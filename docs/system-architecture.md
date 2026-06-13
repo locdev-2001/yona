@@ -1,4 +1,4 @@
-# System Architecture — Beru CRM (Phase 1)
+# System Architecture — Chợ Rạch Management (Phase 1)
 
 > Domain architecture for an all-in-one, multi-tenant SaaS CRM on **Laravel 12 + PostgreSQL 16 + Eloquent + Inertia/React + Redis**. Living doc. Maps the domain docs (`crm-domain-definition`, `crm-business-rules`, `crm-field-dictionary`, `crm-actors-and-use-cases`) onto a concrete, Laravel-idiomatic design.
 > Build order: **Sales-first**, but the model covers Support + Marketing from day one. Source of BR-* references: `crm-business-rules.md`.

@@ -1,4 +1,4 @@
-# Beru CRM
+# Chợ Rạch Management
 
 > Hệ thống CRM (Customer Relationship Management) đa-tenant cấp doanh nghiệp — quản lý toàn bộ vòng đời khách hàng từ lead đến chăm sóc sau bán, hợp nhất Sales, Support và Marketing trên một nền tảng.
 
@@ -6,9 +6,9 @@ Tài liệu này mô tả **dự án là gì**: domain, cách dữ liệu đư�
 
 ---
 
-## Beru CRM làm gì
+## Chợ Rạch Management làm gì
 
-CRM là hệ thống + quy trình quản lý mọi tương tác với khách hàng — từ người lạ quan tâm (lead), thành khách mua, đến quan hệ lâu dài. Beru CRM bao trùm cả ba mặt của một CRM:
+CRM là hệ thống + quy trình quản lý mọi tương tác với khách hàng — từ người lạ quan tâm (lead), thành khách mua, đến quan hệ lâu dài. Chợ Rạch Management bao trùm cả ba mặt của một CRM:
 
 | Mặt | Vai trò |
 |---|---|
@@ -148,7 +148,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 ## Cách dự án được xây dựng
 
-Beru CRM theo một pipeline đặt **đúng domain model lên trước, code sau** — với một nguyên tắc cốt lõi: trong CRM, mô hình dữ liệu và ranh giới domain là nền móng, sai sẽ đắt nhất để sửa, nên kiến trúc và red-team luôn đi trước khi viết code.
+Chợ Rạch Management theo một pipeline đặt **đúng domain model lên trước, code sau** — với một nguyên tắc cốt lõi: trong CRM, mô hình dữ liệu và ranh giới domain là nền móng, sai sẽ đắt nhất để sửa, nên kiến trúc và red-team luôn đi trước khi viết code.
 
 Năm giai đoạn: **Discovery** (chốt phạm vi) → **Domain Architecture** (ERD, ranh giới, isolation) → **Red-team** (bẻ gãy thiết kế trên giấy) → **Plan** (chia phase) → **Build → Verify** (test → review → đồng bộ docs). Chi tiết: [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md).
 

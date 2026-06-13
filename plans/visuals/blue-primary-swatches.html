@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beru CRM — Blue Primary Swatches</title>
+<style>
+  :root{
+    --bg:#f8fafc; --fg:#0f172a; --muted:#64748b; --card:#ffffff;
+    --border:#e2e8f0; --row:#f1f5f9;
+    --won:#059669; --pending:#d97706; --lost:#dc2626;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Inter", "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:26px;letter-spacing:-.02em;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 28px;line-height:1.6}
+  .toolbar{display:flex;gap:10px;align-items:center;margin:0 0 28px;flex-wrap:wrap}
+  .toggle{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+  .toggle button{appearance:none;border:0;background:transparent;color:var(--fg);
+    padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  .toggle button.active{background:var(--fg);color:var(--bg)}
+  .legend{font-size:12px;color:var(--muted)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.02em}
+  .tag.pick{background:#dcfce7;color:#166534}
+  .tag.avoid{background:#fee2e2;color:#991b1b}
+  .tag.ok{background:#e0e7ff;color:#3730a3}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px}
+  .dot{width:18px;height:18px;border-radius:6px;border:1px solid rgba(0,0,0,.08)}
+  .hex{font-family:"Fira Code",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)}
+
+  /* demo CRM strip */
+  .demo{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:stretch}
+  .nav{display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border);padding-right:12px}
+  .nav a{font-size:12.5px;color:var(--muted);text-decoration:none;padding:7px 9px;border-radius:8px;font-weight:500}
+  .nav a.active{color:#fff}
+  .panel{display:flex;flex-direction:column;gap:12px}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{border:1px solid var(--border);border-radius:10px;padding:10px 12px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+  .kpi .lbl{font-size:11px;color:var(--muted)}
+  .kpi .val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+  .btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{appearance:none;border:0;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;color:#fff;transition:filter .15s, transform .05s}
+  .btn:hover{filter:brightness(1.07)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;border:1px solid var(--border)}
+  .btn.ghost{color:inherit}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+    padding:3px 9px;border-radius:999px}
+  .link{font-size:13px;font-weight:600;text-decoration:none}
+  .table{border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12.5px}
+  .table .tr{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 11px}
+  .table .tr+.tr{border-top:1px solid var(--border)}
+  .table .tr.sel{font-weight:600}
+  .status{display:flex;gap:6px}
+  .chip{width:9px;height:9px;border-radius:50%}
+
+  /* DARK */
+  body.dark{--bg:#0b1220;--fg:#e2e8f0;--muted:#94a3b8;--card:#111a2e;--border:#22304b;--row:#16213a}
+  body.dark .kpi,body.dark .table,body.dark .nav{border-color:var(--border)}
+  body.dark .tag.pick{background:#064e3b;color:#bbf7d0}
+  body.dark .tag.avoid{background:#7f1d1d;color:#fecaca}
+  body.dark .tag.ok{background:#312e81;color:#c7d2fe}
+  body.dark .card{box-shadow:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Beru CRM — chọn Primary Blue</h1>
+  <p class="sub">
+    Mỗi card áp 1 sắc blue lên UI thật của CRM: <b>nav active · button · link · KPI accent · badge · row chọn</b>.
+    Status colors (won/pending/lost) giữ cố định để bạn thấy primary có “đụng” nghĩa không.
+    Bật Dark mode để kiểm tra contrast cả 2 chế độ.
+  </p>
+
+  <div class="toolbar">
+    <div class="toggle" id="mode">
+      <button data-mode="light" class="active">☀️ Light</button>
+      <button data-mode="dark">🌙 Dark</button>
+    </div>
+    <span class="legend">Tip: nhìn lâu — blue nào không làm mỏi mắt khi data-dense thì thắng.</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const blues = [
+  {name:"Royal / Trust Blue", hex:"#2563EB", tw:"blue-600", tag:"pick",  note:"Khuyến nghị · cân bằng, hợp shadcn"},
+  {name:"Cobalt",             hex:"#1D4ED8", tw:"blue-700", tag:"pick",  note:"Trầm hơn, cảm giác “đắt”"},
+  {name:"Indigo",             hex:"#4F46E5", tw:"indigo-600", tag:"avoid", note:"Ngả tím — AI default, dễ đụng hàng"},
+  {name:"Electric / Azure",   hex:"#0EA5E9", tw:"sky-500",  tag:"ok",    note:"Tươi, hợp link/info phụ hơn primary"},
+  {name:"Ocean / Steel",      hex:"#0369A1", tw:"sky-700",  tag:"ok",    note:"Enterprise, chín chắn"},
+  {name:"Slate Navy",         hex:"#0F172A", tw:"slate-900", tag:"ok",   note:"Primary tối kiểu Linear/Vercel"},
+];
+
+const tagText = {pick:"NÊN DÙNG", avoid:"NÉ", ok:"DÙNG ĐƯỢC"};
+
+// soften a hex toward background for tinted accents
+function tint(hex, a){const n=parseInt(hex.slice(1),16);const r=n>>16,g=(n>>8)&255,b=n&255;return `rgba(${r},${g},${b},${a})`;}
+
+function card(b){
+  const navText = b.hex === "#0F172A" ? "#fff" : "#fff";
+  return `
+  <div class="card">
+    <div class="head">
+      <div class="name"><span class="dot" style="background:${b.hex}"></span>${b.name}</div>
+      <span class="tag ${b.tag}">${tagText[b.tag]}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span class="hex">${b.hex} · ${b.tw}</span>
+      <span class="hex" style="opacity:.8">${b.note}</span>
+    </div>
+    <div class="demo">
+      <div class="nav">
+        <a>Dashboard</a>
+        <a class="active" style="background:${b.hex};color:${navText}">Deals</a>
+        <a>Contacts</a>
+        <a>Reports</a>
+      </div>
+      <div class="panel">
+        <div class="kpis">
+          <div class="kpi" style="--a:${b.hex}"><span class="lbl">Open deals</span><div class="val">128</div></div>
+          <div class="kpi"><span class="lbl">Win rate</span><div class="val">42.6%</div></div>
+        </div>
+        <div class="btns">
+          <button class="btn" style="background:${b.hex}">+ New deal</button>
+          <button class="btn ghost">Filter</button>
+          <a class="link" style="color:${b.hex}">View pipeline</a>
+        </div>
+        <div class="btns">
+          <span class="badge" style="background:${tint(b.hex,.14)};color:${b.hex}">Assigned to you</span>
+          <span class="badge" style="background:rgba(5,150,105,.14);color:var(--won)">● Won</span>
+          <span class="badge" style="background:rgba(217,119,6,.16);color:var(--pending)">● Pending</span>
+          <span class="badge" style="background:rgba(220,38,38,.14);color:var(--lost)">● Lost</span>
+        </div>
+        <div class="table">
+          <div class="tr sel" style="background:${tint(b.hex,.10)};box-shadow:inset 3px 0 0 ${b.hex}">
+            <span>Acme Corp · Q3 renewal</span><span class="status"><i class="chip" style="background:var(--won)"></i></span>
+          </div>
+          <div class="tr"><span>Lumen Health · onboarding</span><span class="status"><i class="chip" style="background:var(--pending)"></i></span></div>
+          <div class="tr"><span>Pike Logistics · upsell</span><span class="status"><i class="chip" style="background:var(--lost)"></i></span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+document.getElementById('grid').innerHTML = blues.map(card).join('');
+// apply KPI left-bar color
+document.querySelectorAll('.kpi[style*="--a"]').forEach(k=>{
+  k.querySelector ? null : null;
+});
+const style = document.createElement('style');
+style.textContent = blues.map((b,i)=>`#grid .card:nth-child(${i+1}) .kpi:first-child::before{background:${b.hex}}`).join('\n');
+document.head.appendChild(style);
+
+document.getElementById('mode').addEventListener('click', e=>{
+  const m = e.target.closest('button'); if(!m) return;
+  document.body.classList.toggle('dark', m.dataset.mode==='dark');
+  document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('active', x===m));
+});
+</script>
+</body>
+</html>
