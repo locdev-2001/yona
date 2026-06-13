@@ -1,14 +1,14 @@
 -- Chó Rách Management — Postgres role setup for real RLS enforcement.
 --
--- Run as the DB owner/superuser (beru) on BOTH databases:
---   psql -U beru -d cho_rach      -f database/sql/setup-roles.sql
---   psql -U beru -d cho_rach_test -f database/sql/setup-roles.sql
+-- Run as the DB owner/superuser (cho_rach_owner) on BOTH databases:
+--   psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql
+--   psql -U cho_rach_owner -d cho_rach_test -f database/sql/setup-roles.sql
 -- (or: make db-roles)
 --
 -- Why: the app must connect as a NON-superuser, NON-owner role so Postgres
 -- Row-Level Security policies actually apply (superusers + table owners bypass
 -- RLS). Migrations + audit-immutable writes + cross-workspace platform reads
--- use the privileged owner connection (beru). Idempotent — safe to re-run.
+-- use the privileged owner connection (cho_rach_owner). Idempotent — safe to re-run.
 
 -- 1. Runtime application role (RLS-enforced). No password: local trust auth.
 DO $$
@@ -29,10 +29,10 @@ GRANT USAGE ON SCHEMA public TO cho_rach_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO cho_rach_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cho_rach_app;
 
--- 4. Future tables/sequences created by beru auto-granted to the app role.
-ALTER DEFAULT PRIVILEGES FOR ROLE beru IN SCHEMA public
+-- 4. Future tables/sequences created by cho_rach_owner auto-granted to the app role.
+ALTER DEFAULT PRIVILEGES FOR ROLE cho_rach_owner IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cho_rach_app;
-ALTER DEFAULT PRIVILEGES FOR ROLE beru IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE cho_rach_owner IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO cho_rach_app;
 
 -- 5. Audit immutability (BR-X05): the app role may read + append audit rows but

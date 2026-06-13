@@ -11,14 +11,21 @@ x-app-env: &app-env
   DB_HOST: postgres
   DB_PORT: 5432
   DB_DATABASE: cho_rach
-  DB_USERNAME: crm
+  # Runtime role — non-superuser, RLS-enforced (see docs/local-development.md).
+  DB_USERNAME: cho_rach_app
   DB_PASSWORD: secret
+  # Privileged owner role — migrations / DDL / audit / cross-workspace reads.
+  DB_PRIVILEGED_USERNAME: cho_rach_owner
+  DB_PRIVILEGED_PASSWORD: secret
   REDIS_HOST: redis
   REDIS_PORT: 6379
   CACHE_STORE: redis
   QUEUE_CONNECTION: redis
   SESSION_DRIVER: redis
   BROADCAST_CONNECTION: reverb
+  REVERB_APP_ID: cho-rach
+  REVERB_APP_KEY: local-reverb-key
+  REVERB_APP_SECRET: local-reverb-secret
   REVERB_HOST: localhost
   REVERB_PORT: 8081
   REVERB_SCHEME: http
@@ -59,14 +66,18 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: cho_rach
-      POSTGRES_USER: crm
+      POSTGRES_USER: cho_rach_owner          # privileged owner role (matches host design)
       POSTGRES_PASSWORD: secret
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # First-boot bootstrap: create the cho_rach_app runtime role + cho_rach_test
+      # DB + grants. Runs only on an empty data dir (down -v to re-run).
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./database/sql/setup-roles.sql:/opt/db/setup-roles.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crm -d cho_rach"]
+      test: ["CMD-SHELL", "pg_isready -U cho_rach_owner -d cho_rach"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -83,9 +94,17 @@ services:
     environment: *app-env
     volumes:
       - .:/var/www/html
+      # node_modules + pnpm store live on a Linux named volume, NOT the Windows
+      # bind mount — pnpm's content-addressable store needs same-fs links, which
+      # the bind mount can't do (ERR_PNPM system error -116). Also much faster.
+      - node_modules:/var/www/html/node_modules
     ports:
       - "5173:5173"
-    command: sh -c "corepack enable && pnpm install && pnpm run dev -- --host 0.0.0.0"
+    command: >
+      sh -c "corepack enable &&
+             pnpm config set store-dir /var/www/html/node_modules/.pnpm-store &&
+             pnpm install &&
+             pnpm run dev"
     profiles: ["frontend"]
 
   # Queue worker. Enable: docker compose --profile workers up -d horizon
@@ -104,3 +123,4 @@ services:
 
 volumes:
   pgdata:
+  node_modules:

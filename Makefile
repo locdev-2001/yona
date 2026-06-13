@@ -36,16 +36,20 @@ setup: ## First-time: Docker if available, otherwise host (install+migrate+build
 		echo "→ Docker detected — running Docker setup"; \
 		$(DC) build && \
 		$(DC) up -d postgres redis && \
-		$(DC) run --rm app php artisan migrate --force && \
+		$(DC) run --rm app php artisan migrate --database=pgsql_privileged --force && \
+		$(DC) run --rm -e DB_DATABASE=cho_rach_test app php artisan migrate --database=pgsql_privileged --force && \
 		$(DC) up -d && \
-		echo "✓ setup done → http://localhost:8080  (frontend: make docker-front)"; \
+		echo "✓ setup done → http://localhost:8080  (then: make dev — for Vite hot reload)"; \
 	else \
 		echo "→ Docker not available — running host setup"; \
 		$(COMPOSER) install && \
 		pnpm install && \
 		{ test -f .env || cp .env.example .env; } && \
 		{ grep -q "APP_KEY=base64:" .env || $(ARTISAN) key:generate; } && \
-		$(ARTISAN) migrate && \
+		psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql && \
+		psql -U cho_rach_owner -d cho_rach_test -f database/sql/setup-roles.sql && \
+		$(ARTISAN) migrate --database=pgsql_privileged --force && \
+		DB_DATABASE=cho_rach_test $(ARTISAN) migrate --database=pgsql_privileged --force && \
 		pnpm run build && \
 		echo "✓ host setup done"; \
 	fi
@@ -55,16 +59,20 @@ setup: ## First-time: Docker if available, otherwise host (install+migrate+build
 setup-docker: ## Force Docker setup (build, bootstrap, migrate, start app)
 	$(DC) build
 	$(DC) up -d postgres redis
-	$(DC) run --rm app php artisan migrate --force
+	$(DC) run --rm app php artisan migrate --database=pgsql_privileged --force
+	$(DC) run --rm -e DB_DATABASE=cho_rach_test app php artisan migrate --database=pgsql_privileged --force
 	$(DC) up -d
-	@echo "✓ setup done → http://localhost:8080  (frontend: make docker-front)"
+	@echo "✓ setup done → http://localhost:8080  (then: make dev — for Vite hot reload)"
 
-setup-host: ## Force host setup (deps + env + key + migrate + assets)
+setup-host: ## Force host setup (deps + env + key + roles + migrate + assets)
 	$(COMPOSER) install
 	pnpm install
 	@test -f .env || cp .env.example .env
 	@grep -q "APP_KEY=base64:" .env || $(ARTISAN) key:generate
-	$(ARTISAN) migrate
+	psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql
+	psql -U cho_rach_owner -d cho_rach_test -f database/sql/setup-roles.sql
+	$(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) migrate --database=pgsql_privileged --force
 	pnpm run build
 	@echo "✓ host setup done"
 
@@ -90,8 +98,8 @@ docker-sh: ## Shell into the app container
 docker-artisan: ## Run artisan: make docker-artisan CMD="migrate:status"
 	$(EXEC) php artisan $(CMD)
 
-docker-migrate: ## Run pending migrations in the container
-	$(EXEC) php artisan migrate
+docker-migrate: ## Run pending migrations in the container (as the owner role)
+	$(EXEC) php artisan migrate --database=pgsql_privileged
 
 docker-seed: ## Run seeders in the container
 	$(EXEC) php artisan db:seed
@@ -124,9 +132,19 @@ install: ## Install PHP + JS dependencies on the host
 	$(COMPOSER) install
 	pnpm install
 
-## ── Run (host) ─────────────────────────────────────────
-dev: ## Run full stack (server + queue + logs + vite)
-	$(COMPOSER) run dev
+## ── Run ────────────────────────────────────────────────
+# Auto-detects Docker (like `setup`). Docker path starts the core services and
+# runs the Vite dev server in the foreground — it writes public/hot so the app
+# at :8080 renders with hot reload (no built manifest needed). Ctrl-C stops Vite;
+# core services stay up (use `make docker-down` to stop them).
+dev: ## Run dev stack: Docker (app + Vite) if available, else host (composer run dev)
+	@if docker info >/dev/null 2>&1; then \
+		echo "→ Docker detected — app on :8080, Vite dev server on :5173 (Ctrl-C to stop Vite)"; \
+		$(DC) up -d && \
+		$(DC) --profile frontend up node; \
+	else \
+		$(COMPOSER) run dev; \
+	fi
 
 serve: ## Serve the app (http://localhost:8000)
 	$(ARTISAN) serve
@@ -142,8 +160,8 @@ reverb: ## Run Reverb websocket server (live chat)
 
 ## ── Database (host) ────────────────────────────────────
 db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
-	psql -U beru -d cho_rach      -f database/sql/setup-roles.sql
-	psql -U beru -d cho_rach_test -f database/sql/setup-roles.sql
+	psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql
+	psql -U cho_rach_owner -d cho_rach_test -f database/sql/setup-roles.sql
 
 migrate: ## Run pending migrations (additive, forward-only) on dev + test DBs
 	$(ARTISAN) migrate --database=pgsql_privileged --force
@@ -183,3 +201,6 @@ clear: ## Clear all caches
 
 tinker: ## Open a REPL
 	$(ARTISAN) tinker
+	
+shell: ## Open shell in app container
+	$(EXEC) bash
