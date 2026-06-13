@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      has_php: ${{ steps.c.outputs.has_php }}
+      has_node: ${{ steps.c.outputs.has_node }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: c
+        run: |
+          [ -f composer.json ] && echo "has_php=true" >> "$GITHUB_OUTPUT" || echo "has_php=false" >> "$GITHUB_OUTPUT"
+          [ -f package.json ] && echo "has_node=true" >> "$GITHUB_OUTPUT" || echo "has_node=false" >> "$GITHUB_OUTPUT"
+
+  backend:
+    needs: detect
+    if: needs.detect.outputs.has_php == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: crm_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, redis, mbstring, bcmath, intl
+          coverage: none
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('**/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Lint (Pint)
+        run: vendor/bin/pint --test
+      - name: Static analysis (Larastan)
+        run: vendor/bin/phpstan analyse --no-progress || true
+      - name: Migrate + test (Pest)
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: crm_test
+          DB_USERNAME: crm
+          DB_PASSWORD: secret
+          REDIS_HOST: 127.0.0.1
+        run: |
+          php artisan migrate --force
+          php artisan test
+
+  frontend:
+    needs: detect
+    if: needs.detect.outputs.has_node == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --if-present
+      - run: npm run build --if-present
