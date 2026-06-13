@@ -132,6 +132,8 @@ Cards = hairline `border` **+** `shadow-sm`; don't rely on shadow alone.
 - [ ] Tables: server-side pagination, sortable headers w/ `aria-sort`, virtualized for long lists.
 - [ ] Responsive at 375 / 768 / 1024 / 1440 (sidebar collapses; shell goes edge-to-edge on mobile).
 - [ ] `prefers-reduced-motion` respected; transitions 150–300ms.
+- [ ] Both **light + dark** rendered & contrast-checked separately (§9) — never assume light values work in dark.
+- [ ] **No hard-coded user-facing strings** — every label/message comes from i18n (§10). Layout tolerates VI↔EN length shifts (VI ~+30%); no truncation of nav/buttons.
 
 ## 7. Coding rules (FE consistency) — ENFORCED
 
@@ -206,6 +208,29 @@ The look that defines the product — build these as the shared shell/components
 - **Topbar:** breadcrumb (back chevron → trail) · global search w/ `⌘F` kbd hint · contextual actions (Manage/Share) · primary CTA.
 - **KPI stat card:** muted label + icon · big `tabular-nums` value · colored delta (`↗ green` / `↘ red`) · inline sparkline (Recharts: scatter/bar/area) · `edit · expand · more` controls top-right.
 - **Kanban:** column header = status icon + name + count + overflow menu. **Task card** anatomy: id chip (`MDS-39`) · priority flag badge · title · subtitle w/ small icon · due-date pill (calendar icon) · footer = avatar stack + comment count + date. Dragged card lifts to `shadow-lg`.
+
+## 9. Theming — light & dark mode
+
+Both themes are **first-class**, shipped together. Status: **implemented**.
+
+- **Mechanism:** a `.dark` class on `<html>` toggles the `.dark` token block in `app.css` (§3). Every color is a semantic token, so components theme automatically — no per-component dark variants.
+- **Modes:** `light` · `dark` · `system` (follows OS `prefers-color-scheme`). Persisted in `localStorage('appearance')`; applied pre-paint to avoid flash.
+- **Code:** hook [`use-appearance`](../resources/js/hooks/use-appearance.tsx) (`useAppearance()` + `initializeTheme()`); switcher UI [`appearance-tabs`](../resources/js/components/appearance-tabs.tsx) / [`appearance-dropdown`](../resources/js/components/appearance-dropdown.tsx) (in Settings → Appearance and the user menu).
+- **Dark is not inverted light** — surfaces use desaturated navy-slate, primary lifts Blue 600→500, chart accents desaturate (§2/§3). Test contrast in dark independently.
+- **Rules:** never hard-code a color that only works in one theme; dividers/borders + hover/pressed/disabled states must stay visible in both; modal scrim strong enough in both (§6).
+
+## 10. Internationalization — Vietnamese & English
+
+Bilingual product: **`vi` (default) · `en`**, fallback `en`. Status: **to implement** (greenfield — no i18n yet).
+
+- **Single source of strings = Laravel `lang/`** (DRY across web + emails + validation):
+  - `lang/{vi,en}/*.php` (grouped keys) and `lang/{vi,en}.json` (flat UI strings). Backend uses `__('...')`.
+  - Set `APP_LOCALE=vi`, `APP_FALLBACK_LOCALE=en` in env.
+- **Frontend access (Inertia):** the active locale + its message bundle are shared via `HandleInertiaRequests::share()` → a thin `t(key, params)` helper (e.g. `laravel-react-i18n`) reads them in React. **No literal user-facing text in `.tsx`** — always `t('deals.create')`.
+- **Locale resolution & switch:** per-user preference (column on `users`) → session → `Accept-Language` → default `vi`. A language switcher lives in the **user menu** (and on auth pages); switching `PUT /locale` persists + reloads shared props.
+- **Formatting is locale-aware (ties to §7.5):** `formatCurrency` / `formatNumber` / `formatDate` take the active locale (`vi-VN` ↔ `en-US`). Currency stays VND unless product says otherwise; numbers keep `tabular-nums`.
+- **Layout rule:** VI text runs ~30% longer than EN — nav, buttons, badges, table headers must wrap/flex, never fixed-width-truncate. Test both locales at 375px.
+- **Pluralization & params:** use Laravel `trans_choice` / ICU-style params, not string concatenation.
 
 ## Related
 
