@@ -8,7 +8,7 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ### Added — Phase 0 & 1 foundation (2026-06-13)
 - **Discovery** (`plans/.../reports/discovery.md`): scope (all-in-one SaaS CRM), row-level multi-tenant, mid-market scale, build order Sales-first.
-- **Tech stack locked**: Laravel 12 · PostgreSQL 16 · Eloquent · Inertia 2 + React + shadcn/TanStack · Redis (Queue/Horizon) · spatie/laravel-permission.
+- **Tech stack locked**: Laravel 13 · PostgreSQL 16 · Eloquent · Inertia 2 + React + shadcn/TanStack · Redis (Queue/Horizon) · spatie/laravel-permission.
 - **Domain docs**: domain-definition, business-rules (BR-* incl. red-team BR-X11–X18), field-dictionary, actors-and-use-cases.
 - **System architecture** (`docs/system-architecture.md`): 6 bounded contexts, data model, 3-layer tenant isolation + RLS, RBAC (own/team/all), transaction boundaries, custom-fields engine, audit, async, scale, frontend.
 - **Authorization model** (`docs/crm-authorization-model.md`): two planes — Platform (internal staff, god-mode via audited impersonation) + Workspace (customers); global identity + membership.
