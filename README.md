@@ -22,18 +22,24 @@ Hệ thống không chỉ *lưu trữ* dữ liệu khách hàng mà còn đượ
 
 ## Phạm vi
 
-Một nền tảng all-in-one gồm bốn nhóm năng lực:
+Một nền tảng all-in-one, chia ba nhóm: **CRM khách hàng dùng**, **Platform nền tảng** (shared), và **nội bộ Platform-staff**. 🟢 = miễn phí (base) · 🔵 = add-on tính phí (marketplace).
 
 ```
-SALES            MARKETING        SERVICE          PLATFORM (nền tảng)
-─────            ─────────        ───────          ────────
-Lead Mgmt        Campaigns        Ticketing        Multi-tenancy + RBAC
-Pipeline/Deals   Email log        SLA tracking     Audit log + soft-delete
-Forecasting      Lead scoring     CSAT/feedback    Custom fields engine
-Activity & Task  Segmentation     Knowledge base   Reporting / BI · API
+CUSTOMER-FACING (workspace)        PLATFORM / SHARED                INTERNAL (platform staff)
+───────────────────────────       ──────────────────────────       ──────────────────────────
+Sales 🟢                           Multi-tenancy + Workspace         Workspace administration
+  Lead·Contact·Account·Deal        Identity + Membership             Marketplace catalog mgmt
+  Pipeline·Forecast                RBAC (roles·teams·visibility)     Billing / subscription ops
+Engagement 🟢 (Activity·Task)      Custom Fields engine              Support impersonation (audited)
+Support 🔵 (Ticket·SLA·CSAT)       Audit log + soft-delete
+Conversations/Inbox 🟢             Attachments · Notifications        COMMERCE
+  live chat realtime               Product Announcements             ─────────
+  omnichannel: web·Zalo·FB·email   Realtime (Reverb)                 Marketplace (add-ons)
+  escalate → Ticket                Reporting/BI · API + Webhooks     Entitlements · Integrations
+Marketing 🔵 (Campaign·Segment·Scoring)
 ```
 
-Sales và tầng platform là lõi; Support và Marketing mở rộng trên cùng một domain model thống nhất.
+Sales và tầng platform là lõi; Support, Marketing, và Inbox mở rộng trên cùng một domain model thống nhất. Năng lực mở/khóa theo **marketplace** (mua add-on), không phải gói cứng.
 
 ---
 
@@ -107,6 +113,8 @@ Mỗi bước chuyển tiếp đều ghi lại Activity, tạo nên dòng lịch
   - Admin → tất cả trong tenant
 - Tầm nhìn tính trên từng thực thể, không lan truyền qua liên kết — thấy một Account không đồng nghĩa thấy các Deal của người khác trên đó.
 
+**Hai mặt phẳng quyền:** ngoài *Workspace plane* (khách hàng, mô tả trên), có *Platform plane* — nhân sự nội bộ (`super_admin`/`support_engineer`/`billing_ops`) vận hành xuyên workspace; truy cập dữ liệu khách qua **impersonation có thời hạn + audit đầy đủ**. Identity là **global** (một email, gia nhập nhiều workspace qua membership). Chi tiết: [docs/crm-authorization-model.md](docs/crm-authorization-model.md).
+
 Hệ thống lưu **audit log** bất biến (append-only) và dùng **soft-delete** cho mọi thực thể — phục vụ truy vết và tuân thủ.
 
 ---
@@ -140,6 +148,8 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 | Phân quyền | spatie/laravel-permission (roles) + Policies (record own/team/subtree) |
 | Frontend | Inertia 2 + React + shadcn/ui + Tailwind + TanStack Table/Query |
 | Jobs / Cron | Laravel Queue (Redis) + Horizon · Scheduler (SLA, alerts, forecast) |
+| Realtime | Laravel Reverb (WebSocket) + Echo — live chat, presence, typing (channel auth scoped theo workspace + visibility) |
+| Billing | Marketplace (add-on one-time/subscription) + entitlements; payment provider-agnostic (`payment-integration` sau) |
 | Quan sát | Telescope (dev) + Sentry (prod) |
 | Test | Pest (unit/feature) + Playwright (e2e) |
 | Triển khai | Laravel Forge + VPS hoặc Docker |
@@ -164,4 +174,10 @@ Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
 | [docs/crm-actors-and-use-cases.md](docs/crm-actors-and-use-cases.md) | Actors, jobs-to-be-done, user stories, ma trận quyền |
 | [docs/crm-business-rules.md](docs/crm-business-rules.md) | 46 quy tắc nghiệp vụ (`BR-XXX`) |
 | [docs/crm-field-dictionary.md](docs/crm-field-dictionary.md) | Từ điển field đầy đủ + enums |
+| [docs/system-architecture.md](docs/system-architecture.md) | **Kiến trúc**: bounded contexts, data model, isolation, RBAC, TX, async, scale, frontend |
+| [docs/crm-authorization-model.md](docs/crm-authorization-model.md) | Phân quyền 2 mặt phẳng: Platform (nội bộ) + Workspace (khách) |
+| [docs/crm-marketplace.md](docs/crm-marketplace.md) | Marketplace billing + entitlements (base free + add-on) |
+| [docs/crm-conversations-inbox.md](docs/crm-conversations-inbox.md) | Live chat realtime, omnichannel inbox |
+| [docs/crm-business-config.md](docs/crm-business-config.md) | Pipeline mặc định, enums, SLA, scoring, gói free, marketplace seed |
 | [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |
+| [docs/development-roadmap.md](docs/development-roadmap.md) · [docs/project-changelog.md](docs/project-changelog.md) | Lộ trình & nhật ký thay đổi |
