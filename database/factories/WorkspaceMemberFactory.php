@@ -24,7 +24,8 @@ class WorkspaceMemberFactory extends Factory
     public function definition(): array
     {
         return [
-            'workspace_id' => Workspace::factory(),
+            // Respect an active workspace context (RLS WITH CHECK on insert).
+            'workspace_id' => currentWorkspace()?->id ?? Workspace::factory(),
             'user_id' => User::factory(),
             'role' => 'sales_rep',
             'team_id' => null,

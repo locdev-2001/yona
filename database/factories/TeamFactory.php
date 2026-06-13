@@ -19,7 +19,9 @@ class TeamFactory extends Factory
     public function definition(): array
     {
         return [
-            'workspace_id' => Workspace::factory(),
+            // Respect an active workspace context (RLS WITH CHECK on insert);
+            // otherwise spin up a fresh workspace for standalone use.
+            'workspace_id' => currentWorkspace()?->id ?? Workspace::factory(),
             'name' => fake()->unique()->words(2, true),
             'parent_id' => null,
         ];

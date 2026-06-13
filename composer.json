@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "cho-rach/management",
     "type": "project",
-    "description": "Ch\u00f3 R\u00e1ch Management \u2014 multi-tenant enterprise SaaS CRM (Sales + Support + Marketing).",
+    "description": "Chó Rách Management — multi-tenant enterprise SaaS CRM (Sales + Support + Marketing).",
     "keywords": [
         "crm",
         "saas",
@@ -40,7 +40,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

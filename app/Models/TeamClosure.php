@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TeamClosure extends Model
 {
+    use BelongsToWorkspace;
+
     protected $table = 'team_closure';
 
     public $incrementing = false;
