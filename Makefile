@@ -18,7 +18,7 @@ COMPOSER := composer
 
 .DEFAULT_GOAL := help
 .PHONY: help setup setup-docker setup-host install dev serve queue horizon reverb \
-        migrate seed test format pint pint-test stan check build \
+        db-roles migrate seed test format pint pint-test stan check build \
         clear tinker \
         docker-up docker-down docker-restart docker-logs docker-ps \
         docker-sh docker-artisan docker-migrate docker-seed docker-test \
@@ -141,11 +141,16 @@ reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
 
 ## ── Database (host) ────────────────────────────────────
-migrate: ## Run pending migrations (additive, forward-only)
-	$(ARTISAN) migrate
+db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
+	psql -U beru -d cho_rach      -f database/sql/setup-roles.sql
+	psql -U beru -d cho_rach_test -f database/sql/setup-roles.sql
 
-seed: ## Run seeders
-	$(ARTISAN) db:seed
+migrate: ## Run pending migrations (additive, forward-only) on dev + test DBs
+	$(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) migrate --database=pgsql_privileged --force
+
+seed: ## Run seeders (idempotent foundation data)
+	$(ARTISAN) db:seed --force
 
 # NOTE: no migrate:fresh / migrate:reset / db:wipe target by design —
 # supreme rule: never run anything that can wipe DB data.

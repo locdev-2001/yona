@@ -66,11 +66,26 @@ If you already have PHP 8.4 + Postgres + Redis locally, the plain (unprefixed) t
 
 ```bash
 make install        # composer install + pnpm install
-make migrate        # run migrations on the host
+make db-roles       # one-time: create cho_rach_app role + grants (real RLS)
+make migrate        # run migrations on the host (dev + test DBs, as owner)
 make dev            # server + queue + logs + vite (composer run dev)
 make test
 make check
 ```
+
+### Postgres roles & Row-Level Security (host)
+
+Tenant isolation has a Postgres RLS backstop (BR-X18), and **superusers/table owners bypass RLS**. So the app uses **two roles**:
+
+| Role | Connection | Used for |
+|---|---|---|
+| `cho_rach_app` (non-superuser) | `pgsql` (runtime/default) | All web + test queries — **subject to RLS**. Tenant set per request via `set_config('app.current_workspace', …)`. |
+| `beru` (owner) | `pgsql_privileged` | Migrations (DDL), append-only audit writes, cross-workspace platform reads. |
+
+- `make db-roles` runs `database/sql/setup-roles.sql` (idempotent) on `cho_rach` + `cho_rach_test`. Re-run it after adding tables so the app role keeps its grants (default privileges also auto-grant future tables).
+- `make migrate` runs as the owner (`--database=pgsql_privileged`) on both DBs.
+- `.env`: `DB_USERNAME=cho_rach_app`, `DB_PRIVILEGED_USERNAME=beru` (local trust auth, empty passwords).
+- Requires local trust auth for `cho_rach_app` (default `pg_hba.conf` for local/127.0.0.1). If login fails, add a trust line for the role — do not weaken auth beyond local.
 
 ## Images
 

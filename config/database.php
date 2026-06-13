@@ -82,14 +82,39 @@ return [
             ]) : [],
         ],
 
+        // Runtime connection — connects as the NON-superuser `cho_rach_app`
+        // role so Postgres Row-Level Security policies actually enforce
+        // (superusers + table owners bypass RLS). All app/web/test queries
+        // flow through this; tenant context is set per-request via
+        // `set_config('app.current_workspace', ...)` (IdentifyWorkspace).
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
+            'username' => env('DB_USERNAME', 'cho_rach_app'),
             'password' => env('DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
+        // Privileged connection — owner/superuser (`beru`). Used for: schema
+        // migrations (DDL), append-only audit writes the app role may not
+        // mutate, and cross-workspace platform-plane reads. NEVER bound to a
+        // customer-plane request path. Shares DB_DATABASE so test runs can
+        // target cho_rach_test via a DB_DATABASE override.
+        'pgsql_privileged' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_PRIVILEGED_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_PRIVILEGED_USERNAME', 'beru'),
+            'password' => env('DB_PRIVILEGED_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
