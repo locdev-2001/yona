@@ -76,7 +76,7 @@ Nguyên tắc dữ liệu định hình cả hệ thống:
 - **Account ↔ Contact là 1:N** — một công ty nhiều người liên hệ.
 - **Deal ↔ Contact là N:N** (qua `deal_contact_roles`) — model được *buying committee*, nhiều người cùng quyết định một deal.
 - **Lead tách biệt Contact** — giữ phễu chuyển đổi đo được và dữ liệu sạch không bị nhiễm. Qualify một lead tạo Contact (kèm Account, Deal) trong một transaction, không mất dữ liệu.
-- **Tính linh hoạt qua custom fields** — schema lõi cố định, mỗi tenant tự thêm field riêng (lưu JSONB).
+- **Tính linh hoạt qua custom fields** — schema lõi cố định, mỗi workspace tự thêm field riêng (lưu JSONB).
 
 ---
 
@@ -101,7 +101,7 @@ Mỗi bước chuyển tiếp đều ghi lại Activity, tạo nên dòng lịch
 
 ## Mô hình đa-tenant & phân quyền
 
-**Đa-tenant:** mỗi khách hàng doanh nghiệp là một **tenant** — ranh giới dữ liệu cứng. Mọi bảng mang `tenant_id`, suy ra từ phiên đăng nhập phía server (không nhận từ client), với Postgres Row-Level Security làm lớp chặn cuối.
+**Đa-tenant:** mỗi khách hàng doanh nghiệp là một **workspace** — ranh giới dữ liệu cứng. (Thực thể & cột tên là `workspace`/`workspace_id`; "đa-tenant"/"multi-tenant" chỉ là tên *pattern* kiến trúc.) Mọi bảng mang `workspace_id`, suy ra từ phiên đăng nhập phía server (không nhận từ client), với Postgres Row-Level Security làm lớp chặn cuối.
 
 **Phân quyền = Role + Record ownership:**
 
@@ -110,7 +110,7 @@ Mỗi bước chuyển tiếp đều ghi lại Activity, tạo nên dòng lịch
 - **Tầm nhìn (visibility)** theo vai trò:
   - Rep / Agent → record mình sở hữu
   - Manager → record của team mình **và toàn bộ nhánh con** (team tổ chức dạng cây)
-  - Admin → tất cả trong tenant
+  - Admin → tất cả trong workspace
 - Tầm nhìn tính trên từng thực thể, không lan truyền qua liên kết — thấy một Account không đồng nghĩa thấy các Deal của người khác trên đó.
 
 **Hai mặt phẳng quyền:** ngoài *Workspace plane* (khách hàng, mô tả trên), có *Platform plane* — nhân sự nội bộ (`super_admin`/`support_engineer`/`billing_ops`) vận hành xuyên workspace; truy cập dữ liệu khách qua **impersonation có thời hạn + audit đầy đủ**. Identity là **global** (một email, gia nhập nhiều workspace qua membership). Chi tiết: [docs/crm-authorization-model.md](docs/crm-authorization-model.md).
@@ -124,11 +124,11 @@ Hệ thống lưu **audit log** bất biến (append-only) và dùng **soft-dele
 | Hạng mục | Lựa chọn |
 |---|---|
 | Sản phẩm | All-in-one (Sales + Support + Marketing), một domain model thống nhất |
-| Tenancy | Multi-tenant row-level (`tenant_id`) + Postgres RLS |
+| Tenancy | Multi-tenant row-level (`workspace_id`) + Postgres RLS |
 | Phân quyền | Role + record ownership; team phân cấp dạng cây (manager rollup) |
-| Custom fields | Schema lõi + JSONB engine theo tenant (không EAV, không template theo ngành) |
-| Tiền tệ | Một base currency cho mỗi tenant |
-| Quy mô | Mid-market (~ngàn tenant × ~triệu record/tenant) |
+| Custom fields | Schema lõi + JSONB engine theo workspace (không EAV, không template theo ngành) |
+| Tiền tệ | Một base currency cho mỗi workspace |
+| Quy mô | Mid-market (~ngàn workspace × ~triệu record/workspace) |
 | Audit & xóa dữ liệu | Audit append-only, tối giản PII; soft-delete; hỗ trợ xóa PII theo GDPR |
 | SLA | Tính theo thời gian calendar 24/7, có pause/resume |
 
@@ -142,8 +142,8 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 |---|---|
 | Backend | Laravel 12 (PHP 8.3+) |
 | Database | PostgreSQL 16+ (JSONB + GIN, RLS, partition khi cần) |
-| ORM | Eloquent — query scopes cho tenant/visibility; raw SQL cho report nặng |
-| Đa-tenant | `BelongsToTenant` global scope + middleware + Postgres RLS |
+| ORM | Eloquent — query scopes cho workspace/visibility; raw SQL cho report nặng |
+| Đa-tenant | `BelongsToWorkspace` global scope + middleware + Postgres RLS |
 | Auth | Fortify/Breeze (Inertia React starter), session-based |
 | Phân quyền | spatie/laravel-permission (roles) + Policies (record own/team/subtree) |
 | Frontend | Inertia 2 + React + shadcn/ui + Tailwind + TanStack Table/Query |
