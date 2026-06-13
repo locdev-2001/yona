@@ -23,6 +23,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 | **Support** | Issue resolution + SLA | Ticket |
 | **Marketing** | Campaigns, segments, scoring inputs | Campaign, Segment, CampaignRecipient |
 | **Billing** | Marketplace (free base + add-ons, one-time/subscription), purchases, entitlements (Platform plane) | MarketplaceItem, WorkspacePurchase, Entitlements resolver — see [crm-marketplace.md](crm-marketplace.md) |
+| **Conversations** (Inbox) | Realtime omnichannel messaging (web/Zalo/FB/email), live chat | Channel, Conversation, Message — see [crm-conversations-inbox.md](crm-conversations-inbox.md) |
 
 **Invariant ownership**
 - *Tenant isolation* (BR-X01/X11/X14/X18) → enforced by Platform (trait + middleware + RLS); every context inherits it.
@@ -115,6 +116,18 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 | `workspace_integrations` | `workspace_id, item_id, provider_key, status, config jsonb, connected_at` | Connected instance for `integration` items (OAuth/config). |
 
 **Effective entitlements** = BASE (free) ⊕ Σ(active purchases) ⊕ overrides. **Entitlement gate ≠ RBAC gate**: workspace quota/feature is checked *in addition to* user role permission. Single resolver `Entitlements::for(workspace)`; cached in Redis, busted on purchase/subscription change.
+
+### 3.6b Conversations / Inbox tables (live chat, omnichannel)
+
+V1 core. `messages` is high-volume, append-only, partition-ready. Full spec: [crm-conversations-inbox.md](crm-conversations-inbox.md).
+
+| Table | Notable columns | Notes |
+|---|---|---|
+| `inbox_channels` | `workspace_id, type(web_widget/zalo/facebook/email), name, integration_id, config jsonb, is_active` | Zalo/FB/email ref `workspace_integrations`; web_widget built-in. |
+| `conversations` | `workspace_id, channel_id, contact_id(nullable), assignee_id, team_id, status, subject, last_message_at, unread_count, external_thread_ref, ticket_id(nullable), first_response_at, closed_at` | `ticket_id` set on escalate. `last_message_at` denormalized for inbox sort. |
+| `messages` | `workspace_id, conversation_id, sender_type, sender_id, body, direction, external_message_ref, delivery_status, created_at` | Append-only. `unique(workspace_id, channel, external_message_ref)` (inbound idempotency). Attachments via `attachments`. |
+| `conversation_participants` | `workspace_id, conversation_id, user_id, role` | Collaboration / @mention. |
+| `canned_responses` | `workspace_id, title, body, shortcut, scope, owner_id` | Saved replies. |
 
 ### 3.7 Platform foundation tables (cross-cutting)
 
@@ -220,6 +233,8 @@ No TX wraps an HTTP/queue/Redis call. Events dispatched **after commit** (`DB::a
 | `SendNotification` | domain events | `default` | per-recipient channels (in_app/email); respects preferences |
 | `DispatchWebhook` | domain events | `default` | HMAC-signed, retry+backoff, logs `webhook_deliveries`, idempotent |
 | `ScanAttachment` | file upload | `low` | virus scan (deferred); quarantine on fail |
+| `IngestInboundMessage` | channel webhook (Zalo/FB/email) | `high` | normalize + idempotent (external_message_ref); broadcast + route |
+| `SendOutboundMessage` | agent reply | `high` | provider Send API, retry/backoff, update delivery_status |
 
 Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()` start (no request context). All handlers idempotent. `withoutOverlapping` on scheduled scans.
 
@@ -229,7 +244,7 @@ Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()
 
 **Why Inertia (not a separate SPA/API in v1):** the CRM is an internal, behind-login, CRUD + dashboard app — Inertia's sweet spot. Routing, auth, CSRF, and **RBAC/visibility scoping stay server-side** (frontend is never a trust boundary; aligns with §4–5). No separate API to build/maintain.
 
-**Tradeoff (accepted):** Inertia is not a full SPA and gives no general-purpose API. A future **mobile app or 3rd-party API** (domain docs mention API/Webhooks/AI agents) must be added via Sanctum. **Safeguard (mandatory):** business logic lives in Action/Service classes, never in controllers (§11) — so an API controller can later call the *same* services. Inertia controllers and a future API are thin doors onto one core. Realtime/collaborative needs Reverb regardless (deferred; Inertia 2 polling is the v1 stopgap).
+**Tradeoff (accepted):** Inertia is not a full SPA and gives no general-purpose API. A future **mobile app or 3rd-party API** (domain docs mention API/Webhooks/AI agents) must be added via Sanctum. **Safeguard (mandatory):** business logic lives in Action/Service classes, never in controllers (§11) — so an API controller can later call the *same* services. Inertia controllers and a future API are thin doors onto one core. **Realtime: Laravel Reverb is v1 infra** (mandated by live-chat/Inbox — see [crm-conversations-inbox.md](crm-conversations-inbox.md)); the React client uses Laravel Echo over Reverb for messages/presence/typing, and Inertia polling for lighter live updates (pipeline/ticket). Broadcast channel auth is workspace + visibility scoped (§11 leak surface).
 
 **UI stack**
 
@@ -290,13 +305,14 @@ Defined basic now (data model above §3.7), built incrementally. All workspace-s
 
 1. **Platform foundation**: Workspace, User(global)+Membership, Team(+closure), `BelongsToWorkspace` trait, `IdentifyWorkspace` middleware, RLS migration + CI check, spatie setup, `Visibility` resolver, AuditLog + observer, optimistic-concurrency trait, **time/locale (UTC) base**, **workspace_sequences** (record numbers).
 2. **Custom-fields engine**: registry + JSONB validation + GIN.
-3. **Cross-cutting platform**: attachments, notifications (+preferences), domain-event bus (feeds notifications/webhooks/audit).
+3. **Cross-cutting platform**: attachments, notifications (+preferences), domain-event bus (feeds notifications/webhooks/audit), **Reverb realtime infra** (channel auth = workspace+visibility scoped).
 4. **Sales core**: Account, Contact, Deal, Pipeline/Stage, DealContactRole; stage-change + won/lost + forecast.
 5. **Lead + conversion**: Lead, scoring, routing, conversion TX (BR-L06/L07).
 6. **Engagement**: Activity, Task (polymorphic + `last_activity_at` denorm).
 7. **Support**: Ticket + SLA scheduler.
-8. **Marketplace + entitlements**: items, purchases, `Entitlements` resolver + enforcement.
-9. **Later**: Marketing (Campaign/Segment/recipients), outbound Webhooks, inbound API (Sanctum), email two-way, import.
+8. **Conversations / Inbox** (v1 core): channels, conversations, messages (realtime via Reverb), web widget first → Zalo/FB/email; routing; escalate→Ticket.
+9. **Marketplace + entitlements**: items, purchases, `Entitlements` resolver + enforcement.
+10. **Later**: Marketing (Campaign/Segment/recipients), product announcements, outbound Webhooks, inbound API (Sanctum), import.
 
 ---
 

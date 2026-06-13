@@ -24,20 +24,21 @@ Last updated: 2026-06-13
 |---|---|---|
 | 1 | Platform foundation (workspace, identity+membership, teams+closure, tenant isolation+RLS, RBAC, audit, time/locale, record numbers) | ⬜ |
 | 2 | Custom-fields engine | ⬜ |
-| 3 | Cross-cutting platform (attachments, notifications, event bus, product announcements/"What's New") | ⬜ |
+| 3 | Cross-cutting platform (attachments, notifications, event bus, **Reverb realtime**, product announcements) | ⬜ |
 | 4 | Sales core (Account, Contact, Deal, Pipeline/Stage, roles; stage/won-lost/forecast) | ⬜ |
 | 5 | Lead + conversion | ⬜ |
 | 6 | Engagement (Activity, Task) | ⬜ |
 | 7 | Support (Ticket + SLA) | ⬜ |
-| 8 | Marketplace + entitlements | ⬜ |
-| 9 | Later: Marketing, Webhooks, inbound API, **Email two-way** (first integration), Import | ⬜ |
+| 8 | **Conversations / Inbox** (v1 core): live chat realtime, omnichannel web→Zalo/FB/email, escalate→Ticket | ⬜ |
+| 9 | Marketplace + entitlements | ⬜ |
+| 10 | Later: Marketing, Webhooks, inbound API, Import | ⬜ |
 
 ## Milestones
 
 - **M1 — Platform MVP**: a workspace with users/teams/roles, tenant-isolated, audited. (build 1–3)
 - **M2 — Sales MVP**: full lead→deal→won funnel with activities/tasks. (build 4–6)
-- **M3 — Support + Billing**: tickets/SLA + marketplace live. (build 7–8)
-- **M4 — Integrations**: email two-way, then more. (build 9)
+- **M3 — Support + Inbox**: tickets/SLA + realtime omnichannel live chat. (build 7–8)
+- **M4 — Billing + Integrations**: marketplace live; Zalo/FB/email channels, more. (build 9–10)
 
 ## Success metrics (per milestone)
 - Tenant-isolation tests pass (zero cross-workspace leak).

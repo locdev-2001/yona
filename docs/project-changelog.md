@@ -17,10 +17,14 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **Business config** (`docs/crm-business-config.md`): default pipeline/stages, enums, SLA targets, lead scoring, base free entitlements, marketplace seeds. Currency VND.
 - **Tooling**: `.claude` toolkit normalized; `laravel` skill added.
 
+- **Conversations / Inbox** (`docs/crm-conversations-inbox.md`): V1 realtime omnichannel live chat (web widget + Zalo + FB + email), Conversation/Message model, escalate→Ticket. Mandates Laravel Reverb (now v1 infra).
+
 ### Changed
 - Identity model: per-tenant → **global identity + membership** (long-term multi-org support).
 - Billing: fixed plans → **marketplace** (add-ons, one-time/subscription).
 - Terminology: tenant → **workspace** (entity/column); "multi-tenant" kept as pattern name.
+- Realtime (Reverb): deferred → **v1 infra** (required by live chat).
+- Email two-way: moved from "integration later" → a **Conversations channel** (v1 core).
 
 ### Pending decisions
 - Marketplace item prices (TBD — model is price-agnostic; Platform seeds later).
