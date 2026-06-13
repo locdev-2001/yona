@@ -3,6 +3,7 @@
 All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com); dates ISO (YYYY-MM-DD). Semantic versions begin once the first code ships; pre-code foundation work lives under **[Unreleased]**.
 
 > Maintained per `.claude/rules/documentation-management.md` — update on every significant change/feature/fix.
+> **Automated by [release-please](https://github.com/googleapis/release-please)** from conventional commits: merging the bot's release PR bumps the version, tags it, and writes the release section here. SemVer `0.x` during build → `1.0.0` at production launch. (GitHub Releases = internal/dev notes; customer-facing "What's New" lives in the in-app Announcements feature — see crm-conversations-inbox/marketplace docs.)
 
 ## [Unreleased]
 
