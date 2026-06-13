@@ -24,7 +24,7 @@ Last updated: 2026-06-13
 |---|---|---|
 | 1 | Platform foundation (workspace, identity+membership, teams+closure, tenant isolation+RLS, RBAC, audit, time/locale, record numbers) | ⬜ |
 | 2 | Custom-fields engine | ⬜ |
-| 3 | Cross-cutting platform (attachments, notifications, event bus) | ⬜ |
+| 3 | Cross-cutting platform (attachments, notifications, event bus, product announcements/"What's New") | ⬜ |
 | 4 | Sales core (Account, Contact, Deal, Pipeline/Stage, roles; stage/won-lost/forecast) | ⬜ |
 | 5 | Lead + conversion | ⬜ |
 | 6 | Engagement (Activity, Task) | ⬜ |

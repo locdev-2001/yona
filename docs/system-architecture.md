@@ -126,6 +126,8 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 | `webhook_endpoints` | `workspace_id, url, event_types jsonb, secret, is_active` | Outbound subscriptions per workspace. |
 | `webhook_deliveries` | `workspace_id, endpoint_id, event, payload jsonb, status, attempts, response_code, next_retry_at` | Delivery log; queued + retried. Partition-ready. |
 | `workspace_sequences` | `workspace_id, entity, next_value` | Human-readable per-workspace counters (Deal #1234). Atomic increment under row lock. |
+| `announcements` | `title, slug, body, category(feature/improvement/fix/announcement/maintenance), status(draft/published), published_at, audience jsonb, cover_image, created_by` | **Product changelog / "What's New"** — Platform-authored, **global** (not workspace-scoped). `audience` = targeting (all / by plan / by entitlement / workspace filter). |
+| `announcement_reads` | `announcement_id, user_id, read_at` | Per-user read state → unread badge. |
 
 API tokens reuse Sanctum's `personal_access_tokens` (+ `abilities` for scopes, bound to a `workspace_member`).
 
@@ -258,6 +260,7 @@ Defined basic now (data model above §3.7), built incrementally. All workspace-s
 - **API & Webhooks** (posture now; full build deferred) —
   - *Inbound*: Sanctum tokens scoped to a `workspace_member` with `abilities` (= permissions) + RLS; per-workspace rate limit. Same authorization path as the web app (no privileged bypass).
   - *Outbound*: `webhook_endpoints` subscribe to event types; the **domain-event bus** is the single source → a queued `DispatchWebhook` job signs (HMAC via endpoint `secret`), delivers, **retries with backoff**, logs to `webhook_deliveries`; consumer dedupes on event id (idempotent). Reuses the same events that drive notifications/audit — one event stream, many consumers.
+- **Product announcements / changelog** (customer-facing "What's New") — Platform staff (super_admin / a `product` platform role) publish global `announcements` targeted by `audience` (all / plan / entitlement / workspace filter). Customers see an **in-app feed + unread badge** (read state per user); publishing optionally fans out a `Notification` and/or email. Distinct from the developer `project-changelog.md`. Optional public changelog page deferred (YAGNI).
 
 ## 10. Scale posture
 
