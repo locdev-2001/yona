@@ -17,6 +17,7 @@
         "laravel/horizon": "^5.47",
         "laravel/reverb": "^1.10",
         "laravel/tinker": "^3.0",
+        "sentry/sentry-laravel": "^4.26",
         "spatie/laravel-permission": "^8.0",
         "tightenco/ziggy": "^2.6"
     },
