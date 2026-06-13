@@ -1,6 +1,6 @@
 ---
 name: laravel
-description: Build Laravel 12 (PHP 8.3+) backends — Eloquent models/migrations, row-level multi-tenancy, queues + Horizon, task scheduler, spatie/laravel-permission RBAC + Policies, Inertia 2 + React, Pest tests, PostgreSQL. Use for Laravel/PHP work — controllers, API, Eloquent queries, jobs, tenancy scoping, auth, migrations, or when building features in a Laravel app.
+description: Build Laravel 13 (PHP 8.3+) backends — Eloquent models/migrations, row-level multi-tenancy, queues + Horizon, task scheduler, spatie/laravel-permission RBAC + Policies, Inertia 2 + React, Pest tests, PostgreSQL. Use for Laravel/PHP work — controllers, API, Eloquent queries, jobs, tenancy scoping, auth, migrations, or when building features in a Laravel app.
 license: MIT
 metadata:
   author: beru
@@ -9,7 +9,7 @@ metadata:
 
 # Laravel
 
-Patterns for production Laravel 12 SaaS apps. Opinionated toward **PostgreSQL + row-level multi-tenant + Inertia/React** (this project's stack). For exact current API signatures, fetch live docs via the `docs-seeker` / `context7` skill — don't rely on memory for framework specifics.
+Patterns for production Laravel 13 SaaS apps. Opinionated toward **PostgreSQL + row-level multi-tenant + Inertia/React** (this project's stack). For exact current API signatures, fetch live docs via the `docs-seeker` / `context7` skill — don't rely on memory for framework specifics.
 
 ## Golden rules
 
@@ -22,7 +22,7 @@ Patterns for production Laravel 12 SaaS apps. Opinionated toward **PostgreSQL + 
 
 ## Project conventions
 
-- PHP 8.3+, Laravel 12, PostgreSQL 16+, Redis. Frontend = Inertia 2 + React + shadcn/ui.
+- PHP 8.3+, Laravel 13, PostgreSQL 16+, Redis. Frontend = Inertia 2 + React + shadcn/ui.
 - Auth: Fortify/Breeze (Inertia React). RBAC: `spatie/laravel-permission` + Policies.
 - Tests: **Pest** (`php artisan make:test --pest`). E2E: Playwright.
 - Format with Laravel Pint. Static analysis with Larastan (PHPStan) if configured.

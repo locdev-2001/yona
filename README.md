@@ -140,7 +140,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 | Tầng | Lựa chọn |
 |---|---|
-| Backend | Laravel 12 (PHP 8.3+) |
+| Backend | Laravel 13 (PHP 8.3+) |
 | Database | PostgreSQL 16+ (JSONB + GIN, RLS, partition khi cần) |
 | ORM | Eloquent — query scopes cho workspace/visibility; raw SQL cho report nặng |
 | Đa-tenant | `BelongsToWorkspace` global scope + middleware + Postgres RLS |

@@ -24,7 +24,7 @@ Date: 2026-06-13 · Status: locked · Phase 1.5 red-team: **done** (rules harden
 
 | Layer | Choice | Why |
 |---|---|---|
-| Backend | **Laravel 12** (PHP 8.3+) | User experience; CRM-friendly ecosystem; mature queue/scheduler/auth out of the box. |
+| Backend | **Laravel 13** (PHP 8.3+) | User experience; CRM-friendly ecosystem; mature queue/scheduler/auth out of the box. |
 | Database | **PostgreSQL 16+** | JSONB custom-fields + GIN index, table partitioning (deferred), RLS backstop, strong reporting. |
 | ORM | **Eloquent** (built-in) | At 1B rows: query scopes + `chunk`/`lazyById`; drop to query-builder/raw SQL for reports. |
 | Multi-tenant | **`BelongsToTenant` global scope + middleware** (single-DB, row-level) **+ Postgres RLS** backstop | Enforces "never query without `tenant_id`" at the data-access layer. (`stancl/tenancy` single-database mode optional.) |
