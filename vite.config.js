@@ -18,4 +18,20 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+    // Dev server config that works both on the host and inside the Docker `node`
+    // container. In Docker: bind all interfaces so Docker can forward :5173, but
+    // advertise `localhost` (the host-reachable name) in the hot file + HMR — the
+    // container's [::1]/127.0.0.1 are not reachable from the host browser.
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
+        // Windows bind mounts don't emit inotify events; poll so HMR sees edits.
+        watch: {
+            usePolling: true,
+        },
+    },
 });
