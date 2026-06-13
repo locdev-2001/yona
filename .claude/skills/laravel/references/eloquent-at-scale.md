@@ -8,6 +8,7 @@ Mid-market posture: ~1,000s tenants × ~1M records. The DB is the bottleneck, no
 - Match index column order to the query's WHERE + ORDER BY.
 - JSONB custom fields: GIN index `CREATE INDEX ... USING gin (custom_fields jsonb_path_ops)`; or expression index on a specific key when filtering one field hot.
 - Avoid indexing low-cardinality columns alone.
+- Text search: prefer `whereLike('col', "%$q%")` (Laravel 13, DB-agnostic) over raw `LIKE`; for real search load → Postgres `tsvector`/GIN or `pgvector` similarity (see `modern-laravel-13.md`).
 
 ## Never load unbounded sets
 

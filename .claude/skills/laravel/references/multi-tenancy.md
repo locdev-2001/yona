@@ -65,7 +65,8 @@ The app DB role must NOT be a superuser / table owner (those bypass RLS). Use a 
 
 ## 4. Pitfalls
 
-- **Jobs/commands/schedulers have no request** → no `currentTenant`. Pass `tenant_id` explicitly into the job and re-bind it at the start of `handle()`, or loop tenants for cron tasks.
+- **Jobs/commands/schedulers have no request** → no `currentTenant`. Pass `tenant_id` explicitly into the job and re-bind it at the start of `handle()`, or loop tenants for cron tasks. Stamp `Context::add('tenant_id', $id)` so logs carry it. See `queues-jobs-horizon.md`.
+- **Broadcasting** crosses tenants if a channel auth callback trusts the channel name — re-check `$user->tenant_id`. See `realtime-reverb.md`.
 - **Reports using raw query-builder** skip the global scope → add `->where('tenant_id', $id)` manually AND rely on RLS.
 - **`whereHas`/joins** — ensure the related table is also tenant-scoped or the join is constrained.
 - **Unique constraints** must be composite with tenant: `unique(['tenant_id', 'email'])`, not `unique('email')`.
