@@ -68,6 +68,9 @@ return [
         'status' => 'Trạng thái',
         'deactivate' => 'Vô hiệu hóa',
         'no_team' => 'Không có nhóm',
+        'invited' => 'Đã mời thành viên.',
+        'updated' => 'Đã cập nhật thành viên.',
+        'deactivate_confirm' => 'Vô hiệu hóa thành viên này?',
     ],
     'roles' => [
         'admin' => 'Quản trị viên',

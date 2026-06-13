@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\Settings\MemberController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TeamController;
@@ -36,4 +37,9 @@ Route::middleware(['auth', 'workspace'])->group(function () {
     Route::patch('settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
     Route::patch('settings/teams/{team}/reparent', [TeamController::class, 'reparent'])->name('teams.reparent');
     Route::delete('settings/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+
+    Route::get('settings/members', [MemberController::class, 'index'])->name('members.index');
+    Route::post('settings/members', [MemberController::class, 'store'])->name('members.store');
+    Route::patch('settings/members/{member}', [MemberController::class, 'update'])->name('members.update');
+    Route::delete('settings/members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
 });

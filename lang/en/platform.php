@@ -67,6 +67,9 @@ return [
         'status' => 'Status',
         'deactivate' => 'Deactivate',
         'no_team' => 'No team',
+        'invited' => 'Member invited.',
+        'updated' => 'Member updated.',
+        'deactivate_confirm' => 'Deactivate this member?',
     ],
     'roles' => [
         'admin' => 'Administrator',

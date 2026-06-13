@@ -18,6 +18,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         { title: t('platform.nav.appearance'), url: '/settings/appearance' },
         ...(can('workspace.update') ? [{ title: t('platform.nav.workspace'), url: '/settings/workspace' }] : []),
         ...(can('team.manage') ? [{ title: t('platform.nav.teams'), url: '/settings/teams' }] : []),
+        ...(can('member.manage') ? [{ title: t('platform.nav.members'), url: '/settings/members' }] : []),
     ];
 
     return (
