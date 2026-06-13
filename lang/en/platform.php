@@ -51,6 +51,11 @@ return [
         'no_parent' => 'Top level',
         'delete_confirm' => 'Delete this team? Its members will be detached.',
         'empty' => 'No teams yet.',
+        'members_count' => ':count members',
+        'created' => 'Team created.',
+        'updated' => 'Team updated.',
+        'deleted' => 'Team deleted.',
+        'cycle_error' => 'A team cannot be moved under itself or one of its descendants.',
     ],
     'members' => [
         'title' => 'Members',

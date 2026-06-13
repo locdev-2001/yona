@@ -3,6 +3,7 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,4 +30,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'workspace'])->group(function () {
     Route::get('settings/workspace', [WorkspaceController::class, 'edit'])->name('workspace.edit');
     Route::patch('settings/workspace', [WorkspaceController::class, 'update'])->name('workspace.update');
+
+    Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
+    Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::patch('settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    Route::patch('settings/teams/{team}/reparent', [TeamController::class, 'reparent'])->name('teams.reparent');
+    Route::delete('settings/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
 });
