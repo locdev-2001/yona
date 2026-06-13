@@ -36,6 +36,7 @@ Legend — **Req**: ● required · ○ optional · ⚙ system-managed. Types: `
 | `name` | string | ● | Organization name |
 | `base_currency` | enum | ● | ISO 4217; all money in this tenant is in this currency (BR-D05) |
 | `default_pipeline_id` | ref(Pipeline) | ○ | |
+| `audit_retention` | enum | ● | Audit log retention policy (BR-X05); default per plan |
 | `status` | enum | ● | active, suspended |
 
 ### User
@@ -168,8 +169,9 @@ Legend — **Req**: ● required · ○ optional · ⚙ system-managed. Types: `
 | `account_id` | ref(Account) | ⚙ | Derived from contact |
 | `status` | enum | ● | new, open, pending, waiting_on_customer, resolved, closed |
 | `priority` | enum | ● | low, normal, high, urgent |
-| `sla_due_at` | datetime | ⚙ | From priority; pausable (BR-S02) |
+| `sla_due_at` | datetime | ⚙ | From priority, calendar 24/7; pausable (BR-S02) |
 | `sla_paused` | bool | ⚙ | True while waiting_on_customer |
+| `paused_total` | int | ⚙ | Accumulated paused seconds; running time = elapsed − paused_total (BR-S02) |
 | `first_response_at` | datetime | ⚙ | SLA metric |
 | `resolved_at` | datetime | ⚙ | |
 | `csat_score` | int | ○ | 1–5, post-resolution (BR-S05) |

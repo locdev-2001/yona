@@ -39,7 +39,12 @@ Visibility resolves by **role × record ownership** (own / team / all). `✓` = 
 | View audit log | — | own team | — | own team | — | all |
 | Export data | own | team | — | team | segments | all |
 
-(Authoritative rules live in [crm-business-rules.md](crm-business-rules.md) §Ownership/Visibility.)
+**Notes:**
+- **Viewer** role = read-only within visibility scope; **no export, no create/edit** (not shown as a column above).
+- **Export** is gated per `BR-X17`: within-scope up to a row threshold; bulk/over-threshold = admin-approved; every export audited.
+- Visibility is **per-entity**, never inherited across links (seeing an Account ≠ seeing its non-owned Deals) — `BR-X02`.
+
+(Authoritative rules live in [crm-business-rules.md](crm-business-rules.md) §Ownership/Visibility & §6b.)
 
 ---
 
