@@ -1,0 +1,167 @@
+# Beru CRM
+
+> Hệ thống CRM (Customer Relationship Management) đa-tenant cấp doanh nghiệp — quản lý toàn bộ vòng đời khách hàng từ lead đến chăm sóc sau bán, hợp nhất Sales, Support và Marketing trên một nền tảng.
+
+Tài liệu này mô tả **dự án là gì**: domain, cách dữ liệu được tổ chức, mô hình phân quyền, và công nghệ. Đọc để hiểu hệ thống trước khi đi vào chi tiết từng tài liệu.
+
+---
+
+## Beru CRM làm gì
+
+CRM là hệ thống + quy trình quản lý mọi tương tác với khách hàng — từ người lạ quan tâm (lead), thành khách mua, đến quan hệ lâu dài. Beru CRM bao trùm cả ba mặt của một CRM:
+
+| Mặt | Vai trò |
+|---|---|
+| **Operational** | Tự động hóa quy trình sales / marketing / support hằng ngày |
+| **Analytical** | Biến dữ liệu tương tác thành insight, forecast, báo cáo |
+| **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên các phòng ban |
+
+Hệ thống không chỉ *lưu trữ* dữ liệu khách hàng mà còn được thiết kế để *hành động* trên dữ liệu đó (chấm điểm lead, nhắc follow-up, đẩy deal, theo dõi SLA), với activity/event stream làm xương sống cho tự động hóa.
+
+---
+
+## Phạm vi
+
+Một nền tảng all-in-one gồm bốn nhóm năng lực:
+
+```
+SALES            MARKETING        SERVICE          PLATFORM (nền tảng)
+─────            ─────────        ───────          ────────
+Lead Mgmt        Campaigns        Ticketing        Multi-tenancy + RBAC
+Pipeline/Deals   Email log        SLA tracking     Audit log + soft-delete
+Forecasting      Lead scoring     CSAT/feedback    Custom fields engine
+Activity & Task  Segmentation     Knowledge base   Reporting / BI · API
+```
+
+Sales và tầng platform là lõi; Support và Marketing mở rộng trên cùng một domain model thống nhất.
+
+---
+
+## Cách dữ liệu được tổ chức
+
+Trung tâm của hệ thống là sáu thực thể và quan hệ giữa chúng:
+
+```
+┌─────────┐   convert    ┌──────────┐
+│  LEAD   │ ───────────▶ │ CONTACT  │  người, đã qualify
+│ chưa    │              └────┬─────┘
+│ qualify │                   │ N  thuộc về  1
+└─────────┘             ┌─────▼────┐  1   N  ┌─────────┐
+                        │ ACCOUNT  │◀────────│  DEAL   │  cơ hội bán hàng
+                        │ công ty  │         └────┬────┘
+                        └──────────┘              │ ở 1 stage của
+                                             ┌────▼─────┐
+                                             │ PIPELINE │
+                                             └──────────┘
+   ACTIVITY / TASK / TICKET  ── gắn vào ─▶  Lead | Contact | Account | Deal
+```
+
+| Thực thể | Là gì |
+|---|---|
+| **Lead** | Một người ở một công ty có thể sẽ mua. Biệt lập tới khi được qualify. |
+| **Contact** | Người đã qualify, đang được tương tác. Xương sống — mọi tương tác gắn vào Contact. |
+| **Account** | Công ty đang có/theo đuổi quan hệ (Contact = người, Account = tổ chức). |
+| **Deal** | Một cơ hội bán hàng, di chuyển qua các stage của pipeline. |
+| **Pipeline / Stage** | Tập stage có thứ tự, cấu hình theo team; mỗi stage có xác suất thắng. |
+| **Activity / Task / Ticket** | Tương tác đã ghi / việc cần làm / yêu cầu hỗ trợ — gắn polymorphic vào bất kỳ thực thể nào. |
+
+Nguyên tắc dữ liệu định hình cả hệ thống:
+
+- **Account ↔ Contact là 1:N** — một công ty nhiều người liên hệ.
+- **Deal ↔ Contact là N:N** (qua `deal_contact_roles`) — model được *buying committee*, nhiều người cùng quyết định một deal.
+- **Lead tách biệt Contact** — giữ phễu chuyển đổi đo được và dữ liệu sạch không bị nhiễm. Qualify một lead tạo Contact (kèm Account, Deal) trong một transaction, không mất dữ liệu.
+- **Tính linh hoạt qua custom fields** — schema lõi cố định, mỗi tenant tự thêm field riêng (lưu JSONB).
+
+---
+
+## Vòng đời khách hàng
+
+```
+Người lạ → Lead → (qualify) → Contact + Account
+                                   │ tạo
+                                   ▼
+                                 Deal → qua các stage Pipeline
+                                   │
+                          ┌────────┴────────┐
+                       Won (khách hàng)   Lost (lưu lý do)
+                          │
+                          ▼
+                  Onboarding → Support (Ticket) → Renewal / Upsell
+```
+
+Mỗi bước chuyển tiếp đều ghi lại Activity, tạo nên dòng lịch sử đầy đủ trên từng khách hàng.
+
+---
+
+## Mô hình đa-tenant & phân quyền
+
+**Đa-tenant:** mỗi khách hàng doanh nghiệp là một **tenant** — ranh giới dữ liệu cứng. Mọi bảng mang `tenant_id`, suy ra từ phiên đăng nhập phía server (không nhận từ client), với Postgres Row-Level Security làm lớp chặn cuối.
+
+**Phân quyền = Role + Record ownership:**
+
+- **Role** quy định *làm được tính năng gì*: `admin`, `sales_manager`, `sales_rep`, `support_manager`, `support_agent`, `marketer`, `viewer`.
+- **Ownership** quy định *thấy được record nào*: mỗi record có `owner_id` + `team_id`.
+- **Tầm nhìn (visibility)** theo vai trò:
+  - Rep / Agent → record mình sở hữu
+  - Manager → record của team mình **và toàn bộ nhánh con** (team tổ chức dạng cây)
+  - Admin → tất cả trong tenant
+- Tầm nhìn tính trên từng thực thể, không lan truyền qua liên kết — thấy một Account không đồng nghĩa thấy các Deal của người khác trên đó.
+
+Hệ thống lưu **audit log** bất biến (append-only) và dùng **soft-delete** cho mọi thực thể — phục vụ truy vết và tuân thủ.
+
+---
+
+## Quyết định thiết kế
+
+| Hạng mục | Lựa chọn |
+|---|---|
+| Sản phẩm | All-in-one (Sales + Support + Marketing), một domain model thống nhất |
+| Tenancy | Multi-tenant row-level (`tenant_id`) + Postgres RLS |
+| Phân quyền | Role + record ownership; team phân cấp dạng cây (manager rollup) |
+| Custom fields | Schema lõi + JSONB engine theo tenant (không EAV, không template theo ngành) |
+| Tiền tệ | Một base currency cho mỗi tenant |
+| Quy mô | Mid-market (~ngàn tenant × ~triệu record/tenant) |
+| Audit & xóa dữ liệu | Audit append-only, tối giản PII; soft-delete; hỗ trợ xóa PII theo GDPR |
+| SLA | Tính theo thời gian calendar 24/7, có pause/resume |
+
+Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm trong [docs/crm-business-rules.md](docs/crm-business-rules.md).
+
+---
+
+## Công nghệ
+
+| Tầng | Lựa chọn |
+|---|---|
+| Backend | Laravel 12 (PHP 8.3+) |
+| Database | PostgreSQL 16+ (JSONB + GIN, RLS, partition khi cần) |
+| ORM | Eloquent — query scopes cho tenant/visibility; raw SQL cho report nặng |
+| Đa-tenant | `BelongsToTenant` global scope + middleware + Postgres RLS |
+| Auth | Fortify/Breeze (Inertia React starter), session-based |
+| Phân quyền | spatie/laravel-permission (roles) + Policies (record own/team/subtree) |
+| Frontend | Inertia 2 + React + shadcn/ui + Tailwind + TanStack Table/Query |
+| Jobs / Cron | Laravel Queue (Redis) + Horizon · Scheduler (SLA, alerts, forecast) |
+| Quan sát | Telescope (dev) + Sentry (prod) |
+| Test | Pest (unit/feature) + Playwright (e2e) |
+| Triển khai | Laravel Forge + VPS hoặc Docker |
+
+---
+
+## Cách dự án được xây dựng
+
+Beru CRM theo một pipeline đặt **đúng domain model lên trước, code sau** — với một nguyên tắc cốt lõi: trong CRM, mô hình dữ liệu và ranh giới domain là nền móng, sai sẽ đắt nhất để sửa, nên kiến trúc và red-team luôn đi trước khi viết code.
+
+Năm giai đoạn: **Discovery** (chốt phạm vi) → **Domain Architecture** (ERD, ranh giới, isolation) → **Red-team** (bẻ gãy thiết kế trên giấy) → **Plan** (chia phase) → **Build → Verify** (test → review → đồng bộ docs). Chi tiết: [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md).
+
+Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
+
+---
+
+## Bản đồ tài liệu
+
+| Tài liệu | Nội dung |
+|---|---|
+| [docs/crm-domain-definition.md](docs/crm-domain-definition.md) | Định nghĩa CRM, thực thể, quan hệ, vòng đời, thuật ngữ |
+| [docs/crm-actors-and-use-cases.md](docs/crm-actors-and-use-cases.md) | Actors, jobs-to-be-done, user stories, ma trận quyền |
+| [docs/crm-business-rules.md](docs/crm-business-rules.md) | 46 quy tắc nghiệp vụ (`BR-XXX`) |
+| [docs/crm-field-dictionary.md](docs/crm-field-dictionary.md) | Từ điển field đầy đủ + enums |
+| [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |

@@ -39,7 +39,7 @@ Date: 2026-06-13 · Status: locked · Phase 1.5 red-team: **done** (rules harden
 | Test | **Pest** (unit/feature) + **Playwright** (e2e) | |
 | Deploy | **Laravel Forge + VPS** (Hetzner/DO) or Docker | Queue workers + Horizon favor VPS/container over serverless. Vapor if serverless AWS wanted. |
 
-**Toolkit gap:** no Laravel/PHP skill in `.claude/skills` (`backend-development` covers Node/Python/Go only). Add a `laravel` skill before Phase 3.
+**Toolkit:** `laravel` skill available (Eloquent, row-level tenancy, queue/Horizon, scheduler, spatie/permission + Policies, Inertia 2 + React, Pest, Postgres) — toolkit gap resolved.
 
 **Deferred (YAGNI):** physical partitioning, Reverb, email provider, telephony, import/export, billing, per-deal FX.
 
