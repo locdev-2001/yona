@@ -6,6 +6,14 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — App scaffold / bootstrap (2026-06-13)
+- **Laravel app initialized** from `laravel/react-starter-kit` (Inertia 2 + React + shadcn/Tailwind), merged into repo (docs/plans/.claude/README preserved).
+- **Laravel 13.15 on PHP 8.4** (L13 requires 8.4): switched local default PHP 8.3→8.4 (`.zshrc`), installed `phpredis` ext for 8.4.
+- **Packages**: spatie/laravel-permission 8, Horizon, Reverb, Telescope (dev), Pest 4 + pest-plugin-laravel 4, Larastan, Pint.
+- **Env**: Postgres (`beru_crm` / `beru_crm_test`), Redis (cache/queue/session), Reverb broadcasting. `phpunit.xml` → Postgres test DB (RLS/JSONB need pgsql, not sqlite).
+- **Verified**: `artisan about` green, migrations run, **26 tests pass** on pgsql.
+- Note: spatie-permission migration NOT run yet — deferred to Module 1 (RBAC keeps role in `workspace_member`, team-scoped).
+
 ### Added — Phase 0 & 1 foundation (2026-06-13)
 - **Discovery** (`plans/.../reports/discovery.md`): scope (all-in-one SaaS CRM), row-level multi-tenant, mid-market scale, build order Sales-first.
 - **Tech stack locked**: Laravel 13 · PostgreSQL 16 · Eloquent · Inertia 2 + React + shadcn/TanStack · Redis (Queue/Horizon) · spatie/laravel-permission.
@@ -16,6 +24,8 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **Cross-cutting foundations**: attachments, notifications, time/locale (UTC), human-readable record numbers, API + webhooks (shared event bus), **product announcements/changelog** (customer-facing "What's New").
 - **Business config** (`docs/crm-business-config.md`): default pipeline/stages, enums, SLA targets, lead scoring, base free entitlements, marketplace seeds. Currency VND.
 - **Tooling**: `.claude` toolkit normalized; `laravel` skill added.
+- **Dev environment**: Docker Compose (PHP 8.3-fpm + Nginx + PostgreSQL 16 + Redis 7 + Node/Vite + Horizon/Reverb profiles); `docs/local-development.md`. Runs without host PHP/DB.
+- **GitHub**: `.github/` (PR/issue templates, Laravel CI, dependabot, CODEOWNERS); labels, milestones (M1–M4), 10 build-phase issues; squash-only + auto-delete-branch.
 
 - **Conversations / Inbox** (`docs/crm-conversations-inbox.md`): V1 realtime omnichannel live chat (web widget + Zalo + FB + email), Conversation/Message model, escalate→Ticket. Mandates Laravel Reverb (now v1 infra).
 
