@@ -15,12 +15,12 @@ npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Laravel / PHP (future app)
+# Laravel / PHP
 /vendor/
 /public/build/
 /public/hot
 /storage/*.key
-/storage/logs/*
+# storage/ contents are ignored via per-directory .gitignore files (Laravel skeleton)
 .env
 .env.*
 !.env.example
