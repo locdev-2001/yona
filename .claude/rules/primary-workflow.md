@@ -3,6 +3,24 @@
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT**: Ensure token efficiency while maintaining high quality.
 
+## Enterprise CRM Build Pipeline (project default)
+
+> This is an enterprise CRM built from zero. For any **new feature/module or system-level change**, follow this 5-phase pipeline. Full playbook: `docs/crm-build-pipeline.md`. The generic steps below (#1–#6) are the *how-to* for Phase 3–4.
+
+**HARD GATE: architect + red-team BEFORE writing code.** For a CRM, a wrong data model is the most expensive mistake — never skip Phase 1–1.5.
+
+| Phase | Goal | Skills / Agents |
+|---|---|---|
+| **0. Discovery** | Lock scope, actors, modules, constraints (multi-tenant? RBAC? scale?) | `brainstorm`, `research`, `ask` |
+| **1. Domain Architecture** | Data model, bounded contexts, consistency, audit, scale posture | `backend-architect` ⭐ |
+| **1.5. Red-team** | Stress the design before committing | `ck-predict`, `ck-scenario`, `ck-security` |
+| **2. Plan** | Phase files + TODOs in `plans/` | `planner` agent, `ck-plan` |
+| **3. Build** | Implement per plan; parallel devs with strict file ownership | `fullstack-developer` ×N |
+| **4. Verify** | Tests → review → docs sync | `tester` → `code-reviewer` → `docs-manager` |
+
+- Skip phases only for trivial mechanical changes; state explicitly when skipping.
+- Phase 3 parallelism = a real pipeline: assign distinct file ownership per dev, no overlapping edits.
+
 #### 1. Code Implementation
 - Before you start, delegate to `planner` agent to create a implementation plan with TODO tasks in `./plans` directory.
 - When in planning phase, use multiple `researcher` agents in parallel to conduct research on different relevant technical topics and report back to `planner` agent to create implementation plan.
