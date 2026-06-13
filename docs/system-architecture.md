@@ -22,7 +22,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 | **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Task |
 | **Support** | Issue resolution + SLA | Ticket |
 | **Marketing** | Campaigns, segments, scoring inputs | Campaign, Segment, CampaignRecipient |
-| **Billing** | Plans/packages, subscriptions, entitlements (Platform plane) | Plan, Subscription, Entitlements resolver — see [crm-plans-and-entitlements.md](crm-plans-and-entitlements.md) |
+| **Billing** | Marketplace (free base + add-ons, one-time/subscription), purchases, entitlements (Platform plane) | MarketplaceItem, WorkspacePurchase, Entitlements resolver — see [crm-marketplace.md](crm-marketplace.md) |
 
 **Invariant ownership**
 - *Tenant isolation* (BR-X01/X11/X14/X18) → enforced by Platform (trait + middleware + RLS); every context inherits it.
@@ -104,16 +104,17 @@ spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model
 
 Migration safety: greenfield, no online-DDL concerns yet. Forward-only discipline applies once shipped.
 
-### 3.6 Billing tables (plans & subscriptions)
+### 3.6 Billing / Marketplace tables
 
-Plan catalog is **global** (Platform); subscription is **workspace-scoped**. Entitlements are **JSONB data** (extend by adding keys, no migration). Full spec + enforcement: [crm-plans-and-entitlements.md](crm-plans-and-entitlements.md).
+**Free base + à-la-carte marketplace** (add-ons billed one-time or subscription). Item catalog is **global** (Platform); purchases are **workspace-scoped**. Entitlements are **JSONB data** (extend by adding items/keys, no migration). Full spec + enforcement: [crm-marketplace.md](crm-marketplace.md).
 
 | Table | Notable columns | Notes |
 |---|---|---|
-| `plans` | `code (unique), name, price_cents, currency, interval, entitlements jsonb, is_active, is_public, sort` | Sellable tier catalog (global). `entitlements` = limit/feature map. |
-| `subscriptions` | `workspace_id, plan_id, status, trial_ends_at, current_period_start, current_period_end, cancel_at_period_end, entitlement_overrides jsonb, external_ref` | One active per workspace (`unique(workspace_id) where status in (trialing,active,past_due)`). Effective entitlement = plan ⊕ overrides. `external_ref` = future payment provider. |
+| `marketplace_items` | `code (unique), name, type(feature_module/quota/integration/service), billing_type(one_time/subscription), price_cents, currency, interval, entitlements jsonb, provider_key, is_active, is_public, sort` | Catalog (global). `entitlements` = flags / quota increments; `service` items grant none. |
+| `workspace_purchases` | `workspace_id, item_id, billing_type, status, quantity, purchased_at, current_period_start, current_period_end, cancel_at_period_end, external_ref` | Owned/active items. `quantity` = stackable quota. `external_ref` = future payment provider. |
+| `workspace_integrations` | `workspace_id, item_id, provider_key, status, config jsonb, connected_at` | Connected instance for `integration` items (OAuth/config). |
 
-**Entitlement gate ≠ RBAC gate**: plan permits/quota (workspace) is checked *in addition to* role permission (user). Single resolver `Entitlements::for(workspace)`; cached in Redis, busted on plan/subscription change.
+**Effective entitlements** = BASE (free) ⊕ Σ(active purchases) ⊕ overrides. **Entitlement gate ≠ RBAC gate**: workspace quota/feature is checked *in addition to* user role permission. Single resolver `Entitlements::for(workspace)`; cached in Redis, busted on purchase/subscription change.
 
 ---
 
