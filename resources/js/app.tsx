@@ -1,10 +1,12 @@
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
+import { queryClient } from './lib/query-client';
 
 declare global {
     const route: typeof routeFn;
@@ -18,7 +20,11 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        root.render(
+            <QueryClientProvider client={queryClient}>
+                <App {...props} />
+            </QueryClientProvider>,
+        );
     },
     progress: {
         color: '#4B5563',
