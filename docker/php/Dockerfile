@@ -1,5 +1,5 @@
-# Dev PHP image for Laravel 13 (PHP 8.3) — used by app/horizon/reverb services.
-FROM php:8.3-fpm-alpine
+# Dev PHP image for Laravel 13 (PHP 8.4) — used by app/horizon/reverb services.
+FROM php:8.4-fpm-alpine
 
 # Runtime + build deps, PHP extensions, Composer.
 RUN apk add --no-cache \

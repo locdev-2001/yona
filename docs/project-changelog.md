@@ -24,7 +24,7 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **Cross-cutting foundations**: attachments, notifications, time/locale (UTC), human-readable record numbers, API + webhooks (shared event bus), **product announcements/changelog** (customer-facing "What's New").
 - **Business config** (`docs/crm-business-config.md`): default pipeline/stages, enums, SLA targets, lead scoring, base free entitlements, marketplace seeds. Currency VND.
 - **Tooling**: `.claude` toolkit normalized; `laravel` skill added.
-- **Dev environment**: Docker Compose (PHP 8.3-fpm + Nginx + PostgreSQL 16 + Redis 7 + Node/Vite + Horizon/Reverb profiles); `docs/local-development.md`. Runs without host PHP/DB.
+- **Dev environment**: this machine = local (PHP 8.4 host + local Postgres/Redis). Docker Compose (PHP 8.4-fpm + Nginx + PostgreSQL 16 + Redis 7 + Node/Vite + Horizon/Reverb profiles) provided for other devs' machines; `docs/local-development.md`.
 - **GitHub**: `.github/` (PR/issue templates, Laravel CI, dependabot, CODEOWNERS); labels, milestones (M1–M4), 10 build-phase issues; squash-only + auto-delete-branch.
 
 - **Conversations / Inbox** (`docs/crm-conversations-inbox.md`): V1 realtime omnichannel live chat (web widget + Zalo + FB + email), Conversation/Message model, escalate→Ticket. Mandates Laravel Reverb (now v1 infra).

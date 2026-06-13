@@ -1,4 +1,4 @@
-# Local dev environment — PHP 8.3 (Laravel 13) + PostgreSQL 16 + Redis.
+# Local dev environment — PHP 8.4 (Laravel 13) + PostgreSQL 16 + Redis.
 # Core services start with `docker compose up -d`. Optional services are behind
 # profiles (enable after the Laravel app is scaffolded). See docs/local-development.md.
 
