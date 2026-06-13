@@ -23,7 +23,7 @@ setup: install migrate build ## First-time: deps + migrate + assets
 
 install: ## Install PHP + JS dependencies
 	$(COMPOSER) install
-	npm install
+	pnpm install
 
 ## ── Run ────────────────────────────────────────────────
 dev: ## Run full stack (server + queue + logs + vite)
@@ -68,7 +68,7 @@ check: pint-test stan test ## Run all quality gates
 
 ## ── Utils ──────────────────────────────────────────────
 build: ## Build frontend assets
-	npm run build
+	pnpm run build
 
 clear: ## Clear all caches
 	$(ARTISAN) optimize:clear

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 // E2E tests live in ./e2e (kept out of tests/ so Pest/PHPUnit ignore them).
-// Run: npx playwright install (first time) then `npx playwright test`.
+// Run: pnpm exec playwright install (first time) then `pnpm exec playwright test`.
 export default defineConfig({
     testDir: './e2e',
     fullyParallel: true,
