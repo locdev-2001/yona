@@ -13,7 +13,7 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **System architecture** (`docs/system-architecture.md`): 6 bounded contexts, data model, 3-layer tenant isolation + RLS, RBAC (own/team/all), transaction boundaries, custom-fields engine, audit, async, scale, frontend.
 - **Authorization model** (`docs/crm-authorization-model.md`): two planes — Platform (internal staff, god-mode via audited impersonation) + Workspace (customers); global identity + membership.
 - **Marketplace billing** (`docs/crm-marketplace.md`): free base + à-la-carte add-ons (feature/quota/integration/service), one-time or subscription; entitlements-as-data.
-- **Cross-cutting foundations**: attachments, notifications, time/locale (UTC), human-readable record numbers, API + webhooks (shared event bus).
+- **Cross-cutting foundations**: attachments, notifications, time/locale (UTC), human-readable record numbers, API + webhooks (shared event bus), **product announcements/changelog** (customer-facing "What's New").
 - **Business config** (`docs/crm-business-config.md`): default pipeline/stages, enums, SLA targets, lead scoring, base free entitlements, marketplace seeds. Currency VND.
 - **Tooling**: `.claude` toolkit normalized; `laravel` skill added.
 
