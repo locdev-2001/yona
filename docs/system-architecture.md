@@ -9,7 +9,7 @@ Date: 2026-06-13 · Status: Phase 1 design · Owner: architecture
 
 ## 1. Summary
 
-Greenfield CRM. The hard parts are **the Platform layer** (tenant isolation, RBAC, audit, custom-fields) and **transactional correctness** of money/state paths (deal stage, won/lost, lead conversion, ticket SLA). Everything tenant-scoped is enforced at the data-access layer **and** Postgres RLS (defense-in-depth). Reporting/scoring/activity-feed are eventually consistent; deal/ticket/ownership are strongly consistent.
+Greenfield CRM. The hard parts are **the Platform layer** (tenant isolation, RBAC, audit, custom-fields) and **transactional correctness** of money/state paths (deal stage, won/lost, lead conversion, ticket SLA). Everything workspace-scoped is enforced at the data-access layer **and** Postgres RLS (defense-in-depth). Reporting/scoring/activity-feed are eventually consistent; deal/ticket/ownership are strongly consistent.
 
 ## 2. Bounded contexts
 
@@ -17,7 +17,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 
 | Context | Owns | Key models |
 |---|---|---|
-| **Platform** | Tenancy, identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Tenant, User, Team, Role/Permission, CustomFieldDefinition, AuditLog, Pipeline, Stage |
+| **Platform** | Two-plane access control (internal staff + workspaces), identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Workspace, User, Membership, PlatformRole, Team, CustomFieldDefinition, AuditLog, Pipeline, Stage |
 | **Sales** | Funnel + opportunities | Lead, Contact, Account, Deal, DealContactRole |
 | **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Task |
 | **Support** | Issue resolution + SLA | Ticket |
@@ -40,23 +40,26 @@ Cross-context communication happens through **domain events**, never direct tabl
 
 ## 3. Data model
 
-UUID PKs everywhere (`uuid` default). All tenant-scoped tables carry the **system columns** (BR field-dictionary §System): `tenant_id, owner_id, team_id, custom_fields jsonb, created_at, updated_at, created_by, updated_by, deleted_at`, plus `lock_version int` for optimistic concurrency (BR-X08).
+UUID PKs everywhere (`uuid` default). All workspace-scoped tables carry the **system columns** (BR field-dictionary §System): `workspace_id, owner_id, team_id, custom_fields jsonb, created_at, updated_at, created_by, updated_by, deleted_at`, plus `lock_version int` for optimistic concurrency (BR-X08).
 
 ### 3.1 Platform tables
 
+> **Access control = two planes (Platform staff + Workspace customers). Canonical spec: [crm-authorization-model.md](crm-authorization-model.md).** Terminology: **Workspace** = the customer / isolation boundary (was "tenant"); "multi-tenant" / "tenant isolation" remain the *pattern* names.
+
 | Table | Notable columns | Notes |
 |---|---|---|
-| `tenants` | `name, base_currency, default_pipeline_id, audit_retention, status` | Root boundary. NOT tenant-scoped itself. |
-| `users` | `email, name, password, status` | **Global identity** (NOT tenant-scoped). `unique(email)` globally. No role/team here. |
-| `tenant_user` (membership) | `tenant_id, user_id, role, team_id, status, invited_at` | **The tenant-scoped membership.** `unique(tenant_id, user_id)`. `role`/`team_id` live here, server-controlled (BR-X12). A user joins N tenants. Deactivate = membership.status (BR-X03), not user. |
-| `teams` | `tenant_id, name, parent_id` | Tree (BR-X02). Cycle-guarded (BR-X13). |
-| `team_closure` | `tenant_id, ancestor_id, descendant_id, depth` | Closure table for O(1) subtree reads (manager rollup). Maintained on team create/reparent. |
-| `pipelines` | `tenant_id, name, is_default` | One default per tenant. |
-| `stages` | `tenant_id, pipeline_id, name, order, probability, type(open/won/lost)` | `unique(pipeline_id, order)`. |
-| `custom_field_definitions` | `tenant_id, entity, key, label, type, options jsonb, validation jsonb, version, is_active` | `unique(tenant_id, entity, key)`. Registry (§5). |
-| `audit_logs` | `tenant_id, entity_type, entity_id, action, actor_id, changes jsonb, occurred_at` | Append-only (§7). |
+| `workspaces` | `name, base_currency, default_pipeline_id, audit_retention, status` | Root boundary. NOT workspace-scoped itself. |
+| `users` | `email, name, password, status, is_internal` | **Global identity** (NOT workspace-scoped). `unique(email)` globally. `is_internal` = platform staff. No role/team here. |
+| `platform_role_user` | `user_id, platform_role(super_admin/support_engineer/billing_ops)` | Platform plane. Internal staff only; god-mode data access via audited impersonation (auth-model doc). |
+| `workspace_member` (membership) | `workspace_id, user_id, role, team_id, status, invited_at` | **The workspace-scoped membership.** `unique(workspace_id, user_id)`. `role`/`team_id` live here, server-controlled (BR-X12). A user joins N workspaces. Deactivate = membership.status (BR-X03), not user. |
+| `teams` | `workspace_id, name, parent_id` | Tree (BR-X02). Cycle-guarded (BR-X13). |
+| `team_closure` | `workspace_id, ancestor_id, descendant_id, depth` | Closure table for O(1) subtree reads (manager rollup). Maintained on team create/reparent. |
+| `pipelines` | `workspace_id, name, is_default` | One default per workspace. |
+| `stages` | `workspace_id, pipeline_id, name, order, probability, type(open/won/lost)` | `unique(pipeline_id, order)`. |
+| `custom_field_definitions` | `workspace_id, entity, key, label, type, options jsonb, validation jsonb, version, is_active` | `unique(workspace_id, entity, key)`. Registry (§5). |
+| `audit_logs` | `workspace_id, entity_type, entity_id, action, actor_id, changes jsonb, occurred_at` | Append-only (§7). |
 
-spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model_has_permissions`) configured **team-aware** with `teams.team_foreign_key = tenant_id` → roles scoped per tenant.
+spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model_has_permissions`) configured **team-aware** with `teams.team_foreign_key = workspace_id` → roles scoped per workspace.
 
 ### 3.2 Sales tables
 
@@ -66,7 +69,7 @@ spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model
 | `accounts` | `name,domain,industry,size,annual_revenue,parent_account_id,billing_address jsonb` | Company. |
 | `contacts` | `first_name,last_name,email,phone,title,account_id,lifecycle_stage,do_not_contact,last_activity_at` | Backbone. `account_id` 0..1 (BR-C01). |
 | `deals` | `name,account_id,pipeline_id,stage_id,value,currency,expected_close_date,status(open/won/lost),loss_reason,probability,closed_at,last_activity_at,is_stalled` | Money/state core. `value ≥ 0` CHECK (BR-D04). |
-| `deal_contact_roles` | `tenant_id,deal_id,contact_id,role(champion/decision-maker/influencer/blocker)` | N:N buying committee (BR-D01). `unique(deal_id, contact_id)`. |
+| `deal_contact_roles` | `workspace_id,deal_id,contact_id,role(champion/decision-maker/influencer/blocker)` | N:N buying committee (BR-D01). `unique(deal_id, contact_id)`. |
 
 ### 3.3 Engagement tables (polymorphic, high-volume)
 
@@ -84,19 +87,19 @@ spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model
 | `segments` | `name,definition jsonb` | Saved filter over contacts/leads. |
 | `campaign_recipients` | `campaign_id,contact_id,sent_at,opened_at` | Email log; partition-ready. |
 
-### 3.5 Mapped queries → indexes (tenant_id-leading)
+### 3.5 Mapped queries → indexes (workspace_id-leading)
 
 | Query | Index |
 |---|---|
-| My open deals by stage | `deals (tenant_id, owner_id, status, stage_id)` |
-| Team pipeline board | `deals (tenant_id, team_id, status, stage_id)` |
-| Stalled scan (read denormalized) | `deals (tenant_id, status, last_activity_at)` |
-| Contact timeline | `activities (tenant_id, related_type, related_id, occurred_at desc)` |
-| My tasks due | `tasks (tenant_id, assignee_id, status, due_at)` |
-| Ticket queue by SLA | `tickets (tenant_id, status, sla_due_at)` |
-| Lead dedup | `leads (tenant_id, lower(email)) where deleted_at is null` (partial) |
+| My open deals by stage | `deals (workspace_id, owner_id, status, stage_id)` |
+| Team pipeline board | `deals (workspace_id, team_id, status, stage_id)` |
+| Stalled scan (read denormalized) | `deals (workspace_id, status, last_activity_at)` |
+| Contact timeline | `activities (workspace_id, related_type, related_id, occurred_at desc)` |
+| My tasks due | `tasks (workspace_id, assignee_id, status, due_at)` |
+| Ticket queue by SLA | `tickets (workspace_id, status, sla_due_at)` |
+| Lead dedup | `leads (workspace_id, lower(email)) where deleted_at is null` (partial) |
 | Custom-field filter | GIN `... using gin (custom_fields jsonb_path_ops)` |
-| Audit by entity | `audit_logs (tenant_id, entity_type, entity_id, occurred_at desc)` |
+| Audit by entity | `audit_logs (workspace_id, entity_type, entity_id, occurred_at desc)` |
 
 Migration safety: greenfield, no online-DDL concerns yet. Forward-only discipline applies once shipped.
 
@@ -106,23 +109,25 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 
 Three layers; no single point of failure (BR-X01/X11/X14/X18):
 
-1. **App: `BelongsToTenant` trait** (global scope filters by `app('currentTenant')`, `creating` hook stamps `tenant_id`). On every tenant model. *(laravel skill → references/multi-tenancy.md)*
-2. **Middleware `IdentifyTenant`** — resolves the **active tenant server-side** from the session (never client input, BR-X14), **validates the authenticated user has an active `tenant_user` membership** in it (else 403), binds `currentTenant` + `currentMembership`; `SET app.current_tenant` for RLS. Multi-tenant users pick/switch active tenant; session holds it.
-3. **Postgres RLS, default-deny** — every tenant-scoped table has `ENABLE ROW LEVEL SECURITY` + policy `tenant_id = current_setting('app.current_tenant')::uuid`. App DB role is non-owner. **CI test asserts every tenant table has a policy** (BR-X18).
+1. **App: `BelongsToWorkspace` trait** (global scope filters by `app('currentWorkspace')`, `creating` hook stamps `workspace_id`). On every workspace model. *(laravel skill → references/multi-tenancy.md)*
+2. **Middleware `IdentifyWorkspace`** — resolves the **active tenant server-side** from the session (never client input, BR-X14), **validates the authenticated user has an active `workspace_member` membership** in it (else 403), binds `currentWorkspace` + `currentMembership`; `SET app.current_workspace` for RLS. Multi-tenant users pick/switch active tenant; session holds it.
+3. **Postgres RLS, default-deny** — every workspace-scoped table has `ENABLE ROW LEVEL SECURITY` + policy `workspace_id = current_setting('app.current_workspace')::uuid`. App DB role is non-owner. **CI test asserts every tenant table has a policy** (BR-X18).
 
 Supporting invariants:
-- **Same-tenant FKs** (BR-X11): every reference (incl. polymorphic `related_id`, `account_id`, `pipeline_id`, custom-field refs) validated to resolve in-tenant on write (FormRequest rule + DB composite FK `(tenant_id, id)` where practical).
-- **No mass-assignment** of `tenant_id/owner_id/team_id/role` (BR-X12) — guarded; set only by server.
-- **Unique constraints are composite** with `tenant_id`.
-- **Owner/assignee must be members** — `owner_id`, `team_id`, `assignee_id`, `created_by` reference global `users`, but the referenced user must have an active `tenant_user` membership in the record's tenant (validated on write; reassignment target check in BR-X03).
+- **Same-workspace FKs** (BR-X11): every reference (incl. polymorphic `related_id`, `account_id`, `pipeline_id`, custom-field refs) validated to resolve in-workspace on write (FormRequest rule + DB composite FK `(workspace_id, id)` where practical).
+- **No mass-assignment** of `workspace_id/owner_id/team_id/role` (BR-X12) — guarded; set only by server.
+- **Unique constraints are composite** with `workspace_id`.
+- **Owner/assignee must be members** — `owner_id`, `team_id`, `assignee_id`, `created_by` reference global `users`, but the referenced user must have an active `workspace_member` membership in the record's tenant (validated on write; reassignment target check in BR-X03).
 
 ---
 
 ## 5. RBAC (role × record ownership)
 
+> This is the **Workspace plane**. The **Platform plane** (internal staff, platform roles, god-mode impersonation) is specified in [crm-authorization-model.md](crm-authorization-model.md).
+
 Two layers (BR-X02), see laravel skill → references/rbac.md:
 
-- **Feature gate = spatie roles, scoped per tenant via membership**: `admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer`. spatie teams feature with `team_foreign_key = tenant_id` → the same global user holds different roles in different tenants (role lives on `tenant_user`). Permissions like `deal.create`, `export.bulk`.
+- **Feature gate = spatie roles, scoped per workspace via membership**: `admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer`. spatie teams feature with `team_foreign_key = workspace_id` → the same global user holds different roles in different tenants (role lives on `workspace_member`). Permissions like `deal.create`, `export.bulk`.
 - **Record gate = Policies + `Visibility` resolver**:
   - `own` (rep/agent) → `owner_id = me`
   - `team` (manager) → `team_id IN visibleTeamIds(me)` = own team + descendant subtree via `team_closure`
@@ -132,7 +137,7 @@ Two layers (BR-X02), see laravel skill → references/rbac.md:
 - **Non-enumeration** (BR-X15): list queries pass the visibility scope; single-record fetch that fails visibility returns **404, not 403**.
 - **Reporting/search** (BR-X16): tenant + visibility filters are non-optional; no raw unscoped path.
 
-`Visibility::scopeFor($query, $user)` is the single chokepoint; collections use it, single records use Policies. Both run **inside** the already-tenant-scoped query.
+`Visibility::scopeFor($query, $user)` is the single chokepoint; collections use it, single records use Policies. Both run **inside** the already-workspace-scoped query.
 
 ---
 
@@ -165,9 +170,9 @@ No TX wraps an HTTP/queue/Redis call. Events dispatched **after commit** (`DB::a
 
 ## 8. Custom-fields engine (BR-X06)
 
-- **Registry**: `custom_field_definitions` (tenant-scoped, versioned). Type ∈ {string, number, date, bool, enum, multi-enum}.
+- **Registry**: `custom_field_definitions` (workspace-scoped, versioned). Type ∈ {string, number, date, bool, enum, multi-enum}.
 - **Storage**: `custom_fields jsonb` on each core entity; values validated against the active registry version on write. Unknown keys rejected; custom `key` may **not** collide with a reserved core field name.
-- **Validation**: safe primitives only — type, enum options, min/max/length. **No tenant-supplied raw regex** (ReDoS); any pattern via a vetted timeout-bounded validator. **Caps**: bounded field count per entity/tenant + bounded payload per record.
+- **Validation**: safe primitives only — type, enum options, min/max/length. **No workspace-supplied raw regex** (ReDoS); any pattern via a vetted timeout-bounded validator. **Caps**: bounded field count per entity/tenant + bounded payload per record.
 - **Lifecycle**: definition versioned — type change = new version (old values read-only, never destructively coerced); removing an enum option deactivates it (historical retained, not selectable); disabling a field keeps data, hides from input/filters.
 - **Indexing**: GIN `jsonb_path_ops` per entity; add expression index on a specific hot key when a filter is heavy.
 
@@ -180,12 +185,12 @@ No TX wraps an HTTP/queue/Redis call. Events dispatched **after commit** (`DB::a
 | `ScoreLead` (BR-L05) | `ActivityLogged`, lead update | `low` | advisory; recomputable; re-run safe |
 | `RouteLead` (BR-L04) | lead create | `default` | round-robin/rule; fallback owner, never null |
 | `RecomputeStallFlags` (BR-D06) | scheduler hourly | `default` | reads denormalized `last_activity_at`; **never scans activities** |
-| `CheckSlaBreaches` (BR-S02) | scheduler every 5 min | `high` | per-tenant loop; re-bind tenant in handler |
+| `CheckSlaBreaches` (BR-S02) | scheduler every 5 min | `high` | per-workspace loop; re-bind tenant in handler |
 | `SendCsatRequest` (BR-S05) | `TicketResolved` | `default` | dedupe per ticket |
-| `RebuildReportRollups` | scheduler nightly | `low` | eventual; tenant-partitioned read store |
+| `RebuildReportRollups` | scheduler nightly | `low` | eventual; workspace-partitioned read store |
 | `BulkReassign` (BR-X03) | deactivation | `default` | batched, atomic-per-record, audited |
 
-Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` start (no request context). All handlers idempotent. `withoutOverlapping` on scheduled scans.
+Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()` start (no request context). All handlers idempotent. `withoutOverlapping` on scheduled scans.
 
 ---
 
@@ -216,9 +221,9 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 ## 10. Scale posture
 
 - Volume: ~1,000s tenants × ~1M records/tenant (~1B rows). DB is the bottleneck, not PHP.
-- **Hottest tables**: `activities`, `campaign_recipients`, `audit_logs`, `tasks` — append-heavy. **Partition-ready** (UUID PK + `tenant_id`/`created_at` available), but **physical partitioning deferred** until volume justifies (red-team: avoid over-engineering pre-customers).
+- **Hottest tables**: `activities`, `campaign_recipients`, `audit_logs`, `tasks` — append-heavy. **Partition-ready** (UUID PK + `workspace_id`/`created_at` available), but **physical partitioning deferred** until volume justifies (red-team: avoid over-engineering pre-customers).
 - Denormalized `last_activity_at` kills the stall-scan N+1 (BR-D06).
-- Composite `(tenant_id, …)` indexes mandatory; `paginate`/`lazyById`/`cursor` for large sets; query-builder/raw for reports.
+- Composite `(workspace_id, …)` indexes mandatory; `paginate`/`lazyById`/`cursor` for large sets; query-builder/raw for reports.
 - Search: v1 = Postgres (ILIKE + GIN/trigram); Meilisearch deferred.
 - PgBouncer added when worker+web connection count justifies — not now.
 
@@ -226,7 +231,7 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 
 ## 11. Anti-pattern audit
 
-- **Tenant leak** → 3-layer enforcement + RLS default-deny + CI policy check; cache keys/broadcast channels/search will be tenant-prefixed.
+- **Tenant leak** → 3-layer enforcement + RLS default-deny + CI policy check; cache keys/broadcast channels/search will be workspace-prefixed.
 - **Unbounded query** → no `Model::all()`; visibility scope + pagination mandatory.
 - **Polling instead of events** → stall/SLA are the *only* scheduled scans, and they read denormalized columns, not raw event tables.
 - **Race on shared state** → optimistic `lock_version`; `GREATEST` for monotonic denorm; `lockForUpdate` on conversion/merge.
@@ -239,7 +244,7 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 
 ## 12. Implementation order (Phase 2 will detail)
 
-1. **Platform foundation**: Tenant, User, Team(+closure), `BelongsToTenant` trait, `IdentifyTenant` middleware, RLS migration + CI check, spatie setup, `Visibility` resolver, AuditLog + observer, optimistic-concurrency trait.
+1. **Platform foundation**: Tenant, User, Team(+closure), `BelongsToWorkspace` trait, `IdentifyWorkspace` middleware, RLS migration + CI check, spatie setup, `Visibility` resolver, AuditLog + observer, optimistic-concurrency trait.
 2. **Custom-fields engine**: registry + JSONB validation + GIN.
 3. **Sales core**: Account, Contact, Deal, Pipeline/Stage, DealContactRole; stage-change + won/lost + forecast.
 4. **Lead + conversion**: Lead, scoring, routing, conversion TX (BR-L06/L07).
@@ -253,8 +258,10 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 
 All Phase 1 open questions locked — user directive: "best for the long term".
 
-1. **Auth scaffold** → **Breeze + spatie + custom team model**. Jetstream teams ≠ our tenant model; Breeze is a minimal owned scaffold.
+1. **Auth scaffold** → **Breeze + spatie + custom team model**. Jetstream teams ≠ our workspace model; Breeze is a minimal owned scaffold.
 2. **Team subtree** → **closure table** (`team_closure`). O(1) subtree reads for manager rollup (hot path); pay write cost on reparent.
-3. **Identity** → **Global identity + membership** (NOT per-tenant). Global `users` (unique email) + `tenant_user` membership carrying role/team/status. Enables one user across many tenants, agencies, future cross-org SSO. Chosen over the simpler per-tenant model because retrofitting it later is prohibitively expensive. (Supersedes the earlier discovery per-tenant note.)
+3. **Identity** → **Global identity + membership** (NOT per-workspace). Global `users` (unique email) + `workspace_member` membership carrying role/team/status. Enables one user across many tenants, agencies, future cross-org SSO. Chosen over the simpler per-workspace model because retrofitting it later is prohibitively expensive. (Supersedes the earlier discovery per-workspace note.)
 4. **Reporting** → **compute-on-read v1**, through a repository/query layer so rollup tables can slot in later without changing callers. No premature rollups (YAGNI).
-5. **Polymorphic FKs** → enforce same-tenant via **app validation + RLS** on the polymorphic table (`activities`/`tasks`). No native DB FK on a polymorphic target; if a relation becomes hot/critical, denormalize to a typed FK column.
+5. **Polymorphic FKs** → enforce same-workspace via **app validation + RLS** on the polymorphic table (`activities`/`tasks`). No native DB FK on a polymorphic target; if a relation becomes hot/critical, denormalize to a typed FK column.
+6. **Access model** → **two planes** (Platform staff + Workspace customers). "Workspace" is the customer/isolation entity (renames "tenant"; pattern still called multi-tenant). Full spec: [crm-authorization-model.md](crm-authorization-model.md).
+7. **Internal access** → **god-mode** (super_admin sees all workspaces' data) **but mediated**: time-boxed impersonation (RLS still scopes to one workspace) + cross-workspace reads via an audited privileged path. Every internal data access is audited (extends BR-X05); designed so it can tighten to consent-based later without rework.
