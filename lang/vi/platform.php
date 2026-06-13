@@ -52,6 +52,11 @@ return [
         'no_parent' => 'Cấp cao nhất',
         'delete_confirm' => 'Xóa nhóm này? Thành viên sẽ được gỡ khỏi nhóm.',
         'empty' => 'Chưa có nhóm nào.',
+        'members_count' => ':count thành viên',
+        'created' => 'Đã tạo nhóm.',
+        'updated' => 'Đã cập nhật nhóm.',
+        'deleted' => 'Đã xóa nhóm.',
+        'cycle_error' => 'Không thể di chuyển nhóm vào chính nó hoặc một nhóm con.',
     ],
     'members' => [
         'title' => 'Thành viên',
