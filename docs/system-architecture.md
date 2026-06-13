@@ -116,6 +116,19 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 
 **Effective entitlements** = BASE (free) ⊕ Σ(active purchases) ⊕ overrides. **Entitlement gate ≠ RBAC gate**: workspace quota/feature is checked *in addition to* user role permission. Single resolver `Entitlements::for(workspace)`; cached in Redis, busted on purchase/subscription change.
 
+### 3.7 Platform foundation tables (cross-cutting)
+
+| Table | Notable columns | Notes |
+|---|---|---|
+| `attachments` | `workspace_id, related_type, related_id, filename, mime, size, storage_key, uploaded_by, created_at, deleted_at` | Polymorphic file on any entity. S3-compatible disk; inherits parent visibility (BR-X09); download via short-lived signed URLs. |
+| `notifications` | `workspace_id, user_id, type, data jsonb, read_at, created_at` | In-app feed (Laravel notifications convention). Indexed `(workspace_id, user_id, read_at)`. |
+| `notification_preferences` | `workspace_id, user_id, type, channel(in_app/email/push), enabled` | Per-user opt-in/out per event type × channel. |
+| `webhook_endpoints` | `workspace_id, url, event_types jsonb, secret, is_active` | Outbound subscriptions per workspace. |
+| `webhook_deliveries` | `workspace_id, endpoint_id, event, payload jsonb, status, attempts, response_code, next_retry_at` | Delivery log; queued + retried. Partition-ready. |
+| `workspace_sequences` | `workspace_id, entity, next_value` | Human-readable per-workspace counters (Deal #1234). Atomic increment under row lock. |
+
+API tokens reuse Sanctum's `personal_access_tokens` (+ `abilities` for scopes, bound to a `workspace_member`).
+
 ---
 
 ## 4. Multi-tenant enforcement (defense-in-depth)
@@ -202,6 +215,9 @@ No TX wraps an HTTP/queue/Redis call. Events dispatched **after commit** (`DB::a
 | `SendCsatRequest` (BR-S05) | `TicketResolved` | `default` | dedupe per ticket |
 | `RebuildReportRollups` | scheduler nightly | `low` | eventual; workspace-partitioned read store |
 | `BulkReassign` (BR-X03) | deactivation | `default` | batched, atomic-per-record, audited |
+| `SendNotification` | domain events | `default` | per-recipient channels (in_app/email); respects preferences |
+| `DispatchWebhook` | domain events | `default` | HMAC-signed, retry+backoff, logs `webhook_deliveries`, idempotent |
+| `ScanAttachment` | file upload | `low` | virus scan (deferred); quarantine on fail |
 
 Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()` start (no request context). All handlers idempotent. `withoutOverlapping` on scheduled scans.
 
@@ -231,6 +247,18 @@ Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()
 - Use Inertia 2 deferred props (heavy tables load after paint), prefetch (hover), polling (light realtime) before reaching for WebSocket.
 - State: Inertia props + React state/context; add **Zustand** only for genuinely complex client state. No Redux.
 
+## 9c. Cross-cutting foundations
+
+Defined basic now (data model above §3.7), built incrementally. All workspace-scoped, audited where relevant.
+
+- **Attachments** — polymorphic file on any entity; S3-compatible disk (Laravel filesystem), tenant-prefixed keys. Upload validated (mime/size, entitlement quota `storage_mb`); virus scan = queued job (deferred). Visibility **inherits parent** (BR-X09); downloads via short-lived signed URLs scoped to the viewer. Delete = soft (recoverable), purge on parent hard-delete.
+- **Notifications** — Laravel Notification, **queued**. Channels: `in_app` (DB feed, v1) + `email` + `push` (later); per-user `notification_preferences` (type × channel). Driven by domain events: `TaskDue`, `DealAssigned`, `OwnerReassigned`, `SlaBreaching`, `Mentioned`, `TicketUpdated`. Digest/batching deferred. Notifications are per-recipient, never cross-workspace.
+- **Time & locale** — **store all datetimes in UTC**; `workspace.timezone`+`locale` defaults, overridable per `workspace_member`. Inputs (due date, close date) entered in the user's tz → converted to UTC; display converts back. **Overdue/SLA computed in UTC** (SLA stays calendar-24/7, BR-S02). Money already one base currency/workspace (BR-D05).
+- **Human-readable numbers** — per-workspace sequential ref (`Deal #1234`, `Ticket #5678`) via `workspace_sequences` (atomic increment under row lock; `unique(workspace_id, entity, number)`). UUID stays the PK; the number is display/lookup only.
+- **API & Webhooks** (posture now; full build deferred) —
+  - *Inbound*: Sanctum tokens scoped to a `workspace_member` with `abilities` (= permissions) + RLS; per-workspace rate limit. Same authorization path as the web app (no privileged bypass).
+  - *Outbound*: `webhook_endpoints` subscribe to event types; the **domain-event bus** is the single source → a queued `DispatchWebhook` job signs (HMAC via endpoint `secret`), delivers, **retries with backoff**, logs to `webhook_deliveries`; consumer dedupes on event id (idempotent). Reuses the same events that drive notifications/audit — one event stream, many consumers.
+
 ## 10. Scale posture
 
 - Volume: ~1,000s tenants × ~1M records/tenant (~1B rows). DB is the bottleneck, not PHP.
@@ -257,13 +285,15 @@ Jobs carry `workspace_id` explicitly and re-bind `currentWorkspace` at `handle()
 
 ## 12. Implementation order (Phase 2 will detail)
 
-1. **Platform foundation**: Tenant, User, Team(+closure), `BelongsToWorkspace` trait, `IdentifyWorkspace` middleware, RLS migration + CI check, spatie setup, `Visibility` resolver, AuditLog + observer, optimistic-concurrency trait.
+1. **Platform foundation**: Workspace, User(global)+Membership, Team(+closure), `BelongsToWorkspace` trait, `IdentifyWorkspace` middleware, RLS migration + CI check, spatie setup, `Visibility` resolver, AuditLog + observer, optimistic-concurrency trait, **time/locale (UTC) base**, **workspace_sequences** (record numbers).
 2. **Custom-fields engine**: registry + JSONB validation + GIN.
-3. **Sales core**: Account, Contact, Deal, Pipeline/Stage, DealContactRole; stage-change + won/lost + forecast.
-4. **Lead + conversion**: Lead, scoring, routing, conversion TX (BR-L06/L07).
-5. **Engagement**: Activity, Task (polymorphic + `last_activity_at` denorm).
-6. **Support**: Ticket + SLA scheduler.
-7. **Marketing** (later): Campaign, Segment, recipients.
+3. **Cross-cutting platform**: attachments, notifications (+preferences), domain-event bus (feeds notifications/webhooks/audit).
+4. **Sales core**: Account, Contact, Deal, Pipeline/Stage, DealContactRole; stage-change + won/lost + forecast.
+5. **Lead + conversion**: Lead, scoring, routing, conversion TX (BR-L06/L07).
+6. **Engagement**: Activity, Task (polymorphic + `last_activity_at` denorm).
+7. **Support**: Ticket + SLA scheduler.
+8. **Marketplace + entitlements**: items, purchases, `Entitlements` resolver + enforcement.
+9. **Later**: Marketing (Campaign/Segment/recipients), outbound Webhooks, inbound API (Sanctum), email two-way, import.
 
 ---
 
