@@ -170,7 +170,7 @@ pint-test: ## Check formatting without changing files
 	$(PHP) vendor/bin/pint --test
 
 stan: ## Static analysis (Larastan)
-	$(PHP) vendor/bin/phpstan analyse
+	$(PHP) vendor/bin/phpstan analyse --memory-limit=1G
 
 check: pint-test stan test ## Run all quality gates
 
