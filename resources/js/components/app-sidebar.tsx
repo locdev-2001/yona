@@ -1,30 +1,45 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
-import AppLogo from './app-logo';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
+import { type NavGroup } from '@/types';
+import { Activity, BarChart3, Bell, CalendarDays, History, Inbox, LayoutGrid, ListChecks, Plug } from 'lucide-react';
 
-const mainNavItems: NavItem[] = [
+// Mock CRM navigation (sidebar-07 grouped + collapsible). Wire to real routes later.
+const navGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Overview',
+        items: [
+            { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
+            { title: 'Calendar', url: '/calendar', icon: CalendarDays },
+            {
+                title: 'Tasks',
+                url: '/tasks',
+                icon: ListChecks,
+                items: [
+                    { title: 'Backlog', url: '/tasks/backlog', badge: 24 },
+                    { title: 'In progress', url: '/tasks/in-progress', badge: 4 },
+                    { title: 'Validation', url: '/tasks/validation', badge: 7 },
+                    { title: 'Done', url: '/tasks/done', badge: 13 },
+                ],
+            },
+        ],
     },
-];
-
-const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Tools',
+        items: [
+            { title: 'Notification', url: '/notifications', icon: Bell, badge: 7 },
+            { title: 'Inbox', url: '/inbox', icon: Inbox },
+            { title: 'Integration', url: '/integrations', icon: Plug },
+            { title: 'Reporting', url: '/reporting', icon: BarChart3 },
+        ],
     },
     {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
+        title: 'Metrics',
+        items: [
+            { title: 'Active', url: '/metrics/active', icon: Activity },
+            { title: 'Past', url: '/metrics/past', icon: History },
+        ],
     },
 ];
 
@@ -32,25 +47,18 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                <WorkspaceSwitcher />
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={navGroups} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
+
+            <SidebarRail />
         </Sidebar>
     );
 }
