@@ -1,5 +1,7 @@
 # Project Documentation Management
 
+> **Feature flow docs are governed by `feature-documentation.md` (MANDATORY hard gate).** This file covers project-level docs (roadmap, changelog, architecture); that file covers per-feature operational flow. Keep both in sync.
+
 ### Roadmap & Changelog Maintenance
 - **Project Roadmap** (`./docs/development-roadmap.md`): Living document tracking project phases, milestones, and progress
 - **Project Changelog** (`./docs/project-changelog.md`): Detailed record of all significant changes, features, and fixes
