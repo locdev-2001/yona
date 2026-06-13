@@ -12,7 +12,9 @@ export default defineConfig({
         baseURL: process.env.APP_URL ?? 'http://127.0.0.1:8000',
         trace: 'on-first-retry',
     },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    // App default locale is Vietnamese; pin Accept-Language so the UI under test
+    // matches (otherwise the browser's en-US flips SetLocale to English).
+    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], locale: 'vi-VN' } }],
     // Auto-start the app for tests; reuses an already-running server (e.g. `make serve`).
     webServer: {
         command: 'php artisan serve --port=8000',
