@@ -1,0 +1,84 @@
+# Local dev environment — PHP 8.3 (Laravel 13) + PostgreSQL 16 + Redis.
+# Core services start with `docker compose up -d`. Optional services are behind
+# profiles (enable after the Laravel app is scaffolded). See docs/local-development.md.
+
+services:
+  app:
+    build: ./docker/php
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cho_rach
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm -d cho_rach"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Vite dev server (frontend). Enable: docker compose --profile frontend up node
+  node:
+    image: node:22-alpine
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    profiles: ["frontend"]
+
+  # Queue worker. Enable after app exists: docker compose --profile workers up -d horizon
+  horizon:
+    build: ./docker/php
+    volumes:
+      - .:/var/www/html
+    command: php artisan horizon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    profiles: ["workers"]
+
+  # Reverb WebSocket (live chat). Enable: docker compose --profile workers up -d reverb
+  reverb:
+    build: ./docker/php
+    volumes:
+      - .:/var/www/html
+    command: php artisan reverb:start --host=0.0.0.0 --port=8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    profiles: ["workers"]
+
+volumes:
+  pgdata:

@@ -140,7 +140,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 | Tầng | Lựa chọn |
 |---|---|
-| Backend | Laravel 13 (PHP 8.3+) |
+| Backend | Laravel 13 (PHP 8.4+) |
 | Database | PostgreSQL 16+ (JSONB + GIN, RLS, partition khi cần) |
 | ORM | Eloquent — query scopes cho workspace/visibility; raw SQL cho report nặng |
 | Đa-tenant | `BelongsToWorkspace` global scope + middleware + Postgres RLS |
@@ -180,4 +180,5 @@ Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
 | [docs/crm-conversations-inbox.md](docs/crm-conversations-inbox.md) | Live chat realtime, omnichannel inbox |
 | [docs/crm-business-config.md](docs/crm-business-config.md) | Pipeline mặc định, enums, SLA, scoring, gói free, marketplace seed |
 | [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |
+| [docs/local-development.md](docs/local-development.md) | Chạy local bằng Docker (PHP/Postgres/Redis) — không cần cài gì trên máy |
 | [docs/development-roadmap.md](docs/development-roadmap.md) · [docs/project-changelog.md](docs/project-changelog.md) | Lộ trình & nhật ký thay đổi |
