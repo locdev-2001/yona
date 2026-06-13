@@ -1,7 +1,27 @@
 import { LucideIcon } from 'lucide-react';
 
+export type WorkspaceRole = 'admin' | 'sales_manager' | 'sales_rep' | 'support_manager' | 'support_agent' | 'marketer' | 'viewer';
+
+export interface Workspace {
+    id: string;
+    name: string;
+    slug: string;
+    role?: WorkspaceRole;
+    base_currency?: string;
+    timezone?: string;
+    locale?: string;
+}
+
+export interface Membership {
+    role: WorkspaceRole;
+    team_id: string | null;
+    permissions: string[];
+}
+
 export interface Auth {
     user: User;
+    workspaces: Workspace[];
+    membership: Membership | null;
 }
 
 export interface BreadcrumbItem {
@@ -27,6 +47,10 @@ export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    activeWorkspace: Workspace | null;
+    locale: string;
+    i18n: Record<string, unknown>;
+    flash: { success: string | null; error: string | null };
     [key: string]: unknown;
 }
 

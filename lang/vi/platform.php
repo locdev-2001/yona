@@ -12,6 +12,7 @@ return [
         'profile' => 'Hồ sơ',
         'password' => 'Mật khẩu',
         'appearance' => 'Giao diện',
+        'logout' => 'Đăng xuất',
     ],
     'actions' => [
         'save' => 'Lưu',
