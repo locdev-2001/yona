@@ -3,12 +3,14 @@
 use App\Exceptions\StaleModelException;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyWorkspace;
+use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Clear any leaked RLS context first (Octane/persistent-connection safety).
+        $middleware->web(prepend: [
+            ResetTenantContext::class,
+        ]);
+
         $middleware->web(append: [
             SetLocale::class,
             HandleInertiaRequests::class,
@@ -25,10 +32,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Tenant-context middleware — applied per route group (auth + workspace
-        // data screens), wired in routes in phase 06.
+        // data screens).
         $middleware->alias([
             'workspace' => IdentifyWorkspace::class,
         ]);
+
+        // The workspace (RLS) context MUST be established before route-model
+        // binding queries tenant tables — otherwise binding runs default-denied
+        // and 404s every {team}/{member}. Bindings resolve in SubstituteBindings.
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: IdentifyWorkspace::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Optimistic-concurrency loss (BR-X08) → 409 for APIs; for Inertia,

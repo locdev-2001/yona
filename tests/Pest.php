@@ -73,6 +73,8 @@ function clearWorkspaceContext(): void
     setWorkspaceContext(null);
     setUserContext(null);
     app(PermissionRegistrar::class)->setPermissionsTeamId(null);
+    app()->forgetInstance('currentWorkspace');
+    app()->forgetInstance('currentMembership');
 }
 
 /**
