@@ -68,7 +68,10 @@ class IdentifyWorkspace
      */
     private function resolveMembership(int|string $userId, ?string $sessionWorkspaceId): ?WorkspaceMember
     {
-        $base = fn () => WorkspaceMember::query()
+        // Cross-workspace lookup by design (it decides which workspace), so drop
+        // the per-tenant global scope; RLS still confines it to the caller's own
+        // rows via app.current_user_id.
+        $base = fn () => WorkspaceMember::withoutGlobalScope('workspace')
             ->where('user_id', $userId)
             ->where('status', 'active');
 

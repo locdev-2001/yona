@@ -7,10 +7,15 @@ use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Writes append-only audit entries (BR-X05). Inserts go through the normal
- * connection — the cho_rach_app role has INSERT but no UPDATE/DELETE on
- * audit_logs (setup-roles.sql), so the entry can never be altered afterwards
- * (immutability is grant-enforced, not just app-enforced).
+ * Writes append-only audit entries (BR-X05).
+ *
+ * Connection: workspace-scoped entries are written on the runtime connection,
+ * where cho_rach_app has INSERT but no UPDATE/DELETE on audit_logs
+ * (setup-roles.sql) — immutability is grant-enforced, not just app-enforced.
+ * Platform-plane entries (no workspace_id: login, impersonation, …) cannot
+ * satisfy the audit_logs RLS WITH CHECK, so they are written on the privileged
+ * connection (which also bypasses RLS); their immutability rests on the model
+ * guard + the absence of any update path.
  *
  * Diffs are PII-minimized (BR-X07): a model lists PII attributes via
  * auditPiiAttributes(); those are stored as a stable reference, never the raw
@@ -23,8 +28,10 @@ class Audit
      */
     public static function log(Model $model, string $action, ?array $changes = null): void
     {
-        AuditLog::query()->forceCreate([
-            'workspace_id' => self::workspaceId($model),
+        $workspaceId = self::workspaceId($model);
+
+        AuditLog::on($workspaceId === null ? 'pgsql_privileged' : null)->forceCreate([
+            'workspace_id' => $workspaceId,
             'entity_type' => $model->getMorphClass(),
             'entity_id' => (string) $model->getKey(),
             'action' => $action,
