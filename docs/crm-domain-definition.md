@@ -95,19 +95,27 @@ Every transition logs Activities; AI/automation can act on these events.
 
 ## 5. Module map (full enterprise CRM)
 
+Three groups: customer-facing CRM, shared Platform foundation, and internal Platform-staff. 🟢 = free base · 🔵 = paid add-on (entitlement, see [crm-marketplace.md](crm-marketplace.md)).
+
 ```
-SALES            MARKETING        SERVICE          PLATFORM
-─────            ─────────        ───────          ────────
-Lead Mgmt        Campaigns        Ticketing        Multi-tenancy + RBAC
-Pipeline/Deals   Email log        Knowledge base   Audit log + soft-delete
-Quotes (later)   Lead scoring     SLA tracking     Custom fields engine
-Forecasting      Segmentation     CSAT/feedback    Reporting / BI
-Activity & Task                                    Workflow engine (later)
-                                                   API / Webhooks
-                                                   AI agents (future)
+CUSTOMER-FACING (workspace)        PLATFORM / SHARED                INTERNAL (platform staff)
+───────────────────────────       ──────────────────────────       ──────────────────────────
+Sales 🟢                           Multi-tenancy + Workspace         Workspace administration
+  Lead·Contact·Account·Deal        Identity + Membership             Marketplace catalog mgmt
+  Pipeline/Stage·Forecast          RBAC (roles·teams·visibility)     Billing / subscription ops
+Engagement 🟢                      Custom Fields engine              Support impersonation (audited)
+  Activity·Task                    Audit log + soft-delete
+Support 🔵                         Attachments / files               COMMERCE
+  Ticket·SLA·CSAT                  Notifications (+preferences)      ─────────
+Conversations / Inbox              Product Announcements             Marketplace (add-ons)
+  Live chat realtime 🟢            Realtime (Reverb)                 Entitlements
+  Omnichannel: web·Zalo·FB·email   Reporting / BI                    Integrations (Zalo/FB/
+  escalate → Ticket                API + Webhooks (event bus)          email/calendar/…)
+Marketing 🔵
+  Campaign·Segment·Scoring         Workflow engine (later) · AI agents (future)
 ```
 
-Platform layer (RBAC, audit, custom fields, reporting, API) is as much work as the business layer — don't underestimate it.
+Platform layer (RBAC, audit, custom fields, realtime, reporting, API) is as much work as the business layer — don't underestimate it. Detailed contexts & tables: [system-architecture.md](system-architecture.md); access planes: [crm-authorization-model.md](crm-authorization-model.md); inbox: [crm-conversations-inbox.md](crm-conversations-inbox.md).
 
 ---
 
