@@ -8,16 +8,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * User — a global identity (one email system-wide, NOT workspace-scoped).
  * Joins N workspaces via WorkspaceMember; role/team/status live on membership.
  * `is_internal` flags platform staff. `id` stays bigint (hybrid ID strategy).
+ *
+ * spatie roles are scoped per workspace via team_foreign_key=workspace_id;
+ * call setPermissionsTeamId($workspace->id) (done by IdentifyWorkspace) before
+ * role/permission checks so they resolve within the active workspace.
  */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.

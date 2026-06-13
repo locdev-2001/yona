@@ -1,9 +1,12 @@
 <?php
 
+use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /*
@@ -74,17 +77,19 @@ function clearWorkspaceContext(): void
 {
     setWorkspaceContext(null);
     setUserContext(null);
+    app(PermissionRegistrar::class)->setPermissionsTeamId(null);
 }
 
 /**
  * Enter a workspace for the duration of a test: bind the app-layer context
- * (global scope) AND the DB RLS context, optionally authenticating a user and
- * binding their membership. Mirrors what IdentifyWorkspace does at runtime.
+ * (global scope), the DB RLS context, and spatie's team scope; optionally
+ * authenticate a user + bind their membership. Mirrors IdentifyWorkspace.
  */
 function actingInWorkspace(Workspace $workspace, ?User $user = null): ?User
 {
     app()->instance('currentWorkspace', $workspace);
     setWorkspaceContext($workspace->id);
+    app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
 
     if ($user) {
         setUserContext($user->getKey());
@@ -95,4 +100,27 @@ function actingInWorkspace(Workspace $workspace, ?User $user = null): ?User
     }
 
     return $user;
+}
+
+/**
+ * Create an active membership AND assign the matching spatie role within the
+ * workspace (what MembershipService does at runtime). Requires that the
+ * workspace context is appropriate for RLS inserts.
+ */
+function seedMember(Workspace $workspace, User $user, string $role = 'sales_rep', ?Team $team = null): WorkspaceMember
+{
+    setWorkspaceContext($workspace->id);
+    setUserContext($user->getKey());
+
+    $member = WorkspaceMember::factory()->for($workspace)->create([
+        'user_id' => $user->id,
+        'role' => $role,
+        'team_id' => $team?->id,
+        'status' => 'active',
+    ]);
+
+    app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+    $user->assignRole($role);
+
+    return $member;
 }
