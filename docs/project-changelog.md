@@ -17,6 +17,21 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 1 Platform Foundation (2026-06-13)
+- **Tenant isolation** (3-layer): global scope (BelongsToWorkspace trait) + middleware (IdentifyWorkspace, ResetTenantContext) + PostgreSQL RLS (defense-in-depth). No cross-workspace read/write possible.
+- **Workspace switching**: multi-workspace users can switch active context; session-driven, server-validated.
+- **Workspace settings**: admin view/update workspace name and base currency.
+- **Teams (hierarchical)**: tree structure with cycle-guard; closure table (team_closure) enables O(1) subtree queries for manager visibility rollup.
+- **Members + RBAC**: invite users by email, assign roles (admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer) and teams; spatie role sync scoped per workspace.
+- **Visibility resolver** (2-layer gate): feature-gate (role → permissions, spatie) + record-gate (own/team/all visibility, closure table for manager rollup).
+- **Audit log** (append-only): all CRUD + security events logged; PII-minimized (name/email/phone stored as refs, erasable at source).
+- **Localization** (i18n): `lang/{vi,en}/platform.php` with role names, team labels, audit action strings.
+- **Sequence counter**: `workspace_sequences` for human-readable record numbers (e.g., Deal #1234).
+- **Fixed assumptions** from red-team (Phase 1.5):
+  - RLS context **reset at request start** (ResetTenantContext runs first, before auth middleware) — prevents stale context on persistent connections (Octane, PgBouncer).
+  - Middleware priority: ResetTenantContext → auth → IdentifyWorkspace → route handlers (critical for security).
+  - RLS-aware audit writer: workspace-scoped entries on app connection (RLS-scoped), Platform-plane entries on privileged connection (RLS bypassed).
+
 ### Added — App scaffold / bootstrap (2026-06-13)
 - **Laravel app initialized** from `laravel/react-starter-kit` (Inertia 2 + React + shadcn/Tailwind), merged into repo (docs/plans/.claude/README preserved).
 - **Laravel 13.15 on PHP 8.4** (L13 requires 8.4): switched local default PHP 8.3→8.4 (`.zshrc`), installed `phpredis` ext for 8.4.
