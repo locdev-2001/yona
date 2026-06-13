@@ -22,7 +22,7 @@ Last updated: 2026-06-13
 
 | # | Module | Status |
 |---|---|---|
-| 1 | Platform foundation (workspace, identity+membership, teams+closure, tenant isolation+RLS, RBAC, audit, time/locale, record numbers) | ⬜ |
+| 1 | Platform foundation (workspace, identity+membership, teams+closure, tenant isolation+RLS, RBAC, audit, time/locale, record numbers) | ✅ |
 | 2 | Custom-fields engine | ⬜ |
 | 3 | Cross-cutting platform (attachments, notifications, event bus, **Reverb realtime**, product announcements) | ⬜ |
 | 4 | Sales core (Account, Contact, Deal, Pipeline/Stage, roles; stage/won-lost/forecast) | ⬜ |
