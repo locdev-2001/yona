@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "beru/crm",
+    "name": "cho-rach/management",
     "type": "project",
     "description": "Ch\u00f3 R\u00e1ch Management \u2014 multi-tenant enterprise SaaS CRM (Sales + Support + Marketing).",
     "keywords": [
