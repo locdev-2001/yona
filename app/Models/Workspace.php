@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Audit\Audit;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,14 @@ class Workspace extends Model
         'audit_retention',
         'status',
     ];
+
+    // Audit settings changes (BR-X05). Creation is a platform action without a
+    // workspace context yet, so only update/delete are audited here.
+    protected static function booted(): void
+    {
+        static::updated(fn (Workspace $workspace) => Audit::log($workspace, 'update'));
+        static::deleted(fn (Workspace $workspace) => Audit::log($workspace, 'delete'));
+    }
 
     /** @return HasMany<WorkspaceMember, $this> */
     public function members(): HasMany
