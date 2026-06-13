@@ -10,7 +10,7 @@ COMPOSER := composer
 
 .DEFAULT_GOAL := help
 .PHONY: help setup install dev serve queue horizon reverb \
-        migrate seed test pint pint-test stan check build \
+        migrate seed test format pint pint-test stan check build \
         clear tinker
 
 help: ## Show this help
@@ -55,7 +55,11 @@ seed: ## Run seeders
 test: ## Run the Pest test suite
 	$(ARTISAN) test
 
-pint: ## Format code (Laravel Pint)
+format: ## Format everything (Pint + Prettier)
+	$(PHP) vendor/bin/pint
+	pnpm run format
+
+pint: ## Format PHP only (Laravel Pint)
 	$(PHP) vendor/bin/pint
 
 pint-test: ## Check formatting without changing files
