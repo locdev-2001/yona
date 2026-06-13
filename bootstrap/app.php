@@ -1,11 +1,14 @@
 <?php
 
+use App\Exceptions\StaleModelException;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyWorkspace;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
+            SetLocale::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
@@ -27,5 +31,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Optimistic-concurrency loss (BR-X08) → 409 for APIs; for Inertia,
+        // redirect back with a flash error so the page can prompt a reload.
+        $exceptions->render(function (StaleModelException $e, Request $request) {
+            if ($request->header('X-Inertia')) {
+                return back(303)->with('error', $e->getMessage());
+            }
+
+            return response()->json(['message' => $e->getMessage()], 409);
+        });
     })->create();

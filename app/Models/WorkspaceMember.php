@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceMemberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class WorkspaceMember extends Model
 {
     /** @use HasFactory<WorkspaceMemberFactory> */
-    use BelongsToWorkspace, HasFactory, HasUuids;
+    use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids;
 
     protected $table = 'workspace_member';
 
