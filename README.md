@@ -150,7 +150,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 | Jobs / Cron | Laravel Queue (Redis) + Horizon · Scheduler (SLA, alerts, forecast) |
 | Realtime | Laravel Reverb (WebSocket) + Echo — live chat, presence, typing (channel auth scoped theo workspace + visibility) |
 | Billing | Marketplace (add-on one-time/subscription) + entitlements; payment provider-agnostic (`payment-integration` sau) |
-| Quan sát | Telescope (dev) + Sentry (prod) |
+| Quan sát | Telescope (dev) + Pulse (free, self-hosted) + Sentry (tùy chọn, free tier) |
 | Test | Pest (unit/feature) + Playwright (e2e) |
 | Triển khai | Laravel Forge + VPS hoặc Docker |
 
