@@ -47,7 +47,8 @@ UUID PKs everywhere (`uuid` default). All tenant-scoped tables carry the **syste
 | Table | Notable columns | Notes |
 |---|---|---|
 | `tenants` | `name, base_currency, default_pipeline_id, audit_retention, status` | Root boundary. NOT tenant-scoped itself. |
-| `users` | `tenant_id, email, name, role, team_id, status` | `unique(tenant_id, email)`. `role` mirrors spatie role; server-controlled (BR-X12). |
+| `users` | `email, name, password, status` | **Global identity** (NOT tenant-scoped). `unique(email)` globally. No role/team here. |
+| `tenant_user` (membership) | `tenant_id, user_id, role, team_id, status, invited_at` | **The tenant-scoped membership.** `unique(tenant_id, user_id)`. `role`/`team_id` live here, server-controlled (BR-X12). A user joins N tenants. Deactivate = membership.status (BR-X03), not user. |
 | `teams` | `tenant_id, name, parent_id` | Tree (BR-X02). Cycle-guarded (BR-X13). |
 | `team_closure` | `tenant_id, ancestor_id, descendant_id, depth` | Closure table for O(1) subtree reads (manager rollup). Maintained on team create/reparent. |
 | `pipelines` | `tenant_id, name, is_default` | One default per tenant. |
@@ -106,13 +107,14 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 Three layers; no single point of failure (BR-X01/X11/X14/X18):
 
 1. **App: `BelongsToTenant` trait** (global scope filters by `app('currentTenant')`, `creating` hook stamps `tenant_id`). On every tenant model. *(laravel skill → references/multi-tenancy.md)*
-2. **Middleware `IdentifyTenant`** — derives tenant **server-side** from the authenticated session/org (never client input, BR-X14); binds `currentTenant`; `SET app.current_tenant` for RLS.
+2. **Middleware `IdentifyTenant`** — resolves the **active tenant server-side** from the session (never client input, BR-X14), **validates the authenticated user has an active `tenant_user` membership** in it (else 403), binds `currentTenant` + `currentMembership`; `SET app.current_tenant` for RLS. Multi-tenant users pick/switch active tenant; session holds it.
 3. **Postgres RLS, default-deny** — every tenant-scoped table has `ENABLE ROW LEVEL SECURITY` + policy `tenant_id = current_setting('app.current_tenant')::uuid`. App DB role is non-owner. **CI test asserts every tenant table has a policy** (BR-X18).
 
 Supporting invariants:
 - **Same-tenant FKs** (BR-X11): every reference (incl. polymorphic `related_id`, `account_id`, `pipeline_id`, custom-field refs) validated to resolve in-tenant on write (FormRequest rule + DB composite FK `(tenant_id, id)` where practical).
 - **No mass-assignment** of `tenant_id/owner_id/team_id/role` (BR-X12) — guarded; set only by server.
 - **Unique constraints are composite** with `tenant_id`.
+- **Owner/assignee must be members** — `owner_id`, `team_id`, `assignee_id`, `created_by` reference global `users`, but the referenced user must have an active `tenant_user` membership in the record's tenant (validated on write; reassignment target check in BR-X03).
 
 ---
 
@@ -120,7 +122,7 @@ Supporting invariants:
 
 Two layers (BR-X02), see laravel skill → references/rbac.md:
 
-- **Feature gate = spatie roles**: `admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer`. Permissions like `deal.create`, `export.bulk`.
+- **Feature gate = spatie roles, scoped per tenant via membership**: `admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer`. spatie teams feature with `team_foreign_key = tenant_id` → the same global user holds different roles in different tenants (role lives on `tenant_user`). Permissions like `deal.create`, `export.bulk`.
 - **Record gate = Policies + `Visibility` resolver**:
   - `own` (rep/agent) → `owner_id = me`
   - `team` (manager) → `team_id IN visibleTeamIds(me)` = own team + descendant subtree via `team_closure`
@@ -187,6 +189,30 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 
 ---
 
+## 9b. Frontend (Inertia 2 + React)
+
+**Why Inertia (not a separate SPA/API in v1):** the CRM is an internal, behind-login, CRUD + dashboard app — Inertia's sweet spot. Routing, auth, CSRF, and **RBAC/visibility scoping stay server-side** (frontend is never a trust boundary; aligns with §4–5). No separate API to build/maintain.
+
+**Tradeoff (accepted):** Inertia is not a full SPA and gives no general-purpose API. A future **mobile app or 3rd-party API** (domain docs mention API/Webhooks/AI agents) must be added via Sanctum. **Safeguard (mandatory):** business logic lives in Action/Service classes, never in controllers (§11) — so an API controller can later call the *same* services. Inertia controllers and a future API are thin doors onto one core. Realtime/collaborative needs Reverb regardless (deferred; Inertia 2 polling is the v1 stopgap).
+
+**UI stack**
+
+| Need | Library | Note |
+|---|---|---|
+| Components | **shadcn/ui** (Radix + Tailwind v4) | skill `ui-styling` |
+| Data grids | **TanStack Table v8** + **TanStack Virtual** | always server-side pagination (1M rows/tenant); virtualize long lists |
+| Kanban pipeline | **dnd-kit** | not react-beautiful-dnd (deprecated) |
+| Forms | **React Hook Form + Zod** | client validation; Zod schema mirrors BE validation |
+| Charts | **Recharts** (default) / **Tremor** (fast dashboards) | forecast, pipeline, activity |
+| Misc | **lucide-react**, **sonner** (toast), **cmdk** (command palette), **date-fns**, **nuqs** (table state in URL) | |
+
+**Integration rules**
+- No React Router — Inertia owns routing; a page = component receiving Laravel-controller props.
+- Inertia `useForm` for page submits (CSRF + Laravel validation errors auto-mapped); RHF+Zod for client-side pre-validation. Complementary.
+- **TanStack Query only for client-driven async widgets** (typeahead, polling, infinite scroll) — never for primary page data (Inertia owns it). Biggest over-engineering trap.
+- Use Inertia 2 deferred props (heavy tables load after paint), prefetch (hover), polling (light realtime) before reaching for WebSocket.
+- State: Inertia props + React state/context; add **Zustand** only for genuinely complex client state. No Redux.
+
 ## 10. Scale posture
 
 - Volume: ~1,000s tenants × ~1M records/tenant (~1B rows). DB is the bottleneck, not PHP.
@@ -223,10 +249,12 @@ Jobs carry `tenant_id` explicitly and re-bind `currentTenant` at `handle()` star
 
 ---
 
-## 13. Open questions (confirm before Phase 2)
+## 13. Resolved decisions (2026-06-13)
 
-1. **Auth scaffold**: Breeze (lighter, Inertia-React) vs Jetstream (teams built-in)? Recommend **Breeze + spatie + custom team model** (Jetstream teams ≠ our tenant model; avoid fighting it).
-2. **Team subtree**: closure table (proposed, O(1) reads, write cost on reparent) vs recursive CTE (simpler, slower deep reads). Recommend **closure table** given manager rollup is a hot read path. Confirm?
-3. **`tenants`/`users` global identity**: is login global (one email → many tenants) or strictly per-tenant (`unique(tenant_id,email)`)? Field-dictionary says per-tenant — confirm no cross-tenant SSO in v1.
-4. **Reporting read store**: v1 compute-on-read from primary (with indexes) vs nightly rollup tables now? Recommend **on-read v1**, add rollups when slow (YAGNI). Confirm.
-5. **Polymorphic FKs + RLS**: `activities.related_id` can't have a normal composite FK across entity types. Enforce same-tenant via app validation + RLS on `activities` itself — acceptable? (No native DB FK on polymorphic target.)
+All Phase 1 open questions locked — user directive: "best for the long term".
+
+1. **Auth scaffold** → **Breeze + spatie + custom team model**. Jetstream teams ≠ our tenant model; Breeze is a minimal owned scaffold.
+2. **Team subtree** → **closure table** (`team_closure`). O(1) subtree reads for manager rollup (hot path); pay write cost on reparent.
+3. **Identity** → **Global identity + membership** (NOT per-tenant). Global `users` (unique email) + `tenant_user` membership carrying role/team/status. Enables one user across many tenants, agencies, future cross-org SSO. Chosen over the simpler per-tenant model because retrofitting it later is prohibitively expensive. (Supersedes the earlier discovery per-tenant note.)
+4. **Reporting** → **compute-on-read v1**, through a repository/query layer so rollup tables can slot in later without changing callers. No premature rollups (YAGNI).
+5. **Polymorphic FKs** → enforce same-tenant via **app validation + RLS** on the polymorphic table (`activities`/`tasks`). No native DB FK on a polymorphic target; if a relation becomes hot/critical, denormalize to a typed FK column.
