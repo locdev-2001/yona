@@ -59,7 +59,10 @@ return [
 
     'storage' => [
         'database' => [
-            'connection' => env('DB_CONNECTION', 'mysql'),
+            // Observability tables use the privileged owner connection: the
+            // runtime `pgsql` role (cho_rach_app) is RLS-scoped and may not
+            // create/own non-tenant tables. See docs/local-development.md.
+            'connection' => env('TELESCOPE_DB_CONNECTION', 'pgsql_privileged'),
             'chunk' => 1000,
         ],
     ],

@@ -64,7 +64,8 @@ return [
         ],
 
         'database' => [
-            'connection' => env('PULSE_DB_CONNECTION'),
+            // Privileged owner connection — see config/telescope.php for why.
+            'connection' => env('PULSE_DB_CONNECTION', 'pgsql_privileged'),
             'chunk' => 1000,
         ],
     ],

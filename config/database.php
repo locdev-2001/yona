@@ -102,7 +102,7 @@ return [
             'sslmode' => 'prefer',
         ],
 
-        // Privileged connection — owner/superuser (`beru`). Used for: schema
+        // Privileged connection — owner/superuser (`cho_rach_owner`). Used for: schema
         // migrations (DDL), append-only audit writes the app role may not
         // mutate, and cross-workspace platform-plane reads. NEVER bound to a
         // customer-plane request path. Shares DB_DATABASE so test runs can
@@ -113,7 +113,7 @@ return [
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_PRIVILEGED_USERNAME', 'beru'),
+            'username' => env('DB_PRIVILEGED_USERNAME', 'cho_rach_owner'),
             'password' => env('DB_PRIVILEGED_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
