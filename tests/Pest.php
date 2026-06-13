@@ -20,15 +20,10 @@ use Tests\TestCase;
 |
 */
 
+// RLS context is reset for every DB-backed test in Tests\TestCase::setUp().
 pest()->extend(TestCase::class)
     ->use(DatabaseTransactions::class)
     ->in('Feature');
-
-// Platform tests run against real Postgres RLS. Reset the tenant context before
-// each test so a leaked SET from a prior test can't mask a default-deny bug.
-pest()->beforeEach(function () {
-    clearWorkspaceContext();
-})->in('Feature/Platform');
 
 /*
 |--------------------------------------------------------------------------

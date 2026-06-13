@@ -2,8 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,13 +41,109 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        return array_merge(parent::share($request), [
+        $user = $request->user();
+
+        return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? $this->userPayload($user) : null,
+                'workspaces' => $user ? $this->workspaceList($user) : [],
+                // Lazy: IdentifyWorkspace binds the context AFTER Inertia::share()
+                // runs, so these resolve at response time.
+                'membership' => fn () => $this->membershipPayload($user),
             ],
-        ]);
+            'activeWorkspace' => fn () => $this->activeWorkspacePayload(),
+            'locale' => app()->getLocale(),
+            'i18n' => ['platform' => trans('platform')],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function userPayload(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $user->avatar ?? null,
+            'locale' => $user->locale,
+            'timezone' => $user->timezone,
+            'is_internal' => $user->isInternal(),
+        ];
+    }
+
+    /**
+     * The user's active workspaces for the switcher — across all workspaces, so
+     * we drop the per-tenant global scope and let RLS expose the caller's own
+     * membership rows via app.current_user_id (set here).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function workspaceList(User $user): array
+    {
+        DB::statement("select set_config('app.current_user_id', ?, false)", [(string) $user->getKey()]);
+
+        return WorkspaceMember::withoutGlobalScope('workspace')
+            ->where('user_id', $user->getKey())
+            ->where('status', 'active')
+            ->with('workspace:id,name,slug')
+            ->get()
+            ->map(fn (WorkspaceMember $member) => [
+                'id' => $member->workspace_id,
+                'name' => $member->workspace?->name,
+                'slug' => $member->workspace?->slug,
+                'role' => $member->role,
+            ])
+            ->all();
+    }
+
+    /**
+     * The active membership (role + permissions) within the current workspace,
+     * or null on pages without a workspace context.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function membershipPayload(?User $user): ?array
+    {
+        $membership = currentMembership();
+
+        if (! $user || ! $membership) {
+            return null;
+        }
+
+        return [
+            'role' => $membership->role,
+            'team_id' => $membership->team_id,
+            'permissions' => $user->getAllPermissions()->pluck('name')->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function activeWorkspacePayload(): ?array
+    {
+        $workspace = currentWorkspace();
+
+        if (! $workspace) {
+            return null;
+        }
+
+        return [
+            'id' => $workspace->id,
+            'name' => $workspace->name,
+            'slug' => $workspace->slug,
+            'base_currency' => $workspace->base_currency,
+            'timezone' => $workspace->timezone,
+            'locale' => $workspace->locale,
+        ];
     }
 }

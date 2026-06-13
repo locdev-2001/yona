@@ -11,6 +11,7 @@ return [
         'profile' => 'Profile',
         'password' => 'Password',
         'appearance' => 'Appearance',
+        'logout' => 'Log out',
     ],
     'actions' => [
         'save' => 'Save',

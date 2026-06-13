@@ -13,5 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         // Global workspace-role definitions (reference data, idempotent).
         $this->call(PlatformPermissionSeeder::class);
+
+        // Default workspace + admin membership for existing users (dev).
+        $this->call(FoundationSeeder::class);
     }
 }
