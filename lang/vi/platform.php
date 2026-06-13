@@ -26,6 +26,9 @@ return [
         'confirm' => 'Xác nhận',
         'move' => 'Di chuyển',
     ],
+    'settings' => [
+        'subtitle' => 'Quản lý hồ sơ và cài đặt tài khoản.',
+    ],
     'workspace' => [
         'switch' => 'Chuyển không gian làm việc',
         'add' => 'Thêm không gian làm việc',

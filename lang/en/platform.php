@@ -25,6 +25,9 @@ return [
         'confirm' => 'Confirm',
         'move' => 'Move',
     ],
+    'settings' => [
+        'subtitle' => 'Manage your profile and account settings.',
+    ],
     'workspace' => [
         'switch' => 'Switch workspace',
         'add' => 'Add workspace',

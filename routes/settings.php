@@ -3,6 +3,7 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,4 +23,10 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+});
+
+// Workspace-scoped settings require an active workspace context (IdentifyWorkspace).
+Route::middleware(['auth', 'workspace'])->group(function () {
+    Route::get('settings/workspace', [WorkspaceController::class, 'edit'])->name('workspace.edit');
+    Route::patch('settings/workspace', [WorkspaceController::class, 'update'])->name('workspace.update');
 });
