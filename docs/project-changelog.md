@@ -5,6 +5,16 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 > Maintained per `.claude/rules/documentation-management.md` — update on every significant change/feature/fix.
 > **Automated by [release-please](https://github.com/googleapis/release-please)** from conventional commits: merging the bot's release PR bumps the version, tags it, and writes the release section here. SemVer `0.x` during build → `1.0.0` at production launch. (GitHub Releases = internal/dev notes; customer-facing "What's New" lives in the in-app Announcements feature — see crm-conversations-inbox/marketplace docs.)
 
+## 1.0.0 (2026-06-13)
+
+
+### Features
+
+* add Laravel Pulse (self-hosted observability) ([cd816b5](https://github.com/locflamedia/cho-rach-management/commit/cd816b55664b813e7efa6e3e8931ae0515fec0c1))
+* add laravel skill; lock Laravel stack and fold in red-team findings ([209df87](https://github.com/locflamedia/cho-rach-management/commit/209df873832acb969321e2cafe5e80a55820ee74))
+* bootstrap Laravel 13 app skeleton ([9448483](https://github.com/locflamedia/cho-rach-management/commit/94484832547116c6330d5303a23c480462be7fbd))
+* complete frontend/test/observability stack ([ebceb5e](https://github.com/locflamedia/cho-rach-management/commit/ebceb5edf27018fc029a64229f699269b3e9154c))
+
 ## [Unreleased]
 
 ### Added — App scaffold / bootstrap (2026-06-13)
