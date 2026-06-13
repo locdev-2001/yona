@@ -39,15 +39,26 @@ Legend — **Req**: ● required · ○ optional · ⚙ system-managed. Types: `
 | `audit_retention` | enum | ● | Audit log retention policy (BR-X05); default per plan |
 | `status` | enum | ● | active, suspended |
 
-### User
+### User (global identity — NOT tenant-scoped)
 
 | Field | Type | Req | Notes |
 |---|---|---|---|
-| `email` | email | ● | Login identity, unique per tenant |
+| `email` | email | ● | Login identity, **unique globally**. One person = one user across all tenants. |
 | `name` | string | ● | |
-| `role` | enum | ● | admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer |
-| `team_id` | ref(Team) | ○ | Primary team (1 per user, BR-X02) |
+| `status` | enum | ● | active, locked (global account state) |
+
+> A user joins one or more tenants via **Membership**. Role, team, and per-tenant status live on the membership, not here.
+
+### Membership (`tenant_user` — the tenant-scoped join)
+
+| Field | Type | Req | Notes |
+|---|---|---|---|
+| `tenant_id` | ref(Tenant) | ⚙● | |
+| `user_id` | ref(User) | ⚙● | `unique(tenant_id, user_id)` |
+| `role` | enum | ● | admin, sales_manager, sales_rep, support_manager, support_agent, marketer, viewer (per tenant, BR-X12) |
+| `team_id` | ref(Team) | ○ | Primary team in this tenant (1 per membership, BR-X02) |
 | `status` | enum | ● | active, invited, deactivated (deactivate ⇒ reassign open records, BR-X03) |
+| `invited_at` | datetime | ⚙ | |
 
 ### Team (hierarchy)
 
