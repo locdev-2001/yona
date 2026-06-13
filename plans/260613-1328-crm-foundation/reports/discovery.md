@@ -35,7 +35,7 @@ Date: 2026-06-13 · Status: locked · Phase 1.5 red-team: **done** (rules harden
 | Cron/SLA | **Laravel Scheduler** | SLA timers, stalled-deal alerts, nightly forecast. |
 | Cache/Redis | **Redis** | Cache, queue, session, rate-limiting. |
 | Realtime | **Laravel Reverb** (deferred) | Live pipeline/ticket updates when needed (YAGNI). |
-| Observability | **Telescope** (dev) + **Sentry** (prod) + structured logs | Production CRM error tracking. |
+| Observability | **Telescope** (dev) + **Pulse** (free, self-hosted: exceptions/perf/usage) + **Sentry** (optional, free tier 5K err/mo) + structured logs | Free-first; upgrade Sentry only when volume needs alerting/grouping. |
 | Test | **Pest** (unit/feature) + **Playwright** (e2e) | |
 | Deploy | **Laravel Forge + VPS** (Hetzner/DO) or Docker | Queue workers + Horizon favor VPS/container over serverless. Vapor if serverless AWS wanted. |
 
