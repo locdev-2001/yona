@@ -39,7 +39,7 @@ Seeded per workspace on signup (`is_default = true`). B2B standard:
 
 > Enums are workspace-extensible later via custom-fields; these are the system defaults.
 
-## 3. Support SLA targets [YOUR CALL — defaults proposed]
+## 3. Support SLA targets [LOCKED 2026-06-13]
 
 Calendar 24/7 (BR-S02). Two clocks: first-response & resolution.
 
@@ -62,7 +62,7 @@ Score 0–100, advisory only (BR-L05). Simple additive v1:
 - Decay: −10 if no activity 30d.
 - Clamp 0–100. Recomputed async on activity (eventual).
 
-## 5. Base (free) entitlements [YOUR CALL — defaults proposed]
+## 5. Base (free) entitlements [LOCKED 2026-06-13]
 
 What every new workspace gets free (BASE in [crm-marketplace.md](crm-marketplace.md)):
 
@@ -91,19 +91,19 @@ What every new workspace gets free (BASE in [crm-marketplace.md](crm-marketplace
 | `sso` | feature_module | subscription | `sso` | TBD |
 | `onboarding` | service | one_time | — | TBD |
 
-## 7. Workspace defaults [YOUR CALL]
+## 7. Workspace defaults [LOCKED 2026-06-13]
 
-- **`base_currency`**: default? (VND or USD) [YOUR CALL]
-- **`timezone`**: default `Asia/Ho_Chi_Minh` [PROPOSED]
-- **`locale`**: default `vi` [PROPOSED]
-- **`audit_retention`**: default 365 days [PROPOSED]
+- **`base_currency`**: default **VND** (workspace can choose another at creation).
+- **`timezone`**: default `Asia/Ho_Chi_Minh`.
+- **`locale`**: default `vi`.
+- **`audit_retention`**: default 365 days.
 
 ---
 
-## Decisions needed from you
+## Decisions — status
 
-1. SLA targets (§3) — accept proposed or set your own hours?
-2. Base free entitlements (§5) — accept, or different free tier?
-3. Marketplace items + **prices** (§6) — which to launch with, and pricing?
-4. Default `base_currency` (§7) — VND or USD?
-5. First integration(s) to build (Zalo / email / telephony / calendar)?
+1. SLA targets (§3) → **locked** (proposed defaults accepted).
+2. Base free entitlements (§5) → **locked** (proposed accepted).
+3. **First integration → Email (two-way)** — build first after Sales core (inbound capture → activity, outbound send). Others (Zalo, calendar, telephony) deferred.
+4. `base_currency` → **VND** (locked).
+5. Marketplace **prices** → still TBD; not blocking — Platform staff can set/seed prices later, build the model price-agnostic.
