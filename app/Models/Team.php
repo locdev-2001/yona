@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,18 +18,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use HasFactory, HasUuids, SoftDeletes;
+    use BelongsToWorkspace, HasFactory, HasUuids, SoftDeletes;
 
     // workspace_id / parent_id are server-controlled (BR-X12) — set via service.
     protected $fillable = [
         'name',
     ];
-
-    /** @return BelongsTo<Workspace, $this> */
-    public function workspace(): BelongsTo
-    {
-        return $this->belongsTo(Workspace::class);
-    }
 
     /** @return BelongsTo<Team, $this> */
     public function parent(): BelongsTo

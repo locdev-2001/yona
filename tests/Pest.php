@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /*
@@ -17,6 +20,12 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(DatabaseTransactions::class)
     ->in('Feature');
+
+// Platform tests run against real Postgres RLS. Reset the tenant context before
+// each test so a leaked SET from a prior test can't mask a default-deny bug.
+pest()->beforeEach(function () {
+    clearWorkspaceContext();
+})->in('Feature/Platform');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +53,46 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Set the Postgres RLS tenant context on the runtime connection. Passing null
+ * clears it ('' → NULL via the policy's nullif → default-deny).
+ */
+function setWorkspaceContext(?string $workspaceId): void
 {
-    // ..
+    DB::statement("select set_config('app.current_workspace', ?, false)", [$workspaceId ?? '']);
+}
+
+/**
+ * Set the RLS user context (exposes the user's own workspace_member rows).
+ */
+function setUserContext(int|string|null $userId): void
+{
+    DB::statement("select set_config('app.current_user_id', ?, false)", [$userId === null ? '' : (string) $userId]);
+}
+
+function clearWorkspaceContext(): void
+{
+    setWorkspaceContext(null);
+    setUserContext(null);
+}
+
+/**
+ * Enter a workspace for the duration of a test: bind the app-layer context
+ * (global scope) AND the DB RLS context, optionally authenticating a user and
+ * binding their membership. Mirrors what IdentifyWorkspace does at runtime.
+ */
+function actingInWorkspace(Workspace $workspace, ?User $user = null): ?User
+{
+    app()->instance('currentWorkspace', $workspace);
+    setWorkspaceContext($workspace->id);
+
+    if ($user) {
+        setUserContext($user->getKey());
+        if ($membership = $user->membershipFor($workspace)) {
+            app()->instance('currentMembership', $membership);
+        }
+        test()->actingAs($user);
+    }
+
+    return $user;
 }

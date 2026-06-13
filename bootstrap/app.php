@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdentifyWorkspace;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+        ]);
+
+        // Tenant-context middleware — applied per route group (auth + workspace
+        // data screens), wired in routes in phase 06.
+        $middleware->alias([
+            'workspace' => IdentifyWorkspace::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
