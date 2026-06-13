@@ -3,22 +3,22 @@
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT**: Ensure token efficiency while maintaining high quality.
 
-## Enterprise CRM Build Pipeline (project default)
+## Build Pipeline (5-phase)
 
-> This is an enterprise CRM built from zero. For any **new feature/module or system-level change**, follow this 5-phase pipeline. Full playbook: `docs/crm-build-pipeline.md`. The generic steps below (#1–#6) are the *how-to* for Phase 3–4.
+> For any **new feature/module or system-level change**, follow this pipeline. The numbered steps below (#1–#6) are the *how-to* for Phase 3–4. If the project defines its own playbook in `docs/` (e.g. a `*-build-pipeline.md`), follow that as the concrete instance.
 
-**HARD GATE: architect + red-team BEFORE writing code.** For a CRM, a wrong data model is the most expensive mistake — never skip Phase 1–1.5.
+**HARD GATE: architect + red-team BEFORE writing code** for any change touching the data model, auth, money, or cross-module contracts. The most expensive mistakes are foundational — never skip Phase 1–1.5 on domain-heavy work.
 
 | Phase | Goal | Skills / Agents |
 |---|---|---|
-| **0. Discovery** | Lock scope, actors, modules, constraints (multi-tenant? RBAC? scale?) | `brainstorm`, `research`, `ask` |
-| **1. Domain Architecture** | Data model, bounded contexts, consistency, audit, scale posture | `backend-architect` ⭐ |
+| **0. Discovery** | Lock scope, actors, constraints | `brainstorm`, `research`, `ask` |
+| **1. Architecture** | Data model, boundaries, consistency, scale posture | `backend-architect` ⭐ |
 | **1.5. Red-team** | Stress the design before committing | `ck-predict`, `ck-scenario`, `ck-security` |
 | **2. Plan** | Phase files + TODOs in `plans/` | `planner` agent, `ck-plan` |
 | **3. Build** | Implement per plan; parallel devs with strict file ownership | `fullstack-developer` ×N |
 | **4. Verify** | Tests → review → docs sync | `tester` → `code-reviewer` → `docs-manager` |
 
-- Skip phases only for trivial mechanical changes; state explicitly when skipping.
+- Scale the pipeline to the change: trivial mechanical edits go straight to Phase 3 — state explicitly when skipping phases.
 - Phase 3 parallelism = a real pipeline: assign distinct file ownership per dev, no overlapping edits.
 
 #### 1. Code Implementation
