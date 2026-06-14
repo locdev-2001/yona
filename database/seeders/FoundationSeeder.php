@@ -2,11 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PlatformRole;
+use App\Models\Admin;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -18,6 +21,19 @@ class FoundationSeeder extends Seeder
 {
     public function run(): void
     {
+        // Dev platform-admin login (guard `admin`) + super_admin role. Idempotent.
+        $admin = Admin::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            ['name' => 'Platform Admin', 'password' => Hash::make('12345678')],
+        );
+
+        // Admin role assignments live under the reserved platform scope (reuses
+        // the spatie pivot + RLS without a real workspace). The workspace block
+        // below re-binds the tenant context afterwards.
+        DB::statement("select set_config('app.current_workspace', ?, false)", [Admin::PLATFORM_SCOPE]);
+        app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
+        $admin->syncRoles([PlatformRole::SuperAdmin->value]);
+
         $workspace = Workspace::firstOrCreate(
             ['slug' => 'cho-rach'],
             [

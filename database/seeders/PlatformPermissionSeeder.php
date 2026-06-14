@@ -2,53 +2,54 @@
 
 namespace Database\Seeders;
 
+use App\Enums\TenantPermission;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
- * Seeds the GLOBAL (workspace_id = NULL) workspace-role definitions + their
- * feature permissions. Role *definitions* are shared across all workspaces;
- * *assignments* are per-workspace (carry workspace_id) via setPermissionsTeamId.
- * Idempotent — safe to re-run. Roles map to system-architecture.md §5.
+ * Seeds the GLOBAL (workspace_id = NULL) tenant-plane role definitions + their
+ * feature permissions (guard `web`). Role *definitions* are shared across all
+ * workspaces; *assignments* are per-workspace (carry workspace_id). The catalog
+ * lives in code (TenantPermission enum). Idempotent.
  */
 class PlatformPermissionSeeder extends Seeder
 {
-    /** Module-1 feature permissions. Extended per module (deal.*, export.*, …). */
-    private const PERMISSIONS = [
-        'workspace.update',
-        'team.manage',
-        'member.manage',
-        'audit.view',
-    ];
-
-    /** Workspace role → granted permissions. */
-    private const ROLE_PERMISSIONS = [
-        'admin' => ['workspace.update', 'team.manage', 'member.manage', 'audit.view'],
-        'sales_manager' => ['audit.view'],
-        'support_manager' => ['audit.view'],
-        'sales_rep' => [],
-        'support_agent' => [],
-        'marketer' => [],
-        'viewer' => [],
-    ];
+    private const GUARD = 'web';
 
     public function run(): void
     {
-        $guard = 'web';
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->setPermissionsTeamId(null);
 
-        // Create definitions globally (no team context) so they apply everywhere.
-        app(PermissionRegistrar::class)->setPermissionsTeamId(null);
-
-        foreach (self::PERMISSIONS as $permission) {
-            Permission::findOrCreate($permission, $guard);
+        foreach (TenantPermission::values() as $permission) {
+            Permission::findOrCreate($permission, self::GUARD);
         }
 
-        foreach (self::ROLE_PERMISSIONS as $role => $permissions) {
-            Role::findOrCreate($role, $guard)->syncPermissions($permissions);
+        foreach ($this->roleGrants() as $role => $permissions) {
+            Role::findOrCreate($role, self::GUARD)->syncPermissions($permissions);
         }
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        // Drop permissions removed from the catalog (e.g. after a prefix rename).
+        Permission::where('guard_name', self::GUARD)
+            ->whereNotIn('name', TenantPermission::values())
+            ->delete();
+
+        $registrar->forgetCachedPermissions();
+    }
+
+    /** @return array<string, list<string>> Workspace role → granted permissions. */
+    private function roleGrants(): array
+    {
+        return [
+            'admin' => TenantPermission::values(),
+            'sales_manager' => [TenantPermission::AuditView->value],
+            'support_manager' => [TenantPermission::AuditView->value],
+            'sales_rep' => [],
+            'support_agent' => [],
+            'marketer' => [],
+            'viewer' => [],
+        ];
     }
 }

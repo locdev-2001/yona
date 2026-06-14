@@ -14,7 +14,7 @@ class MemberUpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('member.manage') ?? false;
+        return $this->user()?->can('tenant.member.manage') ?? false;
     }
 
     /**

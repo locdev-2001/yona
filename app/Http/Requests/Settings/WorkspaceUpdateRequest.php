@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Validates workspace-settings edits. Admin-gated via the workspace.update
+ * Validates workspace-settings edits. Admin-gated via the tenant.workspace.update
  * permission (scoped to the active workspace). Server-controlled fields
  * (workspace_id, status, slug) are not editable here (BR-X12).
  */
@@ -14,7 +14,7 @@ class WorkspaceUpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('workspace.update') ?? false;
+        return $this->user()?->can('tenant.workspace.update') ?? false;
     }
 
     /**

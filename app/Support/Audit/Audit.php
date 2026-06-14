@@ -35,12 +35,49 @@ class Audit
             'entity_type' => $model->getMorphClass(),
             'entity_id' => (string) $model->getKey(),
             'action' => $action,
-            'actor_id' => auth()->id(),
-            'actor_type' => auth()->id() ? 'user' : 'system',
+            ...self::resolveActor(),
             'changes' => $changes ?? self::diff($model, $action),
             'context' => self::context(),
             'occurred_at' => now(),
         ]);
+    }
+
+    /**
+     * Resolve actor fields based on the active guard.
+     *
+     * admin guard (no impersonation): actor_type='admin', actor_admin_id=admin id, actor_id=null.
+     * web guard (possibly impersonating): actor_type='user', actor_id=user id,
+     *   impersonated_by_admin_id from session (null when not impersonating).
+     * otherwise: actor_type='system', all actor ids null.
+     *
+     * @return array<string, mixed>
+     */
+    private static function resolveActor(): array
+    {
+        if (auth('admin')->check() && ! session()->has('impersonator_admin_id')) {
+            return [
+                'actor_type' => 'admin',
+                'actor_admin_id' => auth('admin')->id(),
+                'actor_id' => null,
+                'impersonated_by_admin_id' => null,
+            ];
+        }
+
+        if (auth('web')->check()) {
+            return [
+                'actor_type' => 'user',
+                'actor_id' => auth('web')->id(),
+                'actor_admin_id' => null,
+                'impersonated_by_admin_id' => session('impersonator_admin_id'),
+            ];
+        }
+
+        return [
+            'actor_type' => 'system',
+            'actor_id' => null,
+            'actor_admin_id' => null,
+            'impersonated_by_admin_id' => null,
+        ];
     }
 
     private static function workspaceId(Model $model): ?string

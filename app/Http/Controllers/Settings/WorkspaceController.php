@@ -18,7 +18,7 @@ class WorkspaceController extends Controller
     {
         $workspace = currentWorkspace();
 
-        abort_unless($workspace !== null && (auth()->user()?->can('workspace.update') ?? false), 403);
+        abort_unless($workspace !== null && (auth()->user()?->can('tenant.workspace.update') ?? false), 403);
 
         return Inertia::render('settings/workspace', [
             'workspace' => [

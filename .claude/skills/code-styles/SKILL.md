@@ -73,6 +73,12 @@ Mục tiêu: DRY, dễ mở rộng, **sửa 1 chỗ → chạy mọi nơi**, và
 - KHÔNG để 1 file phình: ngưỡng **~200 dòng** → tách theo **concern** (controller phình → Action/Service; component phình → sub-component + hook; util → gom theo nhóm).
 - Tách vì trách nhiệm, không tách máy móc.
 
+## 9. DB lỏng — enum & foreign key định nghĩa ở CODE, không ở DB
+- **Enum**: cột DB để `string`; tập giá trị + validate khai ở **code** (class const / PHP enum + FormRequest/Service). KHÔNG dùng DB `enum` / `CHECK`.
+- **Foreign key**: KHÔNG khai FK constraint trong migration (không `->constrained()` / `->foreign()`). Toàn vẹn quan hệ enforce ở **Eloquent relationship + Service** (validate tồn tại, xử lý cascade ở code).
+- Mục tiêu: **tránh ràng buộc DB quá chặt** → schema dễ tiến hoá, migration forward-only nhẹ nhàng.
+- VẪN giữ: `unique` (định danh, vd email), `index` (hiệu năng), và **RLS** (bảo mật tenant) — không tính là "quá chặt".
+
 ## Được phép (KHÔNG tính là "inline" — đừng áp quá tay)
 - Migration anonymous class `return new class extends Migration` (chuẩn Laravel).
 - Closure ngắn biến đổi dữ liệu: `->map(fn ($x) => …)`, pipeline collection.
@@ -88,6 +94,7 @@ Mục tiêu: DRY, dễ mở rộng, **sửa 1 chỗ → chạy mọi nơi**, và
 - [ ] Const ở đầu file/class; comment tối thiểu (chỉ technical)
 - [ ] Tên file/folder rõ nghĩa (PHP StudlyCase / FE kebab-case)
 - [ ] File 1 trách nhiệm, < ~200 dòng; phình → tách theo concern
+- [ ] Migration: không FK constraint / DB enum / CHECK (enforce ở code); giữ unique/index/RLS
 - [ ] Điểm nào chưa chắc → đã HỎI, không đoán
 - [ ] Đã chạy `make format`, output sạch
 
