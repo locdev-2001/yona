@@ -113,7 +113,7 @@ Mỗi bước chuyển tiếp đều ghi lại Activity, tạo nên dòng lịch
   - Admin → tất cả trong workspace
 - Tầm nhìn tính trên từng thực thể, không lan truyền qua liên kết — thấy một Account không đồng nghĩa thấy các Deal của người khác trên đó.
 
-**Hai mặt phẳng quyền:** ngoài *Workspace plane* (khách hàng, mô tả trên), có *Platform plane* — nhân sự nội bộ (`super_admin`/`support_engineer`/`billing_ops`) vận hành xuyên workspace; truy cập dữ liệu khách qua **impersonation có thời hạn + audit đầy đủ**. Identity là **global** (một email, gia nhập nhiều workspace qua membership). Chi tiết: [docs/crm-authorization-model.md](docs/crm-authorization-model.md).
+**Hai mặt phẳng quyền (2 guard riêng):** *Workspace plane* — khách hàng (guard `web`, bảng `users`), một email gia nhập nhiều workspace qua membership; *Platform plane* — nhân sự nội bộ (guard `admin`, bảng `admins` tách riêng) với roles `super_admin`/`support_engineer`/`billing_ops` (RBAC qua spatie), vận hành xuyên workspace và truy cập dữ liệu khách qua **impersonation + audit đầy đủ**. Chi tiết: [docs/crm-authorization-model.md](docs/crm-authorization-model.md).
 
 Hệ thống lưu **audit log** bất biến (append-only) và dùng **soft-delete** cho mọi thực thể — phục vụ truy vết và tuân thủ.
 

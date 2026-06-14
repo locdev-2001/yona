@@ -195,8 +195,10 @@ sequenceDiagram
 - `name` (string) — display name.
 - `password` (string hashed) — password.
 - `status` (enum: active, invited, suspended) — user status (global).
-- `is_internal` (bool) — platform staff flag.
+- `locale`, `timezone` — user preferences.
 - `created_at`, `updated_at` — timestamps.
+
+> Platform staff are **not** `users`: they live in the separate `admins` table (`admin` guard). See [crm-authorization-model.md](../../crm-authorization-model.md).
 
 ## State transitions
 

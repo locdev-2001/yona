@@ -17,7 +17,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 
 | Context | Owns | Key models |
 |---|---|---|
-| **Platform** | Two-plane access control (internal staff + workspaces), identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Workspace, User, Membership, PlatformRole, Team, CustomFieldDefinition, AuditLog, Pipeline, Stage |
+| **Platform** | Two-plane access control (admins + workspaces), identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Workspace, User, Admin, Membership, Team, CustomFieldDefinition, AuditLog, Pipeline, Stage |
 | **Sales** | Funnel + opportunities | Lead, Contact, Account, Deal, DealContactRole |
 | **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Task |
 | **Support** | Issue resolution + SLA | Ticket |
@@ -51,8 +51,8 @@ UUID PKs everywhere (`uuid` default). All workspace-scoped tables carry the **sy
 | Table | Notable columns | Notes |
 |---|---|---|
 | `workspaces` | `name, base_currency, default_pipeline_id, audit_retention, status` | Root boundary. NOT workspace-scoped itself. |
-| `users` | `email, name, password, status, is_internal` | **Global identity** (NOT workspace-scoped). `unique(email)` globally. `is_internal` = platform staff. No role/team here. |
-| `platform_role_user` | `user_id, platform_role(super_admin/support_engineer/billing_ops)` | Platform plane. Internal staff only; god-mode data access via audited impersonation (auth-model doc). |
+| `users` | `email, name, password, status, locale, timezone` | **Customer identity** (`web` guard, NOT workspace-scoped). `unique(email)` globally. No role/team here. |
+| `admins` | `email, name, password, status, locale, timezone` | **Platform-staff identity** (`admin` guard, separate from `users`). Platform RBAC via spatie on guard `admin` (roles super_admin/support_engineer/billing_ops); god-mode via audited impersonation (auth-model doc). |
 | `workspace_member` (membership) | `workspace_id, user_id, role, team_id, status, invited_at` | **The workspace-scoped membership.** `unique(workspace_id, user_id)`. `role`/`team_id` live here, server-controlled (BR-X12). A user joins N workspaces. Deactivate = membership.status (BR-X03), not user. |
 | `teams` | `workspace_id, name, parent_id` | Tree (BR-X02). Cycle-guarded (BR-X13). |
 | `team_closure` | `workspace_id, ancestor_id, descendant_id, depth` | Closure table for O(1) subtree reads (manager rollup). Maintained on team create/reparent. |
