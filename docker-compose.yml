@@ -40,6 +40,12 @@ x-php: &php
   environment: *app-env
   volumes:
     - .:/var/www/html
+    # vendor/ lives on a Linux named volume, NOT the Windows bind mount. Booting
+    # Laravel reads thousands of vendor class files per request; over the slow
+    # Docker Desktop bind mount that costs ~15s/request. On a native volume it's
+    # instant. App code stays on the bind mount, so PHP edits are still live.
+    # Populated by the entrypoint's `composer install` on first boot.
+    - vendor:/var/www/html/vendor
   depends_on:
     postgres:
       condition: service_healthy
@@ -91,7 +97,11 @@ services:
   node:
     image: node:22-alpine
     working_dir: /var/www/html
-    environment: *app-env
+    environment:
+      <<: *app-env
+      # Windows bind mounts don't emit inotify events — force Vite to poll so HMR
+      # picks up edits made on the host. See vite.config.js server.watch.
+      VITE_USE_POLLING: "true"
     volumes:
       - .:/var/www/html
       # node_modules + pnpm store live on a Linux named volume, NOT the Windows
@@ -124,3 +134,4 @@ services:
 volumes:
   pgdata:
   node_modules:
+  vendor:
