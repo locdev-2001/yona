@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Admin;
 use App\Models\User;
 use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Inspiring;
@@ -41,18 +42,26 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        $user = $request->user();
+        $admin = $request->user('admin');
+        $user = $request->user('web');
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
+                'admin' => $admin ? $this->adminPayload($admin) : null,
                 'user' => $user ? $this->userPayload($user) : null,
                 'workspaces' => $user ? $this->workspaceList($user) : [],
                 // Lazy: IdentifyWorkspace binds the context AFTER Inertia::share()
                 // runs, so these resolve at response time.
                 'membership' => fn () => $this->membershipPayload($user),
+                'impersonating' => session('impersonator_admin_id')
+                    ? [
+                        'admin_id' => session('impersonator_admin_id'),
+                        'workspace_id' => session('current_workspace_id'),
+                    ]
+                    : null,
             ],
             'activeWorkspace' => fn () => $this->activeWorkspacePayload(),
             'locale' => app()->getLocale(),
@@ -61,6 +70,19 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function adminPayload(Admin $admin): array
+    {
+        return [
+            'id' => $admin->id,
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'permissions' => $admin->getAllPermissions()->pluck('name')->all(),
         ];
     }
 
@@ -76,7 +98,6 @@ class HandleInertiaRequests extends Middleware
             'avatar' => $user->avatar ?? null,
             'locale' => $user->locale,
             'timezone' => $user->timezone,
-            'is_internal' => $user->isInternal(),
         ];
     }
 

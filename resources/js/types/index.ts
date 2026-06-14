@@ -18,10 +18,24 @@ export interface Membership {
     permissions: string[];
 }
 
+export interface AdminIdentity {
+    id: number;
+    name: string;
+    email: string;
+    permissions: string[];
+}
+
+export interface ImpersonationContext {
+    admin_id: number;
+    workspace_id: string;
+}
+
 export interface Auth {
-    user: User;
+    admin: AdminIdentity | null;
+    user: User | null;
     workspaces: Workspace[];
     membership: Membership | null;
+    impersonating: ImpersonationContext | null;
 }
 
 export interface BreadcrumbItem {

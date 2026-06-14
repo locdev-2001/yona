@@ -13,7 +13,8 @@ use Spatie\Permission\Traits\HasRoles;
 /**
  * User — a global identity (one email system-wide, NOT workspace-scoped).
  * Joins N workspaces via WorkspaceMember; role/team/status live on membership.
- * `is_internal` flags platform staff. `id` stays bigint (hybrid ID strategy).
+ * Platform staff access is managed via the Admin model (guard `admin`).
+ * `id` stays bigint (hybrid ID strategy).
  *
  * spatie roles are scoped per workspace via team_foreign_key=workspace_id;
  * call setPermissionsTeamId($workspace->id) (done by IdentifyWorkspace) before
@@ -27,7 +28,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * `status` / `is_internal` are server-controlled (BR-X12) — excluded.
+     * `status` is server-controlled (BR-X12) — excluded.
      *
      * @var list<string>
      */
@@ -59,7 +60,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_internal' => 'boolean',
         ];
     }
 
@@ -67,12 +67,6 @@ class User extends Authenticatable
     public function memberships(): HasMany
     {
         return $this->hasMany(WorkspaceMember::class);
-    }
-
-    /** @return HasMany<PlatformRole, $this> */
-    public function platformRoles(): HasMany
-    {
-        return $this->hasMany(PlatformRole::class);
     }
 
     /**
@@ -86,10 +80,5 @@ class User extends Authenticatable
             ->where('workspace_id', $workspaceId)
             ->where('status', 'active')
             ->first();
-    }
-
-    public function isInternal(): bool
-    {
-        return (bool) $this->is_internal;
     }
 }
