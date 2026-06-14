@@ -1,6 +1,8 @@
 <?php
 
 use App\Exceptions\StaleModelException;
+use App\Http\Middleware\BindAdminPermissionScope;
+use App\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyWorkspace;
 use App\Http\Middleware\ResetTenantContext;
@@ -35,7 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // data screens).
         $middleware->alias([
             'workspace' => IdentifyWorkspace::class,
+            'admin.scope' => BindAdminPermissionScope::class,
+            'no.impersonation' => BlockDuringImpersonation::class,
         ]);
+
+        // Guard-aware redirects: admin routes redirect to admin endpoints.
+        $middleware->redirectGuestsTo(fn (Request $r) => $r->is('admin*') ? route('admin.login') : route('login'));
+        $middleware->redirectUsersTo(fn (Request $r) => $r->is('admin*') ? route('admin.dashboard') : route('dashboard'));
 
         // The workspace (RLS) context MUST be established before route-model
         // binding queries tenant tables — otherwise binding runs default-denied

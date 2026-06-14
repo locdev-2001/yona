@@ -19,12 +19,12 @@ Route::middleware('auth')->group(function () {
         Route::controller(ProfileController::class)->name('profile.')->group(function () {
             Route::get('profile', 'edit')->name('edit');
             Route::patch('profile', 'update')->name('update');
-            Route::delete('profile', 'destroy')->name('destroy');
+            Route::delete('profile', 'destroy')->name('destroy')->middleware('no.impersonation');
         });
 
         Route::controller(PasswordController::class)->name('password.')->group(function () {
             Route::get('password', 'edit')->name('edit');
-            Route::put('password', 'update')->name('update');
+            Route::put('password', 'update')->name('update')->middleware('no.impersonation');
         });
 
         Route::get('appearance', AppearanceController::class)->name('appearance');

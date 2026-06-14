@@ -29,13 +29,20 @@ class Audit
     public static function log(Model $model, string $action, ?array $changes = null): void
     {
         $workspaceId = self::workspaceId($model);
+        $actor = self::resolveActor();
 
-        AuditLog::on($workspaceId === null ? 'pgsql_privileged' : null)->forceCreate([
+        // Platform-plane writes go through the privileged role: entries with no
+        // workspace, or an admin actor (whose request RLS context is the reserved
+        // platform scope, not this row's workspace), cannot satisfy the
+        // audit_logs RLS WITH CHECK on the runtime connection.
+        $privileged = $workspaceId === null || $actor['actor_type'] === 'admin';
+
+        AuditLog::on($privileged ? 'pgsql_privileged' : null)->forceCreate([
             'workspace_id' => $workspaceId,
             'entity_type' => $model->getMorphClass(),
             'entity_id' => (string) $model->getKey(),
             'action' => $action,
-            ...self::resolveActor(),
+            ...$actor,
             'changes' => $changes ?? self::diff($model, $action),
             'context' => self::context(),
             'occurred_at' => now(),
