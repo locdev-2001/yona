@@ -44,9 +44,7 @@ export function AdminNavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                             <Avatar className="h-8 w-8 overflow-hidden rounded-full">
-                                <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                    {getInitials(admin.name)}
-                                </AvatarFallback>
+                                <AvatarFallback className="bg-secondary text-foreground rounded-lg">{getInitials(admin.name)}</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{admin.name}</span>
@@ -63,9 +61,7 @@ export function AdminNavUser() {
                         <DropdownMenuLabel className="p-0 font-normal">
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                 <Avatar className="h-8 w-8 overflow-hidden rounded-full">
-                                    <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                        {getInitials(admin.name)}
-                                    </AvatarFallback>
+                                    <AvatarFallback className="bg-secondary text-foreground rounded-lg">{getInitials(admin.name)}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">{admin.name}</span>

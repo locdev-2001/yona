@@ -1,17 +1,19 @@
+import { useTranslator } from '@/lib/i18n';
 import { dealStatus, priority, type DealStatus, type Priority, type StatusMeta } from '@/lib/status';
 import { cn } from '@/lib/utils';
 
 /**
  * Shared status / priority pill (design-system §7.4).
- * Color + icon + label — never color alone (§6). Styling comes from
- * lib/status.ts only; do not inline colored spans per screen.
+ * Color + icon + label — never color alone (§6). Styling + label key come from
+ * lib/status.ts only; the label is resolved here via i18n (§10).
  */
 function Pill({ meta }: { meta: StatusMeta }) {
+    const t = useTranslator();
     const Icon = meta.icon;
     return (
         <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', meta.class)}>
             <Icon className="size-3.5" aria-hidden />
-            {meta.label}
+            {t(meta.label)}
         </span>
     );
 }

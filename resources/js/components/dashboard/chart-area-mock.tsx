@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useTranslator } from '@/lib/i18n';
 import { useState } from 'react';
 
-// Mock area chart (no chart lib) — dashboard-01 ChartAreaInteractive placeholder.
+// Mock area chart (no chart lib) — wire to Recharts + real data later.
 const W = 600;
 const H = 220;
 
@@ -17,6 +18,12 @@ const secondary: Record<string, number[]> = {
     '7d': [50, 64, 58, 82, 72, 96, 108],
 };
 
+const ranges = [
+    { key: '90d', labelKey: 'platform.dashboard.chart.range_90d' },
+    { key: '30d', labelKey: 'platform.dashboard.chart.range_30d' },
+    { key: '7d', labelKey: 'platform.dashboard.chart.range_7d' },
+] as const;
+
 function paths(values: number[]) {
     const max = Math.max(...values) * 1.15;
     const step = W / (values.length - 1);
@@ -26,23 +33,18 @@ function paths(values: number[]) {
     return { line, area };
 }
 
-const ranges = [
-    { key: '90d', label: 'Last 3 months' },
-    { key: '30d', label: 'Last 30 days' },
-    { key: '7d', label: 'Last 7 days' },
-];
-
 export function ChartAreaMock() {
+    const t = useTranslator();
     const [range, setRange] = useState<keyof typeof series>('90d');
     const a = paths(series[range]);
     const b = paths(secondary[range]);
 
     return (
-        <Card className="shadow-sm">
+        <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
                 <div className="grid gap-1">
-                    <CardTitle>Deals closed</CardTitle>
-                    <CardDescription>Total for the selected period</CardDescription>
+                    <CardTitle>{t('platform.dashboard.chart.title')}</CardTitle>
+                    <CardDescription>{t('platform.dashboard.chart.subtitle')}</CardDescription>
                 </div>
                 <ToggleGroup
                     type="single"
@@ -53,7 +55,7 @@ export function ChartAreaMock() {
                 >
                     {ranges.map((r) => (
                         <ToggleGroupItem key={r.key} value={r.key} className="px-3 text-xs">
-                            {r.label}
+                            {t(r.labelKey)}
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
@@ -64,7 +66,7 @@ export function ChartAreaMock() {
                     preserveAspectRatio="none"
                     className="aspect-[3/1] w-full"
                     role="img"
-                    aria-label="Deals closed area chart"
+                    aria-label={t('platform.dashboard.chart.title')}
                 >
                     <defs>
                         <linearGradient id="fill-1" x1="0" y1="0" x2="0" y2="1">
@@ -83,10 +85,10 @@ export function ChartAreaMock() {
                 </svg>
                 <div className="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
                     <span className="flex items-center gap-1.5">
-                        <span className="bg-chart-1 size-2 rounded-full" /> Closed
+                        <span className="bg-chart-1 size-2 rounded-full" /> {t('platform.dashboard.chart.closed')}
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <span className="bg-chart-2 size-2 rounded-full" /> Forecast
+                        <span className="bg-chart-2 size-2 rounded-full" /> {t('platform.dashboard.chart.forecast')}
                     </span>
                 </div>
             </CardContent>

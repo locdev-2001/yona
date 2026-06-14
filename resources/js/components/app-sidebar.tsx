@@ -1,6 +1,6 @@
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, SidebarSeparator } from '@/components/ui/sidebar';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { type NavGroup } from '@/types';
 import { Activity, BarChart3, Bell, CalendarDays, History, Inbox, LayoutGrid, ListChecks, Plug } from 'lucide-react';
@@ -53,6 +53,8 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain groups={navGroups} />
             </SidebarContent>
+
+            <SidebarSeparator />
 
             <SidebarFooter>
                 <NavUser />
