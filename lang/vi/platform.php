@@ -91,4 +91,39 @@ return [
         'vi' => 'Tiếng Việt',
         'en' => 'English',
     ],
+    'admin' => [
+        'title' => 'Nền tảng',
+        'badge' => 'Admin',
+        'nav' => [
+            'dashboard' => 'Bảng điều khiển',
+            'workspaces' => 'Không gian làm việc',
+        ],
+        'dashboard' => [
+            'title' => 'Bảng điều khiển nền tảng',
+            'subtitle' => 'Quản trị các không gian làm việc và hóa thân thành viên để hỗ trợ.',
+        ],
+        'workspaces' => [
+            'title' => 'Không gian làm việc',
+            'subtitle' => 'Tất cả không gian làm việc của khách hàng trên nền tảng.',
+            'name' => 'Tên',
+            'slug' => 'Slug',
+            'status' => 'Trạng thái',
+            'currency' => 'Tiền tệ',
+            'created' => 'Ngày tạo',
+            'empty' => 'Chưa có không gian làm việc nào.',
+        ],
+        'members' => [
+            'title' => 'Thành viên',
+            'name' => 'Tên',
+            'email' => 'Email',
+            'role' => 'Vai trò',
+            'status' => 'Trạng thái',
+            'impersonate' => 'Hóa thân',
+            'empty' => 'Không gian làm việc này chưa có thành viên.',
+        ],
+        'impersonation' => [
+            'banner' => 'Bạn đang hóa thân một thành viên của không gian làm việc khách hàng.',
+            'stop' => 'Dừng hóa thân',
+        ],
+    ],
 ];

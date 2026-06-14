@@ -25,7 +25,7 @@ class ImpersonationController extends Controller
      */
     public function store(Request $request, Workspace $workspace, User $user): RedirectResponse
     {
-        abort_unless(auth('admin')->user()?->can('platform.impersonate'), 403);
+        // Capability is enforced by the admin.can:platform.impersonate route middleware.
         abort_unless($user->membershipFor($workspace)?->isActive(), 422, 'User has no active membership in this workspace.');
 
         $request->session()->regenerate();

@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\StaleModelException;
+use App\Http\Middleware\AdminCan;
 use App\Http\Middleware\BindAdminPermissionScope;
 use App\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'workspace' => IdentifyWorkspace::class,
             'admin.scope' => BindAdminPermissionScope::class,
+            'admin.can' => AdminCan::class,
             'no.impersonation' => BlockDuringImpersonation::class,
         ]);
 

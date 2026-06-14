@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -120,4 +121,27 @@ function seedMember(Workspace $workspace, User $user, string $role = 'sales_rep'
     $user->assignRole($role);
 
     return $member;
+}
+
+/**
+ * Create an admin and authenticate them on the `admin` guard, assigning their
+ * platform roles under the reserved PLATFORM_SCOPE (what BindAdminPermissionScope
+ * does per request). Pass roles: [] for an admin with no capabilities.
+ *
+ * @param  list<string>  $roles
+ */
+function actingAsAdmin(?Admin $admin = null, array $roles = ['super_admin']): Admin
+{
+    $admin ??= Admin::factory()->create();
+
+    setWorkspaceContext(Admin::PLATFORM_SCOPE);
+    app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
+    $admin->syncRoles($roles);
+    clearWorkspaceContext();
+
+    // Authenticate a fresh instance (no pre-loaded role relation) so the request
+    // resolves roles under the admin scope exactly as production does.
+    test()->actingAs($admin->fresh(), 'admin');
+
+    return $admin;
 }

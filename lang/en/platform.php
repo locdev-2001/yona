@@ -90,4 +90,39 @@ return [
         'vi' => 'Tiếng Việt',
         'en' => 'English',
     ],
+    'admin' => [
+        'title' => 'Platform',
+        'badge' => 'Admin',
+        'nav' => [
+            'dashboard' => 'Dashboard',
+            'workspaces' => 'Workspaces',
+        ],
+        'dashboard' => [
+            'title' => 'Platform dashboard',
+            'subtitle' => 'Administer workspaces and impersonate members for support.',
+        ],
+        'workspaces' => [
+            'title' => 'Workspaces',
+            'subtitle' => 'All customer workspaces on the platform.',
+            'name' => 'Name',
+            'slug' => 'Slug',
+            'status' => 'Status',
+            'currency' => 'Currency',
+            'created' => 'Created',
+            'empty' => 'No workspaces yet.',
+        ],
+        'members' => [
+            'title' => 'Members',
+            'name' => 'Name',
+            'email' => 'Email',
+            'role' => 'Role',
+            'status' => 'Status',
+            'impersonate' => 'Impersonate',
+            'empty' => 'No members in this workspace.',
+        ],
+        'impersonation' => [
+            'banner' => 'You are impersonating a member of a customer workspace.',
+            'stop' => 'Stop impersonating',
+        ],
+    ],
 ];

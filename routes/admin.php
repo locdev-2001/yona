@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -35,7 +36,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
             ->name('logout');
 
+        Route::middleware('admin.can:platform.workspaces.view')->group(function () {
+            Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
+            Route::get('workspaces/{workspace}', [WorkspaceController::class, 'show'])->name('workspaces.show');
+        });
+
         Route::post('workspaces/{workspace}/members/{user}/impersonate', [ImpersonationController::class, 'store'])
+            ->middleware('admin.can:platform.impersonate')
             ->name('workspaces.impersonate');
 
         // Stop impersonation (the admin guard is still authenticated here).
