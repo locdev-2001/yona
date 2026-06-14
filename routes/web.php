@@ -1,12 +1,11 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\WorkspaceSwitchController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', WelcomeController::class)->name('home');
 
 Route::middleware(['auth'])->group(function () {
     // Switch active workspace (validated against the user's memberships).
@@ -14,7 +13,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Workspace-scoped app screens require an active membership (IdentifyWorkspace).
     Route::middleware('workspace')->group(function () {
-        Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+        Route::get('dashboard', DashboardController::class)->name('dashboard');
     });
 });
 

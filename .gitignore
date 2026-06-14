@@ -40,3 +40,9 @@ dist/
 /test-results
 /playwright-report
 /playwright/.cache
+
+# Plans (local planning artifacts — not tracked)
+/plans/
+
+# Claude local settings (skills/ stays tracked)
+.claude/settings*
