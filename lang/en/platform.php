@@ -2,6 +2,47 @@
 
 // English (fallback). Mirror of lang/vi/platform.php — keep keys in sync.
 return [
+    'landing' => [
+        'nav' => [
+            'features' => 'Features',
+            'login' => 'Log in',
+            'register' => 'Get started',
+            'dashboard' => 'Go to dashboard',
+        ],
+        'hero' => [
+            'eyebrow' => 'CRM for fast-moving teams',
+            'title' => 'Manage customers without the chaos',
+            'subtitle' => 'Bring your customers, deals and team tasks into one tidy place. Realtime, multi-workspace, with record-level permissions.',
+            'cta_primary' => 'Get started free',
+            'cta_secondary' => 'Log in',
+            'cta_dashboard' => 'Go to dashboard',
+            'hint' => 'No credit card required · Cancel anytime',
+        ],
+        'features' => [
+            'title' => 'Everything you need to nurture customers',
+            'subtitle' => 'A multi-tenant platform with tight permissions and instant updates for the whole team.',
+            'workspaces' => [
+                'title' => 'Multiple workspaces',
+                'description' => 'A separate workspace per department or client, with strictly isolated data.',
+            ],
+            'roles' => [
+                'title' => 'Role-based access',
+                'description' => 'Owner, admin, member… control exactly who can see and do what, down to each record.',
+            ],
+            'teams' => [
+                'title' => 'Team hierarchy',
+                'description' => 'Organize users into a hierarchy that decides who can see which records.',
+            ],
+            'realtime' => [
+                'title' => 'Realtime updates',
+                'description' => 'Every change shows up instantly for the whole team via realtime broadcasting.',
+            ],
+        ],
+        'footer' => [
+            'tagline' => 'A tidy CRM for modern teams.',
+            'copyright' => '© :year Chó Rách Management. All rights reserved.',
+        ],
+    ],
     'nav' => [
         'dashboard' => 'Dashboard',
         'settings' => 'Settings',

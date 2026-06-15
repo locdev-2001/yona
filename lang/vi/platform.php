@@ -3,6 +3,47 @@
 // Vietnamese (default). Single source of UI strings for the Platform module
 // (shared to React via Inertia). Keep keys stable; mirror in lang/en/platform.php.
 return [
+    'landing' => [
+        'nav' => [
+            'features' => 'Tính năng',
+            'login' => 'Đăng nhập',
+            'register' => 'Dùng thử',
+            'dashboard' => 'Vào Dashboard',
+        ],
+        'hero' => [
+            'eyebrow' => 'CRM cho đội nhóm tăng tốc',
+            'title' => 'Quản lý khách hàng, không rối như tơ vò',
+            'subtitle' => 'Gom khách hàng, giao dịch và công việc của cả đội vào một nơi gọn gàng. Realtime, đa không gian làm việc, phân quyền tới từng bản ghi.',
+            'cta_primary' => 'Bắt đầu miễn phí',
+            'cta_secondary' => 'Đăng nhập',
+            'cta_dashboard' => 'Vào Dashboard',
+            'hint' => 'Không cần thẻ tín dụng · Hủy bất cứ lúc nào',
+        ],
+        'features' => [
+            'title' => 'Đủ thứ cần để chăm khách hàng',
+            'subtitle' => 'Nền tảng đa tenant, phân quyền chặt, cập nhật tức thì cho cả đội.',
+            'workspaces' => [
+                'title' => 'Đa không gian làm việc',
+                'description' => 'Mỗi phòng ban hay khách hàng một workspace riêng, dữ liệu tách bạch tuyệt đối.',
+            ],
+            'roles' => [
+                'title' => 'Phân quyền theo vai trò',
+                'description' => 'Owner, admin, member… kiểm soát rõ ai được thấy và làm gì tới từng bản ghi.',
+            ],
+            'teams' => [
+                'title' => 'Cây đội nhóm',
+                'description' => 'Tổ chức người dùng theo cấp bậc, quyết định mỗi người thấy được những bản ghi nào.',
+            ],
+            'realtime' => [
+                'title' => 'Cập nhật realtime',
+                'description' => 'Mọi thay đổi hiện ngay cho cả đội nhờ broadcasting thời gian thực.',
+            ],
+        ],
+        'footer' => [
+            'tagline' => 'CRM gọn gàng cho đội nhóm Việt.',
+            'copyright' => '© :year Chó Rách Management. Đã đăng ký bản quyền.',
+        ],
+    ],
     'nav' => [
         'dashboard' => 'Bảng điều khiển',
         'settings' => 'Cài đặt',
