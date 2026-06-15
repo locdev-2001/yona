@@ -1,6 +1,6 @@
 # Audit Log (Append-Only History)
 
-Module: Platform · Status: live · Updated: 2026-06-13
+Module: Platform · Status: live · Updated: 2026-06-15
 
 ## Purpose
 
@@ -162,8 +162,10 @@ sequenceDiagram
 - `entity_type` (string) — morph class (e.g., 'deal', 'contact', 'user').
 - `entity_id` (UUID/int) — primary key of the changed entity.
 - `action` (enum: create, update, delete, ownership_changed, role_changed, login, export, erasure) — what happened.
-- `actor_id` (int, nullable) — user who triggered the change; null for system events.
-- `actor_type` (enum: user, system) — who acted.
+- `actor_id` (int, nullable) — user who triggered the change; null for system/admin events.
+- `actor_type` (enum: user, system, admin) — who acted.
+- `actor_admin_id` (int, nullable) — set when an Admin performed the action (`actor_type = 'admin'`); see [admin plane](../admin/README.md).
+- `impersonated_by_admin_id` (int, nullable) — set when an Admin made the change while impersonating a user (BR-X05); see [impersonation](../admin/impersonation.md).
 - `changes` (JSONB) — diff: `{field: {old: ..., new: ...}}` or `{field: {ref: entity_id}}` for PII.
 - `context` (JSONB, nullable) — request context: IP, user agent.
 - `occurred_at` (timestamp) — when the change happened (not `created_at`; precise timing).

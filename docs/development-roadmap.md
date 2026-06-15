@@ -2,7 +2,7 @@
 
 > Living document — phases, milestones, progress. Maintained per `.claude/rules/documentation-management.md`. Pipeline defined in `crm-build-pipeline.md`.
 
-Last updated: 2026-06-13
+Last updated: 2026-06-15
 
 ## Status legend
 ✅ done · 🟡 in progress · ⬜ not started
@@ -14,15 +14,16 @@ Last updated: 2026-06-13
 | **0. Discovery** | Scope, stack, constraints | ✅ |
 | **1. Domain Architecture** | Data model, contexts, auth, marketplace, foundations | ✅ |
 | **1.5. Red-team** | Predict / scenario / security hardening | ✅ (folded into business-rules) |
-| **2. Plan** | Phase files + TODOs in `plans/` | ⬜ next |
-| **3. Build** | Implement (Sales-first) | ⬜ |
-| **4. Verify** | Tests → review → docs sync | ⬜ |
+| **2. Plan** | Phase files + TODOs in `plans/` | ✅ (Module 1 + admin plane) |
+| **3. Build** | Implement (Sales-first) | 🟡 in progress |
+| **4. Verify** | Tests → review → docs sync | 🟡 ongoing per module |
 
 ## Build sequence (Phase 3 — from system-architecture §12)
 
 | # | Module | Status |
 |---|---|---|
 | 1 | Platform foundation (workspace, identity+membership, teams+closure, tenant isolation+RLS, RBAC, audit, time/locale, record numbers) | ✅ |
+| 1b | **Admin plane** (two-guard `admin`, admin auth + RBAC, workspaces panel, Model-A impersonation, dual-actor audit, tenant signup, app-shell/UI refresh) | ✅ |
 | 2 | Custom-fields engine | ⬜ |
 | 3 | Cross-cutting platform (attachments, notifications, event bus, **Reverb realtime**, product announcements) | ⬜ |
 | 4 | Sales core (Account, Contact, Deal, Pipeline/Stage, roles; stage/won-lost/forecast) | ⬜ |

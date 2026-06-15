@@ -16,6 +16,16 @@ Workspace isolation, identity + membership, teams with hierarchy, RBAC + visibil
 | [RBAC + Visibility](./platform/rbac-visibility.md) | Feature-gate (role → permissions) and record-gate (ownership + team visibility). | `Visibility` resolver + spatie |
 | [Audit Log](./platform/audit-log.md) | Append-only history of changes; PII-minimized diffs; immutable at DB level. | `Audit` class + `AuditLog` model |
 
+## Admin Plane (Platform)
+
+Internal-staff side: a separate `admin` guard (isolated from the customer `web` guard), admin RBAC, a read-only oversight panel, and audited impersonation. See the [module overview](./admin/README.md).
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Admin Auth (two-guard)](./admin/admin-auth.md) | Staff login/logout/reset on the `admin` guard; guard-aware redirects + permission scope. | `Admin\Auth\AuthenticatedSessionController` + `BindAdminPermissionScope` |
+| [Workspaces Panel](./admin/workspaces-panel.md) | Read-only platform view over workspaces + members (privileged/RLS-bypassed read). | `Admin\WorkspaceController` |
+| [Impersonation (Model A)](./admin/impersonation.md) | Admin acts as a tenant member; dual-actor audited; reversible. | `Admin\ImpersonationController` |
+
 ## Module 2 — Custom-Fields Engine
 
 (Planned) User-defined fields with type validation and versioning.

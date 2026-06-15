@@ -17,6 +17,19 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Admin plane (two-guard) + UI refresh (2026-06-14 → 2026-06-15)
+- **Two-guard split**: internal staff authenticate on a separate `admin` guard (own `admins` table + provider) — fully isolated from the customer `web` guard. Replaces the earlier `is_internal` flag on `users`.
+  - `is_internal` column + `platform_role_user` table **dropped**; `PlatformRole` model removed. Admin RBAC now lives in admin-scoped spatie tables under a fixed `Admin::PLATFORM_SCOPE` team id (`00000000-…-0000`), keeping the workspace-scoped pivot + RLS untouched.
+- **Admin auth**: `/admin/login`, logout, password reset on the `admin` guard. Guard-aware guest/auth redirects (admin routes → admin endpoints).
+- **Admin panel** (lean, read-only over tenants): workspaces index + show (member list); reads workspace-scoped rows via the **privileged connection** (RLS-bypassed) since an admin is bound to no single workspace.
+- **Impersonation (Model A)** — admin guard stays live while `web` guard logs in as the target member, so tenant routes/RLS/`IdentifyWorkspace` work unchanged. `impersonate_start`/`impersonate_stop` audited as the admin actor; impersonation banner in the tenant app; destructive self-account actions blocked while impersonating (`no.impersonation`).
+- **Dual-actor audit**: `audit_logs` gains `actor_admin_id` (admin-performed actions) + `impersonated_by_admin_id` (admin acting through a user) — BR-X05.
+- **Guard-aware middleware**: `admin.scope` (binds platform permission scope + resets cached spatie relations), `admin.can:<ability>` (checks the admin guard, not web), `no.impersonation`.
+- **Conditional Inertia payload**: `HandleInertiaRequests` shapes the auth payload per guard (admin / user / impersonating) — fixes admin-route TypeError.
+- **Tenant signup**: public `register` route creates user + workspace + owner membership (self-serve onboarding).
+- **Horizon/Telescope/Pulse gates** moved to the `admin` guard + `platform.monitoring.view`.
+- **UI refresh**: floated app-shell (SidebarInset shadow + `--radius-shell`), shared `StatCard`/`PageHeader`/`EmptyState` primitives, real KPI counts on both dashboards, light/dark/system switcher in the topbar, status labels + admin panel strings routed through i18n (`lang/{vi,en}/platform.php`). AdminLayout/AdminSidebar reuse the tenant app-shell for visual parity.
+
 ### Added — Module 1 Platform Foundation (2026-06-13)
 - **Tenant isolation** (3-layer): global scope (BelongsToWorkspace trait) + middleware (IdentifyWorkspace, ResetTenantContext) + PostgreSQL RLS (defense-in-depth). No cross-workspace read/write possible.
 - **Workspace switching**: multi-workspace users can switch active context; session-driven, server-validated.
@@ -56,6 +69,7 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **Conversations / Inbox** (`docs/crm-conversations-inbox.md`): V1 realtime omnichannel live chat (web widget + Zalo + FB + email), Conversation/Message model, escalate→Ticket. Mandates Laravel Reverb (now v1 infra).
 
 ### Changed
+- Platform identity: `is_internal` flag on `users` → **separate `admin` guard + `admins` table** (two-guard isolation; staff and customers never share an identity).
 - Identity model: per-tenant → **global identity + membership** (long-term multi-org support).
 - Billing: fixed plans → **marketplace** (add-ons, one-time/subscription).
 - Terminology: tenant → **workspace** (entity/column); "multi-tenant" kept as pattern name.
