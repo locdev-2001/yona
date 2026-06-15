@@ -5,8 +5,8 @@ import { FormEventHandler } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
 interface RegisterForm {
@@ -34,10 +34,10 @@ export default function Register() {
     return (
         <AuthLayout title="Create an account" description="Enter your details below to create your account">
             <Head title="Register" />
-            <form className="flex flex-col gap-6" onSubmit={submit}>
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
+            <form onSubmit={submit}>
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel htmlFor="name">Name</FieldLabel>
                         <Input
                             id="name"
                             type="text"
@@ -50,11 +50,11 @@ export default function Register() {
                             disabled={processing}
                             placeholder="Full name"
                         />
-                        <InputError message={errors.name} className="mt-2" />
-                    </div>
+                        <InputError message={errors.name} />
+                    </Field>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                    <Field>
+                        <FieldLabel htmlFor="email">Email</FieldLabel>
                         <Input
                             id="email"
                             type="email"
@@ -64,13 +64,13 @@ export default function Register() {
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
-                            placeholder="email@example.com"
+                            placeholder="m@example.com"
                         />
                         <InputError message={errors.email} />
-                    </div>
+                    </Field>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                    <Field>
+                        <FieldLabel htmlFor="password">Password</FieldLabel>
                         <Input
                             id="password"
                             type="password"
@@ -83,10 +83,10 @@ export default function Register() {
                             placeholder="Password"
                         />
                         <InputError message={errors.password} />
-                    </div>
+                    </Field>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
+                    <Field>
+                        <FieldLabel htmlFor="password_confirmation">Confirm password</FieldLabel>
                         <Input
                             id="password_confirmation"
                             type="password"
@@ -99,20 +99,22 @@ export default function Register() {
                             placeholder="Confirm password"
                         />
                         <InputError message={errors.password_confirmation} />
-                    </div>
+                    </Field>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Create account
-                    </Button>
-                </div>
+                    <Field>
+                        <Button type="submit" tabIndex={5} disabled={processing}>
+                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                            Create account
+                        </Button>
+                    </Field>
 
-                <div className="text-muted-foreground text-center text-sm">
-                    Already have an account?{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
-                        Log in
-                    </TextLink>
-                </div>
+                    <FieldDescription className="text-center">
+                        Already have an account?{' '}
+                        <TextLink href={route('login')} tabIndex={6}>
+                            Sign in
+                        </TextLink>
+                    </FieldDescription>
+                </FieldGroup>
             </form>
         </AuthLayout>
     );
