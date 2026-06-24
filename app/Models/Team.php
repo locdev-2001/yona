@@ -4,7 +4,11 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasAttachments;
+use App\Models\Concerns\HasComments;
+use App\Models\Concerns\HasNotes;
 use App\Models\Concerns\HasOptimisticLock;
+use App\Models\Concerns\HasTags;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids, SoftDeletes;
+    use Auditable, BelongsToWorkspace, HasAttachments, HasComments, HasFactory, HasNotes, HasOptimisticLock, HasTags, HasUuids, SoftDeletes;
 
     // workspace_id / parent_id are server-controlled (BR-X12) — set via service.
     protected $fillable = [

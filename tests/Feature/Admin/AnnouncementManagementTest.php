@@ -160,7 +160,7 @@ it('records a create audit log entry when an announcement is stored', function (
     // written via pgsql_privileged and hidden from the runtime cho_rach_app
     // connection by RLS (NULL ≠ UUID). Read through the privileged connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
-        ->where('entity_type', Announcement::class)
+        ->where('entity_type', (new Announcement)->getMorphClass())
         ->where('entity_id', $announcement->id)
         ->where('action', 'create')
         ->first();
@@ -183,7 +183,7 @@ it('records an update audit log entry when an announcement is updated', function
     // Read via privileged connection — global audit entries have workspace_id = NULL,
     // which RLS hides from the runtime cho_rach_app connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
-        ->where('entity_type', Announcement::class)
+        ->where('entity_type', (new Announcement)->getMorphClass())
         ->where('entity_id', $announcement->id)
         ->where('action', 'update')
         ->first();
@@ -201,7 +201,7 @@ it('records a delete audit log entry when an announcement is destroyed', functio
     // Read via privileged connection — global audit entries have workspace_id = NULL,
     // which RLS hides from the runtime cho_rach_app connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
-        ->where('entity_type', Announcement::class)
+        ->where('entity_type', (new Announcement)->getMorphClass())
         ->where('entity_id', $announcement->id)
         ->where('action', 'delete')
         ->first();
