@@ -15,6 +15,11 @@ use App\Http\Controllers\Leads\LeadStageController;
 use App\Http\Controllers\Leads\LeadStatusActionController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Projects\ProjectController;
+use App\Http\Controllers\Projects\ProjectDiscussionController;
+use App\Http\Controllers\Projects\ProjectFileController;
+use App\Http\Controllers\Projects\ProjectMemberController;
+use App\Http\Controllers\Projects\ProjectMilestoneController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\WelcomeController;
@@ -102,6 +107,39 @@ Route::middleware(['auth'])->group(function () {
             ->name('clients.vault.update');
         Route::delete('clients/{client}/vault/{vaultEntry}', [ClientVaultEntryController::class, 'destroy'])
             ->name('clients.vault.destroy');
+
+        // P08 — Projects + Milestones + Members + Files + Discussions.
+        Route::prefix('projects')->name('projects.')->group(function () {
+            Route::get('/', [ProjectController::class, 'index'])->name('index');
+            Route::get('create', [ProjectController::class, 'create'])->name('create');
+            Route::post('/', [ProjectController::class, 'store'])->name('store');
+            Route::get('{project}', [ProjectController::class, 'show'])->name('show');
+            Route::get('{project}/edit', [ProjectController::class, 'edit'])->name('edit');
+            Route::patch('{project}', [ProjectController::class, 'update'])->name('update');
+            Route::delete('{project}', [ProjectController::class, 'destroy'])->name('destroy');
+            Route::patch('{project}/status', [ProjectController::class, 'changeStatus'])->name('status');
+            Route::patch('{project}/pin', [ProjectController::class, 'togglePin'])->name('pin');
+            Route::patch('{project}/progress/recalc', [ProjectController::class, 'recalcProgress'])->name('progress.recalc');
+
+            // Members
+            Route::post('{project}/members', [ProjectMemberController::class, 'store'])->name('members.store');
+            Route::delete('{project}/members/{userId}', [ProjectMemberController::class, 'destroy'])->name('members.destroy');
+
+            // Milestones
+            Route::post('{project}/milestones', [ProjectMilestoneController::class, 'store'])->name('milestones.store');
+            Route::patch('{project}/milestones/{milestone}', [ProjectMilestoneController::class, 'update'])->name('milestones.update');
+            Route::post('{project}/milestones/reorder', [ProjectMilestoneController::class, 'reorder'])->name('milestones.reorder');
+            Route::delete('{project}/milestones/{milestone}', [ProjectMilestoneController::class, 'destroy'])->name('milestones.destroy');
+
+            // Files
+            Route::post('{project}/files', [ProjectFileController::class, 'store'])->name('files.store');
+            Route::delete('{project}/files/{attachment}', [ProjectFileController::class, 'destroy'])->name('files.destroy');
+
+            // Discussions + replies
+            Route::post('{project}/discussions', [ProjectDiscussionController::class, 'store'])->name('discussions.store');
+            Route::delete('{project}/discussions/{discussion}', [ProjectDiscussionController::class, 'destroy'])->name('discussions.destroy');
+            Route::post('{project}/discussions/{discussion}/replies', [ProjectDiscussionController::class, 'reply'])->name('discussions.reply');
+        });
     });
 });
 

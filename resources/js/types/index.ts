@@ -306,3 +306,103 @@ export interface ClientVaultEntry {
     visibility: 'private' | 'shared';
 }
 // ──────────────────────────────────────────────────────────────────────────────
+
+// ── P08: Projects + Milestones ────────────────────────────────────────────────
+export interface ProjectStatus {
+    id: string;
+    name: string;
+    color: string | null;
+    status_order: number;
+}
+
+export interface ProjectMilestone {
+    id: string;
+    project_id: string;
+    name: string;
+    color: string | null;
+    due_date: string | null;
+    milestone_order: number;
+    description: string | null;
+}
+
+export interface ProjectDiscussion {
+    id: string;
+    project_id: string;
+    subject: string;
+    body: string | null;
+    show_to_customer: boolean;
+    author_id: number | null;
+    author?: Pick<User, 'id' | 'name'> | null;
+    comments?: ProjectDiscussionReply[];
+    created_at: string;
+}
+
+export interface ProjectDiscussionReply {
+    id: string;
+    body: string;
+    user_id: number | null;
+    parent_id: string | null;
+    created_at: string;
+    user?: Pick<User, 'id' | 'name'> | null;
+}
+
+export interface ProjectAttachment {
+    id: string;
+    path: string;
+    file_name: string | null;
+    mime: string | null;
+    size: number | null;
+    visible_to_customer: boolean;
+    attachment_key: string;
+    created_at: string;
+}
+
+export type ProjectBillingType = 1 | 2 | 3; // 1=fixed, 2=hourly, 3=non_billable
+
+export interface Project {
+    id: string;
+    workspace_id: string;
+    project_number: number;
+    name: string;
+    description: string | null;
+    client_id: string;
+    status_id: string | null;
+    owner_id: number | null;
+    team_id: string | null;
+    billing_type: ProjectBillingType;
+    start_date: string | null;
+    deadline: string | null;
+    finished_at: string | null;
+    progress: number;
+    progress_from_tasks: boolean;
+    is_pinned: boolean;
+    visible_to_customer: boolean;
+    custom_fields: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+    // Relations (eager-loaded)
+    client?: Pick<Client, 'id' | 'name'> | null;
+    status?: ProjectStatus | null;
+    owner?: Pick<User, 'id' | 'name'> | null;
+    team?: Pick<Team, 'id' | 'name'> | null;
+    members?: Pick<User, 'id' | 'name'>[];
+    milestones?: ProjectMilestone[];
+    discussions?: ProjectDiscussion[];
+    attachments?: ProjectAttachment[];
+    activities?: ActivityItem[];
+}
+
+export interface PaginatedProjects {
+    data: Project[];
+    current_page: number;
+    last_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    total: number;
+}
+
+export interface Team {
+    id: string;
+    name: string;
+}
+// ──────────────────────────────────────────────────────────────────────────────

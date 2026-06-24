@@ -61,7 +61,9 @@ class MorphMapServiceProvider extends ServiceProvider
             'client_group' => ClientGroup::class,  // P06 — additional model
             'client_vault_entry' => ClientVaultEntry::class, // P06 — additional model
             'lead' => 'App\\Models\\Lead',     // P07
-            'project' => 'App\\Models\\Project', // P08
+            'project' => 'App\\Models\\Project',             // P08
+            'project_milestone' => 'App\\Models\\ProjectMilestone', // P08
+            'project_discussion' => 'App\\Models\\ProjectDiscussion', // P08
             'task' => 'App\\Models\\Task',     // P09
 
             // P04 models that can appear as subjects (activity/reminder)

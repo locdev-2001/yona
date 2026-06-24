@@ -9,10 +9,12 @@ use App\Models\ClientGroup;
 use App\Models\Contact;
 use App\Models\EmailTemplate;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Policies\ClientPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
 use App\Policies\LeadPolicy;
+use App\Policies\ProjectPolicy;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
@@ -57,6 +59,9 @@ class AppServiceProvider extends ServiceProvider
 
         // P07 — Lead policy.
         Gate::policy(Lead::class, LeadPolicy::class);
+
+        // P08 — Project policy.
+        Gate::policy(Project::class, ProjectPolicy::class);
 
         // P07 — Lead events.
         Event::listen(LeadAssigned::class, SendLeadAssignedNotification::class);
