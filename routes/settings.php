@@ -3,6 +3,7 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\CustomFieldController;
+use App\Http\Controllers\Settings\EmailTemplateController;
 use App\Http\Controllers\Settings\LeadSourceController;
 use App\Http\Controllers\Settings\MemberController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -92,6 +93,14 @@ Route::middleware(['auth', 'workspace'])->prefix('settings')->group(function () 
             Route::patch('{project_status}', 'update')->name('update');
             Route::delete('{project_status}', 'destroy')->name('destroy');
         });
+    });
+
+    // Email templates (P05) — admin edit/preview/test workspace templates.
+    Route::controller(EmailTemplateController::class)->prefix('email-templates')->name('email-templates.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{template}', 'edit')->name('edit');
+        Route::patch('{template}', 'update')->name('update');
+        Route::post('{template}/test', 'test')->name('test');
     });
 
     // Custom fields (P02) — admin CRUD for field definitions per entity_type.

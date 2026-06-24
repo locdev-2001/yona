@@ -19,6 +19,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         ...(can('tenant.workspace.update') ? [{ title: t('platform.nav.workspace'), url: '/settings/workspace' }] : []),
         ...(can('tenant.team.manage') ? [{ title: t('platform.nav.teams'), url: '/settings/teams' }] : []),
         ...(can('tenant.member.manage') ? [{ title: t('platform.nav.members'), url: '/settings/members' }] : []),
+        ...(can('tenant.email_template.view') ? [{ title: t('email_templates.title'), url: '/settings/email-templates' }] : []),
     ];
 
     return (

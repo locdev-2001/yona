@@ -10,6 +10,7 @@ use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\CustomFieldDefinition;
+use App\Models\EmailTemplate;
 use App\Models\LeadSource;
 use App\Models\Note;
 use App\Models\Pipeline;
@@ -71,6 +72,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'audit_log' => AuditLog::class,
             'comment' => Comment::class,
             'custom_field_definition' => CustomFieldDefinition::class,
+            'email_template' => EmailTemplate::class,
             'lead_source' => LeadSource::class,
             'note' => Note::class,
             'pipeline' => Pipeline::class,

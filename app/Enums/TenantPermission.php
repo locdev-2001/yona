@@ -53,6 +53,10 @@ enum TenantPermission: string
     case TaskUpdate = 'tenant.task.update';
     case TaskDelete = 'tenant.task.delete';
 
+    // --- Email templates (P05) ---
+    case EmailTemplateView = 'tenant.email_template.view';
+    case EmailTemplateManage = 'tenant.email_template.manage';
+
     // --- Custom fields (P02) ---
     case CustomFieldsView = 'custom_fields.view';
     case CustomFieldsManage = 'custom_fields.manage';

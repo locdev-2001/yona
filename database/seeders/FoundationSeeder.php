@@ -74,5 +74,9 @@ class FoundationSeeder extends Seeder
         if (! Pipeline::exists()) {
             app(LookupService::class)->seedDefaults($workspace);
         }
+
+        // P05 — Seed email template catalog (lead_assigned vi+en).
+        // Idempotent via firstOrCreate on (workspace_id, slug, language).
+        $this->call(EmailTemplateCatalogSeeder::class);
     }
 }
