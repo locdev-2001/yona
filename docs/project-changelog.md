@@ -17,6 +17,16 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 0: Nền tảng Cross-Cutting (2026-06-24)
+
+Bộ tính năng nền tảng dùng chung cho toàn bộ module CRM: custom fields, đính kèm/tag/bình luận/ghi chú, hoạt động/thông báo/nhắc nhở, email templates, lookups và RBAC seeding.
+
+- **Lookup tables** (`M0 P01`): bảng `lookups` + `lookup_values` lưu danh mục hệ thống (priority, status, category…). Tenant-scoped với global defaults; `LookupSeeder` seed dữ liệu nền tảng. RBAC permission `lookups.manage` thêm vào spatie + seed vào các role phù hợp.
+- **Custom Fields** (`M0 P02`): định nghĩa trường tuỳ biến (`custom_field_definitions`) + giá trị theo record (`custom_field_values`). Hỗ trợ type: `text`, `number`, `date`, `boolean`, `select`, `multi_select`, `url`, `email`, `phone`. Scoped theo workspace + entity\_type; validation engine phía server; RBAC `custom_fields.manage`.
+- **Attachments / Comments / Notes / Tags** (`M0 P03`): bảng đa hình `attachments`, `comments`, `notes`, `tags`, `taggables`. File upload lên local disk (swap-in S3 sau); tag tối đa 20/record; soft-delete trên tất cả; RBAC `attachments.manage`, `comments.manage`, `notes.manage`, `tags.manage`.
+- **Activities / Reminders / Notifications** (`M0 P04`): `activities` (log hành động CRM), `reminders` (cron-triggered, gửi qua `SendReminderJob`), `notifications` (in-app + email channel, đọc/chưa đọc). RBAC `activities.view`, `reminders.manage`; Horizon queue workers cho reminder dispatch.
+- **Email Templates** (`M0 P05`): `email_templates` (subject + body Markdown, category, active flag). Hỗ trợ biến `{{placeholder}}`; preview render server-side; RBAC `email_templates.manage`. Tích hợp sẵn với future Mailer pipeline.
+
 ### Added — Admin plane (two-guard) + UI refresh (2026-06-14 → 2026-06-15)
 - **Two-guard split**: internal staff authenticate on a separate `admin` guard (own `admins` table + provider) — fully isolated from the customer `web` guard. Replaces the earlier `is_internal` flag on `users`.
   - `is_internal` column + `platform_role_user` table **dropped**; `PlatformRole` model removed. Admin RBAC now lives in admin-scoped spatie tables under a fixed `Admin::PLATFORM_SCOPE` team id (`00000000-…-0000`), keeping the workspace-scoped pivot + RLS untouched.
