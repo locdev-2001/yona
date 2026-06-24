@@ -33,6 +33,7 @@ Module quản lý Leads với kanban pipeline, assignment, lost/junk tracking v�
 - **i18n**: lang/vi/leads.php + lang/en/leads.php đầy đủ (title, fields, actions, flash, activity, notification, errors, kanban, status).
 - **Tests** (7 test files, 61+ assertions): LeadCrudTest, LeadVisibilityTest, LeadKanbanTest, LeadAssignmentTest, LeadLostJunkTest, LeadConvertTest, LeadIsolationTest.
 - **Feature doc**: `docs/features/leads/leads-pipeline.md` với sequence diagram G7 convert.
+- **Announcement**: slug `m1-leads-pipeline-release` published (id `019efb66-9fea-706a-a0c7-427826bd7390`) — hiển thị trong What's New cho toàn bộ tenant.
 
 ### Added — Module 1: Clients & Contacts — CRM Core (2026-06-25)
 
