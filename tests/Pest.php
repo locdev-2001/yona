@@ -76,6 +76,15 @@ function clearWorkspaceContext(): void
     app(PermissionRegistrar::class)->setPermissionsTeamId(null);
     app()->forgetInstance('currentWorkspace');
     app()->forgetInstance('currentMembership');
+
+    // Log out the web guard so scheduler tests run without an authenticated actor.
+    // The self-notify guard in NotificationService uses auth()->id(); in production
+    // the CLI scheduler has no authenticated user (auth()->id() === null).
+    try {
+        auth()->guard('web')->logout();
+    } catch (Throwable) {
+        // Guard may not be bootstrapped in all test contexts — safe to ignore.
+    }
 }
 
 /**

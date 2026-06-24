@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Activity;
 use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
@@ -14,6 +15,7 @@ use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\ProjectStatus;
+use App\Models\Reminder;
 use App\Models\Tag;
 use App\Models\Team;
 use App\Models\TeamClosure;
@@ -55,6 +57,10 @@ class MorphMapServiceProvider extends ServiceProvider
             'lead' => 'App\\Models\\Lead',     // P07
             'project' => 'App\\Models\\Project', // P08
             'task' => 'App\\Models\\Task',     // P09
+
+            // P04 models that can appear as subjects (activity/reminder)
+            'activity' => Activity::class,
+            'reminder' => Reminder::class,
 
             // Existing platform models that appear in audit_logs.entity_type or
             // any other morph column - all must be registered now that enforce is on.

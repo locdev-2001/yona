@@ -93,8 +93,50 @@ export interface SharedData {
     unreadAnnouncementCount?: number | null;
     /** Lazy prop — most recent unread announcement payload; null when all read. */
     latestUnreadAnnouncement?: Pick<Announcement, 'id' | 'title' | 'body_html' | 'category' | 'published_at' | 'cover_image' | 'slug'> | null;
+    /** P04: in-app notification bell data (unread count + recent 5). */
+    notifications?: NotificationsBell | null;
     [key: string]: unknown;
 }
+
+// ── P04: Activity, Notifications, Reminders ───────────────────────────────────
+export interface ActivityItem {
+    id: string;
+    action: string;
+    message: string;
+    payload: Record<string, unknown>;
+    actor_name: string | null;
+    visible_to_customer: boolean;
+    occurred_at: string;
+}
+
+export interface NotificationItem {
+    id: string;
+    action: string | null;
+    subject_type: string | null;
+    subject_id: string | null;
+    payload: Record<string, unknown>;
+    link: string | null;
+    read_at: string | null;
+    created_at: string;
+}
+
+export interface NotificationsBell {
+    unread: number;
+    recent: Pick<NotificationItem, 'id' | 'action' | 'subject_type' | 'subject_id' | 'link' | 'created_at'>[];
+}
+
+export interface ReminderItem {
+    id: string;
+    remindable_type: string;
+    remindable_id: string;
+    user_id: number;
+    description: string;
+    remind_at: string;
+    is_notified: boolean;
+    notified_at: string | null;
+    lock_version: number;
+}
+// ──────────────────────────────────────────────────────────────────────────────
 
 export interface User {
     id: number;

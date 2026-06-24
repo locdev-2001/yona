@@ -7,6 +7,7 @@ use App\Models\Announcement;
 use App\Models\User;
 use App\Models\WorkspaceMember;
 use App\Services\AnnouncementReadService;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,8 +77,13 @@ class HandleInertiaRequests extends Middleware
                     app(AnnouncementReadService::class)->getLatestUnread($user)
                 )
                 : null,
+            // P04 — Notifications bell: unread count + recent 5 unread.
+            // Lazy: resolved after IdentifyWorkspace; null for guests.
+            'notifications' => fn () => $user && currentWorkspace()
+                ? $this->notificationsPayload($user)
+                : null,
             'locale' => app()->getLocale(),
-            'i18n' => ['platform' => trans('platform'), 'custom_fields' => trans('custom_fields')],
+            'i18n' => ['platform' => trans('platform'), 'custom_fields' => trans('custom_fields'), 'notification' => trans('notification'), 'reminder' => trans('reminder'), 'activity' => trans('activity')],
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
@@ -186,6 +192,34 @@ class HandleInertiaRequests extends Middleware
             'published_at' => $announcement->published_at?->toISOString(),
             'cover_image' => $announcement->cover_image,
             'slug' => $announcement->slug,
+        ];
+    }
+
+    /**
+     * Notification bell payload: unread count + recent 5 unread items.
+     *
+     * @return array<string, mixed>
+     */
+    private function notificationsPayload(User $user): array
+    {
+        $service = app(NotificationService::class);
+
+        $recent = $user->unreadNotifications()
+            ->take(5)
+            ->get()
+            ->map(fn ($n) => [
+                'id' => $n->id,
+                'action' => data_get($n->data, 'action'),
+                'subject_type' => data_get($n->data, 'subject_type'),
+                'subject_id' => data_get($n->data, 'subject_id'),
+                'link' => data_get($n->data, 'link'),
+                'created_at' => $n->created_at?->toISOString(),
+            ])
+            ->all();
+
+        return [
+            'unread' => $service->unreadCount($user),
+            'recent' => $recent,
         ];
     }
 

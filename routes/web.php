@@ -5,6 +5,8 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\WhatsNewController;
@@ -43,6 +45,16 @@ Route::middleware(['auth'])->group(function () {
         Route::post('notes', [NoteController::class, 'store'])->name('notes.store');
         Route::put('notes/{note}', [NoteController::class, 'update'])->name('notes.update');
         Route::delete('notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+
+        // P04 — Reminders (polymorphic, workspace-scoped).
+        Route::post('reminders', [ReminderController::class, 'store'])->name('reminders.store');
+        Route::put('reminders/{reminder}', [ReminderController::class, 'update'])->name('reminders.update');
+        Route::delete('reminders/{reminder}', [ReminderController::class, 'destroy'])->name('reminders.destroy');
+
+        // P04 — In-app notifications (global, scoped by notifiable user).
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     });
 });
 
