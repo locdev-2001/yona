@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
+// LookupService is injected to seed default pipelines/stages/sources/statuses
+// after workspace provisioning (G2).
+
 /**
  * Provisions a new Workspace for a given owner in one atomic transaction.
  * Reusable from HTTP, console, queue, or AI contexts — no request coupling.
@@ -19,7 +22,10 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class WorkspaceProvisioningService
 {
-    public function __construct(private readonly PermissionRegistrar $registrar) {}
+    public function __construct(
+        private readonly PermissionRegistrar $registrar,
+        private readonly LookupService $lookup,
+    ) {}
 
     /**
      * Create a Workspace owned by $owner, add them as admin member, and return it.
@@ -58,6 +64,10 @@ class WorkspaceProvisioningService
             $member->save();
 
             $owner->syncRoles(['admin']);
+
+            // Seed default lookups for this workspace (G2). RLS context is already
+            // set above so BelongsToWorkspace::creating stamps workspace_id correctly.
+            $this->lookup->seedDefaults($workspace);
 
             return $workspace;
         });

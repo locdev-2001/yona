@@ -91,9 +91,10 @@ class HandleInertiaRequests extends Middleware
     private function adminPayload(Admin $admin): array
     {
         // share() runs before the admin.scope middleware binds the platform
-        // scope, so resolve roles/permissions under PLATFORM_SCOPE here
-        // (mirrors BindAdminPermissionScope) — otherwise getAllPermissions()
-        // is empty and the admin sidebar loses every permission-gated item.
+        // scope, so mirror BindAdminPermissionScope here: set both the DB-level
+        // RLS context (app.current_workspace) and the spatie team ID, otherwise
+        // getAllPermissions() returns empty under RLS-enforced connections.
+        DB::statement("select set_config('app.current_workspace', ?, false)", [Admin::PLATFORM_SCOPE]);
         app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
         $admin->unsetRelation('roles')->unsetRelation('permissions');
 

@@ -33,7 +33,7 @@ class AnnouncementController extends Controller
                 'title' => $a->title,
                 'slug' => $a->slug,
                 'category' => $a->category?->value,
-                'status' => $a->status?->value,
+                'status' => $a->status->value,
                 'published_at' => $a->published_at?->toIso8601String(),
             ]);
 
@@ -66,7 +66,7 @@ class AnnouncementController extends Controller
                 'slug' => $announcement->slug,
                 'body' => $announcement->body,
                 'category' => $announcement->category?->value,
-                'status' => $announcement->status?->value,
+                'status' => $announcement->status->value,
                 'cover_image' => $announcement->cover_image,
                 'audience' => $announcement->audience,
                 'published_at' => $announcement->published_at?->toIso8601String(),

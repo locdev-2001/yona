@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * GLOBAL — no BelongsToWorkspace, no RLS, no workspace_id.
@@ -21,6 +22,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * server-controlled fields (excluded from $fillable):
  *   created_by, updated_by — set by AnnouncementService from auth('admin')
  *   status, published_at  — set explicitly via publish/unpublish actions
+ *
+ * @property string $id
+ * @property string $title
+ * @property string $slug
+ * @property string $body
+ * @property string|null $body_html
+ * @property AnnouncementCategory|null $category
+ * @property AnnouncementStatus $status
+ * @property array<string, mixed>|null $audience
+ * @property string|null $cover_image
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property Carbon|null $published_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  */
 class Announcement extends Model
 {

@@ -1,0 +1,9 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "refs",
+        "vendor",
+        "node_modules",
+        ".git"
+    ]
+}

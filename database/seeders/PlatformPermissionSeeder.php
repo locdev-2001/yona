@@ -39,17 +39,100 @@ class PlatformPermissionSeeder extends Seeder
         $registrar->forgetCachedPermissions();
     }
 
-    /** @return array<string, list<string>> Workspace role → granted permissions. */
+    /** @return array<string, list<string>> Workspace role → granted permissions (G2). */
     private function roleGrants(): array
     {
         return [
+            // admin: all permissions (auto-includes new cases via values())
             'admin' => TenantPermission::values(),
-            'sales_manager' => [TenantPermission::AuditView->value],
-            'support_manager' => [TenantPermission::AuditView->value],
-            'sales_rep' => [],
-            'support_agent' => [],
-            'marketer' => [],
-            'viewer' => [],
+
+            // sales_manager: full access to leads, clients, contacts, projects, tasks + audit
+            'sales_manager' => [
+                TenantPermission::AuditView->value,
+                TenantPermission::ClientView->value,
+                TenantPermission::ClientViewOwn->value,
+                TenantPermission::ClientCreate->value,
+                TenantPermission::ClientUpdate->value,
+                TenantPermission::ClientDelete->value,
+                TenantPermission::ContactView->value,
+                TenantPermission::ContactViewOwn->value,
+                TenantPermission::ContactCreate->value,
+                TenantPermission::ContactUpdate->value,
+                TenantPermission::ContactDelete->value,
+                TenantPermission::LeadView->value,
+                TenantPermission::LeadViewOwn->value,
+                TenantPermission::LeadCreate->value,
+                TenantPermission::LeadUpdate->value,
+                TenantPermission::LeadDelete->value,
+                TenantPermission::ProjectView->value,
+                TenantPermission::ProjectViewOwn->value,
+                TenantPermission::ProjectCreate->value,
+                TenantPermission::ProjectUpdate->value,
+                TenantPermission::ProjectDelete->value,
+                TenantPermission::TaskView->value,
+                TenantPermission::TaskViewOwn->value,
+                TenantPermission::TaskCreate->value,
+                TenantPermission::TaskUpdate->value,
+                TenantPermission::TaskDelete->value,
+            ],
+
+            // sales_rep: own view + create + update for leads/clients/contacts/tasks; no delete
+            'sales_rep' => [
+                TenantPermission::ClientViewOwn->value,
+                TenantPermission::ClientCreate->value,
+                TenantPermission::ClientUpdate->value,
+                TenantPermission::ContactViewOwn->value,
+                TenantPermission::ContactCreate->value,
+                TenantPermission::ContactUpdate->value,
+                TenantPermission::LeadViewOwn->value,
+                TenantPermission::LeadCreate->value,
+                TenantPermission::LeadUpdate->value,
+                TenantPermission::TaskViewOwn->value,
+                TenantPermission::TaskCreate->value,
+                TenantPermission::TaskUpdate->value,
+            ],
+
+            // support_manager: full projects/tasks + client/contact view
+            'support_manager' => [
+                TenantPermission::AuditView->value,
+                TenantPermission::ClientView->value,
+                TenantPermission::ContactView->value,
+                TenantPermission::ProjectView->value,
+                TenantPermission::ProjectViewOwn->value,
+                TenantPermission::ProjectCreate->value,
+                TenantPermission::ProjectUpdate->value,
+                TenantPermission::ProjectDelete->value,
+                TenantPermission::TaskView->value,
+                TenantPermission::TaskViewOwn->value,
+                TenantPermission::TaskCreate->value,
+                TenantPermission::TaskUpdate->value,
+                TenantPermission::TaskDelete->value,
+            ],
+
+            // support_agent: own project view + task create/update + client view
+            'support_agent' => [
+                TenantPermission::ClientView->value,
+                TenantPermission::ProjectViewOwn->value,
+                TenantPermission::TaskViewOwn->value,
+                TenantPermission::TaskCreate->value,
+                TenantPermission::TaskUpdate->value,
+            ],
+
+            // marketer: leads view/create/update (lead_sources via tenant.lead.view)
+            'marketer' => [
+                TenantPermission::LeadView->value,
+                TenantPermission::LeadCreate->value,
+                TenantPermission::LeadUpdate->value,
+            ],
+
+            // viewer: read-only access across all 5 entities
+            'viewer' => [
+                TenantPermission::ClientView->value,
+                TenantPermission::ContactView->value,
+                TenantPermission::LeadView->value,
+                TenantPermission::ProjectView->value,
+                TenantPermission::TaskView->value,
+            ],
         ];
     }
 }

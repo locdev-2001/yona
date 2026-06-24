@@ -166,6 +166,8 @@ db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
 migrate: ## Run pending migrations (additive, forward-only) on dev + test DBs
 	$(ARTISAN) migrate --database=pgsql_privileged --force
 	DB_DATABASE=cho_rach_test $(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) db:seed --class=PlatformPermissionSeeder --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) db:seed --class=AdminPermissionSeeder --force
 
 seed: ## Run seeders (idempotent foundation data)
 	$(ARTISAN) db:seed --force

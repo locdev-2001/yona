@@ -4,9 +4,11 @@ namespace Database\Seeders;
 
 use App\Enums\PlatformRole;
 use App\Models\Admin;
+use App\Models\Pipeline;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Services\LookupService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -66,5 +68,11 @@ class FoundationSeeder extends Seeder
 
             $user->assignRole('admin');
         });
+
+        // Seed default lookup data (pipelines, stages, sources, project statuses)
+        // for the dev workspace. Idempotent: only seeds if no pipeline exists yet.
+        if (! Pipeline::exists()) {
+            app(LookupService::class)->seedDefaults($workspace);
+        }
     }
 }

@@ -156,7 +156,10 @@ it('records a create audit log entry when an announcement is stored', function (
 
     $announcement = Announcement::where('title', 'Audit Create Test')->first();
 
-    $logEntry = DB::table('audit_logs')
+    // Announcements are global (workspace_id = NULL). Their audit entries are
+    // written via pgsql_privileged and hidden from the runtime cho_rach_app
+    // connection by RLS (NULL ≠ UUID). Read through the privileged connection.
+    $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', Announcement::class)
         ->where('entity_id', $announcement->id)
         ->where('action', 'create')
@@ -177,7 +180,9 @@ it('records an update audit log entry when an announcement is updated', function
         'audience' => ['type' => 'all'],
     ]);
 
-    $logEntry = DB::table('audit_logs')
+    // Read via privileged connection — global audit entries have workspace_id = NULL,
+    // which RLS hides from the runtime cho_rach_app connection.
+    $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', Announcement::class)
         ->where('entity_id', $announcement->id)
         ->where('action', 'update')
@@ -193,7 +198,9 @@ it('records a delete audit log entry when an announcement is destroyed', functio
 
     $this->delete(route('admin.announcements.destroy', $announcement));
 
-    $logEntry = DB::table('audit_logs')
+    // Read via privileged connection — global audit entries have workspace_id = NULL,
+    // which RLS hides from the runtime cho_rach_app connection.
+    $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', Announcement::class)
         ->where('entity_id', $announcement->id)
         ->where('action', 'delete')
