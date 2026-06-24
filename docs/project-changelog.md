@@ -17,6 +17,21 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 1: Clients & Contacts — CRM Core (2026-06-25)
+
+Module quản lý Khách hàng và Người liên hệ — phần cốt lõi của CRM. Commit: `13b5ded`.
+
+- **Client (Khách hàng)**: CRUD đầy đủ cho công ty/tổ chức khách hàng. Hỗ trợ assign owner + team members; visibility resolver phân quyền own/team/all theo role. `ClientPolicy` + spatie RBAC (`clients.view`, `clients.create`, `clients.edit`, `clients.delete`, `clients.assign`).
+- **Contact (Người liên hệ)**: Nhiều contact / khách hàng; đánh dấu **Primary Contact** (duy nhất/khách hàng, swap atomic). Ràng buộc email unique theo workspace. `ContactPolicy` tương tự Client.
+- **ClientGroup**: Phân nhóm khách hàng tuỳ chỉnh; nhiều-nhiều với Client (`client_group_pivot`). RBAC `client_groups.manage`.
+- **Client Admins (Customer Admin)**: Gán nhiều admin nội bộ phụ trách một khách hàng qua `SyncCustomerAdminsRequest`.
+- **ClientVaultEntry**: Lưu trữ thông tin nhạy cảm (credentials / notes bảo mật) theo khách hàng; RBAC `clients.vault`.
+- **Custom Fields**: tích hợp morph `App\Models\Client` + `App\Models\Contact` với hệ thống M0 custom fields. Test `ClientCustomFieldMorphismTest` xác minh morph map.
+- **Tags / Notes / Attachments / Activities**: Client và Contact dùng chung toàn bộ shared concerns từ M0 (polymorphic).
+- **RLS**: 8 policy mới trên `clients`, `contacts`, `client_groups`, `client_group_pivot`, `client_user_pivot`, `client_vault_entries`. `RlsPolicyCoverageTest` đảm bảo 100% tables có policy.
+- **UI**: trang index (bảng lọc/tìm kiếm), show (timeline + vault + contacts), create/edit forms, groups manager — React/Inertia/shadcn.
+- **Tests** (9 test files, 60+ assertions pgsql): CRUD, isolation (cross-workspace), visibility RBAC, contact primary, email unique, vault, custom field morph, group, customer admin.
+
 ### Added — Module 0: Nền tảng Cross-Cutting (2026-06-24)
 
 Bộ tính năng nền tảng dùng chung cho toàn bộ module CRM: custom fields, đính kèm/tag/bình luận/ghi chú, hoạt động/thông báo/nhắc nhở, email templates, lookups và RBAC seeding.
