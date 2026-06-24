@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\AnnouncementPublishController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
@@ -48,5 +50,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Stop impersonation (the admin guard is still authenticated here).
         Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
             ->name('impersonate.stop');
+
+        Route::middleware('admin.can:platform.announcements.manage')->group(function () {
+            Route::resource('announcements', AnnouncementController::class)
+                ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::post('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'store'])
+                ->name('announcements.publish');
+
+            Route::delete('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'destroy'])
+                ->name('announcements.unpublish');
+        });
     });
 });

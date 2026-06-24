@@ -3,12 +3,15 @@
 namespace App\Http\Middleware;
 
 use App\Models\Admin;
+use App\Models\Announcement;
 use App\Models\User;
 use App\Models\WorkspaceMember;
+use App\Services\AnnouncementReadService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
+use Spatie\Permission\PermissionRegistrar;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -64,6 +67,15 @@ class HandleInertiaRequests extends Middleware
                     : null,
             ],
             'activeWorkspace' => fn () => $this->activeWorkspacePayload(),
+            // Lazy: resolved after IdentifyWorkspace; null for guests and admin sessions.
+            'unreadAnnouncementCount' => fn () => $user
+                ? app(AnnouncementReadService::class)->getUnreadCount($user)
+                : null,
+            'latestUnreadAnnouncement' => fn () => $user
+                ? $this->latestUnreadAnnouncementPayload(
+                    app(AnnouncementReadService::class)->getLatestUnread($user)
+                )
+                : null,
             'locale' => app()->getLocale(),
             'i18n' => ['platform' => trans('platform')],
             'flash' => [
@@ -78,6 +90,13 @@ class HandleInertiaRequests extends Middleware
      */
     private function adminPayload(Admin $admin): array
     {
+        // share() runs before the admin.scope middleware binds the platform
+        // scope, so resolve roles/permissions under PLATFORM_SCOPE here
+        // (mirrors BindAdminPermissionScope) — otherwise getAllPermissions()
+        // is empty and the admin sidebar loses every permission-gated item.
+        app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
+        $admin->unsetRelation('roles')->unsetRelation('permissions');
+
         return [
             'id' => $admin->id,
             'name' => $admin->name,
@@ -144,6 +163,28 @@ class HandleInertiaRequests extends Middleware
             'role' => $membership->role,
             'team_id' => $membership->team_id,
             'permissions' => $user->getAllPermissions()->pluck('name')->all(),
+        ];
+    }
+
+    /**
+     * Minimal announcement payload for the shared latestUnreadAnnouncement prop.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function latestUnreadAnnouncementPayload(?Announcement $announcement): ?array
+    {
+        if (! $announcement) {
+            return null;
+        }
+
+        return [
+            'id' => $announcement->id,
+            'title' => $announcement->title,
+            'body_html' => $announcement->body_html,
+            'category' => $announcement->category?->value,
+            'published_at' => $announcement->published_at?->toISOString(),
+            'cover_image' => $announcement->cover_image,
+            'slug' => $announcement->slug,
         ];
     }
 

@@ -15,6 +15,7 @@ enum PlatformPermission: string
     case Impersonate = 'platform.impersonate';
     case AuditView = 'platform.audit.view';
     case MonitoringView = 'platform.monitoring.view';
+    case AnnouncementsManage = 'platform.announcements.manage';
 
     /** @return list<string> */
     public static function values(): array
