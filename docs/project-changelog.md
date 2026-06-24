@@ -30,6 +30,23 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 - **Horizon/Telescope/Pulse gates** moved to the `admin` guard + `platform.monitoring.view`.
 - **UI refresh**: floated app-shell (SidebarInset shadow + `--radius-shell`), shared `StatCard`/`PageHeader`/`EmptyState` primitives, real KPI counts on both dashboards, light/dark/system switcher in the topbar, status labels + admin panel strings routed through i18n (`lang/{vi,en}/platform.php`). AdminLayout/AdminSidebar reuse the tenant app-shell for visual parity.
 
+### Added — Product Announcements / What's New v1 (2026-06-15)
+
+- **Admin CRUD** (`/admin/announcements`): super_admin can create, edit, delete, and publish/unpublish announcements. Gated by `platform.announcements.manage` permission on the `admin` guard.
+- **Markdown pipeline** (`AnnouncementMarkdown::toHtml`): CommonMark + HTML purifier; strips `<script>` and event-handler attributes (XSS guard). `body_html` is server-computed and excluded from `$fillable`.
+- **Global tables** (`announcements`, `announcement_reads`): intentionally no `workspace_id`, no RLS, no `BelongsToWorkspace`. Read state is per-user and cross-workspace (once read anywhere, badge clears everywhere).
+- **Tenant feed** (`/announcements`): paginated What's New page via `WhatsNewController` + `AnnouncementReadService::visibleQuery()`. Unread badge injected into every Inertia response via shared props.
+- **Mark-read** (`POST /announcements/{a}/read`): idempotent (`forceCreate` with existence check). `user_id` always from `auth()->id()` — request body ignored (BR-X12 IDOR guard). Drafts return 404 not 403 (BR-X15 non-enumeration).
+- **Audience v1 lock**: `audience.type` must be `all`; `by_plan` / `by_entitlement` / `workspace_filter` rejected at validation (future extension, no schema change needed).
+- **SSRF guard**: `cover_image` must be `https` and resolve to a public IP (private ranges rejected at validation).
+- **Permission seeding**: `platform.announcements.manage` added as migration (not seeder) so the test DB (`cho_rach_test`) receives it automatically.
+- **i18n**: full `announcements` namespace in `lang/en/platform.php` and `lang/vi/platform.php`.
+- **Tests** (30 Pest assertions on pgsql):
+  - `Admin\AnnouncementManagementTest` (14): authz, CRUD, publish/unpublish atomic, audit log, XSS, SSRF, audience validation.
+  - `Tenant\WhatsNewTest` (9): feed visibility, draft→404, future-dated excluded, badge decrement, idempotent read, IDOR guard, cross-workspace coherence, unauthenticated redirect.
+  - `Platform\AnnouncementGlobalTableTest` (7): negative RLS (0 policies on both tables), no `workspace_id` columns, global tables excluded from RLS coverage query, cross-workspace coherence via service, default-connection access.
+- **Feature doc**: `docs/features/platform/announcements.md` — full operational flow + Mermaid sequence diagram.
+
 ### Added — Module 1 Platform Foundation (2026-06-13)
 - **Tenant isolation** (3-layer): global scope (BelongsToWorkspace trait) + middleware (IdentifyWorkspace, ResetTenantContext) + PostgreSQL RLS (defense-in-depth). No cross-workspace read/write possible.
 - **Workspace switching**: multi-workspace users can switch active context; session-driven, server-validated.

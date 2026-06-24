@@ -32,7 +32,11 @@ Internal-staff side: a separate `admin` guard (isolated from the customer `web` 
 
 ## Module 3 — Cross-Cutting Platform
 
-(Planned) Attachments, notifications, event bus, Reverb realtime, product announcements.
+Attachments, notifications, event bus, Reverb realtime, product announcements.
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Product Announcements / What's New](./platform/announcements.md) | Platform staff publish global changelog entries; tenant users see in-app feed + unread badge. Global tables (no RLS). | `WhatsNewController` + `AnnouncementReadService` + `AnnouncementReadController` |
 
 ## Module 4 — Sales Core
 

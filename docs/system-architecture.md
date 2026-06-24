@@ -139,8 +139,10 @@ V1 core. `messages` is high-volume, append-only, partition-ready. Full spec: [cr
 | `webhook_endpoints` | `workspace_id, url, event_types jsonb, secret, is_active` | Outbound subscriptions per workspace. |
 | `webhook_deliveries` | `workspace_id, endpoint_id, event, payload jsonb, status, attempts, response_code, next_retry_at` | Delivery log; queued + retried. Partition-ready. |
 | `workspace_sequences` | `workspace_id, entity, next_value` | Human-readable per-workspace counters (Deal #1234). Atomic increment under row lock. |
-| `announcements` | `title, slug, body, category(feature/improvement/fix/announcement/maintenance), status(draft/published), published_at, audience jsonb, cover_image, created_by` | **Product changelog / "What's New"** — Platform-authored, **global** (not workspace-scoped). `audience` = targeting (all / by plan / by entitlement / workspace filter). |
-| `announcement_reads` | `announcement_id, user_id, read_at` | Per-user read state → unread badge. |
+| `announcements` | `id uuid PK, title, slug unique, body, body_html, category(feature/improvement/fix/announcement/maintenance), status(draft/published), published_at, audience jsonb, cover_image, created_by, updated_by, deleted_at` | **Product changelog / "What's New"** — Platform-authored, **GLOBAL** (no `workspace_id`, no RLS, no `BelongsToWorkspace`). `slug` unique. `body_html` = XSS-safe CommonMark output (server-computed). `audience` v1 = `{type:all}`; extensible (by_plan / by_entitlement / workspace_filter) without schema change. Index: `(status, published_at)`. |
+| `announcement_reads` | `id uuid PK, announcement_id FK, user_id FK, read_at` | Per-user read state → unread badge. **GLOBAL** (no `workspace_id`, no RLS). `unique(announcement_id, user_id)`. Read-state is shared across workspaces — once read in any context the badge clears everywhere. `$guarded = ['*']`; only written via `AnnouncementReadService::markRead()`. |
+
+> **Global-table exception**: `announcements` and `announcement_reads` intentionally have **no `workspace_id`** and **no RLS policies**. The existing `RlsPolicyCoverageTest` scans only tables that have a `workspace_id` column — these global tables are excluded by that query and cause no policy-coverage failure. See [features/platform/announcements.md](../docs/features/platform/announcements.md).
 
 API tokens reuse Sanctum's `personal_access_tokens` (+ `abilities` for scopes, bound to a `workspace_member`).
 
