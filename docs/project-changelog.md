@@ -17,6 +17,19 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Release — CRM Core M0+M1 hoàn tất (2026-06-25)
+
+**Milestone**: Nền tảng CRM production-ready — M0 cross-cutting + M1 nghiệp vụ chính.
+
+- **M0 Cross-cutting** (P01–P05): Lookup tables & RBAC seeding, Custom Fields (9 type, workspace-scoped), Attachments/Comments/Notes/Tags (polymorphic, soft-delete), Activities/Reminders/Notifications (Horizon queue), Email Templates (Markdown + biến động).
+- **M1 Clients & Contacts** (P06): CRUD khách hàng/liên hệ, primary contact swap atomic, ClientGroup, ClientVaultEntry, visibility resolver 2-layer, 9 test files 60+ assertions.
+- **M1 Leads + Pipeline + Convert** (P07): Kanban pipeline drag-drop, assignment + notification, lost/junk/restore, G12 visibility (404 non-enumeration), G7 conversion (transaction + idempotency), 7 test files 61+ assertions.
+- **M1 Projects** (P08): Project entity liên kết client, milestone kanban drag-drop, project members (manager/member/viewer), discussions thread 2 cấp (client-visibility flag), progress % SVG, 9 test files.
+- **M1 Tasks + Timers** (P09): Task polymorphic (lead/client/project/contact), multi-assignee, follower, checklist, bộ đếm giờ/timesheet, kanban by status & priority, 7 test files.
+- **M1-Verify** (P10): Cross-module integration test (4 entity × 5 shared feature), tenant isolation 2-workspace, authz matrix 4 module, convert E2E, 3 browser Playwright specs, feature docs hard gate (MANDATORY).
+- **Commits chính**: `0e46ae7` (P01) → `562f9b8` (P02) → `ccf9b69` (P03) → `37232cc` (P04) → `e7002a0` (P05) → `13b5ded` (P06) → `59e260e` (P07) → `6843434` (P08) → `7ea8415` (P09) → `90cd642` (P10 Verify).
+- **Announcement**: slug `crm-core-m0-m1-complete` (id `019efbbf-4c86-73bb-96c7-76ef82fbe841`) published — tổng kết toàn bộ CRM Core cho tenant.
+
 ### Added — P10 Verify: Cross-module Integration + Docs Gate (2026-06-25)
 
 Phase verify toàn bộ M0+M1: integration tests cross-module, tenant isolation 2-workspace, authz matrix, convert E2E, browser Playwright specs, feature docs hard gate.
