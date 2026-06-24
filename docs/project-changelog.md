@@ -17,6 +17,18 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — P10 Verify: Cross-module Integration + Docs Gate (2026-06-25)
+
+Phase verify toàn bộ M0+M1: integration tests cross-module, tenant isolation 2-workspace, authz matrix, convert E2E, browser Playwright specs, feature docs hard gate.
+
+- **CrossModuleSharedFeaturesTest**: matrix 4 entity (Client/Lead/Project/Task) × 5 shared feature (custom-field, tag, attachment, note, activity) + morph alias assert G3.
+- **LeadConversionTest** (integration): happy path + rollback + idempotency + isolation 404 + attach-existing scope (G7 toàn bộ).
+- **CrmTenantIsolationTest**: 2-workspace isolation cho Client/Lead/Project/Task — scope + RLS layer.
+- **Authz matrix**: `ClientAuthorizationTest`, `LeadAuthorizationTest`, `ProjectAuthorizationTest`, `TaskAuthorizationTest` — 401/403/404/ok × guest/viewer/rep/admin; G12 is_public lead.
+- **Browser E2E Playwright**: `lead-kanban.spec.ts`, `lead-conversion.spec.ts`, `task-timer.spec.ts` — 3 flow tới hạn.
+- **Feature docs (HARD GATE)**: `docs/features/sales/clients-contacts.md`, `docs/features/sales/leads-pipeline-convert.md`, `docs/features/projects/projects-milestones.md`, `docs/features/projects/tasks-timers.md` — đầy đủ template + Mermaid.
+- **Docs sync**: `features/README.md` (thay Module 4/5/6 Account/Deal → Client/Lead/Pipeline/Projects/Tasks), `system-architecture.md` §2/§3.2/§3.3 (thay accounts/deals/stages), `crm-domain-definition.md` (client/contact/lead thay account/deal — quyết định #2), `development-roadmap.md` (build 4-6 ✅), `project-changelog.md` (mục này).
+
 ### Added — Module 1 P09: Tasks — Quản lý Công việc & Timesheet (2026-06-25)
 
 Module quản lý công việc đa hình (gắn với lead/khách/dự án/liên hệ): nhiều người thực hiện, người theo dõi, checklist, bộ đếm giờ/timesheet, bình luận, đính kèm, nhắc hẹn, tags, kanban theo trạng thái & độ ưu tiên. Commit: `7ea8415`.

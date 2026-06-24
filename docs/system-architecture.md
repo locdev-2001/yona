@@ -17,9 +17,10 @@ Cross-context communication happens through **domain events**, never direct tabl
 
 | Context | Owns | Key models |
 |---|---|---|
-| **Platform** | Two-plane access control (admins + workspaces), identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Workspace, User, Admin, Membership, Team, CustomFieldDefinition, AuditLog, Pipeline, Stage |
-| **Sales** | Funnel + opportunities | Lead, Contact, Account, Deal, DealContactRole |
-| **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Task |
+| **Platform** | Two-plane access control (admins + workspaces), identity, RBAC, audit, custom-fields, pipeline config, reporting reads | Workspace, User, Admin, Membership, Team, CustomFieldDefinition, AuditLog, Pipeline, PipelineStage |
+| **Sales** | Funnel + client relationships | Lead, Client, Contact, LeadSource (quyết định #2: thay Account/Deal) |
+| **Projects** | Dự án + công việc + timesheet | Project, ProjectMilestone, Task, TaskTimer |
+| **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Note, Attachment, Tag, Comment, Reminder |
 | **Support** | Issue resolution + SLA | Ticket |
 | **Marketing** | Campaigns, segments, scoring inputs | Campaign, Segment, CampaignRecipient |
 | **Billing** | Marketplace (free base + add-ons, one-time/subscription), purchases, entitlements (Platform plane) | MarketplaceItem, WorkspacePurchase, Entitlements resolver — see [crm-marketplace.md](crm-marketplace.md) |
@@ -63,22 +64,62 @@ UUID PKs everywhere (`uuid` default). All workspace-scoped tables carry the **sy
 
 spatie tables (`roles, permissions, model_has_roles, role_has_permissions, model_has_permissions`) configured **team-aware** with `teams.team_foreign_key = workspace_id` → roles scoped per workspace.
 
-### 3.2 Sales tables
+### 3.2 CRM Core tables (M1 — thực tế đã build)
+
+> **Quyết định khóa #2**: mô hình Client/Contact/Lead/Pipeline thay thế Account/Deal/Stage kiểu HubSpot cũ. Xem [crm-domain-definition.md](crm-domain-definition.md) để biết lý do. Bảng `accounts`/`deals` không tồn tại trong codebase này.
+
+**Clients & Contacts:**
 
 | Table | Notable columns | Notes |
 |---|---|---|
-| `leads` | `first_name,last_name,email,phone,company_name,title,source,status,unqualified_reason,score,converted_contact_id,converted_account_id,converted_deal_id` | Funnel-isolated. `status: new→working→qualified→unqualified→converted` (BR-L03/L06). |
-| `accounts` | `name,domain,industry,size,annual_revenue,parent_account_id,billing_address jsonb` | Company. |
-| `contacts` | `first_name,last_name,email,phone,title,account_id,lifecycle_stage,do_not_contact,last_activity_at` | Backbone. `account_id` 0..1 (BR-C01). |
-| `deals` | `name,account_id,pipeline_id,stage_id,value,currency,expected_close_date,status(open/won/lost),loss_reason,probability,closed_at,last_activity_at,is_stalled` | Money/state core. `value ≥ 0` CHECK (BR-D04). |
-| `deal_contact_roles` | `workspace_id,deal_id,contact_id,role(champion/decision-maker/influencer/blocker)` | N:N buying committee (BR-D01). `unique(deal_id, contact_id)`. |
+| `clients` | `workspace_id, owner_id, name, vat, phone, website, currency(str), default_language, billing_*/shipping_* addr, leadid(nullable), custom_fields jsonb` | Công ty/tổ chức. `leadid` set khi convert từ Lead. Hybrid FK: owner_id bigint. |
+| `contacts` | `workspace_id, client_id, first_name, last_name, email(nullable), phone, title, is_primary, language, custom_fields jsonb` | Người liên hệ. `unique(workspace_id, email) WHERE email IS NOT NULL AND deleted_at IS NULL` (G10). |
+| `client_groups` | `workspace_id, name` | Nhóm khách hàng. |
+| `client_group_client` | `id uuid, workspace_id, client_group_id, client_id` | Pivot mang `workspace_id` → RLS (G4). |
+| `client_user` | `id uuid, workspace_id, client_id, user_id` | Customer-admin delegation pivot; RLS (G4). |
+| `client_vault_entries` | `workspace_id, client_id, title, username, password(encrypted), url, notes` | Mã hóa `Crypt::encrypt`. |
 
-### 3.3 Engagement tables (polymorphic, high-volume)
+**Leads & Pipeline:**
 
 | Table | Notable columns | Notes |
 |---|---|---|
-| `activities` | `type,subject,body,occurred_at,direction,related_type,related_id` | Append-only (BR-T02). Partition-ready (§8). |
-| `tasks` | `title,description,due_at,status(open/done/cancelled),priority,assignee_id,related_type,related_id` | `assignee_id` defaults to owner (BR-T04). |
+| `leads` | `workspace_id, owner_id, lead_number(seq), name, title, email, phone, company, lead_value, address, pipeline_id, stage_id, source_id, assigned_to(bigint), last_contact, date_converted, converted_client_id, is_junk, is_lost, is_public, lead_order, last_stage_id, custom_fields jsonb` | Tiềm năng. Pipeline kanban. G12 visibility. |
+| `pipelines` | `workspace_id, name, is_default` | Một mặc định/workspace. |
+| `pipeline_stages` | `workspace_id, pipeline_id, name, color, stage_order, probability, type(open/won/lost)` | G8: stage phải thuộc pipeline. |
+| `lead_sources` | `workspace_id, name` | Lookup nguồn lead. |
+
+**M0 Cross-cutting tables (dùng chung):**
+
+| Table | Notable columns | Notes |
+|---|---|---|
+| `custom_field_definitions` | `workspace_id, entity_type(client/contact/lead/project/task), name, slug, field_type, options jsonb, required, active, field_order` | Registry. `unique(workspace_id, entity_type, slug)`. |
+| `attachments` | `workspace_id, attachable_type, attachable_id, original_name, path, mime, size, visible_to_customer, attachment_key` | Polymorphic; morph alias từ map G3. |
+| `tags` | `workspace_id, name, slug, color` | `unique(workspace_id, slug)`. |
+| `taggables` | `id uuid, workspace_id, tag_id, taggable_type, taggable_id, order` | Pivot RLS (G4). |
+| `notes` | `workspace_id, noteable_type, noteable_id, user_id, body, date_contacted` | Morph alias G3. |
+| `comments` | `workspace_id, commentable_type, commentable_id, user_id, body, parent_id` | Thread 2 cấp. |
+| `reminders` | `workspace_id, remindable_type, remindable_id, user_id, remind_at, description, is_notified` | Scheduler quét gửi notification. |
+| `email_templates` | `workspace_id, slug, subject, body_html, active, language` | Seed: `lead_assigned`. Merge fields qua whitelist (G9). |
+
+### 3.3 Projects & Tasks tables (M1)
+
+| Table | Notable columns | Notes |
+|---|---|---|
+| `projects` | `workspace_id, project_number(seq), client_id, owner_id, status_id, billing_type, start_date, deadline, progress, progress_from_tasks, is_pinned, visible_to_customer, custom_fields jsonb` | Dự án gắn với Client. |
+| `project_statuses` | `workspace_id, name, color, status_order` | Lookup workspace-scoped (G11). |
+| `project_members` | `id uuid, workspace_id, project_id, user_id, created_at` | Pivot RLS (G4). Validate = active WorkspaceMember. |
+| `project_milestones` | `workspace_id, project_id, name, color, due_date, milestone_order, status` | Kanban reorder. |
+| `project_discussions` | `workspace_id, project_id, user_id, title, body, is_visible_to_client` | Thread; replies = `comments`. |
+| `tasks` | `workspace_id, task_number(seq), owner_id, name, status(1-5 const), priority(1-4 const), related_type, related_id, milestone_id, start_date, due_date, finished_at, billable, billed, kanban_order, custom_fields jsonb` | Polymorphic related-to (lead/client/project/contact). |
+| `task_assignees` | `id uuid, workspace_id, task_id, user_id, assigned_by` | Multi-assignee pivot RLS (G4). |
+| `task_followers` | `id uuid, workspace_id, task_id, user_id` | Follower pivot RLS (G4). |
+| `task_checklist_items` | `workspace_id, task_id, description, finished, item_order, assigned_user_id` | RLS via `workspace_id`. |
+| `task_timers` | `workspace_id, task_id, user_id, start_time, end_time(null=running), note, hourly_rate` | 1 running per (task, user). |
+
+**RBAC permissions (G2):**
+- Format: `tenant.{client,contact,lead,project,task}.{view,view_own,create,update,delete}` trong `App\Enums\TenantPermission`.
+- Seed qua `PlatformPermissionSeeder`: admin=all, sales_manager=leads/clients/contacts/projects/tasks full, sales_rep=view_own + create, viewer=view only.
+- Non-enumeration (BR-X15): visibility fail → `abort(404)`, không 403.
 
 ### 3.4 Support / Marketing tables
 

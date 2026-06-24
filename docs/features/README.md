@@ -26,37 +26,50 @@ Internal-staff side: a separate `admin` guard (isolated from the customer `web` 
 | [Workspaces Panel](./admin/workspaces-panel.md) | Read-only platform view over workspaces + members (privileged/RLS-bypassed read). | `Admin\WorkspaceController` |
 | [Impersonation (Model A)](./admin/impersonation.md) | Admin acts as a tenant member; dual-actor audited; reversible. | `Admin\ImpersonationController` |
 
-## Module 2 — Custom-Fields Engine
+## Module 2 — Custom-Fields Engine ✅
 
-(Planned) User-defined fields with type validation and versioning.
+Engine tùy chỉnh trường dữ liệu: `custom_field_definitions` (registry metadata) + lưu value trong `custom_fields` JSONB trên entity. 5 entity types: `client, contact, lead, project, task`.
 
-## Module 3 — Cross-Cutting Platform
+| Feature | Purpose | Code entry |
+|---|---|---|
+| Custom Fields | Define workspace-scoped fields per entity type; validate + persist in JSONB. | `CustomFieldService` + `HasCustomFields` trait + `CustomFieldDefinition` model |
 
-Attachments, notifications, event bus, Reverb realtime, product announcements.
+## Module 3 — Cross-Cutting Platform ✅
+
+Attachments, tags, comments, notes, activity timeline, notifications, reminders, email templates, product announcements.
 
 | Feature | Purpose | Code entry |
 |---|---|---|
 | [Product Announcements / What's New](./platform/announcements.md) | Platform staff publish global changelog entries; tenant users see in-app feed + unread badge. Global tables (no RLS). | `WhatsNewController` + `AnnouncementReadService` + `AnnouncementReadController` |
+| Attachments | Polymorphic file attachment on any workspace entity; storage namespaced per workspace. | `AttachmentService` + `HasAttachments` + `Attachment` model |
+| Tags | Workspace-scoped tag dedupe by slug; polymorphic many-to-many with RLS pivot. | `TagService` + `HasTags` + `Tag`/`taggables` |
+| Notes | Polymorphic internal notes (not visible to customers). | `NoteService` + `HasNotes` + `Note` model |
+| Activity Timeline | Immutable append-only log of business events; polymorphic subject; render via `ActivityFormatter`. | `ActivityLogger` + `HasActivities` + `Activity` model |
+| Notifications | In-app notification feed (Laravel notifications); DB channel; `NotificationService`. | `NotificationService` + `notifications` table |
+| Reminders | Workspace-scoped scheduled reminders; scheduler per-workspace context (G12). | `Reminder` model + `HasReminders` + reminder scheduler |
+| Email Templates | Workspace-scoped templated email; merge fields; whitelist context keys (G9). | `TemplatedMailer` + `EmailTemplate` model |
 
-## Module 4 — Sales Core
+## Module 4 — CRM Core (Client/Contact/Lead/Pipeline/Convert) ✅
 
-(Planned) Account, Contact, Deal, Pipeline/Stage, deal stage changes, won/lost, forecast.
+Quản lý khách hàng (Client), người liên hệ (Contact), và tiềm năng bán hàng (Lead) qua pipeline kanban, convert Lead → Client+Contact trong transaction.
 
-## Module 5 — Lead + Conversion (P07 — live)
-
-CRM leads module with pipeline kanban, assignment, lost/junk tracking, and conversion to client.
-
-| Feature | Purpose | Code entry |
-|---|---|---|
-| [Leads + Pipeline + Convert](./leads/leads-pipeline.md) | CRUD leads, kanban drag-drop, assignment notification, lost/junk status, convert Lead→Client+Contact in transaction. | `LeadController`, `LeadConversionController`, `LeadService`, `LeadConversionService` |
-
-## Module 6 — Engagement
-
-Activity (immutable history), Tasks (assignable, timers/timesheet), polymorphic relations.
+> **Note**: Tên cũ "Sales Core (Account/Deal)" đã được thay bằng kiến trúc thực tế: `clients/contacts/leads/pipelines/pipeline_stages` — quyết định khóa #2 (không dùng Account/Deal kiểu HubSpot). Xem [crm-domain-definition.md](../crm-domain-definition.md).
 
 | Feature | Purpose | Code entry |
 |---|---|---|
-| [Tasks + Timers](./tasks/tasks-and-timers.md) | Task management (standalone or linked to lead/client/project/contact), multi-assignee, checklist, kanban, time-tracking with start/stop + manual log, 1-running-timer constraint. | `TaskController`, `TaskTimerController`, `TaskKanbanController`, `TaskService`, `TaskTimerService`, `TaskPolicy` |
+| [Clients & Contacts](./sales/clients-contacts.md) | CRUD client (công ty) + contact (người), primary contact, nhóm khách hàng, vault, custom fields/tags/attachments/notes/activity. | `ClientController`, `ClientService`, `ContactController`, `Client`/`Contact` models |
+| [Leads + Pipeline + Convert](./sales/leads-pipeline-convert.md) | CRUD leads, kanban drag-drop, assignment notification, lost/junk, convert Lead→Client+Contact (G7: isolation+idempotency+rollback). | `LeadController`, `LeadConversionController`, `LeadService`, `LeadConversionService` |
+
+## Module 5 — Projects & Tasks ✅
+
+Quản lý dự án (Project) với milestone kanban, thành viên, file, thảo luận. Quản lý công việc (Task) đa hình với nhiều người thực hiện, checklist, và bộ đếm giờ/timesheet.
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Projects & Milestones](./projects/projects-milestones.md) | Project CRUD, members, milestone kanban reorder, files, discussions/comments, progress/status, activity visible_to_customer. | `ProjectController`, `ProjectService`, `ProjectMilestoneController`, `Project`/`ProjectMilestone` |
+| [Tasks & Timers](./projects/tasks-timers.md) | Task CRUD, polymorphic related-to (lead/client/project/contact), multi-assignee, checklist, timer start/stop state machine, comments/reminders. | `TaskController`, `TaskTimerController`, `TaskService`, `TaskTimerService`, `Task`/`TaskTimer` |
+
+> Legacy entries (tasks): `./tasks/tasks-and-timers.md` — superseded by `./projects/tasks-timers.md` (same content, canonical path updated).
 
 ## Module 7 — Support
 
