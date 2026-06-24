@@ -16,7 +16,7 @@ jobs:
       has_php: ${{ steps.c.outputs.has_php }}
       has_node: ${{ steps.c.outputs.has_node }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: c
         run: |
           [ -f composer.json ] && echo "has_php=true" >> "$GITHUB_OUTPUT" || echo "has_php=false" >> "$GITHUB_OUTPUT"
@@ -40,7 +40,7 @@ jobs:
         image: redis:7
         ports: ['6379:6379']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -77,7 +77,7 @@ jobs:
     if: needs.detect.outputs.has_node == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
