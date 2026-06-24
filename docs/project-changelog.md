@@ -17,6 +17,25 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 1 P09: Tasks — Quản lý Công việc & Timesheet (2026-06-25)
+
+Module quản lý công việc đa hình (gắn với lead/khách/dự án/liên hệ): nhiều người thực hiện, người theo dõi, checklist, bộ đếm giờ/timesheet, bình luận, đính kèm, nhắc hẹn, tags, kanban theo trạng thái & độ ưu tiên. Commit: `7ea8415`.
+
+- **Task entity**: UUID PK, polymorphic `taskable` (lead/client/project/contact), `status` enum (todo/in_progress/review/done/cancelled), `priority` enum (low/medium/high/urgent), `due_date`, `estimated_hours`. Trait stack: `HasCustomFields`, `HasTags`, `HasAttachments`, `HasNotes`, `HasActivities`, `HasReminders`. Morph alias `'task'`.
+- **Nhiều người thực hiện** (`TaskAssignee`): bảng `task_assignees` (task_id, member_id). `TaskAssigneeController` POST/DELETE. `TaskService::syncAssignees()` idempotent.
+- **Người theo dõi** (`TaskFollower`): bảng `task_followers` (task_id, member_id). Tương tự assignees, độc lập với thực hiện.
+- **Checklist** (`TaskChecklistItem`): bảng `task_checklist_items` (task_id, label, is_done, sort_order). `TaskChecklistController` CRUD + toggle done. `checklist-panel.tsx` render danh sách có drag-sort.
+- **Bộ đếm giờ / Timesheet** (`TaskTimer`): bảng `task_timers` (task_id, member_id, started_at, ended_at, duration_seconds, note). `TaskTimerService::start/stop/log()`. Timer đang chạy = bản ghi có `started_at` nhưng `ended_at IS NULL`. `timer-widget.tsx` hiển thị đồng hồ real-time.
+- **Kanban**: `TaskKanbanController` PATCH reorder (bulk sort_order trong transaction). `task-kanban-column.tsx` drag-drop HTML5. Board view theo status và priority.
+- **RLS**: migration `enable_rls_on_task_tables` + grant — 5 bảng (`tasks`, `task_assignees`, `task_followers`, `task_checklist_items`, `task_timers`). `RlsPolicyCoverageTest` tự scan.
+- **FormRequests**: `TaskStoreRequest`, `TaskUpdateRequest`, `TaskAssignRequest`, `TaskStatusUpdateRequest`, `TaskKanbanReorderRequest`, `ChecklistItemStoreRequest`, `TimerLogRequest`.
+- **TaskPolicy**: `tasks.view / create / edit / delete / assign / timer` qua `TenantPermission` enum.
+- **UI React/Inertia**: `tasks/index.tsx` (bảng lọc/search/status badge), `tasks/kanban.tsx`, `tasks/show.tsx` (tabs: checklist, assignees, timers, attachments, comments, activity), `task-form.tsx`, `task-card.tsx`, `priority-badge.tsx`, `task-status-badge.tsx`, `timer-widget.tsx`.
+- **i18n**: `lang/vi/tasks.php` + `lang/en/tasks.php` (133 keys mỗi file).
+- **Tests** (7 test files): `TaskCrudTest`, `TaskAuthorizationTest`, `TaskTenantIsolationTest`, `TaskAssigneeTest`, `TaskChecklistTest`, `TaskKanbanTest`, `TaskTimerTest`.
+- **Feature doc**: `docs/features/tasks/tasks-and-timers.md` với sequence diagram timer lifecycle.
+- **Announcement**: slug `m1-tasks-release` published — hiển thị trong What's New cho toàn bộ tenant.
+
 ### Added — Module 1 P08: Projects — Quản lý Dự án (2026-06-25)
 
 Module quản lý dự án gắn với khách hàng: thành viên, cột mốc kanban, tệp đính kèm, thảo luận/bình luận, trạng thái + tiến độ %, timeline hoạt động có kiểm soát hiển thị cho khách hàng. Commit: `6843434`.
