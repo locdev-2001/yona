@@ -17,6 +17,24 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 1 P08: Projects — Quản lý Dự án (2026-06-25)
+
+Module quản lý dự án gắn với khách hàng: thành viên, cột mốc kanban, tệp đính kèm, thảo luận/bình luận, trạng thái + tiến độ %, timeline hoạt động có kiểm soát hiển thị cho khách hàng. Commit: `6843434`.
+
+- **Project entity**: UUID PK, `project_number` sequence (WorkspaceSequence), liên kết `client_id` (nullable), `status` enum (not_started / in_progress / on_hold / completed / cancelled), `progress` int 0–100. Trait stack đầy đủ: `HasCustomFields`, `HasTags`, `HasAttachments`, `HasActivities`, morph alias `'project'`.
+- **Thành viên dự án** (`ProjectMember`): bảng `project_members` (project_id, member_id, role: `manager|member|viewer`). `ProjectMemberController` PATCH role, DELETE member; `ProjectService::syncMembers()` idempotent.
+- **Cột mốc Kanban** (`ProjectMilestone`): `milestone_kanban.tsx` drag-drop reorder (PATCH `/milestones/reorder`). Fields: `name`, `due_date`, `status`, `sort_order`. `ProjectMilestoneService::reorder()` bulk-update sort_order trong transaction.
+- **Thảo luận + Bình luận** (`ProjectDiscussion`): thread 2 cấp (discussion + replies). `ProjectDiscussionService::create/reply/delete()`. Visibility flag `is_visible_to_client` — bình luận nội bộ không lọt ra ngoài.
+- **Tệp đính kèm**: `ProjectFileController` dùng chung polymorphic `Attachment` model từ M0; upload lên local disk (swap-in S3 sau).
+- **Trạng thái + Tiến độ**: `ChangeProjectStatusRequest` + `ProjectService::changeStatus()` log activity. `progress-circle.tsx` hiển thị % vòng tròn SVG.
+- **Timeline hoạt động**: `activity-feed.tsx` render log hành động có `is_visible_to_client` filter — admin xem tất cả, client portal chỉ xem hoạt động public.
+- **RLS**: migration `enable_rls_on_project_tables` — 5 bảng (`projects`, `project_members`, `project_milestones`, `project_discussions`, `project_files`). `RlsPolicyCoverageTest` tự scan.
+- **FormRequests**: `StoreProjectRequest`, `UpdateProjectRequest`, `AddProjectMemberRequest`, `StoreProjectMilestoneRequest`, `ReorderMilestonesRequest`, `StoreProjectDiscussionRequest`, `StoreDiscussionReplyRequest`, `ChangeProjectStatusRequest`, `UploadProjectFileRequest`.
+- **UI React/Inertia**: trang index (bảng lọc/tìm kiếm/status badge), show page (tabs: milestones kanban, members, files, discussions, activity), create/edit forms, `progress-circle.tsx`, `status-badge.tsx`.
+- **i18n**: `lang/vi/projects.php` + `lang/en/projects.php` đầy đủ (148 keys mỗi file).
+- **Tests** (9 test files): `ProjectCrudTest`, `ProjectAuthorizationTest`, `ProjectIsolationTest`, `ProjectMemberTest`, `ProjectMemberRlsTest`, `ProjectMilestoneTest`, `ProjectDiscussionTest`, `ProjectActivityTest`, `ProjectProgressStatusTest`.
+- **Announcement**: slug `m1-projects-release` published — hiển thị trong What's New cho toàn bộ tenant.
+
 ### Added — Module 5 P07: Leads + Pipeline + Convert (2026-06-25)
 
 Module quản lý Leads với kanban pipeline, assignment, lost/junk tracking và conversion sang Client.
