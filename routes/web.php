@@ -9,6 +9,10 @@ use App\Http\Controllers\Clients\ClientVaultEntryController;
 use App\Http\Controllers\Clients\ContactController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Leads\LeadController;
+use App\Http\Controllers\Leads\LeadConversionController;
+use App\Http\Controllers\Leads\LeadStageController;
+use App\Http\Controllers\Leads\LeadStatusActionController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReminderController;
@@ -60,6 +64,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
         Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+        // P07 — Leads + Pipeline.
+        Route::resource('leads', LeadController::class);
+        Route::get('leads-kanban/{pipeline?}', [LeadController::class, 'kanban'])->name('leads.kanban');
+        Route::patch('leads/{lead}/stage', [LeadStageController::class, 'update'])->name('leads.stage');
+        Route::post('leads/{lead}/assign', [LeadController::class, 'assign'])->name('leads.assign');
+        Route::post('leads/{lead}/convert', [LeadConversionController::class, 'store'])->name('leads.convert');
+        Route::post('leads/{lead}/lost', [LeadStatusActionController::class, 'markLost'])->name('leads.lost');
+        Route::post('leads/{lead}/junk', [LeadStatusActionController::class, 'markJunk'])->name('leads.junk');
+        Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])->name('leads.restore-status');
 
         // P06 — Clients + Contacts.
         Route::resource('clients', ClientController::class);

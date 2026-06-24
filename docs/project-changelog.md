@@ -17,6 +17,23 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Module 5 P07: Leads + Pipeline + Convert (2026-06-25)
+
+Module quản lý Leads với kanban pipeline, assignment, lost/junk tracking và conversion sang Client.
+
+- **Lead entity**: UUID PK, `lead_number` sequence (WorkspaceSequence race-safe), hybrid IDs (owner_id bigint, rest uuid). Trait stack đủ 6: `HasCustomFields`, `HasTags`, `HasAttachments`, `HasNotes`, `HasActivities`, `HasReminders`. morph alias `'lead'` (đã đăng ký P03).
+- **Pipeline Kanban**: drag-drop stage (PATCH `/leads/{lead}/stage`). G8 invariant: `stage_id MUST belong to pipeline_id` — validated FormRequest + Service. `LeadService::moveStage()` reorder leads trong stage, log activity, fire `LeadStageChanged`.
+- **Assignment**: `LeadService::assign()` fire `LeadAssigned` → `SendLeadAssignedNotification` listener → `LeadAssignedNotification` (DB + email via `TemplatedMailer`).
+- **Lost / Junk**: `markLost/markJunk` cache `last_stage_id`, set flag. `restore()` khôi phục stage và xóa flag.
+- **G12 Visibility**: `tenant.lead.view` → all; else `assigned_to=me OR owner_id=me OR created_by=me OR team_id∈teams OR is_public`. Fail → `abort(404)` non-enumeration. Scope query qua WorkspaceMember (không dùng Spatie teams).
+- **G7 Convert**: `LeadConversionService::convert()` — isolation assert (WS mismatch → 404), idempotency (double-convert → 422), DB::transaction: tạo Client + primary Contact, map custom fields by slug, re-point notes, stage → won, backlink `client.leadid`, log activities, fire `LeadConverted`.
+- **RLS**: migration `enable_rls_on_leads` với GRANT to `cho_rach_app`. `RlsPolicyCoverageTest` tự scan bảng mới.
+- **FormRequests**: `StoreLeadRequest`, `UpdateLeadRequest`, `MoveLeadStageRequest` (G8), `AssignLeadRequest`, `ConvertLeadRequest`.
+- **UI React/Inertia**: list index, kanban board (HTML5 drag-drop), create/edit forms (pipeline+stage linked selects), show page (tabs: activity/notes/attachments), convert dialog, assign popover.
+- **i18n**: lang/vi/leads.php + lang/en/leads.php đầy đủ (title, fields, actions, flash, activity, notification, errors, kanban, status).
+- **Tests** (7 test files, 61+ assertions): LeadCrudTest, LeadVisibilityTest, LeadKanbanTest, LeadAssignmentTest, LeadLostJunkTest, LeadConvertTest, LeadIsolationTest.
+- **Feature doc**: `docs/features/leads/leads-pipeline.md` với sequence diagram G7 convert.
+
 ### Added — Module 1: Clients & Contacts — CRM Core (2026-06-25)
 
 Module quản lý Khách hàng và Người liên hệ — phần cốt lõi của CRM. Commit: `13b5ded`.

@@ -209,6 +209,91 @@ export interface Tag {
     color: string | null;
 }
 
+// ── P07: Leads + Pipeline ─────────────────────────────────────────────────────
+export interface Pipeline {
+    id: string;
+    name: string;
+    is_default: boolean;
+    stages?: PipelineStage[];
+}
+
+export interface PipelineStage {
+    id: string;
+    pipeline_id: string;
+    name: string;
+    color: string | null;
+    stage_order: number;
+    probability: number;
+    type: 'open' | 'won' | 'lost';
+}
+
+export interface LeadSource {
+    id: string;
+    name: string;
+}
+
+export interface Lead {
+    id: string;
+    workspace_id: string;
+    owner_id: number | null;
+    team_id: string | null;
+    lead_number: number;
+    name: string;
+    title: string | null;
+    email: string | null;
+    phone: string | null;
+    company: string | null;
+    lead_value: string | null;
+    address: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+    country: string | null;
+    website: string | null;
+    description: string | null;
+    pipeline_id: string;
+    stage_id: string;
+    source_id: string | null;
+    assigned_to: number | null;
+    last_contact: string | null;
+    date_converted: string | null;
+    converted_client_id: string | null;
+    is_junk: boolean;
+    is_lost: boolean;
+    is_public: boolean;
+    lead_order: number;
+    last_stage_id: string | null;
+    custom_fields: Record<string, unknown>;
+    lock_version: number;
+    created_at: string;
+    updated_at: string;
+    // Relations (eager-loaded)
+    pipeline?: Pipeline | null;
+    stage?: PipelineStage | null;
+    source?: LeadSource | null;
+    assignee?: Pick<User, 'id' | 'name'> | null;
+    owner?: Pick<User, 'id' | 'name'> | null;
+    converted_client?: Pick<Client, 'id' | 'name'> | null;
+    activities?: ActivityItem[];
+    tags?: Tag[];
+}
+
+export interface KanbanColumn {
+    stage: PipelineStage;
+    leads: PaginatedLeads;
+    total_value: string | number;
+}
+
+export interface PaginatedLeads {
+    data: Lead[];
+    current_page: number;
+    last_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    total: number;
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
 export interface ClientVaultEntry {
     id: string;
     client_id: string;

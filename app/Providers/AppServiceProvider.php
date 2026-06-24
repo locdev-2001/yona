@@ -2,18 +2,23 @@
 
 namespace App\Providers;
 
+use App\Events\LeadAssigned;
+use App\Listeners\SendLeadAssignedNotification;
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\Contact;
 use App\Models\EmailTemplate;
+use App\Models\Lead;
 use App\Policies\ClientPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
+use App\Policies\LeadPolicy;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
 use App\Services\MergeFields\LeadMergeFields;
 use App\Services\MergeFields\MergeFieldResolver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -49,5 +54,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Client::class, ClientPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(ClientGroup::class, ClientPolicy::class); // groups use client permission
+
+        // P07 — Lead policy.
+        Gate::policy(Lead::class, LeadPolicy::class);
+
+        // P07 — Lead events.
+        Event::listen(LeadAssigned::class, SendLeadAssignedNotification::class);
     }
 }

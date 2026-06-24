@@ -42,9 +42,13 @@ Attachments, notifications, event bus, Reverb realtime, product announcements.
 
 (Planned) Account, Contact, Deal, Pipeline/Stage, deal stage changes, won/lost, forecast.
 
-## Module 5 — Lead + Conversion
+## Module 5 — Lead + Conversion (P07 — live)
 
-(Planned) Lead funnel, lead scoring, lead-to-contact conversion, dedup guards.
+CRM leads module with pipeline kanban, assignment, lost/junk tracking, and conversion to client.
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Leads + Pipeline + Convert](./leads/leads-pipeline.md) | CRUD leads, kanban drag-drop, assignment notification, lost/junk status, convert Lead→Client+Contact in transaction. | `LeadController`, `LeadConversionController`, `LeadService`, `LeadConversionService` |
 
 ## Module 6 — Engagement
 
