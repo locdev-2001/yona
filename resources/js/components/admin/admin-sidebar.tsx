@@ -11,17 +11,23 @@ import {
     SidebarRail,
 } from '@/components/ui/sidebar';
 import { useTranslator } from '@/lib/i18n';
-import { Link } from '@inertiajs/react';
-import { Building2, LayoutGrid, ShieldCheck } from 'lucide-react';
+import type { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { Building2, LayoutGrid, Megaphone, ShieldCheck } from 'lucide-react';
 
 export function AdminSidebar() {
     const t = useTranslator();
     const path = window.location.pathname;
+    const { auth } = usePage<SharedData>().props;
+    const adminPermissions: string[] = auth.admin?.permissions ?? [];
 
-    const items = [
-        { title: t('platform.admin.nav.dashboard'), href: '/admin/dashboard', icon: LayoutGrid },
-        { title: t('platform.admin.nav.workspaces'), href: '/admin/workspaces', icon: Building2 },
+    const baseItems = [
+        { title: t('platform.admin.nav.dashboard'), href: '/admin/dashboard', icon: LayoutGrid, permission: null },
+        { title: t('platform.admin.nav.workspaces'), href: '/admin/workspaces', icon: Building2, permission: 'platform.workspaces.view' },
+        { title: t('platform.admin.nav.announcements'), href: '/admin/announcements', icon: Megaphone, permission: 'platform.announcements.manage' },
     ];
+
+    const items = baseItems.filter((item) => item.permission === null || adminPermissions.includes(item.permission));
 
     return (
         <Sidebar collapsible="icon" variant="inset">

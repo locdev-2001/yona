@@ -1,5 +1,29 @@
 import { LucideIcon } from 'lucide-react';
 
+// ── Announcements ──────────────────────────────────────────────────────────────
+export type AnnouncementCategory = 'feature' | 'improvement' | 'fix' | 'announcement' | 'maintenance';
+export type AnnouncementStatus = 'draft' | 'published';
+export type AnnouncementAudienceType = 'all';
+
+export interface AnnouncementAudience {
+    type: AnnouncementAudienceType;
+}
+
+export interface Announcement {
+    id: string;
+    title: string;
+    slug: string;
+    body_html: string;
+    category: AnnouncementCategory;
+    status?: AnnouncementStatus;
+    published_at: string | null;
+    cover_image: string | null;
+    audience?: AnnouncementAudience;
+    /** Present on the index page response — derived server-side. */
+    is_read?: boolean;
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
 export type WorkspaceRole = 'admin' | 'sales_manager' | 'sales_rep' | 'support_manager' | 'support_agent' | 'marketer' | 'viewer';
 
 export interface Workspace {
@@ -65,6 +89,10 @@ export interface SharedData {
     locale: string;
     i18n: Record<string, unknown>;
     flash: { success: string | null; error: string | null };
+    /** Lazy prop — resolved for authenticated web users only; null for guests/admins. */
+    unreadAnnouncementCount?: number | null;
+    /** Lazy prop — most recent unread announcement payload; null when all read. */
+    latestUnreadAnnouncement?: Pick<Announcement, 'id' | 'title' | 'body_html' | 'category' | 'published_at' | 'cover_image' | 'slug'> | null;
     [key: string]: unknown;
 }
 
