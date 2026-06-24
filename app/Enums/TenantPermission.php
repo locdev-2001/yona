@@ -53,6 +53,10 @@ enum TenantPermission: string
     case TaskUpdate = 'tenant.task.update';
     case TaskDelete = 'tenant.task.delete';
 
+    // --- Custom fields (P02) ---
+    case CustomFieldsView = 'custom_fields.view';
+    case CustomFieldsManage = 'custom_fields.manage';
+
     /** @return list<string> */
     public static function values(): array
     {

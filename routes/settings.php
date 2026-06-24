@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
+use App\Http\Controllers\Settings\CustomFieldController;
 use App\Http\Controllers\Settings\LeadSourceController;
 use App\Http\Controllers\Settings\MemberController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -91,5 +92,13 @@ Route::middleware(['auth', 'workspace'])->prefix('settings')->group(function () 
             Route::patch('{project_status}', 'update')->name('update');
             Route::delete('{project_status}', 'destroy')->name('destroy');
         });
+    });
+
+    // Custom fields (P02) — admin CRUD for field definitions per entity_type.
+    Route::controller(CustomFieldController::class)->prefix('custom-fields')->name('custom-fields.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::put('{definition}', 'update')->name('update');
+        Route::delete('{definition}', 'destroy')->name('destroy');
     });
 });

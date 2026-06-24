@@ -77,7 +77,7 @@ class HandleInertiaRequests extends Middleware
                 )
                 : null,
             'locale' => app()->getLocale(),
-            'i18n' => ['platform' => trans('platform')],
+            'i18n' => ['platform' => trans('platform'), 'custom_fields' => trans('custom_fields')],
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
