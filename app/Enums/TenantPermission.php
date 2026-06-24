@@ -52,6 +52,9 @@ enum TenantPermission: string
     case TaskCreate = 'tenant.task.create';
     case TaskUpdate = 'tenant.task.update';
     case TaskDelete = 'tenant.task.delete';
+    // Timesheet-specific permissions (P09 — split from task.update for billing integrity)
+    case TaskTimesheetUpdate = 'tenant.task.timesheet.update';
+    case TaskTimesheetDelete = 'tenant.task.timesheet.delete';
 
     // --- Email templates (P05) ---
     case EmailTemplateView = 'tenant.email_template.view';

@@ -8,7 +8,7 @@ use App\Services\ProjectService;
 
 // P08 — Progress + status transitions.
 
-it('recalcProgressFromTasks returns safely when tasks table does not exist', function () {
+it('recalcProgressFromTasks returns zero progress when project has no tasks', function () {
     $workspace = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($workspace, $user);
@@ -17,11 +17,11 @@ it('recalcProgressFromTasks returns safely when tasks table does not exist', fun
     $client = Client::factory()->create();
     $project = app(ProjectService::class)->create(['name' => 'Recalc Test', 'client_id' => $client->id], $user->id);
 
-    // Guard: tasks table doesn't exist yet (P09 not merged) → no exception
-    // We just call and expect no throw
+    // P09 merged: tasks table exists, project has no tasks → progress = 0, no throw
     $result = app(ProjectService::class)->recalcProgressFromTasks($project);
 
     expect($result->id)->toBe($project->id);
+    expect($result->progress)->toBe(0);
 });
 
 it('changeStatus to non-finished clears finished_at', function () {

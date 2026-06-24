@@ -74,6 +74,8 @@ class PlatformPermissionSeeder extends Seeder
                 TenantPermission::TaskCreate->value,
                 TenantPermission::TaskUpdate->value,
                 TenantPermission::TaskDelete->value,
+                TenantPermission::TaskTimesheetUpdate->value,
+                TenantPermission::TaskTimesheetDelete->value,
             ],
 
             // sales_rep: own view + create + update for leads/clients/contacts/tasks; no delete
@@ -90,9 +92,10 @@ class PlatformPermissionSeeder extends Seeder
                 TenantPermission::TaskViewOwn->value,
                 TenantPermission::TaskCreate->value,
                 TenantPermission::TaskUpdate->value,
+                TenantPermission::TaskTimesheetUpdate->value,
             ],
 
-            // support_manager: full projects/tasks + client/contact view
+            // support_manager: full projects/tasks + client/contact view + timesheet manage
             'support_manager' => [
                 TenantPermission::AuditView->value,
                 TenantPermission::ClientView->value,
@@ -107,15 +110,18 @@ class PlatformPermissionSeeder extends Seeder
                 TenantPermission::TaskCreate->value,
                 TenantPermission::TaskUpdate->value,
                 TenantPermission::TaskDelete->value,
+                TenantPermission::TaskTimesheetUpdate->value,
+                TenantPermission::TaskTimesheetDelete->value,
             ],
 
-            // support_agent: own project view + task create/update + client view
+            // support_agent: own project view + task create/update + client view + timesheet own
             'support_agent' => [
                 TenantPermission::ClientView->value,
                 TenantPermission::ProjectViewOwn->value,
                 TenantPermission::TaskViewOwn->value,
                 TenantPermission::TaskCreate->value,
                 TenantPermission::TaskUpdate->value,
+                TenantPermission::TaskTimesheetUpdate->value,
             ],
 
             // marketer: leads view/create/update (lead_sources via tenant.lead.view)

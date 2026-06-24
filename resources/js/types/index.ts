@@ -406,3 +406,86 @@ export interface Team {
     name: string;
 }
 // ──────────────────────────────────────────────────────────────────────────────
+
+// ── P09: Tasks + Timers ───────────────────────────────────────────────────────
+export type TaskStatus = 1 | 2 | 3 | 4 | 5; // 1=not_started,2=awaiting,3=testing,4=in_progress,5=complete
+export type TaskPriority = 1 | 2 | 3 | 4; // 1=low,2=medium,3=high,4=urgent
+export type TaskRelatedType = 'lead' | 'client' | 'project' | 'contact';
+
+export interface TaskAssignee {
+    id: number;
+    name: string;
+    email?: string;
+    pivot?: { assigned_by: number | null };
+}
+
+export interface TaskChecklistItem {
+    id: string;
+    task_id: string;
+    description: string;
+    finished: boolean;
+    finished_by: number | null;
+    finished_at: string | null;
+    assigned_user_id: number | null;
+    item_order: number;
+    assigned_user?: Pick<User, 'id' | 'name'> | null;
+}
+
+export interface TaskTimer {
+    id: string;
+    task_id: string;
+    user_id: number;
+    start_time: string;
+    end_time: string | null; // null = running
+    hourly_rate: string | null;
+    note: string | null;
+    duration_seconds: number;
+    user?: Pick<User, 'id' | 'name'> | null;
+}
+
+export interface Task {
+    id: string;
+    workspace_id: string;
+    task_number: number;
+    name: string;
+    description: string | null;
+    status: TaskStatus;
+    priority: TaskPriority;
+    start_date: string | null;
+    due_date: string | null;
+    finished_at: string | null;
+    related_type: TaskRelatedType | null;
+    related_id: string | null;
+    milestone_id: string | null;
+    billable: boolean;
+    billed: boolean;
+    hourly_rate: string | null;
+    visible_to_customer: boolean;
+    kanban_order: number;
+    owner_id: number | null;
+    custom_fields: Record<string, unknown>;
+    lock_version: number;
+    created_at: string;
+    updated_at: string;
+    // Relations (eager-loaded)
+    assignees?: TaskAssignee[];
+    followers?: Pick<User, 'id' | 'name'>[];
+    checklist_items?: TaskChecklistItem[];
+    timers?: TaskTimer[];
+    milestone?: Pick<ProjectMilestone, 'id' | 'name'> | null;
+    tags?: Tag[];
+    activities?: ActivityItem[];
+}
+
+export interface PaginatedTasks {
+    data: Task[];
+    current_page: number;
+    last_page: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    total: number;
+}
+
+/** Kanban columns grouped by status (TaskStatus → Task[]). */
+export type TaskKanbanColumns = Record<string, Task[]>;
+// ──────────────────────────────────────────────────────────────────────────────

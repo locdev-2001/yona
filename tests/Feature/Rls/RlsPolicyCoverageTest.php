@@ -52,6 +52,13 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         'client_group_client',  // pivot carries workspace_id — G4
         'client_user',          // pivot carries workspace_id — G4
         'client_vault_entries',
+
+        // P09 tasks + timers (2026_06_25_700006) — includes pivot tables (G4)
+        'tasks',
+        'task_assignees',       // pivot carries workspace_id — G4
+        'task_followers',       // pivot carries workspace_id — G4
+        'task_checklist_items', // pivot carries workspace_id — G4
+        'task_timers',
     ];
 
     // Query pg_policies for ws_isolation on each table

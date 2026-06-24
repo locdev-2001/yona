@@ -52,7 +52,11 @@ CRM leads module with pipeline kanban, assignment, lost/junk tracking, and conve
 
 ## Module 6 — Engagement
 
-(Planned) Activity (immutable history), Task (assignable), polymorphic relations.
+Activity (immutable history), Tasks (assignable, timers/timesheet), polymorphic relations.
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Tasks + Timers](./tasks/tasks-and-timers.md) | Task management (standalone or linked to lead/client/project/contact), multi-assignee, checklist, kanban, time-tracking with start/stop + manual log, 1-running-timer constraint. | `TaskController`, `TaskTimerController`, `TaskKanbanController`, `TaskService`, `TaskTimerService`, `TaskPolicy` |
 
 ## Module 7 — Support
 

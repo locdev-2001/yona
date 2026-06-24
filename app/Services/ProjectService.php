@@ -161,16 +161,21 @@ class ProjectService
             return $project;
         }
 
-        // P09 will unlock this: compute from tasks complete/total ratio.
-        $total = DB::table('tasks')->where('project_id', $project->id)->whereNull('deleted_at')->count();
+        // P09 tasks use polymorphic morph (related_type='project', related_id=project.id).
+        $total = DB::table('tasks')
+            ->where('related_type', 'project')
+            ->where('related_id', $project->id)
+            ->whereNull('deleted_at')
+            ->count();
 
         if ($total === 0) {
             $project->progress = 0;
         } else {
             $completed = DB::table('tasks')
-                ->where('project_id', $project->id)
+                ->where('related_type', 'project')
+                ->where('related_id', $project->id)
                 ->whereNull('deleted_at')
-                ->where('status', 5) // 5 = complete (P09 const)
+                ->where('status', 5) // 5 = Task::STATUS_COMPLETE (P09)
                 ->count();
 
             $project->progress = (int) round(($completed / $total) * 100);

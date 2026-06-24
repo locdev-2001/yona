@@ -64,7 +64,9 @@ class MorphMapServiceProvider extends ServiceProvider
             'project' => 'App\\Models\\Project',             // P08
             'project_milestone' => 'App\\Models\\ProjectMilestone', // P08
             'project_discussion' => 'App\\Models\\ProjectDiscussion', // P08
-            'task' => 'App\\Models\\Task',     // P09
+            'task' => 'App\\Models\\Task',                               // P09
+            'task_checklist_item' => 'App\\Models\\TaskChecklistItem', // P09
+            'task_timer' => 'App\\Models\\TaskTimer',                  // P09
 
             // P04 models that can appear as subjects (activity/reminder)
             'activity' => Activity::class,

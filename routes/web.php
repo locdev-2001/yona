@@ -140,6 +140,9 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('{project}/discussions/{discussion}', [ProjectDiscussionController::class, 'destroy'])->name('discussions.destroy');
             Route::post('{project}/discussions/{discussion}/replies', [ProjectDiscussionController::class, 'reply'])->name('discussions.reply');
         });
+
+        // P09 — Tasks + Timers.
+        require __DIR__.'/tasks.php';
     });
 });
 

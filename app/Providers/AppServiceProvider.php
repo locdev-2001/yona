@@ -10,11 +10,13 @@ use App\Models\Contact;
 use App\Models\EmailTemplate;
 use App\Models\Lead;
 use App\Models\Project;
+use App\Models\Task;
 use App\Policies\ClientPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\TaskPolicy;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
@@ -62,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
 
         // P08 — Project policy.
         Gate::policy(Project::class, ProjectPolicy::class);
+
+        // P09 — Task policy.
+        Gate::policy(Task::class, TaskPolicy::class);
 
         // P07 — Lead events.
         Event::listen(LeadAssigned::class, SendLeadAssignedNotification::class);
