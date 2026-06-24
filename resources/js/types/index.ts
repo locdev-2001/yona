@@ -148,3 +148,76 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+// ── P06: Clients + Contacts ───────────────────────────────────────────────────
+export interface ClientGroup {
+    id: string;
+    name: string;
+    slug: string;
+    clients_count?: number;
+}
+
+export interface Contact {
+    id: string;
+    client_id: string;
+    first_name: string;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    title: string | null;
+    is_primary: boolean;
+    language: string | null;
+    custom_fields: Record<string, unknown>;
+}
+
+export interface Client {
+    id: string;
+    workspace_id: string;
+    owner_id: number | null;
+    name: string;
+    vat: string | null;
+    phone: string | null;
+    website: string | null;
+    currency: string | null;
+    default_language: string | null;
+    billing_street: string | null;
+    billing_city: string | null;
+    billing_state: string | null;
+    billing_zip: string | null;
+    billing_country: string | null;
+    shipping_street: string | null;
+    shipping_city: string | null;
+    shipping_state: string | null;
+    shipping_zip: string | null;
+    shipping_country: string | null;
+    leadid: string | null;
+    custom_fields: Record<string, unknown>;
+    // Relations (eager-loaded)
+    primary_contact?: Contact | null;
+    contacts?: Contact[];
+    groups?: ClientGroup[];
+    owner?: Pick<User, 'id' | 'name'> | null;
+    customer_admins?: Pick<User, 'id' | 'name'>[];
+    activities?: ActivityItem[];
+    tags?: Tag[];
+}
+
+export interface Tag {
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+}
+
+export interface ClientVaultEntry {
+    id: string;
+    client_id: string;
+    name: string;
+    server_address: string | null;
+    port: string | null;
+    username: string | null;
+    description: string | null;
+    share_in_projects: boolean;
+    visibility: 'private' | 'shared';
+}
+// ──────────────────────────────────────────────────────────────────────────────

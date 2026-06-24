@@ -2,6 +2,11 @@
 
 use App\Http\Controllers\AnnouncementReadController;
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\Clients\ClientController;
+use App\Http\Controllers\Clients\ClientCustomerAdminController;
+use App\Http\Controllers\Clients\ClientGroupController;
+use App\Http\Controllers\Clients\ClientVaultEntryController;
+use App\Http\Controllers\Clients\ContactController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
@@ -55,6 +60,34 @@ Route::middleware(['auth'])->group(function () {
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
         Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+        // P06 — Clients + Contacts.
+        Route::resource('clients', ClientController::class);
+
+        // Contacts: shallow nested (contacts/{contact} without client prefix for update/destroy).
+        Route::resource('clients.contacts', ContactController::class)
+            ->shallow()
+            ->only(['store', 'update', 'destroy']);
+
+        // Contact: make primary action.
+        Route::post('contacts/{contact}/primary', [ContactController::class, 'makePrimary'])
+            ->name('contacts.primary');
+
+        // Client groups (no show/create/edit views — list+store+update+destroy).
+        Route::resource('client-groups', ClientGroupController::class)
+            ->except(['show', 'create', 'edit']);
+
+        // Customer-admin delegation.
+        Route::post('clients/{client}/customer-admins', [ClientCustomerAdminController::class, 'sync'])
+            ->name('clients.customer-admins.sync');
+
+        // Vault entries (nested under clients).
+        Route::post('clients/{client}/vault', [ClientVaultEntryController::class, 'store'])
+            ->name('clients.vault.store');
+        Route::put('clients/{client}/vault/{vaultEntry}', [ClientVaultEntryController::class, 'update'])
+            ->name('clients.vault.update');
+        Route::delete('clients/{client}/vault/{vaultEntry}', [ClientVaultEntryController::class, 'destroy'])
+            ->name('clients.vault.destroy');
     });
 });
 

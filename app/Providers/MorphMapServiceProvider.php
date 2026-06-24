@@ -8,7 +8,11 @@ use App\Models\Announcement;
 use App\Models\AnnouncementRead;
 use App\Models\Attachment;
 use App\Models\AuditLog;
+use App\Models\Client;
+use App\Models\ClientGroup;
+use App\Models\ClientVaultEntry;
 use App\Models\Comment;
+use App\Models\Contact;
 use App\Models\CustomFieldDefinition;
 use App\Models\EmailTemplate;
 use App\Models\LeadSource;
@@ -52,9 +56,10 @@ class MorphMapServiceProvider extends ServiceProvider
         /** @var array<string, class-string> $map */
         $map = [
             // P03 canonical entity aliases (G3 - single source shared with custom_field entity_type).
-            // M1 classes declared as strings - they don't exist at P03 build time but will be resolved lazily at query time.
-            'client' => 'App\\Models\\Client',   // P06
-            'contact' => 'App\\Models\\Contact',  // P06
+            'client' => Client::class,             // P06 — now exists
+            'contact' => Contact::class,           // P06 — now exists
+            'client_group' => ClientGroup::class,  // P06 — additional model
+            'client_vault_entry' => ClientVaultEntry::class, // P06 — additional model
             'lead' => 'App\\Models\\Lead',     // P07
             'project' => 'App\\Models\\Project', // P08
             'task' => 'App\\Models\\Task',     // P09

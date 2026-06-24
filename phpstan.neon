@@ -5,5 +5,4 @@ parameters:
     paths:
         - app
     level: 5
-    ignoreErrors:
-        - '#Trait.*HasCustomFields is used zero times#'
+    ignoreErrors: []

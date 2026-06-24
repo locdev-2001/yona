@@ -2,7 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Client;
+use App\Models\ClientGroup;
+use App\Models\Contact;
 use App\Models\EmailTemplate;
+use App\Policies\ClientPolicy;
+use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
@@ -39,5 +44,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // P05 — Register EmailTemplatePolicy (auto-discovery backup).
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
+
+        // P06 — Client / Contact / ClientGroup policies.
+        Gate::policy(Client::class, ClientPolicy::class);
+        Gate::policy(Contact::class, ContactPolicy::class);
+        Gate::policy(ClientGroup::class, ClientPolicy::class); // groups use client permission
     }
 }
