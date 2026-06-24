@@ -47,7 +47,7 @@ jobs:
           extensions: pdo_pgsql, redis, mbstring, bcmath, intl
           coverage: none
       - name: Cache Composer
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/composer
           key: composer-${{ hashFiles('**/composer.lock') }}
