@@ -4,10 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Support\TenantScope;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -31,7 +30,7 @@ class IdentifyWorkspace
         }
 
         // Expose this user's own membership rows to RLS for the lookup below.
-        DB::statement("select set_config('app.current_user_id', ?, false)", [(string) $user->getKey()]);
+        TenantScope::bindUser($user->getKey());
 
         $membership = $this->resolveMembership(
             $user->getKey(),
@@ -45,13 +44,8 @@ class IdentifyWorkspace
 
         $workspaceId = $membership->workspace_id;
 
-        // Establish the RLS tenant context for the rest of the request.
-        DB::statement("select set_config('app.current_workspace', ?, false)", [$workspaceId]);
-
-        // Scope spatie role checks to this workspace (no-op until teams on).
-        if (config('permission.teams')) {
-            app(PermissionRegistrar::class)->setPermissionsTeamId($workspaceId);
-        }
+        // Establish the RLS + spatie team scope for the rest of the request.
+        TenantScope::bind($workspaceId);
 
         app()->instance('currentWorkspace', Workspace::findOrFail($workspaceId));
         app()->instance('currentMembership', $membership);

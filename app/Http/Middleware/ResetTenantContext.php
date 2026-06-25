@@ -2,10 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\TenantScope;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,9 +22,7 @@ class ResetTenantContext
 {
     public function handle(Request $request, Closure $next): Response
     {
-        DB::statement("select set_config('app.current_workspace', '', false), set_config('app.current_user_id', '', false)");
-
-        app(PermissionRegistrar::class)->setPermissionsTeamId(null);
+        TenantScope::forget();
 
         return $next($request);
     }

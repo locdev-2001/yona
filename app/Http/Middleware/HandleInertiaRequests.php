@@ -8,11 +8,10 @@ use App\Models\User;
 use App\Models\WorkspaceMember;
 use App\Services\AnnouncementReadService;
 use App\Services\NotificationService;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
-use Spatie\Permission\PermissionRegistrar;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -97,18 +96,31 @@ class HandleInertiaRequests extends Middleware
     private function adminPayload(Admin $admin): array
     {
         // share() runs before the admin.scope middleware binds the platform
-        // scope, so mirror BindAdminPermissionScope here: set both the DB-level
-        // RLS context (app.current_workspace) and the spatie team ID, otherwise
-        // getAllPermissions() returns empty under RLS-enforced connections.
-        DB::statement("select set_config('app.current_workspace', ?, false)", [Admin::PLATFORM_SCOPE]);
-        app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
+        // scope, so mirror BindAdminPermissionScope here: read the admin's
+        // platform permissions under PLATFORM_SCOPE, otherwise getAllPermissions()
+        // returns empty under RLS-enforced connections.
+        TenantScope::bind(Admin::PLATFORM_SCOPE);
         $admin->unsetRelation('roles')->unsetRelation('permissions');
+        $permissions = $admin->getAllPermissions()->pluck('name')->all();
+
+        // This payload is built EAGERLY, but the tenant props (membership,
+        // notifications, announcements) resolve LAZILY at response time. When an
+        // admin guard is co-authenticated in the same session — manual admin+tenant
+        // dual-login, or an active impersonation — leaving the scope on
+        // PLATFORM_SCOPE would make every lazy tenant read return empty (the
+        // sidebar menu vanishes). Restore the request's tenant scope, or clear it
+        // entirely on a pure admin-plane request.
+        if ($workspace = currentWorkspace()) {
+            TenantScope::bind($workspace->id);
+        } else {
+            TenantScope::forget();
+        }
 
         return [
             'id' => $admin->id,
             'name' => $admin->name,
             'email' => $admin->email,
-            'permissions' => $admin->getAllPermissions()->pluck('name')->all(),
+            'permissions' => $permissions,
         ];
     }
 
@@ -136,7 +148,7 @@ class HandleInertiaRequests extends Middleware
      */
     private function workspaceList(User $user): array
     {
-        DB::statement("select set_config('app.current_user_id', ?, false)", [(string) $user->getKey()]);
+        TenantScope::bindUser($user->getKey());
 
         return WorkspaceMember::withoutGlobalScope('workspace')
             ->where('user_id', $user->getKey())
@@ -185,6 +197,14 @@ class HandleInertiaRequests extends Middleware
         if (! $user || ! $membership) {
             return null;
         }
+
+        // Defense in depth for the permission-driven sidebar: this closure resolves
+        // lazily at response time, so re-assert the tenant scope (and drop any roles
+        // loaded under another scope) right before reading permissions. Guards
+        // against a co-authenticated admin payload having left the scope on
+        // PLATFORM_SCOPE, which would make getAllPermissions() return empty.
+        TenantScope::bind($membership->workspace_id);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
 
         return [
             'role' => $membership->role,
