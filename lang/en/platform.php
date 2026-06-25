@@ -45,6 +45,12 @@ return [
     ],
     'nav' => [
         'dashboard' => 'Dashboard',
+        'overview' => 'Overview',
+        'crm' => 'CRM',
+        'clients' => 'Clients',
+        'leads' => 'Leads',
+        'projects' => 'Projects',
+        'tasks' => 'Tasks',
         'settings' => 'Settings',
         'workspace' => 'Workspace',
         'teams' => 'Teams',
@@ -65,6 +71,7 @@ return [
         'add' => 'Add',
         'confirm' => 'Confirm',
         'move' => 'Move',
+        'search' => 'Search',
     ],
     'settings' => [
         'subtitle' => 'Manage your profile and account settings.',

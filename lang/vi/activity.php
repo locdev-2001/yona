@@ -6,6 +6,8 @@
 // M0 seeds common/system keys; M1 phases add entity-specific keys.
 return [
     'system_actor' => 'Hệ thống',
+    'empty' => 'Chưa có hoạt động.',
+    'visible_customer' => 'Hiển thị cho khách hàng',
 
     // ── Reminder ─────────────────────────────────────────────────────────────
     'reminder.due' => 'Nhắc nhở: :description',

@@ -46,6 +46,12 @@ return [
     ],
     'nav' => [
         'dashboard' => 'Bảng điều khiển',
+        'overview' => 'Tổng quan',
+        'crm' => 'CRM',
+        'clients' => 'Khách hàng',
+        'leads' => 'Leads',
+        'projects' => 'Dự án',
+        'tasks' => 'Công việc',
         'settings' => 'Cài đặt',
         'workspace' => 'Không gian làm việc',
         'teams' => 'Nhóm',
@@ -66,6 +72,7 @@ return [
         'add' => 'Thêm',
         'confirm' => 'Xác nhận',
         'move' => 'Di chuyển',
+        'search' => 'Tìm kiếm',
     ],
     'settings' => [
         'subtitle' => 'Quản lý hồ sơ và cài đặt tài khoản.',

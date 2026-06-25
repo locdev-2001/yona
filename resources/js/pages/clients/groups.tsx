@@ -75,7 +75,7 @@ export default function ClientGroups({ groups }: Props) {
                 </div>
 
                 {groups.length === 0 ? (
-                    <p className="text-muted-foreground py-16 text-center text-sm">{t('clients.empty') ?? 'No groups yet.'}</p>
+                    <p className="text-muted-foreground py-16 text-center text-sm">{t('clients.group.empty')}</p>
                 ) : (
                     <div className="rounded-md border">
                         <table className="w-full text-sm">

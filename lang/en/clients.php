@@ -12,6 +12,9 @@ return [
         'groups' => 'Client Groups',
     ],
 
+    // Empty states
+    'empty' => 'No clients yet.',
+
     // Fields — client
     'fields' => [
         'name' => 'Company Name',
@@ -51,6 +54,7 @@ return [
         'add' => 'Add Contact',
         'edit' => 'Edit Contact',
         'none' => 'No contacts yet',
+        'delete_confirm' => 'Delete this contact?',
     ],
 
     // Groups
@@ -61,6 +65,8 @@ return [
         'name' => 'Group Name',
         'slug' => 'Slug',
         'client_count' => ':count clients',
+        'empty' => 'No groups yet.',
+        'delete_confirm' => 'Delete this group?',
     ],
 
     // Customer admins
@@ -75,6 +81,9 @@ return [
     'vault' => [
         'title' => 'Vault',
         'add' => 'Add Entry',
+        'edit' => 'Edit Entry',
+        'empty' => 'No vault entries',
+        'delete_confirm' => 'Delete this vault entry?',
         'name' => 'Name',
         'server_address' => 'Server Address',
         'port' => 'Port',
@@ -102,6 +111,7 @@ return [
         'create' => 'Add Client',
         'edit' => 'Edit',
         'delete' => 'Delete',
+        'delete_confirm' => 'Delete this client?',
         'save' => 'Save',
         'cancel' => 'Cancel',
         'search' => 'Search',

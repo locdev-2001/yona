@@ -17,19 +17,19 @@ export function AppSidebar() {
 
     // CRM navigation gated by tenant permissions (membership.permissions).
     const crmCandidates: Array<NavItem | false> = [
-        can('tenant.client.view') && { title: 'Khách hàng', url: '/clients', icon: Building2 },
-        can('tenant.lead.view') && { title: 'Leads', url: '/leads', icon: Target },
-        can('tenant.project.view') && { title: 'Dự án', url: '/projects', icon: FolderKanban },
-        can('tenant.task.view') && { title: 'Công việc', url: '/tasks', icon: ListChecks },
+        can('tenant.client.view') && { title: t('platform.nav.clients'), url: '/clients', icon: Building2 },
+        can('tenant.lead.view') && { title: t('platform.nav.leads'), url: '/leads', icon: Target },
+        can('tenant.project.view') && { title: t('platform.nav.projects'), url: '/projects', icon: FolderKanban },
+        can('tenant.task.view') && { title: t('platform.nav.tasks'), url: '/tasks', icon: ListChecks },
     ];
     const crmItems: NavItem[] = crmCandidates.filter((item): item is NavItem => item !== false);
 
     const navGroups: NavGroup[] = [
         {
-            title: 'Tổng quan',
-            items: [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }],
+            title: t('platform.nav.overview'),
+            items: [{ title: t('platform.nav.dashboard'), url: '/dashboard', icon: LayoutGrid }],
         },
-        ...(crmItems.length > 0 ? [{ title: 'CRM', items: crmItems }] : []),
+        ...(crmItems.length > 0 ? [{ title: t('platform.nav.crm'), items: crmItems }] : []),
         {
             title: t('platform.announcements.nav_label'),
             items: [

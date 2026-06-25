@@ -3,6 +3,8 @@
 // Activity timeline — action keys mapped to English sentences.
 return [
     'system_actor' => 'System',
+    'empty' => 'No activity yet.',
+    'visible_customer' => 'Client visible',
 
     // ── Reminder ─────────────────────────────────────────────────────────────
     'reminder.due' => 'Reminder: :description',

@@ -12,6 +12,9 @@ return [
         'groups' => 'Nhóm khách hàng',
     ],
 
+    // Empty states
+    'empty' => 'Chưa có khách hàng.',
+
     // Fields — client
     'fields' => [
         'name' => 'Tên công ty',
@@ -51,6 +54,7 @@ return [
         'add' => 'Thêm người liên hệ',
         'edit' => 'Chỉnh sửa người liên hệ',
         'none' => 'Chưa có người liên hệ',
+        'delete_confirm' => 'Xóa người liên hệ này?',
     ],
 
     // Groups
@@ -61,6 +65,8 @@ return [
         'name' => 'Tên nhóm',
         'slug' => 'Slug',
         'client_count' => ':count khách hàng',
+        'empty' => 'Chưa có nhóm.',
+        'delete_confirm' => 'Xóa nhóm này?',
     ],
 
     // Customer admins
@@ -75,6 +81,9 @@ return [
     'vault' => [
         'title' => 'Thông tin bảo mật',
         'add' => 'Thêm thông tin',
+        'edit' => 'Sửa thông tin',
+        'empty' => 'Chưa có thông tin bảo mật',
+        'delete_confirm' => 'Xóa thông tin bảo mật này?',
         'name' => 'Tên',
         'server_address' => 'Địa chỉ máy chủ',
         'port' => 'Cổng',
@@ -102,6 +111,7 @@ return [
         'create' => 'Thêm khách hàng',
         'edit' => 'Chỉnh sửa',
         'delete' => 'Xóa',
+        'delete_confirm' => 'Xóa khách hàng này?',
         'save' => 'Lưu',
         'cancel' => 'Hủy',
         'search' => 'Tìm kiếm',
