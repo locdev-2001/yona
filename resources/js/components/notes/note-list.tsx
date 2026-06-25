@@ -163,3 +163,5 @@ export default function NoteList({ notes, noteableType, noteableId, currentUserI
         </div>
     );
 }
+
+export { NoteList };

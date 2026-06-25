@@ -78,3 +78,5 @@ export default function AttachmentList({ attachments, canDelete = false }: Props
         </ul>
     );
 }
+
+export { AttachmentList };
