@@ -83,7 +83,7 @@ class HandleInertiaRequests extends Middleware
                 ? $this->notificationsPayload($user)
                 : null,
             'locale' => app()->getLocale(),
-            'i18n' => ['platform' => trans('platform'), 'custom_fields' => trans('custom_fields'), 'notification' => trans('notification'), 'reminder' => trans('reminder'), 'activity' => trans('activity')],
+            'i18n' => $this->translationsPayload(),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
@@ -158,6 +158,26 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * All translation namespaces for the active locale, loaded dynamically so any
+     * new lang/<locale>/<namespace>.php file is auto-registered on the frontend —
+     * single source of truth, no hardcoded namespace list to keep in sync.
+     *
+     * @return array<string, mixed>
+     */
+    private function translationsPayload(): array
+    {
+        $locale = app()->getLocale();
+        $payload = [];
+
+        foreach (glob(lang_path($locale.'/*.php')) ?: [] as $file) {
+            $namespace = basename($file, '.php');
+            $payload[$namespace] = trans($namespace, [], $locale);
+        }
+
+        return $payload;
+    }
+
     private function membershipPayload(?User $user): ?array
     {
         $membership = currentMembership();
