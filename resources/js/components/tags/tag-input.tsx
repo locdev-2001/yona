@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { useTranslator } from '@/lib/i18n';
 import { router } from '@inertiajs/react';
 import { X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 export interface Tag {
     id: string;
@@ -21,26 +21,24 @@ interface Props {
     availableTags?: Tag[];
 }
 
+/** Stable empty-array default so the memoized suggestions don't recompute every render. */
+const EMPTY_TAGS: Tag[] = [];
+
 /**
  * Tag input with autocomplete. On submit syncs full tag list via POST /tags/sync.
  * Creates new tags on-the-fly (server deduplicates by slug).
  * Prop `tags` is the initial set — entity page owns state via Inertia reload.
  */
-export default function TagInput({ tags: initialTags, attachableType, attachableId, availableTags = [] }: Props) {
+export default function TagInput({ tags: initialTags, attachableType, attachableId, availableTags = EMPTY_TAGS }: Props) {
     const t = useTranslator();
     const [selected, setSelected] = useState<string[]>(initialTags.map((t) => t.name));
     const [inputValue, setInputValue] = useState('');
-    const [suggestions, setSuggestions] = useState<Tag[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        if (inputValue.trim().length === 0) {
-            setSuggestions([]);
-            return;
-        }
-        const lower = inputValue.toLowerCase();
-        const filtered = availableTags.filter((tag) => tag.name.toLowerCase().includes(lower) && !selected.includes(tag.name));
-        setSuggestions(filtered);
+    const suggestions = useMemo<Tag[]>(() => {
+        const query = inputValue.trim().toLowerCase();
+        if (query.length === 0) return EMPTY_TAGS;
+        return availableTags.filter((tag) => tag.name.toLowerCase().includes(query) && !selected.includes(tag.name));
     }, [inputValue, availableTags, selected]);
 
     const addTag = (name: string) => {
