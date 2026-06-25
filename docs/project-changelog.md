@@ -17,6 +17,16 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Fixed — RBAC: tenant mất menu sidebar khi mở admin + tenant cùng session (2026-06-25)
+
+Bug: 2 guard `web` (tenant) và `admin` (platform) dùng chung 1 session cookie (chủ ý — impersonation cần admin guard sống + web guard = user bị impersonate trong cùng session). Khi đăng nhập cả admin lẫn tenant trong cùng trình duyệt, mọi request tenant đều có cả 2 guard authenticated. `HandleInertiaRequests::share()` build `adminPayload` **eager** (đặt spatie team-id + RLS = `PLATFORM_SCOPE`) trong khi prop `membership` (điều khiển menu), notifications, announcements resolve **lazy** sau đó → `getAllPermissions()` chạy nhầm dưới `PLATFORM_SCOPE` → permissions rỗng → **mất toàn bộ menu sidebar** ở tenant.
+
+- **`app/Support/TenantScope.php`** (mới): single source of truth để bind RLS context (`app.current_workspace` / `app.current_user_id`) + spatie `setPermissionsTeamId` — `bind()` / `bindUser()` / `forget()`.
+- **`HandleInertiaRequests`**: `adminPayload()` restore lại tenant scope sau khi đọc quyền admin (hết poison các lazy prop của tenant); `membershipPayload()` re-bind tenant scope ngay trước `getAllPermissions()` (defense-in-depth cho path bảo mật).
+- **Refactor DRY**: `IdentifyWorkspace`, `BindAdminPermissionScope`, `ResetTenantContext` dùng chung `TenantScope` — gỡ logic bind scope trùng lặp rải rác (sửa 1 chỗ).
+- **Test**: `tests/Feature/Tenant/SidebarPermissionPropTest.php` thêm case dual-login (admin + tenant cùng session) — assert menu tenant vẫn đủ quyền. Full suite 545 test pass.
+- **Lưu ý**: KHÔNG tách session cookie cho admin guard — sẽ phá impersonation. Impersonation hiện chưa có test riêng (follow-up).
+
 ### Release — CRM Core M0+M1 hoàn tất (2026-06-25)
 
 **Milestone**: Nền tảng CRM production-ready — M0 cross-cutting + M1 nghiệp vụ chính.
