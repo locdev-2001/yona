@@ -48,6 +48,7 @@ class PlatformPermissionSeeder extends Seeder
 
             // sales_manager: full access to leads, clients, contacts, projects, tasks + audit
             'sales_manager' => [
+                TenantPermission::TagsManage->value,
                 TenantPermission::AuditView->value,
                 TenantPermission::ClientView->value,
                 TenantPermission::ClientViewOwn->value,
@@ -80,6 +81,7 @@ class PlatformPermissionSeeder extends Seeder
 
             // sales_rep: own view + create + update for leads/clients/contacts/tasks; no delete
             'sales_rep' => [
+                TenantPermission::TagsManage->value,
                 TenantPermission::ClientViewOwn->value,
                 TenantPermission::ClientCreate->value,
                 TenantPermission::ClientUpdate->value,
@@ -97,6 +99,7 @@ class PlatformPermissionSeeder extends Seeder
 
             // support_manager: full projects/tasks + client/contact view + timesheet manage
             'support_manager' => [
+                TenantPermission::TagsManage->value,
                 TenantPermission::AuditView->value,
                 TenantPermission::ClientView->value,
                 TenantPermission::ContactView->value,
@@ -116,6 +119,7 @@ class PlatformPermissionSeeder extends Seeder
 
             // support_agent: own project view + task create/update + client view + timesheet own
             'support_agent' => [
+                TenantPermission::TagsManage->value,
                 TenantPermission::ClientView->value,
                 TenantPermission::ProjectViewOwn->value,
                 TenantPermission::TaskViewOwn->value,
@@ -126,6 +130,7 @@ class PlatformPermissionSeeder extends Seeder
 
             // marketer: leads view/create/update (lead_sources via tenant.lead.view)
             'marketer' => [
+                TenantPermission::TagsManage->value,
                 TenantPermission::LeadView->value,
                 TenantPermission::LeadCreate->value,
                 TenantPermission::LeadUpdate->value,

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Rename a team. (Re-parenting is a separate, cycle-guarded endpoint.)
@@ -20,7 +21,8 @@ class TeamUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // Unique per workspace (RLS-scoped), ignoring this team itself.
+            'name' => ['required', 'string', 'max:255', Rule::unique('teams', 'name')->ignore($this->route('team'))->whereNull('deleted_at')],
         ];
     }
 }

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -144,6 +144,7 @@ export default function VaultList({ clientId, entries, canEdit }: Props) {
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{editing ? (t('clients.vault.edit') ?? 'Edit Entry') : t('clients.vault.add')}</DialogTitle>
+                        <DialogDescription>{t('clients.vault.dialog_description') ?? 'Securely store credentials or notes for this client.'}</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <div>

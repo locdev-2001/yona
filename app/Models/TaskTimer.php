@@ -39,6 +39,9 @@ class TaskTimer extends Model
         'hourly_rate',
     ];
 
+    /** Serialize the computed duration so the frontend timesheet renders it instead of NaN. */
+    protected $appends = ['duration_seconds'];
+
     protected function casts(): array
     {
         return [

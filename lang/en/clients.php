@@ -43,6 +43,7 @@ return [
     // Contact fields
     'contact' => [
         'title' => 'Contact',
+        'dialog_description' => 'Contact details for this client.',
         'first_name' => 'First Name',
         'last_name' => 'Last Name',
         'email' => 'Email',
@@ -60,6 +61,7 @@ return [
     // Groups
     'group' => [
         'title' => 'Group',
+        'dialog_description' => 'Organize clients into groups.',
         'add' => 'Add Group',
         'edit' => 'Edit Group',
         'name' => 'Group Name',
@@ -80,6 +82,7 @@ return [
     // Vault
     'vault' => [
         'title' => 'Vault',
+        'dialog_description' => 'Store login and secret credentials for this client.',
         'add' => 'Add Entry',
         'edit' => 'Edit Entry',
         'empty' => 'No vault entries',

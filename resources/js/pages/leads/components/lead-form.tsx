@@ -1,5 +1,6 @@
 import CustomFieldsSection from '@/components/custom-fields/custom-fields-section';
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
+import QuickCreateLookup from '@/components/quick-create-lookup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,6 +86,16 @@ export default function LeadForm({ lead, pipelines, sources, members, fieldDefs,
             setData('stage_id', stages[0].id);
         }
     }, [data.pipeline_id]);
+
+    // After a source is quick-created, the refreshed `sources` prop arrives; select it by name.
+    const [pendingSourceName, setPendingSourceName] = useState<string | null>(null);
+    useEffect(() => {
+        if (!pendingSourceName) return;
+        const created = sources.find((s) => s.name === pendingSourceName);
+        if (!created) return;
+        setData('source_id', created.id);
+        setPendingSourceName(null);
+    }, [sources, pendingSourceName, setData]);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -193,19 +204,28 @@ export default function LeadForm({ lead, pipelines, sources, members, fieldDefs,
 
                 <div className="space-y-1.5">
                     <Label>{t('leads.fields.source')}</Label>
-                    <Select value={data.source_id} onValueChange={(v) => setData('source_id', v === 'none' ? '' : v)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder={t('leads.fields.source')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">—</SelectItem>
-                            {sources.map((s) => (
-                                <SelectItem key={s.id} value={s.id}>
-                                    {s.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                        <Select value={data.source_id} onValueChange={(v) => setData('source_id', v === 'none' ? '' : v)}>
+                            <SelectTrigger className="flex-1">
+                                <SelectValue placeholder={t('leads.fields.source')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">—</SelectItem>
+                                {sources.map((s) => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                        {s.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <QuickCreateLookup
+                            storeRoute={route('lookups.lead-sources.store')}
+                            triggerLabel={t('platform.quick_create.new_source') ?? 'New source'}
+                            dialogTitle={t('platform.quick_create.new_source') ?? 'New source'}
+                            placeholder={t('leads.fields.source') ?? 'Source'}
+                            onCreated={(nm) => setPendingSourceName(nm)}
+                        />
+                    </div>
                 </div>
 
                 <div className="space-y-1.5">

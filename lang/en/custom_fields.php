@@ -4,6 +4,7 @@
 return [
     'title' => 'Custom Fields',
     'subtitle' => 'Add custom information fields for each entity type.',
+    'dialog_description' => 'Configure the custom field definition below.',
 
     'field_types' => [
         'input' => 'Short text',

@@ -5,6 +5,7 @@
 return [
     'title' => 'Trường tùy chỉnh',
     'subtitle' => 'Thêm trường thông tin cho từng loại đối tượng.',
+    'dialog_description' => 'Cấu hình định nghĩa trường tùy chỉnh bên dưới.',
 
     'field_types' => [
         'input' => 'Văn bản ngắn',

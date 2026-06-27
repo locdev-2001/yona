@@ -2,7 +2,7 @@ import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -131,6 +131,7 @@ export default function PipelinesSettings({ pipelines, stageTypes }: Props) {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{dialog?.mode === 'create' ? t('lookups.pipelines.add') : t('lookups.actions.edit')}</DialogTitle>
+                            <DialogDescription>{t('lookups.dialog_description') ?? 'Enter the details below.'}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                             <div className="grid gap-2">
@@ -163,6 +164,7 @@ export default function PipelinesSettings({ pipelines, stageTypes }: Props) {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{t('lookups.actions.delete')}</DialogTitle>
+                            <DialogDescription>{t('lookups.delete_dialog_description') ?? 'This action cannot be undone.'}</DialogDescription>
                         </DialogHeader>
                         <p className="text-sm">{t('lookups.pipelines.delete_confirm')}</p>
                         <DialogFooter>

@@ -1,6 +1,6 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -113,6 +113,7 @@ export default function StageList({ pipelineId, stages, stageTypes, storeRoute }
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{dialog?.mode === 'create' ? t('lookups.pipelines.add_stage') : t('lookups.actions.edit')}</DialogTitle>
+                        <DialogDescription>{t('lookups.dialog_description') ?? 'Enter the details below.'}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="grid gap-2">
@@ -175,6 +176,7 @@ export default function StageList({ pipelineId, stages, stageTypes, storeRoute }
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{t('lookups.actions.delete')}</DialogTitle>
+                        <DialogDescription>{t('lookups.delete_dialog_description') ?? 'This action cannot be undone.'}</DialogDescription>
                     </DialogHeader>
                     <p className="text-sm">{t('lookups.pipelines.delete_confirm')}</p>
                     <DialogFooter>

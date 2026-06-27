@@ -43,6 +43,7 @@ return [
     // Contact fields
     'contact' => [
         'title' => 'Người liên hệ',
+        'dialog_description' => 'Thông tin người liên hệ của khách hàng.',
         'first_name' => 'Tên',
         'last_name' => 'Họ',
         'email' => 'Email',
@@ -60,6 +61,7 @@ return [
     // Groups
     'group' => [
         'title' => 'Nhóm',
+        'dialog_description' => 'Phân loại khách hàng theo nhóm.',
         'add' => 'Thêm nhóm',
         'edit' => 'Chỉnh sửa nhóm',
         'name' => 'Tên nhóm',
@@ -80,6 +82,7 @@ return [
     // Vault
     'vault' => [
         'title' => 'Thông tin bảo mật',
+        'dialog_description' => 'Lưu trữ thông tin đăng nhập, bảo mật của khách hàng.',
         'add' => 'Thêm thông tin',
         'edit' => 'Sửa thông tin',
         'empty' => 'Chưa có thông tin bảo mật',

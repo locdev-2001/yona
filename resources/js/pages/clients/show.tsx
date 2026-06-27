@@ -1,10 +1,12 @@
 import { ActivityTimeline } from '@/components/activity/activity-timeline';
 import { AttachmentList } from '@/components/attachments/attachment-list';
+import type { Attachment } from '@/components/attachments/attachment-list';
 import ContactManager from '@/components/clients/contact-manager';
 import CustomerAdminSelector from '@/components/clients/customer-admin-selector';
 import VaultList from '@/components/clients/vault-list';
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { NoteList } from '@/components/notes/note-list';
+import type { Note } from '@/components/notes/note-list';
 import { PageHeader } from '@/components/page-header';
 import TagInput from '@/components/tags/tag-input';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +25,8 @@ interface Props {
     availableGroups: ClientGroup[];
     availableAdmins: Pick<User, 'id' | 'name'>[];
     vaultEntries?: ClientVaultEntry[];
+    attachments?: Attachment[];
+    notes?: Note[];
     canEdit?: boolean;
     canDelete?: boolean;
 }
@@ -34,6 +38,8 @@ export default function ClientShow({
     availableGroups,
     availableAdmins,
     vaultEntries = [],
+    attachments = [],
+    notes = [],
     canEdit = false,
     canDelete = false,
 }: Props) {
@@ -187,12 +193,12 @@ export default function ClientShow({
 
                     {/* Files tab */}
                     <TabsContent value="files" className="mt-4">
-                        <AttachmentList attachments={[]} canDelete={canEdit} />
+                        <AttachmentList attachments={attachments} canDelete={canEdit} />
                     </TabsContent>
 
                     {/* Notes tab */}
                     <TabsContent value="notes" className="mt-4">
-                        <NoteList noteableType="client" noteableId={client.id} notes={[]} canManage={canEdit} />
+                        <NoteList noteableType="client" noteableId={client.id} notes={notes} canManage={canEdit} />
                     </TabsContent>
 
                     {/* Activity tab */}

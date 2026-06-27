@@ -1,14 +1,22 @@
+import TaskForm from '@/components/tasks/task-form';
 import TaskKanbanColumn from '@/components/tasks/task-kanban-column';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Task, TaskKanbanColumns, TaskStatus } from '@/types';
+import type { BreadcrumbItem, Task, TaskKanbanColumns, TaskStatus, User } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
+
+type RecordOption = { id: string; name: string };
+type MemberOption = Pick<User, 'id' | 'name'>;
 
 interface Props {
     columns: TaskKanbanColumns;
     can: { create: boolean; update: boolean };
+    relatedRecords?: Record<string, RecordOption[]>;
+    members?: MemberOption[];
 }
 
 // Display order for kanban columns (not necessarily sorted by id)
@@ -22,8 +30,9 @@ const STATUS_KEYS: Record<TaskStatus, string> = {
     5: 'tasks.status.complete',
 };
 
-export default function TasksKanban({ columns, can }: Props) {
+export default function TasksKanban({ columns, can, relatedRecords = {}, members = [] }: Props) {
     const t = useTranslator();
+    const [createOpen, setCreateOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('tasks.title.index') ?? 'Tasks', href: route('tasks.index') },
@@ -41,12 +50,11 @@ export default function TasksKanban({ columns, can }: Props) {
                         <Button variant="outline" size="sm" asChild>
                             <Link href={route('tasks.index')}>{t('tasks.title.index')}</Link>
                         </Button>
+                        {/* BUG-16 fix: open create dialog instead of navigating away */}
                         {can.create && (
-                            <Button size="sm" asChild>
-                                <Link href={route('tasks.index')}>
-                                    <Plus className="mr-1 h-4 w-4" />
-                                    {t('tasks.actions.create')}
-                                </Link>
+                            <Button size="sm" onClick={() => setCreateOpen(true)}>
+                                <Plus className="mr-1 h-4 w-4" />
+                                {t('tasks.actions.create')}
                             </Button>
                         )}
                     </div>
@@ -66,6 +74,20 @@ export default function TasksKanban({ columns, can }: Props) {
                     ))}
                 </div>
             </div>
+
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{t('tasks.actions.create')}</DialogTitle>
+                    </DialogHeader>
+                    <TaskForm
+                        submitRoute={route('tasks.store')}
+                        onSuccess={() => setCreateOpen(false)}
+                        relatedRecords={relatedRecords}
+                        members={members}
+                    />
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

@@ -5,12 +5,13 @@ import { NoteList } from '@/components/notes/note-list';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Lead, LeadSource, PipelineStage, User } from '@/types';
+import type { BreadcrumbItem, Client, Lead, LeadSource, PipelineStage, User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { Building2, Globe, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
+import { Building2, ChevronDown, Globe, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
 import LeadAssignPopover from './components/lead-assign-popover';
 import LeadConvertDialog from './components/lead-convert-dialog';
 
@@ -19,10 +20,11 @@ interface Props {
     fieldDefs: CustomFieldDefinition[];
     sources: LeadSource[];
     members: Pick<User, 'id' | 'name'>[];
+    clients: Pick<Client, 'id' | 'name'>[];
     allPipelineStages: PipelineStage[];
 }
 
-export default function LeadShow({ lead, fieldDefs, sources, members, allPipelineStages }: Props) {
+export default function LeadShow({ lead, fieldDefs, sources, members, clients, allPipelineStages }: Props) {
     const t = useTranslator();
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -79,28 +81,38 @@ export default function LeadShow({ lead, fieldDefs, sources, members, allPipelin
 
                     {/* Action buttons */}
                     <div className="flex flex-wrap gap-2">
-                        {!lead.date_converted && (
-                            <>
-                                <LeadAssignPopover lead={lead} members={members} />
-                                <LeadConvertDialog lead={lead} />
-                            </>
-                        )}
+                        {!lead.date_converted && <LeadAssignPopover lead={lead} members={members} />}
 
-                        {isActive && (
-                            <>
-                                <Button variant="outline" size="sm" onClick={handleMarkLost}>
-                                    {t('leads.actions.mark_lost')}
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={handleMarkJunk}>
-                                    {t('leads.actions.mark_junk')}
-                                </Button>
-                            </>
-                        )}
+                        {/* Primary CTA: Convert (only when active) */}
+                        {isActive && <LeadConvertDialog lead={lead} clients={clients} />}
 
-                        {(lead.is_lost || lead.is_junk) && (
-                            <Button variant="outline" size="sm" onClick={handleRestore}>
-                                {t('leads.actions.restore')}
-                            </Button>
+                        {/* Status actions grouped in dropdown */}
+                        {(isActive || lead.is_lost || lead.is_junk) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        {t('leads.actions.more') ?? 'More'}
+                                        <ChevronDown className="ml-1 h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {isActive && (
+                                        <>
+                                            <DropdownMenuItem onClick={handleMarkLost}>
+                                                {t('leads.actions.mark_lost')}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleMarkJunk}>
+                                                {t('leads.actions.mark_junk')}
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                    {(lead.is_lost || lead.is_junk) && (
+                                        <DropdownMenuItem onClick={handleRestore}>
+                                            {t('leads.actions.restore')}
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         )}
 
                         <Button variant="outline" size="sm" asChild>
@@ -109,7 +121,7 @@ export default function LeadShow({ lead, fieldDefs, sources, members, allPipelin
                                 {t('leads.actions.edit')}
                             </Link>
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={handleDelete}>
+                        <Button variant="ghost" size="sm" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             {t('leads.actions.delete')}
                         </Button>
@@ -209,9 +221,9 @@ export default function LeadShow({ lead, fieldDefs, sources, members, allPipelin
                     <div className="lg:col-span-2">
                         <Tabs defaultValue="activity">
                             <TabsList>
-                                <TabsTrigger value="activity">Activity</TabsTrigger>
-                                <TabsTrigger value="notes">Notes</TabsTrigger>
-                                <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                                <TabsTrigger value="activity">{t('platform.tabs.activity') ?? 'Activity'}</TabsTrigger>
+                                <TabsTrigger value="notes">{t('platform.tabs.notes') ?? 'Notes'}</TabsTrigger>
+                                <TabsTrigger value="attachments">{t('platform.tabs.attachments') ?? 'Attachments'}</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="activity" className="mt-4">

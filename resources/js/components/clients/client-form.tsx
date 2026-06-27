@@ -2,6 +2,7 @@ import AddressFields from '@/components/clients/address-fields';
 import GroupSelector from '@/components/clients/group-selector';
 import CustomFieldsSection from '@/components/custom-fields/custom-fields-section';
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
+import QuickCreateLookup from '@/components/quick-create-lookup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTranslator } from '@/lib/i18n';
 import type { Client, ClientGroup } from '@/types';
 import { useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     client?: Client;
@@ -69,6 +71,16 @@ export default function ClientForm({ client, groups, clientFieldDefs, submitRout
         custom_fields: client?.custom_fields ?? {},
     });
 
+    // After a group is quick-created, the refreshed `groups` prop arrives; select it by name.
+    const [pendingGroupName, setPendingGroupName] = useState<string | null>(null);
+    useEffect(() => {
+        if (!pendingGroupName) return;
+        const created = groups.find((g) => g.name === pendingGroupName);
+        if (!created) return;
+        setData((prev) => (prev.groups.includes(created.id) ? prev : { ...prev, groups: [...prev.groups, created.id] }));
+        setPendingGroupName(null);
+    }, [groups, pendingGroupName, setData]);
+
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (method === 'put') {
@@ -119,13 +131,21 @@ export default function ClientForm({ client, groups, clientFieldDefs, submitRout
 
                 <div>
                     <Label htmlFor="currency">{t('clients.fields.currency')}</Label>
-                    <Input
-                        id="currency"
-                        value={data.currency}
-                        onChange={(e) => setData('currency', e.target.value)}
-                        placeholder="VND"
-                        maxLength={8}
-                    />
+                    <Select value={data.currency} onValueChange={(v) => setData('currency', v)}>
+                        <SelectTrigger id="currency">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="VND">VND</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="JPY">JPY</SelectItem>
+                            <SelectItem value="GBP">GBP</SelectItem>
+                            <SelectItem value="AUD">AUD</SelectItem>
+                            <SelectItem value="SGD">SGD</SelectItem>
+                            <SelectItem value="CNY">CNY</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div>
                     <Label htmlFor="default_language">{t('clients.fields.default_language')}</Label>
@@ -144,8 +164,15 @@ export default function ClientForm({ client, groups, clientFieldDefs, submitRout
             {/* Groups */}
             <div>
                 <Label>{t('clients.fields.groups')}</Label>
-                <div className="mt-1">
+                <div className="mt-1 flex flex-wrap items-start gap-2">
                     <GroupSelector groups={groups} selected={data.groups} onChange={(ids) => setData('groups', ids)} />
+                    <QuickCreateLookup
+                        storeRoute={route('client-groups.store')}
+                        triggerLabel={t('platform.quick_create.new_group') ?? 'New group'}
+                        dialogTitle={t('platform.quick_create.new_group') ?? 'New group'}
+                        placeholder={t('clients.fields.groups') ?? 'Group'}
+                        onCreated={(nm) => setPendingGroupName(nm)}
+                    />
                 </div>
             </div>
 

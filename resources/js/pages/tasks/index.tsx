@@ -1,6 +1,8 @@
 import PriorityBadge from '@/components/tasks/priority-badge';
+import TaskForm from '@/components/tasks/task-form';
 import TaskStatusBadge from '@/components/tasks/task-status-badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,6 +17,8 @@ interface Props {
     tasks: PaginatedTasks;
     filters: { status?: string; search?: string };
     can: { create: boolean };
+    relatedRecords?: Record<string, { id: string; name: string }[]>;
+    members?: { id: number; name: string }[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -25,9 +29,10 @@ const STATUS_LABELS: Record<string, string> = {
     '5': 'tasks.status.complete',
 };
 
-export default function TasksIndex({ tasks, filters, can }: Props) {
+export default function TasksIndex({ tasks, filters, can, relatedRecords, members }: Props) {
     const t = useTranslator();
     const [search, setSearch] = useState(filters.search ?? '');
+    const [createOpen, setCreateOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: t('tasks.title.index') ?? 'Tasks', href: route('tasks.index') }];
 
@@ -55,11 +60,9 @@ export default function TasksIndex({ tasks, filters, can }: Props) {
                             <Link href={route('tasks.kanban')}>{t('tasks.title.kanban')}</Link>
                         </Button>
                         {can.create && (
-                            <Button size="sm" asChild>
-                                <Link href="#task-create">
-                                    <Plus className="mr-1 h-4 w-4" />
-                                    {t('tasks.actions.create')}
-                                </Link>
+                            <Button size="sm" onClick={() => setCreateOpen(true)}>
+                                <Plus className="mr-1 h-4 w-4" />
+                                {t('tasks.actions.create')}
                             </Button>
                         )}
                     </div>
@@ -157,6 +160,20 @@ export default function TasksIndex({ tasks, filters, can }: Props) {
                     </div>
                 )}
             </div>
+
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>{t('tasks.actions.create')}</DialogTitle>
+                    </DialogHeader>
+                    <TaskForm
+                        submitRoute={route('tasks.store')}
+                        relatedRecords={relatedRecords}
+                        members={members}
+                        onSuccess={() => setCreateOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

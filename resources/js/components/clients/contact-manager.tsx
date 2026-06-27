@@ -2,7 +2,7 @@ import CustomFieldsSection from '@/components/custom-fields/custom-fields-sectio
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -166,6 +166,7 @@ export default function ContactManager({ clientId, contacts, contactFieldDefs, c
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle>{editingContact ? t('clients.contact.edit') : t('clients.contact.add')}</DialogTitle>
+                        <DialogDescription>{t('clients.contact.dialog_description') ?? 'Fill in the contact details below.'}</DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

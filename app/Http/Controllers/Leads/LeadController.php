@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Leads\AssignLeadRequest;
 use App\Http\Requests\Leads\StoreLeadRequest;
 use App\Http\Requests\Leads\UpdateLeadRequest;
+use App\Models\Client;
 use App\Models\CustomFieldDefinition;
 use App\Models\Lead;
 use App\Models\LeadSource;
@@ -137,6 +138,7 @@ class LeadController extends Controller
             'sources' => LeadSource::orderBy('name')->get(['id', 'name']),
             'members' => User::whereHas('memberships', fn ($q) => $q->where('workspace_id', $workspace->id)->where('status', 'active'))
                 ->get(['id', 'name']),
+            'clients' => Client::where('workspace_id', $workspace->id)->orderBy('name')->get(['id', 'name']),
             'allPipelineStages' => $lead->pipeline
                 ? $lead->pipeline->stages()->orderBy('stage_order')->get(['id', 'name', 'color', 'type'])
                 : [],

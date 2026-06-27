@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\PlatformRole;
 use App\Models\Admin;
-use App\Models\Pipeline;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -70,10 +69,9 @@ class FoundationSeeder extends Seeder
         });
 
         // Seed default lookup data (pipelines, stages, sources, project statuses)
-        // for the dev workspace. Idempotent: only seeds if no pipeline exists yet.
-        if (! Pipeline::exists()) {
-            app(LookupService::class)->seedDefaults($workspace);
-        }
+        // for the dev workspace. seedDefaults() is granularly idempotent — it
+        // backfills only the lookup types that are still missing.
+        app(LookupService::class)->seedDefaults($workspace);
 
         // P05 — Seed email template catalog (lead_assigned vi+en).
         // Idempotent via firstOrCreate on (workspace_id, slug, language).

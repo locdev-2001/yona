@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TenantPermission;
 use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\User;
@@ -192,25 +193,63 @@ class HandleInertiaRequests extends Middleware
 
     private function membershipPayload(?User $user): ?array
     {
-        $membership = currentMembership();
-
-        if (! $user || ! $membership) {
+        if (! $user) {
             return null;
         }
 
-        // Defense in depth for the permission-driven sidebar: this closure resolves
-        // lazily at response time, so re-assert the tenant scope (and drop any roles
-        // loaded under another scope) right before reading permissions. Guards
-        // against a co-authenticated admin payload having left the scope on
-        // PLATFORM_SCOPE, which would make getAllPermissions() return empty.
+        // Primary: IdentifyWorkspace middleware binds currentMembership() for
+        // workspace-scoped routes. On auth-only routes (profile, password,
+        // appearance) that middleware does NOT run, so currentMembership() returns
+        // null — which caused the CRM sidebar to vanish (BUG-12). Defensively
+        // resolve from the session workspace so the sidebar always has permissions.
+        $membership = currentMembership() ?? $this->resolveMembershipFromSession($user);
+
+        if (! $membership) {
+            return null;
+        }
+
+        // Defense in depth: re-assert the tenant scope (drop any roles loaded
+        // under another scope) so getAllPermissions() reads from the correct tenant.
+        // Guards against a co-authenticated admin payload having left the scope on
+        // PLATFORM_SCOPE.
         TenantScope::bind($membership->workspace_id);
         $user->unsetRelation('roles')->unsetRelation('permissions');
+
+        // Workspace admin/owner gets the full permission catalog so the sidebar
+        // never depends on individually-granted permissions (mirrors the
+        // Gate::before backend bypass). New permissions appear with zero re-seed.
+        $permissions = $membership->role === 'admin'
+            ? TenantPermission::values()
+            : $user->getAllPermissions()->pluck('name')->all();
 
         return [
             'role' => $membership->role,
             'team_id' => $membership->team_id,
-            'permissions' => $user->getAllPermissions()->pluck('name')->all(),
+            'permissions' => $permissions,
         ];
+    }
+
+    /**
+     * Defensive fallback: resolve membership for auth-only routes (profile,
+     * password, appearance) that skip IdentifyWorkspace. Mirrors the same
+     * session-preference + oldest-active-fallback logic used in IdentifyWorkspace.
+     * Returns null when the user has no active membership (new signup, etc.).
+     */
+    private function resolveMembershipFromSession(User $user): ?WorkspaceMember
+    {
+        TenantScope::bindUser($user->getKey());
+
+        $sessionWorkspaceId = request()->session()->get('current_workspace_id');
+
+        $base = fn () => WorkspaceMember::withoutGlobalScope('workspace')
+            ->where('user_id', $user->getKey())
+            ->where('status', 'active');
+
+        if ($sessionWorkspaceId && $preferred = $base()->where('workspace_id', $sessionWorkspaceId)->first()) {
+            return $preferred;
+        }
+
+        return $base()->oldest()->first();
     }
 
     /**

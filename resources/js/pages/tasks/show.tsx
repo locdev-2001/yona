@@ -1,19 +1,28 @@
 import ChecklistPanel from '@/components/tasks/checklist-panel';
 import PriorityBadge from '@/components/tasks/priority-badge';
+import TaskForm from '@/components/tasks/task-form';
 import TaskStatusBadge from '@/components/tasks/task-status-badge';
 import TimerWidget from '@/components/tasks/timer-widget';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Task, TaskStatus } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
-import { CalendarDays, Edit, Trash2 } from 'lucide-react';
+import type { BreadcrumbItem, Task, TaskStatus, User } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { CalendarDays, Edit, Loader2, Trash2, Users } from 'lucide-react';
+import { useState } from 'react';
+
+type RecordOption = { id: string; name: string };
+type MemberOption = Pick<User, 'id' | 'name'>;
 
 interface Props {
     task: Task;
     can: { update: boolean; delete: boolean; log_time: boolean };
+    relatedRecords?: Record<string, RecordOption[]>;
+    members?: MemberOption[];
 }
 
 const STATUS_OPTIONS: { value: string; labelKey: string }[] = [
@@ -24,8 +33,11 @@ const STATUS_OPTIONS: { value: string; labelKey: string }[] = [
     { value: '5', labelKey: 'tasks.status.complete' },
 ];
 
-export default function TaskShow({ task, can }: Props) {
+export default function TaskShow({ task, can, relatedRecords = {}, members = [] }: Props) {
     const t = useTranslator();
+    const [editOpen, setEditOpen] = useState(false);
+    const [assignOpen, setAssignOpen] = useState(false);
+    const [assignProcessing, setAssignProcessing] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('tasks.title.index') ?? 'Tasks', href: route('tasks.index') },
@@ -40,6 +52,24 @@ export default function TaskShow({ task, can }: Props) {
         if (!confirm(t('tasks.actions.delete') ?? 'Delete?')) return;
         router.delete(route('tasks.destroy', { task: task.id }));
     }
+
+    // BUG-10: sync assignees via PATCH /tasks/{task}/assignees
+    function syncAssignees(newIds: number[]) {
+        setAssignProcessing(true);
+        router.patch(
+            route('tasks.assignees.update', { task: task.id }),
+            { user_ids: newIds },
+            { onFinish: () => setAssignProcessing(false) },
+        );
+    }
+
+    function toggleAssignee(userId: number) {
+        const current = task.assignees?.map((a) => a.id) ?? [];
+        const updated = current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId];
+        syncAssignees(updated);
+    }
+
+    const assigneeIds = task.assignees?.map((a) => a.id) ?? [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -82,10 +112,9 @@ export default function TaskShow({ task, can }: Props) {
                                     </SelectContent>
                                 </Select>
 
-                                <Button variant="outline" size="icon" asChild>
-                                    <Link href={route('tasks.show', { task: task.id })}>
-                                        <Edit className="h-4 w-4" />
-                                    </Link>
+                                {/* BUG-09 fix: open edit dialog instead of self-link */}
+                                <Button variant="outline" size="icon" onClick={() => setEditOpen(true)}>
+                                    <Edit className="h-4 w-4" />
                                 </Button>
                             </>
                         )}
@@ -121,9 +150,40 @@ export default function TaskShow({ task, can }: Props) {
 
                     {/* Sidebar */}
                     <div className="space-y-4">
-                        {/* Assignees */}
+                        {/* BUG-10 fix: Assignees panel with inline popover picker */}
                         <div>
-                            <h3 className="mb-1 text-sm font-semibold">{t('tasks.fields.assignees')}</h3>
+                            <div className="mb-1 flex items-center justify-between">
+                                <h3 className="text-sm font-semibold">{t('tasks.fields.assignees')}</h3>
+                                {can.update && members.length > 0 && (
+                                    <Popover open={assignOpen} onOpenChange={setAssignOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                {assignProcessing ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <Users className="h-3 w-3" />
+                                                )}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-56 p-2">
+                                            <div className="space-y-1">
+                                                {members.map((m) => (
+                                                    <button
+                                                        key={m.id}
+                                                        type="button"
+                                                        className="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
+                                                        onClick={() => toggleAssignee(m.id)}
+                                                        disabled={assignProcessing}
+                                                    >
+                                                        {m.name}
+                                                        {assigneeIds.includes(m.id) && <span className="text-primary ml-auto text-xs">✓</span>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                            </div>
                             {task.assignees && task.assignees.length > 0 ? (
                                 <div className="space-y-1">
                                     {task.assignees.map((a) => (
@@ -181,6 +241,25 @@ export default function TaskShow({ task, can }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* BUG-09 fix: edit dialog */}
+            {can.update && (
+                <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>{t('tasks.actions.edit') ?? 'Edit Task'}</DialogTitle>
+                        </DialogHeader>
+                        <TaskForm
+                            task={task}
+                            submitRoute={route('tasks.update', { task: task.id })}
+                            method="patch"
+                            onSuccess={() => setEditOpen(false)}
+                            relatedRecords={relatedRecords}
+                            members={members}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </AppLayout>
     );
 }

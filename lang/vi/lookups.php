@@ -2,6 +2,8 @@
 
 // Lookups module — vi. Mirror of lang/en/lookups.php — keep keys in sync.
 return [
+    'dialog_description' => 'Nhập thông tin bên dưới.',
+    'delete_dialog_description' => 'Hành động này không thể hoàn tác.',
     'pipelines' => [
         'title' => 'Pipelines',
         'subtitle' => 'Quản lý pipeline và các giai đoạn của lead.',

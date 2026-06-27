@@ -3,18 +3,18 @@ import { PageHeader } from '@/components/page-header';
 import ProjectForm from '@/components/projects/project-form';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Client, Project, ProjectStatus, Team } from '@/types';
+import type { BreadcrumbItem, Client, Project, ProjectStatus, User } from '@/types';
 import { Head } from '@inertiajs/react';
 
 interface Props {
     project: Project;
     clients: Pick<Client, 'id' | 'name'>[];
     statuses: ProjectStatus[];
-    teams: Pick<Team, 'id' | 'name'>[];
+    members: Pick<User, 'id' | 'name'>[];
     fieldDefs: CustomFieldDefinition[];
 }
 
-export default function ProjectEdit({ project, clients, statuses, teams, fieldDefs }: Props) {
+export default function ProjectEdit({ project, clients, statuses, members, fieldDefs }: Props) {
     const t = useTranslator();
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -33,7 +33,7 @@ export default function ProjectEdit({ project, clients, statuses, teams, fieldDe
                     project={project}
                     clients={clients}
                     statuses={statuses}
-                    teams={teams}
+                    members={members}
                     fieldDefs={fieldDefs}
                     submitRoute={route('projects.update', project.id)}
                     method="patch"

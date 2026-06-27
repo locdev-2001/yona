@@ -11,6 +11,7 @@ use App\Models\EmailTemplate;
 use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Policies\ClientPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
@@ -51,6 +52,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Workspace admin/owner has unrestricted access WITHIN their workspace.
+        // Cross-workspace isolation is still enforced by Postgres RLS + the
+        // BelongsToWorkspace scope, so this only removes per-feature permission
+        // gating: a workspace admin automatically gains any NEW permission with
+        // zero re-seeding. Returns null (falls through to normal policy/permission
+        // checks) for every non-admin member.
+        Gate::before(function ($user, string $ability): ?bool {
+            if ($user instanceof User && currentMembership()?->role === 'admin') {
+                return true;
+            }
+
+            return null;
+        });
+
         // P05 — Register EmailTemplatePolicy (auto-discovery backup).
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
 

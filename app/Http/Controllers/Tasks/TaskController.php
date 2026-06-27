@@ -5,7 +5,12 @@ namespace App\Http\Controllers\Tasks;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tasks\TaskStoreRequest;
 use App\Http\Requests\Tasks\TaskUpdateRequest;
+use App\Models\Client;
+use App\Models\Contact;
+use App\Models\Lead;
+use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,6 +65,8 @@ class TaskController extends Controller
             'can' => [
                 'create' => $user->can('tenant.task.create'),
             ],
+            'relatedRecords' => $this->relatedRecords(),
+            'members' => $this->workspaceMembers(),
         ]);
     }
 
@@ -94,6 +101,8 @@ class TaskController extends Controller
                 'create' => $user->can('tenant.task.create'),
                 'update' => $user->can('tenant.task.update'),
             ],
+            'relatedRecords' => $this->relatedRecords(),
+            'members' => $this->workspaceMembers(),
         ]);
     }
 
@@ -125,6 +134,8 @@ class TaskController extends Controller
                 'delete' => request()->user()->can('delete', $task),
                 'log_time' => request()->user()->can('logTime', $task),
             ],
+            'relatedRecords' => $this->relatedRecords(),
+            'members' => $this->workspaceMembers(),
         ]);
     }
 
@@ -148,7 +159,10 @@ class TaskController extends Controller
     {
         $this->taskService->update(
             task: $task,
-            data: $request->safe()->except(['related_type', 'related_id', 'custom_fields', 'lock_version']),
+            // Keep related_type/related_id in the data so edits to the linked record
+            // persist (TaskService::update applies them atomically, G12). assignee_ids
+            // are managed via the dedicated assignees endpoint, not the update form.
+            data: $request->safe()->except(['assignee_ids', 'custom_fields', 'lock_version']),
             customFields: $request->input('custom_fields', []),
         );
 
@@ -164,6 +178,45 @@ class TaskController extends Controller
 
         return redirect()->route('tasks.index')
             ->with('success', __('tasks.deleted'));
+    }
+
+    /**
+     * Workspace-scoped lookup lists for the related_type picker.
+     * Returns only id+name for each type — enough for a Select.
+     *
+     * @return array<string, array<array{id: string, name: string}>>
+     */
+    private function relatedRecords(): array
+    {
+        return [
+            'lead' => Lead::select('id', 'name')->orderBy('name')->get()->toArray(),
+            'client' => Client::select('id', 'name')->orderBy('name')->get()->toArray(),
+            'project' => Project::select('id', 'name')->orderBy('name')->get()->toArray(),
+            'contact' => Contact::selectRaw("id, CONCAT(first_name, ' ', COALESCE(last_name, '')) AS name")
+                ->orderBy('first_name')
+                ->get()
+                ->map(fn ($c) => ['id' => $c->id, 'name' => trim($c->name)])
+                ->toArray(),
+        ];
+    }
+
+    /**
+     * Active workspace members for the assignee picker.
+     *
+     * @return array<array{id: int, name: string}>
+     */
+    private function workspaceMembers(): array
+    {
+        $workspaceId = currentWorkspace()->id;
+
+        return User::whereHas(
+            'memberships',
+            fn ($q) => $q->where('workspace_id', $workspaceId)->where('status', 'active'),
+        )
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get()
+            ->toArray();
     }
 
     /** @return array<string, mixed> */

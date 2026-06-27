@@ -94,7 +94,7 @@ class ClientController extends Controller
             ->with('success', __('clients.flash.created'));
     }
 
-    public function show(Client $client): Response
+    public function show(Request $request, Client $client): Response
     {
         $this->authorize('view', $client);
 
@@ -105,7 +105,12 @@ class ClientController extends Controller
             'customerAdmins:id,name',
             'activities' => fn ($q) => $q->latest('occurred_at')->limit(50),
             'tags',
+            'attachments.uploader:id,name',
+            'notes.author:id,name',
+            'vaultEntries',
         ]);
+
+        $user = $request->user();
 
         return Inertia::render('clients/show', [
             'client' => $client,
@@ -116,6 +121,11 @@ class ClientController extends Controller
                 'memberships',
                 fn ($q) => $q->where('workspace_id', currentWorkspace()->id)->where('status', 'active')
             )->get(['id', 'name']),
+            'canEdit' => $user->can('update', $client),
+            'canDelete' => $user->can('delete', $client),
+            'vaultEntries' => $client->vaultEntries,
+            'attachments' => $client->attachments,
+            'notes' => $client->notes,
         ]);
     }
 

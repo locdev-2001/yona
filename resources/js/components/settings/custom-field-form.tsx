@@ -2,7 +2,7 @@ import type { CustomFieldDefinition, EntityType, FieldType } from '@/components/
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -142,6 +142,7 @@ export default function CustomFieldForm({ open, onClose, entityTypes, fieldTypes
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{isEditing ? t('custom_fields.actions.edit') : t('custom_fields.actions.add')}</DialogTitle>
+                    <DialogDescription>{t('custom_fields.dialog_description') ?? 'Configure the custom field definition below.'}</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-2">

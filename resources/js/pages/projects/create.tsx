@@ -3,17 +3,17 @@ import { PageHeader } from '@/components/page-header';
 import ProjectForm from '@/components/projects/project-form';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Client, ProjectStatus, Team } from '@/types';
+import type { BreadcrumbItem, Client, ProjectStatus, User } from '@/types';
 import { Head } from '@inertiajs/react';
 
 interface Props {
     clients: Pick<Client, 'id' | 'name'>[];
     statuses: ProjectStatus[];
-    teams: Pick<Team, 'id' | 'name'>[];
+    members: Pick<User, 'id' | 'name'>[];
     fieldDefs: CustomFieldDefinition[];
 }
 
-export default function ProjectCreate({ clients, statuses, teams, fieldDefs }: Props) {
+export default function ProjectCreate({ clients, statuses, members, fieldDefs }: Props) {
     const t = useTranslator();
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -30,7 +30,7 @@ export default function ProjectCreate({ clients, statuses, teams, fieldDefs }: P
                 <ProjectForm
                     clients={clients}
                     statuses={statuses}
-                    teams={teams}
+                    members={members}
                     fieldDefs={fieldDefs}
                     submitRoute={route('projects.store')}
                     method="post"

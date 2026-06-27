@@ -1,3 +1,4 @@
+import CustomFieldsSection from '@/components/custom-fields/custom-fields-section';
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslator } from '@/lib/i18n';
-import type { Client, Project, ProjectStatus, Team } from '@/types';
+import type { Client, Project, ProjectStatus, User } from '@/types';
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
@@ -14,7 +15,7 @@ interface Props {
     project?: Project;
     clients: Pick<Client, 'id' | 'name'>[];
     statuses: ProjectStatus[];
-    teams: Pick<Team, 'id' | 'name'>[];
+    members: Pick<User, 'id' | 'name'>[];
     fieldDefs?: CustomFieldDefinition[];
     submitRoute: string;
     method?: 'post' | 'patch';
@@ -26,20 +27,29 @@ const BILLING_TYPES = [
     { value: '2', labelKey: 'projects.billing_types.hourly' },
 ];
 
-export default function ProjectForm({ project, clients, statuses, teams, submitRoute, method = 'post' }: Props) {
+// sentinel: no owner explicitly chosen (server defaults to creator)
+const NO_OWNER = '__none__';
+
+export default function ProjectForm({ project, clients, statuses, members, fieldDefs, submitRoute, method = 'post' }: Props) {
     const t = useTranslator();
 
+    // ponytail: no explicit generic — let inertia infer; cast custom_fields to avoid FormDataType constraint
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, setData, post, patch, processing, errors } = useForm({
         name: project?.name ?? '',
         description: project?.description ?? '',
         client_id: project?.client_id ?? '',
+        status_id: project?.status_id ?? '',
+        // owner?.id is number; stringify for Select (sentinel __none__ is string)
+        owner_id: project?.owner?.id != null ? String(project.owner.id) : '',
         billing_type: String(project?.billing_type ?? 3),
         start_date: project?.start_date ?? '',
         deadline: project?.deadline ?? '',
         progress: project?.progress ?? 0,
         progress_from_tasks: project?.progress_from_tasks ?? false,
         visible_to_customer: project?.visible_to_customer ?? false,
-        custom_fields: project?.custom_fields ?? {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        custom_fields: (project?.custom_fields ?? {}) as any,
     });
 
     function handleSubmit(e: FormEvent) {
@@ -77,6 +87,47 @@ export default function ProjectForm({ project, clients, statuses, teams, submitR
                 </Select>
                 {errors.client_id && <p className="text-destructive text-sm">{errors.client_id}</p>}
             </div>
+
+            {/* Status */}
+            {statuses.length > 0 && (
+                <div className="space-y-1">
+                    <Label htmlFor="status_id">{t('projects.fields.status') ?? 'Status'}</Label>
+                    <Select value={data.status_id || NO_OWNER} onValueChange={(v) => setData('status_id', v === NO_OWNER ? '' : v)}>
+                        <SelectTrigger id="status_id">
+                            <SelectValue placeholder="— default —" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={NO_OWNER}>{t('projects.fields.status_default') ?? '— default —'}</SelectItem>
+                            {statuses.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                    {s.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {/* Owner */}
+            {members.length > 0 && (
+                <div className="space-y-1">
+                    <Label htmlFor="owner_id">{t('projects.fields.owner') ?? 'Owner'}</Label>
+                    <Select value={data.owner_id || NO_OWNER} onValueChange={(v) => setData('owner_id', v === NO_OWNER ? '' : v)}>
+                        <SelectTrigger id="owner_id">
+                            <SelectValue placeholder="— me (default) —" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={NO_OWNER}>{t('projects.fields.owner_default') ?? '— me (default) —'}</SelectItem>
+                            {members.map((m) => (
+                                <SelectItem key={m.id} value={String(m.id)}>
+                                    {m.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.owner_id && <p className="text-destructive text-sm">{errors.owner_id}</p>}
+                </div>
+            )}
 
             {/* Billing type */}
             <div className="space-y-1">
@@ -116,6 +167,16 @@ export default function ProjectForm({ project, clients, statuses, teams, submitR
                 <Textarea id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} rows={4} />
                 {errors.description && <p className="text-destructive text-sm">{errors.description}</p>}
             </div>
+
+            {/* Custom fields */}
+            {fieldDefs && fieldDefs.length > 0 && (
+                <CustomFieldsSection
+                    definitions={fieldDefs}
+                    values={data.custom_fields}
+                    errors={errors as Record<string, string>}
+                    onChange={(slug, value) => setData('custom_fields', { ...data.custom_fields, [slug]: value })}
+                />
+            )}
 
             {/* Toggles */}
             <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">

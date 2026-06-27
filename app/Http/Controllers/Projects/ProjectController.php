@@ -10,7 +10,7 @@ use App\Models\Client;
 use App\Models\CustomFieldDefinition;
 use App\Models\Project;
 use App\Models\ProjectStatus;
-use App\Models\Team;
+use App\Models\User;
 use App\Services\ProjectService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,24 +79,38 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
+        $workspace = currentWorkspace();
         $clients = Client::orderBy('name')->get(['id', 'name']);
         $statuses = ProjectStatus::orderBy('status_order')->get(['id', 'name', 'color']);
-        $teams = Team::orderBy('name')->get(['id', 'name']);
         $fieldDefs = CustomFieldDefinition::forEntity('project')->active()->ordered()->get();
+        $members = User::whereHas('memberships', fn ($q) => $q->where('workspace_id', $workspace->id)->where('status', 'active'))
+            ->get(['id', 'name']);
 
         return Inertia::render('projects/create', [
             'clients' => $clients,
             'statuses' => $statuses,
-            'teams' => $teams,
+            'members' => $members,
             'fieldDefs' => $fieldDefs,
         ]);
     }
 
     public function store(StoreProjectRequest $request): RedirectResponse
     {
+        // owner_id is not in StoreProjectRequest (G12 intentionally excludes it from validated())
+        // We read it directly and validate workspace membership here before passing to service.
+        $ownerId = $request->user()->id;
+        if ($requestedOwner = $request->input('owner_id')) {
+            $workspace = currentWorkspace();
+            $ownerExists = User::whereHas('memberships', fn ($q) => $q->where('workspace_id', $workspace->id)->where('status', 'active'))
+                ->where('id', $requestedOwner)->exists();
+            if ($ownerExists) {
+                $ownerId = (int) $requestedOwner;
+            }
+        }
+
         $project = $this->projectService->create(
             $request->validated(),
-            $request->user()->id
+            $ownerId
         );
 
         return redirect()->route('projects.show', $project)
@@ -142,22 +156,34 @@ class ProjectController extends Controller
             abort(404);
         }
 
+        $workspace = currentWorkspace();
         $clients = Client::orderBy('name')->get(['id', 'name']);
         $statuses = ProjectStatus::orderBy('status_order')->get(['id', 'name', 'color']);
-        $teams = Team::orderBy('name')->get(['id', 'name']);
         $fieldDefs = CustomFieldDefinition::forEntity('project')->active()->ordered()->get();
+        $members = User::whereHas('memberships', fn ($q) => $q->where('workspace_id', $workspace->id)->where('status', 'active'))
+            ->get(['id', 'name']);
 
         return Inertia::render('projects/edit', [
             'project' => $project->load(['client:id,name', 'status:id,name,color', 'owner:id,name']),
             'clients' => $clients,
             'statuses' => $statuses,
-            'teams' => $teams,
+            'members' => $members,
             'fieldDefs' => $fieldDefs,
         ]);
     }
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
+        // owner_id not in UpdateProjectRequest rules — handle separately with membership check
+        if ($requestedOwner = $request->input('owner_id')) {
+            $workspace = currentWorkspace();
+            $ownerExists = User::whereHas('memberships', fn ($q) => $q->where('workspace_id', $workspace->id)->where('status', 'active'))
+                ->where('id', $requestedOwner)->exists();
+            if ($ownerExists) {
+                $project->owner_id = (int) $requestedOwner;
+            }
+        }
+
         $this->projectService->update($project, $request->validated());
 
         return redirect()->route('projects.show', $project)

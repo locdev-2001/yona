@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TenantPermission;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,7 +15,7 @@ class SyncTagsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('tags.manage') || $this->user()->can('tenant.tags.manage');
+        return $this->user()?->can(TenantPermission::TagsManage->value) ?? false;
     }
 
     /** @return array<string, mixed> */

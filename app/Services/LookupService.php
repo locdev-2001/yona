@@ -33,41 +33,44 @@ class LookupService
     public function seedDefaults(Workspace $workspace): void
     {
         DB::transaction(function (): void {
-            // Pipeline + stages
-            $pipeline = $this->createPipeline('Sales Pipeline', isDefault: true);
-            $this->createStage($pipeline, ['name' => 'New', 'type' => 'open', 'stage_order' => 0, 'probability' => 10, 'color' => '#3b82f6']);
-            $this->createStage($pipeline, ['name' => 'Won', 'type' => 'won', 'stage_order' => 1, 'probability' => 100, 'color' => '#22c55e']);
-            $this->createStage($pipeline, ['name' => 'Lost', 'type' => 'lost', 'stage_order' => 2, 'probability' => 0, 'color' => '#ef4444']);
-
-            // Lead sources
-            $sources = ['Website', 'Referral', 'Direct', 'Social Media', 'Email'];
-            $firstSource = null;
-            foreach ($sources as $sourceName) {
-                $source = $this->createSource($sourceName);
-                $firstSource ??= $source;
+            // Pipeline + stages — only if this workspace has none yet (granular
+            // idempotency: backfills whatever is missing without duplicating).
+            if (! Pipeline::exists()) {
+                $pipeline = $this->createPipeline('Sales Pipeline', isDefault: true);
+                $this->createStage($pipeline, ['name' => 'New', 'type' => 'open', 'stage_order' => 0, 'probability' => 10, 'color' => '#3b82f6']);
+                $this->createStage($pipeline, ['name' => 'Won', 'type' => 'won', 'stage_order' => 1, 'probability' => 100, 'color' => '#22c55e']);
+                $this->createStage($pipeline, ['name' => 'Lost', 'type' => 'lost', 'stage_order' => 2, 'probability' => 0, 'color' => '#ef4444']);
             }
 
-            // Project statuses
-            $statusDefs = [
-                ['name' => 'Not Started', 'status_order' => 0, 'color' => '#94a3b8'],
-                ['name' => 'In Progress', 'status_order' => 1, 'color' => '#3b82f6'],
-                ['name' => 'On Hold', 'status_order' => 2, 'color' => '#f59e0b'],
-                ['name' => 'Completed', 'status_order' => 3, 'color' => '#22c55e'],
-                ['name' => 'Cancelled', 'status_order' => 4, 'color' => '#ef4444'],
-            ];
-            $firstStatus = null;
-            foreach ($statusDefs as $attrs) {
-                $status = $this->createProjectStatus($attrs);
-                $firstStatus ??= $status;
+            // Lead sources — only if none yet.
+            if (! LeadSource::exists()) {
+                $firstSource = null;
+                foreach (['Website', 'Referral', 'Direct', 'Social Media', 'Email'] as $sourceName) {
+                    $source = $this->createSource($sourceName);
+                    $firstSource ??= $source;
+                }
+                if ($firstSource) {
+                    $this->settings->set('default_lead_source_id', $firstSource->id);
+                }
             }
 
-            // Persist defaults
-            $this->settings->set('default_pipeline_id', $pipeline->id);
-            if ($firstSource) { // @phpstan-ignore-line
-                $this->settings->set('default_lead_source_id', $firstSource->id);
-            }
-            if ($firstStatus) { // @phpstan-ignore-line
-                $this->settings->set('default_project_status_id', $firstStatus->id);
+            // Project statuses — only if none yet.
+            if (! ProjectStatus::exists()) {
+                $statusDefs = [
+                    ['name' => 'Not Started', 'status_order' => 0, 'color' => '#94a3b8'],
+                    ['name' => 'In Progress', 'status_order' => 1, 'color' => '#3b82f6'],
+                    ['name' => 'On Hold', 'status_order' => 2, 'color' => '#f59e0b'],
+                    ['name' => 'Completed', 'status_order' => 3, 'color' => '#22c55e'],
+                    ['name' => 'Cancelled', 'status_order' => 4, 'color' => '#ef4444'],
+                ];
+                $firstStatus = null;
+                foreach ($statusDefs as $attrs) {
+                    $status = $this->createProjectStatus($attrs);
+                    $firstStatus ??= $status;
+                }
+                if ($firstStatus) {
+                    $this->settings->set('default_project_status_id', $firstStatus->id);
+                }
             }
         });
     }

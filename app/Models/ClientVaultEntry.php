@@ -37,6 +37,11 @@ class ClientVaultEntry extends Model
         'visibility',
     ];
 
+    // Vault is write-only from the client: the decrypted password must never be
+    // serialized into Inertia/API responses. (Without this, eager-loading vault
+    // entries on the client detail page would leak every stored password.)
+    protected $hidden = ['password'];
+
     /** @return array<string, string> */
     protected function casts(): array
     {

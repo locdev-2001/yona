@@ -5,6 +5,8 @@ namespace App\Listeners;
 use App\Events\LeadAssigned;
 use App\Models\User;
 use App\Notifications\LeadAssignedNotification;
+use App\Services\TemplatedMailer;
+use Throwable;
 
 /**
  * P07 — Listen for LeadAssigned, notify the assignee (DB + email).
@@ -29,8 +31,17 @@ class SendLeadAssignedNotification
 
         $assignedByName = auth()->user()?->name;
 
+        // In-app bell (database channel only — never throws on the assign request).
         $assignee->notify(
             new LeadAssignedNotification($lead, $assignedByName)
         );
+
+        // Templated email is best-effort: a mail/template failure must NOT break the
+        // assignment (the old toMail() returned null and 500'd via the mail channel).
+        try {
+            app(TemplatedMailer::class)->send('lead_assigned', $assignee, ['lead' => $lead]);
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 }

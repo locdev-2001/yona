@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -120,6 +120,7 @@ export default function ClientGroups({ groups }: Props) {
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>{editing ? t('clients.group.edit') : t('clients.group.add')}</DialogTitle>
+                        <DialogDescription>{t('clients.group.dialog_description') ?? 'Enter the group details below.'}</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <div>

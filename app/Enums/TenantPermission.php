@@ -64,6 +64,9 @@ enum TenantPermission: string
     case CustomFieldsView = 'custom_fields.view';
     case CustomFieldsManage = 'custom_fields.manage';
 
+    // --- Tags (cross-cutting: tag/untag any entity) ---
+    case TagsManage = 'tenant.tags.manage';
+
     /** @return list<string> */
     public static function values(): array
     {

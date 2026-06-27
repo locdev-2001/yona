@@ -3,12 +3,12 @@
 namespace App\Notifications;
 
 use App\Models\Lead;
-use App\Services\TemplatedMailer;
 use Illuminate\Notifications\Notification;
 
 /**
  * P07 — Notification sent to the assignee when a lead is assigned to them.
- * Channels: database (in-app bell) + email template 'lead_assigned' (G9).
+ * Channel: database (in-app bell). The templated email is sent separately by the
+ * SendLeadAssignedNotification listener so a mail failure can never break the assign.
  */
 class LeadAssignedNotification extends Notification
 {
@@ -22,7 +22,7 @@ class LeadAssignedNotification extends Notification
      */
     public function via(mixed $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     /**
@@ -43,23 +43,5 @@ class LeadAssignedNotification extends Notification
             ],
             'link' => route('leads.show', $this->lead),
         ];
-    }
-
-    /**
-     * Send via TemplatedMailer (G9 — context whitelist enforced inside mailer).
-     * Returns null when mail channel is not supported via the standard toMail contract;
-     * TemplatedMailer::send() is called from SendLeadAssignedNotification listener instead.
-     */
-    public function toMail(mixed $notifiable): ?object
-    {
-        // Email is dispatched by the listener using TemplatedMailer::send()
-        // This channel registration ensures the mail delivery path exists.
-        app(TemplatedMailer::class)->send(
-            'lead_assigned',
-            $notifiable,
-            ['lead' => $this->lead]
-        );
-
-        return null;
     }
 }

@@ -2,6 +2,8 @@
 
 // Lookups module — en (fallback). Mirror of lang/vi/lookups.php — keep keys in sync.
 return [
+    'dialog_description' => 'Enter the details below.',
+    'delete_dialog_description' => 'This action cannot be undone.',
     'pipelines' => [
         'title' => 'Pipelines',
         'subtitle' => 'Manage pipelines and lead stages.',
