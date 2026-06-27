@@ -1,0 +1,11 @@
+{
+  "name": "cdp",
+  "version": "0.1.0",
+  "enabled": true,
+  "type": "core",
+  "depends": ["identity"],
+  "provides": [
+    "cdp.identity_resolver"
+  ],
+  "entitlement": null
+}

@@ -45,7 +45,8 @@
             "Modules\\Identity\\": "modules/identity/src/",
             "Modules\\Sample\\": "modules/sample/src/",
             "Modules\\Shared\\": "modules/shared/src/",
-        "Modules\\Tenancy\\": "modules/tenancy/src/"
+        "Modules\\Tenancy\\": "modules/tenancy/src/",
+            "Modules\\Cdp\\": "modules/cdp/src/"
         },
         "files": [
             "app/helpers.php"
