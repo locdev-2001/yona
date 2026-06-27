@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\LeadSource;
+use Modules\CrmSales\Models\LeadSource;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

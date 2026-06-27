@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Client;
-use App\Models\Lead;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\Lead;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\UploadedFile;

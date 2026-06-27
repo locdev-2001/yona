@@ -1,10 +1,10 @@
 <?php
 
-use App\Events\LeadAssigned;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
-use App\Notifications\LeadAssignedNotification;
-use App\Services\LeadService;
+use Modules\CrmSales\Events\LeadAssigned;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
+use Modules\CrmSales\Notifications\LeadAssignedNotification;
+use Modules\CrmSales\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Modules\Identity\Models\User;

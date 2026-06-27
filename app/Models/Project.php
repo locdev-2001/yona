@@ -18,6 +18,7 @@ use Modules\Shared\Concerns\HasAttachments;
 use Modules\Shared\Concerns\HasCustomFields;
 use Modules\Shared\Concerns\HasNotes;
 use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\CrmSales\Models\Client;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**

@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Client;
-use App\Models\ClientVaultEntry;
-use App\Services\ClientVaultService;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\ClientVaultEntry;
+use Modules\CrmSales\Services\ClientVaultService;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

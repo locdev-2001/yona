@@ -46,7 +46,8 @@
             "Modules\\Sample\\": "modules/sample/src/",
             "Modules\\Shared\\": "modules/shared/src/",
         "Modules\\Tenancy\\": "modules/tenancy/src/",
-            "Modules\\Cdp\\": "modules/cdp/src/"
+            "Modules\\Cdp\\": "modules/cdp/src/",
+        "Modules\\CrmSales\\": "modules/crm-sales/src/"
         },
         "files": [
             "app/helpers.php"

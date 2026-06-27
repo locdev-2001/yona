@@ -1,13 +1,13 @@
 <?php
 
-use App\Events\LeadConverted;
-use App\Models\Client;
-use App\Models\Contact;
-use App\Models\Lead;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
-use App\Services\LeadConversionService;
-use App\Services\LeadService;
+use Modules\CrmSales\Events\LeadConverted;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\Contact;
+use Modules\CrmSales\Models\Lead;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
+use Modules\CrmSales\Services\LeadConversionService;
+use Modules\CrmSales\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Modules\Identity\Models\User;
 use Modules\Shared\Models\Note;

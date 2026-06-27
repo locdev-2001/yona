@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Policies\ProjectPolicy;
 use App\Services\ProjectService;
 use Modules\Identity\Models\User;

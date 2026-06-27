@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
-use App\Services\LookupService;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
+use Modules\CrmSales\Services\LookupService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Services\SettingsService;

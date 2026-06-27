@@ -1,9 +1,9 @@
 <?php
 
-use App\Events\LeadStageChanged;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
-use App\Services\LeadService;
+use Modules\CrmSales\Events\LeadStageChanged;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
+use Modules\CrmSales\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
 use Modules\Identity\Models\User;

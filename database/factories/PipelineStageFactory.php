@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Tenancy\Models\Workspace;
 

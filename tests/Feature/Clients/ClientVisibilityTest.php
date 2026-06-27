@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Client;
-use App\Policies\ClientPolicy;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Policies\ClientPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Identity\Models\User;

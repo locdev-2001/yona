@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Client;
-use App\Models\Contact;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\Contact;
 use Illuminate\Database\QueryException;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Pipeline;
+use Modules\CrmSales\Models\Pipeline;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

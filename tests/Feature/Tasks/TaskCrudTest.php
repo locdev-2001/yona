@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Models\Task;
 use App\Services\TaskService;
 use Modules\Identity\Models\User;

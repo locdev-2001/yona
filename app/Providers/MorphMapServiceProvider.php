@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Models\Client;
-use App\Models\ClientGroup;
-use App\Models\ClientVaultEntry;
-use App\Models\Contact;
 use App\Models\EmailTemplate;
-use App\Models\LeadSource;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
 use App\Models\ProjectStatus;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\ClientGroup;
+use Modules\CrmSales\Models\ClientVaultEntry;
+use Modules\CrmSales\Models\Contact;
+use Modules\CrmSales\Models\LeadSource;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Modules\Announcements\Models\Announcement;
@@ -60,7 +60,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'contact' => Contact::class,           // P06 — now exists
             'client_group' => ClientGroup::class,  // P06 — additional model
             'client_vault_entry' => ClientVaultEntry::class, // P06 — additional model
-            'lead' => 'App\\Models\\Lead',     // P07
+            'lead' => 'Modules\\CrmSales\\Models\\Lead',     // P07
             'project' => 'App\\Models\\Project',             // P08
             'project_milestone' => 'App\\Models\\ProjectMilestone', // P08
             'project_discussion' => 'App\\Models\\ProjectDiscussion', // P08

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\ChangeProjectStatusRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectStatus;
 use App\Services\ProjectService;

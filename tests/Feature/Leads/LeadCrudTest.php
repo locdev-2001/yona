@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Lead;
-use App\Models\Pipeline;
-use App\Models\PipelineStage;
-use App\Services\LeadService;
+use Modules\CrmSales\Models\Lead;
+use Modules\CrmSales\Models\Pipeline;
+use Modules\CrmSales\Models\PipelineStage;
+use Modules\CrmSales\Services\LeadService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

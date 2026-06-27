@@ -3,10 +3,10 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\EmailTemplateController;
-use App\Http\Controllers\Settings\LeadSourceController;
-use App\Http\Controllers\Settings\PipelineController;
-use App\Http\Controllers\Settings\PipelineStageController;
 use App\Http\Controllers\Settings\ProjectStatusController;
+use Modules\CrmSales\Http\Controllers\Settings\LeadSourceController;
+use Modules\CrmSales\Http\Controllers\Settings\PipelineController;
+use Modules\CrmSales\Http\Controllers\Settings\PipelineStageController;
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Http\Controllers\Settings\MemberController;
 use Modules\Identity\Http\Controllers\Settings\PasswordController;

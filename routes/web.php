@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\Clients\ClientController;
-use App\Http\Controllers\Clients\ClientCustomerAdminController;
-use App\Http\Controllers\Clients\ClientGroupController;
-use App\Http\Controllers\Clients\ClientVaultEntryController;
-use App\Http\Controllers\Clients\ContactController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Leads\LeadController;
-use App\Http\Controllers\Leads\LeadConversionController;
-use App\Http\Controllers\Leads\LeadStageController;
-use App\Http\Controllers\Leads\LeadStatusActionController;
+use Modules\CrmSales\Http\Controllers\Clients\ClientController;
+use Modules\CrmSales\Http\Controllers\Clients\ClientCustomerAdminController;
+use Modules\CrmSales\Http\Controllers\Clients\ClientGroupController;
+use Modules\CrmSales\Http\Controllers\Clients\ClientVaultEntryController;
+use Modules\CrmSales\Http\Controllers\Clients\ContactController;
+use Modules\CrmSales\Http\Controllers\Leads\LeadController;
+use Modules\CrmSales\Http\Controllers\Leads\LeadConversionController;
+use Modules\CrmSales\Http\Controllers\Leads\LeadStageController;
+use Modules\CrmSales\Http\Controllers\Leads\LeadStatusActionController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectDiscussionController;
 use App\Http\Controllers\Projects\ProjectFileController;

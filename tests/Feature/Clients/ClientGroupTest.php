@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Client;
-use App\Models\ClientGroup;
-use App\Services\ClientService;
+use Modules\CrmSales\Models\Client;
+use Modules\CrmSales\Models\ClientGroup;
+use Modules\CrmSales\Services\ClientService;
 use Illuminate\Database\QueryException;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

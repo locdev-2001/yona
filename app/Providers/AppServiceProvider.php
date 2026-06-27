@@ -2,19 +2,10 @@
 
 namespace App\Providers;
 
-use App\Events\LeadAssigned;
-use App\Listeners\SendLeadAssignedNotification;
-use App\Models\Client;
-use App\Models\ClientGroup;
-use App\Models\Contact;
 use App\Models\EmailTemplate;
-use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
-use App\Policies\ClientPolicy;
-use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
-use App\Policies\LeadPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\TaskPolicy;
 use App\Services\MergeFields\ClientMergeFields;
@@ -23,7 +14,6 @@ use App\Services\MergeFields\Contracts\EntityMergeFields;
 use App\Services\MergeFields\LeadMergeFields;
 use App\Services\MergeFields\MergeFieldResolver;
 use App\Support\ModuleAwareInertiaViewFinder;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Identity\Models\User;
@@ -80,21 +70,12 @@ class AppServiceProvider extends ServiceProvider
         // P05 — Register EmailTemplatePolicy (auto-discovery backup).
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
 
-        // P06 — Client / Contact / ClientGroup policies.
-        Gate::policy(Client::class, ClientPolicy::class);
-        Gate::policy(Contact::class, ContactPolicy::class);
-        Gate::policy(ClientGroup::class, ClientPolicy::class); // groups use client permission
-
-        // P07 — Lead policy.
-        Gate::policy(Lead::class, LeadPolicy::class);
-
         // P08 — Project policy.
         Gate::policy(Project::class, ProjectPolicy::class);
 
         // P09 — Task policy.
         Gate::policy(Task::class, TaskPolicy::class);
 
-        // P07 — Lead events.
-        Event::listen(LeadAssigned::class, SendLeadAssignedNotification::class);
+        // crm-sales policies + events are registered in CrmSalesServiceProvider.
     }
 }

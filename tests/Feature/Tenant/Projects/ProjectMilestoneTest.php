@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Models\ProjectMilestone;
 use App\Services\ProjectMilestoneService;
 use App\Services\ProjectService;

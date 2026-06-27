@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Services\ProjectService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Services;
 
-use App\Services\LookupService;
+use Modules\CrmSales\Services\LookupService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Identity\Models\User;

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Models\ProjectDiscussion;
 use App\Services\ProjectDiscussionService;
 use App\Services\ProjectService;

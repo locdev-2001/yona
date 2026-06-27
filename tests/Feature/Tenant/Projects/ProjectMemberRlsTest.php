@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Client;
+use Modules\CrmSales\Models\Client;
 use App\Services\ProjectService;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\User;
