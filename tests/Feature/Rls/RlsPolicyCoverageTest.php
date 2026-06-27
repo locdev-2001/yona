@@ -63,6 +63,9 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         // P07 inbox (2026_06_28_700003)
         'conversations',
         'messages',
+
+        // P07 channel-zalo (2026_06_28_800003)
+        'zalo_connections',
     ];
 
     // Query pg_policies for ws_isolation on each table

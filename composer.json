@@ -50,7 +50,8 @@
         "Modules\\CrmSales\\": "modules/crm-sales/src/",
         "Modules\\Projects\\": "modules/projects/src/",
         "Modules\\Email\\": "modules/email/src/",
-        "Modules\\Inbox\\": "modules/inbox/src/"
+        "Modules\\Inbox\\": "modules/inbox/src/",
+        "Modules\\ChannelZalo\\": "modules/channel-zalo/src/"
         },
         "files": [
             "app/helpers.php"

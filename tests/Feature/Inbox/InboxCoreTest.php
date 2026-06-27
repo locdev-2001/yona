@@ -114,7 +114,8 @@ it('conversations unique(zalo_connection_id, peer_uid) enforces idempotency', fu
     actingInWorkspace($ws, $user);
     seedMember($ws, $user, 'admin');
 
-    $connectionId = (string) \Illuminate\Support\Str::uuid();
+    // zalo_connection_id là bigint sau migration 700004
+    $connectionId = random_int(1_000_000, 9_999_999);
 
     Conversation::create([
         'workspace_id' => $ws->id,
@@ -224,9 +225,11 @@ it('ChannelManager singleton resolves from container', function () {
     expect($manager)->toBeInstanceOf(ChannelManager::class);
 });
 
-it('ChannelManager hasAny returns false when no driver registered', function () {
+it('ChannelManager hasAny returns true when zalo_personal driver is registered (channel-zalo module)', function () {
+    // channel-zalo ServiceProvider đã register 'zalo_personal' driver khi boot
     $manager = app(ChannelManager::class);
-    expect($manager->hasAny())->toBeFalse();
+    expect($manager->hasAny())->toBeTrue();
+    expect($manager->driver('zalo_personal'))->toBeInstanceOf(\Modules\ChannelZalo\Services\ZaloChannelDriver::class);
 });
 
 it('ChannelManager hasAny returns true after driver registered', function () {

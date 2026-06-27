@@ -67,6 +67,9 @@ enum TenantPermission: string
     // --- Tags (cross-cutting: tag/untag any entity) ---
     case TagsManage = 'tenant.tags.manage';
 
+    // --- Zalo channel (P07 channel-zalo) ---
+    case ZaloManage = 'tenant.zalo.manage';
+
     /** @return list<string> */
     public static function values(): array
     {

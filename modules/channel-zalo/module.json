@@ -1,0 +1,11 @@
+{
+  "name": "channel-zalo",
+  "version": "0.1.0",
+  "enabled": true,
+  "type": "driver",
+  "depends": ["inbox"],
+  "provides": [
+    "inbox.channel:zalo_personal"
+  ],
+  "entitlement": "integration.zalo_personal"
+}

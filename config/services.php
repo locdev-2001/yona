@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Zalo Personal Bridge (P07 channel-zalo)
+    |--------------------------------------------------------------------------
+    |
+    | Secrets cho bridge Node.js (zca-js) → Laravel webhook.
+    | bridge_url: base URL bridge HTTP (gọi /send, /auth/qr/*, /ui/*).
+    | webhook_secret: HMAC header X-Zalo-Personal-Bridge-Secret (VerifyZaloBridgeSecret).
+    | send_secret: X-Bridge-Send-Secret khi Laravel → bridge gửi tin.
+    | ui_secret: X-Bridge-UI-Secret khi Laravel → bridge UI actions (QR, friends, ...).
+    |
+    */
+    'zalo_bridge' => [
+        'url'            => env('ZALO_BRIDGE_URL', 'http://127.0.0.1:3710'),
+        'webhook_secret' => env('ZALO_BRIDGE_WEBHOOK_SECRET', ''),
+        'send_secret'    => env('ZALO_BRIDGE_SEND_SECRET', ''),
+        'ui_secret'      => env('ZALO_BRIDGE_UI_SECRET', ''),
+    ],
+
 ];

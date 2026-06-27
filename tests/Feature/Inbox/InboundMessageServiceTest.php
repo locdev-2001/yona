@@ -17,10 +17,12 @@ function makeService(?MeteringGate $gate = null): InboundMessageService
     return new InboundMessageService($gate ?? app(MeteringGate::class));
 }
 
-function basePayload(string $peerUid = 'peer_001', ?string $connectionId = null): array
+function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId = null): array
 {
+    // zalo_connection_id là bigint (global sequence, xem migration 700004)
+    $connectionId ??= random_int(1_000_000, 9_999_999);
     return [
-        'zalo_connection_id' => $connectionId ?? (string) \Illuminate\Support\Str::uuid(),
+        'zalo_connection_id' => (string) $connectionId,
         'channel' => 'zalo_personal',
         'peer_uid' => $peerUid,
         'thread_type' => 0,
@@ -154,7 +156,7 @@ it('F14: ingest cùng source_id 2 lần → chỉ tạo 1 Message (idempotent)',
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $connectionId = (string) \Illuminate\Support\Str::uuid();
+    $connectionId = random_int(1_000_000, 9_999_999);
     $sourceId = 'zalo_dup_msg_001';
 
     $payload = basePayload('peer_idem', $connectionId);
@@ -202,7 +204,7 @@ it('ingest 2 tin từ cùng peer → 1 Conversation + 2 Message', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $connectionId = (string) \Illuminate\Support\Str::uuid();
+    $connectionId = random_int(1_000_000, 9_999_999);
     $service = makeService();
 
     $p1 = basePayload('peer_dup', $connectionId);
