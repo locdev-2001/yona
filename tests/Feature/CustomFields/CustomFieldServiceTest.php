@@ -2,7 +2,7 @@
 
 use App\Models\Concerns\HasCustomFields;
 use App\Models\CustomFieldDefinition;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 use Illuminate\Database\Eloquent\Model;
 

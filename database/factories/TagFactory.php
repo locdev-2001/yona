@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Tag;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

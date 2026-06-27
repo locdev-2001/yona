@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Policies;
+namespace Modules\Tenancy\Policies;
 
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Feature gate for workspace administration. Permissions are scoped to the

@@ -2,7 +2,7 @@
 
 use App\Models\EmailTemplate;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 // ── Index ──────────────────────────────────────────────────────────────────────
 

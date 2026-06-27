@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Models\AnnouncementRead;
 use Modules\Announcements\Services\AnnouncementReadService;

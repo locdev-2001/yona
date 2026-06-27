@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Team;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 // Layer 1 (BelongsToWorkspace global scope) — BR-X01/X11.
 

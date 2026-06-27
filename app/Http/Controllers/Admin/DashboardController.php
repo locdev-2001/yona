@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Inertia\Inertia;
 use Inertia\Response;
 

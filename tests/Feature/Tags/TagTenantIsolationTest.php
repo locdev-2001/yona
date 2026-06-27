@@ -2,7 +2,7 @@
 
 use App\Models\Tag;
 use App\Models\Team;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\TagService;
 use Illuminate\Support\Facades\DB;
 

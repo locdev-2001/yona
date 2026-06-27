@@ -3,7 +3,7 @@
 use App\Models\Attachment;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 
 // Tenant isolation for attachments (Layer 1 global scope + Layer 3 RLS).

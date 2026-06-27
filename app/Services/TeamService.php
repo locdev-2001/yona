@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\TeamHierarchyException;
 use App\Models\Team;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Support\Facades\DB;
 
 /**

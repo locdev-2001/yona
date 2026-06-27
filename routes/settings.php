@@ -12,7 +12,7 @@ use App\Http\Controllers\Settings\PipelineStageController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\ProjectStatusController;
 use App\Http\Controllers\Settings\TeamController;
-use App\Http\Controllers\Settings\WorkspaceController;
+use Modules\Tenancy\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

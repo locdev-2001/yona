@@ -3,7 +3,7 @@
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\ProjectService;
 
 // ── Authz matrix: Projects (G2/BR-X15) ───────────────────────────────────────

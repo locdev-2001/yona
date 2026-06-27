@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Project;
 use App\Models\ProjectDiscussion;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

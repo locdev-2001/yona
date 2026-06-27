@@ -3,7 +3,7 @@
 namespace App\Support;
 
 use App\Models\TeamClosure;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\Builder;
 
 /**

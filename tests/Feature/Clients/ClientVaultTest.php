@@ -3,7 +3,7 @@
 use App\Models\Client;
 use App\Models\ClientVaultEntry;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\ClientVaultService;
 use Illuminate\Support\Facades\DB;
 

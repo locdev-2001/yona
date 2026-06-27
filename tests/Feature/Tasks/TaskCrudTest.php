@@ -3,7 +3,7 @@
 use App\Models\Client;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\TaskService;
 
 // ── TaskService create ────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Client;
 use App\Models\Contact;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\WorkspaceMember;
 use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

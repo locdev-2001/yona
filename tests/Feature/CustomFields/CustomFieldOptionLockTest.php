@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\CustomFieldDefinition;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 
 // Option management rules: add = ok; remove option in use = reject.

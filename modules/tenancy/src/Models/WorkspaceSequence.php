@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Tenancy\Models;
 
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;

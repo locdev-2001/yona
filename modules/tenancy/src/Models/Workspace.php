@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Tenancy\Models;
 
 use App\Support\Audit\Audit;
 use Database\Factories\WorkspaceFactory;
@@ -19,6 +19,11 @@ class Workspace extends Model
 {
     /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasUuids, SoftDeletes;
+
+    protected static function newFactory(): WorkspaceFactory
+    {
+        return WorkspaceFactory::new();
+    }
 
     protected $fillable = [
         'name',
@@ -45,15 +50,15 @@ class Workspace extends Model
         return $this->hasMany(WorkspaceMember::class);
     }
 
-    /** @return HasMany<Team, $this> */
+    /** @return HasMany<\App\Models\Team, $this> */
     public function teams(): HasMany
     {
-        return $this->hasMany(Team::class);
+        return $this->hasMany(\App\Models\Team::class);
     }
 
-    /** @return BelongsTo<User, $this> */
+    /** @return BelongsTo<\App\Models\User, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
     }
 }

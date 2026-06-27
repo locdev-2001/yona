@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Reminder;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Notifications\EntityNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;

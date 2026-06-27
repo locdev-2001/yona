@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Tenancy\Models;
 
 use App\Models\Concerns\Auditable;
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceMemberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -20,6 +20,11 @@ class WorkspaceMember extends Model
 {
     /** @use HasFactory<WorkspaceMemberFactory> */
     use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids;
+
+    protected static function newFactory(): WorkspaceMemberFactory
+    {
+        return WorkspaceMemberFactory::new();
+    }
 
     /** Workspace roles (crm-authorization-model.md §Plane 2). */
     public const ROLES = ['admin', 'sales_manager', 'sales_rep', 'support_manager', 'support_agent', 'marketer', 'viewer'];
@@ -39,16 +44,16 @@ class WorkspaceMember extends Model
         ];
     }
 
-    /** @return BelongsTo<User, $this> */
+    /** @return BelongsTo<\App\Models\User, $this> */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(\App\Models\User::class);
     }
 
-    /** @return BelongsTo<Team, $this> */
+    /** @return BelongsTo<\App\Models\Team, $this> */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(\App\Models\Team::class);
     }
 
     public function isActive(): bool

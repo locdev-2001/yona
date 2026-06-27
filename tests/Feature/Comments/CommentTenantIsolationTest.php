@@ -3,7 +3,7 @@
 use App\Models\Comment;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CommentService;
 use Illuminate\Support\Facades\DB;
 

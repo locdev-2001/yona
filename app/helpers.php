@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 if (! function_exists('currentWorkspace')) {
     /**

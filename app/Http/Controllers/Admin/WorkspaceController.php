@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Inertia\Inertia;
 use Inertia\Response;
 

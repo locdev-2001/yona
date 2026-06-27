@@ -2,7 +2,7 @@
 
 use App\Models\Client;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\ProjectService;
 
 // P08 — G12: Member management — active workspace_member validation.

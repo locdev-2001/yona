@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Workspace;
-use App\Models\WorkspaceSetting;
-use App\Services\SettingsService;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceSetting;
+use Modules\Tenancy\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 
 it('set() upserts a setting for the active workspace', function () {

@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Modules\Tenancy\Http\Controllers;
 
-use App\Models\WorkspaceMember;
+use App\Http\Controllers\Controller;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

@@ -6,7 +6,8 @@ use App\Models\LeadSource;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\ProjectStatus;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 
 /**

@@ -6,7 +6,7 @@ use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 
 // ── CRM Tenant Isolation: 2-workspace pattern cho Client/Lead/Project/Task ────

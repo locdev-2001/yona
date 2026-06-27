@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Projects;
 
 use App\Models\Project;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

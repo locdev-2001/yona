@@ -3,7 +3,7 @@
 use App\Models\Activity;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Support\Activity\ActivityLogger;
 
 // ActivityLogger: logs an activity entry with correct action/payload/actor_name.

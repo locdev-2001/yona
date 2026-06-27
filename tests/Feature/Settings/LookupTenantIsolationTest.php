@@ -3,7 +3,7 @@
 use App\Models\LeadSource;
 use App\Models\Pipeline;
 use App\Models\ProjectStatus;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\LookupService;
 
 // Two-workspace isolation: verify 0 cross-workspace leak for lookup tables.

@@ -42,7 +42,8 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Modules\\Announcements\\": "modules/announcements/src/",
-            "Modules\\Sample\\": "modules/sample/src/"
+            "Modules\\Sample\\": "modules/sample/src/",
+            "Modules\\Tenancy\\": "modules/tenancy/src/"
         },
         "files": [
             "app/helpers.php"

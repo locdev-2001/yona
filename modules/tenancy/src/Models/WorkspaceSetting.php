@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Tenancy\Models;
 
 use App\Models\Concerns\Auditable;
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceSettingFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -20,6 +20,11 @@ class WorkspaceSetting extends Model
 {
     /** @use HasFactory<WorkspaceSettingFactory> */
     use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids;
+
+    protected static function newFactory(): WorkspaceSettingFactory
+    {
+        return WorkspaceSettingFactory::new();
+    }
 
     // key is server-controlled (set via SettingsService); value is the only
     // user-supplied field and goes through SettingsService validation.

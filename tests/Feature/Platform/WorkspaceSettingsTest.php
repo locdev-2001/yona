@@ -2,7 +2,7 @@
 
 use App\Models\AuditLog;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 // Settings → Workspace (admin-gated, audited). BR-X12.
 

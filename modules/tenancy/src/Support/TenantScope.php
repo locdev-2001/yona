@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace Modules\Tenancy\Support;
 
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;

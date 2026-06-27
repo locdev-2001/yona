@@ -4,7 +4,7 @@ use App\Models\Lead;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadService;
 
 // ── LeadService create / update / delete ─────────────────────────────────────

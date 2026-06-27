@@ -2,7 +2,7 @@
 
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\TaskService;
 use App\Services\TaskTimerService;
 use Illuminate\Support\Facades\DB;

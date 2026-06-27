@@ -8,7 +8,7 @@ use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 use App\Services\LeadConversionService;
 use App\Services\LeadService;

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Database\Factories\ActivityFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

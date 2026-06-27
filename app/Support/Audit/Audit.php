@@ -3,7 +3,7 @@
 namespace App\Support\Audit;
 
 use App\Models\AuditLog;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
 
 /**

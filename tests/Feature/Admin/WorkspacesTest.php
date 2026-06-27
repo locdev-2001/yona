@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 it('lets a permitted admin list workspaces', function () {
     actingAsAdmin();

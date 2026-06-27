@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Models\Concerns;
+namespace Modules\Tenancy\Concerns;
 
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,7 +34,7 @@ trait BelongsToWorkspace
         });
     }
 
-    /** @return BelongsTo<Workspace, $this> */
+    /** @return BelongsTo<\Modules\Tenancy\Models\Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);

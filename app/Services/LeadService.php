@@ -8,7 +8,7 @@ use App\Events\LeadStageChanged;
 use App\Models\Lead;
 use App\Models\PipelineStage;
 use App\Models\User;
-use App\Models\WorkspaceSequence;
+use Modules\Tenancy\Models\WorkspaceSequence;
 use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

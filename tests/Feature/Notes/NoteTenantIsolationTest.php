@@ -2,7 +2,7 @@
 
 use App\Models\Note;
 use App\Models\Team;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\NoteService;
 use Illuminate\Support\Facades\DB;
 

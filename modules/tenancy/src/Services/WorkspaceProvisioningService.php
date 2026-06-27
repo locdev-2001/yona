@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace Modules\Tenancy\Services;
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use App\Services\LookupService;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
@@ -24,7 +25,7 @@ class WorkspaceProvisioningService
 {
     public function __construct(
         private readonly PermissionRegistrar $registrar,
-        private readonly LookupService $lookup,
+        private readonly LookupService $lookup, // ponytail: LookupService still in App\Services until identity/shared moves
     ) {}
 
     /**

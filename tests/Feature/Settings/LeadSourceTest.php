@@ -2,7 +2,7 @@
 
 use App\Models\LeadSource;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 it('admin can list lead sources', function () {
     $ws = Workspace::factory()->create();

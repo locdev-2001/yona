@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use App\Models\Concerns\HasActivities;
 use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasComments;

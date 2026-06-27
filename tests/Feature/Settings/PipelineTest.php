@@ -2,7 +2,7 @@
 
 use App\Models\Pipeline;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 // Pipeline CRUD + single-default invariant + stage types + non-enumeration.
 

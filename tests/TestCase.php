@@ -3,8 +3,8 @@
 namespace Tests;
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;

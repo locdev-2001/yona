@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace Modules\Tenancy\Http\Middleware;
 
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
-use App\Support\TenantScope;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
+use Modules\Tenancy\Support\TenantScope;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

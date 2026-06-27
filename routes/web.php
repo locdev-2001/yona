@@ -22,7 +22,7 @@ use App\Http\Controllers\Projects\ProjectMilestoneController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\WelcomeController;
-use App\Http\Controllers\WorkspaceSwitchController;
+use Modules\Tenancy\Http\Controllers\WorkspaceSwitchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', WelcomeController::class)->name('home');

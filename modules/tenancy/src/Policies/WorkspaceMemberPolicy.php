@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Policies;
+namespace Modules\Tenancy\Policies;
 
 use App\Models\User;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 /**
  * Membership administration is admin-only (`tenant.member.manage`). A user can never

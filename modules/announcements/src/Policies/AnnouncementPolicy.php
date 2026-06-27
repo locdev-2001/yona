@@ -3,7 +3,7 @@
 namespace Modules\Announcements\Policies;
 
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Modules\Announcements\Enums\AnnouncementStatus;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Support\AudienceResolver;

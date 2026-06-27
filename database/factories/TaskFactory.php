@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Task;
-use App\Models\Workspace;
-use App\Models\WorkspaceSequence;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceSequence;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

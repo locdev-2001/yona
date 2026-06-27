@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\AuditLog;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\TeamService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;

@@ -2,7 +2,7 @@
 
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\TaskService;
 
 // ── Authz matrix: Tasks (G2/BR-X15) ──────────────────────────────────────────

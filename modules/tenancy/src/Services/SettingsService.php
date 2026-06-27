@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace Modules\Tenancy\Services;
 
-use App\Models\WorkspaceSetting;
+use Modules\Tenancy\Models\WorkspaceSetting;
 
 /**
  * Single gateway for workspace key-value settings. All reads and writes MUST

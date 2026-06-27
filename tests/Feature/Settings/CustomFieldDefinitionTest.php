@@ -2,7 +2,7 @@
 
 use App\Models\CustomFieldDefinition;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 
 // Custom-field definition CRUD + authz matrix.

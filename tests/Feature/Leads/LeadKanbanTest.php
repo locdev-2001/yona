@@ -5,7 +5,7 @@ use App\Models\Activity;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;

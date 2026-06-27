@@ -2,7 +2,7 @@
 
 use App\Models\Activity;
 use App\Models\Team;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 

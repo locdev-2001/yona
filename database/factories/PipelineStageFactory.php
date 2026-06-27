@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

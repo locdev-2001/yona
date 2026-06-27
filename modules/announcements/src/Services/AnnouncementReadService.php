@@ -3,7 +3,7 @@
 namespace Modules\Announcements\Services;
 
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Announcements\Enums\AnnouncementStatus;
 use Modules\Announcements\Models\Announcement;

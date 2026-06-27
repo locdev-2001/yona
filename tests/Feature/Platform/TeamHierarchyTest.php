@@ -4,8 +4,8 @@ use App\Exceptions\TeamHierarchyException;
 use App\Models\Team;
 use App\Models\TeamClosure;
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use App\Services\TeamService;
 
 // Team-tree integrity + closure maintenance (BR-X02/X13).

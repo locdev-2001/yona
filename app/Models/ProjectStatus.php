@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
-use App\Models\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\ProjectStatusFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

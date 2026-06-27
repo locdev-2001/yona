@@ -2,7 +2,7 @@
 
 namespace Modules\Announcements\Support;
 
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Determines whether a workspace (or a workspace-less context) can view an

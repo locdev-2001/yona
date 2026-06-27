@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Support\Audit\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

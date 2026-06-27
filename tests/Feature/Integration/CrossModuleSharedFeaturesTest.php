@@ -10,7 +10,7 @@ use App\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Workspace;
+use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 use App\Services\TagService;
 use App\Support\Activity\ActivityLogger;

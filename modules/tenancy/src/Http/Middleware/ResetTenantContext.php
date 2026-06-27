@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace Modules\Tenancy\Http\Middleware;
 
-use App\Support\TenantScope;
+use Modules\Tenancy\Support\TenantScope;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
