@@ -18,7 +18,7 @@ Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 
 ## Tech Stack
 - Backend: PHP / Laravel
-- Frontend: Vue / Next.js
+- Frontend: Inertia + React (TypeScript), Tailwind + Radix — KHÔNG phải Vue/Next.js
 - DB: PostgreSQL + Row-Level Security (multi-tenant isolation)
 - Auth/Perm: RBAC
 
@@ -68,7 +68,7 @@ Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.j
 | **Entitlements** | Khung bật/tắt tính năng theo gói đã mua (nền monetization) |
 | **Conversation metering** | Tính phí theo số hội thoại, **đếm theo từng kênh** |
 | **Zalo cá nhân** | Kênh inbox Phase 1 (không phải OA — OA hoãn vì chưa có tài khoản test) |
-→ Full glossary: memory/glossary.md
+→ Full glossary: docs/glossary.md
 
 ## Projects
 | Name | What |

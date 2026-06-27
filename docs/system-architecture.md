@@ -7,9 +7,45 @@ Date: 2026-06-13 · Status: Phase 1 design · Owner: architecture
 
 ---
 
+## 0. Status: Current vs Target Architecture
+
+**Current state (M1):** Greenfield CRM built as a **layered monolith** (`app/Models`, `app/Http`, `app/Services` — organized by technical type). Fully functional but lacking module isolation.
+
+**Target state (Modular standardization):** Hand-rolled **modular monolith** (core + feature modules + extensible contracts). Full spec: [docs/modular-architecture.md](../modular-architecture.md) · ADR: [docs/decisions/2026-06-27-modular-monolith.md](../decisions/2026-06-27-modular-monolith.md). This refactoring is **in progress** per plan [plans/260627-modular-standardization/plan.md](../../plans/260627-modular-standardization/plan.md).
+
+Core architecture principles below remain unchanged; the modular overlay adds boundaries and contracts (§2a below).
+
+---
+
 ## 1. Summary
 
 Greenfield CRM. The hard parts are **the Platform layer** (tenant isolation, RBAC, audit, custom-fields) and **transactional correctness** of money/state paths (deal stage, won/lost, lead conversion, ticket SLA). Everything workspace-scoped is enforced at the data-access layer **and** Postgres RLS (defense-in-depth). Reporting/scoring/activity-feed are eventually consistent; deal/ticket/ownership are strongly consistent.
+
+## 2a. Modular Architecture (Target: standardizing per Phase 0)
+
+When standardization completes, the codebase will shift from layered → **modular monolith**:
+
+- **Core (always-on):** `modules/platform/`, `modules/tenancy/`, `modules/identity/`, `modules/cdp/`, `modules/shared/` — handle tenant isolation, identity, CDP golden profile, and cross-cutting concerns.
+- **Feature modules (toggleable):** `modules/crm-sales/`, `modules/projects/`, `modules/inbox/`, `modules/billing/`, `modules/announcements/`, `modules/email/`, `modules/import/`.
+- **Driver modules (extensible contracts):** `modules/channel-zalo/`, `modules/payment-vnpay/` implement contracts (`ChannelDriver`, `PaymentProvider`) defined in core modules, enabling *new kênh/payment method = new folder, zero lõi change*.
+
+**Within a module:**
+```
+modules/{name}/
+  src/ (Models, Http, Services, Contracts, Policies, Events)
+  database/migrations/
+  routes/
+  resources/js/
+  tests/
+```
+
+**Isolation rule:** Module depends on core + contracts of peer modules only; never directly imports another module's Model/Service. Cross-module comms via **event bus** or **contract resolve from container**.
+
+**Enable/disable 2 tiers:** `module.json` flag (system default) × Entitlements (per-workspace). Even if a module is system-disabled, workspaces can't enable it (see § **crm-marketplace.md**).
+
+See full spec: [modular-architecture.md](../modular-architecture.md).
+
+---
 
 ## 2. Bounded contexts
 

@@ -66,6 +66,8 @@ Sales + Projects và tầng platform là lõi (đã build); Support, Marketing, 
 
 ## Cách dữ liệu được tổ chức
 
+> **⚠️ WARNING: Data model section references Account/Deal below — these tables do NOT exist. The codebase uses Client/Contact/Lead/Pipeline instead (decision #2). See [docs/project-overview.md](docs/project-overview.md) (state-of-code) for the ACTUAL schema implemented, or [docs/crm-domain-definition.md](docs/crm-domain-definition.md) for full entity definitions.**
+
 > **Mô hình thực tế: Client / Contact / Lead / Pipeline** (quyết định khóa #2 — thay cho Account/Deal kiểu HubSpot, vốn overkill cho SMB/B2C). Bảng `accounts`/`deals` **không tồn tại** trong code.
 
 ```
@@ -159,6 +161,8 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 ## Công nghệ
 
+> **⚠️ OUTDATED: Some libraries listed below are not yet added to the codebase (React Hook Form, Zod, Recharts, sonner, cmdk, dnd-kit).** Current stack built with Inertia 3 + React 19 + vanilla HTML5 drag-drop. See [docs/system-architecture.md](docs/system-architecture.md) § **9b. Frontend** for the authoritative breakdown.
+
 | Tầng | Lựa chọn |
 |---|---|
 | Backend | Laravel 13 (PHP 8.4) |
@@ -178,7 +182,15 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 | Format/Lint | Pint + Prettier + ESLint (`make format`) |
 | Triển khai | VPS / Docker (xem [docs/local-development.md](docs/local-development.md)) |
 
-> Một số thư viện trong tầm nhìn dài hạn (dnd-kit, React Hook Form + Zod, Recharts, sonner, cmdk) **chưa được thêm**; kanban hiện dùng HTML5 drag-drop. Khi build module cần tới (vd dashboard/forecast) sẽ bổ sung.
+---
+
+## Kiến trúc & Định hướng mới
+
+**Hiện tại (M1):** Monolith phân lớp kỹ thuật (`app/Models`, `app/Http`, `app/Services`).
+
+**Định hướng mới (chuẩn hóa, Phase 4.0):** Hand-rolled **modular monolith** — core modules (always-on) + feature modules (toggleable) + extensible contracts (ChannelDriver, PaymentProvider). Mục đích: mở rộng kênh/cổng = thêm module, **0 sửa lõi**; cô lập module, test độc lập.
+
+**Spec:** [docs/modular-architecture.md](docs/modular-architecture.md) · [docs/decisions/2026-06-27-modular-monolith.md](docs/decisions/2026-06-27-modular-monolith.md) · Plan: [plans/260627-modular-standardization/](../plans/260627-modular-standardization/).
 
 ---
 
