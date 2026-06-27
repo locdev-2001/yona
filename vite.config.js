@@ -1,3 +1,5 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
 import {
@@ -5,16 +7,27 @@ import {
 } from 'vite';
 import tailwindcss from "@tailwindcss/vite";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             ssr: 'resources/js/ssr.jsx',
-            refresh: true,
+            refresh: [
+                'resources/**',
+                'modules/*/resources/**',
+            ],
         }),
         react(),
         tailwindcss(),
     ],
+    resolve: {
+        alias: {
+            // @modules/sample/... → modules/sample/... (asset imports in module pages)
+            '@modules': path.resolve(__dirname, 'modules'),
+        },
+    },
     esbuild: {
         jsx: 'automatic',
     },

@@ -18,6 +18,11 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        // Per-module API routes are loaded via loadRoutesFrom() inside each
+        // module's ServiceProvider (modules/{name}/routes/api.php). There is no
+        // central routes/api.php. Those routes run on Laravel's built-in 'api'
+        // middleware group — that group is NOT registered explicitly here; the
+        // framework provides it by default.
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',

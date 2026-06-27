@@ -8,6 +8,7 @@ Workspace isolation, identity + membership, teams with hierarchy, RBAC + visibil
 
 | Feature | Purpose | Code entry |
 |---|---|---|
+| [Module Framework (Loader & Registry)](./platform/module-framework.md) | Scan + topo-sort + boot module providers; ModuleRegistry; no-op default binding pattern (F10); per-module routes/migrations/FE. | `ModuleServiceProvider` + `ModuleRegistry` + `TopoSort` |
 | [Tenant Isolation (3-Layer)](./platform/tenant-isolation.md) | Enforce workspace isolation via global scope, middleware, and PostgreSQL RLS. | `IdentifyWorkspace` + `BelongsToWorkspace` + `ResetTenantContext` |
 | [Workspace Switching](./platform/workspace-switching.md) | Switch active workspace context for multi-workspace users. | `WorkspaceSwitchController` |
 | [Workspace Settings](./platform/workspace-settings.md) | Admin view and update workspace name, currency, and config. | `WorkspaceController` |

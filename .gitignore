@@ -48,3 +48,5 @@ dist/
 .claude/settings*
 
 /refs
+# PHPUnit
+.phpunit.result.cache
