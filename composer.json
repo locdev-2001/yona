@@ -53,7 +53,8 @@
         "Modules\\Inbox\\": "modules/inbox/src/",
         "Modules\\ChannelZalo\\": "modules/channel-zalo/src/",
         "Modules\\Billing\\": "modules/billing/src/",
-        "Modules\\Billing\\Database\\Seeders\\": "modules/billing/database/seeders/"
+        "Modules\\Billing\\Database\\Seeders\\": "modules/billing/database/seeders/",
+        "Modules\\PaymentManual\\": "modules/payment-manual/src/"
         },
         "files": [
             "app/helpers.php"

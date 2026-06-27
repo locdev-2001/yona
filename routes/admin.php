@@ -6,6 +6,7 @@ use Modules\Identity\Http\Controllers\Admin\Auth\NewPasswordController;
 use Modules\Identity\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use Modules\Identity\Http\Controllers\Admin\DashboardController;
 use Modules\Identity\Http\Controllers\Admin\ImpersonationController;
+use Modules\Billing\Http\Controllers\Admin\WorkspacePlanController;
 use Modules\Identity\Http\Controllers\Admin\WorkspaceController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -39,6 +40,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware('admin.can:platform.workspaces.view')->group(function () {
             Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('workspaces/{workspace}', [WorkspaceController::class, 'show'])->name('workspaces.show');
+        });
+
+        Route::middleware('admin.can:platform.billing.manage')->group(function () {
+            Route::get('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'index'])->name('workspaces.plans.index');
+            Route::post('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'store'])->name('workspaces.plans.store');
+            Route::delete('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'destroy'])->name('workspaces.plans.destroy');
         });
 
         Route::post('workspaces/{workspace}/members/{user}/impersonate', [ImpersonationController::class, 'store'])
