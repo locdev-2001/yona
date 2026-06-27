@@ -158,6 +158,12 @@ horizon: ## Run Horizon (Redis queues)
 reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
 
+workers: ## Run full pipeline (Horizon queues + Reverb websocket)
+	trap 'kill 0' INT TERM; \
+	$(ARTISAN) horizon & \
+	$(ARTISAN) reverb:start & \
+	wait
+
 ## ── Database (host) ────────────────────────────────────
 db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
 	psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql
