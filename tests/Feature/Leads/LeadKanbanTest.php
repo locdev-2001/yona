@@ -4,7 +4,7 @@ use App\Events\LeadStageChanged;
 use App\Models\Activity;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;

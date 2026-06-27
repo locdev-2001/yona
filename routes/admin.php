@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Admin\Auth\NewPasswordController;
-use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ImpersonationController;
-use App\Http\Controllers\Admin\WorkspaceController;
+use Modules\Identity\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
+use Modules\Identity\Http\Controllers\Admin\Auth\NewPasswordController;
+use Modules\Identity\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use Modules\Identity\Http\Controllers\Admin\DashboardController;
+use Modules\Identity\Http\Controllers\Admin\ImpersonationController;
+use Modules\Identity\Http\Controllers\Admin\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {

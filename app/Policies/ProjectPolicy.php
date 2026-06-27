@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Project;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * P08 — Project authorization (G2).

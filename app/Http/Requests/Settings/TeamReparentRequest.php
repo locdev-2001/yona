@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Settings;
 
-use App\Models\Team;
-use App\Services\TeamService;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Services\TeamService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

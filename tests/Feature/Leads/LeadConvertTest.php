@@ -6,7 +6,7 @@ use App\Models\Contact;
 use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadConversionService;
 use App\Services\LeadService;

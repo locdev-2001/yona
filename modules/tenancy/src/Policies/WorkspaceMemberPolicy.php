@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Policies;
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\WorkspaceMember;
 
 /**

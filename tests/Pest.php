@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Admin;
-use App\Models\Team;
-use App\Models\User;
+use Modules\Identity\Models\Admin;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Foundation\Testing\DatabaseTransactions;

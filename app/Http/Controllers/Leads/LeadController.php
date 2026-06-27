@@ -11,7 +11,7 @@ use App\Models\CustomFieldDefinition;
 use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\Pipeline;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

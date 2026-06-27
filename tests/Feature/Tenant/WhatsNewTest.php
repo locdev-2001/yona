@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Models\AnnouncementRead;

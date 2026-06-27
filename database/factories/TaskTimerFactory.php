@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Task;
 use App\Models\TaskTimer;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

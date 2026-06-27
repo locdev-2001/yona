@@ -3,7 +3,7 @@
 namespace App\Support\Activity;
 
 use App\Models\Activity;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 

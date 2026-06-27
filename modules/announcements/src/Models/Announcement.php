@@ -2,7 +2,7 @@
 
 namespace Modules\Announcements\Models;
 
-use App\Models\Concerns\Auditable;
+use Modules\Identity\Models\Concerns\Auditable;
 use Database\Factories\AnnouncementFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

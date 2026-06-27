@@ -4,7 +4,7 @@ use App\Events\LeadAssigned;
 use App\Models\Activity;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Notifications\LeadAssignedNotification;
 use App\Services\LeadService;

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Admin;
+use Modules\Identity\Models\Admin;
 use Spatie\Permission\PermissionRegistrar;
 
 it('lets an authenticated admin view the dashboard', function () {

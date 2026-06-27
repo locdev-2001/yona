@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\TenantPermission;
+use Modules\Identity\Enums\TenantPermission;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

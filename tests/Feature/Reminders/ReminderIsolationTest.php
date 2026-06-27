@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Reminder;
-use App\Models\Team;
-use App\Models\User;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\ReminderService;
 use Illuminate\Support\Facades\DB;

@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Note;
-use App\Models\Team;
+use Modules\Identity\Models\Team;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\NoteService;
 use Illuminate\Support\Facades\DB;

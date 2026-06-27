@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\Factories\Factory;

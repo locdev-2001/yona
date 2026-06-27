@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\EmailTemplate;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * P05 — Authorization for email template management.

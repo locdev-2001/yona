@@ -8,7 +8,7 @@ use App\Http\Requests\Clients\ClientUpdateRequest;
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\CustomFieldDefinition;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Services\ClientService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

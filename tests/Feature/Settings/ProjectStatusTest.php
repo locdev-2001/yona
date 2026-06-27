@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\ProjectStatus;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 
 it('admin can list project statuses', function () {

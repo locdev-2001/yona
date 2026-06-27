@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Enums\PlatformRole;
-use App\Models\Admin;
-use App\Models\User;
+use Modules\Identity\Enums\PlatformRole;
+use Modules\Identity\Models\Admin;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
 use App\Services\LookupService;

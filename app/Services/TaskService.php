@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\WorkspaceMember;
 use Modules\Tenancy\Models\WorkspaceSequence;
 use App\Notifications\EntityNotification;

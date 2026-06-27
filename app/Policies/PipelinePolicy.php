@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Pipeline;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Pipelines are workspace settings — admin-only via tenant.workspace.update.

@@ -4,7 +4,7 @@ namespace App\Policies;
 
 use App\Models\Task;
 use App\Models\TaskTimer;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Task authorization (G2). Permission format: tenant.task.{action}.

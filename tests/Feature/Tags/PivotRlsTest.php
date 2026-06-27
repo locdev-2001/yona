@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Tag;
-use App\Models\Team;
+use Modules\Identity\Models\Team;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\TagService;
 use Illuminate\Database\QueryException;

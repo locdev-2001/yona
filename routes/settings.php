@@ -5,13 +5,13 @@ use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\CustomFieldController;
 use App\Http\Controllers\Settings\EmailTemplateController;
 use App\Http\Controllers\Settings\LeadSourceController;
-use App\Http\Controllers\Settings\MemberController;
-use App\Http\Controllers\Settings\PasswordController;
+use Modules\Identity\Http\Controllers\Settings\MemberController;
+use Modules\Identity\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PipelineController;
 use App\Http\Controllers\Settings\PipelineStageController;
-use App\Http\Controllers\Settings\ProfileController;
+use Modules\Identity\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\ProjectStatusController;
-use App\Http\Controllers\Settings\TeamController;
+use Modules\Identity\Http\Controllers\Settings\TeamController;
 use Modules\Tenancy\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 

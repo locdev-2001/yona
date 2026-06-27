@@ -1,9 +1,9 @@
 <?php
 
 use App\Exceptions\StaleModelException;
-use App\Http\Middleware\AdminCan;
-use App\Http\Middleware\BindAdminPermissionScope;
-use App\Http\Middleware\BlockDuringImpersonation;
+use Modules\Identity\Http\Middleware\AdminCan;
+use Modules\Identity\Http\Middleware\BindAdminPermissionScope;
+use Modules\Identity\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use Modules\Tenancy\Http\Middleware\IdentifyWorkspace;
 use Modules\Tenancy\Http\Middleware\ResetTenantContext;

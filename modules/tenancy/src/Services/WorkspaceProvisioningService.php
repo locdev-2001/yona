@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Services;
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Services\LookupService;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;

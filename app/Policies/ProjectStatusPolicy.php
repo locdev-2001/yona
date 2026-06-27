@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\ProjectStatus;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Project statuses are workspace settings — admin-only via tenant.workspace.update.

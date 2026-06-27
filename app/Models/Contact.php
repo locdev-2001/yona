@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\Auditable;
+use Modules\Identity\Models\Concerns\Auditable;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasCustomFields;
 use App\Models\Concerns\HasOptimisticLock;

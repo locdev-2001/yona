@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Reminder;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Notifications\EntityNotification;
 use Carbon\CarbonImmutable;

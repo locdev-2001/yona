@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Reminder;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Reminder authorization.

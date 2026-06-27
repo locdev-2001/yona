@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Admin;
+use Modules\Identity\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use Modules\Announcements\Enums\AnnouncementCategory;

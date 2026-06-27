@@ -10,7 +10,7 @@ use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

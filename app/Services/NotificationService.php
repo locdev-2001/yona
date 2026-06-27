@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\WorkspaceMember;
 use App\Notifications\EntityNotification;
 use Illuminate\Database\Eloquent\Collection;

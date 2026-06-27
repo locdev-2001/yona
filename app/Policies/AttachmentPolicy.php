@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Attachment;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Attachment authorization. create delegates to the parent entity's policy

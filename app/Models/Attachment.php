@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\Auditable;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\AttachmentFactory;

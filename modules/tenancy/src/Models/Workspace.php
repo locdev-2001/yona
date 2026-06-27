@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Models;
 
-use App\Support\Audit\Audit;
+use Modules\Identity\Support\Audit\Audit;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,15 +50,15 @@ class Workspace extends Model
         return $this->hasMany(WorkspaceMember::class);
     }
 
-    /** @return HasMany<\App\Models\Team, $this> */
+    /** @return HasMany<\Modules\Identity\Models\Team, $this> */
     public function teams(): HasMany
     {
-        return $this->hasMany(\App\Models\Team::class);
+        return $this->hasMany(\Modules\Identity\Models\Team::class);
     }
 
-    /** @return BelongsTo<\App\Models\User, $this> */
+    /** @return BelongsTo<\Modules\Identity\Models\User, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(\Modules\Identity\Models\User::class, 'created_by');
     }
 }

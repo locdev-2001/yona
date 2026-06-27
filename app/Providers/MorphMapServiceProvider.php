@@ -3,9 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Activity;
-use App\Models\Admin;
 use App\Models\Attachment;
-use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\ClientVaultEntry;
@@ -20,9 +18,11 @@ use App\Models\PipelineStage;
 use App\Models\ProjectStatus;
 use App\Models\Reminder;
 use App\Models\Tag;
-use App\Models\Team;
-use App\Models\TeamClosure;
-use App\Models\User;
+use Modules\Identity\Models\Admin;
+use Modules\Identity\Models\AuditLog;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\TeamClosure;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
 use Modules\Tenancy\Models\WorkspaceSequence;

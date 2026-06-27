@@ -2,7 +2,7 @@
 
 use App\Mail\TemplatedMessage;
 use App\Models\EmailTemplate;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\TemplatedMailer;
 use Database\Seeders\EmailTemplateCatalogSeeder;

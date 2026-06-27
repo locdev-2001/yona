@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Database\Factories\ActivityFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

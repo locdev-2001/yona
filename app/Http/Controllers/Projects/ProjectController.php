@@ -10,7 +10,7 @@ use App\Models\Client;
 use App\Models\CustomFieldDefinition;
 use App\Models\Project;
 use App\Models\ProjectStatus;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Services\ProjectService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

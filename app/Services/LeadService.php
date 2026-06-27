@@ -7,7 +7,7 @@ use App\Events\LeadCreated;
 use App\Events\LeadStageChanged;
 use App\Models\Lead;
 use App\Models\PipelineStage;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\WorkspaceSequence;
 use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;

@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\LeadSource;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 
 it('admin can list lead sources', function () {

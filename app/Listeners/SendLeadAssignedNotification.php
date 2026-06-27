@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\LeadAssigned;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use App\Notifications\LeadAssignedNotification;
 use App\Services\TemplatedMailer;
 use Throwable;

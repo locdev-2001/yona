@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\LeadSource;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Lead sources are workspace settings — admin-only via tenant.workspace.update.

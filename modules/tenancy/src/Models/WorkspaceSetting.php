@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Models;
 
-use App\Models\Concerns\Auditable;
+use Modules\Identity\Models\Concerns\Auditable;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceSettingFactory;

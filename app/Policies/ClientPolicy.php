@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Client;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * P06 — Client authorization (G2).

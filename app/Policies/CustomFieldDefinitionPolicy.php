@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\CustomFieldDefinition;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * Custom-field definition access is gated by custom_fields.manage / custom_fields.view.

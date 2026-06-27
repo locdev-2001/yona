@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Comment;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 

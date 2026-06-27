@@ -9,7 +9,7 @@ use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use App\Services\CustomFieldService;
 use App\Services\TagService;

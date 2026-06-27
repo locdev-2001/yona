@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Lead;
-use App\Models\User;
+use Modules\Identity\Models\User;
 
 /**
  * P07 — Lead authorization (G2, G12).

@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\TenantPermission;
-use App\Models\Admin;
-use App\Models\User;
+use Modules\Identity\Enums\TenantPermission;
+use Modules\Identity\Models\Admin;
+use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\WorkspaceMember;
 use App\Services\NotificationService;
 use Modules\Tenancy\Support\TenantScope;

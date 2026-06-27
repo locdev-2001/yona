@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Team;
+use Modules\Identity\Models\Team;
 use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;

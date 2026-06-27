@@ -2,7 +2,7 @@
 
 namespace Modules\Tenancy\Models;
 
-use App\Models\Concerns\Auditable;
+use Modules\Identity\Models\Concerns\Auditable;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceMemberFactory;
@@ -44,16 +44,16 @@ class WorkspaceMember extends Model
         ];
     }
 
-    /** @return BelongsTo<\App\Models\User, $this> */
+    /** @return BelongsTo<\Modules\Identity\Models\User, $this> */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(\Modules\Identity\Models\User::class);
     }
 
-    /** @return BelongsTo<\App\Models\Team, $this> */
+    /** @return BelongsTo<\Modules\Identity\Models\Team, $this> */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Team::class);
+        return $this->belongsTo(\Modules\Identity\Models\Team::class);
     }
 
     public function isActive(): bool
