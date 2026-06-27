@@ -8,6 +8,7 @@ import Pusher from 'pusher-js';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
+import { moduleToKebab } from './lib/module-kebab';
 import { queryClient } from './lib/query-client';
 
 declare global {
@@ -64,7 +65,7 @@ function resolvePage(name: string) {
         const dotIdx = withoutPrefix.indexOf('.');
         const module = withoutPrefix.slice(0, dotIdx); // 'Sample'
         const page = withoutPrefix.slice(dotIdx + 1); // 'sample/index'
-        const kebab = module.replace(/([A-Z])/g, (c, i) => (i === 0 ? c : '-' + c)).toLowerCase();
+        const kebab = moduleToKebab(module);
         const key = `../../modules/${kebab}/resources/js/pages/${page}.tsx`;
 
         if (!(key in modulePages)) {

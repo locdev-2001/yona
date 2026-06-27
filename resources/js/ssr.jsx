@@ -4,6 +4,7 @@ createInertiaApp
 } from '@inertiajs/react';
 import createServer from '@inertiajs/react/server';
 import ReactDOMServer from 'react-dom/server';
+import { moduleToKebab } from './lib/module-kebab';
 
 // SSR resolver mirrors app.tsx resolvePage logic with eager:true for SSR.
 // Module pages use same Modules.{Module}.{Page} prefix convention.
@@ -16,7 +17,7 @@ function resolvePage(name) {
         const dotIdx = withoutPrefix.indexOf('.');
         const module = withoutPrefix.slice(0, dotIdx);
         const page = withoutPrefix.slice(dotIdx + 1);
-        const kebab = module.replace(/([A-Z])/g, (c, i) => (i === 0 ? c : '-' + c)).toLowerCase();
+        const kebab = moduleToKebab(module);
         const key = `../../modules/${kebab}/resources/js/pages/${page}.tsx`;
         return modulePages[key];
     }
