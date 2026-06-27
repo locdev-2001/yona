@@ -1,7 +1,7 @@
 import { ActivityTimeline } from '@/components/activity/activity-timeline';
-import { AttachmentList } from '@/components/attachments/attachment-list';
+import { AttachmentList, type Attachment } from '@/components/attachments/attachment-list';
 import type { CustomFieldDefinition } from '@/components/custom-fields/types';
-import { NoteList } from '@/components/notes/note-list';
+import { NoteList, type Note } from '@/components/notes/note-list';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import LeadAssignPopover from './components/lead-assign-popover';
 import LeadConvertDialog from './components/lead-convert-dialog';
 
 interface Props {
-    lead: Lead;
+    lead: Lead & { notes?: Note[]; attachments?: Attachment[] };
     fieldDefs: CustomFieldDefinition[];
     sources: LeadSource[];
     members: Pick<User, 'id' | 'name'>[];
@@ -231,11 +231,11 @@ export default function LeadShow({ lead, fieldDefs, sources, members, clients, a
                             </TabsContent>
 
                             <TabsContent value="notes" className="mt-4">
-                                <NoteList subjectType="lead" subjectId={lead.id} notes={(lead as any).notes ?? []} />
+                                <NoteList noteableType="lead" noteableId={lead.id} notes={lead.notes ?? []} />
                             </TabsContent>
 
                             <TabsContent value="attachments" className="mt-4">
-                                <AttachmentList attachments={(lead as any).attachments ?? []} subjectType="lead" subjectId={lead.id} />
+                                <AttachmentList attachments={lead.attachments ?? []} />
                             </TabsContent>
                         </Tabs>
                     </div>

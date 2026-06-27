@@ -17,7 +17,6 @@ interface Props {
 interface GroupFormData {
     name: string;
     slug: string;
-    [key: string]: unknown;
 }
 
 export default function ClientGroups({ groups }: Props) {

@@ -1,5 +1,13 @@
 import { LucideIcon } from 'lucide-react';
 
+// ── Custom Fields ─────────────────────────────────────────────────────────────
+/** Union of all values the custom-field engine can produce/consume.
+ * - string[] for multiselect / checkbox field types
+ * - { url?, text? } for link field type
+ * Compatible with Inertia v2 FormDataConvertible (array + object branches). */
+export type CustomFieldValue = string | number | boolean | null | undefined | string[] | { url?: string; text?: string };
+// ──────────────────────────────────────────────────────────────────────────────
+
 // ── Announcements ──────────────────────────────────────────────────────────────
 export type AnnouncementCategory = 'feature' | 'improvement' | 'fix' | 'announcement' | 'maintenance';
 export type AnnouncementStatus = 'draft' | 'published';
@@ -167,7 +175,7 @@ export interface Contact {
     title: string | null;
     is_primary: boolean;
     language: string | null;
-    custom_fields: Record<string, unknown>;
+    custom_fields: Record<string, CustomFieldValue>;
 }
 
 export interface Client {
@@ -191,7 +199,7 @@ export interface Client {
     shipping_zip: string | null;
     shipping_country: string | null;
     leadid: string | null;
-    custom_fields: Record<string, unknown>;
+    custom_fields: Record<string, CustomFieldValue>;
     // Relations (eager-loaded)
     primary_contact?: Contact | null;
     contacts?: Contact[];
@@ -263,7 +271,7 @@ export interface Lead {
     is_public: boolean;
     lead_order: number;
     last_stage_id: string | null;
-    custom_fields: Record<string, unknown>;
+    custom_fields: Record<string, CustomFieldValue>;
     lock_version: number;
     created_at: string;
     updated_at: string;
@@ -377,7 +385,7 @@ export interface Project {
     progress_from_tasks: boolean;
     is_pinned: boolean;
     visible_to_customer: boolean;
-    custom_fields: Record<string, unknown>;
+    custom_fields: Record<string, CustomFieldValue>;
     created_at: string;
     updated_at: string;
     // Relations (eager-loaded)
@@ -463,7 +471,7 @@ export interface Task {
     visible_to_customer: boolean;
     kanban_order: number;
     owner_id: number | null;
-    custom_fields: Record<string, unknown>;
+    custom_fields: Record<string, CustomFieldValue>;
     lock_version: number;
     created_at: string;
     updated_at: string;

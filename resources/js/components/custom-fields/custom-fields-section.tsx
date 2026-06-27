@@ -1,3 +1,4 @@
+import type { CustomFieldValue } from '@/types';
 import { useTranslator } from '@/lib/i18n';
 import CustomFieldInput from './custom-field-input';
 import type { CustomFieldDefinition } from './types';
@@ -6,11 +7,11 @@ interface Props {
     /** Active definitions for this entity type (ordered, active only). */
     definitions: CustomFieldDefinition[];
     /** Current custom_fields bag from the host form (slug → value). */
-    values: Record<string, unknown>;
+    values: Record<string, CustomFieldValue>;
     /** Validation errors keyed by slug (from host form errors). */
     errors?: Record<string, string>;
     /** Called when any field changes — host form owns the state. */
-    onChange: (slug: string, value: unknown) => void;
+    onChange: (slug: string, value: CustomFieldValue) => void;
     /** When true, all fields are read-only (e.g. client portal view). */
     disabled?: boolean;
 }

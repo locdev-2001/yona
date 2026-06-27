@@ -20,7 +20,7 @@ interface Props {
     remindableType: string;
     remindableId: string;
     members: WorkspaceMember[];
-    currentUser: User;
+    currentUser: Pick<User, 'id' | 'name'>;
     reminder?: ReminderItem | null;
 }
 

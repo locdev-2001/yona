@@ -15,7 +15,7 @@ declare global {
     // Echo is attached to window so modules can use window.Echo directly.
     interface Window {
         Pusher: typeof Pusher;
-        Echo: Echo;
+        Echo: Echo<'reverb'>;
     }
 }
 
@@ -26,7 +26,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 // laravel-echo + pusher-js added as required peer deps (realtime is not
 // achievable without them; no stdlib/platform alternative exists).
 window.Pusher = Pusher;
-window.Echo = new Echo({
+window.Echo = new Echo<'reverb'>({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: import.meta.env.VITE_REVERB_HOST ?? 'localhost',

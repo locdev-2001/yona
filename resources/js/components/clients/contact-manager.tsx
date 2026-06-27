@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslator } from '@/lib/i18n';
-import type { Contact } from '@/types';
+import type { Contact, CustomFieldValue } from '@/types';
 import { router, useForm } from '@inertiajs/react';
 import { Pencil, Star, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
@@ -27,8 +27,7 @@ interface ContactFormData {
     title: string;
     language: string;
     make_primary: boolean;
-    custom_fields: Record<string, unknown>;
-    [key: string]: unknown;
+    custom_fields: Record<string, CustomFieldValue>;
 }
 
 /**

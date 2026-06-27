@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslator } from '@/lib/i18n';
-import type { Client, Project, ProjectStatus, User } from '@/types';
+import type { Client, CustomFieldValue, Project, ProjectStatus, User } from '@/types';
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
@@ -33,9 +33,20 @@ const NO_OWNER = '__none__';
 export default function ProjectForm({ project, clients, statuses, members, fieldDefs, submitRoute, method = 'post' }: Props) {
     const t = useTranslator();
 
-    // ponytail: no explicit generic — let inertia infer; cast custom_fields to avoid FormDataType constraint
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, setData, post, patch, processing, errors } = useForm({
+    const { data, setData, post, patch, processing, errors } = useForm<{
+        name: string;
+        description: string;
+        client_id: string;
+        status_id: string;
+        owner_id: string;
+        billing_type: string;
+        start_date: string;
+        deadline: string;
+        progress: number;
+        progress_from_tasks: boolean;
+        visible_to_customer: boolean;
+        custom_fields: Record<string, CustomFieldValue>;
+    }>({
         name: project?.name ?? '',
         description: project?.description ?? '',
         client_id: project?.client_id ?? '',
@@ -48,8 +59,7 @@ export default function ProjectForm({ project, clients, statuses, members, field
         progress: project?.progress ?? 0,
         progress_from_tasks: project?.progress_from_tasks ?? false,
         visible_to_customer: project?.visible_to_customer ?? false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        custom_fields: (project?.custom_fields ?? {}) as any,
+        custom_fields: project?.custom_fields ?? {},
     });
 
     function handleSubmit(e: FormEvent) {

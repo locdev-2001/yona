@@ -3,14 +3,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import type { CustomFieldValue } from '@/types';
 import { useTranslator } from '@/lib/i18n';
 import type { CustomFieldDefinition } from './types';
 
 interface Props {
     definition: CustomFieldDefinition;
-    value: unknown;
+    value: CustomFieldValue;
     error?: string;
-    onChange: (slug: string, value: unknown) => void;
+    onChange: (slug: string, value: CustomFieldValue) => void;
     disabled?: boolean;
 }
 

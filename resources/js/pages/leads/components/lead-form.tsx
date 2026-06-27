@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslator } from '@/lib/i18n';
-import type { Lead, LeadSource, Pipeline, PipelineStage, User } from '@/types';
+import type { CustomFieldValue, Lead, LeadSource, Pipeline, PipelineStage, User } from '@/types';
 import { useForm } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -41,8 +41,7 @@ type LeadFormData = {
     source_id: string;
     assigned_to: string;
     is_public: boolean;
-    custom_fields: Record<string, unknown>;
-    [key: string]: unknown;
+    custom_fields: Record<string, CustomFieldValue>;
 };
 
 export default function LeadForm({ lead, pipelines, sources, members, fieldDefs, submitRoute, method }: Props) {
@@ -73,7 +72,7 @@ export default function LeadForm({ lead, pipelines, sources, members, fieldDefs,
         source_id: lead?.source_id ?? '',
         assigned_to: lead?.assigned_to ? String(lead.assigned_to) : '',
         is_public: lead?.is_public ?? false,
-        custom_fields: (lead?.custom_fields as Record<string, unknown>) ?? {},
+        custom_fields: lead?.custom_fields ?? {},
     });
 
     // When pipeline changes, update available stages and reset stage_id
@@ -106,7 +105,7 @@ export default function LeadForm({ lead, pipelines, sources, members, fieldDefs,
         }
     }
 
-    function handleCustomFieldChange(slug: string, value: unknown) {
+    function handleCustomFieldChange(slug: string, value: CustomFieldValue) {
         setData('custom_fields', { ...data.custom_fields, [slug]: value });
     }
 

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useTranslator } from '@/lib/i18n';
-import type { Client, ClientGroup } from '@/types';
+import type { Client, ClientGroup, CustomFieldValue } from '@/types';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -39,8 +39,7 @@ interface ClientFormData {
     shipping_zip: string;
     shipping_country: string;
     groups: string[];
-    custom_fields: Record<string, unknown>;
-    [key: string]: unknown;
+    custom_fields: Record<string, CustomFieldValue>;
 }
 
 /**
@@ -102,7 +101,7 @@ export default function ClientForm({ client, groups, clientFieldDefs, submitRout
     }
 
     function setAddressField(field: string, value: string) {
-        setData(field as keyof ClientFormData, value);
+        setData((prev) => ({ ...prev, [field]: value }));
     }
 
     return (

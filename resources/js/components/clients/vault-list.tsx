@@ -24,7 +24,6 @@ interface VaultFormData {
     description: string;
     share_in_projects: boolean;
     visibility: 'private' | 'shared';
-    [key: string]: unknown;
 }
 
 const defaultFormData: VaultFormData = {

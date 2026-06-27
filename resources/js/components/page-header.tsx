@@ -4,6 +4,7 @@ interface PageHeaderProps {
     title: string;
     description?: string;
     actions?: ReactNode;
+    className?: string;
 }
 
 /**

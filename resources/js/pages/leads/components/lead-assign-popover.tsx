@@ -13,7 +13,6 @@ interface Props {
 
 type AssignFormData = {
     assigned_to: string;
-    [key: string]: unknown;
 };
 
 export default function LeadAssignPopover({ lead, members }: Props) {
@@ -27,7 +26,6 @@ export default function LeadAssignPopover({ lead, members }: Props) {
     function handleAssign(userId: string) {
         setData('assigned_to', userId);
         post(route('leads.assign', lead.id), {
-            data: { assigned_to: userId || null },
             onSuccess: () => setOpen(false),
         });
     }
