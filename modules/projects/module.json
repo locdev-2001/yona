@@ -1,0 +1,14 @@
+{
+  "name": "projects",
+  "version": "0.1.0",
+  "enabled": true,
+  "type": "feature",
+  "depends": ["tenancy", "identity", "shared", "cdp", "crm-sales"],
+  "provides": [
+    "projects.project",
+    "projects.milestone",
+    "projects.task",
+    "projects.timer"
+  ],
+  "entitlement": null
+}

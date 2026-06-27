@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\TaskChecklistItem;
-use App\Services\TaskService;
+use Modules\Projects\Models\TaskChecklistItem;
+use Modules\Projects\Services\TaskService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

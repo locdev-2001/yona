@@ -1,0 +1,36 @@
+<?php
+
+namespace Modules\Projects\Http\Requests\Settings;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class ProjectStatusUpdateRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()?->can('tenant.workspace.update') ?? false;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        $statusId = $this->route('project_status')?->id;
+
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('project_statuses')
+                    ->where('workspace_id', currentWorkspace()->id)
+                    ->whereNull('deleted_at')
+                    ->ignore($statusId),
+            ],
+            'color' => ['nullable', 'string', 'max:9'],
+            'status_order' => ['sometimes', 'integer', 'min:0'],
+        ];
+    }
+}

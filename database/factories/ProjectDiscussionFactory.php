@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Project;
-use App\Models\ProjectDiscussion;
+use Modules\Projects\Models\Project;
+use Modules\Projects\Models\ProjectDiscussion;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Tenancy\Models\Workspace;
 

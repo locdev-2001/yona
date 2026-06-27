@@ -4,8 +4,8 @@ use Modules\CrmSales\Models\Client;
 use Modules\CrmSales\Models\Lead;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\CrmSales\Models\PipelineStage;
-use App\Models\Project;
-use App\Models\Task;
+use Modules\Projects\Models\Project;
+use Modules\Projects\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Modules\Tenancy\Models\Workspace;
 

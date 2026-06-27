@@ -1,8 +1,8 @@
 <?php
 
 use Modules\CrmSales\Models\Client;
-use App\Models\Project;
-use App\Services\ProjectService;
+use Modules\Projects\Models\Project;
+use Modules\Projects\Services\ProjectService;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

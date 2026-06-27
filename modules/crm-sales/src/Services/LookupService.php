@@ -2,7 +2,7 @@
 
 namespace Modules\CrmSales\Services;
 
-use App\Models\ProjectStatus;
+use Modules\Projects\Models\ProjectStatus;
 use Illuminate\Support\Facades\DB;
 use Modules\CrmSales\Models\LeadSource;
 use Modules\CrmSales\Models\Pipeline;
@@ -20,7 +20,7 @@ use Modules\Tenancy\Services\SettingsService;
  *
  * Reusable from HTTP, console, queue, or provisioning — no request coupling.
  *
- * ponytail: ProjectStatus stays App\Models\ProjectStatus until phase-05 moves it.
+ * ponytail: ProjectStatus moved to Modules\Projects\Models\ProjectStatus in phase-05.
  */
 class LookupService
 {

@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Models\EmailTemplate;
-use App\Models\ProjectStatus;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\ServiceProvider;
+use Modules\Announcements\Models\Announcement;
+use Modules\Announcements\Models\AnnouncementRead;
 use Modules\CrmSales\Models\Client;
 use Modules\CrmSales\Models\ClientGroup;
 use Modules\CrmSales\Models\ClientVaultEntry;
@@ -11,15 +14,18 @@ use Modules\CrmSales\Models\Contact;
 use Modules\CrmSales\Models\LeadSource;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\CrmSales\Models\PipelineStage;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\ServiceProvider;
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Models\AnnouncementRead;
 use Modules\Identity\Models\Admin;
 use Modules\Identity\Models\AuditLog;
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\TeamClosure;
 use Modules\Identity\Models\User;
+use Modules\Projects\Models\Project;
+use Modules\Projects\Models\ProjectDiscussion;
+use Modules\Projects\Models\ProjectMilestone;
+use Modules\Projects\Models\ProjectStatus;
+use Modules\Projects\Models\Task;
+use Modules\Projects\Models\TaskChecklistItem;
+use Modules\Projects\Models\TaskTimer;
 use Modules\Shared\Models\Activity;
 use Modules\Shared\Models\Attachment;
 use Modules\Shared\Models\Comment;
@@ -43,11 +49,6 @@ use Modules\Tenancy\Models\WorkspaceSetting;
  *
  * Aliases MUST match the entity_type values in CustomFieldDefinition::ENTITY_TYPES
  * (P02) - single source of truth per G3.
- *
- * M1 classes (client/contact/lead/project/task) are declared as strings - they
- * do not exist at P03 build time. The map is string->FQCN only; classes are NOT
- * autoloaded at boot and are resolved lazily at query time. CI for P03 does not
- * touch M1 classes, so the build does not fail. (G3)
  */
 class MorphMapServiceProvider extends ServiceProvider
 {
@@ -56,17 +57,20 @@ class MorphMapServiceProvider extends ServiceProvider
         /** @var array<string, class-string> $map */
         $map = [
             // P03 canonical entity aliases (G3 - single source shared with custom_field entity_type).
-            'client' => Client::class,             // P06 — now exists
-            'contact' => Contact::class,           // P06 — now exists
-            'client_group' => ClientGroup::class,  // P06 — additional model
-            'client_vault_entry' => ClientVaultEntry::class, // P06 — additional model
-            'lead' => 'Modules\\CrmSales\\Models\\Lead',     // P07
-            'project' => 'App\\Models\\Project',             // P08
-            'project_milestone' => 'App\\Models\\ProjectMilestone', // P08
-            'project_discussion' => 'App\\Models\\ProjectDiscussion', // P08
-            'task' => 'App\\Models\\Task',                               // P09
-            'task_checklist_item' => 'App\\Models\\TaskChecklistItem', // P09
-            'task_timer' => 'App\\Models\\TaskTimer',                  // P09
+            'client' => Client::class,
+            'contact' => Contact::class,
+            'client_group' => ClientGroup::class,
+            'client_vault_entry' => ClientVaultEntry::class,
+            'lead' => 'Modules\\CrmSales\\Models\\Lead',
+
+            // Phase 05 — projects module (G3: alias string unchanged, FQCN updated).
+            'project' => Project::class,
+            'project_milestone' => ProjectMilestone::class,
+            'project_discussion' => ProjectDiscussion::class,
+            'project_status' => ProjectStatus::class,
+            'task' => Task::class,
+            'task_checklist_item' => TaskChecklistItem::class,
+            'task_timer' => TaskTimer::class,
 
             // P04 models that can appear as subjects (activity/reminder)
             'activity' => Activity::class,
@@ -86,7 +90,6 @@ class MorphMapServiceProvider extends ServiceProvider
             'note' => Note::class,
             'pipeline' => Pipeline::class,
             'pipeline_stage' => PipelineStage::class,
-            'project_status' => ProjectStatus::class,
             'tag' => Tag::class,
             'team' => Team::class,
             'team_closure' => TeamClosure::class,

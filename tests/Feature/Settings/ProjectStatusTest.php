@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\ProjectStatus;
+use Modules\Projects\Models\ProjectStatus;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

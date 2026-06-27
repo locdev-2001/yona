@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Task;
-use App\Models\TaskChecklistItem;
+use Modules\Projects\Models\Task;
+use Modules\Projects\Models\TaskChecklistItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Tenancy\Models\Workspace;
 

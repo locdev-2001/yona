@@ -3,11 +3,7 @@
 namespace App\Providers;
 
 use App\Models\EmailTemplate;
-use App\Models\Project;
-use App\Models\Task;
 use App\Policies\EmailTemplatePolicy;
-use App\Policies\ProjectPolicy;
-use App\Policies\TaskPolicy;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
@@ -70,12 +66,7 @@ class AppServiceProvider extends ServiceProvider
         // P05 — Register EmailTemplatePolicy (auto-discovery backup).
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
 
-        // P08 — Project policy.
-        Gate::policy(Project::class, ProjectPolicy::class);
-
-        // P09 — Task policy.
-        Gate::policy(Task::class, TaskPolicy::class);
-
+        // Project + Task policies registered in ProjectsServiceProvider (modules/projects).
         // crm-sales policies + events are registered in CrmSalesServiceProvider.
     }
 }

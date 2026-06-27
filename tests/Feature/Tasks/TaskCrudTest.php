@@ -1,8 +1,8 @@
 <?php
 
 use Modules\CrmSales\Models\Client;
-use App\Models\Task;
-use App\Services\TaskService;
+use Modules\Projects\Models\Task;
+use Modules\Projects\Services\TaskService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 

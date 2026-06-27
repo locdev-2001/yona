@@ -3,7 +3,7 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\EmailTemplateController;
-use App\Http\Controllers\Settings\ProjectStatusController;
+use Modules\Projects\Http\Controllers\Settings\ProjectStatusController;
 use Modules\CrmSales\Http\Controllers\Settings\LeadSourceController;
 use Modules\CrmSales\Http\Controllers\Settings\PipelineController;
 use Modules\CrmSales\Http\Controllers\Settings\PipelineStageController;
