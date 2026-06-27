@@ -4,15 +4,15 @@ namespace App\Http\Middleware;
 
 use App\Enums\TenantPermission;
 use App\Models\Admin;
-use App\Models\Announcement;
 use App\Models\User;
 use App\Models\WorkspaceMember;
-use App\Services\AnnouncementReadService;
 use App\Services\NotificationService;
 use App\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Modules\Announcements\Models\Announcement;
+use Modules\Announcements\Services\AnnouncementReadService;
 
 class HandleInertiaRequests extends Middleware
 {

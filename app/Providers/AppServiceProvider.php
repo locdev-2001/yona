@@ -23,6 +23,7 @@ use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
 use App\Services\MergeFields\LeadMergeFields;
 use App\Services\MergeFields\MergeFieldResolver;
+use App\Support\ModuleAwareInertiaViewFinder;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -44,6 +45,16 @@ class AppServiceProvider extends ServiceProvider
         // Bind MergeFieldResolver with all tagged resolvers injected.
         $this->app->singleton(MergeFieldResolver::class, function ($app) {
             return new MergeFieldResolver($app->tagged(EntityMergeFields::class));
+        });
+
+        // Override Inertia's view-finder to resolve Modules.X.page convention.
+        // Modules.{Module}.{page} → modules/{kebab}/resources/js/pages/{page}.tsx
+        $this->app->bind('inertia.view-finder', function ($app) {
+            return new ModuleAwareInertiaViewFinder(
+                $app['files'],
+                $app['config']->get('inertia.pages.paths'),
+                $app['config']->get('inertia.pages.extensions'),
+            );
         });
     }
 

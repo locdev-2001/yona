@@ -4,8 +4,6 @@ namespace App\Providers;
 
 use App\Models\Activity;
 use App\Models\Admin;
-use App\Models\Announcement;
-use App\Models\AnnouncementRead;
 use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\Client;
@@ -31,6 +29,8 @@ use App\Models\WorkspaceSequence;
 use App\Models\WorkspaceSetting;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use Modules\Announcements\Models\Announcement;
+use Modules\Announcements\Models\AnnouncementRead;
 
 /**
  * G3 - Registers the canonical morph alias map for all polymorphic relations.

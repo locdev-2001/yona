@@ -41,6 +41,7 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
+            "Modules\\Announcements\\": "modules/announcements/src/",
             "Modules\\Sample\\": "modules/sample/src/"
         },
         "files": [
