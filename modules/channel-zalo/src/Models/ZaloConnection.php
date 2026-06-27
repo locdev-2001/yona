@@ -87,7 +87,7 @@ class ZaloConnection extends Model
      */
     public function updateState(string $state, ?string $lostReason = null): void
     {
-        $updates = ['state' => $state];
+        $updates = ['state' => $state, 'updated_at' => now()];
 
         if ($state === 'connected') {
             $updates['last_connected_at'] = now();
@@ -98,6 +98,13 @@ class ZaloConnection extends Model
             $updates['last_qr_at'] = now();
         }
 
-        $this->fill($updates)->save();
+        // pgsql_privileged để bypass RLS — updateState gọi từ webhook + settings controller,
+        // cả 2 context đều có thể không có RLS session var set đúng.
+        DB::connection('pgsql_privileged')
+            ->table('zalo_connections')
+            ->where('id', $this->id)
+            ->update($updates);
+
+        $this->fill($updates);
     }
 }

@@ -1,0 +1,319 @@
+<?php
+
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Modules\ChannelZalo\Exceptions\RateCapException;
+use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
+use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
+use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
+use Modules\ChannelZalo\Services\AccountHealthMonitor;
+use Modules\ChannelZalo\Services\SendRateLimiter;
+use Modules\ChannelZalo\Services\ZaloSendService;
+use Modules\Inbox\Channel\AllowAllMeteringGate;
+use Modules\Inbox\Models\Conversation;
+use Modules\Inbox\Models\Message;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Support\TenantScope;
+
+/**
+ * Unit / integration tests cho ZaloSendService, SendRateLimiter, AccountHealthMonitor.
+ *
+ * Không cần bridge thật — dùng Http::fake().
+ * ZaloConnection insert qua pgsql_privileged (bypass RLS + sequence grant).
+ *
+ * @group channel-zalo
+ */
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Tạo workspace + zalo_connection (pgsql_privileged) + conversation.
+ * Trả [$workspace, $connectionId (int), $conversation].
+ */
+function makeWorkspaceAndConversation(int $connId = 9991): array
+{
+    $workspace = Workspace::factory()->create();
+    TenantScope::bind($workspace->id);
+    app()->instance('currentWorkspace', $workspace);
+
+    // Insert zalo_connection qua pgsql_privileged (bypass RLS + sequence permission)
+    $nextVal = (int) DB::connection('pgsql_privileged')
+        ->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")
+        ->id;
+
+    DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+        'workspace_id'  => $workspace->id,
+        'connection_id' => $nextVal,
+        'state'         => 'connected',
+        'lock_version'  => 0,
+        'created_at'    => now(),
+        'updated_at'    => now(),
+    ]);
+
+    // Tạo conversation (Eloquent — workspace bound)
+    $conversation = Conversation::create([
+        'workspace_id'       => $workspace->id,
+        'channel'            => 'zalo_personal',
+        'zalo_connection_id' => $nextVal,
+        'peer_uid'           => 'peer_test_'.uniqid(),
+        'peer_phone'         => '0901234567',
+        'thread_type'        => 0,
+        'conversation_number' => 1,
+    ]);
+
+    return [$workspace, $nextVal, $conversation];
+}
+
+function makeSendService(): ZaloSendService
+{
+    return new ZaloSendService(
+        rateLimiter:   new SendRateLimiter(),
+        healthMonitor: app(AccountHealthMonitor::class),
+        meteringGate:  new AllowAllMeteringGate(),
+    );
+}
+
+// ── ZaloSendService: send thành công ─────────────────────────────────────────
+
+it('sends message and writes Message row (direction=out) when bridge ok', function () {
+    [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
+
+    Http::fake([
+        '*personal-messages/send*' => Http::response([
+            'ok'        => true,
+            'source_id' => 'bridge_msg_001',
+        ], 200),
+    ]);
+
+    // Set time trong cửa sổ (10h VN)
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    $message = makeSendService()->send($conversation, 'Hello Zalo');
+
+    expect($message)->toBeInstanceOf(Message::class)
+        ->and($message->direction)->toBe('out')
+        ->and($message->source_id)->toBe('bridge_msg_001')
+        ->and($message->body)->toBe('Hello Zalo');
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('does NOT write Message when bridge returns 503 (not_logged_in)', function () {
+    [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
+
+    Http::fake([
+        '*personal-messages/send*' => Http::response(['ok' => false, 'message' => 'not_logged_in'], 503),
+    ]);
+
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => makeSendService()->send($conversation, 'Hello'))
+        ->toThrow(ZaloNotConnectedException::class);
+
+    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('does NOT write Message on bridge connection exception', function () {
+    [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
+
+    Http::fake([
+        '*personal-messages/send*' => fn () => throw new \Exception('Connection refused'),
+    ]);
+
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => makeSendService()->send($conversation, 'Hello'))
+        ->toThrow(ZaloNotConnectedException::class);
+
+    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+// ── SendRateLimiter ───────────────────────────────────────────────────────────
+
+it('throws SendOutsideWindowException before 7h VN', function () {
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 06:59:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => (new SendRateLimiter())->assertCanSend('ws-1', '0901234567'))
+        ->toThrow(SendOutsideWindowException::class);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('throws SendOutsideWindowException at 22h VN', function () {
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 22:00:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => (new SendRateLimiter())->assertCanSend('ws-1', '0901234567'))
+        ->toThrow(SendOutsideWindowException::class);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('allows send inside window at 10h VN', function () {
+    Cache::flush();
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    $limiter = new SendRateLimiter();
+    $limiter->assertCanSend('ws-window-ok', '0901111111'); // no exception
+
+    expect($limiter->currentCount('ws-window-ok', '0901111111'))->toBe(0);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('throws RateCapException on 4th message to same number same day', function () {
+    Cache::flush();
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    $limiter = new SendRateLimiter();
+    $ws  = 'ws-cap-'.uniqid();
+    $num = '0909111222';
+
+    // Tin 1-3: assert ok + increment
+    foreach (range(1, 3) as $_) {
+        $limiter->assertCanSend($ws, $num);
+        $limiter->increment($ws, $num);
+    }
+
+    // Tin 4: phải throw RateCapException
+    expect(fn () => $limiter->assertCanSend($ws, $num))
+        ->toThrow(RateCapException::class);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+// ── AccountHealthMonitor (circuit-breaker) ────────────────────────────────────
+
+it('opens circuit after 5 errors within window', function () {
+    Cache::flush();
+
+    $monitor = new AccountHealthMonitor();
+    $connId  = 'conn-circuit-'.uniqid();
+
+    expect($monitor->isCircuitOpen($connId))->toBeFalse();
+
+    foreach (range(1, 5) as $_) {
+        $monitor->recordError($connId, '429');
+    }
+
+    expect($monitor->isCircuitOpen($connId))->toBeTrue();
+})->group('channel-zalo');
+
+it('resets circuit after reset() call', function () {
+    Cache::flush();
+
+    $monitor = new AccountHealthMonitor();
+    $connId  = 'conn-reset-'.uniqid();
+
+    foreach (range(1, 5) as $_) {
+        $monitor->recordError($connId, '403');
+    }
+
+    expect($monitor->isCircuitOpen($connId))->toBeTrue();
+
+    $monitor->reset($connId);
+    expect($monitor->isCircuitOpen($connId))->toBeFalse();
+})->group('channel-zalo');
+
+it('throws ZaloCircuitOpenException when circuit is open before send', function () {
+    Cache::flush();
+    [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
+
+    $monitor = new AccountHealthMonitor();
+    foreach (range(1, 5) as $_) {
+        $monitor->recordError((string) $connId, '429');
+    }
+
+    $service = new ZaloSendService(
+        rateLimiter:   new SendRateLimiter(),
+        healthMonitor: $monitor,
+        meteringGate:  new AllowAllMeteringGate(),
+    );
+
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => $service->send($conversation, 'Hello'))
+        ->toThrow(ZaloCircuitOpenException::class);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+// ── ZaloConnectionController QR: store + promote ──────────────────────────────
+
+it('store returns connection_id and qr_token when bridge qr/start ok', function () {
+    $workspace = Workspace::factory()->create();
+
+    // Seed user với permission tenant.zalo.manage trong workspace (spatie teams mode)
+    $user = \Modules\Identity\Models\User::factory()->create();
+    seedMember($workspace, $user, 'admin');
+    actingInWorkspace($workspace, $user);
+
+    // Ensure permission exists + gán thẳng cho user trong workspace scope
+    app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+    $perm = \Spatie\Permission\Models\Permission::firstOrCreate(
+        ['name' => 'tenant.zalo.manage', 'guard_name' => 'web']
+    );
+    $user->givePermissionTo($perm);
+
+    Http::fake([
+        '*auth/qr/start*' => Http::response(['ok' => true, 'phase' => 'logging_in'], 200),
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $workspace->id])
+        ->postJson('/settings/zalo-connections')
+        ->assertStatus(200)
+        ->assertJsonFragment(['ok' => true])
+        ->assertJsonStructure(['connection_id', 'qr_token']);
+})->group('channel-zalo');
+
+it('promote updates ZaloConnection state to connected when bridge promote ok', function () {
+    $workspace = Workspace::factory()->create();
+
+    $user = \Modules\Identity\Models\User::factory()->create();
+    seedMember($workspace, $user, 'admin');
+    actingInWorkspace($workspace, $user);
+
+    app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+    $perm = \Spatie\Permission\Models\Permission::firstOrCreate(
+        ['name' => 'tenant.zalo.manage', 'guard_name' => 'web']
+    );
+    $user->givePermissionTo($perm);
+
+    $nextVal = (int) DB::connection('pgsql_privileged')
+        ->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")
+        ->id;
+
+    DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+        'workspace_id'  => $workspace->id,
+        'connection_id' => $nextVal,
+        'state'         => 'qr_waiting',
+        'lock_version'  => 0,
+        'created_at'    => now(),
+        'updated_at'    => now(),
+    ]);
+
+    Http::fake([
+        '*auth/qr/promote*' => Http::response(['ok' => true, 'connection_id' => $nextVal], 200),
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $workspace->id])
+        ->postJson('/settings/zalo-connections/promote', [
+            'connection_id' => $nextVal,
+            'qr_token'      => 'test-qr-token',
+        ])
+        ->assertStatus(200)
+        ->assertJsonFragment(['ok' => true]);
+
+    $row = DB::connection('pgsql_privileged')
+        ->table('zalo_connections')
+        ->where('connection_id', $nextVal)
+        ->first();
+
+    expect($row->state)->toBe('connected');
+})->group('channel-zalo');
