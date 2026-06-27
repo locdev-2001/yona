@@ -5,6 +5,7 @@ namespace Modules\CrmSales\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Cdp\Contracts\IdentityResolver;
 use Modules\CrmSales\Contracts\ContactRepository;
 use Modules\CrmSales\Contracts\LeadCreator;
 use Modules\CrmSales\Events\LeadAssigned;
@@ -23,6 +24,7 @@ use Modules\CrmSales\Policies\ContactPolicy;
 use Modules\CrmSales\Policies\LeadPolicy;
 use Modules\CrmSales\Policies\LeadSourcePolicy;
 use Modules\CrmSales\Policies\PipelinePolicy;
+use Modules\CrmSales\Services\CdpIdentityResolverImpl;
 use Modules\CrmSales\Services\ContactRepositoryImpl;
 use Modules\CrmSales\Services\LeadCreatorImpl;
 use Modules\Email\Contracts\EntityMergeFields;
@@ -45,6 +47,12 @@ class CrmSalesServiceProvider extends ServiceProvider
         // Bind contracts → implementations (phơi cho Phase 07: inbox + cdp)
         $this->app->bind(ContactRepository::class, ContactRepositoryImpl::class);
         $this->app->bind(LeadCreator::class, LeadCreatorImpl::class);
+
+        // Phase-07: override no-op IdentityResolver (CdpServiceProvider) bằng impl thật.
+        // Đặt trong register() của crm-sales (boot sau cdp theo topo-sort depends: ["cdp"]).
+        // CdpIdentityResolverImpl nằm trong crm-sales vì cần Contact + ContactRepository —
+        // crm-sales depends cdp (không vòng phụ thuộc; cdp KHÔNG depend crm-sales).
+        $this->app->bind(IdentityResolver::class, CdpIdentityResolverImpl::class);
 
         // P06 — Reverse-registry: tag crm-sales merge-field providers so EmailServiceProvider
         // picks them up via $app->tagged(EntityMergeFields::class).

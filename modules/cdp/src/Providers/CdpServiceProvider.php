@@ -29,7 +29,7 @@ class CdpServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Không có migration, model, hay route ở Phase-03 scaffold.
-        // Migration Contact + partial unique + lead refs thuộc Phase-07.
+        // Phase-07: load migrations cho Contact.client_id nullable + partial unique phone.
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
     }
 }

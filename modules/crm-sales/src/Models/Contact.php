@@ -21,13 +21,15 @@ use Modules\Tenancy\Concerns\BelongsToWorkspace;
  *
  * @property string $id
  * @property string $workspace_id
- * @property string $client_id
+ * @property string|null $client_id
  * @property string $first_name
  * @property string|null $last_name
  * @property string|null $email
  * @property string|null $phone
  * @property string|null $title
  * @property bool $is_primary
+ * @property bool $needs_merge_review  Phase-07: flag khi phát hiện SĐT trùng, chờ admin xác nhận
+ * @property string|null $merge_review_with  UUID contact kia cần review
  * @property string|null $language
  * @property array<string, mixed> $custom_fields
  */
@@ -56,6 +58,7 @@ class Contact extends Model
     {
         return [
             'is_primary' => 'boolean',
+            'needs_merge_review' => 'boolean',
             'is_active' => 'boolean',
             'email_optin' => 'array',
             'custom_fields' => 'array',
