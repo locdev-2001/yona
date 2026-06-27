@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Settings;
+namespace Modules\Email\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\EmailTemplateTestRequest;
-use App\Http\Requests\Settings\EmailTemplateUpdateRequest;
-use App\Models\EmailTemplate;
-use App\Services\EmailTemplateService;
-use App\Services\MergeFields\MergeFieldResolver;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Email\Http\Requests\Settings\EmailTemplateTestRequest;
+use Modules\Email\Http\Requests\Settings\EmailTemplateUpdateRequest;
+use Modules\Email\Models\EmailTemplate;
+use Modules\Email\Services\EmailTemplateService;
+use Modules\Email\Services\MergeFieldResolver;
 
 /**
- * P05 — Settings → Email Templates (admin CRUD + test send).
+ * P06 — Settings → Email Templates (admin CRUD + test send).
  *
  * Thin controller: parse → authorize → service → Inertia/redirect.
  * workspace_id NEVER from request — RLS + route-model-binding scope automatically.
@@ -42,7 +42,7 @@ class EmailTemplateController extends Controller
                 'sort_order' => $t->sort_order,
             ]);
 
-        return Inertia::render('settings/email-templates/index', [
+        return Inertia::render('Modules.Email.settings/email-templates/index', [
             'templates' => $templates,
             'types' => EmailTemplate::TYPES,
             'languages' => EmailTemplate::LANGUAGES,
@@ -55,7 +55,7 @@ class EmailTemplateController extends Controller
 
         $entityType = $template->slugEntityType();
 
-        return Inertia::render('settings/email-templates/edit', [
+        return Inertia::render('Modules.Email.settings/email-templates/edit', [
             'template' => [
                 'id' => $template->id,
                 'slug' => $template->slug,

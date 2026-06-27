@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Email\Models;
 
 use Database\Factories\EmailTemplateFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +13,7 @@ use Modules\Shared\Concerns\HasOptimisticLock;
 use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
- * P05 — Email template catalog entry (C4).
+ * P06 — Email template catalog entry (C4).
  *
  * Configuration resource — no owner_id/team_id/HasCustomFields (workspace-level config).
  * slug + language uniquely identifies a template; admin edits content only (not slug/type/language).
@@ -35,6 +35,11 @@ class EmailTemplate extends Model
 {
     /** @use HasFactory<EmailTemplateFactory> */
     use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids, SoftDeletes;
+
+    protected static function newFactory(): EmailTemplateFactory
+    {
+        return EmailTemplateFactory::new();
+    }
 
     // UI grouping categories (mirrors Perfex template types for M1 scope).
     const TYPES = ['leads', 'clients', 'contacts', 'projects', 'tasks', 'staff'];

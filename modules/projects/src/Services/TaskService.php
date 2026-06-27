@@ -22,7 +22,7 @@ class TaskService
 {
     public function __construct(
         private readonly CustomFieldService $customFieldService,
-        private readonly \App\Services\NotificationService $notificationService,
+        private readonly \Modules\Shared\Services\NotificationService $notificationService,
         private readonly TaskTimerService $timerService,
     ) {}
 

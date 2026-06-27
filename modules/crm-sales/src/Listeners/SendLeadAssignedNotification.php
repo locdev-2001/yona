@@ -2,7 +2,7 @@
 
 namespace Modules\CrmSales\Listeners;
 
-use App\Services\TemplatedMailer;
+use Modules\Email\Services\TemplatedMailer;
 use Modules\CrmSales\Events\LeadAssigned;
 use Modules\CrmSales\Notifications\LeadAssignedNotification;
 use Modules\Identity\Models\User;

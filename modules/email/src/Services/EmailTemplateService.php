@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace Modules\Email\Services;
 
 use App\Mail\TemplatedMessage;
-use App\Models\EmailTemplate;
-use App\Services\MergeFields\MergeFieldResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
+use Modules\Email\Models\EmailTemplate;
 
 /**
- * P05 — CRUD + preview + test-send operations for EmailTemplate (settings).
+ * P06 — CRUD + preview + test-send operations for EmailTemplate (settings).
  *
  * Called from EmailTemplateController. All workspace scoping is handled by
  * RLS + model-binding; this service operates on already-resolved models.

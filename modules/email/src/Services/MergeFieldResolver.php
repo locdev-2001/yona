@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Services\MergeFields;
+namespace Modules\Email\Services;
 
-use App\Services\MergeFields\Contracts\EntityMergeFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Modules\Email\Contracts\EntityMergeFields;
 use Modules\Shared\Services\CustomFieldService;
 
 /**
- * P05 — Orchestrates all entity merge-field resolvers (C4).
+ * P06 — Orchestrates all entity merge-field resolvers (registry pattern).
  *
- * Registered via AppServiceProvider (tagged binding). Consumers call resolve()
- * with a $context array already filtered by TemplatedMailer (G9 whitelist).
+ * Feature modules self-register providers via their ServiceProvider (reverse-registry).
+ * Email module only knows the EntityMergeFields contract — never imports domain models.
  *
  * Token format: {snake_key} (curly braces, all lowercase + underscore).
  * Unknown / missing tokens are stripped to empty string — never leaked as raw {token}.
@@ -29,6 +29,14 @@ class MergeFieldResolver
         foreach ($entityResolvers as $resolver) {
             $this->resolvers[$resolver->entityType()] = $resolver;
         }
+    }
+
+    /**
+     * Register a merge-field provider at runtime (called by feature module ServiceProviders).
+     */
+    public function register(EntityMergeFields $provider): void
+    {
+        $this->resolvers[$provider->entityType()] = $provider;
     }
 
     /**
@@ -75,7 +83,7 @@ class MergeFieldResolver
         $values['current_date'] = now()->toDateString();
 
         // Optional: wire custom-field tokens from CustomFieldService (P02).
-        // Guard with class_exists so P05 doesn't hard-depend on P02 order.
+        // Guard with class_exists so email doesn't hard-depend on P02 order.
         if (class_exists(CustomFieldService::class)) {
             foreach ($context as $entityType => $entity) {
                 $this->resolveCustomFieldTokens($entityType, $entity, $values);
@@ -94,7 +102,6 @@ class MergeFieldResolver
      */
     public function render(string $text, array $values): string
     {
-        // Build {key} => value replacement pairs.
         $pairs = [];
         foreach ($values as $key => $value) {
             $pairs["{{$key}}"] = $value;
@@ -108,7 +115,6 @@ class MergeFieldResolver
 
     /**
      * Attempt to add custom-field tokens from the entity's custom_fields JSONB bag.
-     * Only runs when CustomFieldService is available (P02 dependency is optional).
      *
      * @param  array<string, string>  $values  (mutated in place)
      */

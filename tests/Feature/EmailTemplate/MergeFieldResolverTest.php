@@ -1,7 +1,7 @@
 <?php
 
-use App\Services\MergeFields\LeadMergeFields;
-use App\Services\MergeFields\MergeFieldResolver;
+use Modules\CrmSales\MergeFields\LeadMergeFields;
+use Modules\Email\Services\MergeFieldResolver;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;

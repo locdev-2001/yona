@@ -1,8 +1,8 @@
 <?php
 
 use App\Mail\TemplatedMessage;
-use App\Models\EmailTemplate;
-use App\Services\TemplatedMailer;
+use Modules\Email\Models\EmailTemplate;
+use Modules\Email\Services\TemplatedMailer;
 use Database\Seeders\EmailTemplateCatalogSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;

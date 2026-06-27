@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\EmailTemplate;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Modules\Email\Models\EmailTemplate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Models\AnnouncementRead;

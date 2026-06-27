@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Settings;
+namespace Modules\Email\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * P05 — Validate send-test request for an email template.
+ * P06 — Validate send-test request for an email template.
  */
 class EmailTemplateTestRequest extends FormRequest
 {

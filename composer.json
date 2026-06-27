@@ -48,7 +48,8 @@
         "Modules\\Tenancy\\": "modules/tenancy/src/",
             "Modules\\Cdp\\": "modules/cdp/src/",
         "Modules\\CrmSales\\": "modules/crm-sales/src/",
-        "Modules\\Projects\\": "modules/projects/src/"
+        "Modules\\Projects\\": "modules/projects/src/",
+        "Modules\\Email\\": "modules/email/src/"
         },
         "files": [
             "app/helpers.php"

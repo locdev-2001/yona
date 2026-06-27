@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
-use App\Http\Controllers\Settings\EmailTemplateController;
 use Modules\Projects\Http\Controllers\Settings\ProjectStatusController;
 use Modules\CrmSales\Http\Controllers\Settings\LeadSourceController;
 use Modules\CrmSales\Http\Controllers\Settings\PipelineController;
@@ -95,13 +94,7 @@ Route::middleware(['auth', 'workspace'])->prefix('settings')->group(function () 
         });
     });
 
-    // Email templates (P05) — admin edit/preview/test workspace templates.
-    Route::controller(EmailTemplateController::class)->prefix('email-templates')->name('email-templates.')->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('{template}', 'edit')->name('edit');
-        Route::patch('{template}', 'update')->name('update');
-        Route::post('{template}/test', 'test')->name('test');
-    });
+    // Email templates (P06) — now served by modules/email/routes/web.php via EmailServiceProvider.
 
     // Custom fields (P02) — admin CRUD for field definitions per entity_type.
     Route::controller(CustomFieldController::class)->prefix('custom-fields')->name('custom-fields.')->group(function () {

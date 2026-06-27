@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Services\MergeFields;
+namespace Modules\CrmSales\MergeFields;
 
-use App\Services\MergeFields\Contracts\EntityMergeFields;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Email\Contracts\EntityMergeFields;
 
 /**
- * P05 — Merge field resolver for Lead entities.
+ * P06 — Merge field resolver for Lead entities.
  *
- * Tokens are minimal stubs targeting the fields that exist on Lead (P07).
- * Full field mapping is completed in P07 when the Lead model ships.
- * This resolver is the single source of truth for lead merge tokens — only
- * edit here, not in TemplatedMailer or templates.
+ * Registered in CrmSalesServiceProvider into Modules\Email\Services\MergeFieldResolver.
+ * Implements EntityMergeFields from the email module (reverse-registry pattern).
  *
  * TODO P07: once Lead model is built, verify all field names match and
  * add any additional fields (company, phone, source, assigned team, etc.).

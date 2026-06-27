@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Services\MergeFields;
+namespace Modules\CrmSales\MergeFields;
 
-use App\Services\MergeFields\Contracts\EntityMergeFields;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Email\Contracts\EntityMergeFields;
 
 /**
- * P05 — Merge field resolver stub for Client entities.
+ * P06 — Merge field resolver stub for Client entities.
  * Full implementation in P06 when the Client model ships.
+ *
+ * Registered in CrmSalesServiceProvider into MergeFieldResolver (reverse-registry).
  *
  * TODO P06: expand with actual Client model fields.
  */

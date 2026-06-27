@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Policies;
+namespace Modules\Email\Policies;
 
-use App\Models\EmailTemplate;
+use Modules\Email\Models\EmailTemplate;
 use Modules\Identity\Models\User;
 
 /**
- * P05 — Authorization for email template management.
+ * P06 — Authorization for email template management.
  *
  * No create/delete at M1 (slugs are seeded catalog, not user-created).
  * Non-enumeration (BR-X15): missing template is 404 via RLS route-model-binding.

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Settings;
+namespace Modules\Email\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * P05 — Validate content edits for an existing email template.
+ * P06 — Validate content edits for an existing email template.
  *
  * slug / type / language are server-controlled — never validated here.
  * Admin cannot change those; only content fields are allowed.

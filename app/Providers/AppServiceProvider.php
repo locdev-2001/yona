@@ -2,16 +2,11 @@
 
 namespace App\Providers;
 
-use App\Models\EmailTemplate;
-use App\Policies\EmailTemplatePolicy;
-use App\Services\MergeFields\ClientMergeFields;
-use App\Services\MergeFields\ContactMergeFields;
-use App\Services\MergeFields\Contracts\EntityMergeFields;
-use App\Services\MergeFields\LeadMergeFields;
-use App\Services\MergeFields\MergeFieldResolver;
 use App\Support\ModuleAwareInertiaViewFinder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Email\Models\EmailTemplate;
+use Modules\Email\Policies\EmailTemplatePolicy;
 use Modules\Identity\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,18 +16,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // P05 — Register entity merge-field resolvers as a tagged group.
-        $this->app->tag([
-            LeadMergeFields::class,
-            ClientMergeFields::class,
-            ContactMergeFields::class,
-        ], EntityMergeFields::class);
-
-        // Bind MergeFieldResolver with all tagged resolvers injected.
-        $this->app->singleton(MergeFieldResolver::class, function ($app) {
-            return new MergeFieldResolver($app->tagged(EntityMergeFields::class));
-        });
-
         // Override Inertia's view-finder to resolve Modules.X.page convention.
         // Modules.{Module}.{page} → modules/{kebab}/resources/js/pages/{page}.tsx
         $this->app->bind('inertia.view-finder', function ($app) {
@@ -63,10 +46,9 @@ class AppServiceProvider extends ServiceProvider
             return null;
         });
 
-        // P05 — Register EmailTemplatePolicy (auto-discovery backup).
+        // P06 — EmailTemplatePolicy registered here as backup (EmailServiceProvider is primary).
+        // crm-sales policies + events registered in CrmSalesServiceProvider.
+        // Project + Task policies registered in ProjectsServiceProvider.
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
-
-        // Project + Task policies registered in ProjectsServiceProvider (modules/projects).
-        // crm-sales policies + events are registered in CrmSalesServiceProvider.
     }
 }

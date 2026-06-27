@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Services;
+namespace Modules\Email\Services;
 
 use App\Mail\TemplatedMessage;
-use App\Models\EmailTemplate;
-use App\Services\MergeFields\MergeFieldResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Email\Models\EmailTemplate;
 use Modules\Shared\Support\Activity\ActivityLogger;
 
 /**
- * P05 — Public interface for sending workspace email templates (C4).
+ * P06 — Public interface for sending workspace email templates (C4).
  *
  * G9 — context whitelist is the FIRST operation; only 5 entity keys can ever
  * reach MergeFieldResolver. Callers cannot inject PII / secrets via context.

@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Services\MergeFields\Contracts;
+namespace Modules\Email\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * P05 — Contract for entity-specific merge-field resolvers.
+ * P06 — Contract for entity-specific merge-field resolvers (registry pattern).
  *
- * Implementations map a single entity type (e.g. 'lead') to its set of
- * merge tokens. The orchestrator (MergeFieldResolver) wires all registered
- * implementations together.
+ * Implementations live in feature modules (crm-sales, projects…) and self-register
+ * into MergeFieldResolver via their ServiceProvider.
+ * The email module owns the interface; feature modules implement it — no circular dep.
  */
 interface EntityMergeFields
 {

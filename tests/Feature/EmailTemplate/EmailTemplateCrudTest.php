@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\EmailTemplate;
+use Modules\Email\Models\EmailTemplate;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 
