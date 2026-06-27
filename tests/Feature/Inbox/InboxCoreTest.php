@@ -164,16 +164,20 @@ it('soft-deleted conversation is hidden by global scope', function () {
         ->and($trashed->deleted_at)->not->toBeNull();
 });
 
-// ── MeteringGate no-op default ───────────────────────────────────────────────
+// ── MeteringGate no-op / AllowAllMeteringGate direct ─────────────────────────
+// Nếu billing module active, container trả ConversationMeter (F10 override).
+// Test AllowAllMeteringGate directly (không qua container) để kiểm disable-safe behavior.
 
-it('MeteringGate default binding is AllowAllMeteringGate (no-op)', function () {
-    $gate = app(MeteringGate::class);
+it('MeteringGate contract is implemented by AllowAllMeteringGate (disable-safe)', function () {
+    // Test class trực tiếp — không qua container (billing có thể override binding)
+    $gate = new AllowAllMeteringGate();
 
-    expect(get_class($gate))->toBe(AllowAllMeteringGate::class);
+    expect($gate)->toBeInstanceOf(MeteringGate::class);
 });
 
 it('AllowAllMeteringGate canStartNew always returns true (disable-safe)', function () {
-    $gate = app(MeteringGate::class);
+    // Test class trực tiếp — not via container (billing may override)
+    $gate = new AllowAllMeteringGate();
 
     expect($gate->canStartNew('zalo_personal'))->toBeTrue()
         ->and($gate->canStartNew('messenger'))->toBeTrue();
@@ -211,7 +215,8 @@ it('AllowAllMeteringGate meterReply is a no-op (no exception, no DB write)', fun
 
     $periodBefore = $conv->last_metered_period;
 
-    $gate = app(MeteringGate::class);
+    // Test AllowAllMeteringGate directly (no-op — billing override không ảnh hưởng)
+    $gate = new AllowAllMeteringGate();
     $gate->meterReply($conv); // no-op → không throw, không update DB
 
     $conv->refresh();

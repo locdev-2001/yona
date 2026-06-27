@@ -66,6 +66,11 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
 
         // P07 channel-zalo (2026_06_28_800003)
         'zalo_connections',
+
+        // P07 billing (2026_06_28_900002/900003)
+        // marketplace_items intentionally GLOBAL (no RLS) — intentional-global list
+        'workspace_purchases',
+        'channel_usage',
     ];
 
     // Query pg_policies for ws_isolation on each table

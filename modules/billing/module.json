@@ -1,0 +1,12 @@
+{
+  "name": "billing",
+  "version": "0.1.0",
+  "enabled": true,
+  "type": "feature",
+  "depends": ["inbox"],
+  "provides": [
+    "billing.entitlements",
+    "inbox.metering"
+  ],
+  "entitlement": null
+}
