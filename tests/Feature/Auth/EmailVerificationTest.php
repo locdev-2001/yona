@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
-use Modules\Identity\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Modules\Identity\Models\User;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase

@@ -2,14 +2,16 @@
 
 namespace Modules\Tenancy\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceMemberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\User;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * Membership — the workspace-scoped join carrying role + team + status.
@@ -44,16 +46,16 @@ class WorkspaceMember extends Model
         ];
     }
 
-    /** @return BelongsTo<\Modules\Identity\Models\User, $this> */
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
-    /** @return BelongsTo<\Modules\Identity\Models\Team, $this> */
+    /** @return BelongsTo<Team, $this> */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Identity\Models\Team::class);
+        return $this->belongsTo(Team::class);
     }
 
     public function isActive(): bool

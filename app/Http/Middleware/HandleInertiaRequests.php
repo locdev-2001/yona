@@ -2,17 +2,17 @@
 
 namespace App\Http\Middleware;
 
-use Modules\Identity\Enums\TenantPermission;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\WorkspaceMember;
-use App\Services\NotificationService;
-use Modules\Tenancy\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Services\AnnouncementReadService;
+use Modules\Identity\Enums\TenantPermission;
+use Modules\Identity\Models\Admin;
+use Modules\Identity\Models\User;
+use Modules\Shared\Services\NotificationService;
+use Modules\Tenancy\Models\WorkspaceMember;
+use Modules\Tenancy\Support\TenantScope;
 
 class HandleInertiaRequests extends Middleware
 {

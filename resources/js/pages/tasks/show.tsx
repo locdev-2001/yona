@@ -56,11 +56,7 @@ export default function TaskShow({ task, can, relatedRecords = {}, members = [] 
     // BUG-10: sync assignees via PATCH /tasks/{task}/assignees
     function syncAssignees(newIds: number[]) {
         setAssignProcessing(true);
-        router.patch(
-            route('tasks.assignees.update', { task: task.id }),
-            { user_ids: newIds },
-            { onFinish: () => setAssignProcessing(false) },
-        );
+        router.patch(route('tasks.assignees.update', { task: task.id }), { user_ids: newIds }, { onFinish: () => setAssignProcessing(false) });
     }
 
     function toggleAssignee(userId: number) {
@@ -158,11 +154,7 @@ export default function TaskShow({ task, can, relatedRecords = {}, members = [] 
                                     <Popover open={assignOpen} onOpenChange={setAssignOpen}>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-6 w-6">
-                                                {assignProcessing ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    <Users className="h-3 w-3" />
-                                                )}
+                                                {assignProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Users className="h-3 w-3" />}
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-56 p-2">

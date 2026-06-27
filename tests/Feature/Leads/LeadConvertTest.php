@@ -3,14 +3,14 @@
 use App\Events\LeadConverted;
 use App\Models\Client;
 use App\Models\Contact;
-use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadConversionService;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
+use Modules\Identity\Models\User;
+use Modules\Shared\Models\Note;
+use Modules\Tenancy\Models\Workspace;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // ── G7 Convert Lead → Client + Contact ───────────────────────────────────────

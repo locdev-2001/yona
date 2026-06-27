@@ -10,12 +10,12 @@ use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
-use Modules\Identity\Models\User;
 use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Models\User;
 
 /**
  * Task CRUD + list/kanban/show. Thin controller — logic in TaskService.

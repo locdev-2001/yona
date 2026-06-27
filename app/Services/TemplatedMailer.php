@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Mail\TemplatedMessage;
 use App\Models\EmailTemplate;
 use App\Services\MergeFields\MergeFieldResolver;
-use App\Support\Activity\ActivityLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Shared\Support\Activity\ActivityLogger;
 
 /**
  * P05 — Public interface for sending workspace email templates (C4).

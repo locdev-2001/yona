@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<TaskChecklistItem>

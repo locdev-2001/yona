@@ -2,12 +2,12 @@
 
 namespace Modules\Tenancy\Services;
 
-use Modules\Identity\Models\User;
 use App\Services\LookupService;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 use Spatie\Permission\PermissionRegistrar;
 
 // LookupService is injected to seed default pipelines/stages/sources/statuses

@@ -11,7 +11,6 @@ use App\Models\EmailTemplate;
 use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
-use Modules\Identity\Models\User;
 use App\Policies\ClientPolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\EmailTemplatePolicy;
@@ -27,6 +26,7 @@ use App\Support\ModuleAwareInertiaViewFinder;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Identity\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {

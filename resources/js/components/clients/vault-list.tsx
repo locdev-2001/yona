@@ -143,7 +143,9 @@ export default function VaultList({ clientId, entries, canEdit }: Props) {
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{editing ? (t('clients.vault.edit') ?? 'Edit Entry') : t('clients.vault.add')}</DialogTitle>
-                        <DialogDescription>{t('clients.vault.dialog_description') ?? 'Securely store credentials or notes for this client.'}</DialogDescription>
+                        <DialogDescription>
+                            {t('clients.vault.dialog_description') ?? 'Securely store credentials or notes for this client.'}
+                        </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <div>

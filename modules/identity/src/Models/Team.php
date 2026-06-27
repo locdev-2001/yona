@@ -2,16 +2,6 @@
 
 namespace Modules\Identity\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use Modules\Tenancy\Models\WorkspaceMember;
-use App\Models\Concerns\HasActivities;
-use App\Models\Concerns\HasAttachments;
-use App\Models\Concerns\HasComments;
-use App\Models\Concerns\HasNotes;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\HasReminders;
-use App\Models\Concerns\HasTags;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Shared\Concerns\HasActivities;
+use Modules\Shared\Concerns\HasAttachments;
+use Modules\Shared\Concerns\HasComments;
+use Modules\Shared\Concerns\HasNotes;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Shared\Concerns\HasReminders;
+use Modules\Shared\Concerns\HasTags;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 /**
  * Team — a node in the per-workspace team tree (BR-X02). Structural changes

@@ -2,7 +2,6 @@
 
 namespace Modules\Announcements\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
 use Database\Factories\AnnouncementFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Modules\Announcements\Enums\AnnouncementCategory;
 use Modules\Announcements\Enums\AnnouncementStatus;
+use Modules\Identity\Models\Concerns\Auditable;
 
 /**
  * GLOBAL — no BelongsToWorkspace, no RLS, no workspace_id.

@@ -1,7 +1,3 @@
-import { ActivityTimeline } from '@/components/activity/activity-timeline';
-import { AttachmentList, type Attachment } from '@/components/attachments/attachment-list';
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
-import { NoteList, type Note } from '@/components/notes/note-list';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +7,10 @@ import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, Client, Lead, LeadSource, PipelineStage, User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
+import { ActivityTimeline } from '@modules/shared/resources/js/components/activity/activity-timeline';
+import { AttachmentList, type Attachment } from '@modules/shared/resources/js/components/attachments/attachment-list';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
+import { NoteList, type Note } from '@modules/shared/resources/js/components/notes/note-list';
 import { Building2, ChevronDown, Globe, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
 import LeadAssignPopover from './components/lead-assign-popover';
 import LeadConvertDialog from './components/lead-convert-dialog';
@@ -98,18 +98,12 @@ export default function LeadShow({ lead, fieldDefs, sources, members, clients, a
                                 <DropdownMenuContent align="end">
                                     {isActive && (
                                         <>
-                                            <DropdownMenuItem onClick={handleMarkLost}>
-                                                {t('leads.actions.mark_lost')}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={handleMarkJunk}>
-                                                {t('leads.actions.mark_junk')}
-                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleMarkLost}>{t('leads.actions.mark_lost')}</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleMarkJunk}>{t('leads.actions.mark_junk')}</DropdownMenuItem>
                                         </>
                                     )}
                                     {(lead.is_lost || lead.is_junk) && (
-                                        <DropdownMenuItem onClick={handleRestore}>
-                                            {t('leads.actions.restore')}
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleRestore}>{t('leads.actions.restore')}</DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>

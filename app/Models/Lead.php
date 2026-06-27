@@ -2,17 +2,6 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use Modules\Tenancy\Models\WorkspaceMember;
-use App\Models\Concerns\HasActivities;
-use App\Models\Concerns\HasAttachments;
-use App\Models\Concerns\HasCustomFields;
-use App\Models\Concerns\HasNotes;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\HasReminders;
-use App\Models\Concerns\HasTags;
 use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -21,6 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\User;
+use Modules\Shared\Concerns\HasActivities;
+use Modules\Shared\Concerns\HasAttachments;
+use Modules\Shared\Concerns\HasCustomFields;
+use Modules\Shared\Concerns\HasNotes;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Shared\Concerns\HasReminders;
+use Modules\Shared\Concerns\HasTags;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 /**
  * P07 — Lead entity. Workspace-scoped, pipeline+stage required.

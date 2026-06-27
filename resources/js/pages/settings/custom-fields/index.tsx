@@ -1,4 +1,3 @@
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import HeadingSmall from '@/components/heading-small';
 import CustomFieldForm from '@/components/settings/custom-field-form';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 

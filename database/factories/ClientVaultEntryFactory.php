@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Client;
 use App\Models\ClientVaultEntry;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<ClientVaultEntry>

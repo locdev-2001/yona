@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Comment;
 use App\Models\Project;
 use App\Models\ProjectDiscussion;
-use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
+use Modules\Shared\Models\Comment;
+use Modules\Shared\Support\Activity\ActivityLogger;
 
 /**
  * P08 — Discussion thread and reply operations.

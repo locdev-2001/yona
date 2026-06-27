@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
-use Modules\Identity\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Modules\Identity\Models\User;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase

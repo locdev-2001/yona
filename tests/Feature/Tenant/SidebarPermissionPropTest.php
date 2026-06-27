@@ -1,8 +1,8 @@
 <?php
 
+use Database\Seeders\PlatformPermissionSeeder;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use Database\Seeders\PlatformPermissionSeeder;
 
 it('exposes tenant CRM permissions in the membership shared prop (array cache store)', function () {
     $this->seed(PlatformPermissionSeeder::class);

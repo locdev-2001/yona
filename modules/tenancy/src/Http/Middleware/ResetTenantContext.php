@@ -2,9 +2,9 @@
 
 namespace Modules\Tenancy\Http\Middleware;
 
-use Modules\Tenancy\Support\TenantScope;
 use Closure;
 use Illuminate\Http\Request;
+use Modules\Tenancy\Support\TenantScope;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

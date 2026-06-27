@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\ProjectMilestone;
-use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
+use Modules\Shared\Support\Activity\ActivityLogger;
 
 /**
  * P08 — Milestone write operations (create, update, reorder, delete).

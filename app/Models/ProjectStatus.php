@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\ProjectStatusFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * ProjectStatus — configurable workspace-scoped lookup (G11). Phase 08

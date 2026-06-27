@@ -2,8 +2,8 @@
 
 use App\Exceptions\StaleModelException;
 use Modules\Identity\Models\Team;
-use Modules\Tenancy\Models\Workspace;
 use Modules\Identity\Services\TeamService;
+use Modules\Tenancy\Models\Workspace;
 
 // Optimistic concurrency (BR-X08): stale writes are rejected, not silently
 // applied (no last-write-wins).

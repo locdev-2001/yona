@@ -2,12 +2,12 @@
 
 namespace Modules\Announcements\Services;
 
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Announcements\Enums\AnnouncementStatus;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Models\AnnouncementRead;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Read-state query SSOT for announcements.

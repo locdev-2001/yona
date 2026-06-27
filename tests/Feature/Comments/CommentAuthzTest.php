@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Comment;
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\User;
+use Modules\Shared\Models\Comment;
+use Modules\Shared\Services\CommentService;
 use Modules\Tenancy\Models\Workspace;
-use App\Services\CommentService;
 
 // Authz matrix for CommentController.
 

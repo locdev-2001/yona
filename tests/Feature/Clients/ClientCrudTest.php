@@ -3,9 +3,9 @@
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\Contact;
+use App\Services\ClientService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use App\Services\ClientService;
 
 // ── CRUD happy paths ──────────────────────────────────────────────────────────
 

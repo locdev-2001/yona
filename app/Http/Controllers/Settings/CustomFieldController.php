@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\CustomFieldDefinitionRequest;
-use App\Models\CustomFieldDefinition;
-use App\Services\CustomFieldService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Shared\Models\CustomFieldDefinition;
+use Modules\Shared\Services\CustomFieldService;
 
 /**
  * Admin CRUD for custom-field definitions (settings panel).

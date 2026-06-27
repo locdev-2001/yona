@@ -1,10 +1,10 @@
 import ClientForm from '@/components/clients/client-form';
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { PageHeader } from '@/components/page-header';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, Client, ClientGroup } from '@/types';
 import { Head } from '@inertiajs/react';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 
 interface Props {
     client: Client;

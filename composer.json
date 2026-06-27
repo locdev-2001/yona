@@ -44,7 +44,8 @@
             "Modules\\Announcements\\": "modules/announcements/src/",
             "Modules\\Identity\\": "modules/identity/src/",
             "Modules\\Sample\\": "modules/sample/src/",
-            "Modules\\Tenancy\\": "modules/tenancy/src/"
+            "Modules\\Shared\\": "modules/shared/src/",
+        "Modules\\Tenancy\\": "modules/tenancy/src/"
         },
         "files": [
             "app/helpers.php"

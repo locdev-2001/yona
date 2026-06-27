@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Activity;
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\User;
+use Modules\Shared\Models\Activity;
+use Modules\Shared\Support\Activity\ActivityLogger;
 use Modules\Tenancy\Models\Workspace;
-use App\Support\Activity\ActivityLogger;
 
 // ActivityLogger: logs an activity entry with correct action/payload/actor_name.
 

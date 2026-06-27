@@ -2,10 +2,10 @@
 
 namespace App\Services\MergeFields;
 
-use App\Services\CustomFieldService;
 use App\Services\MergeFields\Contracts\EntityMergeFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Modules\Shared\Services\CustomFieldService;
 
 /**
  * P05 — Orchestrates all entity merge-field resolvers (C4).

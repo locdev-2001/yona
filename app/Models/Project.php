@@ -2,15 +2,6 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use App\Models\Concerns\HasActivities;
-use App\Models\Concerns\HasAttachments;
-use App\Models\Concerns\HasCustomFields;
-use App\Models\Concerns\HasNotes;
-use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\User;
+use Modules\Shared\Concerns\HasActivities;
+use Modules\Shared\Concerns\HasAttachments;
+use Modules\Shared\Concerns\HasCustomFields;
+use Modules\Shared\Concerns\HasNotes;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * P08 — Project entity. Hosts: custom fields, attachments, activities, notes.

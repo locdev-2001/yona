@@ -1,29 +1,29 @@
 <?php
 
-use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\Clients\ClientCustomerAdminController;
 use App\Http\Controllers\Clients\ClientGroupController;
 use App\Http\Controllers\Clients\ClientVaultEntryController;
 use App\Http\Controllers\Clients\ContactController;
-use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Leads\LeadController;
 use App\Http\Controllers\Leads\LeadConversionController;
 use App\Http\Controllers\Leads\LeadStageController;
 use App\Http\Controllers\Leads\LeadStatusActionController;
-use App\Http\Controllers\NoteController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectDiscussionController;
 use App\Http\Controllers\Projects\ProjectFileController;
 use App\Http\Controllers\Projects\ProjectMemberController;
 use App\Http\Controllers\Projects\ProjectMilestoneController;
-use App\Http\Controllers\ReminderController;
-use App\Http\Controllers\TagController;
 use App\Http\Controllers\WelcomeController;
-use Modules\Tenancy\Http\Controllers\WorkspaceSwitchController;
 use Illuminate\Support\Facades\Route;
+use Modules\Shared\Http\Controllers\AttachmentController;
+use Modules\Shared\Http\Controllers\CommentController;
+use Modules\Shared\Http\Controllers\NoteController;
+use Modules\Shared\Http\Controllers\NotificationController;
+use Modules\Shared\Http\Controllers\ReminderController;
+use Modules\Shared\Http\Controllers\TagController;
+use Modules\Tenancy\Http\Controllers\WorkspaceSwitchController;
 
 Route::get('/', WelcomeController::class)->name('home');
 

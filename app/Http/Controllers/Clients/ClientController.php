@@ -7,13 +7,13 @@ use App\Http\Requests\Clients\ClientStoreRequest;
 use App\Http\Requests\Clients\ClientUpdateRequest;
 use App\Models\Client;
 use App\Models\ClientGroup;
-use App\Models\CustomFieldDefinition;
-use Modules\Identity\Models\User;
 use App\Services\ClientService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Models\User;
+use Modules\Shared\Models\CustomFieldDefinition;
 
 /**
  * P06 — Thin client controller. Parse → Service → Inertia/redirect.

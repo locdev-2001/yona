@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Projects;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\UploadProjectFileRequest;
-use App\Models\Attachment;
 use App\Models\Project;
-use App\Services\AttachmentService;
-use App\Support\Activity\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Modules\Shared\Models\Attachment;
+use Modules\Shared\Services\AttachmentService;
+use Modules\Shared\Support\Activity\ActivityLogger;
 
 /**
  * P08 — File upload / delete for projects (via P03 AttachmentService).

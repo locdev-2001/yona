@@ -2,10 +2,10 @@
 
 namespace Modules\Tenancy\Concerns;
 
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Layer 1 of the 3-layer tenant isolation (arch §4, BR-X01/X11/X14):
@@ -34,7 +34,7 @@ trait BelongsToWorkspace
         });
     }
 
-    /** @return BelongsTo<\Modules\Tenancy\Models\Workspace, $this> */
+    /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);

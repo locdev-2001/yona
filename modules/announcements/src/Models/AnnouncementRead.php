@@ -2,10 +2,10 @@
 
 namespace Modules\Announcements\Models;
 
-use Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Identity\Models\User;
 
 /**
  * GLOBAL — no workspace_id, no RLS, no BelongsToWorkspace.

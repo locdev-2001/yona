@@ -2,8 +2,8 @@
 
 namespace Modules\Identity\Models\Concerns;
 
-use Modules\Identity\Support\Audit\Audit;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Identity\Support\Audit\Audit;
 
 /**
  * Records create/update/delete/restore of a model to the append-only audit log

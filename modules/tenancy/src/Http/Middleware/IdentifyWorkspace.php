@@ -2,11 +2,11 @@
 
 namespace Modules\Tenancy\Http\Middleware;
 
+use Closure;
+use Illuminate\Http\Request;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
 use Modules\Tenancy\Support\TenantScope;
-use Closure;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use App\Models\Concerns\HasComments;
-use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\ProjectDiscussionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\User;
+use Modules\Shared\Concerns\HasComments;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * P08 — Discussion thread on a project.

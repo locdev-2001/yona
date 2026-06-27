@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\ClientGroup;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<ClientGroup>

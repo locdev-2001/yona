@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Task;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceSequence;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<Task>

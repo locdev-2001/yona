@@ -3,10 +3,10 @@
 namespace Modules\Identity\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 /**
  * Platform (read-only) view over customer workspaces. Membership rows are

@@ -2,9 +2,9 @@
 
 use App\Models\Client;
 use App\Models\ProjectStatus;
+use App\Services\ProjectService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use App\Services\ProjectService;
 
 // P08 — Progress + status transitions.
 

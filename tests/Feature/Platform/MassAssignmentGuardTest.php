@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
-use Illuminate\Database\Eloquent\MassAssignmentException;
 
 // BR-X12: workspace_id / owner_id / team_id / role / status are
 // server-controlled and must never be settable via mass assignment.

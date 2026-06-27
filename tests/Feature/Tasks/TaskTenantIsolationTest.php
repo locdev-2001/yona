@@ -1,11 +1,11 @@
 <?php
 
 use App\Models\Task;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Services\TaskService;
 use App\Services\TaskTimerService;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 // ── 2-workspace tenant isolation + RLS pivot coverage ─────────────────────────
 

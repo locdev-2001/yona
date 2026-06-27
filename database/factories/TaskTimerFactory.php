@@ -4,9 +4,9 @@ namespace Database\Factories;
 
 use App\Models\Task;
 use App\Models\TaskTimer;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<TaskTimer>

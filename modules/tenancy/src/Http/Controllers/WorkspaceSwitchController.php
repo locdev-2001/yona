@@ -3,10 +3,10 @@
 namespace Modules\Tenancy\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Tenancy\Models\WorkspaceMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 /**
  * Switches the active workspace. The target is validated against the user's own

@@ -3,8 +3,6 @@
 namespace Modules\Identity\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Services\WorkspaceProvisioningService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +13,8 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Services\WorkspaceProvisioningService;
 
 class RegisteredUserController extends Controller
 {

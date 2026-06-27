@@ -1,8 +1,8 @@
 <?php
 
+use Inertia\Testing\AssertableInertia as Assert;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use Inertia\Testing\AssertableInertia as Assert;
 
 // Server-controlled active workspace + switching (BR-X14) + shared props.
 

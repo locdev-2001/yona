@@ -6,8 +6,8 @@ use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Support\Facades\DB;
+use Modules\Tenancy\Models\Workspace;
 
 // ── CRM Tenant Isolation: 2-workspace pattern cho Client/Lead/Project/Task ────
 // Theo TenantIsolationTest pattern (BR-X01/X11): Layer 1 (global scope) + Layer 3 (RLS).

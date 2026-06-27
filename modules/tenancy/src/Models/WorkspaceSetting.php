@@ -2,13 +2,13 @@
 
 namespace Modules\Tenancy\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
-use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\WorkspaceSettingFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Shared\Concerns\HasOptimisticLock;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * WorkspaceSetting — key-value JSONB defaults per workspace. No SoftDeletes:

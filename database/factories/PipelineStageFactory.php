@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<PipelineStage>

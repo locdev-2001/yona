@@ -3,12 +3,12 @@
 namespace Modules\Identity\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Identity\Support\Audit\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\Identity\Models\User;
+use Modules\Identity\Support\Audit\Audit;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Platform-admin impersonation (Model A): the admin guard stays live; the web

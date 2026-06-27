@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use Illuminate\View\FileViewFinder;
-use InvalidArgumentException;
 
 /**
  * Extends FileViewFinder to resolve Inertia page components for modules.
@@ -35,8 +34,8 @@ class ModuleAwareInertiaViewFinder extends FileViewFinder
         }
 
         $module = substr($withoutPrefix, 0, $dotPos);         // 'Announcements'
-        $page   = substr($withoutPrefix, $dotPos + 1);         // 'announcements/index'
-        $kebab  = strtolower(preg_replace('/([A-Z])/', '-$1', lcfirst($module)));
+        $page = substr($withoutPrefix, $dotPos + 1);         // 'announcements/index'
+        $kebab = strtolower(preg_replace('/([A-Z])/', '-$1', lcfirst($module)));
 
         $base = base_path("modules/{$kebab}/resources/js/pages");
 

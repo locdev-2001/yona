@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
-use App\Models\Comment;
-use App\Services\CommentService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
+use Modules\Shared\Models\Comment;
+use Modules\Shared\Services\CommentService;
 
 /**
  * Thin controller for comments. Auth via CommentPolicy. Workspace isolation

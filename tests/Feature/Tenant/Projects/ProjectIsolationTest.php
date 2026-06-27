@@ -2,10 +2,10 @@
 
 use App\Models\Client;
 use App\Models\Project;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Services\ProjectService;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 // P08 — Tenant isolation: workspace A project invisible in workspace B context.
 

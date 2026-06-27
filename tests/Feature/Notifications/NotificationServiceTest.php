@@ -1,11 +1,11 @@
 <?php
 
+use App\Notifications\EntityNotification;
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\User;
+use Modules\Shared\Services\NotificationService;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
-use App\Notifications\EntityNotification;
-use App\Services\NotificationService;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 // NotificationService: self-notify guard, inactive guard, mark-read ownership.

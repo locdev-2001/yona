@@ -1,10 +1,10 @@
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { PageHeader } from '@/components/page-header';
 import ProjectForm from '@/components/projects/project-form';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, Client, Project, ProjectStatus, User } from '@/types';
 import { Head } from '@inertiajs/react';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 
 interface Props {
     project: Project;

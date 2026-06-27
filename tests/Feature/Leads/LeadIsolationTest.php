@@ -3,10 +3,10 @@
 use App\Models\Lead;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 // ── 2-workspace isolation ─────────────────────────────────────────────────────
 

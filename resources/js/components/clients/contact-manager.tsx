@@ -1,5 +1,3 @@
-import CustomFieldsSection from '@/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslator } from '@/lib/i18n';
 import type { Contact, CustomFieldValue } from '@/types';
 import { router, useForm } from '@inertiajs/react';
+import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 import { Pencil, Star, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 

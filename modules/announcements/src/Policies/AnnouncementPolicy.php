@@ -2,11 +2,11 @@
 
 namespace Modules\Announcements\Policies;
 
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use Modules\Announcements\Enums\AnnouncementStatus;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Support\AudienceResolver;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * Tenant-plane (web guard) authorization for announcements.

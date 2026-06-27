@@ -73,7 +73,10 @@ export default function TaskForm({ task, onSuccess, submitRoute, method = 'post'
     }
 
     function toggleAssignee(userId: number) {
-        setData('assignee_ids', data.assignee_ids.includes(userId) ? data.assignee_ids.filter((id) => id !== userId) : [...data.assignee_ids, userId]);
+        setData(
+            'assignee_ids',
+            data.assignee_ids.includes(userId) ? data.assignee_ids.filter((id) => id !== userId) : [...data.assignee_ids, userId],
+        );
     }
 
     const PRIORITIES: { value: string; label: string }[] = [
@@ -146,9 +149,7 @@ export default function TaskForm({ task, onSuccess, submitRoute, method = 'post'
             {/* BUG-07 fix: dependent record picker — only shown when a non-standalone type is selected */}
             {activeRelatedType && (
                 <div>
-                    <Label>
-                        {RELATED_TYPES.find((rt) => rt.value === activeRelatedType)?.label ?? activeRelatedType}
-                    </Label>
+                    <Label>{RELATED_TYPES.find((rt) => rt.value === activeRelatedType)?.label ?? activeRelatedType}</Label>
                     <Select value={data.related_id || ''} onValueChange={(v) => setData('related_id', v)}>
                         <SelectTrigger>
                             <SelectValue placeholder={t('tasks.fields.related_to') ?? 'Select...'} />

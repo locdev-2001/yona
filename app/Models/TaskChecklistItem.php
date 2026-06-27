@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Database\Factories\TaskChecklistItemFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * Checklist item for a task. item_order preserved for drag-reorder.

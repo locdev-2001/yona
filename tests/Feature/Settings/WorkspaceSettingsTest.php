@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceSetting;
 use Modules\Tenancy\Services\SettingsService;
-use Illuminate\Support\Facades\DB;
 
 it('set() upserts a setting for the active workspace', function () {
     $workspace = Workspace::factory()->create();

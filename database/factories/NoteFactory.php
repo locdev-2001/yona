@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Note;
-use Modules\Identity\Models\Team;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Identity\Models\Team;
+use Modules\Shared\Models\Note;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Note>

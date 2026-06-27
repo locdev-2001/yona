@@ -2,9 +2,9 @@
 
 use App\Models\Client;
 use App\Models\Contact;
+use App\Services\ClientService;
 use Modules\Identity\Models\User;
 use Modules\Tenancy\Models\Workspace;
-use App\Services\ClientService;
 
 /**
  * Primary contact invariant: exactly 1 is_primary per client.

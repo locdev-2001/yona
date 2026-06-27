@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\TeamReparentRequest;
 use App\Http\Requests\Settings\TeamStoreRequest;
 use App\Http\Requests\Settings\TeamUpdateRequest;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Services\TeamService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Services\TeamService;
 
 /**
  * Settings → Teams (admin). Tree CRUD with closure maintenance + cycle guard

@@ -1,15 +1,15 @@
 <?php
 
 use App\Events\LeadAssigned;
-use App\Models\Activity;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Notifications\LeadAssignedNotification;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Modules\Identity\Models\User;
+use Modules\Shared\Models\Activity;
+use Modules\Tenancy\Models\Workspace;
 
 // ── Assignment notification + activity ───────────────────────────────────────
 

@@ -1,12 +1,12 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Identity\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use Modules\Identity\Http\Controllers\Admin\Auth\NewPasswordController;
 use Modules\Identity\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use Modules\Identity\Http\Controllers\Admin\DashboardController;
 use Modules\Identity\Http\Controllers\Admin\ImpersonationController;
 use Modules\Identity\Http\Controllers\Admin\WorkspaceController;
-use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {

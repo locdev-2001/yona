@@ -1,10 +1,10 @@
 <?php
 
 use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
 use Modules\Identity\Services\TeamService;
 use Modules\Identity\Support\Visibility;
+use Modules\Tenancy\Models\Workspace;
+use Modules\Tenancy\Models\WorkspaceMember;
 
 // Record gate (BR-X02): own | team-subtree | all. The full owner_id matrix is
 // exercised on Sales entities later; here we prove the building blocks — closure

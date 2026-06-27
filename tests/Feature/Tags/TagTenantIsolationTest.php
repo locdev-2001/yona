@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Tag;
-use Modules\Identity\Models\Team;
-use Modules\Tenancy\Models\Workspace;
-use App\Services\TagService;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Models\Team;
+use Modules\Shared\Models\Tag;
+use Modules\Shared\Services\TagService;
+use Modules\Tenancy\Models\Workspace;
 
 // Tenant isolation for tags + taggables.
 

@@ -1,4 +1,3 @@
-import type { CustomFieldDefinition, EntityType, FieldType } from '@/components/custom-fields/types';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslator } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
+import type { CustomFieldDefinition, EntityType, FieldType } from '@modules/shared/resources/js/components/custom-fields/types';
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

@@ -1,5 +1,3 @@
-import CustomFieldsSection from '@/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@/components/custom-fields/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslator } from '@/lib/i18n';
 import type { Client, CustomFieldValue, Project, ProjectStatus, User } from '@/types';
 import { useForm } from '@inertiajs/react';
+import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 import { FormEvent } from 'react';
 
 interface Props {

@@ -2,7 +2,6 @@
 
 namespace Modules\Tenancy\Models;
 
-use Modules\Identity\Support\Audit\Audit;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Models\User;
+use Modules\Identity\Support\Audit\Audit;
 
 /**
  * Workspace — one customer organization, the hard data-isolation boundary.
@@ -50,15 +52,15 @@ class Workspace extends Model
         return $this->hasMany(WorkspaceMember::class);
     }
 
-    /** @return HasMany<\Modules\Identity\Models\Team, $this> */
+    /** @return HasMany<Team, $this> */
     public function teams(): HasMany
     {
-        return $this->hasMany(\Modules\Identity\Models\Team::class);
+        return $this->hasMany(Team::class);
     }
 
-    /** @return BelongsTo<\Modules\Identity\Models\User, $this> */
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

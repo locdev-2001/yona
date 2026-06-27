@@ -7,15 +7,15 @@ use App\Http\Requests\Projects\ChangeProjectStatusRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Models\Client;
-use App\Models\CustomFieldDefinition;
 use App\Models\Project;
 use App\Models\ProjectStatus;
-use Modules\Identity\Models\User;
 use App\Services\ProjectService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Models\User;
+use Modules\Shared\Models\CustomFieldDefinition;
 
 /**
  * P08 — Thin project controller. Parse → Service → Inertia/redirect.

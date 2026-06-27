@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNoteRequest;
 use App\Http\Requests\UpdateNoteRequest;
-use App\Models\Note;
-use App\Services\NoteService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
+use Modules\Shared\Models\Note;
+use Modules\Shared\Services\NoteService;
 
 /**
  * Thin controller for notes. Auth via NotePolicy. Workspace isolation

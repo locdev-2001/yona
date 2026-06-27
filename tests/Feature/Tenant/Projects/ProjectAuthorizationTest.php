@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Client;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 use App\Policies\ProjectPolicy;
 use App\Services\ProjectService;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Models\Workspace;
 
 // P08 — Authz matrix: 401 guest / 403 missing permission / 404 foreign WS / 200 authorized.
 

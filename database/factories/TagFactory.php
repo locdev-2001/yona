@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Tag;
-use Modules\Tenancy\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Modules\Shared\Models\Tag;
+use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Tag>

@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\Settings;
 
-use Modules\Identity\Models\Team;
-use Modules\Identity\Services\TeamService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Identity\Models\Team;
+use Modules\Identity\Services\TeamService;
 
 /**
  * Move a team under a new parent (or to root). Rejects cycles at validation

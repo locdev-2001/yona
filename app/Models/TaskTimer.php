@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-use Modules\Identity\Models\Concerns\Auditable;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Database\Factories\TaskTimerFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -12,6 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Modules\Identity\Models\Concerns\Auditable;
+use Modules\Identity\Models\User;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * Task timer (timesheet entry). Running = end_time IS NULL.

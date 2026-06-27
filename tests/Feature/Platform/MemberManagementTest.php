@@ -2,9 +2,9 @@
 
 use Modules\Identity\Models\Team;
 use Modules\Identity\Models\User;
+use Modules\Identity\Services\TeamService;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceMember;
-use Modules\Identity\Services\TeamService;
 use Spatie\Permission\PermissionRegistrar;
 
 // Settings → Members: invite / role / team (server-controlled, BR-X12/X03/X15).

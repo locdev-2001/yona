@@ -2,8 +2,8 @@
 
 namespace Modules\Identity\Models;
 
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * Closure-table row: one (ancestor, descendant, depth) edge of the team tree.
