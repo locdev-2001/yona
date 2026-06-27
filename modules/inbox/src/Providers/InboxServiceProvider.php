@@ -64,6 +64,9 @@ class InboxServiceProvider extends ServiceProvider
     {
         $path = __DIR__.'/../../routes/channels.php';
         if (file_exists($path)) {
+            // Broadcast::routes() đăng ký endpoint /broadcasting/auth trước khi load channel definitions.
+            // Dùng require (không phải Route::group) vì Broadcast::channel() không cần middleware wrapper.
+            \Illuminate\Support\Facades\Broadcast::routes(['middleware' => ['web', 'auth']]);
             require $path;
         }
     }
