@@ -5,7 +5,7 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { useTranslator } from '@/lib/i18n';
 import { type NavGroup, type NavItem, type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { Building2, FolderKanban, LayoutGrid, ListChecks, Sparkles, Target } from 'lucide-react';
+import { Building2, FolderKanban, Inbox, LayoutGrid, ListChecks, Sparkles, Target } from 'lucide-react';
 
 export function AppSidebar() {
     const t = useTranslator();
@@ -27,7 +27,10 @@ export function AppSidebar() {
     const navGroups: NavGroup[] = [
         {
             title: t('platform.nav.overview'),
-            items: [{ title: t('platform.nav.dashboard'), url: '/dashboard', icon: LayoutGrid }],
+            items: [
+                { title: t('platform.nav.dashboard'), url: '/dashboard', icon: LayoutGrid },
+                { title: t('platform.nav.inbox'), url: '/inbox', icon: Inbox },
+            ],
         },
         ...(crmItems.length > 0 ? [{ title: t('platform.nav.crm'), items: crmItems }] : []),
         {

@@ -47,6 +47,7 @@ return [
     'nav' => [
         'dashboard' => 'Bảng điều khiển',
         'overview' => 'Tổng quan',
+        'inbox' => 'Hộp thư',
         'crm' => 'CRM',
         'clients' => 'Khách hàng',
         'leads' => 'Leads',

@@ -46,6 +46,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'overview' => 'Overview',
+        'inbox' => 'Inbox',
         'crm' => 'CRM',
         'clients' => 'Clients',
         'leads' => 'Leads',
