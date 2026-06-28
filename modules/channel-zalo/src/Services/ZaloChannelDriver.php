@@ -2,7 +2,12 @@
 
 namespace Modules\ChannelZalo\Services;
 
+use Modules\ChannelZalo\Exceptions\RateCapException;
+use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
+use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
+use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
 use Modules\Inbox\Contracts\ChannelDriver;
+use Modules\Inbox\Contracts\SendException;
 use Modules\Inbox\Models\Conversation;
 use Modules\Inbox\Models\Message;
 
@@ -120,19 +125,31 @@ class ZaloChannelDriver implements ChannelDriver
     }
 
     /**
-     * Gửi tin outbound qua ZaloSendService (bridge HTTP + metering + rate-limit + circuit-breaker).
-     *
-     * Contract trả void; ZaloSendService::send() trả Message (dùng qua inject trực tiếp nếu cần Message).
+     * Gửi tin outbound qua ZaloSendService.
+     * Wrap Zalo-specific exceptions thành SendException (inbox-agnostic)
+     * để InboxController không cần import ChannelZalo exceptions (N1).
      *
      * @param  array<string, mixed>  $payload  {text?, media?}
+     *
+     * @throws SendException
      */
     public function sendMessage(Conversation $conversation, array $payload): void
     {
-        $this->sendService->send(
-            conversation: $conversation,
-            text: isset($payload['text']) ? (string) $payload['text'] : null,
-            media: $payload['media'] ?? null,
-        );
+        try {
+            $this->sendService->send(
+                conversation: $conversation,
+                text: isset($payload['text']) ? (string) $payload['text'] : null,
+                media: $payload['media'] ?? null,
+            );
+        } catch (ZaloCircuitOpenException $e) {
+            throw new SendException('Kết nối Zalo đang lỗi. Vui lòng gửi tin tay hoặc thử lại sau.', 'circuit_open', $e);
+        } catch (SendOutsideWindowException $e) {
+            throw new SendException('Chỉ được gửi tin từ 7h–22h (ToS Zalo).', 'outside_window', $e);
+        } catch (RateCapException $e) {
+            throw new SendException('Đã gửi tối đa 3 tin quảng cáo trong ngày cho số này (ToS Zalo).', 'rate_cap', $e);
+        } catch (ZaloNotConnectedException $e) {
+            throw new SendException('Zalo chưa kết nối hoặc phiên đã hết. Vui lòng đăng nhập lại.', 'not_connected', $e);
+        }
     }
 
     public function connect(string $workspaceId, array $params): void

@@ -60,6 +60,8 @@ use Modules\Tenancy\Models\WorkspaceMember;
  * @property bool $is_public
  * @property int $lead_order
  * @property string|null $last_stage_id
+ * @property string|null $conversation_id  P07: inbox conversation ref (no FK, cross-module N1)
+ * @property string|null $contact_id       P07: CDP contact ref (no FK, cross-module N1)
  * @property array<string, mixed> $custom_fields
  * @property int $lock_version
  * @property Carbon $created_at
@@ -84,6 +86,7 @@ class Lead extends Model
      * System columns: workspace_id, owner_id, team_id, created_by, updated_by,
      * lock_version, lead_number, lead_order, last_contact, date_converted,
      * converted_client_id, is_lost, is_junk, last_stage_id.
+     * P07 inbox refs: conversation_id, contact_id (set by ConversationLeadController, no FK cross-module).
      */
     protected $fillable = [
         'name',
@@ -104,6 +107,9 @@ class Lead extends Model
         'source_id',
         'assigned_to',
         'is_public',
+        // P07 — inbox cross-module refs (set by ConversationLeadController only, no FK)
+        'conversation_id',
+        'contact_id',
     ];
 
     /** @return array<string, string|array<string>> */

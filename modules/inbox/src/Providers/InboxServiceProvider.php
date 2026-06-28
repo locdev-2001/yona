@@ -2,11 +2,14 @@
 
 namespace Modules\Inbox\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Inbox\Channel\AllowAllMeteringGate;
 use Modules\Inbox\Channel\ChannelManager;
 use Modules\Inbox\Contracts\MeteringGate;
+use Modules\Inbox\Models\Conversation;
+use Modules\Inbox\Policies\ConversationPolicy;
 
 /**
  * Inbox feature module service provider.
@@ -38,6 +41,8 @@ class InboxServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+
+        Gate::policy(Conversation::class, ConversationPolicy::class);
 
         $this->loadWebRoutes();
         $this->loadApiRoutes();
