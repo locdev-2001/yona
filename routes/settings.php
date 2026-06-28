@@ -7,12 +7,12 @@ use Modules\CrmSales\Http\Controllers\Settings\LeadSourceController;
 use Modules\CrmSales\Http\Controllers\Settings\PipelineController;
 use Modules\CrmSales\Http\Controllers\Settings\PipelineStageController;
 use Illuminate\Support\Facades\Route;
-use Modules\Identity\Http\Controllers\Settings\MemberController;
-use Modules\Identity\Http\Controllers\Settings\PasswordController;
-use Modules\Identity\Http\Controllers\Settings\ProfileController;
-use Modules\Identity\Http\Controllers\Settings\TeamController;
-use Modules\Shared\Http\Controllers\Settings\CustomFieldController;
-use Modules\Tenancy\Http\Controllers\Settings\WorkspaceController;
+use App\Http\Controllers\Identity\Settings\MemberController;
+use App\Http\Controllers\Identity\Settings\PasswordController;
+use App\Http\Controllers\Identity\Settings\ProfileController;
+use App\Http\Controllers\Identity\Settings\TeamController;
+use App\Http\Controllers\Shared\Settings\CustomFieldController;
+use App\Http\Controllers\Tenancy\Settings\WorkspaceController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('settings', 'settings/profile');

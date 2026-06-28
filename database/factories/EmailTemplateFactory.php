@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use Modules\Email\Models\EmailTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<EmailTemplate>

@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Identity\Models\Team;
-use Modules\Shared\Models\Activity;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Team;
+use App\Models\Activity;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<Activity>

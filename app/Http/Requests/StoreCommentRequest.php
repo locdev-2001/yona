@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Shared\Models\Comment;
+use App\Models\Comment;
 
 /**
  * Validates creating a new comment (top-level or reply).

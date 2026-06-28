@@ -5,7 +5,7 @@ namespace Database\Factories;
 use Modules\CrmSales\Models\ClientGroup;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<ClientGroup>

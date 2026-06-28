@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Modules\Shared\Models\CustomFieldDefinition;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\CustomFieldDefinition;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<CustomFieldDefinition>

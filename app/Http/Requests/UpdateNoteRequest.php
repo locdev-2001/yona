@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Shared\Models\Note;
+use App\Models\Note;
 
 /**
  * Validates editing an existing note. Authorization checks authorship via NotePolicy.

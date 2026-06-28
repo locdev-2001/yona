@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Shared\Models\Comment;
+use App\Models\Comment;
 
 /**
  * Validates editing an existing comment. Authorization checks authorship via CommentPolicy.

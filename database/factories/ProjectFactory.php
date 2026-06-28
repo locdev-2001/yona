@@ -5,7 +5,7 @@ namespace Database\Factories;
 use Modules\CrmSales\Models\Client;
 use Modules\Projects\Models\Project;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<Project>

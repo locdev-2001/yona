@@ -5,8 +5,8 @@ namespace App\Http\Requests\Reminders;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Shared\Models\Reminder;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Models\Reminder;
+use App\Models\WorkspaceMember;
 
 /**
  * Validate creating a new reminder.

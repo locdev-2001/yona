@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Services\AnnouncementReadService;
-use Modules\Identity\Enums\TenantPermission;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\User;
-use Modules\Shared\Services\NotificationService;
-use Modules\Tenancy\Models\WorkspaceMember;
-use Modules\Tenancy\Support\TenantScope;
+use App\Enums\TenantPermission;
+use App\Models\Admin;
+use App\Models\User;
+use App\Services\NotificationService;
+use App\Models\WorkspaceMember;
+use App\Support\TenantScope;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -269,7 +269,7 @@ class HandleInertiaRequests extends Middleware
      * Finding 7b: fail-safe wrapper — announcements module bị tắt / belum migrate → null.
      * Đối xứng với guard billing entitlements ở membershipPayload().
      */
-    private function safeAnnouncementCount(\Modules\Identity\Models\User $user): ?int
+    private function safeAnnouncementCount(\App\Models\User $user): ?int
     {
         try {
             return app(AnnouncementReadService::class)->getUnreadCount($user);
@@ -280,7 +280,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /** @return array<string, mixed>|null */
-    private function safeLatestUnreadAnnouncement(\Modules\Identity\Models\User $user): ?array
+    private function safeLatestUnreadAnnouncement(\App\Models\User $user): ?array
     {
         try {
             $announcement = app(AnnouncementReadService::class)->getLatestUnread($user);

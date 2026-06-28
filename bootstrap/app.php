@@ -9,11 +9,11 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Modules\Identity\Http\Middleware\AdminCan;
-use Modules\Identity\Http\Middleware\BindAdminPermissionScope;
-use Modules\Identity\Http\Middleware\BlockDuringImpersonation;
-use Modules\Tenancy\Http\Middleware\IdentifyWorkspace;
-use Modules\Tenancy\Http\Middleware\ResetTenantContext;
+use App\Http\Middleware\AdminCan;
+use App\Http\Middleware\BindAdminPermissionScope;
+use App\Http\Middleware\BlockDuringImpersonation;
+use App\Http\Middleware\IdentifyWorkspace;
+use App\Http\Middleware\ResetTenantContext;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(

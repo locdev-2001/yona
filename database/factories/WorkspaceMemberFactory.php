@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 
 /**
  * @extends Factory<WorkspaceMember>

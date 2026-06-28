@@ -4,7 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Models\WorkspaceMember;
 
 /**
  * Update a member's role and/or team. Server-controlled (BR-X12); the

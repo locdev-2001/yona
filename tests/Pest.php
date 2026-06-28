@@ -2,11 +2,11 @@
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Models\Admin;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 

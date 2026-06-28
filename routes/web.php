@@ -17,13 +17,13 @@ use Modules\Projects\Http\Controllers\Projects\ProjectMemberController;
 use Modules\Projects\Http\Controllers\Projects\ProjectMilestoneController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
-use Modules\Shared\Http\Controllers\AttachmentController;
-use Modules\Shared\Http\Controllers\CommentController;
-use Modules\Shared\Http\Controllers\NoteController;
-use Modules\Shared\Http\Controllers\NotificationController;
-use Modules\Shared\Http\Controllers\ReminderController;
-use Modules\Shared\Http\Controllers\TagController;
-use Modules\Tenancy\Http\Controllers\WorkspaceSwitchController;
+use App\Http\Controllers\Shared\AttachmentController;
+use App\Http\Controllers\Shared\CommentController;
+use App\Http\Controllers\Shared\NoteController;
+use App\Http\Controllers\Shared\NotificationController;
+use App\Http\Controllers\Shared\ReminderController;
+use App\Http\Controllers\Shared\TagController;
+use App\Http\Controllers\Tenancy\WorkspaceSwitchController;
 
 Route::get('/', WelcomeController::class)->name('home');
 

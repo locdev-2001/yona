@@ -5,7 +5,7 @@ namespace Database\Factories;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\CrmSales\Models\PipelineStage;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 /**
  * @extends Factory<PipelineStage>

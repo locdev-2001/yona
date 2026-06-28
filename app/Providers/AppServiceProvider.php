@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Email\Models\EmailTemplate;
 use Modules\Email\Policies\EmailTemplatePolicy;
-use Modules\Identity\Models\User;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,6 +17,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Transition shim app/Support/legacy-aliases.php (aliases old Modules\
+        // {Identity,Tenancy,Shared}\ class names to their App\ locations) is loaded
+        // via composer autoload "files" so the aliases exist before ANY class
+        // compiles (including PHPUnit-discovered test stubs). Removed in a later phase.
+
         // Override Inertia's view-finder to resolve Modules.X.page convention.
         // Modules.{Module}.{page} → modules/{kebab}/resources/js/pages/{page}.tsx
         $this->app->bind('inertia.view-finder', function ($app) {

@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceSetting;
+use App\Models\Workspace;
+use App\Models\WorkspaceSetting;
 
 /**
  * @extends Factory<WorkspaceSetting>

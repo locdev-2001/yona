@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Modules\Identity\Models\User;
+use App\Models\User;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

@@ -4,7 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Models\WorkspaceMember;
 
 /**
  * Invite a member. role + team are validated but applied by MembershipService

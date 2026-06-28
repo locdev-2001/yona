@@ -57,6 +57,7 @@
         "Modules\\PaymentManual\\": "modules/payment-manual/src/"
         },
         "files": [
+            "app/Support/legacy-aliases.php",
             "app/helpers.php"
         ]
     },

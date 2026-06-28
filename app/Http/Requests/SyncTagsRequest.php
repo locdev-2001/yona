@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Identity\Enums\TenantPermission;
+use App\Enums\TenantPermission;
 
 /**
  * Validates a tag sync request for a specific entity.
