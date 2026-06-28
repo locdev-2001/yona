@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import { type SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { MessageCircle, Send, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -10,13 +11,22 @@ import { useEffect, useRef, useState } from 'react';
 
 interface Message {
     id: string;
+    conversation_id: string;
     direction: 'in' | 'out';
     type: string;
     body: string | null;
     media_url: string | null;
     platform_sent_at: string | null;
-    created_at: string;
     sender_name: string | null;
+    created_at: string;
+}
+
+/** Payload từ MessageReceived.broadcastWith() */
+interface MessageReceivedPayload {
+    message: Message;
+    conversation_id: string;
+    last_message_at: string | null;
+    unread_count: number;
 }
 
 interface Conversation {
@@ -46,9 +56,22 @@ interface Props {
     filters: { q?: string; unread?: string; channel?: string };
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const ZALO_QUOTA_KEY = 'quota.conversations.zalo_personal';
+
+/** Hiển thị toast lỗi nhẹ — dùng alert vì chưa có toast component chung */
+function showToast(msg: string) {
+    // ponytail: alert thay toast — thêm toaster lib khi có shared toast infra
+    alert(msg);
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function InboxIndex({ conversations, filters }: Props) {
+    const { auth, activeWorkspace } = usePage<SharedData>().props;
+
+    const [convList, setConvList] = useState<Conversation[]>(conversations.data);
     const [activeConv, setActiveConv] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -59,10 +82,67 @@ export default function InboxIndex({ conversations, filters }: Props) {
 
     const { data, setData, post, processing, reset, errors } = useForm({ text: '' });
 
-    // Scroll to bottom when messages change
+    // Entitlements snapshot từ Inertia shared data
+    const entitlements = auth.membership?.entitlements ?? null;
+    const zaloLimit = entitlements?.quotas[ZALO_QUOTA_KEY] ?? null;
+    const zaloRemaining = entitlements?.remaining[ZALO_QUOTA_KEY] ?? null;
+    // Chỉ gate khi có quota rõ ràng VÀ remaining = 0
+    const quotaExhausted = zaloRemaining !== null && zaloRemaining <= 0;
+
+    // Sync convList khi Inertia reload conversations prop
+    useEffect(() => {
+        setConvList(conversations.data);
+    }, [conversations.data]);
+
+    // Scroll to bottom khi messages thay đổi
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // ── Echo realtime subscribe ────────────────────────────────────────────────
+    useEffect(() => {
+        const workspaceId = activeWorkspace?.id;
+        // Guard: Echo có thể undefined nếu Reverb tắt local
+        if (!workspaceId || typeof window === 'undefined' || !window.Echo) return;
+
+        const channel = window.Echo.private(`workspace.${workspaceId}.conversations`);
+
+        channel.listen('MessageReceived', (payload: MessageReceivedPayload) => {
+            const { message, conversation_id, last_message_at, unread_count } = payload;
+
+            // Cập nhật message thread nếu đang mở đúng conversation
+            setActiveConv((current) => {
+                if (current?.id === conversation_id) {
+                    setMessages((prev) => {
+                        // Tránh duplicate nếu message đã có (outbound vừa gửi)
+                        if (prev.some((m) => m.id === message.id)) return prev;
+                        return [...prev, message];
+                    });
+                }
+                return current;
+            });
+
+            // Cập nhật unread + preview trong danh sách
+            setConvList((prev) =>
+                prev.map((c) =>
+                    c.id === conversation_id
+                        ? {
+                              ...c,
+                              unread_count,
+                              last_message_at,
+                              last_message_preview: message.body ?? c.last_message_preview,
+                          }
+                        : c,
+                ),
+            );
+        });
+
+        return () => {
+            window.Echo.leave(`workspace.${workspaceId}.conversations`);
+        };
+    }, [activeWorkspace?.id]);
+
+    // ── Handlers ───────────────────────────────────────────────────────────────
 
     function handleSelectConv(conv: Conversation) {
         setActiveConv(conv);
@@ -70,13 +150,17 @@ export default function InboxIndex({ conversations, filters }: Props) {
         setLeadError(null);
         setLoadingMessages(true);
 
+        // Reset unread cục bộ ngay khi click
+        setConvList((prev) => prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c)));
+
         fetch(route('inbox.messages', conv.id), {
             headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
         })
             .then((r) => r.json())
-            .then((data) => {
-                setMessages(data.data ?? []);
+            .then((responseData) => {
+                setMessages(responseData.data ?? []);
             })
+            .catch(() => showToast('Không tải được tin nhắn. Vui lòng thử lại.'))
             .finally(() => setLoadingMessages(false));
     }
 
@@ -88,7 +172,12 @@ export default function InboxIndex({ conversations, filters }: Props) {
             preserveState: true,
             onSuccess: () => {
                 reset('text');
+                // Reload messages sau khi gửi thành công
                 handleSelectConv(activeConv);
+            },
+            onError: (errs) => {
+                const msg = errs.text ?? errs.quota ?? errs.rate ?? errs.circuit;
+                if (msg) showToast(msg);
             },
         });
     }
@@ -104,7 +193,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                 'X-Requested-With': 'XMLHttpRequest',
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
         })
             .then(async (r) => {
@@ -113,10 +202,13 @@ export default function InboxIndex({ conversations, filters }: Props) {
                     setLeadError(json.message ?? 'Lỗi tạo Lead.');
                     return;
                 }
-                // Cập nhật conversation local để hiện nút "Xem Lead"
-                setActiveConv({ ...activeConv, lead_id: json.lead_id });
-                router.reload({ only: ['conversations'] });
+                // Cập nhật local state để hiện nút "Xem Lead"
+                setActiveConv((prev) => (prev ? { ...prev, lead_id: json.lead_id } : prev));
+                setConvList((prev) =>
+                    prev.map((c) => (c.id === activeConv.id ? { ...c, lead_id: json.lead_id } : c)),
+                );
             })
+            .catch(() => setLeadError('Không kết nối được server.'))
             .finally(() => setLeadLoading(false));
     }
 
@@ -134,7 +226,8 @@ export default function InboxIndex({ conversations, filters }: Props) {
             <div className="flex h-[calc(100vh-64px)] overflow-hidden">
                 {/* ── Cột trái: danh sách hội thoại ─────────────────────── */}
                 <div className="flex w-80 flex-shrink-0 flex-col border-r">
-                    <div className="border-b p-3">
+                    {/* Header: search + usage badge */}
+                    <div className="border-b p-3 space-y-2">
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <Input
                                 placeholder="Tìm hội thoại..."
@@ -146,17 +239,30 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 Tìm
                             </Button>
                         </form>
+
+                        {/* Usage badge — chỉ hiện khi có quota data */}
+                        {zaloLimit !== null && zaloRemaining !== null && (
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Hội thoại tháng này</span>
+                                <Badge
+                                    variant={quotaExhausted ? 'destructive' : 'secondary'}
+                                    className="text-[10px]"
+                                >
+                                    {zaloLimit - zaloRemaining}/{zaloLimit}
+                                </Badge>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                        {conversations.data.length === 0 && (
+                        {convList.length === 0 && (
                             <div className="text-muted-foreground p-6 text-center text-sm">
                                 <MessageCircle className="mx-auto mb-2 h-8 w-8 opacity-30" />
                                 Chưa có hội thoại nào.
                             </div>
                         )}
 
-                        {conversations.data.map((conv) => (
+                        {convList.map((conv) => (
                             <button
                                 key={conv.id}
                                 className={`w-full border-b px-4 py-3 text-left hover:bg-muted/50 transition-colors ${
@@ -248,20 +354,37 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* Composer */}
-                            <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
-                                <Input
-                                    value={data.text}
-                                    onChange={(e) => setData('text', e.target.value)}
-                                    placeholder="Nhập tin nhắn..."
-                                    className="flex-1"
-                                    disabled={processing}
-                                />
-                                <Button type="submit" size="sm" disabled={processing || !data.text.trim()}>
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            </form>
-                            {errors.text && <p className="px-3 pb-2 text-xs text-red-500">{errors.text}</p>}
+                            {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
+                            {quotaExhausted && messages.length === 0 ? (
+                                <div className="border-t p-3 text-center">
+                                    <p className="text-muted-foreground mb-2 text-xs">
+                                        Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        variant="default"
+                                        onClick={() => router.visit('/admin/billing/upgrade')}
+                                    >
+                                        Nâng gói
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
+                                        <Input
+                                            value={data.text}
+                                            onChange={(e) => setData('text', e.target.value)}
+                                            placeholder="Nhập tin nhắn..."
+                                            className="flex-1"
+                                            disabled={processing}
+                                        />
+                                        <Button type="submit" size="sm" disabled={processing || !data.text.trim()}>
+                                            <Send className="h-4 w-4" />
+                                        </Button>
+                                    </form>
+                                    {errors.text && <p className="px-3 pb-2 text-xs text-red-500">{errors.text}</p>}
+                                </>
+                            )}
                         </>
                     )}
                 </div>
@@ -293,7 +416,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Lead</span>
-                                    <span>{activeConv.lead_id ? 'Đã tạo' : 'Chưa có'}</span>
+                                    <span>{activeConv.lead_id ? `#${activeConv.lead_id.slice(0, 8)}` : 'Chưa có'}</span>
                                 </div>
                             </div>
 
@@ -305,11 +428,12 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                     className="w-full"
                                     onClick={() => router.visit(route('leads.show', activeConv.lead_id!))}
                                 >
-                                    Xem Lead
+                                    Xem Lead #{activeConv.lead_id.slice(0, 8)}
                                 </Button>
                             ) : (
                                 <>
-                                    {activeConv.thread_type !== 1 && (
+                                    {/* thread_type 1 = nhóm → không tạo Lead */}
+                                    {activeConv.thread_type !== 1 ? (
                                         <Button
                                             size="sm"
                                             className="w-full"
@@ -318,6 +442,10 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                         >
                                             {leadLoading ? 'Đang tạo...' : 'Tạo Lead'}
                                         </Button>
+                                    ) : (
+                                        <p className="text-muted-foreground text-center text-xs">
+                                            Hội thoại nhóm — không tạo Lead
+                                        </p>
                                     )}
                                     {leadError && (
                                         <p className="text-destructive text-xs">{leadError}</p>

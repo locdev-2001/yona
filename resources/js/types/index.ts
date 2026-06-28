@@ -44,10 +44,20 @@ export interface Workspace {
     locale?: string;
 }
 
+export interface EntitlementSnapshot {
+    flags: string[];
+    /** Quota limits per key (e.g. 'quota.conversations.zalo_personal' → 50) */
+    quotas: Record<string, number>;
+    /** Remaining per quota.conversations.* key for current billing period */
+    remaining: Record<string, number>;
+}
+
 export interface Membership {
     role: WorkspaceRole;
     team_id: string | null;
     permissions: string[];
+    /** Present only when billing module is active; null otherwise */
+    entitlements: EntitlementSnapshot | null;
 }
 
 export interface AdminIdentity {
