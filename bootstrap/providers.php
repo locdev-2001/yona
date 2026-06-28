@@ -24,9 +24,6 @@ return [
     EmailServiceProvider::class,
     AnnouncementsServiceProvider::class,
     ProjectsServiceProvider::class,
-    ModuleServiceProvider::class,
-    // Registered AFTER ModuleServiceProvider so it overrides cdp's no-op
-    // IdentityResolver binding with the real dedup impl (the old topo-sort F10
-    // invariant). This override is collapsed in phase 1d when cdp moves.
     CrmSalesServiceProvider::class,
+    ModuleServiceProvider::class,
 ];

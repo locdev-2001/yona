@@ -7,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 use App\Events\LeadAssigned;
 use App\Events\LeadCreated;
 use App\Events\LeadStageChanged;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\PipelineStage;
 use App\Models\User;
@@ -70,6 +71,24 @@ class LeadService
 
             return $lead;
         });
+    }
+
+    /**
+     * Create a Lead from an existing Contact (inbox → Lead flow, Phase 07).
+     * Populates name/email/phone from the contact, merged with extra attrs
+     * (pipeline_id, stage_id required).
+     *
+     * @param  array<string, mixed>  $attrs
+     */
+    public function createFromContact(Contact $contact, array $attrs): Lead
+    {
+        $leadAttrs = array_merge([
+            'name' => $contact->fullName(),
+            'email' => $contact->email,
+            'phone' => $contact->phone,
+        ], $attrs);
+
+        return $this->create($leadAttrs);
     }
 
     /**

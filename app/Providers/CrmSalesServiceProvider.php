@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Contracts\ContactRepository;
-use App\Contracts\LeadCreator;
 use App\Events\LeadAssigned;
 use App\Listeners\SendLeadAssignedNotification;
 use App\Models\Client;
@@ -17,16 +15,12 @@ use App\Policies\ContactPolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\LeadSourcePolicy;
 use App\Policies\PipelinePolicy;
-use App\Services\CdpIdentityResolverImpl;
-use App\Services\ContactRepositoryImpl;
-use App\Services\LeadCreatorImpl;
 use App\Services\MergeFields\ClientMergeFields;
 use App\Services\MergeFields\ContactMergeFields;
 use App\Services\MergeFields\LeadMergeFields;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Cdp\Contracts\IdentityResolver;
 use App\Contracts\EntityMergeFields;
 
 /**
@@ -37,11 +31,7 @@ class CrmSalesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(ContactRepository::class, ContactRepositoryImpl::class);
-        $this->app->bind(LeadCreator::class, LeadCreatorImpl::class);
-
-        // Phase-07: override no-op IdentityResolver (CdpServiceProvider) bằng impl thật.
-        $this->app->bind(IdentityResolver::class, CdpIdentityResolverImpl::class);
+        // ContactService + LeadService auto-resolve (concrete classes, no contracts).
 
         // P06 — Reverse-registry: tag crm-sales merge-field providers so EmailServiceProvider
         // picks them up via $app->tagged(EntityMergeFields::class).

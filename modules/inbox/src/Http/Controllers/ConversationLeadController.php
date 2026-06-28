@@ -3,12 +3,13 @@
 namespace Modules\Inbox\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Contact;
+use App\Services\ContactService;
+use App\Services\LeadService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Modules\Cdp\Contracts\IdentityResolver;
-use App\Contracts\LeadCreator;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\Inbox\Models\Conversation;
 
@@ -18,12 +19,9 @@ use Modules\Inbox\Models\Conversation;
  * Guard bất biến:
  *   - Idempotency: conversation.lead_id đã set → trả Lead cũ (KHÔNG tạo mới).
  *   - Group guard: thread_type=1 (group) → 422.
- *   - Dedup SĐT: peer_phone → cdp IdentityResolver::resolveOrCreateFromPeer → set contact_id.
- *   - Tạo Lead qua LeadCreator contract (crm-sales) — KHÔNG tự viết logic Lead.
+ *   - Dedup SĐT: peer_phone → ContactService::resolveOrCreateFromPeer → set contact_id.
+ *   - Tạo Lead qua LeadService::createFromContact — KHÔNG tự viết logic Lead.
  *   - Link 2 chiều: conversation.lead_id + leads.conversation_id + leads.contact_id.
- *
- * Cross-module: KHÔNG import Modules\CrmSales\Models\Lead trực tiếp —
- * dùng LeadCreator contract (phơi bởi crm-sales). lead_id lưu dưới dạng string (uuid).
  */
 class ConversationLeadController extends Controller
 {
@@ -51,9 +49,7 @@ class ConversationLeadController extends Controller
         // Contact dedup không cần atomic chung với tạo Lead.
         $contactId = null;
         if ($conversation->peer_phone !== null) {
-            /** @var \Modules\Cdp\Contracts\IdentityResolver $resolver */
-            $resolver = app(IdentityResolver::class);
-            $contact = $resolver->resolveOrCreateFromPeer(
+            $contact = app(ContactService::class)->resolveOrCreateFromPeer(
                 workspaceId: $conversation->workspace_id,
                 channel: $conversation->channel,
                 peerUid: $conversation->peer_uid,
@@ -81,13 +77,10 @@ class ConversationLeadController extends Controller
 
                 $firstStage = $pipeline?->stages()->orderBy('stage_order')->first();
 
-                /** @var \App\Contracts\LeadCreator $creator */
-                $creator = app(LeadCreator::class);
-
-                // Tạo Lead qua crm-sales contract (REUSE — không viết logic Lead)
-                $lead = $creator->createFromContact(
+                // Tạo Lead qua LeadService (REUSE — không viết logic Lead)
+                $lead = app(LeadService::class)->createFromContact(
                     // createFromContact cần Contact — nhưng contact_id có thể null
-                    // Với trường hợp không có contact, tạo Lead trực tiếp qua LeadService
+                    // Với trường hợp không có contact, tạo Lead từ stub đọc fields
                     contact: $this->resolveOrBuildDummyContact($conversation, $contactId),
                     attrs: array_filter([
                         'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ Zalo',
@@ -135,21 +128,21 @@ class ConversationLeadController extends Controller
     }
 
     /**
-     * Trả Contact model nếu có, hoặc tạo anonymous stub cho LeadCreator.
-     * ponytail: LeadCreatorImpl chỉ đọc fullName()/email/phone từ Contact —
+     * Trả Contact model nếu có, hoặc tạo anonymous stub cho LeadService::createFromContact.
+     * ponytail: createFromContact chỉ đọc fullName()/email/phone từ Contact —
      * stub này đủ khi không có SĐT / chưa tạo được Contact.
      */
-    private function resolveOrBuildDummyContact(Conversation $conversation, ?string $contactId): \Modules\CrmSales\Models\Contact
+    private function resolveOrBuildDummyContact(Conversation $conversation, ?string $contactId): Contact
     {
         if ($contactId !== null) {
-            $contact = \Modules\CrmSales\Models\Contact::find($contactId);
+            $contact = Contact::find($contactId);
             if ($contact !== null) {
                 return $contact;
             }
         }
 
-        // Stub contact (không save — chỉ để LeadCreatorImpl đọc fields)
-        $stub = new \Modules\CrmSales\Models\Contact;
+        // Stub contact (không save — chỉ để createFromContact đọc fields)
+        $stub = new Contact;
         $stub->first_name = $conversation->peer_name ?? 'Khách';
         $stub->phone = $conversation->peer_phone;
 

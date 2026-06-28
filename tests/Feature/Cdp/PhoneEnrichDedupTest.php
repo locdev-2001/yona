@@ -1,14 +1,13 @@
 <?php
 
-use Modules\Cdp\Contracts\IdentityResolver;
-use App\Contracts\ContactRepository;
+use App\Services\ContactService;
 use Modules\CrmSales\Models\Contact;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Identity\Models\User;
 
 // ── Phase-07: cdp-dedup tests ─────────────────────────────────────────────────
 // Covers: normalizePhone, firstOrCreateByPhone (idempotent), mergeIdentities (flag-not-auto),
-//         Contact.client_id nullable, IdentityResolver binding override.
+//         Contact.client_id nullable.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +24,7 @@ function cdpWorkspace(): array
 // ─── normalizePhone ───────────────────────────────────────────────────────────
 
 it('normalizePhone: chuẩn hóa +84 về 0xxx', function () {
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     expect($repo->normalizePhone('+84 90 123 4567'))->toBe('0901234567')
         ->and($repo->normalizePhone('84901234567'))->toBe('0901234567')
@@ -34,7 +33,7 @@ it('normalizePhone: chuẩn hóa +84 về 0xxx', function () {
 });
 
 it('normalizePhone: trả null cho SĐT không hợp lệ', function () {
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     expect($repo->normalizePhone(null))->toBeNull()
         ->and($repo->normalizePhone(''))->toBeNull()
@@ -46,7 +45,7 @@ it('normalizePhone: trả null cho SĐT không hợp lệ', function () {
 
 it('firstOrCreateByPhone: tạo mới contact draft khi chưa có', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $contact = $repo->firstOrCreateByPhone('0901234567', 'Nguyễn Văn An');
 
@@ -60,7 +59,7 @@ it('firstOrCreateByPhone: tạo mới contact draft khi chưa có', function () 
 
 it('firstOrCreateByPhone: idempotent — 2 lần cùng phone trả cùng 1 contact', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $first = $repo->firstOrCreateByPhone('0901234567', 'Nguyễn Văn An');
     $second = $repo->firstOrCreateByPhone('0901234567', 'Tên Khác');
@@ -71,7 +70,7 @@ it('firstOrCreateByPhone: idempotent — 2 lần cùng phone trả cùng 1 conta
 
 it('firstOrCreateByPhone: tự normalize phone trước khi tra', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $contact = $repo->firstOrCreateByPhone('+84 90 123 4567', 'Khách A');
     $same = $repo->firstOrCreateByPhone('0901234567', 'Khách A');
@@ -81,7 +80,7 @@ it('firstOrCreateByPhone: tự normalize phone trước khi tra', function () {
 
 it('firstOrCreateByPhone: throw InvalidArgumentException khi phone không hợp lệ', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     expect(fn () => $repo->firstOrCreateByPhone('abc123'))->toThrow(\InvalidArgumentException::class);
 });
@@ -121,7 +120,7 @@ it('mergeIdentities: flag needs_merge_review trên cả 2 contact, KHÔNG auto-m
     $primary = Contact::factory()->create(['workspace_id' => $ws->id, 'phone' => '0901111111']);
     $duplicate = Contact::factory()->create(['workspace_id' => $ws->id, 'phone' => '0901111112']);
 
-    $resolver = app(IdentityResolver::class);
+    $resolver = app(ContactService::class);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
 
     $primary->refresh();
@@ -143,7 +142,7 @@ it('mergeIdentities: idempotent — gọi 2 lần không duplicate flag', functi
     $primary = Contact::factory()->create(['workspace_id' => $ws->id]);
     $duplicate = Contact::factory()->create(['workspace_id' => $ws->id]);
 
-    $resolver = app(IdentityResolver::class);
+    $resolver = app(ContactService::class);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
 
@@ -159,15 +158,6 @@ it('mergeIdentities: idempotent — gọi 2 lần không duplicate flag', functi
         ->where('action', 'contact.merge_review_flagged')
         ->count();
     expect($activityCount)->toBe(1);
-});
-
-// ─── IdentityResolver binding override ───────────────────────────────────────
-
-it('app(IdentityResolver) là impl thật, không phải NoOpIdentityResolver', function () {
-    $resolver = app(IdentityResolver::class);
-
-    expect($resolver)->not->toBeInstanceOf(\Modules\Cdp\NoOpIdentityResolver::class);
-    expect($resolver)->toBeInstanceOf(\Modules\CrmSales\Services\CdpIdentityResolverImpl::class);
 });
 
 // ─── RLS: contacts còn enforce workspace isolation ────────────────────────────
