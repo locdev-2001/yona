@@ -80,7 +80,8 @@ export default function InboxIndex({ conversations, filters }: Props) {
     const [leadError, setLeadError] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const { data, setData, post, processing, reset, errors } = useForm({ text: '' });
+    const { data, setData } = useForm({ text: '' });
+    const [sending, setSending] = useState(false);
 
     // Entitlements snapshot từ Inertia shared data
     const entitlements = auth.membership?.entitlements ?? null;
@@ -166,20 +167,39 @@ export default function InboxIndex({ conversations, filters }: Props) {
 
     function handleSend(e: React.FormEvent) {
         e.preventDefault();
-        if (!activeConv || !data.text.trim()) return;
+        if (!activeConv || !data.text.trim() || sending) return;
 
-        post(route('inbox.send', activeConv.id), {
-            preserveState: true,
-            onSuccess: () => {
-                reset('text');
-                // Reload messages sau khi gửi thành công
-                handleSelectConv(activeConv);
+        // The send endpoint is a JSON API (returns the created message / {message,error_code} on 422),
+        // not an Inertia page — use fetch, mirroring handleSelectConv/handleCreateLead.
+        const text = data.text;
+        const conv = activeConv;
+        setSending(true);
+        setData('text', '');
+
+        fetch(route('inbox.send', conv.id), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
-            onError: (errs) => {
-                const msg = errs.text ?? errs.quota ?? errs.rate ?? errs.circuit;
-                if (msg) showToast(msg);
-            },
-        });
+            body: JSON.stringify({ text }),
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    setData('text', text); // restore input so the user can retry
+                    showToast(json.message ?? 'Không gửi được tin nhắn. Vui lòng thử lại.');
+                    return;
+                }
+                handleSelectConv(conv); // reload thread to show the sent message
+            })
+            .catch(() => {
+                setData('text', text);
+                showToast('Không kết nối được server.');
+            })
+            .finally(() => setSending(false));
     }
 
     function handleCreateLead() {
@@ -352,13 +372,12 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                             onChange={(e) => setData('text', e.target.value)}
                                             placeholder="Nhập tin nhắn..."
                                             className="flex-1"
-                                            disabled={processing}
+                                            disabled={sending}
                                         />
-                                        <Button type="submit" size="sm" disabled={processing || !data.text.trim()}>
+                                        <Button type="submit" size="sm" disabled={sending || !data.text.trim()}>
                                             <Send className="h-4 w-4" />
                                         </Button>
                                     </form>
-                                    {errors.text && <p className="px-3 pb-2 text-xs text-red-500">{errors.text}</p>}
                                 </>
                             )}
                         </>
