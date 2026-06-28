@@ -7,7 +7,9 @@ use App\Models\Workspace;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
 use App\Services\InboundMessageService;
+use App\Services\ZaloGroupBackfillService;
 use App\Support\TenantScope;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -88,22 +90,56 @@ class ZaloPersonalWebhookController extends Controller
      * Inbound message từ bridge → parse + ingest.
      * KHÔNG gọi gate (F13/F20: inbound always-accept, fail-safe).
      *
+     * Contract HTTP (outbox classify):
+     *   200 → done (xóa khỏi outbox)
+     *   422 → dead-letter (payload hỏng vĩnh viễn, không retry)
+     *   503 → retry (DB transient, bridge giữ + backoff)
+     *
      * @param  array<string, mixed>  $payload
      */
     private function handleInbound(array $payload): JsonResponse
     {
         try {
+            // Account-keyed: resolve personal_uid của connection (kể cả trashed) để
+            // upsertConversation gắn message vào conversation canonical thay vì fork
+            // theo connection_id mỗi lần reconnect.
+            $connectionId = (int) ($payload['connection_id'] ?? 0);
+            $payload['connection_personal_uid'] = $connectionId > 0
+                ? ZaloConnection::personalUidForConnection($connectionId)
+                : null;
+
             $driver = app(ChannelManager::class)->driver('zalo_personal');
             $normalized = $driver->parseInbound($payload);
             $this->inboundMessageService->ingest($normalized);
 
             return response()->json(['ok' => true]);
-        } catch (Throwable $e) {
-            // ponytail: log nhưng trả 200 — bridge không retry nếu nhận non-2xx
-            // F13: inbound fail-safe — không để bridge loop retry làm spam DB
-            report($e);
+        } catch (QueryException|\PDOException $e) {
+            // Transient DB error (down, deadlock, lock timeout) → 503 → outbox retry
+            $this->safeReport($e);
 
-            return response()->json(['ok' => true, 'message' => 'ingest_error_logged'], 200);
+            return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+        } catch (\InvalidArgumentException $e) {
+            // Payload hỏng / driver thiếu → permanent → 422 → dead-letter, không retry vô tận
+            $this->safeReport($e);
+
+            return response()->json(['ok' => false, 'message' => 'permanent_bad_payload'], 422);
+        } catch (Throwable $e) {
+            // Unknown — thà giữ lại để retry hơn mất tin
+            $this->safeReport($e);
+
+            return response()->json(['ok' => false, 'message' => 'unexpected_error'], 503);
+        }
+    }
+
+    /**
+     * Bọc report() để tránh throw khi log channel = database đang down (H-5).
+     */
+    private function safeReport(Throwable $e): void
+    {
+        try {
+            report($e);
+        } catch (Throwable) {
+            error_log('zalo webhook report() failed: '.$e->getMessage());
         }
     }
 
@@ -136,7 +172,20 @@ class ZaloPersonalWebhookController extends Controller
             return response()->json(['ok' => true, 'message' => 'connection_not_found'], 200);
         }
 
+        $hadGap = $connection->last_session_lost_at !== null
+            || $connection->state === 'session_lost';
+
         $connection->updateState($modelState, $detail);
+
+        // ponytail: inline backfill — chưa có DB-queue worker; chuyển Job khi có worker
+        if ($modelState === 'connected' && $hadGap) {
+            try {
+                app(ZaloGroupBackfillService::class)->run($connectionId);
+            } catch (Throwable $e) {
+                // Không để lỗi backfill phá update state
+                $this->safeReport($e);
+            }
+        }
 
         // TODO D-2: broadcast ZaloConnectionStateChanged event khi có realtime FE
 

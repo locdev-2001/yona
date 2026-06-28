@@ -6,7 +6,9 @@ use App\Contracts\SendException;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Services\ZaloGroupBackfillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,8 +30,13 @@ class InboxController extends Controller
     /**
      * GET /inbox — danh sách hội thoại workspace, RLS auto-filter.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ?Conversation $conversation = null): Response
     {
+        // Deep-link /inbox/{conversation}: preselect (RLS đã chặn cross-workspace → 404).
+        if ($conversation !== null) {
+            $this->authorize('view', $conversation);
+        }
+
         $query = Conversation::orderByDesc('last_message_at');
 
         if ($search = $request->string('q')->toString()) {
@@ -55,11 +62,38 @@ class InboxController extends Controller
             ? app(ChannelManager::class)->hasAny()
             : false;
 
+        // Tier 0: truyền trạng thái kết nối Zalo xuống FE để hiển thị banner gap.
+        // RLS auto-filter theo workspace. Phase 1 ~1 kết nối/workspace → first() đủ (YAGNI).
+        $zaloConnection = ZaloConnection::orderByDesc('last_connected_at')
+            ->first(['id', 'display_name', 'state', 'session_lost_reason', 'last_connected_at', 'last_session_lost_at']);
+
         return Inertia::render('inbox/index', [
             'conversations' => $conversations,
             'filters' => $request->only(['q', 'unread', 'channel']),
             'channelsAvailable' => $channelsAvailable,
+            'selectedConversation' => $conversation,
+            'zaloConnection' => $zaloConnection,
         ]);
+    }
+
+    /**
+     * POST /inbox/resync
+     * Kéo backfill tin nhóm bị mất trong gap kết nối.
+     * Tin mới sẽ vào DB async qua webhook (idempotent ingest).
+     */
+    public function resync(ZaloGroupBackfillService $backfillService): JsonResponse
+    {
+        // RLS tự lọc theo workspace — chỉ lấy connection của workspace hiện tại
+        $connections = ZaloConnection::where('state', 'connected')
+            ->whereNull('deleted_at')
+            ->get(['connection_id']);
+
+        $totalFetched = 0;
+        foreach ($connections as $conn) {
+            $totalFetched += $backfillService->run($conn->connection_id);
+        }
+
+        return response()->json(['ok' => true, 'fetched' => $totalFetched]);
     }
 
     /**

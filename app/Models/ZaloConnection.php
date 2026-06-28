@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $state
  * @property string|null $session_lost_reason
  * @property Carbon|null $last_connected_at
+ * @property Carbon|null $last_session_lost_at Tier 0: timestamp khi session bị mất, FE dùng so gap với last_connected_at
  * @property Carbon|null $last_qr_at
  * @property int $lock_version
  */
@@ -43,6 +44,7 @@ class ZaloConnection extends Model
         'state',
         'session_lost_reason',
         'last_connected_at',
+        'last_session_lost_at',
         'last_qr_at',
         'lock_version',
     ];
@@ -50,6 +52,7 @@ class ZaloConnection extends Model
     protected $casts = [
         'connection_id' => 'integer',
         'last_connected_at' => 'datetime',
+        'last_session_lost_at' => 'datetime',
         'last_qr_at' => 'datetime',
         'lock_version' => 'integer',
     ];
@@ -84,6 +87,23 @@ class ZaloConnection extends Model
     }
 
     /**
+     * Lookup personal_uid từ connection_id qua pgsql_privileged (bypass RLS).
+     * Bao gồm cả connection đã soft-delete — reconnect mint connection_id mới
+     * nhưng cùng tài khoản Zalo (cùng personal_uid); inbound cần uid này để
+     * gắn message vào conversation canonical thay vì fork theo connection_id.
+     */
+    public static function personalUidForConnection(int $connectionId): ?string
+    {
+        $row = DB::connection('pgsql_privileged')
+            ->table('zalo_connections')
+            ->select('personal_uid')
+            ->where('connection_id', $connectionId)
+            ->first();
+
+        return $row?->personal_uid;
+    }
+
+    /**
      * Cập nhật state và session_lost_reason từ bridge_session event.
      */
     public function updateState(string $state, ?string $lostReason = null): void
@@ -93,8 +113,12 @@ class ZaloConnection extends Model
         if ($state === 'connected') {
             $updates['last_connected_at'] = now();
             $updates['session_lost_reason'] = null;
-        } elseif ($state === 'session_lost' && $lostReason !== null) {
-            $updates['session_lost_reason'] = $lostReason;
+            // Tier 0: KHÔNG clear last_session_lost_at — FE so sánh [last_session_lost_at, last_connected_at] tính gap
+        } elseif ($state === 'session_lost') {
+            $updates['last_session_lost_at'] = now();
+            if ($lostReason !== null) {
+                $updates['session_lost_reason'] = $lostReason;
+            }
         } elseif ($state === 'qr_waiting') {
             $updates['last_qr_at'] = now();
         }

@@ -228,12 +228,17 @@ Route::middleware(['auth'])->group(function () {
 
         // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+        Route::post('/inbox/resync', [InboxController::class, 'resync'])->name('inbox.resync');
         Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])
             ->name('inbox.messages');
         Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
             ->name('inbox.send');
         Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
             ->name('inbox.lead.store');
+        // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
+        Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
+            ->whereUuid('conversation')
+            ->name('inbox.show');
     });
 });
 

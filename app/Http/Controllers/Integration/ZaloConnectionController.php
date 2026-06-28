@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Integration;
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Models\ZaloConnection;
+use App\Services\ZaloConversationMerger;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ use Inertia\Response;
  */
 class ZaloConnectionController extends Controller
 {
+    public function __construct(private readonly ZaloConversationMerger $conversationMerger) {}
+
     /**
      * Trang settings Zalo — danh sách kết nối + trạng thái.
      */
@@ -182,10 +185,49 @@ class ZaloConnectionController extends Controller
             'avatar_url' => $data['avatar'] ?? null,
         ], fn ($v) => $v !== null && $v !== '');
         if ($profile !== []) {
-            DB::connection('pgsql_privileged')
-                ->table('zalo_connections')
-                ->where('id', $connection->id)
-                ->update($profile);
+            DB::connection('pgsql_privileged')->transaction(function () use ($connection, $profile) {
+                // Dedup connections cùng (workspace_id, personal_uid): soft-delete các slot khác
+                // và gộp conversation của chúng vào slot hiện tại — giải phóng partial-unique
+                // slot VÀ tránh thread fork (cùng peer xuất hiện 2 lần) sau reconnect.
+                if (isset($profile['personal_uid'])) {
+                    // Gồm CẢ connection đã soft-delete cùng uid: nếu chỉ lấy active thì một
+                    // connection cũ đã trashed (kèm conversation 34 tin) sẽ không được gộp → thread
+                    // vẫn fork + thiếu tin. Merge idempotent nên gộp lại bản đã trashed là an toàn.
+                    $priorConnections = DB::connection('pgsql_privileged')
+                        ->table('zalo_connections')
+                        ->where('workspace_id', $connection->workspace_id)
+                        ->where('personal_uid', $profile['personal_uid'])
+                        ->where('id', '!=', $connection->id)
+                        ->get(['connection_id']);
+
+                    if ($priorConnections->isNotEmpty()) {
+                        DB::connection('pgsql_privileged')
+                            ->table('zalo_connections')
+                            ->where('workspace_id', $connection->workspace_id)
+                            ->where('personal_uid', $profile['personal_uid'])
+                            ->where('id', '!=', $connection->id)
+                            ->whereNull('deleted_at')
+                            ->update([
+                                'state' => 'disconnected',
+                                'deleted_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+
+                        foreach ($priorConnections as $prior) {
+                            $this->conversationMerger->mergeConnection(
+                                $connection->workspace_id,
+                                (int) $prior->connection_id,
+                                (int) $connection->connection_id,
+                            );
+                        }
+                    }
+                }
+
+                DB::connection('pgsql_privileged')
+                    ->table('zalo_connections')
+                    ->where('id', $connection->id)
+                    ->update($profile);
+            });
         }
 
         $connection->updateState('connected');

@@ -105,6 +105,10 @@ class ZaloChannelDriver implements ChannelDriver
         return [
             'channel' => 'zalo_personal',
             'zalo_connection_id' => isset($raw['connection_id']) ? (int) $raw['connection_id'] : null,
+            // Account-key cho upsertConversation — uid tài khoản Zalo, ổn định qua reconnect.
+            'connection_personal_uid' => isset($raw['connection_personal_uid']) && $raw['connection_personal_uid'] !== ''
+                ? (string) $raw['connection_personal_uid']
+                : null,
             'peer_uid' => (string) ($raw['peer_uid'] ?? ''),
             'peer_name' => $user['name'] ?? null,
             'peer_avatar' => $user['avatar'] ?? null,
