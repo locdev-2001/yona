@@ -1,8 +1,8 @@
 <?php
 
-use Modules\CrmSales\Models\Pipeline;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Pipeline;
+use App\Models\User;
+use App\Models\Workspace;
 
 // Pipeline CRUD + single-default invariant + stage types + non-enumeration.
 

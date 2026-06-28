@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use Modules\CrmSales\Models\Lead;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
+use App\Models\Lead;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Lead>

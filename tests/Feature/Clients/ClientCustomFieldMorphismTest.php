@@ -1,10 +1,10 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\Contact;
-use Modules\Identity\Models\User;
-use Modules\Shared\Services\CustomFieldService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Models\Contact;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\CustomFieldService;
 
 /**
  * G6 — custom-field morphism guard.

@@ -1,14 +1,19 @@
 <?php
 
-use Modules\Cdp\Contracts\IdentityResolver;
-use Modules\CrmSales\Contracts\ContactRepository;
-use Modules\CrmSales\Models\Contact;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Identity\Models\User;
+use App\Models\Activity;
+use App\Models\Contact;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Policies\ContactPolicy;
+use App\Services\ContactService;
+use App\Services\LeadConversionService;
+use App\Services\LeadService;
 
 // ── Phase-07: cdp-dedup tests ─────────────────────────────────────────────────
 // Covers: normalizePhone, firstOrCreateByPhone (idempotent), mergeIdentities (flag-not-auto),
-//         Contact.client_id nullable, IdentityResolver binding override.
+//         Contact.client_id nullable.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +30,7 @@ function cdpWorkspace(): array
 // ─── normalizePhone ───────────────────────────────────────────────────────────
 
 it('normalizePhone: chuẩn hóa +84 về 0xxx', function () {
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     expect($repo->normalizePhone('+84 90 123 4567'))->toBe('0901234567')
         ->and($repo->normalizePhone('84901234567'))->toBe('0901234567')
@@ -34,7 +39,7 @@ it('normalizePhone: chuẩn hóa +84 về 0xxx', function () {
 });
 
 it('normalizePhone: trả null cho SĐT không hợp lệ', function () {
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     expect($repo->normalizePhone(null))->toBeNull()
         ->and($repo->normalizePhone(''))->toBeNull()
@@ -46,7 +51,7 @@ it('normalizePhone: trả null cho SĐT không hợp lệ', function () {
 
 it('firstOrCreateByPhone: tạo mới contact draft khi chưa có', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $contact = $repo->firstOrCreateByPhone('0901234567', 'Nguyễn Văn An');
 
@@ -60,7 +65,7 @@ it('firstOrCreateByPhone: tạo mới contact draft khi chưa có', function () 
 
 it('firstOrCreateByPhone: idempotent — 2 lần cùng phone trả cùng 1 contact', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $first = $repo->firstOrCreateByPhone('0901234567', 'Nguyễn Văn An');
     $second = $repo->firstOrCreateByPhone('0901234567', 'Tên Khác');
@@ -71,7 +76,7 @@ it('firstOrCreateByPhone: idempotent — 2 lần cùng phone trả cùng 1 conta
 
 it('firstOrCreateByPhone: tự normalize phone trước khi tra', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
     $contact = $repo->firstOrCreateByPhone('+84 90 123 4567', 'Khách A');
     $same = $repo->firstOrCreateByPhone('0901234567', 'Khách A');
@@ -81,9 +86,9 @@ it('firstOrCreateByPhone: tự normalize phone trước khi tra', function () {
 
 it('firstOrCreateByPhone: throw InvalidArgumentException khi phone không hợp lệ', function () {
     cdpWorkspace();
-    $repo = app(ContactRepository::class);
+    $repo = app(ContactService::class);
 
-    expect(fn () => $repo->firstOrCreateByPhone('abc123'))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => $repo->firstOrCreateByPhone('abc123'))->toThrow(InvalidArgumentException::class);
 });
 
 // ─── Contact.client_id nullable ──────────────────────────────────────────────
@@ -108,7 +113,7 @@ it('Contact.client_id nullable không làm vỡ ContactPolicy.view khi client = 
     $contact->phone = '0933333333';
     $contact->save();
 
-    $policy = new \Modules\CrmSales\Policies\ContactPolicy;
+    $policy = new ContactPolicy;
     // Draft contact: client = null → view returns false (policy delegate to client)
     expect($policy->view($user, $contact))->toBeFalse();
 });
@@ -121,7 +126,7 @@ it('mergeIdentities: flag needs_merge_review trên cả 2 contact, KHÔNG auto-m
     $primary = Contact::factory()->create(['workspace_id' => $ws->id, 'phone' => '0901111111']);
     $duplicate = Contact::factory()->create(['workspace_id' => $ws->id, 'phone' => '0901111112']);
 
-    $resolver = app(IdentityResolver::class);
+    $resolver = app(ContactService::class);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
 
     $primary->refresh();
@@ -143,7 +148,7 @@ it('mergeIdentities: idempotent — gọi 2 lần không duplicate flag', functi
     $primary = Contact::factory()->create(['workspace_id' => $ws->id]);
     $duplicate = Contact::factory()->create(['workspace_id' => $ws->id]);
 
-    $resolver = app(IdentityResolver::class);
+    $resolver = app(ContactService::class);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
     $resolver->mergeIdentities($ws->id, $primary->id, $duplicate->id);
 
@@ -154,20 +159,11 @@ it('mergeIdentities: idempotent — gọi 2 lần không duplicate flag', functi
 
     // Chỉ 1 activity log (Contact dùng HasActivities nếu có, nếu không bỏ qua check này)
     // ponytail: Contact không trait HasActivities → kiểm qua Activity model trực tiếp
-    $activityCount = \Modules\Shared\Models\Activity::where('subject_type', 'contact')
+    $activityCount = Activity::where('subject_type', 'contact')
         ->where('subject_id', $primary->id)
         ->where('action', 'contact.merge_review_flagged')
         ->count();
     expect($activityCount)->toBe(1);
-});
-
-// ─── IdentityResolver binding override ───────────────────────────────────────
-
-it('app(IdentityResolver) là impl thật, không phải NoOpIdentityResolver', function () {
-    $resolver = app(IdentityResolver::class);
-
-    expect($resolver)->not->toBeInstanceOf(\Modules\Cdp\NoOpIdentityResolver::class);
-    expect($resolver)->toBeInstanceOf(\Modules\CrmSales\Services\CdpIdentityResolverImpl::class);
 });
 
 // ─── RLS: contacts còn enforce workspace isolation ────────────────────────────
@@ -199,17 +195,17 @@ it('contacts RLS: workspace A không thấy contact workspace B', function () {
 it('convert lead → vẫn tạo Contact với client_id (nullable không vỡ)', function () {
     ['ws' => $ws, 'user' => $user] = cdpWorkspace();
 
-    $pipeline = \Modules\CrmSales\Models\Pipeline::factory()->create();
-    $stage = \Modules\CrmSales\Models\PipelineStage::factory()->for($pipeline)->create([
+    $pipeline = Pipeline::factory()->create();
+    $stage = PipelineStage::factory()->for($pipeline)->create([
         'workspace_id' => $pipeline->workspace_id,
         'type' => 'won',
     ]);
-    $openStage = \Modules\CrmSales\Models\PipelineStage::factory()->for($pipeline)->create([
+    $openStage = PipelineStage::factory()->for($pipeline)->create([
         'workspace_id' => $pipeline->workspace_id,
         'type' => 'open',
     ]);
 
-    $lead = app(\Modules\CrmSales\Services\LeadService::class)->create([
+    $lead = app(LeadService::class)->create([
         'name' => 'Trần Thị Bình',
         'company' => 'ABC Corp',
         'email' => 'binh@abc.com',
@@ -218,7 +214,7 @@ it('convert lead → vẫn tạo Contact với client_id (nullable không vỡ)'
         'stage_id' => $openStage->id,
     ]);
 
-    $client = app(\Modules\CrmSales\Services\LeadConversionService::class)->convert($lead);
+    $client = app(LeadConversionService::class)->convert($lead);
 
     // Contact phải có client_id (NOT null khi tạo qua conversion)
     $contact = Contact::where('client_id', $client->id)->where('is_primary', true)->first();

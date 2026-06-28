@@ -1,7 +1,7 @@
 <?php
 
+use App\Enums\TenantPermission;
 use Illuminate\Database\Migrations\Migration;
-use Modules\Identity\Enums\TenantPermission;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;

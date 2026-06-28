@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Modules\Email\Models\EmailTemplate;
+use App\Models\EmailTemplate;
 use Illuminate\Database\Seeder;
 
 /**

@@ -1,29 +1,66 @@
 <?php
 
+use App\Http\Controllers\Announcements\Admin\AnnouncementController;
+use App\Http\Controllers\Announcements\Admin\AnnouncementPublishController;
+use App\Http\Controllers\Announcements\AnnouncementReadController;
+use App\Http\Controllers\Announcements\WhatsNewController;
+use App\Http\Controllers\Billing\Admin\WorkspacePlanController;
+use App\Http\Controllers\Crm\Clients\ClientController;
+use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
+use App\Http\Controllers\Crm\Clients\ClientGroupController;
+use App\Http\Controllers\Crm\Clients\ClientVaultEntryController;
+use App\Http\Controllers\Crm\Clients\ContactController;
+use App\Http\Controllers\Crm\Leads\LeadController;
+use App\Http\Controllers\Crm\Leads\LeadConversionController;
+use App\Http\Controllers\Crm\Leads\LeadStageController;
+use App\Http\Controllers\Crm\Leads\LeadStatusActionController;
+use App\Http\Controllers\Crm\Settings\LeadSourceController;
+use App\Http\Controllers\Crm\Settings\PipelineController;
+use App\Http\Controllers\Crm\Settings\PipelineStageController;
 use App\Http\Controllers\DashboardController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientCustomerAdminController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientGroupController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientVaultEntryController;
-use Modules\CrmSales\Http\Controllers\Clients\ContactController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadConversionController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadStageController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadStatusActionController;
-use Modules\Projects\Http\Controllers\Projects\ProjectController;
-use Modules\Projects\Http\Controllers\Projects\ProjectDiscussionController;
-use Modules\Projects\Http\Controllers\Projects\ProjectFileController;
-use Modules\Projects\Http\Controllers\Projects\ProjectMemberController;
-use Modules\Projects\Http\Controllers\Projects\ProjectMilestoneController;
+use App\Http\Controllers\Email\EmailTemplateController;
+use App\Http\Controllers\Identity\Admin\ImpersonationController;
+use App\Http\Controllers\Identity\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Identity\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Identity\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Identity\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Identity\Auth\NewPasswordController;
+use App\Http\Controllers\Identity\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Identity\Auth\RegisteredUserController;
+use App\Http\Controllers\Identity\Auth\VerifyEmailController;
+use App\Http\Controllers\Identity\Settings\MemberController;
+use App\Http\Controllers\Identity\Settings\PasswordController;
+use App\Http\Controllers\Identity\Settings\ProfileController;
+use App\Http\Controllers\Identity\Settings\TeamController;
+use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\InboxController;
+use App\Http\Controllers\Integration\IntegrationController;
+use App\Http\Controllers\Integration\ZaloConnectionController;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\Projects\Projects\ProjectController;
+use App\Http\Controllers\Projects\Projects\ProjectDiscussionController;
+use App\Http\Controllers\Projects\Projects\ProjectFileController;
+use App\Http\Controllers\Projects\Projects\ProjectMemberController;
+use App\Http\Controllers\Projects\Projects\ProjectMilestoneController;
+use App\Http\Controllers\Projects\Settings\ProjectStatusController;
+use App\Http\Controllers\Projects\Tasks\TaskAssigneeController;
+use App\Http\Controllers\Projects\Tasks\TaskChecklistController;
+use App\Http\Controllers\Projects\Tasks\TaskController;
+use App\Http\Controllers\Projects\Tasks\TaskKanbanController;
+use App\Http\Controllers\Projects\Tasks\TaskStatusController;
+use App\Http\Controllers\Projects\Tasks\TaskTimerController;
+use App\Http\Controllers\Settings\AppearanceController;
+use App\Http\Controllers\Shared\AttachmentController;
+use App\Http\Controllers\Shared\CommentController;
+use App\Http\Controllers\Shared\NoteController;
+use App\Http\Controllers\Shared\NotificationController;
+use App\Http\Controllers\Shared\ReminderController;
+use App\Http\Controllers\Shared\Settings\CustomFieldController;
+use App\Http\Controllers\Shared\TagController;
+use App\Http\Controllers\Tenancy\Settings\WorkspaceController;
+use App\Http\Controllers\Tenancy\WorkspaceSwitchController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
-use Modules\Shared\Http\Controllers\AttachmentController;
-use Modules\Shared\Http\Controllers\CommentController;
-use Modules\Shared\Http\Controllers\NoteController;
-use Modules\Shared\Http\Controllers\NotificationController;
-use Modules\Shared\Http\Controllers\ReminderController;
-use Modules\Shared\Http\Controllers\TagController;
-use Modules\Tenancy\Http\Controllers\WorkspaceSwitchController;
 
 Route::get('/', WelcomeController::class)->name('home');
 
@@ -72,7 +109,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('leads/{lead}/convert', [LeadConversionController::class, 'store'])->name('leads.convert');
         Route::post('leads/{lead}/lost', [LeadStatusActionController::class, 'markLost'])->name('leads.lost');
         Route::post('leads/{lead}/junk', [LeadStatusActionController::class, 'markJunk'])->name('leads.junk');
-        Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])->name('leads.restore-status');
+        Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])
+            ->name('leads.restore-status')->withTrashed();
 
         // P06 — Clients + Contacts.
         Route::resource('clients', ClientController::class);
@@ -135,11 +173,285 @@ Route::middleware(['auth'])->group(function () {
             Route::post('{project}/discussions/{discussion}/replies', [ProjectDiscussionController::class, 'reply'])->name('discussions.reply');
         });
 
-        // P09 — Tasks + Timers.
-        require __DIR__.'/tasks.php';
+        // ===== Tasks =====
+        // P09 — Tasks + Timers (class-first, no closures — A4). Nested under auth + workspace.
+        Route::prefix('tasks')->name('tasks.')->group(function () {
+            // Task CRUD
+            Route::get('/', [TaskController::class, 'index'])->name('index');
+            Route::get('/kanban', [TaskController::class, 'kanban'])->name('kanban');
+            Route::post('/', [TaskController::class, 'store'])->name('store');
+            Route::get('/{task}', [TaskController::class, 'show'])->name('show');
+            Route::patch('/{task}', [TaskController::class, 'update'])->name('update');
+            Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+
+            // Status change
+            Route::patch('/{task}/status', [TaskStatusController::class, 'update'])->name('status');
+
+            // Kanban reorder
+            Route::patch('/{task}/kanban-order', [TaskKanbanController::class, 'reorder'])->name('kanban-order');
+
+            // Assignees
+            Route::patch('/{task}/assignees', [TaskAssigneeController::class, 'update'])->name('assignees.update');
+
+            // Checklist
+            Route::post('/{task}/checklist', [TaskChecklistController::class, 'store'])->name('checklist.store');
+            Route::patch('/{task}/checklist/{item}/toggle', [TaskChecklistController::class, 'toggle'])->name('checklist.toggle');
+            Route::post('/{task}/checklist/reorder', [TaskChecklistController::class, 'reorder'])->name('checklist.reorder');
+            Route::delete('/{task}/checklist/{item}', [TaskChecklistController::class, 'destroy'])->name('checklist.destroy');
+
+            // Timers / Timesheets
+            Route::post('/{task}/timers/start', [TaskTimerController::class, 'start'])->name('timers.start');
+            Route::patch('/{task}/timers/{timer}/stop', [TaskTimerController::class, 'stop'])->name('timers.stop');
+            Route::post('/{task}/timers/log', [TaskTimerController::class, 'logManual'])->name('timers.log');
+            Route::patch('/{task}/timers/{timer}', [TaskTimerController::class, 'update'])->name('timers.update');
+            Route::delete('/{task}/timers/{timer}', [TaskTimerController::class, 'destroy'])->name('timers.destroy');
+        });
+
+        // Integrations catalog page.
+        Route::get('integrations', [IntegrationController::class, 'index'])->name('integrations.index');
+
+        // Zalo personal connection CRUD (QR connect / list / promote / logout).
+        // auth + workspace already applied by the enclosing group. Toggle via config/integrations.php.
+        if (config('integrations.zalo_personal.enabled')) {
+            Route::prefix('integrations')->name('integrations.zalo.')->group(function () {
+                Route::controller(ZaloConnectionController::class)
+                    ->prefix('zalo')
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::post('/', 'store')->name('store');
+                        Route::get('/qr-status', 'qr')->name('qr');
+                        Route::post('/promote', 'promote')->name('promote');
+                        Route::delete('/{zaloConnection}', 'destroy')->name('destroy');
+                    });
+            });
+        }
+
+        // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
+        Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+        Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])
+            ->name('inbox.messages');
+        Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
+            ->name('inbox.send');
+        Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
+            ->name('inbox.lead.store');
     });
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
-require __DIR__.'/admin.php';
+// Announcements — tenant-plane: What's New feed + mark-read.
+Route::middleware(['auth', 'workspace'])->group(function () {
+    Route::get('whats-new', WhatsNewController::class)->name('announcements.index');
+    Route::post('whats-new/{announcement}/read', AnnouncementReadController::class)->name('announcements.read');
+});
+
+// ===== Settings =====
+Route::middleware('auth')->group(function () {
+    Route::redirect('settings', 'settings/profile');
+
+    // Language preference (design-system §10) — user menu + auth pages.
+    Route::put('locale', LocaleController::class)->name('locale');
+
+    Route::prefix('settings')->group(function () {
+        Route::controller(ProfileController::class)->name('profile.')->group(function () {
+            Route::get('profile', 'edit')->name('edit');
+            Route::patch('profile', 'update')->name('update');
+            Route::delete('profile', 'destroy')->name('destroy')->middleware('no.impersonation');
+        });
+
+        Route::controller(PasswordController::class)->name('password.')->group(function () {
+            Route::get('password', 'edit')->name('edit');
+            Route::put('password', 'update')->name('update')->middleware('no.impersonation');
+        });
+
+        Route::get('appearance', AppearanceController::class)->name('appearance');
+    });
+});
+
+// Workspace-scoped settings require an active workspace context (IdentifyWorkspace).
+Route::middleware(['auth', 'workspace'])->prefix('settings')->group(function () {
+    Route::controller(WorkspaceController::class)->name('workspace.')->group(function () {
+        Route::get('workspace', 'edit')->name('edit');
+        Route::patch('workspace', 'update')->name('update');
+    });
+
+    Route::controller(TeamController::class)->prefix('teams')->name('teams.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::patch('{team}', 'update')->name('update');
+        Route::patch('{team}/reparent', 'reparent')->name('reparent');
+        Route::delete('{team}', 'destroy')->name('destroy');
+    });
+
+    Route::controller(MemberController::class)->prefix('members')->name('members.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::patch('{member}', 'update')->name('update');
+        Route::delete('{member}', 'destroy')->name('destroy');
+    });
+
+    // Lookups (P01): admin-only workspace reference data management.
+    Route::prefix('lookups')->name('lookups.')->group(function () {
+        // Pipelines
+        Route::controller(PipelineController::class)->prefix('pipelines')->name('pipelines.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('{pipeline}', 'update')->name('update');
+            Route::delete('{pipeline}', 'destroy')->name('destroy');
+        });
+
+        // Pipeline stages (nested under pipeline)
+        Route::prefix('pipelines/{pipeline}/stages')->name('stages.')->group(function () {
+            Route::post('/', [PipelineStageController::class, 'store'])->name('store');
+        });
+        Route::prefix('stages')->name('stage.')->group(function () {
+            Route::patch('{stage}', [PipelineStageController::class, 'update'])->name('update');
+            Route::delete('{stage}', [PipelineStageController::class, 'destroy'])->name('destroy');
+        });
+
+        // Lead sources
+        Route::controller(LeadSourceController::class)->prefix('lead-sources')->name('lead-sources.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('{lead_source}', 'update')->name('update');
+            Route::delete('{lead_source}', 'destroy')->name('destroy');
+        });
+
+        // Project statuses
+        Route::controller(ProjectStatusController::class)->prefix('project-statuses')->name('project-statuses.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::patch('{project_status}', 'update')->name('update');
+            Route::delete('{project_status}', 'destroy')->name('destroy');
+        });
+    });
+
+    // Email templates (P06).
+    Route::controller(EmailTemplateController::class)
+        ->prefix('email-templates')
+        ->name('email-templates.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('{template}', 'edit')->name('edit');
+            Route::patch('{template}', 'update')->name('update');
+            Route::post('{template}/test', 'test')->name('test');
+        });
+
+    // Custom fields (P02) — admin CRUD for field definitions per entity_type.
+    Route::controller(CustomFieldController::class)->prefix('custom-fields')->name('custom-fields.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::put('{definition}', 'update')->name('update');
+        Route::delete('{definition}', 'destroy')->name('destroy');
+    });
+});
+
+// ===== Auth =====
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+        ->name('login');
+
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class)
+        ->name('verification.notice');
+
+    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
+        ->name('password.confirm');
+
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+});
+
+// ===== Admin =====
+// Admin-plane controllers are fully-qualified inline to avoid short-name collisions
+// with the tenant-plane `use` imports above (AuthenticatedSessionController,
+// NewPasswordController, PasswordResetLinkController, DashboardController, WorkspaceController).
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('login', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'create'])
+            ->name('login');
+
+        Route::post('login', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'store']);
+
+        Route::get('forgot-password', [App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'create'])
+            ->name('password.request');
+
+        Route::post('forgot-password', [App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'store'])
+            ->name('password.email');
+
+        Route::get('reset-password/{token}', [App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'create'])
+            ->name('password.reset');
+
+        Route::post('reset-password', [App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'store'])
+            ->name('password.store');
+    });
+
+    Route::middleware(['auth:admin', 'admin.scope'])->group(function () {
+        Route::redirect('/', '/admin/dashboard');
+
+        Route::get('dashboard', App\Http\Controllers\Identity\Admin\DashboardController::class)->name('dashboard');
+
+        Route::post('logout', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'destroy'])
+            ->name('logout');
+
+        Route::middleware('admin.can:platform.workspaces.view')->group(function () {
+            Route::get('workspaces', [App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'index'])->name('workspaces.index');
+            Route::get('workspaces/{workspace}', [App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'show'])->name('workspaces.show');
+        });
+
+        Route::middleware('admin.can:platform.billing.manage')->group(function () {
+            Route::get('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'index'])->name('workspaces.plans.index');
+            Route::post('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'store'])->name('workspaces.plans.store');
+            Route::delete('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'destroy'])->name('workspaces.plans.destroy');
+        });
+
+        Route::post('workspaces/{workspace}/members/{user}/impersonate', [ImpersonationController::class, 'store'])
+            ->middleware('admin.can:platform.impersonate')
+            ->name('workspaces.impersonate');
+
+        // Stop impersonation (the admin guard is still authenticated here).
+        Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
+            ->name('impersonate.stop');
+
+        // Announcements — admin CRUD + publish/unpublish.
+        Route::middleware('admin.can:platform.announcements.manage')->group(function () {
+            Route::resource('announcements', AnnouncementController::class)
+                ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::post('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'store'])
+                ->name('announcements.publish');
+
+            Route::delete('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'destroy'])
+                ->name('announcements.unpublish');
+        });
+
+    });
+});

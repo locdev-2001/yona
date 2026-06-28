@@ -1,8 +1,8 @@
 <?php
 
-use Modules\Projects\Models\ProjectStatus;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\ProjectStatus;
+use App\Models\User;
+use App\Models\Workspace;
 
 it('admin can list project statuses', function () {
     $ws = Workspace::factory()->create();

@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\ClientVaultEntry;
+use App\Models\Client;
+use App\Models\ClientVaultEntry;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<ClientVaultEntry>

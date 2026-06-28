@@ -1,9 +1,9 @@
 <?php
 
-use Modules\Projects\Models\Task;
-use Modules\Projects\Services\TaskService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\TaskService;
 
 // ── Kanban status + reorder ────────────────────────────────────────────────────
 
@@ -88,5 +88,5 @@ it('kanban view groups tasks by status', function () {
     $response = test()->get(route('tasks.kanban'));
 
     $response->assertOk()
-        ->assertInertia(fn ($page) => $page->component('Modules.Projects.tasks/kanban')->has('columns'));
+        ->assertInertia(fn ($page) => $page->component('projects/tasks/kanban')->has('columns'));
 });

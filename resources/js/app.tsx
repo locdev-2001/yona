@@ -8,7 +8,6 @@ import Pusher from 'pusher-js';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
-import { moduleToKebab } from './lib/module-kebab';
 import { queryClient } from './lib/query-client';
 
 declare global {
@@ -38,43 +37,9 @@ window.Echo = new Echo<'reverb'>({
     disableStats: true,
 });
 
-// App pages (GĐ0 monolith pages) — unchanged glob.
 const appPages = import.meta.glob('./pages/**/*.tsx');
 
-// Module pages — keyed by full path, resolved via prefix Modules.{Module}.{Page}.
-// ponytail: glob outside resources/ works in Vite via relative path from this file.
-// Build bundles ALL module pages regardless of enabled flag (build-time doesn't know
-// runtime enabled state). Disabled module → its routes 404 before resolver is called.
-const modulePages = import.meta.glob('../../modules/*/resources/js/pages/**/*.tsx');
-
-/**
- * Resolve an Inertia page component.
- *
- * Routing:
- *   name = 'dashboard'                    → app page ./pages/dashboard.tsx
- *   name = 'Modules.Sample.sample/index'  → module page modules/sample/.../sample/index.tsx
- *
- * The Modules.{Module}.{Page} prefix is mandatory to prevent collision between
- * an app page and a module page sharing the same basename (e.g. both named
- * 'sample/index').
- */
 function resolvePage(name: string) {
-    if (name.startsWith('Modules.')) {
-        // 'Modules.Sample.sample/index' → module='Sample', page='sample/index'
-        const withoutPrefix = name.slice('Modules.'.length);
-        const dotIdx = withoutPrefix.indexOf('.');
-        const module = withoutPrefix.slice(0, dotIdx); // 'Sample'
-        const page = withoutPrefix.slice(dotIdx + 1); // 'sample/index'
-        const kebab = moduleToKebab(module);
-        const key = `../../modules/${kebab}/resources/js/pages/${page}.tsx`;
-
-        if (!(key in modulePages)) {
-            throw new Error(`Module page not found: [${name}]. Looked up key: [${key}]`);
-        }
-
-        return (modulePages[key] as () => Promise<{ default: unknown }>)();
-    }
-
     return resolvePageComponent(`./pages/${name}.tsx`, appPages);
 }
 

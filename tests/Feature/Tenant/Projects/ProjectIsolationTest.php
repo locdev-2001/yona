@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\Project;
-use Modules\Projects\Services\ProjectService;
+use App\Models\Client;
+use App\Models\Project;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ProjectService;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 
 // P08 — Tenant isolation: workspace A project invisible in workspace B context.
 

@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\AuditLog;
+use App\Models\Workspace;
+use App\Services\TeamService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\AuditLog;
-use Modules\Identity\Services\TeamService;
-use Modules\Tenancy\Models\Workspace;
 
 // Append-only audit (BR-X05). PII minimization (BR-X07) is exercised when a
 // PII-bearing entity (Contact) lands; the mechanism (auditPiiAttributes) is in

@@ -2,7 +2,7 @@
 
 Decoder ring cho dự án Chó Rách CRM — thuật ngữ, viết tắt, codename, tên gọi nội bộ.
 
-> Liên quan: roadmap [development-roadmap.md](development-roadmap.md) · định vị/hiện trạng [project-overview.md](project-overview.md) · domain [crm-domain-definition.md](crm-domain-definition.md) · kiến trúc [modular-architecture.md](modular-architecture.md). Mục tiêu/north-star: xem CLAUDE.md + bộ nhớ dự án. CDP Layer / Phase ↔ GĐ trong roadmap.
+> Liên quan: roadmap [development-roadmap.md](development-roadmap.md) · định vị/hiện trạng [project-overview.md](project-overview.md) · domain [crm-domain-definition.md](crm-domain-definition.md) · kiến trúc [system-architecture.md](system-architecture.md). Mục tiêu/north-star: xem CLAUDE.md + bộ nhớ dự án. CDP Layer / Phase ↔ GĐ trong roadmap.
 
 ## Acronyms & Terms
 | Term | Meaning | Context |
@@ -13,7 +13,7 @@ Decoder ring cho dự án Chó Rách CRM — thuật ngữ, viết tắt, codena
 | Tenant | Một doanh nghiệp dùng SaaS | Mỗi tenant có không gian dữ liệu riêng (multi-tenant) |
 | RLS | Row-Level Security (PostgreSQL) | Cô lập dữ liệu giữa các tenant |
 | RBAC | Role-Based Access Control | Phân quyền nhân viên |
-| Entitlements | Khung bật/tắt tính năng theo gói | Nền monetization (GĐ1); cũng là **cơ chế gate bật/tắt module** (xem modular-architecture.md) |
+| Entitlements | Khung bật/tắt tính năng theo gói | Nền monetization (GĐ1); cơ chế gate bật/tắt tính năng theo workspace |
 | Addon | Module trả phí mở rộng | Marketplace mở ở **GĐ5** |
 | Conversation metering | Tính phí theo số hội thoại | Đếm per-channel, chỉ khi tenant trả lời |
 | Zalo cá nhân | Tài khoản Zalo cá nhân (personal) | **Kênh inbox GĐ1** — không có API chính thức, dùng QR login/web automation (zca-js). Rủi ro ToS/khóa acc |

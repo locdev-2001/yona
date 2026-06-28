@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Modules\Projects\Models\Project;
-use Modules\Projects\Models\ProjectMilestone;
+use App\Models\Project;
+use App\Models\ProjectMilestone;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<ProjectMilestone>

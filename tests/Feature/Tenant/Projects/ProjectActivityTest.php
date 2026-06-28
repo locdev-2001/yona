@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\ProjectStatus;
-use Modules\Projects\Services\ProjectService;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Activity;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Activity;
+use App\Models\Client;
+use App\Models\ProjectStatus;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ProjectService;
 
 // P08 — Activity logging for project mutations.
 

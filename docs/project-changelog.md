@@ -19,10 +19,10 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ### Release — GĐ1 Modular Monolith + Inbox Zalo + CDP Dedup Contract + Billing/Metering (2026-06-28)
 
-**Milestone**: Phase-07 (code-complete) — modular architecture + Phase-01 inbox + entitlements system audited (18 findings fixed).
+**Milestone**: Phase-07 (code-complete) — refactored to standard Laravel + 1 Integration module + Phase-01 inbox + entitlements system audited (18 findings fixed).
 
 **GĐ1 Feature Delivery:**
-- **Modular Architecture Refactor**: `modules/{platform,tenancy,identity,shared,cdp,crm-sales,projects,inbox,channel-zalo,billing,payment-manual,announcements,email}/` with module.json + topo-sort loader + contract-based extensibility (F10 no-op default). Spec: [modular-architecture.md](../modular-architecture.md).
+- **Traditional Laravel Refactor** (2026-06-28): Removed custom modular framework; restructured to standard Laravel with `app/Models`, `app/Http/Controllers/{Domain}`, `app/Services` containing `MeteringService` (concrete), `EntitlementService`, `ContactService`. **Only module:** `app/Modules/Integration/` with `ChannelManager` + `PaymentManager` (driver pattern via `Illuminate\Support\Manager`). See [system-architecture.md](../system-architecture.md).
 - **Inbox Phase 1 (Zalo Personal)**: webhook inbound (`WebhookController`), idempotent message ingestion (`InboundMessageService` F2/F14), Reverb realtime broadcast (F22), RLS scope-binding from connection_id (F11), conversation number sequencing (F16).
 - **Outbound Send Chain**: `ZaloSendService` with circuit-breaker (F3), metering gate (F1/F5), SendRateLimiter (F8: 7h–22h + 3/phone/day), bridge retry (F4), atomic meterReply (F1 compare-set + ON CONFLICT).
 - **Conversation to Lead**: `ConversationLeadController` + `IdentityResolver` contract (Phase-07: no-op; Phase-08: phone dedup); idempotent lead creation (F15 unique conversation_lead_link); bidirectional link.

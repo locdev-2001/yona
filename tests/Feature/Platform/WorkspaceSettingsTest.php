@@ -1,8 +1,8 @@
 <?php
 
-use Modules\Identity\Models\AuditLog;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\AuditLog;
+use App\Models\User;
+use App\Models\Workspace;
 
 // Settings → Workspace (admin-gated, audited). BR-X12.
 

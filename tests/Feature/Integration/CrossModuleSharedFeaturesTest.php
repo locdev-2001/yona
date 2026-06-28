@@ -1,21 +1,21 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\Lead;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\Projects\Models\Project;
-use Modules\Projects\Models\Task;
+use App\Models\Attachment;
+use App\Models\Client;
+use App\Models\CustomFieldDefinition;
+use App\Models\Lead;
+use App\Models\Note;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\CustomFieldService;
+use App\Services\TagService;
+use App\Support\Activity\ActivityLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Attachment;
-use Modules\Shared\Models\CustomFieldDefinition;
-use Modules\Shared\Models\Note;
-use Modules\Shared\Services\CustomFieldService;
-use Modules\Shared\Services\TagService;
-use Modules\Shared\Support\Activity\ActivityLogger;
-use Modules\Tenancy\Models\Workspace;
 
 // ── Cross-module integration: 4 entity × 5 shared M0 features ─────────────────
 // Chứng minh rằng mỗi entity M1 dùng được đầy đủ 5 trait từ M0:

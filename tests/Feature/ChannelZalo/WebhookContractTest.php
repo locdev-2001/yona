@@ -1,11 +1,13 @@
 <?php
 
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\Workspace;
+use App\Models\ZaloConnection;
+use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
+use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Support\TenantScope;
 
 /**
  * Webhook contract tests cho channel-zalo.
@@ -17,7 +19,6 @@ use Modules\Tenancy\Support\TenantScope;
  *
  * @group channel-zalo
  */
-
 beforeEach(function () {
     TenantScope::forget();
     // Cấu hình webhook secret cho test (mock)
@@ -49,13 +50,13 @@ it('returns 202 and creates no orphan when connection_id not mapped', function (
     $this->postJson(
         '/api/integrations/zalo-personal/webhook',
         [
-            'type'          => 'inbound',
+            'type' => 'inbound',
             'connection_id' => 888888888,
-            'peer_uid'      => 'ghost_peer',
-            'source_id'     => 'ghost_msg_001',
-            'inbound_kind'  => 'text',
-            'content'       => 'should not save',
-            'direction'     => 'in',
+            'peer_uid' => 'ghost_peer',
+            'source_id' => 'ghost_msg_001',
+            'inbound_kind' => 'text',
+            'content' => 'should not save',
+            'direction' => 'in',
         ],
         ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
     )->assertStatus(202);
@@ -77,20 +78,20 @@ it('inbound webhook creates conversation and message', function () {
     $this->postJson(
         '/api/integrations/zalo-personal/webhook',
         [
-            'type'              => 'inbound',
-            'connection_id'     => $connId,
-            'bot_id'            => 1,
-            'personal_uid'      => 'uid_test',
-            'peer_uid'          => 'peer_contract_001',
-            'thread_id'         => 'peer_contract_001',
-            'thread_type'       => 0,
-            'source_id'         => 'src_contract_inbound_001',
-            'is_self'           => false,
-            'direction'         => 'in',
-            'user'              => ['name' => 'Khách Test', 'avatar' => null],
-            'platform_sent_at'  => now()->timestamp * 1000,
-            'inbound_kind'      => 'text',
-            'content'           => 'Xin chào hệ thống',
+            'type' => 'inbound',
+            'connection_id' => $connId,
+            'bot_id' => 1,
+            'personal_uid' => 'uid_test',
+            'peer_uid' => 'peer_contract_001',
+            'thread_id' => 'peer_contract_001',
+            'thread_type' => 0,
+            'source_id' => 'src_contract_inbound_001',
+            'is_self' => false,
+            'direction' => 'in',
+            'user' => ['name' => 'Khách Test', 'avatar' => null],
+            'platform_sent_at' => now()->timestamp * 1000,
+            'inbound_kind' => 'text',
+            'content' => 'Xin chào hệ thống',
         ],
         ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
     )->assertStatus(200);
@@ -116,16 +117,16 @@ it('inbound webhook is idempotent — duplicate source_id does not double-insert
     $connId = createZaloConnection($ws->id, 'uid_dedup');
 
     $payload = [
-        'type'             => 'inbound',
-        'connection_id'    => $connId,
-        'peer_uid'         => 'peer_dedup_001',
-        'source_id'        => 'src_dedup_001',
-        'is_self'          => false,
-        'direction'        => 'in',
-        'user'             => ['name' => 'Khách Dedup', 'avatar' => null],
+        'type' => 'inbound',
+        'connection_id' => $connId,
+        'peer_uid' => 'peer_dedup_001',
+        'source_id' => 'src_dedup_001',
+        'is_self' => false,
+        'direction' => 'in',
+        'user' => ['name' => 'Khách Dedup', 'avatar' => null],
         'platform_sent_at' => now()->timestamp * 1000,
-        'inbound_kind'     => 'text',
-        'content'          => 'Tin nhắn lần 1',
+        'inbound_kind' => 'text',
+        'content' => 'Tin nhắn lần 1',
     ];
 
     $headers = ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123'];
@@ -151,11 +152,11 @@ it('bridge_session event updates ZaloConnection state to connected', function ()
     $this->postJson(
         '/api/integrations/zalo-personal/webhook',
         [
-            'type'          => 'bridge_session',
+            'type' => 'bridge_session',
             'connection_id' => $connId,
-            'bot_id'        => 1,
-            'state'         => 'session_ok',
-            'detail'        => null,
+            'bot_id' => 1,
+            'state' => 'session_ok',
+            'detail' => null,
         ],
         ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
     )->assertStatus(200);
@@ -173,11 +174,11 @@ it('bridge_session event updates state to session_lost with reason', function ()
     $this->postJson(
         '/api/integrations/zalo-personal/webhook',
         [
-            'type'          => 'bridge_session',
+            'type' => 'bridge_session',
             'connection_id' => $connId,
-            'bot_id'        => 1,
-            'state'         => 'session_lost',
-            'detail'        => 'ws_closed_3000_',
+            'bot_id' => 1,
+            'state' => 'session_lost',
+            'detail' => 'ws_closed_3000_',
         ],
         ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
     )->assertStatus(200);
@@ -192,11 +193,11 @@ it('bridge_session event updates state to session_lost with reason', function ()
 // ── ChannelManager driver registration ───────────────────────────────────────
 
 it('ChannelManager has zalo_personal driver registered', function () {
-    $manager = app(\Modules\Inbox\Channel\ChannelManager::class);
+    $manager = app(ChannelManager::class);
     expect($manager->hasAny())->toBeTrue();
 
     $driver = $manager->driver('zalo_personal');
-    expect($driver)->toBeInstanceOf(\Modules\ChannelZalo\Services\ZaloChannelDriver::class);
+    expect($driver)->toBeInstanceOf(ZaloChannelDriver::class);
     expect($driver->channelKey())->toBe('zalo_personal');
 })->group('channel-zalo');
 
@@ -242,13 +243,13 @@ function createZaloConnection(string $workspaceId, string $personalUid = 'uid_te
         ->id;
 
     DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
-        'workspace_id'  => $workspaceId,
+        'workspace_id' => $workspaceId,
         'connection_id' => $connId,
-        'personal_uid'  => $personalUid,
-        'display_name'  => 'Test Zalo',
-        'state'         => $state,
-        'created_at'    => now(),
-        'updated_at'    => now(),
+        'personal_uid' => $personalUid,
+        'display_name' => 'Test Zalo',
+        'state' => $state,
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 
     return $connId;

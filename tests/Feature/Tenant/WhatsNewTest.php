@@ -1,10 +1,10 @@
 <?php
 
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Models\AnnouncementRead;
-use Modules\Announcements\Services\AnnouncementReadService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Announcement;
+use App\Models\AnnouncementRead;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\AnnouncementReadService;
 
 // ---------------------------------------------------------------------------
 // WhatsNewTest — Tenant-plane visibility, IDOR, badge, read-state, coherence
@@ -25,7 +25,7 @@ it('shows published announcements to authenticated tenant users', function () {
 
     $this->get(route('announcements.index'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('Modules.Announcements.announcements/index'));
+        ->assertInertia(fn ($page) => $page->component('announcements/index'));
 });
 
 it('hides draft announcements from tenant users (GET draft slug → 404 via policy)', function () {

@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use App\Support\ModuleAwareInertiaViewFinder;
+use App\Models\EmailTemplate;
+use App\Models\User;
+use App\Modules\Integration\IntegrationServiceProvider;
+use App\Policies\EmailTemplatePolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Email\Models\EmailTemplate;
-use Modules\Email\Policies\EmailTemplatePolicy;
-use Modules\Identity\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,15 +17,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Override Inertia's view-finder to resolve Modules.X.page convention.
-        // Modules.{Module}.{page} → modules/{kebab}/resources/js/pages/{page}.tsx
-        $this->app->bind('inertia.view-finder', function ($app) {
-            return new ModuleAwareInertiaViewFinder(
-                $app['files'],
-                $app['config']->get('inertia.pages.paths'),
-                $app['config']->get('inertia.pages.extensions'),
-            );
-        });
+        // Internal-first: register Integration module nếu nó tồn tại. Xóa thư mục
+        // app/Modules/Integration/ → class_exists false → skip → inbox/billing core
+        // vẫn build/chạy (không fatal). KHÔNG hard-reference trong bootstrap/providers.php.
+        if (class_exists(IntegrationServiceProvider::class)) {
+            $this->app->register(IntegrationServiceProvider::class);
+        }
     }
 
     /**
@@ -38,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         // rebuilds its own throwaway DB. A careless `migrate:fresh --seed` against the dev
         // DB once wiped local data. To run one intentionally, set DB_ALLOW_DESTRUCTIVE=true.
         if (! $this->app->runningUnitTests()) {
-            DB::prohibitDestructiveCommands(! env('DB_ALLOW_DESTRUCTIVE', false));
+            DB::prohibitDestructiveCommands(! config('database.allow_destructive'));
         }
 
         // Workspace admin/owner has unrestricted access WITHIN their workspace.

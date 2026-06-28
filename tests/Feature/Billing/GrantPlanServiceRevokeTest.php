@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\MarketplaceItem;
+use App\Models\Workspace;
+use App\Services\EntitlementService;
+use App\Services\GrantPlanService;
 use Illuminate\Support\Facades\DB;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Billing\Services\GrantPlanService;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * F2-audit: GrantPlanService::revoke đọc qua pgsql_privileged (không bị RLS silently filter).
@@ -76,7 +76,7 @@ it('F2-audit: revoke cập nhật entitlements về free sau khi cancel', functi
     actingInWorkspace($workspace); // chỉ bind để resolver query được
 
     $service = app(GrantPlanService::class);
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
 
     $service->grant($workspace->id, 'plan.team');
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeTrue();

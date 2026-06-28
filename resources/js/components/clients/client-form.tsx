@@ -1,6 +1,8 @@
 import AddressFields from '@/components/clients/address-fields';
 import GroupSelector from '@/components/clients/group-selector';
 import QuickCreateLookup from '@/components/quick-create-lookup';
+import CustomFieldsSection from '@/components/shared/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { useTranslator } from '@/lib/i18n';
 import type { Client, ClientGroup, CustomFieldValue } from '@/types';
 import { useForm } from '@inertiajs/react';
-import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
 import { useEffect, useState } from 'react';
 
 interface Props {

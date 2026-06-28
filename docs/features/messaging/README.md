@@ -90,7 +90,7 @@ EntitlementResolver::snapshot(workspace_id)
 
 - **CDP (Customer Data Platform):** Contact dedup by phone (Phase-08). See [crm-domain-definition.md](../crm-domain-definition.md) § Contact.
 - **IdentityResolver contract:** Resolve/create Contact from peer (Phase-07: no-op; Phase-08: real dedup). See [Conversation to Lead](./conversation-to-lead.md).
-- **Modular architecture:** Each module provides contract interface; others depend on contract, not impl. See [modular-architecture.md](../modular-architecture.md).
+- **Integration driver pattern:** Drivers register via `Illuminate\Support\Manager` in `app/Modules/Integration/`. See [system-architecture.md](../system-architecture.md) § Architecture.
 - **RLS (Row-Level Security):** PostgreSQL enforces workspace isolation; TenantScope binds workspace before queries. See [../system-architecture.md](../system-architecture.md) § RLS.
 - **Realtime:** Reverb broadcasts message events to subscribed LiveWire components (F22). See [../platform/announcements.md](../platform/announcements.md) (similar pattern).
 

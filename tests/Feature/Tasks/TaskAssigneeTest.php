@@ -1,9 +1,9 @@
 <?php
 
-use Modules\Projects\Services\TaskService;
-use Modules\Projects\Services\TaskTimerService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\TaskService;
+use App\Services\TaskTimerService;
 
 // ── Multi-assignee + notification + timer stop ─────────────────────────────────
 

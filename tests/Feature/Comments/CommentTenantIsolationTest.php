@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\Comment;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\CommentService;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Comment;
-use Modules\Shared\Services\CommentService;
-use Modules\Tenancy\Models\Workspace;
 
 // Tenant isolation + portal visibility gate (G3) for comments.
 

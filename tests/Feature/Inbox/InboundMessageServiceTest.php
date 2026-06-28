@@ -1,26 +1,28 @@
 <?php
 
+use App\Events\MessageReceived;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\InboundMessageService;
+use App\Services\MeteringService;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
 use Mockery\MockInterface;
-use Modules\Identity\Models\User;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Events\MessageReceived;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Inbox\Services\InboundMessageService;
-use Modules\Tenancy\Models\Workspace;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-function makeService(?MeteringGate $gate = null): InboundMessageService
+function makeService(?MeteringService $meter = null): InboundMessageService
 {
-    return new InboundMessageService($gate ?? app(MeteringGate::class));
+    return new InboundMessageService($meter ?? app(MeteringService::class));
 }
 
 function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId = null): array
 {
     // zalo_connection_id là bigint (global sequence, xem migration 700004)
     $connectionId ??= random_int(1_000_000, 9_999_999);
+
     return [
         'zalo_connection_id' => (string) $connectionId,
         'channel' => 'zalo_personal',
@@ -30,7 +32,7 @@ function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId
         'direction' => 'in',
         'type' => 'text',
         'body' => 'Xin chào!',
-        'source_id' => 'zalo_msg_' . uniqid(),
+        'source_id' => 'zalo_msg_'.uniqid(),
         'platform_sent_at' => now()->toDateTimeString(),
     ];
 }
@@ -45,8 +47,8 @@ it('F13/F20: ingest ghi Conversation+Message và dispatch MessageReceived kể c
     actingInWorkspace($ws, $user);
 
     // Gate throw bất kỳ exception — simulates billing crash
-    $throwingGate = mock(MeteringGate::class, function (MockInterface $m) {
-        $m->shouldReceive('meterReply')->andThrow(new \RuntimeException('Billing dead'));
+    $throwingGate = mock(MeteringService::class, function (MockInterface $m) {
+        $m->shouldReceive('meterReply')->andThrow(new RuntimeException('Billing dead'));
         $m->shouldReceive('canStartNew')->andReturn(true);
         $m->shouldReceive('canReplyOnExisting')->andReturn(true);
     });
@@ -77,7 +79,7 @@ it('F1/F14: direction=in → KHÔNG gọi meterReply', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
@@ -95,7 +97,7 @@ it('F1/F14: direction=out → gọi meterReply đúng 1 lần', function () {
     actingInWorkspace($ws, $user);
 
     $meterCallCount = 0;
-    $gate = mock(MeteringGate::class, function (MockInterface $m) use (&$meterCallCount) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) use (&$meterCallCount) {
         $m->shouldReceive('meterReply')
             ->once()
             ->andReturnUsing(function () use (&$meterCallCount) {
@@ -118,7 +120,7 @@ it('F14: direction=echo → KHÔNG gọi meterReply', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
@@ -135,7 +137,7 @@ it('F14: thiếu direction field → default in → KHÔNG gọi meterReply', fu
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
@@ -193,7 +195,7 @@ it('MessageReceived broadcastOn private workspace.{id}.conversations channel', f
     expect($channels)->toHaveCount(1);
 
     $channel = $channels[0];
-    expect($channel)->toBeInstanceOf(\Illuminate\Broadcasting\PrivateChannel::class)
+    expect($channel)->toBeInstanceOf(PrivateChannel::class)
         ->and($channel->name)->toBe("private-workspace.{$message->workspace_id}.conversations");
 });
 
@@ -260,4 +262,69 @@ it('channel auth: user của workspace khác bị denied', function () {
     // userA có membership wsA nhưng không có wsB
     expect($userA->membershipFor($wsB->id))->toBeNull();
     expect($userA->membershipFor($wsA->id))->not->toBeNull();
+});
+
+// ── Race: 2 webhook đồng thời cùng (zalo_connection_id, peer_uid) ────────────
+//
+// Trước fix: read-check-write không atomic → cả 2 miss first() → cả 2 INSERT →
+// request thứ 2 hit conversations_channel_peer_unique → QueryException 23505 →
+// caught upstream + 200 OK → message bị drop âm thầm (silent data loss).
+//
+// Mô phỏng race deterministic: một conversation conflicting ĐÃ tồn tại; subclass
+// ép findConversation() lần ĐẦU trả null (cửa sổ race: request kia vừa INSERT mà
+// request này chưa thấy) → service đi vào nhánh INSERT → đụng unique 23505 → catch
+// → re-fetch THẬT (delegate parent) tìm thấy row → trả về existing, không duplicate.
+it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, không throw, không duplicate', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $connectionId = (string) random_int(1_000_000, 9_999_999);
+    $peerUid = 'peer_race_001';
+
+    // Conversation conflicting đã tồn tại (request "kia" tạo trước, trong cùng workspace).
+    $existing = Conversation::create([
+        'channel' => 'zalo_personal',
+        'zalo_connection_id' => $connectionId,
+        'peer_uid' => $peerUid,
+        'thread_type' => 0,
+        'conversation_number' => 999,
+    ]);
+
+    // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
+    $racingService = new class(app(MeteringService::class)) extends InboundMessageService
+    {
+        private bool $firstLookup = true;
+
+        protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation
+        {
+            if ($this->firstLookup) {
+                $this->firstLookup = false;
+
+                return null; // ép đi vào nhánh INSERT → đụng 23505
+            }
+
+            return parent::findConversation($zaloConnectionId, $peerUid); // re-fetch thật trong catch
+        }
+    };
+
+    $payload = basePayload($peerUid, $connectionId);
+    $payload['peer_name'] = 'Khách Race';
+    $payload['source_id'] = 'msg_race_001';
+
+    // Không được throw — catch 23505 → re-fetch
+    $message = $racingService->ingest($payload);
+
+    // Message gắn vào conversation đã tồn tại (re-fetched), KHÔNG tạo conversation mới
+    expect($message->conversation_id)->toBe($existing->id);
+
+    $convCount = Conversation::withTrashed()
+        ->where('zalo_connection_id', $connectionId)
+        ->where('peer_uid', $peerUid)
+        ->count();
+
+    expect($convCount)->toBe(1); // không duplicate
+
+    // peer-info update của existing-row path được áp dụng sau re-fetch
+    expect($existing->fresh()->peer_name)->toBe('Khách Race');
 });

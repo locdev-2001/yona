@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use Modules\CrmSales\Models\Pipeline;
+use App\Models\Pipeline;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Pipeline>

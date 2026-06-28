@@ -48,10 +48,10 @@ return [
     |
     */
     'zalo_bridge' => [
-        'url'            => env('ZALO_BRIDGE_URL', 'http://127.0.0.1:3710'),
+        'url' => env('ZALO_BRIDGE_URL', 'http://127.0.0.1:3710'),
         'webhook_secret' => env('ZALO_BRIDGE_WEBHOOK_SECRET', ''),
-        'send_secret'    => env('ZALO_BRIDGE_SEND_SECRET', ''),
-        'ui_secret'      => env('ZALO_BRIDGE_UI_SECRET', ''),
+        'send_secret' => env('ZALO_BRIDGE_SEND_SECRET', ''),
+        'ui_secret' => env('ZALO_BRIDGE_UI_SECRET', ''),
     ],
 
 ];

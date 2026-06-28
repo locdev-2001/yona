@@ -1,10 +1,10 @@
 <?php
 
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Note;
-use Modules\Shared\Services\NoteService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Note;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\NoteService;
 
 // Authz matrix for NoteController.
 

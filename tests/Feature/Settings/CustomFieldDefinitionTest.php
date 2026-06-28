@@ -1,9 +1,9 @@
 <?php
 
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\CustomFieldDefinition;
-use Modules\Shared\Services\CustomFieldService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\CustomFieldDefinition;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\CustomFieldService;
 
 // Custom-field definition CRUD + authz matrix.
 

@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\ClientGroup;
-use Modules\CrmSales\Services\ClientService;
+use App\Models\Client;
+use App\Models\ClientGroup;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ClientService;
 use Illuminate\Database\QueryException;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
 
 it('creates a client group', function () {
     $workspace = Workspace::factory()->create();

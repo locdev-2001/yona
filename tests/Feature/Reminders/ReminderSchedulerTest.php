@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ReminderService;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Shared\Services\ReminderService;
-use Modules\Tenancy\Models\Workspace;
 
 // G12 scheduler isolation: 2-workspace due reminders dispatched with no cross-workspace leak.
 //

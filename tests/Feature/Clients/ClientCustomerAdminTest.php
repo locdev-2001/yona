@@ -1,9 +1,9 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Services\ClientService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ClientService;
 
 /**
  * Customer-admin delegation tests.

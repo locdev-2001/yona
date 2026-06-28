@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\Project;
-use Modules\Projects\Models\ProjectStatus;
-use Modules\Projects\Services\ProjectService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Models\Project;
+use App\Models\ProjectStatus;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\ProjectService;
 
 // P08 — ProjectCrudTest: create / update / delete via service.
 

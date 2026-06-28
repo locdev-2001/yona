@@ -2,41 +2,42 @@
 
 namespace App\Providers;
 
+use App\Models\Activity;
+use App\Models\Admin;
+use App\Models\Announcement;
+use App\Models\AnnouncementRead;
+use App\Models\Attachment;
+use App\Models\AuditLog;
+use App\Models\Client;
+use App\Models\ClientGroup;
+use App\Models\ClientVaultEntry;
+use App\Models\Comment;
+use App\Models\Contact;
+use App\Models\CustomFieldDefinition;
+use App\Models\EmailTemplate;
+use App\Models\Lead;
+use App\Models\LeadSource;
+use App\Models\Note;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\Project;
+use App\Models\ProjectDiscussion;
+use App\Models\ProjectMilestone;
+use App\Models\ProjectStatus;
+use App\Models\Reminder;
+use App\Models\Tag;
+use App\Models\Task;
+use App\Models\TaskChecklistItem;
+use App\Models\TaskTimer;
+use App\Models\Team;
+use App\Models\TeamClosure;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
+use App\Models\WorkspaceSequence;
+use App\Models\WorkspaceSetting;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Modules\Email\Models\EmailTemplate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Models\AnnouncementRead;
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\ClientGroup;
-use Modules\CrmSales\Models\ClientVaultEntry;
-use Modules\CrmSales\Models\Contact;
-use Modules\CrmSales\Models\LeadSource;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\AuditLog;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\TeamClosure;
-use Modules\Identity\Models\User;
-use Modules\Projects\Models\Project;
-use Modules\Projects\Models\ProjectDiscussion;
-use Modules\Projects\Models\ProjectMilestone;
-use Modules\Projects\Models\ProjectStatus;
-use Modules\Projects\Models\Task;
-use Modules\Projects\Models\TaskChecklistItem;
-use Modules\Projects\Models\TaskTimer;
-use Modules\Shared\Models\Activity;
-use Modules\Shared\Models\Attachment;
-use Modules\Shared\Models\Comment;
-use Modules\Shared\Models\CustomFieldDefinition;
-use Modules\Shared\Models\Note;
-use Modules\Shared\Models\Reminder;
-use Modules\Shared\Models\Tag;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
-use Modules\Tenancy\Models\WorkspaceSequence;
-use Modules\Tenancy\Models\WorkspaceSetting;
 
 /**
  * G3 - Registers the canonical morph alias map for all polymorphic relations.
@@ -61,7 +62,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'contact' => Contact::class,
             'client_group' => ClientGroup::class,
             'client_vault_entry' => ClientVaultEntry::class,
-            'lead' => 'Modules\\CrmSales\\Models\\Lead',
+            'lead' => Lead::class,
 
             // Phase 05 — projects module (G3: alias string unchanged, FQCN updated).
             'project' => Project::class,

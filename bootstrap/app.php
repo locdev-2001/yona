@@ -1,28 +1,25 @@
 <?php
 
 use App\Exceptions\StaleModelException;
+use App\Http\Middleware\AdminCan;
+use App\Http\Middleware\BindAdminPermissionScope;
+use App\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdentifyWorkspace;
+use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Modules\Identity\Http\Middleware\AdminCan;
-use Modules\Identity\Http\Middleware\BindAdminPermissionScope;
-use Modules\Identity\Http\Middleware\BlockDuringImpersonation;
-use Modules\Tenancy\Http\Middleware\IdentifyWorkspace;
-use Modules\Tenancy\Http\Middleware\ResetTenantContext;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        // Per-module API routes are loaded via loadRoutesFrom() inside each
-        // module's ServiceProvider (modules/{name}/routes/api.php). There is no
-        // central routes/api.php. Those routes run on Laravel's built-in 'api'
-        // middleware group — that group is NOT registered explicitly here; the
-        // framework provides it by default.
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -30,6 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Clear any leaked RLS context first (Octane/persistent-connection safety).
         $middleware->web(prepend: [
+            ResetTenantContext::class,
+        ]);
+
+        // Same defense for module API routes (Zalo webhook, future api endpoints):
+        // a pooled connection could carry stale RLS context into an api request.
+        $middleware->api(prepend: [
             ResetTenantContext::class,
         ]);
 
@@ -46,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.scope' => BindAdminPermissionScope::class,
             'admin.can' => AdminCan::class,
             'no.impersonation' => BlockDuringImpersonation::class,
+            'zalo.bridge.secret' => VerifyZaloBridgeSecret::class,
         ]);
 
         // Guard-aware redirects: admin routes redirect to admin endpoints.

@@ -47,6 +47,7 @@ return [
         'dashboard' => 'Dashboard',
         'overview' => 'Overview',
         'inbox' => 'Inbox',
+        'integrations' => 'Integrations',
         'zalo' => 'Zalo connection',
         'crm' => 'CRM',
         'clients' => 'Clients',
@@ -92,6 +93,18 @@ return [
         'confirm' => 'Confirm',
         'move' => 'Move',
         'search' => 'Search',
+    ],
+    'integrations' => [
+        'title' => 'Integrations',
+        'subtitle' => 'Connect channels and services to your workspace.',
+        'connect' => 'Connect',
+        'manage' => 'Manage',
+        'connected' => 'Connected',
+        'not_connected' => 'Not connected',
+        'empty' => 'No integrations available.',
+        'category' => [
+            'chat' => 'Chat',
+        ],
     ],
     'settings' => [
         'subtitle' => 'Manage your profile and account settings.',

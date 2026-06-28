@@ -32,19 +32,18 @@ Last updated: 2026-06-28
 | 5 | **Projects & Tasks** (P08-09): Project + members + milestones kanban + file + discussions; Task multi-assignee + checklist + timer/timesheet (start/stop state machine) | ✅ |
 | 6 | **Integration + Verify** (P10): cross-module tests (4×5 matrix), tenant isolation 2-workspace, authz matrix (401/403/404/ok), convert E2E, browser Playwright, docs gate | ✅ |
 
-### Phase 4 (Standardization + GĐ1: Omnichannel/CDP/Billing)
+### Phase 4 (Standardization + GĐ1: Omnichannel/CDP/Billing → Traditional Laravel Refactor)
 
 | # | Phase | Status |
 |---|---|---|
-| **0** | **Modular standardization (docs & plans)** — chuẩn hóa docs trước code; spec modular architecture, ADR, update roadmap/system-architecture | ✅ |
-| **1** | **Module framework scaffold** — `modules/`, PSR-4, loader, `module.json`, topo-sort | ✅ |
-| **2–6** | **Reorg current code → modular** (staged, test xanh): announcements, tenancy, identity, shared, cdp, crm-sales, projects | ✅ |
-| **7** | **GĐ1 — Inbox + Channel-Zalo + CDP (contract) + Billing + Payment-manual** — inbox Zalo webhook + idempotent message, conv→Lead (dedup contract Phase-08), plan grant, metering per-channel, 18 audit findings fixed | ✅ |
-| **7-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; quotas PLACEHOLDER (founder decision), Zalo test account pending | ✅ |
-| **8** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
+| **0–3** | **Custom modular framework (SUPERSEDED)** — [plans/260627-modular-standardization/](../../plans/260627-modular-standardization/plan.md) replaced by traditional Laravel refactor | ✅ (archived) |
+| **4** | **Traditional Laravel Refactor** (2026-06-28) — `app/Models`, `app/Http/Controllers/{Domain}`, `app/Services` (MeteringService concrete); **only module:** `app/Modules/Integration/` (driver pattern); xóa `module.json`/ModuleRegistry/topo-sort | ✅ |
+| **5** | **GĐ1 — Inbox + Channel-Zalo + CDP (contract) + Billing + Payment-manual** — inbox Zalo webhook + idempotent message, conv→Lead (dedup contract Phase-08), plan grant, metering per-channel, 18 audit findings fixed | ✅ |
+| **5-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; code-standards.md + getting-started.md + feature-docs; quotas PLACEHOLDER (founder decision), Zalo test account pending | ✅ |
+| **6** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
 | (later) | Support (Ticket + SLA), Marketing, Webhooks, API, Client Portal | ⬜ |
 
-**Plan:** [plans/260627-modular-standardization/plan.md](../../plans/260627-modular-standardization/plan.md)
+**Primary Plan:** [plans/260628-traditional-laravel-refactor/plan.md](../../plans/260628-traditional-laravel-refactor/plan.md)
 
 ## Milestones
 

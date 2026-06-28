@@ -1,9 +1,9 @@
 <?php
 
-use Modules\Projects\Models\TaskChecklistItem;
-use Modules\Projects\Services\TaskService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\TaskChecklistItem;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\TaskService;
 
 // ── Checklist add/toggle/reorder/delete ──────────────────────────────────────
 

@@ -1,9 +1,9 @@
 <?php
 
 use App\Exceptions\StaleModelException;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Services\TeamService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Team;
+use App\Models\Workspace;
+use App\Services\TeamService;
 
 // Optimistic concurrency (BR-X08): stale writes are rejected, not silently
 // applied (no last-write-wins).

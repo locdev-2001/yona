@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use Modules\Projects\Models\ProjectStatus;
+use App\Models\ProjectStatus;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<ProjectStatus>

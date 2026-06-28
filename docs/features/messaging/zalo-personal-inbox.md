@@ -20,8 +20,8 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope
 
 **Inbound webhook** `POST /api/integrations/zalo-personal/webhook`:
 - Bridge sends HMAC-signed payload when peer messages arrive.
-- Code: `modules/inbox/src/Http/Controllers/WebhookController.php::handleZaloPersonalWebhook()`.
-- Route: `modules/inbox/routes/web.php`.
+- Code: `app/Http/Controllers/Integration/ZaloPersonalWebhookController.php::handle()`.
+- Route: `routes/api.php`.
 
 **Entrypoint in bridge:**
 - Bridge (Node zca-js) receives message event from Zalo client → normalizes → POST to webhook with `X-Zalo-Personal-Bridge-Secret` header.
@@ -82,18 +82,18 @@ sequenceDiagram
 ## Data touched
 
 **Models:**
-- `Conversation` (modules/inbox)
+- `Conversation` (app/Models)
   - Reads: zalo_connection_id, peer_uid (composite lookup)
   - Writes: channel, peer_uid, peer_name, peer_avatar_url, peer_phone, conversation_number, last_message_at, last_message_preview, unread_count, contact_id (null for draft)
   - RLS: `workspace_id` global scope enforced
   - Sequence: `WorkspaceSequence::next('conversation')` for conversation_number
 
-- `Message` (modules/inbox)
+- `Message` (app/Models)
   - Reads: conversation_id, source_id (idempotency key)
   - Writes: direction ('in'/'out'/'echo'), type, body, media_url, media_meta, platform_sent_at, sender_uid, sender_name, sent_by
   - RLS: inherited via conversation FK
 
-- `ZaloConnection` (modules/channel-zalo)
+- `ZaloConnection` (app/Models)
   - Reads: connection_id → workspace_id (privileged query, bypasses RLS)
   - No writes in inbound
 
@@ -133,6 +133,5 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § Inbox.
 
 - [conversation-to-lead.md](./conversation-to-lead.md) — convert inbound conversation to Lead with CDP dedup.
 - [outbound-send.md](./outbound-send.md) — reply to conversation via ZaloSendService (outbound metering).
-- [system-architecture.md](../system-architecture.md) § Inbox + Zalo Channel.
-- [modular-architecture.md](../modular-architecture.md) § Module contract pattern (inbox.channel-host).
+- [system-architecture.md](../system-architecture.md) § Inbox + Zalo Channel + Integration Driver Pattern.
 - [crm-business-rules.md](../crm-business-rules.md) § F2, F6, F11, F13, F14, F20.

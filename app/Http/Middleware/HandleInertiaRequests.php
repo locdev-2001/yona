@@ -2,17 +2,18 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TenantPermission;
+use App\Models\Admin;
+use App\Models\Announcement;
+use App\Models\User;
+use App\Models\WorkspaceMember;
+use App\Services\AnnouncementReadService;
+use App\Services\EntitlementService;
+use App\Services\NotificationService;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Services\AnnouncementReadService;
-use Modules\Identity\Enums\TenantPermission;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\User;
-use Modules\Shared\Services\NotificationService;
-use Modules\Tenancy\Models\WorkspaceMember;
-use Modules\Tenancy\Support\TenantScope;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -222,16 +223,14 @@ class HandleInertiaRequests extends Middleware
             ? TenantPermission::values()
             : $user->getAllPermissions()->pluck('name')->all();
 
-        // Entitlements: share snapshot nếu billing module active (cô lập — check class_exists)
+        // Entitlements: billing là CORE — luôn on, resolve trực tiếp App\Services\EntitlementService
         $entitlements = null;
-        if (class_exists(\Modules\Billing\Services\EntitlementResolver::class)) {
-            try {
-                /** @var \Modules\Billing\Services\EntitlementResolver $resolver */
-                $resolver = app(\Modules\Billing\Services\EntitlementResolver::class);
-                $entitlements = $resolver->snapshot($membership->workspace_id);
-            } catch (\Throwable) {
-                // ponytail: fail-safe — billing chưa migrate không làm vỡ login
-            }
+        try {
+            /** @var EntitlementService $entitlementService */
+            $entitlementService = app(EntitlementService::class);
+            $entitlements = $entitlementService->snapshot($membership->workspace_id);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — billing chưa migrate không làm vỡ login
         }
 
         return [
@@ -269,7 +268,7 @@ class HandleInertiaRequests extends Middleware
      * Finding 7b: fail-safe wrapper — announcements module bị tắt / belum migrate → null.
      * Đối xứng với guard billing entitlements ở membershipPayload().
      */
-    private function safeAnnouncementCount(\Modules\Identity\Models\User $user): ?int
+    private function safeAnnouncementCount(User $user): ?int
     {
         try {
             return app(AnnouncementReadService::class)->getUnreadCount($user);
@@ -280,7 +279,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /** @return array<string, mixed>|null */
-    private function safeLatestUnreadAnnouncement(\Modules\Identity\Models\User $user): ?array
+    private function safeLatestUnreadAnnouncement(User $user): ?array
     {
         try {
             $announcement = app(AnnouncementReadService::class)->getLatestUnread($user);

@@ -1,10 +1,10 @@
 <?php
 
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\CrmSales\Services\LeadService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Services\LeadService;
 
 // ── Lost / Junk / Restore ─────────────────────────────────────────────────────
 

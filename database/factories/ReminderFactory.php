@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Reminder;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Identity\Models\Team;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Reminder;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Reminder>

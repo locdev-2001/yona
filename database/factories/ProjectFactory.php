@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\Project;
+use App\Models\Client;
+use App\Models\Project;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * @extends Factory<Project>

@@ -20,6 +20,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Allow Destructive Commands
+    |--------------------------------------------------------------------------
+    |
+    | Opt-in flag to permit destructive DB commands (migrate:fresh/refresh/reset,
+    | db:wipe). Defaults to false: AppServiceProvider prohibits them everywhere
+    | except the test suite. Set DB_ALLOW_DESTRUCTIVE=true to run one knowingly.
+    |
+    */
+
+    'allow_destructive' => env('DB_ALLOW_DESTRUCTIVE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
     |
@@ -57,9 +70,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([]) : [],
         ],
 
         'mariadb' => [
@@ -77,9 +88,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([]) : [],
         ],
 
         // Runtime connection — connects as the NON-superuser `cho_rach_app`

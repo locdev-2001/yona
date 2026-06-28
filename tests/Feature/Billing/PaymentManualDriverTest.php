@@ -1,26 +1,26 @@
 <?php
 
-use Modules\Billing\Contracts\PaymentProvider;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Models\WorkspacePurchase;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Billing\Services\GrantPlanService;
-use Modules\Billing\Services\PaymentManager;
-use Modules\PaymentManual\Services\ManualPaymentProvider;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\MarketplaceItem;
+use App\Models\Workspace;
+use App\Modules\Integration\Contracts\PaymentDriver;
+use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
+use App\Modules\Integration\PaymentManager;
+use App\Services\EntitlementService;
+use App\Services\GrantPlanService;
+use Illuminate\Support\Facades\DB;
 
 // ── Driver registry ───────────────────────────────────────────────────────────
 
-it('PaymentManager: driver(manual) instanceof ManualPaymentProvider', function () {
+it('PaymentManager: driver(manual) instanceof ManualPaymentDriver', function () {
     $manager = app(PaymentManager::class);
 
-    expect($manager->driver('manual'))->toBeInstanceOf(ManualPaymentProvider::class);
+    expect($manager->driver('manual'))->toBeInstanceOf(ManualPaymentDriver::class);
 });
 
-it('ManualPaymentProvider implements PaymentProvider contract', function () {
-    $provider = app(ManualPaymentProvider::class);
+it('ManualPaymentDriver implements PaymentDriver contract', function () {
+    $provider = app(ManualPaymentDriver::class);
 
-    expect($provider)->toBeInstanceOf(PaymentProvider::class)
+    expect($provider)->toBeInstanceOf(PaymentDriver::class)
         ->and($provider->key())->toBe('manual');
 });
 
@@ -84,7 +84,7 @@ it('GrantPlanService::grant: EntitlementResolver entitlements đổi LIVE sau gr
             ],
         ]);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     // Trước grant: workspace mới tạo không có plan.team (auto-grant plan.free chạy khi create)
@@ -123,7 +123,7 @@ it('GrantPlanService::grant idempotent: gọi 2 lần → 1 active purchase, kh�
 
     // Đọc qua pgsql_privileged để bypass RLS (không có workspace context trong test này)
     $teamItem = MarketplaceItem::where('code', 'plan.team')->firstOrFail();
-    $count = \Illuminate\Support\Facades\DB::connection('pgsql_privileged')
+    $count = DB::connection('pgsql_privileged')
         ->table('workspace_purchases')
         ->where('workspace_id', $workspace->id)
         ->where('item_id', $teamItem->id)
@@ -155,7 +155,7 @@ it('GrantPlanService::revoke: cancelled → entitlements về free', function ()
     );
 
     $service = app(GrantPlanService::class);
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
 
     // Grant trước
     $service->grant($workspace->id, 'plan.team');
@@ -168,7 +168,7 @@ it('GrantPlanService::revoke: cancelled → entitlements về free', function ()
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeFalse();
 
     // DB: purchase cancelled (đọc qua pgsql_privileged để bypass RLS)
-    $row = \Illuminate\Support\Facades\DB::connection('pgsql_privileged')
+    $row = DB::connection('pgsql_privileged')
         ->table('workspace_purchases')
         ->where('workspace_id', $workspace->id)
         ->where('item_id', $teamItem->id)

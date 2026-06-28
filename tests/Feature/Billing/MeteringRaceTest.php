@@ -1,37 +1,27 @@
 <?php
 
+use App\Exceptions\QuotaExceededException;
+use App\Models\ChannelUsage;
+use App\Models\Conversation;
+use App\Models\MarketplaceItem;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspacePurchase;
+use App\Models\WorkspaceSequence;
+use App\Services\EntitlementService;
+use App\Services\MeteringService;
 use Illuminate\Support\Facades\DB;
-use Modules\Billing\Models\ChannelUsage;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Models\WorkspacePurchase;
-use Modules\Billing\Services\ConversationMeter;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Identity\Models\User;
-use Modules\Inbox\Channel\AllowAllMeteringGate;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Exceptions\QuotaExceededException;
-use Modules\Inbox\Models\Conversation;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceSequence;
+use Illuminate\Support\Str;
 
 /**
- * MeteringRaceTest — F1 race-safe metering + F5 canReplyOnExisting + F10 override.
+ * MeteringRaceTest — F1 race-safe metering + F5 canReplyOnExisting + quota gate.
  *
  * Test các invariant:
  *   F1: gọi meterReply 2 lần cùng kỳ → answered_count === 1 (compare-set chặn double).
  *   F5: conv đã metered kỳ này → canReplyOnExisting = true kể cả remaining = 0.
- *   F10: MeteringGate binding là ConversationMeter (không phải AllowAllMeteringGate).
+ *   Quota: conv mới + hết quota → assertCanSend ném QuotaExceededException.
  *   EntitlementResolver: workspace free → remaining = 50; allows theo gói.
  */
-
-// ── F10: Override binding ─────────────────────────────────────────────────────
-
-it('F10: MeteringGate resolves to ConversationMeter (not AllowAllMeteringGate)', function () {
-    $gate = app(MeteringGate::class);
-
-    expect($gate)->toBeInstanceOf(ConversationMeter::class)
-        ->and($gate)->not->toBeInstanceOf(AllowAllMeteringGate::class);
-});
 
 // ── F1: meterReply compare-set ────────────────────────────────────────────────
 
@@ -49,7 +39,7 @@ it('F1: meterReply called twice same period → answered_count === 1', function 
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     // Gọi 2 lần liên tiếp cùng kỳ (giả lập 2 request concurrent)
     $meter->meterReply($conv);
@@ -81,7 +71,7 @@ it('F1: meterReply in different periods → counted separately', function () {
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     // Giả lập kỳ tháng trước: set last_metered_period thủ công
     $previousPeriod = now('Asia/Ho_Chi_Minh')->subMonth()->format('Y-m');
@@ -124,7 +114,7 @@ it('F5: canReplyOnExisting = true even when remaining = 0 if conv already metere
 
     // Tạo channel_usage = 0 remaining (quota đã hết)
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -133,7 +123,7 @@ it('F5: canReplyOnExisting = true even when remaining = 0 if conv already metere
         'updated_at' => now(),
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     // F5: conv đã tính kỳ này → canReplyOnExisting phải true kể cả hết quota
     expect($meter->canReplyOnExisting($conv))->toBeTrue();
@@ -174,7 +164,7 @@ it('canStartNew = false when remaining = 0', function () {
     // Đã dùng hết 50 hội thoại kỳ này
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -184,9 +174,9 @@ it('canStartNew = false when remaining = 0', function () {
     ]);
 
     // Clear cache để resolver đọc lại
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     expect($meter->canStartNew('zalo_personal'))->toBeFalse();
 });
@@ -197,7 +187,7 @@ it('EntitlementResolver: workspace without purchase uses free defaults (remainin
     $workspace = Workspace::factory()->create();
     actingInWorkspace($workspace);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     $remaining = $resolver->remaining($workspace->id, 'quota.conversations.zalo_personal');
@@ -234,7 +224,7 @@ it('EntitlementResolver: allows integration.zalo_personal for team plan', functi
         'quantity' => 1,
     ]);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeTrue()
@@ -257,7 +247,7 @@ it('F9-audit: meterReply 2 lần cùng kỳ → last_metered_period set đúng (
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
     $period = $meter->currentPeriod();
 
     $meter->meterReply($conv);
@@ -279,7 +269,7 @@ it('F9-audit: meterReply 2 lần cùng kỳ → last_metered_period set đúng (
 
 // ── F1-audit: assertCanSend enforce quota ─────────────────────────────────────
 
-it('F1-audit: ConversationMeter::assertCanSend throws QuotaExceededException khi quota hết + conv mới', function () {
+it('F1-audit: MeteringService::assertCanSend throws QuotaExceededException khi quota hết + conv mới', function () {
     $workspace = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($workspace, $user);
@@ -311,7 +301,7 @@ it('F1-audit: ConversationMeter::assertCanSend throws QuotaExceededException khi
     // Đã dùng hết 50 quota kỳ này
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -320,7 +310,7 @@ it('F1-audit: ConversationMeter::assertCanSend throws QuotaExceededException khi
         'updated_at' => now(),
     ]);
 
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
     // Conv MỚI (chưa metered kỳ này)
     $conv = Conversation::create([
@@ -332,14 +322,14 @@ it('F1-audit: ConversationMeter::assertCanSend throws QuotaExceededException khi
         // last_metered_period = null → conv mới kỳ này
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     // assertCanSend phải throw QuotaExceededException
     expect(fn () => $meter->assertCanSend($conv))
         ->toThrow(QuotaExceededException::class);
 });
 
-it('F1-audit: ConversationMeter::assertCanSend KHÔNG throw khi conv đã metered kỳ này (F5)', function () {
+it('F1-audit: MeteringService::assertCanSend KHÔNG throw khi conv đã metered kỳ này (F5)', function () {
     $workspace = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($workspace, $user);
@@ -370,7 +360,7 @@ it('F1-audit: ConversationMeter::assertCanSend KHÔNG throw khi conv đã metere
 
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -379,7 +369,7 @@ it('F1-audit: ConversationMeter::assertCanSend KHÔNG throw khi conv đã metere
         'updated_at' => now(),
     ]);
 
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
     // Conv ĐÃ metered kỳ này (F5)
     $conv = Conversation::create([
@@ -391,26 +381,8 @@ it('F1-audit: ConversationMeter::assertCanSend KHÔNG throw khi conv đã metere
         'last_metered_period' => $period, // đã tính kỳ này
     ]);
 
-    $meter = app(ConversationMeter::class);
+    $meter = app(MeteringService::class);
 
     // F5: không throw dù hết quota
     expect(fn () => $meter->assertCanSend($conv))->not->toThrow(QuotaExceededException::class);
-});
-
-it('F1-audit: AllowAllMeteringGate::assertCanSend no-op (billing tắt → không throw)', function () {
-    $workspace = Workspace::factory()->create();
-    actingInWorkspace($workspace);
-
-    $conv = Conversation::create([
-        'workspace_id' => $workspace->id,
-        'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_noop_'.uniqid(),
-        'thread_type' => 0,
-        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
-    ]);
-
-    $gate = new AllowAllMeteringGate();
-
-    // Phải không throw dù conv mới và không có quota
-    expect(fn () => $gate->assertCanSend($conv))->not->toThrow(\Throwable::class);
 });
