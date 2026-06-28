@@ -4,7 +4,7 @@ namespace App\Http\Requests\Leads;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Shared\Services\CustomFieldService;
+use App\Services\CustomFieldService;
 
 /**
  * P07 — Validate + authorize creating a new lead.

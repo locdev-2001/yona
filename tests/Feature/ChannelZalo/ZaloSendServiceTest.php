@@ -15,8 +15,8 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedExcepti
 use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Support\TenantScope;
+use App\Models\Workspace;
+use App\Support\TenantScope;
 
 /**
  * Unit / integration tests cho ZaloSendService, SendRateLimiter, ZaloHealthMonitor.
@@ -252,7 +252,7 @@ it('store returns connection_id and qr_token when bridge qr/start ok', function 
     $workspace = Workspace::factory()->create();
 
     // Seed user với permission tenant.zalo.manage trong workspace (spatie teams mode)
-    $user = \Modules\Identity\Models\User::factory()->create();
+    $user = \App\Models\User::factory()->create();
     seedMember($workspace, $user, 'admin');
     actingInWorkspace($workspace, $user);
 
@@ -278,7 +278,7 @@ it('store returns connection_id and qr_token when bridge qr/start ok', function 
 it('promote updates ZaloConnection state to connected when bridge promote ok', function () {
     $workspace = Workspace::factory()->create();
 
-    $user = \Modules\Identity\Models\User::factory()->create();
+    $user = \App\Models\User::factory()->create();
     seedMember($workspace, $user, 'admin');
     actingInWorkspace($workspace, $user);
 

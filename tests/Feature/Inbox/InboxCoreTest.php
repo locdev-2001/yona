@@ -5,7 +5,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\WorkspaceSequence;
 use App\Modules\Integration\ChannelManager;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────
 
@@ -172,7 +172,7 @@ it('ChannelManager hasAny returns true when zalo_personal driver is registered (
     // channel-zalo ServiceProvider đã register 'zalo_personal' driver khi boot
     $manager = app(ChannelManager::class);
     expect($manager->hasAny())->toBeTrue();
-    expect($manager->driver('zalo_personal'))->toBeInstanceOf(\Modules\ChannelZalo\Services\ZaloChannelDriver::class);
+    expect($manager->driver('zalo_personal'))->toBeInstanceOf(\App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver::class);
 });
 
 it('ChannelManager hasAny returns true after driver registered', function () {

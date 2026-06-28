@@ -6,11 +6,11 @@ use App\Models\User;
 use App\Models\WorkspaceSequence;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\DB;
-use Modules\Billing\Models\ChannelUsage;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Models\WorkspacePurchase;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\ChannelUsage;
+use App\Models\MarketplaceItem;
+use App\Models\WorkspacePurchase;
+use App\Services\EntitlementService;
+use App\Models\Workspace;
 
 /**
  * MeteringRaceTest — F1 race-safe metering + F5 canReplyOnExisting + quota gate.
@@ -173,7 +173,7 @@ it('canStartNew = false when remaining = 0', function () {
     ]);
 
     // Clear cache để resolver đọc lại
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
     $meter = app(MeteringService::class);
 
@@ -186,7 +186,7 @@ it('EntitlementResolver: workspace without purchase uses free defaults (remainin
     $workspace = Workspace::factory()->create();
     actingInWorkspace($workspace);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     $remaining = $resolver->remaining($workspace->id, 'quota.conversations.zalo_personal');
@@ -223,7 +223,7 @@ it('EntitlementResolver: allows integration.zalo_personal for team plan', functi
         'quantity' => 1,
     ]);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeTrue()
@@ -309,7 +309,7 @@ it('F1-audit: MeteringService::assertCanSend throws QuotaExceededException khi q
         'updated_at' => now(),
     ]);
 
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
     // Conv MỚI (chưa metered kỳ này)
     $conv = Conversation::create([
@@ -368,7 +368,7 @@ it('F1-audit: MeteringService::assertCanSend KHÔNG throw khi conv đã metered 
         'updated_at' => now(),
     ]);
 
-    app(EntitlementResolver::class)->forgetCache($workspace->id);
+    app(EntitlementService::class)->forgetCache($workspace->id);
 
     // Conv ĐÃ metered kỳ này (F5)
     $conv = Conversation::create([

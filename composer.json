@@ -40,22 +40,9 @@
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/",
-            "Modules\\Announcements\\": "modules/announcements/src/",
-            "Modules\\Identity\\": "modules/identity/src/",
-            "Modules\\Sample\\": "modules/sample/src/",
-            "Modules\\Shared\\": "modules/shared/src/",
-        "Modules\\Tenancy\\": "modules/tenancy/src/",
-            "Modules\\Cdp\\": "modules/cdp/src/",
-        "Modules\\CrmSales\\": "modules/crm-sales/src/",
-        "Modules\\Projects\\": "modules/projects/src/",
-        "Modules\\Email\\": "modules/email/src/",
-        "Modules\\Inbox\\": "modules/inbox/src/",
-        "Modules\\Billing\\": "modules/billing/src/",
-        "Modules\\Billing\\Database\\Seeders\\": "modules/billing/database/seeders/"
+            "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Support/legacy-aliases.php",
             "app/helpers.php"
         ]
     },

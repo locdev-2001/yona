@@ -1,12 +1,12 @@
 <?php
 
-use Modules\CrmSales\Models\Lead;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\Inbox\Models\Conversation;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceSequence;
+use App\Models\Lead;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\Conversation;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceSequence;
 
 // ── conv→Lead: happy path ─────────────────────────────────────────────────────
 
@@ -162,7 +162,7 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
     expect($conv1->contact_id)->toBe($conv2->contact_id);
 
     // Chỉ 1 Contact trong workspace cho SĐT này
-    $contactCount = \Modules\CrmSales\Models\Contact::where('workspace_id', $workspace->id)
+    $contactCount = \App\Models\Contact::where('workspace_id', $workspace->id)
         ->where('phone', $sharedPhone)
         ->count();
     expect($contactCount)->toBe(1);

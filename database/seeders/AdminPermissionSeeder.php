@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Identity\Enums\PlatformPermission;
-use Modules\Identity\Enums\PlatformRole;
+use App\Enums\PlatformPermission;
+use App\Enums\PlatformRole;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;

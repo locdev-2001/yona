@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Announcements service provider (moved from Modules\Announcements\Providers).
+ * Announcements feature service provider.
  *
  * Loads:
  *  - Policy (AnnouncementPolicy for tenant-plane view/markRead authorization)

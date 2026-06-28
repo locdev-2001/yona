@@ -30,6 +30,11 @@ class ZaloPersonalServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Driver gate: tắt qua config('integrations.zalo_personal.enabled') → driver/route không register.
+        if (! config('integrations.zalo_personal.enabled')) {
+            return;
+        }
+
         // Singleton services — stateless giữa request; ZaloHealthMonitor + SendRateLimiter dùng Cache.
         $this->app->singleton(ZaloHealthMonitor::class, fn () => new ZaloHealthMonitor());
         $this->app->singleton(SendRateLimiter::class, fn () => new SendRateLimiter());
@@ -52,6 +57,11 @@ class ZaloPersonalServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Driver gate: disabled → bỏ qua middleware alias + routes.
+        if (! config('integrations.zalo_personal.enabled')) {
+            return;
+        }
+
         $this->registerMiddlewareAlias();
         $this->loadApiRoutes();
         $this->loadSettingsRoutes();

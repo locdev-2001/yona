@@ -1,9 +1,9 @@
 <?php
 
 use App\Services\ContactService;
-use Modules\CrmSales\Models\Contact;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Identity\Models\User;
+use App\Models\Contact;
+use App\Models\Workspace;
+use App\Models\User;
 
 // ── Phase-07: cdp-dedup tests ─────────────────────────────────────────────────
 // Covers: normalizePhone, firstOrCreateByPhone (idempotent), mergeIdentities (flag-not-auto),
@@ -107,7 +107,7 @@ it('Contact.client_id nullable không làm vỡ ContactPolicy.view khi client = 
     $contact->phone = '0933333333';
     $contact->save();
 
-    $policy = new \Modules\CrmSales\Policies\ContactPolicy;
+    $policy = new \App\Policies\ContactPolicy;
     // Draft contact: client = null → view returns false (policy delegate to client)
     expect($policy->view($user, $contact))->toBeFalse();
 });
@@ -153,7 +153,7 @@ it('mergeIdentities: idempotent — gọi 2 lần không duplicate flag', functi
 
     // Chỉ 1 activity log (Contact dùng HasActivities nếu có, nếu không bỏ qua check này)
     // ponytail: Contact không trait HasActivities → kiểm qua Activity model trực tiếp
-    $activityCount = \Modules\Shared\Models\Activity::where('subject_type', 'contact')
+    $activityCount = \App\Models\Activity::where('subject_type', 'contact')
         ->where('subject_id', $primary->id)
         ->where('action', 'contact.merge_review_flagged')
         ->count();
@@ -189,17 +189,17 @@ it('contacts RLS: workspace A không thấy contact workspace B', function () {
 it('convert lead → vẫn tạo Contact với client_id (nullable không vỡ)', function () {
     ['ws' => $ws, 'user' => $user] = cdpWorkspace();
 
-    $pipeline = \Modules\CrmSales\Models\Pipeline::factory()->create();
-    $stage = \Modules\CrmSales\Models\PipelineStage::factory()->for($pipeline)->create([
+    $pipeline = \App\Models\Pipeline::factory()->create();
+    $stage = \App\Models\PipelineStage::factory()->for($pipeline)->create([
         'workspace_id' => $pipeline->workspace_id,
         'type' => 'won',
     ]);
-    $openStage = \Modules\CrmSales\Models\PipelineStage::factory()->for($pipeline)->create([
+    $openStage = \App\Models\PipelineStage::factory()->for($pipeline)->create([
         'workspace_id' => $pipeline->workspace_id,
         'type' => 'open',
     ]);
 
-    $lead = app(\Modules\CrmSales\Services\LeadService::class)->create([
+    $lead = app(\App\Services\LeadService::class)->create([
         'name' => 'Trần Thị Bình',
         'company' => 'ABC Corp',
         'email' => 'binh@abc.com',
@@ -208,7 +208,7 @@ it('convert lead → vẫn tạo Contact với client_id (nullable không vỡ)'
         'stage_id' => $openStage->id,
     ]);
 
-    $client = app(\Modules\CrmSales\Services\LeadConversionService::class)->convert($lead);
+    $client = app(\App\Services\LeadConversionService::class)->convert($lead);
 
     // Contact phải có client_id (NOT null khi tạo qua conversion)
     $contact = Contact::where('client_id', $client->id)->where('is_primary', true)->first();

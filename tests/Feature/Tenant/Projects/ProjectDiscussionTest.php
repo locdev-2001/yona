@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\ProjectDiscussion;
-use Modules\Projects\Services\ProjectDiscussionService;
-use Modules\Projects\Services\ProjectService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Models\ProjectDiscussion;
+use App\Services\ProjectDiscussionService;
+use App\Services\ProjectService;
+use App\Models\User;
+use App\Models\Workspace;
 
 // P08 — Discussion thread + reply via HasComments (P03).
 

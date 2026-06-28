@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Inbox-core service provider (moved from Modules\Inbox).
+ * Inbox-core service provider.
  *
  * Migrations now in database/migrations/ (run by default — loadMigrationsFrom removed).
  * Routes merged into routes/web.php + routes/channels.php.

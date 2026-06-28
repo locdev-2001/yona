@@ -23,6 +23,11 @@ class ManualPaymentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Driver gate: tắt qua config('integrations.payment_manual.enabled') → driver không register.
+        if (! config('integrations.payment_manual.enabled')) {
+            return;
+        }
+
         $this->callAfterResolving(PaymentManager::class, function (PaymentManager $manager) {
             $manager->extend('manual', fn () => app(ManualPaymentDriver::class));
         });

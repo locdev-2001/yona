@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Policies\ClientPolicy;
+use App\Models\Client;
+use App\Policies\ClientPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Workspace;
 
 /**
  * G2 visibility rules:

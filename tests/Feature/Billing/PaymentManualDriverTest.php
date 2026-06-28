@@ -3,11 +3,11 @@
 use App\Modules\Integration\Contracts\PaymentDriver;
 use App\Modules\Integration\PaymentManager;
 use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Models\WorkspacePurchase;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Billing\Services\GrantPlanService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\MarketplaceItem;
+use App\Models\WorkspacePurchase;
+use App\Services\EntitlementService;
+use App\Services\GrantPlanService;
+use App\Models\Workspace;
 
 // ── Driver registry ───────────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ it('GrantPlanService::grant: EntitlementResolver entitlements đổi LIVE sau gr
             ],
         ]);
 
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
     $resolver->forgetCache($workspace->id);
 
     // Trước grant: workspace mới tạo không có plan.team (auto-grant plan.free chạy khi create)
@@ -155,7 +155,7 @@ it('GrantPlanService::revoke: cancelled → entitlements về free', function ()
     );
 
     $service = app(GrantPlanService::class);
-    $resolver = app(EntitlementResolver::class);
+    $resolver = app(EntitlementService::class);
 
     // Grant trước
     $service->grant($workspace->id, 'plan.team');

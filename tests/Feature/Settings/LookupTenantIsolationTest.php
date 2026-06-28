@@ -1,10 +1,10 @@
 <?php
 
-use Modules\CrmSales\Models\LeadSource;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\Projects\Models\ProjectStatus;
-use Modules\CrmSales\Services\LookupService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\LeadSource;
+use App\Models\Pipeline;
+use App\Models\ProjectStatus;
+use App\Services\LookupService;
+use App\Models\Workspace;
 
 // Two-workspace isolation: verify 0 cross-workspace leak for lookup tables.
 

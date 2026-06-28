@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Arr;
-use Modules\Identity\Models\User;
+use App\Models\User;
 
 // Bilingual i18n base (design-system §10): vi default, en fallback.
 

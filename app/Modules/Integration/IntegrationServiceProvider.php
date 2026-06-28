@@ -26,9 +26,6 @@ class IntegrationServiceProvider extends ServiceProvider
 
         $this->app->singleton(PaymentManager::class, fn () => new PaymentManager());
 
-        // Container-key alias for legacy callers using old Modules\Billing\Services\PaymentManager key.
-        $this->app->alias(PaymentManager::class, 'Modules\Billing\Services\PaymentManager');
-
         // Re-home driver providers INTO Integration — không còn module-framework auto-discovery.
         // Internal-first: xóa app/Modules/Integration/ → các provider + driver + routes biến mất cùng nhau.
         $this->app->register(\App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider::class);

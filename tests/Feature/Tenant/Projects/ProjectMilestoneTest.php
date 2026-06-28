@@ -1,11 +1,11 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Models\ProjectMilestone;
-use Modules\Projects\Services\ProjectMilestoneService;
-use Modules\Projects\Services\ProjectService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Models\ProjectMilestone;
+use App\Services\ProjectMilestoneService;
+use App\Services\ProjectService;
+use App\Models\User;
+use App\Models\Workspace;
 
 // P08 — Milestone CRUD + reorder.
 

@@ -6,7 +6,6 @@ use App\Http\Middleware\EnsureEntitled;
 use App\Models\WorkspacePurchase;
 use App\Observers\WorkspacePurchaseObserver;
 use App\Services\EntitlementService;
-use App\Services\GrantPlanService;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,13 +26,6 @@ class BillingServiceProvider extends ServiceProvider
         $this->app->singleton(MeteringService::class, function ($app) {
             return new MeteringService($app->make(EntitlementService::class));
         });
-
-        // Container-key aliases for legacy callers (tests + modules) that resolve
-        // app(Modules\Billing\Services\EntitlementResolver::class).
-        // class_alias alone doesn't bridge container binding keys — must alias here too.
-        $this->app->alias(EntitlementService::class, 'Modules\Billing\Services\EntitlementResolver');
-        $this->app->alias(EntitlementService::class, 'Modules\Billing\Services\EntitlementService');
-        $this->app->alias(GrantPlanService::class, 'Modules\Billing\Services\GrantPlanService');
     }
 
     public function boot(): void

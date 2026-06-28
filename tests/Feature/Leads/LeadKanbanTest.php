@@ -1,14 +1,14 @@
 <?php
 
 use App\Events\LeadStageChanged;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\CrmSales\Services\LeadService;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Activity;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Activity;
+use App\Models\Workspace;
 
 // ── G8 Pipeline invariant + kanban stage move ─────────────────────────────────
 

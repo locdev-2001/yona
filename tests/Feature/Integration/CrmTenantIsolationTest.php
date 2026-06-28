@@ -1,13 +1,13 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\Lead;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\Projects\Models\Project;
-use Modules\Projects\Models\Task;
+use App\Models\Client;
+use App\Models\Lead;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Support\Facades\DB;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 // ── CRM Tenant Isolation: 2-workspace pattern cho Client/Lead/Project/Task ────
 // Theo TenantIsolationTest pattern (BR-X01/X11): Layer 1 (global scope) + Layer 3 (RLS).

@@ -2,14 +2,14 @@
 
 use App\Events\LeadAssigned;
 use App\Notifications\LeadAssignedNotification;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\CrmSales\Services\LeadService;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Activity;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Activity;
+use App\Models\Workspace;
 
 // ── Assignment notification + activity ───────────────────────────────────────
 

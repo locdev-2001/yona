@@ -24,7 +24,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Contracts\EntityMergeFields;
 
 /**
- * CRM-Sales service provider (moved from Modules\CrmSales\Providers\CrmSalesServiceProvider).
+ * CRM-Sales feature service provider.
  * loadMigrationsFrom removed — migrations now in database/migrations/ (run by default).
  */
 class CrmSalesServiceProvider extends ServiceProvider

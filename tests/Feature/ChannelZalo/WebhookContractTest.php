@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Support\TenantScope;
+use App\Models\ZaloConnection;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\Workspace;
+use App\Support\TenantScope;
 
 /**
  * Webhook contract tests cho channel-zalo.
@@ -192,11 +192,11 @@ it('bridge_session event updates state to session_lost with reason', function ()
 // ── ChannelManager driver registration ───────────────────────────────────────
 
 it('ChannelManager has zalo_personal driver registered', function () {
-    $manager = app(\Modules\Inbox\Channel\ChannelManager::class);
+    $manager = app(\App\Modules\Integration\ChannelManager::class);
     expect($manager->hasAny())->toBeTrue();
 
     $driver = $manager->driver('zalo_personal');
-    expect($driver)->toBeInstanceOf(\Modules\ChannelZalo\Services\ZaloChannelDriver::class);
+    expect($driver)->toBeInstanceOf(\App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver::class);
     expect($driver->channelKey())->toBe('zalo_personal');
 })->group('channel-zalo');
 

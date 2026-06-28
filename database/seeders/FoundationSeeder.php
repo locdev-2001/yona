@@ -6,11 +6,11 @@ use App\Services\LookupService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Modules\Identity\Enums\PlatformRole;
-use Modules\Identity\Models\Admin;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceMember;
+use App\Enums\PlatformRole;
+use App\Models\Admin;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Spatie\Permission\PermissionRegistrar;
 
 /**

@@ -2,12 +2,12 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Modules\ChannelZalo\Http\Controllers\ZaloPersonalWebhookController;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Support\TenantScope;
+use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
+use App\Models\ZaloConnection;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\Workspace;
+use App\Support\TenantScope;
 
 // Helper: bind currentWorkspace + TenantScope cùng nhau (giống IdentifyWorkspace)
 function bindWorkspaceContext(string $workspaceId): void
@@ -334,7 +334,7 @@ function simulateZaloWebhook(array $payload): array
     forgetWorkspaceContext();
 
     /** @var string|null $workspaceId */
-    $workspaceId = \Modules\ChannelZalo\Models\ZaloConnection::workspaceForConnection($connectionId);
+    $workspaceId = \App\Models\ZaloConnection::workspaceForConnection($connectionId);
 
     if ($workspaceId === null) {
         return ['status' => 202, 'body' => ['ok' => true, 'message' => 'connection_not_mapped']];
@@ -343,8 +343,8 @@ function simulateZaloWebhook(array $payload): array
     bindWorkspaceContext($workspaceId);
 
     try {
-        $channelManager = app(\Modules\Inbox\Channel\ChannelManager::class);
-        $ingestService = app(\Modules\Inbox\Services\InboundMessageService::class);
+        $channelManager = app(\App\Modules\Integration\ChannelManager::class);
+        $ingestService = app(\App\Services\InboundMessageService::class);
 
         $driver = $channelManager->driver('zalo_personal');
         $normalized = $driver->parseInbound($payload);

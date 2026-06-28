@@ -1,9 +1,9 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
+use App\Models\Client;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Workspace;
 
 /**
  * Tenant isolation: client created in WS-A must be invisible in WS-B.

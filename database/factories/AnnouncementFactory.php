@@ -4,10 +4,10 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Modules\Announcements\Enums\AnnouncementCategory;
-use Modules\Announcements\Enums\AnnouncementStatus;
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Support\AnnouncementMarkdown;
+use App\Enums\AnnouncementCategory;
+use App\Enums\AnnouncementStatus;
+use App\Models\Announcement;
+use App\Support\AnnouncementMarkdown;
 use App\Models\Admin;
 
 /**

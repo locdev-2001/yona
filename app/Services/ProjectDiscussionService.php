@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use App\Models\ProjectDiscussion;
 use Illuminate\Support\Facades\DB;
-use Modules\Shared\Models\Comment;
+use App\Models\Comment;
 use App\Support\Activity\ActivityLogger;
 
 /**

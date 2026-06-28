@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * P06 — Email feature service provider (moved from Modules\Email\Providers).
+ * P06 — Email feature service provider.
  *
  * Loads:
  *  - Policy: EmailTemplate
@@ -32,13 +32,6 @@ class EmailServiceProvider extends ServiceProvider
         $this->app->singleton(MergeFieldResolver::class, function ($app) {
             return new MergeFieldResolver($app->tagged(EntityMergeFields::class));
         });
-
-        // Bridge the legacy alias string key → same singleton instance.
-        // class_alias() only aliases the PHP class; the container keys by string.
-        // Tests and callers using "use Modules\Email\Services\MergeFieldResolver" resolve
-        // ::class to the OLD string, so we alias the container binding too.
-        $this->app->alias(MergeFieldResolver::class, 'Modules\Email\Services\MergeFieldResolver');
-        $this->app->alias(EntityMergeFields::class, 'Modules\Email\Contracts\EntityMergeFields');
     }
 
     public function boot(): void

@@ -1,7 +1,7 @@
 <?php
 
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Models\WorkspaceSequence;
+use App\Models\Workspace;
+use App\Models\WorkspaceSequence;
 
 // Per-workspace human-readable counters (arch §9c). Atomic via
 // INSERT … ON CONFLICT DO UPDATE … RETURNING.

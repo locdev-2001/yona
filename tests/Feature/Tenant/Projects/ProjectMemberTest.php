@@ -1,9 +1,9 @@
 <?php
 
-use Modules\CrmSales\Models\Client;
-use Modules\Projects\Services\ProjectService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Client;
+use App\Services\ProjectService;
+use App\Models\User;
+use App\Models\Workspace;
 
 // P08 — G12: Member management — active workspace_member validation.
 

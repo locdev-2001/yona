@@ -20,7 +20,7 @@ use App\Services\SettingsService;
  *
  * Reusable from HTTP, console, queue, or provisioning — no request coupling.
  *
- * ponytail: ProjectStatus moved to Modules\Projects\Models\ProjectStatus in phase-05.
+ * ponytail: ProjectStatus moved to App\Models\ProjectStatus in phase-05.
  */
 class LookupService
 {

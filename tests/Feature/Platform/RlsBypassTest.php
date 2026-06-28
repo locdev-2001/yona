@@ -2,8 +2,8 @@
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\Team;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Team;
+use App\Models\Workspace;
 
 // Layer 3 (Postgres RLS) proven independent of Eloquent — raw query builder
 // bypasses the global scope entirely, yet still cannot cross workspaces. BR-X18.

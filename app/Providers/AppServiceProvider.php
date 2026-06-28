@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Support\ModuleAwareInertiaViewFinder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -17,21 +16,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Transition shim app/Support/legacy-aliases.php (aliases old Modules\
-        // {Identity,Tenancy,Shared}\ class names to their App\ locations) is loaded
-        // via composer autoload "files" so the aliases exist before ANY class
-        // compiles (including PHPUnit-discovered test stubs). Removed in a later phase.
-
-        // Override Inertia's view-finder to resolve Modules.X.page convention.
-        // Modules.{Module}.{page} → modules/{kebab}/resources/js/pages/{page}.tsx
-        $this->app->bind('inertia.view-finder', function ($app) {
-            return new ModuleAwareInertiaViewFinder(
-                $app['files'],
-                $app['config']->get('inertia.pages.paths'),
-                $app['config']->get('inertia.pages.extensions'),
-            );
-        });
-
         // Internal-first: register Integration module nếu nó tồn tại. Xóa thư mục
         // app/Modules/Integration/ → class_exists false → skip → inbox/billing core
         // vẫn build/chạy (không fatal). KHÔNG hard-reference trong bootstrap/providers.php.

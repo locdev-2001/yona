@@ -9,8 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use App\Models\Attachment;
-use Modules\Shared\Services\AttachmentService;
-use Modules\Shared\Support\Activity\ActivityLogger;
+use App\Services\AttachmentService;
+use App\Support\Activity\ActivityLogger;
 
 /**
  * P08 — File upload / delete for projects (via P03 AttachmentService).

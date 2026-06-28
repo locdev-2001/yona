@@ -1,13 +1,13 @@
 <?php
 
 use App\Mail\TemplatedMessage;
-use Modules\Email\Models\EmailTemplate;
-use Modules\Email\Services\TemplatedMailer;
+use App\Models\EmailTemplate;
+use App\Services\TemplatedMailer;
 use Database\Seeders\EmailTemplateCatalogSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Workspace;
 
 // ── Happy path ────────────────────────────────────────────────────────────────
 

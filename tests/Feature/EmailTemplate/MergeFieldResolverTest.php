@@ -1,10 +1,10 @@
 <?php
 
-use Modules\CrmSales\MergeFields\LeadMergeFields;
-use Modules\Email\Services\MergeFieldResolver;
+use App\Services\MergeFields\LeadMergeFields;
+use App\Services\MergeFieldResolver;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Workspace;
 
 // ── Resolver resolves tokens from entity ──────────────────────────────────────
 

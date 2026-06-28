@@ -8,7 +8,7 @@ use App\Services\InboundMessageService;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Event;
 use Mockery\MockInterface;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Workspace;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 

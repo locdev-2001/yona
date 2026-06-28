@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProjectStatusStoreRequest;
 use App\Http\Requests\Settings\ProjectStatusUpdateRequest;
 use App\Models\ProjectStatus;
-use Modules\CrmSales\Services\LookupService;
+use App\Services\LookupService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;

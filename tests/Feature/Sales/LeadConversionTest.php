@@ -1,19 +1,19 @@
 <?php
 
 use App\Events\LeadConverted;
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\Contact;
-use Modules\CrmSales\Models\Lead;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
-use Modules\CrmSales\Services\LeadConversionService;
-use Modules\CrmSales\Services\LeadService;
+use App\Models\Client;
+use App\Models\Contact;
+use App\Models\Lead;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
+use App\Services\LeadConversionService;
+use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
-use Modules\Identity\Models\User;
-use Modules\Shared\Models\Note;
-use Modules\Shared\Services\CustomFieldService;
-use Modules\Shared\Services\TagService;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\User;
+use App\Models\Note;
+use App\Services\CustomFieldService;
+use App\Services\TagService;
+use App\Models\Workspace;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // ── G7 LeadConversionTest: happy path + rollback + idempotency + isolation ────

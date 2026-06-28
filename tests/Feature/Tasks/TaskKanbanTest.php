@@ -1,9 +1,9 @@
 <?php
 
-use Modules\Projects\Models\Task;
-use Modules\Projects\Services\TaskService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Task;
+use App\Services\TaskService;
+use App\Models\User;
+use App\Models\Workspace;
 
 // ── Kanban status + reorder ────────────────────────────────────────────────────
 

@@ -1,11 +1,11 @@
 <?php
 
-use Modules\Projects\Models\Task;
-use Modules\Projects\Models\TaskTimer;
-use Modules\Projects\Services\TaskService;
-use Modules\Projects\Services\TaskTimerService;
-use Modules\Identity\Models\User;
-use Modules\Tenancy\Models\Workspace;
+use App\Models\Task;
+use App\Models\TaskTimer;
+use App\Services\TaskService;
+use App\Services\TaskTimerService;
+use App\Models\User;
+use App\Models\Workspace;
 
 // ── Timer start/stop/manual/guard ─────────────────────────────────────────────
 

@@ -8,7 +8,7 @@ use App\Contracts\EntityMergeFields;
 /**
  * P06 — Merge field resolver for Lead entities.
  *
- * Registered in CrmSalesServiceProvider into Modules\Email\Services\MergeFieldResolver.
+ * Registered in CrmSalesServiceProvider into App\Services\MergeFieldResolver.
  * Implements EntityMergeFields from the email module (reverse-registry pattern).
  *
  * TODO P07: once Lead model is built, verify all field names match and
