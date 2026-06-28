@@ -65,7 +65,18 @@ class ContactRepositoryImpl implements ContactRepository
             $digits = '0'.substr($digits, 2);
         }
 
-        // Cũng xử lý +84 dạng 12 chữ số (vd '840901234567' không hợp lệ → skip)
+        // Finding 19a: '840' + 9 chữ số (12 ký tự) — Zalo trả dạng này (country code 84 + 0 + 9 digits)
+        // Ví dụ: '840901234567' → '0901234567'
+        if (strlen($digits) === 12 && str_starts_with($digits, '840')) {
+            $digits = '0'.substr($digits, 3);
+        }
+
+        // Finding 19b: 9 chữ số không bắt đầu bằng 0 → thử thêm '0' để thành 10 số VN hợp lệ
+        // Ví dụ: '901234567' → '0901234567'
+        if (strlen($digits) === 9 && ! str_starts_with($digits, '0')) {
+            $digits = '0'.$digits;
+        }
+
         // SĐT VN hợp lệ: 10 chữ số, bắt đầu bằng 0
         if (strlen($digits) !== 10 || ! str_starts_with($digits, '0')) {
             return null;
@@ -109,8 +120,10 @@ class ContactRepositoryImpl implements ContactRepository
 
             return $contact;
         } catch (QueryException $e) {
-            // PostgreSQL unique-violation = SQLSTATE 23505 (partial unique contacts_workspace_phone_unique)
-            if (str_contains($e->getMessage(), '23505')) {
+            // PostgreSQL unique-violation = SQLSTATE 23505 (partial unique contacts_workspace_phone_unique).
+            // Finding 14: dùng $e->getCode() === '23505' thay vì so chuỗi message —
+            // message có thể thay đổi theo locale/PG version; SQLSTATE code thì ổn định.
+            if ($e->getCode() === '23505') {
                 // Race condition: re-fetch contact đã được tạo bởi request khác
                 $contact = Contact::where('workspace_id', $workspace->id)
                     ->where('phone', $normalized)

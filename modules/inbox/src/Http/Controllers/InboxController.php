@@ -50,9 +50,13 @@ class InboxController extends Controller
 
         $conversations = $query->paginate(30)->withQueryString();
 
+        // Finding 6: wire hasAny() → FE hiện empty/disabled state khi tắt tất cả module kênh (N2).
+        $channelsAvailable = app(ChannelManager::class)->hasAny();
+
         return Inertia::render('Modules.Inbox.inbox/index', [
             'conversations' => $conversations,
             'filters' => $request->only(['q', 'unread', 'channel']),
+            'channelsAvailable' => $channelsAvailable,
         ]);
     }
 
@@ -112,6 +116,13 @@ class InboxController extends Controller
             return response()->json([
                 'message' => $e->getMessage(),
                 'error_code' => $e->errorCode,
+            ], 422);
+        } catch (\InvalidArgumentException $e) {
+            // Finding 5b: driver() ném InvalidArgumentException khi channel-module tắt (chưa đăng ký).
+            // InvalidArgumentException extends LogicException, KHÔNG phải RuntimeException → không bị catch bên dưới.
+            return response()->json([
+                'message' => 'Kênh không khả dụng.',
+                'error_code' => 'channel_unavailable',
             ], 422);
         } catch (\RuntimeException $e) {
             // QuotaExceededException từ billing (chưa wrap thành SendException) — fail-safe

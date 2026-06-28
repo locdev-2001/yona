@@ -89,7 +89,9 @@ class InboundMessageService
             ->first();
 
         if ($conversation === null) {
-            $conversationNumber = WorkspaceSequence::next('conversations');
+            // Finding 16: chuẩn hóa 'conversation' (số ít) — khớp test/seed/codebase.
+            // Trước đây dùng 'conversations' (số nhiều) → 2 counter độc lập → trùng conversation_number.
+            $conversationNumber = WorkspaceSequence::next('conversation');
 
             $conversation = new Conversation([
                 'channel' => $channel,

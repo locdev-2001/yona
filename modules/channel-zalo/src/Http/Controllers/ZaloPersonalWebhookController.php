@@ -60,14 +60,14 @@ class ZaloPersonalWebhookController extends Controller
             return response()->json(['ok' => true, 'message' => 'connection_not_mapped'], 202);
         }
 
-        // Bind tenant scope — mọi query sau dùng RLS của workspace này
-        TenantScope::bind($workspaceId);
-
-        // Bind currentWorkspace vào container (WorkspaceSequence::next() cần) —
-        // bình thường IdentifyWorkspace middleware làm điều này, webhook route không có middleware đó.
-        app()->instance('currentWorkspace', Workspace::withoutGlobalScopes()->find($workspaceId));
-
         try {
+            // ⚠️ F5/Finding5: bind() VÀO TRONG try — nếu Workspace::find() throw,
+            // finally{forget} vẫn chạy. Trước đây nằm ngoài → scope leak-on-throw.
+            TenantScope::bind($workspaceId);
+
+            // Bind currentWorkspace vào container (WorkspaceSequence::next() cần) —
+            // bình thường IdentifyWorkspace middleware làm điều này, webhook route không có middleware đó.
+            app()->instance('currentWorkspace', Workspace::withoutGlobalScopes()->find($workspaceId));
             return match ($eventType) {
                 'inbound'       => $this->handleInbound($payload),
                 'bridge_session' => $this->handleBridgeSession($payload),

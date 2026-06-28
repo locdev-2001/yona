@@ -3,6 +3,7 @@
 namespace Modules\Inbox\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,70 +46,87 @@ class ConversationLeadController extends Controller
             ]);
         }
 
-        $lead = DB::transaction(function () use ($conversation) {
-            // Dedup SĐT qua cdp IdentityResolver (KHÔNG import Contact trực tiếp)
-            $contactId = null;
-            if ($conversation->peer_phone !== null) {
-                /** @var \Modules\Cdp\Contracts\IdentityResolver $resolver */
-                $resolver = app(IdentityResolver::class);
-                $contact = $resolver->resolveOrCreateFromPeer(
-                    workspaceId: $conversation->workspace_id,
-                    channel: $conversation->channel,
-                    peerUid: $conversation->peer_uid,
-                    phone: $conversation->peer_phone,
-                    displayName: $conversation->peer_name,
-                );
-                $contactId = $contact?->id;
+        // Finding 14: resolveOrCreateFromPeer TRƯỚC transaction — tránh 25P02 (aborted transaction).
+        // Khi 23505 nổ TRONG transaction, Postgres abort → catch re-fetch ném 25P02.
+        // Contact dedup không cần atomic chung với tạo Lead.
+        $contactId = null;
+        if ($conversation->peer_phone !== null) {
+            /** @var \Modules\Cdp\Contracts\IdentityResolver $resolver */
+            $resolver = app(IdentityResolver::class);
+            $contact = $resolver->resolveOrCreateFromPeer(
+                workspaceId: $conversation->workspace_id,
+                channel: $conversation->channel,
+                peerUid: $conversation->peer_uid,
+                phone: $conversation->peer_phone,
+                displayName: $conversation->peer_name,
+            );
+            $contactId = $contact?->id;
+        }
 
-                // Link contact_id vào conversation nếu resolve được
+        try {
+            $lead = DB::transaction(function () use ($conversation, $contactId) {
+                // Link contact_id vào conversation nếu resolve được (trong transaction để atomic với Lead)
                 if ($contactId !== null && $conversation->contact_id !== $contactId) {
                     $conversation->saveQuietly(); // avoid observer side-effects before mutation
                     Conversation::where('id', $conversation->id)
                         ->update(['contact_id' => $contactId]);
                     $conversation->contact_id = $contactId;
                 }
+
+                // Resolve pipeline mặc định
+                $pipeline = Pipeline::where('workspace_id', currentWorkspace()->id)
+                    ->orderByDesc('is_default')
+                    ->orderBy('name')
+                    ->first();
+
+                $firstStage = $pipeline?->stages()->orderBy('stage_order')->first();
+
+                /** @var \Modules\CrmSales\Contracts\LeadCreator $creator */
+                $creator = app(LeadCreator::class);
+
+                // Tạo Lead qua crm-sales contract (REUSE — không viết logic Lead)
+                $lead = $creator->createFromContact(
+                    // createFromContact cần Contact — nhưng contact_id có thể null
+                    // Với trường hợp không có contact, tạo Lead trực tiếp qua LeadService
+                    contact: $this->resolveOrBuildDummyContact($conversation, $contactId),
+                    attrs: array_filter([
+                        'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ Zalo',
+                        'phone' => $conversation->peer_phone,
+                        'pipeline_id' => $pipeline?->id,
+                        'stage_id' => $firstStage?->id,
+                        'source' => 'Zalo',
+                        'contact_id' => $contactId,
+                        'conversation_id' => $conversation->id,
+                    ], fn ($v) => $v !== null),
+                );
+
+                // Link 2 chiều: conversation → lead
+                Conversation::where('id', $conversation->id)
+                    ->update(['lead_id' => $lead->id]);
+
+                // Link lead → conversation + contact (set trực tiếp vì không qua fillable)
+                $lead->conversation_id = $conversation->id;
+                if ($contactId !== null) {
+                    $lead->contact_id = $contactId;
+                }
+                $lead->saveQuietly();
+
+                return $lead;
+            });
+        } catch (QueryException $e) {
+            // Finding 15: partial unique index leads(conversation_id) — double-submit race.
+            // 23505 = PostgreSQL unique violation → re-fetch Lead đã được tạo bởi request chạy song song.
+            if ($e->getCode() === '23505') {
+                $freshConversation = Conversation::find($conversation->id);
+                if ($freshConversation?->lead_id !== null) {
+                    return response()->json([
+                        'lead_id' => $freshConversation->lead_id,
+                        'existing' => true,
+                    ]);
+                }
             }
-
-            // Resolve pipeline mặc định
-            $pipeline = Pipeline::where('workspace_id', currentWorkspace()->id)
-                ->orderByDesc('is_default')
-                ->orderBy('name')
-                ->first();
-
-            $firstStage = $pipeline?->stages()->orderBy('stage_order')->first();
-
-            /** @var \Modules\CrmSales\Contracts\LeadCreator $creator */
-            $creator = app(LeadCreator::class);
-
-            // Tạo Lead qua crm-sales contract (REUSE — không viết logic Lead)
-            $lead = $creator->createFromContact(
-                // createFromContact cần Contact — nhưng contact_id có thể null
-                // Với trường hợp không có contact, tạo Lead trực tiếp qua LeadService
-                contact: $this->resolveOrBuildDummyContact($conversation, $contactId),
-                attrs: array_filter([
-                    'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ Zalo',
-                    'phone' => $conversation->peer_phone,
-                    'pipeline_id' => $pipeline?->id,
-                    'stage_id' => $firstStage?->id,
-                    'source' => 'Zalo',
-                    'contact_id' => $contactId,
-                    'conversation_id' => $conversation->id,
-                ], fn($v) => $v !== null),
-            );
-
-            // Link 2 chiều: conversation → lead
-            Conversation::where('id', $conversation->id)
-                ->update(['lead_id' => $lead->id]);
-
-            // Link lead → conversation + contact (set trực tiếp vì không qua fillable)
-            $lead->conversation_id = $conversation->id;
-            if ($contactId !== null) {
-                $lead->contact_id = $contactId;
-            }
-            $lead->saveQuietly();
-
-            return $lead;
-        });
+            throw $e;
+        }
 
         return response()->json([
             'lead_id' => $lead->id,

@@ -69,13 +69,13 @@ class HandleInertiaRequests extends Middleware
             ],
             'activeWorkspace' => fn () => $this->activeWorkspacePayload(),
             // Lazy: resolved after IdentifyWorkspace; null for guests and admin sessions.
-            'unreadAnnouncementCount' => fn () => $user
-                ? app(AnnouncementReadService::class)->getUnreadCount($user)
+            // Finding 7b: bọc class_exists + try/catch đối xứng với billing entitlements —
+            // disable-safe: tắt module announcements → null thay vì 500.
+            'unreadAnnouncementCount' => fn () => $user && class_exists(AnnouncementReadService::class)
+                ? $this->safeAnnouncementCount($user)
                 : null,
-            'latestUnreadAnnouncement' => fn () => $user
-                ? $this->latestUnreadAnnouncementPayload(
-                    app(AnnouncementReadService::class)->getLatestUnread($user)
-                )
+            'latestUnreadAnnouncement' => fn () => $user && class_exists(AnnouncementReadService::class)
+                ? $this->safeLatestUnreadAnnouncement($user)
                 : null,
             // P04 — Notifications bell: unread count + recent 5 unread.
             // Lazy: resolved after IdentifyWorkspace; null for guests.
@@ -263,6 +263,32 @@ class HandleInertiaRequests extends Middleware
         }
 
         return $base()->oldest()->first();
+    }
+
+    /**
+     * Finding 7b: fail-safe wrapper — announcements module bị tắt / belum migrate → null.
+     * Đối xứng với guard billing entitlements ở membershipPayload().
+     */
+    private function safeAnnouncementCount(\Modules\Identity\Models\User $user): ?int
+    {
+        try {
+            return app(AnnouncementReadService::class)->getUnreadCount($user);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — module chưa migrate không làm vỡ request
+            return null;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function safeLatestUnreadAnnouncement(\Modules\Identity\Models\User $user): ?array
+    {
+        try {
+            $announcement = app(AnnouncementReadService::class)->getLatestUnread($user);
+
+            return $this->latestUnreadAnnouncementPayload($announcement);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

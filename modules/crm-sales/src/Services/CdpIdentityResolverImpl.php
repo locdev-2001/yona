@@ -47,7 +47,9 @@ class CdpIdentityResolverImpl implements IdentityResolver
      *
      * Không có phone → trả null (Conversation giữ contact_id = NULL = Liên hệ nháp).
      * Có phone → firstOrCreateByPhone (idempotent).
-     * Phát hiện trùng sau enrich → gọi mergeIdentities flag-not-auto.
+     *
+     * Finding 18: mergeIdentities KHÔNG được gọi tự động ở đây — chỉ flag needs_merge_review
+     * sau khi tenant xác nhận (Phase-07 admin UI). API mergeIdentities() là hoãn lại (deferred).
      */
     public function resolveOrCreateFromPeer(
         string $workspaceId,
