@@ -2,7 +2,7 @@
 
 > Living document — phases, milestones, progress. Maintained per `.claude/rules/documentation-management.md`. Pipeline defined in `crm-build-pipeline.md`.
 
-Last updated: 2026-06-25
+Last updated: 2026-06-28
 
 ## Status legend
 ✅ done · 🟡 in progress · ⬜ not started
@@ -34,24 +34,28 @@ Last updated: 2026-06-25
 
 ### Phase 4 (Standardization + GĐ1: Omnichannel/CDP/Billing)
 
-| # | Phase | Loại | Status |
-|---|---|---|---|
-| **0** | **Modular standardization (docs & plans)** — chuẩn hóa docs trước code; spec modular architecture, ADR, update roadmap/system-architecture, mark README lỗi thời | 🟡 (in progress) |
-| **1** | **Module framework scaffold** — `modules/`, PSR-4, loader, `module.json`, 1 mẫu | ⬜ |
-| **2–6** | **Reorg current code → modular** (staged, test xanh): announcements → module, core kernel, crm-sales, projects, remaining | ⬜ |
-| **7** | **GĐ1 — Inbox + Channel-Zalo + CDP (core) + Billing + Payment-manual** — inbox Zalo, conv→Lead, cấp gói, metering per-channel | ⬜ |
-| **8** | **GĐ1.5** — import Excel/CSV, QR login, payment drivers (VNPay/MoMo) | ⬜ |
+| # | Phase | Status |
+|---|---|---|
+| **0** | **Modular standardization (docs & plans)** — chuẩn hóa docs trước code; spec modular architecture, ADR, update roadmap/system-architecture | ✅ |
+| **1** | **Module framework scaffold** — `modules/`, PSR-4, loader, `module.json`, topo-sort | ✅ |
+| **2–6** | **Reorg current code → modular** (staged, test xanh): announcements, tenancy, identity, shared, cdp, crm-sales, projects | ✅ |
+| **7** | **GĐ1 — Inbox + Channel-Zalo + CDP (contract) + Billing + Payment-manual** — inbox Zalo webhook + idempotent message, conv→Lead (dedup contract Phase-08), plan grant, metering per-channel, 18 audit findings fixed | ✅ |
+| **7-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; quotas PLACEHOLDER (founder decision), Zalo test account pending | ✅ |
+| **8** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
 | (later) | Support (Ticket + SLA), Marketing, Webhooks, API, Client Portal | ⬜ |
 
 **Plan:** [plans/260627-modular-standardization/plan.md](../../plans/260627-modular-standardization/plan.md)
 
 ## Milestones
 
-- **M1 — Platform MVP**: workspace + users/teams/roles, tenant-isolated, audited. (Phase 3, build 1–3) ✅
+- **M1 — Platform MVP**: workspace + users/teams/roles, tenant-isolated, audited. (Phase 3, build 1–3) ✅ 2026-06-13
 - **M1b — CRM Core (M0+M1)**: Client/Contact/Lead/Pipeline/Convert + Projects/Tasks + timers. (Phase 3, build 4–6) ✅ 2026-06-25
-- **Phase 4.0 — Modular standardization**: Code reorganization → modular monolith; docs/plans aligned; no code changes yet. ⬜
-- **M3 — GĐ1 (Omnichannel/CDP/Billing)**: Inbox Zalo + CDP → Lead flow + Billing/metering (Phase 4.7) ⬜
-- **M3.5 — GĐ1.5**: Import + payment drivers (Phase 4.8) ⬜
+- **Phase 4.0–4.7 — Modular standardization + GĐ1**: Code reorganization → modular monolith; Inbox Zalo + CDP dedup contract + Billing metering + 18 audit findings fixed (Phase-07 code-complete). ✅ 2026-06-28
+  - Blockers to launch GĐ1 (Phase-08 start):
+    1. **Quota PLACEHOLDER**: 3 gói (Free/Team/Business) còn chưa định số. Founder chốt trước tuần ~2026-07-07.
+    2. **Zalo test account**: Bridge + realtime cần verify tay bằng personal Zalo account (QR login).
+    3. **Phase-08**: Implement IdentityResolver (phone dedup), import CSV, payment drivers (VNPay/MoMo).
+- **M3.5 — GĐ1.5**: Import + payment drivers (Phase 4.8 / Phase-08) ⬜
 - **M4 — Support + Marketing**: Tickets/SLA + campaigns + scoring (Phase 5) ⬜
 - **M5 — Client Portal**: Contact portal login + self-service views (Phase 6) ⬜
 

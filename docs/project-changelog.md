@@ -17,6 +17,51 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Release — GĐ1 Modular Monolith + Inbox Zalo + CDP Dedup Contract + Billing/Metering (2026-06-28)
+
+**Milestone**: Phase-07 (code-complete) — modular architecture + Phase-01 inbox + entitlements system audited (18 findings fixed).
+
+**GĐ1 Feature Delivery:**
+- **Modular Architecture Refactor**: `modules/{platform,tenancy,identity,shared,cdp,crm-sales,projects,inbox,channel-zalo,billing,payment-manual,announcements,email}/` with module.json + topo-sort loader + contract-based extensibility (F10 no-op default). Spec: [modular-architecture.md](../modular-architecture.md).
+- **Inbox Phase 1 (Zalo Personal)**: webhook inbound (`WebhookController`), idempotent message ingestion (`InboundMessageService` F2/F14), Reverb realtime broadcast (F22), RLS scope-binding from connection_id (F11), conversation number sequencing (F16).
+- **Outbound Send Chain**: `ZaloSendService` with circuit-breaker (F3), metering gate (F1/F5), SendRateLimiter (F8: 7h–22h + 3/phone/day), bridge retry (F4), atomic meterReply (F1 compare-set + ON CONFLICT).
+- **Conversation to Lead**: `ConversationLeadController` + `IdentityResolver` contract (Phase-07: no-op; Phase-08: phone dedup); idempotent lead creation (F15 unique conversation_lead_link); bidirectional link.
+- **Metering & Entitlements**: `ConversationMeter` (race-safe F1), `EntitlementResolver` (cache 5min, F21 FREE_DEFAULTS), `GrantPlanService` (soft-delete old plan F24), `PaymentProvider` contract (Phase-08 VNPay/MoMo drivers).
+- **Audit Findings Fixed** (18 critical/major):
+  - F1 meterReply race: atomic compare-set + upsert in single transaction (PostgreSQL 15+).
+  - F3 circuit-breaker: `AccountHealthMonitor` tracks bridge failures per connection.
+  - F4 bridge timeout: 15s + 2×200ms retry; fail-soft (no message on timeout).
+  - F5 existing-conv quota: `assertCanSend()` pass if `last_metered_period == currentPeriod()`.
+  - F6 HMAC auth: webhook signature verification (`X-Zalo-Personal-Bridge-Secret`).
+  - F8 rate limiter: Redis atomic INCR (if enabled) or in-memory cache.
+  - F9 metering atomicity: DB transaction rollback if upsert fails after compare-set.
+  - F10 no-op binding: billing module disabled → AllowAllMeteringGate (no feature block).
+  - F11 RLS scope-leak: webhook TenantScope::bind() from privileged ZaloConnection query before all writes.
+  - F13/F20 inbound always accepted: meterReply() fail-safe try/catch; webhook never rejects by quota.
+  - F14 idempotency: updateOrCreate on (conversation_id, source_id) prevents duplicate messages.
+  - F15 conv-lead idempotency: unique conversation_lead_link (no 2 leads per conversation).
+  - F16 unread atomic: DB increment() for unread_count race-safety.
+  - F17 source tracking: Lead.source = 'zalo_personal' for channel origin audit.
+  - F18 bidirectional link: Conversation.contact_id + Lead.conversation_id.
+  - F21 free defaults: 50 conversations/month + 3 seats on non-purchased workspace.
+  - F23 draft contact: Conversation.contact_id = null if peer_phone not available.
+  - F24 plan soft-delete: ended_at timestamp (audit trail, not hard-deleted).
+  - F25 entitlements merge: multiple purchases → aggregate flags (union) + max quotas.
+- **Data Model Changes**:
+  - `contacts.client_id` FK: change cascadeOnDelete → nullOnDelete (deleting Client keeps Contact as draft, preserves CDP history).
+  - `conversations.last_metered_period` (NEW): tracks 'YYYY-MM' period for F1 metering.
+  - `channel_usage` (NEW): workspace_id, channel, period, answered_count (metering ledger).
+  - `zalo_connections` (NEW): workspace_id, connection_id, account_status, circuit_open, circuit_error_count (bridge session tracking).
+  - `workspace_purchases` (NEW): plan entitlements, soft-delete via ended_at (F24).
+  - `marketplace_items` (NEW, global): plan catalog with entitlements JSONB.
+- **Contract Additions**:
+  - `MeteringGate` (inbox): canStartNew / canReplyOnExisting / meterReply / assertCanSend.
+  - `IdentityResolver` (cdp): resolveByPhone / resolveOrCreateFromPeer / mergeIdentities.
+  - `PaymentProvider` (billing): charge / verify / cancel (Phase-08+ drivers).
+  - `ChannelDriver` (inbox): send / webhook handler (extensible for Messenger, TikTok, email).
+- **Feature Docs (HARD GATE)**: [docs/features/messaging/README.md](../features/messaging/README.md), `zalo-personal-inbox.md`, `outbound-send.md`, `conversation-to-lead.md`, `conversation-metering.md`, `plan-entitlements-grant.md` — all with Mermaid diagrams + business-rule cross-references.
+- **Status**: Phase-07 code-complete + audited. Chained blockers for launch: (a) quota PLACEHOLDER (founder decision 3-gói), (b) Zalo test account (realtime/bridge manual verify), (c) Phase-08 import + VNPay/MoMo.
+
 ### Fixed — RBAC: tenant mất menu sidebar khi mở admin + tenant cùng session (2026-06-25)
 
 Bug: 2 guard `web` (tenant) và `admin` (platform) dùng chung 1 session cookie (chủ ý — impersonation cần admin guard sống + web guard = user bị impersonate trong cùng session). Khi đăng nhập cả admin lẫn tenant trong cùng trình duyệt, mọi request tenant đều có cả 2 guard authenticated. `HandleInertiaRequests::share()` build `adminPayload` **eager** (đặt spatie team-id + RLS = `PLATFORM_SCOPE`) trong khi prop `membership` (điều khiển menu), notifications, announcements resolve **lazy** sau đó → `getAllPermissions()` chạy nhầm dưới `PLATFORM_SCOPE` → permissions rỗng → **mất toàn bộ menu sidebar** ở tenant.

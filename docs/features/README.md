@@ -76,13 +76,28 @@ Quản lý dự án (Project) với milestone kanban, thành viên, file, thảo
 
 (Planned) Ticket creation, SLA computation and breach detection, status flow, CSAT.
 
-## Module 8 — Conversations / Inbox
+## Module 8 — Conversations / Inbox (GĐ1 ✅)
 
-(Planned) Realtime omnichannel live chat (web widget, Zalo, FB, email), escalate to Ticket.
+Realtime omnichannel live chat — Phase 1: Zalo personal webhook inbound, idempotent message ingestion, CDP dedup contract, quota gates, rate limiting. Related: [messaging](./messaging/README.md).
 
-## Module 9 — Marketplace + Entitlements
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Zalo Personal Inbox](./messaging/zalo-personal-inbox.md) | Receive inbound Zalo messages via webhook, store Conversation + Message, broadcast realtime. | `WebhookController` + `InboundMessageService` + Reverb |
+| [Outbound Send](./messaging/outbound-send.md) | Reply to conversation: circuit-breaker → quota → rate limit → bridge HTTP → persist + meter. | `ZaloSendService` + `SendRateLimiter` + bridge |
+| [Conversation to Lead](./messaging/conversation-to-lead.md) | Convert inbound conversation to Lead via CDP identity resolution (Phase-08: dedup by phone). | `ConversationLeadController` + `IdentityResolver` contract |
+| [Conversation Metering](./messaging/conversation-metering.md) | Race-safe count outbound per channel per month; F5: existing conv always allowed even if over quota. | `ConversationMeter` (MeteringGate contract) |
+| [Plan Entitlements & Grant](./messaging/plan-entitlements-grant.md) | Workspace subscriptions; admin grants plans manually (Phase-07); resolves quota + remaining. | `GrantPlanService` + `EntitlementResolver` |
 
-(Planned) Workspace purchases, item catalog, quota/feature gates, entitlements resolver.
+## Module 9 — Billing + Entitlements (GĐ1 Core, Phase-08 Payment)
+
+Marketplace catalog, workspace purchases, quota/feature gates, entitlements resolver. Phase-07: manual grant (payment-manual driver); Phase-08: VNPay/MoMo drivers.
+
+**Features:** Covered in [Module 8 (Conversation Metering + Plan Entitlements)](./messaging/).
+
+| Contracts | Purpose | Code entry |
+|---|---|---|
+| MeteringGate (inbox contract) | Gate conversation send (quota check); implemented by ConversationMeter (billing). | `modules/inbox/src/Contracts/MeteringGate.php` |
+| PaymentProvider (billing contract) | Abstract payment processing; implemented by drivers (payment-manual, VNPay, MoMo). | `modules/billing/src/Contracts/PaymentProvider.php` |
 
 ## Module 10 — Later
 

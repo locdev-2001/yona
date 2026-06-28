@@ -194,9 +194,25 @@ Migration safety: greenfield, no online-DDL concerns yet. Forward-only disciplin
 
 **Effective entitlements** = BASE (free) ⊕ Σ(active purchases) ⊕ overrides. **Entitlement gate ≠ RBAC gate**: workspace quota/feature is checked *in addition to* user role permission. Single resolver `Entitlements::for(workspace)`; cached in Redis, busted on purchase/subscription change.
 
-### 3.6b Conversations / Inbox tables (live chat, omnichannel)
+### 3.6b Conversations / Inbox tables (GĐ1 live chat, omnichannel Phase 1)
 
-V1 core. `messages` is high-volume, append-only, partition-ready. Full spec: [crm-conversations-inbox.md](crm-conversations-inbox.md).
+Phase 1 (GĐ1): Zalo personal webhook inbound, idempotent message store, metering gate, rate limiting. `messages` is high-volume, append-only, partition-ready. Full feature docs: [features/messaging/README.md](../features/messaging/README.md).
+
+| Table | Notable columns | Notes |
+|---|---|---|
+| `conversations` (modules/inbox) | `workspace_id, channel, zalo_connection_id, peer_uid, peer_phone, peer_name, peer_avatar_url, thread_type, contact_id(nullable), conversation_number, last_message_at, last_message_preview, unread_count, last_metered_period` | `unique(workspace_id, zalo_connection_id, peer_uid)` (F2: dedup inbound per peer). `contact_id = null` = "Liên hệ nháp"; linked on convert-to-lead. `last_metered_period` = 'YYYY-MM' (F1: metering atomic compare-set). |
+| `messages` (modules/inbox) | `workspace_id, conversation_id, direction(in/out/echo), type, body, media_url, media_meta jsonb, source_id, platform_sent_at, sender_uid, sender_name, sent_by, created_at` | Append-only. `unique(conversation_id, source_id)` where source_id not null (F14: idempotency key). RLS inherited via conversation FK. |
+| `zalo_connections` (modules/channel-zalo) | `workspace_id, connection_id(uuid, primary), account_status, account_health, last_bridge_check, last_error, circuit_open, circuit_error_count, last_circuit_reset` | Zalo personal account session tracking. `account_health` = 'ok' / 'degraded' / 'unhealthy' (F3: circuit-breaker). No webhook stores password; bridge maintains session (QR login). |
+| `channel_usage` (modules/billing) | `workspace_id, channel, period(YYYY-MM), answered_count` | Metering ledger. `unique(workspace_id, channel, period)` (F1: upsert atomic). `answered_count` = conversations tenants replied to in period. |
+| `workspace_purchases` (modules/billing) | `workspace_id, plan_id, started_at, ended_at(nullable), status, created_at` | Entitlements. `started_at <= now() AND (ended_at IS NULL OR ended_at > now())` = active. Soft-delete via ended_at (audit trail F24). |
+| `marketplace_items` (modules/billing, global) | `id, code, name, entitlements jsonb, created_at` | Plan catalog (global, no RLS). `entitlements = {flags: ['module.inbox'], quotas: {'quota.conversations.zalo_personal': 50}}`. |
+
+**GĐ1 RLS & metering design:**
+- Webhook resolves workspace from `zalo_connections.workspace_id` via **privileged query** (bypasses RLS) to avoid credential exposure.
+- After TenantScope bind, all Conversation/Message writes enforce workspace RLS at DB level (F11: scope-binding chokes leak).
+- meterReply() uses atomic compare-set UPDATE + ON CONFLICT upsert in single transaction (F1 race-safe). Idempotent: same conversation, same period → counted once only.
+- canStartNew(channel) checks EntitlementResolver quota; F5: existing conversation always allowed even if over quota (prevents mid-conversation block).
+- Rate limiter enforces 7h–22h Ho Chi Minh time + ≤3 messages per phone per day (F8: ToS compliance).
 
 | Table | Notable columns | Notes |
 |---|---|---|
