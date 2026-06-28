@@ -48,6 +48,7 @@ return [
         'dashboard' => 'Bảng điều khiển',
         'overview' => 'Tổng quan',
         'inbox' => 'Hộp thư',
+        'zalo' => 'Kết nối Zalo',
         'crm' => 'CRM',
         'clients' => 'Khách hàng',
         'leads' => 'Leads',

@@ -47,6 +47,7 @@ return [
         'dashboard' => 'Dashboard',
         'overview' => 'Overview',
         'inbox' => 'Inbox',
+        'zalo' => 'Zalo connection',
         'crm' => 'CRM',
         'clients' => 'Clients',
         'leads' => 'Leads',
