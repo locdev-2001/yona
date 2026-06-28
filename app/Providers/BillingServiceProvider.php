@@ -1,42 +1,43 @@
 <?php
 
-namespace Modules\Billing\Providers;
+namespace App\Providers;
 
+use App\Http\Middleware\EnsureEntitled;
+use App\Models\WorkspacePurchase;
+use App\Observers\WorkspacePurchaseObserver;
+use App\Services\EntitlementService;
+use App\Services\GrantPlanService;
+use App\Services\MeteringService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use App\Services\MeteringService;
-use Modules\Billing\Http\Middleware\EnsureEntitled;
-use Modules\Billing\Models\WorkspacePurchase;
-use Modules\Billing\Observers\WorkspacePurchaseObserver;
-use Modules\Billing\Services\EntitlementResolver;
-use Modules\Billing\Services\PaymentManager;
 
 /**
- * Billing feature module service provider.
+ * Billing service provider — CORE, luôn on.
  *
- * Billing là CORE luôn on — MeteringService (App\Services) là class concrete,
- * KHÔNG còn binding interface→impl (MeteringGate/AllowAll đã bỏ).
- * (Billing models/services còn ở modules/billing — chuyển sang app/ ở phase 2b.)
+ * MeteringService = class concrete, KHÔNG còn binding interface→impl.
+ * PaymentManager singleton đã chuyển sang IntegrationServiceProvider
+ * (manager sống cùng module driver — internal-first).
  */
 class BillingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Billing là CORE luôn on — MeteringService là class concrete, không binding interface.
-        $this->app->singleton(EntitlementResolver::class, fn () => new EntitlementResolver());
+        $this->app->singleton(EntitlementService::class, fn () => new EntitlementService());
 
         $this->app->singleton(MeteringService::class, function ($app) {
-            return new MeteringService($app->make(EntitlementResolver::class));
+            return new MeteringService($app->make(EntitlementService::class));
         });
 
-        // PaymentManager: singleton driver registry (payment-manual extend trong boot của nó)
-        $this->app->singleton(PaymentManager::class, fn () => new PaymentManager());
+        // Container-key aliases for legacy callers (tests + modules) that resolve
+        // app(Modules\Billing\Services\EntitlementResolver::class).
+        // class_alias alone doesn't bridge container binding keys — must alias here too.
+        $this->app->alias(EntitlementService::class, 'Modules\Billing\Services\EntitlementResolver');
+        $this->app->alias(EntitlementService::class, 'Modules\Billing\Services\EntitlementService');
+        $this->app->alias(GrantPlanService::class, 'Modules\Billing\Services\GrantPlanService');
     }
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
-
         // Observer: cache forget khi purchase thay đổi
         WorkspacePurchase::observe($this->app->make(WorkspacePurchaseObserver::class));
 
@@ -54,7 +55,7 @@ class BillingServiceProvider extends ServiceProvider
     private function observeWorkspaceCreated(): void
     {
         // Dùng event listener thay vì Observer class để tránh tạo file thừa
-        \Modules\Tenancy\Models\Workspace::created(function ($workspace) {
+        \App\Models\Workspace::created(function ($workspace) {
             $this->grantFreePlan($workspace->id);
         });
     }

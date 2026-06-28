@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Billing\Services;
+namespace App\Modules\Integration;
 
+use App\Modules\Integration\Contracts\PaymentDriver;
 use InvalidArgumentException;
-use Modules\Billing\Contracts\PaymentProvider;
 
 /**
- * PaymentManager — driver registry cho PaymentProvider.
+ * PaymentManager — driver registry cho PaymentDriver.
  *
  * payment-manual extend('manual', ...) trong boot().
  * VNPay/MoMo extend('vnpay', ...) / extend('momo', ...) GĐ2+.
@@ -16,20 +16,20 @@ use Modules\Billing\Contracts\PaymentProvider;
  */
 class PaymentManager
 {
-    /** @var array<string, callable(): PaymentProvider> */
+    /** @var array<string, callable(): PaymentDriver> */
     private array $drivers = [];
 
     /**
      * Đăng ký driver (gọi từ payment-manual ServiceProvider::boot).
      *
-     * @param  callable(): PaymentProvider  $factory
+     * @param  callable(): PaymentDriver  $factory
      */
     public function extend(string $key, callable $factory): void
     {
         $this->drivers[$key] = $factory;
     }
 
-    public function driver(string $key): PaymentProvider
+    public function driver(string $key): PaymentDriver
     {
         if (! isset($this->drivers[$key])) {
             throw new InvalidArgumentException("Payment driver '{$key}' chưa đăng ký.");

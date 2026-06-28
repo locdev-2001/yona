@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Billing\Services;
+namespace App\Services;
 
+use App\Models\MarketplaceItem;
+use App\Models\WorkspacePurchase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Models\WorkspacePurchase;
 
 /**
  * GrantPlanService — single source of truth cho admin cấp/thu hồi gói tay.
@@ -53,7 +53,7 @@ class GrantPlanService
                     'updated_at' => $now,
                 ]);
 
-            app(EntitlementResolver::class)->forgetCache($workspaceId);
+            app(EntitlementService::class)->forgetCache($workspaceId);
 
             // Build model từ data (không query lại qua RLS — không có workspace context)
             $purchase = new WorkspacePurchase;
@@ -81,7 +81,7 @@ class GrantPlanService
             'updated_at' => $now,
         ]);
 
-        app(EntitlementResolver::class)->forgetCache($workspaceId);
+        app(EntitlementService::class)->forgetCache($workspaceId);
 
         // Build model từ data (không query lại qua RLS — privileged insert không có context)
         $purchase = new WorkspacePurchase;
@@ -108,8 +108,6 @@ class GrantPlanService
         }
 
         // F2-audit: đọc qua pgsql_privileged (bypass RLS) — giống grant().
-        // WorkspacePurchase::withoutGlobalScope dùng connection mặc định 'pgsql' vẫn bị RLS
-        // khi không có workspace context (admin route) → first() = null → silent no-op.
         $db = DB::connection('pgsql_privileged');
 
         $existing = $db->table('workspace_purchases')
@@ -126,7 +124,7 @@ class GrantPlanService
             ->where('id', $existing->id)
             ->update(['status' => 'cancelled', 'updated_at' => now()]);
 
-        app(EntitlementResolver::class)->forgetCache($workspaceId);
+        app(EntitlementService::class)->forgetCache($workspaceId);
 
         // Build model từ data (không query lại qua RLS — không có workspace context)
         $purchase = new WorkspacePurchase;

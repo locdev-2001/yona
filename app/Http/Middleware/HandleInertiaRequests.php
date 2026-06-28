@@ -222,16 +222,14 @@ class HandleInertiaRequests extends Middleware
             ? TenantPermission::values()
             : $user->getAllPermissions()->pluck('name')->all();
 
-        // Entitlements: share snapshot nếu billing module active (cô lập — check class_exists)
+        // Entitlements: billing là CORE — luôn on, resolve trực tiếp App\Services\EntitlementService
         $entitlements = null;
-        if (class_exists(\Modules\Billing\Services\EntitlementResolver::class)) {
-            try {
-                /** @var \Modules\Billing\Services\EntitlementResolver $resolver */
-                $resolver = app(\Modules\Billing\Services\EntitlementResolver::class);
-                $entitlements = $resolver->snapshot($membership->workspace_id);
-            } catch (\Throwable) {
-                // ponytail: fail-safe — billing chưa migrate không làm vỡ login
-            }
+        try {
+            /** @var \App\Services\EntitlementService $entitlementService */
+            $entitlementService = app(\App\Services\EntitlementService::class);
+            $entitlements = $entitlementService->snapshot($membership->workspace_id);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — billing chưa migrate không làm vỡ login
         }
 
         return [

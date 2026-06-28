@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Exceptions\QuotaExceededException;
 use App\Models\Conversation;
 use Illuminate\Support\Facades\DB;
-use Modules\Billing\Services\EntitlementResolver;
+use App\Services\EntitlementService;
 
 /**
  * MeteringService — đếm hội thoại per-channel per-month (billing CORE, luôn on).
@@ -21,7 +21,7 @@ use Modules\Billing\Services\EntitlementResolver;
  */
 class MeteringService
 {
-    public function __construct(private readonly EntitlementResolver $resolver) {}
+    public function __construct(private readonly EntitlementService $resolver) {}
 
     /**
      * Hội thoại đã tồn tại: luôn cho phép gửi.

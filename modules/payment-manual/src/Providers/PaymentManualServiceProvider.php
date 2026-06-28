@@ -3,7 +3,7 @@
 namespace Modules\PaymentManual\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Modules\Billing\Services\PaymentManager;
+use App\Modules\Integration\PaymentManager;
 use Modules\PaymentManual\Services\ManualPaymentProvider;
 
 /**

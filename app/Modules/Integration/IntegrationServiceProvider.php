@@ -3,6 +3,7 @@
 namespace App\Modules\Integration;
 
 use Illuminate\Support\ServiceProvider;
+use App\Modules\Integration\PaymentManager;
 
 /**
  * Integration module — registry cho channel/payment drivers (internal-first).
@@ -22,5 +23,10 @@ class IntegrationServiceProvider extends ServiceProvider
         $this->app->singleton(ChannelManager::class, function ($app) {
             return new ChannelManager($app);
         });
+
+        $this->app->singleton(PaymentManager::class, fn () => new PaymentManager());
+
+        // Container-key alias for legacy callers using old Modules\Billing\Services\PaymentManager key.
+        $this->app->alias(PaymentManager::class, 'Modules\Billing\Services\PaymentManager');
     }
 }

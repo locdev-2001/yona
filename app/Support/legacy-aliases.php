@@ -243,3 +243,33 @@ if (class_exists('App\Modules\Integration\ChannelManager')) {
 if (interface_exists('App\Modules\Integration\Contracts\ChannelDriver')) {
     class_alias('App\Modules\Integration\Contracts\ChannelDriver', 'Modules\Inbox\Contracts\ChannelDriver');
 }
+
+// Phase 2b — billing moved from Modules\Billing\* → App\* (models/services/observers/enums/middleware/controller)
+// + PaymentManager/PaymentDriver → App\Modules\Integration\*.
+// External callers (payment-manual source + tests) still use Modules\Billing\... — aliases resolve them.
+// EntitlementResolver renamed → EntitlementService (alias both old names).
+// QuotaExceededException: billing's version (channel+quotaKey params) differs from App\ (simple msg).
+//   Alias Modules\Billing\Exceptions\QuotaExceededException → App\Exceptions\QuotaExceededException
+//   (callers that only catch it still work; callers that construct it with channel/quotaKey args must use
+//   App\Exceptions\QuotaExceededException directly — MeteringService already does this).
+// ServiceProvider intentionally NOT aliased.
+class_alias(\App\Models\MarketplaceItem::class, 'Modules\Billing\Models\MarketplaceItem');
+class_alias(\App\Models\WorkspacePurchase::class, 'Modules\Billing\Models\WorkspacePurchase');
+class_alias(\App\Models\ChannelUsage::class, 'Modules\Billing\Models\ChannelUsage');
+class_alias(\App\Services\EntitlementService::class, 'Modules\Billing\Services\EntitlementResolver');
+class_alias(\App\Services\EntitlementService::class, 'Modules\Billing\Services\EntitlementService');
+class_alias(\App\Services\GrantPlanService::class, 'Modules\Billing\Services\GrantPlanService');
+class_alias(\App\Observers\WorkspacePurchaseObserver::class, 'Modules\Billing\Observers\WorkspacePurchaseObserver');
+class_alias(\App\Enums\TenantEntitlement::class, 'Modules\Billing\Enums\TenantEntitlement');
+class_alias(\App\Exceptions\QuotaExceededException::class, 'Modules\Billing\Exceptions\QuotaExceededException');
+class_alias(\App\Http\Middleware\EnsureEntitled::class, 'Modules\Billing\Http\Middleware\EnsureEntitled');
+class_alias(\App\Http\Controllers\Billing\Admin\WorkspacePlanController::class, 'Modules\Billing\Http\Controllers\Admin\WorkspacePlanController');
+// Internal-first: PaymentManager/PaymentDriver sống trong app/Modules/Integration/.
+// Xóa thư mục đó → guard class_exists/interface_exists để KHÔNG fatal khi alias.
+if (class_exists('App\Modules\Integration\PaymentManager')) {
+    class_alias('App\Modules\Integration\PaymentManager', 'Modules\Billing\Services\PaymentManager');
+}
+if (interface_exists('App\Modules\Integration\Contracts\PaymentDriver')) {
+    class_alias('App\Modules\Integration\Contracts\PaymentDriver', 'Modules\Billing\Contracts\PaymentProvider');
+    class_alias('App\Modules\Integration\Contracts\PaymentDriver', 'Modules\Billing\Contracts\PaymentDriver');
+}

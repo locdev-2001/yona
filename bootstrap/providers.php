@@ -6,6 +6,7 @@ use App\Providers\CrmSalesServiceProvider;
 use App\Providers\EmailServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\IdentityServiceProvider;
+use App\Providers\BillingServiceProvider;
 use App\Providers\InboxServiceProvider;
 use App\Providers\ModuleServiceProvider;
 use App\Providers\MorphMapServiceProvider;
@@ -26,6 +27,7 @@ return [
     AnnouncementsServiceProvider::class,
     ProjectsServiceProvider::class,
     CrmSalesServiceProvider::class,
+    BillingServiceProvider::class,
     InboxServiceProvider::class,
     ModuleServiceProvider::class,
 ];

@@ -2,8 +2,8 @@
 
 namespace Modules\PaymentManual\Services;
 
-use Modules\Billing\Contracts\PaymentProvider;
-use Modules\Billing\Models\WorkspacePurchase;
+use App\Models\WorkspacePurchase;
+use App\Modules\Integration\Contracts\PaymentDriver;
 
 /**
  * ManualPaymentProvider — GĐ1: admin duyệt tay, không qua gateway ngoài.
@@ -14,7 +14,7 @@ use Modules\Billing\Models\WorkspacePurchase;
  * verifyCallback(): no-op — manual không có IPN/callback.
  * refund(): no-op — manual không hỗ trợ hoàn tiền tự động GĐ1.
  */
-class ManualPaymentProvider implements PaymentProvider
+class ManualPaymentProvider implements PaymentDriver
 {
     public function key(): string
     {

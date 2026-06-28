@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Billing\Database\Seeders;
+namespace Database\Seeders;
 
+use App\Models\MarketplaceItem;
 use Illuminate\Database\Seeder;
-use Modules\Billing\Models\MarketplaceItem;
 
 /**
  * Seed 3 gói cước GĐ1: plan.free / plan.team / plan.business.

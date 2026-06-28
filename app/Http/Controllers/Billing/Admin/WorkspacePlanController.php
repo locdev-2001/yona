@@ -1,16 +1,16 @@
 <?php
 
-namespace Modules\Billing\Http\Controllers\Admin;
+namespace App\Http\Controllers\Billing\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MarketplaceItem;
+use App\Services\GrantPlanService;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Billing\Models\MarketplaceItem;
-use Modules\Billing\Services\GrantPlanService;
-use Modules\Tenancy\Models\Workspace;
 
 /**
  * Admin: cấp/thu hồi gói cho workspace thủ công.
@@ -44,7 +44,7 @@ class WorkspacePlanController extends Controller
             ->keyBy(fn (object $row) => $row->channel)
             ->map(fn (object $row) => (int) $row->answered_count);
 
-        return Inertia::render('Modules.Billing.admin/workspace-plans/index', [
+        return Inertia::render('billing/workspace-plans/index', [
             'workspace' => [
                 'id' => $workspace->id,
                 'name' => $workspace->name,

@@ -1,10 +1,9 @@
 <?php
 
-namespace Modules\Billing\Enums;
+namespace App\Enums;
 
 /**
- * Entitlement catalog cho billing module — mirror cấu trúc TenantPermission.
- * flags[] = bật/tắt tính năng; quotas{} = giới hạn số lượng.
+ * Entitlement catalog cho billing — flags[] bật/tắt tính năng; quotas{} giới hạn số lượng.
  *
  * Naming: module.* cho flag mở tính năng, quota.* cho giới hạn số,
  * integration.* cho bật kênh cụ thể.

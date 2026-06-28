@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Billing\Models;
+namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * ChannelUsage — bộ đếm hội thoại per-workspace per-channel per-month (RLS).

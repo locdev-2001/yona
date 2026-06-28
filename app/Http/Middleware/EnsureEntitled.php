@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Billing\Http\Middleware;
+namespace App\Http\Middleware;
 
+use App\Services\EntitlementService;
 use Closure;
 use Illuminate\Http\Request;
-use Modules\Billing\Services\EntitlementResolver;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -12,20 +12,17 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Dùng: Route::middleware('entitled:integration.zalo_personal')
  * → 403 nếu workspace không có flag đó.
- *
- * Không check khi billing module tắt → EntitlementResolver không bind
- * → middleware alias 'entitled' không đăng ký → route không có middleware này.
  */
 class EnsureEntitled
 {
-    public function __construct(private readonly EntitlementResolver $resolver) {}
+    public function __construct(private readonly EntitlementService $entitlementService) {}
 
     public function handle(Request $request, Closure $next, string $flag): Response
     {
         $workspaceId = currentWorkspace()?->id;
 
         abort_unless(
-            $workspaceId && $this->resolver->allows($workspaceId, $flag),
+            $workspaceId && $this->entitlementService->allows($workspaceId, $flag),
             403,
             "Tính năng này yêu cầu entitlement: {$flag}"
         );

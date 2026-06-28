@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Billing\Models;
+namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * WorkspacePurchase — tenant mua gói (RLS, workspace-scoped).

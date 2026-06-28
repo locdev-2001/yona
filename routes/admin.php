@@ -9,7 +9,7 @@ use App\Http\Controllers\Identity\Admin\DashboardController;
 use App\Http\Controllers\Identity\Admin\ImpersonationController;
 use App\Http\Controllers\Identity\Admin\WorkspaceController;
 use Illuminate\Support\Facades\Route;
-use Modules\Billing\Http\Controllers\Admin\WorkspacePlanController;
+use App\Http\Controllers\Billing\Admin\WorkspacePlanController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {

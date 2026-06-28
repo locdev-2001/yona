@@ -1,23 +1,23 @@
 <?php
 
-namespace Modules\Billing\Services;
+namespace App\Services;
 
+use App\Models\ChannelUsage;
+use App\Models\WorkspacePurchase;
 use Illuminate\Support\Facades\Cache;
-use Modules\Billing\Models\ChannelUsage;
-use Modules\Billing\Models\WorkspacePurchase;
 
 /**
- * EntitlementResolver — tổng hợp quyền từ workspace_purchases active của workspace.
+ * EntitlementService — tổng hợp quyền từ workspace_purchases active của workspace.
  *
  * Cache: chỉ cache limits (quota tổng) theo workspace_id — KHÔNG cache remaining
  * vì remaining thay đổi theo channel_usage (mỗi meterReply).
- * TTL: 5 phút (EntitlementResolver::CACHE_TTL).
+ * TTL: 5 phút (EntitlementService::CACHE_TTL).
  * Invalidate: WorkspacePurchaseObserver gọi forgetCache() khi purchase changed.
  *
  * Free defaults: workspace không có gói active → trả về gói free mặc định.
  * Gói free defaults cứng trong FREE_DEFAULTS, không query DB để tránh lỗi boot.
  */
-class EntitlementResolver
+class EntitlementService
 {
     private const CACHE_TTL = 300; // 5 phút
 

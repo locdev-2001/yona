@@ -1,14 +1,14 @@
 <?php
 
-namespace Modules\Billing\Contracts;
+namespace App\Modules\Integration\Contracts;
 
 /**
- * PaymentProvider contract — payment-manual implements GĐ1; VNPay/MoMo GĐ2+.
+ * PaymentDriver contract — payment-manual implements GĐ1; VNPay/MoMo GĐ2+.
  *
  * F25: GĐ1 = one-off purchase only. Auto-recurring/dunning/proration hoãn Phase 08+.
  * Billing không biết payment-manual (N1); PaymentManager là registry driver.
  */
-interface PaymentProvider
+interface PaymentDriver
 {
     public function key(): string;
 
