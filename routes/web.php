@@ -147,6 +147,22 @@ Route::middleware(['auth'])->group(function () {
         // Integrations catalog page.
         Route::get('integrations', [IntegrationController::class, 'index'])->name('integrations.index');
 
+        // Zalo personal connection CRUD (QR connect / list / promote / logout).
+        // auth + workspace already applied by the enclosing group. Toggle via config/integrations.php.
+        if (config('integrations.zalo_personal.enabled')) {
+            Route::prefix('integrations')->name('integrations.zalo.')->group(function () {
+                Route::controller(\App\Http\Controllers\Integration\ZaloConnectionController::class)
+                    ->prefix('zalo')
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::post('/', 'store')->name('store');
+                        Route::get('/qr-status', 'qr')->name('qr');
+                        Route::post('/promote', 'promote')->name('promote');
+                        Route::delete('/{zaloConnection}', 'destroy')->name('destroy');
+                    });
+            });
+        }
+
         // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
         Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])

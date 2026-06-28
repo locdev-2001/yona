@@ -2,10 +2,8 @@
 
 namespace App\Modules\Integration\Chat\ZaloPersonal;
 
-use App\Http\Middleware\VerifyZaloBridgeSecret;
 use App\Modules\Integration\ChannelManager;
 use App\Services\MeteringService;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -14,12 +12,14 @@ use Illuminate\Support\ServiceProvider;
  * Đăng ký:
  *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter + MeteringService)
  *   - ZaloChannelDriver vào ChannelManager (extend 'zalo_personal')
- *   - Middleware alias 'zalo.bridge.secret'
- *   - API routes (webhook receiver)
- *   - Settings routes (ZaloConnectionController — auth+workspace gate)
+ *
+ * Routes + middleware alias 'zalo.bridge.secret' nay sống ở Laravel routing chuẩn:
+ *   - Webhook: routes/api.php (đăng ký qua bootstrap/app.php withRouting api:)
+ *   - Connection CRUD: routes/web.php (integrations.zalo.*)
+ *   - Alias: bootstrap/app.php withMiddleware $middleware->alias([...])
  *
  * Re-home: được IntegrationServiceProvider register (KHÔNG còn module framework auto-discovery).
- * Internal-first: xóa app/Modules/Integration/ → provider + driver + routes biến mất cùng nhau.
+ * Internal-first: xóa app/Modules/Integration/ → provider + driver biến mất cùng nhau.
  *
  * Migrations KHÔNG load ở đây — đã chuyển sang database/migrations/ (Laravel thuần).
  *
@@ -53,40 +53,5 @@ class ZaloPersonalServiceProvider extends ServiceProvider
         $this->callAfterResolving(ChannelManager::class, function (ChannelManager $manager) {
             $manager->extend('zalo_personal', fn () => app(ZaloChannelDriver::class));
         });
-    }
-
-    public function boot(): void
-    {
-        // Driver gate: disabled → bỏ qua middleware alias + routes.
-        if (! config('integrations.zalo_personal.enabled')) {
-            return;
-        }
-
-        $this->registerMiddlewareAlias();
-        $this->loadApiRoutes();
-        $this->loadSettingsRoutes();
-    }
-
-    private function registerMiddlewareAlias(): void
-    {
-        /** @var \Illuminate\Routing\Router $router */
-        $router = $this->app['router'];
-        $router->aliasMiddleware('zalo.bridge.secret', VerifyZaloBridgeSecret::class);
-    }
-
-    private function loadApiRoutes(): void
-    {
-        $path = __DIR__.'/routes/api.php';
-        if (file_exists($path)) {
-            Route::middleware('api')->prefix('api')->group($path);
-        }
-    }
-
-    private function loadSettingsRoutes(): void
-    {
-        $path = __DIR__.'/routes/settings.php';
-        if (file_exists($path)) {
-            $this->loadRoutesFrom($path);
-        }
     }
 }
