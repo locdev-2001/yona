@@ -33,6 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ResetTenantContext::class,
         ]);
 
+        // Same defense for module API routes (Zalo webhook, future api endpoints):
+        // a pooled connection could carry stale RLS context into an api request.
+        $middleware->api(prepend: [
+            ResetTenantContext::class,
+        ]);
+
         $middleware->web(append: [
             SetLocale::class,
             HandleInertiaRequests::class,

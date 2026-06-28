@@ -261,3 +261,67 @@ it('channel auth: user của workspace khác bị denied', function () {
     expect($userA->membershipFor($wsB->id))->toBeNull();
     expect($userA->membershipFor($wsA->id))->not->toBeNull();
 });
+
+// ── Race: 2 webhook đồng thời cùng (zalo_connection_id, peer_uid) ────────────
+//
+// Trước fix: read-check-write không atomic → cả 2 miss first() → cả 2 INSERT →
+// request thứ 2 hit conversations_channel_peer_unique → QueryException 23505 →
+// caught upstream + 200 OK → message bị drop âm thầm (silent data loss).
+//
+// Mô phỏng race deterministic: một conversation conflicting ĐÃ tồn tại; subclass
+// ép findConversation() lần ĐẦU trả null (cửa sổ race: request kia vừa INSERT mà
+// request này chưa thấy) → service đi vào nhánh INSERT → đụng unique 23505 → catch
+// → re-fetch THẬT (delegate parent) tìm thấy row → trả về existing, không duplicate.
+it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, không throw, không duplicate', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $connectionId = (string) random_int(1_000_000, 9_999_999);
+    $peerUid = 'peer_race_001';
+
+    // Conversation conflicting đã tồn tại (request "kia" tạo trước, trong cùng workspace).
+    $existing = Conversation::create([
+        'channel' => 'zalo_personal',
+        'zalo_connection_id' => $connectionId,
+        'peer_uid' => $peerUid,
+        'thread_type' => 0,
+        'conversation_number' => 999,
+    ]);
+
+    // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
+    $racingService = new class(app(MeteringService::class)) extends InboundMessageService {
+        private bool $firstLookup = true;
+
+        protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation
+        {
+            if ($this->firstLookup) {
+                $this->firstLookup = false;
+
+                return null; // ép đi vào nhánh INSERT → đụng 23505
+            }
+
+            return parent::findConversation($zaloConnectionId, $peerUid); // re-fetch thật trong catch
+        }
+    };
+
+    $payload = basePayload($peerUid, $connectionId);
+    $payload['peer_name'] = 'Khách Race';
+    $payload['source_id'] = 'msg_race_001';
+
+    // Không được throw — catch 23505 → re-fetch
+    $message = $racingService->ingest($payload);
+
+    // Message gắn vào conversation đã tồn tại (re-fetched), KHÔNG tạo conversation mới
+    expect($message->conversation_id)->toBe($existing->id);
+
+    $convCount = Conversation::withTrashed()
+        ->where('zalo_connection_id', $connectionId)
+        ->where('peer_uid', $peerUid)
+        ->count();
+
+    expect($convCount)->toBe(1); // không duplicate
+
+    // peer-info update của existing-row path được áp dụng sau re-fetch
+    expect($existing->fresh()->peer_name)->toBe('Khách Race');
+});

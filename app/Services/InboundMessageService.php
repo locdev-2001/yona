@@ -6,6 +6,8 @@ use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\WorkspaceSequence;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Channel-agnostic inbound message ingestor (F2, F13, F14, F20).
@@ -75,46 +77,78 @@ class InboundMessageService
     }
 
     /** @param array<string, mixed> $normalized */
-    private function upsertConversation(array $normalized): Conversation
+    protected function upsertConversation(array $normalized): Conversation
     {
         $channel = $normalized['channel'] ?? 'zalo_personal';
         $zaloConnectionId = $normalized['zalo_connection_id'] ?? null;
         $peerUid = $normalized['peer_uid'];
 
         // Unique per (zalo_connection_id, peer_uid) — F14 idempotency
-        $conversation = Conversation::withTrashed()
+        $existing = $this->findConversation($zaloConnectionId, $peerUid);
+
+        if ($existing !== null) {
+            return $this->applyPeerUpdates($existing, $normalized);
+        }
+
+        // Finding 16: chuẩn hóa 'conversation' (số ít) — khớp test/seed/codebase.
+        // Trước đây dùng 'conversations' (số nhiều) → 2 counter độc lập → trùng conversation_number.
+        try {
+            // Savepoint quanh INSERT: nếu đụng unique, Postgres abort cả transaction
+            // (25P02) khiến re-fetch trong catch fail. DB::transaction() rollback chỉ
+            // savepoint → connection còn dùng được cho re-fetch (an toàn cả khi ingest
+            // chạy trong một transaction ngoài).
+            return DB::transaction(function () use ($channel, $zaloConnectionId, $peerUid, $normalized) {
+                $conversation = new Conversation([
+                    'channel' => $channel,
+                    'zalo_connection_id' => $zaloConnectionId,
+                    'peer_uid' => $peerUid,
+                    'thread_type' => $normalized['thread_type'] ?? 0,
+                    'peer_name' => $normalized['peer_name'] ?? null,
+                    'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
+                    'peer_phone' => $normalized['peer_phone'] ?? null,
+                    'conversation_number' => WorkspaceSequence::next('conversation'),
+                    'contact_id' => null, // F23: Liên hệ nháp
+                ]);
+                $conversation->save();
+
+                return $conversation;
+            });
+        } catch (QueryException $e) {
+            // Race: 2 webhook cùng (zalo_connection_id, peer_uid) → cùng miss first() → cùng INSERT.
+            // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_peer_unique).
+            // Re-fetch row do request kia tạo, áp peer-info update như existing-row path.
+            // Cùng pattern ContactService::firstOrCreateByPhone.
+            if ($e->getCode() === '23505') {
+                $conversation = $this->findConversation($zaloConnectionId, $peerUid);
+
+                if ($conversation !== null) {
+                    return $this->applyPeerUpdates($conversation, $normalized);
+                }
+            }
+
+            throw $e;
+        }
+    }
+
+    protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation
+    {
+        return Conversation::withTrashed()
             ->where('zalo_connection_id', $zaloConnectionId)
             ->where('peer_uid', $peerUid)
             ->first();
+    }
 
-        if ($conversation === null) {
-            // Finding 16: chuẩn hóa 'conversation' (số ít) — khớp test/seed/codebase.
-            // Trước đây dùng 'conversations' (số nhiều) → 2 counter độc lập → trùng conversation_number.
-            $conversationNumber = WorkspaceSequence::next('conversation');
+    /** @param array<string, mixed> $normalized */
+    private function applyPeerUpdates(Conversation $conversation, array $normalized): Conversation
+    {
+        $updates = array_filter([
+            'peer_name' => $normalized['peer_name'] ?? null,
+            'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
+            'peer_phone' => $normalized['peer_phone'] ?? null,
+        ], fn ($v) => $v !== null);
 
-            $conversation = new Conversation([
-                'channel' => $channel,
-                'zalo_connection_id' => $zaloConnectionId,
-                'peer_uid' => $peerUid,
-                'thread_type' => $normalized['thread_type'] ?? 0,
-                'peer_name' => $normalized['peer_name'] ?? null,
-                'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
-                'peer_phone' => $normalized['peer_phone'] ?? null,
-                'conversation_number' => $conversationNumber,
-                'contact_id' => null, // F23: Liên hệ nháp
-            ]);
-            $conversation->save();
-        } else {
-            // Cập nhật peer info nếu thay đổi
-            $updates = array_filter([
-                'peer_name' => $normalized['peer_name'] ?? null,
-                'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
-                'peer_phone' => $normalized['peer_phone'] ?? null,
-            ], fn ($v) => $v !== null);
-
-            if ($updates !== []) {
-                $conversation->fill($updates)->save();
-            }
+        if ($updates !== []) {
+            $conversation->fill($updates)->save();
         }
 
         return $conversation;

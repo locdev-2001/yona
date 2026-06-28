@@ -53,6 +53,15 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         'client_user',          // pivot carries workspace_id — G4
         'client_vault_entries',
 
+        // P07 leads (2026_06_25_500002)
+        'leads',
+
+        // P08 projects (2026_06_25_600005) — members/milestones/discussions carry workspace_id (G4)
+        'projects',
+        'project_members',      // pivot carries workspace_id — G4
+        'project_milestones',   // carries workspace_id — G4
+        'project_discussions',  // carries workspace_id — G4
+
         // P09 tasks + timers (2026_06_25_700006) — includes pivot tables (G4)
         'tasks',
         'task_assignees',       // pivot carries workspace_id — G4

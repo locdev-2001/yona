@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Attachment;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Attachment authorization. create delegates to the parent entity's policy
@@ -13,17 +14,18 @@ use App\Models\Attachment;
 class AttachmentPolicy
 {
     /**
-     * Creating an attachment requires the user to be able to manage the workspace.
-     * The caller (FormRequest / Controller) resolves the parent entity and checks
-     * edit rights on it. Here we allow any authenticated workspace member.
+     * Creating an attachment requires EDIT rights on the parent entity.
      *
-     * @param  array<int, mixed>|null  $args  [Attachment::class, $parentModel]
+     * Caller: $user->can('create', [Attachment::class, $parent]) — Gate uses the
+     * first array element to resolve THIS policy and SPREADS the array as method
+     * args, so $parent arrives here as the 2nd argument (the class string is
+     * dropped by Gate before dispatch). We delegate to the parent's `update`
+     * ability: a member who cannot edit a Client/Lead/Project/Task/Contact
+     * cannot attach files to it (within-workspace authz — RLS blocks cross-ws).
      */
-    public function create(User $user, ?array $args = null): bool
+    public function create(User $user, ?Model $parent = null): bool
     {
-        // Delegate: authenticated workspace member can attach files.
-        // Fine-grained entity-level gate is in StoreAttachmentRequest::authorize().
-        return true;
+        return $parent !== null && $user->can('update', $parent);
     }
 
     /**
