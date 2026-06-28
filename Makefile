@@ -17,7 +17,7 @@ ARTISAN  := $(PHP) artisan
 COMPOSER := composer
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-docker setup-host install dev serve queue horizon reverb \
+.PHONY: help setup setup-docker setup-host install dev serve queue horizon reverb bridge \
         db-roles migrate seed test format pint pint-test stan check build \
         clear tinker \
         docker-up docker-down docker-restart docker-logs docker-ps \
@@ -157,6 +157,9 @@ horizon: ## Run Horizon (Redis queues)
 
 reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
+
+bridge: ## Start the Zalo personal bridge (foreground; installs deps on first run) — then connect at /integrations/zalo
+	cd services/zalo-bridge && { test -d node_modules || npm install; } && npm run dev
 
 workers: ## Run full pipeline (Horizon queues + Reverb websocket)
 	trap 'kill 0' INT TERM; \
