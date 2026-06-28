@@ -13,16 +13,17 @@ use App\Models\ZaloConnection;
 class IntegrationCatalog
 {
     /**
-     * @return array<int, array{key: string, name: string, category: string, enabled: bool, connected: bool}>
+     * @return array<int, array{key: string, name: string, category: string, logo: string, enabled: bool, connected: bool}>
      */
     public function cards(): array
     {
         return [
             [
-                'key'       => 'zalo_personal',
-                'name'      => 'Zalo cá nhân',
-                'category'  => 'chat',
-                'enabled'   => (bool) config('integrations.zalo_personal.enabled'),
+                'key' => 'zalo_personal',
+                'name' => 'Zalo cá nhân',
+                'category' => 'chat',
+                'logo' => '/assets/images/icon_zalo.png', // per-integration logo; card falls back to category icon if empty
+                'enabled' => (bool) config('integrations.zalo_personal.enabled'),
                 'connected' => ZaloConnection::query()->exists(), // workspace-scoped via RLS
             ],
         ];

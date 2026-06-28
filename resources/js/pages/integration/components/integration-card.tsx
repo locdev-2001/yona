@@ -9,6 +9,7 @@ export interface IntegrationCard {
     key: string;
     name: string;
     category: string;
+    logo?: string | null;
     enabled: boolean;
     connected: boolean;
 }
@@ -33,7 +34,11 @@ export function IntegrationCardItem({ card }: Props) {
     return (
         <Card className={!card.enabled ? 'opacity-60' : ''}>
             <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                <div className="text-muted-foreground">{CATEGORY_ICONS[card.category] ?? <MessageSquare className="h-6 w-6" />}</div>
+                {card.logo ? (
+                    <img src={card.logo} alt={card.name} className="h-6 w-6 shrink-0 rounded object-contain" />
+                ) : (
+                    <div className="text-muted-foreground">{CATEGORY_ICONS[card.category] ?? <MessageSquare className="h-6 w-6" />}</div>
+                )}
                 <CardTitle className="text-base">{card.name}</CardTitle>
                 <Badge variant="secondary" className="ml-auto text-xs capitalize">
                     {t(`platform.integrations.category.${card.category}`)}
@@ -53,9 +58,7 @@ export function IntegrationCardItem({ card }: Props) {
             <CardFooter>
                 {card.enabled ? (
                     <Button asChild size="sm" variant={card.connected ? 'outline' : 'default'}>
-                        <Link href={href}>
-                            {card.connected ? t('platform.integrations.manage') : t('platform.integrations.connect')}
-                        </Link>
+                        <Link href={href}>{card.connected ? t('platform.integrations.manage') : t('platform.integrations.connect')}</Link>
                     </Button>
                 ) : (
                     <Button size="sm" disabled>
