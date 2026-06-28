@@ -192,3 +192,37 @@ class_alias(\App\Http\Controllers\Projects\Tasks\TaskKanbanController::class, 'M
 class_alias(\App\Http\Controllers\Projects\Tasks\TaskStatusController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskStatusController');
 class_alias(\App\Http\Controllers\Projects\Tasks\TaskTimerController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskTimerController');
 class_alias(\App\Http\Controllers\Projects\Settings\ProjectStatusController::class, 'Modules\Projects\Http\Controllers\Settings\ProjectStatusController');
+
+// Phase 1d — Email moved from Modules\Email\* → App\*
+// External callers (inbox/billing/cdp) still use Modules\Email\... — aliases resolve them.
+// ServiceProvider intentionally NOT aliased.
+class_alias(\App\Contracts\EntityMergeFields::class, 'Modules\Email\Contracts\EntityMergeFields');
+class_alias(\App\Models\EmailTemplate::class, 'Modules\Email\Models\EmailTemplate');
+class_alias(\App\Policies\EmailTemplatePolicy::class, 'Modules\Email\Policies\EmailTemplatePolicy');
+class_alias(\App\Services\EmailTemplateService::class, 'Modules\Email\Services\EmailTemplateService');
+class_alias(\App\Services\MergeFieldResolver::class, 'Modules\Email\Services\MergeFieldResolver');
+class_alias(\App\Services\TemplatedMailer::class, 'Modules\Email\Services\TemplatedMailer');
+class_alias(\App\Http\Controllers\Email\EmailTemplateController::class, 'Modules\Email\Http\Controllers\Settings\EmailTemplateController');
+class_alias(\App\Http\Requests\Email\EmailTemplateUpdateRequest::class, 'Modules\Email\Http\Requests\Settings\EmailTemplateUpdateRequest');
+class_alias(\App\Http\Requests\Email\EmailTemplateTestRequest::class, 'Modules\Email\Http\Requests\Settings\EmailTemplateTestRequest');
+
+// Phase 1d — Announcements moved from Modules\Announcements\* → App\*
+// External callers still use Modules\Announcements\... — aliases resolve them.
+// ServiceProvider intentionally NOT aliased.
+class_alias(\App\Enums\AnnouncementAudience::class, 'Modules\Announcements\Enums\AnnouncementAudience');
+class_alias(\App\Enums\AnnouncementCategory::class, 'Modules\Announcements\Enums\AnnouncementCategory');
+class_alias(\App\Enums\AnnouncementStatus::class, 'Modules\Announcements\Enums\AnnouncementStatus');
+class_alias(\App\Models\Announcement::class, 'Modules\Announcements\Models\Announcement');
+class_alias(\App\Models\AnnouncementRead::class, 'Modules\Announcements\Models\AnnouncementRead');
+class_alias(\App\Policies\AnnouncementPolicy::class, 'Modules\Announcements\Policies\AnnouncementPolicy');
+class_alias(\App\Rules\AnnouncementAudienceRule::class, 'Modules\Announcements\Rules\AnnouncementAudienceRule');
+class_alias(\App\Services\AnnouncementReadService::class, 'Modules\Announcements\Services\AnnouncementReadService');
+class_alias(\App\Services\AnnouncementService::class, 'Modules\Announcements\Services\AnnouncementService');
+class_alias(\App\Support\AnnouncementMarkdown::class, 'Modules\Announcements\Support\AnnouncementMarkdown');
+class_alias(\App\Support\AudienceResolver::class, 'Modules\Announcements\Support\AudienceResolver');
+class_alias(\App\Http\Controllers\Announcements\AnnouncementReadController::class, 'Modules\Announcements\Http\Controllers\AnnouncementReadController');
+class_alias(\App\Http\Controllers\Announcements\WhatsNewController::class, 'Modules\Announcements\Http\Controllers\WhatsNewController');
+class_alias(\App\Http\Controllers\Announcements\Admin\AnnouncementController::class, 'Modules\Announcements\Http\Controllers\Admin\AnnouncementController');
+class_alias(\App\Http\Controllers\Announcements\Admin\AnnouncementPublishController::class, 'Modules\Announcements\Http\Controllers\Admin\AnnouncementPublishController');
+class_alias(\App\Http\Requests\Announcements\Admin\AnnouncementStoreRequest::class, 'Modules\Announcements\Http\Requests\Admin\AnnouncementStoreRequest');
+class_alias(\App\Http\Requests\Announcements\Admin\AnnouncementUpdateRequest::class, 'Modules\Announcements\Http\Requests\Admin\AnnouncementUpdateRequest');

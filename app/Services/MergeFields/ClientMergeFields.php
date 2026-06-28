@@ -3,7 +3,7 @@
 namespace App\Services\MergeFields;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Email\Contracts\EntityMergeFields;
+use App\Contracts\EntityMergeFields;
 
 /**
  * P06 — Merge field resolver stub for Client entities.

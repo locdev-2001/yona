@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Announcements\Admin\AnnouncementController;
+use App\Http\Controllers\Announcements\Admin\AnnouncementPublishController;
 use App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Identity\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Identity\Admin\DashboardController;
 use App\Http\Controllers\Identity\Admin\ImpersonationController;
-use Modules\Billing\Http\Controllers\Admin\WorkspacePlanController;
 use App\Http\Controllers\Identity\Admin\WorkspaceController;
+use Illuminate\Support\Facades\Route;
+use Modules\Billing\Http\Controllers\Admin\WorkspacePlanController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {
@@ -55,6 +57,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Stop impersonation (the admin guard is still authenticated here).
         Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
             ->name('impersonate.stop');
+
+        // Announcements — admin CRUD + publish/unpublish.
+        Route::middleware('admin.can:platform.announcements.manage')->group(function () {
+            Route::resource('announcements', AnnouncementController::class)
+                ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::post('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'store'])
+                ->name('announcements.publish');
+
+            Route::delete('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'destroy'])
+                ->name('announcements.unpublish');
+        });
 
     });
 });

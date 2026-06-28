@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Announcements\AnnouncementReadController;
+use App\Http\Controllers\Announcements\WhatsNewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Crm\Clients\ClientController;
 use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
@@ -139,6 +141,12 @@ Route::middleware(['auth'])->group(function () {
         // P09 — Tasks + Timers.
         require __DIR__.'/tasks.php';
     });
+});
+
+// Announcements — tenant-plane: What's New feed + mark-read.
+Route::middleware(['auth', 'workspace'])->group(function () {
+    Route::get('whats-new', WhatsNewController::class)->name('announcements.index');
+    Route::post('whats-new/{announcement}/read', AnnouncementReadController::class)->name('announcements.read');
 });
 
 require __DIR__.'/settings.php';

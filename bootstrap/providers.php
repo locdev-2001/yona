@@ -1,7 +1,9 @@
 <?php
 
+use App\Providers\AnnouncementsServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\CrmSalesServiceProvider;
+use App\Providers\EmailServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\IdentityServiceProvider;
 use App\Providers\ModuleServiceProvider;
@@ -19,6 +21,8 @@ return [
     TenancyServiceProvider::class,
     IdentityServiceProvider::class,
     SharedServiceProvider::class,
+    EmailServiceProvider::class,
+    AnnouncementsServiceProvider::class,
     ProjectsServiceProvider::class,
     ModuleServiceProvider::class,
     // Registered AFTER ModuleServiceProvider so it overrides cdp's no-op

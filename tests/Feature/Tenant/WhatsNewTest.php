@@ -25,7 +25,7 @@ it('shows published announcements to authenticated tenant users', function () {
 
     $this->get(route('announcements.index'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('Modules.Announcements.announcements/index'));
+        ->assertInertia(fn ($page) => $page->component('announcements/index'));
 });
 
 it('hides draft announcements from tenant users (GET draft slug → 404 via policy)', function () {

@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use Modules\Email\Services\TemplatedMailer;
+use App\Services\TemplatedMailer;
 use App\Events\LeadAssigned;
 use App\Notifications\LeadAssignedNotification;
 use App\Models\User;

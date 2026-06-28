@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Cdp\Contracts\IdentityResolver;
-use Modules\Email\Contracts\EntityMergeFields;
+use App\Contracts\EntityMergeFields;
 
 /**
  * CRM-Sales service provider (moved from Modules\CrmSales\Providers\CrmSalesServiceProvider).

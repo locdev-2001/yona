@@ -6,8 +6,8 @@ use App\Support\ModuleAwareInertiaViewFinder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Email\Models\EmailTemplate;
-use Modules\Email\Policies\EmailTemplatePolicy;
+use App\Models\EmailTemplate;
+use App\Policies\EmailTemplatePolicy;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider

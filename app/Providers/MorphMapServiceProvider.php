@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Announcement;
+use App\Models\AnnouncementRead;
+use App\Models\EmailTemplate;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Modules\Email\Models\EmailTemplate;
 use Illuminate\Support\ServiceProvider;
-use Modules\Announcements\Models\Announcement;
-use Modules\Announcements\Models\AnnouncementRead;
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\ClientVaultEntry;
