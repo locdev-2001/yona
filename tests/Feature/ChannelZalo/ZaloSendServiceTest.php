@@ -269,7 +269,7 @@ it('store returns connection_id and qr_token when bridge qr/start ok', function 
 
     $this->actingAs($user)
         ->withSession(['current_workspace_id' => $workspace->id])
-        ->postJson('/settings/zalo-connections')
+        ->postJson('/integrations/zalo')
         ->assertStatus(200)
         ->assertJsonFragment(['ok' => true])
         ->assertJsonStructure(['connection_id', 'qr_token']);
@@ -307,7 +307,7 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
 
     $this->actingAs($user)
         ->withSession(['current_workspace_id' => $workspace->id])
-        ->postJson('/settings/zalo-connections/promote', [
+        ->postJson('/integrations/zalo/promote', [
             'connection_id' => $nextVal,
             'qr_token'      => 'test-qr-token',
         ])

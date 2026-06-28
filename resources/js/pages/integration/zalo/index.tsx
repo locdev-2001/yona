@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
@@ -55,8 +54,8 @@ const INITIAL_QR: QrLoginState = {
 
 export default function ZaloConnectionsIndex({ connections }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Cài đặt', href: '/settings' },
-        { title: 'Kết nối Zalo', href: '/settings/zalo-connections' },
+        { title: 'Tích hợp', href: '/integrations' },
+        { title: 'Kết nối Zalo', href: '/integrations/zalo' },
     ];
 
     const [qrState, setQrState] = useState<QrLoginState>(INITIAL_QR);
@@ -69,7 +68,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
 
         pollRef.current = setInterval(async () => {
             try {
-                const res = await fetch(`/settings/zalo-connections/qr-status?qr_token=${qrState.qrToken}`, {
+                const res = await fetch(`/integrations/zalo/qr-status?qr_token=${qrState.qrToken}`, {
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 const data = await res.json();
@@ -102,7 +101,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
     const startQrLogin = async () => {
         setQrState({ ...INITIAL_QR, open: true, phase: 'starting' });
         try {
-            const res = await fetch('/settings/zalo-connections', {
+            const res = await fetch('/integrations/zalo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -129,7 +128,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
 
     const promoteConnection = async (connectionId: number, qrToken: string) => {
         try {
-            const res = await fetch('/settings/zalo-connections/promote', {
+            const res = await fetch('/integrations/zalo/promote', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -153,7 +152,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
 
     const disconnectConnection = (id: string) => {
         if (!confirm('Xác nhận ngắt kết nối Zalo này?')) return;
-        router.delete(`/settings/zalo-connections/${id}`, {
+        router.delete(`/integrations/zalo/${id}`, {
             preserveScroll: true,
         });
     };
@@ -161,7 +160,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Kết nối Zalo" />
-            <SettingsLayout>
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -236,7 +235,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                         </div>
                     )}
                 </div>
-            </SettingsLayout>
+            </div>
         </AppLayout>
     );
 }

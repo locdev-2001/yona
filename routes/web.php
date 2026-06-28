@@ -27,6 +27,7 @@ use App\Http\Controllers\Shared\NoteController;
 use App\Http\Controllers\Shared\NotificationController;
 use App\Http\Controllers\Shared\ReminderController;
 use App\Http\Controllers\Shared\TagController;
+use App\Http\Controllers\Integration\IntegrationController;
 use App\Http\Controllers\Tenancy\WorkspaceSwitchController;
 
 Route::get('/', WelcomeController::class)->name('home');
@@ -142,6 +143,9 @@ Route::middleware(['auth'])->group(function () {
 
         // P09 — Tasks + Timers.
         require __DIR__.'/tasks.php';
+
+        // Integrations catalog page.
+        Route::get('integrations', [IntegrationController::class, 'index'])->name('integrations.index');
 
         // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');

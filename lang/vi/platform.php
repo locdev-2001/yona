@@ -48,6 +48,7 @@ return [
         'dashboard' => 'Bảng điều khiển',
         'overview' => 'Tổng quan',
         'inbox' => 'Hộp thư',
+        'integrations' => 'Tích hợp',
         'zalo' => 'Kết nối Zalo',
         'crm' => 'CRM',
         'clients' => 'Khách hàng',
@@ -93,6 +94,18 @@ return [
         'confirm' => 'Xác nhận',
         'move' => 'Di chuyển',
         'search' => 'Tìm kiếm',
+    ],
+    'integrations' => [
+        'title'         => 'Tích hợp',
+        'subtitle'      => 'Kết nối các kênh và dịch vụ với workspace của bạn.',
+        'connect'       => 'Kết nối',
+        'manage'        => 'Quản lý',
+        'connected'     => 'Đã kết nối',
+        'not_connected' => 'Chưa kết nối',
+        'empty'         => 'Chưa có tích hợp nào.',
+        'category'      => [
+            'chat' => 'Chat',
+        ],
     ],
     'settings' => [
         'subtitle' => 'Quản lý hồ sơ và cài đặt tài khoản.',
