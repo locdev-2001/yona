@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\PaymentManual\Services;
+namespace App\Modules\Integration\Payment\Manual;
 
 use App\Models\WorkspacePurchase;
 use App\Modules\Integration\Contracts\PaymentDriver;
 
 /**
- * ManualPaymentProvider — GĐ1: admin duyệt tay, không qua gateway ngoài.
+ * ManualPaymentDriver — GĐ1: admin duyệt tay, không qua gateway ngoài.
  *
  * createCheckout(): đánh dấu purchase status='manual_pending' và trả về
  * thông tin để admin duyệt. Không redirect hay gọi API ngoài.
@@ -14,7 +14,7 @@ use App\Modules\Integration\Contracts\PaymentDriver;
  * verifyCallback(): no-op — manual không có IPN/callback.
  * refund(): no-op — manual không hỗ trợ hoàn tiền tự động GĐ1.
  */
-class ManualPaymentProvider implements PaymentDriver
+class ManualPaymentDriver implements PaymentDriver
 {
     public function key(): string
     {

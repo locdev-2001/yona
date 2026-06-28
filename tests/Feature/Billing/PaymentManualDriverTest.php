@@ -1,26 +1,26 @@
 <?php
 
-use Modules\Billing\Contracts\PaymentProvider;
+use App\Modules\Integration\Contracts\PaymentDriver;
+use App\Modules\Integration\PaymentManager;
+use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
 use Modules\Billing\Models\MarketplaceItem;
 use Modules\Billing\Models\WorkspacePurchase;
 use Modules\Billing\Services\EntitlementResolver;
 use Modules\Billing\Services\GrantPlanService;
-use Modules\Billing\Services\PaymentManager;
-use Modules\PaymentManual\Services\ManualPaymentProvider;
 use Modules\Tenancy\Models\Workspace;
 
 // ── Driver registry ───────────────────────────────────────────────────────────
 
-it('PaymentManager: driver(manual) instanceof ManualPaymentProvider', function () {
+it('PaymentManager: driver(manual) instanceof ManualPaymentDriver', function () {
     $manager = app(PaymentManager::class);
 
-    expect($manager->driver('manual'))->toBeInstanceOf(ManualPaymentProvider::class);
+    expect($manager->driver('manual'))->toBeInstanceOf(ManualPaymentDriver::class);
 });
 
-it('ManualPaymentProvider implements PaymentProvider contract', function () {
-    $provider = app(ManualPaymentProvider::class);
+it('ManualPaymentDriver implements PaymentDriver contract', function () {
+    $provider = app(ManualPaymentDriver::class);
 
-    expect($provider)->toBeInstanceOf(PaymentProvider::class)
+    expect($provider)->toBeInstanceOf(PaymentDriver::class)
         ->and($provider->key())->toBe('manual');
 });
 

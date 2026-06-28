@@ -1,27 +1,26 @@
 <?php
 
-namespace Modules\ChannelZalo\Services;
+namespace App\Modules\Integration\Chat\ZaloPersonal;
 
-use Modules\ChannelZalo\Exceptions\RateCapException;
-use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
-use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
-use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
-use Modules\Inbox\Contracts\ChannelDriver;
-use Modules\Inbox\Contracts\SendException;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
+use App\Contracts\SendException;
+use App\Models\Conversation;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
  * Channel driver cho Zalo cá nhân (zca-js bridge).
  *
- * Implements ChannelDriver contract (inbox) — inbox core không import class này.
- * Đăng ký qua ChannelManager::extend('zalo_personal', ...) trong ChannelZaloServiceProvider.
+ * Implements ChannelDriver contract (App\Modules\Integration) — inbox core không import class này.
+ * Đăng ký qua ChannelManager::extend('zalo_personal', ...) trong ZaloPersonalServiceProvider.
  *
  * D-2 (outbound/QR/send): sendMessage → ZaloSendService.
  * D-1 (inbound): parseInbound() đã đầy đủ cho webhook RLS-bind flow.
  *
- * @see modules/channel-zalo/src/Providers/ChannelZaloServiceProvider.php
- * @see modules/inbox/src/Contracts/ChannelDriver.php
+ * @see \App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider
+ * @see \App\Modules\Integration\Contracts\ChannelDriver
  */
 class ZaloChannelDriver implements ChannelDriver
 {

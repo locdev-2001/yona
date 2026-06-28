@@ -1,8 +1,10 @@
 <?php
 
-namespace Modules\ChannelZalo\Http\Controllers\Settings;
+namespace App\Http\Controllers\Integration;
 
+use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
+use App\Models\ZaloConnection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,8 +13,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Identity\Enums\TenantPermission;
 
 /**
  * F1 — Settings: Kết nối Zalo cá nhân qua QR login.
@@ -27,7 +27,7 @@ use Modules\Identity\Enums\TenantPermission;
  * Gate: tenant.zalo.manage (TenantPermission::ZaloManage)
  * Route group: ['auth', 'workspace'] — web middleware.
  *
- * Render page: Modules.ChannelZalo.settings/zalo/index
+ * Render page: integration/zalo/index
  */
 class ZaloConnectionController extends Controller
 {
@@ -51,7 +51,7 @@ class ZaloConnectionController extends Controller
                 'last_connected_at'   => $c->last_connected_at?->toISOString(),
             ]);
 
-        return Inertia::render('Modules.ChannelZalo.settings/zalo/index', [
+        return Inertia::render('integration/zalo/index', [
             'connections' => $connections,
         ]);
     }

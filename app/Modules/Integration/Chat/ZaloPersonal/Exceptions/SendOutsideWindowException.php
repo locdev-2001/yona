@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\ChannelZalo\Exceptions;
+namespace App\Modules\Integration\Chat\ZaloPersonal\Exceptions;
 
 use RuntimeException;
 

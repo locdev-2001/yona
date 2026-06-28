@@ -273,3 +273,34 @@ if (interface_exists('App\Modules\Integration\Contracts\PaymentDriver')) {
     class_alias('App\Modules\Integration\Contracts\PaymentDriver', 'Modules\Billing\Contracts\PaymentProvider');
     class_alias('App\Modules\Integration\Contracts\PaymentDriver', 'Modules\Billing\Contracts\PaymentDriver');
 }
+
+// Phase 2c — channel-zalo moved from Modules\ChannelZalo\* → App\* + App\Modules\Integration\Chat\ZaloPersonal\*.
+// External callers (tests) still use Modules\ChannelZalo\... — aliases resolve them.
+// Rename: AccountHealthMonitor → ZaloHealthMonitor (old name aliases new class).
+// ServiceProvider intentionally NOT aliased (re-homed via IntegrationServiceProvider).
+//
+// Model/controllers/middleware sống ngoài Integration (App\Models, App\Http\*) → alias thẳng.
+class_alias(\App\Models\ZaloConnection::class, 'Modules\ChannelZalo\Models\ZaloConnection');
+class_alias(\App\Http\Controllers\Integration\ZaloPersonalWebhookController::class, 'Modules\ChannelZalo\Http\Controllers\ZaloPersonalWebhookController');
+class_alias(\App\Http\Controllers\Integration\ZaloConnectionController::class, 'Modules\ChannelZalo\Http\Controllers\Settings\ZaloConnectionController');
+class_alias(\App\Http\Middleware\VerifyZaloBridgeSecret::class, 'Modules\ChannelZalo\Http\Middleware\VerifyZaloBridgeSecret');
+// Services/exceptions/driver sống TRONG Integration → guard class_exists (string literal, KHÔNG ::class).
+if (class_exists('App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService')) {
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService', 'Modules\ChannelZalo\Services\ZaloSendService');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver', 'Modules\ChannelZalo\Services\ZaloChannelDriver');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter', 'Modules\ChannelZalo\Services\SendRateLimiter');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor', 'Modules\ChannelZalo\Services\AccountHealthMonitor');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException', 'Modules\ChannelZalo\Exceptions\RateCapException');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException', 'Modules\ChannelZalo\Exceptions\SendOutsideWindowException');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException', 'Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException');
+    class_alias('App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException', 'Modules\ChannelZalo\Exceptions\ZaloNotConnectedException');
+}
+
+// Phase 2d — payment-manual moved from Modules\PaymentManual\* → App\Modules\Integration\Payment\Manual\*.
+// Rename: ManualPaymentProvider → ManualPaymentDriver (old name aliases new class).
+// External callers (tests) still use Modules\PaymentManual\Services\ManualPaymentProvider — alias resolves.
+// ServiceProvider intentionally NOT aliased (re-homed via IntegrationServiceProvider).
+// Driver sống TRONG Integration → guard class_exists.
+if (class_exists('App\Modules\Integration\Payment\Manual\ManualPaymentDriver')) {
+    class_alias('App\Modules\Integration\Payment\Manual\ManualPaymentDriver', 'Modules\PaymentManual\Services\ManualPaymentProvider');
+}

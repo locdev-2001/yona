@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\ChannelZalo\Http\Controllers;
+namespace App\Http\Controllers\Integration;
 
+use App\Models\Workspace;
+use App\Models\ZaloConnection;
+use App\Modules\Integration\ChannelManager;
+use App\Services\InboundMessageService;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use App\Modules\Integration\ChannelManager;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Services\InboundMessageService;
-use Modules\Tenancy\Models\Workspace;
-use Modules\Tenancy\Support\TenantScope;
 use Throwable;
 
 /**
@@ -29,8 +29,8 @@ use Throwable;
  * Route: POST /api/integrations/zalo-personal/webhook
  * Middleware: zalo.bridge.secret (VerifyZaloBridgeSecret)
  *
- * @see modules/channel-zalo/routes/api.php
- * @see modules/channel-zalo/src/Http/Middleware/VerifyZaloBridgeSecret.php
+ * @see routes/api.php
+ * @see \App\Http\Middleware\VerifyZaloBridgeSecret
  */
 class ZaloPersonalWebhookController extends Controller
 {

@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
 use Illuminate\Support\Facades\Route;
-use Modules\ChannelZalo\Http\Controllers\ZaloPersonalWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,7 +14,7 @@ use Modules\ChannelZalo\Http\Controllers\ZaloPersonalWebhookController;
 | Không có: auth, session, CSRF (bridge → server, không phải browser).
 |
 | RLS bind xảy ra TRONG controller (không qua middleware web/tenant).
-| @see ZaloPersonalWebhookController
+| @see \App\Http\Controllers\Integration\ZaloPersonalWebhookController
 |
 */
 

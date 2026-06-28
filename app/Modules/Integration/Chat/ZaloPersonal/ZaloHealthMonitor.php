@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\ChannelZalo\Services;
+namespace App\Modules\Integration\Chat\ZaloPersonal;
 
 use Illuminate\Support\Facades\Cache;
 
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Cache;
  * ponytail: dùng cache increment với TTL 1h = window trượt đơn giản nhất.
  * Không chính xác 100% sliding window nhưng đủ cho MVP (upgrade Redis ZRANGEBYSCORE nếu cần chính xác).
  */
-class AccountHealthMonitor
+class ZaloHealthMonitor
 {
     private const ERROR_THRESHOLD = 5;
     private const WINDOW_SECONDS  = 3600; // 1 hour

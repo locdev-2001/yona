@@ -8,18 +8,18 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Mockery\MockInterface;
-use Modules\ChannelZalo\Exceptions\RateCapException;
-use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
-use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
-use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
-use Modules\ChannelZalo\Services\AccountHealthMonitor;
-use Modules\ChannelZalo\Services\SendRateLimiter;
-use Modules\ChannelZalo\Services\ZaloSendService;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Support\TenantScope;
 
 /**
- * Unit / integration tests cho ZaloSendService, SendRateLimiter, AccountHealthMonitor.
+ * Unit / integration tests cho ZaloSendService, SendRateLimiter, ZaloHealthMonitor.
  *
  * Không cần bridge thật — dùng Http::fake().
  * ZaloConnection insert qua pgsql_privileged (bypass RLS + sequence grant).
@@ -73,7 +73,7 @@ function makeSendService(): ZaloSendService
     // → assertCanSend pass cho conv mới (tương đương no-op cũ). Quota-block test riêng.
     return new ZaloSendService(
         rateLimiter:     new SendRateLimiter(),
-        healthMonitor:   app(AccountHealthMonitor::class),
+        healthMonitor:   app(ZaloHealthMonitor::class),
         meteringService: app(MeteringService::class),
     );
 }
@@ -190,12 +190,12 @@ it('throws RateCapException on 4th message to same number same day', function ()
     \Carbon\Carbon::setTestNow();
 })->group('channel-zalo');
 
-// ── AccountHealthMonitor (circuit-breaker) ────────────────────────────────────
+// ── ZaloHealthMonitor (circuit-breaker) ────────────────────────────────────
 
 it('opens circuit after 5 errors within window', function () {
     Cache::flush();
 
-    $monitor = new AccountHealthMonitor();
+    $monitor = new ZaloHealthMonitor();
     $connId  = 'conn-circuit-'.uniqid();
 
     expect($monitor->isCircuitOpen($connId))->toBeFalse();
@@ -210,7 +210,7 @@ it('opens circuit after 5 errors within window', function () {
 it('resets circuit after reset() call', function () {
     Cache::flush();
 
-    $monitor = new AccountHealthMonitor();
+    $monitor = new ZaloHealthMonitor();
     $connId  = 'conn-reset-'.uniqid();
 
     foreach (range(1, 5) as $_) {
@@ -227,7 +227,7 @@ it('throws ZaloCircuitOpenException when circuit is open before send', function 
     Cache::flush();
     [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
 
-    $monitor = new AccountHealthMonitor();
+    $monitor = new ZaloHealthMonitor();
     foreach (range(1, 5) as $_) {
         $monitor->recordError((string) $connId, '429');
     }
@@ -334,7 +334,7 @@ it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGa
 
     $service = new ZaloSendService(
         rateLimiter:     new SendRateLimiter(),
-        healthMonitor:   app(AccountHealthMonitor::class),
+        healthMonitor:   app(ZaloHealthMonitor::class),
         meteringService: $blockingMeter,
     );
 

@@ -51,10 +51,8 @@
         "Modules\\Projects\\": "modules/projects/src/",
         "Modules\\Email\\": "modules/email/src/",
         "Modules\\Inbox\\": "modules/inbox/src/",
-        "Modules\\ChannelZalo\\": "modules/channel-zalo/src/",
         "Modules\\Billing\\": "modules/billing/src/",
-        "Modules\\Billing\\Database\\Seeders\\": "modules/billing/database/seeders/",
-        "Modules\\PaymentManual\\": "modules/payment-manual/src/"
+        "Modules\\Billing\\Database\\Seeders\\": "modules/billing/database/seeders/"
         },
         "files": [
             "app/Support/legacy-aliases.php",

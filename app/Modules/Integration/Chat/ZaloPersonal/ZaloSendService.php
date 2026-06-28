@@ -1,23 +1,23 @@
 <?php
 
-namespace Modules\ChannelZalo\Services;
+namespace App\Modules\Integration\Chat\ZaloPersonal;
 
+use App\Models\Message;
+use App\Models\ZaloConnection;
+use App\Models\Conversation;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Services\MeteringService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Modules\ChannelZalo\Exceptions\RateCapException;
-use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
-use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
-use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
-use App\Services\MeteringService;
-use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
 
 /**
  * F3/F8 — Gửi tin outbound qua Zalo cá nhân bridge.
  *
  * Thứ tự kiểm tra TRƯỚC khi gửi:
- *   1. Circuit-breaker (AccountHealthMonitor) → ZaloCircuitOpenException
+ *   1. Circuit-breaker (ZaloHealthMonitor) → ZaloCircuitOpenException
  *   2. MeteringService quota (assertCanSend)
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (retry 2×200ms)
@@ -25,15 +25,15 @@ use Modules\Inbox\Models\Message;
  *
  * Lỗi bridge:
  *   - 503 / not_logged_in → ZaloNotConnectedException (ghi health monitor)
- *   - 429 / 403 → ghi AccountHealthMonitor + throw ZaloNotConnectedException
+ *   - 429 / 403 → ghi ZaloHealthMonitor + throw ZaloNotConnectedException
  *   - timeout → ZaloNotConnectedException (KHÔNG ghi Message)
  */
 class ZaloSendService
 {
     public function __construct(
-        private readonly SendRateLimiter     $rateLimiter,
-        private readonly AccountHealthMonitor $healthMonitor,
-        private readonly MeteringService     $meteringService,
+        private readonly SendRateLimiter   $rateLimiter,
+        private readonly ZaloHealthMonitor $healthMonitor,
+        private readonly MeteringService   $meteringService,
     ) {}
 
     /**
@@ -43,7 +43,7 @@ class ZaloSendService
      * @param  array<string, mixed>|null  $media  {file_url, media_kind, filename}
      *
      * @throws ZaloCircuitOpenException                       circuit breaker OPEN
-     * @throws \Modules\Inbox\Exceptions\QuotaExceededException  hết quota hội thoại mới
+     * @throws \App\Exceptions\QuotaExceededException         hết quota hội thoại mới
      * @throws SendOutsideWindowException                     ngoài 7h-22h
      * @throws RateCapException                               >3 tin/số/ngày
      * @throws ZaloNotConnectedException                      bridge lỗi / session hết

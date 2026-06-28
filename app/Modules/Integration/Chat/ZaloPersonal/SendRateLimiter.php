@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\ChannelZalo\Services;
+namespace App\Modules\Integration\Chat\ZaloPersonal;
 
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Modules\ChannelZalo\Exceptions\RateCapException;
-use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
 
 /**
  * F2/F8 — Enforce Zalo ToS: cửa sổ gửi 7h-22h + cap ≤3 tin QC/số/ngày.
