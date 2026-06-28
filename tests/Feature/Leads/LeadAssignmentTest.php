@@ -1,9 +1,9 @@
 <?php
 
-use Modules\CrmSales\Events\LeadAssigned;
+use App\Events\LeadAssigned;
+use App\Notifications\LeadAssignedNotification;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\CrmSales\Models\PipelineStage;
-use Modules\CrmSales\Notifications\LeadAssignedNotification;
 use Modules\CrmSales\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;

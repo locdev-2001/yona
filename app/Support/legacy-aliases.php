@@ -108,3 +108,53 @@ class_alias(\App\Policies\WorkspacePolicy::class, 'Modules\Tenancy\Policies\Work
 class_alias(\App\Services\SettingsService::class, 'Modules\Tenancy\Services\SettingsService');
 class_alias(\App\Services\WorkspaceProvisioningService::class, 'Modules\Tenancy\Services\WorkspaceProvisioningService');
 class_alias(\App\Support\TenantScope::class, 'Modules\Tenancy\Support\TenantScope');
+
+// Phase 1b — CRM Sales moved from Modules\CrmSales\* → App\*
+// External callers (inbox/projects/cdp/tests) still use Modules\CrmSales\... — aliases resolve them.
+// ServiceProvider intentionally NOT aliased (ModuleServiceProvider skips via class_exists check).
+class_alias(\App\Models\Client::class, 'Modules\CrmSales\Models\Client');
+class_alias(\App\Models\ClientGroup::class, 'Modules\CrmSales\Models\ClientGroup');
+class_alias(\App\Models\ClientGroupPivot::class, 'Modules\CrmSales\Models\ClientGroupPivot');
+class_alias(\App\Models\ClientUserPivot::class, 'Modules\CrmSales\Models\ClientUserPivot');
+class_alias(\App\Models\ClientVaultEntry::class, 'Modules\CrmSales\Models\ClientVaultEntry');
+class_alias(\App\Models\Contact::class, 'Modules\CrmSales\Models\Contact');
+class_alias(\App\Models\Lead::class, 'Modules\CrmSales\Models\Lead');
+class_alias(\App\Models\LeadSource::class, 'Modules\CrmSales\Models\LeadSource');
+class_alias(\App\Models\Pipeline::class, 'Modules\CrmSales\Models\Pipeline');
+class_alias(\App\Models\PipelineStage::class, 'Modules\CrmSales\Models\PipelineStage');
+class_alias(\App\Services\ClientService::class, 'Modules\CrmSales\Services\ClientService');
+class_alias(\App\Services\ClientVaultService::class, 'Modules\CrmSales\Services\ClientVaultService');
+class_alias(\App\Services\ContactRepositoryImpl::class, 'Modules\CrmSales\Services\ContactRepositoryImpl');
+class_alias(\App\Services\CdpIdentityResolverImpl::class, 'Modules\CrmSales\Services\CdpIdentityResolverImpl');
+class_alias(\App\Services\LeadConversionService::class, 'Modules\CrmSales\Services\LeadConversionService');
+class_alias(\App\Services\LeadCreatorImpl::class, 'Modules\CrmSales\Services\LeadCreatorImpl');
+class_alias(\App\Services\LeadService::class, 'Modules\CrmSales\Services\LeadService');
+class_alias(\App\Services\LookupService::class, 'Modules\CrmSales\Services\LookupService');
+class_alias(\App\Contracts\ContactRepository::class, 'Modules\CrmSales\Contracts\ContactRepository');
+class_alias(\App\Contracts\LeadCreator::class, 'Modules\CrmSales\Contracts\LeadCreator');
+class_alias(\App\Policies\ClientPolicy::class, 'Modules\CrmSales\Policies\ClientPolicy');
+class_alias(\App\Policies\ContactPolicy::class, 'Modules\CrmSales\Policies\ContactPolicy');
+class_alias(\App\Policies\LeadPolicy::class, 'Modules\CrmSales\Policies\LeadPolicy');
+class_alias(\App\Policies\LeadSourcePolicy::class, 'Modules\CrmSales\Policies\LeadSourcePolicy');
+class_alias(\App\Policies\PipelinePolicy::class, 'Modules\CrmSales\Policies\PipelinePolicy');
+class_alias(\App\Events\LeadAssigned::class, 'Modules\CrmSales\Events\LeadAssigned');
+class_alias(\App\Events\LeadConverted::class, 'Modules\CrmSales\Events\LeadConverted');
+class_alias(\App\Events\LeadCreated::class, 'Modules\CrmSales\Events\LeadCreated');
+class_alias(\App\Events\LeadStageChanged::class, 'Modules\CrmSales\Events\LeadStageChanged');
+class_alias(\App\Listeners\SendLeadAssignedNotification::class, 'Modules\CrmSales\Listeners\SendLeadAssignedNotification');
+class_alias(\App\Notifications\LeadAssignedNotification::class, 'Modules\CrmSales\Notifications\LeadAssignedNotification');
+class_alias(\App\Services\MergeFields\LeadMergeFields::class, 'Modules\CrmSales\MergeFields\LeadMergeFields');
+class_alias(\App\Services\MergeFields\ClientMergeFields::class, 'Modules\CrmSales\MergeFields\ClientMergeFields');
+class_alias(\App\Services\MergeFields\ContactMergeFields::class, 'Modules\CrmSales\MergeFields\ContactMergeFields');
+class_alias(\App\Http\Controllers\Crm\Clients\ClientController::class, 'Modules\CrmSales\Http\Controllers\Clients\ClientController');
+class_alias(\App\Http\Controllers\Crm\Clients\ClientCustomerAdminController::class, 'Modules\CrmSales\Http\Controllers\Clients\ClientCustomerAdminController');
+class_alias(\App\Http\Controllers\Crm\Clients\ClientGroupController::class, 'Modules\CrmSales\Http\Controllers\Clients\ClientGroupController');
+class_alias(\App\Http\Controllers\Crm\Clients\ClientVaultEntryController::class, 'Modules\CrmSales\Http\Controllers\Clients\ClientVaultEntryController');
+class_alias(\App\Http\Controllers\Crm\Clients\ContactController::class, 'Modules\CrmSales\Http\Controllers\Clients\ContactController');
+class_alias(\App\Http\Controllers\Crm\Leads\LeadController::class, 'Modules\CrmSales\Http\Controllers\Leads\LeadController');
+class_alias(\App\Http\Controllers\Crm\Leads\LeadConversionController::class, 'Modules\CrmSales\Http\Controllers\Leads\LeadConversionController');
+class_alias(\App\Http\Controllers\Crm\Leads\LeadStageController::class, 'Modules\CrmSales\Http\Controllers\Leads\LeadStageController');
+class_alias(\App\Http\Controllers\Crm\Leads\LeadStatusActionController::class, 'Modules\CrmSales\Http\Controllers\Leads\LeadStatusActionController');
+class_alias(\App\Http\Controllers\Crm\Settings\LeadSourceController::class, 'Modules\CrmSales\Http\Controllers\Settings\LeadSourceController');
+class_alias(\App\Http\Controllers\Crm\Settings\PipelineController::class, 'Modules\CrmSales\Http\Controllers\Settings\PipelineController');
+class_alias(\App\Http\Controllers\Crm\Settings\PipelineStageController::class, 'Modules\CrmSales\Http\Controllers\Settings\PipelineStageController');

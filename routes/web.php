@@ -1,15 +1,15 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientCustomerAdminController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientGroupController;
-use Modules\CrmSales\Http\Controllers\Clients\ClientVaultEntryController;
-use Modules\CrmSales\Http\Controllers\Clients\ContactController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadConversionController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadStageController;
-use Modules\CrmSales\Http\Controllers\Leads\LeadStatusActionController;
+use App\Http\Controllers\Crm\Clients\ClientController;
+use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
+use App\Http\Controllers\Crm\Clients\ClientGroupController;
+use App\Http\Controllers\Crm\Clients\ClientVaultEntryController;
+use App\Http\Controllers\Crm\Clients\ContactController;
+use App\Http\Controllers\Crm\Leads\LeadController;
+use App\Http\Controllers\Crm\Leads\LeadConversionController;
+use App\Http\Controllers\Crm\Leads\LeadStageController;
+use App\Http\Controllers\Crm\Leads\LeadStatusActionController;
 use Modules\Projects\Http\Controllers\Projects\ProjectController;
 use Modules\Projects\Http\Controllers\Projects\ProjectDiscussionController;
 use Modules\Projects\Http\Controllers\Projects\ProjectFileController;

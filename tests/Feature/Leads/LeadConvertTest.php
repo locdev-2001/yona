@@ -1,6 +1,6 @@
 <?php
 
-use Modules\CrmSales\Events\LeadConverted;
+use App\Events\LeadConverted;
 use Modules\CrmSales\Models\Client;
 use Modules\CrmSales\Models\Contact;
 use Modules\CrmSales\Models\Pipeline;

@@ -1,6 +1,6 @@
 <?php
 
-use Modules\CrmSales\Events\LeadStageChanged;
+use App\Events\LeadStageChanged;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\CrmSales\Models\PipelineStage;
 use Modules\CrmSales\Services\LeadService;

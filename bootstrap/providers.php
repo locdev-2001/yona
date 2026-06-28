@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use App\Providers\CrmSalesServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\IdentityServiceProvider;
 use App\Providers\ModuleServiceProvider;
@@ -18,4 +19,8 @@ return [
     IdentityServiceProvider::class,
     SharedServiceProvider::class,
     ModuleServiceProvider::class,
+    // Registered AFTER ModuleServiceProvider so it overrides cdp's no-op
+    // IdentityResolver binding with the real dedup impl (the old topo-sort F10
+    // invariant). This override is collapsed in phase 1d when cdp moves.
+    CrmSalesServiceProvider::class,
 ];

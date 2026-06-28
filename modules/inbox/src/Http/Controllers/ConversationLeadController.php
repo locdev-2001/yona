@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cdp\Contracts\IdentityResolver;
-use Modules\CrmSales\Contracts\LeadCreator;
+use App\Contracts\LeadCreator;
 use Modules\CrmSales\Models\Pipeline;
 use Modules\Inbox\Models\Conversation;
 
@@ -81,7 +81,7 @@ class ConversationLeadController extends Controller
 
                 $firstStage = $pipeline?->stages()->orderBy('stage_order')->first();
 
-                /** @var \Modules\CrmSales\Contracts\LeadCreator $creator */
+                /** @var \App\Contracts\LeadCreator $creator */
                 $creator = app(LeadCreator::class);
 
                 // Tạo Lead qua crm-sales contract (REUSE — không viết logic Lead)

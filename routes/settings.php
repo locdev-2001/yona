@@ -3,9 +3,9 @@
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
 use Modules\Projects\Http\Controllers\Settings\ProjectStatusController;
-use Modules\CrmSales\Http\Controllers\Settings\LeadSourceController;
-use Modules\CrmSales\Http\Controllers\Settings\PipelineController;
-use Modules\CrmSales\Http\Controllers\Settings\PipelineStageController;
+use App\Http\Controllers\Crm\Settings\LeadSourceController;
+use App\Http\Controllers\Crm\Settings\PipelineController;
+use App\Http\Controllers\Crm\Settings\PipelineStageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Identity\Settings\MemberController;
 use App\Http\Controllers\Identity\Settings\PasswordController;

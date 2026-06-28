@@ -1,7 +1,7 @@
 <?php
 
 use Modules\Cdp\Contracts\IdentityResolver;
-use Modules\CrmSales\Contracts\ContactRepository;
+use App\Contracts\ContactRepository;
 use Modules\CrmSales\Models\Contact;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Identity\Models\User;

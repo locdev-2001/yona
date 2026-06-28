@@ -7,13 +7,14 @@ use Modules\Email\Models\EmailTemplate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Announcements\Models\Announcement;
 use Modules\Announcements\Models\AnnouncementRead;
-use Modules\CrmSales\Models\Client;
-use Modules\CrmSales\Models\ClientGroup;
-use Modules\CrmSales\Models\ClientVaultEntry;
-use Modules\CrmSales\Models\Contact;
-use Modules\CrmSales\Models\LeadSource;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\CrmSales\Models\PipelineStage;
+use App\Models\Client;
+use App\Models\ClientGroup;
+use App\Models\ClientVaultEntry;
+use App\Models\Contact;
+use App\Models\Lead;
+use App\Models\LeadSource;
+use App\Models\Pipeline;
+use App\Models\PipelineStage;
 use App\Models\Admin;
 use App\Models\AuditLog;
 use App\Models\Team;
@@ -61,7 +62,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'contact' => Contact::class,
             'client_group' => ClientGroup::class,
             'client_vault_entry' => ClientVaultEntry::class,
-            'lead' => 'Modules\\CrmSales\\Models\\Lead',
+            'lead' => Lead::class,
 
             // Phase 05 — projects module (G3: alias string unchanged, FQCN updated).
             'project' => Project::class,

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Modules\CrmSales\Models\Pipeline;
+use App\Models\Pipeline;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Workspace;
 
