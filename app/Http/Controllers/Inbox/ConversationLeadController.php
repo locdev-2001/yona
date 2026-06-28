@@ -1,17 +1,17 @@
 <?php
 
-namespace Modules\Inbox\Http\Controllers;
+namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
+use App\Models\Conversation;
+use App\Models\Pipeline;
 use App\Services\ContactService;
 use App\Services\LeadService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Modules\CrmSales\Models\Pipeline;
-use Modules\Inbox\Models\Conversation;
 
 /**
  * P07-F-1 — Biến 1 Conversation thành Lead (conv→Lead flow).

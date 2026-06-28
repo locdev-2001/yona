@@ -4,37 +4,30 @@ namespace Modules\Billing\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use App\Services\MeteringService;
 use Modules\Billing\Http\Middleware\EnsureEntitled;
 use Modules\Billing\Models\WorkspacePurchase;
 use Modules\Billing\Observers\WorkspacePurchaseObserver;
-use Modules\Billing\Services\ConversationMeter;
 use Modules\Billing\Services\EntitlementResolver;
 use Modules\Billing\Services\PaymentManager;
-use Modules\Inbox\Contracts\MeteringGate;
 
 /**
  * Billing feature module service provider.
  *
- * F6/F10: bind (override) MeteringGate → ConversationMeter trong register().
- * billing depends:["inbox"] → topo-sort đảm bảo billing register/boot SAU inbox
- * → ghi đè AllowAllMeteringGate no-op của inbox.
- *
- * Tắt billing → module không load → inbox AllowAllMeteringGate vẫn dùng (fail-safe).
+ * Billing là CORE luôn on — MeteringService (App\Services) là class concrete,
+ * KHÔNG còn binding interface→impl (MeteringGate/AllowAll đã bỏ).
+ * (Billing models/services còn ở modules/billing — chuyển sang app/ ở phase 2b.)
  */
 class BillingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // F6/F10: override MeteringGate binding (inbox đã bind AllowAllMeteringGate trước)
-        // billing depends:["inbox"] → chắc chắn register() này chạy sau InboxServiceProvider.
+        // Billing là CORE luôn on — MeteringService là class concrete, không binding interface.
         $this->app->singleton(EntitlementResolver::class, fn () => new EntitlementResolver());
 
-        $this->app->singleton(ConversationMeter::class, function ($app) {
-            return new ConversationMeter($app->make(EntitlementResolver::class));
+        $this->app->singleton(MeteringService::class, function ($app) {
+            return new MeteringService($app->make(EntitlementResolver::class));
         });
-
-        // Override: ConversationMeter thay AllowAllMeteringGate
-        $this->app->bind(MeteringGate::class, ConversationMeter::class);
 
         // PaymentManager: singleton driver registry (payment-manual extend trong boot của nó)
         $this->app->singleton(PaymentManager::class, fn () => new PaymentManager());

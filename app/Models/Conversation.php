@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\Inbox\Models;
+namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * P07 — Conversation entity. Inbox hội thoại per-channel per-peer.

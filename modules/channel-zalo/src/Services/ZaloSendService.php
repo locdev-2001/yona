@@ -8,8 +8,8 @@ use Modules\ChannelZalo\Exceptions\RateCapException;
 use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
 use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
 use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
+use App\Services\MeteringService;
 use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Contracts\MeteringGate;
 use Modules\Inbox\Models\Conversation;
 use Modules\Inbox\Models\Message;
 
@@ -18,7 +18,7 @@ use Modules\Inbox\Models\Message;
  *
  * Thứ tự kiểm tra TRƯỚC khi gửi:
  *   1. Circuit-breaker (AccountHealthMonitor) → ZaloCircuitOpenException
- *   2. MeteringGate quota (canStartNew / canReplyOnExisting)
+ *   2. MeteringService quota (assertCanSend)
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (retry 2×200ms)
  *   5. Ghi Message direction=out → meterReply → increment rate limiter
@@ -33,7 +33,7 @@ class ZaloSendService
     public function __construct(
         private readonly SendRateLimiter     $rateLimiter,
         private readonly AccountHealthMonitor $healthMonitor,
-        private readonly MeteringGate        $meteringGate,
+        private readonly MeteringService     $meteringService,
     ) {}
 
     /**
@@ -57,10 +57,9 @@ class ZaloSendService
             throw new ZaloCircuitOpenException();
         }
 
-        // 2. Metering gate (quota) — assertCanSend throw QuotaExceededException nếu hết quota.
-        // AllowAllMeteringGate: no-op (billing tắt → không chặn).
-        // ConversationMeter: throw khi conv mới kỳ này + hết quota.
-        $this->meteringGate->assertCanSend($conversation);
+        // 2. Metering (quota) — assertCanSend throw QuotaExceededException nếu hết quota.
+        // Billing là CORE luôn on: throw khi conv mới kỳ này + hết quota.
+        $this->meteringService->assertCanSend($conversation);
 
         // 3. Rate limiter (ToS Zalo)
         $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
@@ -71,7 +70,7 @@ class ZaloSendService
 
         // 5. Ghi Message + meter
         $message = $this->persistMessage($conversation, $text, $media, $responseData);
-        $this->meteringGate->meterReply($conversation);
+        $this->meteringService->meterReply($conversation);
         $this->rateLimiter->increment($conversation->workspace_id, $targetNumber);
 
         // Reset circuit nếu gửi thành công

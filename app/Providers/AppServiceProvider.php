@@ -31,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
                 $app['config']->get('inertia.pages.extensions'),
             );
         });
+
+        // Internal-first: register Integration module nếu nó tồn tại. Xóa thư mục
+        // app/Modules/Integration/ → class_exists false → skip → inbox/billing core
+        // vẫn build/chạy (không fatal). KHÔNG hard-reference trong bootstrap/providers.php.
+        if (class_exists(\App\Modules\Integration\IntegrationServiceProvider::class)) {
+            $this->app->register(\App\Modules\Integration\IntegrationServiceProvider::class);
+        }
     }
 
     /**

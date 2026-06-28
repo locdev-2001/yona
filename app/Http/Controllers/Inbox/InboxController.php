@@ -1,27 +1,27 @@
 <?php
 
-namespace Modules\Inbox\Http\Controllers;
+namespace App\Http\Controllers\Inbox;
 
+use App\Contracts\SendException;
 use App\Http\Controllers\Controller;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Modules\Integration\ChannelManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Inbox\Channel\ChannelManager;
-use Modules\Inbox\Contracts\SendException;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
 
 /**
- * P07-F-1 — Inbox controller (channel-agnostic).
+ * P07-F-1 — Inbox controller (channel-agnostic, internal-first).
  *
- * index:    list Conversations workspace, filter, paginate → Inertia Modules.Inbox.inbox/index.
+ * index:    list Conversations workspace, filter, paginate → Inertia inbox/index.
  * messages: paginate Messages asc, đánh dấu đã đọc.
  * send:     gọi ChannelManager→driver→sendMessage (KHÔNG biết kênh cụ thể).
- *           Bắt SendException (inbox contract) → 422.
- *           Driver (channel-zalo) wrap exception kênh thành SendException trước khi throw lên đây.
+ *           Bắt SendException (app contract) → 422.
  *
- * N1 cô lập: chỉ import inbox contracts — không import channel-zalo / billing class cụ thể.
+ * Internal-first: ChannelManager nằm trong app/Modules/Integration/. Xóa module
+ * → class không tồn tại → channelsAvailable=false (empty state) + send() → 422.
  */
 class InboxController extends Controller
 {
@@ -50,10 +50,12 @@ class InboxController extends Controller
 
         $conversations = $query->paginate(30)->withQueryString();
 
-        // Finding 6: wire hasAny() → FE hiện empty/disabled state khi tắt tất cả module kênh (N2).
-        $channelsAvailable = app(ChannelManager::class)->hasAny();
+        // Internal-first: Integration module xóa → class vắng → empty state (N2).
+        $channelsAvailable = class_exists(ChannelManager::class)
+            ? app(ChannelManager::class)->hasAny()
+            : false;
 
-        return Inertia::render('Modules.Inbox.inbox/index', [
+        return Inertia::render('inbox/index', [
             'conversations' => $conversations,
             'filters' => $request->only(['q', 'unread', 'channel']),
             'channelsAvailable' => $channelsAvailable,
@@ -84,7 +86,7 @@ class InboxController extends Controller
     /**
      * POST /inbox/conversations/{conversation}/messages
      * Gửi outbound qua ChannelManager (channel-agnostic).
-     * Driver (channel-zalo) wrap exceptions thành SendException.
+     * Driver wrap exceptions thành SendException.
      */
     public function send(Request $request, Conversation $conversation): JsonResponse
     {
@@ -98,6 +100,14 @@ class InboxController extends Controller
 
         if ($text === '') {
             return response()->json(['message' => 'Nội dung không được để trống.'], 422);
+        }
+
+        // Internal-first: Integration module xóa → không có driver → 422 thay vì fatal.
+        if (! class_exists(ChannelManager::class)) {
+            return response()->json([
+                'message' => 'Kênh không khả dụng.',
+                'error_code' => 'channel_unavailable',
+            ], 422);
         }
 
         try {
@@ -118,14 +128,14 @@ class InboxController extends Controller
                 'error_code' => $e->errorCode,
             ], 422);
         } catch (\InvalidArgumentException $e) {
-            // Finding 5b: driver() ném InvalidArgumentException khi channel-module tắt (chưa đăng ký).
+            // Finding 5b: driver() ném InvalidArgumentException khi channel chưa đăng ký.
             // InvalidArgumentException extends LogicException, KHÔNG phải RuntimeException → không bị catch bên dưới.
             return response()->json([
                 'message' => 'Kênh không khả dụng.',
                 'error_code' => 'channel_unavailable',
             ], 422);
         } catch (\RuntimeException $e) {
-            // QuotaExceededException từ billing (chưa wrap thành SendException) — fail-safe
+            // QuotaExceededException từ metering (chưa wrap thành SendException) — fail-safe
             if (str_contains(get_class($e), 'Quota')) {
                 return response()->json([
                     'message' => 'Hết quota hội thoại tháng này. Nâng gói để tiếp tục.',

@@ -1,8 +1,13 @@
 <?php
 
+use App\Exceptions\QuotaExceededException;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Services\MeteringService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Mockery\MockInterface;
 use Modules\ChannelZalo\Exceptions\RateCapException;
 use Modules\ChannelZalo\Exceptions\SendOutsideWindowException;
 use Modules\ChannelZalo\Exceptions\ZaloCircuitOpenException;
@@ -10,11 +15,6 @@ use Modules\ChannelZalo\Exceptions\ZaloNotConnectedException;
 use Modules\ChannelZalo\Services\AccountHealthMonitor;
 use Modules\ChannelZalo\Services\SendRateLimiter;
 use Modules\ChannelZalo\Services\ZaloSendService;
-use Modules\Inbox\Channel\AllowAllMeteringGate;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Exceptions\QuotaExceededException;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Support\TenantScope;
 
@@ -69,10 +69,12 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
 
 function makeSendService(): ZaloSendService
 {
+    // MeteringService thật: workspace bound + chưa có purchase → free plan (remaining 50)
+    // → assertCanSend pass cho conv mới (tương đương no-op cũ). Quota-block test riêng.
     return new ZaloSendService(
-        rateLimiter:   new SendRateLimiter(),
-        healthMonitor: app(AccountHealthMonitor::class),
-        meteringGate:  new AllowAllMeteringGate(),
+        rateLimiter:     new SendRateLimiter(),
+        healthMonitor:   app(AccountHealthMonitor::class),
+        meteringService: app(MeteringService::class),
     );
 }
 
@@ -231,9 +233,9 @@ it('throws ZaloCircuitOpenException when circuit is open before send', function 
     }
 
     $service = new ZaloSendService(
-        rateLimiter:   new SendRateLimiter(),
-        healthMonitor: $monitor,
-        meteringGate:  new AllowAllMeteringGate(),
+        rateLimiter:     new SendRateLimiter(),
+        healthMonitor:   $monitor,
+        meteringService: app(MeteringService::class),
     );
 
     \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
@@ -325,20 +327,15 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
 it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGate::assertCanSend throw', function () {
     [, , $conversation] = makeWorkspaceAndConversation();
 
-    // MeteringGate mock luôn throw (mô phỏng workspace hết quota, conv mới)
-    $blockingGate = new class implements MeteringGate {
-        public function canReplyOnExisting(Conversation $c): bool { return false; }
-        public function canStartNew(string $channel): bool { return false; }
-        public function meterReply(Conversation $c): void {}
-        public function assertCanSend(Conversation $c): void {
-            throw new QuotaExceededException();
-        }
-    };
+    // MeteringService mock luôn throw (mô phỏng workspace hết quota, conv mới)
+    $blockingMeter = mock(MeteringService::class, function (MockInterface $m) {
+        $m->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException());
+    });
 
     $service = new ZaloSendService(
-        rateLimiter:   new SendRateLimiter(),
-        healthMonitor: app(AccountHealthMonitor::class),
-        meteringGate:  $blockingGate,
+        rateLimiter:     new SendRateLimiter(),
+        healthMonitor:   app(AccountHealthMonitor::class),
+        meteringService: $blockingMeter,
     );
 
     \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
@@ -353,7 +350,7 @@ it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGa
     \Carbon\Carbon::setTestNow();
 })->group('channel-zalo');
 
-it('F1-audit: ZaloSendService::send PASS khi conv đã metered (AllowAllMeteringGate → no-op)', function () {
+it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan remaining 50)', function () {
     [, , $conversation] = makeWorkspaceAndConversation();
 
     Http::fake([
@@ -362,7 +359,7 @@ it('F1-audit: ZaloSendService::send PASS khi conv đã metered (AllowAllMetering
 
     \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
 
-    // AllowAllMeteringGate: assertCanSend no-op → gửi được kể cả khi billing tắt
+    // MeteringService: conv mới + free plan còn quota → assertCanSend pass → gửi được
     $message = makeSendService()->send($conversation, 'Reply F5');
 
     expect($message)->toBeInstanceOf(Message::class)

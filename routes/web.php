@@ -3,6 +3,8 @@
 use App\Http\Controllers\Announcements\AnnouncementReadController;
 use App\Http\Controllers\Announcements\WhatsNewController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\InboxController;
 use App\Http\Controllers\Crm\Clients\ClientController;
 use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
 use App\Http\Controllers\Crm\Clients\ClientGroupController;
@@ -140,6 +142,15 @@ Route::middleware(['auth'])->group(function () {
 
         // P09 — Tasks + Timers.
         require __DIR__.'/tasks.php';
+
+        // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
+        Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+        Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])
+            ->name('inbox.messages');
+        Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
+            ->name('inbox.send');
+        Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
+            ->name('inbox.lead.store');
     });
 });
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Inbox\Models;
+namespace App\Models;
 
+use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Modules\Tenancy\Concerns\BelongsToWorkspace;
 
 /**
  * P07 — Message entity. Immutable log per hội thoại.

@@ -221,3 +221,25 @@ class_alias(\App\Http\Controllers\Announcements\Admin\AnnouncementController::cl
 class_alias(\App\Http\Controllers\Announcements\Admin\AnnouncementPublishController::class, 'Modules\Announcements\Http\Controllers\Admin\AnnouncementPublishController');
 class_alias(\App\Http\Requests\Announcements\Admin\AnnouncementStoreRequest::class, 'Modules\Announcements\Http\Requests\Admin\AnnouncementStoreRequest');
 class_alias(\App\Http\Requests\Announcements\Admin\AnnouncementUpdateRequest::class, 'Modules\Announcements\Http\Requests\Admin\AnnouncementUpdateRequest');
+
+// Phase 2a — Inbox-core moved from Modules\Inbox\* → App\* (models/services/events/policy)
+// + ChannelManager/ChannelDriver → App\Modules\Integration\*.
+// External callers (channel-zalo source + tests) still use Modules\Inbox\... — aliases resolve them.
+// MeteringGate interface + AllowAllMeteringGate DELETED (no alias — billing là CORE concrete).
+// ServiceProvider intentionally NOT aliased.
+class_alias(\App\Models\Conversation::class, 'Modules\Inbox\Models\Conversation');
+class_alias(\App\Models\Message::class, 'Modules\Inbox\Models\Message');
+class_alias(\App\Services\InboundMessageService::class, 'Modules\Inbox\Services\InboundMessageService');
+class_alias(\App\Events\MessageReceived::class, 'Modules\Inbox\Events\MessageReceived');
+class_alias(\App\Policies\ConversationPolicy::class, 'Modules\Inbox\Policies\ConversationPolicy');
+class_alias(\App\Exceptions\QuotaExceededException::class, 'Modules\Inbox\Exceptions\QuotaExceededException');
+class_alias(\App\Contracts\SendException::class, 'Modules\Inbox\Contracts\SendException');
+// Internal-first: ChannelManager/ChannelDriver sống trong app/Modules/Integration/.
+// Xóa thư mục đó → guard class_exists/interface_exists để KHÔNG fatal khi alias.
+// (Dùng string literal, KHÔNG ::class — ::class ép autoload class đã bị xóa → fatal.)
+if (class_exists('App\Modules\Integration\ChannelManager')) {
+    class_alias('App\Modules\Integration\ChannelManager', 'Modules\Inbox\Channel\ChannelManager');
+}
+if (interface_exists('App\Modules\Integration\Contracts\ChannelDriver')) {
+    class_alias('App\Modules\Integration\Contracts\ChannelDriver', 'Modules\Inbox\Contracts\ChannelDriver');
+}

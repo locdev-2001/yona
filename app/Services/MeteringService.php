@@ -1,25 +1,25 @@
 <?php
 
-namespace Modules\Billing\Services;
+namespace App\Services;
 
+use App\Exceptions\QuotaExceededException;
+use App\Models\Conversation;
 use Illuminate\Support\Facades\DB;
-use Modules\Billing\Enums\TenantEntitlement;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Exceptions\QuotaExceededException;
-use Modules\Inbox\Models\Conversation;
+use Modules\Billing\Services\EntitlementResolver;
 
 /**
- * ConversationMeter — impl thật của MeteringGate (override AllowAllMeteringGate).
+ * MeteringService — đếm hội thoại per-channel per-month (billing CORE, luôn on).
+ *
+ * Concrete class, KHÔNG implement interface (no-op fail-safe đã bỏ — billing là CORE).
  *
  * F1 race-safe: meterReply dùng 1 UPDATE compare-set + ON CONFLICT DO UPDATE.
  * F5: canReplyOnExisting = luôn true nếu conv.last_metered_period == currentPeriod()
  *     (hội thoại đã tính kỳ này → vẫn trả lời được kể cả hết quota).
  * F13/F20: canStartNew gate hội thoại MỚI; canReplyOnExisting KHÔNG bao giờ false.
- * F10: BillingServiceProvider bind class này override AllowAllMeteringGate sau inbox boot.
  *
  * Isolation: KHÔNG import Models của channel-zalo (N1).
  */
-class ConversationMeter implements MeteringGate
+class MeteringService
 {
     public function __construct(private readonly EntitlementResolver $resolver) {}
 
@@ -116,12 +116,12 @@ class ConversationMeter implements MeteringGate
     }
 
     /**
-     * Assert hội thoại có thể gửi — contract MeteringGate (F1-audit).
+     * Assert hội thoại có thể gửi (F1-audit).
      *
      * Conv đã metered kỳ này (last_metered_period == currentPeriod) → luôn pass.
      * Conv chưa metered kỳ này (mới hoặc kỳ cũ) + hết quota → throw.
      *
-     * ZaloSendService gọi method này thay vì tự kiểm if (! canStartNew) { /* rỗng * / }.
+     * ZaloSendService gọi method này thay vì tự kiểm if (! canStartNew).
      *
      * @throws QuotaExceededException
      */

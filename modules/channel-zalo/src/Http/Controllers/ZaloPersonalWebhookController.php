@@ -5,8 +5,8 @@ namespace Modules\ChannelZalo\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use App\Modules\Integration\ChannelManager;
 use Modules\ChannelZalo\Models\ZaloConnection;
-use Modules\Inbox\Channel\ChannelManager;
 use Modules\Inbox\Services\InboundMessageService;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Support\TenantScope;
@@ -34,8 +34,9 @@ use Throwable;
  */
 class ZaloPersonalWebhookController extends Controller
 {
+    // Internal-first: ChannelManager (app/Modules/Integration/) resolve lazily trong
+    // handleInbound — KHÔNG inject qua constructor để route:list không fatal khi xóa Integration.
     public function __construct(
-        private readonly ChannelManager $channelManager,
         private readonly InboundMessageService $inboundMessageService,
     ) {}
 
@@ -90,7 +91,7 @@ class ZaloPersonalWebhookController extends Controller
     private function handleInbound(array $payload): JsonResponse
     {
         try {
-            $driver = $this->channelManager->driver('zalo_personal');
+            $driver = app(ChannelManager::class)->driver('zalo_personal');
             $normalized = $driver->parseInbound($payload);
             $this->inboundMessageService->ingest($normalized);
 

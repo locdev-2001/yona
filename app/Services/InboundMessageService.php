@@ -1,12 +1,11 @@
 <?php
 
-namespace Modules\Inbox\Services;
+namespace App\Services;
 
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Events\MessageReceived;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Tenancy\Models\WorkspaceSequence;
+use App\Events\MessageReceived;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\WorkspaceSequence;
 
 /**
  * Channel-agnostic inbound message ingestor (F2, F13, F14, F20).
@@ -42,7 +41,7 @@ use Modules\Tenancy\Models\WorkspaceSequence;
  */
 class InboundMessageService
 {
-    public function __construct(private readonly MeteringGate $meteringGate) {}
+    public function __construct(private readonly MeteringService $meteringService) {}
 
     public function ingest(array $normalized): Message
     {
@@ -61,7 +60,7 @@ class InboundMessageService
         // --- Meter outbound (F1) — fail-safe, lỗi KHÔNG chặn ---
         if ($direction === 'out') {
             try {
-                $this->meteringGate->meterReply($conversation);
+                $this->meteringService->meterReply($conversation);
             } catch (\Throwable) {
                 // ponytail: fail-safe F13/F20 — lỗi gate không chặn ghi/broadcast
             }

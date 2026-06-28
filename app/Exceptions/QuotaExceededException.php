@@ -1,18 +1,16 @@
 <?php
 
-namespace Modules\Inbox\Exceptions;
+namespace App\Exceptions;
 
 /**
  * Ném khi tenant hết quota hội thoại mới trong kỳ hiện tại.
  *
- * Single source of truth — ConversationMeter (billing) dùng exception này,
- * billing QuotaExceededException cũ sẽ trở thành alias hoặc bị loại bỏ dần.
+ * Single source of truth — MeteringService ném exception này.
  *
  * InboxController bắt RuntimeException + str_contains(get_class, 'Quota') → 422,
  * nên class này kế thừa RuntimeException là đủ (không phải SendException).
  *
- * @see Modules\Inbox\Contracts\MeteringGate::assertCanSend
- * @see Modules\Billing\Services\ConversationMeter::assertCanSend
+ * @see \App\Services\MeteringService::assertCanSend
  */
 class QuotaExceededException extends \RuntimeException
 {

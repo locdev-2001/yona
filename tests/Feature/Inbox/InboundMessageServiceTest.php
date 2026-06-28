@@ -1,20 +1,20 @@
 <?php
 
+use App\Events\MessageReceived;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\User;
+use App\Services\InboundMessageService;
+use App\Services\MeteringService;
 use Illuminate\Support\Facades\Event;
 use Mockery\MockInterface;
-use Modules\Identity\Models\User;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Events\MessageReceived;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Inbox\Services\InboundMessageService;
 use Modules\Tenancy\Models\Workspace;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-function makeService(?MeteringGate $gate = null): InboundMessageService
+function makeService(?MeteringService $meter = null): InboundMessageService
 {
-    return new InboundMessageService($gate ?? app(MeteringGate::class));
+    return new InboundMessageService($meter ?? app(MeteringService::class));
 }
 
 function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId = null): array
@@ -45,7 +45,7 @@ it('F13/F20: ingest ghi Conversation+Message và dispatch MessageReceived kể c
     actingInWorkspace($ws, $user);
 
     // Gate throw bất kỳ exception — simulates billing crash
-    $throwingGate = mock(MeteringGate::class, function (MockInterface $m) {
+    $throwingGate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldReceive('meterReply')->andThrow(new \RuntimeException('Billing dead'));
         $m->shouldReceive('canStartNew')->andReturn(true);
         $m->shouldReceive('canReplyOnExisting')->andReturn(true);
@@ -77,7 +77,7 @@ it('F1/F14: direction=in → KHÔNG gọi meterReply', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
@@ -95,7 +95,7 @@ it('F1/F14: direction=out → gọi meterReply đúng 1 lần', function () {
     actingInWorkspace($ws, $user);
 
     $meterCallCount = 0;
-    $gate = mock(MeteringGate::class, function (MockInterface $m) use (&$meterCallCount) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) use (&$meterCallCount) {
         $m->shouldReceive('meterReply')
             ->once()
             ->andReturnUsing(function () use (&$meterCallCount) {
@@ -118,7 +118,7 @@ it('F14: direction=echo → KHÔNG gọi meterReply', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
@@ -135,7 +135,7 @@ it('F14: thiếu direction field → default in → KHÔNG gọi meterReply', fu
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $gate = mock(MeteringGate::class, function (MockInterface $m) {
+    $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
         $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
         $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();

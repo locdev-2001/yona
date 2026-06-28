@@ -1,13 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Modules\Identity\Models\User;
-use Modules\Inbox\Channel\AllowAllMeteringGate;
-use Modules\Inbox\Channel\ChannelManager;
-use Modules\Inbox\Contracts\MeteringGate;
-use Modules\Inbox\Models\Conversation;
-use Modules\Inbox\Models\Message;
-use Modules\Tenancy\Models\WorkspaceSequence;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\User;
+use App\Models\WorkspaceSequence;
+use App\Modules\Integration\ChannelManager;
 use Modules\Tenancy\Models\Workspace;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────
@@ -164,65 +161,6 @@ it('soft-deleted conversation is hidden by global scope', function () {
         ->and($trashed->deleted_at)->not->toBeNull();
 });
 
-// ── MeteringGate no-op / AllowAllMeteringGate direct ─────────────────────────
-// Nếu billing module active, container trả ConversationMeter (F10 override).
-// Test AllowAllMeteringGate directly (không qua container) để kiểm disable-safe behavior.
-
-it('MeteringGate contract is implemented by AllowAllMeteringGate (disable-safe)', function () {
-    // Test class trực tiếp — không qua container (billing có thể override binding)
-    $gate = new AllowAllMeteringGate();
-
-    expect($gate)->toBeInstanceOf(MeteringGate::class);
-});
-
-it('AllowAllMeteringGate canStartNew always returns true (disable-safe)', function () {
-    // Test class trực tiếp — not via container (billing may override)
-    $gate = new AllowAllMeteringGate();
-
-    expect($gate->canStartNew('zalo_personal'))->toBeTrue()
-        ->and($gate->canStartNew('messenger'))->toBeTrue();
-});
-
-it('AllowAllMeteringGate canReplyOnExisting always returns true', function () {
-    $ws = Workspace::factory()->create();
-    $user = User::factory()->create();
-    actingInWorkspace($ws, $user);
-
-    $conv = Conversation::create([
-        'workspace_id' => $ws->id,
-        'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_meter_test',
-        'thread_type' => 0,
-        'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
-    ]);
-
-    $gate = app(MeteringGate::class);
-    expect($gate->canReplyOnExisting($conv))->toBeTrue();
-});
-
-it('AllowAllMeteringGate meterReply is a no-op (no exception, no DB write)', function () {
-    $ws = Workspace::factory()->create();
-    $user = User::factory()->create();
-    actingInWorkspace($ws, $user);
-
-    $conv = Conversation::create([
-        'workspace_id' => $ws->id,
-        'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_noop_meter',
-        'thread_type' => 0,
-        'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
-    ]);
-
-    $periodBefore = $conv->last_metered_period;
-
-    // Test AllowAllMeteringGate directly (no-op — billing override không ảnh hưởng)
-    $gate = new AllowAllMeteringGate();
-    $gate->meterReply($conv); // no-op → không throw, không update DB
-
-    $conv->refresh();
-    expect($conv->last_metered_period)->toBe($periodBefore); // unchanged
-});
-
 // ── ChannelManager ────────────────────────────────────────────────────────────
 
 it('ChannelManager singleton resolves from container', function () {
@@ -241,11 +179,11 @@ it('ChannelManager hasAny returns true after driver registered', function () {
     $manager = app(ChannelManager::class);
 
     $manager->extend('test_channel', function () {
-        return new class implements \Modules\Inbox\Contracts\ChannelDriver {
+        return new class implements \App\Modules\Integration\Contracts\ChannelDriver {
             public function channelKey(): string { return 'test_channel'; }
             public function connect(string $workspaceId, array $params): void {}
             public function disconnect(string $workspaceId): void {}
-            public function sendMessage(\Modules\Inbox\Models\Conversation $c, array $p): void {}
+            public function sendMessage(\App\Models\Conversation $c, array $p): void {}
             public function parseInbound(array $raw): array { return []; }
         };
     });

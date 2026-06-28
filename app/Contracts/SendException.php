@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Inbox\Contracts;
+namespace App\Contracts;
 
 /**
  * Base exception cho outbound send failures — inbox-agnostic.
  *
- * Channel drivers (channel-zalo, channel-messenger, ...) wrap lỗi kênh
- * bằng exception con của SendException để InboxController bắt 1 lần duy nhất.
+ * Channel drivers (Integration/Chat/*, ...) wrap lỗi kênh bằng exception con
+ * của SendException để InboxController bắt 1 lần duy nhất.
  *
  * error_code values dùng chung (FE hiển thị toast theo code):
  *   - 'quota_exceeded'  — hết quota billing

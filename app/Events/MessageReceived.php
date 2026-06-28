@@ -1,14 +1,14 @@
 <?php
 
-namespace Modules\Inbox\Events;
+namespace App\Events;
 
+use App\Models\Message;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Modules\Inbox\Models\Message;
 
 /**
  * Broadcast khi có tin nhắn mới (inbound hoặc outbound).

@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Inbox\Policies;
+namespace App\Policies;
 
-use Modules\Identity\Models\User;
-use Modules\Inbox\Models\Conversation;
+use App\Models\Conversation;
+use App\Models\User;
 
 /**
  * P07 — Authorization cho Conversation inbox.
