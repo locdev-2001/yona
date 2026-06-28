@@ -1,11 +1,11 @@
 <?php
 
-use Modules\Projects\Http\Controllers\Tasks\TaskAssigneeController;
-use Modules\Projects\Http\Controllers\Tasks\TaskChecklistController;
-use Modules\Projects\Http\Controllers\Tasks\TaskController;
-use Modules\Projects\Http\Controllers\Tasks\TaskKanbanController;
-use Modules\Projects\Http\Controllers\Tasks\TaskStatusController;
-use Modules\Projects\Http\Controllers\Tasks\TaskTimerController;
+use App\Http\Controllers\Projects\Tasks\TaskAssigneeController;
+use App\Http\Controllers\Projects\Tasks\TaskChecklistController;
+use App\Http\Controllers\Projects\Tasks\TaskController;
+use App\Http\Controllers\Projects\Tasks\TaskKanbanController;
+use App\Http\Controllers\Projects\Tasks\TaskStatusController;
+use App\Http\Controllers\Projects\Tasks\TaskTimerController;
 use Illuminate\Support\Facades\Route;
 
 /**

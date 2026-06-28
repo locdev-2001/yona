@@ -88,5 +88,5 @@ it('kanban view groups tasks by status', function () {
     $response = test()->get(route('tasks.kanban'));
 
     $response->assertOk()
-        ->assertInertia(fn ($page) => $page->component('Modules.Projects.tasks/kanban')->has('columns'));
+        ->assertInertia(fn ($page) => $page->component('projects/tasks/kanban')->has('columns'));
 });

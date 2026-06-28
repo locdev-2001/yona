@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Modules\Projects\Models\ProjectStatus;
+use App\Models\ProjectStatus;
 use Illuminate\Support\Facades\DB;
 use App\Models\LeadSource;
 use App\Models\Pipeline;

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use Modules\Projects\Models\Task;
-use Modules\Projects\Models\TaskTimer;
+use App\Models\Task;
+use App\Models\TaskTimer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\User;
 use App\Models\Workspace;

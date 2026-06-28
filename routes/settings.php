@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Settings\AppearanceController;
-use Modules\Projects\Http\Controllers\Settings\ProjectStatusController;
+use App\Http\Controllers\Projects\Settings\ProjectStatusController;
 use App\Http\Controllers\Crm\Settings\LeadSourceController;
 use App\Http\Controllers\Crm\Settings\PipelineController;
 use App\Http\Controllers\Crm\Settings\PipelineStageController;

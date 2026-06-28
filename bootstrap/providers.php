@@ -6,6 +6,7 @@ use App\Providers\HorizonServiceProvider;
 use App\Providers\IdentityServiceProvider;
 use App\Providers\ModuleServiceProvider;
 use App\Providers\MorphMapServiceProvider;
+use App\Providers\ProjectsServiceProvider;
 use App\Providers\SharedServiceProvider;
 use App\Providers\TelescopeServiceProvider;
 use App\Providers\TenancyServiceProvider;
@@ -18,6 +19,7 @@ return [
     TenancyServiceProvider::class,
     IdentityServiceProvider::class,
     SharedServiceProvider::class,
+    ProjectsServiceProvider::class,
     ModuleServiceProvider::class,
     // Registered AFTER ModuleServiceProvider so it overrides cdp's no-op
     // IdentityResolver binding with the real dedup impl (the old topo-sort F10

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Modules\Projects\Models\Task;
+use App\Models\Task;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;

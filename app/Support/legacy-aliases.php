@@ -158,3 +158,37 @@ class_alias(\App\Http\Controllers\Crm\Leads\LeadStatusActionController::class, '
 class_alias(\App\Http\Controllers\Crm\Settings\LeadSourceController::class, 'Modules\CrmSales\Http\Controllers\Settings\LeadSourceController');
 class_alias(\App\Http\Controllers\Crm\Settings\PipelineController::class, 'Modules\CrmSales\Http\Controllers\Settings\PipelineController');
 class_alias(\App\Http\Controllers\Crm\Settings\PipelineStageController::class, 'Modules\CrmSales\Http\Controllers\Settings\PipelineStageController');
+
+// Phase 1c — Projects moved from Modules\Projects\* → App\*
+// External callers (tests, MorphMap) still use Modules\Projects\... — aliases resolve them.
+// ServiceProvider intentionally NOT aliased.
+class_alias(\App\Models\Project::class, 'Modules\Projects\Models\Project');
+class_alias(\App\Models\ProjectDiscussion::class, 'Modules\Projects\Models\ProjectDiscussion');
+class_alias(\App\Models\ProjectMember::class, 'Modules\Projects\Models\ProjectMember');
+class_alias(\App\Models\ProjectMilestone::class, 'Modules\Projects\Models\ProjectMilestone');
+class_alias(\App\Models\ProjectStatus::class, 'Modules\Projects\Models\ProjectStatus');
+class_alias(\App\Models\Task::class, 'Modules\Projects\Models\Task');
+class_alias(\App\Models\TaskAssignee::class, 'Modules\Projects\Models\TaskAssignee');
+class_alias(\App\Models\TaskChecklistItem::class, 'Modules\Projects\Models\TaskChecklistItem');
+class_alias(\App\Models\TaskFollower::class, 'Modules\Projects\Models\TaskFollower');
+class_alias(\App\Models\TaskTimer::class, 'Modules\Projects\Models\TaskTimer');
+class_alias(\App\Services\ProjectDiscussionService::class, 'Modules\Projects\Services\ProjectDiscussionService');
+class_alias(\App\Services\ProjectMilestoneService::class, 'Modules\Projects\Services\ProjectMilestoneService');
+class_alias(\App\Services\ProjectService::class, 'Modules\Projects\Services\ProjectService');
+class_alias(\App\Services\TaskService::class, 'Modules\Projects\Services\TaskService');
+class_alias(\App\Services\TaskTimerService::class, 'Modules\Projects\Services\TaskTimerService');
+class_alias(\App\Policies\ProjectPolicy::class, 'Modules\Projects\Policies\ProjectPolicy');
+class_alias(\App\Policies\ProjectStatusPolicy::class, 'Modules\Projects\Policies\ProjectStatusPolicy');
+class_alias(\App\Policies\TaskPolicy::class, 'Modules\Projects\Policies\TaskPolicy');
+class_alias(\App\Http\Controllers\Projects\Projects\ProjectController::class, 'Modules\Projects\Http\Controllers\Projects\ProjectController');
+class_alias(\App\Http\Controllers\Projects\Projects\ProjectDiscussionController::class, 'Modules\Projects\Http\Controllers\Projects\ProjectDiscussionController');
+class_alias(\App\Http\Controllers\Projects\Projects\ProjectFileController::class, 'Modules\Projects\Http\Controllers\Projects\ProjectFileController');
+class_alias(\App\Http\Controllers\Projects\Projects\ProjectMemberController::class, 'Modules\Projects\Http\Controllers\Projects\ProjectMemberController');
+class_alias(\App\Http\Controllers\Projects\Projects\ProjectMilestoneController::class, 'Modules\Projects\Http\Controllers\Projects\ProjectMilestoneController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskAssigneeController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskAssigneeController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskChecklistController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskChecklistController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskKanbanController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskKanbanController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskStatusController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskStatusController');
+class_alias(\App\Http\Controllers\Projects\Tasks\TaskTimerController::class, 'Modules\Projects\Http\Controllers\Tasks\TaskTimerController');
+class_alias(\App\Http\Controllers\Projects\Settings\ProjectStatusController::class, 'Modules\Projects\Http\Controllers\Settings\ProjectStatusController');
