@@ -2164,7 +2164,21 @@ function buildExpress() {
         if (!ok) {
             return res.status(400).json({ ok: false, message: 'promote_failed' });
         }
-        return res.json({ ok: true, connection_id: connectionId });
+        // Load the freshly-connected slot + ensure its profile (name/avatar) is fetched
+        // so Laravel can persist personal_uid/display_name/avatar on promote (no separate poll).
+        const slot = getSlot(String(connectionId));
+        try {
+            await refreshIntegratedProfile(slot);
+        } catch {
+            /* profile enrichment is best-effort; uid is still returned */
+        }
+        return res.json({
+            ok: true,
+            connection_id: connectionId,
+            personal_uid: slot?.personalUid || null,
+            display_name: slot?.integratedDisplayName || null,
+            avatar: slot?.integratedAvatar || null,
+        });
     });
 
     app.post('/auth/qr/cancel', async (req, res) => {

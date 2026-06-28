@@ -641,7 +641,8 @@ export function registerUiActionsRoutes(app, deps) {
                 if (!data?.length) {
                     throw new Error(`empty_avatar file=${fp}`);
                 }
-                return { data, metadata: { width: 0, height: 0, size: data.length } };
+                // ponytail: AttachmentSource requires filename + totalSize (zca-js 2.1.2)
+                return { data, filename: 'avatar.jpg', metadata: { totalSize: data.length } };
             }
         } catch {
             // ignore and fallback to fetch
@@ -683,12 +684,12 @@ export function registerUiActionsRoutes(app, deps) {
         if (!data.length) {
             throw new Error(`empty_avatar url=${u}`);
         }
+        // ponytail: AttachmentSource requires filename + totalSize (zca-js 2.1.2)
         return {
             data,
+            filename: 'avatar.jpg',
             metadata: {
-                width: 0,
-                height: 0,
-                size: data.length,
+                totalSize: data.length,
             },
         };
     };
@@ -941,8 +942,10 @@ export function registerUiActionsRoutes(app, deps) {
             const profiles = [];
             for (const ids of chunks) {
                 try {
-                    const r = await slot.api.getGroupMembersInfo(ids, groupId);
-                    const arr = Array.isArray(r) ? r : (Array.isArray(r?.data) ? r.data : []);
+                    // ponytail: 2.1.2 signature is (memberId) — no groupId arg; returns { profiles: { [id]: GroupMemberProfile } }
+                    const r = await slot.api.getGroupMembersInfo(ids);
+                    const profilesMap = r?.profiles && typeof r.profiles === 'object' ? r.profiles : {};
+                    const arr = Object.values(profilesMap);
                     profiles.push(...arr);
                 } catch {
                     // ignore chunk errors, keep best-effort
@@ -951,11 +954,12 @@ export function registerUiActionsRoutes(app, deps) {
 
             const byId = new Map();
             for (const p of profiles) {
+                // GroupMemberProfile 2.1.2: id, displayName, zaloName, avatar
                 const id = String(p?.id || p?.uid || p?.userId || '').trim();
                 if (!id) continue;
                 byId.set(id, {
                     id,
-                    name: p?.dName || p?.zaloName || p?.displayName || p?.name || null,
+                    name: p?.displayName || p?.zaloName || p?.dName || p?.name || null,
                     avatar: p?.avatar || p?.avatarUrl || p?.avt || null,
                 });
             }

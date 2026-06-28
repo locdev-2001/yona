@@ -172,6 +172,22 @@ class ZaloConnectionController extends Controller
             ], $bridgeResponse->status());
         }
 
+        // Persist the account profile the bridge returns (uid/name/avatar) so the
+        // connection list shows the real account, not just "#id". Privileged connection
+        // mirrors updateState() — RLS-safe regardless of caller context.
+        $data = $bridgeResponse->json();
+        $profile = array_filter([
+            'personal_uid' => $data['personal_uid'] ?? null,
+            'display_name' => $data['display_name'] ?? null,
+            'avatar_url' => $data['avatar'] ?? null,
+        ], fn ($v) => $v !== null && $v !== '');
+        if ($profile !== []) {
+            DB::connection('pgsql_privileged')
+                ->table('zalo_connections')
+                ->where('id', $connection->id)
+                ->update($profile);
+        }
+
         $connection->updateState('connected');
 
         return response()->json(['ok' => true, 'connection_id' => $validated['connection_id']]);
