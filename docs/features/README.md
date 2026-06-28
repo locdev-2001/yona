@@ -8,7 +8,6 @@ Workspace isolation, identity + membership, teams with hierarchy, RBAC + visibil
 
 | Feature | Purpose | Code entry |
 |---|---|---|
-| [Module Framework (Loader & Registry)](./platform/module-framework.md) | Scan + topo-sort + boot module providers; ModuleRegistry; no-op default binding pattern (F10); per-module routes/migrations/FE. | `ModuleServiceProvider` + `ModuleRegistry` + `TopoSort` |
 | [Tenant Isolation (3-Layer)](./platform/tenant-isolation.md) | Enforce workspace isolation via global scope, middleware, and PostgreSQL RLS. | `IdentifyWorkspace` + `BelongsToWorkspace` + `ResetTenantContext` |
 | [Workspace Switching](./platform/workspace-switching.md) | Switch active workspace context for multi-workspace users. | `WorkspaceSwitchController` |
 | [Workspace Settings](./platform/workspace-settings.md) | Admin view and update workspace name, currency, and config. | `WorkspaceController` |
@@ -96,8 +95,17 @@ Marketplace catalog, workspace purchases, quota/feature gates, entitlements reso
 
 | Contracts | Purpose | Code entry |
 |---|---|---|
-| MeteringGate (inbox contract) | Gate conversation send (quota check); implemented by ConversationMeter (billing). | `modules/inbox/src/Contracts/MeteringGate.php` |
-| PaymentProvider (billing contract) | Abstract payment processing; implemented by drivers (payment-manual, VNPay, MoMo). | `modules/billing/src/Contracts/PaymentProvider.php` |
+| MeteringGate (inbox contract) | Gate conversation send (quota check); implemented by ConversationMeter (billing). | `app/Services/MeteringService.php` |
+| PaymentDriver (integration contract) | Abstract payment processing; implemented by drivers (manual, VNPay, MoMo). | `app/Modules/Integration/Contracts/PaymentDriver.php` |
+
+## Module 9.5 — Integration & Drivers (GĐ1)
+
+Driver pattern via `Illuminate\Support\Manager`. Only production module: `app/Modules/Integration/`. See [integration](./integration/README.md) for full architecture.
+
+| Feature | Purpose | Code entry |
+|---|---|---|
+| [Zalo Personal Connect (QR)](./integration/zalo-personal-connect.md) | Scan QR → bridge session → inbound webhooks ready. | `IntegrationController` + `ZaloChannelDriver` + QR flow |
+| [Integration Catalog](./integration/README.md) | Hardcoded integration cards; extensible driver registration. | `IntegrationCatalog` + `ChannelManager` + `PaymentManager` |
 
 ## Module 10 — Later
 

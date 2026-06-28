@@ -2,7 +2,7 @@
 
 > How a workspace gains capabilities: a **free base** + à-la-carte **marketplace items** (add-ons). Each item is billed **one-time** or as a **subscription**. Designed basic now, extensible (new items/types = data, no schema churn).
 > Billing bounded context (Platform plane). Companion to [crm-authorization-model.md](crm-authorization-model.md), [system-architecture.md](system-architecture.md).
-> **Entitlements as module gate:** See [docs/modular-architecture.md](modular-architecture.md) — marketplace items (with `type: feature_module`) are the **per-workspace mechanism to enable/disable feature modules** (complementing `module.json` system-level flag). This aligns with target architecture.
+> **Entitlements as module gate:** marketplace items (with `type: feature_module`) are the **per-workspace mechanism to enable/disable features**. See [system-architecture.md](system-architecture.md) for integration driver pattern details.
 
 Date: 2026-06-13 · Status: living
 
