@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\ModuleAwareInertiaViewFinder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Email\Models\EmailTemplate;
@@ -32,6 +33,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Defense-in-depth: block destructive DB commands (migrate:fresh / migrate:refresh
+        // / migrate:reset / db:wipe) everywhere EXCEPT the test suite, which legitimately
+        // rebuilds its own throwaway DB. A careless `migrate:fresh --seed` against the dev
+        // DB once wiped local data. To run one intentionally, set DB_ALLOW_DESTRUCTIVE=true.
+        if (! $this->app->runningUnitTests()) {
+            DB::prohibitDestructiveCommands(! env('DB_ALLOW_DESTRUCTIVE', false));
+        }
+
         // Workspace admin/owner has unrestricted access WITHIN their workspace.
         // Cross-workspace isolation is still enforced by Postgres RLS + the
         // BelongsToWorkspace scope, so this only removes per-feature permission
