@@ -1,29 +1,21 @@
+import { ChatAvatar } from '@/components/inbox/chat-avatar';
+import { ChatThread } from '@/components/inbox/chat-thread';
+import { ConnectionBanner, type ConnectionInfo } from '@/components/inbox/connection-banner';
+import { messagePreview, type ChatMessage } from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { MessageCircle, Send, User } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { MessageCircle, RefreshCw, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-interface Message {
-    id: string;
-    conversation_id: string;
-    direction: 'in' | 'out';
-    type: string;
-    body: string | null;
-    media_url: string | null;
-    platform_sent_at: string | null;
-    sender_name: string | null;
-    created_at: string;
-}
-
 /** Payload từ MessageReceived.broadcastWith() */
 interface MessageReceivedPayload {
-    message: Message;
+    message: ChatMessage;
     conversation_id: string;
     last_message_at: string | null;
     unread_count: number;
@@ -34,6 +26,7 @@ interface Conversation {
     channel: string;
     peer_uid: string;
     peer_name: string | null;
+    peer_avatar_url: string | null;
     peer_phone: string | null;
     thread_type: number;
     unread_count: number;
@@ -54,6 +47,9 @@ interface PaginatedConversations {
 interface Props {
     conversations: PaginatedConversations;
     filters: { q?: string; unread?: string; channel?: string };
+    selectedConversation?: Conversation | null;
+    zaloConnection?: ConnectionInfo | null;
+    channelsAvailable?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -68,20 +64,45 @@ function showToast(msg: string) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function InboxIndex({ conversations, filters }: Props) {
+export default function InboxIndex({ conversations, filters, selectedConversation, zaloConnection }: Props) {
     const { auth, activeWorkspace } = usePage<SharedData>().props;
 
     const [convList, setConvList] = useState<Conversation[]>(conversations.data);
     const [activeConv, setActiveConv] = useState<Conversation | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [search, setSearch] = useState(filters.q ?? '');
     const [leadLoading, setLeadLoading] = useState(false);
     const [leadError, setLeadError] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const { data, setData } = useForm({ text: '' });
     const [sending, setSending] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+
+    // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
+    function handleResync() {
+        if (syncing) return;
+        setSyncing(true);
+        fetch(route('inbox.resync'), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    showToast(json.message ?? 'Không đồng bộ được. Kiểm tra bridge đã chạy chưa.');
+                    return;
+                }
+                showToast(`Đã đồng bộ ${json.fetched ?? 0} tin nhóm.`);
+                router.reload({ only: ['conversations'] });
+            })
+            .catch(() => showToast('Không kết nối được server.'))
+            .finally(() => setSyncing(false));
+    }
 
     // Entitlements snapshot từ Inertia shared data
     const entitlements = auth.membership?.entitlements ?? null;
@@ -95,10 +116,11 @@ export default function InboxIndex({ conversations, filters }: Props) {
         setConvList(conversations.data);
     }, [conversations.data]);
 
-    // Scroll to bottom khi messages thay đổi
+    // Deep-link: preselect hội thoại từ URL /inbox/{id} khi mở/reload trang
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (selectedConversation) handleSelectConv(selectedConversation);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ── Echo realtime subscribe ────────────────────────────────────────────────
     useEffect(() => {
@@ -123,19 +145,18 @@ export default function InboxIndex({ conversations, filters }: Props) {
                 return current;
             });
 
-            // Cập nhật unread + preview trong danh sách
-            setConvList((prev) =>
-                prev.map((c) =>
-                    c.id === conversation_id
-                        ? {
-                              ...c,
-                              unread_count,
-                              last_message_at,
-                              last_message_preview: message.body ?? c.last_message_preview,
-                          }
-                        : c,
-                ),
-            );
+            // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước, kiểu Zalo).
+            // Hội thoại chưa có trong list (người mới nhắn) → reload nhẹ vì payload thiếu data hội thoại đầy đủ.
+            setConvList((prev) => {
+                if (!prev.some((c) => c.id === conversation_id)) {
+                    queueMicrotask(() => router.reload({ only: ['conversations'], preserveState: true, preserveScroll: true }));
+                    return prev;
+                }
+                const updated = prev.map((c) =>
+                    c.id === conversation_id ? { ...c, unread_count, last_message_at, last_message_preview: messagePreview(message) } : c,
+                );
+                return [...updated].sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''));
+            });
         });
 
         return () => {
@@ -147,6 +168,8 @@ export default function InboxIndex({ conversations, filters }: Props) {
 
     function handleSelectConv(conv: Conversation) {
         setActiveConv(conv);
+        // Phản chiếu URL → reload/share giữ đúng hội thoại (route inbox.show preselect). Không round-trip.
+        window.history.replaceState(window.history.state, '', route('inbox.show', conv.id));
         setMessages([]);
         setLeadError(null);
         setLoadingMessages(true);
@@ -241,6 +264,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
 
+            <ConnectionBanner connection={zaloConnection ?? null} />
             <div className="flex h-[calc(100vh-64px)] overflow-hidden">
                 {/* ── Cột trái: danh sách hội thoại ─────────────────────── */}
                 <div className="flex w-80 flex-shrink-0 flex-col border-r">
@@ -257,6 +281,12 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 Tìm
                             </Button>
                         </form>
+
+                        {/* Đồng bộ lại tin nhóm — luôn sẵn (không chờ banner gap). Cần bridge đang chạy. */}
+                        <Button type="button" size="sm" variant="outline" className="w-full" disabled={syncing} onClick={handleResync}>
+                            <RefreshCw className={`mr-1 h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ tin nhóm'}
+                        </Button>
 
                         {/* Usage badge — chỉ hiện khi có quota data */}
                         {zaloLimit !== null && zaloRemaining !== null && (
@@ -285,19 +315,22 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 }`}
                                 onClick={() => handleSelectConv(conv)}
                             >
-                                <div className="flex items-center justify-between">
-                                    <span className="max-w-[160px] truncate text-sm font-medium">
-                                        {conv.peer_name ?? conv.peer_phone ?? conv.peer_uid}
-                                    </span>
-                                    {conv.unread_count > 0 && (
-                                        <Badge variant="default" className="h-4 min-w-4 px-1 text-[10px]">
-                                            {conv.unread_count}
-                                        </Badge>
-                                    )}
+                                <div className="flex items-center gap-3">
+                                    <ChatAvatar name={conv.peer_name ?? conv.peer_uid} src={conv.peer_avatar_url} className="h-9 w-9 shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="truncate text-sm font-medium">{conv.peer_name ?? conv.peer_phone ?? conv.peer_uid}</span>
+                                            {conv.unread_count > 0 && (
+                                                <Badge variant="default" className="h-4 min-w-4 shrink-0 px-1 text-[10px]">
+                                                    {conv.unread_count}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        {conv.last_message_preview && (
+                                            <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
+                                        )}
+                                    </div>
                                 </div>
-                                {conv.last_message_preview && (
-                                    <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
-                                )}
                             </button>
                         ))}
                     </div>
@@ -333,28 +366,17 @@ export default function InboxIndex({ conversations, filters }: Props) {
                         </div>
                     ) : (
                         <>
-                            <div className="border-b px-4 py-2 text-sm font-medium">
-                                {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid}
-                                {activeConv.peer_phone && <span className="text-muted-foreground ml-2 text-xs">{activeConv.peer_phone}</span>}
+                            <div className="flex items-center gap-2 border-b px-4 py-2">
+                                <ChatAvatar name={activeConv.peer_name ?? activeConv.peer_uid} src={activeConv.peer_avatar_url} />
+                                <div className="min-w-0">
+                                    <div className="truncate text-sm font-medium">
+                                        {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid}
+                                    </div>
+                                    {activeConv.peer_phone && <div className="text-muted-foreground text-xs">{activeConv.peer_phone}</div>}
+                                </div>
                             </div>
 
-                            {/* Messages */}
-                            <div className="flex-1 space-y-3 overflow-y-auto p-4">
-                                {loadingMessages && <div className="text-muted-foreground text-center text-sm">Đang tải...</div>}
-                                {messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`}>
-                                        <div
-                                            className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                                                msg.direction === 'out' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                                            }`}
-                                        >
-                                            {msg.media_url && <div className="mb-1 text-xs opacity-70">[{msg.type}]</div>}
-                                            {msg.body && <p className="whitespace-pre-wrap">{msg.body}</p>}
-                                        </div>
-                                    </div>
-                                ))}
-                                <div ref={messagesEndRef} />
-                            </div>
+                            <ChatThread messages={messages} peer={activeConv} loading={loadingMessages} />
 
                             {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
                             {quotaExhausted && messages.length === 0 ? (
@@ -389,9 +411,11 @@ export default function InboxIndex({ conversations, filters }: Props) {
                     {activeConv ? (
                         <div className="space-y-4 p-4">
                             <div className="text-center">
-                                <div className="bg-muted mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">
-                                    <User className="h-6 w-6" />
-                                </div>
+                                <ChatAvatar
+                                    name={activeConv.peer_name ?? activeConv.peer_uid}
+                                    src={activeConv.peer_avatar_url}
+                                    className="mx-auto mb-2 h-12 w-12"
+                                />
                                 <p className="text-sm font-medium">{activeConv.peer_name ?? 'Không rõ tên'}</p>
                                 {activeConv.peer_phone && <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>}
                             </div>

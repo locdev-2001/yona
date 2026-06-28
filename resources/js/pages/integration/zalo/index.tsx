@@ -150,11 +150,26 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
         }
     };
 
-    const disconnectConnection = (id: string) => {
+    const disconnectConnection = async (id: string) => {
         if (!confirm('Xác nhận ngắt kết nối Zalo này?')) return;
-        router.delete(`/integrations/zalo/${id}`, {
-            preserveScroll: true,
-        });
+        // destroy() trả JSON ({ok:true}), không phải Inertia response — dùng fetch như store/promote.
+        try {
+            const res = await fetch(`/integrations/zalo/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                },
+            });
+            if (!res.ok) {
+                alert('Ngắt kết nối thất bại. Vui lòng thử lại.');
+                return;
+            }
+            router.reload({ only: ['connections'] });
+        } catch {
+            alert('Không kết nối được server.');
+        }
     };
 
     return (
