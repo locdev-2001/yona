@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\LeadSource;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<LeadSource>

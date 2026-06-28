@@ -19,16 +19,19 @@ use Illuminate\Support\Facades\Cache;
  */
 class SendRateLimiter
 {
-    private const WINDOW_OPEN_HOUR  = 7;   // 07:00 VN (inclusive)
+    private const WINDOW_OPEN_HOUR = 7;   // 07:00 VN (inclusive)
+
     private const WINDOW_CLOSE_HOUR = 22;  // 22:00 VN (exclusive)
-    private const DAILY_CAP         = 3;
-    private const VN_TIMEZONE       = 'Asia/Ho_Chi_Minh';
+
+    private const DAILY_CAP = 3;
+
+    private const VN_TIMEZONE = 'Asia/Ho_Chi_Minh';
 
     /**
      * Assert tenant có thể gửi outbound đến targetNumber trong workspace.
      *
      * @throws SendOutsideWindowException nếu ngoài cửa sổ 7h-22h giờ VN
-     * @throws RateCapException           nếu đã gửi ≥3 tin/số/ngày
+     * @throws RateCapException nếu đã gửi ≥3 tin/số/ngày
      */
     public function assertCanSend(string $workspaceId, string $targetNumber): void
     {
@@ -65,7 +68,7 @@ class SendRateLimiter
         $hour = Carbon::now(self::VN_TIMEZONE)->hour;
         if ($hour < self::WINDOW_OPEN_HOUR || $hour >= self::WINDOW_CLOSE_HOUR) {
             throw new SendOutsideWindowException(
-                "Zalo outbound chỉ cho phép trong cửa sổ ".self::WINDOW_OPEN_HOUR."h-".self::WINDOW_CLOSE_HOUR."h giờ VN."
+                'Zalo outbound chỉ cho phép trong cửa sổ '.self::WINDOW_OPEN_HOUR.'h-'.self::WINDOW_CLOSE_HOUR.'h giờ VN.'
             );
         }
     }
@@ -75,7 +78,7 @@ class SendRateLimiter
         $count = (int) Cache::get($this->cacheKey($workspaceId, $targetNumber), 0);
         if ($count >= self::DAILY_CAP) {
             throw new RateCapException(
-                "Đã gửi {$count} tin đến số này hôm nay. Giới hạn ".self::DAILY_CAP." tin QC/số/ngày."
+                "Đã gửi {$count} tin đến số này hôm nay. Giới hạn ".self::DAILY_CAP.' tin QC/số/ngày.'
             );
         }
     }
@@ -83,13 +86,15 @@ class SendRateLimiter
     private function cacheKey(string $workspaceId, string $targetNumber): string
     {
         $date = Carbon::now(self::VN_TIMEZONE)->format('Ymd');
+
         return "zalo_rate:{$workspaceId}:{$targetNumber}:{$date}";
     }
 
     private function secondsUntilMidnight(): int
     {
-        $now      = Carbon::now(self::VN_TIMEZONE);
+        $now = Carbon::now(self::VN_TIMEZONE);
         $midnight = $now->copy()->addDay()->startOfDay();
+
         return max(60, (int) $now->diffInSeconds($midnight));
     }
 }

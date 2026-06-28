@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\AttachmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,10 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Concerns\Auditable;
-use App\Models\User;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * Polymorphic file attachment. Download secured via attachment_key (non-enumeration).

@@ -1,11 +1,11 @@
 <?php
 
 use App\Models\Client;
+use App\Models\User;
+use App\Models\Workspace;
 use App\Policies\ClientPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Models\User;
-use App\Models\Workspace;
 
 /**
  * G2 visibility rules:

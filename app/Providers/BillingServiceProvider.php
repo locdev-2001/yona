@@ -3,12 +3,16 @@
 namespace App\Providers;
 
 use App\Http\Middleware\EnsureEntitled;
+use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
 use App\Observers\WorkspacePurchaseObserver;
 use App\Services\EntitlementService;
 use App\Services\MeteringService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 /**
  * Billing service provider — CORE, luôn on.
@@ -21,7 +25,7 @@ class BillingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(EntitlementService::class, fn () => new EntitlementService());
+        $this->app->singleton(EntitlementService::class, fn () => new EntitlementService);
 
         $this->app->singleton(MeteringService::class, function ($app) {
             return new MeteringService($app->make(EntitlementService::class));
@@ -47,7 +51,7 @@ class BillingServiceProvider extends ServiceProvider
     private function observeWorkspaceCreated(): void
     {
         // Dùng event listener thay vì Observer class để tránh tạo file thừa
-        \App\Models\Workspace::created(function ($workspace) {
+        Workspace::created(function ($workspace) {
             $this->grantFreePlan($workspace->id);
         });
     }
@@ -65,13 +69,13 @@ class BillingServiceProvider extends ServiceProvider
     {
         // ponytail: Schema::hasTable guard — PostgreSQL abort transaction cả khi
         // có try/catch PHP nếu query fail. Check trước ở tầng schema.
-        if (! \Illuminate\Support\Facades\Schema::hasTable('marketplace_items')
-            || ! \Illuminate\Support\Facades\Schema::hasTable('workspace_purchases')) {
+        if (! Schema::hasTable('marketplace_items')
+            || ! Schema::hasTable('workspace_purchases')) {
             return;
         }
 
         try {
-            $db = \Illuminate\Support\Facades\DB::connection('pgsql_privileged');
+            $db = DB::connection('pgsql_privileged');
 
             $freeItem = $db->table('marketplace_items')
                 ->where('code', 'plan.free')
@@ -93,7 +97,7 @@ class BillingServiceProvider extends ServiceProvider
             }
 
             $db->table('workspace_purchases')->insert([
-                'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                'id' => (string) Str::orderedUuid(),
                 'workspace_id' => $workspaceId,
                 'item_id' => $freeItem->id,
                 'status' => 'active',

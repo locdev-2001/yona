@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Notification;
 use App\Models\Lead;
+use Illuminate\Notifications\Notification;
 
 /**
  * P07 — Notification sent to the assignee when a lead is assigned to them.

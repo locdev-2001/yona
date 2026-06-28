@@ -1,5 +1,6 @@
 import HeadingSmall from '@/components/heading-small';
 import CustomFieldForm from '@/components/settings/custom-field-form';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,7 +10,6 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 

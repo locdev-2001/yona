@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Audit\Audit;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,9 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Team;
-use App\Models\User;
-use App\Support\Audit\Audit;
 
 /**
  * Workspace — one customer organization, the hard data-isolation boundary.

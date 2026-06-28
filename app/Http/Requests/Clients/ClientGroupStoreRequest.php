@@ -56,4 +56,3 @@ class ClientGroupStoreRequest extends FormRequest
         return $data;
     }
 }
-

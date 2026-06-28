@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Payment\Manual;
 
+use App\Modules\Integration\IntegrationServiceProvider;
 use App\Modules\Integration\PaymentManager;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,8 +17,8 @@ use Illuminate\Support\ServiceProvider;
  * Bài học từ ChannelManager: closure extend PHẢI dùng app() helper,
  * KHÔNG dùng $this->app trong closure (binding context khác nhau).
  *
- * @see \App\Modules\Integration\PaymentManager
- * @see \App\Modules\Integration\IntegrationServiceProvider
+ * @see PaymentManager
+ * @see IntegrationServiceProvider
  */
 class ManualPaymentServiceProvider extends ServiceProvider
 {

@@ -2,10 +2,10 @@
 
 use App\Models\Client;
 use App\Models\ClientVaultEntry;
-use App\Services\ClientVaultService;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ClientVaultService;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Vault entry tests (should).

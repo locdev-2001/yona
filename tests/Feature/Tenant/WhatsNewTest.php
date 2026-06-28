@@ -2,9 +2,9 @@
 
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
-use App\Services\AnnouncementReadService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\AnnouncementReadService;
 
 // ---------------------------------------------------------------------------
 // WhatsNewTest — Tenant-plane visibility, IDOR, badge, read-state, coherence

@@ -2,10 +2,10 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Workspace;
 
 /**
  * Layer 1 of the 3-layer tenant isolation (arch §4, BR-X01/X11/X14):

@@ -1,13 +1,16 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
-use App\Models\ZaloConnection;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;
+use App\Models\ZaloConnection;
+use App\Modules\Integration\ChannelManager;
+use App\Services\InboundMessageService;
 use App\Support\TenantScope;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 // Helper: bind currentWorkspace + TenantScope cùng nhau (giống IdentifyWorkspace)
 function bindWorkspaceContext(string $workspaceId): void
@@ -37,7 +40,6 @@ function forgetWorkspaceContext(): void
  *
  * @group rls
  */
-
 beforeEach(function () {
     // Đảm bảo TenantScope sạch trước mỗi test
     TenantScope::forget();
@@ -84,42 +86,42 @@ it('webhook inbound for connection A creates message in workspace A only (F19 sc
 
     // --- Simulate webhook inbound cho connection A ---
     $payloadA = [
-        'type'              => 'inbound',
-        'connection_id'     => $connIdA,
-        'bot_id'            => 1,
-        'personal_uid'      => 'uid_a',
-        'peer_uid'          => 'peer_from_a_001',
-        'thread_id'         => 'peer_from_a_001',
-        'thread_type'       => 0,
-        'source_id'         => 'msg_scope_bleed_test_a_001',
-        'is_self'           => false,
-        'direction'         => 'in',
-        'user'              => ['name' => 'Khách A', 'avatar' => null],
-        'platform_sent_at'  => now()->timestamp * 1000, // ms epoch int — parseInbound converts
-        'inbound_kind'      => 'text',
-        'content'           => 'Tin nhắn từ workspace A',
-        'msg_type'          => 'chat.text',
+        'type' => 'inbound',
+        'connection_id' => $connIdA,
+        'bot_id' => 1,
+        'personal_uid' => 'uid_a',
+        'peer_uid' => 'peer_from_a_001',
+        'thread_id' => 'peer_from_a_001',
+        'thread_type' => 0,
+        'source_id' => 'msg_scope_bleed_test_a_001',
+        'is_self' => false,
+        'direction' => 'in',
+        'user' => ['name' => 'Khách A', 'avatar' => null],
+        'platform_sent_at' => now()->timestamp * 1000, // ms epoch int — parseInbound converts
+        'inbound_kind' => 'text',
+        'content' => 'Tin nhắn từ workspace A',
+        'msg_type' => 'chat.text',
     ];
 
     simulateZaloWebhook($payloadA);
 
     // --- Simulate webhook inbound cho connection B ---
     $payloadB = [
-        'type'              => 'inbound',
-        'connection_id'     => $connIdB,
-        'bot_id'            => 2,
-        'personal_uid'      => 'uid_b',
-        'peer_uid'          => 'peer_from_b_001',
-        'thread_id'         => 'peer_from_b_001',
-        'thread_type'       => 0,
-        'source_id'         => 'msg_scope_bleed_test_b_001',
-        'is_self'           => false,
-        'direction'         => 'in',
-        'user'              => ['name' => 'Khách B', 'avatar' => null],
-        'platform_sent_at'  => now()->timestamp * 1000, // ms epoch int — parseInbound converts
-        'inbound_kind'      => 'text',
-        'content'           => 'Tin nhắn từ workspace B',
-        'msg_type'          => 'chat.text',
+        'type' => 'inbound',
+        'connection_id' => $connIdB,
+        'bot_id' => 2,
+        'personal_uid' => 'uid_b',
+        'peer_uid' => 'peer_from_b_001',
+        'thread_id' => 'peer_from_b_001',
+        'thread_type' => 0,
+        'source_id' => 'msg_scope_bleed_test_b_001',
+        'is_self' => false,
+        'direction' => 'in',
+        'user' => ['name' => 'Khách B', 'avatar' => null],
+        'platform_sent_at' => now()->timestamp * 1000, // ms epoch int — parseInbound converts
+        'inbound_kind' => 'text',
+        'content' => 'Tin nhắn từ workspace B',
+        'msg_type' => 'chat.text',
     ];
 
     simulateZaloWebhook($payloadB);
@@ -162,13 +164,13 @@ it('unknown connection_id returns 202 and creates no orphan records (F19)', func
     $nonExistentConnectionId = 999999999;
 
     $payloadUnknown = [
-        'type'          => 'inbound',
+        'type' => 'inbound',
         'connection_id' => $nonExistentConnectionId,
-        'peer_uid'      => 'orphan_peer',
-        'source_id'     => 'orphan_msg_001',
-        'inbound_kind'  => 'text',
-        'content'       => 'should not persist',
-        'direction'     => 'in',
+        'peer_uid' => 'orphan_peer',
+        'source_id' => 'orphan_msg_001',
+        'inbound_kind' => 'text',
+        'content' => 'should not persist',
+        'direction' => 'in',
     ];
 
     $response = simulateZaloWebhook($payloadUnknown);
@@ -256,7 +258,7 @@ it('forget() runs even when Workspace::find() throws inside controller (Finding 
 
     try {
         $response = $controller->__invoke($request);
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         // Nếu controller throw (do mock/driver fail) → forget() vẫn phải đã chạy
     }
 
@@ -275,7 +277,7 @@ it('forget() runs even when Workspace::find() throws inside controller (Finding 
  */
 it('forget() runs when Workspace::find() returns null inside controller (Finding 5 leak-on-throw)', function () {
     // UUID không tồn tại trong DB — workspaceForConnection resolve được nhưng Workspace::find() = null
-    $ghostWorkspaceId = (string) \Illuminate\Support\Str::orderedUuid();
+    $ghostWorkspaceId = (string) Str::orderedUuid();
 
     $connId = (int) DB::connection('pgsql_privileged')
         ->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")
@@ -311,7 +313,7 @@ it('forget() runs when Workspace::find() returns null inside controller (Finding
 
     try {
         $controller->__invoke($request);
-    } catch (\Throwable) {
+    } catch (Throwable) {
         // Controller throw do currentWorkspace() = null → forget() vẫn phải chạy
     }
 
@@ -334,7 +336,7 @@ function simulateZaloWebhook(array $payload): array
     forgetWorkspaceContext();
 
     /** @var string|null $workspaceId */
-    $workspaceId = \App\Models\ZaloConnection::workspaceForConnection($connectionId);
+    $workspaceId = ZaloConnection::workspaceForConnection($connectionId);
 
     if ($workspaceId === null) {
         return ['status' => 202, 'body' => ['ok' => true, 'message' => 'connection_not_mapped']];
@@ -343,8 +345,8 @@ function simulateZaloWebhook(array $payload): array
     bindWorkspaceContext($workspaceId);
 
     try {
-        $channelManager = app(\App\Modules\Integration\ChannelManager::class);
-        $ingestService = app(\App\Services\InboundMessageService::class);
+        $channelManager = app(ChannelManager::class);
+        $ingestService = app(InboundMessageService::class);
 
         $driver = $channelManager->driver('zalo_personal');
         $normalized = $driver->parseInbound($payload);

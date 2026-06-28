@@ -23,4 +23,3 @@ class LeadConversionController extends Controller
             ->with('success', __('leads.flash.converted'));
     }
 }
-

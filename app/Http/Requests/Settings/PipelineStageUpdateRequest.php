@@ -42,4 +42,3 @@ class PipelineStageUpdateRequest extends FormRequest
         ];
     }
 }
-

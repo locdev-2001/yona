@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\HasCustomFields;
 use App\Models\CustomFieldDefinition;
-use App\Services\CustomFieldService;
 use App\Models\Workspace;
+use App\Services\CustomFieldService;
+use Illuminate\Database\Eloquent\Model;
 
 // G6 — CustomFieldService tests run INDEPENDENTLY of P06 entity models.
 // apply() is tested against an in-memory model stub (no real entity table needed).

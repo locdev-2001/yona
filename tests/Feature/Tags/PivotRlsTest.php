@@ -1,12 +1,12 @@
 <?php
 
+use App\Models\Tag;
+use App\Models\Team;
+use App\Models\Workspace;
+use App\Services\TagService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Models\Team;
-use App\Models\Tag;
-use App\Services\TagService;
-use App\Models\Workspace;
 
 // G4 — PivotRlsTest: taggables pivot must be RLS-protected at the DB layer.
 // Raw query (bypass Eloquent global scope) cross-workspace → 0 rows.

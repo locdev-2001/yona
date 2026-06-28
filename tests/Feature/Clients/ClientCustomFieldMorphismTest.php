@@ -3,8 +3,8 @@
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\User;
-use App\Services\CustomFieldService;
 use App\Models\Workspace;
+use App\Services\CustomFieldService;
 
 /**
  * G6 — custom-field morphism guard.

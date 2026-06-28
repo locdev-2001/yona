@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasCustomFields;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Concerns\Auditable;
-use App\Models\Concerns\HasCustomFields;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * P06 — Contact (person, belongs to one client; many per client; 1 primary).
@@ -28,8 +28,8 @@ use App\Models\Concerns\BelongsToWorkspace;
  * @property string|null $phone
  * @property string|null $title
  * @property bool $is_primary
- * @property bool $needs_merge_review  Phase-07: flag khi phát hiện SĐT trùng, chờ admin xác nhận
- * @property string|null $merge_review_with  UUID contact kia cần review
+ * @property bool $needs_merge_review Phase-07: flag khi phát hiện SĐT trùng, chờ admin xác nhận
+ * @property string|null $merge_review_with UUID contact kia cần review
  * @property string|null $language
  * @property array<string, mixed> $custom_fields
  */

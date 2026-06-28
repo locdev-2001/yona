@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Settings;
 
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase

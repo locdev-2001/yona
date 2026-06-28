@@ -1,21 +1,21 @@
 <?php
 
+use App\Models\Attachment;
 use App\Models\Client;
+use App\Models\CustomFieldDefinition;
 use App\Models\Lead;
+use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
 use App\Models\Project;
 use App\Models\Task;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use App\Models\User;
-use App\Models\Attachment;
-use App\Models\CustomFieldDefinition;
-use App\Models\Note;
+use App\Models\Workspace;
 use App\Services\CustomFieldService;
 use App\Services\TagService;
 use App\Support\Activity\ActivityLogger;
-use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 // ── Cross-module integration: 4 entity × 5 shared M0 features ─────────────────
 // Chứng minh rằng mỗi entity M1 dùng được đầy đủ 5 trait từ M0:

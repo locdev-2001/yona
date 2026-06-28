@@ -61,4 +61,3 @@ class ClientGroupController extends Controller
         return back()->with('success', __('clients.flash.group_deleted'));
     }
 }
-

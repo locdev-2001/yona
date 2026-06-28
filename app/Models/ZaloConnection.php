@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -15,16 +16,16 @@ use Illuminate\Support\Facades\DB;
  *
  * state enum values: disconnected | qr_waiting | connected | session_lost
  *
- * @property int    $id
+ * @property int $id
  * @property string $workspace_id
- * @property int    $connection_id  UNIQUE cross-tenant
+ * @property int $connection_id UNIQUE cross-tenant
  * @property string|null $personal_uid
  * @property string|null $display_name
  * @property string|null $avatar_url
  * @property string $state
  * @property string|null $session_lost_reason
- * @property \Carbon\Carbon|null $last_connected_at
- * @property \Carbon\Carbon|null $last_qr_at
+ * @property Carbon|null $last_connected_at
+ * @property Carbon|null $last_qr_at
  * @property int $lock_version
  */
 class ZaloConnection extends Model
@@ -47,10 +48,10 @@ class ZaloConnection extends Model
     ];
 
     protected $casts = [
-        'connection_id'    => 'integer',
+        'connection_id' => 'integer',
         'last_connected_at' => 'datetime',
-        'last_qr_at'       => 'datetime',
-        'lock_version'     => 'integer',
+        'last_qr_at' => 'datetime',
+        'lock_version' => 'integer',
     ];
 
     /**

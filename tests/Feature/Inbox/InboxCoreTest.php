@@ -3,9 +3,12 @@
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Integration\ChannelManager;
-use App\Models\Workspace;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Integration\Contracts\ChannelDriver;
+use Illuminate\Database\QueryException;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────
 
@@ -131,7 +134,7 @@ it('conversations unique(zalo_connection_id, peer_uid) enforces idempotency', fu
         'peer_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
-    ]))->toThrow(\Illuminate\Database\QueryException::class);
+    ]))->toThrow(QueryException::class);
 });
 
 // ── Soft-delete global scope ──────────────────────────────────────────────────
@@ -172,19 +175,30 @@ it('ChannelManager hasAny returns true when zalo_personal driver is registered (
     // channel-zalo ServiceProvider đã register 'zalo_personal' driver khi boot
     $manager = app(ChannelManager::class);
     expect($manager->hasAny())->toBeTrue();
-    expect($manager->driver('zalo_personal'))->toBeInstanceOf(\App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver::class);
+    expect($manager->driver('zalo_personal'))->toBeInstanceOf(ZaloChannelDriver::class);
 });
 
 it('ChannelManager hasAny returns true after driver registered', function () {
     $manager = app(ChannelManager::class);
 
     $manager->extend('test_channel', function () {
-        return new class implements \App\Modules\Integration\Contracts\ChannelDriver {
-            public function channelKey(): string { return 'test_channel'; }
+        return new class implements ChannelDriver
+        {
+            public function channelKey(): string
+            {
+                return 'test_channel';
+            }
+
             public function connect(string $workspaceId, array $params): void {}
+
             public function disconnect(string $workspaceId): void {}
-            public function sendMessage(\App\Models\Conversation $c, array $p): void {}
-            public function parseInbound(array $raw): array { return []; }
+
+            public function sendMessage(Conversation $c, array $p): void {}
+
+            public function parseInbound(array $raw): array
+            {
+                return [];
+            }
         };
     });
 

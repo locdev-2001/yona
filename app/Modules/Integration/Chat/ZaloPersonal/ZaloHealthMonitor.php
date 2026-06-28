@@ -20,14 +20,15 @@ use Illuminate\Support\Facades\Cache;
 class ZaloHealthMonitor
 {
     private const ERROR_THRESHOLD = 5;
-    private const WINDOW_SECONDS  = 3600; // 1 hour
+
+    private const WINDOW_SECONDS = 3600; // 1 hour
 
     private const TRACKABLE_TYPES = ['429', '403', 'session_lost', 'rate_limited', 'forbidden'];
 
     /**
      * Ghi nhận lỗi bridge cho connection_id.
      *
-     * @param string $type Loại lỗi: '429' | '403' | 'session_lost'
+     * @param  string  $type  Loại lỗi: '429' | '403' | 'session_lost'
      */
     public function recordError(string $connectionId, string $type): void
     {
@@ -53,6 +54,7 @@ class ZaloHealthMonitor
     public function isCircuitOpen(string $connectionId): bool
     {
         $count = (int) Cache::get($this->errorCountKey($connectionId), 0);
+
         return $count >= self::ERROR_THRESHOLD;
     }
 

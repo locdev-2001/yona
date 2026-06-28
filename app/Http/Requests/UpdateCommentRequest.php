@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Comment;
+use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Validates editing an existing comment. Authorization checks authorship via CommentPolicy.

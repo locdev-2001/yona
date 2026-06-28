@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\NoteFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,10 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use App\Models\Concerns\Auditable;
-use App\Models\User;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * Internal staff note (no portal visibility). date_contacted mirrors Perfex;

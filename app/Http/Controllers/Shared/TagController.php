@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SyncTagsRequest;
+use App\Models\Tag;
+use App\Services\TagService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use App\Models\Tag;
-use App\Services\TagService;
 
 /**
  * Tags: list for autocomplete + sync for an entity.

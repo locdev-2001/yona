@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Client;
-use App\Services\ProjectService;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ProjectService;
+use Illuminate\Support\Facades\DB;
 
 // P08 — G4: Pivot RLS for project_members: raw query in WS-B context sees 0 rows from WS-A.
 

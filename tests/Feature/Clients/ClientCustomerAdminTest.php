@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Client;
-use App\Services\ClientService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ClientService;
 
 /**
  * Customer-admin delegation tests.

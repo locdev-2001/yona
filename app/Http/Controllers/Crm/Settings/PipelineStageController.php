@@ -43,4 +43,3 @@ class PipelineStageController extends Controller
         return back()->with('success', __('lookups.pipelines.stage_deleted'));
     }
 }
-

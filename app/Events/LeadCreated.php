@@ -2,9 +2,9 @@
 
 namespace App\Events;
 
+use App\Models\Lead;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Lead;
 
 /**
  * Fired after a Lead is created (P07).

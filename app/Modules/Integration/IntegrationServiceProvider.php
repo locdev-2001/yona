@@ -2,8 +2,9 @@
 
 namespace App\Modules\Integration;
 
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider;
+use App\Modules\Integration\Payment\Manual\ManualPaymentServiceProvider;
 use Illuminate\Support\ServiceProvider;
-use App\Modules\Integration\PaymentManager;
 
 /**
  * Integration module — registry cho channel/payment drivers (internal-first).
@@ -24,11 +25,11 @@ class IntegrationServiceProvider extends ServiceProvider
             return new ChannelManager($app);
         });
 
-        $this->app->singleton(PaymentManager::class, fn () => new PaymentManager());
+        $this->app->singleton(PaymentManager::class, fn () => new PaymentManager);
 
         // Re-home driver providers INTO Integration — không còn module-framework auto-discovery.
         // Internal-first: xóa app/Modules/Integration/ → các provider + driver + routes biến mất cùng nhau.
-        $this->app->register(\App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider::class);
-        $this->app->register(\App\Modules\Integration\Payment\Manual\ManualPaymentServiceProvider::class);
+        $this->app->register(ZaloPersonalServiceProvider::class);
+        $this->app->register(ManualPaymentServiceProvider::class);
     }
 }

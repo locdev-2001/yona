@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\ProjectStatus;
-use Illuminate\Support\Facades\DB;
 use App\Models\LeadSource;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
+use App\Models\ProjectStatus;
 use App\Models\Workspace;
-use App\Services\SettingsService;
+use Illuminate\Support\Facades\DB;
 
 /**
  * LookupService — manages workspace-scoped reference data (pipelines, stages,
@@ -52,9 +51,7 @@ class LookupService
                     $source = $this->createSource($sourceName);
                     $firstSource ??= $source;
                 }
-                if ($firstSource) {
-                    $this->settings->set('default_lead_source_id', $firstSource->id);
-                }
+                $this->settings->set('default_lead_source_id', $firstSource->id);
             }
 
             // Project statuses — only if none yet.
@@ -71,9 +68,7 @@ class LookupService
                     $status = $this->createProjectStatus($attrs);
                     $firstStatus ??= $status;
                 }
-                if ($firstStatus) {
-                    $this->settings->set('default_project_status_id', $firstStatus->id);
-                }
+                $this->settings->set('default_project_status_id', $firstStatus->id);
             }
         });
     }

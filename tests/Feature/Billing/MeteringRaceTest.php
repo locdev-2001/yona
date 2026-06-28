@@ -1,16 +1,17 @@
 <?php
 
 use App\Exceptions\QuotaExceededException;
+use App\Models\ChannelUsage;
 use App\Models\Conversation;
+use App\Models\MarketplaceItem;
 use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspacePurchase;
 use App\Models\WorkspaceSequence;
+use App\Services\EntitlementService;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\DB;
-use App\Models\ChannelUsage;
-use App\Models\MarketplaceItem;
-use App\Models\WorkspacePurchase;
-use App\Services\EntitlementService;
-use App\Models\Workspace;
+use Illuminate\Support\Str;
 
 /**
  * MeteringRaceTest — F1 race-safe metering + F5 canReplyOnExisting + quota gate.
@@ -113,7 +114,7 @@ it('F5: canReplyOnExisting = true even when remaining = 0 if conv already metere
 
     // Tạo channel_usage = 0 remaining (quota đã hết)
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -163,7 +164,7 @@ it('canStartNew = false when remaining = 0', function () {
     // Đã dùng hết 50 hội thoại kỳ này
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -300,7 +301,7 @@ it('F1-audit: MeteringService::assertCanSend throws QuotaExceededException khi q
     // Đã dùng hết 50 quota kỳ này
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,
@@ -359,7 +360,7 @@ it('F1-audit: MeteringService::assertCanSend KHÔNG throw khi conv đã metered 
 
     $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
     DB::table('channel_usage')->insert([
-        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'id' => (string) Str::orderedUuid(),
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'period' => $period,

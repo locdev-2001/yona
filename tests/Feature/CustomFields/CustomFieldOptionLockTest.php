@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\CustomFieldDefinition;
-use App\Services\CustomFieldService;
 use App\Models\Workspace;
+use App\Services\CustomFieldService;
 
 // Option management rules: add = ok; remove option in use = reject.
 

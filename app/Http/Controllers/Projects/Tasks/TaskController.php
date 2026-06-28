@@ -10,12 +10,12 @@ use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\User;
 
 /**
  * Task CRUD + list/kanban/show. Thin controller — logic in TaskService.
@@ -192,10 +192,10 @@ class TaskController extends Controller
             'lead' => Lead::select('id', 'name')->orderBy('name')->get()->toArray(),
             'client' => Client::select('id', 'name')->orderBy('name')->get()->toArray(),
             'project' => Project::select('id', 'name')->orderBy('name')->get()->toArray(),
-            'contact' => Contact::selectRaw("id, CONCAT(first_name, ' ', COALESCE(last_name, '')) AS name")
+            'contact' => Contact::select('id', 'first_name', 'last_name')
                 ->orderBy('first_name')
                 ->get()
-                ->map(fn ($c) => ['id' => $c->id, 'name' => trim($c->name)])
+                ->map(fn (Contact $c) => ['id' => $c->id, 'name' => $c->fullName()])
                 ->toArray(),
         ];
     }

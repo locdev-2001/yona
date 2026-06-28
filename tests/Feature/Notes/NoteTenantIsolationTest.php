@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Team;
 use App\Models\Note;
-use App\Services\NoteService;
+use App\Models\Team;
 use App\Models\Workspace;
+use App\Services\NoteService;
+use Illuminate\Support\Facades\DB;
 
 // Tenant isolation for notes.
 

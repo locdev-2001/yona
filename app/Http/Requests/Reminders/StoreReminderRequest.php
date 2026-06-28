@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests\Reminders;
 
+use App\Models\Reminder;
+use App\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Reminder;
-use App\Models\WorkspaceMember;
 
 /**
  * Validate creating a new reminder.

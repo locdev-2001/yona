@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Leads;
 
+use App\Services\CustomFieldService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Services\CustomFieldService;
 
 /**
  * P07 — Validate + authorize creating a new lead.
@@ -81,4 +81,3 @@ class StoreLeadRequest extends FormRequest
         ];
     }
 }
-

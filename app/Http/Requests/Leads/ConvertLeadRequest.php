@@ -46,4 +46,3 @@ class ConvertLeadRequest extends FormRequest
         ];
     }
 }
-

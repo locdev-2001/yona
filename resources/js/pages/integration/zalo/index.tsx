@@ -174,7 +174,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
 
                     {/* QR Panel */}
                     {qrState.open && (
-                        <div className="rounded-lg border p-6 space-y-4">
+                        <div className="space-y-4 rounded-lg border p-6">
                             <h3 className="font-medium">Đăng nhập bằng mã QR</h3>
                             {qrState.phase === 'starting' && <p className="text-muted-foreground text-sm">Đang khởi động...</p>}
                             {(qrState.phase === 'logging_in' || qrState.phase === 'qr_waiting') && !qrState.qrImage && (
@@ -188,10 +188,15 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                             )}
                             {qrState.phase === 'ready' && <p className="text-sm text-green-600">Đăng nhập thành công! Đang kết nối...</p>}
                             {qrState.phase === 'done' && <p className="text-sm text-green-600">Kết nối hoàn tất.</p>}
-                            {qrState.phase === 'error' && (
-                                <p className="text-sm text-red-600">Lỗi: {qrState.error}</p>
-                            )}
-                            <Button variant="outline" size="sm" onClick={() => { clearPoll(); setQrState(INITIAL_QR); }}>
+                            {qrState.phase === 'error' && <p className="text-sm text-red-600">Lỗi: {qrState.error}</p>}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    clearPoll();
+                                    setQrState(INITIAL_QR);
+                                }}
+                            >
                                 Đóng
                             </Button>
                         </div>
@@ -205,14 +210,12 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                             {connections.map((conn) => (
                                 <div key={conn.id} className="flex items-center justify-between px-4 py-3">
                                     <div className="flex items-center gap-3">
-                                        {conn.avatar_url && (
-                                            <img src={conn.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
-                                        )}
+                                        {conn.avatar_url && <img src={conn.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />}
                                         <div>
-                                            <p className="text-sm font-medium">{conn.display_name ?? conn.personal_uid ?? `#${conn.connection_id}`}</p>
-                                            {conn.session_lost_reason && (
-                                                <p className="text-xs text-red-500">{conn.session_lost_reason}</p>
-                                            )}
+                                            <p className="text-sm font-medium">
+                                                {conn.display_name ?? conn.personal_uid ?? `#${conn.connection_id}`}
+                                            </p>
+                                            {conn.session_lost_reason && <p className="text-xs text-red-500">{conn.session_lost_reason}</p>}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -222,11 +225,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                                                 Đăng nhập lại
                                             </Button>
                                         )}
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => disconnectConnection(conn.id)}
-                                        >
+                                        <Button size="sm" variant="destructive" onClick={() => disconnectConnection(conn.id)}>
                                             Ngắt kết nối
                                         </Button>
                                     </div>
@@ -241,7 +240,5 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
 }
 
 function getCsrfToken(): string {
-    return (document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1]
-        ? decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1])
-        : '';
+    return (document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1] ? decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1]) : '';
 }

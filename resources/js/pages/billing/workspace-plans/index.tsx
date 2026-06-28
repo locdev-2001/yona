@@ -93,9 +93,7 @@ export default function AdminWorkspacePlans({ workspace, items, channel_usage }:
                                     <TableCell className="text-muted-foreground font-mono text-xs">{item.code}</TableCell>
                                     <TableCell>{item.type}</TableCell>
                                     <TableCell className="tabular-nums">
-                                        {item.price_cents === 0
-                                            ? 'Miễn phí'
-                                            : `${item.price_cents.toLocaleString()} ${item.currency}`}
+                                        {item.price_cents === 0 ? 'Miễn phí' : `${item.price_cents.toLocaleString()} ${item.currency}`}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
@@ -107,27 +105,15 @@ export default function AdminWorkspacePlans({ workspace, items, channel_usage }:
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {item.active ? (
-                                            <Badge variant="default">Đang dùng</Badge>
-                                        ) : (
-                                            <Badge variant="outline">Chưa cấp</Badge>
-                                        )}
+                                        {item.active ? <Badge variant="default">Đang dùng</Badge> : <Badge variant="outline">Chưa cấp</Badge>}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {item.active ? (
-                                            <Button
-                                                size="sm"
-                                                variant="destructive"
-                                                onClick={() => revoke(item.code)}
-                                            >
+                                            <Button size="sm" variant="destructive" onClick={() => revoke(item.code)}>
                                                 Thu hồi
                                             </Button>
                                         ) : (
-                                            <Button
-                                                size="sm"
-                                                variant="default"
-                                                onClick={() => grant(item.code)}
-                                            >
+                                            <Button size="sm" variant="default" onClick={() => grant(item.code)}>
                                                 Cấp gói
                                             </Button>
                                         )}

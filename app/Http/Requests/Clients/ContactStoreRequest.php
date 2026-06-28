@@ -51,4 +51,3 @@ class ContactStoreRequest extends FormRequest
         ];
     }
 }
-

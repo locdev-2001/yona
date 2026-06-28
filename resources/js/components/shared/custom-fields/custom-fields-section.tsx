@@ -1,5 +1,5 @@
-import type { CustomFieldValue } from '@/types';
 import { useTranslator } from '@/lib/i18n';
+import type { CustomFieldValue } from '@/types';
 import CustomFieldInput from './custom-field-input';
 import type { CustomFieldDefinition } from './types';
 

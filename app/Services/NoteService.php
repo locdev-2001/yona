@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Note;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use App\Models\Note;
 
 /**
  * Owns note write operations (internal staff notes — no portal visibility).

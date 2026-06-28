@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\WorkspaceMember;
 
 /**
  * Update a member's role and/or team. Server-controlled (BR-X12); the

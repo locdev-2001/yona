@@ -41,4 +41,3 @@ class LeadStatusActionController extends Controller
         return back()->with('success', __('leads.flash.restored'));
     }
 }
-

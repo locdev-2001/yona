@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\TeamClosure;
 use App\Models\WorkspaceMember;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Record gate (BR-X02): resolves what a member can see — own | team-subtree |

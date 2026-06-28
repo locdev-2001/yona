@@ -90,4 +90,3 @@ class PipelineController extends Controller
         return back()->with('success', __('lookups.pipelines.deleted'));
     }
 }
-

@@ -2,9 +2,9 @@
 
 use App\Models\Team;
 use App\Models\User;
-use App\Services\TeamService;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Services\TeamService;
 use Spatie\Permission\PermissionRegistrar;
 
 // Settings → Members: invite / role / team (server-controlled, BR-X12/X03/X15).

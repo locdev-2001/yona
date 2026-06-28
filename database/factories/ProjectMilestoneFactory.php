@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Project;
 use App\Models\ProjectMilestone;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<ProjectMilestone>

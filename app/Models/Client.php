@@ -2,6 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasActivities;
+use App\Models\Concerns\HasAttachments;
+use App\Models\Concerns\HasCustomFields;
+use App\Models\Concerns\HasNotes;
+use App\Models\Concerns\HasOptimisticLock;
+use App\Models\Concerns\HasTags;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,15 +19,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Concerns\Auditable;
-use App\Models\User;
-use App\Models\Concerns\HasActivities;
-use App\Models\Concerns\HasAttachments;
-use App\Models\Concerns\HasCustomFields;
-use App\Models\Concerns\HasNotes;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\HasTags;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * P06 — Client (company entity). Hosts: custom fields, tags, attachments,

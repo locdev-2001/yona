@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use App\Events\LeadAssigned;
 use App\Events\LeadCreated;
 use App\Events\LeadStageChanged;
@@ -11,9 +9,10 @@ use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\PipelineStage;
 use App\Models\User;
-use App\Services\CustomFieldService;
-use App\Support\Activity\ActivityLogger;
 use App\Models\WorkspaceSequence;
+use App\Support\Activity\ActivityLogger;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * P07 — Single entry-point for Lead write operations.

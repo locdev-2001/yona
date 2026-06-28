@@ -3,6 +3,7 @@
 namespace App\Modules\Integration\Chat\ZaloPersonal;
 
 use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\IntegrationServiceProvider;
 use App\Services\MeteringService;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,8 +24,8 @@ use Illuminate\Support\ServiceProvider;
  *
  * Migrations KHÔNG load ở đây — đã chuyển sang database/migrations/ (Laravel thuần).
  *
- * @see \App\Modules\Integration\ChannelManager
- * @see \App\Modules\Integration\IntegrationServiceProvider
+ * @see ChannelManager
+ * @see IntegrationServiceProvider
  */
 class ZaloPersonalServiceProvider extends ServiceProvider
 {
@@ -36,13 +37,13 @@ class ZaloPersonalServiceProvider extends ServiceProvider
         }
 
         // Singleton services — stateless giữa request; ZaloHealthMonitor + SendRateLimiter dùng Cache.
-        $this->app->singleton(ZaloHealthMonitor::class, fn () => new ZaloHealthMonitor());
-        $this->app->singleton(SendRateLimiter::class, fn () => new SendRateLimiter());
+        $this->app->singleton(ZaloHealthMonitor::class, fn () => new ZaloHealthMonitor);
+        $this->app->singleton(SendRateLimiter::class, fn () => new SendRateLimiter);
 
         $this->app->singleton(ZaloSendService::class, function ($app) {
             return new ZaloSendService(
-                rateLimiter:     $app->make(SendRateLimiter::class),
-                healthMonitor:   $app->make(ZaloHealthMonitor::class),
+                rateLimiter: $app->make(SendRateLimiter::class),
+                healthMonitor: $app->make(ZaloHealthMonitor::class),
                 meteringService: $app->make(MeteringService::class),
             );
         });

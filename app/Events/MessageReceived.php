@@ -53,11 +53,11 @@ class MessageReceived implements ShouldBroadcast
                 'sender_uid' => $this->message->sender_uid,
                 'sender_name' => $this->message->sender_name,
                 'sent_by' => $this->message->sent_by,
-                'created_at' => $this->message->created_at?->toIso8601String(),
+                'created_at' => $this->message->created_at->toIso8601String(),
             ],
             'conversation_id' => $this->message->conversation_id,
             'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
-            'unread_count' => $conversation?->unread_count ?? 0,
+            'unread_count' => $conversation ? $conversation->unread_count : 0,
         ];
     }
 }

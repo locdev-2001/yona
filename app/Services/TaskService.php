@@ -4,13 +4,12 @@ namespace App\Services;
 
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
+use App\Models\User;
+use App\Models\WorkspaceMember;
+use App\Models\WorkspaceSequence;
 use App\Notifications\EntityNotification;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-use App\Models\User;
-use App\Services\CustomFieldService;
-use App\Models\WorkspaceMember;
-use App\Models\WorkspaceSequence;
 use RuntimeException;
 
 /**
@@ -22,7 +21,7 @@ class TaskService
 {
     public function __construct(
         private readonly CustomFieldService $customFieldService,
-        private readonly \App\Services\NotificationService $notificationService,
+        private readonly NotificationService $notificationService,
         private readonly TaskTimerService $timerService,
     ) {}
 

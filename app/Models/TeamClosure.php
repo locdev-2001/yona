@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\BelongsToWorkspace;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Closure-table row: one (ancestor, descendant, depth) edge of the team tree.

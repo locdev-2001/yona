@@ -23,4 +23,3 @@ class LeadStageController extends Controller
         return back()->with('success', __('leads.flash.stage_moved'));
     }
 }
-

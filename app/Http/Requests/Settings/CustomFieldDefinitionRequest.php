@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Models\CustomFieldDefinition;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\CustomFieldDefinition;
 
 /**
  * Shared FormRequest for create (POST) and update (PUT/PATCH) of custom-field

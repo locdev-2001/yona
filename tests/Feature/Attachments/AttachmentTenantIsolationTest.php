@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
+use App\Models\Attachment;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Attachment;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 
 // Tenant isolation for attachments (Layer 1 global scope + Layer 3 RLS).
 

@@ -1,14 +1,14 @@
 <?php
 
 use App\Events\LeadStageChanged;
+use App\Models\Activity;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
+use App\Models\User;
+use App\Models\Workspace;
 use App\Services\LeadService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
-use App\Models\User;
-use App\Models\Activity;
-use App\Models\Workspace;
 
 // ── G8 Pipeline invariant + kanban stage move ─────────────────────────────────
 

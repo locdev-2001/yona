@@ -2,9 +2,10 @@
 
 namespace App\Modules\Integration\Chat\ZaloPersonal;
 
+use App\Exceptions\QuotaExceededException;
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
-use App\Models\Conversation;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
@@ -31,22 +32,22 @@ use Illuminate\Support\Facades\Http;
 class ZaloSendService
 {
     public function __construct(
-        private readonly SendRateLimiter   $rateLimiter,
+        private readonly SendRateLimiter $rateLimiter,
         private readonly ZaloHealthMonitor $healthMonitor,
-        private readonly MeteringService   $meteringService,
+        private readonly MeteringService $meteringService,
     ) {}
 
     /**
      * Gửi tin outbound. Ghi Message chỉ khi bridge confirm ok.
      *
-     * @param  string|null  $text   Nội dung text
+     * @param  string|null  $text  Nội dung text
      * @param  array<string, mixed>|null  $media  {file_url, media_kind, filename}
      *
-     * @throws ZaloCircuitOpenException                       circuit breaker OPEN
-     * @throws \App\Exceptions\QuotaExceededException         hết quota hội thoại mới
-     * @throws SendOutsideWindowException                     ngoài 7h-22h
-     * @throws RateCapException                               >3 tin/số/ngày
-     * @throws ZaloNotConnectedException                      bridge lỗi / session hết
+     * @throws ZaloCircuitOpenException circuit breaker OPEN
+     * @throws QuotaExceededException hết quota hội thoại mới
+     * @throws SendOutsideWindowException ngoài 7h-22h
+     * @throws RateCapException >3 tin/số/ngày
+     * @throws ZaloNotConnectedException bridge lỗi / session hết
      */
     public function send(Conversation $conversation, ?string $text, ?array $media = null): Message
     {
@@ -54,7 +55,7 @@ class ZaloSendService
 
         // 1. Circuit-breaker check — fail fast trước mọi thứ
         if ($this->healthMonitor->isCircuitOpen((string) $connection->connection_id)) {
-            throw new ZaloCircuitOpenException();
+            throw new ZaloCircuitOpenException;
         }
 
         // 2. Metering (quota) — assertCanSend throw QuotaExceededException nếu hết quota.
@@ -89,15 +90,15 @@ class ZaloSendService
     {
         $payload = [
             'connection_id' => $connection->connection_id,
-            'thread_id'     => $conversation->peer_uid,
-            'thread_type'   => $conversation->thread_type,
-            'text'          => $text,
+            'thread_id' => $conversation->peer_uid,
+            'thread_type' => $conversation->thread_type,
+            'text' => $text,
         ];
 
         if ($media) {
-            $payload['file_url']    = $media['file_url'] ?? null;
-            $payload['media_kind']  = $media['media_kind'] ?? null;
-            $payload['filename']    = $media['filename'] ?? null;
+            $payload['file_url'] = $media['file_url'] ?? null;
+            $payload['media_kind'] = $media['media_kind'] ?? null;
+            $payload['filename'] = $media['filename'] ?? null;
         }
 
         $connectionId = (string) $connection->connection_id;
@@ -114,7 +115,7 @@ class ZaloSendService
         }
 
         $status = $response->status();
-        $body   = $response->json() ?? [];
+        $body = $response->json() ?? [];
 
         if ($status === 503 || ($body['message'] ?? '') === 'not_logged_in') {
             $this->healthMonitor->recordError($connectionId, 'session_lost');
@@ -147,23 +148,23 @@ class ZaloSendService
         $mediaMeta = [];
         if ($media) {
             $mediaMeta = array_filter([
-                'file_url'   => $media['file_url'] ?? null,
+                'file_url' => $media['file_url'] ?? null,
                 'media_kind' => $media['media_kind'] ?? null,
-                'filename'   => $media['filename'] ?? null,
+                'filename' => $media['filename'] ?? null,
             ]);
         }
 
         return Message::create([
-            'workspace_id'    => $conversation->workspace_id,
+            'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
-            'direction'       => 'out',
-            'type'            => $media ? ($media['media_kind'] ?? 'file') : 'text',
-            'body'            => $text,
-            'media_url'       => $media['file_url'] ?? null,
-            'media_meta'      => $mediaMeta ?: [],
-            'source_id'       => isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null,
+            'direction' => 'out',
+            'type' => $media ? ($media['media_kind'] ?? 'file') : 'text',
+            'body' => $text,
+            'media_url' => $media['file_url'] ?? null,
+            'media_meta' => $mediaMeta ?: [],
+            'source_id' => isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null,
             'platform_sent_at' => now(),
-            'sent_by'         => Auth::id(),
+            'sent_by' => Auth::id(),
         ]);
     }
 

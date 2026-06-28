@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\CustomFieldDefinition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use App\Models\CustomFieldDefinition;
 
 /**
  * Attaches custom-field capabilities to an entity host (P02, C1, G6).

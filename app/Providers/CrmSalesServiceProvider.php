@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\EntityMergeFields;
 use App\Events\LeadAssigned;
 use App\Listeners\SendLeadAssignedNotification;
 use App\Models\Client;
@@ -21,7 +22,6 @@ use App\Services\MergeFields\LeadMergeFields;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Contracts\EntityMergeFields;
 
 /**
  * CRM-Sales feature service provider.

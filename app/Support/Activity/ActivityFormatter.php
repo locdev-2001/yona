@@ -2,8 +2,8 @@
 
 namespace App\Support\Activity;
 
-use Illuminate\Support\Facades\Log;
 use App\Models\Activity;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Renders an Activity into a human-readable message using i18n keys.

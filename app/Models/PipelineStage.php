@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\PipelineStageFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,9 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use App\Models\Concerns\Auditable;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * PipelineStage — one step inside a Pipeline. type ∈ STAGE_TYPES (string,

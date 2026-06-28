@@ -58,4 +58,3 @@ class LeadSourceController extends Controller
         return back()->with('success', __('lookups.lead_sources.deleted'));
     }
 }
-

@@ -2,14 +2,8 @@
 
 namespace App\Models;
 
-use Database\Factories\TeamFactory;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
 use App\Models\Concerns\HasActivities;
 use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasComments;
@@ -17,8 +11,13 @@ use App\Models\Concerns\HasNotes;
 use App\Models\Concerns\HasOptimisticLock;
 use App\Models\Concerns\HasReminders;
 use App\Models\Concerns\HasTags;
-use App\Models\Concerns\BelongsToWorkspace;
-use App\Models\WorkspaceMember;
+use Database\Factories\TeamFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Team — a node in the per-workspace team tree (BR-X02). Structural changes

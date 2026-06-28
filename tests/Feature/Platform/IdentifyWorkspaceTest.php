@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use Illuminate\Support\Facades\Route;
 
 // Layer 2 (IdentifyWorkspace middleware) — server-derived active workspace
 // + membership requirement (BR-X14, auth-model resolution order).

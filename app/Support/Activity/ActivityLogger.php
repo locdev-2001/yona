@@ -2,9 +2,9 @@
 
 namespace App\Support\Activity;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 use App\Models\Activity;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
 /**

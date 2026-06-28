@@ -4,11 +4,12 @@ use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Services\InboundMessageService;
 use App\Services\MeteringService;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
 use Mockery\MockInterface;
-use App\Models\Workspace;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId
 {
     // zalo_connection_id là bigint (global sequence, xem migration 700004)
     $connectionId ??= random_int(1_000_000, 9_999_999);
+
     return [
         'zalo_connection_id' => (string) $connectionId,
         'channel' => 'zalo_personal',
@@ -30,7 +32,7 @@ function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId
         'direction' => 'in',
         'type' => 'text',
         'body' => 'Xin chào!',
-        'source_id' => 'zalo_msg_' . uniqid(),
+        'source_id' => 'zalo_msg_'.uniqid(),
         'platform_sent_at' => now()->toDateTimeString(),
     ];
 }
@@ -46,7 +48,7 @@ it('F13/F20: ingest ghi Conversation+Message và dispatch MessageReceived kể c
 
     // Gate throw bất kỳ exception — simulates billing crash
     $throwingGate = mock(MeteringService::class, function (MockInterface $m) {
-        $m->shouldReceive('meterReply')->andThrow(new \RuntimeException('Billing dead'));
+        $m->shouldReceive('meterReply')->andThrow(new RuntimeException('Billing dead'));
         $m->shouldReceive('canStartNew')->andReturn(true);
         $m->shouldReceive('canReplyOnExisting')->andReturn(true);
     });
@@ -193,7 +195,7 @@ it('MessageReceived broadcastOn private workspace.{id}.conversations channel', f
     expect($channels)->toHaveCount(1);
 
     $channel = $channels[0];
-    expect($channel)->toBeInstanceOf(\Illuminate\Broadcasting\PrivateChannel::class)
+    expect($channel)->toBeInstanceOf(PrivateChannel::class)
         ->and($channel->name)->toBe("private-workspace.{$message->workspace_id}.conversations");
 });
 
@@ -290,7 +292,8 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class)) extends InboundMessageService {
+    $racingService = new class(app(MeteringService::class)) extends InboundMessageService
+    {
         private bool $firstLookup = true;
 
         protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation

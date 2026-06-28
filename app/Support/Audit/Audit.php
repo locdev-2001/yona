@@ -2,9 +2,9 @@
 
 namespace App\Support\Audit;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\AuditLog;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Writes append-only audit entries (BR-X05).

@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Mail\TemplatedMessage;
 use App\Models\EmailTemplate;
+use App\Support\Activity\ActivityLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Support\Activity\ActivityLogger;
 
 /**
  * P06 — Public interface for sending workspace email templates (C4).

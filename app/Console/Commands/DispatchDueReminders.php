@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\ReminderService;
+use Illuminate\Console\Command;
 
 /**
  * Scheduler command: fire notifications for all due reminders.

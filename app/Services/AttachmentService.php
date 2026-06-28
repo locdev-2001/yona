@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\Attachment;
 
 /**
  * Owns all attachment write operations. Workspace context via BelongsToWorkspace

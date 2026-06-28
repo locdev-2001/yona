@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 use Tests\TestCase;
 
 class PasswordUpdateTest extends TestCase

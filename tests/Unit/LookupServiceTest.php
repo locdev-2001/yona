@@ -2,10 +2,10 @@
 
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Services\LookupService;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Models\Workspace;
+use App\Services\LookupService;
 use App\Services\SettingsService;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 uses(TestCase::class, DatabaseTransactions::class);

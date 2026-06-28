@@ -2,9 +2,9 @@
 
 use App\Models\Client;
 use App\Models\Contact;
-use Illuminate\Database\QueryException;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Database\QueryException;
 
 /**
  * G10 — Contact email partial unique index:

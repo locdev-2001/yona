@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use App\Services\MeteringService;
+
 /**
  * Ném khi tenant hết quota hội thoại mới trong kỳ hiện tại.
  *
@@ -10,7 +12,7 @@ namespace App\Exceptions;
  * InboxController bắt RuntimeException + str_contains(get_class, 'Quota') → 422,
  * nên class này kế thừa RuntimeException là đủ (không phải SendException).
  *
- * @see \App\Services\MeteringService::assertCanSend
+ * @see MeteringService::assertCanSend
  */
 class QuotaExceededException extends \RuntimeException
 {

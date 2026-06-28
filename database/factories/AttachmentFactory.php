@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Attachment;
+use App\Models\Team;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use App\Models\Team;
-use App\Models\Attachment;
-use App\Models\Workspace;
 
 /**
  * @extends Factory<Attachment>

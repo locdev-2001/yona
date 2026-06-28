@@ -3,8 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { CustomFieldValue } from '@/types';
 import { useTranslator } from '@/lib/i18n';
+import type { CustomFieldValue } from '@/types';
 import type { CustomFieldDefinition } from './types';
 
 interface Props {

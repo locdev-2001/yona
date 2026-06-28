@@ -2,6 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasActivities;
+use App\Models\Concerns\HasAttachments;
+use App\Models\Concerns\HasCustomFields;
+use App\Models\Concerns\HasNotes;
+use App\Models\Concerns\HasOptimisticLock;
+use App\Models\Concerns\HasReminders;
+use App\Models\Concerns\HasTags;
 use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -10,17 +19,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use App\Models\Concerns\Auditable;
-use App\Models\User;
-use App\Models\Concerns\HasActivities;
-use App\Models\Concerns\HasAttachments;
-use App\Models\Concerns\HasCustomFields;
-use App\Models\Concerns\HasNotes;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\HasReminders;
-use App\Models\Concerns\HasTags;
-use App\Models\Concerns\BelongsToWorkspace;
-use App\Models\WorkspaceMember;
 
 /**
  * P07 — Lead entity. Workspace-scoped, pipeline+stage required.
@@ -60,8 +58,8 @@ use App\Models\WorkspaceMember;
  * @property bool $is_public
  * @property int $lead_order
  * @property string|null $last_stage_id
- * @property string|null $conversation_id  P07: inbox conversation ref (no FK, cross-module N1)
- * @property string|null $contact_id       P07: CDP contact ref (no FK, cross-module N1)
+ * @property string|null $conversation_id P07: inbox conversation ref (no FK, cross-module N1)
+ * @property string|null $contact_id P07: CDP contact ref (no FK, cross-module N1)
  * @property array<string, mixed> $custom_fields
  * @property int $lock_version
  * @property Carbon $created_at

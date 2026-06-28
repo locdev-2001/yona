@@ -2,10 +2,10 @@
 
 namespace App\Models\Concerns;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\Activity;
 use App\Support\Activity\ActivityLogger;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Expose the activities polymorphic relation and a convenience logger shortcut.

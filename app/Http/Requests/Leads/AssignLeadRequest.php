@@ -41,4 +41,3 @@ class AssignLeadRequest extends FormRequest
         ];
     }
 }
-

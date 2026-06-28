@@ -96,14 +96,14 @@ return [
         'search' => 'Tìm kiếm',
     ],
     'integrations' => [
-        'title'         => 'Tích hợp',
-        'subtitle'      => 'Kết nối các kênh và dịch vụ với workspace của bạn.',
-        'connect'       => 'Kết nối',
-        'manage'        => 'Quản lý',
-        'connected'     => 'Đã kết nối',
+        'title' => 'Tích hợp',
+        'subtitle' => 'Kết nối các kênh và dịch vụ với workspace của bạn.',
+        'connect' => 'Kết nối',
+        'manage' => 'Quản lý',
+        'connected' => 'Đã kết nối',
         'not_connected' => 'Chưa kết nối',
-        'empty'         => 'Chưa có tích hợp nào.',
-        'category'      => [
+        'empty' => 'Chưa có tích hợp nào.',
+        'category' => [
             'chat' => 'Chat',
         ],
     ],

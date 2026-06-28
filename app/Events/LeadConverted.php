@@ -2,10 +2,10 @@
 
 namespace App\Events;
 
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use App\Models\Client;
 use App\Models\Lead;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 /**
  * Fired after a Lead is successfully converted to a Client (P07, G7).

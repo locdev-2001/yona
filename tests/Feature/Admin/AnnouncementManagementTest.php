@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use App\Enums\AnnouncementStatus;
 use App\Models\Announcement;
 use App\Support\AnnouncementMarkdown;
+use Illuminate\Support\Facades\DB;
 
 // ---------------------------------------------------------------------------
 // AnnouncementManagementTest — Admin-plane authz, CRUD, publish, audit, rules

@@ -2,10 +2,10 @@
 
 namespace App\Listeners;
 
-use App\Services\TemplatedMailer;
 use App\Events\LeadAssigned;
-use App\Notifications\LeadAssignedNotification;
 use App\Models\User;
+use App\Notifications\LeadAssignedNotification;
+use App\Services\TemplatedMailer;
 use Throwable;
 
 /**

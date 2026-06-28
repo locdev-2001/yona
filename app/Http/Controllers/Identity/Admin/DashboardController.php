@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Identity\Admin;
 
 use App\Http\Controllers\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\Workspace;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {

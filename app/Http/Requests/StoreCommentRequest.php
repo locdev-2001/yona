@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Comment;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Comment;
 
 /**
  * Validates creating a new comment (top-level or reply).

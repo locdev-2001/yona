@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
-use App\Services\AnnouncementReadService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\AnnouncementReadService;
+use Illuminate\Support\Facades\DB;
 
 // ---------------------------------------------------------------------------
 // AnnouncementGlobalTableTest — Negative: no RLS on global tables + coherence

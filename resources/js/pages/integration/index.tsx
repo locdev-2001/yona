@@ -2,8 +2,8 @@ import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { IntegrationCardItem } from './components/integration-card';
 import type { IntegrationCard } from './components/integration-card';
+import { IntegrationCardItem } from './components/integration-card';
 
 interface Props {
     cards: IntegrationCard[];
@@ -12,9 +12,7 @@ interface Props {
 export default function IntegrationsIndex({ cards }: Props) {
     const t = useTranslator();
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('platform.nav.integrations'), href: '/integrations' },
-    ];
+    const breadcrumbs: BreadcrumbItem[] = [{ title: t('platform.nav.integrations'), href: '/integrations' }];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

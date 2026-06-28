@@ -2,10 +2,10 @@
 
 use App\Models\Client;
 use App\Models\ProjectDiscussion;
-use App\Services\ProjectDiscussionService;
-use App\Services\ProjectService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ProjectDiscussionService;
+use App\Services\ProjectService;
 
 // P08 — Discussion thread + reply via HasComments (P03).
 

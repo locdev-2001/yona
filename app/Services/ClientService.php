@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Client;
+use App\Models\Contact;
+use App\Models\WorkspaceMember;
+use App\Support\Activity\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use App\Models\Client;
-use App\Models\Contact;
-use App\Services\CustomFieldService;
-use App\Support\Activity\ActivityLogger;
-use App\Models\WorkspaceMember;
 
 /**
  * P06 — Single entry-point for all Client + Contact write operations.

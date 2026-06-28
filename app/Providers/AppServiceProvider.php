@@ -2,12 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\EmailTemplate;
+use App\Models\User;
+use App\Modules\Integration\IntegrationServiceProvider;
+use App\Policies\EmailTemplatePolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Models\EmailTemplate;
-use App\Policies\EmailTemplatePolicy;
-use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,8 +20,8 @@ class AppServiceProvider extends ServiceProvider
         // Internal-first: register Integration module nếu nó tồn tại. Xóa thư mục
         // app/Modules/Integration/ → class_exists false → skip → inbox/billing core
         // vẫn build/chạy (không fatal). KHÔNG hard-reference trong bootstrap/providers.php.
-        if (class_exists(\App\Modules\Integration\IntegrationServiceProvider::class)) {
-            $this->app->register(\App\Modules\Integration\IntegrationServiceProvider::class);
+        if (class_exists(IntegrationServiceProvider::class)) {
+            $this->app->register(IntegrationServiceProvider::class);
         }
     }
 
@@ -34,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         // rebuilds its own throwaway DB. A careless `migrate:fresh --seed` against the dev
         // DB once wiped local data. To run one intentionally, set DB_ALLOW_DESTRUCTIVE=true.
         if (! $this->app->runningUnitTests()) {
-            DB::prohibitDestructiveCommands(! env('DB_ALLOW_DESTRUCTIVE', false));
+            DB::prohibitDestructiveCommands(! config('database.allow_destructive'));
         }
 
         // Workspace admin/owner has unrestricted access WITHIN their workspace.

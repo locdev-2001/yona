@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use App\Models\WorkspaceMember;
 use App\Notifications\EntityNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Notification;
-use App\Models\User;
-use App\Models\WorkspaceMember;
 
 /**
  * Façade for in-app notifications. All writes go through here to enforce:

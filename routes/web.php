@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Announcements\Admin\AnnouncementController;
+use App\Http\Controllers\Announcements\Admin\AnnouncementPublishController;
 use App\Http\Controllers\Announcements\AnnouncementReadController;
 use App\Http\Controllers\Announcements\WhatsNewController;
+use App\Http\Controllers\Billing\Admin\WorkspacePlanController;
 use App\Http\Controllers\Crm\Clients\ClientController;
 use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
 use App\Http\Controllers\Crm\Clients\ClientGroupController;
@@ -16,6 +19,7 @@ use App\Http\Controllers\Crm\Settings\PipelineController;
 use App\Http\Controllers\Crm\Settings\PipelineStageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Email\EmailTemplateController;
+use App\Http\Controllers\Identity\Admin\ImpersonationController;
 use App\Http\Controllers\Identity\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Identity\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Identity\Auth\EmailVerificationNotificationController;
@@ -31,6 +35,7 @@ use App\Http\Controllers\Identity\Settings\TeamController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
 use App\Http\Controllers\Inbox\InboxController;
 use App\Http\Controllers\Integration\IntegrationController;
+use App\Http\Controllers\Integration\ZaloConnectionController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Projects\Projects\ProjectController;
 use App\Http\Controllers\Projects\Projects\ProjectDiscussionController;
@@ -209,7 +214,7 @@ Route::middleware(['auth'])->group(function () {
         // auth + workspace already applied by the enclosing group. Toggle via config/integrations.php.
         if (config('integrations.zalo_personal.enabled')) {
             Route::prefix('integrations')->name('integrations.zalo.')->group(function () {
-                Route::controller(\App\Http\Controllers\Integration\ZaloConnectionController::class)
+                Route::controller(ZaloConnectionController::class)
                     ->prefix('zalo')
                     ->group(function () {
                         Route::get('/', 'index')->name('index');
@@ -391,60 +396,60 @@ Route::middleware('auth')->group(function () {
 // NewPasswordController, PasswordResetLinkController, DashboardController, WorkspaceController).
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {
-        Route::get('login', [\App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'create'])
+        Route::get('login', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'create'])
             ->name('login');
 
-        Route::post('login', [\App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'store']);
+        Route::post('login', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'store']);
 
-        Route::get('forgot-password', [\App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'create'])
+        Route::get('forgot-password', [App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'create'])
             ->name('password.request');
 
-        Route::post('forgot-password', [\App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'store'])
+        Route::post('forgot-password', [App\Http\Controllers\Identity\Admin\Auth\PasswordResetLinkController::class, 'store'])
             ->name('password.email');
 
-        Route::get('reset-password/{token}', [\App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'create'])
+        Route::get('reset-password/{token}', [App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'create'])
             ->name('password.reset');
 
-        Route::post('reset-password', [\App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'store'])
+        Route::post('reset-password', [App\Http\Controllers\Identity\Admin\Auth\NewPasswordController::class, 'store'])
             ->name('password.store');
     });
 
     Route::middleware(['auth:admin', 'admin.scope'])->group(function () {
         Route::redirect('/', '/admin/dashboard');
 
-        Route::get('dashboard', \App\Http\Controllers\Identity\Admin\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', App\Http\Controllers\Identity\Admin\DashboardController::class)->name('dashboard');
 
-        Route::post('logout', [\App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'destroy'])
+        Route::post('logout', [App\Http\Controllers\Identity\Admin\Auth\AuthenticatedSessionController::class, 'destroy'])
             ->name('logout');
 
         Route::middleware('admin.can:platform.workspaces.view')->group(function () {
-            Route::get('workspaces', [\App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'index'])->name('workspaces.index');
-            Route::get('workspaces/{workspace}', [\App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'show'])->name('workspaces.show');
+            Route::get('workspaces', [App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'index'])->name('workspaces.index');
+            Route::get('workspaces/{workspace}', [App\Http\Controllers\Identity\Admin\WorkspaceController::class, 'show'])->name('workspaces.show');
         });
 
         Route::middleware('admin.can:platform.billing.manage')->group(function () {
-            Route::get('workspaces/{workspace}/plans', [\App\Http\Controllers\Billing\Admin\WorkspacePlanController::class, 'index'])->name('workspaces.plans.index');
-            Route::post('workspaces/{workspace}/plans', [\App\Http\Controllers\Billing\Admin\WorkspacePlanController::class, 'store'])->name('workspaces.plans.store');
-            Route::delete('workspaces/{workspace}/plans', [\App\Http\Controllers\Billing\Admin\WorkspacePlanController::class, 'destroy'])->name('workspaces.plans.destroy');
+            Route::get('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'index'])->name('workspaces.plans.index');
+            Route::post('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'store'])->name('workspaces.plans.store');
+            Route::delete('workspaces/{workspace}/plans', [WorkspacePlanController::class, 'destroy'])->name('workspaces.plans.destroy');
         });
 
-        Route::post('workspaces/{workspace}/members/{user}/impersonate', [\App\Http\Controllers\Identity\Admin\ImpersonationController::class, 'store'])
+        Route::post('workspaces/{workspace}/members/{user}/impersonate', [ImpersonationController::class, 'store'])
             ->middleware('admin.can:platform.impersonate')
             ->name('workspaces.impersonate');
 
         // Stop impersonation (the admin guard is still authenticated here).
-        Route::post('impersonate/stop', [\App\Http\Controllers\Identity\Admin\ImpersonationController::class, 'destroy'])
+        Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
             ->name('impersonate.stop');
 
         // Announcements — admin CRUD + publish/unpublish.
         Route::middleware('admin.can:platform.announcements.manage')->group(function () {
-            Route::resource('announcements', \App\Http\Controllers\Announcements\Admin\AnnouncementController::class)
+            Route::resource('announcements', AnnouncementController::class)
                 ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
-            Route::post('announcements/{announcement}/publish', [\App\Http\Controllers\Announcements\Admin\AnnouncementPublishController::class, 'store'])
+            Route::post('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'store'])
                 ->name('announcements.publish');
 
-            Route::delete('announcements/{announcement}/publish', [\App\Http\Controllers\Announcements\Admin\AnnouncementPublishController::class, 'destroy'])
+            Route::delete('announcements/{announcement}/publish', [AnnouncementPublishController::class, 'destroy'])
                 ->name('announcements.unpublish');
         });
 

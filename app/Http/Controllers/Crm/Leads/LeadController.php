@@ -7,16 +7,16 @@ use App\Http\Requests\Leads\AssignLeadRequest;
 use App\Http\Requests\Leads\StoreLeadRequest;
 use App\Http\Requests\Leads\UpdateLeadRequest;
 use App\Models\Client;
+use App\Models\CustomFieldDefinition;
 use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\Pipeline;
+use App\Models\User;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\User;
-use App\Models\CustomFieldDefinition;
 
 /**
  * P07 — Thin lead controller. Parse → Service → Inertia/redirect.
@@ -193,4 +193,3 @@ class LeadController extends Controller
         return back()->with('success', __('leads.flash.assigned'));
     }
 }
-

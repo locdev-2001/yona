@@ -30,10 +30,10 @@ return new class extends Migration
 
         if (! empty($duplicates)) {
             $sample = $duplicates[0];
-            throw new \RuntimeException(
-                "Phát hiện SĐT trùng trước khi tạo partial unique index. ".
+            throw new RuntimeException(
+                'Phát hiện SĐT trùng trước khi tạo partial unique index. '.
                 "workspace_id={$sample->workspace_id}, phone={$sample->phone}, count={$sample->cnt}. ".
-                "Giải quyết thủ công trước khi chạy migration này."
+                'Giải quyết thủ công trước khi chạy migration này.'
             );
         }
 

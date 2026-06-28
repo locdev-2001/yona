@@ -2,8 +2,8 @@
 
 use App\Models\Team;
 use App\Models\User;
-use App\Services\TeamService;
 use App\Models\Workspace;
+use App\Services\TeamService;
 
 // Settings → Teams CRUD (admin, cycle-guarded, workspace-scoped). BR-X02/X13/X15.
 

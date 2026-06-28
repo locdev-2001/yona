@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Exceptions\QuotaExceededException;
 use App\Models\Conversation;
 use Illuminate\Support\Facades\DB;
-use App\Services\EntitlementService;
 
 /**
  * MeteringService — đếm hội thoại per-channel per-month (billing CORE, luôn on).

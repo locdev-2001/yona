@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
 
 /**
  * FIX 3 — AttachmentPolicy::create within-workspace authz.
@@ -16,8 +17,7 @@ use Illuminate\Support\Facades\Storage;
  * Sau fix: create() đòi quyền `update` trên parent. viewer (chỉ có client.view,
  * KHÔNG có client.update) → 403; sales_manager (có client.update) → thành công.
  */
-
-function postAttachmentToClient(User $user, Workspace $ws, Client $client): \Illuminate\Testing\TestResponse
+function postAttachmentToClient(User $user, Workspace $ws, Client $client): TestResponse
 {
     return test()
         ->actingAs($user)

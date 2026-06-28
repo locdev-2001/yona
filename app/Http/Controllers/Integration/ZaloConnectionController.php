@@ -41,14 +41,14 @@ class ZaloConnectionController extends Controller
         $connections = ZaloConnection::orderByDesc('created_at')
             ->get(['id', 'connection_id', 'personal_uid', 'display_name', 'avatar_url', 'state', 'session_lost_reason', 'last_connected_at'])
             ->map(fn (ZaloConnection $c) => [
-                'id'                  => $c->id,
-                'connection_id'       => $c->connection_id,
-                'personal_uid'        => $c->personal_uid,
-                'display_name'        => $c->display_name,
-                'avatar_url'          => $c->avatar_url,
-                'state'               => $c->state,
+                'id' => $c->id,
+                'connection_id' => $c->connection_id,
+                'personal_uid' => $c->personal_uid,
+                'display_name' => $c->display_name,
+                'avatar_url' => $c->avatar_url,
+                'state' => $c->state,
                 'session_lost_reason' => $c->session_lost_reason,
-                'last_connected_at'   => $c->last_connected_at?->toISOString(),
+                'last_connected_at' => $c->last_connected_at?->toISOString(),
             ]);
 
         return Inertia::render('integration/zalo/index', [
@@ -63,19 +63,19 @@ class ZaloConnectionController extends Controller
     {
         abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
 
-        $connectionId  = ZaloConnection::nextConnectionId();
-        $qrToken       = Str::uuid()->toString();
-        $workspaceId   = $this->currentWorkspaceId();
+        $connectionId = ZaloConnection::nextConnectionId();
+        $qrToken = Str::uuid()->toString();
+        $workspaceId = $this->currentWorkspaceId();
 
         // Insert qua pgsql_privileged (bypass RLS) — sequence GRANT đủ
         DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
-            'workspace_id'  => $workspaceId,
+            'workspace_id' => $workspaceId,
             'connection_id' => $connectionId,
-            'state'         => 'qr_waiting',
-            'lock_version'  => 0,
-            'last_qr_at'    => now(),
-            'created_at'    => now(),
-            'updated_at'    => now(),
+            'state' => 'qr_waiting',
+            'lock_version' => 0,
+            'last_qr_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $connection = ZaloConnection::where('connection_id', $connectionId)->firstOrFail();
@@ -87,7 +87,7 @@ class ZaloConnectionController extends Controller
                 ->timeout(10)
                 ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/start', [
                     'qr_token' => $qrToken,
-                    'bot_id'   => $connectionId,
+                    'bot_id' => $connectionId,
                 ]);
         } catch (ConnectionException) {
             $connection->delete();
@@ -99,15 +99,15 @@ class ZaloConnectionController extends Controller
             $connection->delete();
 
             return response()->json([
-                'ok'      => false,
+                'ok' => false,
                 'message' => 'Bridge không khởi động được QR: '.($bridgeResponse->json('message') ?? 'unknown'),
             ], 502);
         }
 
         return response()->json([
-            'ok'            => true,
+            'ok' => true,
             'connection_id' => $connectionId,
-            'qr_token'      => $qrToken,
+            'qr_token' => $qrToken,
         ]);
     }
 
@@ -146,7 +146,7 @@ class ZaloConnectionController extends Controller
 
         $validated = $request->validate([
             'connection_id' => 'required|integer',
-            'qr_token'      => 'required|string',
+            'qr_token' => 'required|string',
         ]);
 
         $connection = ZaloConnection::where('connection_id', $validated['connection_id'])
@@ -158,7 +158,7 @@ class ZaloConnectionController extends Controller
                 ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
                 ->timeout(10)
                 ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/promote', [
-                    'qr_token'      => $validated['qr_token'],
+                    'qr_token' => $validated['qr_token'],
                     'connection_id' => $validated['connection_id'],
                 ]);
         } catch (ConnectionException) {
@@ -167,7 +167,7 @@ class ZaloConnectionController extends Controller
 
         if (! $bridgeResponse->successful()) {
             return response()->json([
-                'ok'      => false,
+                'ok' => false,
                 'message' => $bridgeResponse->json('message') ?? 'promote_failed',
             ], $bridgeResponse->status());
         }
@@ -211,7 +211,7 @@ class ZaloConnectionController extends Controller
     private function bridgeDownResponse(): JsonResponse
     {
         return response()->json([
-            'ok'      => false,
+            'ok' => false,
             'message' => 'Dịch vụ kết nối Zalo (bridge) chưa chạy ở cổng 3710. Khởi động bridge rồi thử lại.',
         ], 503);
     }

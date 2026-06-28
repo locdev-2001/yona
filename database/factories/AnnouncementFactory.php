@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 use App\Enums\AnnouncementCategory;
 use App\Enums\AnnouncementStatus;
+use App\Models\Admin;
 use App\Models\Announcement;
 use App\Support\AnnouncementMarkdown;
-use App\Models\Admin;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Announcement>

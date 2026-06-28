@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\ServiceProvider;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Policies\WorkspaceMemberPolicy;
 use App\Policies\WorkspacePolicy;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Tenancy service provider.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Projects;
 
 use App\Models\Project;
+use App\Models\WorkspaceMember;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\WorkspaceMember;
 
 /**
  * P08 — Validate add project member.

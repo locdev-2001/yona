@@ -36,4 +36,3 @@ class PipelineUpdateRequest extends FormRequest
         ];
     }
 }
-

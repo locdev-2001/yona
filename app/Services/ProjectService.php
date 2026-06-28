@@ -5,12 +5,11 @@ namespace App\Services;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\ProjectStatus;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use App\Services\CustomFieldService;
-use App\Support\Activity\ActivityLogger;
 use App\Models\WorkspaceMember;
 use App\Models\WorkspaceSequence;
+use App\Support\Activity\ActivityLogger;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 /**

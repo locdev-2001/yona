@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Events\LeadConverted;
 use App\Models\Client;
 use App\Models\Contact;
+use App\Models\CustomFieldDefinition;
 use App\Models\Lead;
 use App\Models\PipelineStage;
-use App\Models\CustomFieldDefinition;
-use App\Services\CustomFieldService;
 use App\Support\Activity\ActivityLogger;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**

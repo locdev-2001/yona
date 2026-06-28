@@ -32,4 +32,3 @@ class SyncCustomerAdminsRequest extends FormRequest
         ];
     }
 }
-

@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Exceptions\TeamHierarchyException;
-use Illuminate\Support\Facades\DB;
 use App\Models\Team;
 use App\Models\WorkspaceMember;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Owns team-tree mutations + closure-table maintenance (BR-X02/X13). The

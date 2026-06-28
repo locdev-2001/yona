@@ -32,4 +32,3 @@ class PipelineStoreRequest extends FormRequest
         ];
     }
 }
-

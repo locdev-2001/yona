@@ -24,4 +24,3 @@ class ClientCustomerAdminController extends Controller
             ->with('success', __('clients.flash.admins_updated'));
     }
 }
-

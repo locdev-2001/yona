@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasOptimisticLock;
 use Database\Factories\TagFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Concerns\Auditable;
-use App\Models\Concerns\HasOptimisticLock;
-use App\Models\Concerns\BelongsToWorkspace;
 
 /**
  * Workspace-scoped tag definition. Deduplicated by slug per workspace

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Team;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<Team>

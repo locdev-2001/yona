@@ -2,12 +2,12 @@
 
 use App\Mail\TemplatedMessage;
 use App\Models\EmailTemplate;
+use App\Models\User;
+use App\Models\Workspace;
 use App\Services\TemplatedMailer;
 use Database\Seeders\EmailTemplateCatalogSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Models\User;
-use App\Models\Workspace;
 
 // ── Happy path ────────────────────────────────────────────────────────────────
 

@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Shared;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reminders\StoreReminderRequest;
 use App\Http\Requests\Reminders\UpdateReminderRequest;
+use App\Models\Reminder;
+use App\Models\User;
+use App\Services\ReminderService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
-use App\Models\User;
-use App\Models\Reminder;
-use App\Services\ReminderService;
 
 /**
  * Thin controller for Reminder CRUD.

@@ -2,42 +2,42 @@
 
 namespace App\Providers;
 
+use App\Models\Activity;
+use App\Models\Admin;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
-use App\Models\EmailTemplate;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\ServiceProvider;
+use App\Models\Attachment;
+use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\ClientGroup;
 use App\Models\ClientVaultEntry;
+use App\Models\Comment;
 use App\Models\Contact;
+use App\Models\CustomFieldDefinition;
+use App\Models\EmailTemplate;
 use App\Models\Lead;
 use App\Models\LeadSource;
+use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\Admin;
-use App\Models\AuditLog;
-use App\Models\Team;
-use App\Models\TeamClosure;
-use App\Models\User;
 use App\Models\Project;
 use App\Models\ProjectDiscussion;
 use App\Models\ProjectMilestone;
 use App\Models\ProjectStatus;
+use App\Models\Reminder;
+use App\Models\Tag;
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
 use App\Models\TaskTimer;
-use App\Models\Activity;
-use App\Models\Attachment;
-use App\Models\Comment;
-use App\Models\CustomFieldDefinition;
-use App\Models\Note;
-use App\Models\Reminder;
-use App\Models\Tag;
+use App\Models\Team;
+use App\Models\TeamClosure;
+use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Models\WorkspaceSequence;
 use App\Models\WorkspaceSetting;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * G3 - Registers the canonical morph alias map for all polymorphic relations.

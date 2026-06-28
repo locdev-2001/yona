@@ -1,10 +1,10 @@
 import ClientForm from '@/components/clients/client-form';
 import { PageHeader } from '@/components/page-header';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, ClientGroup } from '@/types';
 import { Head } from '@inertiajs/react';
-import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 
 interface Props {
     groups: ClientGroup[];

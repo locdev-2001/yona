@@ -3,9 +3,9 @@
 use App\Models\Lead;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Services\LeadService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\LeadService;
 
 // ── Route: leads.restore-status must work for soft-deleted leads ──────────────
 // Bug: route lacked ->withTrashed() so route-model-binding excluded soft-deleted

@@ -204,9 +204,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                 }
                 // Cập nhật local state để hiện nút "Xem Lead"
                 setActiveConv((prev) => (prev ? { ...prev, lead_id: json.lead_id } : prev));
-                setConvList((prev) =>
-                    prev.map((c) => (c.id === activeConv.id ? { ...c, lead_id: json.lead_id } : c)),
-                );
+                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, lead_id: json.lead_id } : c)));
             })
             .catch(() => setLeadError('Không kết nối được server.'))
             .finally(() => setLeadLoading(false));
@@ -227,7 +225,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                 {/* ── Cột trái: danh sách hội thoại ─────────────────────── */}
                 <div className="flex w-80 flex-shrink-0 flex-col border-r">
                     {/* Header: search + usage badge */}
-                    <div className="border-b p-3 space-y-2">
+                    <div className="space-y-2 border-b p-3">
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <Input
                                 placeholder="Tìm hội thoại..."
@@ -244,10 +242,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                         {zaloLimit !== null && zaloRemaining !== null && (
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Hội thoại tháng này</span>
-                                <Badge
-                                    variant={quotaExhausted ? 'destructive' : 'secondary'}
-                                    className="text-[10px]"
-                                >
+                                <Badge variant={quotaExhausted ? 'destructive' : 'secondary'} className="text-[10px]">
                                     {zaloLimit - zaloRemaining}/{zaloLimit}
                                 </Badge>
                             </div>
@@ -265,7 +260,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                         {convList.map((conv) => (
                             <button
                                 key={conv.id}
-                                className={`w-full border-b px-4 py-3 text-left hover:bg-muted/50 transition-colors ${
+                                className={`hover:bg-muted/50 w-full border-b px-4 py-3 text-left transition-colors ${
                                     activeConv?.id === conv.id ? 'bg-muted' : ''
                                 }`}
                                 onClick={() => handleSelectConv(conv)}
@@ -281,9 +276,7 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                     )}
                                 </div>
                                 {conv.last_message_preview && (
-                                    <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                                        {conv.last_message_preview}
-                                    </p>
+                                    <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
                                 )}
                             </button>
                         ))}
@@ -322,31 +315,20 @@ export default function InboxIndex({ conversations, filters }: Props) {
                         <>
                             <div className="border-b px-4 py-2 text-sm font-medium">
                                 {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid}
-                                {activeConv.peer_phone && (
-                                    <span className="text-muted-foreground ml-2 text-xs">{activeConv.peer_phone}</span>
-                                )}
+                                {activeConv.peer_phone && <span className="text-muted-foreground ml-2 text-xs">{activeConv.peer_phone}</span>}
                             </div>
 
                             {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                                {loadingMessages && (
-                                    <div className="text-muted-foreground text-center text-sm">Đang tải...</div>
-                                )}
+                            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+                                {loadingMessages && <div className="text-muted-foreground text-center text-sm">Đang tải...</div>}
                                 {messages.map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`}
-                                    >
+                                    <div key={msg.id} className={`flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`}>
                                         <div
                                             className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                                                msg.direction === 'out'
-                                                    ? 'bg-primary text-primary-foreground'
-                                                    : 'bg-muted'
+                                                msg.direction === 'out' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                                             }`}
                                         >
-                                            {msg.media_url && (
-                                                <div className="mb-1 text-xs opacity-70">[{msg.type}]</div>
-                                            )}
+                                            {msg.media_url && <div className="mb-1 text-xs opacity-70">[{msg.type}]</div>}
                                             {msg.body && <p className="whitespace-pre-wrap">{msg.body}</p>}
                                         </div>
                                     </div>
@@ -357,14 +339,8 @@ export default function InboxIndex({ conversations, filters }: Props) {
                             {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
                             {quotaExhausted && messages.length === 0 ? (
                                 <div className="border-t p-3 text-center">
-                                    <p className="text-muted-foreground mb-2 text-xs">
-                                        Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).
-                                    </p>
-                                    <Button
-                                        size="sm"
-                                        variant="default"
-                                        onClick={() => router.visit('/admin/billing/upgrade')}
-                                    >
+                                    <p className="text-muted-foreground mb-2 text-xs">Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).</p>
+                                    <Button size="sm" variant="default" onClick={() => router.visit('/admin/billing/upgrade')}>
                                         Nâng gói
                                     </Button>
                                 </div>
@@ -392,17 +368,13 @@ export default function InboxIndex({ conversations, filters }: Props) {
                 {/* ── Cột phải: thông tin peer + actions ────────────────── */}
                 <div className="w-64 flex-shrink-0 border-l">
                     {activeConv ? (
-                        <div className="p-4 space-y-4">
+                        <div className="space-y-4 p-4">
                             <div className="text-center">
                                 <div className="bg-muted mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">
                                     <User className="h-6 w-6" />
                                 </div>
-                                <p className="text-sm font-medium">
-                                    {activeConv.peer_name ?? 'Không rõ tên'}
-                                </p>
-                                {activeConv.peer_phone && (
-                                    <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>
-                                )}
+                                <p className="text-sm font-medium">{activeConv.peer_name ?? 'Không rõ tên'}</p>
+                                {activeConv.peer_phone && <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>}
                             </div>
 
                             <div className="space-y-1 text-xs">
@@ -434,29 +406,18 @@ export default function InboxIndex({ conversations, filters }: Props) {
                                 <>
                                     {/* thread_type 1 = nhóm → không tạo Lead */}
                                     {activeConv.thread_type !== 1 ? (
-                                        <Button
-                                            size="sm"
-                                            className="w-full"
-                                            disabled={leadLoading}
-                                            onClick={handleCreateLead}
-                                        >
+                                        <Button size="sm" className="w-full" disabled={leadLoading} onClick={handleCreateLead}>
                                             {leadLoading ? 'Đang tạo...' : 'Tạo Lead'}
                                         </Button>
                                     ) : (
-                                        <p className="text-muted-foreground text-center text-xs">
-                                            Hội thoại nhóm — không tạo Lead
-                                        </p>
+                                        <p className="text-muted-foreground text-center text-xs">Hội thoại nhóm — không tạo Lead</p>
                                     )}
-                                    {leadError && (
-                                        <p className="text-destructive text-xs">{leadError}</p>
-                                    )}
+                                    {leadError && <p className="text-destructive text-xs">{leadError}</p>}
                                 </>
                             )}
                         </div>
                     ) : (
-                        <div className="text-muted-foreground p-4 text-center text-sm">
-                            Chọn hội thoại để xem thông tin
-                        </div>
+                        <div className="text-muted-foreground p-4 text-center text-sm">Chọn hội thoại để xem thông tin</div>
                     )}
                 </div>
             </div>

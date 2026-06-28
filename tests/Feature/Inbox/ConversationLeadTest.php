@@ -1,9 +1,10 @@
 <?php
 
+use App\Models\Contact;
+use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
-use App\Models\Conversation;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
@@ -162,7 +163,7 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
     expect($conv1->contact_id)->toBe($conv2->contact_id);
 
     // Chỉ 1 Contact trong workspace cho SĐT này
-    $contactCount = \App\Models\Contact::where('workspace_id', $workspace->id)
+    $contactCount = Contact::where('workspace_id', $workspace->id)
         ->where('phone', $sharedPhone)
         ->count();
     expect($contactCount)->toBe(1);

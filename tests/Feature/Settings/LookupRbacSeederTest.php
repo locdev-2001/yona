@@ -1,7 +1,7 @@
 <?php
 
-use Database\Seeders\PlatformPermissionSeeder;
 use App\Enums\TenantPermission;
+use Database\Seeders\PlatformPermissionSeeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;

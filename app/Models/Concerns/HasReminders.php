@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Reminder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\Reminder;
 
 /**
  * Expose the reminders polymorphic relation on any workspace entity.

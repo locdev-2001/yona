@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Client;
 use App\Models\ClientVaultEntry;
+use Illuminate\Support\Facades\DB;
 
 /**
  * P06 (should) — Vault entry management for clients.

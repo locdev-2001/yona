@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 // Feature gate (spatie, scoped per workspace) + Policies (BR-X02/X12).
 

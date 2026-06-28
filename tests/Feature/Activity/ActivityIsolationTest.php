@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Team;
 use App\Models\Activity;
-use App\Support\Activity\ActivityLogger;
+use App\Models\Team;
 use App\Models\Workspace;
+use App\Support\Activity\ActivityLogger;
+use Illuminate\Support\Facades\DB;
 
 // Tenant isolation: WS-B must NOT see activities belonging to WS-A (0 leak).
 // Tests both Eloquent global scope (layer 1) and raw SQL + RLS (layer 3).

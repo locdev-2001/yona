@@ -2,17 +2,18 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TenantPermission;
+use App\Models\Admin;
+use App\Models\Announcement;
+use App\Models\User;
+use App\Models\WorkspaceMember;
+use App\Services\AnnouncementReadService;
+use App\Services\EntitlementService;
+use App\Services\NotificationService;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\Announcement;
-use App\Services\AnnouncementReadService;
-use App\Enums\TenantPermission;
-use App\Models\Admin;
-use App\Models\User;
-use App\Services\NotificationService;
-use App\Models\WorkspaceMember;
-use App\Support\TenantScope;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -225,8 +226,8 @@ class HandleInertiaRequests extends Middleware
         // Entitlements: billing là CORE — luôn on, resolve trực tiếp App\Services\EntitlementService
         $entitlements = null;
         try {
-            /** @var \App\Services\EntitlementService $entitlementService */
-            $entitlementService = app(\App\Services\EntitlementService::class);
+            /** @var EntitlementService $entitlementService */
+            $entitlementService = app(EntitlementService::class);
             $entitlements = $entitlementService->snapshot($membership->workspace_id);
         } catch (\Throwable) {
             // ponytail: fail-safe — billing chưa migrate không làm vỡ login
@@ -267,7 +268,7 @@ class HandleInertiaRequests extends Middleware
      * Finding 7b: fail-safe wrapper — announcements module bị tắt / belum migrate → null.
      * Đối xứng với guard billing entitlements ở membershipPayload().
      */
-    private function safeAnnouncementCount(\App\Models\User $user): ?int
+    private function safeAnnouncementCount(User $user): ?int
     {
         try {
             return app(AnnouncementReadService::class)->getUnreadCount($user);
@@ -278,7 +279,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /** @return array<string, mixed>|null */
-    private function safeLatestUnreadAnnouncement(\App\Models\User $user): ?array
+    private function safeLatestUnreadAnnouncement(User $user): ?array
     {
         try {
             $announcement = app(AnnouncementReadService::class)->getLatestUnread($user);

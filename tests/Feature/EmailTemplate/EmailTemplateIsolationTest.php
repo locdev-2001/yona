@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\EmailTemplate;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 
 // ── Tenant isolation (BR-X18) ─────────────────────────────────────────────────
 

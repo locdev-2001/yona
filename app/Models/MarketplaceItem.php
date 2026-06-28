@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * Không dùng BelongsToWorkspace — đây là dữ liệu platform-wide.
  * entitlements jsonb: {flags: ["module.inbox", ...], quotas: {"quota.conversations.zalo_personal": 50}}
+ *
+ * @property array<string, mixed> $entitlements
  */
 class MarketplaceItem extends Model
 {

@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use App\Models\Tag;
 
 /**
  * Expose the tags polymorphic many-to-many relation on any workspace entity.

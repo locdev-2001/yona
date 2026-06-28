@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Integration;
 
+use App\Http\Middleware\VerifyZaloBridgeSecret;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
@@ -30,7 +31,7 @@ use Throwable;
  * Middleware: zalo.bridge.secret (VerifyZaloBridgeSecret)
  *
  * @see routes/api.php
- * @see \App\Http\Middleware\VerifyZaloBridgeSecret
+ * @see VerifyZaloBridgeSecret
  */
 class ZaloPersonalWebhookController extends Controller
 {
@@ -69,11 +70,12 @@ class ZaloPersonalWebhookController extends Controller
             // Bind currentWorkspace vào container (WorkspaceSequence::next() cần) —
             // bình thường IdentifyWorkspace middleware làm điều này, webhook route không có middleware đó.
             app()->instance('currentWorkspace', Workspace::withoutGlobalScopes()->find($workspaceId));
+
             return match ($eventType) {
-                'inbound'       => $this->handleInbound($payload),
+                'inbound' => $this->handleInbound($payload),
                 'bridge_session' => $this->handleBridgeSession($payload),
-                'social_event'  => $this->handleSocialEvent($payload),
-                default         => response()->json(['ok' => true, 'message' => 'unknown_event_type'], 200),
+                'social_event' => $this->handleSocialEvent($payload),
+                default => response()->json(['ok' => true, 'message' => 'unknown_event_type'], 200),
             };
         } finally {
             // ⚠️ F19: LUÔN forget sau request — pooled connection an toàn
@@ -120,9 +122,9 @@ class ZaloPersonalWebhookController extends Controller
         $detail = $payload['detail'] ?? null;
 
         $modelState = match ($bridgeState) {
-            'session_ok'   => 'connected',
+            'session_ok' => 'connected',
             'session_lost' => 'session_lost',
-            default        => null,
+            default => null,
         };
 
         if ($modelState === null || $connectionId <= 0) {

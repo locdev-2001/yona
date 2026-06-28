@@ -45,4 +45,3 @@ class ClientVaultEntryController extends Controller
             ->with('success', __('clients.flash.vault_deleted'));
     }
 }
-

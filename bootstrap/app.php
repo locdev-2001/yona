@@ -1,20 +1,20 @@
 <?php
 
 use App\Exceptions\StaleModelException;
+use App\Http\Middleware\AdminCan;
+use App\Http\Middleware\BindAdminPermissionScope;
+use App\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdentifyWorkspace;
+use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use App\Http\Middleware\AdminCan;
-use App\Http\Middleware\BindAdminPermissionScope;
-use App\Http\Middleware\BlockDuringImpersonation;
-use App\Http\Middleware\IdentifyWorkspace;
-use App\Http\Middleware\ResetTenantContext;
-use App\Http\Middleware\VerifyZaloBridgeSecret;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(

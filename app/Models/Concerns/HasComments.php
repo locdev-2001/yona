@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Comment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\Comment;
 
 /**
  * Expose the top-level comments relation on any workspace entity.

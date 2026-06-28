@@ -74,4 +74,3 @@ class ContactController extends Controller
             ->with('success', __('clients.flash.primary_changed'));
     }
 }
-

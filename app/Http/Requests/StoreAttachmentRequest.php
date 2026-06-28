@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Attachment;
 
 /**
  * Validates an attachment upload. attachable_type must be a known morph alias;

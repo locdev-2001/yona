@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use App\Models\Workspace;
 
 /**
  * @extends Factory<Workspace>

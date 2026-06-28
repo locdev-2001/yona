@@ -45,4 +45,3 @@ class MoveLeadStageRequest extends FormRequest
         ];
     }
 }
-

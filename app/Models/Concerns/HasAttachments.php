@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\Attachment;
 
 /**
  * Expose the attachments polymorphic relation on any workspace entity.

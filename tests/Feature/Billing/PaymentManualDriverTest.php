@@ -1,13 +1,13 @@
 <?php
 
-use App\Modules\Integration\Contracts\PaymentDriver;
-use App\Modules\Integration\PaymentManager;
-use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
 use App\Models\MarketplaceItem;
-use App\Models\WorkspacePurchase;
+use App\Models\Workspace;
+use App\Modules\Integration\Contracts\PaymentDriver;
+use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
+use App\Modules\Integration\PaymentManager;
 use App\Services\EntitlementService;
 use App\Services\GrantPlanService;
-use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 
 // ── Driver registry ───────────────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ it('GrantPlanService::grant idempotent: gọi 2 lần → 1 active purchase, kh�
 
     // Đọc qua pgsql_privileged để bypass RLS (không có workspace context trong test này)
     $teamItem = MarketplaceItem::where('code', 'plan.team')->firstOrFail();
-    $count = \Illuminate\Support\Facades\DB::connection('pgsql_privileged')
+    $count = DB::connection('pgsql_privileged')
         ->table('workspace_purchases')
         ->where('workspace_id', $workspace->id)
         ->where('item_id', $teamItem->id)
@@ -168,7 +168,7 @@ it('GrantPlanService::revoke: cancelled → entitlements về free', function ()
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeFalse();
 
     // DB: purchase cancelled (đọc qua pgsql_privileged để bypass RLS)
-    $row = \Illuminate\Support\Facades\DB::connection('pgsql_privileged')
+    $row = DB::connection('pgsql_privileged')
         ->table('workspace_purchases')
         ->where('workspace_id', $workspace->id)
         ->where('item_id', $teamItem->id)

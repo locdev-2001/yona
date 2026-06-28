@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Services\LookupService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
 // LookupService is injected to seed default pipelines/stages/sources/statuses

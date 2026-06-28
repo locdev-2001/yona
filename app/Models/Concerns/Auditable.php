@@ -2,8 +2,8 @@
 
 namespace App\Models\Concerns;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Support\Audit\Audit;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Records create/update/delete/restore of a model to the append-only audit log

@@ -19,8 +19,8 @@ use App\Modules\Integration\Contracts\ChannelDriver;
  * D-2 (outbound/QR/send): sendMessage → ZaloSendService.
  * D-1 (inbound): parseInbound() đã đầy đủ cho webhook RLS-bind flow.
  *
- * @see \App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider
- * @see \App\Modules\Integration\Contracts\ChannelDriver
+ * @see ZaloPersonalServiceProvider
+ * @see ChannelDriver
  */
 class ZaloChannelDriver implements ChannelDriver
 {
@@ -60,16 +60,16 @@ class ZaloChannelDriver implements ChannelDriver
         $inboundKind = $raw['inbound_kind'] ?? 'text';
 
         $type = match ($inboundKind) {
-            'text'          => 'text',
-            'image'         => 'image',
-            'gif'           => 'gif',
-            'video'         => 'video',
-            'audio'         => 'audio',
-            'file'          => 'file',
-            'sticker'       => 'sticker',
+            'text' => 'text',
+            'image' => 'image',
+            'gif' => 'gif',
+            'video' => 'video',
+            'audio' => 'audio',
+            'file' => 'file',
+            'sticker' => 'sticker',
             'business_card' => 'business_card',
-            'call'          => 'call',
-            default         => 'text',
+            'call' => 'call',
+            default => 'text',
         };
 
         $mediaMeta = [];
@@ -103,23 +103,23 @@ class ZaloChannelDriver implements ChannelDriver
         $sender = $raw['sender'] ?? null;
 
         return [
-            'channel'            => 'zalo_personal',
+            'channel' => 'zalo_personal',
             'zalo_connection_id' => isset($raw['connection_id']) ? (int) $raw['connection_id'] : null,
-            'peer_uid'           => (string) ($raw['peer_uid'] ?? ''),
-            'peer_name'          => $user['name'] ?? null,
-            'peer_avatar'        => $user['avatar'] ?? null,
-            'peer_phone'         => null, // enrich async khi có business_card.phone
-            'thread_type'        => isset($raw['thread_type']) ? (int) $raw['thread_type'] : 0,
-            'direction'          => $direction,
-            'source_id'          => isset($raw['source_id']) ? (string) $raw['source_id'] : null,
-            'type'               => $type,
-            'body'               => isset($raw['content']) ? (string) $raw['content'] : null,
-            'media_url'          => $raw['media_url'] ?? null,
-            'media_meta'         => $mediaMeta,
-            'platform_sent_at'   => $platformSentAt,
-            'sender_uid'         => $raw['sender_uid'] ?? ($sender['id'] ?? null),
-            'sender_name'        => $sender['name'] ?? null,
-            'sent_by'            => null, // inbound = ngoài hệ thống
+            'peer_uid' => (string) ($raw['peer_uid'] ?? ''),
+            'peer_name' => $user['name'] ?? null,
+            'peer_avatar' => $user['avatar'] ?? null,
+            'peer_phone' => null, // enrich async khi có business_card.phone
+            'thread_type' => isset($raw['thread_type']) ? (int) $raw['thread_type'] : 0,
+            'direction' => $direction,
+            'source_id' => isset($raw['source_id']) ? (string) $raw['source_id'] : null,
+            'type' => $type,
+            'body' => isset($raw['content']) ? (string) $raw['content'] : null,
+            'media_url' => $raw['media_url'] ?? null,
+            'media_meta' => $mediaMeta,
+            'platform_sent_at' => $platformSentAt,
+            'sender_uid' => $raw['sender_uid'] ?? ($sender['id'] ?? null),
+            'sender_name' => $sender['name'] ?? null,
+            'sent_by' => null, // inbound = ngoài hệ thống
         ];
     }
 

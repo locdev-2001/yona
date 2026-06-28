@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
+use App\Models\Reminder;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Reminder;
-use App\Services\ReminderService;
 use App\Models\Workspace;
+use App\Services\ReminderService;
+use Illuminate\Support\Facades\DB;
 
 // Tenant isolation: WS-B must NOT see reminders belonging to WS-A.
 

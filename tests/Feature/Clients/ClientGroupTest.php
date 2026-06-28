@@ -2,10 +2,10 @@
 
 use App\Models\Client;
 use App\Models\ClientGroup;
-use App\Services\ClientService;
-use Illuminate\Database\QueryException;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ClientService;
+use Illuminate\Database\QueryException;
 
 it('creates a client group', function () {
     $workspace = Workspace::factory()->create();

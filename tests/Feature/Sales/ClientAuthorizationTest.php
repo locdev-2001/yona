@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Client;
-use App\Services\ClientService;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\ClientService;
 
 // ── Authz matrix: Clients (G2/BR-X15) ────────────────────────────────────────
 // guest → redirect/401; sai-permission → 403; ngoài-tầm → 404; đúng → 2xx.

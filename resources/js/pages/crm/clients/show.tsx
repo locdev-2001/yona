@@ -2,13 +2,6 @@ import ContactManager from '@/components/clients/contact-manager';
 import CustomerAdminSelector from '@/components/clients/customer-admin-selector';
 import VaultList from '@/components/clients/vault-list';
 import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppLayout from '@/layouts/app-layout';
-import { useTranslator } from '@/lib/i18n';
-import type { BreadcrumbItem, Client, ClientGroup, ClientVaultEntry, User } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
 import { ActivityTimeline } from '@/components/shared/activity/activity-timeline';
 import type { Attachment } from '@/components/shared/attachments/attachment-list';
 import { AttachmentList } from '@/components/shared/attachments/attachment-list';
@@ -16,6 +9,13 @@ import type { CustomFieldDefinition } from '@/components/shared/custom-fields/ty
 import type { Note } from '@/components/shared/notes/note-list';
 import { NoteList } from '@/components/shared/notes/note-list';
 import TagInput from '@/components/shared/tags/tag-input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AppLayout from '@/layouts/app-layout';
+import { useTranslator } from '@/lib/i18n';
+import type { BreadcrumbItem, Client, ClientGroup, ClientVaultEntry, User } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
 import { Globe, Pencil, Phone, Trash2 } from 'lucide-react';
 
 interface Props {

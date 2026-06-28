@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\ServiceProvider;
 use App\Models\Activity;
 use App\Models\Attachment;
 use App\Models\Comment;
@@ -16,6 +14,8 @@ use App\Policies\CommentPolicy;
 use App\Policies\CustomFieldDefinitionPolicy;
 use App\Policies\NotePolicy;
 use App\Policies\ReminderPolicy;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Shared service provider.

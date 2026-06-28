@@ -1,10 +1,10 @@
 <?php
 
-use App\Services\MergeFields\LeadMergeFields;
-use App\Services\MergeFieldResolver;
-use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\MergeFieldResolver;
+use App\Services\MergeFields\LeadMergeFields;
+use Illuminate\Database\Eloquent\Model;
 
 // ── Resolver resolves tokens from entity ──────────────────────────────────────
 

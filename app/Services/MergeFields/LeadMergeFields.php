@@ -2,8 +2,8 @@
 
 namespace App\Services\MergeFields;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Contracts\EntityMergeFields;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * P06 — Merge field resolver for Lead entities.

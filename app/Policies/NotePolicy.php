@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Note;
+use App\Models\User;
 
 /**
  * Note authorization. Notes are internal staff-only (no portal visibility).

@@ -29,4 +29,3 @@ class LeadSourceStoreRequest extends FormRequest
         ];
     }
 }
-

@@ -2,9 +2,9 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Note;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\Note;
 
 /**
  * Expose the notes polymorphic relation on any workspace entity.

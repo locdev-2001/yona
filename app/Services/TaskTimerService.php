@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Models\Task;
 use App\Models\TaskTimer;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-use App\Models\User;
 use RuntimeException;
 
 /**

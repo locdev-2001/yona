@@ -95,14 +95,14 @@ return [
         'search' => 'Search',
     ],
     'integrations' => [
-        'title'         => 'Integrations',
-        'subtitle'      => 'Connect channels and services to your workspace.',
-        'connect'       => 'Connect',
-        'manage'        => 'Manage',
-        'connected'     => 'Connected',
+        'title' => 'Integrations',
+        'subtitle' => 'Connect channels and services to your workspace.',
+        'connect' => 'Connect',
+        'manage' => 'Manage',
+        'connected' => 'Connected',
         'not_connected' => 'Not connected',
-        'empty'         => 'No integrations available.',
-        'category'      => [
+        'empty' => 'No integrations available.',
+        'category' => [
             'chat' => 'Chat',
         ],
     ],
