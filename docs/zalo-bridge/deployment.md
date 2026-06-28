@@ -11,11 +11,13 @@ storage/logs/zalo-bridge/   ← pm2 logs (auto-created)
 ## Cài đặt
 
 ```bash
+# Cách nhanh (từ project root): make bridge  — tự pnpm install + chạy foreground
+# Hoặc thủ công (chạy nền bằng pm2):
 cd services/zalo-bridge
 cp .env.example .env
 # Điền secrets vào .env (xem bên dưới)
-npm install
-npm run pm2:start
+pnpm install
+pnpm pm2:start
 ```
 
 ## Biến môi trường
@@ -46,7 +48,7 @@ pm2 tự tạo thư mục nếu chưa có.
 
 Xem logs:
 ```bash
-npm run pm2:logs     # trong bridge dir
+pnpm pm2:logs        # trong bridge dir
 # hoặc
 pm2 logs zalo-personal-bridge
 ```
@@ -55,7 +57,7 @@ pm2 logs zalo-personal-bridge
 
 - zca-js là thư viện **không chính thức** (reverse-engineer Zalo protocol)
 - Pin version **chính xác** (không caret): `"zca-js": "2.0.0"` trong package.json
-- Kiểm tra upstream thường xuyên: `npm outdated` — không auto-update khi có breaking change
+- Kiểm tra upstream thường xuyên: `pnpm outdated` — không auto-update khi có breaking change
 - Rủi ro: ToS Zalo, nguy cơ khóa tài khoản nếu gửi quá nhiều (xem SendRateLimiter D-2)
 
 ## Health Check
