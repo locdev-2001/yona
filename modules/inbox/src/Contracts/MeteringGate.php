@@ -52,4 +52,19 @@ interface MeteringGate
      * No-op không làm gì (billing tắt → không đếm).
      */
     public function meterReply(Conversation $conversation): void;
+
+    /**
+     * Assert hội thoại có thể gửi; ném QuotaExceededException nếu không.
+     *
+     * Logic:
+     *   - Conv đã có outbound trước đó (canReplyOnExisting) → luôn pass (không throw).
+     *   - Conv mới kỳ này + hết quota → throw QuotaExceededException.
+     *
+     * ZaloSendService gọi method này thay vì tự kiểm canStartNew (F1-audit).
+     * AllowAllMeteringGate: no-op (billing tắt → không chặn).
+     * ConversationMeter: throw khi ! canReplyOnExisting (conv mới + hết quota).
+     *
+     * @throws \Modules\Inbox\Exceptions\QuotaExceededException
+     */
+    public function assertCanSend(Conversation $conversation): void;
 }

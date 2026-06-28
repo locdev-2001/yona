@@ -4,8 +4,8 @@ namespace Modules\Billing\Services;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Enums\TenantEntitlement;
-use Modules\Billing\Exceptions\QuotaExceededException;
 use Modules\Inbox\Contracts\MeteringGate;
+use Modules\Inbox\Exceptions\QuotaExceededException;
 use Modules\Inbox\Models\Conversation;
 
 /**
@@ -75,32 +75,36 @@ class ConversationMeter implements MeteringGate
     public function meterReply(Conversation $conversation): void
     {
         $period = $this->currentPeriod();
-
-        // Step 1: compare-set atomic — chỉ 1 request thắng race
-        $affected = Conversation::withoutGlobalScope('workspace')
-            ->where('id', $conversation->id)
-            ->where(function ($query) use ($period) {
-                $query->whereNull('last_metered_period')
-                    ->orWhere('last_metered_period', '!=', $period);
-            })
-            ->update(['last_metered_period' => $period]);
-
-        if ($affected === 0) {
-            // Đã đếm kỳ này (hoặc request khác thắng race) → early-return idempotent
-            return;
-        }
-
-        // Step 2: upsert channel_usage atomic
         $workspaceId = $conversation->workspace_id;
         $channel = $conversation->channel;
 
-        DB::statement(
-            'INSERT INTO channel_usage (id, workspace_id, channel, period, answered_count, created_at, updated_at)
-             VALUES (gen_random_uuid(), ?, ?, ?, 1, now(), now())
-             ON CONFLICT (workspace_id, channel, period)
-             DO UPDATE SET answered_count = channel_usage.answered_count + 1, updated_at = now()',
-            [$workspaceId, $channel, $period]
-        );
+        // F9-audit: bọc cả 2 step trong transaction — compare-set + upsert hoặc cả hai rollback.
+        // Nếu upsert fail sau compare-set → conversation.last_metered_period được rollback
+        // → lần sau retry meterReply được (không under-count vĩnh viễn).
+        DB::transaction(function () use ($conversation, $period, $workspaceId, $channel) {
+            // Step 1: compare-set atomic — chỉ 1 request thắng race
+            $affected = Conversation::withoutGlobalScope('workspace')
+                ->where('id', $conversation->id)
+                ->where(function ($query) use ($period) {
+                    $query->whereNull('last_metered_period')
+                        ->orWhere('last_metered_period', '!=', $period);
+                })
+                ->update(['last_metered_period' => $period]);
+
+            if ($affected === 0) {
+                // Đã đếm kỳ này (hoặc request khác thắng race) → early-return idempotent
+                return;
+            }
+
+            // Step 2: upsert channel_usage atomic (cùng transaction với step 1)
+            DB::statement(
+                'INSERT INTO channel_usage (id, workspace_id, channel, period, answered_count, created_at, updated_at)
+                 VALUES (gen_random_uuid(), ?, ?, ?, 1, now(), now())
+                 ON CONFLICT (workspace_id, channel, period)
+                 DO UPDATE SET answered_count = channel_usage.answered_count + 1, updated_at = now()',
+                [$workspaceId, $channel, $period]
+            );
+        });
     }
 
     /**
@@ -112,17 +116,25 @@ class ConversationMeter implements MeteringGate
     }
 
     /**
-     * Ném QuotaExceededException nếu không thể mở hội thoại mới.
-     * Gọi từ OutboundController trước khi gửi (F13/F20).
+     * Assert hội thoại có thể gửi — contract MeteringGate (F1-audit).
+     *
+     * Conv đã metered kỳ này (last_metered_period == currentPeriod) → luôn pass.
+     * Conv chưa metered kỳ này (mới hoặc kỳ cũ) + hết quota → throw.
+     *
+     * ZaloSendService gọi method này thay vì tự kiểm if (! canStartNew) { /* rỗng * / }.
      *
      * @throws QuotaExceededException
      */
-    public function assertCanStartNew(string $channel): void
+    public function assertCanSend(Conversation $conversation): void
     {
-        if (! $this->canStartNew($channel)) {
-            $workspaceId = currentWorkspace()?->id ?? '';
-            $quotaKey = TenantEntitlement::QuotaConversationsZaloPersonal->value;
-            throw new QuotaExceededException($channel, $quotaKey);
+        // Conv đã tính kỳ này → luôn cho gửi (F5)
+        if ($conversation->last_metered_period === $this->currentPeriod()) {
+            return;
+        }
+
+        // Conv chưa tính kỳ này → kiểm quota; nếu hết → chặn
+        if (! $this->canStartNew($conversation->channel)) {
+            throw new QuotaExceededException;
         }
     }
 }

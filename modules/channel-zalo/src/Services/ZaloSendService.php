@@ -42,11 +42,11 @@ class ZaloSendService
      * @param  string|null  $text   Nội dung text
      * @param  array<string, mixed>|null  $media  {file_url, media_kind, filename}
      *
-     * @throws ZaloCircuitOpenException     circuit breaker OPEN
-     * @throws \RuntimeException            QuotaExceededException từ billing (nếu active)
-     * @throws SendOutsideWindowException   ngoài 7h-22h
-     * @throws RateCapException             >3 tin/số/ngày
-     * @throws ZaloNotConnectedException    bridge lỗi / session hết
+     * @throws ZaloCircuitOpenException                       circuit breaker OPEN
+     * @throws \Modules\Inbox\Exceptions\QuotaExceededException  hết quota hội thoại mới
+     * @throws SendOutsideWindowException                     ngoài 7h-22h
+     * @throws RateCapException                               >3 tin/số/ngày
+     * @throws ZaloNotConnectedException                      bridge lỗi / session hết
      */
     public function send(Conversation $conversation, ?string $text, ?array $media = null): Message
     {
@@ -57,19 +57,10 @@ class ZaloSendService
             throw new ZaloCircuitOpenException();
         }
 
-        // 2. Metering gate (quota)
-        $hasExistingOutbound = $conversation->messages()
-            ->where('direction', 'out')
-            ->exists();
-
-        if ($hasExistingOutbound) {
-            $this->meteringGate->canReplyOnExisting($conversation); // luôn true nhưng extensible
-        } else {
-            if (! $this->meteringGate->canStartNew($conversation->channel)) {
-                // Billing sẽ throw QuotaExceededException; no-op return true (không throw)
-                // ponytail: gate throw hoặc chúng ta throw — billing inject exception riêng
-            }
-        }
+        // 2. Metering gate (quota) — assertCanSend throw QuotaExceededException nếu hết quota.
+        // AllowAllMeteringGate: no-op (billing tắt → không chặn).
+        // ConversationMeter: throw khi conv mới kỳ này + hết quota.
+        $this->meteringGate->assertCanSend($conversation);
 
         // 3. Rate limiter (ToS Zalo)
         $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;

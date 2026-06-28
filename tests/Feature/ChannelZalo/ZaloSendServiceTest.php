@@ -11,6 +11,8 @@ use Modules\ChannelZalo\Services\AccountHealthMonitor;
 use Modules\ChannelZalo\Services\SendRateLimiter;
 use Modules\ChannelZalo\Services\ZaloSendService;
 use Modules\Inbox\Channel\AllowAllMeteringGate;
+use Modules\Inbox\Contracts\MeteringGate;
+use Modules\Inbox\Exceptions\QuotaExceededException;
 use Modules\Inbox\Models\Conversation;
 use Modules\Inbox\Models\Message;
 use Modules\Tenancy\Models\Workspace;
@@ -316,4 +318,55 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
         ->first();
 
     expect($row->state)->toBe('connected');
+})->group('channel-zalo');
+
+// ── F1-audit: ZaloSendService quota enforce ───────────────────────────────────
+
+it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGate::assertCanSend throw', function () {
+    [, , $conversation] = makeWorkspaceAndConversation();
+
+    // MeteringGate mock luôn throw (mô phỏng workspace hết quota, conv mới)
+    $blockingGate = new class implements MeteringGate {
+        public function canReplyOnExisting(Conversation $c): bool { return false; }
+        public function canStartNew(string $channel): bool { return false; }
+        public function meterReply(Conversation $c): void {}
+        public function assertCanSend(Conversation $c): void {
+            throw new QuotaExceededException();
+        }
+    };
+
+    $service = new ZaloSendService(
+        rateLimiter:   new SendRateLimiter(),
+        healthMonitor: app(AccountHealthMonitor::class),
+        meteringGate:  $blockingGate,
+    );
+
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    // Phải throw QuotaExceededException — KHÔNG gửi bridge
+    expect(fn () => $service->send($conversation, 'Hello'))
+        ->toThrow(QuotaExceededException::class);
+
+    // KHÔNG ghi Message (bridge chưa được gọi)
+    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
+
+    \Carbon\Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('F1-audit: ZaloSendService::send PASS khi conv đã metered (AllowAllMeteringGate → no-op)', function () {
+    [, , $conversation] = makeWorkspaceAndConversation();
+
+    Http::fake([
+        '*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'src_f5'], 200),
+    ]);
+
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    // AllowAllMeteringGate: assertCanSend no-op → gửi được kể cả khi billing tắt
+    $message = makeSendService()->send($conversation, 'Reply F5');
+
+    expect($message)->toBeInstanceOf(Message::class)
+        ->and($message->direction)->toBe('out');
+
+    \Carbon\Carbon::setTestNow();
 })->group('channel-zalo');

@@ -32,4 +32,9 @@ final class AllowAllMeteringGate implements MeteringGate
     {
         // ponytail: no-op khi billing tắt — không đếm, không exception.
     }
+
+    public function assertCanSend(Conversation $conversation): void
+    {
+        // ponytail: no-op khi billing tắt — không chặn, không throw.
+    }
 }

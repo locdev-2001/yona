@@ -9,6 +9,7 @@ use Modules\Billing\Services\EntitlementResolver;
 use Modules\Identity\Models\User;
 use Modules\Inbox\Channel\AllowAllMeteringGate;
 use Modules\Inbox\Contracts\MeteringGate;
+use Modules\Inbox\Exceptions\QuotaExceededException;
 use Modules\Inbox\Models\Conversation;
 use Modules\Tenancy\Models\Workspace;
 use Modules\Tenancy\Models\WorkspaceSequence;
@@ -238,4 +239,178 @@ it('EntitlementResolver: allows integration.zalo_personal for team plan', functi
 
     expect($resolver->allows($workspace->id, 'integration.zalo_personal'))->toBeTrue()
         ->and($resolver->limit($workspace->id, 'quota.conversations.zalo_personal'))->toBe(1000);
+});
+
+// ── F9-audit: meterReply atomic transaction ───────────────────────────────────
+
+it('F9-audit: meterReply 2 lần cùng kỳ → last_metered_period set đúng (transaction wrap)', function () {
+    $workspace = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($workspace, $user);
+    seedMember($workspace, $user, 'admin');
+
+    $conv = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'zalo_atomic_f9_'.uniqid(),
+        'thread_type' => 0,
+        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
+    ]);
+
+    $meter = app(ConversationMeter::class);
+    $period = $meter->currentPeriod();
+
+    $meter->meterReply($conv);
+    $meter->meterReply($conv); // idempotent — second call nop
+
+    // last_metered_period phải đúng kỳ hiện tại (không rollback bởi double-call)
+    $fresh = Conversation::withoutGlobalScope('workspace')->find($conv->id);
+    expect($fresh->last_metered_period)->toBe($period);
+
+    // answered_count phải = 1 (transaction đảm bảo step1+step2 cùng commit hoặc rollback)
+    $usage = ChannelUsage::withoutGlobalScope('workspace')
+        ->where('workspace_id', $workspace->id)
+        ->where('channel', 'zalo_personal')
+        ->where('period', $period)
+        ->first();
+    expect($usage)->not->toBeNull()
+        ->and($usage->answered_count)->toBe(1);
+});
+
+// ── F1-audit: assertCanSend enforce quota ─────────────────────────────────────
+
+it('F1-audit: ConversationMeter::assertCanSend throws QuotaExceededException khi quota hết + conv mới', function () {
+    $workspace = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($workspace, $user);
+    seedMember($workspace, $user, 'admin');
+
+    $freeItem = MarketplaceItem::where('code', 'plan.free')->firstOrCreate(
+        ['code' => 'plan.free'],
+        [
+            'name' => 'Free',
+            'type' => 'plan',
+            'billing_type' => 'one_off',
+            'price_cents' => 0,
+            'currency' => 'VND',
+            'is_active' => true,
+            'entitlements' => [
+                'flags' => ['module.inbox'],
+                'quotas' => ['quota.conversations.zalo_personal' => 50],
+            ],
+        ]
+    );
+
+    WorkspacePurchase::withoutGlobalScope('workspace')->create([
+        'workspace_id' => $workspace->id,
+        'item_id' => $freeItem->id,
+        'status' => 'active',
+        'quantity' => 1,
+    ]);
+
+    // Đã dùng hết 50 quota kỳ này
+    $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
+    DB::table('channel_usage')->insert([
+        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'period' => $period,
+        'answered_count' => 50,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    app(EntitlementResolver::class)->forgetCache($workspace->id);
+
+    // Conv MỚI (chưa metered kỳ này)
+    $conv = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'zalo_quota_'.uniqid(),
+        'thread_type' => 0,
+        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
+        // last_metered_period = null → conv mới kỳ này
+    ]);
+
+    $meter = app(ConversationMeter::class);
+
+    // assertCanSend phải throw QuotaExceededException
+    expect(fn () => $meter->assertCanSend($conv))
+        ->toThrow(QuotaExceededException::class);
+});
+
+it('F1-audit: ConversationMeter::assertCanSend KHÔNG throw khi conv đã metered kỳ này (F5)', function () {
+    $workspace = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($workspace, $user);
+    seedMember($workspace, $user, 'admin');
+
+    $freeItem = MarketplaceItem::where('code', 'plan.free')->firstOrCreate(
+        ['code' => 'plan.free'],
+        [
+            'name' => 'Free',
+            'type' => 'plan',
+            'billing_type' => 'one_off',
+            'price_cents' => 0,
+            'currency' => 'VND',
+            'is_active' => true,
+            'entitlements' => [
+                'flags' => ['module.inbox'],
+                'quotas' => ['quota.conversations.zalo_personal' => 50],
+            ],
+        ]
+    );
+
+    WorkspacePurchase::withoutGlobalScope('workspace')->create([
+        'workspace_id' => $workspace->id,
+        'item_id' => $freeItem->id,
+        'status' => 'active',
+        'quantity' => 1,
+    ]);
+
+    $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
+    DB::table('channel_usage')->insert([
+        'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'period' => $period,
+        'answered_count' => 50, // hết quota
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    app(EntitlementResolver::class)->forgetCache($workspace->id);
+
+    // Conv ĐÃ metered kỳ này (F5)
+    $conv = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'zalo_f5_metered_'.uniqid(),
+        'thread_type' => 0,
+        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
+        'last_metered_period' => $period, // đã tính kỳ này
+    ]);
+
+    $meter = app(ConversationMeter::class);
+
+    // F5: không throw dù hết quota
+    expect(fn () => $meter->assertCanSend($conv))->not->toThrow(QuotaExceededException::class);
+});
+
+it('F1-audit: AllowAllMeteringGate::assertCanSend no-op (billing tắt → không throw)', function () {
+    $workspace = Workspace::factory()->create();
+    actingInWorkspace($workspace);
+
+    $conv = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'zalo_noop_'.uniqid(),
+        'thread_type' => 0,
+        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
+    ]);
+
+    $gate = new AllowAllMeteringGate();
+
+    // Phải không throw dù conv mới và không có quota
+    expect(fn () => $gate->assertCanSend($conv))->not->toThrow(\Throwable::class);
 });

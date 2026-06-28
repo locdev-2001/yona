@@ -107,23 +107,35 @@ class GrantPlanService
             return null;
         }
 
-        $purchase = WorkspacePurchase::withoutGlobalScope('workspace')
+        // F2-audit: đọc qua pgsql_privileged (bypass RLS) — giống grant().
+        // WorkspacePurchase::withoutGlobalScope dùng connection mặc định 'pgsql' vẫn bị RLS
+        // khi không có workspace context (admin route) → first() = null → silent no-op.
+        $db = DB::connection('pgsql_privileged');
+
+        $existing = $db->table('workspace_purchases')
             ->where('workspace_id', $workspaceId)
             ->where('item_id', $item->id)
             ->where('status', 'active')
             ->first();
 
-        if (! $purchase) {
+        if (! $existing) {
             return null;
         }
 
-        DB::connection('pgsql_privileged')
-            ->table('workspace_purchases')
-            ->where('id', $purchase->id)
+        $db->table('workspace_purchases')
+            ->where('id', $existing->id)
             ->update(['status' => 'cancelled', 'updated_at' => now()]);
 
         app(EntitlementResolver::class)->forgetCache($workspaceId);
 
-        return $purchase->fresh();
+        // Build model từ data (không query lại qua RLS — không có workspace context)
+        $purchase = new WorkspacePurchase;
+        $purchase->id = $existing->id;
+        $purchase->workspace_id = $workspaceId;
+        $purchase->item_id = $item->id;
+        $purchase->status = 'cancelled';
+        $purchase->exists = true;
+
+        return $purchase;
     }
 }

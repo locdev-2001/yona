@@ -190,8 +190,9 @@ function slotKeyFromRequest(req) {
 }
 
 function checkUiSecret(req) {
+    // F10-audit: fail-CLOSED — secret rỗng → từ chối (không phải bypass).
     if (!BRIDGE_UI_SECRET) {
-        return true;
+        return false;
     }
     const h = req.header('X-Bridge-UI-Secret') || req.query.ui_secret || '';
     return h === BRIDGE_UI_SECRET;
@@ -1978,12 +1979,15 @@ async function downloadFileUrlToTemp(url, mediaKind, filenameHint) {
 }
 
 function checkSendSecret(req, res) {
-    if (BRIDGE_SEND_SECRET) {
-        const h = req.header('X-Bridge-Send-Secret') || '';
-        if (h !== BRIDGE_SEND_SECRET) {
-            res.status(403).json({ ok: false, message: 'Forbidden' });
-            return false;
-        }
+    // F10-audit: fail-CLOSED — secret rỗng → từ chối thay vì bypass.
+    if (!BRIDGE_SEND_SECRET) {
+        res.status(503).json({ ok: false, error: 'bridge secret not configured' });
+        return false;
+    }
+    const h = req.header('X-Bridge-Send-Secret') || '';
+    if (h !== BRIDGE_SEND_SECRET) {
+        res.status(403).json({ ok: false, message: 'Forbidden' });
+        return false;
     }
     return true;
 }
@@ -2362,6 +2366,17 @@ async function cleanupStaleQrSessionFiles() {
 }
 
 async function boot() {
+    // F10-audit: startup guard — thiếu secret trong production → từ chối boot.
+    if (process.env.NODE_ENV === 'production') {
+        const missing = [];
+        if (!BRIDGE_SEND_SECRET) missing.push('BRIDGE_SEND_SECRET');
+        if (!BRIDGE_UI_SECRET) missing.push('BRIDGE_UI_SECRET');
+        if (missing.length > 0) {
+            console.error(`[bridge] FATAL: missing required env vars in production: ${missing.join(', ')}. Refusing to start.`);
+            process.exit(1);
+        }
+    }
+
     await cleanupStaleQrSessionFiles();
     await bootRestoreAllSessions();
     setInterval(() => {
