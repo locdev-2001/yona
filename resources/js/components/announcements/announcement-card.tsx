@@ -1,4 +1,4 @@
-import { AnnouncementBody } from '@modules/announcements/resources/js/components/announcements/announcement-body';
+import { AnnouncementBody } from '@/components/announcements/announcement-body';
 import { Badge } from '@/components/ui/badge';
 import { useTranslator } from '@/lib/i18n';
 import { type Announcement, type AnnouncementCategory } from '@/types';

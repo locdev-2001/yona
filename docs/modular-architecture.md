@@ -96,7 +96,7 @@ Modules\Inbox\Contracts\ChannelDriver {
 ```
 - `ChannelManager` (driver-manager pattern, như Laravel `Manager`): driver tự `extend('zalo_personal', fn() => new ZaloChannelDriver)` trong ServiceProvider của `channel-zalo`.
 - Inbox core chỉ gọi `ChannelManager::driver($channel)->sendMessage(...)`. **Không biết Zalo.** Thêm Messenger = module `channel-messenger` đăng ký driver mới.
-- Webhook nhận tin: route ở driver, chuẩn hóa qua `parseInbound` → inbox core ghi `Conversation/Message`. Bridge Zalo (Node) thuộc `channel-zalo` (`modules/channel-zalo/services/bridge/`).
+- Webhook nhận tin: route ở driver, chuẩn hóa qua `parseInbound` → inbox core ghi `Conversation/Message`. Bridge Zalo (Node) chạy tại `services/zalo-bridge/`.
 
 ### 4.2 Payment (billing)
 ```

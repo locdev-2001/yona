@@ -1,5 +1,5 @@
-import { AnnouncementCard } from '@modules/announcements/resources/js/components/announcements/announcement-card';
-import { WhatsNewModal } from '@modules/announcements/resources/js/components/announcements/whats-new-modal';
+import { AnnouncementCard } from '@/components/announcements/announcement-card';
+import { WhatsNewModal } from '@/components/announcements/whats-new-modal';
 import { PageHeader } from '@/components/page-header';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';

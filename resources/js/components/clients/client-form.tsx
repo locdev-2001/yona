@@ -9,8 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useTranslator } from '@/lib/i18n';
 import type { Client, ClientGroup, CustomFieldValue } from '@/types';
 import { useForm } from '@inertiajs/react';
-import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
+import CustomFieldsSection from '@/components/shared/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { useEffect, useState } from 'react';
 
 interface Props {

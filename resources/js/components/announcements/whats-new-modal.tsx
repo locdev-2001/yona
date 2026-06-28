@@ -1,7 +1,7 @@
-import { AnnouncementBody } from '@modules/announcements/resources/js/components/announcements/announcement-body';
+import { AnnouncementBody } from '@/components/announcements/announcement-body';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAnnouncementModal } from '@modules/announcements/resources/js/hooks/use-announcement-modal';
+import { useAnnouncementModal } from '@/hooks/use-announcement-modal';
 import { useTranslator } from '@/lib/i18n';
 import type { SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/react';

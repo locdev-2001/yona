@@ -16,17 +16,13 @@ export default defineConfig({
             ssr: 'resources/js/ssr.jsx',
             refresh: [
                 'resources/**',
-                'modules/*/resources/**',
             ],
         }),
         react(),
         tailwindcss(),
     ],
     resolve: {
-        alias: {
-            // @modules/sample/... → modules/sample/... (asset imports in module pages)
-            '@modules': path.resolve(__dirname, 'modules'),
-        },
+        alias: {},
     },
     esbuild: {
         jsx: 'automatic',

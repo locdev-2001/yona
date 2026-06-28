@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, Lead, LeadSource, Pipeline, PipelineStage, User } from '@/types';
 import { Head } from '@inertiajs/react';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import LeadForm from './components/lead-form';
 
 interface Props {

@@ -4,14 +4,14 @@
 
 Bridge Node.js chạy song song với Laravel app:
 ```
-modules/channel-zalo/services/bridge/   ← bridge source
-storage/logs/zalo-bridge/               ← pm2 logs (auto-created)
+services/zalo-bridge/       ← bridge source
+storage/logs/zalo-bridge/   ← pm2 logs (auto-created)
 ```
 
 ## Cài đặt
 
 ```bash
-cd modules/channel-zalo/services/bridge
+cd services/zalo-bridge
 cp .env.example .env
 # Điền secrets vào .env (xem bên dưới)
 npm install

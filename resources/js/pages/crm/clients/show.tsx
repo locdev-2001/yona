@@ -9,13 +9,13 @@ import AppLayout from '@/layouts/app-layout';
 import { useTranslator } from '@/lib/i18n';
 import type { BreadcrumbItem, Client, ClientGroup, ClientVaultEntry, User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ActivityTimeline } from '@modules/shared/resources/js/components/activity/activity-timeline';
-import type { Attachment } from '@modules/shared/resources/js/components/attachments/attachment-list';
-import { AttachmentList } from '@modules/shared/resources/js/components/attachments/attachment-list';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
-import type { Note } from '@modules/shared/resources/js/components/notes/note-list';
-import { NoteList } from '@modules/shared/resources/js/components/notes/note-list';
-import TagInput from '@modules/shared/resources/js/components/tags/tag-input';
+import { ActivityTimeline } from '@/components/shared/activity/activity-timeline';
+import type { Attachment } from '@/components/shared/attachments/attachment-list';
+import { AttachmentList } from '@/components/shared/attachments/attachment-list';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
+import type { Note } from '@/components/shared/notes/note-list';
+import { NoteList } from '@/components/shared/notes/note-list';
+import TagInput from '@/components/shared/tags/tag-input';
 import { Globe, Pencil, Phone, Trash2 } from 'lucide-react';
 
 interface Props {

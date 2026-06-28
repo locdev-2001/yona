@@ -20,9 +20,9 @@ module.exports = {
             autorestart: true,
             watch: false,
             max_memory_restart: "512M",
-            // Log paths → storage/logs/zalo-bridge (relative từ project root, bridge chạy từ modules/channel-zalo/services/bridge)
-            error_file: path.join(__dirname, "../../../../storage/logs/zalo-bridge/error.log"),
-            out_file: path.join(__dirname, "../../../../storage/logs/zalo-bridge/out.log"),
+            // Log paths → storage/logs/zalo-bridge (relative từ project root, bridge chạy từ services/zalo-bridge)
+            error_file: path.join(__dirname, "../../storage/logs/zalo-bridge/error.log"),
+            out_file: path.join(__dirname, "../../storage/logs/zalo-bridge/out.log"),
             log_date_format: "YYYY-MM-DD HH:mm:ss",
             merge_logs: true,
             kill_timeout: 5000,

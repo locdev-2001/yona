@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslator } from '@/lib/i18n';
 import type { Contact, CustomFieldValue } from '@/types';
 import { router, useForm } from '@inertiajs/react';
-import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
+import CustomFieldsSection from '@/components/shared/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { Pencil, Star, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 

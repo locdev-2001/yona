@@ -7,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslator } from '@/lib/i18n';
 import type { CustomFieldValue, Lead, LeadSource, Pipeline, PipelineStage, User } from '@/types';
 import { useForm } from '@inertiajs/react';
-import CustomFieldsSection from '@modules/shared/resources/js/components/custom-fields/custom-fields-section';
-import type { CustomFieldDefinition } from '@modules/shared/resources/js/components/custom-fields/types';
+import CustomFieldsSection from '@/components/shared/custom-fields/custom-fields-section';
+import type { CustomFieldDefinition } from '@/components/shared/custom-fields/types';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
