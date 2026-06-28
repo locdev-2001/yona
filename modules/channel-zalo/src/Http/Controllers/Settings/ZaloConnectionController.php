@@ -3,6 +3,7 @@
 namespace Modules\ChannelZalo\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -80,13 +81,19 @@ class ZaloConnectionController extends Controller
         $connection = ZaloConnection::where('connection_id', $connectionId)->firstOrFail();
 
         // Gọi bridge để bắt đầu QR login
-        $bridgeResponse = Http::asJson()
-            ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
-            ->timeout(10)
-            ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/start', [
-                'qr_token' => $qrToken,
-                'bot_id'   => $connectionId,
-            ]);
+        try {
+            $bridgeResponse = Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(10)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/start', [
+                    'qr_token' => $qrToken,
+                    'bot_id'   => $connectionId,
+                ]);
+        } catch (ConnectionException) {
+            $connection->delete();
+
+            return $this->bridgeDownResponse();
+        }
 
         if (! $bridgeResponse->successful()) {
             $connection->delete();
@@ -116,12 +123,16 @@ class ZaloConnectionController extends Controller
             return response()->json(['ok' => false, 'message' => 'qr_token required'], 400);
         }
 
-        $bridgeResponse = Http::asJson()
-            ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
-            ->timeout(8)
-            ->get(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/status', [
-                'qr_token' => $qrToken,
-            ]);
+        try {
+            $bridgeResponse = Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(8)
+                ->get(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/status', [
+                    'qr_token' => $qrToken,
+                ]);
+        } catch (ConnectionException) {
+            return $this->bridgeDownResponse();
+        }
 
         return response()->json($bridgeResponse->json(), $bridgeResponse->status());
     }
@@ -142,13 +153,17 @@ class ZaloConnectionController extends Controller
             ->where('workspace_id', $this->currentWorkspaceId())
             ->firstOrFail();
 
-        $bridgeResponse = Http::asJson()
-            ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
-            ->timeout(10)
-            ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/promote', [
-                'qr_token'      => $validated['qr_token'],
-                'connection_id' => $validated['connection_id'],
-            ]);
+        try {
+            $bridgeResponse = Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(10)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/promote', [
+                    'qr_token'      => $validated['qr_token'],
+                    'connection_id' => $validated['connection_id'],
+                ]);
+        } catch (ConnectionException) {
+            return $this->bridgeDownResponse();
+        }
 
         if (! $bridgeResponse->successful()) {
             return response()->json([
@@ -173,17 +188,32 @@ class ZaloConnectionController extends Controller
             abort(403);
         }
 
-        Http::asJson()
-            ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
-            ->timeout(8)
-            ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/logout', [
-                'connection_id' => $zaloConnection->connection_id,
-            ]);
-        // ponytail: ignore bridge logout error — soft-delete vẫn chạy
+        // ponytail: ignore bridge logout error (incl. bridge down) — soft-delete vẫn chạy
+        try {
+            Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(8)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/logout', [
+                    'connection_id' => $zaloConnection->connection_id,
+                ]);
+        } catch (ConnectionException) {
+            // bridge không chạy — vẫn soft-delete connection
+        }
 
         $zaloConnection->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Phản hồi thân thiện khi bridge Node (port 3710) không chạy — tránh lòi cURL thô ra UI.
+     */
+    private function bridgeDownResponse(): JsonResponse
+    {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'Dịch vụ kết nối Zalo (bridge) chưa chạy ở cổng 3710. Khởi động bridge rồi thử lại.',
+        ], 503);
     }
 
     private function currentWorkspaceId(): string
