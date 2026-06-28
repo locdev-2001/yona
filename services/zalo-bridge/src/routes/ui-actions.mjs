@@ -191,7 +191,6 @@ export function registerUiActionsRoutes(app, deps) {
     const {
         checkUiSecret,
         getSlot,
-        AvatarSize,
         ThreadType,
     } = deps;
 
@@ -258,7 +257,7 @@ export function registerUiActionsRoutes(app, deps) {
         }
         try {
             const p = (async () => {
-                const friends = await slot.api.getAllFriends(2000, 1, AvatarSize.Large);
+                const friends = await slot.api.getAllFriends(2000, 1);
                 const out = Array.isArray(friends)
                 ? friends.map((u) => ({
                       id: String(u.userId ?? u.uid ?? u.id ?? ''),
@@ -341,7 +340,7 @@ export function registerUiActionsRoutes(app, deps) {
             return res.status(503).json({ ok: false, message: 'not_logged_in' });
         }
         try {
-            const u = await slot.api.findUser(phone, AvatarSize.Large);
+            const u = await slot.api.findUser(phone);
             const pick = (obj, path, fallback = null) => {
                 try {
                     return path.split('.').reduce((a, k) => (a && a[k] != null ? a[k] : null), obj) ?? fallback;
@@ -375,7 +374,7 @@ export function registerUiActionsRoutes(app, deps) {
             let avatar = pickAvatar(u);
             if (uid && !name) {
                 try {
-                    const prof = await slot.api.getUserInfo(uid, AvatarSize.Large);
+                    const prof = await slot.api.getUserInfo(uid);
                     const uidBase = uid.split('_')[0];
                     const rows = [];
                     const walkProf = (obj, depth) => {
@@ -478,7 +477,7 @@ export function registerUiActionsRoutes(app, deps) {
             return res.status(503).json({ ok: false, message: 'not_logged_in' });
         }
         try {
-            const u = await slot.api.findUser(phone, AvatarSize.Large);
+            const u = await slot.api.findUser(phone);
             const uid = String(u.userId ?? u.uid ?? u.id ?? '').trim();
             if (!uid) {
                 return res.status(400).json({ ok: false, message: 'user_not_found' });
@@ -1017,7 +1016,7 @@ export function registerUiActionsRoutes(app, deps) {
                 const base = byId.get(String(id)) || { id: String(id), name: null, avatar: null };
                 if (base.name && base.avatar) continue;
                 try {
-                    const prof = await slot.api.getUserInfo(String(id), AvatarSize.Large);
+                    const prof = await slot.api.getUserInfo(String(id));
                     const resolved = resolveFromProfile(prof, String(id).split('_')[0]);
                     if (resolved && (resolved.name || resolved.avatar)) {
                         byId.set(String(id), {

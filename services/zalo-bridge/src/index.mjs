@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { Zalo, ThreadType, LoginQRCallbackEventType, AvatarSize, CloseReason } from 'zca-js';
+import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 
@@ -1277,7 +1277,7 @@ async function resolveBusinessCardForWebhook(api, card, message) {
         }
         if (!phone && typeof api.getUserInfo === 'function') {
             try {
-                const res = await api.getUserInfo(uid, AvatarSize.Large);
+                const res = await api.getUserInfo(uid);
                 const profiles = res?.changed_profiles || {};
                 const keys = Object.keys(profiles);
                 const p = keys.length ? profiles[keys[0]] : null;
@@ -1306,7 +1306,7 @@ async function refreshIntegratedProfile(slot) {
         return;
     }
     try {
-        const res = await slot.api.getUserInfo(slot.personalUid, AvatarSize.Large);
+        const res = await slot.api.getUserInfo(slot.personalUid);
         const profiles = res?.changed_profiles || {};
         const keys = Object.keys(profiles);
         if (!keys.length) {
@@ -1329,7 +1329,7 @@ async function refreshIntegratedProfile(slot) {
 
 async function resolvePeerProfile(api, peerUid) {
     try {
-        const res = await api.getUserInfo(peerUid, AvatarSize.Large);
+        const res = await api.getUserInfo(peerUid);
         const profiles = res?.changed_profiles || {};
         const keys = Object.keys(profiles);
         if (!keys.length) {
@@ -2304,7 +2304,7 @@ function buildExpress() {
         }
     });
     registerPersonalMessageRoutes(app, { checkSendSecret, getSlot, bridgeSendTextOrMedia });
-    registerUiActionsRoutes(app, { checkUiSecret, getSlot, AvatarSize, ThreadType });
+    registerUiActionsRoutes(app, { checkUiSecret, getSlot, ThreadType });
 
     return app;
 }

@@ -159,7 +159,7 @@ reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
 
 bridge: ## Start the Zalo personal bridge (foreground; installs deps on first run) — then connect at /integrations/zalo
-	cd services/zalo-bridge && { test -d node_modules || pnpm install; } && pnpm dev
+	cd services/zalo-bridge && { test -d node_modules || pnpm install; } && node src/index.mjs
 
 workers: ## Run full pipeline (Horizon queues + Reverb websocket)
 	trap 'kill 0' INT TERM; \
