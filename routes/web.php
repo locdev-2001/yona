@@ -72,7 +72,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('leads/{lead}/convert', [LeadConversionController::class, 'store'])->name('leads.convert');
         Route::post('leads/{lead}/lost', [LeadStatusActionController::class, 'markLost'])->name('leads.lost');
         Route::post('leads/{lead}/junk', [LeadStatusActionController::class, 'markJunk'])->name('leads.junk');
-        Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])->name('leads.restore-status');
+        Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])
+            ->name('leads.restore-status')->withTrashed();
 
         // P06 — Clients + Contacts.
         Route::resource('clients', ClientController::class);
