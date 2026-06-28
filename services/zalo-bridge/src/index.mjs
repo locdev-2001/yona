@@ -12,6 +12,9 @@ import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
+import { createOutbox } from './outbox.mjs';
+import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
+import { deriveInboundSourceId } from './inbound-source-id.mjs';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -21,11 +24,22 @@ const PLUGIN_ROOT = path.join(__dirname_src, '..');
 dotenv.config({ path: path.join(PLUGIN_ROOT, '.env') });
 
 const SESSIONS_DIR = path.join(PLUGIN_ROOT, '.sessions');
+const OUTBOX_DIR = path.join(PLUGIN_ROOT, '.outbox');
+const OUTBOX_DEAD_DIR = path.join(PLUGIN_ROOT, '.outbox-dead');
 const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 3710);
 const BRIDGE_SEND_SECRET = process.env.BRIDGE_SEND_SECRET || '';
 const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
+
+// Tier 1 outbox — khởi tạo sớm, start() gọi sau bootRestoreAllSessions()
+const outbox = createOutbox({
+    dir: OUTBOX_DIR,
+    deadDir: OUTBOX_DEAD_DIR,
+    webhookUrl: LARAVEL_WEBHOOK_URL,
+    webhookSecret: LARAVEL_WEBHOOK_SECRET,
+});
+
 const ZCA_USER_AGENT =
     process.env.ZCA_USER_AGENT ||
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0';
@@ -307,68 +321,18 @@ function zaloPersonalSocialSourceId(connectionId, socialKind, act, threadId, eve
 }
 
 async function postZaloPersonalSocialEvent(body) {
-    if (!LARAVEL_WEBHOOK_URL) {
-        console.error('postZaloPersonalSocialEvent: LARAVEL_WEBHOOK_URL not set');
-        return;
-    }
-    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
-    if (LARAVEL_WEBHOOK_SECRET) {
-        headers['X-Zalo-Personal-Bridge-Secret'] = LARAVEL_WEBHOOK_SECRET;
-    }
-    const res = await fetch(LARAVEL_WEBHOOK_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        const t = await res.text();
-        console.error('Laravel social_event webhook HTTP', res.status, t);
-    }
+    if (!LARAVEL_WEBHOOK_URL) return;
+    await outbox.enqueue(body);
 }
 
 async function postInbound(body) {
-    if (!LARAVEL_WEBHOOK_URL) {
-        console.error('postInbound: LARAVEL_WEBHOOK_URL not set');
-        return;
-    }
-    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
-    if (LARAVEL_WEBHOOK_SECRET) {
-        headers['X-Zalo-Personal-Bridge-Secret'] = LARAVEL_WEBHOOK_SECRET;
-    }
-    const res = await fetch(LARAVEL_WEBHOOK_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        const t = await res.text();
-        console.error('Laravel webhook HTTP', res.status, t);
-    }
+    if (!LARAVEL_WEBHOOK_URL) return;
+    await outbox.enqueue(body);
 }
 
 async function postBridgeSession({ connection_id, bot_id, state, detail }) {
-    if (!LARAVEL_WEBHOOK_URL || !connection_id || !bot_id) {
-        return;
-    }
-    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
-    if (LARAVEL_WEBHOOK_SECRET) {
-        headers['X-Zalo-Personal-Bridge-Secret'] = LARAVEL_WEBHOOK_SECRET;
-    }
-    const res = await fetch(LARAVEL_WEBHOOK_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-            type: 'bridge_session',
-            connection_id,
-            bot_id,
-            state,
-            detail: detail ?? null,
-        }),
-    });
-    if (!res.ok) {
-        const t = await res.text();
-        console.error('Laravel bridge_session HTTP', res.status, t);
-    }
+    if (!LARAVEL_WEBHOOK_URL || !connection_id || !bot_id) return;
+    await outbox.enqueue({ type: 'bridge_session', connection_id, bot_id, state, detail: detail ?? null });
 }
 
 function pickMediaUrl(c) {
@@ -967,6 +931,27 @@ function extractQuoteFromListenerMessage(message) {
         if (sr) {
             quote.sticker_ref = sr;
         }
+        // Reply tới tin KHÔNG phải text (ảnh/file/video...): TQuote.attach là JSON {thumb,href,type,title};
+        // cliMsgType là loại (số); fromD là tên người gửi tin được trả lời.
+        if (!quote.sender_name && q.fromD != null && String(q.fromD).trim() !== '') {
+            quote.sender_name = String(q.fromD).trim();
+        }
+        if (q.cliMsgType != null && Number.isFinite(Number(q.cliMsgType))) {
+            quote.cli_msg_type = Number(q.cliMsgType);
+        }
+        if (typeof q.attach === 'string' && q.attach.trim().startsWith('{')) {
+            try {
+                const a = JSON.parse(q.attach);
+                if (a && typeof a === 'object') {
+                    const thumb = a.thumb || a.href || null;
+                    if (thumb) quote.thumb = String(thumb);
+                    if (a.type) quote.attach_type = String(a.type);
+                    if (!quote.text && a.title && String(a.title).trim() !== '') quote.text = String(a.title);
+                }
+            } catch {
+                // attach không phải JSON → bỏ qua
+            }
+        }
         if (Object.keys(quote).length === 0) {
             quote = null;
         }
@@ -1491,6 +1476,48 @@ async function resolveGroupProfile(api, groupId) {
     }
 }
 
+/**
+ * Build payload inbound đơn giản cho backfill nhóm từ getGroupChatHistory.
+ * Không resolve profile async (tốc độ backfill > độ đầy đủ profile).
+ * source_id deterministic qua deriveInboundSourceId (C-2).
+ * is_self theo uid thật (C-1).
+ */
+function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
+    const cid = slot._connectionId; // gắn khi startListenerForSlot
+    const bid = slot.botId;
+    if (!cid || !bid) return null;
+
+    const sourceId = deriveInboundSourceId(cid, groupId, rawD);
+    const ts = rawD?.ts ?? rawD?.msgTs ?? rawD?.sendTime ?? rawD?.clientTime;
+    const platformSentAt = Number.isFinite(Number(ts)) && Number(ts) > 0 ? Math.round(Number(ts)) : Date.now();
+
+    // Suy ra content/inbound_kind từ rawD trực tiếp (history không qua parseInboundDescriptor)
+    const contentRaw = rawD?.content;
+    const contentStr = typeof contentRaw === 'string' ? contentRaw : JSON.stringify(contentRaw ?? '');
+    const mediaUrl = typeof contentRaw === 'object' ? (contentRaw?.href ?? contentRaw?.url ?? null) : null;
+
+    const payload = {
+        connection_id: cid,
+        bot_id: bid,
+        personal_uid: slot.personalUid,
+        peer_uid: groupId,
+        thread_id: groupId,
+        thread_type: 1,          // group
+        source_id: sourceId,
+        is_self: isSelf,
+        direction: isSelf ? 'out' : 'in',  // backfill không check echo (không có outboundEchoIds context)
+        user: { name: null, avatar: null }, // profile không resolve khi backfill
+        platform_sent_at: platformSentAt,
+        inbound_kind: mediaUrl ? 'media' : 'text',
+        content: contentStr,
+        backfill: true,          // marker để Laravel biết đây là tin hồi phục (không gửi notification)
+    };
+    if (mediaUrl) payload.media_url = mediaUrl;
+    if (!isSelf && rawD?.uidFrom) payload.sender_uid = String(rawD.uidFrom);
+
+    return payload;
+}
+
 function startListenerForSlot(slotKey) {
     const slot = getSlot(slotKey);
     if (!slot.api || slot.listenerStarted) {
@@ -1501,6 +1528,7 @@ function startListenerForSlot(slotKey) {
         return;
     }
     slot.listenerStarted = true;
+    slot._connectionId = Number(slotKey); // cho buildGroupBackfillPayload
     const cid = Number(slotKey);
     const bid = slot.botId;
 
@@ -1509,6 +1537,7 @@ function startListenerForSlot(slotKey) {
             slot.api.listener.on('error', (err) => {
                 slot.loginPhase = 'session_lost';
                 slot.sessionLostReason = err?.message || String(err || 'listener_error');
+                slot.sessionLostAt = Date.now(); // cho computeGapMs khi reconnect
                 console.warn('zalo-bridge: listener error connection_id=', cid, slot.sessionLostReason);
                 postBridgeSession({
                     connection_id: cid,
@@ -1525,6 +1554,7 @@ function startListenerForSlot(slotKey) {
                 if (code === CloseReason.KickConnection || code === CloseReason.DuplicateConnection) {
                     slot.loginPhase = 'session_lost';
                     slot.sessionLostReason = `ws_closed_${code}_${reason || ''}`;
+                    slot.sessionLostAt = Date.now(); // cho computeGapMs khi reconnect
                     console.warn('zalo-bridge: listener closed (other session?)', cid, slot.sessionLostReason);
                     postBridgeSession({
                         connection_id: cid,
@@ -1626,7 +1656,8 @@ function startListenerForSlot(slotKey) {
                     : NaN;
             const platformSentAt =
                 Number.isFinite(tsMs0) && tsMs0 > 0 ? Math.round(tsMs0) : Date.now();
-            const sourceId = String(message?.data?.msgId ?? message?.data?.msgID ?? Date.now());
+            // C-2: dùng deriveInboundSourceId — không bao giờ Date.now() fallback
+            const sourceId = deriveInboundSourceId(cid, threadId, message?.data);
             if (!bid) {
                 console.error('bridge: bot_id missing for slot', cid);
                 return;
@@ -1683,7 +1714,10 @@ function startListenerForSlot(slotKey) {
                 avatar = prof?.avatar ?? null;
             }
 
-            const isSelf = Boolean(message.isSelf);
+            // C-1: ưu tiên so sánh uid thật; fallback message.isSelf nếu personalUid chưa có
+            const isSelf = slot.personalUid
+                ? String(rawD?.uidFrom ?? '') === String(slot.personalUid)
+                : Boolean(message.isSelf);
             const payload = {
                 connection_id: cid,
                 bot_id: bid,
@@ -1845,6 +1879,12 @@ async function promoteQrToConnection(qrKey, connectionId) {
     if (slot.botId) {
         postBridgeSession({ connection_id: connectionId, bot_id: slot.botId, state: 'session_ok' }).catch(() => {});
     }
+    // Tier 2: backfill khi promote QR (lần đầu kết nối — gapMs null, backfill cần nếu mất kết nối trước)
+    void backfillOnReconnect(slot, {
+        enqueue: (body) => outbox.enqueue(body),
+        buildInboundPayload: buildGroupBackfillPayload,
+        gapMs: computeGapMs(slot),
+    });
     await clearDuplicatePersonalUidSlots(newKey, slot.personalUid);
     console.info('Zalo bridge: promoted', qrKey, '->', connectionId);
     return true;
@@ -1883,6 +1923,12 @@ async function tryLoginWithSavedSession(connectionId) {
         if (slot.botId) {
             postBridgeSession({ connection_id: connectionId, bot_id: slot.botId, state: 'session_ok' }).catch(() => {});
         }
+        // Tier 2: backfill tin nhóm trong gap kể từ lần session_lost (nếu có)
+        void backfillOnReconnect(slot, {
+            enqueue: (body) => outbox.enqueue(body),
+            buildInboundPayload: buildGroupBackfillPayload,
+            gapMs: computeGapMs(slot),
+        });
         await clearDuplicatePersonalUidSlots(key, slot.personalUid);
         return true;
     } catch (e) {
@@ -2074,6 +2120,8 @@ function buildExpress() {
             laravel_webhook_configured: Boolean(LARAVEL_WEBHOOK_URL),
             session_lost: slot.loginPhase === 'session_lost',
             session_lost_reason: slot.sessionLostReason || null,
+            // H-3 / M-4: outbox stats cho alert khi authBlocked hoặc queue tăng bất thường
+            outbox: outbox.stats(),
         };
         if (isQrSlotKey(slotKey)) {
             out.qr_token = slotKey.slice(3);
@@ -2318,7 +2366,13 @@ function buildExpress() {
         }
     });
     registerPersonalMessageRoutes(app, { checkSendSecret, getSlot, bridgeSendTextOrMedia });
-    registerUiActionsRoutes(app, { checkUiSecret, getSlot, ThreadType });
+    registerUiActionsRoutes(app, {
+        checkUiSecret,
+        getSlot,
+        ThreadType,
+        buildGroupBackfillPayload,
+        enqueueOutbox: (body) => outbox.enqueue(body),
+    });
 
     return app;
 }
@@ -2393,6 +2447,7 @@ async function boot() {
 
     await cleanupStaleQrSessionFiles();
     await bootRestoreAllSessions();
+    outbox.start(); // Tier 1: drain outbox còn lại từ lần chạy trước, rồi setInterval
     setInterval(() => {
         cleanupStaleQrSessionFiles().catch(() => {});
     }, 6 * 60 * 60 * 1000);

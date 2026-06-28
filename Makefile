@@ -158,8 +158,11 @@ horizon: ## Run Horizon (Redis queues)
 reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
 
-bridge: ## Start the Zalo personal bridge (foreground; installs deps on first run) — then connect at /integrations/zalo
-	cd services/zalo-bridge && { test -d node_modules || pnpm install; } && node src/index.mjs
+bridge: ## Start the Zalo personal bridge (foreground; kills any stale instance on the port first) — then connect at /integrations/zalo
+	cd services/zalo-bridge && { test -d node_modules || pnpm install; } && \
+		PORT=$${BRIDGE_HTTP_PORT:-3710}; \
+		fuser -k $$PORT/tcp 2>/dev/null && sleep 0.5 || true; \
+		node src/index.mjs
 
 workers: ## Run full pipeline (Horizon queues + Reverb websocket)
 	trap 'kill 0' INT TERM; \

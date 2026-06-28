@@ -192,6 +192,8 @@ export function registerUiActionsRoutes(app, deps) {
         checkUiSecret,
         getSlot,
         ThreadType,
+        buildGroupBackfillPayload,
+        enqueueOutbox,
     } = deps;
 
     const cache = new Map();
@@ -1155,6 +1157,38 @@ export function registerUiActionsRoutes(app, deps) {
         } catch (e) {
             return res.status(500).json({ ok: false, message: e?.message || String(e) });
         }
+    });
+
+    app.post('/backfill/group', async (req, res) => {
+        if (!checkUiSecret(req)) {
+            return res.status(403).json({ ok: false, message: 'Forbidden' });
+        }
+        const connectionId = Number(req.body?.connection_id || 0);
+        const groupId = String(req.body?.group_id || '').trim();
+        const count = Math.min(200, Number(req.body?.count) || 100);
+        if (!connectionId || !groupId) {
+            return res.status(400).json({ ok: false, message: 'connection_id and group_id required' });
+        }
+        const slot = getSlot(String(connectionId));
+        // Khớp định nghĩa connected của /health: loginPhase === 'ready' (session restore cũng = 'ready',
+        // KHÔNG phải 'session_ok' — 'session_ok' chỉ set lúc QR mới).
+        if (!slot?.api?.getGroupChatHistory || slot.loginPhase !== 'ready' || !slot.personalUid) {
+            return res.status(409).json({ ok: false, message: 'not_connected' });
+        }
+        let msgs;
+        try {
+            const res2 = await slot.api.getGroupChatHistory(groupId, count);
+            msgs = Array.isArray(res2?.groupMsgs) ? res2.groupMsgs : (Array.isArray(res2) ? res2 : []);
+        } catch (e) {
+            return res.status(502).json({ ok: false, message: e?.message || String(e) });
+        }
+        for (const m of msgs) {
+            const rawD = m?.data ?? m;
+            const isSelf = String(rawD?.uidFrom ?? '') === String(slot.personalUid ?? '');
+            const payload = buildGroupBackfillPayload(slot, groupId, rawD, isSelf);
+            if (payload) await enqueueOutbox(payload);
+        }
+        return res.json({ ok: true, fetched: msgs.length });
     });
 
     app.post('/ui/group/update', async (req, res) => {
