@@ -52,6 +52,7 @@ class Conversation extends Model
         'peer_uid',
         'thread_type',
         'peer_phone',
+        'phone_source',
         'peer_name',
         'peer_avatar_url',
         'contact_id',
@@ -75,6 +76,8 @@ class Conversation extends Model
             'conversation_number' => 'integer',
             'last_message_at' => 'datetime',
             'deleted_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'phone_enriched_at' => 'datetime',
         ];
     }
 

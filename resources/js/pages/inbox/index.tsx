@@ -86,6 +86,10 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [search, setSearch] = useState(filters.q ?? '');
     const [leadLoading, setLeadLoading] = useState(false);
     const [leadError, setLeadError] = useState<string | null>(null);
+    // P05 — nhập tay SĐT + verify
+    const [phoneInput, setPhoneInput] = useState('');
+    const [phoneSaving, setPhoneSaving] = useState(false);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
 
     const [syncing, setSyncing] = useState(false);
     // P03 — typing phù du: {convId, hết hạn} — tự tắt sau TYPING_TTL_MS không cần event mới
@@ -279,6 +283,36 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             })
             .catch(() => setLeadError('Không kết nối được server.'))
             .finally(() => setLeadLoading(false));
+    }
+
+    // P05 — verify findUser phía server: uid khớp peer mới lưu (manual_verified)
+    function handleVerifyPhone() {
+        if (!activeConv || !phoneInput.trim() || phoneSaving) return;
+        setPhoneSaving(true);
+        setPhoneError(null);
+
+        fetch(route('inbox.phone.update', activeConv.id), {
+            method: 'PUT',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+            body: JSON.stringify({ phone: phoneInput.trim() }),
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    setPhoneError(json.message ?? 'Không xác minh được SĐT.');
+                    return;
+                }
+                setPhoneInput('');
+                setActiveConv((prev) => (prev ? { ...prev, peer_phone: json.peer_phone, contact_id: json.contact_id ?? prev.contact_id } : prev));
+                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, peer_phone: json.peer_phone } : c)));
+            })
+            .catch(() => setPhoneError('Không kết nối được server.'))
+            .finally(() => setPhoneSaving(false));
     }
 
     function handleSearch(e: React.FormEvent) {
@@ -475,6 +509,25 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                 <p className="text-sm font-medium">{activeConv.peer_name ?? 'Không rõ tên'}</p>
                                 {activeConv.peer_phone && <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>}
                             </div>
+
+                            {/* P05 — nhập tay SĐT + verify (chỉ 1-1, chưa có SĐT) */}
+                            {activeConv.thread_type !== 1 && !activeConv.peer_phone && (
+                                <div className="space-y-1">
+                                    <div className="flex gap-1">
+                                        <Input
+                                            value={phoneInput}
+                                            onChange={(e) => setPhoneInput(e.target.value)}
+                                            placeholder="SĐT khách..."
+                                            className="h-7 text-xs"
+                                            disabled={phoneSaving}
+                                        />
+                                        <Button size="sm" variant="secondary" className="h-7 text-xs" disabled={phoneSaving || !phoneInput.trim()} onClick={handleVerifyPhone}>
+                                            {phoneSaving ? '...' : 'Xác minh'}
+                                        </Button>
+                                    </div>
+                                    {phoneError && <p className="text-destructive text-[11px]">{phoneError}</p>}
+                                </div>
+                            )}
 
                             <div className="space-y-1 text-xs">
                                 <div className="flex justify-between">

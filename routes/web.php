@@ -34,6 +34,7 @@ use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
 use App\Http\Controllers\Inbox\ConversationAttachmentController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\ConversationPhoneController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
 use App\Http\Controllers\Integration\IntegrationController;
@@ -245,6 +246,9 @@ Route::middleware(['auth'])->group(function () {
             ->name('inbox.attachments.store');
         Route::get('/inbox/attachments/{attachmentKey}', [ConversationAttachmentController::class, 'show'])
             ->name('inbox.attachments.show');
+        // P05 — nhập tay SĐT + verify qua kênh (manual_verified).
+        Route::put('/inbox/conversations/{conversation}/phone', [ConversationPhoneController::class, 'update'])
+            ->name('inbox.phone.update');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')

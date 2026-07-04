@@ -35,18 +35,50 @@ class MessageSourceResolver
      */
     public function findForAccount(string $channelAccountId, string $sourceId): ?Message
     {
-        $direct = Message::whereHas('conversation', fn ($q) => $q->where('channel_account_id', $channelAccountId))
-            ->where('source_id', $sourceId)
-            ->first();
+        return $this->findManyForAccount($channelAccountId, [$sourceId])[$sourceId] ?? null;
+    }
 
-        if ($direct !== null) {
-            return $direct;
+    /**
+     * P02 review MED-1 — batch resolve cho event dày (seen 1-50 tin/batch):
+     * 2 query whereIn thay vì 2N. Trả map source_id → Message.
+     *
+     * @param  list<string>  $sourceIds
+     * @return array<string, Message>
+     */
+    public function findManyForAccount(string $channelAccountId, array $sourceIds): array
+    {
+        $sourceIds = array_values(array_unique(array_filter($sourceIds)));
+        if ($sourceIds === []) {
+            return [];
         }
 
-        $alias = MessageSourceAlias::where('source_id', $sourceId)
-            ->whereHas('conversation', fn ($q) => $q->where('channel_account_id', $channelAccountId))
-            ->first();
+        $found = Message::whereHas('conversation', fn ($q) => $q->where('channel_account_id', $channelAccountId))
+            ->whereIn('source_id', $sourceIds)
+            ->with('conversation:id,thread_type,workspace_id')
+            ->get()
+            ->keyBy('source_id')
+            ->all();
 
-        return $alias === null ? null : Message::find($alias->message_id);
+        $missing = array_diff($sourceIds, array_keys($found));
+        if ($missing !== []) {
+            $aliases = MessageSourceAlias::whereIn('source_id', array_values($missing))
+                ->whereHas('conversation', fn ($q) => $q->where('channel_account_id', $channelAccountId))
+                ->get(['source_id', 'message_id']);
+
+            if ($aliases->isNotEmpty()) {
+                $aliasMessages = Message::whereIn('id', $aliases->pluck('message_id'))
+                    ->with('conversation:id,thread_type,workspace_id')
+                    ->get()
+                    ->keyBy('id');
+                foreach ($aliases as $alias) {
+                    $message = $aliasMessages->get($alias->message_id);
+                    if ($message !== null) {
+                        $found[$alias->source_id] = $message;
+                    }
+                }
+            }
+        }
+
+        return $found;
     }
 }

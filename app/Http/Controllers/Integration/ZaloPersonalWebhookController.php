@@ -334,7 +334,13 @@ class ZaloPersonalWebhookController extends Controller
             ->first();
 
         if ($conversation !== null) {
-            event(new ConversationTyping($conversation->workspace_id, $conversation->id, $typing['typist_uid']));
+            try {
+                event(new ConversationTyping($conversation->workspace_id, $conversation->id, $typing['typist_uid']));
+            } catch (Throwable $e) {
+                // Review LOW-2: ShouldBroadcastNow — Reverb down không được thành 500
+                // (typing là phù du, contract chatty luôn 200)
+                $this->safeReport($e);
+            }
         }
     }
 
