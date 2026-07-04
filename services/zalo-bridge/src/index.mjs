@@ -16,6 +16,7 @@ import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
+import { attachRelayForwarder } from './relay-forwarder.mjs';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -90,6 +91,8 @@ function createSlotState() {
         // P11: workspace bind lúc promote (B1 token-từ-session) + allowlist reflect cache
         workspaceId: '',
         allowlist: null,
+        // P12: forwarder generic attach đúng 1 lần/api instance (review MED-2)
+        forwarderAttached: false,
     };
 }
 
@@ -344,6 +347,20 @@ async function postInbound(body) {
 async function postBridgeSession({ connection_id, bot_id, state, detail }) {
     if (!LARAVEL_WEBHOOK_URL || !connection_id || !bot_id) return;
     await outbox.enqueue({ type: 'bridge_session', connection_id, bot_id, state, detail: detail ?? null });
+}
+
+/**
+ * P12/H3: lane fire-and-forget cho event chatty (typing/seen/delivered/…) —
+ * POST thẳng, KHÔNG qua outbox durable (nghẽn FIFO chặn inbound). Lỗi bỏ qua.
+ * Vẫn ký LARAVEL_WEBHOOK_SECRET như đường outbox.
+ */
+function postRelayFireAndForget(body) {
+    if (!LARAVEL_WEBHOOK_URL) return;
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (LARAVEL_WEBHOOK_SECRET) {
+        headers['X-Zalo-Personal-Bridge-Secret'] = LARAVEL_WEBHOOK_SECRET;
+    }
+    fetch(LARAVEL_WEBHOOK_URL, { method: 'POST', headers, body: JSON.stringify(body) }).catch(() => {});
 }
 
 function pickMediaUrl(c) {
@@ -1464,8 +1481,10 @@ async function resolveGroupProfile(api, groupId) {
  * Không resolve profile async (tốc độ backfill > độ đầy đủ profile).
  * source_id deterministic qua deriveInboundSourceId (C-2).
  * is_self theo uid thật (C-1).
+ * P12: threadType=0 cho old_messages 1-1 (relay-forwarder) — mặc định 1 giữ
+ * nguyên hành vi group backfill/resync cũ.
  */
-function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
+function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) {
     const cid = slot._connectionId; // gắn khi startListenerForSlot
     const bid = slot.botId;
     if (!cid || !bid) return null;
@@ -1485,7 +1504,7 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
         personal_uid: slot.personalUid,
         peer_uid: groupId,
         thread_id: groupId,
-        thread_type: 1,          // group
+        thread_type: threadType,
         source_id: sourceId,
         is_self: isSelf,
         direction: isSelf ? 'out' : 'in',  // backfill không check echo (không có outboundEchoIds context)
@@ -1795,6 +1814,17 @@ function startListenerForSlot(slotKey) {
             postInbound(payload).catch((e) => console.error('postInbound', e));
         })();
     });
+
+    // P12: forwarder generic — subscribe 10 event chưa wired (né 5 bespoke +
+    // cipher_key, B3/B6); guard slot.forwarderAttached bên trong (MED-2).
+    const relayEvents = attachRelayForwarder(slot, {
+        enqueue: (body) => outbox.enqueue(body),
+        postFireAndForget: postRelayFireAndForget,
+        buildInboundPayload: buildGroupBackfillPayload,
+    });
+    if (relayEvents.length > 0) {
+        console.info('zalo-bridge: relay forwarder attached connection_id=', cid, 'events=', relayEvents.join(','));
+    }
 
     slot.api.listener.start();
     console.info('zalo-bridge: listener started connection_id=', cid, 'bot_id=', bid);
