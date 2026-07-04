@@ -175,6 +175,12 @@ class InboxController extends Controller
             if ($text === '') {
                 return response()->json(['message' => 'Trả lời trích dẫn cần nội dung text.'], 422);
             }
+
+            // Review LOW-1: bridge nhánh file không gắn quote → khách KHÔNG thấy trích
+            // dẫn dù portal hiển thị. Chặn trung thực thay vì drop im lặng.
+            if (! empty($validated['attachment_id'])) {
+                return response()->json(['message' => 'Chưa hỗ trợ trả lời trích dẫn kèm tệp — gửi tách 2 tin.'], 422);
+            }
         }
 
         $sticker = $validated['sticker'] ?? null;
