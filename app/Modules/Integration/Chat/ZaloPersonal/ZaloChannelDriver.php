@@ -126,7 +126,41 @@ class ZaloChannelDriver implements ChannelDriver
             'sender_uid' => $raw['sender_uid'] ?? ($sender['id'] ?? null),
             'sender_name' => $sender['name'] ?? null,
             'sent_by' => null, // inbound = ngoài hệ thống
+            'platform_meta' => $this->extractPlatformMeta($raw),
         ];
+    }
+
+    /**
+     * P01a — platform_meta.zca_message: subset raw từ listener_data đủ 14 field
+     * cho outbound action (quote/reaction/seen — Codex BLOCKER-1). Thiếu 1 field
+     * = action tương ứng KHÔNG gọi được → chỉ giữ field có mặt, P06 gate theo field.
+     * Tin backfill/legacy không có listener_data → platform_meta rỗng (action disable).
+     *
+     * @param  array<string, mixed>  $raw
+     * @return array<string, mixed>
+     */
+    private function extractPlatformMeta(array $raw): array
+    {
+        $listenerData = $raw['listener_data'] ?? null;
+        if (! is_array($listenerData)) {
+            return [];
+        }
+
+        $zcaFields = [
+            'msgId', 'cliMsgId', 'uidFrom', 'idTo', 'msgType', 'ts', 'ttl',
+            'content', 'propertyExt', 'st', 'at', 'cmd', 'realMsgId',
+        ];
+
+        $zcaMessage = array_intersect_key($listenerData, array_flip($zcaFields));
+
+        if (isset($raw['thread_id'])) {
+            $zcaMessage['threadId'] = (string) $raw['thread_id'];
+        }
+        if (isset($raw['thread_type'])) {
+            $zcaMessage['threadType'] = (int) $raw['thread_type'];
+        }
+
+        return $zcaMessage === [] ? [] : ['zca_message' => $zcaMessage];
     }
 
     /**
