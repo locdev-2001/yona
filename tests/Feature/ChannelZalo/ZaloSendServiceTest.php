@@ -480,8 +480,9 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
         ->assertStatus(200)
         ->assertJsonFragment(['ok' => true]);
 
-    $row = DB::connection('pgsql_privileged')
-        ->table('zalo_connections')
+    // P10 [d]: promote update đi connection MẶC ĐỊNH (1 session cả cụm) — đọc
+    // cùng session mới thấy thay đổi trong transaction test (privileged = session khác).
+    $row = DB::table('zalo_connections')
         ->where('connection_id', $nextVal)
         ->first();
 

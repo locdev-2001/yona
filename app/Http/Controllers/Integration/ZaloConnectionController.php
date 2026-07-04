@@ -72,8 +72,9 @@ class ZaloConnectionController extends Controller
         $qrToken = Str::uuid()->toString();
         $workspaceId = $this->currentWorkspaceId();
 
-        // Insert qua pgsql_privileged (bypass RLS) — sequence GRANT đủ
-        DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+        // P10 [d]: insert qua connection MẶC ĐỊNH — request đã bind tenant (RLS
+        // session var set), GRANT bảng + sequence đủ. 1 session cho cả flow.
+        DB::table('zalo_connections')->insert([
             'workspace_id' => $workspaceId,
             'connection_id' => $connectionId,
             'state' => 'qr_waiting',
@@ -221,10 +222,11 @@ class ZaloConnectionController extends Controller
             }
         } elseif ($profile !== []) {
             // Bridge không trả personal_uid (hiếm) — fallback cập nhật state, KHÔNG bind account.
-            DB::connection('pgsql_privileged')->table('zalo_connections')->where('id', $connection->id)->update($profile);
-            $connection->updateState('connected');
+            // P10 [d]: CẢ CỤM promote đi 1 session mặc định (binder đã default) — né treo chéo.
+            DB::table('zalo_connections')->where('id', $connection->id)->update($profile);
+            $connection->updateState('connected', privileged: false);
         } else {
-            $connection->updateState('connected');
+            $connection->updateState('connected', privileged: false);
         }
 
         return response()->json(['ok' => true, 'connection_id' => $validated['connection_id']]);
