@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Integration;
 
+use App\Events\ConversationTyping;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
+use App\Models\Conversation;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Services\InboundMessageService;
+use App\Services\Inbox\MessageStateService;
 use App\Services\ZaloGroupBackfillService;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
@@ -14,7 +18,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -26,12 +29,13 @@ use Throwable;
  *   3. TenantScope::bind($workspaceId)
  *   4. try { xử lý } finally { TenantScope::forget() }
  *
- * 4 event types:
- *   - inbound       → parse + ingest (InboundMessageService, always-accept F13/F20)
+ * Event types:
+ *   - inbound        → parse + ingest (InboundMessageService, always-accept F13/F20)
  *   - bridge_session → update ZaloConnection.state
- *   - social_event  → log/no-op (YAGNI)
- *   - relay_event   → lưu relay_events (P10 — 11 event zca chưa có handler product)
- *   - default       → CŨNG lưu relay_events (P10/H1: event lạ KHÔNG drop im lặng)
+ *   - social_event   → log/no-op (YAGNI)
+ *   - relay_event    → P02: undo/seen/delivered/reaction ĐI THEO messages
+ *                      (MessageStateService); typing broadcast-only; lạ → log redacted.
+ *                      KHÔNG còn ghi relay_events (bảng drop ở P09).
  *
  * Route: POST /api/integrations/zalo-personal/webhook
  * Middleware: zalo.bridge.secret (VerifyZaloBridgeSecret)
@@ -224,19 +228,22 @@ class ZaloPersonalWebhookController extends Controller
     }
 
     /**
-     * P10 — relay_event từ forwarder generic (P12) + event type LẠ: lưu vào
-     * relay_events thay vì drop im lặng (red-team H1). KHÔNG tính metering
-     * (F1/F14 — kho quan sát, không phải message tenant trả lời).
+     * P02 (inbox-full-messaging-framework) — 5 event trạng-thái-tin đi THẲNG vào
+     * messages theo taxonomy 4 loại, NGỪNG ghi kho relay_events (bảng drop ở P09).
+     * KHÔNG tính metering (F1/F14 — trạng thái tin, không phải tin tenant trả lời).
      *
-     * Idempotent theo unique partial (workspace_id, event_type, source_id):
-     * bridge retry → 23505 → 200 dedup. Contract HTTP như handleInbound:
-     * 200 done · 422 payload hỏng vĩnh viễn · 503 DB transient (outbox retry).
+     * Lane theo độ quan trọng:
+     *  - undo (nghiệp vụ, durable outbox): 200 applied/pending · 422 payload hỏng · 503 DB transient
+     *  - seen/delivered/reaction (chatty, fire-and-forget): LUÔN 200, lỗi swallow —
+     *    drop-on-miss là CHỦ ĐÍCH (bridge không retry lane này)
+     *  - typing: broadcast-only, KHÔNG DB (taxonomy loại 1)
+     *  - connected/disconnected/upload_attachment: phù du đã biết → 200 skip
+     *  - LẠ: structured log redacted (event_type + keys, KHÔNG payload thô) + 200
      *
      * @param  array<string, mixed>  $payload
      */
     private function handleRelayEvent(array $payload, string $eventType): JsonResponse
     {
-        // relay_event envelope (P12/H2) mang event_type riêng; type lạ → dùng chính type đó.
         $relayEventType = $eventType === 'relay_event'
             ? (string) ($payload['event_type'] ?? '')
             : $eventType;
@@ -245,43 +252,90 @@ class ZaloPersonalWebhookController extends Controller
             return response()->json(['ok' => false, 'message' => 'missing_event_type'], 422);
         }
 
-        // Typing là presence phù du — chỉ có giá trị hiển thị realtime tại FE,
-        // KHÔNG phải dữ liệu nghiệp vụ. Ghi kho = phình bảng vô hạn (source_id
-        // null → không dedup, không TTL). Nhận 200 để bridge không retry, không lưu.
-        if ($relayEventType === 'typing') {
-            return response()->json(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
-        }
-
         $connectionId = (int) ($payload['connection_id'] ?? 0);
-        $sourceId = isset($payload['source_id']) && $payload['source_id'] !== '' ? (string) $payload['source_id'] : null;
+        $channelAccountId = $connectionId > 0
+            ? ZaloConnection::channelAccountIdForConnection($connectionId)
+            : null;
+        $eventPayload = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
 
-        try {
-            // insertOrIgnore (ON CONFLICT DO NOTHING) thay vì catch 23505: lỗi unique
-            // trong Postgres abort cả transaction bao ngoài — dedup phải không-lỗi.
-            $inserted = DB::table('relay_events')->insertOrIgnore([
-                'id' => (string) Str::uuid(),
-                'workspace_id' => currentWorkspace()->id,
-                'channel_account_id' => $connectionId > 0
-                    ? ZaloConnection::channelAccountIdForConnection($connectionId)
-                    : null,
-                'connection_id' => $connectionId > 0 ? $connectionId : null,
-                'event_type' => mb_substr($relayEventType, 0, 32),
-                'personal_uid' => isset($payload['personal_uid']) ? mb_substr((string) $payload['personal_uid'], 0, 64) : null,
-                'source_id' => $sourceId,
-                'payload' => json_encode($payload['payload'] ?? $payload),
-                'received_at' => now(),
-                'created_at' => now(),
-            ]);
-        } catch (QueryException|\PDOException $e) {
-            $this->safeReport($e);
+        $parser = app(ZaloStateEventParser::class);
+        $stateService = app(MessageStateService::class);
 
-            return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+        switch ($relayEventType) {
+            case 'undo':
+                $recall = $parser->parseUndo($eventPayload);
+                if ($recall === null) {
+                    return response()->json(['ok' => false, 'message' => 'undo_target_missing'], 422);
+                }
+                try {
+                    $result = $stateService->applyRecall($channelAccountId, $recall);
+                } catch (QueryException|\PDOException $e) {
+                    $this->safeReport($e);
+
+                    return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+                }
+
+                return response()->json(['ok' => true, 'message' => "undo_{$result}"]);
+
+            case 'seen_messages':
+            case 'delivered_messages':
+                $kind = $relayEventType === 'seen_messages' ? 'seen' : 'delivered';
+                try {
+                    $stateService->applyReceipts($channelAccountId, $parser->parseReceipts($eventPayload, $kind));
+                } catch (Throwable $e) {
+                    $this->safeReport($e); // chatty: mất receipt không mất nghiệp vụ
+                }
+
+                return response()->json(['ok' => true, 'message' => 'receipts_processed']);
+
+            case 'reaction':
+            case 'old_reactions':
+                try {
+                    $stateService->applyReactions($channelAccountId, $parser->parseReactions($eventPayload));
+                } catch (Throwable $e) {
+                    $this->safeReport($e);
+                }
+
+                return response()->json(['ok' => true, 'message' => 'reactions_processed']);
+
+            case 'typing':
+                $this->broadcastTyping($channelAccountId, $parser->parseTyping($eventPayload));
+
+                return response()->json(['ok' => true, 'message' => 'typing_broadcast']);
+
+            case 'connected':
+            case 'disconnected':
+            case 'upload_attachment':
+                // Phù du đã biết — không có đích DB theo taxonomy, không log spam
+                return response()->json(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
+
+            default:
+                // Event LẠ — observability tối thiểu (P09 thêm rate-limit + alert):
+                // redact — chỉ event_type + shape keys, KHÔNG payload thô.
+                logger()->warning('zalo relay_event unknown type', [
+                    'event_type' => mb_substr($relayEventType, 0, 32),
+                    'connection_id' => $connectionId,
+                    'payload_keys' => array_slice(array_keys($eventPayload), 0, 10),
+                ]);
+
+                return response()->json(['ok' => true, 'message' => 'relay_event_unknown_logged']);
+        }
+    }
+
+    /** @param array{peer_uid: string, typist_uid: string|null}|null $typing */
+    private function broadcastTyping(?string $channelAccountId, ?array $typing): void
+    {
+        if ($typing === null || $channelAccountId === null) {
+            return;
         }
 
-        return response()->json([
-            'ok' => true,
-            'message' => $inserted > 0 ? 'relay_event_stored' : 'relay_event_duplicate',
-        ], 200);
+        $conversation = Conversation::where('channel_account_id', $channelAccountId)
+            ->where('peer_uid', $typing['peer_uid'])
+            ->first();
+
+        if ($conversation !== null) {
+            event(new ConversationTyping($conversation->workspace_id, $conversation->id, $typing['typist_uid']));
+        }
     }
 
     /**

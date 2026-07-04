@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\MessageSourceAlias;
 use App\Models\WorkspaceSequence;
+use App\Services\Inbox\MessageSourceResolver;
+use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +50,8 @@ class InboundMessageService
     public function __construct(
         private readonly MeteringService $meteringService,
         private readonly SessionGapMaterializer $gapMaterializer,
+        private readonly MessageSourceResolver $sourceResolver,
+        private readonly MessageStateService $messageStateService,
     ) {}
 
     public function ingest(array $normalized): Message
@@ -243,28 +246,21 @@ class InboundMessageService
     }
 
     /**
-     * P06 — replay/dedup: tra messages.source_id trực tiếp TRƯỚC, miss thì tra
-     * message_source_aliases (giá trị source_id thay thế đã biết cho message hiện tại —
-     * P01/P02e backfill mọi message legacy). 1 method DRY thay vì lặp 2 query rải rác.
+     * P06 — replay/dedup theo source_id (P02 tách ra MessageSourceResolver dùng
+     * chung với message-state events).
      */
     private function findExistingBySource(string $conversationId, string $sourceId): ?Message
     {
-        $direct = Message::where('conversation_id', $conversationId)
-            ->where('source_id', $sourceId)
-            ->first();
-
-        if ($direct !== null) {
-            return $direct;
-        }
-
-        $aliasedMessageId = MessageSourceAlias::messageIdFor($conversationId, $sourceId);
-
-        return $aliasedMessageId === null ? null : Message::find($aliasedMessageId);
+        return $this->sourceResolver->find($conversationId, $sourceId);
     }
 
     /**
      * P05: mọi Message insert mới +1 conversations.stream_version (FE dùng để
      * biết khi nào cần refetch window quanh cursor — không đụng replay/no-op).
+     *
+     * P02: sau insert, quét pending_message_states khớp source_id — undo đến
+     * TRƯỚC tin (race event-trước-tin) được áp lại tại đây. Fail-safe: lỗi
+     * pending KHÔNG chặn ingest (F13/F20).
      *
      * @param  array<string, mixed>  $attrs
      */
@@ -272,6 +268,12 @@ class InboundMessageService
     {
         $message = Message::create($attrs);
         Conversation::where('id', $conversation->id)->increment('stream_version');
+
+        try {
+            $this->messageStateService->applyPendingFor($message);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — pending state lỗi không được chặn ghi tin
+        }
 
         return $message;
     }

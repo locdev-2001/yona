@@ -56,6 +56,12 @@ class MessageSourceAlias extends Model
         return $this->belongsTo(Message::class);
     }
 
+    /** @return BelongsTo<Conversation, $this> */
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
     /**
      * P06 — lookup message_id qua alias (source_id legacy hoặc source_id contract cũ
      * qua reconnect). Dùng bởi InboundMessageService::findExistingBySource() sau khi
