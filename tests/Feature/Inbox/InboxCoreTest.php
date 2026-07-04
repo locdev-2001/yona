@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -106,31 +107,35 @@ it('message from workspace A is not visible in workspace B (RLS)', function () {
     expect($found)->toBeNull();
 });
 
-// ── Unique(zalo_connection_id, peer_uid) idempotent upsert ───────────────────
+// ── Unique(channel_account_id, peer_uid) idempotent upsert (P08 re-key) ──────
 
-it('conversations unique(zalo_connection_id, peer_uid) enforces idempotency', function () {
+it('conversations unique(channel_account_id, peer_uid) enforces idempotency', function () {
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
     seedMember($ws, $user, 'admin');
 
-    // zalo_connection_id là bigint sau migration 700004
-    $connectionId = random_int(1_000_000, 9_999_999);
+    $accountId = ChannelAccount::create([
+        'workspace_id' => $ws->id,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_'.uniqid(),
+        'status' => 'connected',
+    ])->id;
 
     Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $connectionId,
+        'channel_account_id' => $accountId,
         'peer_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);
 
-    // Thử insert lại cùng (zalo_connection_id, peer_uid) → phải throw
+    // Thử insert lại cùng (channel_account_id, peer_uid) → phải throw
     expect(fn () => Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $connectionId,
+        'channel_account_id' => $accountId,
         'peer_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -20,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $workspace_id
  * @property string $channel
- * @property string|null $zalo_connection_id
+ * @property string|null $channel_account_id
  * @property string $peer_uid
  * @property int $thread_type
  * @property string|null $peer_phone
@@ -34,6 +35,7 @@ use Illuminate\Support\Carbon;
  * @property int $unread_count
  * @property string|null $last_metered_period
  * @property int $lock_version
+ * @property int $stream_version
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property Carbon $created_at
@@ -46,7 +48,7 @@ class Conversation extends Model
 
     protected $fillable = [
         'channel',
-        'zalo_connection_id',
+        'channel_account_id',
         'peer_uid',
         'thread_type',
         'peer_phone',
@@ -69,6 +71,7 @@ class Conversation extends Model
             'thread_type' => 'integer',
             'unread_count' => 'integer',
             'lock_version' => 'integer',
+            'stream_version' => 'integer',
             'conversation_number' => 'integer',
             'last_message_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -79,6 +82,12 @@ class Conversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
+    }
+
+    /** @return BelongsTo<ChannelAccount, $this> */
+    public function channelAccount(): BelongsTo
+    {
+        return $this->belongsTo(ChannelAccount::class);
     }
 
     /**

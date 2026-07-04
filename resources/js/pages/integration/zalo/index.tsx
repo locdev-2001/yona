@@ -41,6 +41,7 @@ interface QrLoginState {
     phase: string;
     qrImage: string | null;
     error: string | null;
+    expectedAccountUid: string | null;
 }
 
 const INITIAL_QR: QrLoginState = {
@@ -50,6 +51,7 @@ const INITIAL_QR: QrLoginState = {
     phase: 'idle',
     qrImage: null,
     error: null,
+    expectedAccountUid: null,
 };
 
 export default function ZaloConnectionsIndex({ connections }: Props) {
@@ -81,7 +83,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                 if (data.phase === 'ready') {
                     clearPoll();
                     // Promote bridge slot → Laravel connection
-                    await promoteConnection(qrState.connectionId!, qrState.qrToken!);
+                    await promoteConnection(qrState.connectionId!, qrState.qrToken!, qrState.expectedAccountUid);
                 }
             } catch {
                 // ignore network errors during poll
@@ -98,8 +100,8 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
         }
     };
 
-    const startQrLogin = async () => {
-        setQrState({ ...INITIAL_QR, open: true, phase: 'starting' });
+    const startQrLogin = async (expectedAccountUid: string | null = null) => {
+        setQrState({ ...INITIAL_QR, open: true, phase: 'starting', expectedAccountUid });
         try {
             const res = await fetch('/integrations/zalo', {
                 method: 'POST',
@@ -126,7 +128,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
         }
     };
 
-    const promoteConnection = async (connectionId: number, qrToken: string) => {
+    const promoteConnection = async (connectionId: number, qrToken: string, expectedAccountUid: string | null) => {
         try {
             const res = await fetch('/integrations/zalo/promote', {
                 method: 'POST',
@@ -136,12 +138,14 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-XSRF-TOKEN': getCsrfToken(),
                 },
-                body: JSON.stringify({ connection_id: connectionId, qr_token: qrToken }),
+                body: JSON.stringify({ connection_id: connectionId, qr_token: qrToken, expected_account_uid: expectedAccountUid }),
             });
             const data = await res.json();
             if (data.ok) {
                 setQrState((prev) => ({ ...prev, phase: 'done' }));
                 router.reload({ only: ['connections'] });
+            } else if (data.error_code === 'zalo_account_mismatch') {
+                setQrState((prev) => ({ ...prev, phase: 'error', error: 'Đã quét nhầm tài khoản Zalo khác — vui lòng quét đúng tài khoản cần đăng nhập lại.' }));
             } else {
                 setQrState((prev) => ({ ...prev, phase: 'error', error: data.message ?? 'promote_failed' }));
             }
@@ -182,7 +186,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                             <h2 className="text-lg font-semibold">Kết nối Zalo cá nhân</h2>
                             <p className="text-muted-foreground text-sm">Quản lý tài khoản Zalo cá nhân kết nối vào workspace.</p>
                         </div>
-                        <Button onClick={startQrLogin} disabled={qrState.open && qrState.phase !== 'done' && qrState.phase !== 'error'}>
+                        <Button onClick={() => startQrLogin()} disabled={qrState.open && qrState.phase !== 'done' && qrState.phase !== 'error'}>
                             + Thêm tài khoản Zalo
                         </Button>
                     </div>
@@ -236,7 +240,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                                     <div className="flex items-center gap-3">
                                         <Badge variant={STATE_VARIANTS[conn.state]}>{STATE_LABELS[conn.state]}</Badge>
                                         {conn.state === 'session_lost' && (
-                                            <Button size="sm" variant="outline" onClick={startQrLogin}>
+                                            <Button size="sm" variant="outline" onClick={() => startQrLogin(conn.personal_uid)}>
                                                 Đăng nhập lại
                                             </Button>
                                         )}

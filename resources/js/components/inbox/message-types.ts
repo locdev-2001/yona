@@ -51,6 +51,13 @@ export interface ChatMessage {
     created_at: string;
 }
 
+/** P05 — item trong stream hợp nhất (GET .../stream): message hoặc gap marker. */
+export type StreamItem = (ChatMessage & { item_type: 'message' }) | import('./gap-marker').GapEvent;
+
+export function isStreamMessage(item: StreamItem): item is ChatMessage & { item_type: 'message' } {
+    return item.item_type === 'message';
+}
+
 /** The peer side of a thread — a Conversation is structurally compatible. */
 export interface ChatPeer {
     peer_uid: string;

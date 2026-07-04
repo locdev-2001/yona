@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\Cache;
 /**
  * F2/F8 — Enforce Zalo ToS: cửa sổ gửi 7h-22h + cap ≤3 tin QC/số/ngày.
  *
+ * Cap CHỈ áp cho tin CHỦ ĐỘNG (QC/marketing). Tin TRẢ LỜI trong hội thoại đang
+ * hoạt động (khách có inbound gần đây — caller xác định, truyền $isReply) KHÔNG
+ * phải QC → không bị cap, không tiêu quota cap. Cửa sổ 7h-22h vẫn áp cho mọi tin.
+ *
  * State lưu trong cache, key: {workspaceId}:{targetNumber}:{Ymd}
  * - Cửa sổ giờ: giờ VN (Asia/Ho_Chi_Minh). Ngoài → SendOutsideWindowException.
- * - Cap: ≤3 tin/số/ngày per-workspace. Vượt → RateCapException.
+ * - Cap: ≤3 tin chủ động/số/ngày per-workspace. Vượt → RateCapException.
  *
  * ponytail: dùng Laravel Cache (database driver mặc định) — không cần thêm dep.
  * Upgrade: Redis nếu throughput cần atomic increment (hiện đủ cho MVP).
@@ -30,11 +34,21 @@ class SendRateLimiter
     /**
      * Assert tenant có thể gửi outbound đến targetNumber trong workspace.
      *
-     * @throws SendOutsideWindowException nếu ngoài cửa sổ 7h-22h giờ VN
-     * @throws RateCapException nếu đã gửi ≥3 tin/số/ngày
+     * Tin TRẢ LỜI (khách có inbound gần đây) = hành vi chat bình thường → KHÔNG
+     * giới hạn gì (cả giờ lẫn cap). Giới hạn 7h-22h + cap ≤3/ngày chỉ dành cho
+     * tin CHỦ ĐỘNG/QC — theo Nghị định 91/2020 (chống tin nhắn rác) + ToS Zalo.
+     *
+     * @param  bool  $isReply  tin trả lời hội thoại đang hoạt động → bỏ qua mọi giới hạn
+     *
+     * @throws SendOutsideWindowException tin chủ động ngoài cửa sổ 7h-22h giờ VN
+     * @throws RateCapException tin chủ động và đã gửi ≥3 tin/số/ngày
      */
-    public function assertCanSend(string $workspaceId, string $targetNumber): void
+    public function assertCanSend(string $workspaceId, string $targetNumber, bool $isReply = false): void
     {
+        if ($isReply) {
+            return;
+        }
+
         $this->assertInWindow();
         $this->assertUnderCap($workspaceId, $targetNumber);
     }

@@ -4,10 +4,12 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 
 use App\Contracts\SendException;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
 use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
@@ -48,7 +50,7 @@ class ZaloChannelDriver implements ChannelDriver
      *   sender_uid     = payload.sender_uid (group sender)
      *   sender_name    = payload.sender.name
      *   platform_sent_at = payload.platform_sent_at (ms unix → Carbon)
-     *   zalo_connection_id = payload.connection_id
+     *   channel_account_id = payload.channel_account_id (resolved bởi webhook controller — P08)
      *   thread_type    = payload.thread_type (0=user, 1=group)
      *   channel        = 'zalo_personal'
      *
@@ -104,10 +106,10 @@ class ZaloChannelDriver implements ChannelDriver
 
         return [
             'channel' => 'zalo_personal',
-            'zalo_connection_id' => isset($raw['connection_id']) ? (int) $raw['connection_id'] : null,
-            // Account-key cho upsertConversation — uid tài khoản Zalo, ổn định qua reconnect.
-            'connection_personal_uid' => isset($raw['connection_personal_uid']) && $raw['connection_personal_uid'] !== ''
-                ? (string) $raw['connection_personal_uid']
+            // P08: key duy nhất cho upsertConversation — resolved bởi webhook controller
+            // (channel_account_id ổn định qua reconnect, thay vì connection_id/personal_uid).
+            'channel_account_id' => isset($raw['channel_account_id']) && $raw['channel_account_id'] !== ''
+                ? (string) $raw['channel_account_id']
                 : null,
             'peer_uid' => (string) ($raw['peer_uid'] ?? ''),
             'peer_name' => $user['name'] ?? null,
@@ -136,10 +138,10 @@ class ZaloChannelDriver implements ChannelDriver
      *
      * @throws SendException
      */
-    public function sendMessage(Conversation $conversation, array $payload): void
+    public function sendMessage(Conversation $conversation, array $payload): Message
     {
         try {
-            $this->sendService->send(
+            return $this->sendService->send(
                 conversation: $conversation,
                 text: isset($payload['text']) ? (string) $payload['text'] : null,
                 media: $payload['media'] ?? null,
@@ -152,6 +154,8 @@ class ZaloChannelDriver implements ChannelDriver
             throw new SendException('Đã gửi tối đa 3 tin quảng cáo trong ngày cho số này (ToS Zalo).', 'rate_cap', $e);
         } catch (ZaloNotConnectedException $e) {
             throw new SendException('Zalo chưa kết nối hoặc phiên đã hết. Vui lòng đăng nhập lại.', 'not_connected', $e);
+        } catch (ZaloSplitBrainException $e) {
+            throw new SendException('Phát hiện nhiều phiên Zalo cùng kết nối — đã dừng gửi để tránh gửi nhầm. Liên hệ hỗ trợ.', 'split_brain', $e);
         }
     }
 

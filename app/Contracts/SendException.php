@@ -14,6 +14,7 @@ namespace App\Contracts;
  *   - 'outside_window'  — ngoài cửa sổ giờ cho phép
  *   - 'rate_cap'        — vượt giới hạn tần suất
  *   - 'not_connected'   — kênh chưa kết nối / session hết
+ *   - 'split_brain'     — >1 phiên connected cùng lúc cho 1 tài khoản (fail-closed)
  */
 class SendException extends \RuntimeException
 {

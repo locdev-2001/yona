@@ -6,9 +6,11 @@
  *
  * Giới hạn biết trước:
  * - API không có cursor → chỉ lấy N tin gần nhất, không phân trang
- * - 1-1 (convsUser): không có API lịch sử → không backfill được
- *   (banner Tier 0 đã cảnh báo, không hứa cứu)
- * - Zalo có tự dội lại tin 1-1 khi reconnect? Chưa biết — founder cần spike
+ * - 1-1 (convsUser): getGroupChatHistory không áp dụng, NHƯNG spike 1b
+ *   (2026-07-04) xác nhận `requestOldMessages(ThreadType.User, null)` kéo được
+ *   tin 1-1 (đo thật 48 tin/lần) → 1-1 backfill KHẢ THI qua event `old_messages`,
+ *   forwarder generic (relay-forwarder.mjs, P12) normalize + dedup source_id.
+ * - Reconnect KHÔNG auto-push tin 1-1 (passive) — phải chủ động requestOldMessages.
  */
 
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
@@ -84,8 +86,10 @@ export async function backfillOnReconnect(slot, { enqueue, buildInboundPayload, 
         }
     }
 
-    // convsUser (1-1): zca-js KHÔNG co API lich su 1-1 → KHONG backfill duoc
-    // Banner Tier 0 da canh bao. Spike: Zalo co tu doi lai tin 1-1 khi reconnect?
+    // convsUser (1-1): spike 1b (2026-07-04) — backfill 1-1 KHẢ THI qua
+    // listener.requestOldMessages(ThreadType.User, null) → event old_messages →
+    // relay-forwarder (P12) normalize per-item + dedup source_id. Chưa wire tự động
+    // ở đây (phối P08 khi chuyển reconnect-backfill sang dispatcher generic).
 }
 
 /**

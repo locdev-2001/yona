@@ -1,208 +1,178 @@
 # Outbound Send (Zalo Personal)
 
-Module: `channel-zalo` · Status: live (GĐ1) · Updated: 2026-06-28
+Module: `app/Http/Controllers/Inbox` + `app/Modules/Integration/Chat/ZaloPersonal` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-04
 
 ## Purpose
 
-Reply to inbound Zalo conversations via `ZaloSendService` chain: circuit-breaker → metering quota → rate limiter → bridge HTTP call → message persist → meter reply. Implements fail-safe metering (quota gate never blocks outbound; only blocks new conversations when over quota per F5/F13).
+Reply to inbound Zalo conversations via `ZaloSendService::send()`: resolve the account's live connection → circuit-breaker → metering quota → rate limiter → bridge HTTP call → message persist → meter reply. Implements fail-safe metering (quota gate never blocks an already-metered conversation; only blocks brand-new conversations when over quota, per F5/F13).
 
-**Value:** Ensures outbound compliance (rate limits, metering for billing) while maintaining optimistic UX (never fail mid-conversation).
+**Value:** Ensures outbound compliance (rate limits, metering for billing) while maintaining optimistic UX (never fail mid-conversation once it's already been metered this period).
 
 ## Actors & permissions
 
-- **Workspace member** (`lead.manage` / `conversation.reply`) → can send replies on conversations in their visibility scope (team-based).
-- **System** (OutboundMessageController) → acts on behalf of authenticated member, validates quota + rate limits before bridge call.
+- **Workspace member** with `update` permission on the conversation (`ConversationPolicy::update()`, team-based visibility) → can send replies.
+- **System** (`InboxController::send()`) → acts on behalf of the authenticated member; validates text, then delegates to the channel driver.
 
 Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope.
 
 ## Trigger / entry points
 
-**API endpoint** `POST /api/conversations/{id}/messages`:
-- Frontend form: text + optional media (file_url, media_kind).
-- Controller: `modules/inbox/src/Http/Controllers/OutboundMessageController.php::store()`.
-- Service: `ZaloSendService::send()` (modules/channel-zalo).
-- Route: `modules/inbox/routes/web.php`.
+**Route** `POST /inbox/conversations/{conversation}/messages` (name `inbox.send`, `routes/web.php`):
+- Frontend form: text only (media not yet wired on this endpoint).
+- Controller: `app/Http/Controllers/Inbox/InboxController.php::send()`.
+- Driver dispatch: `ChannelManager::driver($conversation->channel)->sendMessage()` → `ZaloChannelDriver::sendMessage()` → `ZaloSendService::send()`.
 
 ## Operational flow (step-by-step)
 
 ```mermaid
 sequenceDiagram
     participant User as Tenant Member<br/>(UI)
-    participant Controller as OutboundMessageController
-    participant Gate as MeteringGate
-    participant Limiter as SendRateLimiter
-    participant HealthMon as AccountHealthMonitor
+    participant Controller as InboxController::send()
+    participant Driver as ZaloChannelDriver
     participant ZaloSvc as ZaloSendService
+    participant HealthMon as ZaloHealthMonitor
+    participant Meter as MeteringService
+    participant Limiter as SendRateLimiter
     participant Bridge as Bridge<br/>(Node)
-    participant InboundSvc as InboundMessageService
-    participant RLS as PostgreSQL RLS
 
-    User->>Controller: POST /api/conversations/{id}/messages<br/>(text, media)
-    Controller->>Controller: Authorize: can_reply_conversation()
-    Controller->>Controller: Resolve conversation + ZaloConnection
-    
-    Controller->>ZaloSvc: send(conversation, text, media)
-    
-    Note over ZaloSvc: F3: Check circuit-breaker
+    User->>Controller: POST /inbox/conversations/{id}/messages (text)
+    Controller->>Controller: authorize('update', conversation)
+    Controller->>Driver: sendMessage(conversation, {text})
+    Driver->>ZaloSvc: send(conversation, text, media=null)
+
+    ZaloSvc->>ZaloSvc: resolveConnection(conversation)<br/>ZaloConnection::connectedForAccount(workspace_id, channel_account_id)
+    alt 0 slots connected
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException
+    else >1 slots connected (DB constraint should prevent this)
+        ZaloSvc-->>Driver: throw ZaloSplitBrainException
+    end
+
+    Note over ZaloSvc: 1. Circuit-breaker (fail fast)
     ZaloSvc->>HealthMon: isCircuitOpen(connection_id)?
-    alt Circuit Open
-        HealthMon->>ZaloSvc: true
-        ZaloSvc->>ZaloSvc: throw ZaloCircuitOpenException
-        ZaloSvc->>Controller: Exception → 409 Conflict
-    else Circuit OK
-        ZaloSvc->>ZaloSvc: proceed
+    alt Circuit open
+        ZaloSvc-->>Driver: throw ZaloCircuitOpenException
     end
-    
-    Note over ZaloSvc: F1 + F5: Check metering quota
-    ZaloSvc->>Gate: assertCanSend(conversation)
-    Note over Gate: F5: If conv.last_metered_period == currentPeriod<br/>→ pass (always allow existing conv)
-    alt Quota Exceeded (new conv, new period)
-        Gate->>ZaloSvc: throw QuotaExceededException
-        ZaloSvc->>Controller: Exception → 402 Payment Required
-    else Quota OK
-        Gate->>ZaloSvc: pass
+
+    Note over ZaloSvc: 2. Metering quota (F1/F5)
+    ZaloSvc->>Meter: assertCanSend(conversation)
+    Note over Meter: F5: last_metered_period == currentPeriod → always pass
+    alt New conversation this period + quota exhausted
+        ZaloSvc-->>Driver: throw QuotaExceededException
     end
-    
-    Note over ZaloSvc: F8: Check rate limiter (7h-22h, ≤3 QC/số/ngày)
-    ZaloSvc->>Limiter: assertCanSend(workspace_id, peer_phone)
-    alt Outside window or rate cap exceeded
-        Limiter->>ZaloSvc: throw SendOutsideWindowException / RateCapException
-        ZaloSvc->>Controller: Exception → 429 Too Many Requests
-    else Rate OK
-        Limiter->>ZaloSvc: pass
+
+    Note over ZaloSvc: 3. Rate limiter (7h-22h, <=3/peer/day, ToS Zalo)
+    ZaloSvc->>Limiter: assertCanSend(workspace_id, peer_phone ?? peer_uid)
+    alt outside window
+        ZaloSvc-->>Driver: throw SendOutsideWindowException
+    else rate cap exceeded
+        ZaloSvc-->>Driver: throw RateCapException
     end
-    
-    Note over ZaloSvc: F4: Call bridge
-    ZaloSvc->>Bridge: HTTP POST /personal-messages/send<br/>(retry 2×200ms, timeout 15s)
-    
-    alt Bridge success (200)
-        Bridge->>Bridge: Send message via Zalo cá nhân account
-        Bridge->>ZaloSvc: {success: true, message_id, timestamp}
-    else Bridge error: 503 / not_logged_in
-        Bridge->>ZaloSvc: 503 / {message: "not_logged_in"}
-        ZaloSvc->>HealthMon: recordError(connection_id, "session_lost")
-        ZaloSvc->>ZaloSvc: throw ZaloNotConnectedException
-        ZaloSvc->>Controller: Exception → 503 Service Unavailable
-    else Bridge error: 429
-        Bridge->>ZaloSvc: 429
-        ZaloSvc->>HealthMon: recordError(connection_id, "429")
-        ZaloSvc->>ZaloSvc: throw ZaloNotConnectedException
-        ZaloSvc->>Controller: Exception → 503 (rate-limited by Zalo)
-    else Bridge error: 403
-        Bridge->>ZaloSvc: 403
-        ZaloSvc->>HealthMon: recordError(connection_id, "403")
-        ZaloSvc->>ZaloSvc: throw ZaloNotConnectedException
-        ZaloSvc->>Controller: Exception → 503 (permission denied by Zalo)
-    else Bridge timeout
-        Bridge->>ZaloSvc: Exception (15s timeout)
-        ZaloSvc->>ZaloSvc: throw ZaloNotConnectedException<br/>(NO Message persisted — fail-safe)
-        ZaloSvc->>Controller: Exception → 503
+
+    Note over ZaloSvc: 4. Bridge HTTP call
+    ZaloSvc->>Bridge: POST /personal-messages/send<br/>(X-Bridge-Send-Secret, retry 2x200ms, timeout 15s)
+    alt network error / timeout
+        Bridge-->>ZaloSvc: exception
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException (NO Message persisted)
+    else HTTP 503 or {message: not_logged_in}
+        ZaloSvc->>HealthMon: recordError(connection_id, session_lost)
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException
+    else HTTP 429
+        ZaloSvc->>HealthMon: recordError(connection_id, 429)
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException
+    else HTTP 403
+        ZaloSvc->>HealthMon: recordError(connection_id, 403)
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException
+    else other non-2xx
+        ZaloSvc-->>Driver: throw ZaloNotConnectedException
+    else 2xx success
+        Bridge-->>ZaloSvc: { source_id, ... }
     end
-    
-    Note over ZaloSvc: F1 + F5 + F9: Persist message + meter
-    ZaloSvc->>InboundSvc: persistMessage(conversation, text, media, bridge_response)
-    InboundSvc->>RLS: INSERT message direction=out<br/>(RLS: workspace_id)
-    ZaloSvc->>Gate: meterReply(conversation)
-    Note over Gate: F1 race-safe: UPDATE conversation.last_metered_period<br/>compare-set + ON CONFLICT upsert channel_usage
-    Gate->>RLS: Transaction: compare-set + upsert<br/>atomically
-    
+
+    Note over ZaloSvc: 5. Persist + meter + reset
+    ZaloSvc->>ZaloSvc: persistMessage() — Message::create(direction=out, source_id=bridge.source_id, sent_by=Auth::id())
+    ZaloSvc->>Meter: meterReply(conversation)
     ZaloSvc->>Limiter: increment(workspace_id, peer_phone)
-    Limiter->>Limiter: Redis INCR (cache, atomic)
-    
     ZaloSvc->>HealthMon: reset(connection_id)
-    HealthMon->>HealthMon: Clear circuit error count
-    
-    ZaloSvc->>Controller: return Message
-    Controller->>User: 200 {message, conversation, quota_remaining}
+    ZaloSvc-->>Driver: return Message
+    Driver-->>Controller: void (no exception)
+    Controller->>User: 201 { ...Message }
 ```
 
+**Any exception from any step** propagates up through `ZaloChannelDriver::sendMessage()`, which wraps each into a channel-agnostic `App\Contracts\SendException` with an `error_code` (`circuit_open`, `outside_window`, `rate_cap`, `not_connected`, `split_brain`), and `InboxController::send()` catches it uniformly — **every failure returns HTTP `422`**, distinguished only by the JSON body's `error_code` (FE picks the toast message from this code, not from the HTTP status). `QuotaExceededException` is a plain `\RuntimeException` (not yet wrapped as a `SendException`) caught separately in the controller by class-name substring match — also `422`, `error_code: quota_exceeded`.
+
 **Steps:**
-1. Member submits reply text + optional media via UI form.
-2. Controller authorizes: member can reply (policy: `ConversationPolicy::update()`).
-3. Controller resolves conversation + ZaloConnection from conversation.zalo_connection_id.
-4. Service checks circuit-breaker (F3): if open → 409 Conflict (connection unhealthy).
-5. Service checks metering quota via `assertCanSend()` (F1/F5):
-   - If conversation already metered this period → pass (allow existing conversation).
-   - If new conversation + period over quota → throw QuotaExceededException → 402.
-6. Service checks rate limiter (F8): 7h–22h window + max 3 messages per peer phone per day.
-   - Outside window or rate-capped → throw SendOutsideWindowException / RateCapException → 429.
-7. Service calls bridge HTTP POST `/personal-messages/send` with retry (2×200ms, 15s timeout).
-   - Bridge error (503, 429, 403) → record health monitor error → throw ZaloNotConnectedException → 503.
-   - Bridge timeout → throw ZaloNotConnectedException; **NO Message persisted** (fail-safe).
-   - Bridge success → return bridge response (message_id, timestamp).
-8. Service persists Message with direction='out' (idempotent on conversation_id + source_id from bridge).
-9. Service meters reply atomically (F1 race-safe compare-set + upsert channel_usage in transaction).
-10. Service increments rate limiter counter (Redis atomic INCR if enabled, else in-memory).
-11. Service resets circuit-breaker error count on success.
-12. Controller returns 200 with updated Message + Conversation cache + quota_remaining for FE re-render.
+1. Member submits reply text via UI form (media not yet supported on this endpoint).
+2. Controller authorizes via `ConversationPolicy::update()`; empty text → `422` before any driver call.
+3. `ZaloChannelDriver::sendMessage()` delegates to `ZaloSendService::send()`.
+4. Service resolves the conversation's live connection via `channel_account_id` (`ZaloConnection::connectedForAccount()` — exactly one connected slot expected; the DB partial-unique index makes 0 or 1 the only reachable outcomes via the app, `>1` is a defense-in-depth branch).
+5. Circuit-breaker check (`ZaloHealthMonitor::isCircuitOpen()`) — open → fail fast, no bridge call.
+6. Metering quota check (`MeteringService::assertCanSend()`) — F5: a conversation already metered this period always passes, even at 0 remaining; only a brand-new conversation over quota throws.
+7. Rate limiter check (`SendRateLimiter::assertCanSend()`) — 7h–22h window + max 3 messages per peer phone/day (Zalo ToS).
+8. HTTP POST to bridge `/personal-messages/send` (15s timeout, 2×200ms retry). Non-2xx / timeout → `ZaloNotConnectedException`, **no Message row created**.
+9. On bridge success: persist `Message` (`direction=out`, `source_id` = bridge's `source_id` field, `sent_by = Auth::id()`), meter the reply, increment the rate limiter, reset the circuit breaker.
+10. Controller returns `201` with the newly-created Message on success, or `422` with an `error_code` on any failure.
 
 ## Data touched
 
 **Models:**
-- `Conversation` (modules/inbox)
-  - Reads: id, zalo_connection_id, peer_phone, peer_uid, workspace_id, last_metered_period
-  - Writes: last_metered_period (via ConversationMeter.meterReply), last_message_at, last_message_preview
+- `Conversation`
+  - Reads: `id`, `channel_account_id`, `peer_phone`, `peer_uid`, `workspace_id`, `thread_type`, `last_metered_period`
+  - Writes: `last_metered_period` (via `MeteringService::meterReply()`), `last_message_at`, `last_message_preview`, `stream_version`
   - RLS: enforced on all writes
 
-- `Message` (modules/inbox)
-  - Writes: direction='out', type, body, media_url, media_meta, source_id (from bridge message_id), platform_sent_at
+- `Message`
+  - Writes: `direction='out'`, `type`, `body`, `media_url`, `media_meta`, `source_id` (from the bridge response's `source_id` field — not a remapped `message_id`), `platform_sent_at`, `sent_by`
   - RLS: inherited via conversation FK
 
-- `ZaloConnection` (modules/channel-zalo)
-  - Reads: connection_id, account_status, account_health
-  - No writes in send flow
+- `ZaloConnection`
+  - Reads (via `connectedForAccount()`): `workspace_id`, `channel_account_id`, `state = 'connected'`, `deleted_at IS NULL` — no other fields (no `account_status`/`account_health` columns are read here; circuit-breaker state lives in cache, not this table)
+  - No writes in the send flow itself
 
-- `ChannelUsage` (modules/billing)
-  - Writes: answered_count increment via ON CONFLICT upsert (F1 atomicity)
-  - Columns: workspace_id, channel, period, answered_count, updated_at
+- `ChannelUsage`
+  - Writes: `answered_count` increment via compare-set + upsert (F1 atomicity)
+  - Columns: `workspace_id`, `channel`, `period`, `answered_count`, `updated_at`
 
 **RLS scoping:**
-- All model writes respect workspace_id global scope (binded at controller entry).
-- ChannelUsage write bypasses RLS (internal billing table, no per-workspace scoping needed).
+- All model writes respect the `workspace_id` global scope (bound at the tenant middleware layer before this controller runs).
 
 ## State transitions
 
-Conversation state: "open" → no change (conversation remains open after reply). Status managed separately by tenant (e.g., "leads.lead_status").
+Conversation state: no change (conversation remains open after reply); lead/pipeline status is managed separately.
 
-Message.direction: new → 'out' on successful send.
+`Message.direction`: new row created with `'out'` on successful send.
 
 ## Business rules applied
 
-- **F1 (Race-safe metering):** `ConversationMeter::meterReply()` uses compare-set atomic UPDATE + ON CONFLICT upsert in single transaction (PostgreSQL 15+). Idempotent: same conversation, same period → counted once only.
+- **F1 (Race-safe metering):** `MeteringService::meterReply()` uses a compare-set atomic update + upsert in a single transaction. Idempotent: same conversation, same period → counted once only (see `tests/Feature/Billing/MeteringRaceTest.php`).
+- **F3 (Circuit-breaker):** `ZaloHealthMonitor` tracks bridge failures per connection in cache (not a DB column). After enough errors → circuit opens, sends fail fast without calling the bridge. Reset on successful send.
+- **F4 (Bridge fail-fast timeout):** HTTP timeout 15s, retry 2×200ms on network failure. Timeout/network error → throw, no Message persisted (the bridge, not this service, owns retry from its side via the outbox).
+- **F5 (Existing conversation always allowed):** `last_metered_period == currentPeriod` → `assertCanSend()` passes even at 0 quota remaining. Only blocks brand-new conversations when over quota.
+- **F8 (Rate limit + window):** `SendRateLimiter` enforces 7h–22h (Asia/Ho_Chi_Minh) + max 3 messages per phone number per day.
+- **F13/F20 (Inbound never blocked):** Inbound acceptance is never gated by quota at all (only outbound is gated, via F5). See [zalo-personal-inbox.md](./zalo-personal-inbox.md).
 
-- **F3 (Circuit-breaker):** `AccountHealthMonitor` tracks bridge failures per connection. After N errors → circuit open, all sends fail fast without calling bridge. Reset on successful send.
-
-- **F4 (Bridge fail-fast timeout):** HTTP timeout 15 seconds; retry 2×200ms on network failure. If timeout → throw, no message persisted (fail-safe: bridge responsible for retry from their side).
-
-- **F5 (Existing conversation always allowed):** Conversation already metered in current period (`last_metered_period == currentPeriod`) → `assertCanSend()` passes even if quota remaining = 0. Only blocks NEW conversations when over quota.
-
-- **F8 (Rate limit + window):** SendRateLimiter enforces 7h–22h (Ho Chi Minh time) + max 3 QC (quick call?) per phone number per day. Persisted in Redis if enabled, else in-memory cache.
-
-- **F9 (Metering atomicity):** Compare-set + upsert wrapped in `DB::transaction()`. If upsert fails after compare-set → entire transaction rolls back, conversation.last_metered_period reverted (no under-counting).
-
-- **F13/F20 (Inbound never blocked):** Inbound acceptance NEVER gated by quota (only outbound gated via F5). See [zalo-personal-inbox.md](./zalo-personal-inbox.md).
-
-Link: [crm-business-rules.md](../crm-business-rules.md) § F1, F3, F4, F5, F8, F9, F13, F20.
+Link: [crm-business-rules.md](../crm-business-rules.md) § F1, F3, F4, F5, F8, F13, F20.
 
 ## Edge cases & error handling
 
 | Scenario | Behavior |
 |---|---|
-| **Quota exceeded (new conversation, period over)** | throw QuotaExceededException → 402 Payment Required; member sees "quota exceeded" message in UI. |
-| **Circuit breaker open** | throw ZaloCircuitOpenException → 409 Conflict; member sees "connection unhealthy, try again later". |
-| **Outside 7h–22h window** | throw SendOutsideWindowException → 429; member sees "can only send during 7h–22h". |
-| **Rate cap (3 msg/phone/day)** | throw RateCapException → 429; member sees "too many messages to this phone today". |
-| **Bridge session lost (503, not_logged_in)** | ZaloNotConnectedException → 503; health monitor records error; member sees "session expired, admin needs to re-login". |
-| **Bridge rate-limited (429)** | ZaloNotConnectedException → 503; health monitor records; circuit-breaker increments error counter. |
-| **Bridge timeout (15s)** | ZaloNotConnectedException → 503; NO Message persisted; member can retry. |
-| **Metering transaction rollback** | Rare; if upsert fails after compare-set → entire transaction rolls back. Conversation.last_metered_period NOT updated → retry meterReply later idempotent. |
-| **Media URL invalid** | Message persists with media_meta as-is; FE handles 404 / rendering error gracefully. |
-| **Member loses permission mid-request** | Authorization policy re-checked at controller; unlikely race but returns 403 if membership changed. |
-| **Conversation deleted by tenant** | FK constraint violation (if conversation hard-deleted); returns 404. Soft-delete recommended to preserve audit. |
+| **Empty text** | `422 { message: "Nội dung không được để trống." }` — before any driver call. |
+| **Integration module missing/disabled** | `422 { error_code: channel_unavailable }`. |
+| **0 connected slots for the account** | `ZaloNotConnectedException` → wrapped `SendException(not_connected)` → `422`. |
+| **>1 connected slots for the account** (should be DB-impossible via the app) | `ZaloSplitBrainException` → `SendException(split_brain)` → `422`. |
+| **Circuit breaker open** | `SendException(circuit_open)` → `422`. |
+| **Quota exceeded (new conversation, period over)** | `QuotaExceededException` (not yet a `SendException`, caught separately by class-name check) → `422 { error_code: quota_exceeded }`. |
+| **Outside 7h–22h window** | `SendException(outside_window)` → `422`. |
+| **Rate cap (3 msg/phone/day)** | `SendException(rate_cap)` → `422`. |
+| **Bridge session lost (503 / not_logged_in)** | `SendException(not_connected)` → `422`; health monitor records the error. |
+| **Bridge rate-limited (429) / forbidden (403)** | Same as above — `422`, health monitor records. |
+| **Bridge timeout / network error** | `422`; **no Message persisted**; member can retry. |
+| **Every error above is distinguished only by `error_code` in the JSON body — the HTTP status is uniformly 422, never 402/409/429/503.** | |
 
 ## Related
 
 - [zalo-personal-inbox.md](./zalo-personal-inbox.md) — inbound message ingestion.
 - [conversation-metering.md](./conversation-metering.md) — metering gate contract + implementation.
+- [channel-account-architecture.md](./channel-account-architecture.md) — account-keyed connection resolution this flow relies on.
 - [system-architecture.md](../system-architecture.md) § Billing + Metering.
-- [crm-business-rules.md](../crm-business-rules.md) § F1, F3, F4, F5, F8, F9, F13, F20.
+- [crm-business-rules.md](../crm-business-rules.md) § F1, F3, F4, F5, F8, F13, F20.

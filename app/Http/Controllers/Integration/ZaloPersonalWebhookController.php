@@ -13,6 +13,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -24,10 +26,12 @@ use Throwable;
  *   3. TenantScope::bind($workspaceId)
  *   4. try { xử lý } finally { TenantScope::forget() }
  *
- * 3 event types:
+ * 4 event types:
  *   - inbound       → parse + ingest (InboundMessageService, always-accept F13/F20)
  *   - bridge_session → update ZaloConnection.state
  *   - social_event  → log/no-op (YAGNI)
+ *   - relay_event   → lưu relay_events (P10 — 11 event zca chưa có handler product)
+ *   - default       → CŨNG lưu relay_events (P10/H1: event lạ KHÔNG drop im lặng)
  *
  * Route: POST /api/integrations/zalo-personal/webhook
  * Middleware: zalo.bridge.secret (VerifyZaloBridgeSecret)
@@ -77,7 +81,9 @@ class ZaloPersonalWebhookController extends Controller
                 'inbound' => $this->handleInbound($payload),
                 'bridge_session' => $this->handleBridgeSession($payload),
                 'social_event' => $this->handleSocialEvent($payload),
-                default => response()->json(['ok' => true, 'message' => 'unknown_event_type'], 200),
+                // P10/H1: relay_event (forwarder generic P12) + event type LẠ → đều
+                // ghi relay_events, KHÔNG drop im lặng. KHÔNG tính metering (F1/F14).
+                default => $this->handleRelayEvent($payload, $eventType),
             };
         } finally {
             // ⚠️ F19: LUÔN forget sau request — pooled connection an toàn
@@ -100,12 +106,11 @@ class ZaloPersonalWebhookController extends Controller
     private function handleInbound(array $payload): JsonResponse
     {
         try {
-            // Account-keyed: resolve personal_uid của connection (kể cả trashed) để
-            // upsertConversation gắn message vào conversation canonical thay vì fork
-            // theo connection_id mỗi lần reconnect.
+            // P08: resolve channel_account_id của slot (kể cả trashed) — 1 nguồn sự thật
+            // duy nhất cho upsertConversation, thay vì zalo_connection_id/personal_uid.
             $connectionId = (int) ($payload['connection_id'] ?? 0);
-            $payload['connection_personal_uid'] = $connectionId > 0
-                ? ZaloConnection::personalUidForConnection($connectionId)
+            $payload['channel_account_id'] = $connectionId > 0
+                ? ZaloConnection::channelAccountIdForConnection($connectionId)
                 : null;
 
             $driver = app(ChannelManager::class)->driver('zalo_personal');
@@ -175,6 +180,32 @@ class ZaloPersonalWebhookController extends Controller
         $hadGap = $connection->last_session_lost_at !== null
             || $connection->state === 'session_lost';
 
+        // P05: đồng bộ account-level state + cửa sổ gap theo 2 chiều:
+        //  - session_lost → mở gap: CHỈ set gap_started_at lần ĐẦU (gap_open còn false);
+        //    session_lost lặp lại (bridge chập chờn) không đẩy lùi mốc bắt đầu.
+        //  - session_ok → ĐÓNG gap (gap_open=false, GIỮ gap_started_at cho marker các
+        //    hội thoại chưa kịp nhận tin post-gap). Đường này là cookie-restore reconnect
+        //    (bridge tự khôi phục, KHÔNG qua PromoteAccountBinder) — nếu không đóng ở
+        //    đây, gap kế tiếp không set được gap_started_at mới → marker gap 2+ bị nuốt
+        //    (unique conversation_events trùng gap_started_at cũ) và account status
+        //    kẹt 'session_lost' vĩnh viễn trên UI.
+        // pgsql_privileged — NHẤT QUÁN với updateState() + mọi ghi khác trong handler
+        // này. KHÔNG đổi sang connection mặc định: default session của test giữ lock
+        // row zalo_connections trong transaction → updateState (privileged) chờ lock
+        // → treo chéo session (đã dính khi review 04/07).
+        if ($connection->channel_account_id !== null) {
+            $accountQuery = fn () => DB::connection('pgsql_privileged')->table('channel_accounts')
+                ->where('id', $connection->channel_account_id);
+
+            if ($modelState === 'session_lost') {
+                $accountQuery()->where('gap_open', false)
+                    ->update(['gap_started_at' => now(), 'gap_open' => true, 'updated_at' => now()]);
+                $accountQuery()->update(['status' => 'session_lost', 'updated_at' => now()]);
+            } else {
+                $accountQuery()->update(['status' => 'connected', 'gap_open' => false, 'updated_at' => now()]);
+            }
+        }
+
         $connection->updateState($modelState, $detail);
 
         // ponytail: inline backfill — chưa có DB-queue worker; chuyển Job khi có worker
@@ -190,6 +221,67 @@ class ZaloPersonalWebhookController extends Controller
         // TODO D-2: broadcast ZaloConnectionStateChanged event khi có realtime FE
 
         return response()->json(['ok' => true, 'state' => $modelState]);
+    }
+
+    /**
+     * P10 — relay_event từ forwarder generic (P12) + event type LẠ: lưu vào
+     * relay_events thay vì drop im lặng (red-team H1). KHÔNG tính metering
+     * (F1/F14 — kho quan sát, không phải message tenant trả lời).
+     *
+     * Idempotent theo unique partial (workspace_id, event_type, source_id):
+     * bridge retry → 23505 → 200 dedup. Contract HTTP như handleInbound:
+     * 200 done · 422 payload hỏng vĩnh viễn · 503 DB transient (outbox retry).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function handleRelayEvent(array $payload, string $eventType): JsonResponse
+    {
+        // relay_event envelope (P12/H2) mang event_type riêng; type lạ → dùng chính type đó.
+        $relayEventType = $eventType === 'relay_event'
+            ? (string) ($payload['event_type'] ?? '')
+            : $eventType;
+
+        if ($relayEventType === '') {
+            return response()->json(['ok' => false, 'message' => 'missing_event_type'], 422);
+        }
+
+        // Typing là presence phù du — chỉ có giá trị hiển thị realtime tại FE,
+        // KHÔNG phải dữ liệu nghiệp vụ. Ghi kho = phình bảng vô hạn (source_id
+        // null → không dedup, không TTL). Nhận 200 để bridge không retry, không lưu.
+        if ($relayEventType === 'typing') {
+            return response()->json(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
+        }
+
+        $connectionId = (int) ($payload['connection_id'] ?? 0);
+        $sourceId = isset($payload['source_id']) && $payload['source_id'] !== '' ? (string) $payload['source_id'] : null;
+
+        try {
+            // insertOrIgnore (ON CONFLICT DO NOTHING) thay vì catch 23505: lỗi unique
+            // trong Postgres abort cả transaction bao ngoài — dedup phải không-lỗi.
+            $inserted = DB::table('relay_events')->insertOrIgnore([
+                'id' => (string) Str::uuid(),
+                'workspace_id' => currentWorkspace()->id,
+                'channel_account_id' => $connectionId > 0
+                    ? ZaloConnection::channelAccountIdForConnection($connectionId)
+                    : null,
+                'connection_id' => $connectionId > 0 ? $connectionId : null,
+                'event_type' => mb_substr($relayEventType, 0, 32),
+                'personal_uid' => isset($payload['personal_uid']) ? mb_substr((string) $payload['personal_uid'], 0, 64) : null,
+                'source_id' => $sourceId,
+                'payload' => json_encode($payload['payload'] ?? $payload),
+                'received_at' => now(),
+                'created_at' => now(),
+            ]);
+        } catch (QueryException|\PDOException $e) {
+            $this->safeReport($e);
+
+            return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $inserted > 0 ? 'relay_event_stored' : 'relay_event_duplicate',
+        ], 200);
     }
 
     /**

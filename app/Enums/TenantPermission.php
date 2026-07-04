@@ -70,6 +70,12 @@ enum TenantPermission: string
     // --- Zalo channel (P07 channel-zalo) ---
     case ZaloManage = 'tenant.zalo.manage';
 
+    // Gate RIÊNG cho 39 method destructive của dispatcher generic (P10/P11 —
+    // disperseGroup, changeGroupOwner, deleteMessage…), KHÔNG dùng chung
+    // ZaloManage (red-team H4/A-V3). Call-site Laravel check quyền này TRƯỚC
+    // khi gọi bridge với elevated secret.
+    case ZaloDestructive = 'tenant.zalo.destructive';
+
     /** @return list<string> */
     public static function values(): array
     {

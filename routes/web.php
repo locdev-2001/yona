@@ -33,6 +33,7 @@ use App\Http\Controllers\Identity\Settings\PasswordController;
 use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
 use App\Http\Controllers\Integration\IntegrationController;
 use App\Http\Controllers\Integration\ZaloConnectionController;
@@ -231,6 +232,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/inbox/resync', [InboxController::class, 'resync'])->name('inbox.resync');
         Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])
             ->name('inbox.messages');
+        // P05 — stream hợp nhất messages + gap marker (session_gap), keyset cursor.
+        Route::get('/inbox/conversations/{conversation}/stream', ConversationStreamController::class)
+            ->name('inbox.stream');
         Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
             ->name('inbox.send');
         Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
