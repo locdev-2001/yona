@@ -5,12 +5,14 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\ZaloConnection;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
 use App\Modules\Integration\Contracts\ChannelDriver;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Channel driver cho Zalo cá nhân (zca-js bridge).
@@ -192,6 +194,58 @@ class ZaloChannelDriver implements ChannelDriver
         } catch (ZaloSplitBrainException $e) {
             throw new SendException('Phát hiện nhiều phiên Zalo cùng kết nối — đã dừng gửi để tránh gửi nhầm. Liên hệ hỗ trợ.', 'split_brain', $e);
         }
+    }
+
+    /**
+     * P05 — verify SĐT nhập tay: findUser(phone) chiều XUÔI, uid trả về phải
+     * khớp peer_uid. 1 API call/lần do NGƯỜI DÙNG chủ động (không harvest —
+     * BLK-5). Đi qua dispatcher /zca (workspace_token B1, rate-limit bridge).
+     *
+     * @return bool true = uid khớp; false = không khớp / không resolve được
+     *
+     * @throws ZaloNotConnectedException bridge/slot không sẵn sàng
+     */
+    public function verifyPeerPhone(Conversation $conversation, string $phone): bool
+    {
+        if (! $conversation->channel_account_id) {
+            throw new ZaloNotConnectedException('Hội thoại chưa gắn tài khoản Zalo.');
+        }
+
+        $slots = ZaloConnection::connectedForAccount($conversation->workspace_id, $conversation->channel_account_id);
+        if ($slots->count() !== 1) {
+            throw new ZaloNotConnectedException('Tài khoản Zalo cần quét lại QR.');
+        }
+
+        $connectionId = (string) $slots->first()->connection_id;
+        $secret = (string) config('services.zalo_bridge.send_secret', '');
+
+        try {
+            $response = Http::asJson()
+                ->withHeader('X-Bridge-Send-Secret', $secret)
+                ->timeout(15)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/zca/findUser', [
+                    'connection_id' => (int) $connectionId,
+                    // B1 token-từ-session: HMAC(connection_id:workspace_id) — bridge so với slot binding
+                    'workspace_token' => hash_hmac('sha256', $connectionId.':'.$conversation->workspace_id, $secret),
+                    'args' => [$phone],
+                ]);
+        } catch (\Exception $e) {
+            throw new ZaloNotConnectedException('Không thể kết nối bridge Zalo: '.$e->getMessage());
+        }
+
+        if (! $response->successful()) {
+            // findUser không resolve (số không dùng Zalo) → zca throw → bridge 500:
+            // đây là "verify thất bại", KHÔNG phải lỗi hạ tầng (LOW-2: reject cả 2 nhánh)
+            if ($response->status() >= 500) {
+                return false;
+            }
+            throw new ZaloNotConnectedException('Bridge từ chối ('.$response->status().'). Kiểm tra kết nối Zalo.');
+        }
+
+        $result = $response->json('result');
+        $uid = $result['uid'] ?? $result['userId'] ?? $result['globalId'] ?? null;
+
+        return $uid !== null && (string) $uid === $conversation->peer_uid;
     }
 
     public function connect(string $workspaceId, array $params): void

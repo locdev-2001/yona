@@ -1,11 +1,11 @@
 ---
 name: p04-composer-media-review
-description: Kết quả review P04 (f1a6c47, feat/inbox-full-messaging) — HIGH stored-XSS do bỏ mime allowlist, cần verify fix ở commit sau
+description: Review P04 (f1a6c47) — HIGH stored-XSS + 2 MED ĐÃ FIX ở dac4674; còn treo LOW avatar fetch không cap
 metadata:
   type: project
 ---
 
-Review P04 composer media (commit f1a6c47) ngày 2026-07-04: HIGH duy nhất = upload không validate mime (chỉ cap 20MB) + route `inbox.attachments.show` serve inline qua `Storage::response()` → member upload .html/.svg = stored XSS trên origin app. Phase spec YÊU CẦU "validate mime/size" nhưng mime bị bỏ ("validate đã chốt" chỉ nói bỏ cap ảnh 10MB, không nói bỏ mime).
+Review P04 composer media (commit f1a6c47) ngày 2026-07-04: HIGH = upload không validate mime + serve inline → stored XSS. **ĐÃ FIX ở commit dac4674** ("P04 review fixes"): H1 mime allowlist + Content-Disposition attachment + nosniff cho non-inline-safe; M1 bridge re-validate host cuối sau redirect; M2 test quota-media 422.
 
-**Why:** đây là blocking finding chưa fix tại thời điểm review — commit sau trên branch này phải có mime allowlist HOẶC Content-Disposition: attachment + nosniff cho non-image.
-**How to apply:** khi review các commit P05+ trên feat/inbox-full-messaging, kiểm tra fix này đã vào chưa; các MED còn treo: redirect-follow không re-validate host trong media-fetch.mjs, thiếu test quota/rate-áp-cho-media, avatar fetch ui-actions.mjs còn arrayBuffer() không cap.
+**Why:** giữ record vòng review P04 đã đóng — tránh flag lại finding đã fix.
+**How to apply:** còn treo duy nhất (LOW): avatar fetch ui-actions.mjs dùng arrayBuffer() không cap size — check nếu đụng file đó. Xem thêm [[p02-message-state-review]] cho item treo của P02.

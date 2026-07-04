@@ -63,8 +63,11 @@ class MessageStateService
      */
     public function applyReceipts(?string $channelAccountId, array $receipts): void
     {
+        // MED-1: batch resolve — seen có thể 1-50 tin/event, tránh 2N query
+        $messages = $this->resolveMany($channelAccountId, array_column($receipts, 'target_msg_id'));
+
         foreach ($receipts as $receipt) {
-            $message = $this->resolve($channelAccountId, $receipt['target_msg_id']);
+            $message = $messages[$receipt['target_msg_id']] ?? null;
 
             // Chatty drop-on-miss có chủ đích. Guard: chỉ tin MÌNH gửi + thread 1-1.
             if ($message === null || $message->direction === 'in' || $message->conversation?->thread_type === 1) {
@@ -93,8 +96,10 @@ class MessageStateService
      */
     public function applyReactions(?string $channelAccountId, array $reactions): void
     {
+        $messages = $this->resolveMany($channelAccountId, array_column($reactions, 'target_msg_id'));
+
         foreach ($reactions as $reaction) {
-            $message = $this->resolve($channelAccountId, $reaction['target_msg_id']);
+            $message = $messages[$reaction['target_msg_id']] ?? null;
 
             if ($message === null) {
                 continue; // chatty drop-on-miss có chủ đích
@@ -106,6 +111,11 @@ class MessageStateService
 
             // Monotonic: event cũ hơn bản ghi hiện tại → bỏ (out-of-order MED-1)
             if ($existing !== null && $existing->reacted_at->gt($reaction['reacted_at'])) {
+                continue;
+            }
+
+            // Review LOW-1: replay trùng hệt (cùng ts, cùng icon) → no-op, KHÔNG broadcast lần 2
+            if ($existing !== null && $existing->icon === $reaction['icon'] && $existing->reacted_at->equalTo($reaction['reacted_at'])) {
                 continue;
             }
 
@@ -143,14 +153,15 @@ class MessageStateService
             return;
         }
 
+        // Review INFO: chỉ quét loại pending mình xử lý — loại mới sau này phải
+        // tự thêm handler, không bị xoá-không-áp.
         $pendings = PendingMessageState::where('target_msg_id', $message->source_id)
+            ->where('event_type', 'undo')
             ->where('expires_at', '>', now())
             ->get();
 
         foreach ($pendings as $pending) {
-            if ($pending->event_type === 'undo') {
-                $this->markRecalled($message, $pending->payload['recalled_at'] ?? null);
-            }
+            $this->markRecalled($message, $pending->payload['recalled_at'] ?? null);
             $pending->delete();
         }
     }
@@ -158,6 +169,15 @@ class MessageStateService
     private function resolve(?string $channelAccountId, string $sourceId): ?Message
     {
         return $channelAccountId === null ? null : $this->resolver->findForAccount($channelAccountId, $sourceId);
+    }
+
+    /**
+     * @param  list<string>  $sourceIds
+     * @return array<string, Message>
+     */
+    private function resolveMany(?string $channelAccountId, array $sourceIds): array
+    {
+        return $channelAccountId === null ? [] : $this->resolver->findManyForAccount($channelAccountId, $sourceIds);
     }
 
     private function markRecalled(Message $message, Carbon|string|null $recalledAt): bool

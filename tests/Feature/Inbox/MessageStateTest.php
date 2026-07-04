@@ -6,17 +6,20 @@ use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageReaction;
+use App\Models\MessageSourceAlias;
 use App\Models\PendingMessageState;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Services\Inbox\MessageSourceResolver;
 use App\Services\Inbox\MessageStateService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 
@@ -416,4 +419,57 @@ it('webhook: bơm 100 state-event KHÔNG đổi channel_usage (seam metering)', 
     }
 
     expect(DB::table('channel_usage')->count())->toBe($before);
+});
+
+// ── Race 23505: echo về trước khi portal persist (review MED-2) ──────────────
+
+it('race 23505: echo insert trước → portal send merge vào row echo, không lỗi giả, không double stream_version', function () {
+    Carbon::setTestNow(
+        Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh')
+    );
+    [$workspace, $account, $conversation] = msSetup();
+
+    ZaloConnection::create([
+        'workspace_id' => $workspace->id,
+        'connection_id' => ZaloConnection::nextConnectionId(),
+        'channel_account_id' => $account->id,
+        'state' => 'connected',
+        'lock_version' => 0,
+    ]);
+
+    // Echo self-listen về TRƯỚC (webhook đã tạo row + bump stream_version)
+    $echoRow = Message::create([
+        'workspace_id' => $workspace->id,
+        'conversation_id' => $conversation->id,
+        'direction' => 'echo',
+        'type' => 'text',
+        'body' => null,
+        'source_id' => 'race_src_1',
+        'platform_sent_at' => now(),
+        'platform_meta' => ['zca_message' => ['msgId' => 'race_src_1', 'cliMsgId' => '999']],
+    ]);
+    $svBefore = (int) $conversation->fresh()->stream_version;
+
+    Http::fake([
+        '*personal-messages/send*' => Http::response([
+            'ok' => true,
+            'source_id' => 'race_src_1',
+            'source_ids' => ['race_src_1', 'race_src_extra'],
+        ], 200),
+    ]);
+
+    $message = app(ZaloSendService::class)
+        ->send($conversation, 'tin từ portal');
+
+    expect($message->id)->toBe($echoRow->id)
+        ->and($message->direction)->toBe('echo')                       // identity KHÔNG lật
+        ->and($message->body)->toBe('tin từ portal')                   // merge phần portal biết
+        ->and($message->platform_meta['zca_message']['cliMsgId'])->toBe('999') // meta echo giữ nguyên
+        ->and(Message::where('source_id', 'race_src_1')->count())->toBe(1)
+        ->and((int) $conversation->fresh()->stream_version)->toBe($svBefore); // KHÔNG bump lần 2
+
+    // Alias msgId phụ vẫn ghi về đúng row
+    expect(MessageSourceAlias::where('source_id', 'race_src_extra')->sole()->message_id)->toBe($echoRow->id);
+
+    Carbon::setTestNow();
 });
