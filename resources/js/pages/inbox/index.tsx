@@ -3,14 +3,15 @@ import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
 import type { GapEvent } from '@/components/inbox/gap-marker';
+import { MessageComposer } from '@/components/inbox/message-composer';
 import { messagePreview, type ChatMessage, type StreamItem } from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type SharedData } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { MessageCircle, RefreshCw, Send } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { MessageCircle, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -83,8 +84,6 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [leadLoading, setLeadLoading] = useState(false);
     const [leadError, setLeadError] = useState<string | null>(null);
 
-    const { data, setData } = useForm({ text: '' });
-    const [sending, setSending] = useState(false);
     const [syncing, setSyncing] = useState(false);
 
     // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
@@ -216,43 +215,6 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             })
             .catch(() => showToast('Không tải được tin cũ hơn. Vui lòng thử lại.'))
             .finally(() => setLoadingMore(false));
-    }
-
-    function handleSend(e: React.FormEvent) {
-        e.preventDefault();
-        if (!activeConv || !data.text.trim() || sending) return;
-
-        // The send endpoint is a JSON API (returns the created message / {message,error_code} on 422),
-        // not an Inertia page — use fetch, mirroring handleSelectConv/handleCreateLead.
-        const text = data.text;
-        const conv = activeConv;
-        setSending(true);
-        setData('text', '');
-
-        fetch(route('inbox.send', conv.id), {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
-            },
-            body: JSON.stringify({ text }),
-        })
-            .then(async (r) => {
-                const json = await r.json().catch(() => ({}));
-                if (!r.ok) {
-                    setData('text', text); // restore input so the user can retry
-                    showToast(json.message ?? 'Không gửi được tin nhắn. Vui lòng thử lại.');
-                    return;
-                }
-                handleSelectConv(conv); // reload thread to show the sent message
-            })
-            .catch(() => {
-                setData('text', text);
-                showToast('Không kết nối được server.');
-            })
-            .finally(() => setSending(false));
     }
 
     function handleCreateLead() {
@@ -444,20 +406,12 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                     </Button>
                                 </div>
                             ) : (
-                                <>
-                                    <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
-                                        <Input
-                                            value={data.text}
-                                            onChange={(e) => setData('text', e.target.value)}
-                                            placeholder="Nhập tin nhắn..."
-                                            className="flex-1"
-                                            disabled={sending}
-                                        />
-                                        <Button type="submit" size="sm" disabled={sending || !data.text.trim()}>
-                                            <Send className="h-4 w-4" />
-                                        </Button>
-                                    </form>
-                                </>
+                                // key theo conversation — reset text/đính kèm khi đổi hội thoại
+                                <MessageComposer
+                                    key={activeConv.id}
+                                    conversationId={activeConv.id}
+                                    onSent={() => handleSelectConv(activeConv)}
+                                />
                             )}
                         </>
                     )}

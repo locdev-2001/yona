@@ -35,6 +35,9 @@ export interface MediaMeta {
     call?: { type?: string | number; duration?: number } | null;
     media_filename?: string;
     quote?: QuoteMeta | null;
+    /** P04 — media outbound từ portal (private disk, media_url = route show bền). */
+    media_kind?: string;
+    attachment_id?: string;
 }
 
 export interface ChatMessage {

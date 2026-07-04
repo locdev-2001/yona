@@ -5,6 +5,7 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 use App\Exceptions\QuotaExceededException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\MessageSourceAlias;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
@@ -156,12 +157,16 @@ class ZaloSendService
     {
         $mediaMeta = [];
         if ($media) {
+            // P04: KHÔNG lưu file_url (signed URL transient, hết hạn 15') — media_url
+            // dùng display_url bền (route show, quyền = xem conversation).
             $mediaMeta = array_filter([
-                'file_url' => $media['file_url'] ?? null,
                 'media_kind' => $media['media_kind'] ?? null,
-                'filename' => $media['filename'] ?? null,
+                'media_filename' => $media['filename'] ?? null,
+                'attachment_id' => $media['attachment_id'] ?? null,
             ]);
         }
+
+        $sourceId = isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null;
 
         $message = Message::create([
             'workspace_id' => $conversation->workspace_id,
@@ -169,12 +174,26 @@ class ZaloSendService
             'direction' => 'out',
             'type' => $media ? ($media['media_kind'] ?? 'file') : 'text',
             'body' => $text,
-            'media_url' => $media['file_url'] ?? null,
+            'media_url' => $media !== null ? ($media['display_url'] ?? $media['file_url'] ?? null) : null,
             'media_meta' => $mediaMeta ?: [],
-            'source_id' => isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null,
+            'source_id' => $sourceId,
             'platform_sent_at' => now(),
             'sent_by' => Auth::id(),
         ]);
+
+        // P04 (Codex MED-7): file + caption → zca tách 2 tin → 2 msgId. Bridge trả
+        // source_ids đầy đủ; id phụ ghi message_source_aliases để echo thứ hai dedup
+        // vào CÙNG row này thay vì tạo tin trùng.
+        $allSourceIds = array_map('strval', array_filter((array) ($bridgeResponse['source_ids'] ?? [])));
+        foreach (array_unique(array_diff($allSourceIds, [$sourceId ?? ''])) as $aliasSourceId) {
+            MessageSourceAlias::create([
+                'workspace_id' => $conversation->workspace_id,
+                'conversation_id' => $conversation->id,
+                'message_id' => $message->id,
+                'source_id' => $aliasSourceId,
+                'kind' => 'multi_send',
+            ]);
+        }
 
         // P05 invariant: MỌI Message insert mới +1 stream_version (khớp
         // InboundMessageService::createMessage) — echo bridge về sau chỉ là
