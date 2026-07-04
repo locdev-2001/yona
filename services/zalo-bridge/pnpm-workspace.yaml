@@ -1,5 +1,5 @@
 allowBuilds:
-  sharp: set this to true or false
+  sharp: true
 # pnpm 10 blocks dependency build scripts by default. sharp needs its native
 # build to run, so allow it explicitly here (the pnpm-10 home for this setting).
 onlyBuiltDependencies:

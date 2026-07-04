@@ -1,28 +1,26 @@
-# Conversation to Lead (CDP Dedup)
+# Conversation to Lead
 
-Module: `inbox` + `crm-sales` (via `LeadCreator` contract) · Status: live (GĐ1, dedup contract only; impl Phase-08) · Updated: 2026-06-28
+Module: `app/Http/Controllers/Inbox` + `app/Services` (plain Laravel — no `modules/` directory, no `IdentityResolver`/`LeadCreatorImpl` contract layer; this is a direct, synchronous implementation) · Status: live (GĐ1) · Updated: 2026-07-04
 
 ## Purpose
 
-Convert inbound Zalo conversation to Lead via CDP identity resolution: resolve or create Contact by phone number (dedup), link bidirectionally (Conversation ↔ Lead), prevent duplicate leads per conversation, and prepare for Phase-08 CDP Layer 1 mergeIdentities flow.
+Convert an inbound Zalo conversation into a Lead: dedup the peer by phone number via `ContactService`, create the Lead via `LeadService`, and link everything bidirectionally (`Conversation.contact_id`, `Conversation.lead_id`, `Lead.conversation_id`, `Lead.contact_id`).
 
-**Value:** Deduplicates inbound leads from same phone across channels, ensures 1:1 conversation-to-lead link, and enables future omnichannel analytics (same person contacted via Zalo + Messenger = 1 contact).
+**Value:** Deduplicates inbound leads from the same phone number, ensures a 1:1 conversation-to-lead link, and gives the tenant a one-click path from "someone messaged us" to "this is a sales lead."
 
 ## Actors & permissions
 
-- **Tenant member** (`lead.manage`) → manually convert conversation to lead via UI button or API.
-- **System** (ConversationLeadController) → acts on behalf of member, enforces tenant isolation + idempotency.
-- **IdentityResolver contract** (Phase-08 impl) → resolves contact by phone or creates new draft contact.
+- **Tenant member** with `update` permission on the conversation (`ConversationPolicy::update()`) → converts a conversation to a Lead via UI button.
+- **System** (`ConversationLeadController::store()`) → acts on behalf of the member; enforces idempotency and the group-conversation guard directly (no separate contract layer).
 
 Link: [crm-authorization-model.md](../crm-authorization-model.md) § Lead creation scope.
 
 ## Trigger / entry points
 
-**API endpoint** `POST /api/conversations/{id}/convert-to-lead`:
-- Frontend: "Convert to Lead" button on conversation detail.
-- Controller: `modules/inbox/src/Http/Controllers/ConversationLeadController.php::store()`.
-- Service: `LeadCreatorImpl` (contract-based, modules/crm-sales).
-- Route: `modules/inbox/routes/web.php`.
+**Route** `POST /inbox/conversations/{conversation}/lead` (`routes/web.php`):
+- Frontend: "Convert to Lead" button on the conversation thread.
+- Controller: `app/Http/Controllers/Inbox/ConversationLeadController.php::store()`.
+- Services used directly (no contract/interface indirection): `App\Services\ContactService::resolveOrCreateFromPeer()`, `App\Services\LeadService::createFromContact()`.
 
 ## Operational flow (step-by-step)
 
@@ -30,142 +28,100 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Lead creati
 sequenceDiagram
     participant User as Tenant Member<br/>(UI)
     participant Controller as ConversationLeadController
-    participant IdentityResolver as IdentityResolver<br/>(contract)
-    participant Contact as Contact Model<br/>(crm-sales)
-    participant Lead as Lead Model<br/>(crm-sales)
-    participant LeadCreator as LeadCreatorImpl
+    participant ContactSvc as ContactService
+    participant LeadSvc as LeadService
     participant RLS as PostgreSQL RLS
 
-    User->>Controller: POST /api/conversations/{id}/convert-to-lead<br/>(optional: pipeline_id, stage_id)
-    Controller->>Controller: Authorize: can_create_lead() + can_update_conversation()
-    Controller->>Controller: Load conversation + validate peer_phone exists
-    
-    alt peer_phone is null
-        Controller->>User: 400 Bad Request<br/>("phone required to convert")
-    else phone exists
-        Controller->>IdentityResolver: resolveOrCreateFromPeer(<br/>channel='zalo_personal',<br/>peer_uid, peer_phone, peer_name)
-        
-        Note over IdentityResolver: Phase-08 impl: <br/>normalize phone (VN format)<br/>search Contact by (workspace_id, phone)<br/>if found + needs_merge_review<br/>→ flag for manual merge<br/>if not found → create draft Contact
-        
-        alt Phase-07 (no-op impl)
-            IdentityResolver->>IdentityResolver: return null<br/>(Phase-08 placeholder)
-        else Phase-08 (future)
-            IdentityResolver->>Contact: find by phone or create
-            Contact->>RLS: INSERT/UPDATE with<br/>channel_uid mapping
-            IdentityResolver->>Controller: return ContactRef
+    User->>Controller: POST /inbox/conversations/{id}/lead
+    Controller->>Controller: authorize('update', conversation)
+
+    alt conversation.thread_type === 1 (group)
+        Controller-->>User: 422 "Không thể tạo Lead từ hội thoại nhóm."
+    else conversation.lead_id already set
+        Controller-->>User: 200 { lead_id, existing: true }
+    else not yet converted, not a group
+        alt peer_phone is not null
+            Controller->>ContactSvc: resolveOrCreateFromPeer(workspace_id, channel, peer_uid, phone, displayName)
+            Note over ContactSvc: Called BEFORE the transaction — dedup doesn't need to be<br/>atomic with Lead creation, and doing it inside risks a<br/>25P02 "aborted transaction" if its own 23505 fires mid-tx.
+            ContactSvc-->>Controller: Contact (found or created) or null
         end
-        
-        alt contact_ref is null<br/>(no phone match + no create)
-            Controller->>User: 422 Unprocessable Entity<br/>("cannot resolve contact")
-        else contact_ref found or created
-            Note over Controller: F15: Idempotency check
-            Controller->>Controller: Check if conversation<br/>.lead_id already set<br/>OR lead already exists<br/>WHERE conversation_id = ?
-            
-            alt Already linked
-                Controller->>User: 409 Conflict<br/>("already converted")
-            else Not yet linked
-                Controller->>LeadCreator: createFromContact(<br/>contact, <br/>{pipeline_id, stage_id, <br/>source='zalo_personal'})
-                
-                Note over LeadCreator: F17: Use service to populate<br/>lead_name, email, phone from contact
-                LeadCreator->>Lead: create({name, email, phone, <br/>pipeline_id, stage_id, <br/>source, assigned_to, <br/>conversation_id, <br/>contact_id})
-                Lead->>RLS: INSERT lead<br/>(RLS: workspace_id)
-                
-                Controller->>Controller: Link bidirectional:<br/>Conversation.contact_id = contact.id,<br/>Lead.conversation_id = lead.id
-                Controller->>RLS: UPDATE conversation<br/>(contact_id, conversation_lead_link_at)
-                
-                Controller->>User: 201 Created<br/>{lead, conversation, contact}
-            end
+
+        Controller->>Controller: DB::transaction { ... }
+        Note over Controller: link contact_id onto conversation if resolved,<br/>resolve default Pipeline + its first stage
+        Controller->>LeadSvc: createFromContact(contact, {name, phone, pipeline_id, stage_id, source: 'Zalo', contact_id, conversation_id})
+        LeadSvc->>RLS: INSERT lead
+        Controller->>RLS: UPDATE conversation SET lead_id
+        Controller->>RLS: UPDATE lead SET conversation_id, contact_id (saveQuietly)
+
+        alt 23505 on leads(conversation_id) — concurrent double-submit
+            Controller->>Controller: re-fetch conversation.lead_id
+            Controller-->>User: 200 { lead_id, existing: true }
+        else success
+            Controller-->>User: 200 { lead_id, existing: false }
         end
     end
 ```
 
 **Steps:**
-1. Member clicks "Convert to Lead" on conversation detail view.
-2. Controller authorizes: member has `lead.manage` (create) + `conversation.update` (link).
-3. Controller validates conversation.peer_phone exists; if null → 400 "phone required".
-4. Controller calls `IdentityResolver::resolveOrCreateFromPeer()` contract (Phase-07: no-op; Phase-08: real impl):
-   - Phone normalization (VN '0' prefix handling).
-   - Search Contact by (workspace_id, phone) → partial unique constraint.
-   - If found + flagged needs_merge_review → flag for tenant manual review; don't auto-merge.
-   - If found + clean → return ContactRef.
-   - If not found → create draft Contact (channel_uid mapping for Zalo).
-5. If contact_ref is null (no match + no create possible) → 422 "cannot resolve contact".
-6. Controller idempotency check (F15): does conversation.conversation_lead_link already exist? If yes → 409 "already converted".
-7. Controller calls `LeadCreator::createFromContact()` (crm-sales service):
-   - Populates lead.name, email, phone from contact (fallback to conversation peer_name if contact.name empty).
-   - Sets lead.source = 'zalo_personal' (tracks channel origin).
-   - Assigns to default stage + pipeline (or tenant-specified via request params).
-   - Sets lead.conversation_id (backlink for audit + conversation thread access).
-8. Service creates Lead in transaction (RLS enforced).
-9. Controller updates Conversation.contact_id = contact.id + sets conversation_lead_link_at timestamp.
-10. Controller returns 201 Created with Lead + updated Conversation + Contact (for FE to update cache).
+1. Member clicks "Convert to Lead" on the conversation thread.
+2. Controller authorizes via `ConversationPolicy::update()`.
+3. **Group guard:** `thread_type === 1` (group conversation) → `422`, no lead ever created for groups.
+4. **Idempotency:** `conversation.lead_id !== null` → returns the existing lead id immediately, no new Lead created.
+5. If `peer_phone` is set, `ContactService::resolveOrCreateFromPeer()` runs — dedups by phone, returns a `Contact` (found or newly created) or `null`. This runs **before** the transaction below (not inside it) specifically to avoid a Postgres `25P02` aborted-transaction error if the contact dedup's own unique-constraint race fires mid-transaction.
+6. Inside `DB::transaction()`: if a contact was resolved, link it onto the conversation (`contact_id`); resolve the workspace's default `Pipeline` (`is_default` first, else by name) and its first stage.
+7. `LeadService::createFromContact()` creates the Lead with `name` (peer_name → peer_phone → "Liên hệ Zalo" fallback chain), `phone`, `pipeline_id`, `stage_id`, `source: 'Zalo'`, `contact_id`, `conversation_id`. If no real Contact was resolved, an unsaved stub `Contact` (peer_name/peer_phone only) is passed instead — `LeadService` only reads `fullName()`/`email`/`phone` off it.
+8. Link back: `conversation.lead_id` set to the new Lead's id; `lead.conversation_id`/`lead.contact_id` set directly and saved quietly (bypassing fillable/observers).
+9. **Race guard:** if a concurrent double-submit causes a `23505` on the `leads(conversation_id)` unique constraint, the controller catches it, re-fetches the conversation, and returns the lead the other request created instead of erroring.
+10. Response is always `200` (not `201`) with `{ lead_id, existing: bool }` — there is no combined `{lead, conversation, contact}` payload; the frontend re-fetches as needed.
 
 ## Data touched
 
 **Models:**
-- `Conversation` (modules/inbox)
-  - Reads: id, peer_phone, peer_name, zalo_connection_id, workspace_id
-  - Writes: contact_id (FK to Contact), conversation_lead_link_at (timestamp)
+- `Conversation`
+  - Reads: `id`, `thread_type`, `lead_id`, `peer_phone`, `peer_name`, `peer_uid`, `channel`, `workspace_id`, `contact_id`
+  - Writes: `contact_id` (if resolved), `lead_id`
   - RLS: enforced
 
-- `Contact` (modules/crm-sales)
-  - Reads: (workspace_id, phone) lookup
-  - Writes: (Phase-08) channel_uid mapping, name, email, phone, display_name, needs_merge_review flag
-  - RLS: enforced
+- `Contact` (`App\Models\Contact`, `App\Services\ContactService`)
+  - Reads: dedup lookup by phone within the workspace
+  - Writes: creates a new Contact row when no phone match exists (exact fields owned by `ContactService`, not duplicated here — see that service directly)
 
-- `Lead` (modules/crm-sales)
-  - Writes: name, email, phone, pipeline_id, stage_id, source, assigned_to, conversation_id (backlink), contact_id (FK)
+- `Lead` / `Pipeline` (`App\Models`, `App\Services\LeadService`)
+  - Reads: default `Pipeline` for the workspace (`is_default` DESC, `name` ASC) and its first stage (`stage_order` ASC)
+  - Writes: `name`, `phone`, `pipeline_id`, `stage_id`, `source`, `contact_id`, `conversation_id` — **no `assigned_to` is set by this flow**
   - RLS: enforced
 
 **RLS scoping:**
-- All reads/writes respect workspace_id global scope (binded at controller entry).
+- All reads/writes respect the `workspace_id` global scope bound by the tenant middleware before this controller runs.
 
 ## State transitions
 
-- **Conversation state:** "open" → "open" (state unchanged; only adds contact_id + lead link).
-- **Contact state:** (Phase-08) "draft" → "matched" or "needs_merge_review" (depends on dedup result).
-- **Lead state:** "new" → "stage_id" (assigned to pipeline stage per request or default).
+- **Conversation:** `lead_id` goes from `null` → set once, permanently (idempotent — never re-created or re-linked).
+- **Lead:** created directly into the workspace's default pipeline's first stage; no separate "new" pre-pipeline state.
 
 ## Business rules applied
 
-- **F15 (Idempotency):** Partial unique constraint `leads(conversation_id)` ensures 1 lead per conversation. Duplicate convert request → 409 Conflict.
+- **F23 (Liên hệ nháp / draft contact):** A conversation can convert to a Lead even without a `peer_phone` — `contact_id` simply stays unlinked in that case; the Lead is still created (fallback name chain covers the missing contact).
+- **Idempotency:** Enforced two ways — an application-level check (`conversation.lead_id !== null`) for the common case, and a DB-level unique constraint on `leads(conversation_id)` with a `23505` catch-and-refetch for the concurrent double-submit race.
+- **Group-conversation guard:** `thread_type === 1` conversations can never become a Lead through this endpoint — enforced unconditionally before any other check.
+- **Source tracking:** `Lead.source = 'Zalo'` (not `'zalo_personal'`) — tracks channel origin.
 
-- **F2 (Phone-based dedup):** IdentityResolver uses phone as primary key for dedup (SĐT = khóa chính). Same phone across channels → same Contact.
-
-- **F23 (Draft contact state):** Conversation without peer_phone → cannot convert (no dedup anchor). Leaves contact_id = null (Liên hệ nháp).
-
-- **F17 (Source tracking):** Lead.source = 'zalo_personal' (tracks channel origin for analytics + future routing rules).
-
-- **F11 (Workspace isolation):** IdentityResolver scoped to workspace_id; no cross-tenant contact leakage.
-
-- **F18 (Conversation-Lead bidirectional link):** Conversation.contact_id + Lead.conversation_id create audit trail (who contacted whom, when).
-
-Link: [crm-business-rules.md](../crm-business-rules.md) § F2, F15, F17, F18, F23.
+Link: [crm-business-rules.md](../crm-business-rules.md) § F23.
 
 ## Edge cases & error handling
 
 | Scenario | Behavior |
 |---|---|
-| **peer_phone is null** | 400 "phone required to convert to lead"; UI prompts member to edit conversation peer info first. |
-| **Conversation already linked to lead** | 409 Conflict; UI shows "already converted, view lead" link. |
-| **IdentityResolver returns null** (Phase-08 placeholder) | 422 "cannot resolve contact"; UI prompts "Phase-08 will auto-resolve; contact support for manual mapping". |
-| **Phone resolves to multiple contacts** | Phase-08: flag needs_merge_review on both contacts (don't auto-merge). Tenant manually reviews + confirms merge. |
-| **Contact.needs_merge_review = true** | Phase-08 impl: set flag, notify tenant; lead creation waits for tenant confirmation (backlog task). |
-| **Member loses permission mid-request** | Authorization re-check at controller; returns 403 if membership revoked. |
-| **Conversation deleted by tenant** | FK constraint: cannot update conversation.contact_id (soft-delete recommended). Returns 404. |
-| **Pipeline / stage_id invalid** | LeadService validation; returns 422 "invalid stage for pipeline". |
-| **Assigned_to user invalid** | LeadService validation; returns 422 "assigned user not member of workspace". |
-| **Duplicate lead creation (race)** | DB unique constraint on leads(conversation_id) → second request fails; controller catches constraint error → 409. |
+| **Group conversation** (`thread_type === 1`) | `422 { message: "Không thể tạo Lead từ hội thoại nhóm." }` — checked before anything else. |
+| **Conversation already linked to a lead** | `200 { lead_id, existing: true }` — no error, no duplicate creation. |
+| **`peer_phone` is null** | Contact dedup step is skipped entirely; Lead is still created without a linked Contact (uses a stub built from `peer_name`). |
+| **Concurrent double-submit** (two requests convert the same conversation at once) | Second request's `leads(conversation_id)` insert hits `23505` → caught → re-fetches and returns the first request's `lead_id` with `existing: true`. |
+| **No default Pipeline exists for the workspace** | `pipeline_id`/`stage_id` are simply omitted from the Lead's create attrs (`array_filter` drops null values) — `LeadService` is responsible for whatever default that implies. |
+| **Conversation deleted concurrently** | Route-model binding would 404 before the controller body runs. |
 
 ## Related
 
 - [zalo-personal-inbox.md](./zalo-personal-inbox.md) — inbound message ingestion + conversation creation.
-- [outbound-send.md](./outbound-send.md) — reply to conversation.
-- [../sales/leads-pipeline-convert.md](../sales/leads-pipeline-convert.md) — lead state management + conversion workflow.
-- [../crm-domain-definition.md](../crm-domain-definition.md) § Contact, Lead, Conversation.
-- [../system-architecture.md](../system-architecture.md) § CDP Layer 1 (Phase-08) + IdentityResolver contract.
-- [crm-business-rules.md](../crm-business-rules.md) § F2, F15, F17, F18, F23.
-
-**Phase-08 Dependents:**
-- `IdentityResolver::resolveByPhone()` implementation (dedup by phone + handle merge reviews).
-- `mergeIdentities()` for manual contact merge approval flow.
+- [outbound-send.md](./outbound-send.md) — reply to a conversation.
+- [channel-account-architecture.md](./channel-account-architecture.md) — account-keyed conversation identity this flow operates on.
+- [crm-business-rules.md](../crm-business-rules.md) § F23.

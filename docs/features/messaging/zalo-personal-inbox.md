@@ -1,10 +1,10 @@
 # Zalo Personal Inbox
 
-Module: `inbox` + `channel-zalo` · Status: live (GĐ1) · Updated: 2026-06-28
+Module: `app/Modules/Integration/Chat/ZaloPersonal` + `app/Services` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-04
 
 ## Purpose
 
-Accept inbound personal Zalo messages via webhook, create Conversation + Message records in real-time, bind workspace scope safely from connection ID, broadcast to LiveWire realtime subscribers for instant UI update, and queue inbound for CDP dedup (Phase-08).
+Accept inbound personal Zalo messages via webhook, create Conversation + Message records in real-time, bind workspace scope safely from the connection, broadcast to Reverb realtime subscribers for instant UI update, and hand off to CDP dedup on demand ([conversation-to-lead.md](./conversation-to-lead.md)).
 
 **Value:** Tenants capture leads from Zalo personal conversations in a unified inbox without needing separate Zalo OA setup (phase 1 positioning).
 
@@ -20,8 +20,8 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope
 
 **Inbound webhook** `POST /api/integrations/zalo-personal/webhook`:
 - Bridge sends HMAC-signed payload when peer messages arrive.
-- Code: `app/Http/Controllers/Integration/ZaloPersonalWebhookController.php::handle()`.
-- Route: `routes/api.php`.
+- Code: `app/Http/Controllers/Integration/ZaloPersonalWebhookController.php::__invoke()`.
+- Route: `routes/api.php`. Middleware: `VerifyZaloBridgeSecret` (alias `zalo.bridge.secret`).
 
 **Entrypoint in bridge:**
 - Bridge (Node zca-js) receives message event from Zalo client → normalizes → POST to webhook with `X-Zalo-Personal-Bridge-Secret` header.
@@ -32,87 +32,97 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope
 sequenceDiagram
     participant Peer as Peer (Zalo)
     participant Bridge as Bridge<br/>(Node zca-js)
-    participant Webhook as POST /webhook
-    participant TenantScope as TenantScope::bind
+    participant MW as VerifyZaloBridgeSecret
+    participant Webhook as ZaloPersonalWebhookController
+    participant TenantScope as TenantScope
     participant InboundSvc as InboundMessageService
     participant RLS as PostgreSQL RLS
     participant Reverb as Reverb PrivateChannel
 
     Peer->>Bridge: Send message to Zalo account
-    Bridge->>Webhook: POST /api/integrations/zalo-personal/webhook<br/>(HMAC X-Zalo-Personal-Bridge-Secret)
+    Bridge->>MW: POST /api/integrations/zalo-personal/webhook<br/>(HMAC X-Zalo-Personal-Bridge-Secret)
+    MW->>MW: hash_equals(expected, header)<br/>fail → abort 401
 
-    Webhook->>Webhook: Verify HMAC signature<br/>(F6: reject if invalid)
-    Webhook->>TenantScope: TenantScope::resolve(connection_id)<br/>qry pgsql_privileged
-    TenantScope->>TenantScope: Fetch ZaloConnection.workspace_id
-    TenantScope->>TenantScope: Bind: app->bind('workspace', $ws)<br/>+ Auth::setDefaultGuard()
-    
-    Webhook->>InboundSvc: ingest(normalized_payload)
-    
-    InboundSvc->>InboundSvc: upsertConversation()<br/>WHERE (zalo_connection_id, peer_uid)
-    InboundSvc->>RLS: INSERT/UPDATE conversations<br/>(RLS: workspace_id = currentWorkspace)
-    
-    InboundSvc->>InboundSvc: upsertMessage(idempotent source_id)
-    InboundSvc->>RLS: INSERT/UPDATE messages<br/>(conversation_id, source_id)
-    
-    InboundSvc->>InboundSvc: updateConversationCache()<br/>(last_message_at, unread_count)
-    InboundSvc->>RLS: UPDATE conversations
-    
-    InboundSvc->>InboundSvc: meterReply() fail-safe<br/>(F1: count outbound only)
-    InboundSvc->>InboundSvc: Event: MessageReceived broadcast
-    
-    InboundSvc->>Reverb: Broadcast PrivateChannel<br/>workspace.{id}.conversations
-    Reverb->>Reverb: Notify subscribed LiveWire<br/>(real-time message + unread)
+    MW->>Webhook: __invoke()
+    Webhook->>TenantScope: TenantScope::forget()<br/>(F19: reset pooled-connection leak from prior request)
+    Webhook->>Webhook: connection_id missing/<=0 → 400
 
-    Webhook->>Webhook: Return 200 JSON{success: true}
+    Webhook->>Webhook: ZaloConnection::workspaceForConnection(connection_id)<br/>(pgsql_privileged, bypass RLS — workspace not yet known)
+    alt connection_id not mapped
+        Webhook-->>Bridge: 202 { ok: true, message: connection_not_mapped }<br/>(no orphan row created)
+    else mapped
+        Webhook->>TenantScope: TenantScope::bind(workspace_id)
+        Webhook->>Webhook: resolve channel_account_id via<br/>ZaloConnection::channelAccountIdForConnection(connection_id)
+        Webhook->>InboundSvc: handleInbound() → ingest(normalized_payload)
+
+        InboundSvc->>InboundSvc: upsertConversation()<br/>WHERE (channel_account_id, peer_uid)
+        InboundSvc->>RLS: INSERT/UPDATE conversations<br/>(RLS: workspace_id = currentWorkspace)
+
+        InboundSvc->>InboundSvc: upsertMessage(idempotent source_id)<br/>(fallback lookup via message_source_aliases)
+        InboundSvc->>RLS: INSERT/UPDATE messages<br/>(conversation_id, source_id)
+
+        InboundSvc->>InboundSvc: updateConversationCache()<br/>(last_message_at, unread_count)
+        InboundSvc->>RLS: UPDATE conversations
+
+        InboundSvc->>InboundSvc: meterReply() fail-safe, direction=out only<br/>(F1: inbound never metered)
+        InboundSvc->>Reverb: event(MessageReceived)<br/>Broadcast workspace.{id}.conversations
+        Reverb->>Reverb: Notify subscribed FE<br/>(real-time message + unread)
+
+        Webhook-->>Bridge: 200 { ok: true }
+        Webhook->>TenantScope: finally: TenantScope::forget()
+    end
 ```
 
 **Steps:**
-1. Bridge calls webhook with normalized payload + HMAC header.
-2. Webhook verifies HMAC (F6 security).
-3. Webhook resolves workspace from `connection_id` via privileged query to `zalo_connections`.
-4. Webhook **binds workspace scope** (`TenantScope::bind()`) to app container before processing (critical: chokes RLS leak F11).
-5. Webhook calls `InboundMessageService::ingest()` with normalized peer/message data.
-6. Service upserts Conversation idempotent on `(zalo_connection_id, peer_uid)` (F2).
-7. Service upserts Message idempotent on `(conversation_id, source_id)` (F14: fail-safe direction='in' default).
+1. Bridge calls webhook with the raw bridge payload + HMAC header + `connection_id`.
+2. `VerifyZaloBridgeSecret` middleware verifies HMAC via `hash_equals` — invalid/missing header or unconfigured secret → `abort(401)` before the controller runs.
+3. Controller resets any leaked RLS scope (`TenantScope::forget()`, F19), then resolves workspace from `connection_id` via `ZaloConnection::workspaceForConnection()` (queries `pgsql_privileged`, bypassing RLS since the workspace isn't known yet).
+4. Unmapped `connection_id` → `202 { message: connection_not_mapped }` — no conversation/message created, no error surfaced to bridge (avoids orphan rows and unnecessary bridge retries).
+5. Mapped → `TenantScope::bind($workspaceId)`, then `channel_account_id` is resolved separately (`ZaloConnection::channelAccountIdForConnection($connectionId)`) purely to key the conversation upsert — it plays no role in workspace resolution.
+6. `InboundMessageService::ingest()` upserts Conversation idempotent on `(channel_account_id, peer_uid)` (F2) — stable key across reconnects.
+7. Service upserts Message idempotent on `(conversation_id, source_id)`, falling back to `message_source_aliases` lookup for pre-rekey source_id formats (F14: fail-safe direction='in' default).
 8. Service updates Conversation cache (last_message_at, unread_count atomic increment F16).
-9. Service calls `meterReply()` fail-safe (F1: only count outbound, inbound always accepted per F13/F20).
-10. Event broadcasts via Reverb PrivateChannel `workspace.{id}.conversations` for real-time UI (F22).
-11. Webhook returns HTTP 200 to bridge (ACK to prevent bridge retry).
+9. Service calls `meterReply()` in a try/catch, only for `direction='out'` (F1: inbound is never metered — see [conversation-metering.md](./conversation-metering.md)).
+10. Event broadcasts via Reverb PrivateChannel `workspace.{id}.conversations` for real-time UI.
+11. Webhook returns HTTP 200 to bridge (ACK — removes the message from the bridge's outbox).
 
 ## Data touched
 
 **Models:**
 - `Conversation` (app/Models)
-  - Reads: zalo_connection_id, peer_uid (composite lookup)
-  - Writes: channel, peer_uid, peer_name, peer_avatar_url, peer_phone, conversation_number, last_message_at, last_message_preview, unread_count, contact_id (null for draft)
+  - Reads: `channel_account_id`, `peer_uid` (composite lookup, stable across reconnects)
+  - Writes: channel, peer_uid, peer_name, peer_avatar_url, peer_phone, conversation_number, last_message_at, last_message_preview, unread_count, contact_id (null for draft), stream_version
   - RLS: `workspace_id` global scope enforced
   - Sequence: `WorkspaceSequence::next('conversation')` for conversation_number
 
 - `Message` (app/Models)
-  - Reads: conversation_id, source_id (idempotency key)
+  - Reads: conversation_id, source_id (idempotency key; falls back to `message_source_aliases` for pre-rekey formats)
   - Writes: direction ('in'/'out'/'echo'), type, body, media_url, media_meta, platform_sent_at, sender_uid, sender_name, sent_by
   - RLS: inherited via conversation FK
 
 - `ZaloConnection` (app/Models)
-  - Reads: connection_id → workspace_id (privileged query, bypasses RLS)
-  - No writes in inbound
+  - Reads: `connection_id` → `workspace_id` (`workspaceForConnection()`, via `pgsql_privileged`); `connection_id` → `channel_account_id` (`channelAccountIdForConnection()`, same connection)
+  - No writes in the `inbound` event path (writes happen in `bridge_session` — see `handleBridgeSession()`)
+
+- `ChannelAccount` (app/Models) — new in this rekey
+  - Not read/written directly by the inbound path; `channel_account_id` is looked up through `ZaloConnection`, not `ChannelAccount` itself.
 
 **RLS scoping:**
-- Webhook query `ZaloConnection` WITHOUT RLS (uses pgsql_privileged role) to resolve workspace from connection_id.
-- After TenantScope bind, all Conversation/Message writes enforce workspace RLS at DB level.
-- If connection lookup fails → 403 Unauthorized (no workspace found).
+- Webhook resolves workspace via `ZaloConnection` on the `pgsql_privileged` connection (bypasses RLS — no workspace context exists yet).
+- After `TenantScope::bind()`, all Conversation/Message writes enforce workspace RLS at DB level.
+- `TenantScope::forget()` runs both defensively at request start (F19: guard against a leaked scope from a prior request on a pooled connection) and in a `finally` block at request end.
 
 ## State transitions
 
-None — inbound conversations start in "open" state. Conversation.contact_id = null until CDP dedup (Phase-08) or tenant links to contact.
+None — inbound conversations start in "open" state. `Conversation.contact_id` stays null until a tenant converts it to a Lead ([conversation-to-lead.md](./conversation-to-lead.md)).
 
 ## Business rules applied
 
-- **F2 (Dedup inbound per peer):** Conversation unique per (zalo_connection_id, peer_uid) per workspace. Same peer → same conversation thread.
-- **F13/F20 (Always accept inbound):** Inbound messages NEVER blocked by quota, regardless of billing plan. Preserves lead capture.
-- **F14 (Fail-safe direction):** If webhook payload missing `direction` field → default to `in` (not `out`); prevents accidental outbound counting.
-- **F6 (Webhook auth):** HMAC signature required; reject unsigned payloads (prevents spoofing).
-- **F11 (RLS scope-binding):** Webhook binds workspace BEFORE touching conversation data; unscoped query to ZaloConnection via privileged role (no RLS leak).
+- **F2 (Dedup inbound per peer):** Conversation unique per `(channel_account_id, peer_uid)` — stable across reconnects (partial unique index, `deleted_at IS NULL`). Same peer → same conversation thread.
+- **F13/F20 (Always accept inbound):** Inbound messages are never routed through any metering gate at all (not merely "fail-safe" — `direction='in'` skips `meterReply()` entirely). Preserves lead capture regardless of billing plan/quota state.
+- **F14 (Fail-safe direction):** If webhook payload is missing `direction` → defaults to `in`; prevents accidental outbound counting.
+- **F6 (Webhook auth):** HMAC signature required at the middleware layer; unsigned/invalid payloads never reach the controller.
+- **F11/F19 (RLS scope-binding):** Workspace resolved and bound BEFORE touching conversation data; scope explicitly reset both before and after the request to prevent leaking across pooled connections.
 
 Link: [crm-business-rules.md](../crm-business-rules.md) § Inbox.
 
@@ -120,18 +130,19 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § Inbox.
 
 | Scenario | Behavior |
 |---|---|
-| **HMAC signature invalid** | Return 403 Unauthorized, log rejection. |
-| **connection_id not found** | Return 403 Unauthorized, log missing connection. |
-| **Duplicate source_id** (retry from bridge) | Message::updateOrCreate() idempotent → no-op, return existing message. |
-| **Peer phone null** | Conversation records peer_phone = null; CD dedup later fails gracefully (requires phone to resolve contact). |
-| **Peer avatar too large** | No processing on FE; avatar_url stored as-is (FE lazy-loads, handles image errors). |
-| **Bridge timeout (15s)** | Webhook returns 504 to bridge, bridge retries; no Message created (fail-safe F13). |
-| **RLS violation during write** | PostgreSQL returns permission error; webhook catches, returns 500 to bridge; message lost (acceptable per F13 "always retry inbound"). |
-| **Metering gate error** | Fail-safe: lỗi gate KHÔNG chặn inbound (line 65 `try/catch` in InboundMessageService). |
+| **HMAC signature invalid/missing/unconfigured** | Middleware aborts `401` before the controller runs. |
+| **`connection_id` missing or `<= 0`** | `400 { message: missing connection_id }`. |
+| **`connection_id` not mapped to a workspace** | `202 { message: connection_not_mapped }` — no orphan conversation/message, bridge does not retry (F13 always-accept still holds — the message is dropped only because there is no tenant to attribute it to). |
+| **Duplicate `source_id`** (bridge retry) | `InboundMessageService` idempotent upsert on `(conversation_id, source_id)`, with `message_source_aliases` fallback for pre-rekey formats → no-op, returns existing message, still `200`. |
+| **Transient DB error** (`QueryException`/`PDOException`, e.g. deadlock, connection down) | `503 { message: transient_db_error }` → bridge outbox retries with backoff. |
+| **Malformed/permanently-invalid payload** (`InvalidArgumentException`, e.g. driver can't parse) | `422 { message: permanent_bad_payload }` → bridge dead-letters, does not retry forever. |
+| **Any other unhandled exception** | `503 { message: unexpected_error }` → treated as retry-safe rather than silently dropping the message. |
+| **Metering gate error during `direction='out'`** | Fail-safe: caught in `InboundMessageService::ingest()` — message still persisted and broadcast regardless (F13/F20). |
 
 ## Related
 
-- [conversation-to-lead.md](./conversation-to-lead.md) — convert inbound conversation to Lead with CDP dedup.
-- [outbound-send.md](./outbound-send.md) — reply to conversation via ZaloSendService (outbound metering).
-- [system-architecture.md](../system-architecture.md) § Inbox + Zalo Channel + Integration Driver Pattern.
-- [crm-business-rules.md](../crm-business-rules.md) § F2, F6, F11, F13, F14, F20.
+- [conversation-to-lead.md](./conversation-to-lead.md) — convert inbound conversation to Lead via `ConversationLeadController`.
+- [outbound-send.md](./outbound-send.md) — reply to conversation via `ZaloSendService` (outbound metering).
+- [channel-account-architecture.md](./channel-account-architecture.md) — account-keyed identity model this flow relies on.
+- [system-architecture.md](../system-architecture.md) § Inbound Message (Webhook).
+- [crm-business-rules.md](../crm-business-rules.md) § F2, F6, F11, F13, F14, F19, F20.

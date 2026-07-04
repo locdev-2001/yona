@@ -12,9 +12,11 @@ import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
+import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
+import { attachRelayForwarder } from './relay-forwarder.mjs';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -29,6 +31,9 @@ const OUTBOX_DEAD_DIR = path.join(PLUGIN_ROOT, '.outbox-dead');
 const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 3710);
 const BRIDGE_SEND_SECRET = process.env.BRIDGE_SEND_SECRET || '';
 const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
+// P11: secret RIÊNG cho 39 method destructive qua /zca/:method (defense-in-depth,
+// quyền thật gate ở Laravel TenantPermission::ZaloDestructive). Rỗng = không bao giờ elevated.
+const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
 
@@ -83,6 +88,11 @@ function createSlotState() {
         botId: 0,
         listenerStarted: false,
         outboundEchoIds: new Map(),
+        // P11: workspace bind lúc promote (B1 token-từ-session) + allowlist reflect cache
+        workspaceId: '',
+        allowlist: null,
+        // P12: forwarder generic attach đúng 1 lần/api instance (review MED-2)
+        forwarderAttached: false,
     };
 }
 
@@ -304,9 +314,13 @@ function stableJsonForDedup(value) {
     return `{${keys.map((k) => JSON.stringify(k) + ':' + stableJsonForDedup(value[k])).join(',')}}`;
 }
 
-function zaloPersonalSocialSourceId(connectionId, socialKind, act, threadId, eventPayload) {
+/**
+ * P06: khoá theo accountUid (ổn định qua reconnect) — KHÔNG connectionId (đổi mỗi
+ * lần reconnect, sẽ tách cùng 1 event thành 2 source_id khác nhau).
+ */
+function zaloPersonalSocialSourceId(accountUid, socialKind, act, threadId, eventPayload) {
     const h = createHash('sha256')
-        .update(String(connectionId))
+        .update(String(accountUid))
         .update('\n')
         .update(String(socialKind))
         .update('\n')
@@ -317,7 +331,7 @@ function zaloPersonalSocialSourceId(connectionId, socialKind, act, threadId, eve
         .update(stableJsonForDedup(eventPayload))
         .digest('hex')
         .slice(0, 48);
-    return `zps:${connectionId}:${h}`;
+    return `zps:${accountUid}:${h}`;
 }
 
 async function postZaloPersonalSocialEvent(body) {
@@ -333,6 +347,20 @@ async function postInbound(body) {
 async function postBridgeSession({ connection_id, bot_id, state, detail }) {
     if (!LARAVEL_WEBHOOK_URL || !connection_id || !bot_id) return;
     await outbox.enqueue({ type: 'bridge_session', connection_id, bot_id, state, detail: detail ?? null });
+}
+
+/**
+ * P12/H3: lane fire-and-forget cho event chatty (typing/seen/delivered/…) —
+ * POST thẳng, KHÔNG qua outbox durable (nghẽn FIFO chặn inbound). Lỗi bỏ qua.
+ * Vẫn ký LARAVEL_WEBHOOK_SECRET như đường outbox.
+ */
+function postRelayFireAndForget(body) {
+    if (!LARAVEL_WEBHOOK_URL) return;
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (LARAVEL_WEBHOOK_SECRET) {
+        headers['X-Zalo-Personal-Bridge-Secret'] = LARAVEL_WEBHOOK_SECRET;
+    }
+    fetch(LARAVEL_WEBHOOK_URL, { method: 'POST', headers, body: JSON.stringify(body) }).catch(() => {});
 }
 
 function pickMediaUrl(c) {
@@ -1379,34 +1407,6 @@ function extractGroupSenderDisplayName(rawD) {
     return '';
 }
 
-async function clearDuplicatePersonalUidSlots(keepSlotKey, personalUid) {
-    const uid = String(personalUid ?? '').trim();
-    if (!uid) {
-        return;
-    }
-    const keepNum = Number(keepSlotKey);
-    const purgeAll = !Number.isFinite(keepNum) || keepNum <= 0;
-    const keep = purgeAll ? '' : String(keepSlotKey);
-    for (const key of [...slots.keys()]) {
-        if (!purgeAll && key === keep) {
-            continue;
-        }
-        if (isQrSlotKey(key)) {
-            continue;
-        }
-        const slot = slots.get(key);
-        if (slot && String(slot.personalUid || '') === uid) {
-            console.warn('zalo-bridge: clearing personal_uid slot', {
-                personalUid: uid,
-                removedSlot: key,
-                keepSlot: purgeAll ? null : keep,
-                purgeAll,
-            });
-            await clearSlot(key);
-        }
-    }
-}
-
 async function dedupeRestoredSessionsByPersonalUid(restored) {
     const byUid = new Map();
     for (const { id, personalUid } of restored) {
@@ -1481,13 +1481,15 @@ async function resolveGroupProfile(api, groupId) {
  * Không resolve profile async (tốc độ backfill > độ đầy đủ profile).
  * source_id deterministic qua deriveInboundSourceId (C-2).
  * is_self theo uid thật (C-1).
+ * P12: threadType=0 cho old_messages 1-1 (relay-forwarder) — mặc định 1 giữ
+ * nguyên hành vi group backfill/resync cũ.
  */
-function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
+function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) {
     const cid = slot._connectionId; // gắn khi startListenerForSlot
     const bid = slot.botId;
     if (!cid || !bid) return null;
 
-    const sourceId = deriveInboundSourceId(cid, groupId, rawD);
+    const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, groupId, rawD);
     const ts = rawD?.ts ?? rawD?.msgTs ?? rawD?.sendTime ?? rawD?.clientTime;
     const platformSentAt = Number.isFinite(Number(ts)) && Number(ts) > 0 ? Math.round(Number(ts)) : Date.now();
 
@@ -1502,7 +1504,7 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
         personal_uid: slot.personalUid,
         peer_uid: groupId,
         thread_id: groupId,
-        thread_type: 1,          // group
+        thread_type: threadType,
         source_id: sourceId,
         is_self: isSelf,
         direction: isSelf ? 'out' : 'in',  // backfill không check echo (không có outboundEchoIds context)
@@ -1593,7 +1595,7 @@ function startListenerForSlot(slotKey) {
                         act,
                         thread_id: threadId,
                         event: evPlain,
-                        source_id: zaloPersonalSocialSourceId(cid, 'group_event', act, threadId, evPlain),
+                        source_id: zaloPersonalSocialSourceId(slot.personalUid, 'group_event', act, threadId, evPlain),
                     });
                 } catch (e2) {
                     console.error('zalo-bridge: group_event forward failed', e2?.message || e2);
@@ -1626,7 +1628,7 @@ function startListenerForSlot(slotKey) {
                         act: '',
                         thread_id: threadId,
                         event: evPlain,
-                        source_id: zaloPersonalSocialSourceId(cid, 'friend_event', '', threadId, evPlain),
+                        source_id: zaloPersonalSocialSourceId(slot.personalUid, 'friend_event', '', threadId, evPlain),
                     });
                 } catch (e2) {
                     console.error('zalo-bridge: friend_event forward failed', e2?.message || e2);
@@ -1656,8 +1658,8 @@ function startListenerForSlot(slotKey) {
                     : NaN;
             const platformSentAt =
                 Number.isFinite(tsMs0) && tsMs0 > 0 ? Math.round(tsMs0) : Date.now();
-            // C-2: dùng deriveInboundSourceId — không bao giờ Date.now() fallback
-            const sourceId = deriveInboundSourceId(cid, threadId, message?.data);
+            // C-2/P06: dùng deriveInboundSourceId — không bao giờ Date.now() fallback, không connectionId
+            const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, threadId, message?.data);
             if (!bid) {
                 console.error('bridge: bot_id missing for slot', cid);
                 return;
@@ -1813,6 +1815,17 @@ function startListenerForSlot(slotKey) {
         })();
     });
 
+    // P12: forwarder generic — subscribe 10 event chưa wired (né 5 bespoke +
+    // cipher_key, B3/B6); guard slot.forwarderAttached bên trong (MED-2).
+    const relayEvents = attachRelayForwarder(slot, {
+        enqueue: (body) => outbox.enqueue(body),
+        postFireAndForget: postRelayFireAndForget,
+        buildInboundPayload: buildGroupBackfillPayload,
+    });
+    if (relayEvents.length > 0) {
+        console.info('zalo-bridge: relay forwarder attached connection_id=', cid, 'events=', relayEvents.join(','));
+    }
+
     slot.api.listener.start();
     console.info('zalo-bridge: listener started connection_id=', cid, 'bot_id=', bid);
 }
@@ -1838,7 +1851,7 @@ async function clearSlot(slotKey) {
     slots.delete(String(slotKey));
 }
 
-async function promoteQrToConnection(qrKey, connectionId) {
+async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
     const slot = slots.get(qrKey);
     if (!slot?.api || slot.loginPhase !== 'ready' || !slot.personalUid) {
         return false;
@@ -1871,7 +1884,11 @@ async function promoteQrToConnection(qrKey, connectionId) {
     if (existsSync(oldMp)) {
         await fs.unlink(oldMp).catch(() => {});
     }
-    await writeSlotMetaForKey(newKey, { bot_id: slot.botId });
+    // P11/B1: bind connection→workspace tại promote (nơi DUY NHẤT ghi binding —
+    // workspace_id từ SESSION Laravel đã auth, không từ connection row). Persist
+    // vào meta để tryLoginWithSavedSession khôi phục sau restart (review NEW-2).
+    slot.workspaceId = String(workspaceId || '');
+    await writeSlotMetaForKey(newKey, { bot_id: slot.botId, workspace_id: slot.workspaceId });
     slots.delete(qrKey);
     slots.set(newKey, slot);
     startListenerForSlot(newKey);
@@ -1885,7 +1902,6 @@ async function promoteQrToConnection(qrKey, connectionId) {
         buildInboundPayload: buildGroupBackfillPayload,
         gapMs: computeGapMs(slot),
     });
-    await clearDuplicatePersonalUidSlots(newKey, slot.personalUid);
     console.info('Zalo bridge: promoted', qrKey, '->', connectionId);
     return true;
 }
@@ -1906,6 +1922,11 @@ async function tryLoginWithSavedSession(connectionId) {
         const meta = await readSlotMetaForKey(key);
         if (meta?.bot_id) {
             slot.botId = Number(meta.bot_id);
+        }
+        // P11/B1: khôi phục workspace binding sau restart — thiếu thì dispatcher
+        // /zca fail-closed 403 (workspace_binding_missing) cho tới khi re-promote.
+        if (meta?.workspace_id) {
+            slot.workspaceId = String(meta.workspace_id);
         }
         const zalo = new Zalo(ZALO_OPTIONS);
         slot.api = await zalo.login({
@@ -1929,7 +1950,6 @@ async function tryLoginWithSavedSession(connectionId) {
             buildInboundPayload: buildGroupBackfillPayload,
             gapMs: computeGapMs(slot),
         });
-        await clearDuplicatePersonalUidSlots(key, slot.personalUid);
         return true;
     } catch (e) {
         console.warn('Saved session login failed connection_id=', connectionId, e?.message || e);
@@ -2208,7 +2228,9 @@ function buildExpress() {
             return res.status(400).json({ ok: false, message: 'qr_token and connection_id required' });
         }
         const qrKey = `qr:${token}`;
-        const ok = await promoteQrToConnection(qrKey, connectionId);
+        // P11/B1: workspace_id từ session Laravel đã auth (currentWorkspace) — bind vào slot
+        const workspaceId = typeof req.body?.workspace_id === 'string' ? req.body.workspace_id.trim() : '';
+        const ok = await promoteQrToConnection(qrKey, connectionId, workspaceId);
         if (!ok) {
             return res.status(400).json({ ok: false, message: 'promote_failed' });
         }
@@ -2251,19 +2273,6 @@ function buildExpress() {
         }
         await clearSlot(String(connectionId));
         res.json({ ok: true });
-    });
-
-    app.post('/auth/purge-duplicate-uid', async (req, res) => {
-        if (!checkUiSecret(req)) {
-            return res.status(403).json({ ok: false, message: 'Forbidden' });
-        }
-        const personalUid = req.body?.personal_uid != null ? String(req.body.personal_uid).trim() : '';
-        const keepConnectionId = Number(req.body?.keep_connection_id ?? 0);
-        if (!personalUid) {
-            return res.status(400).json({ ok: false, message: 'personal_uid required' });
-        }
-        await clearDuplicatePersonalUidSlots(keepConnectionId, personalUid);
-        res.json({ ok: true, keep_connection_id: keepConnectionId > 0 ? keepConnectionId : null, purged_all: keepConnectionId <= 0 });
     });
 
     app.get('/auth/qr/status', (req, res) => {
@@ -2372,6 +2381,13 @@ function buildExpress() {
         ThreadType,
         buildGroupBackfillPayload,
         enqueueOutbox: (body) => outbox.enqueue(body),
+    });
+    // P11: dispatcher generic — mount SAU các route active. resolve-only (M2):
+    // slots.get, KHÔNG getSlot (get-or-create).
+    registerZcaDispatchRoutes(app, {
+        resolveSlot: (connectionId) => slots.get(String(connectionId)),
+        sendSecret: BRIDGE_SEND_SECRET,
+        elevatedSecret: BRIDGE_ELEVATED_SECRET,
     });
 
     return app;

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\DB;
  * @property int $id
  * @property string $workspace_id
  * @property int $connection_id UNIQUE cross-tenant
+ * @property string|null $channel_account_id
  * @property string|null $personal_uid
  * @property string|null $display_name
  * @property string|null $avatar_url
@@ -38,6 +40,7 @@ class ZaloConnection extends Model
     protected $fillable = [
         'workspace_id',
         'connection_id',
+        'channel_account_id',
         'personal_uid',
         'display_name',
         'avatar_url',
@@ -87,20 +90,37 @@ class ZaloConnection extends Model
     }
 
     /**
-     * Lookup personal_uid từ connection_id qua pgsql_privileged (bypass RLS).
-     * Bao gồm cả connection đã soft-delete — reconnect mint connection_id mới
-     * nhưng cùng tài khoản Zalo (cùng personal_uid); inbound cần uid này để
-     * gắn message vào conversation canonical thay vì fork theo connection_id.
+     * P08 — lookup channel_account_id từ connection_id qua pgsql_privileged (bypass
+     * RLS). Bao gồm cả connection đã soft-delete — reconnect mint connection_id mới
+     * nhưng cùng tài khoản (channel_account_id); inbound dùng account_id này để key
+     * conversation trực tiếp (channel_account_id, peer_uid) — 1 nguồn sự thật.
      */
-    public static function personalUidForConnection(int $connectionId): ?string
+    public static function channelAccountIdForConnection(int $connectionId): ?string
     {
         $row = DB::connection('pgsql_privileged')
             ->table('zalo_connections')
-            ->select('personal_uid')
+            ->select('channel_account_id')
             ->where('connection_id', $connectionId)
             ->first();
 
-        return $row?->personal_uid;
+        return $row?->channel_account_id;
+    }
+
+    /**
+     * Slot 'connected' của 1 channel_account, workspace-scoped (P03/P04 single
+     * source cho outbound resolve + reconnect fail-closed). Trả về Collection
+     * (không first()) — caller quyết định fail-closed khi count() !== 1.
+     *
+     * @return Collection<int, static>
+     */
+    public static function connectedForAccount(string $workspaceId, string $channelAccountId): Collection
+    {
+        return static::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('channel_account_id', $channelAccountId)
+            ->where('state', 'connected')
+            ->whereNull('deleted_at')
+            ->get();
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Contracts\SendException;
 use App\Http\Controllers\Controller;
+use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
@@ -55,24 +56,31 @@ class InboxController extends Controller
             $query->where('channel', $channel);
         }
 
-        $conversations = $query->paginate(30)->withQueryString();
+        // P07 — rail 2 tầng: lọc theo tài khoản kết nối (shop có thể cắm nhiều số Zalo).
+        if ($channelAccountId = $request->string('channel_account_id')->toString()) {
+            $query->where('channel_account_id', $channelAccountId);
+        }
+
+        $conversations = $query->with('channelAccount:id,display_name')->paginate(30)->withQueryString();
 
         // Internal-first: Integration module xóa → class vắng → empty state (N2).
         $channelsAvailable = class_exists(ChannelManager::class)
             ? app(ChannelManager::class)->hasAny()
             : false;
 
-        // Tier 0: truyền trạng thái kết nối Zalo xuống FE để hiển thị banner gap.
-        // RLS auto-filter theo workspace. Phase 1 ~1 kết nối/workspace → first() đủ (YAGNI).
-        $zaloConnection = ZaloConnection::orderByDesc('last_connected_at')
-            ->first(['id', 'display_name', 'state', 'session_lost_reason', 'last_connected_at', 'last_session_lost_at']);
+        // P07 — danh sách tài khoản kênh (đa tài khoản) + count hội thoại active/account,
+        // thay $zaloConnection first() cũ (giả định 1 kết nối/workspace).
+        $channelAccounts = ChannelAccount::query()
+            ->withCount(['conversations as conversations_count' => fn ($q) => $q->whereNull('deleted_at')])
+            ->orderBy('created_at')
+            ->get(['id', 'channel', 'display_name', 'avatar_url', 'status']);
 
         return Inertia::render('inbox/index', [
             'conversations' => $conversations,
-            'filters' => $request->only(['q', 'unread', 'channel']),
+            'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id']),
             'channelsAvailable' => $channelsAvailable,
             'selectedConversation' => $conversation,
-            'zaloConnection' => $zaloConnection,
+            'channelAccounts' => $channelAccounts,
         ]);
     }
 
@@ -147,13 +155,8 @@ class InboxController extends Controller
         try {
             /** @var ChannelManager $channelManager */
             $channelManager = app(ChannelManager::class);
-            $channelManager->driver($conversation->channel)->sendMessage($conversation, ['text' => $text]);
-
-            // Trả message mới nhất direction=out sau khi gửi thành công
-            $message = Message::where('conversation_id', $conversation->id)
-                ->where('direction', 'out')
-                ->latest('created_at')
-                ->first();
+            $message = $channelManager->driver($conversation->channel)
+                ->sendMessage($conversation, ['text' => $text]);
 
             return response()->json($message, 201);
         } catch (SendException $e) {

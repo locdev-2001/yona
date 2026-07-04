@@ -30,9 +30,17 @@ class ZaloGroupBackfillService
         $bridgeUrl = rtrim((string) config('services.zalo_bridge.url'), '/');
         $uiSecret = (string) config('services.zalo_bridge.ui_secret');
 
+        // P08: conversations key theo channel_account_id (không còn zalo_connection_id) —
+        // resolve account của slot trước. Slot chưa gắn account (chưa từng promote) → không có gì để backfill.
+        $channelAccountId = DB::table('zalo_connections')->where('connection_id', $connectionId)->value('channel_account_id');
+
+        if ($channelAccountId === null) {
+            return 0;
+        }
+
         // Default connection (RLS đã bind bởi caller: webhook bind trước khi gọi, controller dùng workspace middleware)
         $groupConversations = DB::table('conversations')
-            ->where('zalo_connection_id', $connectionId)
+            ->where('channel_account_id', $channelAccountId)
             ->where('thread_type', 1)
             ->whereNull('deleted_at')
             ->get(['peer_uid']);
