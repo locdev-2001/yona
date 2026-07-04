@@ -48,7 +48,10 @@ class ZaloSendService
      * Gửi tin outbound. Ghi Message chỉ khi bridge confirm ok.
      *
      * @param  string|null  $text  Nội dung text
-     * @param  array<string, mixed>|null  $media  {file_url, media_kind, filename}
+     * @param  array<string, mixed>|null  $media  {file_url, display_url, media_kind, filename, attachment_id}
+     * @param  array<string, mixed>|null  $quote  P06a — zca quote object (SendMessageQuote shape từ platform_meta)
+     * @param  array<string, mixed>|null  $sticker  P06a — {id, cateId, type, url?, thumbnail?}
+     * @param  array<string, mixed>|null  $quoteDisplay  media_meta.quote cho FE render
      *
      * @throws ZaloCircuitOpenException circuit breaker OPEN
      * @throws QuotaExceededException hết quota hội thoại mới
@@ -56,8 +59,14 @@ class ZaloSendService
      * @throws RateCapException >3 tin/số/ngày
      * @throws ZaloNotConnectedException bridge lỗi / session hết
      */
-    public function send(Conversation $conversation, ?string $text, ?array $media = null): Message
-    {
+    public function send(
+        Conversation $conversation,
+        ?string $text,
+        ?array $media = null,
+        ?array $quote = null,
+        ?array $sticker = null,
+        ?array $quoteDisplay = null,
+    ): Message {
         $connection = $this->resolveConnection($conversation);
 
         // 1. Circuit-breaker check — fail fast trước mọi thứ
@@ -76,10 +85,10 @@ class ZaloSendService
         $this->rateLimiter->assertCanSend($conversation->workspace_id, $targetNumber, isReply: $isReply);
 
         // 4. HTTP → bridge
-        $responseData = $this->callBridge($connection, $conversation, $text, $media);
+        $responseData = $this->callBridge($connection, $conversation, $text, $media, $quote, $sticker);
 
         // 5. Ghi Message + meter
-        $message = $this->persistMessage($conversation, $text, $media, $responseData);
+        $message = $this->persistMessage($conversation, $text, $media, $responseData, $sticker, $quoteDisplay);
         $this->meteringService->meterReply($conversation);
 
         if (! $isReply) {
@@ -94,11 +103,13 @@ class ZaloSendService
 
     /**
      * @param  array<string, mixed>|null  $media
+     * @param  array<string, mixed>|null  $quote
+     * @param  array<string, mixed>|null  $sticker
      * @return array<string, mixed>
      *
      * @throws ZaloNotConnectedException
      */
-    private function callBridge(ZaloConnection $connection, Conversation $conversation, ?string $text, ?array $media): array
+    private function callBridge(ZaloConnection $connection, Conversation $conversation, ?string $text, ?array $media, ?array $quote = null, ?array $sticker = null): array
     {
         $payload = [
             'connection_id' => $connection->connection_id,
@@ -111,6 +122,18 @@ class ZaloSendService
             $payload['file_url'] = $media['file_url'] ?? null;
             $payload['media_kind'] = $media['media_kind'] ?? null;
             $payload['filename'] = $media['filename'] ?? null;
+        }
+
+        if ($quote) {
+            $payload['quote'] = $quote;
+        }
+
+        if ($sticker) {
+            $payload['sticker'] = [
+                'id' => (int) ($sticker['id'] ?? 0),
+                'cateId' => (int) ($sticker['cateId'] ?? $sticker['cate_id'] ?? 0),
+                'type' => (int) ($sticker['type'] ?? 1),
+            ];
         }
 
         $connectionId = (string) $connection->connection_id;
@@ -155,7 +178,13 @@ class ZaloSendService
      * @param  array<string, mixed>|null  $media
      * @param  array<string, mixed>  $bridgeResponse
      */
-    private function persistMessage(Conversation $conversation, ?string $text, ?array $media, array $bridgeResponse): Message
+    /**
+     * @param  array<string, mixed>|null  $media
+     * @param  array<string, mixed>  $bridgeResponse
+     * @param  array<string, mixed>|null  $sticker
+     * @param  array<string, mixed>|null  $quoteDisplay
+     */
+    private function persistMessage(Conversation $conversation, ?string $text, ?array $media, array $bridgeResponse, ?array $sticker = null, ?array $quoteDisplay = null): Message
     {
         $mediaMeta = [];
         if ($media) {
@@ -167,6 +196,18 @@ class ZaloSendService
                 'attachment_id' => $media['attachment_id'] ?? null,
             ]);
         }
+        if ($sticker) {
+            $mediaMeta['sticker'] = array_filter([
+                'id' => $sticker['id'] ?? null,
+                'cateId' => $sticker['cateId'] ?? $sticker['cate_id'] ?? null,
+                'type' => $sticker['type'] ?? null,
+                'url' => $sticker['url'] ?? null,
+                'thumbnail' => $sticker['thumbnail'] ?? null,
+            ], fn ($v) => $v !== null);
+        }
+        if ($quoteDisplay) {
+            $mediaMeta['quote'] = $quoteDisplay;
+        }
 
         $sourceId = isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null;
 
@@ -174,7 +215,7 @@ class ZaloSendService
             'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
             'direction' => 'out',
-            'type' => $media ? ($media['media_kind'] ?? 'file') : 'text',
+            'type' => $sticker ? 'sticker' : ($media ? ($media['media_kind'] ?? 'file') : 'text'),
             'body' => $text,
             // Review L1: KHÔNG fallback file_url — signed URL 15' tuyệt đối không được vào DB
             'media_url' => $media !== null ? ($media['display_url'] ?? null) : null,

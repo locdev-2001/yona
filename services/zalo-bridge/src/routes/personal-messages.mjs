@@ -70,6 +70,8 @@ export function registerPersonalMessageRoutes(app, deps) {
                 file_url: req.body?.file_url,
                 media_kind: req.body?.media_kind,
                 filename: req.body?.filename,
+                quote: req.body?.quote,
+                sticker: req.body?.sticker,
             });
             return res.json({
                 ok: true,

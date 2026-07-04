@@ -37,6 +37,7 @@ use App\Http\Controllers\Inbox\ConversationLeadController;
 use App\Http\Controllers\Inbox\ConversationPhoneController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
+use App\Http\Controllers\Inbox\MessageInteractionController;
 use App\Http\Controllers\Integration\IntegrationController;
 use App\Http\Controllers\Integration\ZaloConnectionController;
 use App\Http\Controllers\LocaleController;
@@ -249,6 +250,11 @@ Route::middleware(['auth'])->group(function () {
         // P05 — nhập tay SĐT + verify qua kênh (manual_verified).
         Route::put('/inbox/conversations/{conversation}/phone', [ConversationPhoneController::class, 'update'])
             ->name('inbox.phone.update');
+        // P06a — reaction (dispatcher caller đầu tiên) + sticker search.
+        Route::post('/inbox/conversations/{conversation}/messages/{message}/reaction', [MessageInteractionController::class, 'react'])
+            ->name('inbox.reaction');
+        Route::get('/inbox/conversations/{conversation}/stickers', [MessageInteractionController::class, 'stickers'])
+            ->name('inbox.stickers');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')

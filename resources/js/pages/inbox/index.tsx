@@ -3,7 +3,7 @@ import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
 import type { GapEvent } from '@/components/inbox/gap-marker';
-import { MessageComposer } from '@/components/inbox/message-composer';
+import { MessageComposer, type ReplyTarget } from '@/components/inbox/message-composer';
 import { isStreamMessage, messagePreview, type ChatMessage, type MessageStatePayload, type StreamItem } from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -94,6 +94,8 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [syncing, setSyncing] = useState(false);
     // P03 — typing phù du: {convId, hết hạn} — tự tắt sau TYPING_TTL_MS không cần event mới
     const [typing, setTyping] = useState<{ convId: string; until: number } | null>(null);
+    // P06a — tin đang trả lời (reply bar composer)
+    const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
 
     // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
     function handleResync() {
@@ -217,6 +219,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
 
     function handleSelectConv(conv: Conversation) {
         setActiveConv(conv);
+        setReplyTo(null);
         // Phản chiếu URL → reload/share giữ đúng hội thoại (route inbox.show preselect). Không round-trip.
         window.history.replaceState(window.history.state, '', route('inbox.show', conv.id));
         setItems([]);
@@ -283,6 +286,43 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             })
             .catch(() => setLeadError('Không kết nối được server.'))
             .finally(() => setLeadLoading(false));
+    }
+
+    // P06a — thả/gỡ reaction: KHÔNG optimistic — server ghi sau khi dispatcher 2xx,
+    // broadcast MessageStateChanged sẽ patch bubble (mọi agent cùng thấy).
+    function handleReact(msg: ChatMessage, icon: string) {
+        if (!activeConv) return;
+
+        fetch(route('inbox.reaction', [activeConv.id, msg.id]), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+            body: JSON.stringify({ icon }),
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    showToast(json.message ?? 'Không thả được cảm xúc.');
+                    return;
+                }
+                // Patch tại chỗ từ response (broadcast cũng sẽ tới — patch idempotent)
+                setItems((prev) =>
+                    prev.map((item) => (isStreamMessage(item) && item.id === msg.id ? { ...item, reactions: json.reactions ?? item.reactions } : item)),
+                );
+            })
+            .catch(() => showToast('Không kết nối được server.'));
+    }
+
+    function handleReply(msg: ChatMessage) {
+        setReplyTo({
+            id: msg.id,
+            text: msg.body ?? `[${msg.type}]`,
+            senderName: msg.direction === 'in' ? (msg.sender_name ?? activeConv?.peer_name ?? 'Khách') : 'Bạn',
+        });
     }
 
     // P05 — verify findUser phía server: uid khớp peer mới lưu (manual_verified)
@@ -469,7 +509,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                 </div>
                             )}
 
-                            <ChatThread items={items} peer={activeConv} loading={loadingMessages} />
+                            <ChatThread items={items} peer={activeConv} loading={loadingMessages} onReply={handleReply} onReact={handleReact} />
 
                             {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
                             {typing?.convId === activeConv.id && (
@@ -490,6 +530,8 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                     key={activeConv.id}
                                     conversationId={activeConv.id}
                                     onSent={() => handleSelectConv(activeConv)}
+                                    replyTo={replyTo}
+                                    onClearReply={() => setReplyTo(null)}
                                 />
                             )}
                         </>

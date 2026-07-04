@@ -3,16 +3,19 @@ import { MessageCircle } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { GapMarker } from './gap-marker';
 import { MessageBubble } from './message-bubble';
-import { dayLabel, isOutbound, isStreamMessage, type ChatPeer, type StreamItem } from './message-types';
+import { dayLabel, isOutbound, isStreamMessage, type ChatMessage, type ChatPeer, type StreamItem } from './message-types';
 
 interface Props {
     items: StreamItem[];
     peer: ChatPeer;
     loading?: boolean;
+    /** P06a — callbacks tương tác (undefined = ẩn action). */
+    onReply?: (msg: ChatMessage) => void;
+    onReact?: (msg: ChatMessage, icon: string) => void;
 }
 
 /** Reusable chat transcript: day separators, sender grouping, gap markers, auto-scroll. Channel-agnostic. */
-export function ChatThread({ items, peer, loading }: Props) {
+export function ChatThread({ items, peer, loading, onReply, onReact }: Props) {
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -74,7 +77,7 @@ export function ChatThread({ items, peer, loading }: Props) {
                             </div>
                         )}
                         <div className={showSender ? 'mt-2' : ''}>
-                            <MessageBubble msg={item} peer={peer} showSender={showSender} />
+                            <MessageBubble msg={item} peer={peer} showSender={showSender} onReply={onReply} onReact={onReact} />
                         </div>
                     </div>
                 );

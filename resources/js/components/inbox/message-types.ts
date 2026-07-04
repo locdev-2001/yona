@@ -65,6 +65,21 @@ export interface ChatMessage {
     delivered_at?: string | null;
     seen_at?: string | null;
     reactions?: MessageReactionInfo[];
+    /** P06a — tin có platform metadata mới quote/react được (tin cũ → disable nút). */
+    quotable?: boolean;
+}
+
+/** P06a — palette reaction chuẩn (icon = mã zca, hiển thị qua reactionEmoji). */
+export const REACTION_PALETTE = ['/-heart', '/-strong', ':>', ':o', ':-((', ':-h'] as const;
+
+/** P06a — sticker item từ search (GET /inbox/.../stickers). */
+export interface StickerItem {
+    id: number;
+    cateId: number;
+    type: number;
+    url: string | null;
+    thumbnail: string | null;
+    description: string | null;
 }
 
 /** Payload broadcast MessageStateChanged (P02). */

@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, Paperclip, Send, X } from 'lucide-react';
+import { FileText, Paperclip, Send, SmilePlus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { StickerItem } from './message-types';
 
 /** Cap tĩnh 20MB chung mọi loại — khớp ConversationAttachmentController::MAX_UPLOAD_KB. */
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -13,11 +14,21 @@ interface PendingAttachment {
     previewUrl: string | null; // objectURL cho ảnh — revoke khi thay/clear
 }
 
+/** P06a — tin đang được trả lời (reply bar). */
+export interface ReplyTarget {
+    id: string;
+    text: string;
+    senderName: string;
+}
+
 interface Props {
     conversationId: string;
     disabled?: boolean;
     /** Gọi sau khi gửi thành công — parent reload thread. */
     onSent: () => void;
+    /** P06a — reply bar (null = không trả lời). */
+    replyTo?: ReplyTarget | null;
+    onClearReply?: () => void;
 }
 
 function xsrfToken(): string {
@@ -29,13 +40,18 @@ function notify(msg: string) {
     alert(msg);
 }
 
-/** Composer channel-agnostic: text + đính kèm (chọn file / paste ảnh) + preview. */
-export function MessageComposer({ conversationId, disabled, onSent }: Props) {
+/** Composer channel-agnostic: text + đính kèm + paste ảnh + reply bar + sticker search. */
+export function MessageComposer({ conversationId, disabled, onSent, replyTo, onClearReply }: Props) {
     const [text, setText] = useState('');
     const [attachment, setAttachment] = useState<PendingAttachment | null>(null);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    // P06a — sticker picker = ô SEARCH (không browse-bộ: zca chỉ có getStickers(keyword))
+    const [stickerOpen, setStickerOpen] = useState(false);
+    const [stickerQuery, setStickerQuery] = useState('');
+    const [stickerResults, setStickerResults] = useState<StickerItem[]>([]);
+    const [stickerLoading, setStickerLoading] = useState(false);
 
     // Revoke objectURL khi unmount/thay attachment — tránh leak
     useEffect(() => {
@@ -113,7 +129,11 @@ export function MessageComposer({ conversationId, disabled, onSent }: Props) {
                 'Content-Type': 'application/json',
                 'X-XSRF-TOKEN': xsrfToken(),
             },
-            body: JSON.stringify({ text: trimmed || null, attachment_id: attachment?.id ?? null }),
+            body: JSON.stringify({
+                text: trimmed || null,
+                attachment_id: attachment?.id ?? null,
+                reply_to_message_id: replyTo?.id ?? null,
+            }),
         })
             .then(async (r) => {
                 const json = await r.json().catch(() => ({}));
@@ -123,6 +143,7 @@ export function MessageComposer({ conversationId, disabled, onSent }: Props) {
                     return;
                 }
                 clearAttachment();
+                onClearReply?.();
                 onSent();
             })
             .catch(() => {
@@ -132,8 +153,114 @@ export function MessageComposer({ conversationId, disabled, onSent }: Props) {
             .finally(() => setSending(false));
     }
 
+    // P06a — sticker: search → grid → click gửi luôn (OUTBOUND đường send thường)
+    function searchStickers() {
+        const q = stickerQuery.trim();
+        if (!q || stickerLoading) return;
+        setStickerLoading(true);
+
+        fetch(`${route('inbox.stickers', conversationId)}?q=${encodeURIComponent(q)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    notify(json.message ?? 'Không tìm được sticker.');
+                    return;
+                }
+                setStickerResults(json.stickers ?? []);
+            })
+            .catch(() => notify('Không kết nối được server.'))
+            .finally(() => setStickerLoading(false));
+    }
+
+    function sendSticker(sticker: StickerItem) {
+        if (sending) return;
+        setSending(true);
+        setStickerOpen(false);
+
+        fetch(route('inbox.send', conversationId), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+            body: JSON.stringify({
+                sticker: {
+                    id: sticker.id,
+                    cate_id: sticker.cateId,
+                    type: sticker.type,
+                    url: sticker.url,
+                    thumbnail: sticker.thumbnail,
+                },
+            }),
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    notify(json.message ?? 'Không gửi được sticker.');
+                    return;
+                }
+                onSent();
+            })
+            .catch(() => notify('Không kết nối được server.'))
+            .finally(() => setSending(false));
+    }
+
     return (
         <div className="border-t">
+            {/* P06a — reply bar */}
+            {replyTo && (
+                <div className="border-primary bg-muted/50 mx-3 mt-2 flex items-center gap-2 rounded border-l-2 px-2 py-1">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-primary text-[11px] font-medium">Trả lời {replyTo.senderName}</p>
+                        <p className="text-muted-foreground truncate text-xs">{replyTo.text}</p>
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={onClearReply} aria-label="Bỏ trả lời">
+                        <X className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+            )}
+
+            {/* P06a — sticker panel: search-only (zca không có API browse bộ) */}
+            {stickerOpen && (
+                <div className="mx-3 mt-2 rounded border p-2">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            searchStickers();
+                        }}
+                        className="flex gap-1"
+                    >
+                        <Input
+                            value={stickerQuery}
+                            onChange={(e) => setStickerQuery(e.target.value)}
+                            placeholder="Tìm sticker (vd: hello, cảm ơn)..."
+                            className="h-7 text-xs"
+                            autoFocus
+                        />
+                        <Button type="submit" size="sm" variant="secondary" className="h-7 text-xs" disabled={stickerLoading || !stickerQuery.trim()}>
+                            {stickerLoading ? '...' : 'Tìm'}
+                        </Button>
+                    </form>
+                    {stickerResults.length > 0 && (
+                        <div className="mt-2 grid max-h-40 grid-cols-6 gap-1 overflow-y-auto">
+                            {stickerResults.map((s) => (
+                                <button key={s.id} type="button" className="hover:bg-muted rounded p-1" onClick={() => sendSticker(s)} disabled={sending}>
+                                    {s.url || s.thumbnail ? (
+                                        <img src={s.url ?? s.thumbnail ?? ''} alt={s.description ?? 'sticker'} className="h-12 w-12 object-contain" loading="lazy" />
+                                    ) : (
+                                        <span className="text-xs">#{s.id}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {attachment && (
                 <div className="flex items-center gap-2 px-3 pt-2">
                     {attachment.previewUrl ? (
@@ -167,6 +294,16 @@ export function MessageComposer({ conversationId, disabled, onSent }: Props) {
                     aria-label="Đính kèm tệp"
                 >
                     <Paperclip className={`h-4 w-4 ${uploading ? 'animate-pulse' : ''}`} />
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={disabled || sending}
+                    onClick={() => setStickerOpen(!stickerOpen)}
+                    aria-label="Gửi sticker"
+                >
+                    <SmilePlus className="h-4 w-4" />
                 </Button>
                 <Input
                     value={text}

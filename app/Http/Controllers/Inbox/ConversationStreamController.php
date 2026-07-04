@@ -74,7 +74,7 @@ class ConversationStreamController extends Controller
                 "id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
                  COALESCE(platform_sent_at, created_at) as stream_at, ? as stream_rank,
                  sender_uid, sender_name, sent_by, created_at,
-                 recalled_at, delivered_at, seen_at",
+                 recalled_at, delivered_at, seen_at, platform_meta",
                 [self::MESSAGE_RANK]
             );
 
@@ -162,6 +162,20 @@ class ConversationStreamController extends Controller
             'delivered_at' => $item->delivered_at,
             'seen_at' => $item->seen_at,
             'reactions' => $reactionsByMessage[$item->id] ?? [],
+            // P06a — tin có platform metadata mới quote/react được (tin cũ pre-P01/
+            // backfill → FE disable nút, fallback trung thực). KHÔNG expose meta thô.
+            'quotable' => $this->hasPlatformMeta($item->platform_meta ?? null),
         ];
+    }
+
+    private function hasPlatformMeta(?string $platformMeta): bool
+    {
+        if ($platformMeta === null || $platformMeta === '' || $platformMeta === '{}') {
+            return false;
+        }
+
+        $decoded = json_decode($platformMeta, true);
+
+        return is_array($decoded) && $decoded !== [];
     }
 }

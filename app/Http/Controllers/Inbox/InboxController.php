@@ -139,9 +139,31 @@ class InboxController extends Controller
         $validated = $request->validate([
             'text' => ['nullable', 'string', 'max:5000'],
             'attachment_id' => ['nullable', 'uuid'],
+            // P06a — quote-reply + sticker
+            'reply_to_message_id' => ['nullable', 'uuid'],
+            'sticker' => ['nullable', 'array'],
+            'sticker.id' => ['required_with:sticker', 'integer', 'min:1'],
+            'sticker.cate_id' => ['required_with:sticker', 'integer', 'min:0'],
+            'sticker.type' => ['nullable', 'integer'],
+            'sticker.url' => ['nullable', 'url:http,https'],
+            'sticker.thumbnail' => ['nullable', 'url:http,https'],
         ]);
 
         $text = isset($validated['text']) ? trim((string) $validated['text']) : '';
+
+        // P06a — reply: tin gốc phải thuộc đúng conversation này
+        $replyTo = null;
+        if (! empty($validated['reply_to_message_id'])) {
+            $replyTo = Message::where('id', $validated['reply_to_message_id'])
+                ->where('conversation_id', $conversation->id)
+                ->firstOrFail();
+
+            if ($text === '') {
+                return response()->json(['message' => 'Trả lời trích dẫn cần nội dung text.'], 422);
+            }
+        }
+
+        $sticker = $validated['sticker'] ?? null;
 
         // P04 — media: resolve attachment đã upload (phải thuộc đúng conversation này).
         $media = null;
@@ -165,7 +187,7 @@ class InboxController extends Controller
             ];
         }
 
-        if ($text === '' && $media === null) {
+        if ($text === '' && $media === null && $sticker === null) {
             return response()->json(['message' => 'Nội dung không được để trống.'], 422);
         }
 
@@ -184,6 +206,8 @@ class InboxController extends Controller
                 ->sendMessage($conversation, [
                     'text' => $text !== '' ? $text : null,
                     'media' => $media,
+                    'reply_to' => $replyTo,
+                    'sticker' => $sticker,
                 ]);
 
             return response()->json($message, 201);
