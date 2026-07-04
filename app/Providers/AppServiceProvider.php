@@ -6,6 +6,7 @@ use App\Models\EmailTemplate;
 use App\Models\User;
 use App\Modules\Integration\IntegrationServiceProvider;
 use App\Policies\EmailTemplatePolicy;
+use App\Support\DbRoleGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +37,17 @@ class AppServiceProvider extends ServiceProvider
         // DB once wiped local data. To run one intentionally, set DB_ALLOW_DESTRUCTIVE=true.
         if (! $this->app->runningUnitTests()) {
             DB::prohibitDestructiveCommands(! config('database.allow_destructive'));
+        }
+
+        // P10 boot-guard: production KHÔNG BAO GIỜ chạy bằng role superuser —
+        // superuser bypass RLS toàn cluster = tenant isolation chết im lặng.
+        // Runbook siết role: docs/database-safety.md (ALTER ROLE ... NOSUPERUSER BYPASSRLS).
+        if ($this->app->environment('production')) {
+            $violations = DbRoleGuard::superuserViolations();
+            if ($violations !== []) {
+                logger()->critical('DB role guard: runtime đang là SUPERUSER — từ chối boot', ['connections' => $violations]);
+                throw new \RuntimeException('DB role misconfigured: superuser runtime on ['.implode(', ', $violations).']. See docs/database-safety.md.');
+            }
         }
 
         // Workspace admin/owner has unrestricted access WITHIN their workspace.

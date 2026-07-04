@@ -45,3 +45,10 @@ BEGIN
   END IF;
 END
 $$;
+
+-- 6. P10 hardening — least-privilege owner: cho_rach_owner giữ BYPASSRLS (3 seam
+--    bất khả kháng: webhook resolve, system command, audit-immutable) nhưng MẤT
+--    toàn quyền cluster. Chạy bằng SUPERUSER thật (vd postgres), KHÔNG phải owner:
+--      ALTER ROLE cho_rach_owner NOSUPERUSER BYPASSRLS;
+--    Rollback (chỉ khi bảo trì cần): ALTER ROLE cho_rach_owner SUPERUSER;
+--    Boot-guard production (AppServiceProvider) từ chối boot nếu runtime là superuser.
