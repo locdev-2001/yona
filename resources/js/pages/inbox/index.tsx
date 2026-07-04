@@ -4,7 +4,7 @@ import { ChatThread } from '@/components/inbox/chat-thread';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
 import type { GapEvent } from '@/components/inbox/gap-marker';
 import { MessageComposer } from '@/components/inbox/message-composer';
-import { messagePreview, type ChatMessage, type StreamItem } from '@/components/inbox/message-types';
+import { isStreamMessage, messagePreview, type ChatMessage, type MessageStatePayload, type StreamItem } from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +63,9 @@ interface Props {
 
 const ZALO_QUOTA_KEY = 'quota.conversations.zalo_personal';
 
+/** P03 — typing tự tắt sau 8s không có event mới (timeout đã chốt, verify LAB sau). */
+const TYPING_TTL_MS = 8000;
+
 /** Hiển thị toast lỗi nhẹ — dùng alert vì chưa có toast component chung */
 function showToast(msg: string) {
     // ponytail: alert thay toast — thêm toaster lib khi có shared toast infra
@@ -85,6 +88,8 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [leadError, setLeadError] = useState<string | null>(null);
 
     const [syncing, setSyncing] = useState(false);
+    // P03 — typing phù du: {convId, hết hạn} — tự tắt sau TYPING_TTL_MS không cần event mới
+    const [typing, setTyping] = useState<{ convId: string; until: number } | null>(null);
 
     // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
     function handleResync() {
@@ -168,10 +173,41 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             });
         });
 
+        // P03 — trạng thái tin đổi (recalled/delivered/seen/reaction): patch tại chỗ, không refetch
+        channel.listen('MessageStateChanged', (payload: MessageStatePayload) => {
+            setItems((prev) =>
+                prev.map((item) =>
+                    isStreamMessage(item) && item.id === payload.message_id
+                        ? {
+                              ...item,
+                              recalled_at: payload.recalled_at,
+                              delivered_at: payload.delivered_at,
+                              seen_at: payload.seen_at,
+                              reactions: payload.reactions,
+                          }
+                        : item,
+                ),
+            );
+        });
+
+        // P03 — typing indicator (phù du, không DB): hiện TYPING_TTL_MS rồi tự tắt
+        channel.listen('ConversationTyping', (payload: { conversation_id: string }) => {
+            setTyping({ convId: payload.conversation_id, until: Date.now() + TYPING_TTL_MS });
+        });
+
         return () => {
             window.Echo.leave(`workspace.${workspaceId}.conversations`);
         };
     }, [activeWorkspace?.id]);
+
+    // Đồng hồ tắt typing — tick 1s, clear khi hết hạn
+    useEffect(() => {
+        if (!typing) return;
+        const timer = setInterval(() => {
+            setTyping((current) => (current && current.until <= Date.now() ? null : current));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [typing]);
 
     // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -332,8 +368,12 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                                 </Badge>
                                             )}
                                         </div>
-                                        {conv.last_message_preview && (
-                                            <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
+                                        {typing?.convId === conv.id ? (
+                                            <p className="text-primary mt-0.5 truncate text-xs italic">đang nhập…</p>
+                                        ) : (
+                                            conv.last_message_preview && (
+                                                <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
+                                            )
                                         )}
                                         {conv.channel_account?.display_name && (
                                             <p className="text-muted-foreground/70 mt-0.5 truncate text-[11px]">
@@ -396,6 +436,11 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                             )}
 
                             <ChatThread items={items} peer={activeConv} loading={loadingMessages} />
+
+                            {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
+                            {typing?.convId === activeConv.id && (
+                                <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>
+                            )}
 
                             {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
                             {quotaExhausted && items.length === 0 ? (

@@ -1,6 +1,13 @@
 # Message-State Pipeline — undo / seen / delivered / reaction / typing
 
-Module: messaging · Status: **LIVE BE (P02 — inbox-full-messaging-framework)** · Updated: 2026-07-04
+Module: messaging · Status: **LIVE BE+FE (P02+P03 — inbox-full-messaging-framework)** · Updated: 2026-07-04
+
+## UI (P03)
+- Bubble out 1-1: ✓ (đã gửi, có source_id) → ✓✓ (delivered) → ✓✓ "Đã xem" (seen). Nhóm + kênh không receipt: KHÔNG render gì (không phải "chưa xem").
+- Tin recalled: ẩn body/media, dòng italic "Tin nhắn đã được thu hồi" — reload vẫn đúng (đọc DB).
+- Reactions: chips emoji + count dưới bubble (map `REACTION_ICON_EMOJI` trong message-types.ts, icon lạ passthrough).
+- Typing: "đang nhập…" trong thread + preview list, tự tắt sau 8s, chỉ hiện đúng hội thoại; KHÔNG ghi DB.
+- Realtime: patch tại chỗ theo `MessageStateChanged.message_id` — không refetch thread.
 
 ## Purpose
 5 event trạng-thái-tin từ Zalo ngừng nằm kho `relay_events`, đi thẳng vào đích theo **taxonomy 4 loại**: trạng thái tin → đi theo `messages` · phù du (typing) → broadcast-only · lạ → structured log. Diệt "tin ma" (khách thu hồi mà CRM vẫn hiện), nhân viên thấy khách đã nhận/đã xem.
