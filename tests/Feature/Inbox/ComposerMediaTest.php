@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\QuotaExceededException;
 use App\Models\Attachment;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
+use App\Services\MeteringService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +83,63 @@ it('upload ảnh trả attachment_id + media_kind image, lưu private disk, morp
     expect($attachment->attachable_type)->toBe('conversation')
         ->and($attachment->attachable_id)->toBe($conversation->id);
     Storage::disk(config('filesystems.default'))->assertExists($attachment->path);
+});
+
+it('upload html/svg bị chặn 422 (mime allowlist — chống stored XSS, review H1)', function () {
+    Storage::fake(config('filesystems.default'));
+    [, , $conversation] = cmSetup();
+
+    foreach ([
+        UploadedFile::fake()->createWithContent('evil.html', '<script>alert(1)</script>'),
+        UploadedFile::fake()->createWithContent('evil.svg', '<svg onload="alert(1)"/>'),
+    ] as $file) {
+        $this->postJson(route('inbox.attachments.store', $conversation->id), ['file' => $file])
+            ->assertStatus(422);
+    }
+});
+
+it('route show: file KHÔNG inline-safe (pdf) ép Content-Disposition attachment + nosniff', function () {
+    Storage::fake(config('filesystems.default'));
+    [, , $conversation] = cmSetup();
+
+    $upload = $this->post(route('inbox.attachments.store', $conversation->id), [
+        'file' => UploadedFile::fake()->create('bao-gia.pdf', 10, 'application/pdf'),
+    ])->json();
+    $attachment = Attachment::find($upload['attachment_id']);
+
+    $response = $this->get(route('inbox.attachments.show', $attachment->attachment_key));
+    $response->assertOk()
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+    expect($response->headers->get('Content-Disposition'))->toStartWith('attachment');
+});
+
+it('send media khi hết quota → 422 quota_exceeded, KHÔNG gọi bridge (review M2)', function () {
+    Storage::fake(config('filesystems.default'));
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+    [$workspace, , $conversation] = cmSetup();
+    cmConnectSlot($workspace, $conversation);
+
+    $upload = $this->post(route('inbox.attachments.store', $conversation->id), [
+        'file' => UploadedFile::fake()->image('bi-chan.png'),
+    ])->json();
+
+    $this->mock(MeteringService::class, function ($mock) {
+        $mock->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
+        $mock->shouldReceive('meterReply')->never();
+    });
+
+    Http::fake();
+
+    $response = $this->postJson(route('inbox.send', $conversation->id), [
+        'attachment_id' => $upload['attachment_id'],
+    ]);
+
+    $response->assertStatus(422);
+    expect($response->json('error_code'))->toBe('quota_exceeded');
+    Http::assertNothingSent();
+    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
+
+    Carbon::setTestNow();
 });
 
 it('upload quá 20MB bị chặn 422', function () {

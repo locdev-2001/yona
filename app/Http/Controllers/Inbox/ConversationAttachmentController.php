@@ -26,12 +26,28 @@ class ConversationAttachmentController extends Controller
     /** Cap tĩnh bảo thủ 20MB CHUNG mọi loại (validate đã chốt — bỏ cap ảnh 10MB ảo). */
     public const MAX_UPLOAD_KB = 20480;
 
+    /**
+     * Mime allowlist (review H1 — chặn stored XSS): KHÔNG html/svg/xml/js.
+     * Loại nghiệp vụ SME thật: ảnh, video, audio, pdf, office, nén, text.
+     */
+    private const ALLOWED_MIMES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+        'video/mp4', 'video/quicktime',
+        'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/aac', 'audio/wav',
+        'application/pdf',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+        'text/plain', 'text/csv',
+    ];
+
     public function store(Request $request, Conversation $conversation, AttachmentService $service): JsonResponse
     {
         $this->authorize('update', $conversation);
 
         $request->validate([
-            'file' => ['required', 'file', 'max:'.self::MAX_UPLOAD_KB],
+            'file' => ['required', 'file', 'max:'.self::MAX_UPLOAD_KB, 'mimetypes:'.implode(',', self::ALLOWED_MIMES)],
         ]);
 
         $attachment = $service->store($conversation, $request->file('file'));
@@ -79,12 +95,25 @@ class ConversationAttachmentController extends Controller
         }
     }
 
+    /** Mime an toàn render inline trong <img>/<video>/<audio> — còn lại ép download (defense-in-depth H1). */
+    private const INLINE_SAFE_MIMES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+        'video/mp4', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/aac', 'audio/wav',
+    ];
+
     private function streamAttachment(Attachment $attachment): StreamedResponse
     {
         $disk = config('filesystems.default');
 
         abort_unless($attachment->path && Storage::disk($disk)->exists($attachment->path), 404);
 
-        return Storage::disk($disk)->response($attachment->path, $attachment->original_name);
+        $inline = in_array((string) $attachment->mime, self::INLINE_SAFE_MIMES, true);
+
+        return Storage::disk($disk)->response(
+            $attachment->path,
+            $attachment->original_name,
+            ['X-Content-Type-Options' => 'nosniff'],
+            $inline ? 'inline' : 'attachment',
+        );
     }
 }

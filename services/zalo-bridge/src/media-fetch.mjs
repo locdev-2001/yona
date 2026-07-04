@@ -47,8 +47,9 @@ export function mimeToExt(ct) {
 }
 
 /**
- * allowedHosts: Set/array hostname lowercase. Rỗng/null = từ chối hết (fail-closed
- * khi thiếu config) TRỪ khi allowAll=true (dev không set LARAVEL_WEBHOOK_URL).
+ * allowedHosts: Set/array hostname lowercase. Rỗng/null = từ chối hết — FAIL-CLOSED,
+ * không có đường bypass: dev chưa set LARAVEL_WEBHOOK_URL thì gửi media sẽ fail
+ * (ghi rõ ở docs/features/messaging/composer-media.md).
  */
 export function assertUrlAllowed(url, allowedHosts) {
     let parsed;
@@ -100,6 +101,9 @@ export async function downloadUrlToTemp(url, { maxBytes = DEFAULT_MAX_FETCH_BYTE
     if (!res.ok) {
         throw new Error(`download_failed_${res.status}`);
     }
+    // Review M1: redirect có thể nhảy sang host lạ (open-redirect trên host
+    // allowlisted = bypass) → re-validate URL CUỐI sau mọi redirect.
+    assertUrlAllowed(res.url || url, allowedHosts);
 
     const contentLength = Number(res.headers.get('content-length'));
     if (Number.isFinite(contentLength) && contentLength > maxBytes) {
