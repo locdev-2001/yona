@@ -2,6 +2,8 @@
 
 Module: `app/Modules/Integration/Chat/ZaloPersonal` + `app/Services` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-04
 
+> **04/07 — Inbox full messaging framework (P01a→P12):** inbox nâng từ text-only lên module nhắn tin đầy đủ — media composer, quote/reaction/sticker, message-state (recalled/receipts/reactions/typing), phone enrichment, CRM layer, seen-sync (OFF), khung omnichannel ĐÓNG BĂNG qua `OutboundSendPipeline` + `ChannelCapabilities`. Chi tiết: [README index](./README.md) + `channel-framework-contract.md`.
+
 ## Purpose
 
 Accept inbound personal Zalo messages via webhook, create Conversation + Message records in real-time, bind workspace scope safely from the connection, broadcast to Reverb realtime subscribers for instant UI update, and hand off to CDP dedup on demand ([conversation-to-lead.md](./conversation-to-lead.md)).
