@@ -50,5 +50,16 @@ InboxController::send → OutboundSendPipeline::send(driver, conversation, paylo
 ## Những gì core LO SẴN cho mọi kênh (đừng viết lại trong driver)
 Account-keyed conversation (`channel_account_id`, `peer_uid`) · idempotency `source_id` + alias · message-state (recall set-once / receipts 1-1 / reactions monotonic) qua `MessageStateService` DTO trung tính · pending undo bounded · gap marker · stream hợp nhất + `stream_version` · CRM layer (assign/label/note/canned) · phone enrichment hook · RLS.
 
+## Seam CHƯA trung tính (biết trước — đóng ở kênh thật thứ 2, đừng hỏi lại)
+Freeze này là **TẠM** (mock-verified). Các chỗ sau còn Zalo-cứng NGOÀI đường send/ingest chính — kênh 2 có tính năng tương ứng sẽ phải trung tính hoá (được phép sửa, có RFC 1 dòng trong PR):
+| Seam | File | Hướng trung tính hoá |
+|---|---|---|
+| Reaction/sticker outbound | `MessageInteractionController` (import `ZaloInteractionService`, permission `ZaloManage`) | driver method `react()/searchStickers()` qua method_exists → contract khi kênh 2 cần |
+| Verify SĐT | `ConversationPhoneController` (đã method_exists `verifyPeerPhone`) | giữ pattern, thêm vào contract khi kênh 2 có verify |
+| Resync nhóm | `InboxController::resync` (query `ZaloConnection` trực tiếp) | driver `resyncHistory()` |
+| Banner kết nối | `connection-banner.tsx` (hardcode route zalo) | route từ capability/props |
+| Seen-sync đọc meta | `SeenSyncService` (pluck key `platform_meta.zca_message`) | driver expose key/extractor |
+| Permission | `tenant.zalo.manage` gate reaction/seen | permission per-channel hoặc generic `tenant.channel.manage` |
+
 ## Mock reference
 `tests/Support/MockChannelDriverA.php` (tối giản nhất — không receipts/media) và `MockChannelDriverB.php` (receipts per_member + policy max-length) — copy làm skeleton.

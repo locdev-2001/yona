@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Http;
  *   2. (P11) metering ĐÃ hoist lên OutboundSendPipeline — driver không meter
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (retry 2×200ms)
- *   5. Ghi Message direction=out → meterReply → increment rate limiter
+ *   5. Ghi Message direction=out → increment rate limiter (meterReply Ở PIPELINE)
  *
  * Lỗi bridge:
  *   - 503 / not_logged_in → ZaloNotConnectedException (ghi health monitor)

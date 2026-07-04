@@ -97,7 +97,9 @@ class InboundMessageService
      */
     protected function upsertConversation(array $normalized): Conversation
     {
-        $channel = $normalized['channel'] ?? 'zalo_personal';
+        // P11 review MED-1: KHÔNG fallback kênh mặc định — driver quên key 'channel'
+        // sẽ meter sai kênh IM LẶNG (phá per-channel). Fail-loud → webhook 422 dead-letter.
+        $channel = $normalized['channel'] ?? throw new \InvalidArgumentException('normalized payload thiếu key channel — driver phải set channelKey');
         $channelAccountId = $normalized['channel_account_id'] ?? null;
         $peerUid = $normalized['peer_uid'];
 

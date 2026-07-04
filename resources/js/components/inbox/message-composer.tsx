@@ -149,7 +149,8 @@ export function MessageComposer({
 
     function handlePaste(e: React.ClipboardEvent) {
         const file = e.clipboardData?.files?.[0];
-        if (file && file.type.startsWith('image/')) {
+        // Review LOW: paste cũng phải qua flag — kênh không hỗ trợ media thì bỏ qua
+        if (canSendMedia && file && file.type.startsWith('image/')) {
             e.preventDefault();
             uploadFile(file);
         }

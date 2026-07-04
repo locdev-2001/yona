@@ -49,24 +49,34 @@ interface ChannelDriver
     public function sendMessage(Conversation $conversation, array $payload): Message;
 
     /**
-     * Parse raw webhook payload từ bridge thành dạng chuẩn hóa cho inbox core.
+     * Parse raw webhook payload từ bridge thành dạng chuẩn hóa cho inbox core
+     * (shape ĐÚNG cái InboundMessageService::ingest consume — P11 review MED-2 sync).
+     *
+     * CHƯA FREEZE (MED-4/C6): contract inbound đóng băng ở kênh thật thứ 2.
+     * `channel` BẮT BUỘC (thiếu → ingest throw — không fallback im lặng).
+     * `platform_meta`: subset raw platform đủ cho quote/reaction/seen — kênh không
+     * có tương tác thì trả [] (UI tự disable theo `quotable`).
      *
      * @param  array<string, mixed>  $raw
      * @return array{
+     *   channel: string,
+     *   channel_account_id: string|null,
+     *   peer_uid: string,
+     *   peer_name: string|null,
+     *   peer_avatar: string|null,
+     *   peer_phone: string|null,
+     *   thread_type: int,
      *   direction: string,
-     *   source_id: string,
+     *   source_id: string|null,
      *   type: string,
      *   body: string|null,
      *   media_url: string|null,
      *   media_meta: array<string, mixed>,
-     *   platform_sent_at: int,
+     *   platform_sent_at: string|null,
      *   sender_uid: string|null,
      *   sender_name: string|null,
-     *   peer_uid: string,
-     *   peer_name: string|null,
-     *   peer_phone: string|null,
-     *   peer_avatar_url: string|null,
-     *   thread_type: int,
+     *   sent_by: int|null,
+     *   platform_meta: array<string, mixed>,
      * }
      */
     public function parseInbound(array $raw): array;
