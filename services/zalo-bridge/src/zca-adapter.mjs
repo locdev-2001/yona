@@ -1,6 +1,7 @@
 /**
  * zca-adapter.mjs — cơ chế GENERIC sở hữu 100% bề mặt zca-js (P11, port nguyên
- * từ .lab/ prototype đã validate LAB session thật 2026-07-04 — KHÔNG sửa logic).
+ * từ prototype .lab đã validate LAB session thật 2026-07-04 — KHÔNG sửa logic;
+ * evidence: services/zalo-bridge/.lab/evidence*.log + plans/.../reports/lab-*).
  * KHÔNG hand-wire từng API. Nâng zca-js → method/event mới tự lộ; method mới
  * chưa phân tier bị test snapshot (zca-adapter.test.mjs, M1) chặn build.
  *
@@ -46,7 +47,7 @@ export const OUTBOUND_SEND_METHODS = new Set([
 // DESTRUCTIVE (39) → CẤM ở dispatcher trừ khi có elevated secret riêng. Defense-in-depth:
 // 1 send-secret rò rộng KHÔNG được cấp quyền giải tán/khoá/chiếm nhóm, xoá tin, cắm auto-reply,
 // thêm-người-lạ vào nhóm. Gate quyền THẬT vẫn ở Laravel RBAC; đây là lớp chặn thứ 2 ở bridge.
-// Đã đối chiếu ĐỦ 146 method (`.lab/audit-classification.mjs` liệt kê MỌI mutation, không dựa regex).
+// Đã đối chiếu ĐỦ 146 method (audit liệt kê MỌI mutation, không dựa regex — enforce bằng test M1 per-method vs snapshot).
 // Nguyên tắc gate: ảnh hưởng nhóm/người-khác/persistent-send/bất-khả-hồi. Để DISPATCH_OK có ý thức:
 // config CÁ NHÂN account (profile/mute/label/quickMessage/setting/reminder), poll/catalog/note
 // (reversible phạm vi hẹp), self-join nhóm, friend-request (rate-limit ở product layer).

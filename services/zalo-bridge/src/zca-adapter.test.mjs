@@ -104,7 +104,7 @@ test('M1 detector: method reflect NGOÀI snapshot bị phát hiện (mô phỏng
     // và assert M1 phía trên chính là cái fail build khi điều này xảy ra với zca thật
 });
 
-// ── invokeMethod guards (port assert từ .lab/lab.mjs) ────────────────────────
+// ── invokeMethod guards (port assert từ LAB harness session thật 2026-07-04) ─
 
 function expectCode(fn, code) {
     assert.throws(fn, (e) => e.code === code, `muốn code=${code}`);
