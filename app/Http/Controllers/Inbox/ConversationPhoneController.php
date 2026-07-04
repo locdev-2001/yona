@@ -8,6 +8,7 @@ use App\Modules\Integration\ChannelManager;
 use App\Services\Inbox\PhoneEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * P05 — nhập tay SĐT khách + verify qua kênh (findUser: uid phải khớp peer_uid).
@@ -26,6 +27,17 @@ class ConversationPhoneController extends Controller
 
         if ($conversation->thread_type === 1) {
             return response()->json(['message' => 'Hội thoại nhóm không có SĐT khách.'], 422);
+        }
+
+        // Review MED-1: mỗi verify = 1 findUser API không chính thức. Throttle
+        // 5/phút/(user,workspace) — chặn burst bot-like (vector khóa acc) + chặn
+        // oracle dò SĐT (iterate phone → true/false thuộc peer_uid).
+        $rateKey = 'phone-verify:'.$conversation->workspace_id.':'.auth()->id();
+        if (! RateLimiter::attempt($rateKey, 5, fn () => true, 60)) {
+            return response()->json([
+                'message' => 'Xác minh quá nhanh — thử lại sau 1 phút.',
+                'error_code' => 'verify_rate_limited',
+            ], 429);
         }
 
         if (! class_exists(ChannelManager::class)) {

@@ -41,6 +41,15 @@ class MessageInteractionController extends Controller
         ]);
         $icon = (string) ($validated['icon'] ?? '');
 
+        // Review INFO: không có source_id thì applyReactions không resolve được row
+        // → thà 422 tường minh còn hơn ok:true mà không có gì xảy ra.
+        if (empty($message->source_id)) {
+            return response()->json([
+                'message' => 'Tin này thiếu metadata nền tảng — không thả cảm xúc được (tin cũ).',
+                'error_code' => 'reaction_unavailable',
+            ], 422);
+        }
+
         try {
             $interactionService->addReaction($conversation, $message, $icon);
         } catch (\InvalidArgumentException) {

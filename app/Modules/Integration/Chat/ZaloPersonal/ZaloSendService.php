@@ -197,12 +197,14 @@ class ZaloSendService
             ]);
         }
         if ($sticker) {
+            // Review LOW-2: url/thumbnail là input client render <img> cho cả workspace
+            // → chỉ giữ CDN Zalo (chặn beacon/IP-leak). Sticker vẫn gửi được bằng id.
             $mediaMeta['sticker'] = array_filter([
                 'id' => $sticker['id'] ?? null,
                 'cateId' => $sticker['cateId'] ?? $sticker['cate_id'] ?? null,
                 'type' => $sticker['type'] ?? null,
-                'url' => $sticker['url'] ?? null,
-                'thumbnail' => $sticker['thumbnail'] ?? null,
+                'url' => $this->zaloCdnUrlOrNull($sticker['url'] ?? null),
+                'thumbnail' => $this->zaloCdnUrlOrNull($sticker['thumbnail'] ?? null),
             ], fn ($v) => $v !== null);
         }
         if ($quoteDisplay) {
@@ -309,6 +311,23 @@ class ZaloSendService
         }
 
         return $slots->first();
+    }
+
+    /** Review LOW-2: chỉ nhận URL CDN sticker Zalo (zadn.vn / zdn.vn). */
+    private function zaloCdnUrlOrNull(?string $url): ?string
+    {
+        if ($url === null || $url === '') {
+            return null;
+        }
+
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        foreach (['.zadn.vn', '.zdn.vn'] as $suffix) {
+            if (str_ends_with($host, $suffix)) {
+                return $url;
+            }
+        }
+
+        return null;
     }
 
     /**

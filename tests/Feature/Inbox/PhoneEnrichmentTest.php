@@ -1,13 +1,16 @@
 <?php
 
 use App\Events\MessageReceived;
+use App\Models\ChannelAccount;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
+use App\Models\ZaloConnection;
 use App\Services\Inbox\PhoneEnrichmentService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -189,4 +192,71 @@ it('nhập tay: phone sai format → 422 validation', function () {
 
     $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => 'abc'])
         ->assertStatus(422);
+});
+
+// ── Review LOW-3: 2 nhánh reject findUser tường minh ─────────────────────────
+
+function peConversationWithSlot(Workspace $workspace, string $peerUid): Conversation
+{
+    $account = ChannelAccount::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_pe_'.uniqid(),
+        'status' => 'connected',
+    ]);
+    ZaloConnection::create([
+        'workspace_id' => $workspace->id,
+        'connection_id' => ZaloConnection::nextConnectionId(),
+        'channel_account_id' => $account->id,
+        'state' => 'connected',
+        'lock_version' => 0,
+    ]);
+    $conversation = peConversation($workspace, $peerUid);
+    $conversation->update(['channel_account_id' => $account->id]);
+
+    return $conversation->fresh();
+}
+
+it('verify: findUser KHÔNG resolve (bridge 500 / số không dùng Zalo) → 422, không lưu', function () {
+    [$workspace] = peSetup();
+    $conversation = peConversationWithSlot($workspace, 'peer_v500');
+
+    Http::fake([
+        '*zca/findUser*' => Http::response(['ok' => false, 'message' => 'zca error 216'], 500),
+    ]);
+
+    $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '0901234567'])
+        ->assertStatus(422);
+    expect($conversation->fresh()->peer_phone)->toBeNull();
+});
+
+it('verify: findUser resolve nhưng uid KHÔNG khớp peer_uid → 422, không lưu', function () {
+    [$workspace] = peSetup();
+    $conversation = peConversationWithSlot($workspace, 'peer_v_mismatch');
+
+    Http::fake([
+        '*zca/findUser*' => Http::response(['ok' => true, 'result' => ['uid' => 'NGUOI_KHAC_999']], 200),
+    ]);
+
+    $response = $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '0901234567']);
+
+    $response->assertStatus(422);
+    expect($response->json('error_code'))->toBe('phone_mismatch')
+        ->and($conversation->fresh()->peer_phone)->toBeNull();
+});
+
+it('verify: throttle 5/phút → lần 6 trả 429 (review MED-1)', function () {
+    [$workspace] = peSetup();
+    $conversation = peConversationWithSlot($workspace, 'peer_v_throttle');
+
+    Http::fake([
+        '*zca/findUser*' => Http::response(['ok' => true, 'result' => ['uid' => 'X']], 200),
+    ]);
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '090123456'.$i])
+            ->assertStatus(422); // mismatch — nhưng ĐÃ tiêu 1 lượt
+    }
+    $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '0901234599'])
+        ->assertStatus(429);
 });

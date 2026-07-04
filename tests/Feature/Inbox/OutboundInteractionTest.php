@@ -8,8 +8,10 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * P06a — quote-reply + reaction + sticker outbound. Caller ĐẦU TIÊN của
@@ -263,4 +265,44 @@ it('sticker search: getStickers → getStickersDetail qua dispatcher, cache theo
     // Lần 2 cùng keyword → cache, KHÔNG thêm HTTP call
     $this->getJson(route('inbox.stickers', $conversation->id).'?q=hello')->assertOk();
     Http::assertSentCount(2);
+});
+
+it('sticker url NGOÀI CDN Zalo bị strip khỏi media_meta (review LOW-2 — chặn beacon)', function () {
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+    [, , $conversation] = oiSetup();
+    oiMessage($conversation);
+
+    Http::fake(['*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'stk_evil'], 200)]);
+
+    $this->postJson(route('inbox.send', $conversation->id), [
+        'sticker' => ['id' => 999, 'cate_id' => 1, 'type' => 1, 'url' => 'https://evil.tracker.example/pixel.png'],
+    ])->assertCreated();
+
+    $sent = Message::where('conversation_id', $conversation->id)->where('direction', 'out')->sole();
+    expect($sent->media_meta['sticker'])->not->toHaveKey('url')
+        ->and($sent->media_meta['sticker']['id'])->toBe(999);
+
+    Carbon::setTestNow();
+});
+
+it('quote kèm attachment → 422 (review LOW-1 — bridge không gắn quote nhánh file)', function () {
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+    Storage::fake(config('filesystems.default'));
+    [, , $conversation] = oiSetup();
+    $original = oiMessage($conversation);
+
+    $upload = $this->post(route('inbox.attachments.store', $conversation->id), [
+        'file' => UploadedFile::fake()->image('kem-quote.png'),
+    ])->json();
+
+    Http::fake();
+
+    $this->postJson(route('inbox.send', $conversation->id), [
+        'text' => 'reply kèm ảnh',
+        'reply_to_message_id' => $original->id,
+        'attachment_id' => $upload['attachment_id'],
+    ])->assertStatus(422);
+
+    Http::assertNothingSent();
+    Carbon::setTestNow();
 });
