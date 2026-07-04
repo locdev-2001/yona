@@ -2,6 +2,7 @@ import { AccountRail, type ChannelAccountInfo } from '@/components/inbox/account
 import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
+import { ConversationPanel } from '@/components/inbox/conversation-panel';
 import type { GapEvent } from '@/components/inbox/gap-marker';
 import { MessageComposer, type ReplyTarget } from '@/components/inbox/message-composer';
 import { isStreamMessage, messagePreview, type ChatMessage, type MessageStatePayload, type StreamItem } from '@/components/inbox/message-types';
@@ -53,7 +54,7 @@ interface PaginatedConversations {
 
 interface Props {
     conversations: PaginatedConversations;
-    filters: { q?: string; unread?: string; channel?: string; channel_account_id?: string };
+    filters: { q?: string; unread?: string; channel?: string; channel_account_id?: string; assigned?: string; tag?: string };
     selectedConversation?: Conversation | null;
     channelAccounts?: ChannelAccountInfo[];
     channelsAvailable?: boolean;
@@ -398,6 +399,32 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                             </Button>
                         </form>
 
+                        {/* P07 — chia ca trực: filter theo người phụ trách */}
+                        <div className="flex gap-1">
+                            {([
+                                ['', 'Tất cả'],
+                                ['me', 'Của tôi'],
+                                ['unassigned', 'Chưa gán'],
+                            ] as const).map(([value, label]) => (
+                                <Button
+                                    key={value}
+                                    type="button"
+                                    size="sm"
+                                    variant={(filters.assigned ?? '') === value ? 'default' : 'outline'}
+                                    className="h-6 flex-1 text-[11px]"
+                                    onClick={() =>
+                                        router.get(
+                                            route('inbox.index'),
+                                            { ...filters, assigned: value || undefined },
+                                            { preserveState: true, replace: true },
+                                        )
+                                    }
+                                >
+                                    {label}
+                                </Button>
+                            ))}
+                        </div>
+
                         {/* Đồng bộ lại tin nhóm — luôn sẵn (không chờ banner gap). Cần bridge đang chạy. */}
                         <Button type="button" size="sm" variant="outline" className="w-full" disabled={syncing} onClick={handleResync}>
                             <RefreshCw className={`mr-1 h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
@@ -532,6 +559,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                     onSent={() => handleSelectConv(activeConv)}
                                     replyTo={replyTo}
                                     onClearReply={() => setReplyTo(null)}
+                                    peerName={activeConv.peer_name}
                                 />
                             )}
                         </>
@@ -609,6 +637,9 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                     {leadError && <p className="text-destructive text-xs">{leadError}</p>}
                                 </>
                             )}
+
+                            {/* P07 — gán / label / note (channel-agnostic, key theo conv để refetch) */}
+                            <ConversationPanel key={activeConv.id} conversationId={activeConv.id} />
                         </div>
                     ) : (
                         <div className="text-muted-foreground p-4 text-center text-sm">Chọn hội thoại để xem thông tin</div>

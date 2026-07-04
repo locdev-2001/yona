@@ -89,6 +89,9 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         'message_reactions',
         'pending_message_states',
 
+        // P01b inbox-full-messaging-framework CRM layer (2026_07_04_500009)
+        'quick_replies',
+
         // P07 billing (2026_06_28_900002/900003)
         // marketplace_items intentionally GLOBAL (no RLS) — intentional-global list
         'workspace_purchases',

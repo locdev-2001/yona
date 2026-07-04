@@ -63,7 +63,21 @@ class InboxController extends Controller
             $query->where('channel_account_id', $channelAccountId);
         }
 
-        $conversations = $query->with('channelAccount:id,display_name')->paginate(30)->withQueryString();
+        // P07 — chia ca trực: ?assigned=me|unassigned|{userId}
+        if ($assigned = $request->string('assigned')->toString()) {
+            match (true) {
+                $assigned === 'me' => $query->where('assigned_user_id', auth()->id()),
+                $assigned === 'unassigned' => $query->whereNull('assigned_user_id'),
+                default => $query->where('assigned_user_id', (int) $assigned),
+            };
+        }
+
+        // P07 — lọc theo label (tags polymorphic)
+        if ($tagId = $request->string('tag')->toString()) {
+            $query->whereHas('tags', fn ($q) => $q->where('tags.id', $tagId));
+        }
+
+        $conversations = $query->with(['channelAccount:id,display_name', 'assignedUser:id,name'])->paginate(30)->withQueryString();
 
         // Internal-first: Integration module xóa → class vắng → empty state (N2).
         $channelsAvailable = class_exists(ChannelManager::class)

@@ -29,6 +29,14 @@ interface Props {
     /** P06a — reply bar (null = không trả lời). */
     replyTo?: ReplyTarget | null;
     onClearReply?: () => void;
+    /** P07 — thay placeholder {ten_khach} trong canned reply. */
+    peerName?: string | null;
+}
+
+interface QuickReplyItem {
+    id: string;
+    title: string;
+    body: string;
 }
 
 function xsrfToken(): string {
@@ -40,8 +48,8 @@ function notify(msg: string) {
     alert(msg);
 }
 
-/** Composer channel-agnostic: text + đính kèm + paste ảnh + reply bar + sticker search. */
-export function MessageComposer({ conversationId, disabled, onSent, replyTo, onClearReply }: Props) {
+/** Composer channel-agnostic: text + đính kèm + paste ảnh + reply bar + sticker + canned "/". */
+export function MessageComposer({ conversationId, disabled, onSent, replyTo, onClearReply, peerName }: Props) {
     const [text, setText] = useState('');
     const [attachment, setAttachment] = useState<PendingAttachment | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -52,6 +60,29 @@ export function MessageComposer({ conversationId, disabled, onSent, replyTo, onC
     const [stickerQuery, setStickerQuery] = useState('');
     const [stickerResults, setStickerResults] = useState<StickerItem[]>([]);
     const [stickerLoading, setStickerLoading] = useState(false);
+    // P07 — canned replies: gõ "/" đầu ô → dropdown search title
+    const [quickReplies, setQuickReplies] = useState<QuickReplyItem[] | null>(null);
+
+    const slashQuery = text.startsWith('/') ? text.slice(1).toLowerCase() : null;
+    const slashMatches =
+        slashQuery !== null && quickReplies !== null
+            ? quickReplies.filter((q) => q.title.toLowerCase().includes(slashQuery)).slice(0, 8)
+            : [];
+
+    // Lazy-load danh sách canned lần đầu gõ "/"
+    useEffect(() => {
+        if (slashQuery === null || quickReplies !== null) return;
+        fetch(route('inbox.quick-replies.index'), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+        })
+            .then((r) => r.json())
+            .then((json) => setQuickReplies(Array.isArray(json) ? json : []))
+            .catch(() => setQuickReplies([]));
+    }, [slashQuery, quickReplies]);
+
+    function insertQuickReply(item: QuickReplyItem) {
+        setText(item.body.replaceAll('{ten_khach}', peerName ?? 'bạn'));
+    }
 
     // Revoke objectURL khi unmount/thay attachment — tránh leak
     useEffect(() => {
@@ -258,6 +289,23 @@ export function MessageComposer({ conversationId, disabled, onSent, replyTo, onC
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* P07 — canned reply dropdown khi gõ "/" */}
+            {slashMatches.length > 0 && (
+                <div className="mx-3 mt-2 rounded border">
+                    {slashMatches.map((q) => (
+                        <button
+                            key={q.id}
+                            type="button"
+                            className="hover:bg-muted block w-full px-2 py-1.5 text-left"
+                            onClick={() => insertQuickReply(q)}
+                        >
+                            <span className="text-xs font-medium">/{q.title}</span>
+                            <span className="text-muted-foreground ml-2 truncate text-xs">{q.body.slice(0, 60)}</span>
+                        </button>
+                    ))}
                 </div>
             )}
 
