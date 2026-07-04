@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToWorkspace;
+use App\Models\Concerns\HasNotes;
+use App\Models\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,7 +46,7 @@ use Illuminate\Support\Carbon;
  */
 class Conversation extends Model
 {
-    use BelongsToWorkspace, HasUuids, SoftDeletes;
+    use BelongsToWorkspace, HasNotes, HasTags, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'channel',
@@ -85,6 +87,12 @@ class Conversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
+    }
+
+    /** @return BelongsTo<User, $this> P07 — người phụ trách (gán qua ConversationAssignController) */
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     /** @return BelongsTo<ChannelAccount, $this> */

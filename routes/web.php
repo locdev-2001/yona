@@ -32,12 +32,15 @@ use App\Http\Controllers\Identity\Settings\MemberController;
 use App\Http\Controllers\Identity\Settings\PasswordController;
 use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
+use App\Http\Controllers\Inbox\ConversationAssignController;
 use App\Http\Controllers\Inbox\ConversationAttachmentController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\ConversationPanelController;
 use App\Http\Controllers\Inbox\ConversationPhoneController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
 use App\Http\Controllers\Inbox\MessageInteractionController;
+use App\Http\Controllers\Inbox\QuickReplyController;
 use App\Http\Controllers\Integration\IntegrationController;
 use App\Http\Controllers\Integration\ZaloConnectionController;
 use App\Http\Controllers\LocaleController;
@@ -255,6 +258,15 @@ Route::middleware(['auth'])->group(function () {
             ->name('inbox.reaction');
         Route::get('/inbox/conversations/{conversation}/stickers', [MessageInteractionController::class, 'stickers'])
             ->name('inbox.stickers');
+        // P07 — tầng CRM channel-agnostic: gán, panel (label/note/member), canned replies.
+        Route::patch('/inbox/conversations/{conversation}/assign', [ConversationAssignController::class, 'update'])
+            ->name('inbox.assign');
+        Route::get('/inbox/conversations/{conversation}/panel', ConversationPanelController::class)
+            ->name('inbox.panel');
+        Route::get('/inbox/quick-replies', [QuickReplyController::class, 'index'])->name('inbox.quick-replies.index');
+        Route::post('/inbox/quick-replies', [QuickReplyController::class, 'store'])->name('inbox.quick-replies.store');
+        Route::put('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'update'])->name('inbox.quick-replies.update');
+        Route::delete('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'destroy'])->name('inbox.quick-replies.destroy');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')
