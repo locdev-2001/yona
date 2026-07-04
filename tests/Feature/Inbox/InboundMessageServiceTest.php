@@ -6,25 +6,28 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\InboundMessageService;
+use App\Services\Inbox\SessionGapMaterializer;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Mockery\MockInterface;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
 function makeService(?MeteringService $meter = null): InboundMessageService
 {
-    return new InboundMessageService($meter ?? app(MeteringService::class));
+    return new InboundMessageService($meter ?? app(MeteringService::class), app(SessionGapMaterializer::class));
 }
 
-function basePayload(string $peerUid = 'peer_001', int|string|null $connectionId = null): array
+function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = null): array
 {
-    // zalo_connection_id là bigint (global sequence, xem migration 700004)
-    $connectionId ??= random_int(1_000_000, 9_999_999);
+    // channel_account_id là uuid, không FK ràng buộc (xem migration 100002) — test không
+    // cần channel_accounts row thật, chỉ cần cùng giá trị để mô phỏng "cùng account".
+    $channelAccountId ??= (string) Str::uuid();
 
     return [
-        'zalo_connection_id' => (string) $connectionId,
+        'channel_account_id' => $channelAccountId,
         'channel' => 'zalo_personal',
         'peer_uid' => $peerUid,
         'thread_type' => 0,
@@ -158,10 +161,10 @@ it('F14: ingest cùng source_id 2 lần → chỉ tạo 1 Message (idempotent)',
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $connectionId = random_int(1_000_000, 9_999_999);
+    $channelAccountId = (string) Str::uuid();
     $sourceId = 'zalo_dup_msg_001';
 
-    $payload = basePayload('peer_idem', $connectionId);
+    $payload = basePayload('peer_idem', $channelAccountId);
     $payload['source_id'] = $sourceId;
 
     $service = makeService();
@@ -206,26 +209,26 @@ it('ingest 2 tin từ cùng peer → 1 Conversation + 2 Message', function () {
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $connectionId = random_int(1_000_000, 9_999_999);
+    $channelAccountId = (string) Str::uuid();
     $service = makeService();
 
-    $p1 = basePayload('peer_dup', $connectionId);
+    $p1 = basePayload('peer_dup', $channelAccountId);
     $p1['source_id'] = 'msg_a_001';
     $service->ingest($p1);
 
-    $p2 = basePayload('peer_dup', $connectionId);
+    $p2 = basePayload('peer_dup', $channelAccountId);
     $p2['source_id'] = 'msg_a_002';
     $service->ingest($p2);
 
     $convCount = Conversation::withTrashed()
-        ->where('zalo_connection_id', $connectionId)
+        ->where('channel_account_id', $channelAccountId)
         ->where('peer_uid', 'peer_dup')
         ->count();
 
     expect($convCount)->toBe(1);
 
     $conv = Conversation::withTrashed()
-        ->where('zalo_connection_id', $connectionId)
+        ->where('channel_account_id', $channelAccountId)
         ->where('peer_uid', 'peer_dup')
         ->first();
 
@@ -264,10 +267,10 @@ it('channel auth: user của workspace khác bị denied', function () {
     expect($userA->membershipFor($wsA->id))->not->toBeNull();
 });
 
-// ── Race: 2 webhook đồng thời cùng (zalo_connection_id, peer_uid) ────────────
+// ── Race: 2 webhook đồng thời cùng (channel_account_id, peer_uid) ────────────
 //
 // Trước fix: read-check-write không atomic → cả 2 miss first() → cả 2 INSERT →
-// request thứ 2 hit conversations_channel_peer_unique → QueryException 23505 →
+// request thứ 2 hit conversations_channel_account_peer_unique → QueryException 23505 →
 // caught upstream + 200 OK → message bị drop âm thầm (silent data loss).
 //
 // Mô phỏng race deterministic: một conversation conflicting ĐÃ tồn tại; subclass
@@ -279,24 +282,24 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $connectionId = (string) random_int(1_000_000, 9_999_999);
+    $channelAccountId = (string) Str::uuid();
     $peerUid = 'peer_race_001';
 
     // Conversation conflicting đã tồn tại (request "kia" tạo trước, trong cùng workspace).
     $existing = Conversation::create([
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $connectionId,
+        'channel_account_id' => $channelAccountId,
         'peer_uid' => $peerUid,
         'thread_type' => 0,
         'conversation_number' => 999,
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class)) extends InboundMessageService
+    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class)) extends InboundMessageService
     {
         private bool $firstLookup = true;
 
-        protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation
+        protected function findConversation(?string $channelAccountId, string $peerUid): ?Conversation
         {
             if ($this->firstLookup) {
                 $this->firstLookup = false;
@@ -304,11 +307,11 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
                 return null; // ép đi vào nhánh INSERT → đụng 23505
             }
 
-            return parent::findConversation($zaloConnectionId, $peerUid); // re-fetch thật trong catch
+            return parent::findConversation($channelAccountId, $peerUid); // re-fetch thật trong catch
         }
     };
 
-    $payload = basePayload($peerUid, $connectionId);
+    $payload = basePayload($peerUid, $channelAccountId);
     $payload['peer_name'] = 'Khách Race';
     $payload['source_id'] = 'msg_race_001';
 
@@ -319,7 +322,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     expect($message->conversation_id)->toBe($existing->id);
 
     $convCount = Conversation::withTrashed()
-        ->where('zalo_connection_id', $connectionId)
+        ->where('channel_account_id', $channelAccountId)
         ->where('peer_uid', $peerUid)
         ->count();
 

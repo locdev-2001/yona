@@ -31,18 +31,36 @@ afterEach(function () {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Insert ZaloConnection qua pgsql_privileged (bypass RLS + sequence).
+ * Insert ChannelAccount + ZaloConnection qua connection MẶC ĐỊNH (RLS-bound, cùng
+ * session với Workspace factory — pgsql_privileged là session khác, không thấy được
+ * row Workspace/ChannelAccount còn uncommitted trong transaction test-wrap → vỡ FK).
+ * nextval() sequence vẫn qua pgsql_privileged (đọc sequence, không phải row — an toàn).
+ * Trả về [connectionId, channelAccountId].
+ *
+ * @return array{0: int, 1: string}
  */
-function insertZaloSlot(string $workspaceId, string $state = 'connected', ?string $lastSessionLostAt = null): int
+function insertZaloSlot(string $workspaceId, string $state = 'connected', ?string $lastSessionLostAt = null): array
 {
+    $accountId = (string) Str::uuid();
+    DB::table('channel_accounts')->insert([
+        'id' => $accountId,
+        'workspace_id' => $workspaceId,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_resync_acct_'.Str::random(8),
+        'status' => $state === 'connected' ? 'connected' : 'session_lost',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $connId = (int) DB::connection('pgsql_privileged')
         ->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")
         ->id;
 
-    DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+    DB::table('zalo_connections')->insert([
         'workspace_id' => $workspaceId,
         'connection_id' => $connId,
-        'personal_uid' => 'uid_resync_' . $connId,
+        'channel_account_id' => $accountId,
+        'personal_uid' => 'uid_resync_'.$connId,
         'display_name' => 'Test Slot',
         'state' => $state,
         'last_session_lost_at' => $lastSessionLostAt,
@@ -51,21 +69,21 @@ function insertZaloSlot(string $workspaceId, string $state = 'connected', ?strin
         'updated_at' => now(),
     ]);
 
-    return $connId;
+    return [$connId, $accountId];
 }
 
 /**
  * Insert conversation nhóm (thread_type=1) qua default connection (RLS session var đã set).
  * Phải gọi sau actingInWorkspace() / setWorkspaceContext().
  */
-function insertGroupConversation(string $workspaceId, int $connId, string $peerUid): string
+function insertGroupConversation(string $workspaceId, string $channelAccountId, string $peerUid): string
 {
     $convId = (string) Str::uuid();
     DB::table('conversations')->insert([
         'id' => $convId,
         'workspace_id' => $workspaceId,
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $connId,
+        'channel_account_id' => $channelAccountId,
         'peer_uid' => $peerUid,
         'thread_type' => 1,
         'peer_name' => 'Nhóm Test',
@@ -81,14 +99,14 @@ function insertGroupConversation(string $workspaceId, int $connId, string $peerU
 /**
  * Insert conversation 1-1 (thread_type=0) qua default connection.
  */
-function insertDmConversation(string $workspaceId, int $connId, string $peerUid): string
+function insertDmConversation(string $workspaceId, string $channelAccountId, string $peerUid): string
 {
     $convId = (string) Str::uuid();
     DB::table('conversations')->insert([
         'id' => $convId,
         'workspace_id' => $workspaceId,
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $connId,
+        'channel_account_id' => $channelAccountId,
         'peer_uid' => $peerUid,
         'thread_type' => 0,
         'peer_name' => 'Em Bé',
@@ -109,11 +127,11 @@ it('ZaloGroupBackfillService calls bridge for group convs only, skips DM convs',
     seedMember($ws, $user, 'admin');
     actingInWorkspace($ws, $user);
 
-    $connId = insertZaloSlot($ws->id);
+    [$connId, $accountId] = insertZaloSlot($ws->id);
 
-    insertGroupConversation($ws->id, $connId, 'group_aaa');
-    insertGroupConversation($ws->id, $connId, 'group_bbb');
-    insertDmConversation($ws->id, $connId, 'dm_ccc'); // phải bị bỏ qua
+    insertGroupConversation($ws->id, $accountId, 'group_aaa');
+    insertGroupConversation($ws->id, $accountId, 'group_bbb');
+    insertDmConversation($ws->id, $accountId, 'dm_ccc'); // phải bị bỏ qua
 
     Http::fake([
         'http://bridge.test/backfill/group' => Http::response(['ok' => true, 'fetched' => 3], 200),
@@ -143,9 +161,9 @@ it('ZaloGroupBackfillService logs bridge errors and continues without throwing',
     seedMember($ws, $user, 'admin');
     actingInWorkspace($ws, $user);
 
-    $connId = insertZaloSlot($ws->id);
-    insertGroupConversation($ws->id, $connId, 'group_ok');
-    insertGroupConversation($ws->id, $connId, 'group_err');
+    [$connId, $accountId] = insertZaloSlot($ws->id);
+    insertGroupConversation($ws->id, $accountId, 'group_ok');
+    insertGroupConversation($ws->id, $accountId, 'group_err');
 
     Http::fake([
         'http://bridge.test/backfill/group' => Http::sequence()
@@ -169,8 +187,8 @@ it('POST /inbox/resync returns total fetched from all connected connections', fu
     seedMember($ws, $user, 'admin');
     actingInWorkspace($ws, $user);
 
-    $connId = insertZaloSlot($ws->id, 'connected');
-    insertGroupConversation($ws->id, $connId, 'group_x');
+    [$connId, $accountId] = insertZaloSlot($ws->id, 'connected');
+    insertGroupConversation($ws->id, $accountId, 'group_x');
 
     Http::fake([
         'http://bridge.test/backfill/group' => Http::response(['ok' => true, 'fetched' => 7], 200),
@@ -192,8 +210,22 @@ it('POST /inbox/resync returns total fetched from all connected connections', fu
 it('handleBridgeSession triggers ZaloGroupBackfillService when reconnecting after a gap', function () {
     $ws = Workspace::factory()->create();
 
-    // Slot: state=session_lost, last_session_lost_at set → hadGap=true
-    $connId = insertZaloSlot($ws->id, 'session_lost', now()->subHour()->toDateTimeString());
+    // Webhook __invoke() resolve workspace_id qua pgsql_privileged TRƯỚC khi có RLS context
+    // (chưa biết workspace) — 1 session KHÁC, không thấy được Workspace vừa tạo qua connection
+    // mặc định (còn uncommitted trong transaction test-wrap). Insert slot qua pgsql_privileged
+    // luôn để cùng session — channel_account_id bỏ trống (nullable, test này mock hẳn service).
+    $connId = (int) DB::connection('pgsql_privileged')->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")->id;
+    DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+        'workspace_id' => $ws->id,
+        'connection_id' => $connId,
+        'personal_uid' => 'uid_resync_'.$connId,
+        'display_name' => 'Test Slot',
+        'state' => 'session_lost',
+        'last_session_lost_at' => now()->subHour(),
+        'deleted_at' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     $mockService = Mockery::mock(ZaloGroupBackfillService::class);
     $mockService->shouldReceive('run')->once()->with($connId)->andReturn(4);
@@ -217,8 +249,8 @@ it('handleBridgeSession skips backfill when no gap detected', function () {
     actingInWorkspace($ws, $user);
 
     // Slot chưa bao giờ mất session (last_session_lost_at null, state=connected)
-    $connId = insertZaloSlot($ws->id, 'connected', null);
-    insertGroupConversation($ws->id, $connId, 'group_nogap');
+    [$connId, $accountId] = insertZaloSlot($ws->id, 'connected', null);
+    insertGroupConversation($ws->id, $accountId, 'group_nogap');
 
     Http::fake();
 

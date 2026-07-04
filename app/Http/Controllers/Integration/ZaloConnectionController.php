@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Integration;
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Models\ZaloConnection;
-use App\Services\ZaloConversationMerger;
+use App\Services\Zalo\PromoteAccountBinder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * F1 — Settings: Kết nối Zalo cá nhân qua QR login.
@@ -22,7 +23,8 @@ use Inertia\Response;
  *   index   → render Inertia page danh sách ZaloConnection (state badge)
  *   store   → tạo connection_id + qr_token, gọi bridge /auth/qr/start
  *   qr      → proxy /auth/qr/status (QR image + phase)
- *   promote → proxy /auth/qr/promote → state=connected, cập nhật ZaloConnection
+ *   promote → proxy /auth/qr/promote → so expected_account_uid, PromoteAccountBinder
+ *             gắn slot vào channel_account (P04, xem class đó cho chi tiết transaction)
  *   destroy → proxy /auth/logout, soft-delete ZaloConnection
  *
  * Gate: tenant.zalo.manage (TenantPermission::ZaloManage)
@@ -32,7 +34,7 @@ use Inertia\Response;
  */
 class ZaloConnectionController extends Controller
 {
-    public function __construct(private readonly ZaloConversationMerger $conversationMerger) {}
+    public function __construct(private readonly PromoteAccountBinder $accountBinder) {}
 
     /**
      * Trang settings Zalo — danh sách kết nối + trạng thái.
@@ -141,7 +143,10 @@ class ZaloConnectionController extends Controller
     }
 
     /**
-     * Promote QR slot → connection: bridge /auth/qr/promote → update ZaloConnection state=connected.
+     * Promote QR slot → connection: bridge /auth/qr/promote → so getOwnId() với
+     * expected_account_uid (FE gửi khi reconnect account đã tồn tại) → mismatch
+     * fail-closed 409 (KHÔNG bind, logout slot mới); khớp/first-connect →
+     * PromoteAccountBinder transaction (P04).
      */
     public function promote(Request $request): JsonResponse
     {
@@ -150,6 +155,7 @@ class ZaloConnectionController extends Controller
         $validated = $request->validate([
             'connection_id' => 'required|integer',
             'qr_token' => 'required|string',
+            'expected_account_uid' => 'nullable|string',
         ]);
 
         $connection = ZaloConnection::where('connection_id', $validated['connection_id'])
@@ -175,64 +181,67 @@ class ZaloConnectionController extends Controller
             ], $bridgeResponse->status());
         }
 
-        // Persist the account profile the bridge returns (uid/name/avatar) so the
-        // connection list shows the real account, not just "#id". Privileged connection
-        // mirrors updateState() — RLS-safe regardless of caller context.
         $data = $bridgeResponse->json();
+        $accountUid = $data['personal_uid'] ?? null;
+        $expectedUid = $validated['expected_account_uid'] ?? null;
+
+        if ($expectedUid !== null && $accountUid !== null && $expectedUid !== $accountUid) {
+            $this->logoutBridge($validated['connection_id']);
+
+            return response()->json([
+                'ok' => false,
+                'error_code' => 'zalo_account_mismatch',
+                'message' => 'Đã quét nhầm tài khoản Zalo khác. Vui lòng quét đúng tài khoản cần đăng nhập lại.',
+            ], 409);
+        }
+
         $profile = array_filter([
-            'personal_uid' => $data['personal_uid'] ?? null,
+            'personal_uid' => $accountUid,
             'display_name' => $data['display_name'] ?? null,
             'avatar_url' => $data['avatar'] ?? null,
         ], fn ($v) => $v !== null && $v !== '');
-        if ($profile !== []) {
-            DB::connection('pgsql_privileged')->transaction(function () use ($connection, $profile) {
-                // Dedup connections cùng (workspace_id, personal_uid): soft-delete các slot khác
-                // và gộp conversation của chúng vào slot hiện tại — giải phóng partial-unique
-                // slot VÀ tránh thread fork (cùng peer xuất hiện 2 lần) sau reconnect.
-                if (isset($profile['personal_uid'])) {
-                    // Gồm CẢ connection đã soft-delete cùng uid: nếu chỉ lấy active thì một
-                    // connection cũ đã trashed (kèm conversation 34 tin) sẽ không được gộp → thread
-                    // vẫn fork + thiếu tin. Merge idempotent nên gộp lại bản đã trashed là an toàn.
-                    $priorConnections = DB::connection('pgsql_privileged')
-                        ->table('zalo_connections')
-                        ->where('workspace_id', $connection->workspace_id)
-                        ->where('personal_uid', $profile['personal_uid'])
-                        ->where('id', '!=', $connection->id)
-                        ->get(['connection_id']);
 
-                    if ($priorConnections->isNotEmpty()) {
-                        DB::connection('pgsql_privileged')
-                            ->table('zalo_connections')
-                            ->where('workspace_id', $connection->workspace_id)
-                            ->where('personal_uid', $profile['personal_uid'])
-                            ->where('id', '!=', $connection->id)
-                            ->whereNull('deleted_at')
-                            ->update([
-                                'state' => 'disconnected',
-                                'deleted_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+        if ($accountUid !== null) {
+            try {
+                $this->accountBinder->bind($connection, $accountUid, $profile);
+            } catch (Throwable $e) {
+                // Bridge đã promote nhưng DB transaction throw — logout slot mới
+                // (idempotent) để KHÔNG mồ côi 1 slot 'connected' không thuộc account nào.
+                report($e);
+                $this->logoutBridge($validated['connection_id']);
 
-                        foreach ($priorConnections as $prior) {
-                            $this->conversationMerger->mergeConnection(
-                                $connection->workspace_id,
-                                (int) $prior->connection_id,
-                                (int) $connection->connection_id,
-                            );
-                        }
-                    }
-                }
-
-                DB::connection('pgsql_privileged')
-                    ->table('zalo_connections')
-                    ->where('id', $connection->id)
-                    ->update($profile);
-            });
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Không gắn được tài khoản Zalo — vui lòng thử lại.',
+                ], 500);
+            }
+        } elseif ($profile !== []) {
+            // Bridge không trả personal_uid (hiếm) — fallback cập nhật state, KHÔNG bind account.
+            DB::connection('pgsql_privileged')->table('zalo_connections')->where('id', $connection->id)->update($profile);
+            $connection->updateState('connected');
+        } else {
+            $connection->updateState('connected');
         }
 
-        $connection->updateState('connected');
-
         return response()->json(['ok' => true, 'connection_id' => $validated['connection_id']]);
+    }
+
+    /**
+     * Logout slot ở bridge (idempotent — an toàn gọi khi slot đã logged out/không tồn tại).
+     * Dùng bởi promote() (mismatch/cleanup-on-fail) và destroy().
+     */
+    private function logoutBridge(int $connectionId): void
+    {
+        try {
+            Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(8)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/logout', [
+                    'connection_id' => $connectionId,
+                ]);
+        } catch (ConnectionException) {
+            // bridge không chạy — bỏ qua, cleanup DB vẫn ưu tiên
+        }
     }
 
     /**
@@ -246,17 +255,7 @@ class ZaloConnectionController extends Controller
             abort(403);
         }
 
-        // ponytail: ignore bridge logout error (incl. bridge down) — soft-delete vẫn chạy
-        try {
-            Http::asJson()
-                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
-                ->timeout(8)
-                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/logout', [
-                    'connection_id' => $zaloConnection->connection_id,
-                ]);
-        } catch (ConnectionException) {
-            // bridge không chạy — vẫn soft-delete connection
-        }
+        $this->logoutBridge($zaloConnection->connection_id);
 
         $zaloConnection->delete();
 

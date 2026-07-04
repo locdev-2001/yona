@@ -304,9 +304,13 @@ function stableJsonForDedup(value) {
     return `{${keys.map((k) => JSON.stringify(k) + ':' + stableJsonForDedup(value[k])).join(',')}}`;
 }
 
-function zaloPersonalSocialSourceId(connectionId, socialKind, act, threadId, eventPayload) {
+/**
+ * P06: khoá theo accountUid (ổn định qua reconnect) — KHÔNG connectionId (đổi mỗi
+ * lần reconnect, sẽ tách cùng 1 event thành 2 source_id khác nhau).
+ */
+function zaloPersonalSocialSourceId(accountUid, socialKind, act, threadId, eventPayload) {
     const h = createHash('sha256')
-        .update(String(connectionId))
+        .update(String(accountUid))
         .update('\n')
         .update(String(socialKind))
         .update('\n')
@@ -317,7 +321,7 @@ function zaloPersonalSocialSourceId(connectionId, socialKind, act, threadId, eve
         .update(stableJsonForDedup(eventPayload))
         .digest('hex')
         .slice(0, 48);
-    return `zps:${connectionId}:${h}`;
+    return `zps:${accountUid}:${h}`;
 }
 
 async function postZaloPersonalSocialEvent(body) {
@@ -1379,34 +1383,6 @@ function extractGroupSenderDisplayName(rawD) {
     return '';
 }
 
-async function clearDuplicatePersonalUidSlots(keepSlotKey, personalUid) {
-    const uid = String(personalUid ?? '').trim();
-    if (!uid) {
-        return;
-    }
-    const keepNum = Number(keepSlotKey);
-    const purgeAll = !Number.isFinite(keepNum) || keepNum <= 0;
-    const keep = purgeAll ? '' : String(keepSlotKey);
-    for (const key of [...slots.keys()]) {
-        if (!purgeAll && key === keep) {
-            continue;
-        }
-        if (isQrSlotKey(key)) {
-            continue;
-        }
-        const slot = slots.get(key);
-        if (slot && String(slot.personalUid || '') === uid) {
-            console.warn('zalo-bridge: clearing personal_uid slot', {
-                personalUid: uid,
-                removedSlot: key,
-                keepSlot: purgeAll ? null : keep,
-                purgeAll,
-            });
-            await clearSlot(key);
-        }
-    }
-}
-
 async function dedupeRestoredSessionsByPersonalUid(restored) {
     const byUid = new Map();
     for (const { id, personalUid } of restored) {
@@ -1487,7 +1463,7 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf) {
     const bid = slot.botId;
     if (!cid || !bid) return null;
 
-    const sourceId = deriveInboundSourceId(cid, groupId, rawD);
+    const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, groupId, rawD);
     const ts = rawD?.ts ?? rawD?.msgTs ?? rawD?.sendTime ?? rawD?.clientTime;
     const platformSentAt = Number.isFinite(Number(ts)) && Number(ts) > 0 ? Math.round(Number(ts)) : Date.now();
 
@@ -1593,7 +1569,7 @@ function startListenerForSlot(slotKey) {
                         act,
                         thread_id: threadId,
                         event: evPlain,
-                        source_id: zaloPersonalSocialSourceId(cid, 'group_event', act, threadId, evPlain),
+                        source_id: zaloPersonalSocialSourceId(slot.personalUid, 'group_event', act, threadId, evPlain),
                     });
                 } catch (e2) {
                     console.error('zalo-bridge: group_event forward failed', e2?.message || e2);
@@ -1626,7 +1602,7 @@ function startListenerForSlot(slotKey) {
                         act: '',
                         thread_id: threadId,
                         event: evPlain,
-                        source_id: zaloPersonalSocialSourceId(cid, 'friend_event', '', threadId, evPlain),
+                        source_id: zaloPersonalSocialSourceId(slot.personalUid, 'friend_event', '', threadId, evPlain),
                     });
                 } catch (e2) {
                     console.error('zalo-bridge: friend_event forward failed', e2?.message || e2);
@@ -1656,8 +1632,8 @@ function startListenerForSlot(slotKey) {
                     : NaN;
             const platformSentAt =
                 Number.isFinite(tsMs0) && tsMs0 > 0 ? Math.round(tsMs0) : Date.now();
-            // C-2: dùng deriveInboundSourceId — không bao giờ Date.now() fallback
-            const sourceId = deriveInboundSourceId(cid, threadId, message?.data);
+            // C-2/P06: dùng deriveInboundSourceId — không bao giờ Date.now() fallback, không connectionId
+            const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, threadId, message?.data);
             if (!bid) {
                 console.error('bridge: bot_id missing for slot', cid);
                 return;
@@ -1885,7 +1861,6 @@ async function promoteQrToConnection(qrKey, connectionId) {
         buildInboundPayload: buildGroupBackfillPayload,
         gapMs: computeGapMs(slot),
     });
-    await clearDuplicatePersonalUidSlots(newKey, slot.personalUid);
     console.info('Zalo bridge: promoted', qrKey, '->', connectionId);
     return true;
 }
@@ -1929,7 +1904,6 @@ async function tryLoginWithSavedSession(connectionId) {
             buildInboundPayload: buildGroupBackfillPayload,
             gapMs: computeGapMs(slot),
         });
-        await clearDuplicatePersonalUidSlots(key, slot.personalUid);
         return true;
     } catch (e) {
         console.warn('Saved session login failed connection_id=', connectionId, e?.message || e);
@@ -2251,19 +2225,6 @@ function buildExpress() {
         }
         await clearSlot(String(connectionId));
         res.json({ ok: true });
-    });
-
-    app.post('/auth/purge-duplicate-uid', async (req, res) => {
-        if (!checkUiSecret(req)) {
-            return res.status(403).json({ ok: false, message: 'Forbidden' });
-        }
-        const personalUid = req.body?.personal_uid != null ? String(req.body.personal_uid).trim() : '';
-        const keepConnectionId = Number(req.body?.keep_connection_id ?? 0);
-        if (!personalUid) {
-            return res.status(400).json({ ok: false, message: 'personal_uid required' });
-        }
-        await clearDuplicatePersonalUidSlots(keepConnectionId, personalUid);
-        res.json({ ok: true, keep_connection_id: keepConnectionId > 0 ? keepConnectionId : null, purged_all: keepConnectionId <= 0 });
     });
 
     app.get('/auth/qr/status', (req, res) => {

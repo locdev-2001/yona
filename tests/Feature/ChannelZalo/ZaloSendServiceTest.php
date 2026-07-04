@@ -1,10 +1,12 @@
 <?php
 
 use App\Exceptions\QuotaExceededException;
+use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\ZaloConnection;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
@@ -15,6 +17,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Services\MeteringService;
 use App\Support\TenantScope;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -26,7 +29,10 @@ use Spatie\Permission\PermissionRegistrar;
  * Unit / integration tests cho ZaloSendService, SendRateLimiter, ZaloHealthMonitor.
  *
  * Không cần bridge thật — dùng Http::fake().
- * ZaloConnection insert qua pgsql_privileged (bypass RLS + sequence grant).
+ * ZaloConnection::nextConnectionId() dùng pgsql_privileged CHỈ cho nextval()
+ * (sequence — không bị vấn đề visibility xuyên session); INSERT bảng thật
+ * (channel_accounts, zalo_connections, conversations) đi qua connection mặc
+ * định (RLS-bound) để cùng session với Workspace factory (xem makeChannelAccount).
  *
  * @group channel-zalo
  */
@@ -34,7 +40,17 @@ use Spatie\Permission\PermissionRegistrar;
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Tạo workspace + zalo_connection (pgsql_privileged) + conversation.
+ * Tạo workspace + channel_account + zalo_connection connected + conversation
+ * gắn channel_account_id (P03: outbound resolve qua account).
+ *
+ * Insert qua connection mặc định (RLS-bound, TenantScope::bind đã set
+ * app.current_workspace) — KHÔNG dùng pgsql_privileged: đó là 1 session
+ * Postgres riêng, không thấy được row Workspace vừa tạo còn nằm trong
+ * transaction test-wrapping (DatabaseTransactions chỉ wrap connection mặc
+ * định) → FK violation vào channel_accounts.workspace_id. zalo_connections
+ * vẫn cần pgsql_privileged CHỈ để lấy nextval() (sequence, không phải row —
+ * không bị vấn đề visibility).
+ *
  * Trả [$workspace, $connectionId (int), $conversation].
  */
 function makeWorkspaceAndConversation(int $connId = 9991): array
@@ -43,25 +59,14 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
     TenantScope::bind($workspace->id);
     app()->instance('currentWorkspace', $workspace);
 
-    // Insert zalo_connection qua pgsql_privileged (bypass RLS + sequence permission)
-    $nextVal = (int) DB::connection('pgsql_privileged')
-        ->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")
-        ->id;
+    $accountId = makeChannelAccount($workspace->id);
+    $nextVal = makeConnectedSlot($workspace->id, $accountId);
 
-    DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
-        'workspace_id' => $workspace->id,
-        'connection_id' => $nextVal,
-        'state' => 'connected',
-        'lock_version' => 0,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    // Tạo conversation (Eloquent — workspace bound)
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'zalo_connection_id' => $nextVal,
+        'channel_account_id' => $accountId,
         'peer_uid' => 'peer_test_'.uniqid(),
         'peer_phone' => '0901234567',
         'thread_type' => 0,
@@ -69,6 +74,33 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
     ]);
 
     return [$workspace, $nextVal, $conversation];
+}
+
+function makeChannelAccount(string $workspaceId, string $status = 'connected'): string
+{
+    $account = ChannelAccount::create([
+        'workspace_id' => $workspaceId,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_'.uniqid(),
+        'status' => $status,
+    ]);
+
+    return $account->id;
+}
+
+function makeConnectedSlot(string $workspaceId, ?string $channelAccountId, string $state = 'connected'): int
+{
+    $nextVal = ZaloConnection::nextConnectionId();
+
+    ZaloConnection::create([
+        'workspace_id' => $workspaceId,
+        'connection_id' => $nextVal,
+        'channel_account_id' => $channelAccountId,
+        'state' => $state,
+        'lock_version' => 0,
+    ]);
+
+    return $nextVal;
 }
 
 function makeSendService(): ZaloSendService
@@ -139,6 +171,74 @@ it('does NOT write Message on bridge connection exception', function () {
     expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
 
     Carbon::setTestNow();
+})->group('channel-zalo');
+
+// ── P03: resolveConnection theo channel_account_id (0/1/>1 slot) ──────────────
+
+it('P03: throws ZaloNotConnectedException with account display_name when 0 slot connected', function () {
+    $workspace = Workspace::factory()->create();
+    TenantScope::bind($workspace->id);
+    app()->instance('currentWorkspace', $workspace);
+
+    $account = ChannelAccount::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_no_slot',
+        'display_name' => 'Cửa hàng ABC',
+        'status' => 'session_lost',
+    ]);
+    $accountId = $account->id;
+
+    // Slot của account nhưng KHÔNG connected → resolveConnection phải fail-closed
+    makeConnectedSlot($workspace->id, $accountId, state: 'session_lost');
+
+    $conversation = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'channel_account_id' => $accountId,
+        'peer_uid' => 'peer_test_'.uniqid(),
+        'thread_type' => 0,
+        'conversation_number' => 1,
+    ]);
+
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    expect(fn () => makeSendService()->send($conversation, 'Hello'))
+        ->toThrow(ZaloNotConnectedException::class, 'Cửa hàng ABC cần quét lại QR.');
+
+    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
+
+    Carbon::setTestNow();
+})->group('channel-zalo');
+
+// Test "ZaloSplitBrainException khi >1 slot connected cùng account" đã XOÁ: kể từ
+// P02(g) swap, zalo_connections_account_connected_unique (partial, state='connected'
+// AND deleted_at IS NULL) khiến kịch bản này KHÔNG THỂ tạo qua INSERT ứng dụng nữa —
+// đụng 23505 ngay lập tức, đúng thiết kế. Từng thử drop/recreate index tạm qua
+// pgsql_privileged để vẫn dựng được kịch bản, nhưng CREATE/DROP INDEX (kể cả
+// CONCURRENTLY) trên 1 session KHÁC luôn phải đợi transaction đang mở của chính
+// test này (connection mặc định, DatabaseTransactions) buông zalo_connections —
+// mà transaction đó chỉ buông SAU khi hàm test return, tạo deadlock tự thân, treo
+// vô thời hạn (xác nhận qua 3 lần chạy bị kẹt). resolveConnection()'s >1-slot branch
+// (ZaloSendService.php) vẫn giữ lại như lưới an toàn cho dữ liệu lịch sử/thao tác SQL
+// trực tiếp, không còn đường tái tạo qua code path bình thường để viết test tích hợp.
+
+// P09 spike #9 — bằng chứng trực tiếp: partial-unique CHẶN >1 slot 'connected'/account
+// ở tầng DB (không qua resolveConnection(), không cần drop/recreate index).
+it('spike #9: DB partial-unique zalo_connections_account_connected_unique blocks a 2nd connected slot for the same account', function () {
+    $workspace = Workspace::factory()->create();
+    TenantScope::bind($workspace->id);
+    app()->instance('currentWorkspace', $workspace);
+
+    $accountId = makeChannelAccount($workspace->id);
+    makeConnectedSlot($workspace->id, $accountId);
+
+    // DB::transaction() mở SAVEPOINT (đã có transaction ngoài của DatabaseTransactions) —
+    // để 23505 không đầu độc luôn transaction ngoài, chỉ rollback riêng câu insert này.
+    expect(fn () => DB::transaction(fn () => makeConnectedSlot($workspace->id, $accountId)))
+        ->toThrow(QueryException::class);
+
+    expect(ZaloConnection::connectedForAccount($workspace->id, $accountId))->toHaveCount(1);
 })->group('channel-zalo');
 
 // ── SendRateLimiter ───────────────────────────────────────────────────────────

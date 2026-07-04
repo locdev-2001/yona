@@ -2,6 +2,8 @@
 
 Enforceable patterns for the Chó Rách CRM codebase. Extracted from Phase-04 bug-sweep findings + refactor to traditional Laravel (2026-06-28).
 
+> **Nguyên tắc trục (đọc trước):** [Rule 16 — Layered Architecture](#16-layered-architecture--core-is-channel-agnostic-upper-knows-only-lower). Không hardcode logic của **một kênh/cá nhân/case cụ thể** vào lõi. Layer trên chỉ biết layer ngay dưới. Lõi trung tính kênh (channel-agnostic). Mọi rule khác phục vụ nguyên tắc này.
+
 ## Model Organization
 
 ### 1. All Models → `app/Models/` (Flat Namespace)
@@ -417,6 +419,47 @@ public function test_leads_table_has_rls_policy() {
 
 ---
 
+## Layered Architecture
+
+### 16. Layered Architecture — Core Is Channel-Agnostic, Upper Knows Only Lower
+
+**Rule:** Kiến trúc chia lớp rõ ràng, đọc vào là hiểu. **Cấm cố định (hardcode) logic của một kênh/nhà cung cấp/cá nhân/case cụ thể vào lớp dùng chung hoặc lớp lõi.** Đặc thù cụ thể sống trong driver/adapter của nó; lõi chỉ nói chuyện qua contract trung tính.
+
+**Hướng phụ thuộc:** mỗi lớp **chỉ được biết lớp ngay dưới** — không nhảy cóc, không phụ thuộc ngược. Danh tính "cứng dần" khi đi lên; chi tiết dễ bay (session, slot, token) bị chặn ở lớp dưới, không leo lên lõi.
+
+```
+L5 CRM/CDP  →  L4 Core (Conversation/Message)  →  L3 Chuẩn hoá (Driver.parse)  →  L2 Danh tính tài khoản  →  L1 Transport
+   (chỉ thấy hộp thư + nội dung)      (chỉ thấy contract + account_id)         (chỉ thấy 1 kênh)         (chỉ thấy slot/session)
+```
+
+```php
+// ❌ Sai — lõi biết Zalo, biết session slot
+class ConversationService {
+    public function reply(Conversation $c) {
+        $slot = ZaloConnection::where('connection_id', $c->zalo_connection_id)->first(); // core coupling!
+        Http::post($slot->bridge_url, ...);                                              // Zalo-specific in core!
+    }
+}
+
+// ✅ Đúng — lõi gọi contract; driver tự resolve chi tiết kênh
+class ConversationService {
+    public function reply(Conversation $c, array $payload) {
+        app('channels')->driver($c->channel)->sendMessage($c, $payload); // core mù kênh/mù session
+    }
+}
+// Driver (module Zalo) tự map channel_account → slot đang connected. Thêm Messenger = thêm driver, KHÔNG sửa lõi.
+```
+
+**Ranh giới bắt buộc:**
+- **Lõi (Models core, InboundMessageService, ConversationService, controllers inbox)** KHÔNG được import class/khái niệm của một kênh cụ thể (không `ZaloConnection`, không `connection_id`, không cookie/token).
+- Cột đặc thù kênh KHÔNG nằm trong bảng core → dùng khoá trung tính (`channel_account_id`), chi tiết ở bảng module.
+- Thêm một kênh mới **chỉ** = thêm một driver (L1–L3) + đăng ký `Manager::extend()`; **không** chạm L4/L5.
+- Không `if ($channel === 'zalo') {...}` trong lõi. Rẽ nhánh theo kênh = mùi coupling → đẩy xuống driver.
+
+**Reason:** Clean, maintainable, scalable. Lõi ổn định khi kênh thay đổi; một behavior đổi chỉ sửa một chỗ (DRY); người mới đọc theo lớp là hiểu. Viết như một senior: đặt logic đúng lớp, không tiện tay nhét vào lõi. Xem [Channel-Account Architecture](features/messaging/channel-account-architecture.md) làm ví dụ tham chiếu; củng cố Rule 2–3 (Driver Pattern) và Rule 11 (per-channel).
+
+---
+
 ## Summary Table
 
 | Pattern | Location | Reason |
@@ -435,6 +478,7 @@ public function test_leads_table_has_rls_policy() {
 | Form requests enforce authorization | `FormRequest::authorize()` | Spatie pattern; prevents auth bypass |
 | Meaningful variable names | All code | Readability, prevent misuse |
 | RLS tested per table | Test suite | Verify isolation is configured |
+| **Layered arch; core channel-agnostic; upper knows only lower** | **Toàn codebase** | **Không hardcode logic 1 kênh vào lõi; thêm kênh = thêm driver, không sửa lõi** |
 
 ---
 

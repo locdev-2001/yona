@@ -192,25 +192,41 @@ test('seq collision: 2 enqueue ép cùng counter → không đè file (H-1)', as
 });
 
 test('deriveInboundSourceId: cùng input → cùng output; msgId rỗng → hash ổn định (C-2)', () => {
-    // Case 1: có msgId → trả msgId
-    const withMsgId = deriveInboundSourceId(1, 'group1', { msgId: '12345' });
-    assert.equal(withMsgId, '12345', 'msgId present → return msgId');
+    // Case 1: có msgId → trả msgId RAW (không prefix — khớp legacy source_id đã backfill alias, P02e)
+    const withMsgId = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', { msgId: '12345' });
+    assert.equal(withMsgId, '12345', 'msgId present → return raw msgId (no prefix)');
 
     // Case 2: msgId rỗng → hash từ content
     const raw = { uidFrom: 'user1', ts: '1700000000000', content: 'hello' };
-    const hash1 = deriveInboundSourceId(1, 'group1', raw);
-    const hash2 = deriveInboundSourceId(1, 'group1', raw);
+    const hash1 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw);
+    const hash2 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw);
     assert.equal(hash1, hash2, 'same input → same hash (idempotent)');
     assert.ok(hash1.startsWith('zps-derived:'), 'hash has zps-derived prefix');
 
-    // Case 3: khác connectionId → khác hash
-    const hash3 = deriveInboundSourceId(2, 'group1', raw);
-    assert.notEqual(hash1, hash3, 'different connectionId → different hash');
+    // Case 3 (P06 MAJOR fix): cùng accountUid, KHÁC lần gọi (mô phỏng reconnect — không còn
+    // connectionId trong chữ ký) → PHẢI ra cùng hash. Trước P06, hash gồm connectionId → khác
+    // slot (reconnect) sinh 2 source_id cho cùng 1 tin.
+    const hash3 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw);
+    assert.equal(hash1, hash3, 'reconnect (no connectionId param anymore) → same hash for same content');
 
     // Case 4: gọi 2 lần với raw khác nội dung → khác hash
     const raw2 = { uidFrom: 'user1', ts: '1700000000000', content: 'world' };
-    const hash4 = deriveInboundSourceId(1, 'group1', raw2);
+    const hash4 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw2);
     assert.notEqual(hash1, hash4, 'different content → different hash');
+});
+
+test('deriveInboundSourceId: cliMsgId ưu tiên khi thiếu msgId, ổn định qua accountUid+thread', () => {
+    const raw = { cliMsgId: 'cli-abc-123', uidFrom: 'user1' };
+
+    const id1 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw);
+    const id2 = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', raw);
+    assert.equal(id1, id2, 'same cliMsgId input → same id (idempotent)');
+    assert.ok(id1.includes('cli-abc-123'), 'id embeds cliMsgId');
+    assert.notEqual(id1, deriveInboundSourceId('zalo_personal', 'uid2', 'group1', raw), 'different accountUid → different id (scoped per account)');
+
+    // msgId có mặt → luôn thắng cliMsgId
+    const withBoth = deriveInboundSourceId('zalo_personal', 'uid1', 'group1', { msgId: '999', cliMsgId: 'cli-abc-123' });
+    assert.equal(withBoth, '999', 'msgId takes priority over cliMsgId');
 });
 
 console.log('outbox.test.mjs: all checks passed');

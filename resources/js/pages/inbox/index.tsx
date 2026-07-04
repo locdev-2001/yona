@@ -1,7 +1,9 @@
+import { AccountRail, type ChannelAccountInfo } from '@/components/inbox/account-rail';
 import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
-import { ConnectionBanner, type ConnectionInfo } from '@/components/inbox/connection-banner';
-import { messagePreview, type ChatMessage } from '@/components/inbox/message-types';
+import { ConnectionBanner } from '@/components/inbox/connection-banner';
+import type { GapEvent } from '@/components/inbox/gap-marker';
+import { messagePreview, type ChatMessage, type StreamItem } from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +15,14 @@ import { useEffect, useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-/** Payload từ MessageReceived.broadcastWith() */
+/** Payload từ MessageReceived.broadcastWith() — P05: gap_event kèm theo nếu vừa materialize. */
 interface MessageReceivedPayload {
     message: ChatMessage;
     conversation_id: string;
     last_message_at: string | null;
     unread_count: number;
+    stream_version: number | null;
+    gap_event: GapEvent | null;
 }
 
 interface Conversation {
@@ -34,21 +38,23 @@ interface Conversation {
     last_message_preview: string | null;
     contact_id: string | null;
     lead_id: string | null;
+    channel_account: { id: string; display_name: string | null } | null;
 }
 
 interface PaginatedConversations {
     data: Conversation[];
     current_page: number;
     last_page: number;
+    total: number;
     next_page_url: string | null;
     prev_page_url: string | null;
 }
 
 interface Props {
     conversations: PaginatedConversations;
-    filters: { q?: string; unread?: string; channel?: string };
+    filters: { q?: string; unread?: string; channel?: string; channel_account_id?: string };
     selectedConversation?: Conversation | null;
-    zaloConnection?: ConnectionInfo | null;
+    channelAccounts?: ChannelAccountInfo[];
     channelsAvailable?: boolean;
 }
 
@@ -64,13 +70,15 @@ function showToast(msg: string) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function InboxIndex({ conversations, filters, selectedConversation, zaloConnection }: Props) {
+export default function InboxIndex({ conversations, filters, selectedConversation, channelAccounts = [] }: Props) {
     const { auth, activeWorkspace } = usePage<SharedData>().props;
 
     const [convList, setConvList] = useState<Conversation[]>(conversations.data);
     const [activeConv, setActiveConv] = useState<Conversation | null>(null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [items, setItems] = useState<StreamItem[]>([]);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [search, setSearch] = useState(filters.q ?? '');
     const [leadLoading, setLeadLoading] = useState(false);
     const [leadError, setLeadError] = useState<string | null>(null);
@@ -131,15 +139,17 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
         const channel = window.Echo.private(`workspace.${workspaceId}.conversations`);
 
         channel.listen('MessageReceived', (payload: MessageReceivedPayload) => {
-            const { message, conversation_id, last_message_at, unread_count } = payload;
+            const { message, conversation_id, last_message_at, unread_count, gap_event } = payload;
 
-            // Cập nhật message thread nếu đang mở đúng conversation
+            // Cập nhật thread nếu đang mở đúng conversation — gap marker (nếu có, P05)
+            // chèn TRƯỚC message, khớp thứ tự materialize ở backend (ingest TX).
             setActiveConv((current) => {
                 if (current?.id === conversation_id) {
-                    setMessages((prev) => {
-                        // Tránh duplicate nếu message đã có (outbound vừa gửi)
-                        if (prev.some((m) => m.id === message.id)) return prev;
-                        return [...prev, message];
+                    setItems((prev) => {
+                        if (prev.some((it) => it.id === message.id)) return prev;
+                        const next = gap_event && !prev.some((it) => it.id === gap_event.id) ? [...prev, gap_event] : prev;
+
+                        return [...next, { ...message, item_type: 'message' as const }];
                     });
                 }
                 return current;
@@ -149,7 +159,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             // Hội thoại chưa có trong list (người mới nhắn) → reload nhẹ vì payload thiếu data hội thoại đầy đủ.
             setConvList((prev) => {
                 if (!prev.some((c) => c.id === conversation_id)) {
-                    queueMicrotask(() => router.reload({ only: ['conversations'], preserveState: true, preserveScroll: true }));
+                    queueMicrotask(() => router.reload({ only: ['conversations'] }));
                     return prev;
                 }
                 const updated = prev.map((c) =>
@@ -170,22 +180,42 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
         setActiveConv(conv);
         // Phản chiếu URL → reload/share giữ đúng hội thoại (route inbox.show preselect). Không round-trip.
         window.history.replaceState(window.history.state, '', route('inbox.show', conv.id));
-        setMessages([]);
+        setItems([]);
+        setNextCursor(null);
         setLeadError(null);
         setLoadingMessages(true);
 
         // Reset unread cục bộ ngay khi click
         setConvList((prev) => prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c)));
 
-        fetch(route('inbox.messages', conv.id), {
+        // P05 — stream hợp nhất messages + gap marker, thay endpoint messages cũ.
+        fetch(route('inbox.stream', conv.id), {
             headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
         })
             .then((r) => r.json())
             .then((responseData) => {
-                setMessages(responseData.data ?? []);
+                setItems(responseData.items ?? []);
+                setNextCursor(responseData.next_cursor ?? null);
             })
             .catch(() => showToast('Không tải được tin nhắn. Vui lòng thử lại.'))
             .finally(() => setLoadingMessages(false));
+    }
+
+    // P05 — tải trang cũ hơn (keyset cursor), chèn vào đầu danh sách hiện tại.
+    function handleLoadMore() {
+        if (!activeConv || !nextCursor || loadingMore) return;
+        setLoadingMore(true);
+
+        fetch(`${route('inbox.stream', activeConv.id)}?cursor=${encodeURIComponent(nextCursor)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+        })
+            .then((r) => r.json())
+            .then((responseData) => {
+                setItems((prev) => [...(responseData.items ?? []), ...prev]);
+                setNextCursor(responseData.next_cursor ?? null);
+            })
+            .catch(() => showToast('Không tải được tin cũ hơn. Vui lòng thử lại.'))
+            .finally(() => setLoadingMore(false));
     }
 
     function handleSend(e: React.FormEvent) {
@@ -258,16 +288,30 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
         router.get(route('inbox.index'), { ...filters, q: search }, { preserveState: true, replace: true });
     }
 
+    function handleSelectAccount(accountId: string | null) {
+        router.get(
+            route('inbox.index'),
+            { ...filters, channel_account_id: accountId ?? undefined },
+            { preserveState: true, replace: true },
+        );
+    }
+
     const breadcrumbs = [{ title: 'Inbox', href: route('inbox.index') }];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
 
-            <ConnectionBanner connection={zaloConnection ?? null} />
+            <ConnectionBanner accounts={channelAccounts} />
             <div className="flex h-[calc(100vh-64px)] overflow-hidden">
-                {/* ── Cột trái: danh sách hội thoại ─────────────────────── */}
+                {/* ── Cột trái: rail tài khoản + danh sách hội thoại ────── */}
                 <div className="flex w-80 flex-shrink-0 flex-col border-r">
+                    <AccountRail
+                        accounts={channelAccounts}
+                        totalCount={conversations.total}
+                        activeAccountId={filters.channel_account_id ?? null}
+                        onSelect={handleSelectAccount}
+                    />
                     {/* Header: search + usage badge */}
                     <div className="space-y-2 border-b p-3">
                         <form onSubmit={handleSearch} className="flex gap-2">
@@ -329,6 +373,11 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                         {conv.last_message_preview && (
                                             <p className="text-muted-foreground mt-0.5 truncate text-xs">{conv.last_message_preview}</p>
                                         )}
+                                        {conv.channel_account?.display_name && (
+                                            <p className="text-muted-foreground/70 mt-0.5 truncate text-[11px]">
+                                                ↳ nhận qua: {conv.channel_account.display_name}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </button>
@@ -376,10 +425,18 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                                 </div>
                             </div>
 
-                            <ChatThread messages={messages} peer={activeConv} loading={loadingMessages} />
+                            {!loadingMessages && nextCursor && (
+                                <div className="flex justify-center border-b py-1.5">
+                                    <Button size="sm" variant="ghost" className="h-6 text-xs" disabled={loadingMore} onClick={handleLoadMore}>
+                                        {loadingMore ? 'Đang tải...' : 'Tải tin cũ hơn'}
+                                    </Button>
+                                </div>
+                            )}
+
+                            <ChatThread items={items} peer={activeConv} loading={loadingMessages} />
 
                             {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
-                            {quotaExhausted && messages.length === 0 ? (
+                            {quotaExhausted && items.length === 0 ? (
                                 <div className="border-t p-3 text-center">
                                     <p className="text-muted-foreground mb-2 text-xs">Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).</p>
                                     <Button size="sm" variant="default" onClick={() => router.visit('/admin/billing/upgrade')}>

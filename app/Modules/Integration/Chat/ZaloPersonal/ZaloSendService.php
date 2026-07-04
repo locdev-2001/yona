@@ -10,6 +10,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -168,20 +169,32 @@ class ZaloSendService
         ]);
     }
 
+    /**
+     * P03 — core mù session: resolve slot sống của tài khoản (channel_account_id),
+     * KHÔNG đọc conversation.zalo_connection_id. Partial unique (P02g) cưỡng chế
+     * đúng 1 slot 'connected'/account; 0 hoặc >1 đều fail-closed.
+     *
+     * @throws ZaloNotConnectedException 0 slot connected
+     * @throws ZaloSplitBrainException >1 slot connected (không nên xảy ra — DB partial unique chặn)
+     */
     private function resolveConnection(Conversation $conversation): ZaloConnection
     {
-        if (! $conversation->zalo_connection_id) {
-            throw new ZaloNotConnectedException('Hội thoại không có connection_id Zalo.');
+        if (! $conversation->channel_account_id) {
+            throw new ZaloNotConnectedException('Hội thoại chưa gắn tài khoản Zalo.');
         }
 
-        $connection = ZaloConnection::where('connection_id', $conversation->zalo_connection_id)
-            ->where('workspace_id', $conversation->workspace_id)
-            ->first();
+        $slots = ZaloConnection::connectedForAccount($conversation->workspace_id, $conversation->channel_account_id);
 
-        if (! $connection) {
-            throw new ZaloNotConnectedException('Không tìm thấy kết nối Zalo cho hội thoại này.');
+        if ($slots->isEmpty()) {
+            $accountName = $conversation->channelAccount?->display_name;
+            $label = $accountName ? "Tài khoản {$accountName}" : 'Tài khoản Zalo';
+            throw new ZaloNotConnectedException("{$label} cần quét lại QR.");
         }
 
-        return $connection;
+        if ($slots->count() > 1) {
+            throw new ZaloSplitBrainException;
+        }
+
+        return $slots->first();
     }
 }

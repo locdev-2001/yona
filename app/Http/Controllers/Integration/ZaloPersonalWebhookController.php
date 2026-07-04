@@ -13,6 +13,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -100,12 +101,11 @@ class ZaloPersonalWebhookController extends Controller
     private function handleInbound(array $payload): JsonResponse
     {
         try {
-            // Account-keyed: resolve personal_uid của connection (kể cả trashed) để
-            // upsertConversation gắn message vào conversation canonical thay vì fork
-            // theo connection_id mỗi lần reconnect.
+            // P08: resolve channel_account_id của slot (kể cả trashed) — 1 nguồn sự thật
+            // duy nhất cho upsertConversation, thay vì zalo_connection_id/personal_uid.
             $connectionId = (int) ($payload['connection_id'] ?? 0);
-            $payload['connection_personal_uid'] = $connectionId > 0
-                ? ZaloConnection::personalUidForConnection($connectionId)
+            $payload['channel_account_id'] = $connectionId > 0
+                ? ZaloConnection::channelAccountIdForConnection($connectionId)
                 : null;
 
             $driver = app(ChannelManager::class)->driver('zalo_personal');
@@ -174,6 +174,16 @@ class ZaloPersonalWebhookController extends Controller
 
         $hadGap = $connection->last_session_lost_at !== null
             || $connection->state === 'session_lost';
+
+        // P05: mở cửa sổ gap account-level — CHỈ set gap_started_at lần ĐẦU (gap_open
+        // còn false); session_lost lặp lại (bridge chập chờn) không đẩy lùi mốc bắt đầu.
+        // Đóng lại ở PromoteAccountBinder (P04) khi reconnect thành công.
+        if ($modelState === 'session_lost' && $connection->channel_account_id !== null) {
+            DB::connection('pgsql_privileged')->table('channel_accounts')
+                ->where('id', $connection->channel_account_id)
+                ->where('gap_open', false)
+                ->update(['gap_started_at' => now(), 'gap_open' => true, 'updated_at' => now()]);
+        }
 
         $connection->updateState($modelState, $detail);
 

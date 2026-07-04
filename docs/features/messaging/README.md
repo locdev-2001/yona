@@ -8,9 +8,11 @@ Navigate messaging features. GĐ1 implements Phase 1 inbox: Zalo personal webhoo
 |---|---|---|
 | [Zalo Personal Inbox](./zalo-personal-inbox.md) | Webhook inbound → Conversation + Message, broadcast realtime. | inbox + channel-zalo |
 | [Outbound Send](./outbound-send.md) | Reply: circuit-breaker → quota → rate-limit → bridge HTTP → persist + meter. | channel-zalo |
-| [Conversation to Lead](./conversation-to-lead.md) | Convert conversation to Lead via CDP dedup (contract Phase-07, impl Phase-08). | inbox + crm-sales |
-| [Conversation Metering](./conversation-metering.md) | Race-safe F1 metering; F5 existing conv unlimited; inbound never blocked. | billing (MeteringGate contract) |
-| [Plan Entitlements & Grant](./plan-entitlements-grant.md) | Workspace subscriptions, admin grant, quota resolve. | billing |
+| [Conversation to Lead](./conversation-to-lead.md) | Convert conversation to Lead via `ContactService` phone dedup + `LeadService` (direct calls, no contract layer). | `ConversationLeadController` |
+| [Conversation Metering](./conversation-metering.md) | Race-safe F1 metering; F5 existing conv unlimited; inbound never routed through the gate at all. | `App\Services\MeteringService` (concrete, no interface) |
+| [Plan Entitlements & Grant](./plan-entitlements-grant.md) | Workspace purchases, admin grant/revoke, quota resolve. | `App\Services\{GrantPlanService,EntitlementService}` |
+| [Channel-Account Architecture](./channel-account-architecture.md) | Account-keyed redesign (GĐ1 live): tách danh tính tài khoản khỏi session, 5 lớp, gap marker + fallback backfill, core mù session. Sửa #1 phân mảnh / #2 mất tin / #3 mở rộng. | inbox + channel-zalo |
+| [zca Capability Map](./zca-capability-map.md) | Bề mặt zca-js (146 REST / 16 event) + adapter generic L1 (dispatcher/forwarder/allowlist reflection) — sở hữu 100% bề mặt, chống "miss" khả năng khi nâng version. | channel-zalo |
 
 ## Key Decisions (GĐ1)
 
@@ -34,11 +36,11 @@ POST /api/integrations/zalo-personal/webhook
   ↓ (HMAC-signed)
 Webhook handler (F6 auth)
   ↓
-TenantScope::bind(connection_id → workspace_id)  [F11: RLS scope]
-  ↓
+TenantScope::bind(connection_id → workspace_id)  [F11: RLS scope, via ZaloConnection::workspaceForConnection()]
+  ↓ resolve channel_account_id from connection_id (ZaloConnection::channelAccountIdForConnection())
 InboundMessageService::ingest()
-  ├─ upsertConversation() [F2: unique per (connection_id, peer_uid)]
-  ├─ upsertMessage() [F14: idempotent source_id, default direction='in']
+  ├─ upsertConversation() [F2: unique per (channel_account_id, peer_uid)]
+  ├─ upsertMessage() [F14: idempotent source_id via message_source_aliases, default direction='in']
   ├─ updateConversationCache() [F16: atomic increment unread_count]
   ├─ meterReply() [fail-safe F1: inbound never counted]
   └─ Event: MessageReceived broadcast [Reverb PrivateChannel F22]
@@ -49,19 +51,21 @@ InboundMessageService::ingest()
 ```
 Member reply (UI)
   ↓
-OutboundMessageController::store()
-  ↓
+InboxController::send()  [POST /inbox/conversations/{conversation}/messages]
+  ↓ ChannelManager::driver()->sendMessage() → ZaloChannelDriver::sendMessage()
 ZaloSendService::send()
-  ├─ HealthMonitor::isCircuitOpen() [F3: fail-fast]
-  ├─ MeteringGate::assertCanSend() [F1/F5: quota or unlimited if existing]
+  ├─ resolveConnection() [account→slot via channel_account_id]
+  ├─ ZaloHealthMonitor::isCircuitOpen() [F3: fail-fast]
+  ├─ MeteringService::assertCanSend() [F1/F5: quota or unlimited if existing]
   ├─ SendRateLimiter::assertCanSend() [F8: 7h-22h + 3 msg/phone/day]
   ├─ callBridge() [retry 2×200ms, timeout 15s, F4]
   │  └─ HTTP POST bridge /personal-messages/send
   ├─ persistMessage() [direction='out', RLS enforced]
-  ├─ meterReply() [F1 race-safe: compare-set + ON CONFLICT upsert]
+  ├─ meterReply() [F1 race-safe: compare-set + upsert]
   ├─ increment(rate_limiter) [Redis INCR if enabled, else memory]
-  └─ HealthMonitor::reset() [success indicator]
+  └─ ZaloHealthMonitor::reset() [success indicator]
 ```
+Every failure path above is wrapped into a `SendException` (or caught directly for `QuotaExceededException`) and surfaces as a uniform HTTP `422` with a distinguishing `error_code` — see [outbound-send.md](./outbound-send.md).
 
 ### Entitlements → Gate Flow
 
@@ -89,16 +93,16 @@ EntitlementResolver::snapshot(workspace_id)
 ## Related Concepts
 
 - **CDP (Customer Data Platform):** Contact dedup by phone (Phase-08). See [crm-domain-definition.md](../crm-domain-definition.md) § Contact.
-- **IdentityResolver contract:** Resolve/create Contact from peer (Phase-07: no-op; Phase-08: real dedup). See [Conversation to Lead](./conversation-to-lead.md).
+- **Contact dedup:** `ContactService::resolveOrCreateFromPeer()` resolves/creates a Contact by phone directly (no contract/interface layer). See [Conversation to Lead](./conversation-to-lead.md).
 - **Integration driver pattern:** Drivers register via `Illuminate\Support\Manager` in `app/Modules/Integration/`. See [system-architecture.md](../system-architecture.md) § Architecture.
 - **RLS (Row-Level Security):** PostgreSQL enforces workspace isolation; TenantScope binds workspace before queries. See [../system-architecture.md](../system-architecture.md) § RLS.
 - **Realtime:** Reverb broadcasts message events to subscribed LiveWire components (F22). See [../platform/announcements.md](../platform/announcements.md) (similar pattern).
 
 ## Troubleshooting
 
-### Webhook signature 403 Unauthorized
+### Webhook signature 401 Unauthorized
 
-- **Cause:** HMAC X-Zalo-Personal-Bridge-Secret header invalid or missing.
+- **Cause:** HMAC X-Zalo-Personal-Bridge-Secret header invalid or missing (`VerifyZaloBridgeSecret` middleware).
 - **Fix:** Verify bridge config `services.zalo_bridge.webhook_secret` matches webhook controller secret. Check bridge logs.
 
 ### Conversation thread shows old peer_name/phone

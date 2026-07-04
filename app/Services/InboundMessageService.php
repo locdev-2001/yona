@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\MessageSourceAlias;
 use App\Models\WorkspaceSequence;
+use App\Services\Inbox\SessionGapMaterializer;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -22,8 +24,7 @@ use Illuminate\Support\Facades\DB;
  *  F14 idempotency: updateOrCreate theo (conversation_id, source_id) — trùng source_id = no-op.
  *
  * @param array{
- *   zalo_connection_id?: string|null,
- *   connection_personal_uid?: string|null,
+ *   channel_account_id?: string|null,
  *   channel?: string,
  *   peer_uid: string,
  *   thread_type?: int,
@@ -44,7 +45,10 @@ use Illuminate\Support\Facades\DB;
  */
 class InboundMessageService
 {
-    public function __construct(private readonly MeteringService $meteringService) {}
+    public function __construct(
+        private readonly MeteringService $meteringService,
+        private readonly SessionGapMaterializer $gapMaterializer,
+    ) {}
 
     public function ingest(array $normalized): Message
     {
@@ -53,6 +57,9 @@ class InboundMessageService
 
         // --- Direction fail-safe (F14): default 'in' nếu không có field ---
         $direction = $normalized['direction'] ?? 'in';
+
+        // --- P05: gap marker TRƯỚC khi message post-gap "visible" (chokepoint) ---
+        $gapMaterialized = $this->gapMaterializer->materializeIfNeeded($conversation, $normalized['platform_sent_at'] ?? null);
 
         // --- Upsert Message (idempotent per source_id) ---
         $message = $this->upsertMessage($conversation, $normalized, $direction);
@@ -70,34 +77,27 @@ class InboundMessageService
         }
 
         // --- Broadcast realtime ---
-        // Reload conversation để payload broadcastWith() có last_message_at mới nhất
+        // Reload conversation để payload broadcastWith() có last_message_at/stream_version mới nhất
         $message->setRelation('conversation', $conversation->fresh() ?? $conversation);
-        event(new MessageReceived($message));
+        event(new MessageReceived($message, $gapMaterialized));
 
         return $message;
     }
 
-    /** @param array<string, mixed> $normalized */
+    /**
+     * P08 — 1 path duy nhất: key (channel_account_id, peer_uid). channel_account_id
+     * ổn định qua reconnect (không như zalo_connection_id cũ, đổi mỗi lần reconnect) —
+     * không còn cần findConversationByAccount/dedupe riêng cho case reconnect.
+     *
+     * @param  array<string, mixed>  $normalized
+     */
     protected function upsertConversation(array $normalized): Conversation
     {
         $channel = $normalized['channel'] ?? 'zalo_personal';
-        $zaloConnectionId = $normalized['zalo_connection_id'] ?? null;
+        $channelAccountId = $normalized['channel_account_id'] ?? null;
         $peerUid = $normalized['peer_uid'];
-        $connectionPersonalUid = $normalized['connection_personal_uid'] ?? null;
 
-        // Account-keyed (chống fork khi reconnect): connection_id đổi mỗi lần reconnect
-        // nhưng personal_uid của tài khoản Zalo ổn định → tìm conversation hiện hữu của
-        // peer này dưới BẤT KỲ connection nào cùng personal_uid. Né tạo conversation mới.
-        if ($connectionPersonalUid !== null && $connectionPersonalUid !== '') {
-            $byAccount = $this->findConversationByAccount($channel, $connectionPersonalUid, $peerUid);
-
-            if ($byAccount !== null) {
-                return $this->applyPeerUpdates($byAccount, $normalized);
-            }
-        }
-
-        // Unique per (zalo_connection_id, peer_uid) — F14 idempotency
-        $existing = $this->findConversation($zaloConnectionId, $peerUid);
+        $existing = $this->findConversation($channelAccountId, $peerUid);
 
         if ($existing !== null) {
             return $this->applyPeerUpdates($existing, $normalized);
@@ -110,10 +110,10 @@ class InboundMessageService
             // (25P02) khiến re-fetch trong catch fail. DB::transaction() rollback chỉ
             // savepoint → connection còn dùng được cho re-fetch (an toàn cả khi ingest
             // chạy trong một transaction ngoài).
-            return DB::transaction(function () use ($channel, $zaloConnectionId, $peerUid, $normalized) {
+            return DB::transaction(function () use ($channel, $channelAccountId, $peerUid, $normalized) {
                 $conversation = new Conversation([
                     'channel' => $channel,
-                    'zalo_connection_id' => $zaloConnectionId,
+                    'channel_account_id' => $channelAccountId,
                     'peer_uid' => $peerUid,
                     'thread_type' => $normalized['thread_type'] ?? 0,
                     'peer_name' => $normalized['peer_name'] ?? null,
@@ -127,12 +127,12 @@ class InboundMessageService
                 return $conversation;
             });
         } catch (QueryException $e) {
-            // Race: 2 webhook cùng (zalo_connection_id, peer_uid) → cùng miss first() → cùng INSERT.
-            // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_peer_unique).
+            // Race: 2 webhook cùng (channel_account_id, peer_uid) → cùng miss first() → cùng INSERT.
+            // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_account_peer_unique).
             // Re-fetch row do request kia tạo, áp peer-info update như existing-row path.
             // Cùng pattern ContactService::firstOrCreateByPhone.
             if ($e->getCode() === '23505') {
-                $conversation = $this->findConversation($zaloConnectionId, $peerUid);
+                $conversation = $this->findConversation($channelAccountId, $peerUid);
 
                 if ($conversation !== null) {
                     return $this->applyPeerUpdates($conversation, $normalized);
@@ -143,32 +143,17 @@ class InboundMessageService
         }
     }
 
-    protected function findConversation(?string $zaloConnectionId, string $peerUid): ?Conversation
-    {
-        return Conversation::withTrashed()
-            ->where('zalo_connection_id', $zaloConnectionId)
-            ->where('peer_uid', $peerUid)
-            ->first();
-    }
-
     /**
-     * Tìm conversation ACTIVE của peer dưới bất kỳ connection nào cùng personal_uid.
-     * Join conversations.zalo_connection_id → zalo_connections.connection_id; KHÔNG lọc
-     * zc.deleted_at (connection cũ đã trashed sau reconnect vẫn là cùng tài khoản).
-     * Chỉ lấy conversation chưa soft-delete; nếu trùng nhiều → ưu tiên connection mới nhất
-     * (conversation.zalo_connection_id lớn nhất = slot reconnect gần nhất).
+     * Chỉ conversation ACTIVE (default SoftDeletes scope loại trừ trashed) — channel_account_id
+     * KHÔNG đổi qua reconnect (khác zalo_connection_id cũ) nên KHÔNG dùng withTrashed(): 1
+     * conversation đã soft-delete (opt-out F17/F26, hoặc merged-away duplicate) phải ở yên
+     * ẩn, không "sống lại" chỉ vì peer nhắn tiếp — tin mới phải vào conversation active
+     * (canonical sau merge), không phải bản đã ẩn.
      */
-    protected function findConversationByAccount(string $channel, string $personalUid, string $peerUid): ?Conversation
+    protected function findConversation(?string $channelAccountId, string $peerUid): ?Conversation
     {
-        return Conversation::query()
-            ->where('conversations.channel', $channel)
-            ->where('conversations.peer_uid', $peerUid)
-            ->whereIn('conversations.zalo_connection_id', function ($q) use ($personalUid) {
-                $q->select('connection_id')
-                    ->from('zalo_connections')
-                    ->where('personal_uid', $personalUid);
-            })
-            ->orderByDesc('conversations.zalo_connection_id')
+        return Conversation::where('channel_account_id', $channelAccountId)
+            ->where('peer_uid', $peerUid)
             ->first();
     }
 
@@ -195,7 +180,7 @@ class InboundMessageService
 
         if ($sourceId === null) {
             // Không dedup được (không có platform msgId) → tạo mới
-            return Message::create([
+            return $this->createMessage($conversation, [
                 'conversation_id' => $conversation->id,
                 'direction' => $direction,
                 'type' => $normalized['type'] ?? 'text',
@@ -210,9 +195,7 @@ class InboundMessageService
             ]);
         }
 
-        $existing = Message::where('conversation_id', $conversation->id)
-            ->where('source_id', $sourceId)
-            ->first();
+        $existing = $this->findExistingBySource($conversation->id, $sourceId);
 
         if ($existing !== null) {
             // C-1: replay/backfill — KHÔNG ghi đè direction/sent_by/sender_uid (identity columns bất biến).
@@ -232,7 +215,7 @@ class InboundMessageService
             return $existing;
         }
 
-        return Message::create([
+        return $this->createMessage($conversation, [
             'conversation_id' => $conversation->id,
             'source_id' => $sourceId,
             'direction' => $direction,
@@ -245,6 +228,40 @@ class InboundMessageService
             'sender_name' => $normalized['sender_name'] ?? null,
             'sent_by' => $normalized['sent_by'] ?? null,
         ]);
+    }
+
+    /**
+     * P06 — replay/dedup: tra messages.source_id trực tiếp TRƯỚC, miss thì tra
+     * message_source_aliases (giá trị source_id thay thế đã biết cho message hiện tại —
+     * P01/P02e backfill mọi message legacy). 1 method DRY thay vì lặp 2 query rải rác.
+     */
+    private function findExistingBySource(string $conversationId, string $sourceId): ?Message
+    {
+        $direct = Message::where('conversation_id', $conversationId)
+            ->where('source_id', $sourceId)
+            ->first();
+
+        if ($direct !== null) {
+            return $direct;
+        }
+
+        $aliasedMessageId = MessageSourceAlias::messageIdFor($conversationId, $sourceId);
+
+        return $aliasedMessageId === null ? null : Message::find($aliasedMessageId);
+    }
+
+    /**
+     * P05: mọi Message insert mới +1 conversations.stream_version (FE dùng để
+     * biết khi nào cần refetch window quanh cursor — không đụng replay/no-op).
+     *
+     * @param  array<string, mixed>  $attrs
+     */
+    private function createMessage(Conversation $conversation, array $attrs): Message
+    {
+        $message = Message::create($attrs);
+        Conversation::where('id', $conversation->id)->increment('stream_version');
+
+        return $message;
     }
 
     private function updateConversationCache(Conversation $conversation, Message $message, string $direction): void

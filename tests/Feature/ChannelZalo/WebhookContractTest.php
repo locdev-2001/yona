@@ -201,7 +201,7 @@ it('inbound returns 503 when DB throws QueryException (transient) so outbox retr
     // Simulate DB error trong ingest (transient — outbox phải retry)
     $this->mock(InboundMessageService::class, function ($mock) {
         $mock->shouldReceive('ingest')->once()->andThrow(
-            new QueryException('pgsql', 'SELECT 1', [], new \PDOException('connection refused'))
+            new QueryException('pgsql', 'SELECT 1', [], new PDOException('connection refused'))
         );
     });
 
@@ -248,7 +248,7 @@ it('inbound returns 503 when unexpected exception thrown (retry safer than drop)
     $connId = createZaloConnection($ws->id, 'uid_unexpected');
 
     $this->mock(InboundMessageService::class, function ($mock) {
-        $mock->shouldReceive('ingest')->once()->andThrow(new \RuntimeException('random crash'));
+        $mock->shouldReceive('ingest')->once()->andThrow(new RuntimeException('random crash'));
     });
 
     $this->postJson(

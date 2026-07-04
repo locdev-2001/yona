@@ -187,12 +187,13 @@ Bridge (Node.js zca-js)
 POST /api/integrations/zalo-personal/webhook
   (HMAC-signed: X-Zalo-Personal-Bridge-Secret)
   ↓
-ZaloPersonalWebhookController::handle()
+ZaloPersonalWebhookController::__invoke()
   ├─ Verify HMAC
-  ├─ TenantScope::bind(zalo_connection_id → workspace_id)  [RLS scope]
+  ├─ TenantScope::bind(connection_id → workspace_id)  [RLS scope, via ZaloConnection::workspaceForConnection()]
+  ├─ Resolve channel_account_id from connection_id (ZaloConnection::channelAccountIdForConnection())
   └─ InboundMessageService::ingest()
-      ├─ upsertConversation(zalo_connection_id, peer_uid, peer_phone, peer_name)
-      │  └─ Unique (zalo_connection_id, peer_uid) per channel
+      ├─ upsertConversation(channel_account_id, peer_uid, peer_phone, peer_name)
+      │  └─ Unique (channel_account_id, peer_uid) per channel (stable across reconnects)
       ├─ upsertMessage(conversation_id, direction='in', text, source_id)
       │  └─ Idempotent on (conversation_id, source_id)
       ├─ updateConversationCache()
@@ -209,12 +210,13 @@ ZaloPersonalWebhookController::handle()
 ```
 Member UI: Click "Reply" → Type message
   ↓
-OutboundMessageController::store(conversation_id, text)
+InboxController::send(conversation_id, text)  [POST /inbox/conversations/{conversation}/messages]
   ├─ Authorize: can('update', Conversation)
-  └─ ZaloSendService::send()
+  └─ ChannelManager::driver()->sendMessage() → ZaloSendService::send()
+      ├─ resolveConnection(conversation)  [channel_account_id → connected slot]
       ├─ ZaloHealthMonitor::isCircuitOpen(connection_id)
-      │  └─ If open → 422 (bridge unreachable)
-      ├─ MeteringGate::assertCanSend(conversation_id)  ⭐ calls MeteringService
+      │  └─ If open → 422 (all send failures return 422, distinguished by error_code)
+      ├─ MeteringService::assertCanSend(conversation_id)
       │  ├─ Exists in current period? → allowed
       │  └─ New? → check quota
       ├─ SendRateLimiter::assertCanSend(peer_phone)
@@ -359,8 +361,11 @@ UUID PKs everywhere (`uuid()` default). All workspace-scoped tables carry the **
 
 | Table | Notable columns | Unique constraints |
 |---|---|---|
-| `zalo_connections` | `workspace_id, connection_id, account_status, circuit_open, circuit_error_count, last_health_check, created_at` | `unique(workspace_id, connection_id)` |
-| `conversations` | `workspace_id, zalo_connection_id, peer_uid, peer_phone, peer_name, channel, unread_count, last_metered_period, ...` | `unique(zalo_connection_id, peer_uid)` per-channel |
+| `channel_accounts` | `workspace_id, channel, account_uid (stable OwnId), display_name, avatar_url, status (needs_qr/connected/session_lost — `session_lost` defined in schema but not currently written by any app code path; session-loss is tracked instead via `gap_started_at`/`gap_open`), gap_started_at, gap_open` | `unique(workspace_id, channel, account_uid)` — stable account identity across reconnects |
+| `zalo_connections` | `workspace_id, connection_id (bigint, global unique), channel_account_id (FK), personal_uid, display_name, avatar_url, state (disconnected/qr_waiting/connected/session_lost), session_lost_reason, last_connected_at, last_qr_at, lock_version, created_at` | **Partial unique `(channel_account_id) WHERE state='connected' AND deleted_at IS NULL`** — exactly 1 live slot per account. Circuit-breaker state (error count, open/closed) is cache-based (`ZaloHealthMonitor`, Redis key `zalo_circuit:{connectionId}:*`), NOT a DB column. |
+| `conversations` | `workspace_id, channel_account_id (FK, no enforce), peer_uid, peer_phone, peer_name, channel, unread_count, last_metered_period, stream_version, ...` | `unique(channel_account_id, peer_uid) WHERE deleted_at IS NULL` — account-keyed, stable across reconnects |
+| `conversation_events` | `workspace_id, conversation_id (FK), kind (session_gap), gap_started_at, gap_ended_at, stream_at, stream_rank, created_at` | `unique(conversation_id, kind, gap_started_at)` — idempotent gap markers. `stream_at`/`stream_rank` are the shared sort key with `messages` for the unified keyset cursor (P05). |
+| `message_source_aliases` | `workspace_id, conversation_id (FK), message_id (FK → messages), source_id, kind (default 'legacy'), created_at` | `unique(conversation_id, source_id)` — maps a legacy/pre-rekey source_id to the message row it now resolves to |
 | `messages` | `workspace_id, conversation_id, direction (in/out), text, media, source_id, created_at, ...` | `unique(conversation_id, source_id)` idempotency |
 | `channel_usage` | `workspace_id, channel, period (YYYY-MM), answered_count` | `unique(workspace_id, channel, period)` |
 
