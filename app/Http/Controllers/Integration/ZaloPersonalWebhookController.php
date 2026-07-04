@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Integration;
 
 use App\Events\ConversationTyping;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
+use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
@@ -11,7 +12,9 @@ use App\Modules\Integration\ChannelManager;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\MessageStateService;
+use App\Services\Inbox\SocialEventMaterializer;
 use App\Services\ZaloGroupBackfillService;
+use App\Support\Activity\ActivityLogger;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -345,14 +348,119 @@ class ZaloPersonalWebhookController extends Controller
     }
 
     /**
-     * Social event (group_event, friend_event) — log/no-op.
-     * ponytail: YAGNI — chỉ log ở D-1, xử lý sau khi có use case rõ.
+     * P08 — social_event hết no-op: group_event/friend_event whitelist → dòng
+     * hệ thống conversation_events (taxonomy loại 3, SocialEventMaterializer).
+     * Act ngoài whitelist / không map được conversation → 200 êm (không kho).
+     * Shape: GroupEvent {type: string, act, threadId=groupId, data} ·
+     * FriendEvent {type: number, threadId=uid người kia} — zca models.
      *
      * @param  array<string, mixed>  $payload
      */
     private function handleSocialEvent(array $payload): JsonResponse
     {
-        // ponytail: social_event no-op D-1 — chỉ accept 200 để bridge không retry
-        return response()->json(['ok' => true, 'message' => 'social_event_accepted']);
+        $connectionId = (int) ($payload['connection_id'] ?? 0);
+        $channelAccountId = $connectionId > 0
+            ? ZaloConnection::channelAccountIdForConnection($connectionId)
+            : null;
+        $threadId = (string) ($payload['thread_id'] ?? '');
+        $dedupKey = (string) ($payload['source_id'] ?? '');
+        $event = is_array($payload['event'] ?? null) ? $payload['event'] : [];
+
+        if ($channelAccountId === null || $threadId === '' || $dedupKey === '') {
+            return response()->json(['ok' => true, 'message' => 'social_event_skipped']);
+        }
+
+        $line = match ($payload['social_kind'] ?? '') {
+            'group_event' => $this->groupSystemLine($event),
+            'friend_event' => $this->friendSystemLine($event),
+            default => null,
+        };
+
+        if ($line === null) {
+            return response()->json(['ok' => true, 'message' => 'social_event_ignored']);
+        }
+
+        $conversation = Conversation::where('channel_account_id', $channelAccountId)
+            ->where('peer_uid', $threadId)
+            ->first();
+
+        if ($conversation === null) {
+            // Nhóm/peer chưa từng nhắn — không có thread để hiện dòng, bỏ qua êm
+            return response()->json(['ok' => true, 'message' => 'social_event_no_conversation']);
+        }
+
+        try {
+            app(SocialEventMaterializer::class)->materialize(
+                $conversation,
+                $line['kind'],
+                $dedupKey,
+                $line['payload'],
+            );
+        } catch (QueryException|\PDOException $e) {
+            $this->safeReport($e);
+
+            return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+        }
+
+        // Friend accept = tín hiệu CDP — ghi activity lên contact nếu đã có hồ sơ
+        if ($line['kind'] === 'friend_system' && ($line['payload']['act'] ?? '') === 'friend_accepted' && $conversation->contact_id !== null) {
+            try {
+                $contact = Contact::find($conversation->contact_id);
+                if ($contact !== null) {
+                    app(ActivityLogger::class)
+                        ->log($contact, 'contact.friend_accepted', ['conversation_id' => $conversation->id]);
+                }
+            } catch (Throwable $e) {
+                $this->safeReport($e);
+            }
+        }
+
+        return response()->json(['ok' => true, 'message' => 'social_event_materialized']);
+    }
+
+    /**
+     * Whitelist act nhóm (GroupEventType string) → label tiếng Việt.
+     *
+     * @param  array<string, mixed>  $event
+     * @return array{kind: string, payload: array<string, mixed>}|null
+     */
+    private function groupSystemLine(array $event): ?array
+    {
+        $type = (string) ($event['type'] ?? '');
+        $data = is_array($event['data'] ?? null) ? $event['data'] : [];
+        $memberNames = collect($data['updateMembers'] ?? [])
+            ->pluck('dName')
+            ->filter()
+            ->take(5)
+            ->implode(', ');
+
+        $label = match ($type) {
+            'update' => 'Nhóm cập nhật thông tin'.(! empty($data['groupName']) ? ': '.$data['groupName'] : ''),
+            'update_avatar' => 'Nhóm đổi ảnh đại diện',
+            'join' => ($memberNames !== '' ? $memberNames : 'Thành viên mới').' đã tham gia nhóm',
+            'leave' => ($memberNames !== '' ? $memberNames : 'Một thành viên').' đã rời nhóm',
+            'remove_member' => ($memberNames !== '' ? $memberNames : 'Một thành viên').' bị mời khỏi nhóm',
+            default => null, // ngoài whitelist — bỏ qua êm, không parse mù
+        };
+
+        return $label === null ? null : [
+            'kind' => 'group_system',
+            'payload' => ['act' => $type, 'label' => $label],
+        ];
+    }
+
+    /**
+     * FriendEventType (number): 0=ADD (thành bạn bè), 2=REQUEST (gửi lời mời).
+     *
+     * @param  array<string, mixed>  $event
+     * @return array{kind: string, payload: array<string, mixed>}|null
+     */
+    private function friendSystemLine(array $event): ?array
+    {
+        return match ((int) ($event['type'] ?? -1)) {
+            0 => ['kind' => 'friend_system', 'payload' => ['act' => 'friend_accepted', 'label' => 'Hai bên đã trở thành bạn bè trên Zalo']],
+            2 => ['kind' => 'friend_system', 'payload' => ['act' => 'friend_request', 'label' => 'Đã gửi lời mời kết bạn']],
+            default => null,
+        };
     }
 }
