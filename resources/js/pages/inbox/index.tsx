@@ -202,6 +202,16 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             setTyping({ convId: payload.conversation_id, until: Date.now() + TYPING_TTL_MS });
         });
 
+        // P08 — dòng hệ thống mới: append vào thread đang mở (idempotent theo id)
+        channel.listen('ConversationSystemLine', (payload: { item: GapEvent & { conversation_id: string } }) => {
+            setActiveConv((current) => {
+                if (current?.id === payload.item.conversation_id) {
+                    setItems((prev) => (prev.some((it) => it.id === payload.item.id) ? prev : [...prev, payload.item]));
+                }
+                return current;
+            });
+        });
+
         return () => {
             window.Echo.leave(`workspace.${workspaceId}.conversations`);
         };

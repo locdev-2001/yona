@@ -91,7 +91,7 @@ class ConversationStreamController extends Controller
     {
         $query = DB::table('conversation_events')
             ->where('conversation_id', $conversationId)
-            ->selectRaw('id, \'event\' as item_type, kind, gap_started_at, gap_ended_at, stream_at, stream_rank, created_at');
+            ->selectRaw('id, \'event\' as item_type, kind, gap_started_at, gap_ended_at, stream_at, stream_rank, created_at, payload');
 
         if ($cursor !== null) {
             [$cStreamAt, $cRank, $cId] = $cursor;
@@ -140,6 +140,8 @@ class ConversationStreamController extends Controller
                 'gap_started_at' => $item->gap_started_at,
                 'gap_ended_at' => $item->gap_ended_at,
                 'stream_at' => $item->stream_at,
+                // P08 — dòng hệ thống: {act, label}
+                'payload' => isset($item->payload) ? json_decode((string) $item->payload, true) : null,
             ];
         }
 
