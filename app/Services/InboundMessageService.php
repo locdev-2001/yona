@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\DB;
  *   sender_uid?: string|null,
  *   sender_name?: string|null,
  *   sent_by?: int|null,
+ *   platform_meta?: array<string, mixed>,
  * } $normalized
  */
 class InboundMessageService
@@ -192,6 +193,7 @@ class InboundMessageService
                 'sender_uid' => $normalized['sender_uid'] ?? null,
                 'sender_name' => $normalized['sender_name'] ?? null,
                 'sent_by' => $normalized['sent_by'] ?? null,
+                'platform_meta' => $normalized['platform_meta'] ?? [],
             ]);
         }
 
@@ -208,6 +210,15 @@ class InboundMessageService
                     $existing->{$col} = $newVal;
                 }
             }
+
+            // P01a: outbound portal chỉ lưu source_id (bridge response không có cliMsgId
+            // và raw meta) — echo/self-listen quay về mang listener_data đầy đủ → MERGE
+            // platform_meta vào row đã tạo để tin mình gửi quote/react được (Codex BLK-1).
+            $newMeta = $normalized['platform_meta'] ?? [];
+            if ($newMeta !== [] && ($existing->platform_meta ?? []) === []) {
+                $existing->platform_meta = $newMeta;
+            }
+
             if ($existing->isDirty()) {
                 $existing->save();
             }
@@ -227,6 +238,7 @@ class InboundMessageService
             'sender_uid' => $normalized['sender_uid'] ?? null,
             'sender_name' => $normalized['sender_name'] ?? null,
             'sent_by' => $normalized['sent_by'] ?? null,
+            'platform_meta' => $normalized['platform_meta'] ?? [],
         ]);
     }
 

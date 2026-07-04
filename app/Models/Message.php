@@ -28,6 +28,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $sender_uid
  * @property string|null $sender_name
  * @property int|null $sent_by
+ * @property Carbon|null $recalled_at
+ * @property Carbon|null $delivered_at
+ * @property Carbon|null $seen_at
+ * @property array<string, mixed> $platform_meta
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -47,13 +51,18 @@ class Message extends Model
         'sender_uid',
         'sender_name',
         'sent_by',
+        'platform_meta',
     ];
 
     protected function casts(): array
     {
         return [
             'media_meta' => 'array',
+            'platform_meta' => 'array',
             'platform_sent_at' => 'datetime',
+            'recalled_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'seen_at' => 'datetime',
         ];
     }
 
