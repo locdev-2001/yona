@@ -82,6 +82,9 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         'message_source_aliases',
         'lead_merge_conflicts',
 
+        // P10 inbox-multichannel-relayer relay-event store (2026_07_04_100008)
+        'relay_events',
+
         // P07 billing (2026_06_28_900002/900003)
         // marketplace_items intentionally GLOBAL (no RLS) — intentional-global list
         'workspace_purchases',

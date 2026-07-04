@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -25,10 +26,12 @@ use Throwable;
  *   3. TenantScope::bind($workspaceId)
  *   4. try { xử lý } finally { TenantScope::forget() }
  *
- * 3 event types:
+ * 4 event types:
  *   - inbound       → parse + ingest (InboundMessageService, always-accept F13/F20)
  *   - bridge_session → update ZaloConnection.state
  *   - social_event  → log/no-op (YAGNI)
+ *   - relay_event   → lưu relay_events (P10 — 11 event zca chưa có handler product)
+ *   - default       → CŨNG lưu relay_events (P10/H1: event lạ KHÔNG drop im lặng)
  *
  * Route: POST /api/integrations/zalo-personal/webhook
  * Middleware: zalo.bridge.secret (VerifyZaloBridgeSecret)
@@ -78,7 +81,9 @@ class ZaloPersonalWebhookController extends Controller
                 'inbound' => $this->handleInbound($payload),
                 'bridge_session' => $this->handleBridgeSession($payload),
                 'social_event' => $this->handleSocialEvent($payload),
-                default => response()->json(['ok' => true, 'message' => 'unknown_event_type'], 200),
+                // P10/H1: relay_event (forwarder generic P12) + event type LẠ → đều
+                // ghi relay_events, KHÔNG drop im lặng. KHÔNG tính metering (F1/F14).
+                default => $this->handleRelayEvent($payload, $eventType),
             };
         } finally {
             // ⚠️ F19: LUÔN forget sau request — pooled connection an toàn
@@ -200,6 +205,60 @@ class ZaloPersonalWebhookController extends Controller
         // TODO D-2: broadcast ZaloConnectionStateChanged event khi có realtime FE
 
         return response()->json(['ok' => true, 'state' => $modelState]);
+    }
+
+    /**
+     * P10 — relay_event từ forwarder generic (P12) + event type LẠ: lưu vào
+     * relay_events thay vì drop im lặng (red-team H1). KHÔNG tính metering
+     * (F1/F14 — kho quan sát, không phải message tenant trả lời).
+     *
+     * Idempotent theo unique partial (workspace_id, event_type, source_id):
+     * bridge retry → 23505 → 200 dedup. Contract HTTP như handleInbound:
+     * 200 done · 422 payload hỏng vĩnh viễn · 503 DB transient (outbox retry).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function handleRelayEvent(array $payload, string $eventType): JsonResponse
+    {
+        // relay_event envelope (P12/H2) mang event_type riêng; type lạ → dùng chính type đó.
+        $relayEventType = $eventType === 'relay_event'
+            ? (string) ($payload['event_type'] ?? '')
+            : $eventType;
+
+        if ($relayEventType === '') {
+            return response()->json(['ok' => false, 'message' => 'missing_event_type'], 422);
+        }
+
+        $connectionId = (int) ($payload['connection_id'] ?? 0);
+        $sourceId = isset($payload['source_id']) && $payload['source_id'] !== '' ? (string) $payload['source_id'] : null;
+
+        try {
+            // insertOrIgnore (ON CONFLICT DO NOTHING) thay vì catch 23505: lỗi unique
+            // trong Postgres abort cả transaction bao ngoài — dedup phải không-lỗi.
+            $inserted = DB::table('relay_events')->insertOrIgnore([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'workspace_id' => currentWorkspace()->id,
+                'channel_account_id' => $connectionId > 0
+                    ? ZaloConnection::channelAccountIdForConnection($connectionId)
+                    : null,
+                'connection_id' => $connectionId > 0 ? $connectionId : null,
+                'event_type' => mb_substr($relayEventType, 0, 32),
+                'personal_uid' => isset($payload['personal_uid']) ? mb_substr((string) $payload['personal_uid'], 0, 64) : null,
+                'source_id' => $sourceId,
+                'payload' => json_encode($payload['payload'] ?? $payload),
+                'received_at' => now(),
+                'created_at' => now(),
+            ]);
+        } catch (QueryException|\PDOException $e) {
+            $this->safeReport($e);
+
+            return response()->json(['ok' => false, 'message' => 'transient_db_error'], 503);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $inserted > 0 ? 'relay_event_stored' : 'relay_event_duplicate',
+        ], 200);
     }
 
     /**
