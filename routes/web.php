@@ -32,6 +32,7 @@ use App\Http\Controllers\Identity\Settings\MemberController;
 use App\Http\Controllers\Identity\Settings\PasswordController;
 use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
+use App\Http\Controllers\Inbox\ConversationAttachmentController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
@@ -239,6 +240,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('inbox.send');
         Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
             ->name('inbox.lead.store');
+        // P04 — composer media: upload multipart trước, send JSON {attachment_id} sau.
+        Route::post('/inbox/conversations/{conversation}/attachments', [ConversationAttachmentController::class, 'store'])
+            ->name('inbox.attachments.store');
+        Route::get('/inbox/attachments/{attachmentKey}', [ConversationAttachmentController::class, 'show'])
+            ->name('inbox.attachments.show');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')
@@ -464,3 +470,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     });
 });
+
+// P04 — bridge fetch media outbound: signed URL TTL ngắn (A3), KHÔNG session/auth.
+// RLS bind thủ công trong controller từ param ws đã ký. Ngoài mọi group tenant.
+Route::get('/inbox/attachments/{attachmentKey}/raw', [ConversationAttachmentController::class, 'raw'])
+    ->middleware('signed')
+    ->name('inbox.attachments.raw');

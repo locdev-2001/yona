@@ -17,6 +17,14 @@ import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
+import {
+    buildAllowedHosts,
+    collectSourceIdsFromSendResult,
+    downloadUrlToTemp,
+    extFromFilename,
+    mimeToExt,
+    MEDIA_KIND_DEFAULT_EXT,
+} from './media-fetch.mjs';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -1957,91 +1965,28 @@ async function tryLoginWithSavedSession(connectionId) {
     }
 }
 
-function extFromFilename(name) {
-    if (!name || typeof name !== 'string') {
-        return null;
-    }
-    const m = name.match(/\.([a-zA-Z0-9]{1,8})$/);
-    return m ? m[1].toLowerCase() : null;
-}
-
-function mimeToExt(ct) {
-    if (!ct || typeof ct !== 'string') {
-        return null;
-    }
-    const base = ct.split(';')[0].trim().toLowerCase();
-    const m = {
-        'image/jpeg': 'jpg',
-        'image/jpg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-        'image/gif': 'gif',
-        'video/mp4': 'mp4',
-        'audio/mpeg': 'mp3',
-        'audio/mp3': 'mp3',
-        'application/pdf': 'pdf',
-    };
-    return m[base] || null;
-}
-
-const MEDIA_KIND_DEFAULT_EXT = {
-    image: 'jpg',
-    gif: 'gif',
-    video: 'mp4',
-    audio: 'mp3',
-    file: 'bin',
-};
-
 const bridgeAttachmentUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 32 * 1024 * 1024 },
 });
 
-function pickSourceIdFromSendResult(sendResult) {
-    if (!sendResult || typeof sendResult !== 'object') {
-        return null;
-    }
-    const collect = [];
-    if (sendResult.message) {
-        collect.push(sendResult.message);
-    }
-    const att = sendResult.attachment;
-    if (Array.isArray(att)) {
-        for (const a of att) {
-            if (a) {
-                collect.push(a);
-            }
-        }
-    } else if (att) {
-        collect.push(att);
-    }
-    for (const raw of collect) {
-        const id = raw?.msgId ?? raw?.msgID ?? raw?.data?.msgId ?? raw?.data?.msgID ?? raw?.cliMsgId;
-        if (id !== undefined && id !== null && String(id) !== '') {
-            return String(id);
-        }
-    }
-    return null;
-}
+// P04: fetch media qua media-fetch.mjs (byte-cap + host allowlist — Codex MED).
+// Allowlist mặc định = host Laravel (signed URL private disk) + env mở rộng.
+const FETCH_ALLOWED_HOSTS = buildAllowedHosts({
+    laravelWebhookUrl: LARAVEL_WEBHOOK_URL,
+    extraCsv: process.env.BRIDGE_FETCH_HOST_ALLOWLIST,
+});
 
-async function downloadFileUrlToTemp(url, mediaKind, filenameHint) {
-    const res = await fetch(url, {
-        headers: { 'User-Agent': ZCA_USER_AGENT },
-        redirect: 'follow',
-    });
-    if (!res.ok) {
-        throw new Error(`download_failed_${res.status}`);
+/**
+ * Đăng ký TẤT CẢ msgId của 1 lần send vào echo-dedup (file+caption = 2 msgId,
+ * Codex MED-7) và trả {source_id: primary, source_ids: all} cho Laravel ghi alias.
+ */
+function registerAllOutboundSourceIds(slot, sendResult) {
+    const ids = collectSourceIdsFromSendResult(sendResult);
+    for (const id of ids) {
+        registerBridgeOutboundSourceId(slot, id);
     }
-    const buf = Buffer.from(await res.arrayBuffer());
-    let ext = extFromFilename(filenameHint);
-    if (!ext) {
-        const ct = (res.headers.get('content-type') || '').split(';')[0].trim();
-        ext = mimeToExt(ct) || MEDIA_KIND_DEFAULT_EXT[mediaKind] || 'bin';
-    }
-    const safe = String(ext).replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
-    const p = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
-    await fs.writeFile(p, buf);
-    return p;
+    return { source_id: ids[0] ?? null, source_ids: ids };
 }
 
 function checkSendSecret(req, res) {
@@ -2084,17 +2029,18 @@ async function bridgeSendTextOrMedia(slot, body) {
             const mk = String(media_kind || '')
                 .trim()
                 .toLowerCase();
-            tmpPath = await downloadFileUrlToTemp(fileUrl, mk, typeof filename === 'string' ? filename : null);
+            tmpPath = await downloadUrlToTemp(fileUrl, {
+                allowedHosts: FETCH_ALLOWED_HOSTS,
+                userAgent: ZCA_USER_AGENT,
+                mediaKind: mk,
+                filenameHint: typeof filename === 'string' ? filename : null,
+            });
             const cap = text != null && String(text).trim() !== '' ? String(text) : '';
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            const sourceId = pickSourceIdFromSendResult(sendResult);
-            registerBridgeOutboundSourceId(slot, sourceId);
-            return { source_id: sourceId };
+            return registerAllOutboundSourceIds(slot, sendResult);
         }
         const sendResult = await slot.api.sendMessage({ msg: String(text) }, String(thread_id), tt);
-        const sourceId = pickSourceIdFromSendResult(sendResult);
-        registerBridgeOutboundSourceId(slot, sourceId);
-        return { source_id: sourceId };
+        return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
         if (tmpPath) {
             await fs.unlink(tmpPath).catch(() => {});
@@ -2333,9 +2279,8 @@ function buildExpress() {
             tmpPath = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
             await fs.writeFile(tmpPath, req.file.buffer);
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            const sourceId = pickSourceIdFromSendResult(sendResult);
-            registerBridgeOutboundSourceId(slot, sourceId);
-            return res.json({ ok: true, source_id: sourceId });
+            const out = registerAllOutboundSourceIds(slot, sendResult);
+            return res.json({ ok: true, source_id: out.source_id, source_ids: out.source_ids });
         } catch (e) {
             console.error('sendAttachment', e);
             return res.status(500).json({ ok: false, message: e?.message || String(e) });
@@ -2360,7 +2305,7 @@ function buildExpress() {
         }
         try {
             const out = await bridgeSendTextOrMedia(slot, req.body || {});
-            return res.json({ ok: true, source_id: out.source_id });
+            return res.json({ ok: true, source_id: out.source_id, source_ids: out.source_ids });
         } catch (e) {
             const msg = e?.message ? String(e.message) : String(e);
             if (

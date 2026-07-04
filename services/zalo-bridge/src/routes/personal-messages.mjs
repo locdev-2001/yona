@@ -77,6 +77,7 @@ export function registerPersonalMessageRoutes(app, deps) {
                 thread_id: resolved.thread_id,
                 thread_type: resolved.thread_type,
                 source_id: out.source_id,
+                source_ids: out.source_ids ?? (out.source_id != null ? [out.source_id] : []),
             });
         } catch (e) {
             const msg = e?.message ? String(e.message) : String(e);

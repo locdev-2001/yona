@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Contracts\SendException;
 use App\Http\Controllers\Controller;
+use App\Models\Attachment;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -12,6 +13,7 @@ use App\Modules\Integration\ChannelManager;
 use App\Services\ZaloGroupBackfillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -136,11 +138,34 @@ class InboxController extends Controller
 
         $validated = $request->validate([
             'text' => ['nullable', 'string', 'max:5000'],
+            'attachment_id' => ['nullable', 'uuid'],
         ]);
 
         $text = isset($validated['text']) ? trim((string) $validated['text']) : '';
 
-        if ($text === '') {
+        // P04 — media: resolve attachment đã upload (phải thuộc đúng conversation này).
+        $media = null;
+        if (! empty($validated['attachment_id'])) {
+            $attachment = Attachment::where('id', $validated['attachment_id'])
+                ->where('attachable_type', 'conversation')
+                ->where('attachable_id', $conversation->id)
+                ->firstOrFail();
+
+            $media = [
+                // Bridge fetch: signed URL TTL ngắn (A3 — private disk, không public).
+                'file_url' => URL::temporarySignedRoute('inbox.attachments.raw', now()->addMinutes(15), [
+                    'attachmentKey' => $attachment->attachment_key,
+                    'ws' => $conversation->workspace_id,
+                ]),
+                // Hiển thị chat: URL bền, quyền = xem conversation (không hết hạn).
+                'display_url' => route('inbox.attachments.show', $attachment->attachment_key),
+                'media_kind' => $attachment->mediaKind(),
+                'filename' => $attachment->original_name,
+                'attachment_id' => $attachment->id,
+            ];
+        }
+
+        if ($text === '' && $media === null) {
             return response()->json(['message' => 'Nội dung không được để trống.'], 422);
         }
 
@@ -156,7 +181,10 @@ class InboxController extends Controller
             /** @var ChannelManager $channelManager */
             $channelManager = app(ChannelManager::class);
             $message = $channelManager->driver($conversation->channel)
-                ->sendMessage($conversation, ['text' => $text]);
+                ->sendMessage($conversation, [
+                    'text' => $text !== '' ? $text : null,
+                    'media' => $media,
+                ]);
 
             return response()->json($message, 201);
         } catch (SendException $e) {
