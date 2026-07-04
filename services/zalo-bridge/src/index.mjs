@@ -357,12 +357,18 @@ async function postBridgeSession({ connection_id, bot_id, state, detail }) {
     await outbox.enqueue({ type: 'bridge_session', connection_id, bot_id, state, detail: detail ?? null });
 }
 
+// P09 spike chatty: đếm event fire-and-forget theo type (expose /health) —
+// chạy 24-48h trên tài khoản thật để quyết định sample/debounce ở bridge.
+const relayEventCounters = { since: Date.now(), byType: {} };
+
 /**
  * P12/H3: lane fire-and-forget cho event chatty (typing/seen/delivered/…) —
  * POST thẳng, KHÔNG qua outbox durable (nghẽn FIFO chặn inbound). Lỗi bỏ qua.
  * Vẫn ký LARAVEL_WEBHOOK_SECRET như đường outbox.
  */
 function postRelayFireAndForget(body) {
+    const evt = body?.event_type || 'unknown';
+    relayEventCounters.byType[evt] = (relayEventCounters.byType[evt] || 0) + 1;
     if (!LARAVEL_WEBHOOK_URL) return;
     const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
     if (LARAVEL_WEBHOOK_SECRET) {
@@ -2105,6 +2111,8 @@ function buildExpress() {
             session_lost_reason: slot.sessionLostReason || null,
             // H-3 / M-4: outbox stats cho alert khi authBlocked hoặc queue tăng bất thường
             outbox: outbox.stats(),
+            // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
+            relay_counters: relayEventCounters,
         };
         if (isQrSlotKey(slotKey)) {
             out.qr_token = slotKey.slice(3);

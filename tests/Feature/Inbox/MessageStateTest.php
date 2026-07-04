@@ -350,13 +350,12 @@ function msPostRelay(Workspace $workspace, int $connectionId, string $eventType,
     return $response;
 }
 
-it('webhook: undo end-to-end → recalled_at set, KHÔNG ghi relay_events, KHÔNG meter', function () {
+it('webhook: undo end-to-end → recalled_at set, KHÔNG meter', function () {
     Event::fake([MessageStateChanged::class]);
     [$workspace, , $conversation, $connectionId] = msWebhookSetup();
     $message = msMessage($conversation, 'zmsg_wh_1', 'in');
 
     $before = DB::table('channel_usage')->count();
-    $relayBefore = DB::table('relay_events')->count();
 
     msPostRelay($workspace, $connectionId, 'undo', [[
         'data' => ['msgId' => 'UNDO_ACT', 'content' => ['globalMsgId' => 'zmsg_wh_1'], 'ts' => '1751600000000'],
@@ -364,8 +363,7 @@ it('webhook: undo end-to-end → recalled_at set, KHÔNG ghi relay_events, KHÔN
     ]])->assertOk();
 
     expect($message->fresh()->recalled_at)->not->toBeNull()
-        ->and(DB::table('channel_usage')->count())->toBe($before)
-        ->and(DB::table('relay_events')->count())->toBe($relayBefore);
+        ->and(DB::table('channel_usage')->count())->toBe($before);
     Event::assertDispatched(MessageStateChanged::class);
 });
 
@@ -384,18 +382,19 @@ it('webhook: typing → broadcast ConversationTyping, KHÔNG ghi DB', function (
     Event::assertDispatched(ConversationTyping::class, function (ConversationTyping $e) use ($conversation) {
         return $e->conversationId === $conversation->id;
     });
-    expect(DB::table('messages')->count())->toBe($messagesBefore)
-        ->and(DB::table('relay_events')->count())->toBe(0);
+    expect(DB::table('messages')->count())->toBe($messagesBefore);
 });
 
-it('webhook: event LẠ → 200 + log, KHÔNG ghi relay_events (bỏ kho)', function () {
+it('webhook: event LẠ → 200 + log redacted, KHÔNG kho (P09: bảng relay_events đã drop)', function () {
     [$workspace, , , $connectionId] = msWebhookSetup();
 
     msPostRelay($workspace, $connectionId, 'brand_new_zca_event', [['some' => 'shape']])
         ->assertOk()
         ->assertJsonPath('message', 'relay_event_unknown_logged');
 
-    expect(DB::table('relay_events')->count())->toBe(0);
+    // P09: bảng relay_events không còn tồn tại
+    $tableExists = DB::selectOne("SELECT to_regclass('public.relay_events') AS t")->t;
+    expect($tableExists)->toBeNull();
 });
 
 it('webhook: bơm 100 state-event KHÔNG đổi channel_usage (seam metering)', function () {

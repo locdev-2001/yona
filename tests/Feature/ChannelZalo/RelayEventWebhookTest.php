@@ -54,7 +54,7 @@ function postRelayWebhook(array $payload)
     );
 }
 
-it('P02: seen_messages relay KHÔNG còn ghi relay_events, không đụng metering', function () {
+it('P02/P09: seen_messages relay không đụng metering (kho relay_events đã drop)', function () {
     $ws = Workspace::factory()->create();
     $connId = relayTestConnection($ws->id);
 
@@ -71,8 +71,7 @@ it('P02: seen_messages relay KHÔNG còn ghi relay_events, không đụng meteri
     ])->assertStatus(200)->assertJson(['ok' => true, 'message' => 'receipts_processed']);
 
     TenantScope::bind($ws->id);
-    expect(DB::table('relay_events')->count())->toBe(0)
-        ->and((int) DB::table('channel_usage')->count())->toBe($usageBefore);
+    expect((int) DB::table('channel_usage')->count())->toBe($usageBefore);
     TenantScope::forget();
 })->group('channel-zalo');
 
@@ -88,10 +87,8 @@ it('typing: broadcast-only, 200, KHÔNG ghi DB (taxonomy phù du)', function () 
         'payload' => [['type' => 0, 'data' => ['uid' => 'peer_x', 'ts' => '1'], 'threadId' => 'peer_x']],
     ])->assertStatus(200)->assertJson(['ok' => true, 'message' => 'typing_broadcast']);
 
-    TenantScope::bind($ws->id);
-    $count = DB::table('relay_events')->where('event_type', 'typing')->count();
-    TenantScope::forget();
-    expect($count)->toBe(0);
+    // P09: không còn bảng kho nào để ghi typing
+    expect(DB::selectOne("SELECT to_regclass('public.relay_events') AS t")->t)->toBeNull();
 })->group('channel-zalo');
 
 it('event LẠ → 200 + log redacted, KHÔNG kho, KHÔNG drop im lặng', function () {
@@ -104,9 +101,6 @@ it('event LẠ → 200 + log redacted, KHÔNG kho, KHÔNG drop im lặng', funct
         'source_id' => 'unknown_evt_001',
     ])->assertStatus(200)->assertJson(['ok' => true, 'message' => 'relay_event_unknown_logged']);
 
-    TenantScope::bind($ws->id);
-    expect(DB::table('relay_events')->count())->toBe(0);
-    TenantScope::forget();
 })->group('channel-zalo');
 
 it('undo retry khi tin chưa về: idempotent qua pending unique — 1 row, 200 cả 2 lần', function () {

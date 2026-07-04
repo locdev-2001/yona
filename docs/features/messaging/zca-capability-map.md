@@ -8,7 +8,7 @@ Module: messaging · Status: **reference** · Updated: 2026-07-04 · Nguồn: zc
 | | Tổng | Hiện wire |
 |---|---|---|
 | **REST method** | **146** (`.d.ts` Factory imports == runtime `Object.getOwnPropertyNames(api)`) | **146** qua `POST /zca/:method` (allowlist reflection, `src/routes/zca-dispatch.mjs`) + ~22 method / 19 endpoint bespoke giữ nguyên (4 active) |
-| **Listener event** | **16** | **15 = 5 bespoke + 10 forwarder generic** (`src/relay-forwarder.mjs`); `cipher_key` CỐ Ý không forward (key material — B6). Event chưa có handler product → lưu `relay_events` (RLS, KHÔNG metering), KHÔNG vứt |
+| **Listener event** | **16** | **15 = 5 bespoke + 10 forwarder generic** (`src/relay-forwarder.mjs`); `cipher_key` CỐ Ý không forward (key material — B6). Event trạng-thái-tin (undo/seen/delivered/reaction) → ĐI THEO `messages` (P02 message-state pipeline); typing → broadcast-only; lạ → structured log redacted + rate-limit + alert (P09 — kho `relay_events` ĐÃ DROP), KHÔNG vứt im lặng |
 
 **11 event trước bị VỨT nay đã phủ** (P12): `connected, disconnected, old_messages, undo, seen_messages, delivered_messages, reaction, old_reactions, upload_attachment, typing` forward về Laravel (`old_messages`/`undo` durable outbox; chatty fire-and-forget — H3); `cipher_key` chặn tại bridge. Snapshot tier: `src/zca-methods.snapshot.json` — test M1 (`src/zca-adapter.test.mjs`) fail build khi bump zca-js lộ method chưa phân tier. Flow chi tiết: [zalo-generic-dispatcher](./zalo-generic-dispatcher.md).
 

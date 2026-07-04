@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { MessageCircle, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -97,6 +97,38 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [typing, setTyping] = useState<{ convId: string; until: number } | null>(null);
     // P06a — tin đang trả lời (reply bar composer)
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+    // P09 — lưới bù khoảng chết websocket: track stream_version đã biết của thread
+    // đang mở; version nhảy >+1 hoặc tab active lại → refetch (debounce 5s)
+    const activeConvRef = useRef<Conversation | null>(null);
+    const streamVersionRef = useRef<number | null>(null);
+    const lastRefetchRef = useRef(0);
+
+    function refetchActiveThread() {
+        const conv = activeConvRef.current;
+        if (!conv || Date.now() - lastRefetchRef.current < 5000) return;
+        lastRefetchRef.current = Date.now();
+
+        fetch(route('inbox.stream', conv.id), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+        })
+            .then((r) => r.json())
+            .then((responseData) => {
+                setItems(responseData.items ?? []);
+                setNextCursor(responseData.next_cursor ?? null);
+                streamVersionRef.current = responseData.stream_version ?? null;
+            })
+            .catch(() => {}); // lưới bù — lỗi im lặng, lần sau thử lại
+    }
+
+    // Tab active lại sau sleep/mất socket → so khớp bằng refetch
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') refetchActiveThread();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
     function handleResync() {
@@ -151,6 +183,16 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
 
         channel.listen('MessageReceived', (payload: MessageReceivedPayload) => {
             const { message, conversation_id, last_message_at, unread_count, gap_event } = payload;
+
+            // P09 — stream_version nhảy >+1 = đã lỡ event trong khoảng chết socket → refetch
+            if (conversation_id === activeConvRef.current?.id && payload.stream_version != null) {
+                const known = streamVersionRef.current;
+                if (known != null && payload.stream_version > known + 1) {
+                    refetchActiveThread();
+                } else {
+                    streamVersionRef.current = payload.stream_version;
+                }
+            }
 
             // Cập nhật thread nếu đang mở đúng conversation — gap marker (nếu có, P05)
             // chèn TRƯỚC message, khớp thứ tự materialize ở backend (ingest TX).
@@ -230,6 +272,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
 
     function handleSelectConv(conv: Conversation) {
         setActiveConv(conv);
+        activeConvRef.current = conv;
         setReplyTo(null);
         // Phản chiếu URL → reload/share giữ đúng hội thoại (route inbox.show preselect). Không round-trip.
         window.history.replaceState(window.history.state, '', route('inbox.show', conv.id));
@@ -249,6 +292,7 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
             .then((responseData) => {
                 setItems(responseData.items ?? []);
                 setNextCursor(responseData.next_cursor ?? null);
+                streamVersionRef.current = responseData.stream_version ?? null; // P09
             })
             .catch(() => showToast('Không tải được tin nhắn. Vui lòng thử lại.'))
             .finally(() => setLoadingMessages(false));

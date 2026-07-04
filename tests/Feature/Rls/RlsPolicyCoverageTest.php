@@ -82,8 +82,7 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         'message_source_aliases',
         'lead_merge_conflicts',
 
-        // P10 inbox-multichannel-relayer relay-event store (2026_07_04_100008)
-        'relay_events',
+        // relay_events ĐÃ NGHỈ HƯU (P09 inbox-full-messaging-framework — drop 2026_07_04_500011)
 
         // P01a inbox-full-messaging-framework message-state (2026_07_04_500004)
         'message_reactions',

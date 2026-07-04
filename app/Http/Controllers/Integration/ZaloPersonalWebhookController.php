@@ -20,7 +20,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
 /**
@@ -88,8 +90,8 @@ class ZaloPersonalWebhookController extends Controller
                 'inbound' => $this->handleInbound($payload),
                 'bridge_session' => $this->handleBridgeSession($payload),
                 'social_event' => $this->handleSocialEvent($payload),
-                // P10/H1: relay_event (forwarder generic P12) + event type LẠ → đều
-                // ghi relay_events, KHÔNG drop im lặng. KHÔNG tính metering (F1/F14).
+                // P02/P09: relay_event + type LẠ → message-state pipeline / structured
+                // log — KHÔNG kho, KHÔNG drop im lặng, KHÔNG metering (F1/F14).
                 default => $this->handleRelayEvent($payload, $eventType),
             };
         } finally {
@@ -313,15 +315,46 @@ class ZaloPersonalWebhookController extends Controller
                 return response()->json(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
 
             default:
-                // Event LẠ — observability tối thiểu (P09 thêm rate-limit + alert):
-                // redact — chỉ event_type + shape keys, KHÔNG payload thô.
-                logger()->warning('zalo relay_event unknown type', [
-                    'event_type' => mb_substr($relayEventType, 0, 32),
-                    'connection_id' => $connectionId,
-                    'payload_keys' => array_slice(array_keys($eventPayload), 0, 10),
-                ]);
+                $this->logUnknownRelayEvent($relayEventType, $connectionId, $channelAccountId, $eventPayload);
 
                 return response()->json(['ok' => true, 'message' => 'relay_event_unknown_logged']);
+        }
+    }
+
+    /**
+     * P09 — observability tối thiểu cho event LẠ (bù việc bỏ kho relay_events):
+     * structured log redacted (hash + size + keys, KHÔNG payload thô/nội dung tin),
+     * sample ~1 log/phút/(connection, event_type) chống log-spam từ event chatty lạ,
+     * alert (error level) khi unknown >10/phút/connection — dấu hiệu zca version
+     * mới bắn event chưa có handler.
+     *
+     * @param  array<int|string, mixed>  $eventPayload
+     */
+    private function logUnknownRelayEvent(string $eventType, int $connectionId, ?string $channelAccountId, array $eventPayload): void
+    {
+        $encoded = (string) json_encode($eventPayload);
+
+        if (RateLimiter::attempt('unknown-relay:'.$connectionId.':'.$eventType, 1, fn () => true, 60)) {
+            logger()->warning('zalo relay_event unknown type', [
+                'event_type' => mb_substr($eventType, 0, 32),
+                'connection_id' => $connectionId,
+                'channel_account_id' => $channelAccountId,
+                'workspace_id' => currentWorkspace()?->id,
+                'payload_hash' => sha1($encoded),
+                'payload_size' => strlen($encoded),
+                'payload_keys' => array_slice(array_keys($eventPayload), 0, 10),
+            ]);
+        }
+
+        $floodKey = 'unknown-relay-flood:'.$connectionId;
+        Cache::add($floodKey, 0, 60);
+        $count = (int) Cache::increment($floodKey);
+        if ($count === 11) { // alert đúng 1 lần khi vượt ngưỡng trong cửa sổ 60s
+            logger()->error('zalo relay_event unknown FLOOD (>10/min) — zca version mới bắn event chưa handler?', [
+                'connection_id' => $connectionId,
+                'channel_account_id' => $channelAccountId,
+                'last_event_type' => mb_substr($eventType, 0, 32),
+            ]);
         }
     }
 
