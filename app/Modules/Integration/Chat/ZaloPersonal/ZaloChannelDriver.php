@@ -221,6 +221,17 @@ class ZaloChannelDriver implements ChannelDriver
     }
 
     /**
+     * P06b — seen-sync (default OFF, A4): SeenSyncService gọi qua method_exists
+     * (kênh không hỗ trợ → im lặng bỏ qua, không phải lỗi).
+     *
+     * @param  list<array<string, mixed>>  $platformMessages  platform_meta.zca_message các tin inbound
+     */
+    public function sendSeen(Conversation $conversation, array $platformMessages): bool
+    {
+        return app(ZaloInteractionService::class)->sendSeenBatch($conversation, $platformMessages);
+    }
+
+    /**
      * SendMessageQuote shape (sendMessage.ts: qmsgOwner/qmsgId/qmsgCliId/qmsgType/
      * qmsgTs/qmsg/qmsgTTL + prepareQMSGAttach đọc propertyExt/content). Gate đủ
      * field bắt buộc + loại tin zca throw (webchat content-object, group.poll).

@@ -104,6 +104,39 @@ class ZaloInteractionService
     }
 
     /**
+     * P06b — báo "đã xem" về Zalo cho batch tin inbound (≤50 — MAX_MESSAGES_PER_SEND).
+     * CHỈ 1-1 (group seen per-member, v1 bỏ). Message thiếu field bắt buộc bị loại
+     * (sendSeenEvent cần msgId/cliMsgId/uidFrom/idTo/msgType — sendSeenEvent.ts).
+     *
+     * @param  list<array<string, mixed>>  $zcaMessages  platform_meta.zca_message của các tin inbound
+     * @return bool true nếu có gửi (≥1 tin hợp lệ + dispatcher 2xx)
+     */
+    public function sendSeenBatch(Conversation $conversation, array $zcaMessages): bool
+    {
+        $valid = array_values(array_filter($zcaMessages, function ($zca) {
+            foreach (['msgId', 'cliMsgId', 'uidFrom', 'idTo', 'msgType'] as $field) {
+                if (! isset($zca[$field]) || $zca[$field] === '') {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+
+        if ($valid === [] || $conversation->thread_type === 1) {
+            return false;
+        }
+
+        $connection = $this->resolveConnection($conversation);
+        $response = $this->dispatch($connection, $conversation->workspace_id, 'sendSeenEvent', [
+            array_slice($valid, 0, 50),
+            0, // ThreadType.User
+        ]);
+
+        return $response->successful();
+    }
+
+    /**
      * P05 — verify SĐT nhập tay: findUser(phone) chiều xuôi, uid phải khớp peer_uid.
      * false = không resolve được HOẶC uid không khớp (LOW-2: reject cả 2 nhánh).
      */
