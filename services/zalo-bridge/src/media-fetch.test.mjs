@@ -90,6 +90,28 @@ test('downloadUrlToTemp: trong cap → ghi file tạm đúng ext theo content-ty
     }
 });
 
+test('downloadUrlToTemp: redirect sang host NGOÀI allowlist bị chặn (re-validate URL cuối — M1)', async () => {
+    // target: localhost (resolve được, KHÔNG trong allowlist chỉ có 127.0.0.1)
+    const { server: target, url: targetUrl } = await serveOnce((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('secret');
+    });
+    const targetPort = new URL(targetUrl).port;
+    const { server: redirector, url } = await serveOnce((req, res) => {
+        res.writeHead(302, { Location: `http://localhost:${targetPort}/steal` });
+        res.end();
+    });
+    try {
+        await assert.rejects(
+            downloadUrlToTemp(url, { maxBytes: 1000, allowedHosts: new Set(['127.0.0.1']) }),
+            /fetch_host_not_allowed/
+        );
+    } finally {
+        redirector.close();
+        target.close();
+    }
+});
+
 test('downloadUrlToTemp: host ngoài allowlist bị chặn TRƯỚC khi fetch', async () => {
     await assert.rejects(
         downloadUrlToTemp('http://evil.example/f', { allowedHosts: new Set(['app.local']) }),
