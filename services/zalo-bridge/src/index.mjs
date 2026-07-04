@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
+import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
@@ -29,6 +30,9 @@ const OUTBOX_DEAD_DIR = path.join(PLUGIN_ROOT, '.outbox-dead');
 const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 3710);
 const BRIDGE_SEND_SECRET = process.env.BRIDGE_SEND_SECRET || '';
 const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
+// P11: secret RIÊNG cho 39 method destructive qua /zca/:method (defense-in-depth,
+// quyền thật gate ở Laravel TenantPermission::ZaloDestructive). Rỗng = không bao giờ elevated.
+const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
 
@@ -83,6 +87,9 @@ function createSlotState() {
         botId: 0,
         listenerStarted: false,
         outboundEchoIds: new Map(),
+        // P11: workspace bind lúc promote (B1 token-từ-session) + allowlist reflect cache
+        workspaceId: '',
+        allowlist: null,
     };
 }
 
@@ -1814,7 +1821,7 @@ async function clearSlot(slotKey) {
     slots.delete(String(slotKey));
 }
 
-async function promoteQrToConnection(qrKey, connectionId) {
+async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
     const slot = slots.get(qrKey);
     if (!slot?.api || slot.loginPhase !== 'ready' || !slot.personalUid) {
         return false;
@@ -1847,7 +1854,11 @@ async function promoteQrToConnection(qrKey, connectionId) {
     if (existsSync(oldMp)) {
         await fs.unlink(oldMp).catch(() => {});
     }
-    await writeSlotMetaForKey(newKey, { bot_id: slot.botId });
+    // P11/B1: bind connection→workspace tại promote (nơi DUY NHẤT ghi binding —
+    // workspace_id từ SESSION Laravel đã auth, không từ connection row). Persist
+    // vào meta để tryLoginWithSavedSession khôi phục sau restart (review NEW-2).
+    slot.workspaceId = String(workspaceId || '');
+    await writeSlotMetaForKey(newKey, { bot_id: slot.botId, workspace_id: slot.workspaceId });
     slots.delete(qrKey);
     slots.set(newKey, slot);
     startListenerForSlot(newKey);
@@ -1881,6 +1892,11 @@ async function tryLoginWithSavedSession(connectionId) {
         const meta = await readSlotMetaForKey(key);
         if (meta?.bot_id) {
             slot.botId = Number(meta.bot_id);
+        }
+        // P11/B1: khôi phục workspace binding sau restart — thiếu thì dispatcher
+        // /zca fail-closed 403 (workspace_binding_missing) cho tới khi re-promote.
+        if (meta?.workspace_id) {
+            slot.workspaceId = String(meta.workspace_id);
         }
         const zalo = new Zalo(ZALO_OPTIONS);
         slot.api = await zalo.login({
@@ -2182,7 +2198,9 @@ function buildExpress() {
             return res.status(400).json({ ok: false, message: 'qr_token and connection_id required' });
         }
         const qrKey = `qr:${token}`;
-        const ok = await promoteQrToConnection(qrKey, connectionId);
+        // P11/B1: workspace_id từ session Laravel đã auth (currentWorkspace) — bind vào slot
+        const workspaceId = typeof req.body?.workspace_id === 'string' ? req.body.workspace_id.trim() : '';
+        const ok = await promoteQrToConnection(qrKey, connectionId, workspaceId);
         if (!ok) {
             return res.status(400).json({ ok: false, message: 'promote_failed' });
         }
@@ -2333,6 +2351,13 @@ function buildExpress() {
         ThreadType,
         buildGroupBackfillPayload,
         enqueueOutbox: (body) => outbox.enqueue(body),
+    });
+    // P11: dispatcher generic — mount SAU các route active. resolve-only (M2):
+    // slots.get, KHÔNG getSlot (get-or-create).
+    registerZcaDispatchRoutes(app, {
+        resolveSlot: (connectionId) => slots.get(String(connectionId)),
+        sendSecret: BRIDGE_SEND_SECRET,
+        elevatedSecret: BRIDGE_ELEVATED_SECRET,
     });
 
     return app;

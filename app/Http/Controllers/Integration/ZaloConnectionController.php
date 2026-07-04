@@ -169,6 +169,10 @@ class ZaloConnectionController extends Controller
                 ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/promote', [
                     'qr_token' => $validated['qr_token'],
                     'connection_id' => $validated['connection_id'],
+                    // P11/B1: bind connection→workspace tại bridge (slot.workspaceId) —
+                    // từ SESSION đã auth (currentWorkspace), KHÔNG từ connection row.
+                    // Dispatcher /zca verify token-từ-session dựa trên binding này.
+                    'workspace_id' => $this->currentWorkspaceId(),
                 ]);
         } catch (ConnectionException) {
             return $this->bridgeDownResponse();
