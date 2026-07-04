@@ -13,7 +13,9 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenExceptio
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
 use App\Services\MeteringService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -168,37 +170,73 @@ class ZaloSendService
 
         $sourceId = isset($bridgeResponse['source_id']) ? (string) $bridgeResponse['source_id'] : null;
 
-        $message = Message::create([
+        $attrs = [
             'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
             'direction' => 'out',
             'type' => $media ? ($media['media_kind'] ?? 'file') : 'text',
             'body' => $text,
-            'media_url' => $media !== null ? ($media['display_url'] ?? $media['file_url'] ?? null) : null,
+            // Review L1: KHÔNG fallback file_url — signed URL 15' tuyệt đối không được vào DB
+            'media_url' => $media !== null ? ($media['display_url'] ?? null) : null,
             'media_meta' => $mediaMeta ?: [],
             'source_id' => $sourceId,
             'platform_sent_at' => now(),
             'sent_by' => Auth::id(),
-        ]);
+        ];
+
+        try {
+            $message = DB::transaction(fn () => Message::create($attrs));
+            $createdNew = true;
+        } catch (QueryException $e) {
+            // P02 race: echo self-listen về webhook TRƯỚC khi portal persist → row
+            // (conversation_id, source_id) đã tồn tại (23505). Tin ĐÃ gửi thành công
+            // phía Zalo — không được ném lỗi ra user. Merge phần portal biết
+            // (body/media/sent_by) vào row echo. Savepoint (DB::transaction) để
+            // connection còn dùng được sau abort — pattern upsertConversation.
+            if ($e->getCode() !== '23505' || $sourceId === null) {
+                throw $e;
+            }
+
+            $message = Message::where('conversation_id', $conversation->id)
+                ->where('source_id', $sourceId)
+                ->firstOrFail();
+
+            foreach (['body', 'media_url', 'media_meta', 'sent_by'] as $col) {
+                $existingValue = $message->{$col};
+                if (($existingValue === null || $existingValue === [] || $existingValue === '') && $attrs[$col] !== null) {
+                    $message->{$col} = $attrs[$col];
+                }
+            }
+            if ($message->isDirty()) {
+                $message->save();
+            }
+            $createdNew = false;
+        }
 
         // P04 (Codex MED-7): file + caption → zca tách 2 tin → 2 msgId. Bridge trả
         // source_ids đầy đủ; id phụ ghi message_source_aliases để echo thứ hai dedup
         // vào CÙNG row này thay vì tạo tin trùng.
         $allSourceIds = array_map('strval', array_filter((array) ($bridgeResponse['source_ids'] ?? [])));
         foreach (array_unique(array_diff($allSourceIds, [$sourceId ?? ''])) as $aliasSourceId) {
-            MessageSourceAlias::create([
-                'workspace_id' => $conversation->workspace_id,
-                'conversation_id' => $conversation->id,
-                'message_id' => $message->id,
-                'source_id' => $aliasSourceId,
-                'kind' => 'multi_send',
-            ]);
+            // Review L5: firstOrCreate — đụng unique (echo về trước) không được ném lỗi
+            // ra user khi tin ĐÃ gửi thành công phía Zalo.
+            MessageSourceAlias::firstOrCreate(
+                ['conversation_id' => $conversation->id, 'source_id' => $aliasSourceId],
+                [
+                    'workspace_id' => $conversation->workspace_id,
+                    'message_id' => $message->id,
+                    'kind' => 'multi_send',
+                ],
+            );
         }
 
         // P05 invariant: MỌI Message insert mới +1 stream_version (khớp
         // InboundMessageService::createMessage) — echo bridge về sau chỉ là
-        // replay no-op theo source_id, không bump lần hai.
-        Conversation::where('id', $conversation->id)->increment('stream_version');
+        // replay no-op theo source_id, không bump lần hai. Race-merge (echo đã
+        // insert + bump trước) → KHÔNG bump lần hai.
+        if ($createdNew) {
+            Conversation::where('id', $conversation->id)->increment('stream_version');
+        }
 
         return $message;
     }

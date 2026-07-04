@@ -6,6 +6,8 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\InboundMessageService;
+use App\Services\Inbox\MessageSourceResolver;
+use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -17,7 +19,12 @@ use Mockery\MockInterface;
 
 function makeService(?MeteringService $meter = null): InboundMessageService
 {
-    return new InboundMessageService($meter ?? app(MeteringService::class), app(SessionGapMaterializer::class));
+    return new InboundMessageService(
+        $meter ?? app(MeteringService::class),
+        app(SessionGapMaterializer::class),
+        app(MessageSourceResolver::class),
+        app(MessageStateService::class),
+    );
 }
 
 function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = null): array
@@ -295,7 +302,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class)) extends InboundMessageService
+    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class), app(MessageSourceResolver::class), app(MessageStateService::class)) extends InboundMessageService
     {
         private bool $firstLookup = true;
 

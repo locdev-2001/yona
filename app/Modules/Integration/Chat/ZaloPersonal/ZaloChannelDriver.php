@@ -131,9 +131,10 @@ class ZaloChannelDriver implements ChannelDriver
     }
 
     /**
-     * P01a — platform_meta.zca_message: subset raw từ listener_data đủ 14 field
-     * cho outbound action (quote/reaction/seen — Codex BLOCKER-1). Thiếu 1 field
-     * = action tương ứng KHÔNG gọi được → chỉ giữ field có mặt, P06 gate theo field.
+     * P01a — platform_meta.zca_message: subset raw từ listener_data đủ 15 key
+     * (13 từ listener_data + threadId/threadType) cho outbound action
+     * (quote/reaction/seen — Codex BLOCKER-1). Thiếu 1 field = action tương ứng
+     * KHÔNG gọi được → chỉ giữ field có mặt, P06 gate theo field.
      * Tin backfill/legacy không có listener_data → platform_meta rỗng (action disable).
      *
      * @param  array<string, mixed>  $raw
