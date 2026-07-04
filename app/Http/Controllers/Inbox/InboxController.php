@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\Inbox\SeenSyncService;
 use App\Services\ZaloGroupBackfillService;
 use Illuminate\Http\JsonResponse;
@@ -102,7 +103,34 @@ class InboxController extends Controller
             // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage thấy nút)
             'seenSyncEnabled' => app(SeenSyncService::class)->enabled(),
             'canManageZalo' => (bool) auth()->user()?->can(TenantPermission::ZaloManage->value),
+            // P11 — capability flags per-kênh: FE ẩn/hiện nút theo flags, KHÔNG biết kênh
+            'channelCapabilities' => $this->channelCapabilities($channelAccounts->pluck('channel')->unique()->values()->all()),
         ]);
+    }
+
+    /**
+     * P11 — map channel → capability flags (từ driver, data không rẽ nhánh).
+     *
+     * @param  list<string>  $channels
+     * @return array<string, array<string, bool|string>>
+     */
+    private function channelCapabilities(array $channels): array
+    {
+        if (! class_exists(ChannelManager::class)) {
+            return [];
+        }
+
+        $manager = app(ChannelManager::class);
+        $map = [];
+        foreach ($channels as $channel) {
+            try {
+                $map[$channel] = $manager->driver($channel)->capabilities()->toArray();
+            } catch (\InvalidArgumentException) {
+                // kênh chưa đăng ký driver — FE fallback all-false (ẩn nút)
+            }
+        }
+
+        return $map;
     }
 
     /**
@@ -227,13 +255,18 @@ class InboxController extends Controller
         try {
             /** @var ChannelManager $channelManager */
             $channelManager = app(ChannelManager::class);
-            $message = $channelManager->driver($conversation->channel)
-                ->sendMessage($conversation, [
+            // P11 (BLK-4): MỌI outbound đi qua OutboundSendPipeline — quota gate
+            // TRƯỚC transport + meterReply SAU (money-path core, kênh nào cũng chạm).
+            $message = app(OutboundSendPipeline::class)->send(
+                $channelManager->driver($conversation->channel),
+                $conversation,
+                [
                     'text' => $text !== '' ? $text : null,
                     'media' => $media,
                     'reply_to' => $replyTo,
                     'sticker' => $sticker,
-                ]);
+                ],
+            );
 
             return response()->json($message, 201);
         } catch (SendException $e) {

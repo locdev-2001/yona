@@ -31,6 +31,9 @@ interface Props {
     onClearReply?: () => void;
     /** P07 — thay placeholder {ten_khach} trong canned reply. */
     peerName?: string | null;
+    /** P11 — capability flags: kênh không hỗ trợ → ẨN nút (không assume Zalo). */
+    canSendMedia?: boolean;
+    canSendSticker?: boolean;
 }
 
 interface QuickReplyItem {
@@ -49,7 +52,16 @@ function notify(msg: string) {
 }
 
 /** Composer channel-agnostic: text + đính kèm + paste ảnh + reply bar + sticker + canned "/". */
-export function MessageComposer({ conversationId, disabled, onSent, replyTo, onClearReply, peerName }: Props) {
+export function MessageComposer({
+    conversationId,
+    disabled,
+    onSent,
+    replyTo,
+    onClearReply,
+    peerName,
+    canSendMedia = false,
+    canSendSticker = false,
+}: Props) {
     const [text, setText] = useState('');
     const [attachment, setAttachment] = useState<PendingAttachment | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -333,26 +345,30 @@ export function MessageComposer({ conversationId, disabled, onSent, replyTo, onC
                         if (file) uploadFile(file);
                     }}
                 />
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    disabled={disabled || uploading || sending}
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="Đính kèm tệp"
-                >
-                    <Paperclip className={`h-4 w-4 ${uploading ? 'animate-pulse' : ''}`} />
-                </Button>
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    disabled={disabled || sending}
-                    onClick={() => setStickerOpen(!stickerOpen)}
-                    aria-label="Gửi sticker"
-                >
-                    <SmilePlus className="h-4 w-4" />
-                </Button>
+                {canSendMedia && (
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={disabled || uploading || sending}
+                        onClick={() => fileInputRef.current?.click()}
+                        aria-label="Đính kèm tệp"
+                    >
+                        <Paperclip className={`h-4 w-4 ${uploading ? 'animate-pulse' : ''}`} />
+                    </Button>
+                )}
+                {canSendSticker && (
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={disabled || sending}
+                        onClick={() => setStickerOpen(!stickerOpen)}
+                        aria-label="Gửi sticker"
+                    >
+                        <SmilePlus className="h-4 w-4" />
+                    </Button>
+                )}
                 <Input
                     value={text}
                     onChange={(e) => setText(e.target.value)}

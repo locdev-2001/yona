@@ -2,7 +2,6 @@
 
 namespace App\Modules\Integration\Chat\ZaloPersonal;
 
-use App\Exceptions\QuotaExceededException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageSourceAlias;
@@ -12,7 +11,6 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowExcept
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
-use App\Services\MeteringService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +21,7 @@ use Illuminate\Support\Facades\Http;
  *
  * Thứ tự kiểm tra TRƯỚC khi gửi:
  *   1. Circuit-breaker (ZaloHealthMonitor) → ZaloCircuitOpenException
- *   2. MeteringService quota (assertCanSend)
+ *   2. (P11) metering ĐÃ hoist lên OutboundSendPipeline — driver không meter
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (retry 2×200ms)
  *   5. Ghi Message direction=out → meterReply → increment rate limiter
@@ -41,7 +39,6 @@ class ZaloSendService
     public function __construct(
         private readonly SendRateLimiter $rateLimiter,
         private readonly ZaloHealthMonitor $healthMonitor,
-        private readonly MeteringService $meteringService,
     ) {}
 
     /**
@@ -54,7 +51,6 @@ class ZaloSendService
      * @param  array<string, mixed>|null  $quoteDisplay  media_meta.quote cho FE render
      *
      * @throws ZaloCircuitOpenException circuit breaker OPEN
-     * @throws QuotaExceededException hết quota hội thoại mới
      * @throws SendOutsideWindowException ngoài 7h-22h
      * @throws RateCapException >3 tin/số/ngày
      * @throws ZaloNotConnectedException bridge lỗi / session hết
@@ -74,22 +70,20 @@ class ZaloSendService
             throw new ZaloCircuitOpenException;
         }
 
-        // 2. Metering (quota) — assertCanSend throw QuotaExceededException nếu hết quota.
-        // Billing là CORE luôn on: throw khi conv mới kỳ này + hết quota.
-        $this->meteringService->assertCanSend($conversation);
+        // P11 (BLK-4): metering KHÔNG còn ở driver — quota gate + meterReply sống ở
+        // OutboundSendPipeline (core). Service này = policy Zalo + transport + persist.
 
-        // 3. Rate limiter (ToS Zalo) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
+        // 2. Rate limiter (ToS Zalo — POLICY kênh) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
         // Tin trả lời khi khách có inbound ≤24h không phải QC → miễn cap, không tiêu quota cap.
         $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
         $isReply = $this->isReplyToRecentInbound($conversation);
         $this->rateLimiter->assertCanSend($conversation->workspace_id, $targetNumber, isReply: $isReply);
 
-        // 4. HTTP → bridge
+        // 3. HTTP → bridge (TRANSPORT)
         $responseData = $this->callBridge($connection, $conversation, $text, $media, $quote, $sticker);
 
-        // 5. Ghi Message + meter
+        // 4. Ghi Message
         $message = $this->persistMessage($conversation, $text, $media, $responseData, $sticker, $quoteDisplay);
-        $this->meteringService->meterReply($conversation);
 
         if (! $isReply) {
             $this->rateLimiter->increment($conversation->workspace_id, $targetNumber);
@@ -174,10 +168,6 @@ class ZaloSendService
         return $body;
     }
 
-    /**
-     * @param  array<string, mixed>|null  $media
-     * @param  array<string, mixed>  $bridgeResponse
-     */
     /**
      * @param  array<string, mixed>|null  $media
      * @param  array<string, mixed>  $bridgeResponse
