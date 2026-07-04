@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 
 use App\Contracts\SendException;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
@@ -137,10 +138,10 @@ class ZaloChannelDriver implements ChannelDriver
      *
      * @throws SendException
      */
-    public function sendMessage(Conversation $conversation, array $payload): void
+    public function sendMessage(Conversation $conversation, array $payload): Message
     {
         try {
-            $this->sendService->send(
+            return $this->sendService->send(
                 conversation: $conversation,
                 text: isset($payload['text']) ? (string) $payload['text'] : null,
                 media: $payload['media'] ?? null,

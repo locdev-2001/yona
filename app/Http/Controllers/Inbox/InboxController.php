@@ -155,13 +155,8 @@ class InboxController extends Controller
         try {
             /** @var ChannelManager $channelManager */
             $channelManager = app(ChannelManager::class);
-            $channelManager->driver($conversation->channel)->sendMessage($conversation, ['text' => $text]);
-
-            // Trả message mới nhất direction=out sau khi gửi thành công
-            $message = Message::where('conversation_id', $conversation->id)
-                ->where('direction', 'out')
-                ->latest('created_at')
-                ->first();
+            $message = $channelManager->driver($conversation->channel)
+                ->sendMessage($conversation, ['text' => $text]);
 
             return response()->json($message, 201);
         } catch (SendException $e) {

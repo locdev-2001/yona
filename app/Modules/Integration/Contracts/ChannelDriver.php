@@ -3,6 +3,7 @@
 namespace App\Modules\Integration\Contracts;
 
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Modules\Integration\ChannelManager;
 
 /**
@@ -31,11 +32,12 @@ interface ChannelDriver
     public function disconnect(string $workspaceId): void;
 
     /**
-     * Gửi tin ra kênh từ inbox.
+     * Gửi tin ra kênh từ inbox. Trả về đúng Message vừa ghi — caller KHÔNG
+     * được tự query "message out mới nhất" (race khi 2 người gửi song song).
      *
      * @param  array<string, mixed>  $payload  body/media/type theo kênh
      */
-    public function sendMessage(Conversation $conversation, array $payload): void;
+    public function sendMessage(Conversation $conversation, array $payload): Message;
 
     /**
      * Parse raw webhook payload từ bridge thành dạng chuẩn hóa cho inbox core.

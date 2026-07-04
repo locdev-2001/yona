@@ -245,6 +245,13 @@ class ZaloPersonalWebhookController extends Controller
             return response()->json(['ok' => false, 'message' => 'missing_event_type'], 422);
         }
 
+        // Typing là presence phù du — chỉ có giá trị hiển thị realtime tại FE,
+        // KHÔNG phải dữ liệu nghiệp vụ. Ghi kho = phình bảng vô hạn (source_id
+        // null → không dedup, không TTL). Nhận 200 để bridge không retry, không lưu.
+        if ($relayEventType === 'typing') {
+            return response()->json(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
+        }
+
         $connectionId = (int) ($payload['connection_id'] ?? 0);
         $sourceId = isset($payload['source_id']) && $payload['source_id'] !== '' ? (string) $payload['source_id'] : null;
 

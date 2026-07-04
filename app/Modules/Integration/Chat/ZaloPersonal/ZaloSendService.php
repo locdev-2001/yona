@@ -32,6 +32,9 @@ use Illuminate\Support\Facades\Http;
  */
 class ZaloSendService
 {
+    /** Cửa sổ "hội thoại đang hoạt động": khách có inbound trong N giờ → tin gửi là TRẢ LỜI, không phải QC. */
+    private const REPLY_WINDOW_HOURS = 24;
+
     public function __construct(
         private readonly SendRateLimiter $rateLimiter,
         private readonly ZaloHealthMonitor $healthMonitor,
@@ -63,9 +66,11 @@ class ZaloSendService
         // Billing là CORE luôn on: throw khi conv mới kỳ này + hết quota.
         $this->meteringService->assertCanSend($conversation);
 
-        // 3. Rate limiter (ToS Zalo)
+        // 3. Rate limiter (ToS Zalo) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
+        // Tin trả lời khi khách có inbound ≤24h không phải QC → miễn cap, không tiêu quota cap.
         $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
-        $this->rateLimiter->assertCanSend($conversation->workspace_id, $targetNumber);
+        $isReply = $this->isReplyToRecentInbound($conversation);
+        $this->rateLimiter->assertCanSend($conversation->workspace_id, $targetNumber, isReply: $isReply);
 
         // 4. HTTP → bridge
         $responseData = $this->callBridge($connection, $conversation, $text, $media);
@@ -73,7 +78,10 @@ class ZaloSendService
         // 5. Ghi Message + meter
         $message = $this->persistMessage($conversation, $text, $media, $responseData);
         $this->meteringService->meterReply($conversation);
-        $this->rateLimiter->increment($conversation->workspace_id, $targetNumber);
+
+        if (! $isReply) {
+            $this->rateLimiter->increment($conversation->workspace_id, $targetNumber);
+        }
 
         // Reset circuit nếu gửi thành công
         $this->healthMonitor->reset((string) $connection->connection_id);
@@ -203,5 +211,18 @@ class ZaloSendService
         }
 
         return $slots->first();
+    }
+
+    /**
+     * Tin TRẢ LỜI = khách có inbound trong REPLY_WINDOW_HOURS gần đây — không
+     * phải tin QC chủ động nên miễn cap ≤3/ngày (rule "≤3 tin QC/số/ngày").
+     * Anchor theo created_at (lúc hệ thống nhận) — index conversation_id thu hẹp đủ rẻ.
+     */
+    private function isReplyToRecentInbound(Conversation $conversation): bool
+    {
+        return Message::where('conversation_id', $conversation->id)
+            ->where('direction', 'in')
+            ->where('created_at', '>=', now()->subHours(self::REPLY_WINDOW_HOURS))
+            ->exists();
     }
 }

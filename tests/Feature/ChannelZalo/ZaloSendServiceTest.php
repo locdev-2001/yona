@@ -293,6 +293,69 @@ it('throws RateCapException on 4th message to same number same day', function ()
     Carbon::setTestNow();
 })->group('channel-zalo');
 
+it('isReply=true skips BOTH the daily cap and the hour window (reply is normal chat, not QC)', function () {
+    Cache::flush();
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    $limiter = new SendRateLimiter;
+    $ws = 'ws-reply-'.uniqid();
+    $num = '0909333444';
+
+    foreach (range(1, 3) as $_) {
+        $limiter->increment($ws, $num);
+    }
+
+    // Cap đã đầy — tin chủ động bị chặn, tin trả lời thì KHÔNG.
+    expect(fn () => $limiter->assertCanSend($ws, $num))->toThrow(RateCapException::class);
+    $limiter->assertCanSend($ws, $num, isReply: true); // no exception
+
+    // 23h: tin chủ động bị chặn cửa sổ giờ; tin TRẢ LỜI vẫn gửi được
+    // (khách nhắn 23h → trả lời 23h là chat bình thường, không phải QC).
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 23:00:00', 'Asia/Ho_Chi_Minh'));
+    expect(fn () => $limiter->assertCanSend($ws, $num))->toThrow(SendOutsideWindowException::class);
+    $limiter->assertCanSend($ws, $num, isReply: true); // no exception
+
+    Carbon::setTestNow();
+})->group('channel-zalo');
+
+it('send() bypasses the cap when peer has inbound within 24h, but enforces it for proactive sends', function () {
+    [$workspace, $connId, $conversation] = makeWorkspaceAndConversation();
+
+    Http::fake([
+        '*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'bridge_reply_ok'], 200),
+    ]);
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+
+    // Nạp đầy cap 3/ngày cho số này.
+    $limiter = new SendRateLimiter;
+    $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
+    foreach (range(1, 3) as $_) {
+        $limiter->increment($workspace->id, $targetNumber);
+    }
+
+    // CHƯA có inbound → tin chủ động → cap chặn.
+    expect(fn () => makeSendService()->send($conversation, 'tin QC thứ 4'))
+        ->toThrow(RateCapException::class);
+
+    // Khách nhắn vào (inbound trong 24h) → tin gửi là TRẢ LỜI → được gửi, không tiêu cap.
+    Message::create([
+        'workspace_id' => $workspace->id,
+        'conversation_id' => $conversation->id,
+        'direction' => 'in',
+        'type' => 'text',
+        'body' => 'khách hỏi giá',
+        'source_id' => 'src_reply_in_'.uniqid(),
+        'platform_sent_at' => now(),
+    ]);
+
+    $sent = makeSendService()->send($conversation, 'dạ giá 100k nhé chị');
+
+    expect($sent->direction)->toBe('out');
+    expect($limiter->currentCount($workspace->id, $targetNumber))->toBe(3); // không increment thêm
+
+    Carbon::setTestNow();
+})->group('channel-zalo');
+
 // ── ZaloHealthMonitor (circuit-breaker) ────────────────────────────────────
 
 it('opens circuit after 5 errors within window', function () {

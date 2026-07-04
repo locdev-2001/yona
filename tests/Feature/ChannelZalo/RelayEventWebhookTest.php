@@ -80,6 +80,24 @@ it('stores relay_event envelope into relay_events and does not touch metering', 
     expect($usageAfter)->toBe($usageBefore);
 })->group('channel-zalo');
 
+it('does NOT store typing events — ephemeral presence, accepted with 200 so bridge never retries', function () {
+    $ws = Workspace::factory()->create();
+    $connId = relayTestConnection($ws->id, 'uid_typing');
+
+    postRelayWebhook([
+        'type' => 'relay_event',
+        'event_type' => 'typing',
+        'connection_id' => $connId,
+        'personal_uid' => 'uid_typing',
+        'payload' => [['threadId' => 'peer_x']],
+    ])->assertStatus(200)->assertJson(['ok' => true, 'message' => 'relay_event_ephemeral_skipped']);
+
+    TenantScope::bind($ws->id);
+    $count = DB::table('relay_events')->where('event_type', 'typing')->count();
+    TenantScope::forget();
+    expect($count)->toBe(0);
+})->group('channel-zalo');
+
 it('stores unknown event type into relay_events instead of silently dropping (H1)', function () {
     $ws = Workspace::factory()->create();
     $connId = relayTestConnection($ws->id, 'uid_unknown_evt');
