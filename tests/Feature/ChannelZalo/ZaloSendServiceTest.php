@@ -12,8 +12,10 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowExcept
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
+use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
+use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\MeteringService;
 use App\Support\TenantScope;
 use Carbon\Carbon;
@@ -104,13 +106,17 @@ function makeConnectedSlot(string $workspaceId, ?string $channelAccountId, strin
 
 function makeSendService(): ZaloSendService
 {
-    // MeteringService thật: workspace bound + chưa có purchase → free plan (remaining 50)
-    // → assertCanSend pass cho conv mới (tương đương no-op cũ). Quota-block test riêng.
+    // P11: metering ĐÃ hoist lên OutboundSendPipeline — service = policy + transport.
     return new ZaloSendService(
         rateLimiter: new SendRateLimiter,
         healthMonitor: app(ZaloHealthMonitor::class),
-        meteringService: app(MeteringService::class),
     );
+}
+
+/** P11 — đường outbound THẬT: pipeline (quota gate + meterReply) bọc driver. */
+function makeSendPipeline(): OutboundSendPipeline
+{
+    return new OutboundSendPipeline(app(MeteringService::class));
 }
 
 // ── ZaloSendService: send thành công ─────────────────────────────────────────
@@ -401,7 +407,6 @@ it('throws ZaloCircuitOpenException when circuit is open before send', function 
     $service = new ZaloSendService(
         rateLimiter: new SendRateLimiter,
         healthMonitor: $monitor,
-        meteringService: app(MeteringService::class),
     );
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
@@ -491,7 +496,7 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
 
 // ── F1-audit: ZaloSendService quota enforce ───────────────────────────────────
 
-it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGate::assertCanSend throw', function () {
+it('F1-audit (P11): OutboundSendPipeline throws QuotaExceededException TRƯỚC khi driver được gọi', function () {
     [, , $conversation] = makeWorkspaceAndConversation();
 
     // MeteringService mock luôn throw (mô phỏng workspace hết quota, conv mới)
@@ -499,19 +504,17 @@ it('F1-audit: ZaloSendService::send throws QuotaExceededException khi meteringGa
         $m->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
     });
 
-    $service = new ZaloSendService(
-        rateLimiter: new SendRateLimiter,
-        healthMonitor: app(ZaloHealthMonitor::class),
-        meteringService: $blockingMeter,
-    );
+    $pipeline = new OutboundSendPipeline($blockingMeter);
+    $driver = new ZaloChannelDriver(makeSendService());
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+    Http::fake();
 
-    // Phải throw QuotaExceededException — KHÔNG gửi bridge
-    expect(fn () => $service->send($conversation, 'Hello'))
+    // Phải throw QuotaExceededException — KHÔNG gửi bridge (money-path chặn trước transport)
+    expect(fn () => $pipeline->send($driver, $conversation, ['text' => 'Hello']))
         ->toThrow(QuotaExceededException::class);
 
-    // KHÔNG ghi Message (bridge chưa được gọi)
+    Http::assertNothingSent();
     expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
 
     Carbon::setTestNow();
@@ -527,7 +530,8 @@ it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
 
     // MeteringService: conv mới + free plan còn quota → assertCanSend pass → gửi được
-    $message = makeSendService()->send($conversation, 'Reply F5');
+    $driver = new ZaloChannelDriver(makeSendService());
+    $message = makeSendPipeline()->send($driver, $conversation, ['text' => 'Reply F5']);
 
     expect($message)->toBeInstanceOf(Message::class)
         ->and($message->direction)->toBe('out');

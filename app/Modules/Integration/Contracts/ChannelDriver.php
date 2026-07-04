@@ -32,8 +32,17 @@ interface ChannelDriver
     public function disconnect(string $workspaceId): void;
 
     /**
-     * Gửi tin ra kênh từ inbox. Trả về đúng Message vừa ghi — caller KHÔNG
+     * P11 — feature flags của kênh (UI ẩn/hiện nút theo flags, additive-only).
+     */
+    public function capabilities(): ChannelCapabilities;
+
+    /**
+     * Gửi tin ra kênh từ inbox: POLICY kênh (cửa sổ giờ/cap ToS — driver-owned)
+     * + TRANSPORT + persist Message. Trả về đúng Message vừa ghi — caller KHÔNG
      * được tự query "message out mới nhất" (race khi 2 người gửi song song).
+     *
+     * ĐÓNG BĂNG P11 (BLK-4): KHÔNG metering trong driver — quota gate + meterReply
+     * sống ở OutboundSendPipeline (core). Mọi kênh (cả mock) ĐI QUA pipeline.
      *
      * @param  array<string, mixed>  $payload  body/media/type theo kênh
      */

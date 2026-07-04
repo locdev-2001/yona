@@ -10,6 +10,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowExcept
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
+use App\Modules\Integration\Contracts\ChannelCapabilities;
 use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
@@ -31,6 +32,26 @@ class ZaloChannelDriver implements ChannelDriver
     public function channelKey(): string
     {
         return 'zalo_personal';
+    }
+
+    /**
+     * P11 — flags Zalo cá nhân. canRecallOwn=false: thu hồi tin MÌNH gửi chưa
+     * build (undo API có nhưng chưa wire UI — backlog).
+     */
+    public function capabilities(): ChannelCapabilities
+    {
+        return new ChannelCapabilities(
+            canSendMedia: true,
+            canSendSticker: true,
+            canQuoteReply: true,
+            canReact: true,
+            canRecallOwn: false,
+            hasDeliveryReceipts: true,
+            hasSeenReceipts: true,
+            hasTyping: true,
+            canSendSeen: true,
+            receiptGranularity: 'thread',
+        );
     }
 
     /**

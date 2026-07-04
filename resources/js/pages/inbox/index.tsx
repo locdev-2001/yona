@@ -61,6 +61,17 @@ interface Props {
     /** P06b — seen-sync per-workspace (default OFF). */
     seenSyncEnabled?: boolean;
     canManageZalo?: boolean;
+    /** P11 — flags per-kênh: FE ẩn/hiện nút theo flags, KHÔNG if(channel===...). */
+    channelCapabilities?: Record<string, ChannelCaps>;
+}
+
+interface ChannelCaps {
+    canSendMedia?: boolean;
+    canSendSticker?: boolean;
+    canQuoteReply?: boolean;
+    canReact?: boolean;
+    hasSeenReceipts?: boolean;
+    hasTyping?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -85,6 +96,7 @@ export default function InboxIndex({
     channelAccounts = [],
     seenSyncEnabled = false,
     canManageZalo = false,
+    channelCapabilities = {},
 }: Props) {
     const { auth, activeWorkspace } = usePage<SharedData>().props;
 
@@ -463,6 +475,9 @@ export default function InboxIndex({
 
     const breadcrumbs = [{ title: 'Inbox', href: route('inbox.index') }];
 
+    // P11 — kênh không đăng ký/không hỗ trợ → all-false → nút tự ẩn (không assume Zalo)
+    const caps: ChannelCaps = (activeConv && channelCapabilities[activeConv.channel]) || {};
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
@@ -644,7 +659,13 @@ export default function InboxIndex({
                                 </div>
                             )}
 
-                            <ChatThread items={items} peer={activeConv} loading={loadingMessages} onReply={handleReply} onReact={handleReact} />
+                            <ChatThread
+                                items={items}
+                                peer={activeConv}
+                                loading={loadingMessages}
+                                onReply={caps.canQuoteReply ? handleReply : undefined}
+                                onReact={caps.canReact ? handleReact : undefined}
+                            />
 
                             {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
                             {typing?.convId === activeConv.id && (
@@ -668,6 +689,8 @@ export default function InboxIndex({
                                     replyTo={replyTo}
                                     onClearReply={() => setReplyTo(null)}
                                     peerName={activeConv.peer_name}
+                                    canSendMedia={caps.canSendMedia === true}
+                                    canSendSticker={caps.canSendSticker === true}
                                 />
                             )}
                         </>
