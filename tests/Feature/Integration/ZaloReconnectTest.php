@@ -222,6 +222,53 @@ it('promoting a slot to an already-active personal_uid soft-deletes the old slot
     expect($activeCount)->toBe(1);
 })->group('channel-zalo');
 
+// ── Test 2b: Slot cũ session_lost (CHƯA soft-delete) → reconnect vẫn phải thành công ──
+// Đây là flow reconnect THƯỜNG GẶP NHẤT: listener chết → bridge báo session_lost
+// (handleBridgeSession chỉ đổi state, KHÔNG soft-delete) → user quét QR lại.
+// Slot session_lost còn deleted_at NULL vẫn chiếm ws_personal_uid_active_unique.
+
+it('reconnecting after session_lost (old slot not soft-deleted) still binds — old slot gets retired', function () {
+    $ws = Workspace::factory()->create();
+    $user = makeZaloManager($ws);
+
+    // Slot cũ: session_lost, KHÔNG soft-delete — đúng trạng thái handleBridgeSession để lại.
+    $oldConnId = makeZaloSlot($ws->id, 'uid_lost_reconnect', 'session_lost');
+
+    // Slot mới: qr_waiting
+    $newConnId = makeZaloSlot($ws->id, null, 'qr_waiting');
+
+    Http::fake([
+        '*/auth/qr/promote' => Http::response([
+            'personal_uid' => 'uid_lost_reconnect',
+            'display_name' => 'Nguyễn Văn A',
+            'avatar' => null,
+        ], 200),
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $ws->id])
+        ->postJson('/integrations/zalo/promote', [
+            'connection_id' => $newConnId,
+            'qr_token' => 'fake-qr-token',
+        ])
+        ->assertStatus(200)
+        ->assertJson(['ok' => true]);
+
+    // Slot cũ phải bị retire (soft-delete) — nếu không, UPDATE personal_uid của slot
+    // mới đụng zalo_connections_ws_personal_uid_active_unique → 23505 → promote 500.
+    $old = DB::table('zalo_connections')->where('connection_id', $oldConnId)->first();
+    expect($old->deleted_at)->not->toBeNull();
+
+    $new = DB::table('zalo_connections')
+        ->where('connection_id', $newConnId)
+        ->whereNull('deleted_at')
+        ->first();
+
+    expect($new)->not->toBeNull();
+    expect($new->state)->toBe('connected');
+    expect($new->personal_uid)->toBe('uid_lost_reconnect');
+})->group('channel-zalo');
+
 // ── Test 3: Reconnect gộp conversation cũ → 1 thread, không mất message ───────
 
 it('reconnect keeps the prior conversation+messages intact (account-keyed — no fork, no message loss)', function () {

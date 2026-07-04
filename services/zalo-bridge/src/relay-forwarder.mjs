@@ -88,7 +88,9 @@ export function relaySink(slot, evt, payload, { enqueue, postFireAndForget, buil
     };
 
     if (evt === 'undo') {
-        // durable — undo đổi DB (ẩn tin ma khách thu hồi); source_id để idempotent
+        // durable — undo là dữ liệu nghiệp vụ (khách thu hồi tin), không được mất.
+        // P10 mới LƯU vào relay_events (kho quan sát); handler ẩn "tin ma" trong
+        // messages là việc product phase sau, CHƯA làm. source_id để idempotent.
         const first = payload?.[0];
         envelope.source_id = deriveInboundSourceId(
             'zalo_personal',

@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\DB;
  * caller (ZaloConnectionController::promote) đã xác nhận uid khớp trước khi
  * gọi bind() (mismatch fail-closed 409, KHÔNG tới đây).
  *
- * Thứ tự BẮT BUỘC trong transaction: lock account FOR UPDATE → tắt slot
- * connected cũ TRƯỚC → bật slot mới → dọn conversation trùng (nếu có). Đảo thứ
- * tự bật/tắt va partial unique P02(g) `(channel_account_id) WHERE
- * state='connected'` → 23505.
+ * Thứ tự BẮT BUỘC trong transaction: lock account FOR UPDATE → tắt MỌI slot
+ * cũ non-deleted trùng account/uid TRƯỚC (bất kể state — xem comment tại query)
+ * → bật slot mới → dọn conversation trùng (nếu có). Đảo thứ tự bật/tắt va
+ * partial unique P02(g) `(channel_account_id) WHERE state='connected'` → 23505.
  *
  * DuplicateConversationMerger (P02, tự chứa — không còn phụ thuộc
  * ZaloConversationMerger, class đó xoá ở P08) dọn nhóm (channel_account_id,
@@ -54,11 +54,14 @@ class PromoteAccountBinder
         return DB::transaction(function () use ($connection, $accountUid, $profile) {
             $account = ChannelAccount::findOrCreateForBind($connection->workspace_id, 'zalo_personal', $accountUid);
 
-            // Tắt slot connected cũ TRƯỚC (thứ tự bắt buộc) — session_lost + soft-delete.
+            // Tắt slot cũ TRƯỚC (thứ tự bắt buộc) — session_lost + soft-delete.
+            // KHÔNG lọc state: slot session_lost chưa soft-delete (trạng thái
+            // handleBridgeSession để lại — flow reconnect thường gặp nhất) vẫn chiếm
+            // ws_personal_uid_active_unique (predicate deleted_at IS NULL, không quan
+            // tâm state) → nếu bỏ sót, UPDATE personal_uid của slot mới 23505.
             DB::table('zalo_connections')
                 ->where('workspace_id', $connection->workspace_id)
                 ->where('id', '!=', $connection->id)
-                ->where('state', 'connected')
                 ->whereNull('deleted_at')
                 ->where(function ($query) use ($account, $accountUid) {
                     $query->where('channel_account_id', $account->id)

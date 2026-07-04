@@ -65,7 +65,6 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'zalo_connection_id' => $nextVal,
         'channel_account_id' => $accountId,
         'peer_uid' => 'peer_test_'.uniqid(),
         'peer_phone' => '0901234567',

@@ -155,7 +155,7 @@ class ZaloSendService
             ]);
         }
 
-        return Message::create([
+        $message = Message::create([
             'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
             'direction' => 'out',
@@ -167,6 +167,13 @@ class ZaloSendService
             'platform_sent_at' => now(),
             'sent_by' => Auth::id(),
         ]);
+
+        // P05 invariant: MỌI Message insert mới +1 stream_version (khớp
+        // InboundMessageService::createMessage) — echo bridge về sau chỉ là
+        // replay no-op theo source_id, không bump lần hai.
+        Conversation::where('id', $conversation->id)->increment('stream_version');
+
+        return $message;
     }
 
     /**

@@ -180,14 +180,30 @@ class ZaloPersonalWebhookController extends Controller
         $hadGap = $connection->last_session_lost_at !== null
             || $connection->state === 'session_lost';
 
-        // P05: mở cửa sổ gap account-level — CHỈ set gap_started_at lần ĐẦU (gap_open
-        // còn false); session_lost lặp lại (bridge chập chờn) không đẩy lùi mốc bắt đầu.
-        // Đóng lại ở PromoteAccountBinder (P04) khi reconnect thành công.
-        if ($modelState === 'session_lost' && $connection->channel_account_id !== null) {
-            DB::connection('pgsql_privileged')->table('channel_accounts')
-                ->where('id', $connection->channel_account_id)
-                ->where('gap_open', false)
-                ->update(['gap_started_at' => now(), 'gap_open' => true, 'updated_at' => now()]);
+        // P05: đồng bộ account-level state + cửa sổ gap theo 2 chiều:
+        //  - session_lost → mở gap: CHỈ set gap_started_at lần ĐẦU (gap_open còn false);
+        //    session_lost lặp lại (bridge chập chờn) không đẩy lùi mốc bắt đầu.
+        //  - session_ok → ĐÓNG gap (gap_open=false, GIỮ gap_started_at cho marker các
+        //    hội thoại chưa kịp nhận tin post-gap). Đường này là cookie-restore reconnect
+        //    (bridge tự khôi phục, KHÔNG qua PromoteAccountBinder) — nếu không đóng ở
+        //    đây, gap kế tiếp không set được gap_started_at mới → marker gap 2+ bị nuốt
+        //    (unique conversation_events trùng gap_started_at cũ) và account status
+        //    kẹt 'session_lost' vĩnh viễn trên UI.
+        // pgsql_privileged — NHẤT QUÁN với updateState() + mọi ghi khác trong handler
+        // này. KHÔNG đổi sang connection mặc định: default session của test giữ lock
+        // row zalo_connections trong transaction → updateState (privileged) chờ lock
+        // → treo chéo session (đã dính khi review 04/07).
+        if ($connection->channel_account_id !== null) {
+            $accountQuery = fn () => DB::connection('pgsql_privileged')->table('channel_accounts')
+                ->where('id', $connection->channel_account_id);
+
+            if ($modelState === 'session_lost') {
+                $accountQuery()->where('gap_open', false)
+                    ->update(['gap_started_at' => now(), 'gap_open' => true, 'updated_at' => now()]);
+                $accountQuery()->update(['status' => 'session_lost', 'updated_at' => now()]);
+            } else {
+                $accountQuery()->update(['status' => 'connected', 'gap_open' => false, 'updated_at' => now()]);
+            }
         }
 
         $connection->updateState($modelState, $detail);
@@ -236,7 +252,7 @@ class ZaloPersonalWebhookController extends Controller
             // insertOrIgnore (ON CONFLICT DO NOTHING) thay vì catch 23505: lỗi unique
             // trong Postgres abort cả transaction bao ngoài — dedup phải không-lỗi.
             $inserted = DB::table('relay_events')->insertOrIgnore([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'workspace_id' => currentWorkspace()->id,
                 'channel_account_id' => $connectionId > 0
                     ? ZaloConnection::channelAccountIdForConnection($connectionId)

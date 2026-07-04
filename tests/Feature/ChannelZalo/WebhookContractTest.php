@@ -10,6 +10,7 @@ use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Webhook contract tests cho channel-zalo.
@@ -356,6 +357,91 @@ it('bridge_session reconnect preserves last_session_lost_at for gap calculation 
     // last_connected_at > last_session_lost_at → FE biết gap đã đóng
     expect($conn->last_connected_at->greaterThanOrEqualTo($conn->last_session_lost_at))->toBeTrue();
     TenantScope::forget();
+})->group('channel-zalo');
+
+it('bridge_session session_ok closes the account gap window so the NEXT gap gets a fresh marker (cookie-restore reconnect)', function () {
+    // TOÀN BỘ fixture qua pgsql_privileged (committed): handler bridge_session ghi
+    // channel_accounts + zalo_connections qua privileged (session khác) — data tạo
+    // trong transaction test (default) sẽ vô hình với nó, thậm chí treo chéo session
+    // nếu default giữ lock row zalo_connections. FK workspaces buộc workspace cũng
+    // phải committed → insert privileged thay vì factory.
+    $priv = fn (string $table) => DB::connection('pgsql_privileged')->table($table);
+
+    $wsId = (string) Str::uuid();
+    $priv('workspaces')->insert([
+        'id' => $wsId,
+        'name' => 'WS Gap Close',
+        'slug' => 'ws-gap-close-'.uniqid(),
+        'base_currency' => 'VND',
+        'timezone' => 'Asia/Ho_Chi_Minh',
+        'locale' => 'vi',
+        'audit_retention' => '1y',
+        'status' => 'active',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $connId = createZaloConnection($wsId, 'uid_gap_close', 'connected');
+
+    $accountId = (string) Str::uuid();
+    $priv('channel_accounts')->insert([
+        'id' => $accountId,
+        'workspace_id' => $wsId,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_gap_close',
+        'status' => 'connected',
+        'gap_open' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    $priv('zalo_connections')->where('connection_id', $connId)->update(['channel_account_id' => $accountId]);
+
+    $headers = ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123'];
+    $account = fn () => $priv('channel_accounts')->where('id', $accountId)->first();
+
+    // Gap 1 mở: account chuyển session_lost + gap_open + mốc gap 1.
+    $this->postJson('/api/integrations/zalo-personal/webhook', [
+        'type' => 'bridge_session', 'connection_id' => $connId,
+        'bot_id' => 1, 'state' => 'session_lost', 'detail' => 'drop1',
+    ], $headers)->assertStatus(200);
+
+    $afterLost1 = $account();
+    expect($afterLost1->gap_open)->toBeTrue();
+    expect($afterLost1->status)->toBe('session_lost');
+    expect($afterLost1->gap_started_at)->not->toBeNull();
+    $gap1StartedAt = $afterLost1->gap_started_at;
+
+    // Cookie-restore reconnect (session_ok — bridge tự khôi phục, KHÔNG qua
+    // PromoteAccountBinder) → account phải connected + gap ĐÓNG, GIỮ gap_started_at.
+    $this->postJson('/api/integrations/zalo-personal/webhook', [
+        'type' => 'bridge_session', 'connection_id' => $connId,
+        'bot_id' => 1, 'state' => 'session_ok', 'detail' => null,
+    ], $headers)->assertStatus(200);
+
+    $afterOk = $account();
+    expect($afterOk->gap_open)->toBeFalse();
+    expect($afterOk->status)->toBe('connected');
+    expect($afterOk->gap_started_at)->toBe($gap1StartedAt);
+
+    // Gap 2 (5 phút sau): PHẢI set mốc gap MỚI — nếu session_ok không đóng gap,
+    // gap_started_at kẹt ở mốc 1 → marker gap 2+ bị unique conversation_events nuốt.
+    $this->travel(5)->minutes();
+    $this->postJson('/api/integrations/zalo-personal/webhook', [
+        'type' => 'bridge_session', 'connection_id' => $connId,
+        'bot_id' => 1, 'state' => 'session_lost', 'detail' => 'drop2',
+    ], $headers)->assertStatus(200);
+
+    $afterLost2 = $account();
+    expect($afterLost2->gap_open)->toBeTrue();
+    expect($afterLost2->status)->toBe('session_lost');
+    expect($afterLost2->gap_started_at)->toBeGreaterThan($gap1StartedAt);
+
+    $this->travelBack();
+
+    // Fixture privileged nằm ngoài transaction test → tự dọn.
+    $priv('zalo_connections')->where('connection_id', $connId)->delete();
+    $priv('channel_accounts')->where('id', $accountId)->delete();
+    $priv('workspaces')->where('id', $wsId)->delete();
 })->group('channel-zalo');
 
 // ── ChannelManager driver registration ───────────────────────────────────────
