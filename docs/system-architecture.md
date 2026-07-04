@@ -174,6 +174,8 @@ config/
    - Bridge client in `services/zalo-bridge/` (fetches QR, handles callback, maintains session).
    - Bridge endpoint: env `ZALO_BRIDGE_ENDPOINT` (default: `http://localhost:3456`).
    - Webhook: `POST /api/integrations/zalo-personal/webhook` (handled by `app/Http/Controllers/Integration/ZaloPersonalWebhookController`).
+   - **Generic dispatcher (P11)**: `POST {bridge}/zca/:method` — allowlist reflection 146 method (`src/zca-adapter.mjs` + snapshot M1 gate), tier guard (send→409, 39 destructive→403 trừ elevated secret + `TenantPermission::ZaloDestructive`, media→415, deny→403). B1 isolation: RLS `zalo_connections` là control chính + token-từ-session `HMAC(connection_id + workspace)` verify với binding ghi lúc promote (persist qua slot meta).
+   - **Relay forwarder (P12)**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty (typing/seen/delivered/…) fire-and-forget; Laravel lưu `relay_events` (RLS, KHÔNG metering — H1 no-silent-drop). Flow doc: `docs/features/messaging/zalo-generic-dispatcher.md`.
 
 ---
 

@@ -4,13 +4,13 @@ Module: messaging · Status: **reference** · Updated: 2026-07-04 · Nguồn: zc
 
 > Mục đích: theo dõi CHÍNH XÁC bề mặt zca-js ta sở hữu, chống "miss" khả năng khi nâng version. Với **adapter generic** (dispatcher + forwarder), nâng zca-js → method/event mới **tự lộ** qua reflection; bảng này là ảnh chụp để đối chiếu, KHÔNG phải allowlist thủ công.
 
-## Số liệu (đo thật, không đoán)
-| | Tổng | Hiện wire | Sau adapter generic |
-|---|---|---|---|
-| **REST method** | **146** (`.d.ts` Factory imports == runtime `Object.getOwnPropertyNames(api)`) | ~22 method / 19 endpoint bespoke (4 active) | 146 tự lộ qua `POST /zca/:method` + allowlist reflection |
-| **Listener event** | **16** | **5** (`message,error,closed,group_event,friend_event`) | 16 (forward kèm `event_type`, event chưa xử lý → log+lưu, KHÔNG vứt) |
+## Số liệu (đo thật, không đoán) — trạng thái SAU build P10-P12 (2026-07-04)
+| | Tổng | Hiện wire |
+|---|---|---|
+| **REST method** | **146** (`.d.ts` Factory imports == runtime `Object.getOwnPropertyNames(api)`) | **146** qua `POST /zca/:method` (allowlist reflection, `src/routes/zca-dispatch.mjs`) + ~22 method / 19 endpoint bespoke giữ nguyên (4 active) |
+| **Listener event** | **16** | **15 = 5 bespoke + 10 forwarder generic** (`src/relay-forwarder.mjs`); `cipher_key` CỐ Ý không forward (key material — B6). Event chưa có handler product → lưu `relay_events` (RLS, KHÔNG metering), KHÔNG vứt |
 
-**11 event đang bị VỨT** (đã xác nhận thiếu `.on` trong `src/index.mjs:1541-1644`): `connected, disconnected, cipher_key, old_messages, undo, seen_messages, delivered_messages, reaction, old_reactions, upload_attachment, typing`. Nguy hiểm nhất: `old_messages` (backfill — LAB đo kéo 48 tin), `undo` (khách thu hồi → DB giữ tin ma), `connected/disconnected` (hook reconnect).
+**11 event trước bị VỨT nay đã phủ** (P12): `connected, disconnected, old_messages, undo, seen_messages, delivered_messages, reaction, old_reactions, upload_attachment, typing` forward về Laravel (`old_messages`/`undo` durable outbox; chatty fire-and-forget — H3); `cipher_key` chặn tại bridge. Snapshot tier: `src/zca-methods.snapshot.json` — test M1 (`src/zca-adapter.test.mjs`) fail build khi bump zca-js lộ method chưa phân tier. Flow chi tiết: [zalo-generic-dispatcher](./zalo-generic-dispatcher.md).
 
 ## REST method — phân tier (dùng cho security gate)
 Nguồn chi tiết: `plans/260704-inbox-multichannel-relayer/research/researcher-01-zca-surface.md`.

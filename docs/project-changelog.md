@@ -17,6 +17,15 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added — Generic zca Adapter L1: Dispatcher + Relay Forwarder (P10-P12, 2026-07-04)
+
+Own 100% zca-js surface (146 REST / 16 event) generically — nâng zca-js → capability mới tự lộ, không hand-wire. Branch `feat/zca-generic-adapter`.
+
+- **P10 Relay-event store**: bảng `relay_events` (RLS ENABLE+FORCE, unique partial `(workspace_id, event_type, source_id)`, **không metering** — F1/F14); webhook hết drop im lặng (H1) — event lạ/`relay_event` → `insertOrIgnore`; permission mới `TenantPermission::ZaloDestructive` tách khỏi `ZaloManage` (H4).
+- **P11 Bridge generic dispatcher**: `POST /zca/:method` JSON-only — allowlist reflection own-property, snapshot 146 method + test M1 fail-build khi drift; guard 6 OUTBOUND→409 / 39 DESTRUCTIVE→403 (elevated secret riêng `BRIDGE_ELEVATED_SECRET`) / DENY→403 / MEDIA→415 / inject→404 / traversal→400 / oversize→413; `timingSafeEqual` + rate-limit per-connection; **B1**: audit call-site dưới RLS (report) + token-từ-session `HMAC(connection_id + workspace)` bind lúc promote, persist qua slot meta, LAB 2-slot chứng minh 403 cross-workspace.
+- **P12 Relay forwarder**: 10 event trước bị vứt (undo/seen/delivered/reaction/typing/connected/disconnected/old_messages/old_reactions/upload_attachment) forward về Laravel; `old_messages` normalize per-item `source_id=msgId` dedup chung live (1-1 backfill khả thi — spike 1b); lane chatty fire-and-forget không qua outbox (H3); `cipher_key` không bao giờ rời bridge (B6).
+- Docs: flow doc mới `docs/features/messaging/zalo-generic-dispatcher.md`; capability map cập nhật trạng thái wire.
+
 ### Release — GĐ1 Modular Monolith + Inbox Zalo + CDP Dedup Contract + Billing/Metering (2026-06-28)
 
 **Milestone**: Phase-07 (code-complete) — refactored to standard Laravel + 1 Integration module + Phase-01 inbox + entitlements system audited (18 findings fixed).
