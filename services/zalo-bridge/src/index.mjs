@@ -2004,13 +2004,24 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename } = body || {};
+    const { thread_id, thread_type, text, file_url, media_kind, filename, quote, sticker } = body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
     const tt = Number(thread_type) === 1 ? ThreadType.Group : ThreadType.User;
     const fileUrl = typeof file_url === 'string' ? file_url.trim() : '';
     const hasFile = fileUrl !== '';
+
+    // P06a — sticker: OUTBOUND có nội dung, đi đường send riêng (KHÔNG dispatcher)
+    if (sticker && sticker.id != null) {
+        const stickerPayload = {
+            id: Number(sticker.id),
+            cateId: Number(sticker.cateId ?? sticker.cate_id ?? 0),
+            type: Number(sticker.type ?? 1),
+        };
+        const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
+        return registerAllOutboundSourceIds(slot, sendResult);
+    }
 
     if (!hasFile && (text === undefined || text === null)) {
         throw new Error('thread_id and text or file_url required');
@@ -2039,7 +2050,13 @@ async function bridgeSendTextOrMedia(slot, body) {
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
             return registerAllOutboundSourceIds(slot, sendResult);
         }
-        const sendResult = await slot.api.sendMessage({ msg: String(text) }, String(thread_id), tt);
+        // P06a — quote: object platform_meta.zca_message từ Laravel (msgId/cliMsgId/
+        // uidFrom/msgType/ts/content/ttl/propertyExt — SendMessageQuote shape)
+        const content = { msg: String(text) };
+        if (quote && typeof quote === 'object' && quote.msgId != null) {
+            content.quote = quote;
+        }
+        const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
         if (tmpPath) {
