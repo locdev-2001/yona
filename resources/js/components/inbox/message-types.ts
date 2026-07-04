@@ -40,6 +40,13 @@ export interface MediaMeta {
     attachment_id?: string;
 }
 
+/** P03 — reaction đã ghi DB (P02 pipeline). icon = raw platform (vd "/-heart") hoặc emoji. */
+export interface MessageReactionInfo {
+    reactor_uid: string;
+    icon: string;
+    reacted_at: string;
+}
+
 export interface ChatMessage {
     id: string;
     conversation_id: string;
@@ -48,10 +55,60 @@ export interface ChatMessage {
     body: string | null;
     media_url: string | null;
     media_meta?: MediaMeta | null;
+    source_id?: string | null;
     platform_sent_at: string | null;
     sender_uid?: string | null;
     sender_name: string | null;
     created_at: string;
+    /** P03 — message-state (null nếu kênh không hỗ trợ / tin cũ). */
+    recalled_at?: string | null;
+    delivered_at?: string | null;
+    seen_at?: string | null;
+    reactions?: MessageReactionInfo[];
+}
+
+/** Payload broadcast MessageStateChanged (P02). */
+export interface MessageStatePayload {
+    conversation_id: string;
+    message_id: string;
+    state: 'recalled' | 'delivered' | 'seen' | 'reaction' | (string & {});
+    recalled_at: string | null;
+    delivered_at: string | null;
+    seen_at: string | null;
+    reactions: MessageReactionInfo[];
+}
+
+/** Map icon reaction platform → emoji hiển thị. Icon lạ/emoji sẵn → trả nguyên. */
+const REACTION_ICON_EMOJI: Record<string, string> = {
+    '/-heart': '❤️',
+    '/-strong': '👍',
+    ':>': '😆',
+    ':o': '😮',
+    ':-((': '😢',
+    ':-h': '😡',
+    ':-*': '😘',
+    ":')": '🥲',
+    '/-ok': '👌',
+    '/-rose': '🌹',
+    '/-break': '💔',
+    '/-weak': '👎',
+    ':))': '🤣',
+};
+
+export function reactionEmoji(icon: string): string {
+    return REACTION_ICON_EMOJI[icon] ?? icon;
+}
+
+/** Gom reactions thành chips {emoji, count} giữ thứ tự xuất hiện. */
+export function reactionChips(reactions: MessageReactionInfo[] | undefined): { emoji: string; count: number }[] {
+    const chips: { emoji: string; count: number }[] = [];
+    for (const r of reactions ?? []) {
+        const emoji = reactionEmoji(r.icon);
+        const hit = chips.find((c) => c.emoji === emoji);
+        if (hit) hit.count += 1;
+        else chips.push({ emoji, count: 1 });
+    }
+    return chips;
 }
 
 /** P05 — item trong stream hợp nhất (GET .../stream): message hoặc gap marker. */

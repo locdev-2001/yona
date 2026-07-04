@@ -42,6 +42,11 @@ class ConversationStreamController extends Controller
             ->reverse()
             ->values();
 
+        // P03 — reactions cho trang hiện tại: 1 query gộp, không N+1
+        $reactionsByMessage = $this->fetchReactions(
+            $page->where('item_type', 'message')->pluck('id')->all()
+        );
+
         $hasMore = $messageItems->count() === $limit || $eventItems->count() === $limit;
         $nextCursor = null;
         if ($hasMore && $page->isNotEmpty()) {
@@ -54,7 +59,7 @@ class ConversationStreamController extends Controller
         }
 
         return response()->json([
-            'items' => $page->map(fn ($item) => $this->formatItem($item)),
+            'items' => $page->map(fn ($item) => $this->formatItem($item, $reactionsByMessage)),
             'next_cursor' => $nextCursor,
             'stream_version' => $conversation->stream_version,
         ]);
@@ -68,7 +73,8 @@ class ConversationStreamController extends Controller
             ->selectRaw(
                 "id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
                  COALESCE(platform_sent_at, created_at) as stream_at, ? as stream_rank,
-                 sender_uid, sender_name, sent_by, created_at",
+                 sender_uid, sender_name, sent_by, created_at,
+                 recalled_at, delivered_at, seen_at",
                 [self::MESSAGE_RANK]
             );
 
@@ -95,8 +101,36 @@ class ConversationStreamController extends Controller
         return $query->orderByDesc('stream_at')->orderByDesc('stream_rank')->orderByDesc('id')->limit($limit)->get();
     }
 
-    /** @return array<string, mixed> */
-    private function formatItem(object $item): array
+    /**
+     * P03 — reactions của các message trong trang, group theo message_id (1 query).
+     *
+     * @param  list<string>  $messageIds
+     * @return array<string, list<array{reactor_uid: string, icon: string, reacted_at: string}>>
+     */
+    private function fetchReactions(array $messageIds): array
+    {
+        if ($messageIds === []) {
+            return [];
+        }
+
+        return DB::table('message_reactions')
+            ->whereIn('message_id', $messageIds)
+            ->orderBy('reacted_at')
+            ->get(['message_id', 'reactor_uid', 'icon', 'reacted_at'])
+            ->groupBy('message_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => [
+                'reactor_uid' => $r->reactor_uid,
+                'icon' => $r->icon,
+                'reacted_at' => $r->reacted_at,
+            ])->values()->all())
+            ->all();
+    }
+
+    /**
+     * @param  array<string, list<array<string, string>>>  $reactionsByMessage
+     * @return array<string, mixed>
+     */
+    private function formatItem(object $item, array $reactionsByMessage = []): array
     {
         if ($item->item_type === 'event') {
             return [
@@ -123,6 +157,11 @@ class ConversationStreamController extends Controller
             'sender_name' => $item->sender_name,
             'sent_by' => $item->sent_by,
             'created_at' => $item->created_at,
+            // P03 — message-state đi theo tin (P02 pipeline ghi)
+            'recalled_at' => $item->recalled_at,
+            'delivered_at' => $item->delivered_at,
+            'seen_at' => $item->seen_at,
+            'reactions' => $reactionsByMessage[$item->id] ?? [],
         ];
     }
 }
