@@ -237,23 +237,32 @@ it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì
     expect($pipeline->send($driverA, $convA, ['text' => $longText])->direction)->toBe('out');
     expect(fn () => $pipeline->send($driverB, $convB, ['text' => $longText]))
         ->toThrow(SendException::class);
+
+    // Review MED-5: transport FAIL → KHÔNG meter (meterReply chỉ sau thành công) — khoá bằng test
+    expect(ChannelUsage::where('channel', 'mock_b')->count())->toBe(0);
 });
 
 // ── Grep gate: core KHÔNG rẽ nhánh theo kênh ─────────────────────────────────
 
-it('grep gate: 0 chỗ if(channel === ...) trong core allowlist (flags là data, không phải branch)', function () {
+it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là data, không phải branch)', function () {
+    // Review MED-3: file list KHỚP allowlist doc channel-framework-contract.md
     $coreFiles = array_merge(
         glob(base_path('app/Services/Inbox/*.php')) ?: [],
         [base_path('app/Services/InboundMessageService.php')],
         glob(base_path('app/Modules/Integration/Contracts/*.php')) ?: [],
+        [base_path('app/Modules/Integration/ChannelManager.php')],
+        glob(base_path('app/Http/Controllers/Inbox/*.php')) ?: [],
         glob(base_path('resources/js/components/inbox/*.ts*')) ?: [],
+        glob(base_path('resources/js/pages/inbox/*.tsx')) ?: [],
     );
 
     $violations = [];
     foreach ($coreFiles as $file) {
         $content = (string) file_get_contents($file);
-        if (preg_match('/if\s*\(\s*\$?[\w>-]*channel[\w>-]*\s*===?\s*[\'"]/i', $content)
-            || preg_match('/(switch|match)\s*\(\s*\$?[\w>-]*channel/i', $content)) {
+        if (preg_match('/if\s*\(\s*\$?[\w>-]*channel[\w>-]*\s*[!=]==?\s*[\'"]/i', $content)   // if (channel ===/!== '...')
+            || preg_match('/(switch|match)\s*\(\s*\$?[\w>-]*channel/i', $content)              // switch/match theo channel
+            || preg_match('/\?\?\s*[\'"]zalo_/i', $content)                                    // fallback CHANNEL KEY im lặng (MED-1) — 'Zalo' label hiển thị thì hợp lệ
+            || preg_match('/channel[\w>-]*\s*[!=]==?\s*[\'"]zalo/i', $content)) {              // so sánh trực tiếp tên kênh
             $violations[] = basename($file);
         }
     }
