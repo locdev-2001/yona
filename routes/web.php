@@ -39,6 +39,7 @@ use App\Http\Controllers\Inbox\ConversationPanelController;
 use App\Http\Controllers\Inbox\ConversationPhoneController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
+use App\Http\Controllers\Inbox\InboxSettingController;
 use App\Http\Controllers\Inbox\MessageInteractionController;
 use App\Http\Controllers\Inbox\QuickReplyController;
 use App\Http\Controllers\Integration\IntegrationController;
@@ -263,6 +264,9 @@ Route::middleware(['auth'])->group(function () {
             ->name('inbox.assign');
         Route::get('/inbox/conversations/{conversation}/panel', ConversationPanelController::class)
             ->name('inbox.panel');
+        // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage).
+        Route::put('/inbox/settings/seen-sync', [InboxSettingController::class, 'updateSeenSync'])
+            ->name('inbox.settings.seen-sync');
         Route::get('/inbox/quick-replies', [QuickReplyController::class, 'index'])->name('inbox.quick-replies.index');
         Route::post('/inbox/quick-replies', [QuickReplyController::class, 'store'])->name('inbox.quick-replies.store');
         Route::put('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'update'])->name('inbox.quick-replies.update');

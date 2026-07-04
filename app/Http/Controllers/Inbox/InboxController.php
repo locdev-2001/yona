@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inbox;
 
 use App\Contracts\SendException;
+use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\ChannelAccount;
@@ -10,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Services\Inbox\SeenSyncService;
 use App\Services\ZaloGroupBackfillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -93,10 +95,13 @@ class InboxController extends Controller
 
         return Inertia::render('inbox/index', [
             'conversations' => $conversations,
-            'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id']),
+            'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id', 'assigned', 'tag']),
             'channelsAvailable' => $channelsAvailable,
             'selectedConversation' => $conversation,
             'channelAccounts' => $channelAccounts,
+            // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage thấy nút)
+            'seenSyncEnabled' => app(SeenSyncService::class)->enabled(),
+            'canManageZalo' => (bool) auth()->user()?->can(TenantPermission::ZaloManage->value),
         ]);
     }
 

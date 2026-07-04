@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Services\Inbox\SeenSyncService;
 use App\Services\Inbox\StreamCursor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,12 @@ class ConversationStreamController extends Controller
 
         if ($cursor === null && $conversation->unread_count > 0) {
             Conversation::where('id', $conversation->id)->update(['unread_count' => 0]);
+        }
+
+        // P06b — seen-sync (default OFF): mở thread (trang đầu) = tín hiệu "đã xem".
+        // Chạy SAU khi response trả (không cộng latency bridge vào GET stream).
+        if ($cursor === null) {
+            app()->terminating(fn () => app(SeenSyncService::class)->syncOnThreadOpen($conversation));
         }
 
         return response()->json([

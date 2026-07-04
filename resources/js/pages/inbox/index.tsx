@@ -58,6 +58,9 @@ interface Props {
     selectedConversation?: Conversation | null;
     channelAccounts?: ChannelAccountInfo[];
     channelsAvailable?: boolean;
+    /** P06b — seen-sync per-workspace (default OFF). */
+    seenSyncEnabled?: boolean;
+    canManageZalo?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -75,7 +78,14 @@ function showToast(msg: string) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function InboxIndex({ conversations, filters, selectedConversation, channelAccounts = [] }: Props) {
+export default function InboxIndex({
+    conversations,
+    filters,
+    selectedConversation,
+    channelAccounts = [],
+    seenSyncEnabled = false,
+    canManageZalo = false,
+}: Props) {
     const { auth, activeWorkspace } = usePage<SharedData>().props;
 
     const [convList, setConvList] = useState<Conversation[]>(conversations.data);
@@ -97,6 +107,34 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
     const [typing, setTyping] = useState<{ convId: string; until: number } | null>(null);
     // P06a — tin đang trả lời (reply bar composer)
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+    // P06b — seen-sync toggle (default OFF — A4)
+    const [seenSync, setSeenSync] = useState(seenSyncEnabled);
+    const [seenSyncSaving, setSeenSyncSaving] = useState(false);
+
+    function toggleSeenSync() {
+        if (seenSyncSaving) return;
+        setSeenSyncSaving(true);
+        fetch(route('inbox.settings.seen-sync'), {
+            method: 'PUT',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+            body: JSON.stringify({ enabled: !seenSync }),
+        })
+            .then(async (r) => {
+                const json = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    showToast(json.message ?? 'Không đổi được cài đặt.');
+                    return;
+                }
+                setSeenSync(json.enabled);
+            })
+            .catch(() => showToast('Không kết nối được server.'))
+            .finally(() => setSeenSyncSaving(false));
+    }
     // P09 — lưới bù khoảng chết websocket: track stream_version đã biết của thread
     // đang mở; version nhảy >+1 hoặc tab active lại → refetch (debounce 5s)
     const activeConvRef = useRef<Conversation | null>(null);
@@ -484,6 +522,22 @@ export default function InboxIndex({ conversations, filters, selectedConversatio
                             <RefreshCw className={`mr-1 h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
                             {syncing ? 'Đang đồng bộ...' : 'Đồng bộ tin nhóm'}
                         </Button>
+
+                        {/* P06b — seen-sync toggle: chỉ tenant.zalo.manage; default OFF (khách sẽ thấy "đã xem") */}
+                        {canManageZalo && (
+                            <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-[11px]"
+                                disabled={seenSyncSaving}
+                                onClick={toggleSeenSync}
+                                title="Bật = khách thấy shop đã xem tin (áp lực trả lời). Cân nhắc trước khi bật."
+                            >
+                                <span>Báo "đã xem" cho khách</span>
+                                <Badge variant={seenSync ? 'default' : 'outline'} className="text-[10px]">
+                                    {seenSync ? 'BẬT' : 'TẮT'}
+                                </Badge>
+                            </button>
+                        )}
 
                         {/* Usage badge — chỉ hiện khi có quota data */}
                         {zaloLimit !== null && zaloRemaining !== null && (
