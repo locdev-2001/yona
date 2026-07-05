@@ -48,7 +48,11 @@ class ConversationStreamController extends Controller
             $page->where('item_type', 'message')->pluck('id')->all()
         );
 
-        $hasMore = $messageItems->count() === $limit || $eventItems->count() === $limit;
+        // Review M1: 2 nguồn đều < limit nhưng TỔNG > limit → take() vứt item cũ
+        // nhất; thiếu vế thứ 3 là next_cursor=null → mất lịch sử im lặng (goal #3).
+        $hasMore = $messageItems->count() === $limit
+            || $eventItems->count() === $limit
+            || ($messageItems->count() + $eventItems->count()) > $limit;
         $nextCursor = null;
         if ($hasMore && $page->isNotEmpty()) {
             $oldest = $page->first();

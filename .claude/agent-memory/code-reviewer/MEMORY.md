@@ -1,5 +1,6 @@
 # Memory Index
 
+- [Final review inbox-full-messaging](project-final-review-inbox-full-messaging.md) — HIGH prod-only: SerializesModels+queued broadcast chết dưới RLS worker; rule: broadcast event = payload scalar
 - [P07-P11 review](project-p07-p11-review.md) — freeze P11 PASS; MED treo: parseInbound PHPDoc stale + fallback 'zalo_personal' core, grep gate hẹp, seam Zalo dir frozen
 - [P04 composer media review](project-p04-composer-media-review.md) — HIGH+MED ĐÃ FIX ở dac4674; còn LOW: avatar fetch arrayBuffer không cap
 - [P02 message-state review](project-p02-message-state-review.md) — 9 acceptance PASS; MED treo ĐÃ FIX ở 1d9efa1 (index ws+source, race test)
