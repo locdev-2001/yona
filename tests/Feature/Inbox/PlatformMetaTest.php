@@ -71,7 +71,7 @@ function inboundPayloadWithMeta(string $peerUid, string $accountId, string $msgI
 
 // ── Driver extraction ────────────────────────────────────────────────────────
 
-it('parseInbound trích đủ 14 field zca_message từ listener_data, loại field thừa', function () {
+it('parseInbound giữ TOÀN BỘ raw listener_data trong zca_message (quyết định 05/07: lấy sạch payload nền tảng)', function () {
     $driver = app(ZaloChannelDriver::class);
 
     $normalized = $driver->parseInbound([
@@ -87,15 +87,19 @@ it('parseInbound trích đủ 14 field zca_message từ listener_data, loại fi
 
     $zca = $normalized['platform_meta']['zca_message'];
 
-    // 14 field: 13 từ listener_data + threadId/threadType từ payload
+    // Field bắt buộc cho action outbound (quote/reaction/seen) + threadId/threadType từ payload
     foreach (['msgId', 'cliMsgId', 'uidFrom', 'idTo', 'msgType', 'ts', 'ttl', 'content', 'propertyExt', 'st', 'at', 'cmd', 'realMsgId', 'threadId', 'threadType'] as $field) {
         expect($zca)->toHaveKey($field);
     }
     expect($zca['msgId'])->toBe('msg_777')
         ->and($zca['cliMsgId'])->toBe('1751600000000')
         ->and($zca['threadId'])->toBe('111222333')
-        ->and($zca['threadType'])->toBe(0)
-        ->and($zca)->not->toHaveKeys(['actionId', 'dName', 'status', 'notify']);
+        ->and($zca['threadType'])->toBe(0);
+
+    // "Lấy sạch hết": field ngoài danh sách action cũng phải được giữ nguyên
+    foreach (array_keys(sampleListenerData()) as $rawField) {
+        expect($zca)->toHaveKey($rawField);
+    }
 });
 
 it('parseInbound không có listener_data (backfill/legacy) → platform_meta rỗng', function () {
