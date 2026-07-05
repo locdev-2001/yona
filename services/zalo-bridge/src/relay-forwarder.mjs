@@ -68,12 +68,20 @@ function normalizeOldMessage(slot, item, buildInboundPayload) {
 export function relaySink(slot, evt, payload, { enqueue, postFireAndForget, buildInboundPayload }) {
     if (evt === 'old_messages') {
         const items = Array.isArray(payload?.[0]) ? payload[0] : [];
+        let enqueued = 0;
         for (const item of items) {
             const inbound = normalizeOldMessage(slot, item, buildInboundPayload);
             if (inbound) {
                 enqueue(inbound); // durable — type mặc định 'inbound', dedup source_id chung live
+                enqueued++;
             }
         }
+        // Batch-level (chỉ đến khi requestOldMessages) — evidence backfill hoạt động
+        console.info('zalo-bridge: old_messages batch', items.length, 'items,', enqueued, 'enqueued, threadType=', payload?.[1]);
+        // Notify deep loop (deepThreadBackfill) — single consumer, null khi không chạy
+        try {
+            slot.onOldMessagesBatch?.(Number(payload?.[1]) === 1 ? 1 : 0, items);
+        } catch { /* deep loop lỗi không được chặn forward */ }
         return;
     }
 

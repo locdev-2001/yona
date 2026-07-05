@@ -13,7 +13,7 @@ use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\Inbox\SeenSyncService;
-use App\Services\ZaloGroupBackfillService;
+use App\Services\ZaloBackfillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -133,12 +133,15 @@ class InboxController extends Controller
         return $map;
     }
 
+    /** Resync thủ công kéo lịch sử lùi tối đa 30 ngày (quyết định founder 05/07). */
+    private const RESYNC_DEEP_DAYS = 30;
+
     /**
      * POST /inbox/resync
-     * Kéo backfill tin nhóm bị mất trong gap kết nối.
+     * Kéo backfill tin 1-1 + nhóm bị mất, deep sync lùi 30 ngày (cursor phía bridge).
      * Tin mới sẽ vào DB async qua webhook (idempotent ingest).
      */
-    public function resync(ZaloGroupBackfillService $backfillService): JsonResponse
+    public function resync(ZaloBackfillService $backfillService): JsonResponse
     {
         // RLS tự lọc theo workspace — chỉ lấy connection của workspace hiện tại
         $connections = ZaloConnection::where('state', 'connected')
@@ -147,7 +150,7 @@ class InboxController extends Controller
 
         $totalFetched = 0;
         foreach ($connections as $conn) {
-            $totalFetched += $backfillService->run($conn->connection_id);
+            $totalFetched += $backfillService->run($conn->connection_id, self::RESYNC_DEEP_DAYS);
         }
 
         return response()->json(['ok' => true, 'fetched' => $totalFetched]);
