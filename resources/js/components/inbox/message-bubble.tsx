@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ChatAvatar } from './chat-avatar';
 import { attachmentIsBare, MessageAttachment } from './message-attachment';
 import { MessageQuote } from './message-quote';
-import { isGroup, isOutbound, messageTime, reactionChips, reactionEmoji, REACTION_PALETTE, type ChatMessage, type ChatPeer } from './message-types';
+import { isGroup, isOutbound, messageTime, REACTION_PALETTE, reactionChips, reactionEmoji, type ChatMessage, type ChatPeer } from './message-types';
 
 interface Props {
     msg: ChatMessage;
@@ -22,7 +22,8 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     const mine = isOutbound(msg);
     const group = isGroup(peer);
     const recalled = !!msg.recalled_at;
-    const hasBody = !!(msg.body && msg.body.trim());
+    // Sticker: body là raw platform content (JSON {id,catId,type}), KHÔNG render text — ảnh do MessageAttachment lo
+    const hasBody = msg.type !== 'sticker' && !!(msg.body && msg.body.trim());
     const quote = msg.media_meta?.quote ?? null;
     const bare = !recalled && attachmentIsBare(msg) && !hasBody && !quote; // quote/caption cần khung bubble
     const hasMedia = msg.type !== 'text';
@@ -85,8 +86,10 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
                     {messageTime(msg)}
                     {/* P03 — receipt CHỈ 1-1 (nhóm per-member, scalar vô nghĩa) + chỉ tin mình gửi.
                         Kênh không có receipt → field null → không render gì (không phải "chưa xem"). */}
-                    {mine && !group && !recalled && (
-                        msg.seen_at ? (
+                    {mine &&
+                        !group &&
+                        !recalled &&
+                        (msg.seen_at ? (
                             <span className="text-primary flex items-center gap-0.5">
                                 <CheckCheck className="h-3 w-3" /> Đã xem
                             </span>
@@ -94,8 +97,7 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
                             <CheckCheck className="h-3 w-3" />
                         ) : msg.source_id ? (
                             <Check className="h-3 w-3" />
-                        ) : null
-                    )}
+                        ) : null)}
                 </span>
             </div>
 
@@ -123,12 +125,7 @@ function BubbleActions({
     return (
         <div className="relative flex items-center gap-0.5 self-center opacity-0 transition-opacity group-hover:opacity-100">
             {onReply && (
-                <button
-                    type="button"
-                    className="text-muted-foreground hover:bg-muted rounded p-1"
-                    onClick={() => onReply(msg)}
-                    aria-label="Trả lời"
-                >
+                <button type="button" className="text-muted-foreground hover:bg-muted rounded p-1" onClick={() => onReply(msg)} aria-label="Trả lời">
                     <Reply className="h-3.5 w-3.5" />
                 </button>
             )}

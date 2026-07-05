@@ -144,6 +144,11 @@ export function collectSourceIdsFromSendResult(sendResult) {
         return [];
     }
     const collect = [];
+    // sendSticker (và API trả msgId phẳng, không wrapper message/attachment):
+    // bỏ sót → source_id null → echo không dedup → double message (bug 05/07).
+    if (sendResult.msgId != null || sendResult.msgID != null) {
+        collect.push(sendResult);
+    }
     if (sendResult.message) {
         collect.push(sendResult.message);
     }
