@@ -5,7 +5,7 @@
 ## Prerequisites
 
 - **PHP 8.3+** (Laravel 13 requirement)
-- **PostgreSQL 16** (local or Docker)
+- **PostgreSQL** (local)
 - **Node.js 18+** (Vite build + Zalo bridge service)
 - **Composer** (PHP dependency manager)
 - **npm or pnpm** (Node package manager)
@@ -30,17 +30,21 @@ pnpm install  # or npm install
 
 ## 2. Database Setup
 
-Create a PostgreSQL database and run migrations:
+Canonical names: dev DB `crm`, test DB `crm_test`, roles `crm_app` (runtime,
+RLS-enforced) + `crm_owner` (schema owner, migrations). Details in
+[local-development.md](local-development.md).
 
 ```bash
-# Create database (adjust credentials in .env)
-createdb crm_dev
+# Create both databases (as the superuser)
+createdb -h 127.0.0.1 -U postgres crm
+createdb -h 127.0.0.1 -U postgres crm_test
 
 # Generate app key
 php artisan key:generate
 
-# Run migrations (creates tables + RLS policies)
-php artisan migrate
+# Create roles + grants (real RLS), then migrate as the owner
+make db-roles
+make migrate
 
 # Seed sample data (optional — creates test workspace + users)
 php artisan db:seed
@@ -154,9 +158,9 @@ php artisan serve --port=8001
 
 ### Database Connection Refused
 
-- Verify PostgreSQL is running: `psql -U postgres -c "SELECT 1"`
-- Check `.env` has correct host/port/user/password.
-- Ensure `crm_dev` database exists: `createdb crm_dev`.
+- Verify PostgreSQL is running: `psql -h 127.0.0.1 -U postgres -c "SELECT 1"`
+- Check `.env` has correct host/port/user/password (`DB_USERNAME=crm_app`).
+- Ensure the `crm` database exists and roles are set up (`make db-roles`).
 
 ### Zalo Bridge Connection Failed
 

@@ -30,8 +30,7 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: crm
-          POSTGRES_PASSWORD: secret
+          POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: crm_test
         ports: ['5432:5432']
         options: >-
@@ -57,17 +56,21 @@ jobs:
         run: vendor/bin/pint --test
       - name: Static analysis (Larastan)
         run: vendor/bin/phpstan analyse --no-progress || true
+      - name: Setup DB roles (crm_app RLS-enforced + crm_owner)
+        run: psql -h 127.0.0.1 -U postgres -d crm_test -f database/sql/setup-roles.sql
       - name: Migrate + test (Pest)
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
           DB_PORT: 5432
           DB_DATABASE: crm_test
-          DB_USERNAME: crm
-          DB_PASSWORD: secret
+          DB_USERNAME: crm_app
+          DB_PASSWORD: ''
+          DB_PRIVILEGED_USERNAME: crm_owner
+          DB_PRIVILEGED_PASSWORD: ''
           REDIS_HOST: 127.0.0.1
         run: |
-          php artisan migrate --force
+          php artisan migrate --database=pgsql_privileged --force
           php artisan db:seed --class=PlatformPermissionSeeder --force
           php artisan db:seed --class=AdminPermissionSeeder --force
           php artisan test

@@ -180,7 +180,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 | Quan sát | Telescope + Pulse + Sentry |
 | Test | Pest (unit/feature) + Playwright (e2e) |
 | Format/Lint | Pint + Prettier + ESLint (`make format`) |
-| Triển khai | VPS / Docker (xem [docs/local-development.md](docs/local-development.md)) |
+| Triển khai | VPS / Forge (xem [docs/local-development.md](docs/local-development.md)) |
 
 ---
 
@@ -220,5 +220,5 @@ Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
 | [docs/crm-business-config.md](docs/crm-business-config.md) | Pipeline mặc định, enums, SLA, scoring, gói free, marketplace seed |
 | [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |
 | [docs/features/README.md](docs/features/README.md) | Index tài liệu flow từng tính năng |
-| [docs/local-development.md](docs/local-development.md) | Chạy local bằng Docker (PHP/Postgres/Redis) |
+| [docs/local-development.md](docs/local-development.md) | Chạy local (PHP 8.4 + Postgres + Redis, tên DB/role chuẩn) |
 | [docs/development-roadmap.md](docs/development-roadmap.md) · [docs/project-changelog.md](docs/project-changelog.md) | Lộ trình & nhật ký thay đổi |
