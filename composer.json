@@ -19,6 +19,7 @@
         "laravel/reverb": "^1.10",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.8",
+        "opcodesio/log-viewer": "^3.24",
         "sentry/sentry-laravel": "^4.26",
         "spatie/laravel-permission": "^8.0",
         "tightenco/ziggy": "^2.6"
