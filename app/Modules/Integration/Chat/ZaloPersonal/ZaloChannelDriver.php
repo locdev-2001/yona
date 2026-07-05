@@ -152,10 +152,11 @@ class ZaloChannelDriver implements ChannelDriver
     }
 
     /**
-     * P01a — platform_meta.zca_message: subset raw từ listener_data đủ 15 key
-     * (13 từ listener_data + threadId/threadType) cho outbound action
-     * (quote/reaction/seen — Codex BLOCKER-1). Thiếu 1 field = action tương ứng
-     * KHÔNG gọi được → chỉ giữ field có mặt, P06 gate theo field.
+     * P01a — platform_meta.zca_message: giữ TOÀN BỘ raw từ listener_data
+     * (quyết định founder 05/07: "có gì lấy sạch hết" — payload nền tảng không
+     * tái tạo được, cần cho action outbound quote/reaction/seen lẫn nhu cầu
+     * tương lai chưa biết trước) + threadId/threadType chuẩn hóa từ payload.
+     * P06 gate action theo field bắt buộc (msgId/cliMsgId...) — thiếu = action disable.
      * Tin backfill/legacy không có listener_data → platform_meta rỗng (action disable).
      *
      * @param  array<string, mixed>  $raw
@@ -168,12 +169,7 @@ class ZaloChannelDriver implements ChannelDriver
             return [];
         }
 
-        $zcaFields = [
-            'msgId', 'cliMsgId', 'uidFrom', 'idTo', 'msgType', 'ts', 'ttl',
-            'content', 'propertyExt', 'st', 'at', 'cmd', 'realMsgId',
-        ];
-
-        $zcaMessage = array_intersect_key($listenerData, array_flip($zcaFields));
+        $zcaMessage = $listenerData;
 
         if (isset($raw['thread_id'])) {
             $zcaMessage['threadId'] = (string) $raw['thread_id'];
