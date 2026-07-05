@@ -24,7 +24,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  *
  * Review H1: KHÔNG SerializesModels, KHÔNG query trong broadcastWith — payload
  * capture NGAY trong request context (RLS còn bind; conversation đã setRelation
- * fresh ở ingest). Queue worker prod chạy cho_rach_app không có
+ * fresh ở ingest). Queue worker prod chạy crm_app không có
  * app.current_workspace → re-query lúc broadcast bị RLS chặn → job fail.
  * $message giữ lại CHỈ cho listener đồng bộ (LiftPhoneFromBusinessCard) —
  * không được dùng trong broadcastOn/broadcastWith.

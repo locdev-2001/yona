@@ -18,7 +18,7 @@ return new class extends Migration
         $db->statement('ALTER TABLE quick_replies FORCE ROW LEVEL SECURITY');
         $db->statement('DROP POLICY IF EXISTS ws_isolation ON quick_replies');
         $db->statement("CREATE POLICY ws_isolation ON quick_replies USING ({$predicate}) WITH CHECK ({$predicate})");
-        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON quick_replies TO cho_rach_app');
+        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON quick_replies TO crm_app');
     }
 
     public function down(): void

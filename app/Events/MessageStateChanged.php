@@ -16,7 +16,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  *
  * Review H1: KHÔNG SerializesModels, KHÔNG query trong broadcastOn/broadcastWith —
  * payload capture NGAY trong request context (RLS còn bind). Queue worker prod
- * chạy cho_rach_app KHÔNG có app.current_workspace → mọi query lúc broadcast bị
+ * chạy crm_app KHÔNG có app.current_workspace → mọi query lúc broadcast bị
  * RLS chặn → job fail im lặng (pattern đúng: ConversationSystemLine).
  */
 class MessageStateChanged implements ShouldBroadcast

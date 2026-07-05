@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * Writes append-only audit entries (BR-X05).
  *
  * Connection: workspace-scoped entries are written on the runtime connection,
- * where cho_rach_app has INSERT but no UPDATE/DELETE on audit_logs
+ * where crm_app has INSERT but no UPDATE/DELETE on audit_logs
  * (setup-roles.sql) — immutability is grant-enforced, not just app-enforced.
  * Platform-plane entries (no workspace_id: login, impersonation, …) cannot
  * satisfy the audit_logs RLS WITH CHECK, so they are written on the privileged
