@@ -179,7 +179,12 @@ export function ConversationPanel({ conversationId }: Props) {
                     }}
                     className="flex gap-1"
                 >
-                    <Input value={noteInput} onChange={(e) => setNoteInput(e.target.value)} placeholder="Ghi chú riêng cho team..." className="h-7 text-xs" />
+                    <Input
+                        value={noteInput}
+                        onChange={(e) => setNoteInput(e.target.value)}
+                        placeholder="Ghi chú riêng cho team..."
+                        className="h-7 text-xs"
+                    />
                     <Button type="submit" size="sm" variant="secondary" className="h-7 text-xs" disabled={busy || !noteInput.trim()}>
                         Lưu
                     </Button>
