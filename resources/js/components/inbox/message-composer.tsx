@@ -77,9 +77,7 @@ export function MessageComposer({
 
     const slashQuery = text.startsWith('/') ? text.slice(1).toLowerCase() : null;
     const slashMatches =
-        slashQuery !== null && quickReplies !== null
-            ? quickReplies.filter((q) => q.title.toLowerCase().includes(slashQuery)).slice(0, 8)
-            : [];
+        slashQuery !== null && quickReplies !== null ? quickReplies.filter((q) => q.title.toLowerCase().includes(slashQuery)).slice(0, 8) : [];
 
     // Lazy-load danh sách canned lần đầu gõ "/"
     useEffect(() => {
@@ -292,9 +290,20 @@ export function MessageComposer({
                     {stickerResults.length > 0 && (
                         <div className="mt-2 grid max-h-40 grid-cols-6 gap-1 overflow-y-auto">
                             {stickerResults.map((s) => (
-                                <button key={s.id} type="button" className="hover:bg-muted rounded p-1" onClick={() => sendSticker(s)} disabled={sending}>
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    className="hover:bg-muted rounded p-1"
+                                    onClick={() => sendSticker(s)}
+                                    disabled={sending}
+                                >
                                     {s.url || s.thumbnail ? (
-                                        <img src={s.url ?? s.thumbnail ?? ''} alt={s.description ?? 'sticker'} className="h-12 w-12 object-contain" loading="lazy" />
+                                        <img
+                                            src={s.url ?? s.thumbnail ?? ''}
+                                            alt={s.description ?? 'sticker'}
+                                            className="h-12 w-12 object-contain"
+                                            loading="lazy"
+                                        />
                                     ) : (
                                         <span className="text-xs">#{s.id}</span>
                                     )}

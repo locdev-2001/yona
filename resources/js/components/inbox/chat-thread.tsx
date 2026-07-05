@@ -66,7 +66,10 @@ export function ChatThread({ items, peer, loading, onReply, onReact }: Props) {
                 lastDay = day;
 
                 const showSender =
-                    showDay || !lastMessage || isOutbound(lastMessage) !== isOutbound(item) || (lastMessage.sender_uid ?? null) !== (item.sender_uid ?? null);
+                    showDay ||
+                    !lastMessage ||
+                    isOutbound(lastMessage) !== isOutbound(item) ||
+                    (lastMessage.sender_uid ?? null) !== (item.sender_uid ?? null);
                 lastMessage = item;
 
                 return (

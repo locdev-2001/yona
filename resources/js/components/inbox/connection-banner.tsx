@@ -20,7 +20,12 @@ export function ConnectionBanner({ accounts }: { accounts: ChannelAccountInfo[] 
                             Tài khoản <strong>{acc.display_name ?? 'Zalo'}</strong>{' '}
                             {acc.status === 'session_lost' ? 'mất kết nối. Tin nhắn mới có thể chưa nhận được.' : 'chưa kết nối.'} Cần quét lại QR.
                         </span>
-                        <Button size="sm" variant="outline" className="ml-3 h-7 shrink-0" onClick={() => router.visit(route('integrations.zalo.index'))}>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="ml-3 h-7 shrink-0"
+                            onClick={() => router.visit(route('integrations.zalo.index'))}
+                        >
                             Quét QR
                         </Button>
                     </AlertDescription>
