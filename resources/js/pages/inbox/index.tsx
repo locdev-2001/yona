@@ -478,6 +478,11 @@ export default function InboxIndex({
     // P11 — kênh không đăng ký/không hỗ trợ → all-false → nút tự ẩn (không assume Zalo)
     const caps: ChannelCaps = (activeConv && channelCapabilities[activeConv.channel]) || {};
 
+    // Review M3: quota gate composer theo KÊNH của hội thoại đang mở (không assume Zalo).
+    // Badge usage cột trái vẫn theo ZALO_QUOTA_KEY — seam đã khai trong channel-framework-contract.md.
+    const convQuotaRemaining = activeConv ? (entitlements?.remaining[`quota.conversations.${activeConv.channel}`] ?? null) : null;
+    const convQuotaExhausted = convQuotaRemaining !== null && convQuotaRemaining <= 0;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
@@ -672,8 +677,8 @@ export default function InboxIndex({
                                 <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>
                             )}
 
-                            {/* Composer — disabled khi quota hết VÀ conversation MỚI (chưa có tin) */}
-                            {quotaExhausted && items.length === 0 ? (
+                            {/* Composer — disabled khi quota KÊNH hết VÀ conversation MỚI (chưa có tin) */}
+                            {convQuotaExhausted && items.length === 0 ? (
                                 <div className="border-t p-3 text-center">
                                     <p className="text-muted-foreground mb-2 text-xs">Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).</p>
                                     <Button size="sm" variant="default" onClick={() => router.visit('/admin/billing/upgrade')}>
