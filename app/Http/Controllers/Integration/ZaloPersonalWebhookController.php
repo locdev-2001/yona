@@ -13,7 +13,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SocialEventMaterializer;
-use App\Services\ZaloGroupBackfillService;
+use App\Services\ZaloBackfillService;
 use App\Support\Activity\ActivityLogger;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
@@ -220,7 +220,7 @@ class ZaloPersonalWebhookController extends Controller
         // ponytail: inline backfill — chưa có DB-queue worker; chuyển Job khi có worker
         if ($modelState === 'connected' && $hadGap) {
             try {
-                app(ZaloGroupBackfillService::class)->run($connectionId);
+                app(ZaloBackfillService::class)->run($connectionId);
             } catch (Throwable $e) {
                 // Không để lỗi backfill phá update state
                 $this->safeReport($e);

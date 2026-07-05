@@ -180,7 +180,7 @@ export default function InboxIndex({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Đồng bộ lại tin nhóm (kéo lịch sử qua getGroupChatHistory) — luôn sẵn, không cần gap.
+    // Đồng bộ lại tin nhắn 1-1 + nhóm (lane WS requestOldMessages, tin về async qua webhook) — luôn sẵn, không cần gap.
     function handleResync() {
         if (syncing) return;
         setSyncing(true);
@@ -198,7 +198,7 @@ export default function InboxIndex({
                     showToast(json.message ?? 'Không đồng bộ được. Kiểm tra bridge đã chạy chưa.');
                     return;
                 }
-                showToast(`Đã đồng bộ ${json.fetched ?? 0} tin nhóm.`);
+                showToast('Đã yêu cầu đồng bộ — tin nhắn thiếu sẽ về trong giây lát.');
                 router.reload({ only: ['conversations'] });
             })
             .catch(() => showToast('Không kết nối được server.'))
@@ -416,7 +416,9 @@ export default function InboxIndex({
                 }
                 // Patch tại chỗ từ response (broadcast cũng sẽ tới — patch idempotent)
                 setItems((prev) =>
-                    prev.map((item) => (isStreamMessage(item) && item.id === msg.id ? { ...item, reactions: json.reactions ?? item.reactions } : item)),
+                    prev.map((item) =>
+                        isStreamMessage(item) && item.id === msg.id ? { ...item, reactions: json.reactions ?? item.reactions } : item,
+                    ),
                 );
             })
             .catch(() => showToast('Không kết nối được server.'));
@@ -466,11 +468,7 @@ export default function InboxIndex({
     }
 
     function handleSelectAccount(accountId: string | null) {
-        router.get(
-            route('inbox.index'),
-            { ...filters, channel_account_id: accountId ?? undefined },
-            { preserveState: true, replace: true },
-        );
+        router.get(route('inbox.index'), { ...filters, channel_account_id: accountId ?? undefined }, { preserveState: true, replace: true });
     }
 
     const breadcrumbs = [{ title: 'Inbox', href: route('inbox.index') }];
@@ -513,11 +511,13 @@ export default function InboxIndex({
 
                         {/* P07 — chia ca trực: filter theo người phụ trách */}
                         <div className="flex gap-1">
-                            {([
-                                ['', 'Tất cả'],
-                                ['me', 'Của tôi'],
-                                ['unassigned', 'Chưa gán'],
-                            ] as const).map(([value, label]) => (
+                            {(
+                                [
+                                    ['', 'Tất cả'],
+                                    ['me', 'Của tôi'],
+                                    ['unassigned', 'Chưa gán'],
+                                ] as const
+                            ).map(([value, label]) => (
                                 <Button
                                     key={value}
                                     type="button"
@@ -537,10 +537,10 @@ export default function InboxIndex({
                             ))}
                         </div>
 
-                        {/* Đồng bộ lại tin nhóm — luôn sẵn (không chờ banner gap). Cần bridge đang chạy. */}
+                        {/* Đồng bộ lại tin nhắn (1-1 + nhóm) — luôn sẵn (không chờ banner gap). Cần bridge đang chạy. */}
                         <Button type="button" size="sm" variant="outline" className="w-full" disabled={syncing} onClick={handleResync}>
                             <RefreshCw className={`mr-1 h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
-                            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ tin nhóm'}
+                            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ tin nhắn'}
                         </Button>
 
                         {/* P06b — seen-sync toggle: chỉ tenant.zalo.manage; default OFF (khách sẽ thấy "đã xem") */}
@@ -673,9 +673,7 @@ export default function InboxIndex({
                             />
 
                             {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
-                            {typing?.convId === activeConv.id && (
-                                <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>
-                            )}
+                            {typing?.convId === activeConv.id && <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>}
 
                             {/* Composer — disabled khi quota KÊNH hết VÀ conversation MỚI (chưa có tin) */}
                             {convQuotaExhausted && items.length === 0 ? (
@@ -727,7 +725,13 @@ export default function InboxIndex({
                                             className="h-7 text-xs"
                                             disabled={phoneSaving}
                                         />
-                                        <Button size="sm" variant="secondary" className="h-7 text-xs" disabled={phoneSaving || !phoneInput.trim()} onClick={handleVerifyPhone}>
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="h-7 text-xs"
+                                            disabled={phoneSaving || !phoneInput.trim()}
+                                            onClick={handleVerifyPhone}
+                                        >
                                             {phoneSaving ? '...' : 'Xác minh'}
                                         </Button>
                                     </div>

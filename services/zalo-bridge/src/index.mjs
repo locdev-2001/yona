@@ -14,7 +14,7 @@ import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
-import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
+import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
@@ -1528,6 +1528,13 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
         content: contentStr,
         backfill: true,          // marker để Laravel biết đây là tin hồi phục (không gửi notification)
     };
+    // Raw đầy đủ như live lane (cùng key) → platform_meta.zca_message: tin backfill
+    // quote/react/seen được + giữ trọn payload nền tảng (yêu cầu founder 05/07).
+    try {
+        payload.listener_data = JSON.parse(JSON.stringify(rawD));
+    } catch {
+        payload.listener_data = null;
+    }
     if (mediaUrl) payload.media_url = mediaUrl;
     if (!isSelf && rawD?.uidFrom) payload.sender_uid = String(rawD.uidFrom);
 
@@ -1582,6 +1589,23 @@ function startListenerForSlot(slotKey) {
             });
         } catch (e) {
             console.warn('zalo-bridge: listener.on(closed) not available', e?.message || e);
+        }
+        try {
+            // P08 — mọi lần WS auth xong (login mới/reconnect/restore) tự kéo gap
+            // 1-1 + nhóm qua cmd 510/511. Hook 'cipher_key' (cmd 1 = handshake xong),
+            // KHÔNG phải 'connected' (emit tại ws.onopen — gửi 510 lúc đó server đóng
+            // 3000 NOT_AUTHENTICATED, đo thật 05/07). sendWs no-op khi ws chưa mở nên
+            // cũng không gọi được từ promote/restore. Dedup source_id nên trùng vô hại.
+            slot.api.listener.on('cipher_key', () => {
+                // Chờ 5s sau auth (spike 1b chờ 6s sau connected mới được server trả) —
+                // request ngay tại cipher_key server im lặng, đo thật 05/07.
+                setTimeout(() => {
+                    const lanes = requestThreadBackfill(slot);
+                    console.info('zalo-bridge: thread backfill requested (post-auth)', cid, lanes.join(','));
+                }, 5000);
+            });
+        } catch (e) {
+            console.warn('zalo-bridge: listener.on(cipher_key) not available', e?.message || e);
         }
         try {
             slot.api.listener.on('group_event', (ev) => {

@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\ZaloGroupBackfillService;
+use App\Services\ZaloBackfillService;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * Tests cho ZaloGroupBackfillService + POST /inbox/resync + auto-backfill on reconnect.
+ * Tests cho ZaloBackfillService + POST /inbox/resync + auto-backfill on reconnect.
  *
  * @group channel-zalo
  */
@@ -121,7 +121,7 @@ function insertDmConversation(string $workspaceId, string $channelAccountId, str
 
 // ── Test 1: Service gọi bridge đúng group_id, bỏ qua conv 1-1 ────────────────
 
-it('ZaloGroupBackfillService calls bridge for group convs only, skips DM convs', function () {
+it('ZaloBackfillService calls bridge for group convs only, skips DM convs', function () {
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     seedMember($ws, $user, 'admin');
@@ -134,15 +134,24 @@ it('ZaloGroupBackfillService calls bridge for group convs only, skips DM convs',
     insertDmConversation($ws->id, $accountId, 'dm_ccc'); // phải bị bỏ qua
 
     Http::fake([
+        'http://bridge.test/backfill/threads' => Http::response(['ok' => true, 'requested' => ['user', 'group'], 'async' => true], 200),
         'http://bridge.test/backfill/group' => Http::response(['ok' => true, 'fetched' => 3], 200),
     ]);
 
-    $fetched = app(ZaloGroupBackfillService::class)->run($connId);
+    $fetched = app(ZaloBackfillService::class)->run($connId);
 
-    // 2 nhóm × 3 tin = 6
+    // 2 nhóm × 3 tin = 6 (lane WS về async, không cộng vào fetched)
     expect($fetched)->toBe(6);
 
-    Http::assertSentCount(2);
+    // 1 call WS threads + 2 call REST group
+    Http::assertSentCount(3);
+    Http::assertSent(function ($request) use ($connId) {
+        $body = $request->data();
+
+        return $request->url() === 'http://bridge.test/backfill/threads'
+            && $request->hasHeader('X-Bridge-UI-Secret', 'test-ui-secret')
+            && $body['connection_id'] === $connId;
+    });
     Http::assertSent(function ($request) use ($connId) {
         $body = $request->data();
 
@@ -155,7 +164,7 @@ it('ZaloGroupBackfillService calls bridge for group convs only, skips DM convs',
 
 // ── Test 2: Bridge lỗi → log + tiếp tục, không throw ────────────────────────
 
-it('ZaloGroupBackfillService logs bridge errors and continues without throwing', function () {
+it('ZaloBackfillService logs bridge errors and continues without throwing', function () {
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     seedMember($ws, $user, 'admin');
@@ -166,6 +175,7 @@ it('ZaloGroupBackfillService logs bridge errors and continues without throwing',
     insertGroupConversation($ws->id, $accountId, 'group_err');
 
     Http::fake([
+        'http://bridge.test/backfill/threads' => Http::response(['ok' => false, 'message' => 'not_connected'], 409),
         'http://bridge.test/backfill/group' => Http::sequence()
             ->push(['ok' => true, 'fetched' => 5], 200)
             ->push(['ok' => false, 'message' => 'not_connected'], 409),
@@ -173,10 +183,10 @@ it('ZaloGroupBackfillService logs bridge errors and continues without throwing',
 
     Log::spy();
 
-    $fetched = app(ZaloGroupBackfillService::class)->run($connId);
+    $fetched = app(ZaloBackfillService::class)->run($connId);
 
-    expect($fetched)->toBe(5); // chỉ nhóm đầu thành công
-    Log::shouldHaveReceived('warning')->once();
+    expect($fetched)->toBe(5); // chỉ nhóm đầu thành công; lane WS lỗi không chặn lane REST
+    Log::shouldHaveReceived('warning')->twice(); // 1 threads + 1 group
 })->group('channel-zalo');
 
 // ── Test 3: Route POST /inbox/resync trả fetched tổng ────────────────────────
@@ -191,6 +201,7 @@ it('POST /inbox/resync returns total fetched from all connected connections', fu
     insertGroupConversation($ws->id, $accountId, 'group_x');
 
     Http::fake([
+        'http://bridge.test/backfill/threads' => Http::response(['ok' => true, 'deep' => true, 'days' => 30, 'async' => true], 200),
         'http://bridge.test/backfill/group' => Http::response(['ok' => true, 'fetched' => 7], 200),
     ]);
 
@@ -199,6 +210,12 @@ it('POST /inbox/resync returns total fetched from all connected connections', fu
         ->postJson('/inbox/resync')
         ->assertOk()
         ->assertJson(['ok' => true, 'fetched' => 7]);
+
+    // Resync thủ công = deep sync 30 ngày (quyết định founder 05/07)
+    Http::assertSent(function ($request) {
+        return $request->url() === 'http://bridge.test/backfill/threads'
+            && $request->data()['days'] === 30;
+    });
 })->group('channel-zalo');
 
 // ── Test 4: bridge_session session_ok + hadGap → auto-backfill (mock service) ─
@@ -207,7 +224,7 @@ it('POST /inbox/resync returns total fetched from all connected connections', fu
 // DatabaseTransactions không visible cross-connection. Mock service để test
 // logic "gọi run() khi hadGap=true" mà không cần data phải committed.
 
-it('handleBridgeSession triggers ZaloGroupBackfillService when reconnecting after a gap', function () {
+it('handleBridgeSession triggers ZaloBackfillService when reconnecting after a gap', function () {
     $ws = Workspace::factory()->create();
 
     // Webhook __invoke() resolve workspace_id qua pgsql_privileged TRƯỚC khi có RLS context
@@ -227,9 +244,9 @@ it('handleBridgeSession triggers ZaloGroupBackfillService when reconnecting afte
         'updated_at' => now(),
     ]);
 
-    $mockService = Mockery::mock(ZaloGroupBackfillService::class);
+    $mockService = Mockery::mock(ZaloBackfillService::class);
     $mockService->shouldReceive('run')->once()->with($connId)->andReturn(4);
-    app()->instance(ZaloGroupBackfillService::class, $mockService);
+    app()->instance(ZaloBackfillService::class, $mockService);
 
     $this->postJson('/api/integrations/zalo-personal/webhook', [
         'type' => 'bridge_session',
