@@ -134,3 +134,10 @@ test('collectSourceIdsFromSendResult: chỉ text → 1 id; rỗng → []', () =>
     assert.deepEqual(collectSourceIdsFromSendResult(null), []);
     assert.deepEqual(collectSourceIdsFromSendResult({}), []);
 });
+
+test('collectSourceIdsFromSendResult: sendSticker trả msgId phẳng (không wrapper) → vẫn thu id (bug double sticker 05/07)', () => {
+    assert.deepEqual(collectSourceIdsFromSendResult({ msgId: 777155 }), ['777155']);
+    assert.deepEqual(collectSourceIdsFromSendResult({ msgID: '888' }), ['888']);
+    // phẳng + wrapper cùng lúc: primary = phẳng, không dup
+    assert.deepEqual(collectSourceIdsFromSendResult({ msgId: '1', message: { msgId: '1' } }), ['1']);
+});

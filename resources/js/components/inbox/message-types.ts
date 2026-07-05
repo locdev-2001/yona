@@ -178,7 +178,8 @@ export function dayLabel(msg: Pick<ChatMessage, 'platform_sent_at' | 'created_at
 
 /** One-line preview for the conversation list, by type. */
 export function messagePreview(msg: Pick<ChatMessage, 'type' | 'body'>): string {
-    if (msg.body && msg.body.trim()) return msg.body;
+    // Sticker: body là raw platform content (JSON {id,catId,type}) — không bao giờ là text người đọc
+    if (msg.type !== 'sticker' && msg.body && msg.body.trim()) return msg.body;
     switch (msg.type) {
         case 'image':
             return '[Hình ảnh]';

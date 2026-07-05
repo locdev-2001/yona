@@ -280,11 +280,39 @@ class InboundMessageService
         return $message;
     }
 
+    /**
+     * Preview sidebar theo type — mirror messagePreview() FE (message-types.ts).
+     * Sticker: body là raw platform content (JSON {id,catId,type}) → LUÔN label,
+     * không bao giờ lộ JSON ra UI (bug 05/07).
+     */
+    private function previewFor(Message $message): string
+    {
+        if ($message->type === 'sticker') {
+            return '[Sticker]';
+        }
+
+        $body = trim((string) ($message->body ?? ''));
+        if ($body !== '') {
+            return mb_substr($body, 0, 100);
+        }
+
+        return match ($message->type) {
+            'image' => '[Hình ảnh]',
+            'gif' => '[GIF]',
+            'video' => '[Video]',
+            'audio' => '[Tin nhắn thoại]',
+            'file' => '[Tệp đính kèm]',
+            'business_card' => '[Danh thiếp]',
+            'call' => '[Cuộc gọi]',
+            default => '',
+        };
+    }
+
     private function updateConversationCache(Conversation $conversation, Message $message, string $direction): void
     {
         $updates = [
             'last_message_at' => $message->platform_sent_at ?? $message->created_at,
-            'last_message_preview' => mb_substr((string) ($message->body ?? ''), 0, 100),
+            'last_message_preview' => $this->previewFor($message),
         ];
 
         if ($direction === 'in') {
