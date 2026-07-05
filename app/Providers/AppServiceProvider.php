@@ -10,6 +10,7 @@ use App\Support\DbRoleGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -68,5 +69,8 @@ class AppServiceProvider extends ServiceProvider
         // crm-sales policies + events registered in CrmSalesServiceProvider.
         // Project + Task policies registered in ProjectsServiceProvider.
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
+
+        // Log chứa dữ liệu nhạy cảm — chỉ mở ở local; môi trường khác cần gate thật (admin RBAC) trước khi bật.
+        LogViewer::auth(fn () => app()->environment('local'));
     }
 }
