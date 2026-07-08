@@ -16,12 +16,12 @@ it('scopes roles per workspace — the same user differs across workspaces', fun
     seedMember($w2, $user, 'viewer');
 
     actingInWorkspace($w1, $user);
-    expect($user->fresh()->can('team.manage'))->toBeTrue()
-        ->and($user->fresh()->can('member.manage'))->toBeTrue();
+    expect($user->fresh()->can('tenant.team.manage'))->toBeTrue()
+        ->and($user->fresh()->can('tenant.member.manage'))->toBeTrue();
 
     actingInWorkspace($w2, $user);
-    expect($user->fresh()->can('team.manage'))->toBeFalse()
-        ->and($user->fresh()->can('workspace.update'))->toBeFalse();
+    expect($user->fresh()->can('tenant.team.manage'))->toBeFalse()
+        ->and($user->fresh()->can('tenant.workspace.update'))->toBeFalse();
 });
 
 it('lets an admin pass management policies and blocks a viewer', function () {
@@ -41,7 +41,7 @@ it('lets an admin pass management policies and blocks a viewer', function () {
         ->and(Gate::forUser($viewer->fresh())->allows('create', Team::class))->toBeFalse();
 });
 
-it('grants audit.view to managers but not reps', function () {
+it('grants tenant.audit.view to managers but not reps', function () {
     $w = Workspace::factory()->create();
     $manager = User::factory()->create();
     $rep = User::factory()->create();
@@ -50,8 +50,8 @@ it('grants audit.view to managers but not reps', function () {
     seedMember($w, $rep, 'sales_rep');
 
     actingInWorkspace($w, $manager);
-    expect($manager->fresh()->can('audit.view'))->toBeTrue();
+    expect($manager->fresh()->can('tenant.audit.view'))->toBeTrue();
 
     actingInWorkspace($w, $rep);
-    expect($rep->fresh()->can('audit.view'))->toBeFalse();
+    expect($rep->fresh()->can('tenant.audit.view'))->toBeFalse();
 });

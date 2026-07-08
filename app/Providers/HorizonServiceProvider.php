@@ -24,13 +24,12 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      * Register the Horizon gate.
      *
      * This gate determines who can access Horizon in non-local environments.
+     * Delegated to the admin guard — platform.monitoring.view permission required.
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', function ($user = null) {
-            return in_array(optional($user)->email, [
-                //
-            ]);
+        Gate::define('viewHorizon', function () {
+            return auth('admin')->user()?->can('platform.monitoring.view') ?? false;
         });
     }
 }

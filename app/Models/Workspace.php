@@ -20,6 +20,11 @@ class Workspace extends Model
     /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasUuids, SoftDeletes;
 
+    protected static function newFactory(): WorkspaceFactory
+    {
+        return WorkspaceFactory::new();
+    }
+
     protected $fillable = [
         'name',
         'slug',

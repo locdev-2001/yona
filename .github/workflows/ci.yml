@@ -68,6 +68,8 @@ jobs:
           REDIS_HOST: 127.0.0.1
         run: |
           php artisan migrate --force
+          php artisan db:seed --class=PlatformPermissionSeeder --force
+          php artisan db:seed --class=AdminPermissionSeeder --force
           php artisan test
 
   frontend:

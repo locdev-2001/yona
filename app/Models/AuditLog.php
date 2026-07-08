@@ -30,10 +30,32 @@ class AuditLog extends Model
         ];
     }
 
-    /** @return BelongsTo<User, $this> */
+    /**
+     * The actor that performed this action.
+     * Returns Admin when actor_type='admin', otherwise User (actor_type='user').
+     * No FK in DB — Eloquent-only (DB_LOOSE convention).
+     *
+     * @return BelongsTo<Admin, $this>|BelongsTo<User, $this>
+     */
     public function actor(): BelongsTo
     {
+        if ($this->actor_type === 'admin') {
+            return $this->belongsTo(Admin::class, 'actor_admin_id');
+        }
+
         return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    /** @return BelongsTo<Admin, $this> */
+    public function actorAdmin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'actor_admin_id');
+    }
+
+    /** @return BelongsTo<Admin, $this> */
+    public function impersonator(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'impersonated_by_admin_id');
     }
 
     /**

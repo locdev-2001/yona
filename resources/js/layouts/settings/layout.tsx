@@ -16,9 +16,21 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         { title: t('platform.nav.profile'), url: '/settings/profile' },
         { title: t('platform.nav.password'), url: '/settings/password' },
         { title: t('platform.nav.appearance'), url: '/settings/appearance' },
-        ...(can('workspace.update') ? [{ title: t('platform.nav.workspace'), url: '/settings/workspace' }] : []),
-        ...(can('team.manage') ? [{ title: t('platform.nav.teams'), url: '/settings/teams' }] : []),
-        ...(can('member.manage') ? [{ title: t('platform.nav.members'), url: '/settings/members' }] : []),
+        ...(can('tenant.workspace.update') ? [{ title: t('platform.nav.workspace'), url: '/settings/workspace' }] : []),
+        ...(can('tenant.team.manage') ? [{ title: t('platform.nav.teams'), url: '/settings/teams' }] : []),
+        ...(can('tenant.member.manage') ? [{ title: t('platform.nav.members'), url: '/settings/members' }] : []),
+        ...(can('tenant.email_template.view') ? [{ title: t('email_templates.title'), url: '/settings/email-templates' }] : []),
+        ...(can('tenant.workspace.update')
+            ? [
+                  { title: t('platform.nav.pipelines'), url: '/settings/lookups/pipelines' },
+                  { title: t('platform.nav.lead_sources'), url: '/settings/lookups/lead-sources' },
+                  { title: t('platform.nav.project_statuses'), url: '/settings/lookups/project-statuses' },
+              ]
+            : []),
+        ...(can('custom_fields.view') || can('custom_fields.manage')
+            ? [{ title: t('platform.nav.custom_fields'), url: '/settings/custom-fields' }]
+            : []),
+        ...(can('tenant.client.view') ? [{ title: t('platform.nav.client_groups'), url: '/client-groups' }] : []),
     ];
 
     return (

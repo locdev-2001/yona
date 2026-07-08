@@ -17,7 +17,7 @@ ARTISAN  := $(PHP) artisan
 COMPOSER := composer
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-docker setup-host install dev serve queue horizon reverb \
+.PHONY: help setup setup-docker setup-host install dev serve queue horizon reverb bridge \
         db-roles migrate seed test format pint pint-test stan check build \
         clear tinker \
         docker-up docker-down docker-restart docker-logs docker-ps \
@@ -158,6 +158,18 @@ horizon: ## Run Horizon (Redis queues)
 reverb: ## Run Reverb websocket server (live chat)
 	$(ARTISAN) reverb:start
 
+bridge: ## Start the Zalo personal bridge (foreground; kills any stale instance on the port first) — then connect at /integrations/zalo
+	cd services/zalo-bridge && { test -d node_modules || pnpm install; } && \
+		PORT=$${BRIDGE_HTTP_PORT:-3710}; \
+		fuser -k $$PORT/tcp 2>/dev/null && sleep 0.5 || true; \
+		node src/index.mjs
+
+workers: ## Run full pipeline (Horizon queues + Reverb websocket)
+	trap 'kill 0' INT TERM; \
+	$(ARTISAN) horizon & \
+	$(ARTISAN) reverb:start & \
+	wait
+
 ## ── Database (host) ────────────────────────────────────
 db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
 	psql -U cho_rach_owner -d cho_rach      -f database/sql/setup-roles.sql
@@ -166,6 +178,8 @@ db-roles: ## Create/grant the cho_rach_app runtime role (real RLS) on both DBs
 migrate: ## Run pending migrations (additive, forward-only) on dev + test DBs
 	$(ARTISAN) migrate --database=pgsql_privileged --force
 	DB_DATABASE=cho_rach_test $(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) db:seed --class=PlatformPermissionSeeder --force
+	DB_DATABASE=cho_rach_test $(ARTISAN) db:seed --class=AdminPermissionSeeder --force
 
 seed: ## Run seeders (idempotent foundation data)
 	$(ARTISAN) db:seed --force

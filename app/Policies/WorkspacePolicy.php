@@ -19,6 +19,6 @@ class WorkspacePolicy
 
     public function update(User $user, Workspace $workspace): bool
     {
-        return $user->can('workspace.update');
+        return $user->can('tenant.workspace.update');
     }
 }

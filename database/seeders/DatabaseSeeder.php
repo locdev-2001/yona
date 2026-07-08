@@ -11,10 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Global workspace-role definitions (reference data, idempotent).
-        $this->call(PlatformPermissionSeeder::class);
+        // Global role definitions (reference data, idempotent).
+        $this->call(PlatformPermissionSeeder::class); // tenant plane (guard web)
+        $this->call(AdminPermissionSeeder::class);    // platform plane (guard admin)
 
-        // Default workspace + admin membership for existing users (dev).
+        // Default workspace + admin membership + dev platform-admin (dev only).
         $this->call(FoundationSeeder::class);
     }
 }

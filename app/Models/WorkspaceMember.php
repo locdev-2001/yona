@@ -21,6 +21,11 @@ class WorkspaceMember extends Model
     /** @use HasFactory<WorkspaceMemberFactory> */
     use Auditable, BelongsToWorkspace, HasFactory, HasOptimisticLock, HasUuids;
 
+    protected static function newFactory(): WorkspaceMemberFactory
+    {
+        return WorkspaceMemberFactory::new();
+    }
+
     /** Workspace roles (crm-authorization-model.md §Plane 2). */
     public const ROLES = ['admin', 'sales_manager', 'sales_rep', 'support_manager', 'support_agent', 'marketer', 'viewer'];
 

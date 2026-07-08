@@ -2,11 +2,17 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TenantPermission;
+use App\Models\Admin;
+use App\Models\Announcement;
 use App\Models\User;
 use App\Models\WorkspaceMember;
+use App\Services\AnnouncementReadService;
+use App\Services\EntitlementService;
+use App\Services\NotificationService;
+use App\Support\TenantScope;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -41,26 +47,82 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        $user = $request->user();
+        $admin = $request->user('admin');
+        $user = $request->user('web');
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
+                'admin' => $admin ? $this->adminPayload($admin) : null,
                 'user' => $user ? $this->userPayload($user) : null,
                 'workspaces' => $user ? $this->workspaceList($user) : [],
                 // Lazy: IdentifyWorkspace binds the context AFTER Inertia::share()
                 // runs, so these resolve at response time.
                 'membership' => fn () => $this->membershipPayload($user),
+                'impersonating' => session('impersonator_admin_id')
+                    ? [
+                        'admin_id' => session('impersonator_admin_id'),
+                        'workspace_id' => session('current_workspace_id'),
+                    ]
+                    : null,
             ],
             'activeWorkspace' => fn () => $this->activeWorkspacePayload(),
+            // Lazy: resolved after IdentifyWorkspace; null for guests and admin sessions.
+            // Finding 7b: bọc class_exists + try/catch đối xứng với billing entitlements —
+            // disable-safe: tắt module announcements → null thay vì 500.
+            'unreadAnnouncementCount' => fn () => $user && class_exists(AnnouncementReadService::class)
+                ? $this->safeAnnouncementCount($user)
+                : null,
+            'latestUnreadAnnouncement' => fn () => $user && class_exists(AnnouncementReadService::class)
+                ? $this->safeLatestUnreadAnnouncement($user)
+                : null,
+            // P04 — Notifications bell: unread count + recent 5 unread.
+            // Lazy: resolved after IdentifyWorkspace; null for guests.
+            'notifications' => fn () => $user && currentWorkspace()
+                ? $this->notificationsPayload($user)
+                : null,
             'locale' => app()->getLocale(),
-            'i18n' => ['platform' => trans('platform')],
+            'i18n' => $this->translationsPayload(),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function adminPayload(Admin $admin): array
+    {
+        // share() runs before the admin.scope middleware binds the platform
+        // scope, so mirror BindAdminPermissionScope here: read the admin's
+        // platform permissions under PLATFORM_SCOPE, otherwise getAllPermissions()
+        // returns empty under RLS-enforced connections.
+        TenantScope::bind(Admin::PLATFORM_SCOPE);
+        $admin->unsetRelation('roles')->unsetRelation('permissions');
+        $permissions = $admin->getAllPermissions()->pluck('name')->all();
+
+        // This payload is built EAGERLY, but the tenant props (membership,
+        // notifications, announcements) resolve LAZILY at response time. When an
+        // admin guard is co-authenticated in the same session — manual admin+tenant
+        // dual-login, or an active impersonation — leaving the scope on
+        // PLATFORM_SCOPE would make every lazy tenant read return empty (the
+        // sidebar menu vanishes). Restore the request's tenant scope, or clear it
+        // entirely on a pure admin-plane request.
+        if ($workspace = currentWorkspace()) {
+            TenantScope::bind($workspace->id);
+        } else {
+            TenantScope::forget();
+        }
+
+        return [
+            'id' => $admin->id,
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'permissions' => $permissions,
         ];
     }
 
@@ -76,7 +138,6 @@ class HandleInertiaRequests extends Middleware
             'avatar' => $user->avatar ?? null,
             'locale' => $user->locale,
             'timezone' => $user->timezone,
-            'is_internal' => $user->isInternal(),
         ];
     }
 
@@ -89,7 +150,7 @@ class HandleInertiaRequests extends Middleware
      */
     private function workspaceList(User $user): array
     {
-        DB::statement("select set_config('app.current_user_id', ?, false)", [(string) $user->getKey()]);
+        TenantScope::bindUser($user->getKey());
 
         return WorkspaceMember::withoutGlobalScope('workspace')
             ->where('user_id', $user->getKey())
@@ -111,18 +172,171 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * All translation namespaces for the active locale, loaded dynamically so any
+     * new lang/<locale>/<namespace>.php file is auto-registered on the frontend —
+     * single source of truth, no hardcoded namespace list to keep in sync.
+     *
+     * @return array<string, mixed>
+     */
+    private function translationsPayload(): array
+    {
+        $locale = app()->getLocale();
+        $payload = [];
+
+        foreach (glob(lang_path($locale.'/*.php')) ?: [] as $file) {
+            $namespace = basename($file, '.php');
+            $payload[$namespace] = trans($namespace, [], $locale);
+        }
+
+        return $payload;
+    }
+
     private function membershipPayload(?User $user): ?array
     {
-        $membership = currentMembership();
-
-        if (! $user || ! $membership) {
+        if (! $user) {
             return null;
+        }
+
+        // Primary: IdentifyWorkspace middleware binds currentMembership() for
+        // workspace-scoped routes. On auth-only routes (profile, password,
+        // appearance) that middleware does NOT run, so currentMembership() returns
+        // null — which caused the CRM sidebar to vanish (BUG-12). Defensively
+        // resolve from the session workspace so the sidebar always has permissions.
+        $membership = currentMembership() ?? $this->resolveMembershipFromSession($user);
+
+        if (! $membership) {
+            return null;
+        }
+
+        // Defense in depth: re-assert the tenant scope (drop any roles loaded
+        // under another scope) so getAllPermissions() reads from the correct tenant.
+        // Guards against a co-authenticated admin payload having left the scope on
+        // PLATFORM_SCOPE.
+        TenantScope::bind($membership->workspace_id);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+
+        // Workspace admin/owner gets the full permission catalog so the sidebar
+        // never depends on individually-granted permissions (mirrors the
+        // Gate::before backend bypass). New permissions appear with zero re-seed.
+        $permissions = $membership->role === 'admin'
+            ? TenantPermission::values()
+            : $user->getAllPermissions()->pluck('name')->all();
+
+        // Entitlements: billing là CORE — luôn on, resolve trực tiếp App\Services\EntitlementService
+        $entitlements = null;
+        try {
+            /** @var EntitlementService $entitlementService */
+            $entitlementService = app(EntitlementService::class);
+            $entitlements = $entitlementService->snapshot($membership->workspace_id);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — billing chưa migrate không làm vỡ login
         }
 
         return [
             'role' => $membership->role,
             'team_id' => $membership->team_id,
-            'permissions' => $user->getAllPermissions()->pluck('name')->all(),
+            'permissions' => $permissions,
+            'entitlements' => $entitlements,
+        ];
+    }
+
+    /**
+     * Defensive fallback: resolve membership for auth-only routes (profile,
+     * password, appearance) that skip IdentifyWorkspace. Mirrors the same
+     * session-preference + oldest-active-fallback logic used in IdentifyWorkspace.
+     * Returns null when the user has no active membership (new signup, etc.).
+     */
+    private function resolveMembershipFromSession(User $user): ?WorkspaceMember
+    {
+        TenantScope::bindUser($user->getKey());
+
+        $sessionWorkspaceId = request()->session()->get('current_workspace_id');
+
+        $base = fn () => WorkspaceMember::withoutGlobalScope('workspace')
+            ->where('user_id', $user->getKey())
+            ->where('status', 'active');
+
+        if ($sessionWorkspaceId && $preferred = $base()->where('workspace_id', $sessionWorkspaceId)->first()) {
+            return $preferred;
+        }
+
+        return $base()->oldest()->first();
+    }
+
+    /**
+     * Finding 7b: fail-safe wrapper — announcements module bị tắt / belum migrate → null.
+     * Đối xứng với guard billing entitlements ở membershipPayload().
+     */
+    private function safeAnnouncementCount(User $user): ?int
+    {
+        try {
+            return app(AnnouncementReadService::class)->getUnreadCount($user);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — module chưa migrate không làm vỡ request
+            return null;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function safeLatestUnreadAnnouncement(User $user): ?array
+    {
+        try {
+            $announcement = app(AnnouncementReadService::class)->getLatestUnread($user);
+
+            return $this->latestUnreadAnnouncementPayload($announcement);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Minimal announcement payload for the shared latestUnreadAnnouncement prop.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function latestUnreadAnnouncementPayload(?Announcement $announcement): ?array
+    {
+        if (! $announcement) {
+            return null;
+        }
+
+        return [
+            'id' => $announcement->id,
+            'title' => $announcement->title,
+            'body_html' => $announcement->body_html,
+            'category' => $announcement->category?->value,
+            'published_at' => $announcement->published_at?->toISOString(),
+            'cover_image' => $announcement->cover_image,
+            'slug' => $announcement->slug,
+        ];
+    }
+
+    /**
+     * Notification bell payload: unread count + recent 5 unread items.
+     *
+     * @return array<string, mixed>
+     */
+    private function notificationsPayload(User $user): array
+    {
+        $service = app(NotificationService::class);
+
+        $recent = $user->unreadNotifications()
+            ->take(5)
+            ->get()
+            ->map(fn ($n) => [
+                'id' => $n->id,
+                'action' => data_get($n->data, 'action'),
+                'subject_type' => data_get($n->data, 'subject_type'),
+                'subject_id' => data_get($n->data, 'subject_id'),
+                'link' => data_get($n->data, 'link'),
+                'created_at' => $n->created_at?->toISOString(),
+            ])
+            ->all();
+
+        return [
+            'unread' => $service->unreadCount($user),
+            'recent' => $recent,
         ];
     }
 

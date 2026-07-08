@@ -6,7 +6,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 
-// BR-X12: workspace_id / owner_id / team_id / role / is_internal are
+// BR-X12: workspace_id / owner_id / team_id / role / status are
 // server-controlled and must never be settable via mass assignment.
 
 it('ignores a smuggled workspace_id on Team and stamps the active one', function () {
@@ -26,15 +26,13 @@ it('refuses to mass-assign any guarded membership field', function () {
         ->toThrow(MassAssignmentException::class);
 });
 
-it('does not mass-assign user status or is_internal', function () {
+it('does not mass-assign user status', function () {
     $user = (new User)->fill([
         'name' => 'Mallory',
         'email' => 'mallory@example.com',
         'password' => 'secret',
         'status' => 'locked',
-        'is_internal' => true,
     ]);
 
-    expect($user->getAttribute('status'))->toBeNull()
-        ->and($user->getAttribute('is_internal'))->toBeNull();
+    expect($user->getAttribute('status'))->toBeNull();
 });
