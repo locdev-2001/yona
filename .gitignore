@@ -46,3 +46,7 @@ dist/
 
 # Claude local settings (skills/ stays tracked)
 .claude/settings*
+
+/refs
+# PHPUnit
+.phpunit.result.cache

@@ -215,8 +215,12 @@ return [
          * You may optionally indicate a specific cache driver to use for permission and
          * role caching using any of the `store` drivers listed in the cache.php config
          * file. Using 'default' here means to use the `default` set in cache.php.
+         *
+         * 'array' = per-request cache only (never persisted across requests): permissions
+         * are always reloaded fresh from the DB each request. Avoids stale-permission bugs
+         * after out-of-band role/permission changes, at the cost of a few queries/request.
          */
 
-        'store' => 'default',
+        'store' => 'array',
     ],
 ];

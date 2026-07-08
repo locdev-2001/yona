@@ -2,6 +2,7 @@
 
 > How a workspace gains capabilities: a **free base** + à-la-carte **marketplace items** (add-ons). Each item is billed **one-time** or as a **subscription**. Designed basic now, extensible (new items/types = data, no schema churn).
 > Billing bounded context (Platform plane). Companion to [crm-authorization-model.md](crm-authorization-model.md), [system-architecture.md](system-architecture.md).
+> **Entitlements as module gate:** marketplace items (with `type: feature_module`) are the **per-workspace mechanism to enable/disable features**. See [system-architecture.md](system-architecture.md) for integration driver pattern details.
 
 Date: 2026-06-13 · Status: living
 
@@ -24,12 +25,12 @@ Both must pass.
 
 ## Item types (all four)
 
-| Type | Grants | Billing typical |
-|---|---|---|
-| `feature_module` | feature-flag entitlement (`module.marketing`, `api_access`, `sso`, …) | subscription |
-| `quota` | adds to a limit (`max_seats +10`, `max_contacts +50k`), **stackable by `quantity`** | subscription |
-| `integration` | feature flag `integration.<provider>` + enables a connector instance (OAuth/config) | subscription or one-time |
-| `service` | **nothing** (onboarding, import, training) — pure transaction | one-time |
+| Type | Grants | Billing typical | Notes |
+|---|---|---|---|
+| `feature_module` | feature-flag entitlement (`module.marketing`, `module.inbox`, `module.support`, …) | subscription | **Per-workspace module enablement**. Complements system-level `module.json` flag: module must be enabled globally AND entitled per-workspace. |
+| `quota` | adds to a limit (`max_seats +10`, `max_contacts +50k`), **stackable by `quantity`** | subscription | |
+| `integration` | feature flag `integration.<provider>` + enables a connector instance (OAuth/config) | subscription or one-time | |
+| `service` | **nothing** (onboarding, import, training) — pure transaction | one-time | |
 
 ## Tables
 

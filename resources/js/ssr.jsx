@@ -5,16 +5,17 @@ createInertiaApp
 import createServer from '@inertiajs/react/server';
 import ReactDOMServer from 'react-dom/server';
 
+const appPages = import.meta.glob('./pages/**/*.tsx', { eager: true });
+
+function resolvePage(name) {
+    return appPages[`./pages/${name}.tsx`];
+}
+
 createServer((page) =>
     createInertiaApp({
         page,
         render: ReactDOMServer.renderToString,
-        resolve: (name) => {
-            const pages = import.meta.glob('./pages/**/*.tsx', {
-                eager: true,
-            });
-            return pages[`./pages/${name}.tsx`];
-        },
+        resolve: resolvePage,
         // prettier-ignore
         setup: ({ App, props }) => <App {...props} />,
     }),

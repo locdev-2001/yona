@@ -14,7 +14,7 @@ class TeamStoreRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('team.manage') ?? false;
+        return $this->user()?->can('tenant.team.manage') ?? false;
     }
 
     /**
@@ -23,7 +23,10 @@ class TeamStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            // Unique per workspace (the query runs as the RLS-scoped app role, so it
+            // only sees this workspace's teams) — turns the raw 23505 unique-violation
+            // into a friendly validation error.
+            'name' => ['required', 'string', 'max:255', Rule::unique('teams', 'name')->whereNull('deleted_at')],
             'parent_id' => ['nullable', 'uuid', Rule::exists('teams', 'id')->whereNull('deleted_at')],
         ];
     }

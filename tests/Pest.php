@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -75,6 +76,15 @@ function clearWorkspaceContext(): void
     app(PermissionRegistrar::class)->setPermissionsTeamId(null);
     app()->forgetInstance('currentWorkspace');
     app()->forgetInstance('currentMembership');
+
+    // Log out the web guard so scheduler tests run without an authenticated actor.
+    // The self-notify guard in NotificationService uses auth()->id(); in production
+    // the CLI scheduler has no authenticated user (auth()->id() === null).
+    try {
+        auth()->guard('web')->logout();
+    } catch (Throwable) {
+        // Guard may not be bootstrapped in all test contexts — safe to ignore.
+    }
 }
 
 /**
@@ -120,4 +130,27 @@ function seedMember(Workspace $workspace, User $user, string $role = 'sales_rep'
     $user->assignRole($role);
 
     return $member;
+}
+
+/**
+ * Create an admin and authenticate them on the `admin` guard, assigning their
+ * platform roles under the reserved PLATFORM_SCOPE (what BindAdminPermissionScope
+ * does per request). Pass roles: [] for an admin with no capabilities.
+ *
+ * @param  list<string>  $roles
+ */
+function actingAsAdmin(?Admin $admin = null, array $roles = ['super_admin']): Admin
+{
+    $admin ??= Admin::factory()->create();
+
+    setWorkspaceContext(Admin::PLATFORM_SCOPE);
+    app(PermissionRegistrar::class)->setPermissionsTeamId(Admin::PLATFORM_SCOPE);
+    $admin->syncRoles($roles);
+    clearWorkspaceContext();
+
+    // Authenticate a fresh instance (no pre-loaded role relation) so the request
+    // resolves roles under the admin scope exactly as production does.
+    test()->actingAs($admin->fresh(), 'admin');
+
+    return $admin;
 }

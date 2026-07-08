@@ -35,7 +35,7 @@ export function WorkspaceSwitcher() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
+                                <AppLogoIcon className="text-sidebar-primary-foreground size-5 fill-current" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">{active?.name ?? 'Chó Rách'}</span>
@@ -54,7 +54,7 @@ export function WorkspaceSwitcher() {
                         {workspaces.map((workspace) => (
                             <DropdownMenuItem key={workspace.id} className="gap-2 p-2" onClick={() => switchTo(workspace.id)}>
                                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex size-6 items-center justify-center rounded-sm">
-                                    <AppLogoIcon className="size-3.5 fill-current text-white dark:text-black" />
+                                    <AppLogoIcon className="text-sidebar-primary-foreground size-3.5 fill-current" />
                                 </div>
                                 <span className="flex-1 truncate">{workspace.name}</span>
                                 {workspace.id === active?.id && <Check className="size-4" />}

@@ -16,7 +16,7 @@ class TeamReparentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('team.manage') ?? false;
+        return $this->user()?->can('tenant.team.manage') ?? false;
     }
 
     /**

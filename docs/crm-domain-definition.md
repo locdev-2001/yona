@@ -27,69 +27,77 @@ Date: 2026-06-13 · Status: living · Owner: domain
 
 ## 3. Core entities (the heart — get this right)
 
+> **Quyết định khóa #2 (2026-06-25)**: Mô hình **Client/Contact/Lead/Pipeline** thay thế Account/Deal/Stage kiểu HubSpot. `accounts` và `deals` không tồn tại trong codebase. Lý do: SMB/B2C focus, simpler funnel, avoid overkill B2B buying-committee modeling cho giai đoạn hiện tại. Sẽ xem xét Deal trong M5+ nếu cần.
+
 ```
 ┌─────────┐   convert    ┌──────────┐
-│  LEAD   │ ───────────▶ │ CONTACT  │  person, qualified
-│ unquali-│              └────┬─────┘
-│ fied    │                  │ N  belongs to  1
-└─────────┘             ┌────▼─────┐  1   N  ┌─────────┐
-                        │ ACCOUNT  │◀────────│  DEAL   │  sales opportunity
-                        │ company  │         └────┬────┘
-                        └──────────┘              │ in one stage of
-                                             ┌────▼─────┐
-                                             │ PIPELINE │
-                                             └──────────┘
-   ACTIVITY / TASK  ── attached to ─▶  Lead | Contact | Account | Deal
+│  LEAD   │ ───────────▶ │ CONTACT  │  người liên hệ (Contact thuộc Client)
+│ tiềm    │  (G7 TX)     └────┬─────┘
+│ năng    │                  │ N  belongs to  1
+└─────────┘             ┌────▼─────┐
+                        │  CLIENT  │  công ty/tổ chức
+                        │ (company)│
+                        └──────────┘
+Lead.pipeline_id → PIPELINE → PIPELINE_STAGES (open/won/lost)
+
+ACTIVITY / TASK  ── attached to ─▶  Lead | Client | Contact | Project
+PROJECT ── has many ─▶  PROJECT_MILESTONES, TASKS
 ```
 
 ### Entity definitions
 
 | Entity | Definition | Key fields (domain) |
 |---|---|---|
-| **Lead** | One person at one company who *might* buy. Lives isolated until qualified. | name, email, phone, company, source, status, score |
-| **Contact** | A qualified person your team actively engages. Backbone — every interaction ties to a Contact. | name, email, phone, title, account_id |
-| **Account** | A company you have/pursue a relationship with. (Contact = person, Account = organization.) | name, domain, industry, size, owner |
-| **Deal** (Opportunity) | A single sales opportunity, moving through pipeline stages. | name, value, currency, stage, expected_close, account_id |
-| **Pipeline** | An ordered set of stages a Deal moves through. Configurable per team. | name, stages[], is_default |
-| **Stage** | One step in a pipeline (e.g. Qualified → Proposal → Won/Lost). | name, order, probability, pipeline_id |
-| **Activity** | A logged interaction: call, email, meeting, note. Polymorphic link. | type, subject, body, occurred_at, related_to |
-| **Task** | A to-do with owner + due date (often the next action on a Deal/Contact). | title, due_at, status, assignee, related_to |
-| **Ticket** (support) | A customer issue/request tracked to resolution with SLA. | subject, status, priority, contact_id, sla_due |
+| **Lead** | Một người tại một công ty *có thể* mua. Funnel-isolated cho đến khi convert. | name, email, phone, company, source, pipeline_id, stage_id, is_public, lead_value |
+| **Client** | Công ty/tổ chức có quan hệ kinh doanh. Source of truth cho relationship. | name, currency, billing_addr, leadid (link from Lead nếu convert) |
+| **Contact** | Người làm việc trực tiếp thuộc Client. is_primary = đầu mối chính. | first_name, last_name, email, phone, client_id, is_primary |
+| **Pipeline** | Bộ stages theo thứ tự Lead di chuyển qua. Cấu hình per workspace. | name, is_default |
+| **Pipeline Stage** | Một bước trong pipeline. `type`: open/won/lost. | name, stage_order, probability, type |
+| **Project** | Dự án gắn với Client, theo dõi tiến độ qua milestones và tasks. | name, client_id, status, progress, billing_type |
+| **Task** | Công việc cần làm; gắn polymorphic với lead/client/project/contact. | name, status(1-5), priority(1-4), related_type, related_id |
+| **Activity** | Hành động đã xảy ra — append-only, immutable. | action, subject_type/id, payload, occurred_at |
+| **Ticket** (support) | Yêu cầu hỗ trợ cần giải quyết với SLA. (M3 — chưa build) | subject, status, priority, contact_id, sla_due |
 
 ### Critical relationships & invariants
 
-- **Account ↔ Contact = 1:N** — one company, many people.
-- **Deal ↔ Account = N:1** — a deal belongs to one company.
-- **Deal ↔ Contact = N:N** — model the *buying committee* (multiple decision-makers). Use a join (`deal_contact_roles`: contact_id, deal_id, role). **B2B-critical — do not collapse to 1:N.**
-- **Lead is separate from Contact** — keep the funnel measurable and the clean data uncontaminated. On qualify → convert spawns Contact (+ optional Account + Deal).
-- **Activity/Task = polymorphic** — attaches to any of Lead/Contact/Account/Deal.
-- Every tenant-scoped record carries `tenant_id` + `owner_id` + `team_id` (see RBAC).
+- **Client ↔ Contact = 1:N** — một công ty, nhiều người liên hệ; đúng 1 là primary.
+- **Lead → Client/Contact** — convert tạo Client + primary Contact trong 1 transaction (G7); idempotency guard.
+- **Lead.stage_id ∈ Lead.pipeline_id** — stage PHẢI thuộc pipeline (G8, validated trong Service + FormRequest).
+- **Lead is separate from Client/Contact** — funnel measurable; clean data không ô nhiễm.
+- **Activity/Task = polymorphic** — gắn với Lead/Client/Contact/Project qua morph map (G3, alias ngắn).
+- **Workspace isolation** — mọi entity có `workspace_id`; RLS default-deny + Eloquent global scope (BR-X01/X11).
+- Mọi FK tới `users` là **bigint** (hybrid ID — quyết định 13a); mọi FK khác là **uuid**.
 
-### Design traps to avoid
+### Design traps (đã tránh)
 
-1. Merging Lead and Contact → lose conversion funnel, pollute clean data.
-2. Deal–Contact as 1:N → can't model multi-stakeholder B2B deals.
-3. Hardcoded pipeline/stages → each sales team needs its own.
-4. No audit trail from day 1 → enterprise needs "who changed what, when".
+1. Merging Lead + Contact → mất funnel analytics, ô nhiễm dữ liệu clean.
+2. Account/Deal làm thêm tầng → overkill cho SMB; defer to M5+ nếu cần.
+3. Hardcoded pipeline → mỗi workspace có pipeline riêng.
+4. No audit trail → `activities` + `audit_logs` từ M1.
+5. EAV cho custom fields → dùng JSONB (B3 reconciliation — KISS, DRY).
 
 ---
 
 ## 4. Lifecycle (lead-to-customer funnel)
 
 ```
-Stranger → Lead → (qualify) → Contact + Account
-                                  │
-                                  ▼ create
-                                Deal → moves through Pipeline stages
-                                  │
-                          ┌───────┴───────┐
-                       Won (customer)   Lost (archived, reasons logged)
+Stranger → Lead → kanban drag stages → Won stage (G7 convert TX)
+                                              │
+                                              ▼
+                                    Client (company) + Contact (person)
+                                              │
+                                    Projects assigned to Client
+                                              │
+                          ┌───────────────────┴───────────────────┐
+                       Tasks (work units)               Support (Tickets) [M3]
                           │
-                          ▼
-                  Onboarding → Support (Tickets) → Renewal / Upsell
+                  Timers/Timesheet → Billing [M3]
+
+       Lost → lead.is_lost=true (last_stage saved for restore)
+       Junk → lead.is_junk=true (last_stage saved for restore)
 ```
 
-Every transition logs Activities; AI/automation can act on these events.
+Every transition logs Activities (append-only). AI/automation listens to events.
 
 ---
 

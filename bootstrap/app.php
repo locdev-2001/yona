@@ -1,10 +1,14 @@
 <?php
 
 use App\Exceptions\StaleModelException;
+use App\Http\Middleware\AdminCan;
+use App\Http\Middleware\BindAdminPermissionScope;
+use App\Http\Middleware\BlockDuringImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyWorkspace;
 use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -22,6 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Clear any leaked RLS context first (Octane/persistent-connection safety).
         $middleware->web(prepend: [
+            ResetTenantContext::class,
+        ]);
+
+        // Same defense for module API routes (Zalo webhook, future api endpoints):
+        // a pooled connection could carry stale RLS context into an api request.
+        $middleware->api(prepend: [
             ResetTenantContext::class,
         ]);
 
@@ -35,7 +46,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // data screens).
         $middleware->alias([
             'workspace' => IdentifyWorkspace::class,
+            'admin.scope' => BindAdminPermissionScope::class,
+            'admin.can' => AdminCan::class,
+            'no.impersonation' => BlockDuringImpersonation::class,
+            'zalo.bridge.secret' => VerifyZaloBridgeSecret::class,
         ]);
+
+        // Guard-aware redirects: admin routes redirect to admin endpoints.
+        $middleware->redirectGuestsTo(fn (Request $r) => $r->is('admin*') ? route('admin.login') : route('login'));
+        $middleware->redirectUsersTo(fn (Request $r) => $r->is('admin*') ? route('admin.dashboard') : route('dashboard'));
 
         // The workspace (RLS) context MUST be established before route-model
         // binding queries tenant tables — otherwise binding runs default-denied
