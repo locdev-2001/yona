@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Services\Inbox\MessageItemSerializer;
 use App\Services\Inbox\SeenSyncService;
 use App\Services\Inbox\StreamCursor;
 use Illuminate\Http\JsonResponse;
@@ -82,7 +83,7 @@ class ConversationStreamController extends Controller
         $query = DB::table('messages')
             ->where('conversation_id', $conversationId)
             ->selectRaw(
-                "id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
+                "id, conversation_id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
                  COALESCE(platform_sent_at, created_at) as stream_at, ? as stream_rank,
                  sender_uid, sender_name, sent_by, created_at,
                  recalled_at, delivered_at, seen_at, platform_meta",
@@ -156,39 +157,7 @@ class ConversationStreamController extends Controller
             ];
         }
 
-        return [
-            'item_type' => 'message',
-            'id' => $item->id,
-            'direction' => $item->direction,
-            'type' => $item->type,
-            'body' => $item->body,
-            'media_url' => $item->media_url,
-            'media_meta' => $item->media_meta === null ? null : json_decode((string) $item->media_meta, true),
-            'source_id' => $item->source_id,
-            'platform_sent_at' => $item->stream_at,
-            'sender_uid' => $item->sender_uid,
-            'sender_name' => $item->sender_name,
-            'sent_by' => $item->sent_by,
-            'created_at' => $item->created_at,
-            // P03 — message-state đi theo tin (P02 pipeline ghi)
-            'recalled_at' => $item->recalled_at,
-            'delivered_at' => $item->delivered_at,
-            'seen_at' => $item->seen_at,
-            'reactions' => $reactionsByMessage[$item->id] ?? [],
-            // P06a — tin có platform metadata mới quote/react được (tin cũ pre-P01/
-            // backfill → FE disable nút, fallback trung thực). KHÔNG expose meta thô.
-            'quotable' => $this->hasPlatformMeta($item->platform_meta ?? null),
-        ];
-    }
-
-    private function hasPlatformMeta(?string $platformMeta): bool
-    {
-        if ($platformMeta === null || $platformMeta === '' || $platformMeta === '{}') {
-            return false;
-        }
-
-        $decoded = json_decode($platformMeta, true);
-
-        return is_array($decoded) && $decoded !== [];
+        // Shape message item = MessageItemSerializer (dùng chung broadcast + send response)
+        return MessageItemSerializer::fromRow($item, $reactionsByMessage[$item->id] ?? []);
     }
 }

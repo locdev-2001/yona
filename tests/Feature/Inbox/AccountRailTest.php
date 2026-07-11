@@ -103,3 +103,61 @@ it('shows the account needing a QR re-scan (session_lost/needs_qr status)', func
         ->where('channelAccounts.0.status', 'session_lost')
     );
 })->group('inbox-account-rail');
+
+it('account disconnected (ngắt chủ động) biến mất khỏi channelAccounts VÀ hội thoại của nó ẩn khỏi list + count', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    seedMember($ws, $user, 'admin');
+    actingInWorkspace($ws, $user);
+
+    $connected = ChannelAccount::create([
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_still_on',
+        'display_name' => 'Còn kết nối',
+        'status' => 'connected',
+    ]);
+    $disconnected = ChannelAccount::create([
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_cut_off',
+        'display_name' => 'Đã ngắt',
+        'status' => 'disconnected',
+    ]);
+
+    Conversation::create([
+        'channel' => 'zalo_personal',
+        'channel_account_id' => $connected->id,
+        'peer_uid' => 'peer_on',
+        'thread_type' => 0,
+        'conversation_number' => 1,
+    ]);
+    Conversation::create([
+        'channel' => 'zalo_personal',
+        'channel_account_id' => $disconnected->id,
+        'peer_uid' => 'peer_off',
+        'thread_type' => 0,
+        'conversation_number' => 2,
+    ]);
+
+    // Conversation legacy chưa gắn account — không thuộc account nào nên vẫn hiển thị
+    Conversation::create([
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'peer_legacy',
+        'thread_type' => 0,
+        'conversation_number' => 3,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $ws->id])
+        ->get(route('inbox.index'))
+        ->assertOk()
+        ->assertInertia(function ($page) {
+            $page->has('channelAccounts', 1)
+                ->where('channelAccounts.0.display_name', 'Còn kết nối')
+                ->where('conversations.total', 2); // account ngắt ẩn; connected + legacy còn
+
+            $peerUids = collect($page->toArray()['props']['conversations']['data'])->pluck('peer_uid');
+            expect($peerUids)->toContain('peer_on')->toContain('peer_legacy')->not->toContain('peer_off');
+
+            return $page;
+        });
+})->group('inbox-account-rail');
