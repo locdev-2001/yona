@@ -6,6 +6,9 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\InboundMessageService;
+use App\Services\Inbox\MessagePublisher;
+use App\Services\Inbox\MessageSourceResolver;
+use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -17,7 +20,13 @@ use Mockery\MockInterface;
 
 function makeService(?MeteringService $meter = null): InboundMessageService
 {
-    return new InboundMessageService($meter ?? app(MeteringService::class), app(SessionGapMaterializer::class));
+    return new InboundMessageService(
+        $meter ?? app(MeteringService::class),
+        app(SessionGapMaterializer::class),
+        app(MessageSourceResolver::class),
+        app(MessageStateService::class),
+        app(MessagePublisher::class),
+    );
 }
 
 function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = null): array
@@ -181,6 +190,74 @@ it('F14: ingest cùng source_id 2 lần → chỉ tạo 1 Message (idempotent)',
     expect($count)->toBe(1);
 });
 
+it('replay upgrade: tin cũ type=text nhãn placeholder + replay mang type giàu hơn → nâng cấp type + media_meta', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $channelAccountId = (string) Str::uuid();
+    $sourceId = 'zalo_bankcard_upgrade_001';
+
+    // Lần 1: bridge cũ chưa nhận ra bankcard → ghi text + nhãn, media_meta rỗng
+    $legacy = basePayload('peer_upgrade', $channelAccountId);
+    $legacy['source_id'] = $sourceId;
+    $legacy['body'] = '[Tài khoản ngân hàng]';
+
+    $service = makeService();
+    $msg1 = $service->ingest($legacy);
+    expect($msg1->type)->toBe('text');
+    expect($msg1->media_meta)->toBe([]);
+
+    // Lần 2 (deep sync replay): bridge mới resolve đủ thẻ → nâng cấp tại chỗ
+    $bankCard = [
+        'bank_name' => 'Ngân hàng Liobank by OCB',
+        'bank_bin' => '963369',
+        'account_number' => '012345678916',
+        'account_holder' => 'Phước Lộc',
+        'logo_url' => 'https://res-zalo.zadn.vn/logo.png',
+        'qr_url' => 'https://group-qr.zdn.vn/qr.png',
+    ];
+    $replay = $legacy;
+    $replay['type'] = 'bank_card';
+    $replay['media_meta'] = ['bank_card' => $bankCard];
+
+    $msg2 = $service->ingest($replay);
+
+    expect($msg2->id)->toBe($msg1->id); // vẫn idempotent — không tạo row mới
+    expect($msg2->type)->toBe('bank_card');
+    // toEqual (==): jsonb PostgreSQL không giữ thứ tự key
+    expect($msg2->media_meta['bank_card'])->toEqual($bankCard);
+    expect($msg2->direction)->toBe('in'); // identity column không đổi (C-1)
+});
+
+it('replay upgrade: KHÔNG hạ cấp type khác về text và không đè media_meta đã có', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $channelAccountId = (string) Str::uuid();
+    $sourceId = 'zalo_no_downgrade_001';
+
+    $rich = basePayload('peer_no_downgrade', $channelAccountId);
+    $rich['source_id'] = $sourceId;
+    $rich['type'] = 'sticker';
+    $rich['media_meta'] = ['sticker' => ['url' => 'https://zalo.example/sticker.png']];
+
+    $service = makeService();
+    $msg1 = $service->ingest($rich);
+
+    $replayAsText = basePayload('peer_no_downgrade', $channelAccountId);
+    $replayAsText['source_id'] = $sourceId;
+    $replayAsText['type'] = 'text';
+    $replayAsText['body'] = '[Sticker]';
+
+    $msg2 = $service->ingest($replayAsText);
+
+    expect($msg2->id)->toBe($msg1->id);
+    expect($msg2->type)->toBe('sticker'); // giữ nguyên, không downgrade
+    expect($msg2->media_meta['sticker']['url'])->toBe('https://zalo.example/sticker.png');
+});
+
 // ── Broadcast: MessageReceived broadcastOn private workspace channel ──────────
 
 it('MessageReceived broadcastOn private workspace.{id}.conversations channel', function () {
@@ -295,7 +372,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class)) extends InboundMessageService
+    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class), app(MessageSourceResolver::class), app(MessageStateService::class), app(MessagePublisher::class)) extends InboundMessageService
     {
         private bool $firstLookup = true;
 
@@ -330,4 +407,98 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
 
     // peer-info update của existing-row path được áp dụng sau re-fetch
     expect($existing->fresh()->peer_name)->toBe('Khách Race');
+});
+
+// ── Participants: hồ sơ thành viên nhóm per-sender (avatar/tên) ───────────────
+
+it('participants: tin nhóm có sender profile → upsert vào conversations.participants', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('group_001');
+    $payload['thread_type'] = 1;
+    $payload['sender_uid'] = 'uid_a';
+    $payload['sender_name'] = 'Phước Lộc';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+
+    $message = makeService()->ingest($payload);
+    $conv = Conversation::find($message->conversation_id);
+
+    expect($conv->participants)->toBe([
+        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
+    ]);
+
+    // Người gửi thứ hai → append entry, không ghi đè entry cũ
+    $payload2 = basePayload('group_001', $payload['channel_account_id']);
+    $payload2['thread_type'] = 1;
+    $payload2['sender_uid'] = 'uid_b';
+    $payload2['sender_name'] = 'Beru';
+    $payload2['sender_avatar'] = 'https://s120.avatar.zalo.me/b.jpg';
+
+    makeService()->ingest($payload2);
+
+    expect($conv->fresh()->participants)->toBe([
+        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
+        'uid_b' => ['name' => 'Beru', 'avatar' => 'https://s120.avatar.zalo.me/b.jpg'],
+    ]);
+});
+
+it('participants: tin backfill thiếu avatar KHÔNG xoá avatar đã có; tin không sender là no-op', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('group_002');
+    $payload['thread_type'] = 1;
+    $payload['sender_uid'] = 'uid_a';
+    $payload['sender_name'] = 'Phước Lộc';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+
+    $message = makeService()->ingest($payload);
+    $conv = Conversation::find($message->conversation_id);
+
+    // Backfill: chỉ có sender_uid + name, không avatar → giữ avatar cũ
+    $backfill = basePayload('group_002', $payload['channel_account_id']);
+    $backfill['thread_type'] = 1;
+    $backfill['sender_uid'] = 'uid_a';
+    $backfill['sender_name'] = 'Phước Lộc';
+
+    makeService()->ingest($backfill);
+
+    expect($conv->fresh()->participants['uid_a'])
+        ->toBe(['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg']);
+
+    // Tin 1-1 không sender_uid → participants không đổi
+    $direct = basePayload('peer_solo', $payload['channel_account_id']);
+    $directMessage = makeService()->ingest($direct);
+
+    expect(Conversation::find($directMessage->conversation_id)->participants)->toBeNull();
+});
+
+it('participants: MessageReceived broadcast kèm sender_participant của người gửi', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('group_003');
+    $payload['thread_type'] = 1;
+    $payload['sender_uid'] = 'uid_a';
+    $payload['sender_name'] = 'Phước Lộc';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+
+    makeService()->ingest($payload);
+
+    Event::assertDispatched(MessageReceived::class, function (MessageReceived $event) {
+        return $event->broadcastPayload['sender_participant'] === [
+            'name' => 'Phước Lộc',
+            'avatar' => 'https://s120.avatar.zalo.me/a.jpg',
+        ];
+    });
 });

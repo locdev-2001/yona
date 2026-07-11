@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\MessageSourceAlias;
 use App\Models\WorkspaceSequence;
+use App\Services\Inbox\MessagePublisher;
+use App\Services\Inbox\MessageSourceResolver;
+use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,9 @@ use Illuminate\Support\Facades\DB;
  *   platform_sent_at?: string|\DateTimeInterface|null,
  *   sender_uid?: string|null,
  *   sender_name?: string|null,
+ *   sender_avatar?: string|null,
  *   sent_by?: int|null,
+ *   platform_meta?: array<string, mixed>,
  * } $normalized
  */
 class InboundMessageService
@@ -48,12 +51,23 @@ class InboundMessageService
     public function __construct(
         private readonly MeteringService $meteringService,
         private readonly SessionGapMaterializer $gapMaterializer,
+        private readonly MessageSourceResolver $sourceResolver,
+        private readonly MessageStateService $messageStateService,
+        private readonly MessagePublisher $messagePublisher,
     ) {}
 
     public function ingest(array $normalized): Message
     {
         // --- Upsert Conversation ---
         $conversation = $this->upsertConversation($normalized);
+
+        // --- Hồ sơ thành viên nhóm: FE tra participants[sender_uid] → avatar/tên,
+        //     áp hồi tố cho cả tin backfill (lane backfill không resolve profile) ---
+        $conversation->rememberParticipant(
+            $normalized['sender_uid'] ?? null,
+            $normalized['sender_name'] ?? null,
+            $normalized['sender_avatar'] ?? null,
+        );
 
         // --- Direction fail-safe (F14): default 'in' nếu không có field ---
         $direction = $normalized['direction'] ?? 'in';
@@ -64,9 +78,6 @@ class InboundMessageService
         // --- Upsert Message (idempotent per source_id) ---
         $message = $this->upsertMessage($conversation, $normalized, $direction);
 
-        // --- Update conversation cache ---
-        $this->updateConversationCache($conversation, $message, $direction);
-
         // --- Meter outbound (F1) — fail-safe, lỗi KHÔNG chặn ---
         if ($direction === 'out') {
             try {
@@ -76,10 +87,8 @@ class InboundMessageService
             }
         }
 
-        // --- Broadcast realtime ---
-        // Reload conversation để payload broadcastWith() có last_message_at/stream_version mới nhất
-        $message->setRelation('conversation', $conversation->fresh() ?? $conversation);
-        event(new MessageReceived($message, $gapMaterialized));
+        // --- Cache hội thoại + broadcast realtime (MessagePublisher — dùng chung outbound pipeline) ---
+        $this->messagePublisher->publish($conversation, $message, $direction, $gapMaterialized);
 
         return $message;
     }
@@ -93,7 +102,9 @@ class InboundMessageService
      */
     protected function upsertConversation(array $normalized): Conversation
     {
-        $channel = $normalized['channel'] ?? 'zalo_personal';
+        // P11 review MED-1: KHÔNG fallback kênh mặc định — driver quên key 'channel'
+        // sẽ meter sai kênh IM LẶNG (phá per-channel). Fail-loud → webhook 422 dead-letter.
+        $channel = $normalized['channel'] ?? throw new \InvalidArgumentException('normalized payload thiếu key channel — driver phải set channelKey');
         $channelAccountId = $normalized['channel_account_id'] ?? null;
         $peerUid = $normalized['peer_uid'];
 
@@ -192,6 +203,7 @@ class InboundMessageService
                 'sender_uid' => $normalized['sender_uid'] ?? null,
                 'sender_name' => $normalized['sender_name'] ?? null,
                 'sent_by' => $normalized['sent_by'] ?? null,
+                'platform_meta' => $normalized['platform_meta'] ?? [],
             ]);
         }
 
@@ -200,14 +212,36 @@ class InboundMessageService
         if ($existing !== null) {
             // C-1: replay/backfill — KHÔNG ghi đè direction/sent_by/sender_uid (identity columns bất biến).
             // Chỉ fill field còn thiếu (vd media_url đến muộn). Chống lật outbound → inbound khi
-            // history bridge trả is_self sai.
+            // history bridge trả is_self sai. media_meta cast array → [] cũng là "thiếu".
             $fillableIfNull = ['body', 'media_url', 'media_meta', 'platform_sent_at', 'sender_name'];
             foreach ($fillableIfNull as $col) {
                 $newVal = $normalized[$col] ?? null;
-                if (($existing->{$col} === null || $existing->{$col} === '') && $newVal !== null && $newVal !== '') {
+                if (($existing->{$col} === null || $existing->{$col} === '' || $existing->{$col} === []) && $newVal !== null && $newVal !== '' && $newVal !== []) {
                     $existing->{$col} = $newVal;
                 }
             }
+
+            // Content-type upgrade: tin từng ingest khi parser chưa nhận ra loại (ghi 'text'
+            // + nhãn placeholder) — replay mang type giàu hơn (bank_card...) thì nâng cấp,
+            // kèm media_meta mới nếu row cũ chưa có. Không phải identity column (C-1),
+            // và không bao giờ hạ cấp type khác về text.
+            $incomingType = $normalized['type'] ?? 'text';
+            if ($existing->type === 'text' && $incomingType !== 'text') {
+                $existing->type = $incomingType;
+                $newMeta = $normalized['media_meta'] ?? [];
+                if ($newMeta !== []) {
+                    $existing->media_meta = array_merge($existing->media_meta ?? [], $newMeta);
+                }
+            }
+
+            // P01a: outbound portal chỉ lưu source_id (bridge response không có cliMsgId
+            // và raw meta) — echo/self-listen quay về mang listener_data đầy đủ → MERGE
+            // platform_meta vào row đã tạo để tin mình gửi quote/react được (Codex BLK-1).
+            $newMeta = $normalized['platform_meta'] ?? [];
+            if ($newMeta !== [] && ($existing->platform_meta ?? []) === []) {
+                $existing->platform_meta = $newMeta;
+            }
+
             if ($existing->isDirty()) {
                 $existing->save();
             }
@@ -227,32 +261,26 @@ class InboundMessageService
             'sender_uid' => $normalized['sender_uid'] ?? null,
             'sender_name' => $normalized['sender_name'] ?? null,
             'sent_by' => $normalized['sent_by'] ?? null,
+            'platform_meta' => $normalized['platform_meta'] ?? [],
         ]);
     }
 
     /**
-     * P06 — replay/dedup: tra messages.source_id trực tiếp TRƯỚC, miss thì tra
-     * message_source_aliases (giá trị source_id thay thế đã biết cho message hiện tại —
-     * P01/P02e backfill mọi message legacy). 1 method DRY thay vì lặp 2 query rải rác.
+     * P06 — replay/dedup theo source_id (P02 tách ra MessageSourceResolver dùng
+     * chung với message-state events).
      */
     private function findExistingBySource(string $conversationId, string $sourceId): ?Message
     {
-        $direct = Message::where('conversation_id', $conversationId)
-            ->where('source_id', $sourceId)
-            ->first();
-
-        if ($direct !== null) {
-            return $direct;
-        }
-
-        $aliasedMessageId = MessageSourceAlias::messageIdFor($conversationId, $sourceId);
-
-        return $aliasedMessageId === null ? null : Message::find($aliasedMessageId);
+        return $this->sourceResolver->find($conversationId, $sourceId);
     }
 
     /**
      * P05: mọi Message insert mới +1 conversations.stream_version (FE dùng để
      * biết khi nào cần refetch window quanh cursor — không đụng replay/no-op).
+     *
+     * P02: sau insert, quét pending_message_states khớp source_id — undo đến
+     * TRƯỚC tin (race event-trước-tin) được áp lại tại đây. Fail-safe: lỗi
+     * pending KHÔNG chặn ingest (F13/F20).
      *
      * @param  array<string, mixed>  $attrs
      */
@@ -261,24 +289,12 @@ class InboundMessageService
         $message = Message::create($attrs);
         Conversation::where('id', $conversation->id)->increment('stream_version');
 
-        return $message;
-    }
-
-    private function updateConversationCache(Conversation $conversation, Message $message, string $direction): void
-    {
-        $updates = [
-            'last_message_at' => $message->platform_sent_at ?? $message->created_at,
-            'last_message_preview' => mb_substr((string) ($message->body ?? ''), 0, 100),
-        ];
-
-        if ($direction === 'in') {
-            // ponytail: DB::raw để atomic increment, tránh race condition
-            $conversation->increment('unread_count', 1, $updates);
-        } else {
-            $conversation->fill($updates)->save();
+        try {
+            $this->messageStateService->applyPendingFor($message);
+        } catch (\Throwable) {
+            // ponytail: fail-safe — pending state lỗi không được chặn ghi tin
         }
 
-        // Sync in-memory để broadcastWith() có data mới
-        $conversation->refresh();
+        return $message;
     }
 }

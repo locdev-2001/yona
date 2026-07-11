@@ -195,3 +195,47 @@ it('reports the current stream_version in the response', function () {
 
     expect($response->json('stream_version'))->toBe(7);
 })->group('inbox-stream');
+
+// P03 — stream item mang message-state (recalled/receipts/reactions) cho FE render
+it('stream item includes recalled_at, delivered_at, seen_at and reactions', function () {
+    $ws = Workspace::factory()->create();
+    $user = makeStreamUser($ws);
+
+    $conversation = Conversation::create([
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'peer_state_stream',
+        'thread_type' => 0,
+        'conversation_number' => 77,
+    ]);
+
+    $t = now()->subMinutes(5)->toDateTimeString();
+    $messageId = insertStreamMessage($conversation, $t, 'tin có state');
+    DB::table('messages')->where('id', $messageId)->update([
+        'recalled_at' => now()->subMinutes(2),
+        'delivered_at' => now()->subMinutes(4),
+        'seen_at' => now()->subMinutes(3),
+    ]);
+    DB::table('message_reactions')->insert([
+        'id' => (string) Str::uuid(),
+        'workspace_id' => $ws->id,
+        'message_id' => $messageId,
+        'reactor_uid' => 'peer_x',
+        'icon' => '/-heart',
+        'reacted_at' => now()->subMinutes(1),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $item = collect($this->actingAs($user)
+        ->withSession(['current_workspace_id' => $ws->id])
+        ->getJson(route('inbox.stream', $conversation->id))
+        ->assertOk()
+        ->json('items'))->firstWhere('id', $messageId);
+
+    expect($item['recalled_at'])->not->toBeNull()
+        ->and($item['delivered_at'])->not->toBeNull()
+        ->and($item['seen_at'])->not->toBeNull()
+        ->and($item['reactions'])->toHaveCount(1)
+        ->and($item['reactions'][0]['icon'])->toBe('/-heart')
+        ->and($item['reactions'][0]['reactor_uid'])->toBe('peer_x');
+});

@@ -1,3 +1,5 @@
+import { deepThreadBackfill, requestThreadBackfill } from '../reconnect-backfill.mjs';
+
 /** Base Zalo id for matching find-user / sent list / incoming list (strip suffix, segment before _). */
 function normalizeZaloFidKey(id) {
     const s = String(id || '').trim();
@@ -1157,6 +1159,47 @@ export function registerUiActionsRoutes(app, deps) {
         } catch (e) {
             return res.status(500).json({ ok: false, message: e?.message || String(e) });
         }
+    });
+
+    /**
+     * P08 — resync thủ công: kéo tin 1-1 + nhóm qua WS cmd 510/511.
+     * Kết quả về ASYNC qua event old_messages → webhook (dedup source_id) —
+     * response ở đây KHÔNG biết số tin.
+     *   days > 0  → deep sync: cursor paginate lùi tới mốc days (chạy nền).
+     *   days = 0  → single-shot window gần nhất; last_msg_id = cursor tùy chọn.
+     */
+    app.post('/backfill/threads', (req, res) => {
+        if (!checkUiSecret(req)) {
+            return res.status(403).json({ ok: false, message: 'Forbidden' });
+        }
+        const connectionId = Number(req.body?.connection_id || 0);
+        if (!connectionId) {
+            return res.status(400).json({ ok: false, message: 'connection_id required' });
+        }
+        const slot = getSlot(String(connectionId));
+        if (!slot?.api?.listener || slot.loginPhase !== 'ready' || !slot.personalUid) {
+            return res.status(409).json({ ok: false, message: 'not_connected' });
+        }
+
+        const days = Math.min(90, Math.max(0, Number(req.body?.days) || 0));
+        if (days > 0) {
+            if (slot._deepBackfillRunning) {
+                return res.status(409).json({ ok: false, message: 'deep_backfill_running' });
+            }
+            void deepThreadBackfill(slot, { days }).then((totals) => {
+                if (totals) {
+                    console.info('deep backfill done connection_id=', connectionId, JSON.stringify(totals));
+                }
+            });
+            return res.json({ ok: true, deep: true, days, async: true });
+        }
+
+        const lastMsgId = req.body?.last_msg_id ? String(req.body.last_msg_id) : null;
+        const requested = requestThreadBackfill(slot, lastMsgId);
+        if (requested.length === 0) {
+            return res.status(502).json({ ok: false, message: 'request_old_messages_unavailable' });
+        }
+        return res.json({ ok: true, requested, async: true });
     });
 
     app.post('/backfill/group', async (req, res) => {

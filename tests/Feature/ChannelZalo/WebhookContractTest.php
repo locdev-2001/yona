@@ -115,6 +115,51 @@ it('inbound webhook creates conversation and message', function () {
     TenantScope::forget();
 })->group('channel-zalo');
 
+it('inbound bank_card → Message type=bank_card với media_meta.bank_card đầy đủ (end-to-end)', function () {
+    $ws = Workspace::factory()->create();
+    $connId = createZaloConnection($ws->id, 'uid_bankcard');
+
+    $bankCard = [
+        'bank_name' => 'Ngân hàng Liobank by OCB',
+        'bank_bin' => '963369',
+        'account_number' => '012345678916',
+        'account_holder' => 'Phước Lộc',
+        'logo_url' => 'https://res-zalo.zadn.vn/upload/media/logo_Liobank.png',
+        'qr_url' => 'https://group-qr.zdn.vn/d/1/220/QRDATA/8/1',
+    ];
+
+    $this->postJson(
+        '/api/integrations/zalo-personal/webhook',
+        [
+            'type' => 'inbound',
+            'connection_id' => $connId,
+            'bot_id' => 1,
+            'peer_uid' => 'peer_bankcard_001',
+            'thread_type' => 0,
+            'source_id' => 'src_bankcard_001',
+            'is_self' => false,
+            'direction' => 'in',
+            'user' => ['name' => 'Khách Bank', 'avatar' => null],
+            'platform_sent_at' => now()->timestamp * 1000,
+            'inbound_kind' => 'bank_card',
+            'content' => '[Tài khoản ngân hàng]',
+            'bank_card' => $bankCard,
+        ],
+        ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
+    )->assertStatus(200);
+
+    TenantScope::bind($ws->id);
+
+    $msg = Message::where('source_id', 'src_bankcard_001')->first();
+    expect($msg)->not->toBeNull();
+    expect($msg->type)->toBe('bank_card');
+    expect($msg->body)->toBe('[Tài khoản ngân hàng]'); // fallback preview/notification
+    // toEqual (==): jsonb PostgreSQL không giữ thứ tự key
+    expect($msg->media_meta['bank_card'])->toEqual($bankCard);
+
+    TenantScope::forget();
+})->group('channel-zalo');
+
 it('inbound webhook is idempotent — duplicate source_id does not double-insert', function () {
     $ws = Workspace::factory()->create();
     $connId = createZaloConnection($ws->id, 'uid_dedup');
@@ -508,3 +553,51 @@ function createZaloConnection(string $workspaceId, string $personalUid = 'uid_te
 
     return $connId;
 }
+
+// ── Inbound nhóm → participants (avatar/tên per-sender) ──────────────────────
+
+it('inbound nhóm với sender profile → persist participants trên conversation (end-to-end)', function () {
+    $ws = Workspace::factory()->create();
+    $connId = createZaloConnection($ws->id);
+
+    $this->postJson(
+        '/api/integrations/zalo-personal/webhook',
+        [
+            'type' => 'inbound',
+            'connection_id' => $connId,
+            'bot_id' => 1,
+            'personal_uid' => 'uid_test',
+            'peer_uid' => 'group_contract_001',
+            'thread_id' => 'group_contract_001',
+            'thread_type' => 1,
+            'source_id' => 'src_contract_group_001',
+            'is_self' => false,
+            'direction' => 'in',
+            'user' => ['name' => 'Nhóm Dev', 'avatar' => 'https://s120.avatar.zalo.me/group.jpg'],
+            'sender_uid' => 'member_uid_1',
+            'sender' => [
+                'id' => 'member_uid_1',
+                'name' => 'Phước Lộc',
+                'avatar' => 'https://s120.avatar.zalo.me/member1.jpg',
+            ],
+            'platform_sent_at' => now()->timestamp * 1000,
+            'inbound_kind' => 'text',
+            'content' => 'Tin nhắn nhóm',
+        ],
+        ['X-Zalo-Personal-Bridge-Secret' => 'test-webhook-secret-123']
+    )->assertStatus(200);
+
+    TenantScope::bind($ws->id);
+
+    $conv = Conversation::where('peer_uid', 'group_contract_001')->first();
+    expect($conv)->not->toBeNull();
+    expect($conv->participants)->toBe([
+        'member_uid_1' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/member1.jpg'],
+    ]);
+
+    $msg = Message::where('source_id', 'src_contract_group_001')->first();
+    expect($msg->sender_uid)->toBe('member_uid_1');
+    expect($msg->sender_name)->toBe('Phước Lộc');
+
+    TenantScope::forget();
+})->group('channel-zalo');

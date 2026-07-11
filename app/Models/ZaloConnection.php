@@ -66,9 +66,9 @@ class ZaloConnection extends Model
      */
     public static function nextConnectionId(): int
     {
-        $row = DB::connection('pgsql_privileged')->selectOne(
-            "SELECT nextval('zalo_connection_id_seq') AS id"
-        );
+        // P10 hardening [d]: connection MẶC ĐỊNH — sequence đã GRANT cho crm_app
+        // (migration 2026_07_04_300001), không cần privileged cho nextval.
+        $row = DB::selectOne("SELECT nextval('zalo_connection_id_seq') AS id");
 
         return (int) $row->id;
     }
@@ -125,8 +125,12 @@ class ZaloConnection extends Model
 
     /**
      * Cập nhật state và session_lost_reason từ bridge_session event.
+     *
+     * P10: $privileged=true (default) cho webhook (RLS session var có thể chưa set);
+     * promote/settings flow (request ĐÃ bind tenant) truyền false → đi CÙNG session
+     * mặc định, né treo chéo session (bài học 04/07).
      */
-    public function updateState(string $state, ?string $lostReason = null): void
+    public function updateState(string $state, ?string $lostReason = null, bool $privileged = true): void
     {
         $updates = ['state' => $state, 'updated_at' => now()];
 
@@ -143,9 +147,7 @@ class ZaloConnection extends Model
             $updates['last_qr_at'] = now();
         }
 
-        // pgsql_privileged để bypass RLS — updateState gọi từ webhook + settings controller,
-        // cả 2 context đều có thể không có RLS session var set đúng.
-        DB::connection('pgsql_privileged')
+        DB::connection($privileged ? 'pgsql_privileged' : config('database.default'))
             ->table('zalo_connections')
             ->where('id', $this->id)
             ->update($updates);

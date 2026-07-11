@@ -70,6 +70,8 @@ export function registerPersonalMessageRoutes(app, deps) {
                 file_url: req.body?.file_url,
                 media_kind: req.body?.media_kind,
                 filename: req.body?.filename,
+                quote: req.body?.quote,
+                sticker: req.body?.sticker,
             });
             return res.json({
                 ok: true,
@@ -77,6 +79,7 @@ export function registerPersonalMessageRoutes(app, deps) {
                 thread_id: resolved.thread_id,
                 thread_type: resolved.thread_type,
                 source_id: out.source_id,
+                source_ids: out.source_ids ?? (out.source_id != null ? [out.source_id] : []),
             });
         } catch (e) {
             const msg = e?.message ? String(e.message) : String(e);

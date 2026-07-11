@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
  * Pivot `project_members` carries workspace_id → RLS MANDATORY (G4).
  * project_statuses RLS is owned by P01 — NOT included here (G11).
  *
- * Run as pgsql_privileged (owner); cho_rach_app is non-owner → policies bind.
+ * Run as pgsql_privileged (owner); crm_app is non-owner → policies bind.
  */
 return new class extends Migration
 {
@@ -32,7 +32,7 @@ return new class extends Migration
             $db->statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY");
             $db->statement("DROP POLICY IF EXISTS ws_isolation ON {$table}");
             $db->statement("CREATE POLICY ws_isolation ON {$table} USING ({$predicate}) WITH CHECK ({$predicate})");
-            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO cho_rach_app");
+            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO crm_app");
         }
     }
 
