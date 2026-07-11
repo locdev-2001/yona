@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Events\MessageReceived;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\WorkspaceSequence;
+use App\Services\Inbox\MessagePublisher;
 use App\Services\Inbox\MessageSourceResolver;
 use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\DB;
  *   platform_sent_at?: string|\DateTimeInterface|null,
  *   sender_uid?: string|null,
  *   sender_name?: string|null,
+ *   sender_avatar?: string|null,
  *   sent_by?: int|null,
  *   platform_meta?: array<string, mixed>,
  * } $normalized
@@ -52,12 +53,21 @@ class InboundMessageService
         private readonly SessionGapMaterializer $gapMaterializer,
         private readonly MessageSourceResolver $sourceResolver,
         private readonly MessageStateService $messageStateService,
+        private readonly MessagePublisher $messagePublisher,
     ) {}
 
     public function ingest(array $normalized): Message
     {
         // --- Upsert Conversation ---
         $conversation = $this->upsertConversation($normalized);
+
+        // --- Hồ sơ thành viên nhóm: FE tra participants[sender_uid] → avatar/tên,
+        //     áp hồi tố cho cả tin backfill (lane backfill không resolve profile) ---
+        $conversation->rememberParticipant(
+            $normalized['sender_uid'] ?? null,
+            $normalized['sender_name'] ?? null,
+            $normalized['sender_avatar'] ?? null,
+        );
 
         // --- Direction fail-safe (F14): default 'in' nếu không có field ---
         $direction = $normalized['direction'] ?? 'in';
@@ -68,9 +78,6 @@ class InboundMessageService
         // --- Upsert Message (idempotent per source_id) ---
         $message = $this->upsertMessage($conversation, $normalized, $direction);
 
-        // --- Update conversation cache ---
-        $this->updateConversationCache($conversation, $message, $direction);
-
         // --- Meter outbound (F1) — fail-safe, lỗi KHÔNG chặn ---
         if ($direction === 'out') {
             try {
@@ -80,10 +87,8 @@ class InboundMessageService
             }
         }
 
-        // --- Broadcast realtime ---
-        // Reload conversation để payload broadcastWith() có last_message_at/stream_version mới nhất
-        $message->setRelation('conversation', $conversation->fresh() ?? $conversation);
-        event(new MessageReceived($message, $gapMaterialized));
+        // --- Cache hội thoại + broadcast realtime (MessagePublisher — dùng chung outbound pipeline) ---
+        $this->messagePublisher->publish($conversation, $message, $direction, $gapMaterialized);
 
         return $message;
     }
@@ -207,12 +212,25 @@ class InboundMessageService
         if ($existing !== null) {
             // C-1: replay/backfill — KHÔNG ghi đè direction/sent_by/sender_uid (identity columns bất biến).
             // Chỉ fill field còn thiếu (vd media_url đến muộn). Chống lật outbound → inbound khi
-            // history bridge trả is_self sai.
+            // history bridge trả is_self sai. media_meta cast array → [] cũng là "thiếu".
             $fillableIfNull = ['body', 'media_url', 'media_meta', 'platform_sent_at', 'sender_name'];
             foreach ($fillableIfNull as $col) {
                 $newVal = $normalized[$col] ?? null;
-                if (($existing->{$col} === null || $existing->{$col} === '') && $newVal !== null && $newVal !== '') {
+                if (($existing->{$col} === null || $existing->{$col} === '' || $existing->{$col} === []) && $newVal !== null && $newVal !== '' && $newVal !== []) {
                     $existing->{$col} = $newVal;
+                }
+            }
+
+            // Content-type upgrade: tin từng ingest khi parser chưa nhận ra loại (ghi 'text'
+            // + nhãn placeholder) — replay mang type giàu hơn (bank_card...) thì nâng cấp,
+            // kèm media_meta mới nếu row cũ chưa có. Không phải identity column (C-1),
+            // và không bao giờ hạ cấp type khác về text.
+            $incomingType = $normalized['type'] ?? 'text';
+            if ($existing->type === 'text' && $incomingType !== 'text') {
+                $existing->type = $incomingType;
+                $newMeta = $normalized['media_meta'] ?? [];
+                if ($newMeta !== []) {
+                    $existing->media_meta = array_merge($existing->media_meta ?? [], $newMeta);
                 }
             }
 
@@ -278,51 +296,5 @@ class InboundMessageService
         }
 
         return $message;
-    }
-
-    /**
-     * Preview sidebar theo type — mirror messagePreview() FE (message-types.ts).
-     * Sticker: body là raw platform content (JSON {id,catId,type}) → LUÔN label,
-     * không bao giờ lộ JSON ra UI (bug 05/07).
-     */
-    private function previewFor(Message $message): string
-    {
-        if ($message->type === 'sticker') {
-            return '[Sticker]';
-        }
-
-        $body = trim((string) ($message->body ?? ''));
-        if ($body !== '') {
-            return mb_substr($body, 0, 100);
-        }
-
-        return match ($message->type) {
-            'image' => '[Hình ảnh]',
-            'gif' => '[GIF]',
-            'video' => '[Video]',
-            'audio' => '[Tin nhắn thoại]',
-            'file' => '[Tệp đính kèm]',
-            'business_card' => '[Danh thiếp]',
-            'call' => '[Cuộc gọi]',
-            default => '',
-        };
-    }
-
-    private function updateConversationCache(Conversation $conversation, Message $message, string $direction): void
-    {
-        $updates = [
-            'last_message_at' => $message->platform_sent_at ?? $message->created_at,
-            'last_message_preview' => $this->previewFor($message),
-        ];
-
-        if ($direction === 'in') {
-            // ponytail: DB::raw để atomic increment, tránh race condition
-            $conversation->increment('unread_count', 1, $updates);
-        } else {
-            $conversation->fill($updates)->save();
-        }
-
-        // Sync in-memory để broadcastWith() có data mới
-        $conversation->refresh();
     }
 }

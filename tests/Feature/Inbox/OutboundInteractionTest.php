@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\MessageReceived;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -10,6 +11,7 @@ use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -281,6 +283,43 @@ it('sticker url NGOÀI CDN Zalo bị strip khỏi media_meta (review LOW-2 — c
     $sent = Message::where('conversation_id', $conversation->id)->where('direction', 'out')->sole();
     expect($sent->media_meta['sticker'])->not->toHaveKey('url')
         ->and($sent->media_meta['sticker']['id'])->toBe(999);
+
+    Carbon::setTestNow();
+});
+
+// ── Outbound publish: cache hội thoại + broadcast (tab người gửi append tại chỗ) ──
+
+it('send: response shape stream item (không lộ platform_meta) + cache hội thoại update + broadcast MessageReceived', function () {
+    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
+    [, , $conversation] = oiSetup();
+    oiMessage($conversation); // inbound gần → hội thoại cũ, không đụng quota gate
+
+    Event::fake([MessageReceived::class]);
+    Http::fake(['*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'pub_out_1'], 200)]);
+
+    $response = $this->postJson(route('inbox.send', $conversation->id), ['text' => 'shop trả lời ạ']);
+
+    $response->assertCreated();
+    $json = $response->json();
+    expect($json['item_type'])->toBe('message')
+        ->and($json['direction'])->toBe('out')
+        ->and($json['body'])->toBe('shop trả lời ạ')
+        ->and($json['reactions'])->toBe([])
+        ->and($json)->not->toHaveKey('platform_meta');
+
+    // Cache hội thoại update ngay (mirror platform_sent_at tin vừa gửi) —
+    // convList sort/preview đúng không cần reload
+    $sent = Message::where('conversation_id', $conversation->id)->where('direction', 'out')->sole();
+    $fresh = $conversation->fresh();
+    expect($fresh->last_message_preview)->toBe('shop trả lời ạ')
+        ->and($fresh->last_message_at?->getTimestamp())->toBe($sent->platform_sent_at?->getTimestamp());
+
+    // Broadcast cùng shape + stream_version ĐÃ bump (P09 — tab gửi không refetch oan)
+    Event::assertDispatched(MessageReceived::class, function (MessageReceived $event) use ($json, $fresh) {
+        return $event->broadcastPayload['message']['id'] === $json['id']
+            && $event->broadcastPayload['message']['item_type'] === 'message'
+            && $event->broadcastPayload['stream_version'] === $fresh->stream_version;
+    });
 
     Carbon::setTestNow();
 });

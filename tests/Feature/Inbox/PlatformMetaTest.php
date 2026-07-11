@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Services\InboundMessageService;
+use App\Services\Inbox\MessagePublisher;
 use App\Services\Inbox\MessageSourceResolver;
 use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\SessionGapMaterializer;
@@ -27,6 +28,7 @@ function platformMetaService(): InboundMessageService
         app(SessionGapMaterializer::class),
         app(MessageSourceResolver::class),
         app(MessageStateService::class),
+        app(MessagePublisher::class),
     );
 }
 

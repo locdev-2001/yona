@@ -17,6 +17,9 @@ use App\Services\MeteringService;
  *     quota → QuotaExceededException, KHÔNG gọi driver).
  *  2. meterReply SAU transport thành công (chỉ đếm khi tenant trả lời — F14;
  *     inbound KHÔNG BAO GIỜ qua đây — F13/F20 ở InboundMessageService).
+ *  3. Publish SAU cùng (cache hội thoại + broadcast MessageReceived) — tab người
+ *     gửi append tại chỗ, đồng nghiệp thấy realtime, stream_version sync (P09).
+ *     Fail-safe: tin ĐÃ đi platform → lỗi publish không được ném ra user.
  *
  * Driver chỉ lo POLICY kênh (giờ/cap ToS) + TRANSPORT + persist. Circuit-breaker,
  * echo-dedup, SendRateLimiter, outbox retry = đặc thù kênh, GIỮ trong driver.
@@ -24,7 +27,10 @@ use App\Services\MeteringService;
  */
 class OutboundSendPipeline
 {
-    public function __construct(private readonly MeteringService $meteringService) {}
+    public function __construct(
+        private readonly MeteringService $meteringService,
+        private readonly MessagePublisher $messagePublisher,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $payload
@@ -42,6 +48,13 @@ class OutboundSendPipeline
 
         // 3. Đếm reply (per-channel) — chỉ khi transport đã thành công
         $this->meteringService->meterReply($conversation);
+
+        // 4. Cache hội thoại + broadcast — fail-safe: tin đã đi platform thành công
+        try {
+            $this->messagePublisher->publish($conversation, $message, 'out');
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return $message;
     }
