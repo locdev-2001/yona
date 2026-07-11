@@ -12,3 +12,7 @@ Artisan::command('inspire', function () {
 // withoutOverlapping prevents concurrent runs if the previous tick is slow.
 // G12: ReminderService::dispatchDue() handles per-workspace context isolation.
 Schedule::command('reminders:dispatch-due')->everyMinute()->withoutOverlapping();
+
+// P04 — bảng tạm inbox BOUNDED (goal #3): pending_message_states expired +
+// attachments upload-không-gửi quá 48h. Daily là đủ (TTL tính bằng giờ).
+Schedule::command('inbox:prune-transient')->daily()->withoutOverlapping();

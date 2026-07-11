@@ -49,6 +49,20 @@ class Attachment extends Model
         return ['original_name'];
     }
 
+    /** P04 inbox — media_kind cho channel driver, suy từ mime (khớp enum bridge). */
+    public function mediaKind(): string
+    {
+        $mime = (string) $this->mime;
+
+        return match (true) {
+            $mime === 'image/gif' => 'gif',
+            str_starts_with($mime, 'image/') => 'image',
+            str_starts_with($mime, 'video/') => 'video',
+            str_starts_with($mime, 'audio/') => 'audio',
+            default => 'file',
+        };
+    }
+
     /** @return MorphTo<Model, $this> */
     public function attachable(): MorphTo
     {

@@ -444,3 +444,90 @@ it('P04(d): DB failure after successful bridge promote logs out the new slot and
     $slot = DB::table('zalo_connections')->where('connection_id', $newConnId)->first();
     expect($slot->state)->toBe('qr_waiting');
 })->group('channel-zalo');
+
+// ── destroy: ngắt chủ động → account hết banner "cần quét QR" ──────────────────
+
+it('destroy: ngắt slot cuối của account → hạ channel_account.status=disconnected (banner thôi nhắc QR)', function () {
+    $ws = Workspace::factory()->create();
+    $user = makeZaloManager($ws);
+
+    $accountId = (string) Str::uuid();
+    DB::table('channel_accounts')->insert([
+        'id' => $accountId,
+        'workspace_id' => $ws->id,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_destroy_'.Str::random(6),
+        'status' => 'session_lost', // đang mất kết nối → banner đang hiện
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $connId = (int) DB::connection('pgsql_privileged')->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")->id;
+    DB::table('zalo_connections')->insert([
+        'workspace_id' => $ws->id,
+        'connection_id' => $connId,
+        'channel_account_id' => $accountId,
+        'personal_uid' => 'uid_destroy_conn',
+        'display_name' => 'Test Zalo',
+        'state' => 'session_lost',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    $rowId = DB::table('zalo_connections')->where('connection_id', $connId)->value('id');
+
+    Http::fake(['*/auth/logout' => Http::response(['ok' => true], 200)]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $ws->id])
+        ->deleteJson("/integrations/zalo/{$rowId}")
+        ->assertOk();
+
+    // Account không còn slot sống → status hạ về disconnected (banner filter chỉ session_lost/needs_qr)
+    expect(DB::table('channel_accounts')->where('id', $accountId)->value('status'))->toBe('disconnected');
+})->group('channel-zalo');
+
+// ── destroy: account còn slot khác đang sống → GIỮ nguyên, không hạ status ─────
+
+it('destroy: account vẫn còn slot connected khác → KHÔNG đổi status', function () {
+    $ws = Workspace::factory()->create();
+    $user = makeZaloManager($ws);
+
+    $accountId = (string) Str::uuid();
+    DB::table('channel_accounts')->insert([
+        'id' => $accountId,
+        'workspace_id' => $ws->id,
+        'channel' => 'zalo_personal',
+        'account_uid' => 'uid_multi_'.Str::random(6),
+        'status' => 'connected',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Schema: tối đa 1 slot 'connected'/account (zalo_connections_account_connected_unique).
+    // Kịch bản hợp lệ: 1 connected (giữ) + 1 session_lost (ngắt).
+    $keepConnId = (int) DB::connection('pgsql_privileged')->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")->id;
+    $dropConnId = (int) DB::connection('pgsql_privileged')->selectOne("SELECT nextval('zalo_connection_id_seq') AS id")->id;
+    foreach ([[$keepConnId, 'connected', 'uid_keep'], [$dropConnId, 'session_lost', 'uid_drop']] as [$cid, $state, $uid]) {
+        DB::table('zalo_connections')->insert([
+            'workspace_id' => $ws->id,
+            'connection_id' => $cid,
+            'channel_account_id' => $accountId,
+            'personal_uid' => $uid,
+            'display_name' => 'Test Zalo',
+            'state' => $state,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    $dropRowId = DB::table('zalo_connections')->where('connection_id', $dropConnId)->value('id');
+
+    Http::fake(['*/auth/logout' => Http::response(['ok' => true], 200)]);
+
+    $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $ws->id])
+        ->deleteJson("/integrations/zalo/{$dropRowId}")
+        ->assertOk();
+
+    // Còn slot connected khác → status giữ nguyên connected
+    expect(DB::table('channel_accounts')->where('id', $accountId)->value('status'))->toBe('connected');
+})->group('channel-zalo');

@@ -145,7 +145,11 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                 setQrState((prev) => ({ ...prev, phase: 'done' }));
                 router.reload({ only: ['connections'] });
             } else if (data.error_code === 'zalo_account_mismatch') {
-                setQrState((prev) => ({ ...prev, phase: 'error', error: 'Đã quét nhầm tài khoản Zalo khác — vui lòng quét đúng tài khoản cần đăng nhập lại.' }));
+                setQrState((prev) => ({
+                    ...prev,
+                    phase: 'error',
+                    error: 'Đã quét nhầm tài khoản Zalo khác — vui lòng quét đúng tài khoản cần đăng nhập lại.',
+                }));
             } else {
                 setQrState((prev) => ({ ...prev, phase: 'error', error: data.message ?? 'promote_failed' }));
             }

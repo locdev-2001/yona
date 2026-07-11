@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Services\Inbox\MessageItemSerializer;
+use App\Services\Inbox\SeenSyncService;
 use App\Services\Inbox\StreamCursor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,7 +44,16 @@ class ConversationStreamController extends Controller
             ->reverse()
             ->values();
 
-        $hasMore = $messageItems->count() === $limit || $eventItems->count() === $limit;
+        // P03 — reactions cho trang hiện tại: 1 query gộp, không N+1
+        $reactionsByMessage = $this->fetchReactions(
+            $page->where('item_type', 'message')->pluck('id')->all()
+        );
+
+        // Review M1: 2 nguồn đều < limit nhưng TỔNG > limit → take() vứt item cũ
+        // nhất; thiếu vế thứ 3 là next_cursor=null → mất lịch sử im lặng (goal #3).
+        $hasMore = $messageItems->count() === $limit
+            || $eventItems->count() === $limit
+            || ($messageItems->count() + $eventItems->count()) > $limit;
         $nextCursor = null;
         if ($hasMore && $page->isNotEmpty()) {
             $oldest = $page->first();
@@ -53,8 +64,14 @@ class ConversationStreamController extends Controller
             Conversation::where('id', $conversation->id)->update(['unread_count' => 0]);
         }
 
+        // P06b — seen-sync (default OFF): mở thread (trang đầu) = tín hiệu "đã xem".
+        // Chạy SAU khi response trả (không cộng latency bridge vào GET stream).
+        if ($cursor === null) {
+            app()->terminating(fn () => app(SeenSyncService::class)->syncOnThreadOpen($conversation));
+        }
+
         return response()->json([
-            'items' => $page->map(fn ($item) => $this->formatItem($item)),
+            'items' => $page->map(fn ($item) => $this->formatItem($item, $reactionsByMessage)),
             'next_cursor' => $nextCursor,
             'stream_version' => $conversation->stream_version,
         ]);
@@ -66,9 +83,10 @@ class ConversationStreamController extends Controller
         $query = DB::table('messages')
             ->where('conversation_id', $conversationId)
             ->selectRaw(
-                "id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
+                "id, conversation_id, 'message' as item_type, direction, type, body, media_url, media_meta, source_id,
                  COALESCE(platform_sent_at, created_at) as stream_at, ? as stream_rank,
-                 sender_uid, sender_name, sent_by, created_at",
+                 sender_uid, sender_name, sent_by, created_at,
+                 recalled_at, delivered_at, seen_at, platform_meta",
                 [self::MESSAGE_RANK]
             );
 
@@ -85,7 +103,7 @@ class ConversationStreamController extends Controller
     {
         $query = DB::table('conversation_events')
             ->where('conversation_id', $conversationId)
-            ->selectRaw('id, \'event\' as item_type, kind, gap_started_at, gap_ended_at, stream_at, stream_rank, created_at');
+            ->selectRaw('id, \'event\' as item_type, kind, gap_started_at, gap_ended_at, stream_at, stream_rank, created_at, payload');
 
         if ($cursor !== null) {
             [$cStreamAt, $cRank, $cId] = $cursor;
@@ -95,8 +113,36 @@ class ConversationStreamController extends Controller
         return $query->orderByDesc('stream_at')->orderByDesc('stream_rank')->orderByDesc('id')->limit($limit)->get();
     }
 
-    /** @return array<string, mixed> */
-    private function formatItem(object $item): array
+    /**
+     * P03 — reactions của các message trong trang, group theo message_id (1 query).
+     *
+     * @param  list<string>  $messageIds
+     * @return array<string, list<array{reactor_uid: string, icon: string, reacted_at: string}>>
+     */
+    private function fetchReactions(array $messageIds): array
+    {
+        if ($messageIds === []) {
+            return [];
+        }
+
+        return DB::table('message_reactions')
+            ->whereIn('message_id', $messageIds)
+            ->orderBy('reacted_at')
+            ->get(['message_id', 'reactor_uid', 'icon', 'reacted_at'])
+            ->groupBy('message_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => [
+                'reactor_uid' => $r->reactor_uid,
+                'icon' => $r->icon,
+                'reacted_at' => $r->reacted_at,
+            ])->values()->all())
+            ->all();
+    }
+
+    /**
+     * @param  array<string, list<array<string, string>>>  $reactionsByMessage
+     * @return array<string, mixed>
+     */
+    private function formatItem(object $item, array $reactionsByMessage = []): array
     {
         if ($item->item_type === 'event') {
             return [
@@ -106,23 +152,12 @@ class ConversationStreamController extends Controller
                 'gap_started_at' => $item->gap_started_at,
                 'gap_ended_at' => $item->gap_ended_at,
                 'stream_at' => $item->stream_at,
+                // P08 — dòng hệ thống: {act, label}
+                'payload' => isset($item->payload) ? json_decode((string) $item->payload, true) : null,
             ];
         }
 
-        return [
-            'item_type' => 'message',
-            'id' => $item->id,
-            'direction' => $item->direction,
-            'type' => $item->type,
-            'body' => $item->body,
-            'media_url' => $item->media_url,
-            'media_meta' => $item->media_meta === null ? null : json_decode((string) $item->media_meta, true),
-            'source_id' => $item->source_id,
-            'platform_sent_at' => $item->stream_at,
-            'sender_uid' => $item->sender_uid,
-            'sender_name' => $item->sender_name,
-            'sent_by' => $item->sent_by,
-            'created_at' => $item->created_at,
-        ];
+        // Shape message item = MessageItemSerializer (dùng chung broadcast + send response)
+        return MessageItemSerializer::fromRow($item, $reactionsByMessage[$item->id] ?? []);
     }
 }

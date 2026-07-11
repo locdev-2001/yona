@@ -83,7 +83,7 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 
 1. **App — `BelongsToWorkspace` trait**: global scope tự lọc theo `currentWorkspace`, hook `creating` tự đóng dấu `workspace_id`.
 2. **Middleware `IdentifyWorkspace`**: suy ra workspace active **từ session phía server** (không tin client), kiểm tra user có `workspace_member` active (else 403), bind `app.current_workspace` cho RLS.
-3. **PostgreSQL RLS default-deny**: mọi bảng workspace-scoped có policy `workspace_id = current_setting('app.current_workspace')`. App chạy bằng role non-owner `cho_rach_app`; DDL/audit/cross-workspace dùng role `pgsql_privileged`. CI test (`RlsPolicyCoverageTest`) tự quét đảm bảo mọi bảng có policy.
+3. **PostgreSQL RLS default-deny**: mọi bảng workspace-scoped có policy `workspace_id = current_setting('app.current_workspace')`. App chạy bằng role non-owner `crm_app`; DDL/audit/cross-workspace dùng role `pgsql_privileged`. CI test (`RlsPolicyCoverageTest`) tự quét đảm bảo mọi bảng có policy.
 
 `ResetTenantContext` xoá context đầu mỗi request (an toàn với connection pooling/Octane). `App\Support\TenantScope` là **single source of truth** để bind/forget RLS + spatie team-id — đã hợp nhất sau bug scope-bleed (xem [[shared-session-scope-bleed]] và changelog 2026-06-25).
 

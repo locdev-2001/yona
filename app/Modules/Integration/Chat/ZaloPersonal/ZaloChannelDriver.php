@@ -10,6 +10,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowExcept
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
+use App\Modules\Integration\Contracts\ChannelCapabilities;
 use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
@@ -34,6 +35,26 @@ class ZaloChannelDriver implements ChannelDriver
     }
 
     /**
+     * P11 — flags Zalo cá nhân. canRecallOwn=false: thu hồi tin MÌNH gửi chưa
+     * build (undo API có nhưng chưa wire UI — backlog).
+     */
+    public function capabilities(): ChannelCapabilities
+    {
+        return new ChannelCapabilities(
+            canSendMedia: true,
+            canSendSticker: true,
+            canQuoteReply: true,
+            canReact: true,
+            canRecallOwn: false,
+            hasDeliveryReceipts: true,
+            hasSeenReceipts: true,
+            hasTyping: true,
+            canSendSeen: true,
+            receiptGranularity: 'thread',
+        );
+    }
+
+    /**
      * Parse raw webhook payload từ bridge thành normalized shape cho InboundMessageService.
      *
      * Field mapping (bridge → normalized):
@@ -49,6 +70,7 @@ class ZaloChannelDriver implements ChannelDriver
      *   media_meta     = {sticker, business_card, call, media_filename, ...}
      *   sender_uid     = payload.sender_uid (group sender)
      *   sender_name    = payload.sender.name
+     *   sender_avatar  = payload.sender.avatar (nuôi conversations.participants)
      *   platform_sent_at = payload.platform_sent_at (ms unix → Carbon)
      *   channel_account_id = payload.channel_account_id (resolved bởi webhook controller — P08)
      *   thread_type    = payload.thread_type (0=user, 1=group)
@@ -70,6 +92,7 @@ class ZaloChannelDriver implements ChannelDriver
             'file' => 'file',
             'sticker' => 'sticker',
             'business_card' => 'business_card',
+            'bank_card' => 'bank_card',
             'call' => 'call',
             default => 'text',
         };
@@ -80,6 +103,9 @@ class ZaloChannelDriver implements ChannelDriver
         }
         if (isset($raw['business_card'])) {
             $mediaMeta['business_card'] = $raw['business_card'];
+        }
+        if (isset($raw['bank_card'])) {
+            $mediaMeta['bank_card'] = $raw['bank_card'];
         }
         if (isset($raw['call'])) {
             $mediaMeta['call'] = $raw['call'];
@@ -125,8 +151,40 @@ class ZaloChannelDriver implements ChannelDriver
             'platform_sent_at' => $platformSentAt,
             'sender_uid' => $raw['sender_uid'] ?? ($sender['id'] ?? null),
             'sender_name' => $sender['name'] ?? null,
+            'sender_avatar' => $sender['avatar'] ?? null,
             'sent_by' => null, // inbound = ngoài hệ thống
+            'platform_meta' => $this->extractPlatformMeta($raw),
         ];
+    }
+
+    /**
+     * P01a — platform_meta.zca_message: giữ TOÀN BỘ raw từ listener_data
+     * (quyết định founder 05/07: "có gì lấy sạch hết" — payload nền tảng không
+     * tái tạo được, cần cho action outbound quote/reaction/seen lẫn nhu cầu
+     * tương lai chưa biết trước) + threadId/threadType chuẩn hóa từ payload.
+     * P06 gate action theo field bắt buộc (msgId/cliMsgId...) — thiếu = action disable.
+     * Tin backfill/legacy không có listener_data → platform_meta rỗng (action disable).
+     *
+     * @param  array<string, mixed>  $raw
+     * @return array<string, mixed>
+     */
+    private function extractPlatformMeta(array $raw): array
+    {
+        $listenerData = $raw['listener_data'] ?? null;
+        if (! is_array($listenerData)) {
+            return [];
+        }
+
+        $zcaMessage = $listenerData;
+
+        if (isset($raw['thread_id'])) {
+            $zcaMessage['threadId'] = (string) $raw['thread_id'];
+        }
+        if (isset($raw['thread_type'])) {
+            $zcaMessage['threadType'] = (int) $raw['thread_type'];
+        }
+
+        return $zcaMessage === [] ? [] : ['zca_message' => $zcaMessage];
     }
 
     /**
@@ -134,17 +192,30 @@ class ZaloChannelDriver implements ChannelDriver
      * Wrap Zalo-specific exceptions thành SendException (inbox-agnostic)
      * để InboxController không cần import ChannelZalo exceptions (N1).
      *
-     * @param  array<string, mixed>  $payload  {text?, media?}
+     * @param  array<string, mixed>  $payload  {text?, media?, reply_to?: Message, sticker?}
      *
      * @throws SendException
      */
     public function sendMessage(Conversation $conversation, array $payload): Message
     {
+        // P06a — quote: build zca object từ platform_meta của tin gốc (đặc thù
+        // Zalo sống ở driver). Thiếu meta → SendException, KHÔNG gửi mù.
+        $quote = null;
+        $quoteDisplay = null;
+        $replyTo = $payload['reply_to'] ?? null;
+        if ($replyTo instanceof Message) {
+            $quote = $this->buildZcaQuote($replyTo);
+            $quoteDisplay = $this->buildQuoteDisplay($conversation, $replyTo);
+        }
+
         try {
             return $this->sendService->send(
                 conversation: $conversation,
                 text: isset($payload['text']) ? (string) $payload['text'] : null,
                 media: $payload['media'] ?? null,
+                quote: $quote,
+                sticker: $payload['sticker'] ?? null,
+                quoteDisplay: $quoteDisplay,
             );
         } catch (ZaloCircuitOpenException $e) {
             throw new SendException('Kết nối Zalo đang lỗi. Vui lòng gửi tin tay hoặc thử lại sau.', 'circuit_open', $e);
@@ -157,6 +228,82 @@ class ZaloChannelDriver implements ChannelDriver
         } catch (ZaloSplitBrainException $e) {
             throw new SendException('Phát hiện nhiều phiên Zalo cùng kết nối — đã dừng gửi để tránh gửi nhầm. Liên hệ hỗ trợ.', 'split_brain', $e);
         }
+    }
+
+    /**
+     * P05 — verify SĐT nhập tay qua ZaloInteractionService (client /zca duy nhất).
+     * 1 API call/lần do NGƯỜI DÙNG chủ động (không harvest — BLK-5).
+     *
+     * @return bool true = uid khớp peer_uid; false = không khớp / không resolve
+     *
+     * @throws ZaloNotConnectedException bridge/slot không sẵn sàng
+     */
+    public function verifyPeerPhone(Conversation $conversation, string $phone): bool
+    {
+        return app(ZaloInteractionService::class)->verifyPeerPhone($conversation, $phone);
+    }
+
+    /**
+     * P06b — seen-sync (default OFF, A4): SeenSyncService gọi qua method_exists
+     * (kênh không hỗ trợ → im lặng bỏ qua, không phải lỗi).
+     *
+     * @param  list<array<string, mixed>>  $platformMessages  platform_meta.zca_message các tin inbound
+     */
+    public function sendSeen(Conversation $conversation, array $platformMessages): bool
+    {
+        return app(ZaloInteractionService::class)->sendSeenBatch($conversation, $platformMessages);
+    }
+
+    /**
+     * SendMessageQuote shape (sendMessage.ts: qmsgOwner/qmsgId/qmsgCliId/qmsgType/
+     * qmsgTs/qmsg/qmsgTTL + prepareQMSGAttach đọc propertyExt/content). Gate đủ
+     * field bắt buộc + loại tin zca throw (webchat content-object, group.poll).
+     *
+     * @return array<string, mixed>
+     *
+     * @throws SendException quote_unavailable — tin cũ pre-P01/backfill thiếu meta
+     */
+    private function buildZcaQuote(Message $replyTo): array
+    {
+        $zca = $replyTo->platform_meta['zca_message'] ?? [];
+
+        $required = ['msgId', 'cliMsgId', 'uidFrom', 'msgType', 'ts'];
+        foreach ($required as $field) {
+            if (! isset($zca[$field]) || $zca[$field] === '') {
+                throw new SendException('Tin gốc thiếu metadata nền tảng — không trích dẫn được (tin cũ).', 'quote_unavailable');
+            }
+        }
+
+        $msgType = (string) $zca['msgType'];
+        $content = $zca['content'] ?? '';
+        if ($msgType === 'group.poll' || ($msgType === 'webchat' && ! is_string($content))) {
+            throw new SendException('Loại tin này không trích dẫn được.', 'quote_unavailable');
+        }
+
+        return array_filter([
+            'msgId' => (string) $zca['msgId'],
+            'cliMsgId' => (string) $zca['cliMsgId'],
+            'uidFrom' => (string) $zca['uidFrom'],
+            'msgType' => $msgType,
+            'ts' => (string) $zca['ts'],
+            'content' => $content,
+            'ttl' => $zca['ttl'] ?? 0,
+            'propertyExt' => $zca['propertyExt'] ?? null,
+        ], fn ($v) => $v !== null);
+    }
+
+    /** @return array<string, mixed> media_meta.quote cho FE (khớp QuoteMeta shape inbound) */
+    private function buildQuoteDisplay(Conversation $conversation, Message $replyTo): array
+    {
+        return array_filter([
+            'msg_id' => $replyTo->source_id,
+            'text' => $replyTo->body ?? ($replyTo->type !== 'text' ? '['.$replyTo->type.']' : null),
+            'sender_name' => $replyTo->direction === 'in'
+                ? ($replyTo->sender_name ?? $conversation->peer_name)
+                : ($conversation->channelAccount->display_name ?? 'Bạn'),
+            'msg_type' => $replyTo->type,
+            'thumb' => in_array($replyTo->type, ['image', 'gif', 'video'], true) ? $replyTo->media_url : null,
+        ], fn ($v) => $v !== null && $v !== '');
     }
 
     public function connect(string $workspaceId, array $params): void

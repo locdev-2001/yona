@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * P09 — Grant DML access on all task tables to the runtime cho_rach_app role.
+ * P09 — Grant DML access on all task tables to the runtime crm_app role.
  * RLS migration (700006) enabled the policy; this migration adds the GRANT so the
  * application user can read/write within the RLS predicate. Forward-only per A3.
  */
@@ -24,7 +24,7 @@ return new class extends Migration
         $db = DB::connection('pgsql_privileged');
 
         foreach ($this->tables as $table) {
-            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO cho_rach_app");
+            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO crm_app");
         }
     }
 
@@ -33,7 +33,7 @@ return new class extends Migration
         $db = DB::connection('pgsql_privileged');
 
         foreach ($this->tables as $table) {
-            $db->statement("REVOKE SELECT, INSERT, UPDATE, DELETE ON {$table} FROM cho_rach_app");
+            $db->statement("REVOKE SELECT, INSERT, UPDATE, DELETE ON {$table} FROM crm_app");
         }
     }
 };
