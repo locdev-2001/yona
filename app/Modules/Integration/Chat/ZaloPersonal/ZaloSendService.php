@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Http;
  *   1. Circuit-breaker (ZaloHealthMonitor) → ZaloCircuitOpenException
  *   2. (P11) metering ĐÃ hoist lên OutboundSendPipeline — driver không meter
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
- *   4. HTTP → bridge /personal-messages/send (retry 2×200ms)
+ *   4. HTTP → bridge /personal-messages/send (không retry — send không idempotent)
  *   5. Ghi Message direction=out → increment rate limiter (meterReply Ở PIPELINE)
  *
  * Lỗi bridge:
@@ -133,10 +133,12 @@ class ZaloSendService
         $connectionId = (string) $connection->connection_id;
 
         try {
+            // Send KHÔNG idempotent — không retry: bridge có thể đã gửi xong sau khi
+            // client timeout, retry = gửi trùng tin cho khách. Media chờ dài hơn text
+            // vì bridge phải tải file về rồi upload lên CDN Zalo trước khi gửi.
             $response = Http::asJson()
                 ->withHeader('X-Bridge-Send-Secret', config('services.zalo_bridge.send_secret', ''))
-                ->timeout(15)
-                ->retry(2, 200, throw: false)
+                ->timeout($media ? 120 : 15)
                 ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/personal-messages/send', $payload);
         } catch (\Exception $e) {
             // Timeout hoặc connection refused → KHÔNG ghi Message

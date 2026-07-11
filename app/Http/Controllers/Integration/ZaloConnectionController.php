@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Integration;
 
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
+use App\Models\ChannelAccount;
 use App\Models\ZaloConnection;
 use App\Services\Zalo\PromoteAccountBinder;
 use Illuminate\Http\Client\ConnectionException;
@@ -263,7 +264,20 @@ class ZaloConnectionController extends Controller
 
         $this->logoutBridge($zaloConnection->connection_id);
 
+        $accountId = $zaloConnection->channel_account_id;
         $zaloConnection->delete();
+
+        // Ngắt CHỦ ĐỘNG: account không còn slot sống → hạ status về 'disconnected' để
+        // banner inbox thôi nhắc "cần quét lại QR" (banner chỉ hiện session_lost/needs_qr).
+        // Giữ channel_account + hội thoại; re-QR sau sẽ set lại 'connected'.
+        if ($accountId !== null) {
+            $stillConnected = ZaloConnection::where('channel_account_id', $accountId)
+                ->where('state', 'connected')
+                ->exists();
+            if (! $stillConnected) {
+                ChannelAccount::where('id', $accountId)->update(['status' => 'disconnected']);
+            }
+        }
 
         return response()->json(['ok' => true]);
     }

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FileText, Paperclip, Send, SmilePlus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { StickerItem } from './message-types';
+import type { ChatMessage, StickerItem } from './message-types';
 
 /** Cap tĩnh 20MB chung mọi loại — khớp ConversationAttachmentController::MAX_UPLOAD_KB. */
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -12,6 +12,7 @@ interface PendingAttachment {
     filename: string;
     mediaKind: string;
     previewUrl: string | null; // objectURL cho ảnh — revoke khi thay/clear
+    file: File; // giữ File để tạo preview cho bubble optimistic / restore khi gửi lỗi
 }
 
 /** P06a — tin đang được trả lời (reply bar). */
@@ -24,8 +25,12 @@ export interface ReplyTarget {
 interface Props {
     conversationId: string;
     disabled?: boolean;
-    /** Gọi sau khi gửi thành công — parent reload thread. */
-    onSent: () => void;
+    /** Đường sticker (không có bubble optimistic): server trả tin đã ghi — parent append tại chỗ, KHÔNG reload thread. */
+    onSent: (message: ChatMessage) => void;
+    /** Optimistic: gọi NGAY khi bấm gửi — parent append bubble "đang gửi" vào thread. */
+    onPending: (msg: ChatMessage) => void;
+    /** Server trả lời: real = tin đã ghi (swap bubble), null = gửi lỗi (gỡ bubble). */
+    onSettled: (tempId: string, real: ChatMessage | null) => void;
     /** P06a — reply bar (null = không trả lời). */
     replyTo?: ReplyTarget | null;
     onClearReply?: () => void;
@@ -56,6 +61,8 @@ export function MessageComposer({
     conversationId,
     disabled,
     onSent,
+    onPending,
+    onSettled,
     replyTo,
     onClearReply,
     peerName,
@@ -139,6 +146,7 @@ export function MessageComposer({
                     filename: json.filename,
                     mediaKind: json.media_kind,
                     previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+                    file,
                 });
             })
             .catch(() => notify('Không kết nối được server.'))
@@ -154,14 +162,51 @@ export function MessageComposer({
         }
     }
 
+    /** Gửi lỗi → trả nội dung về composer để user gửi lại — không đè thứ đang gõ dở. */
+    function restoreComposer(sentText: string, sentAttachment: PendingAttachment | null) {
+        setText((current) => (current === '' ? sentText : current));
+        if (sentAttachment) {
+            setAttachment(
+                (current) =>
+                    current ?? {
+                        ...sentAttachment,
+                        previewUrl: sentAttachment.file.type.startsWith('image/') ? URL.createObjectURL(sentAttachment.file) : null,
+                    },
+            );
+        }
+    }
+
+    // Optimistic send: bubble "đang gửi" hiện ngay + composer tự do gõ tiếp —
+    // gửi media chậm (bridge còn phải upload lên kênh) không được khóa người dùng.
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const trimmed = text.trim();
-        if ((!trimmed && !attachment) || sending || uploading) return;
+        if ((!trimmed && !attachment) || uploading) return;
 
-        setSending(true);
-        const restoreText = text;
+        const sentText = trimmed;
+        const sentAttachment = attachment;
+        const sentReplyToId = replyTo?.id ?? null;
+        const tempId = `pending-${crypto.randomUUID()}`;
+        const now = new Date().toISOString();
+
+        onPending({
+            id: tempId,
+            conversation_id: conversationId,
+            direction: 'out',
+            type: sentAttachment ? sentAttachment.mediaKind : 'text',
+            body: sentText || null,
+            // objectURL riêng cho bubble (parent revoke khi settle) — độc lập preview composer
+            media_url: sentAttachment?.file.type.startsWith('image/') ? URL.createObjectURL(sentAttachment.file) : null,
+            media_meta: sentAttachment ? { media_kind: sentAttachment.mediaKind, media_filename: sentAttachment.filename } : null,
+            platform_sent_at: now,
+            sender_name: null,
+            created_at: now,
+            pending: true,
+        });
+
         setText('');
+        clearAttachment();
+        onClearReply?.();
 
         fetch(route('inbox.send', conversationId), {
             method: 'POST',
@@ -172,27 +217,26 @@ export function MessageComposer({
                 'X-XSRF-TOKEN': xsrfToken(),
             },
             body: JSON.stringify({
-                text: trimmed || null,
-                attachment_id: attachment?.id ?? null,
-                reply_to_message_id: replyTo?.id ?? null,
+                text: sentText || null,
+                attachment_id: sentAttachment?.id ?? null,
+                reply_to_message_id: sentReplyToId,
             }),
         })
             .then(async (r) => {
                 const json = await r.json().catch(() => ({}));
                 if (!r.ok) {
-                    setText(restoreText); // giữ nội dung để user gửi lại
+                    onSettled(tempId, null);
+                    restoreComposer(sentText, sentAttachment);
                     notify(json.message ?? 'Không gửi được tin nhắn. Vui lòng thử lại.');
                     return;
                 }
-                clearAttachment();
-                onClearReply?.();
-                onSent();
+                onSettled(tempId, json as ChatMessage);
             })
             .catch(() => {
-                setText(restoreText);
+                onSettled(tempId, null);
+                restoreComposer(sentText, sentAttachment);
                 notify('Không kết nối được server.');
-            })
-            .finally(() => setSending(false));
+            });
     }
 
     // P06a — sticker: search → grid → click gửi luôn (OUTBOUND đường send thường)
@@ -245,7 +289,7 @@ export function MessageComposer({
                     notify(json.message ?? 'Không gửi được sticker.');
                     return;
                 }
-                onSent();
+                onSent(json as ChatMessage);
             })
             .catch(() => notify('Không kết nối được server.'))
             .finally(() => setSending(false));
@@ -360,7 +404,7 @@ export function MessageComposer({
                         type="button"
                         size="sm"
                         variant="ghost"
-                        disabled={disabled || uploading || sending}
+                        disabled={disabled || uploading}
                         onClick={() => fileInputRef.current?.click()}
                         aria-label="Đính kèm tệp"
                     >
@@ -385,9 +429,9 @@ export function MessageComposer({
                     onPaste={handlePaste}
                     placeholder={uploading ? 'Đang tải tệp lên...' : 'Nhập tin nhắn...'}
                     className="flex-1"
-                    disabled={disabled || sending}
+                    disabled={disabled}
                 />
-                <Button type="submit" size="sm" disabled={disabled || sending || uploading || (!text.trim() && !attachment)}>
+                <Button type="submit" size="sm" disabled={disabled || uploading || (!text.trim() && !attachment)}>
                     <Send className="h-4 w-4" />
                 </Button>
             </form>

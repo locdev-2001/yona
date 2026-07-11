@@ -51,3 +51,6 @@ dist/
 # PHPUnit
 .phpunit.result.cache
 .claude/hooks/.logs/
+
+# Generated tool artifacts
+repomix-output.txt

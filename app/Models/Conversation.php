@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $contact_id
  * @property string|null $lead_id
  * @property int $conversation_number
+ * @property array<string, array{name: string|null, avatar: string|null}>|null $participants
  * @property Carbon|null $last_message_at
  * @property string|null $last_message_preview
  * @property int $unread_count
@@ -72,6 +73,7 @@ class Conversation extends Model
     {
         return [
             'thread_type' => 'integer',
+            'participants' => 'array',
             'unread_count' => 'integer',
             'lock_version' => 'integer',
             'stream_version' => 'integer',
@@ -107,5 +109,31 @@ class Conversation extends Model
     public function isDraftContact(): bool
     {
         return $this->contact_id === null;
+    }
+
+    /**
+     * Upsert hồ sơ thành viên nhóm (keyed sender_uid) từ tin inbound có sender profile.
+     * Field null giữ giá trị cũ (backfill/tin thiếu profile không xoá dữ liệu đã có);
+     * chỉ save khi thực sự đổi — tin liên tiếp cùng người gửi là no-op.
+     */
+    public function rememberParticipant(?string $uid, ?string $name, ?string $avatar): void
+    {
+        if ($uid === null || $uid === '' || ($name === null && $avatar === null)) {
+            return;
+        }
+
+        $participants = $this->participants ?? [];
+        $current = $participants[$uid] ?? [];
+        $merged = [
+            'name' => $name ?? ($current['name'] ?? null),
+            'avatar' => $avatar ?? ($current['avatar'] ?? null),
+        ];
+
+        if ($merged === $current) {
+            return;
+        }
+
+        $participants[$uid] = $merged;
+        $this->forceFill(['participants' => $participants])->save();
     }
 }

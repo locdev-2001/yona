@@ -60,8 +60,8 @@ it('gán phụ trách: member active OK + activity log; user ngoài workspace �
     expect($conversation->fresh()->assigned_user_id)->toBeNull();
 });
 
-it('filter assigned=me|unassigned hoạt động trên index', function () {
-    [$workspace, $user, $conversation] = crmSetup();
+it('filter unread=1 chỉ trả hội thoại còn tin chưa đọc', function () {
+    [$workspace, , $conversation] = crmSetup();
 
     $other = Conversation::create([
         'workspace_id' => $workspace->id,
@@ -70,17 +70,9 @@ it('filter assigned=me|unassigned hoạt động trên index', function () {
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
-    $conversation->forceFill(['assigned_user_id' => $user->id])->save();
+    $other->forceFill(['unread_count' => 3])->save();
 
-    $this->get(route('inbox.index', ['assigned' => 'me']))->assertOk()
-        ->assertInertia(function (AssertableInertia $page) use ($conversation, $other) {
-            $ids = collect($page->toArray()['props']['conversations']['data'])->pluck('id');
-            expect($ids)->toContain($conversation->id)->not->toContain($other->id);
-
-            return $page;
-        });
-
-    $this->get(route('inbox.index', ['assigned' => 'unassigned']))->assertOk()
+    $this->get(route('inbox.index', ['unread' => '1']))->assertOk()
         ->assertInertia(function (AssertableInertia $page) use ($conversation, $other) {
             $ids = collect($page->toArray()['props']['conversations']['data'])->pluck('id');
             expect($ids)->toContain($other->id)->not->toContain($conversation->id);
