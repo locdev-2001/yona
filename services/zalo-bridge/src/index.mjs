@@ -1991,6 +1991,20 @@ async function tryLoginWithSavedSession(connectionId) {
         return true;
     } catch (e) {
         console.warn('Saved session login failed connection_id=', connectionId, e?.message || e);
+        // Cookie chết (Zalo thu hồi) mà im lặng → DB còn 'connected' → UI không hiện
+        // banner "Cần quét lại QR", user tưởng vẫn chạy (sự cố 06/07). Báo Laravel
+        // session_lost để banner hiện + hadGap trigger backfill sau khi re-QR.
+        slot.loginPhase = 'session_lost';
+        slot.sessionLostReason = `restore_failed: ${e?.message || e}`;
+        slot.sessionLostAt = Date.now();
+        if (slot.botId) {
+            postBridgeSession({
+                connection_id: Number(connectionId),
+                bot_id: slot.botId,
+                state: 'session_lost',
+                detail: slot.sessionLostReason,
+            }).catch(() => {});
+        }
         return false;
     }
 }
