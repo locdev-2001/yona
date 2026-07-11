@@ -24,12 +24,15 @@ interface Props {
 
 /** P07 — rail trái 2 tầng: lọc theo tài khoản kết nối (shop có thể cắm nhiều số Zalo). */
 export function AccountRail({ accounts, totalCount, activeAccountId, onSelect }: Props) {
-    if (accounts.length === 0) return null;
+    // Rail = filter hội thoại của account đang hoạt động (connected/session_lost).
+    // needs_qr (đang chờ quét lần đầu) không có hội thoại để lọc — ConnectionBanner lo phần nhắc.
+    const activeAccounts = accounts.filter((acc) => acc.status !== 'needs_qr');
+    if (activeAccounts.length === 0) return null;
 
     return (
         <div className="border-b">
             <RailRow label="Tất cả hộp thư" count={totalCount} active={activeAccountId === null} onClick={() => onSelect(null)} />
-            {accounts.map((acc) => (
+            {activeAccounts.map((acc) => (
                 <RailRow
                     key={acc.id}
                     label={acc.display_name ?? 'Tài khoản chưa đặt tên'}

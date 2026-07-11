@@ -5,7 +5,14 @@ import { ConnectionBanner } from '@/components/inbox/connection-banner';
 import { ConversationPanel } from '@/components/inbox/conversation-panel';
 import type { GapEvent } from '@/components/inbox/gap-marker';
 import { MessageComposer, type ReplyTarget } from '@/components/inbox/message-composer';
-import { isStreamMessage, messagePreview, type ChatMessage, type MessageStatePayload, type StreamItem } from '@/components/inbox/message-types';
+import {
+    isStreamMessage,
+    messagePreview,
+    type ChatMessage,
+    type ChatParticipant,
+    type MessageStatePayload,
+    type StreamItem,
+} from '@/components/inbox/message-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +28,7 @@ import { useEffect, useRef, useState } from 'react';
 interface MessageReceivedPayload {
     message: ChatMessage;
     conversation_id: string;
+    sender_participant: ChatParticipant | null;
     last_message_at: string | null;
     unread_count: number;
     stream_version: number | null;
@@ -35,6 +43,7 @@ interface Conversation {
     peer_avatar_url: string | null;
     peer_phone: string | null;
     thread_type: number;
+    participants: Record<string, ChatParticipant> | null;
     unread_count: number;
     last_message_at: string | null;
     last_message_preview: string | null;
@@ -54,7 +63,7 @@ interface PaginatedConversations {
 
 interface Props {
     conversations: PaginatedConversations;
-    filters: { q?: string; unread?: string; channel?: string; channel_account_id?: string; assigned?: string; tag?: string };
+    filters: { q?: string; unread?: string; channel?: string; channel_account_id?: string; tag?: string };
     selectedConversation?: Conversation | null;
     channelAccounts?: ChannelAccountInfo[];
     channelsAvailable?: boolean;
@@ -152,6 +161,22 @@ export default function InboxIndex({
     const activeConvRef = useRef<Conversation | null>(null);
     const streamVersionRef = useRef<number | null>(null);
     const lastRefetchRef = useRef(0);
+    // Tin inbound đến cho hội thoại đang mở khi tab ẩn → chờ tab hiện lại mới đánh dấu đã đọc
+    const unreadWhileHiddenRef = useRef(false);
+
+    // Tin đến lúc hội thoại đang mở trên màn hình → server không được giữ unread
+    // (mở thread lần đầu đã có stream endpoint reset). Idempotent, lỗi im lặng.
+    function markConversationRead(convId: string) {
+        setConvList((prev) => prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)));
+        fetch(route('inbox.read', convId), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+        }).catch(() => {});
+    }
 
     function refetchActiveThread() {
         const conv = activeConvRef.current;
@@ -170,10 +195,16 @@ export default function InboxIndex({
             .catch(() => {}); // lưới bù — lỗi im lặng, lần sau thử lại
     }
 
-    // Tab active lại sau sleep/mất socket → so khớp bằng refetch
+    // Tab active lại sau sleep/mất socket → so khớp bằng refetch + đánh dấu đã đọc
+    // tin đã đến trong lúc tab ẩn (user quay lại là đang nhìn thấy chúng)
     useEffect(() => {
         const onVisible = () => {
-            if (document.visibilityState === 'visible') refetchActiveThread();
+            if (document.visibilityState !== 'visible') return;
+            refetchActiveThread();
+            if (unreadWhileHiddenRef.current && activeConvRef.current) {
+                unreadWhileHiddenRef.current = false;
+                markConversationRead(activeConvRef.current.id);
+            }
         };
         document.addEventListener('visibilitychange', onVisible);
         return () => document.removeEventListener('visibilitychange', onVisible);
@@ -234,6 +265,15 @@ export default function InboxIndex({
         channel.listen('MessageReceived', (payload: MessageReceivedPayload) => {
             const { message, conversation_id, last_message_at, unread_count, gap_event } = payload;
 
+            // Đang mở đúng hội thoại: tab hiện → đã đọc ngay (badge không nhấp nháy);
+            // tab ẩn → giữ badge, đánh dấu khi user quay lại (visibilitychange bên dưới)
+            const viewingThisConversation = conversation_id === activeConvRef.current?.id;
+            const readImmediately = viewingThisConversation && document.visibilityState === 'visible';
+            if (viewingThisConversation && message.direction === 'in') {
+                if (readImmediately) markConversationRead(conversation_id);
+                else unreadWhileHiddenRef.current = true;
+            }
+
             // P09 — stream_version nhảy >+1 = đã lỡ event trong khoảng chết socket → refetch
             if (conversation_id === activeConvRef.current?.id && payload.stream_version != null) {
                 const known = streamVersionRef.current;
@@ -247,15 +287,23 @@ export default function InboxIndex({
             // Cập nhật thread nếu đang mở đúng conversation — gap marker (nếu có, P05)
             // chèn TRƯỚC message, khớp thứ tự materialize ở backend (ingest TX).
             setActiveConv((current) => {
-                if (current?.id === conversation_id) {
-                    setItems((prev) => {
-                        if (prev.some((it) => it.id === message.id)) return prev;
-                        const next = gap_event && !prev.some((it) => it.id === gap_event.id) ? [...prev, gap_event] : prev;
+                if (current?.id !== conversation_id) return current;
 
-                        return [...next, { ...message, item_type: 'message' as const }];
-                    });
-                }
-                return current;
+                setItems((prev) => {
+                    if (prev.some((it) => it.id === message.id)) return prev;
+                    const next = gap_event && !prev.some((it) => it.id === gap_event.id) ? [...prev, gap_event] : prev;
+
+                    return [...next, { ...message, item_type: 'message' as const }];
+                });
+
+                // Merge hồ sơ người gửi (nhóm) — thành viên mới nhắn lần đầu có avatar ngay, không chờ reload
+                const senderProfile = payload.sender_participant;
+                if (!senderProfile || !message.sender_uid) return current;
+                const known = current.participants?.[message.sender_uid];
+                if (known && known.name === senderProfile.name && known.avatar === senderProfile.avatar) return current;
+                const merged = { ...current, participants: { ...current.participants, [message.sender_uid]: senderProfile } };
+                activeConvRef.current = merged;
+                return merged;
             });
 
             // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước, kiểu Zalo).
@@ -266,7 +314,9 @@ export default function InboxIndex({
                     return prev;
                 }
                 const updated = prev.map((c) =>
-                    c.id === conversation_id ? { ...c, unread_count, last_message_at, last_message_preview: messagePreview(message) } : c,
+                    c.id === conversation_id
+                        ? { ...c, unread_count: readImmediately ? 0 : unread_count, last_message_at, last_message_preview: messagePreview(message) }
+                        : c,
                 );
                 return [...updated].sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''));
             });
@@ -323,6 +373,7 @@ export default function InboxIndex({
     function handleSelectConv(conv: Conversation) {
         setActiveConv(conv);
         activeConvRef.current = conv;
+        unreadWhileHiddenRef.current = false; // cờ thuộc hội thoại cũ — không mang sang
         setReplyTo(null);
         // Phản chiếu URL → reload/share giữ đúng hội thoại (route inbox.show preselect). Không round-trip.
         window.history.replaceState(window.history.state, '', route('inbox.show', conv.id));
@@ -349,8 +400,12 @@ export default function InboxIndex({
     }
 
     // P05 — tải trang cũ hơn (keyset cursor), chèn vào đầu danh sách hiện tại.
+    // Ref guard: scroll event bắn dồn dập trước khi state loadingMore kịp re-render.
+    const loadingMoreRef = useRef(false);
+
     function handleLoadMore() {
-        if (!activeConv || !nextCursor || loadingMore) return;
+        if (!activeConv || !nextCursor || loadingMoreRef.current) return;
+        loadingMoreRef.current = true;
         setLoadingMore(true);
 
         fetch(`${route('inbox.stream', activeConv.id)}?cursor=${encodeURIComponent(nextCursor)}`, {
@@ -362,7 +417,10 @@ export default function InboxIndex({
                 setNextCursor(responseData.next_cursor ?? null);
             })
             .catch(() => showToast('Không tải được tin cũ hơn. Vui lòng thử lại.'))
-            .finally(() => setLoadingMore(false));
+            .finally(() => {
+                loadingMoreRef.current = false;
+                setLoadingMore(false);
+            });
     }
 
     function handleCreateLead() {
@@ -422,6 +480,45 @@ export default function InboxIndex({
                 );
             })
             .catch(() => showToast('Không kết nối được server.'));
+    }
+
+    // Optimistic send: composer append bubble "đang gửi" ngay khi bấm, không chờ bridge
+    // (gửi media mất nhiều giây vì bridge còn upload lên kênh).
+    function handlePendingMessage(temp: ChatMessage) {
+        setItems((prev) => [...prev, { ...temp, item_type: 'message' as const }]);
+        setConvList((prev) => {
+            const updated = prev.map((c) =>
+                c.id === temp.conversation_id ? { ...c, last_message_at: temp.created_at, last_message_preview: messagePreview(temp) } : c,
+            );
+            return [...updated].sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''));
+        });
+    }
+
+    // Đường sticker (không có bubble optimistic): append tin thật tại chỗ — idempotent
+    // theo id vì broadcast outbound có thể về trước HTTP response.
+    function handleMessageSent(real: ChatMessage) {
+        setItems((prev) => (prev.some((it) => it.id === real.id) ? prev : [...prev, { ...real, item_type: 'message' as const }]));
+        setConvList((prev) => {
+            const updated = prev.map((c) =>
+                c.id === real.conversation_id
+                    ? { ...c, last_message_at: real.platform_sent_at ?? real.created_at, last_message_preview: messagePreview(real) }
+                    : c,
+            );
+            return [...updated].sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''));
+        });
+    }
+
+    // Server trả lời: swap bubble pending thành tin thật (giữ vị trí), gửi lỗi → gỡ bubble
+    // (composer tự restore nội dung). Đổi hội thoại giữa chừng → tempId không còn → no-op.
+    function handleSendSettled(tempId: string, real: ChatMessage | null) {
+        setItems((prev) => {
+            const temp = prev.find((it) => it.id === tempId);
+            if (temp && isStreamMessage(temp) && temp.media_url?.startsWith('blob:')) URL.revokeObjectURL(temp.media_url);
+            if (!real) return prev.filter((it) => it.id !== tempId);
+            // Echo/broadcast có thể đã append tin thật trước khi HTTP response về — giữ 1 bản
+            const alreadyAppended = prev.some((it) => it.id === real.id);
+            return prev.flatMap((it) => (it.id === tempId ? (alreadyAppended ? [] : [{ ...real, item_type: 'message' as const }]) : [it]));
+        });
     }
 
     function handleReply(msg: ChatMessage) {
@@ -509,25 +606,23 @@ export default function InboxIndex({
                             </Button>
                         </form>
 
-                        {/* P07 — chia ca trực: filter theo người phụ trách */}
                         <div className="flex gap-1">
                             {(
                                 [
                                     ['', 'Tất cả'],
-                                    ['me', 'Của tôi'],
-                                    ['unassigned', 'Chưa gán'],
+                                    ['1', 'Chưa đọc'],
                                 ] as const
                             ).map(([value, label]) => (
                                 <Button
                                     key={value}
                                     type="button"
                                     size="sm"
-                                    variant={(filters.assigned ?? '') === value ? 'default' : 'outline'}
+                                    variant={(filters.unread ?? '') === value ? 'default' : 'outline'}
                                     className="h-6 flex-1 text-[11px]"
                                     onClick={() =>
                                         router.get(
                                             route('inbox.index'),
-                                            { ...filters, assigned: value || undefined },
+                                            { ...filters, unread: value || undefined },
                                             { preserveState: true, replace: true },
                                         )
                                     }
@@ -656,18 +751,13 @@ export default function InboxIndex({
                                 </div>
                             </div>
 
-                            {!loadingMessages && nextCursor && (
-                                <div className="flex justify-center border-b py-1.5">
-                                    <Button size="sm" variant="ghost" className="h-6 text-xs" disabled={loadingMore} onClick={handleLoadMore}>
-                                        {loadingMore ? 'Đang tải...' : 'Tải tin cũ hơn'}
-                                    </Button>
-                                </div>
-                            )}
-
                             <ChatThread
                                 items={items}
                                 peer={activeConv}
                                 loading={loadingMessages}
+                                hasMore={nextCursor !== null}
+                                loadingMore={loadingMore}
+                                onLoadMore={handleLoadMore}
                                 onReply={caps.canQuoteReply ? handleReply : undefined}
                                 onReact={caps.canReact ? handleReact : undefined}
                             />
@@ -688,7 +778,9 @@ export default function InboxIndex({
                                 <MessageComposer
                                     key={activeConv.id}
                                     conversationId={activeConv.id}
-                                    onSent={() => handleSelectConv(activeConv)}
+                                    onSent={handleMessageSent}
+                                    onPending={handlePendingMessage}
+                                    onSettled={handleSendSettled}
                                     replyTo={replyTo}
                                     onClearReply={() => setReplyTo(null)}
                                     peerName={activeConv.peer_name}

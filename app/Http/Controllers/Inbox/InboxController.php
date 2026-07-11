@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Services\Inbox\MessageItemSerializer;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\Inbox\SeenSyncService;
 use App\Services\ZaloBackfillService;
@@ -45,6 +46,10 @@ class InboxController extends Controller
 
         $query = Conversation::orderByDesc('last_message_at');
 
+        // Account đã ngắt CHỦ ĐỘNG (disconnected) → hội thoại ẩn khỏi inbox (list + count),
+        // KHÔNG xóa — re-QR account sẽ hiện lại. Conversation chưa gắn account (legacy) vẫn hiển thị.
+        $query->whereDoesntHave('channelAccount', fn ($acc) => $acc->where('status', 'disconnected'));
+
         if ($search = $request->string('q')->toString()) {
             $query->where(function ($q) use ($search) {
                 $q->where('peer_name', 'ilike', '%'.$search.'%')
@@ -66,15 +71,6 @@ class InboxController extends Controller
             $query->where('channel_account_id', $channelAccountId);
         }
 
-        // P07 — chia ca trực: ?assigned=me|unassigned|{userId}
-        if ($assigned = $request->string('assigned')->toString()) {
-            match (true) {
-                $assigned === 'me' => $query->where('assigned_user_id', auth()->id()),
-                $assigned === 'unassigned' => $query->whereNull('assigned_user_id'),
-                default => $query->where('assigned_user_id', (int) $assigned),
-            };
-        }
-
         // P07 — lọc theo label (tags polymorphic)
         if ($tagId = $request->string('tag')->toString()) {
             $query->whereHas('tags', fn ($q) => $q->where('tags.id', $tagId));
@@ -89,14 +85,17 @@ class InboxController extends Controller
 
         // P07 — danh sách tài khoản kênh (đa tài khoản) + count hội thoại active/account,
         // thay $zaloConnection first() cũ (giả định 1 kết nối/workspace).
+        // Account đã ngắt CHỦ ĐỘNG (disconnected) biến mất khỏi mọi UI inbox —
+        // hội thoại cũ vẫn nằm trong "Tất cả hộp thư"; re-QR sẽ set lại 'connected'.
         $channelAccounts = ChannelAccount::query()
+            ->where('status', '!=', 'disconnected')
             ->withCount(['conversations as conversations_count' => fn ($q) => $q->whereNull('deleted_at')])
             ->orderBy('created_at')
             ->get(['id', 'channel', 'display_name', 'avatar_url', 'status']);
 
         return Inertia::render('inbox/index', [
             'conversations' => $conversations,
-            'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id', 'assigned', 'tag']),
+            'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id', 'tag']),
             'channelsAvailable' => $channelsAvailable,
             'selectedConversation' => $conversation,
             'channelAccounts' => $channelAccounts,
@@ -175,6 +174,22 @@ class InboxController extends Controller
         }
 
         return response()->json($messages);
+    }
+
+    /**
+     * POST /inbox/conversations/{conversation}/read
+     * FE gọi khi tin đến lúc hội thoại đang mở trên màn hình (tab visible) —
+     * mở thread lần đầu đã được stream endpoint reset sẵn. Idempotent.
+     */
+    public function markRead(Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+
+        if ($conversation->unread_count > 0) {
+            Conversation::where('id', $conversation->id)->update(['unread_count' => 0]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     /**
@@ -271,7 +286,9 @@ class InboxController extends Controller
                 ],
             );
 
-            return response()->json($message, 201);
+            // Shape = stream item — FE append thẳng vào thread, KHÔNG reload.
+            // (Đồng thời không lộ platform_meta thô như trả nguyên model trước đây.)
+            return response()->json(MessageItemSerializer::fromModel($message), 201);
         } catch (SendException $e) {
             return response()->json([
                 'message' => $e->getMessage(),

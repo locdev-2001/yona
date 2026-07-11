@@ -1,10 +1,21 @@
 import { cn } from '@/lib/utils';
-import { Ban, Check, CheckCheck, Reply, SmilePlus } from 'lucide-react';
+import { Ban, Check, CheckCheck, Clock3, Reply, SmilePlus } from 'lucide-react';
 import { useState } from 'react';
 import { ChatAvatar } from './chat-avatar';
 import { attachmentIsBare, MessageAttachment } from './message-attachment';
 import { MessageQuote } from './message-quote';
-import { isGroup, isOutbound, messageTime, REACTION_PALETTE, reactionChips, reactionEmoji, type ChatMessage, type ChatPeer } from './message-types';
+import {
+    isGroup,
+    isOutbound,
+    messageBodyIsRedundant,
+    messageTime,
+    REACTION_PALETTE,
+    reactionChips,
+    reactionEmoji,
+    type ChatMessage,
+    type ChatPeer,
+} from './message-types';
+import { LinkifiedText } from './messages/linkified-text';
 
 interface Props {
     msg: ChatMessage;
@@ -22,8 +33,8 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     const mine = isOutbound(msg);
     const group = isGroup(peer);
     const recalled = !!msg.recalled_at;
-    // Sticker: body là raw platform content (JSON {id,catId,type}), KHÔNG render text — ảnh do MessageAttachment lo
-    const hasBody = msg.type !== 'sticker' && !!(msg.body && msg.body.trim());
+    // Body không dành cho mắt người (sticker = raw JSON, bank_card = nhãn fallback) → component loại đó lo hiển thị
+    const hasBody = !messageBodyIsRedundant(msg) && !!(msg.body && msg.body.trim());
     const quote = msg.media_meta?.quote ?? null;
     const bare = !recalled && attachmentIsBare(msg) && !hasBody && !quote; // quote/caption cần khung bubble
     const hasMedia = msg.type !== 'text';
@@ -32,9 +43,10 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     // P06a — chỉ tin có platform metadata mới quote/react được (tin cũ: disable trung thực)
     const canInteract = !recalled && msg.quotable === true;
 
-    // Group → per-sender name; 1-1 → peer. Per-sender avatars aren't stored yet, so groups fall back to initials.
-    const senderName = group ? (msg.sender_name ?? peer.peer_name) : peer.peer_name;
-    const senderAvatar = group ? null : peer.peer_avatar_url;
+    // Group → per-sender profile từ participants map (upsert từ tin live, áp hồi tố cho tin backfill); 1-1 → peer.
+    const participant = group && msg.sender_uid ? peer.participants?.[msg.sender_uid] : null;
+    const senderName = group ? (msg.sender_name ?? participant?.name ?? peer.peer_name) : peer.peer_name;
+    const senderAvatar = group ? (participant?.avatar ?? null) : peer.peer_avatar_url;
 
     return (
         <div className={cn('group flex w-full gap-2', mine ? 'justify-end' : 'justify-start')}>
@@ -45,15 +57,17 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
                 <BubbleActions msg={msg} onReply={onReply} onReact={onReact} showPalette={showPalette} setShowPalette={setShowPalette} />
             )}
 
-            <div className={cn('flex max-w-[72%] flex-col', mine ? 'items-end' : 'items-start')}>
+            {/* min-w-0: chặn min-width:auto của flex item — token dài (URL) không được nong bubble tràn khung */}
+            <div className={cn('flex max-w-[72%] min-w-0 flex-col', mine ? 'items-end' : 'items-start')}>
                 {!mine && group && showSender && senderName && <span className="text-muted-foreground mb-0.5 px-1 text-xs">{senderName}</span>}
 
                 <div
                     className={cn(
-                        'w-fit text-sm',
+                        'w-fit max-w-full text-sm',
                         bare
                             ? 'p-0'
                             : cn('rounded-2xl px-3 py-2', mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'),
+                        msg.pending && 'opacity-70',
                     )}
                 >
                     {recalled ? (
@@ -65,7 +79,13 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
                         <>
                             {quote && <MessageQuote quote={quote} mine={mine} />}
                             <MessageAttachment msg={msg} mine={mine} />
-                            {hasBody && <p className={cn('break-words whitespace-pre-wrap', hasMedia && !bare ? 'mt-1' : '')}>{msg.body}</p>}
+                            {hasBody && (
+                                // overflow-wrap:anywhere (không phải break-word): tính cả vào intrinsic min-content
+                                // → URL dài không phá width; break-word chỉ bẻ khi render, không chặn nong khung
+                                <p className={cn('[overflow-wrap:anywhere] whitespace-pre-wrap', hasMedia && !bare ? 'mt-1' : '')}>
+                                    <LinkifiedText text={msg.body!} />
+                                </p>
+                            )}
                         </>
                     )}
                 </div>
@@ -84,11 +104,18 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
 
                 <span className="text-muted-foreground mt-0.5 flex items-center gap-1 px-1 text-[10px]">
                     {messageTime(msg)}
+                    {/* Optimistic: bubble hiện ngay khi bấm gửi, server confirm mới swap — receipt chưa có nghĩa */}
+                    {mine && msg.pending && (
+                        <span className="flex items-center gap-0.5 opacity-80">
+                            <Clock3 className="h-3 w-3" /> Đang gửi
+                        </span>
+                    )}
                     {/* P03 — receipt CHỈ 1-1 (nhóm per-member, scalar vô nghĩa) + chỉ tin mình gửi.
                         Kênh không có receipt → field null → không render gì (không phải "chưa xem"). */}
                     {mine &&
                         !group &&
                         !recalled &&
+                        !msg.pending &&
                         (msg.seen_at ? (
                             <span className="text-primary flex items-center gap-0.5">
                                 <CheckCheck className="h-3 w-3" /> Đã xem

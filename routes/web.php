@@ -242,6 +242,9 @@ Route::middleware(['auth'])->group(function () {
         // P05 — stream hợp nhất messages + gap marker (session_gap), keyset cursor.
         Route::get('/inbox/conversations/{conversation}/stream', ConversationStreamController::class)
             ->name('inbox.stream');
+        // Tin đến khi hội thoại đang mở trên màn hình → FE đánh dấu đã đọc ngay.
+        Route::post('/inbox/conversations/{conversation}/read', [InboxController::class, 'markRead'])
+            ->name('inbox.read');
         Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
             ->name('inbox.send');
         Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])

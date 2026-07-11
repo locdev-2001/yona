@@ -15,6 +15,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
+use App\Services\Inbox\MessagePublisher;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\MeteringService;
 use App\Support\TenantScope;
@@ -116,7 +117,7 @@ function makeSendService(): ZaloSendService
 /** P11 — đường outbound THẬT: pipeline (quota gate + meterReply) bọc driver. */
 function makeSendPipeline(): OutboundSendPipeline
 {
-    return new OutboundSendPipeline(app(MeteringService::class));
+    return new OutboundSendPipeline(app(MeteringService::class), app(MessagePublisher::class));
 }
 
 // ── ZaloSendService: send thành công ─────────────────────────────────────────
@@ -504,7 +505,7 @@ it('F1-audit (P11): OutboundSendPipeline throws QuotaExceededException TRƯỚC 
         $m->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
     });
 
-    $pipeline = new OutboundSendPipeline($blockingMeter);
+    $pipeline = new OutboundSendPipeline($blockingMeter, app(MessagePublisher::class));
     $driver = new ZaloChannelDriver(makeSendService());
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
