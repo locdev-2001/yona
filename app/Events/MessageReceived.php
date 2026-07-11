@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Services\Inbox\MessageItemSerializer;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -47,23 +48,16 @@ class MessageReceived implements ShouldBroadcast
 
         $this->workspaceId = $message->workspace_id;
         $this->broadcastPayload = [
-            'message' => [
-                'id' => $message->id,
-                'conversation_id' => $message->conversation_id,
-                'workspace_id' => $message->workspace_id,
-                'direction' => $message->direction,
-                'type' => $message->type,
-                'body' => $message->body,
-                'media_url' => $message->media_url,
-                'media_meta' => $message->media_meta,
-                'source_id' => $message->source_id,
-                'platform_sent_at' => $message->platform_sent_at?->toIso8601String(),
-                'sender_uid' => $message->sender_uid,
-                'sender_name' => $message->sender_name,
-                'sent_by' => $message->sent_by,
-                'created_at' => $message->created_at->toIso8601String(),
-            ],
+            // Shape = stream item (MessageItemSerializer) — FE append thẳng, không map lại.
+            // reactions luôn [] ở đây (không query — Review H1); tin replay đã có id
+            // trong thread → FE dedup theo id bỏ qua, không ghi đè reactions thật.
+            'message' => MessageItemSerializer::fromModel($message),
             'conversation_id' => $message->conversation_id,
+            // Hồ sơ người gửi (nhóm) — FE merge vào participants map của conversation
+            // đang mở, tránh initials fallback khi thành viên mới nhắn lần đầu realtime.
+            'sender_participant' => $message->sender_uid !== null
+                ? (($conversation?->participants ?? [])[$message->sender_uid] ?? null)
+                : null,
             'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
             'unread_count' => $conversation ? $conversation->unread_count : 0,
             'stream_version' => $conversation?->stream_version,
