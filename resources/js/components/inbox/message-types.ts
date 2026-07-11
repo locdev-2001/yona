@@ -3,7 +3,7 @@
 
 export type MessageDirection = 'in' | 'out' | 'echo';
 
-export type MessageType = 'text' | 'image' | 'gif' | 'video' | 'audio' | 'file' | 'sticker' | 'business_card' | 'call' | (string & {});
+export type MessageType = 'text' | 'image' | 'gif' | 'video' | 'audio' | 'file' | 'sticker' | 'business_card' | 'bank_card' | 'call' | (string & {});
 
 export interface StickerMeta {
     url?: string | null;
@@ -13,8 +13,32 @@ export interface StickerMeta {
 
 export interface BusinessCardMeta {
     name?: string | null;
+    title?: string | null;
     phone?: string | null;
+    thumbnail?: string | null;
+    url?: string | null;
     qr_code_url?: string | null;
+    contact_uid?: string | null;
+}
+
+/** Thẻ tài khoản ngân hàng (Zalo zinstant.bankcard) — bridge resolve từ template VietQR. */
+export interface BankCardMeta {
+    bank_name?: string | null;
+    bank_bin?: string | null;
+    account_number?: string | null;
+    account_holder?: string | null;
+    logo_url?: string | null;
+    qr_url?: string | null;
+}
+
+export interface CallMeta {
+    media?: 'voice' | 'video' | (string & {});
+    direction?: 'inbound' | 'outbound' | (string & {});
+    outcome?: 'completed' | 'missed' | 'busy' | 'canceled' | (string & {});
+    duration_seconds?: number;
+    /** Tin cũ trước khi chuẩn hóa call payload. */
+    type?: string | number;
+    duration?: number;
 }
 
 /** Tin được trả lời (reply/quote) — bridge trích từ message.data.quote (TQuote). */
@@ -32,7 +56,8 @@ export interface QuoteMeta {
 export interface MediaMeta {
     sticker?: StickerMeta;
     business_card?: BusinessCardMeta;
-    call?: { type?: string | number; duration?: number } | null;
+    bank_card?: BankCardMeta;
+    call?: CallMeta | null;
     media_filename?: string;
     quote?: QuoteMeta | null;
     /** P04 — media outbound từ portal (private disk, media_url = route show bền). */
@@ -67,6 +92,8 @@ export interface ChatMessage {
     reactions?: MessageReactionInfo[];
     /** P06a — tin có platform metadata mới quote/react được (tin cũ → disable nút). */
     quotable?: boolean;
+    /** Client-only: tin optimistic đang chờ server xác nhận — server không bao giờ trả field này. */
+    pending?: boolean;
 }
 
 /** P06a — palette reaction chuẩn (icon = mã zca, hiển thị qua reactionEmoji). */
@@ -133,6 +160,12 @@ export function isStreamMessage(item: StreamItem): item is ChatMessage & { item_
     return item.item_type === 'message';
 }
 
+/** Group member profile, upserted server-side from live inbound messages. */
+export interface ChatParticipant {
+    name?: string | null;
+    avatar?: string | null;
+}
+
 /** The peer side of a thread — a Conversation is structurally compatible. */
 export interface ChatPeer {
     peer_uid: string;
@@ -140,6 +173,8 @@ export interface ChatPeer {
     peer_phone: string | null;
     peer_avatar_url?: string | null;
     thread_type: number; // 1 = group
+    /** Group threads: sender_uid → profile (avatar/tên per-sender). */
+    participants?: Record<string, ChatParticipant> | null;
 }
 
 /** Outbound = anything the connected account sent — portal ('out') OR own phone ('echo'). Only 'in' is the peer. */
@@ -176,10 +211,18 @@ export function dayLabel(msg: Pick<ChatMessage, 'platform_sent_at' | 'created_at
         : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+/**
+ * Body không dành cho mắt người → không render làm text/caption:
+ * sticker = raw platform JSON {id,catId,type}; bank_card = nhãn fallback
+ * trùng nội dung card (card component đã show đủ).
+ */
+export function messageBodyIsRedundant(msg: Pick<ChatMessage, 'type'>): boolean {
+    return msg.type === 'sticker' || msg.type === 'bank_card';
+}
+
 /** One-line preview for the conversation list, by type. */
 export function messagePreview(msg: Pick<ChatMessage, 'type' | 'body'>): string {
-    // Sticker: body là raw platform content (JSON {id,catId,type}) — không bao giờ là text người đọc
-    if (msg.type !== 'sticker' && msg.body && msg.body.trim()) return msg.body;
+    if (!messageBodyIsRedundant(msg) && msg.body && msg.body.trim()) return msg.body;
     switch (msg.type) {
         case 'image':
             return '[Hình ảnh]';
@@ -195,6 +238,8 @@ export function messagePreview(msg: Pick<ChatMessage, 'type' | 'body'>): string 
             return '[Sticker]';
         case 'business_card':
             return '[Danh thiếp]';
+        case 'bank_card':
+            return '[Tài khoản ngân hàng]';
         case 'call':
             return '[Cuộc gọi]';
         default:

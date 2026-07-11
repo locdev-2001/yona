@@ -15,6 +15,7 @@ import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
+import { contentLabelFromObject, enrichInboundBody, parseZinstantBankCardSource } from './inbound-content.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
@@ -347,9 +348,19 @@ async function postZaloPersonalSocialEvent(body) {
     await outbox.enqueue(body);
 }
 
+/**
+ * Chokepoint duy nhất cho payload inbound → outbox: enrich content cần resolve
+ * async (bank_card fetch template zinstant) TRƯỚC khi persist, để cả lane sync
+ * (relay old_messages, reconnect backfill, deep sync) cũng ra content đầy đủ.
+ */
+async function enqueueInboundEnriched(body) {
+    await enrichInboundBody(body);
+    await outbox.enqueue(body);
+}
+
 async function postInbound(body) {
     if (!LARAVEL_WEBHOOK_URL) return;
-    await outbox.enqueue(body);
+    await enqueueInboundEnriched(body);
 }
 
 async function postBridgeSession({ connection_id, bot_id, state, detail }) {
@@ -1124,6 +1135,14 @@ function parseInboundDescriptor(message) {
         }
     }
 
+    // Thẻ tài khoản ngân hàng (zinstant) — thường đến dạng chat.webcontent nhưng
+    // nhận theo content.action để không phụ thuộc msgType. Chi tiết thẻ resolve
+    // async ở chokepoint enrichInboundBody (trước outbox) — mọi lane đều hưởng.
+    const bankCardSource = parseZinstantBankCardSource(c);
+    if (bankCardSource) {
+        return { inbound_kind: 'bank_card', bank_card_source: bankCardSource, peerUid, msgType };
+    }
+
     if (msgType === 'chat.link' || msgType === 'chat.recommended') {
         if (msgType === 'chat.recommended') {
             const callPayload = parseZaloRecommendedCallContent(c);
@@ -1507,10 +1526,10 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
     const ts = rawD?.ts ?? rawD?.msgTs ?? rawD?.sendTime ?? rawD?.clientTime;
     const platformSentAt = Number.isFinite(Number(ts)) && Number(ts) > 0 ? Math.round(Number(ts)) : Date.now();
 
-    // Suy ra content/inbound_kind từ rawD trực tiếp (history không qua parseInboundDescriptor)
-    const contentRaw = rawD?.content;
-    const contentStr = typeof contentRaw === 'string' ? contentRaw : JSON.stringify(contentRaw ?? '');
-    const mediaUrl = typeof contentRaw === 'object' ? (contentRaw?.href ?? contentRaw?.url ?? null) : null;
+    // DRY (bug 11/07 file/ảnh/bankcard lọt raw JSON): dùng CHUNG parseInboundDescriptor với
+    // live lane để MỌI loại tin ra đúng kind + content. parseInboundDescriptor sync → gọi thẳng;
+    // async resolve (sticker detail, QR card) bỏ qua ở backfill (giữ raw cơ bản, đủ hiển thị).
+    const desc = parseInboundDescriptor({ data: rawD, threadId: groupId, type: threadType });
 
     const payload = {
         connection_id: cid,
@@ -1524,10 +1543,33 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
         direction: isSelf ? 'out' : 'in',  // backfill không check echo (không có outboundEchoIds context)
         user: { name: null, avatar: null }, // profile không resolve khi backfill
         platform_sent_at: platformSentAt,
-        inbound_kind: mediaUrl ? 'media' : 'text',
-        content: contentStr,
+        inbound_kind: desc?.inbound_kind ?? 'text',
         backfill: true,          // marker để Laravel biết đây là tin hồi phục (không gửi notification)
     };
+
+    if (!desc || desc.inbound_kind === 'text') {
+        // desc null (webcontent/banner không ra text) → nhãn thân thiện, KHÔNG raw JSON.
+        const c = rawD?.content;
+        payload.content = desc?.text ?? (typeof c === 'string' ? c : contentLabelFromObject(c, rawD?.msgType));
+    } else if (desc.inbound_kind === 'bank_card') {
+        payload.bank_card_source = desc.bank_card_source;
+        payload.content = desc.bank_card_source.label;
+    } else if (desc.inbound_kind === 'sticker') {
+        payload.sticker = desc.sticker;
+    } else if (desc.inbound_kind === 'business_card') {
+        payload.business_card = desc.business_card;
+        payload.content = desc.caption != null ? String(desc.caption) : '';
+    } else if (desc.inbound_kind === 'call') {
+        payload.call = desc.call;
+        payload.content = '';
+    } else {
+        payload.media_url = desc.media_url;
+        if (desc.media_filename) {
+            payload.media_filename = desc.media_filename;
+        }
+        payload.content = desc.caption != null ? String(desc.caption) : '';
+    }
+
     // Raw đầy đủ như live lane (cùng key) → platform_meta.zca_message: tin backfill
     // quote/react/seen được + giữ trọn payload nền tảng (yêu cầu founder 05/07).
     try {
@@ -1535,7 +1577,6 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
     } catch {
         payload.listener_data = null;
     }
-    if (mediaUrl) payload.media_url = mediaUrl;
     if (!isSelf && rawD?.uidFrom) payload.sender_uid = String(rawD.uidFrom);
 
     return payload;
@@ -1833,6 +1874,9 @@ function startListenerForSlot(slotKey) {
 
             if (desc.inbound_kind === 'text') {
                 payload.content = desc.text;
+            } else if (desc.inbound_kind === 'bank_card') {
+                payload.bank_card_source = desc.bank_card_source;
+                payload.content = desc.bank_card_source.label;
             } else if (desc.inbound_kind === 'sticker') {
                 payload.sticker = await resolveStickerForWebhook(slot.api, desc.sticker);
             } else if (desc.inbound_kind === 'business_card') {
@@ -1856,7 +1900,7 @@ function startListenerForSlot(slotKey) {
     // P12: forwarder generic — subscribe 10 event chưa wired (né 5 bespoke +
     // cipher_key, B3/B6); guard slot.forwarderAttached bên trong (MED-2).
     const relayEvents = attachRelayForwarder(slot, {
-        enqueue: (body) => outbox.enqueue(body),
+        enqueue: (body) => enqueueInboundEnriched(body),
         postFireAndForget: postRelayFireAndForget,
         buildInboundPayload: buildGroupBackfillPayload,
     });
@@ -1936,7 +1980,7 @@ async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
     }
     // Tier 2: backfill khi promote QR (lần đầu kết nối — gapMs null, backfill cần nếu mất kết nối trước)
     void backfillOnReconnect(slot, {
-        enqueue: (body) => outbox.enqueue(body),
+        enqueue: (body) => enqueueInboundEnriched(body),
         buildInboundPayload: buildGroupBackfillPayload,
         gapMs: computeGapMs(slot),
     });
@@ -1984,7 +2028,7 @@ async function tryLoginWithSavedSession(connectionId) {
         }
         // Tier 2: backfill tin nhóm trong gap kể từ lần session_lost (nếu có)
         void backfillOnReconnect(slot, {
-            enqueue: (body) => outbox.enqueue(body),
+            enqueue: (body) => enqueueInboundEnriched(body),
             buildInboundPayload: buildGroupBackfillPayload,
             gapMs: computeGapMs(slot),
         });
@@ -2388,7 +2432,7 @@ function buildExpress() {
         getSlot,
         ThreadType,
         buildGroupBackfillPayload,
-        enqueueOutbox: (body) => outbox.enqueue(body),
+        enqueueOutbox: (body) => enqueueInboundEnriched(body),
     });
     // P11: dispatcher generic — mount SAU các route active. resolve-only (M2):
     // slots.get, KHÔNG getSlot (get-or-create).

@@ -70,6 +70,7 @@ class ZaloChannelDriver implements ChannelDriver
      *   media_meta     = {sticker, business_card, call, media_filename, ...}
      *   sender_uid     = payload.sender_uid (group sender)
      *   sender_name    = payload.sender.name
+     *   sender_avatar  = payload.sender.avatar (nuôi conversations.participants)
      *   platform_sent_at = payload.platform_sent_at (ms unix → Carbon)
      *   channel_account_id = payload.channel_account_id (resolved bởi webhook controller — P08)
      *   thread_type    = payload.thread_type (0=user, 1=group)
@@ -91,6 +92,7 @@ class ZaloChannelDriver implements ChannelDriver
             'file' => 'file',
             'sticker' => 'sticker',
             'business_card' => 'business_card',
+            'bank_card' => 'bank_card',
             'call' => 'call',
             default => 'text',
         };
@@ -101,6 +103,9 @@ class ZaloChannelDriver implements ChannelDriver
         }
         if (isset($raw['business_card'])) {
             $mediaMeta['business_card'] = $raw['business_card'];
+        }
+        if (isset($raw['bank_card'])) {
+            $mediaMeta['bank_card'] = $raw['bank_card'];
         }
         if (isset($raw['call'])) {
             $mediaMeta['call'] = $raw['call'];
@@ -146,6 +151,7 @@ class ZaloChannelDriver implements ChannelDriver
             'platform_sent_at' => $platformSentAt,
             'sender_uid' => $raw['sender_uid'] ?? ($sender['id'] ?? null),
             'sender_name' => $sender['name'] ?? null,
+            'sender_avatar' => $sender['avatar'] ?? null,
             'sent_by' => null, // inbound = ngoài hệ thống
             'platform_meta' => $this->extractPlatformMeta($raw),
         ];

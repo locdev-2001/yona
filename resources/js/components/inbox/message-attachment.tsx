@@ -1,10 +1,16 @@
-import { cn } from '@/lib/utils';
-import { Contact, Download, FileText, Phone } from 'lucide-react';
 import type { ChatMessage } from './message-types';
+import { AudioMessage } from './messages/audio-message';
+import { BankCardMessage } from './messages/bank-card-message';
+import { BusinessCardMessage } from './messages/business-card-message';
+import { CallMessage } from './messages/call-message';
+import { FileMessage } from './messages/file-message';
+import { ImageMessage } from './messages/image-message';
+import { StickerMessage } from './messages/sticker-message';
+import { VideoMessage } from './messages/video-message';
 
 /** Media types that look best WITHOUT a colored bubble background (shown bare). */
 export function attachmentIsBare(msg: Pick<ChatMessage, 'type'>): boolean {
-    return msg.type === 'sticker' || msg.type === 'image' || msg.type === 'gif' || msg.type === 'video';
+    return msg.type === 'sticker' || msg.type === 'image' || msg.type === 'gif' || msg.type === 'video' || msg.type === 'bank_card';
 }
 
 interface Props {
@@ -12,77 +18,31 @@ interface Props {
     mine: boolean;
 }
 
-/** Renders the media part of a message by type. Returns null for plain text (bubble renders body). */
+/**
+ * Dispatcher render media theo loại tin — mỗi loại 1 component riêng trong
+ * ./messages/ (channel-agnostic, kênh mới chỉ cần map về cùng type+meta).
+ * Trả null cho text (bubble tự render body).
+ */
 export function MessageAttachment({ msg, mine }: Props) {
-    const meta = msg.media_meta ?? {};
-
     switch (msg.type) {
-        case 'sticker': {
-            const url = meta.sticker?.url ?? meta.sticker?.thumbnail ?? msg.media_url;
-            return url ? <img src={url} alt="sticker" className="h-28 w-28 object-contain" loading="lazy" /> : <Label text="[Sticker]" />;
-        }
+        case 'sticker':
+            return <StickerMessage msg={msg} />;
         case 'image':
         case 'gif':
-            return msg.media_url ? (
-                <a href={msg.media_url} target="_blank" rel="noreferrer" className="block">
-                    <img
-                        src={msg.media_url}
-                        alt={msg.body ?? 'image'}
-                        className="max-h-72 max-w-full rounded-lg object-cover"
-                        loading="lazy"
-                        decoding="async"
-                    />
-                </a>
-            ) : (
-                <Label text="[Hình ảnh]" />
-            );
+            return <ImageMessage msg={msg} />;
         case 'video':
-            return msg.media_url ? (
-                <video src={msg.media_url} controls preload="none" className="max-h-72 max-w-full rounded-lg" />
-            ) : (
-                <Label text="[Video]" />
-            );
+            return <VideoMessage msg={msg} />;
         case 'audio':
-            return msg.media_url ? <audio src={msg.media_url} controls className="max-w-[220px]" /> : <Label text="[Tin nhắn thoại]" />;
-        case 'file': {
-            const name = meta.media_filename ?? 'Tệp đính kèm';
-            return (
-                <a
-                    href={msg.media_url ?? '#'}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={cn('flex items-center gap-2', mine ? 'text-primary-foreground' : 'text-foreground')}
-                >
-                    <FileText className="h-5 w-5 shrink-0 opacity-80" />
-                    <span className="max-w-[200px] truncate">{name}</span>
-                    <Download className="h-4 w-4 shrink-0 opacity-60" />
-                </a>
-            );
-        }
-        case 'business_card': {
-            const card = meta.business_card ?? {};
-            return (
-                <div className="flex items-center gap-2">
-                    <Contact className="h-5 w-5 shrink-0 opacity-80" />
-                    <div className="leading-tight">
-                        <div className="font-medium">{card.name ?? 'Danh thiếp'}</div>
-                        {card.phone && <div className="text-xs opacity-70">{card.phone}</div>}
-                    </div>
-                </div>
-            );
-        }
+            return <AudioMessage msg={msg} />;
+        case 'file':
+            return <FileMessage msg={msg} mine={mine} />;
+        case 'business_card':
+            return <BusinessCardMessage msg={msg} />;
+        case 'bank_card':
+            return <BankCardMessage msg={msg} />;
         case 'call':
-            return (
-                <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 opacity-80" />
-                    <span>Cuộc gọi</span>
-                </div>
-            );
+            return <CallMessage msg={msg} />;
         default:
             return null; // text / unknown → bubble renders body
     }
-}
-
-function Label({ text }: { text: string }) {
-    return <span className="text-xs opacity-70">{text}</span>;
 }
