@@ -13,6 +13,12 @@ Navigate messaging features. GĐ1 implements Phase 1 inbox: Zalo personal webhoo
 | [Plan Entitlements & Grant](./plan-entitlements-grant.md) | Workspace purchases, admin grant/revoke, quota resolve. | `App\Services\{GrantPlanService,EntitlementService}` |
 | [Channel-Account Architecture](./channel-account-architecture.md) | Account-keyed redesign (GĐ1 live): tách danh tính tài khoản khỏi session, 5 lớp, gap marker + fallback backfill, core mù session. Sửa #1 phân mảnh / #2 mất tin / #3 mở rộng. | inbox + channel-zalo |
 | [zca Capability Map](./zca-capability-map.md) | Bề mặt zca-js (146 REST / 16 event) + adapter generic L1 (dispatcher/forwarder/allowlist reflection) — sở hữu 100% bề mặt, chống "miss" khả năng khi nâng version. | channel-zalo |
+| [Message-State Pipeline](./message-state-pipeline.md) | P02/P03: undo/seen/delivered/reaction ĐI THEO messages (taxonomy 4 loại), pending bounded, UI tick/recalled/reactions/typing. | inbox core + channel-zalo |
+| [Composer Media](./composer-media.md) | P04: gửi ảnh/file từ portal — private disk + signed URL (A3), bridge byte-cap + allowlist, dedup 2-msgId. | inbox + bridge |
+| [Phone Enrichment](./phone-enrichment.md) | P05: SĐT từ danh thiếp (consent-by-conduct) + nhập tay verify — mở khóa rule #1 CDP. CẤM harvest. | inbox core |
+| [Outbound Interactions](./outbound-interactions.md) | P06: quote-reply + reaction + sticker (caller đầu tiên dispatcher /zca) + seen-sync default OFF. | inbox + channel-zalo |
+| [Inbox CRM Layer](./inbox-crm-layer.md) | P07: gán phụ trách, label (tags morph), note nội bộ, canned replies — channel-agnostic. | inbox core |
+| [Channel Framework Contract](./channel-framework-contract.md) | **P11 — HỢP ĐỒNG ĐÓNG BĂNG:** thêm kênh = 1 driver, 0 dòng sửa core. Allowlist + OutboundSendPipeline money-path + mock contract test. | contracts |
 
 ## Key Decisions (GĐ1)
 

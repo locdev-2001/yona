@@ -30,8 +30,8 @@ return new class extends Migration
             $db->statement("DROP POLICY IF EXISTS ws_isolation ON {$table}");
             $db->statement("CREATE POLICY ws_isolation ON {$table} USING ({$predicate}) WITH CHECK ({$predicate})");
             // Grant DML to the runtime app role (may not be auto-granted when
-            // tables are created by the superuser rather than cho_rach_owner).
-            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO cho_rach_app");
+            // tables are created by the superuser rather than crm_owner).
+            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO crm_app");
         }
     }
 

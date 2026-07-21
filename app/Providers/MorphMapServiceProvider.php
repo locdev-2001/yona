@@ -13,6 +13,7 @@ use App\Models\ClientGroup;
 use App\Models\ClientVaultEntry;
 use App\Models\Comment;
 use App\Models\Contact;
+use App\Models\Conversation;
 use App\Models\CustomFieldDefinition;
 use App\Models\EmailTemplate;
 use App\Models\Lead;
@@ -86,6 +87,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'attachment' => Attachment::class,
             'audit_log' => AuditLog::class,
             'comment' => Comment::class,
+            'conversation' => Conversation::class,
             'custom_field_definition' => CustomFieldDefinition::class,
             'email_template' => EmailTemplate::class,
             'lead_source' => LeadSource::class,

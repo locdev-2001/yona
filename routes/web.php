@@ -33,9 +33,16 @@ use App\Http\Controllers\Identity\Settings\MemberController;
 use App\Http\Controllers\Identity\Settings\PasswordController;
 use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
+use App\Http\Controllers\Inbox\ConversationAssignController;
+use App\Http\Controllers\Inbox\ConversationAttachmentController;
 use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\ConversationPanelController;
+use App\Http\Controllers\Inbox\ConversationPhoneController;
 use App\Http\Controllers\Inbox\ConversationStreamController;
 use App\Http\Controllers\Inbox\InboxController;
+use App\Http\Controllers\Inbox\InboxSettingController;
+use App\Http\Controllers\Inbox\MessageInteractionController;
+use App\Http\Controllers\Inbox\QuickReplyController;
 use App\Http\Controllers\Integration\IntegrationController;
 use App\Http\Controllers\Integration\ZaloConnectionController;
 use App\Http\Controllers\LocaleController;
@@ -236,10 +243,38 @@ Route::middleware(['auth'])->group(function () {
         // P05 — stream hợp nhất messages + gap marker (session_gap), keyset cursor.
         Route::get('/inbox/conversations/{conversation}/stream', ConversationStreamController::class)
             ->name('inbox.stream');
+        // Tin đến khi hội thoại đang mở trên màn hình → FE đánh dấu đã đọc ngay.
+        Route::post('/inbox/conversations/{conversation}/read', [InboxController::class, 'markRead'])
+            ->name('inbox.read');
         Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
             ->name('inbox.send');
         Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
             ->name('inbox.lead.store');
+        // P04 — composer media: upload multipart trước, send JSON {attachment_id} sau.
+        Route::post('/inbox/conversations/{conversation}/attachments', [ConversationAttachmentController::class, 'store'])
+            ->name('inbox.attachments.store');
+        Route::get('/inbox/attachments/{attachmentKey}', [ConversationAttachmentController::class, 'show'])
+            ->name('inbox.attachments.show');
+        // P05 — nhập tay SĐT + verify qua kênh (manual_verified).
+        Route::put('/inbox/conversations/{conversation}/phone', [ConversationPhoneController::class, 'update'])
+            ->name('inbox.phone.update');
+        // P06a — reaction (dispatcher caller đầu tiên) + sticker search.
+        Route::post('/inbox/conversations/{conversation}/messages/{message}/reaction', [MessageInteractionController::class, 'react'])
+            ->name('inbox.reaction');
+        Route::get('/inbox/conversations/{conversation}/stickers', [MessageInteractionController::class, 'stickers'])
+            ->name('inbox.stickers');
+        // P07 — tầng CRM channel-agnostic: gán, panel (label/note/member), canned replies.
+        Route::patch('/inbox/conversations/{conversation}/assign', [ConversationAssignController::class, 'update'])
+            ->name('inbox.assign');
+        Route::get('/inbox/conversations/{conversation}/panel', ConversationPanelController::class)
+            ->name('inbox.panel');
+        // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage).
+        Route::put('/inbox/settings/seen-sync', [InboxSettingController::class, 'updateSeenSync'])
+            ->name('inbox.settings.seen-sync');
+        Route::get('/inbox/quick-replies', [QuickReplyController::class, 'index'])->name('inbox.quick-replies.index');
+        Route::post('/inbox/quick-replies', [QuickReplyController::class, 'store'])->name('inbox.quick-replies.store');
+        Route::put('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'update'])->name('inbox.quick-replies.update');
+        Route::delete('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'destroy'])->name('inbox.quick-replies.destroy');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')
@@ -487,3 +522,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     });
 });
+
+// P04 — bridge fetch media outbound: signed URL TTL ngắn (A3), KHÔNG session/auth.
+// RLS bind thủ công trong controller từ param ws đã ký. Ngoài mọi group tenant.
+Route::get('/inbox/attachments/{attachmentKey}/raw', [ConversationAttachmentController::class, 'raw'])
+    ->middleware('signed')
+    ->name('inbox.attachments.raw');

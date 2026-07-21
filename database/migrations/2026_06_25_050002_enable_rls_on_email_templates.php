@@ -21,7 +21,7 @@ return new class extends Migration
         $db->statement('ALTER TABLE email_templates FORCE ROW LEVEL SECURITY');
         $db->statement('DROP POLICY IF EXISTS ws_isolation ON email_templates');
         $db->statement("CREATE POLICY ws_isolation ON email_templates USING ({$predicate}) WITH CHECK ({$predicate})");
-        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON email_templates TO cho_rach_app');
+        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON email_templates TO crm_app');
     }
 
     public function down(): void
