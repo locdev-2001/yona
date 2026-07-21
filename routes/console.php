@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 // withoutOverlapping prevents concurrent runs if the previous tick is slow.
 // G12: ReminderService::dispatchDue() handles per-workspace context isolation.
 Schedule::command('reminders:dispatch-due')->everyMinute()->withoutOverlapping();
+
+// Automation — resume workflow_runs whose "wait" node has elapsed.
+Schedule::command('workflow:resume-waiting')->everyMinute()->withoutOverlapping();

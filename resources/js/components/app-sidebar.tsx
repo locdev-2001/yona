@@ -5,7 +5,7 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { useTranslator } from '@/lib/i18n';
 import { type NavGroup, type NavItem, type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { Building2, FolderKanban, Inbox, LayoutGrid, ListChecks, Plug, Sparkles, Target } from 'lucide-react';
+import { Building2, FolderKanban, GitBranch, Inbox, LayoutGrid, ListChecks, Plug, Sparkles, Target } from 'lucide-react';
 
 export function AppSidebar() {
     const t = useTranslator();
@@ -21,6 +21,7 @@ export function AppSidebar() {
         can('tenant.lead.view') && { title: t('platform.nav.leads'), url: '/leads', icon: Target },
         can('tenant.project.view') && { title: t('platform.nav.projects'), url: '/projects', icon: FolderKanban },
         can('tenant.task.view') && { title: t('platform.nav.tasks'), url: '/tasks', icon: ListChecks },
+        can('tenant.automation.manage') && { title: t('platform.nav.automation'), url: '/automation/workflows', icon: GitBranch },
     ];
     const crmItems: NavItem[] = crmCandidates.filter((item): item is NavItem => item !== false);
 

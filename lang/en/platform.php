@@ -54,6 +54,7 @@ return [
         'leads' => 'Leads',
         'projects' => 'Projects',
         'tasks' => 'Tasks',
+        'automation' => 'Automation',
         'settings' => 'Settings',
         'workspace' => 'Workspace',
         'teams' => 'Teams',

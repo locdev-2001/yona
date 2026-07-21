@@ -120,10 +120,10 @@ Conversations / Inbox              Product Announcements             Marketplace
   Omnichannel: web·Zalo·FB·email   Reporting / BI                    Integrations (Zalo/FB/
   escalate → Ticket                API + Webhooks (event bus)          email/calendar/…)
 Marketing 🔵
-  Campaign·Segment·Scoring         Workflow engine (later) · AI agents (future)
+  Campaign·Segment·Scoring         Workflow engine (designed) · AI agents (future)
 ```
 
-Platform layer (RBAC, audit, custom fields, realtime, reporting, API) is as much work as the business layer — don't underestimate it. Detailed contexts & tables: [system-architecture.md](system-architecture.md); access planes: [crm-authorization-model.md](crm-authorization-model.md); inbox: [crm-conversations-inbox.md](crm-conversations-inbox.md).
+Platform layer (RBAC, audit, custom fields, realtime, reporting, API) is as much work as the business layer — don't underestimate it. Detailed contexts & tables: [system-architecture.md](system-architecture.md); access planes: [crm-authorization-model.md](crm-authorization-model.md); inbox: [crm-conversations-inbox.md](crm-conversations-inbox.md); automation/workflow engine: [crm-automation-workflow.md](crm-automation-workflow.md).
 
 ---
 

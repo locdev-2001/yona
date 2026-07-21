@@ -49,6 +49,7 @@ class PlatformPermissionSeeder extends Seeder
             // sales_manager: full access to leads, clients, contacts, projects, tasks + audit
             'sales_manager' => [
                 TenantPermission::TagsManage->value,
+                TenantPermission::AutomationManage->value,
                 TenantPermission::AuditView->value,
                 TenantPermission::ClientView->value,
                 TenantPermission::ClientViewOwn->value,
@@ -100,6 +101,7 @@ class PlatformPermissionSeeder extends Seeder
             // support_manager: full projects/tasks + client/contact view + timesheet manage
             'support_manager' => [
                 TenantPermission::TagsManage->value,
+                TenantPermission::AutomationManage->value,
                 TenantPermission::AuditView->value,
                 TenantPermission::ClientView->value,
                 TenantPermission::ContactView->value,

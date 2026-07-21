@@ -506,4 +506,58 @@ export interface PaginatedTasks {
 
 /** Kanban columns grouped by status (TaskStatus → Task[]). */
 export type TaskKanbanColumns = Record<string, Task[]>;
+
+// ── P260704: Automation / Workflow Engine ──────────────────────────────────────
+/** v1 Node Handler registry (docs/crm-automation-workflow.md §Node Handler registry) — no more, no fewer. */
+export type WorkflowNodeType =
+    | 'start'
+    | 'condition'
+    | 'wait'
+    | 'end'
+    | 'send_message'
+    | 'create_task'
+    | 'notify_internal'
+    | 'tag'
+    | 'change_lead_stage';
+
+/** Node config shape is a free-form bag validated per-type server-side (ValidatesWorkflowGraph
+ * only checks the envelope, not per-type keys) — kept loose here, narrowed by each inspector form. */
+export interface WorkflowGraphNode {
+    id: string;
+    type: WorkflowNodeType;
+    config: Record<string, unknown>;
+    /** Layout only — WorkflowEngine never reads this key, but it IS persisted
+     * in the graph jsonb column (ValidatesWorkflowGraph.php's position.x/y
+     * rules) so the editor doesn't re-scatter every node on each reload. */
+    position?: { x: number; y: number };
+}
+
+export interface WorkflowGraphEdge {
+    from: string;
+    to: string;
+    /** null for a normal edge; true/false for a condition node's 2 outputs. */
+    branch: boolean | null;
+}
+
+export interface WorkflowGraph {
+    nodes: WorkflowGraphNode[];
+    edges: WorkflowGraphEdge[];
+}
+
+export interface Workflow {
+    id: string;
+    workspace_id: string;
+    name: string;
+    graph: WorkflowGraph;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WorkflowListItem {
+    id: string;
+    name: string;
+    is_active: boolean;
+    updated_at: string;
+}
 // ──────────────────────────────────────────────────────────────────────────────
