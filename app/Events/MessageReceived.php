@@ -3,12 +3,12 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Services\Inbox\MessageItemSerializer;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 /**
  * Broadcast khi có tin nhắn mới (inbound hoặc outbound).
@@ -22,59 +22,67 @@ use Illuminate\Queue\SerializesModels;
  * P05: $gapEvent (nếu có, từ SessionGapMaterializer) đi kèm ngay trong cùng
  * broadcast — FE chèn marker "có thể thiếu tin" vào đúng vị trí ngay lập tức,
  * không cần round-trip refetch riêng cho trường hợp realtime.
+ *
+ * Review H1: KHÔNG SerializesModels, KHÔNG query trong broadcastWith — payload
+ * capture NGAY trong request context (RLS còn bind; conversation đã setRelation
+ * fresh ở ingest). Queue worker prod chạy crm_app không có
+ * app.current_workspace → re-query lúc broadcast bị RLS chặn → job fail.
+ * $message giữ lại CHỈ cho listener đồng bộ (LiftPhoneFromBusinessCard) —
+ * không được dùng trong broadcastOn/broadcastWith.
  */
 class MessageReceived implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
+
+    public readonly string $workspaceId;
+
+    /** @var array<string, mixed> */
+    public readonly array $broadcastPayload;
 
     /** @param  array<string, mixed>|null  $gapEvent */
     public function __construct(
         public readonly Message $message,
         public readonly ?array $gapEvent = null,
-    ) {}
+    ) {
+        $conversation = $message->conversation;
+
+        $this->workspaceId = $message->workspace_id;
+        $this->broadcastPayload = [
+            // Shape = stream item (MessageItemSerializer) — FE append thẳng, không map lại.
+            // reactions luôn [] ở đây (không query — Review H1); tin replay đã có id
+            // trong thread → FE dedup theo id bỏ qua, không ghi đè reactions thật.
+            'message' => MessageItemSerializer::fromModel($message),
+            'conversation_id' => $message->conversation_id,
+            // Hồ sơ người gửi (nhóm) — FE merge vào participants map của conversation
+            // đang mở, tránh initials fallback khi thành viên mới nhắn lần đầu realtime.
+            'sender_participant' => $message->sender_uid !== null
+                ? (($conversation?->participants ?? [])[$message->sender_uid] ?? null)
+                : null,
+            'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
+            'unread_count' => $conversation ? $conversation->unread_count : 0,
+            'stream_version' => $conversation?->stream_version,
+            'gap_event' => $gapEvent === null ? null : [
+                'id' => $gapEvent['id'],
+                'kind' => $gapEvent['kind'],
+                'gap_started_at' => $gapEvent['gap_started_at']->toIso8601String(),
+                'gap_ended_at' => $gapEvent['gap_ended_at']->toIso8601String(),
+                'stream_at' => $gapEvent['stream_at']->toIso8601String(),
+                'stream_rank' => $gapEvent['stream_rank'],
+            ],
+        ];
+    }
 
     /** @return array<Channel> */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("workspace.{$this->message->workspace_id}.conversations"),
+            new PrivateChannel("workspace.{$this->workspaceId}.conversations"),
         ];
     }
 
     /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
-        $conversation = $this->message->conversation;
-
-        return [
-            'message' => [
-                'id' => $this->message->id,
-                'conversation_id' => $this->message->conversation_id,
-                'workspace_id' => $this->message->workspace_id,
-                'direction' => $this->message->direction,
-                'type' => $this->message->type,
-                'body' => $this->message->body,
-                'media_url' => $this->message->media_url,
-                'media_meta' => $this->message->media_meta,
-                'source_id' => $this->message->source_id,
-                'platform_sent_at' => $this->message->platform_sent_at?->toIso8601String(),
-                'sender_uid' => $this->message->sender_uid,
-                'sender_name' => $this->message->sender_name,
-                'sent_by' => $this->message->sent_by,
-                'created_at' => $this->message->created_at->toIso8601String(),
-            ],
-            'conversation_id' => $this->message->conversation_id,
-            'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
-            'unread_count' => $conversation ? $conversation->unread_count : 0,
-            'stream_version' => $conversation?->stream_version,
-            'gap_event' => $this->gapEvent === null ? null : [
-                'id' => $this->gapEvent['id'],
-                'kind' => $this->gapEvent['kind'],
-                'gap_started_at' => $this->gapEvent['gap_started_at']->toIso8601String(),
-                'gap_ended_at' => $this->gapEvent['gap_ended_at']->toIso8601String(),
-                'stream_at' => $this->gapEvent['stream_at']->toIso8601String(),
-                'stream_rank' => $this->gapEvent['stream_rank'],
-            ],
-        ];
+        return $this->broadcastPayload;
     }
 }

@@ -45,6 +45,31 @@ it('creates a conversation and message in the same workspace', function () {
         ->and($msg->direction)->toBe('in');
 });
 
+// ── Mark read: POST inbox.read ────────────────────────────────────────────────
+
+it('POST inbox.read đưa unread_count về 0 (idempotent)', function () {
+    $workspace = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($workspace, $user);
+    seedMember($workspace, $user, 'admin');
+
+    $conv = Conversation::create([
+        'workspace_id' => $workspace->id,
+        'channel' => 'zalo_personal',
+        'peer_uid' => 'zalo_uid_read',
+        'thread_type' => 0,
+        'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
+    ]);
+    $conv->forceFill(['unread_count' => 5])->save();
+
+    $this->postJson(route('inbox.read', $conv->id))->assertOk();
+    expect($conv->fresh()->unread_count)->toBe(0);
+
+    // Gọi lần 2 khi đã 0 — vẫn OK, không lỗi
+    $this->postJson(route('inbox.read', $conv->id))->assertOk();
+    expect($conv->fresh()->unread_count)->toBe(0);
+});
+
 // ── RLS isolation: 2-workspace ────────────────────────────────────────────────
 
 it('conversation from workspace A is not visible in workspace B query (RLS)', function () {

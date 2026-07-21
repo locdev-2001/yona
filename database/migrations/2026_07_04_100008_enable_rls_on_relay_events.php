@@ -20,7 +20,7 @@ return new class extends Migration
         $db->statement('ALTER TABLE relay_events FORCE ROW LEVEL SECURITY');
         $db->statement('DROP POLICY IF EXISTS ws_isolation ON relay_events');
         $db->statement("CREATE POLICY ws_isolation ON relay_events USING ({$predicate}) WITH CHECK ({$predicate})");
-        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON relay_events TO cho_rach_app');
+        $db->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON relay_events TO crm_app');
     }
 
     public function down(): void

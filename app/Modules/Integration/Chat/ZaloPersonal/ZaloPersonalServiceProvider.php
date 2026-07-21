@@ -4,14 +4,13 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 
 use App\Modules\Integration\ChannelManager;
 use App\Modules\Integration\IntegrationServiceProvider;
-use App\Services\MeteringService;
 use Illuminate\Support\ServiceProvider;
 
 /**
  * Service provider cho Zalo personal channel driver (sống trong Integration module).
  *
  * Đăng ký:
- *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter + MeteringService)
+ *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter; P11: metering ở OutboundSendPipeline)
  *   - ZaloChannelDriver vào ChannelManager (extend 'zalo_personal')
  *
  * Routes + middleware alias 'zalo.bridge.secret' nay sống ở Laravel routing chuẩn:
@@ -44,7 +43,6 @@ class ZaloPersonalServiceProvider extends ServiceProvider
             return new ZaloSendService(
                 rateLimiter: $app->make(SendRateLimiter::class),
                 healthMonitor: $app->make(ZaloHealthMonitor::class),
-                meteringService: $app->make(MeteringService::class),
             );
         });
 

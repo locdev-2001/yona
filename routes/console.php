@@ -15,3 +15,7 @@ Schedule::command('reminders:dispatch-due')->everyMinute()->withoutOverlapping()
 
 // Automation — resume workflow_runs whose "wait" node has elapsed.
 Schedule::command('workflow:resume-waiting')->everyMinute()->withoutOverlapping();
+
+// P04 — bảng tạm inbox BOUNDED (goal #3): pending_message_states expired +
+// attachments upload-không-gửi quá 48h. Daily là đủ (TTL tính bằng giờ).
+Schedule::command('inbox:prune-transient')->daily()->withoutOverlapping();

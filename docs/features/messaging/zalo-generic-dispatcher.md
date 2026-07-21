@@ -4,7 +4,7 @@ Module: messaging · Status: live · Updated: 2026-07-04
 
 ## Purpose
 
-Sở hữu 100% bề mặt zca-js (146 REST method / 16 listener event) bằng cơ chế **generic** thay vì hand-wire từng API: (1) **dispatcher** `POST /zca/:method` trên bridge — allowlist reflection + gate tier; (2) **relay forwarder** — subscribe 10 event chưa có handler bespoke, forward về Laravel lưu `relay_events` (không vứt event nào — H1). Nâng zca-js → method/event mới **tự lộ**, method chưa phân tier bị test snapshot chặn build (M1). Nguồn tier: [zca-capability-map](./zca-capability-map.md).
+Sở hữu 100% bề mặt zca-js (146 REST method / 16 listener event) bằng cơ chế **generic** thay vì hand-wire từng API: (1) **dispatcher** `POST /zca/:method` trên bridge — allowlist reflection + gate tier; (2) **relay forwarder** — subscribe 10 event chưa có handler bespoke, forward về Laravel: undo/seen/delivered/reaction đi theo `messages` (P02), typing broadcast-only, lạ → structured log (P09 — `relay_events` đã drop; không vứt event nào — H1). Nâng zca-js → method/event mới **tự lộ**, method chưa phân tier bị test snapshot chặn build (M1). Nguồn tier: [zca-capability-map](./zca-capability-map.md).
 
 ## Actors & permissions
 
@@ -65,7 +65,7 @@ sequenceDiagram
    - `undo`: envelope `relay_event` + `source_id` → **outbox durable** (đổi DB — ẩn tin ma).
    - chatty (`typing`, `seen_messages`, `delivered_messages`, `reaction`, `old_reactions`, `upload_attachment`, `connected`, `disconnected`): **fire-and-forget** POST thẳng (ký secret), lỗi bỏ qua — KHÔNG outbox (H3 chống nghẽn FIFO).
    - event lạ (zca version mới): durable (H1).
-3. Laravel webhook: `relay_event`/type lạ → `insertOrIgnore` vào `relay_events` (idempotent theo `source_id`), **KHÔNG metering**.
+3. Laravel webhook (P02/P09): undo/seen/delivered/reaction → `MessageStateService` (đi theo `messages`, idempotent set-once/monotonic); typing → broadcast; type lạ → structured log redacted + rate-limit + alert. **KHÔNG metering**, KHÔNG còn kho.
 
 ```mermaid
 flowchart LR
@@ -74,20 +74,20 @@ flowchart LR
     S -->|old_messages: normalize per-item| O[outbox durable → webhook type=inbound]
     S -->|undo + event lạ| O2[outbox durable → webhook type=relay_event]
     S -->|typing/seen/delivered/reaction/…| F[fire-and-forget POST → webhook]
-    O2 --> R[(relay_events — RLS, KHÔNG metering)]
+    O2 --> R[MessageStateService — đi theo messages / log lạ]
     F --> R
 ```
 
 ## Data touched
 
-- **`relay_events`** (INSERT, idempotent): `workspace_id` (RLS ENABLE+FORCE `ws_isolation`), `channel_account_id`/`connection_id` (resolve privileged tối thiểu như P04), `event_type`, `personal_uid`, `source_id`, `payload` jsonb (KHÔNG bao giờ chứa `cipher_key` — B6 chặn từ bridge), `received_at`. Unique partial `(workspace_id, event_type, source_id) WHERE source_id IS NOT NULL`.
+- **`relay_events` ĐÃ NGHỈ HƯU (P09)** — thay bằng: trạng thái tin đi theo `messages`/`message_reactions` + `pending_message_states` bounded (undo event-trước-tin) + structured log cho event lạ. Envelope bridge KHÔNG đổi (`cipher_key` vẫn bị chặn từ bridge — B6).
 - **`messages`/`conversations`** (qua đường inbound thường): chỉ từ `old_messages` normalize — dedup `source_id`.
 - **`channel_usage` (metering): KHÔNG đụng** — test enforce.
 - Bridge slot meta file: `workspace_id` bind lúc promote (persist qua restart).
 
 ## State transitions
 
-Không đổi state machine nào. `relay_events` là append-only (chưa có consumer product — undo/seen xử lý sâu hơn là phase sau).
+Không đổi state machine nào. Consumer product cho undo/seen/delivered/reaction = P02 message-state pipeline (`docs/features/messaging/message-state-pipeline.md`).
 
 ## Business rules applied
 

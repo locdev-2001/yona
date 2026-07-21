@@ -14,9 +14,18 @@ import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
-import { backfillOnReconnect, computeGapMs } from './reconnect-backfill.mjs';
+import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
+import { contentLabelFromObject, enrichInboundBody, parseZinstantBankCardSource } from './inbound-content.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
+import {
+    buildAllowedHosts,
+    collectSourceIdsFromSendResult,
+    downloadUrlToTemp,
+    extFromFilename,
+    mimeToExt,
+    MEDIA_KIND_DEFAULT_EXT,
+} from './media-fetch.mjs';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -339,9 +348,19 @@ async function postZaloPersonalSocialEvent(body) {
     await outbox.enqueue(body);
 }
 
+/**
+ * Chokepoint duy nhất cho payload inbound → outbox: enrich content cần resolve
+ * async (bank_card fetch template zinstant) TRƯỚC khi persist, để cả lane sync
+ * (relay old_messages, reconnect backfill, deep sync) cũng ra content đầy đủ.
+ */
+async function enqueueInboundEnriched(body) {
+    await enrichInboundBody(body);
+    await outbox.enqueue(body);
+}
+
 async function postInbound(body) {
     if (!LARAVEL_WEBHOOK_URL) return;
-    await outbox.enqueue(body);
+    await enqueueInboundEnriched(body);
 }
 
 async function postBridgeSession({ connection_id, bot_id, state, detail }) {
@@ -349,12 +368,18 @@ async function postBridgeSession({ connection_id, bot_id, state, detail }) {
     await outbox.enqueue({ type: 'bridge_session', connection_id, bot_id, state, detail: detail ?? null });
 }
 
+// P09 spike chatty: đếm event fire-and-forget theo type (expose /health) —
+// chạy 24-48h trên tài khoản thật để quyết định sample/debounce ở bridge.
+const relayEventCounters = { since: Date.now(), byType: {} };
+
 /**
  * P12/H3: lane fire-and-forget cho event chatty (typing/seen/delivered/…) —
  * POST thẳng, KHÔNG qua outbox durable (nghẽn FIFO chặn inbound). Lỗi bỏ qua.
  * Vẫn ký LARAVEL_WEBHOOK_SECRET như đường outbox.
  */
 function postRelayFireAndForget(body) {
+    const evt = body?.event_type || 'unknown';
+    relayEventCounters.byType[evt] = (relayEventCounters.byType[evt] || 0) + 1;
     if (!LARAVEL_WEBHOOK_URL) return;
     const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
     if (LARAVEL_WEBHOOK_SECRET) {
@@ -1110,6 +1135,14 @@ function parseInboundDescriptor(message) {
         }
     }
 
+    // Thẻ tài khoản ngân hàng (zinstant) — thường đến dạng chat.webcontent nhưng
+    // nhận theo content.action để không phụ thuộc msgType. Chi tiết thẻ resolve
+    // async ở chokepoint enrichInboundBody (trước outbox) — mọi lane đều hưởng.
+    const bankCardSource = parseZinstantBankCardSource(c);
+    if (bankCardSource) {
+        return { inbound_kind: 'bank_card', bank_card_source: bankCardSource, peerUid, msgType };
+    }
+
     if (msgType === 'chat.link' || msgType === 'chat.recommended') {
         if (msgType === 'chat.recommended') {
             const callPayload = parseZaloRecommendedCallContent(c);
@@ -1493,10 +1526,10 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
     const ts = rawD?.ts ?? rawD?.msgTs ?? rawD?.sendTime ?? rawD?.clientTime;
     const platformSentAt = Number.isFinite(Number(ts)) && Number(ts) > 0 ? Math.round(Number(ts)) : Date.now();
 
-    // Suy ra content/inbound_kind từ rawD trực tiếp (history không qua parseInboundDescriptor)
-    const contentRaw = rawD?.content;
-    const contentStr = typeof contentRaw === 'string' ? contentRaw : JSON.stringify(contentRaw ?? '');
-    const mediaUrl = typeof contentRaw === 'object' ? (contentRaw?.href ?? contentRaw?.url ?? null) : null;
+    // DRY (bug 11/07 file/ảnh/bankcard lọt raw JSON): dùng CHUNG parseInboundDescriptor với
+    // live lane để MỌI loại tin ra đúng kind + content. parseInboundDescriptor sync → gọi thẳng;
+    // async resolve (sticker detail, QR card) bỏ qua ở backfill (giữ raw cơ bản, đủ hiển thị).
+    const desc = parseInboundDescriptor({ data: rawD, threadId: groupId, type: threadType });
 
     const payload = {
         connection_id: cid,
@@ -1510,11 +1543,40 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
         direction: isSelf ? 'out' : 'in',  // backfill không check echo (không có outboundEchoIds context)
         user: { name: null, avatar: null }, // profile không resolve khi backfill
         platform_sent_at: platformSentAt,
-        inbound_kind: mediaUrl ? 'media' : 'text',
-        content: contentStr,
+        inbound_kind: desc?.inbound_kind ?? 'text',
         backfill: true,          // marker để Laravel biết đây là tin hồi phục (không gửi notification)
     };
-    if (mediaUrl) payload.media_url = mediaUrl;
+
+    if (!desc || desc.inbound_kind === 'text') {
+        // desc null (webcontent/banner không ra text) → nhãn thân thiện, KHÔNG raw JSON.
+        const c = rawD?.content;
+        payload.content = desc?.text ?? (typeof c === 'string' ? c : contentLabelFromObject(c, rawD?.msgType));
+    } else if (desc.inbound_kind === 'bank_card') {
+        payload.bank_card_source = desc.bank_card_source;
+        payload.content = desc.bank_card_source.label;
+    } else if (desc.inbound_kind === 'sticker') {
+        payload.sticker = desc.sticker;
+    } else if (desc.inbound_kind === 'business_card') {
+        payload.business_card = desc.business_card;
+        payload.content = desc.caption != null ? String(desc.caption) : '';
+    } else if (desc.inbound_kind === 'call') {
+        payload.call = desc.call;
+        payload.content = '';
+    } else {
+        payload.media_url = desc.media_url;
+        if (desc.media_filename) {
+            payload.media_filename = desc.media_filename;
+        }
+        payload.content = desc.caption != null ? String(desc.caption) : '';
+    }
+
+    // Raw đầy đủ như live lane (cùng key) → platform_meta.zca_message: tin backfill
+    // quote/react/seen được + giữ trọn payload nền tảng (yêu cầu founder 05/07).
+    try {
+        payload.listener_data = JSON.parse(JSON.stringify(rawD));
+    } catch {
+        payload.listener_data = null;
+    }
     if (!isSelf && rawD?.uidFrom) payload.sender_uid = String(rawD.uidFrom);
 
     return payload;
@@ -1568,6 +1630,23 @@ function startListenerForSlot(slotKey) {
             });
         } catch (e) {
             console.warn('zalo-bridge: listener.on(closed) not available', e?.message || e);
+        }
+        try {
+            // P08 — mọi lần WS auth xong (login mới/reconnect/restore) tự kéo gap
+            // 1-1 + nhóm qua cmd 510/511. Hook 'cipher_key' (cmd 1 = handshake xong),
+            // KHÔNG phải 'connected' (emit tại ws.onopen — gửi 510 lúc đó server đóng
+            // 3000 NOT_AUTHENTICATED, đo thật 05/07). sendWs no-op khi ws chưa mở nên
+            // cũng không gọi được từ promote/restore. Dedup source_id nên trùng vô hại.
+            slot.api.listener.on('cipher_key', () => {
+                // Chờ 5s sau auth (spike 1b chờ 6s sau connected mới được server trả) —
+                // request ngay tại cipher_key server im lặng, đo thật 05/07.
+                setTimeout(() => {
+                    const lanes = requestThreadBackfill(slot);
+                    console.info('zalo-bridge: thread backfill requested (post-auth)', cid, lanes.join(','));
+                }, 5000);
+            });
+        } catch (e) {
+            console.warn('zalo-bridge: listener.on(cipher_key) not available', e?.message || e);
         }
         try {
             slot.api.listener.on('group_event', (ev) => {
@@ -1795,6 +1874,9 @@ function startListenerForSlot(slotKey) {
 
             if (desc.inbound_kind === 'text') {
                 payload.content = desc.text;
+            } else if (desc.inbound_kind === 'bank_card') {
+                payload.bank_card_source = desc.bank_card_source;
+                payload.content = desc.bank_card_source.label;
             } else if (desc.inbound_kind === 'sticker') {
                 payload.sticker = await resolveStickerForWebhook(slot.api, desc.sticker);
             } else if (desc.inbound_kind === 'business_card') {
@@ -1818,7 +1900,7 @@ function startListenerForSlot(slotKey) {
     // P12: forwarder generic — subscribe 10 event chưa wired (né 5 bespoke +
     // cipher_key, B3/B6); guard slot.forwarderAttached bên trong (MED-2).
     const relayEvents = attachRelayForwarder(slot, {
-        enqueue: (body) => outbox.enqueue(body),
+        enqueue: (body) => enqueueInboundEnriched(body),
         postFireAndForget: postRelayFireAndForget,
         buildInboundPayload: buildGroupBackfillPayload,
     });
@@ -1898,7 +1980,7 @@ async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
     }
     // Tier 2: backfill khi promote QR (lần đầu kết nối — gapMs null, backfill cần nếu mất kết nối trước)
     void backfillOnReconnect(slot, {
-        enqueue: (body) => outbox.enqueue(body),
+        enqueue: (body) => enqueueInboundEnriched(body),
         buildInboundPayload: buildGroupBackfillPayload,
         gapMs: computeGapMs(slot),
     });
@@ -1946,102 +2028,53 @@ async function tryLoginWithSavedSession(connectionId) {
         }
         // Tier 2: backfill tin nhóm trong gap kể từ lần session_lost (nếu có)
         void backfillOnReconnect(slot, {
-            enqueue: (body) => outbox.enqueue(body),
+            enqueue: (body) => enqueueInboundEnriched(body),
             buildInboundPayload: buildGroupBackfillPayload,
             gapMs: computeGapMs(slot),
         });
         return true;
     } catch (e) {
         console.warn('Saved session login failed connection_id=', connectionId, e?.message || e);
+        // Cookie chết (Zalo thu hồi) mà im lặng → DB còn 'connected' → UI không hiện
+        // banner "Cần quét lại QR", user tưởng vẫn chạy (sự cố 06/07). Báo Laravel
+        // session_lost để banner hiện + hadGap trigger backfill sau khi re-QR.
+        slot.loginPhase = 'session_lost';
+        slot.sessionLostReason = `restore_failed: ${e?.message || e}`;
+        slot.sessionLostAt = Date.now();
+        if (slot.botId) {
+            postBridgeSession({
+                connection_id: Number(connectionId),
+                bot_id: slot.botId,
+                state: 'session_lost',
+                detail: slot.sessionLostReason,
+            }).catch(() => {});
+        }
         return false;
     }
 }
-
-function extFromFilename(name) {
-    if (!name || typeof name !== 'string') {
-        return null;
-    }
-    const m = name.match(/\.([a-zA-Z0-9]{1,8})$/);
-    return m ? m[1].toLowerCase() : null;
-}
-
-function mimeToExt(ct) {
-    if (!ct || typeof ct !== 'string') {
-        return null;
-    }
-    const base = ct.split(';')[0].trim().toLowerCase();
-    const m = {
-        'image/jpeg': 'jpg',
-        'image/jpg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-        'image/gif': 'gif',
-        'video/mp4': 'mp4',
-        'audio/mpeg': 'mp3',
-        'audio/mp3': 'mp3',
-        'application/pdf': 'pdf',
-    };
-    return m[base] || null;
-}
-
-const MEDIA_KIND_DEFAULT_EXT = {
-    image: 'jpg',
-    gif: 'gif',
-    video: 'mp4',
-    audio: 'mp3',
-    file: 'bin',
-};
 
 const bridgeAttachmentUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 32 * 1024 * 1024 },
 });
 
-function pickSourceIdFromSendResult(sendResult) {
-    if (!sendResult || typeof sendResult !== 'object') {
-        return null;
-    }
-    const collect = [];
-    if (sendResult.message) {
-        collect.push(sendResult.message);
-    }
-    const att = sendResult.attachment;
-    if (Array.isArray(att)) {
-        for (const a of att) {
-            if (a) {
-                collect.push(a);
-            }
-        }
-    } else if (att) {
-        collect.push(att);
-    }
-    for (const raw of collect) {
-        const id = raw?.msgId ?? raw?.msgID ?? raw?.data?.msgId ?? raw?.data?.msgID ?? raw?.cliMsgId;
-        if (id !== undefined && id !== null && String(id) !== '') {
-            return String(id);
-        }
-    }
-    return null;
-}
+// P04: fetch media qua media-fetch.mjs (byte-cap + host allowlist — Codex MED).
+// Allowlist mặc định = host Laravel (signed URL private disk) + env mở rộng.
+const FETCH_ALLOWED_HOSTS = buildAllowedHosts({
+    laravelWebhookUrl: LARAVEL_WEBHOOK_URL,
+    extraCsv: process.env.BRIDGE_FETCH_HOST_ALLOWLIST,
+});
 
-async function downloadFileUrlToTemp(url, mediaKind, filenameHint) {
-    const res = await fetch(url, {
-        headers: { 'User-Agent': ZCA_USER_AGENT },
-        redirect: 'follow',
-    });
-    if (!res.ok) {
-        throw new Error(`download_failed_${res.status}`);
+/**
+ * Đăng ký TẤT CẢ msgId của 1 lần send vào echo-dedup (file+caption = 2 msgId,
+ * Codex MED-7) và trả {source_id: primary, source_ids: all} cho Laravel ghi alias.
+ */
+function registerAllOutboundSourceIds(slot, sendResult) {
+    const ids = collectSourceIdsFromSendResult(sendResult);
+    for (const id of ids) {
+        registerBridgeOutboundSourceId(slot, id);
     }
-    const buf = Buffer.from(await res.arrayBuffer());
-    let ext = extFromFilename(filenameHint);
-    if (!ext) {
-        const ct = (res.headers.get('content-type') || '').split(';')[0].trim();
-        ext = mimeToExt(ct) || MEDIA_KIND_DEFAULT_EXT[mediaKind] || 'bin';
-    }
-    const safe = String(ext).replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
-    const p = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
-    await fs.writeFile(p, buf);
-    return p;
+    return { source_id: ids[0] ?? null, source_ids: ids };
 }
 
 function checkSendSecret(req, res) {
@@ -2059,13 +2092,24 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename } = body || {};
+    const { thread_id, thread_type, text, file_url, media_kind, filename, quote, sticker } = body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
     const tt = Number(thread_type) === 1 ? ThreadType.Group : ThreadType.User;
     const fileUrl = typeof file_url === 'string' ? file_url.trim() : '';
     const hasFile = fileUrl !== '';
+
+    // P06a — sticker: OUTBOUND có nội dung, đi đường send riêng (KHÔNG dispatcher)
+    if (sticker && sticker.id != null) {
+        const stickerPayload = {
+            id: Number(sticker.id),
+            cateId: Number(sticker.cateId ?? sticker.cate_id ?? 0),
+            type: Number(sticker.type ?? 1),
+        };
+        const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
+        return registerAllOutboundSourceIds(slot, sendResult);
+    }
 
     if (!hasFile && (text === undefined || text === null)) {
         throw new Error('thread_id and text or file_url required');
@@ -2084,17 +2128,24 @@ async function bridgeSendTextOrMedia(slot, body) {
             const mk = String(media_kind || '')
                 .trim()
                 .toLowerCase();
-            tmpPath = await downloadFileUrlToTemp(fileUrl, mk, typeof filename === 'string' ? filename : null);
+            tmpPath = await downloadUrlToTemp(fileUrl, {
+                allowedHosts: FETCH_ALLOWED_HOSTS,
+                userAgent: ZCA_USER_AGENT,
+                mediaKind: mk,
+                filenameHint: typeof filename === 'string' ? filename : null,
+            });
             const cap = text != null && String(text).trim() !== '' ? String(text) : '';
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            const sourceId = pickSourceIdFromSendResult(sendResult);
-            registerBridgeOutboundSourceId(slot, sourceId);
-            return { source_id: sourceId };
+            return registerAllOutboundSourceIds(slot, sendResult);
         }
-        const sendResult = await slot.api.sendMessage({ msg: String(text) }, String(thread_id), tt);
-        const sourceId = pickSourceIdFromSendResult(sendResult);
-        registerBridgeOutboundSourceId(slot, sourceId);
-        return { source_id: sourceId };
+        // P06a — quote: object platform_meta.zca_message từ Laravel (msgId/cliMsgId/
+        // uidFrom/msgType/ts/content/ttl/propertyExt — SendMessageQuote shape)
+        const content = { msg: String(text) };
+        if (quote && typeof quote === 'object' && quote.msgId != null) {
+            content.quote = quote;
+        }
+        const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
+        return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
         if (tmpPath) {
             await fs.unlink(tmpPath).catch(() => {});
@@ -2142,6 +2193,8 @@ function buildExpress() {
             session_lost_reason: slot.sessionLostReason || null,
             // H-3 / M-4: outbox stats cho alert khi authBlocked hoặc queue tăng bất thường
             outbox: outbox.stats(),
+            // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
+            relay_counters: relayEventCounters,
         };
         if (isQrSlotKey(slotKey)) {
             out.qr_token = slotKey.slice(3);
@@ -2333,9 +2386,8 @@ function buildExpress() {
             tmpPath = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
             await fs.writeFile(tmpPath, req.file.buffer);
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            const sourceId = pickSourceIdFromSendResult(sendResult);
-            registerBridgeOutboundSourceId(slot, sourceId);
-            return res.json({ ok: true, source_id: sourceId });
+            const out = registerAllOutboundSourceIds(slot, sendResult);
+            return res.json({ ok: true, source_id: out.source_id, source_ids: out.source_ids });
         } catch (e) {
             console.error('sendAttachment', e);
             return res.status(500).json({ ok: false, message: e?.message || String(e) });
@@ -2360,7 +2412,7 @@ function buildExpress() {
         }
         try {
             const out = await bridgeSendTextOrMedia(slot, req.body || {});
-            return res.json({ ok: true, source_id: out.source_id });
+            return res.json({ ok: true, source_id: out.source_id, source_ids: out.source_ids });
         } catch (e) {
             const msg = e?.message ? String(e.message) : String(e);
             if (
@@ -2380,7 +2432,7 @@ function buildExpress() {
         getSlot,
         ThreadType,
         buildGroupBackfillPayload,
-        enqueueOutbox: (body) => outbox.enqueue(body),
+        enqueueOutbox: (body) => enqueueInboundEnriched(body),
     });
     // P11: dispatcher generic — mount SAU các route active. resolve-only (M2):
     // slots.get, KHÔNG getSlot (get-or-create).

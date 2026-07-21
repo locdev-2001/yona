@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Integration;
 
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
+use App\Models\ChannelAccount;
 use App\Models\ZaloConnection;
 use App\Services\Zalo\PromoteAccountBinder;
 use Illuminate\Http\Client\ConnectionException;
@@ -72,8 +73,9 @@ class ZaloConnectionController extends Controller
         $qrToken = Str::uuid()->toString();
         $workspaceId = $this->currentWorkspaceId();
 
-        // Insert qua pgsql_privileged (bypass RLS) — sequence GRANT đủ
-        DB::connection('pgsql_privileged')->table('zalo_connections')->insert([
+        // P10 [d]: insert qua connection MẶC ĐỊNH — request đã bind tenant (RLS
+        // session var set), GRANT bảng + sequence đủ. 1 session cho cả flow.
+        DB::table('zalo_connections')->insert([
             'workspace_id' => $workspaceId,
             'connection_id' => $connectionId,
             'state' => 'qr_waiting',
@@ -221,10 +223,11 @@ class ZaloConnectionController extends Controller
             }
         } elseif ($profile !== []) {
             // Bridge không trả personal_uid (hiếm) — fallback cập nhật state, KHÔNG bind account.
-            DB::connection('pgsql_privileged')->table('zalo_connections')->where('id', $connection->id)->update($profile);
-            $connection->updateState('connected');
+            // P10 [d]: CẢ CỤM promote đi 1 session mặc định (binder đã default) — né treo chéo.
+            DB::table('zalo_connections')->where('id', $connection->id)->update($profile);
+            $connection->updateState('connected', privileged: false);
         } else {
-            $connection->updateState('connected');
+            $connection->updateState('connected', privileged: false);
         }
 
         return response()->json(['ok' => true, 'connection_id' => $validated['connection_id']]);
@@ -261,7 +264,20 @@ class ZaloConnectionController extends Controller
 
         $this->logoutBridge($zaloConnection->connection_id);
 
+        $accountId = $zaloConnection->channel_account_id;
         $zaloConnection->delete();
+
+        // Ngắt CHỦ ĐỘNG: account không còn slot sống → hạ status về 'disconnected' để
+        // banner inbox thôi nhắc "cần quét lại QR" (banner chỉ hiện session_lost/needs_qr).
+        // Giữ channel_account + hội thoại; re-QR sau sẽ set lại 'connected'.
+        if ($accountId !== null) {
+            $stillConnected = ZaloConnection::where('channel_account_id', $accountId)
+                ->where('state', 'connected')
+                ->exists();
+            if (! $stillConnected) {
+                ChannelAccount::where('id', $accountId)->update(['status' => 'disconnected']);
+            }
+        }
 
         return response()->json(['ok' => true]);
     }

@@ -30,9 +30,9 @@ return new class extends Migration
         });
 
         // GLOBAL: GRANT SELECT cho runtime app role (không RLS).
-        // INSERT/UPDATE/DELETE chỉ superuser/admin — không GRANT DML cho cho_rach_app.
+        // INSERT/UPDATE/DELETE chỉ superuser/admin — không GRANT DML cho crm_app.
         // Dùng default connection (privileged đã được grant bởi owner khi tạo bảng).
-        DB::statement('GRANT SELECT ON marketplace_items TO cho_rach_app');
+        DB::statement('GRANT SELECT ON marketplace_items TO crm_app');
     }
 
     public function down(): void

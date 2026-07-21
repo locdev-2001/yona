@@ -6,9 +6,11 @@ use App\Models\EmailTemplate;
 use App\Models\User;
 use App\Modules\Integration\IntegrationServiceProvider;
 use App\Policies\EmailTemplatePolicy;
+use App\Support\DbRoleGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,6 +40,17 @@ class AppServiceProvider extends ServiceProvider
             DB::prohibitDestructiveCommands(! config('database.allow_destructive'));
         }
 
+        // P10 boot-guard: production KHÔNG BAO GIỜ chạy bằng role superuser —
+        // superuser bypass RLS toàn cluster = tenant isolation chết im lặng.
+        // Runbook siết role: docs/database-safety.md (ALTER ROLE ... NOSUPERUSER BYPASSRLS).
+        if ($this->app->environment('production')) {
+            $violations = DbRoleGuard::superuserViolations();
+            if ($violations !== []) {
+                logger()->critical('DB role guard: runtime đang là SUPERUSER — từ chối boot', ['connections' => $violations]);
+                throw new \RuntimeException('DB role misconfigured: superuser runtime on ['.implode(', ', $violations).']. See docs/database-safety.md.');
+            }
+        }
+
         // Workspace admin/owner has unrestricted access WITHIN their workspace.
         // Cross-workspace isolation is still enforced by Postgres RLS + the
         // BelongsToWorkspace scope, so this only removes per-feature permission
@@ -56,5 +69,8 @@ class AppServiceProvider extends ServiceProvider
         // crm-sales policies + events registered in CrmSalesServiceProvider.
         // Project + Task policies registered in ProjectsServiceProvider.
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
+
+        // Log chứa dữ liệu nhạy cảm — chỉ mở ở local; môi trường khác cần gate thật (admin RBAC) trước khi bật.
+        LogViewer::auth(fn () => app()->environment('local'));
     }
 }
