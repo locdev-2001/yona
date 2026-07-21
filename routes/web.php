@@ -4,6 +4,7 @@ use App\Http\Controllers\Announcements\Admin\AnnouncementController;
 use App\Http\Controllers\Announcements\Admin\AnnouncementPublishController;
 use App\Http\Controllers\Announcements\AnnouncementReadController;
 use App\Http\Controllers\Announcements\WhatsNewController;
+use App\Http\Controllers\Automation\WorkflowController;
 use App\Http\Controllers\Billing\Admin\WorkspacePlanController;
 use App\Http\Controllers\Crm\Clients\ClientController;
 use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
@@ -243,6 +244,28 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')
             ->name('inbox.show');
+
+        // Automation — workflow graph CRUD + manual enroll ("Chạy thủ công" start node).
+        // entitled:module.marketing gates writes/execution only (store/update/
+        // destroy/enroll) — a workspace whose entitlement lapses can still see
+        // its existing workflows (index/show), matching how the rest of this
+        // phase treats a stale is_active=true workflow: data persists, only
+        // new execution/mutation stops.
+        Route::prefix('automation')->name('automation.')->group(function () {
+            Route::get('workflows', [WorkflowController::class, 'index'])->name('workflows.index');
+            // Registered before the {workflow} show route so "create" is never
+            // attempted as a UUID route-model-binding lookup.
+            Route::get('workflows/create', [WorkflowController::class, 'create'])->name('workflows.create');
+            Route::get('workflows/{workflow}', [WorkflowController::class, 'show'])->name('workflows.show');
+
+            Route::middleware('entitled:module.marketing')->group(function () {
+                Route::post('workflows', [WorkflowController::class, 'store'])->name('workflows.store');
+                Route::put('workflows/{workflow}', [WorkflowController::class, 'update'])->name('workflows.update');
+                Route::patch('workflows/{workflow}', [WorkflowController::class, 'update']);
+                Route::delete('workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('workflows.destroy');
+                Route::post('workflows/{workflow}/enroll', [WorkflowController::class, 'enroll'])->name('workflows.enroll');
+            });
+        });
     });
 });
 

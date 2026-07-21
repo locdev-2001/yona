@@ -32,6 +32,7 @@ use App\Models\TaskTimer;
 use App\Models\Team;
 use App\Models\TeamClosure;
 use App\Models\User;
+use App\Models\Workflow;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Models\WorkspaceSequence;
@@ -95,6 +96,7 @@ class MorphMapServiceProvider extends ServiceProvider
             'team' => Team::class,
             'team_closure' => TeamClosure::class,
             'user' => User::class,
+            'workflow' => Workflow::class,
             'workspace' => Workspace::class,
             'workspace_member' => WorkspaceMember::class,
             'workspace_sequence' => WorkspaceSequence::class,

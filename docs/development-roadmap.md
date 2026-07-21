@@ -2,7 +2,7 @@
 
 > Living document — phases, milestones, progress. Maintained per `.claude/rules/documentation-management.md`. Pipeline defined in `crm-build-pipeline.md`.
 
-Last updated: 2026-06-28
+Last updated: 2026-07-04
 
 ## Status legend
 ✅ done · 🟡 in progress · ⬜ not started
@@ -42,6 +42,7 @@ Last updated: 2026-06-28
 | **5-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; code-standards.md + getting-started.md + feature-docs; quotas PLACEHOLDER (founder decision), Zalo test account pending | ✅ |
 | **6** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
 | (later) | Support (Ticket + SLA), Marketing, Webhooks, API, Client Portal | ⬜ |
+| (later) | Automation/Workflow engine (trigger→condition→action) — **design ready**, see [crm-automation-workflow.md](crm-automation-workflow.md) | ⬜ |
 
 **Primary Plan:** [plans/260628-traditional-laravel-refactor/plan.md](../../plans/260628-traditional-laravel-refactor/plan.md)
 

@@ -55,6 +55,7 @@ return [
         'leads' => 'Leads',
         'projects' => 'Dự án',
         'tasks' => 'Công việc',
+        'automation' => 'Automation',
         'settings' => 'Cài đặt',
         'workspace' => 'Không gian làm việc',
         'teams' => 'Nhóm',

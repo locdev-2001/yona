@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Automation\AutomationServiceProvider;
 use App\Providers\AnnouncementsServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\BillingServiceProvider;
@@ -37,6 +38,7 @@ return [
     SharedServiceProvider::class,
     EmailServiceProvider::class,
     AnnouncementsServiceProvider::class,
+    AutomationServiceProvider::class,
     ProjectsServiceProvider::class,
     CrmSalesServiceProvider::class,
     BillingServiceProvider::class,

@@ -70,6 +70,9 @@ enum TenantPermission: string
     // --- Zalo channel (P07 channel-zalo) ---
     case ZaloManage = 'tenant.zalo.manage';
 
+    // --- Automation (workflow builder — trigger→condition→action graphs) ---
+    case AutomationManage = 'tenant.automation.manage';
+
     // Gate RIÊNG cho 39 method destructive của dispatcher generic (P10/P11 —
     // disperseGroup, changeGroupOwner, deleteMessage…), KHÔNG dùng chung
     // ZaloManage (red-team H4/A-V3). Call-site Laravel check quyền này TRƯỚC

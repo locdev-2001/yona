@@ -153,11 +153,11 @@ config/
    - **`MeteringService` is CONCRETE** (not an interface with no-op binding). Send-path calls `app(MeteringService)->assertCanSend()` directly. Replaces the Phase-0 "topo-sort safety" concern — now it's the service's responsibility to be correct.
    - `EntitlementService`, `ContactService`, `LeadService`, `ChannelManager`, `PaymentManager`, etc.
 
-4. **Only 1 module: `app/Modules/Integration/`** (driver pattern point).
-   - `ChannelManager` + `PaymentManager` extend `Illuminate\Support\Manager`.
-   - Drivers register: `Manager::extend('zalo_personal', fn() => app(ZaloChannelDriver::class))`.
+4. **2 modules: `app/Modules/Integration/`** (driver pattern point) **and `app/Modules/Automation/`** (workflow node-handler registry, docs/crm-automation-workflow.md).
+   - `ChannelManager` and `NodeHandlerManager` extend `Illuminate\Support\Manager` (`PaymentManager` does NOT — it's a hand-rolled minimal registry, by its own `ponytail:` comment, since GĐ1 only ever has 1 payment driver).
+   - Drivers/handlers register: `Manager::extend('zalo_personal', fn() => app(ZaloChannelDriver::class))` / `Manager::extend('condition', fn() => new ConditionNodeHandler)`.
    - **Internal-first:** core (inbox, billing) NEVER reference the managers. Instead, they resolve from container + gracefully handle absence (422 on missing driver).
-   - **Toggle:** `config/integrations.php` feature flags (env vars). Core is ALWAYS ON — no `config/features.php`.
+   - **Toggle:** `config/integrations.php` feature flags (env vars) for Integration. Automation has no on/off flag — it's designed as a core feature gated per-workspace by the `module.marketing` entitlement instead, planned for the permissions/entitlement phase, not yet enforced in the engine itself (docs/crm-automation-workflow.md §Permissions & entitlement).
 
 5. **RLS + Tenant isolation:**
    - `IdentifyWorkspace` middleware (1️⃣) binds `app('workspace')` from session/header.
@@ -269,6 +269,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 | **Engagement** (shared/collaborative) | Polymorphic touchpoints across contexts | Activity, Note, Attachment, Tag, Comment, Reminder |
 | **Support** | Issue resolution + SLA | Ticket |
 | **Marketing** | Campaigns, segments, scoring inputs | Campaign, Segment, CampaignRecipient |
+| **Automation** | Trigger→condition→action workflow execution (serves inbox auto-reply + Marketing); never writes into other contexts' tables | Workflow, WorkflowRun, WorkflowRunLog — schema + engine built (Phase 01-02); trigger wiring, action handlers, permissions/entitlement gate, and UI still in progress, see [crm-automation-workflow.md](crm-automation-workflow.md) |
 | **Billing** | Marketplace (free base + add-ons, one-time/subscription), purchases, entitlements; MeteringService | MarketplaceItem, WorkspacePurchase, ChannelUsage, MeteringService |
 | **Conversations** (Inbox) | Realtime omnichannel messaging (web/Zalo/FB/email), live chat, rate limiting | Channel, Conversation, Message, ZaloConnection, SendRateLimiter |
 

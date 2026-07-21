@@ -89,6 +89,11 @@ it('every workspace-scoped table has a Postgres RLS policy', function () {
         // marketplace_items intentionally GLOBAL (no RLS) — intentional-global list
         'workspace_purchases',
         'channel_usage',
+
+        // Automation (2026_07_04_500004)
+        'workflows',
+        'workflow_runs',
+        'workflow_run_logs',
     ];
 
     // Query pg_policies for ws_isolation on each table
