@@ -34,10 +34,10 @@ final class NodeHandlerResult
 
     /**
      * @param  bool|null  $branch  Node condition: nếu skip xảy ra ở đó (vd: subject bị xoá),
-     *   truyền branch tường minh (thường false — "fail closed", không đi nhánh true khi
-     *   không xác minh được điều kiện). Để trống (null) sẽ khiến engine chọn edge ĐẦU TIÊN
-     *   khớp `from` bất kể branch — chỉ hợp lệ cho node không phải condition (vd: action node
-     *   ở Phase 03 có edge "không branch" duy nhất).
+     *                             truyền branch tường minh (thường false — "fail closed", không đi nhánh true khi
+     *                             không xác minh được điều kiện). Để trống (null) sẽ khiến engine chọn edge ĐẦU TIÊN
+     *                             khớp `from` bất kể branch — chỉ hợp lệ cho node không phải condition (vd: action node
+     *                             ở Phase 03 có edge "không branch" duy nhất).
      */
     public static function skipped(string $message, ?bool $branch = null): self
     {

@@ -13,6 +13,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
 use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\Contracts\ChannelCapabilities;
 use App\Modules\Integration\Contracts\ChannelDriver;
 use App\Services\TagService;
 use Illuminate\Support\Str;
@@ -52,6 +53,11 @@ class FakeSendOnlyChannelDriver implements ChannelDriver
     public function parseInbound(array $raw): array
     {
         return [];
+    }
+
+    public function capabilities(): ChannelCapabilities
+    {
+        return new ChannelCapabilities;
     }
 }
 
