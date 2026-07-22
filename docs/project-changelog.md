@@ -10,12 +10,25 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ### Features
 
-* add Laravel Pulse (self-hosted observability) ([cd816b5](https://github.com/locflamedia/cho-rach-management/commit/cd816b55664b813e7efa6e3e8931ae0515fec0c1))
-* add laravel skill; lock Laravel stack and fold in red-team findings ([209df87](https://github.com/locflamedia/cho-rach-management/commit/209df873832acb969321e2cafe5e80a55820ee74))
-* bootstrap Laravel 13 app skeleton ([9448483](https://github.com/locflamedia/cho-rach-management/commit/94484832547116c6330d5303a23c480462be7fbd))
-* complete frontend/test/observability stack ([ebceb5e](https://github.com/locflamedia/cho-rach-management/commit/ebceb5edf27018fc029a64229f699269b3e9154c))
+* add Laravel Pulse (self-hosted observability) ([cd816b5](https://github.com/locflamedia/yona/commit/cd816b55664b813e7efa6e3e8931ae0515fec0c1))
+* add laravel skill; lock Laravel stack and fold in red-team findings ([209df87](https://github.com/locflamedia/yona/commit/209df873832acb969321e2cafe5e80a55820ee74))
+* bootstrap Laravel 13 app skeleton ([9448483](https://github.com/locflamedia/yona/commit/94484832547116c6330d5303a23c480462be7fbd))
+* complete frontend/test/observability stack ([ebceb5e](https://github.com/locflamedia/yona/commit/ebceb5edf27018fc029a64229f699269b3e9154c))
 
 ## [Unreleased]
+
+### Changed — Định vị chính thức + docs refresh (2026-07-22)
+
+- **Định vị chốt: "Conversational CRM & Automation"** — thay "Quản lý khách hàng tập trung & tự động hóa" (generic, thiếu wedge hội thoại). Cập nhật đồng bộ: CLAUDE.md, README, glossary, composer.json, project-overview.
+- **Docs refresh chống nhầm lẫn** (đối chiếu code): README + project-overview không còn ghi Inbox/Marketplace/Automation là "chưa build/kế hoạch" (đã build từ 28/06–11/07); thêm mục kiểm kê H/I/J (Inbox Zalo, Billing Metering+Entitlements, Automation v1); số liệu quy mô cập nhật (55 model · 76 controller · 113 migration · 819 test); gỡ 2 cảnh báo OUTDATED và mục "Kiến trúc & Định hướng mới" trỏ docs/plans đã xóa (modular-architecture); header 3 design doc (`crm-automation-workflow`, `crm-conversations-inbox`, `crm-marketplace`) đánh dấu ĐÃ BUILD + trỏ tài liệu hiện trạng; roadmap thêm mốc Inbox full messaging (11/07), Automation v1, Rebrand; backlog sửa path module cũ.
+
+### Changed — Rebrand: Chó Rách Management → Yona (2026-07-22)
+
+- Tên sản phẩm **Yona**, domain **yona.vn**. Repo GitHub đổi `cho-rach-management` → `yona` (rename trên GitHub Settings; GitHub tự redirect URL cũ).
+- **DB rename** (không mất dữ liệu, `ALTER ... RENAME`): database `crm` → `yona`, `crm_test` → `yona_test`; role `crm_app` → `yona_app`, `crm_owner` → `yona_owner` (policy/grant theo OID nên tự đi theo). Cập nhật đồng bộ: `.env(.example)`, `phpunit.xml`, `config/database.php`, `Makefile`, `database/sql/setup-roles.sql`, toàn bộ migrations RLS/GRANT, CI workflow, docs.
+- Workspace seed `cho-rach` / "Chó Rách" → `yona` / "Yona" (FoundationSeeder + row DB dev); brand trong landing/lang/copyright/workspace-switcher → Yona; `composer.json` → `yona/crm`.
+- **Fixed (migrate lỗi):** migration `2026_07_04_500004_enable_rls_on_workflow_tables` GRANT cho role `cho_rach_app` — role đã không còn tồn tại sau chuẩn hóa tên DB 05/07 → mọi lần migrate fresh (CI, máy mới) và 2 migration pending trên dev đều fail. Sửa về role runtime hiện hành; 5 migration workflow đã áp dụng đủ trên dev + test.
+- **Fixed (test infra):** fake `ChannelDriver` trong `ActionNodeHandlersTest`/`InboxCoreTest` thiếu `capabilities()` (contract P11 thêm 11/07) gây Pest fatal toàn suite; `phpunit.xml` thêm `memory_limit=1G` (suite OOM ở 128M) + `BROADCAST_CONNECTION=log` — test không còn phụ thuộc Reverb đang chạy (trước đây suite chỉ xanh khi dev stack bật). Gate sau fix: 819 pass / 0 fail.
 
 ### Added — Generic zca Adapter L1: Dispatcher + Relay Forwarder (P10-P12, 2026-07-04)
 
@@ -153,7 +166,7 @@ Module quản lý Leads với kanban pipeline, assignment, lost/junk tracking v�
 - **Lost / Junk**: `markLost/markJunk` cache `last_stage_id`, set flag. `restore()` khôi phục stage và xóa flag.
 - **G12 Visibility**: `tenant.lead.view` → all; else `assigned_to=me OR owner_id=me OR created_by=me OR team_id∈teams OR is_public`. Fail → `abort(404)` non-enumeration. Scope query qua WorkspaceMember (không dùng Spatie teams).
 - **G7 Convert**: `LeadConversionService::convert()` — isolation assert (WS mismatch → 404), idempotency (double-convert → 422), DB::transaction: tạo Client + primary Contact, map custom fields by slug, re-point notes, stage → won, backlink `client.leadid`, log activities, fire `LeadConverted`.
-- **RLS**: migration `enable_rls_on_leads` với GRANT to `cho_rach_app`. `RlsPolicyCoverageTest` tự scan bảng mới.
+- **RLS**: migration `enable_rls_on_leads` với GRANT to `yona_app`. `RlsPolicyCoverageTest` tự scan bảng mới.
 - **FormRequests**: `StoreLeadRequest`, `UpdateLeadRequest`, `MoveLeadStageRequest` (G8), `AssignLeadRequest`, `ConvertLeadRequest`.
 - **UI React/Inertia**: list index, kanban board (HTML5 drag-drop), create/edit forms (pipeline+stage linked selects), show page (tabs: activity/notes/attachments), convert dialog, assign popover.
 - **i18n**: lang/vi/leads.php + lang/en/leads.php đầy đủ (title, fields, actions, flash, activity, notification, errors, kanban, status).
@@ -208,7 +221,7 @@ Bộ tính năng nền tảng dùng chung cho toàn bộ module CRM: custom fiel
 - **Mark-read** (`POST /announcements/{a}/read`): idempotent (`forceCreate` with existence check). `user_id` always from `auth()->id()` — request body ignored (BR-X12 IDOR guard). Drafts return 404 not 403 (BR-X15 non-enumeration).
 - **Audience v1 lock**: `audience.type` must be `all`; `by_plan` / `by_entitlement` / `workspace_filter` rejected at validation (future extension, no schema change needed).
 - **SSRF guard**: `cover_image` must be `https` and resolve to a public IP (private ranges rejected at validation).
-- **Permission seeding**: `platform.announcements.manage` added as migration (not seeder) so the test DB (`cho_rach_test`) receives it automatically.
+- **Permission seeding**: `platform.announcements.manage` added as migration (not seeder) so the test DB (`yona_test`) receives it automatically.
 - **i18n**: full `announcements` namespace in `lang/en/platform.php` and `lang/vi/platform.php`.
 - **Tests** (30 Pest assertions on pgsql):
   - `Admin\AnnouncementManagementTest` (14): authz, CRUD, publish/unpublish atomic, audit log, XSS, SSRF, audience validation.
@@ -235,7 +248,7 @@ Bộ tính năng nền tảng dùng chung cho toàn bộ module CRM: custom fiel
 - **Laravel app initialized** from `laravel/react-starter-kit` (Inertia 2 + React + shadcn/Tailwind), merged into repo (docs/plans/.claude/README preserved).
 - **Laravel 13.15 on PHP 8.4** (L13 requires 8.4): switched local default PHP 8.3→8.4 (`.zshrc`), installed `phpredis` ext for 8.4.
 - **Packages**: spatie/laravel-permission 8, Horizon, Reverb, Telescope (dev), Pest 4 + pest-plugin-laravel 4, Larastan, Pint.
-- **Env**: Postgres (`beru_crm` / `beru_crm_test`), Redis (cache/queue/session), Reverb broadcasting. `phpunit.xml` → Postgres test DB (RLS/JSONB need pgsql, not sqlite).
+- **Env**: Postgres (`beru_crm` / `beru_yona_test`), Redis (cache/queue/session), Reverb broadcasting. `phpunit.xml` → Postgres test DB (RLS/JSONB need pgsql, not sqlite).
 - **Verified**: `artisan about` green, migrations run, **26 tests pass** on pgsql.
 - Note: spatie-permission migration NOT run yet — deferred to Module 1 (RBAC keeps role in `workspace_member`, team-scoped).
 

@@ -1,6 +1,8 @@
-# Chó Rách Management
+# Yona
 
-> Hệ thống CRM (Customer Relationship Management) đa-tenant cấp doanh nghiệp — quản lý toàn bộ vòng đời khách hàng từ lead đến chăm sóc sau bán, hợp nhất Sales, Projects và (kế hoạch) Support/Marketing trên một nền tảng.
+**Domain:** [yona.vn](https://yona.vn) · **Repo:** github.com/locflamedia/yona
+
+> **Conversational CRM & Automation** — CRM đa-tenant lấy hội thoại làm cửa vào: gom tin nhắn khách từ mọi kênh chat về một inbox, biến hội thoại thành Lead/Client, tự động hóa chăm sóc; hợp nhất Sales, Projects và (kế hoạch) Support/Marketing trên một nền tảng. Kênh không giới hạn — kiến trúc driver: thêm kênh mới không sửa lõi (Zalo đã có; Messenger, TikTok… tiếp theo).
 
 Tài liệu này mô tả **dự án là gì**: domain, cách dữ liệu được tổ chức, mô hình phân quyền, và công nghệ. Đọc để hiểu hệ thống trước khi đi vào chi tiết từng tài liệu.
 
@@ -10,31 +12,34 @@ Tài liệu này mô tả **dự án là gì**: domain, cách dữ liệu đư�
 
 ## Trạng thái hiện tại
 
-Mốc **M1 — CRM Core (M0 + M1)** đã hoàn tất (2026-06-25): lõi CRM production-ready.
+Mốc **GĐ1 — code-complete** (2026-07-11): lõi CRM + Inbox Zalo cá nhân (full messaging) + billing metering/entitlements + automation engine v1.
 
 | Đã có ✅ | Kế hoạch ⬜ |
 |---|---|
 | Nền tảng đa-tenant + Workspace (RLS 3 lớp) | Support / Ticket + SLA |
-| Identity + Membership + Team + RBAC + Audit | Conversations / Inbox (live chat omnichannel) |
-| Admin plane (auth 2-guard, panel, impersonation, announcements) | Marketplace + Entitlements (billing) |
-| Custom Fields engine + cross-cutting (attach/tag/note/comment/activity/reminder/email/notif) | Marketing (campaign/segment/scoring) |
-| CRM Sales: Client/Contact/Pipeline/Lead/Convert | Client Portal (M2) |
-| Projects & Tasks & Timers (timesheet) | Webhooks + inbound API · Reporting/BI · Import |
+| Identity + Membership + Team + RBAC + Audit | Marketing (campaign/segment/scoring) |
+| Admin plane (auth 2-guard, panel, impersonation, announcements) | Client Portal (M2) |
+| Custom Fields engine + cross-cutting (attach/tag/note/comment/activity/reminder/email/notif) | Inbox Messenger / TikTok (GĐ2) |
+| CRM Sales: Client/Contact/Pipeline/Lead/Convert | Payment drivers VNPay/MoMo · Import CSV |
+| Projects & Tasks & Timers (timesheet) | Webhooks + inbound API · Reporting/BI |
+| **Inbox Zalo cá nhân** — bridge zca-js, realtime Reverb, media/sticker/bank-card, hội thoại → Lead | |
+| **Billing**: metering hội thoại per-channel + entitlements/plan grant | |
+| **Automation engine v1** (trigger→condition→action, workflow canvas) | |
 | Frontend lõi: settings, dark mode, i18n (vi/en), feeds | |
 
-Quy mô: ~39 model · 61 controller · 66 migration · 19 policy · ~545 test (Pest) + Playwright E2E.
+Quy mô: ~55 model · 76 controller · 113 migration · 20 policy · ~819 test (Pest) + Playwright E2E.
 
 ---
 
-## Chó Rách Management làm gì
+## Yona làm gì
 
-CRM là hệ thống + quy trình quản lý mọi tương tác với khách hàng — từ người lạ quan tâm (lead), thành khách mua, đến quan hệ lâu dài. Chó Rách Management bao trùm cả ba mặt của một CRM:
+CRM là hệ thống + quy trình quản lý mọi tương tác với khách hàng — từ người lạ quan tâm (lead), thành khách mua, đến quan hệ lâu dài. Yona bao trùm cả ba mặt của một CRM:
 
 | Mặt | Vai trò | Trạng thái |
 |---|---|---|
-| **Operational** | Tự động hóa quy trình sales / projects / (sau) support, marketing | Sales + Projects ✅ |
+| **Operational** | Tự động hóa quy trình sales / projects / (sau) support, marketing | Sales + Projects ✅ · Automation engine v1 ✅ |
 | **Analytical** | Biến dữ liệu tương tác thành insight, forecast, báo cáo | Hạ tầng activity/audit ✅ · Reporting ⬜ |
-| **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên các phòng ban | Timeline + notes + activity ✅ · Inbox ⬜ |
+| **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên các phòng ban | Timeline + notes + activity ✅ · Inbox Zalo ✅ (Messenger/TikTok ⬜) |
 
 Hệ thống không chỉ *lưu trữ* dữ liệu khách hàng mà còn được thiết kế để *hành động* trên dữ liệu đó (nhắc follow-up, đẩy lead qua stage, sau này chấm điểm lead / theo dõi SLA), với activity/event stream làm xương sống cho tự động hóa.
 
@@ -42,7 +47,7 @@ Hệ thống không chỉ *lưu trữ* dữ liệu khách hàng mà còn đượ
 
 ## Phạm vi
 
-Một nền tảng all-in-one, chia ba nhóm: **CRM khách hàng dùng**, **Platform nền tảng** (shared), và **nội bộ Platform-staff**. 🟢 = miễn phí (base) · 🔵 = add-on tính phí (marketplace, kế hoạch). Năng lực mở/khóa theo marketplace (mua add-on), không phải gói cứng.
+Một nền tảng all-in-one, chia ba nhóm: **CRM khách hàng dùng**, **Platform nền tảng** (shared), và **nội bộ Platform-staff**. 🟢 = miễn phí (base) · 🔵 = add-on tính phí (marketplace). Năng lực mở/khóa theo entitlements (đã build), không phải gói cứng.
 
 ```
 CUSTOMER-FACING (workspace)        PLATFORM / SHARED                INTERNAL (platform staff)
@@ -52,21 +57,20 @@ Sales 🟢 ✅                        Multi-tenancy + Workspace ✅      Workspa
   Convert·Lost/Junk                RBAC (roles·teams·visibility) ✅  Product Announcements ✅
 Projects & Tasks 🟢 ✅             Custom Fields engine ✅           Marketplace catalog mgmt ⬜
   Milestone·Timer/Timesheet        Audit log + soft-delete ✅        Billing / subscription ops ⬜
-Support 🔵 ⬜ (Ticket·SLA·CSAT)    Attachments · Notifications ✅
-Conversations/Inbox 🟢 ⬜          Reminders · Email Templates ✅    COMMERCE
-  live chat realtime               Realtime (Reverb, hạ tầng) 🟡     ─────────
-  omnichannel: web·Zalo·FB·email   Reporting/BI ⬜ · API+Webhooks ⬜ Marketplace (add-ons) ⬜
-Marketing 🔵 ⬜                                                      Entitlements · Integrations ⬜
-  Campaign·Segment·Scoring
+Conversations/Inbox 🟢 ✅          Attachments · Notifications ✅
+  Zalo cá nhân (bridge zca-js)     Reminders · Email Templates ✅    COMMERCE
+  realtime Reverb · conv→Lead      Realtime (Reverb) ✅              ─────────
+  Messenger·TikTok ⬜ (GĐ2)        Reporting/BI ⬜ · API+Webhooks ⬜ Entitlements + Metering ✅
+Automation 🟢 ✅ (engine v1)                                         Payment VNPay/MoMo ⬜
+Support 🔵 ⬜ (Ticket·SLA·CSAT)
+Marketing 🔵 ⬜ (Campaign·Segment·Scoring)
 ```
 
-Sales + Projects và tầng platform là lõi (đã build); Support, Marketing, và Inbox mở rộng trên cùng một domain model thống nhất.
+Sales + Projects + Inbox Zalo + tầng platform là lõi (đã build); Support, Marketing, và các kênh inbox mới mở rộng trên cùng một domain model thống nhất.
 
 ---
 
 ## Cách dữ liệu được tổ chức
-
-> **⚠️ WARNING: Data model section references Account/Deal below — these tables do NOT exist. The codebase uses Client/Contact/Lead/Pipeline instead (decision #2). See [docs/project-overview.md](docs/project-overview.md) (state-of-code) for the ACTUAL schema implemented, or [docs/crm-domain-definition.md](docs/crm-domain-definition.md) for full entity definitions.**
 
 > **Mô hình thực tế: Client / Contact / Lead / Pipeline** (quyết định khóa #2 — thay cho Account/Deal kiểu HubSpot, vốn overkill cho SMB/B2C). Bảng `accounts`/`deals` **không tồn tại** trong code.
 
@@ -161,8 +165,6 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 ## Công nghệ
 
-> **⚠️ OUTDATED: Some libraries listed below are not yet added to the codebase (React Hook Form, Zod, Recharts, sonner, cmdk, dnd-kit).** Current stack built with Inertia 3 + React 19 + vanilla HTML5 drag-drop. See [docs/system-architecture.md](docs/system-architecture.md) § **9b. Frontend** for the authoritative breakdown.
-
 | Tầng | Lựa chọn |
 |---|---|
 | Backend | Laravel 13 (PHP 8.4) |
@@ -174,7 +176,7 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 | Frontend | Inertia 3 + React 19 + TypeScript; Tailwind v4 + Radix UI (shadcn-style) + lucide-react |
 | Data/UI | TanStack Query + TanStack Table v8 · date-fns · **drag-drop HTML5 native** |
 | Jobs / Cron | Laravel Queue (Redis) + Horizon · Scheduler |
-| Realtime | Laravel Reverb (đã cài hạ tầng; chưa subscribe vào UI) |
+| Realtime | Laravel Reverb — realtime inbox (Echo private channels, WebSocket) |
 | Routing FE | Ziggy (route names → JS) |
 | Markdown | league/commonmark (render announcement an toàn XSS) |
 | Quan sát | Telescope + Pulse + Sentry |
@@ -184,19 +186,15 @@ Toàn bộ quy tắc nghiệp vụ chi tiết (46 quy tắc, mã `BR-XXX`) nằm
 
 ---
 
-## Kiến trúc & Định hướng mới
+## Kiến trúc
 
-**Hiện tại (M1):** Monolith phân lớp kỹ thuật (`app/Models`, `app/Http`, `app/Services`).
-
-**Định hướng mới (chuẩn hóa, Phase 4.0):** Hand-rolled **modular monolith** — core modules (always-on) + feature modules (toggleable) + extensible contracts (ChannelDriver, PaymentProvider). Mục đích: mở rộng kênh/cổng = thêm module, **0 sửa lõi**; cô lập module, test độc lập.
-
-**Spec:** [docs/modular-architecture.md](docs/modular-architecture.md) · [docs/decisions/2026-06-27-modular-monolith.md](docs/decisions/2026-06-27-modular-monolith.md) · Plan: [plans/260627-modular-standardization/](../plans/260627-modular-standardization/).
+**Laravel truyền thống** (`app/Models` · `app/Http/Controllers/{Domain}` · `app/Services`) + đúng **một module mở rộng** `app/Modules/Integration/` theo driver pattern: `ChannelDriver` cho kênh chat (Zalo cá nhân đã có; Messenger/TikTok = thêm driver), `PaymentProvider` cho cổng thanh toán. Thêm kênh/cổng = thêm driver, **0 sửa lõi**. Khung modular tự chế trước đây đã gỡ bỏ (refactor 2026-06-28). Chi tiết: [docs/system-architecture.md](docs/system-architecture.md).
 
 ---
 
 ## Cách dự án được xây dựng
 
-Chó Rách Management theo một pipeline đặt **đúng domain model lên trước, code sau** — nguyên tắc cốt lõi: trong CRM, mô hình dữ liệu và ranh giới domain là nền móng, sai sẽ đắt nhất để sửa, nên kiến trúc và red-team luôn đi trước khi viết code.
+Yona theo một pipeline đặt **đúng domain model lên trước, code sau** — nguyên tắc cốt lõi: trong CRM, mô hình dữ liệu và ranh giới domain là nền móng, sai sẽ đắt nhất để sửa, nên kiến trúc và red-team luôn đi trước khi viết code.
 
 Năm giai đoạn: **Discovery** (chốt phạm vi) → **Domain Architecture** (ERD, ranh giới, isolation) → **Red-team** (bẻ gãy thiết kế trên giấy) → **Plan** (chia phase) → **Build → Verify** (test → review → đồng bộ docs). Chi tiết: [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md).
 
@@ -215,8 +213,9 @@ Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
 | [docs/crm-field-dictionary.md](docs/crm-field-dictionary.md) | Từ điển field đầy đủ + enums |
 | [docs/system-architecture.md](docs/system-architecture.md) | **Kiến trúc**: bounded contexts, data model, isolation, RBAC, TX, async, scale, frontend |
 | [docs/crm-authorization-model.md](docs/crm-authorization-model.md) | Phân quyền 2 mặt phẳng: Platform (nội bộ) + Workspace (khách) |
-| [docs/crm-marketplace.md](docs/crm-marketplace.md) | Marketplace billing + entitlements (base free + add-on) — kế hoạch |
-| [docs/crm-conversations-inbox.md](docs/crm-conversations-inbox.md) | Live chat realtime, omnichannel inbox — kế hoạch |
+| [docs/crm-marketplace.md](docs/crm-marketplace.md) | Marketplace billing + entitlements — core đã build (payment drivers: kế hoạch) |
+| [docs/crm-conversations-inbox.md](docs/crm-conversations-inbox.md) | Thiết kế gốc omnichannel inbox — đã build với Zalo cá nhân; hiện trạng: [docs/features/messaging/](docs/features/messaging/README.md) |
+| [docs/crm-automation-workflow.md](docs/crm-automation-workflow.md) | Automation engine (trigger→condition→action) — v1 đã build |
 | [docs/crm-business-config.md](docs/crm-business-config.md) | Pipeline mặc định, enums, SLA, scoring, gói free, marketplace seed |
 | [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |
 | [docs/features/README.md](docs/features/README.md) | Index tài liệu flow từng tính năng |

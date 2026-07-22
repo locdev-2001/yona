@@ -3,7 +3,7 @@
 > The **Conversations** bounded context: realtime omnichannel messaging between customers and agents — web chat widget, Zalo, Facebook Messenger, Email — in one unified inbox. **V1 core.** This is the "omnichannel inbox" from `crm-domain-definition.md` (Collaborative CRM).
 > Mandates **Laravel Reverb** (WebSocket) — previously deferred, now v1 infra. Companion to [system-architecture.md](system-architecture.md), [crm-marketplace.md](crm-marketplace.md) (channels = integration items), [crm-business-rules.md](crm-business-rules.md).
 
-Date: 2026-06-13 · Status: living
+Date: 2026-06-13 · Cập nhật: 2026-07-22 · Status: **thiết kế gốc — inbox ĐÃ BUILD** (GĐ1, kênh đầu = Zalo cá nhân, merge 2026-07-11; KHÔNG phải web widget/FB/Email như thiết kế). Hiện trạng theo code: [features/messaging/README.md](features/messaging/README.md)
 
 ## Scope (v1)
 
