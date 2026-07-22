@@ -4,7 +4,7 @@
 > Billing bounded context (Platform plane). Companion to [crm-authorization-model.md](crm-authorization-model.md), [system-architecture.md](system-architecture.md).
 > **Entitlements as module gate:** marketplace items (with `type: feature_module`) are the **per-workspace mechanism to enable/disable features**. See [system-architecture.md](system-architecture.md) for integration driver pattern details.
 
-Date: 2026-06-13 · Status: living
+Date: 2026-06-13 · Cập nhật: 2026-07-22 · Status: **core ĐÃ BUILD** — entitlements + plan grant + metering per-channel ([features/messaging/plan-entitlements-grant.md](features/messaging/plan-entitlements-grant.md), [features/messaging/conversation-metering.md](features/messaging/conversation-metering.md)); payment drivers VNPay/MoMo + admin catalog UI chưa build
 
 ## Model in one picture
 

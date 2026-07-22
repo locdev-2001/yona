@@ -1,12 +1,12 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { Link, usePage, useForm, Head, router, createInertiaApp } from "@inertiajs/react";
-import { LoaderCircle, Check, TrendingUp, TrendingDown, ChevronRight, Circle, X, PanelLeft, ChevronsUpDown, Languages, LogOut, LayoutGrid, Building2, Megaphone, ShieldCheck, Sun, Moon, Monitor, Users, UserPlus, ChevronDown, ChevronUp, Settings, Plus, Target, FolderKanban, ListChecks, Inbox, Plug, Sparkles, ShieldAlert, Copy, Pencil, Trash2, Star, Lock, Activity, Tag, Paperclip, Download, FileText, Phone, Globe, UserCheck, Loader2, Mail, User, DollarSign, RefreshCw, Kanban, List, XCircle, Clock, CheckCircle2, CircleDollarSign, MessageCircle, Send, MessageSquare, CheckCheck, Pin, UserMinus, GripVertical, Edit, Calendar, CalendarDays, Square, Play, MoreHorizontal, FolderTree, Network, Zap, ArrowRight } from "lucide-react";
+import { LoaderCircle, Check, TrendingUp, TrendingDown, ChevronRight, Circle, X, PanelLeft, ChevronsUpDown, Languages, LogOut, LayoutGrid, Building2, Megaphone, ShieldCheck, Sun, Moon, Monitor, Users, UserPlus, ChevronDown, ChevronUp, Settings, Plus, Target, FolderKanban, ListChecks, GitBranch, Inbox, Plug, Sparkles, ShieldAlert, Trash2, ArrowRightLeft, Tag, Bell, ListTodo, MessageSquare, CircleCheckBig, Hourglass, Play, HelpCircle, Copy, Pencil, Star, Lock, Activity, Paperclip, Download, FileText, Phone, Globe, UserCheck, Loader2, Mail, User, DollarSign, RefreshCw, Kanban, List, XCircle, Clock, CheckCircle2, CircleDollarSign, Info, AlertTriangle, Landmark, Contact, PhoneMissed, Video, Ban, Clock3, CheckCheck, Reply, SmilePlus, MessageCircle, StickyNote, Send, Pin, UserMinus, GripVertical, Edit, Calendar, CalendarDays, Square, MoreHorizontal, FolderTree, MessagesSquare, Zap, ArrowRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import * as React from "react";
-import { useId, useState, useEffect, Fragment as Fragment$1, useCallback, useRef, useMemo, memo } from "react";
+import { useId, useState, useEffect, Fragment as Fragment$1, useCallback, useMemo, useRef, useLayoutEffect, memo } from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
@@ -16,12 +16,13 @@ import * as SheetPrimitive from "@radix-ui/react-dialog";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
+import * as SwitchPrimitive from "@radix-ui/react-switch";
+import { Handle, Position, ReactFlowProvider, useReactFlow, useNodesState, useEdgesState, addEdge, ReactFlow, Background, Controls } from "@xyflow/react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { formatDistanceToNow } from "date-fns";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Transition } from "@headlessui/react";
 import createServer from "@inertiajs/react/server";
 import ReactDOMServer from "react-dom/server";
@@ -2191,7 +2192,7 @@ function WorkspaceSwitcher() {
     /* @__PURE__ */ jsx(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs(SidebarMenuButton, { size: "lg", className: "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground", children: [
       /* @__PURE__ */ jsx("div", { className: "bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg", children: /* @__PURE__ */ jsx(AppLogoIcon, { className: "text-sidebar-primary-foreground size-5 fill-current" }) }),
       /* @__PURE__ */ jsxs("div", { className: "grid flex-1 text-left text-sm leading-tight", children: [
-        /* @__PURE__ */ jsx("span", { className: "truncate font-semibold", children: (active == null ? void 0 : active.name) ?? "Chó Rách" }),
+        /* @__PURE__ */ jsx("span", { className: "truncate font-semibold", children: (active == null ? void 0 : active.name) ?? "Yona" }),
         role && /* @__PURE__ */ jsx("span", { className: "text-muted-foreground truncate text-xs", children: t(`platform.roles.${role}`) })
       ] }),
       /* @__PURE__ */ jsx(ChevronsUpDown, { className: "ml-auto" })
@@ -2231,7 +2232,8 @@ function AppSidebar() {
     can("tenant.client.view") && { title: t("platform.nav.clients"), url: "/clients", icon: Building2 },
     can("tenant.lead.view") && { title: t("platform.nav.leads"), url: "/leads", icon: Target },
     can("tenant.project.view") && { title: t("platform.nav.projects"), url: "/projects", icon: FolderKanban },
-    can("tenant.task.view") && { title: t("platform.nav.tasks"), url: "/tasks", icon: ListChecks }
+    can("tenant.task.view") && { title: t("platform.nav.tasks"), url: "/tasks", icon: ListChecks },
+    can("tenant.automation.manage") && { title: t("platform.nav.automation"), url: "/automation/workflows", icon: GitBranch }
   ];
   const crmItems = crmCandidates.filter((item) => item !== false);
   const navGroups = [
@@ -2794,6 +2796,707 @@ const __vite_glob_0_15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.de
   __proto__: null,
   default: VerifyEmail
 }, Symbol.toStringTag, { value: "Module" }));
+function Switch({ className, ...props }) {
+  return /* @__PURE__ */ jsx(
+    SwitchPrimitive.Root,
+    {
+      "data-slot": "switch",
+      className: cn(
+        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      ),
+      ...props,
+      children: /* @__PURE__ */ jsx(
+        SwitchPrimitive.Thumb,
+        {
+          "data-slot": "switch-thumb",
+          className: cn(
+            "bg-background pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
+          )
+        }
+      )
+    }
+  );
+}
+let autoId = 0;
+function newNodeId() {
+  autoId += 1;
+  return `n_${Date.now().toString(36)}_${autoId}`;
+}
+function graphToFlow(graph, t) {
+  const nodes = graph.nodes.map((node, index) => ({
+    id: node.id,
+    type: "workflowNode",
+    // Single top-to-bottom column — WorkflowNodeCard only exposes
+    // top(target)/bottom(source) handles, so a vertical default layout
+    // avoids a looping bezier before the user repositions anything.
+    position: node.position ?? { x: 250, y: index * 160 + 40 },
+    data: { nodeType: node.type, config: node.config ?? {}, summary: summarizeNode(node.type, node.config ?? {}, t) }
+  }));
+  const edges = graph.edges.map((edge, index) => ({
+    id: `e_${index}_${edge.from}_${edge.to}`,
+    source: edge.from,
+    target: edge.to,
+    sourceHandle: edge.branch === true ? "true" : edge.branch === false ? "false" : void 0
+  }));
+  return { nodes, edges };
+}
+function flowToGraph(nodes, edges) {
+  const graphNodes = nodes.map((node) => ({
+    id: node.id,
+    type: node.data.nodeType,
+    config: node.data.config,
+    position: node.position
+  }));
+  const graphEdges = edges.map((edge) => ({
+    from: edge.source,
+    to: edge.target,
+    branch: edge.sourceHandle === "true" ? true : edge.sourceHandle === "false" ? false : null
+  }));
+  return { nodes: graphNodes, edges: graphEdges };
+}
+function summarizeNode(type, config, t) {
+  switch (type) {
+    case "start":
+      return config.trigger ? t(`automation.triggers.${config.trigger}`) : "";
+    case "condition": {
+      const count = Array.isArray(config.conditions) ? config.conditions.length : 0;
+      return count > 0 ? t("automation.canvas.condition_count", { count }) : "";
+    }
+    case "wait":
+      return config.amount ? `${config.amount} ${t(`automation.fields.wait_${config.unit ?? "minutes"}`).toLowerCase()}` : "";
+    case "end":
+      return "";
+    case "send_message":
+      return typeof config.body === "string" && config.body ? config.body : "";
+    case "create_task":
+      return typeof config.name === "string" && config.name ? config.name : "";
+    case "notify_internal": {
+      const count = Array.isArray(config.user_ids) ? config.user_ids.length : 0;
+      return count > 0 ? t("automation.canvas.recipient_count", { count }) : "";
+    }
+    case "tag": {
+      const action = t(`automation.fields.tag_${config.action === "detach" ? "detach" : "attach"}`);
+      return config.tag ? `${action} "${config.tag}"` : "";
+    }
+    case "change_lead_stage":
+      return typeof config.stage_id === "string" && config.stage_id ? t("automation.canvas.stage_selected") : "";
+    default:
+      return "";
+  }
+}
+function validateGraphShape(graph) {
+  const errors = [];
+  const nodeIds = new Set(graph.nodes.map((n) => n.id));
+  const startNodes = graph.nodes.filter((n) => n.type === "start");
+  if (startNodes.length !== 1) {
+    errors.push("automation.canvas.validation_no_start");
+  }
+  const startIds = new Set(startNodes.map((n) => n.id));
+  for (const edge of graph.edges) {
+    if (!nodeIds.has(edge.from) || !nodeIds.has(edge.to)) {
+      errors.push("automation.canvas.validation_dangling_edge");
+    }
+    if (startIds.has(edge.to)) {
+      errors.push("automation.canvas.validation_start_incoming");
+    }
+  }
+  return [...new Set(errors)];
+}
+const Textarea = React.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsx(
+    "textarea",
+    {
+      className: cn(
+        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        className
+      ),
+      ref,
+      ...props
+    }
+  );
+});
+Textarea.displayName = "Textarea";
+const PALETTE_NODE_TYPES = [
+  "condition",
+  "wait",
+  "end",
+  "send_message",
+  "create_task",
+  "notify_internal",
+  "tag",
+  "change_lead_stage"
+];
+const TRIGGER_KEYS = ["lead_created", "lead_assigned", "lead_stage_changed", "message_received", "manual"];
+const CHANNEL_KEYS = ["zalo_personal"];
+const CONDITION_OPERATORS = ["equals", "not_equals", "contains", "greater_than", "less_than"];
+const CONDITION_FIELD_SUGGESTIONS = ["name", "email", "phone", "company", "lead_value", "stage_id", "pipeline_id", "is_public"];
+const TASK_PRIORITIES = [
+  { value: 1, key: "low" },
+  { value: 2, key: "medium" },
+  { value: 3, key: "high" },
+  { value: 4, key: "urgent" }
+];
+const WAIT_UNITS = ["minutes", "hours", "days"];
+function defaultConfigFor(nodeType) {
+  switch (nodeType) {
+    case "condition":
+      return { conditions: [] };
+    case "wait":
+      return { amount: 0, unit: "minutes" };
+    case "send_message":
+      return { channel: CHANNEL_KEYS[0], body: "" };
+    case "create_task":
+      return { name: "", priority: 2 };
+    case "tag":
+      return { action: "attach", tag: "", color: "#64748b" };
+    default:
+      return {};
+  }
+}
+function InspectorPanel({ node, onChange, onDelete, pipelines, members }) {
+  const t = useTranslator();
+  if (!node) {
+    return /* @__PURE__ */ jsx("div", { className: "w-80 shrink-0 border-l p-4", children: /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: t("automation.canvas.inspector_empty") }) });
+  }
+  const config = node.data.config;
+  const set = (patch) => onChange({ ...config, ...patch });
+  return /* @__PURE__ */ jsxs("div", { className: "w-80 shrink-0 space-y-4 overflow-y-auto border-l p-4", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("p", { className: "text-sm font-semibold", children: t(`automation.node_types.${node.data.nodeType}`) }),
+      node.data.nodeType !== "start" && /* @__PURE__ */ jsx(Button, { type: "button", variant: "ghost", size: "icon", onClick: onDelete, title: t("automation.canvas.delete_node"), children: /* @__PURE__ */ jsx(Trash2, { className: "h-4 w-4" }) })
+    ] }),
+    node.data.nodeType === "start" && /* @__PURE__ */ jsx(StartFields, { config, set, t }),
+    node.data.nodeType === "condition" && /* @__PURE__ */ jsx(ConditionFields, { config, set, t }),
+    node.data.nodeType === "wait" && /* @__PURE__ */ jsx(WaitFields, { config, set, t }),
+    node.data.nodeType === "send_message" && /* @__PURE__ */ jsx(SendMessageFields, { config, set, t }),
+    node.data.nodeType === "create_task" && /* @__PURE__ */ jsx(CreateTaskFields, { config, set, t }),
+    node.data.nodeType === "notify_internal" && /* @__PURE__ */ jsx(NotifyInternalFields, { config, set, t, members }),
+    node.data.nodeType === "tag" && /* @__PURE__ */ jsx(TagFields, { config, set, t }),
+    node.data.nodeType === "change_lead_stage" && /* @__PURE__ */ jsx(ChangeLeadStageFields, { config, set, t, pipelines })
+  ] });
+}
+function StartFields({ config, set, t }) {
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+    /* @__PURE__ */ jsx(Label, { children: t("automation.fields.trigger") }),
+    /* @__PURE__ */ jsxs(Select, { value: config.trigger ?? "", onValueChange: (v) => set({ trigger: v }), children: [
+      /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+      /* @__PURE__ */ jsx(SelectContent, { children: TRIGGER_KEYS.map((key) => /* @__PURE__ */ jsx(SelectItem, { value: key, children: t(`automation.triggers.${key}`) }, key)) })
+    ] })
+  ] });
+}
+function ConditionFields({ config, set, t }) {
+  const conditions = Array.isArray(config.conditions) ? config.conditions : [];
+  function update(index, patch) {
+    const next = conditions.map((c, i) => i === index ? { ...c, ...patch } : c);
+    set({ conditions: next });
+  }
+  function remove(index) {
+    set({ conditions: conditions.filter((_, i) => i !== index) });
+  }
+  function add() {
+    set({ conditions: [...conditions, { field: "", operator: "equals", value: "" }] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    conditions.map((condition, index) => /* @__PURE__ */ jsxs("div", { className: "space-y-1.5 rounded-md border p-2", children: [
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          list: "automation-condition-fields",
+          placeholder: t("automation.fields.condition_field"),
+          value: condition.field ?? "",
+          onChange: (e) => update(index, { field: e.target.value })
+        }
+      ),
+      /* @__PURE__ */ jsxs(Select, { value: condition.operator ?? "equals", onValueChange: (v) => update(index, { operator: v }), children: [
+        /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+        /* @__PURE__ */ jsx(SelectContent, { children: CONDITION_OPERATORS.map((op) => /* @__PURE__ */ jsx(SelectItem, { value: op, children: t(`automation.operators.${op}`) }, op)) })
+      ] }),
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          placeholder: t("automation.fields.condition_value"),
+          value: condition.value ?? "",
+          onChange: (e) => update(index, { value: e.target.value })
+        }
+      ),
+      /* @__PURE__ */ jsx(Button, { type: "button", variant: "ghost", size: "sm", onClick: () => remove(index), children: t("automation.fields.remove_condition") })
+    ] }, index)),
+    /* @__PURE__ */ jsx("datalist", { id: "automation-condition-fields", children: CONDITION_FIELD_SUGGESTIONS.map((f) => /* @__PURE__ */ jsx("option", { value: f }, f)) }),
+    /* @__PURE__ */ jsx(Button, { type: "button", variant: "outline", size: "sm", onClick: add, children: t("automation.fields.add_condition") })
+  ] });
+}
+function WaitFields({ config, set, t }) {
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.wait_amount") }),
+      /* @__PURE__ */ jsx(Input, { type: "number", min: 0, value: config.amount ?? 0, onChange: (e) => set({ amount: Number(e.target.value) }) })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.wait_unit") }),
+      /* @__PURE__ */ jsxs(Select, { value: config.unit ?? "minutes", onValueChange: (v) => set({ unit: v }), children: [
+        /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+        /* @__PURE__ */ jsx(SelectContent, { children: WAIT_UNITS.map((unit) => /* @__PURE__ */ jsx(SelectItem, { value: unit, children: t(`automation.fields.wait_${unit}`) }, unit)) })
+      ] })
+    ] })
+  ] });
+}
+function SendMessageFields({ config, set, t }) {
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.channel") }),
+      /* @__PURE__ */ jsxs(Select, { value: config.channel ?? CHANNEL_KEYS[0], onValueChange: (v) => set({ channel: v }), children: [
+        /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+        /* @__PURE__ */ jsx(SelectContent, { children: CHANNEL_KEYS.map((channel) => /* @__PURE__ */ jsx(SelectItem, { value: channel, children: channel }, channel)) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.message_body") }),
+      /* @__PURE__ */ jsx(Textarea, { value: config.body ?? "", onChange: (e) => set({ body: e.target.value }), rows: 4 })
+    ] })
+  ] });
+}
+function CreateTaskFields({ config, set, t }) {
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.task_name") }),
+      /* @__PURE__ */ jsx(Input, { value: config.name ?? "", onChange: (e) => set({ name: e.target.value }) })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.task_description") }),
+      /* @__PURE__ */ jsx(Textarea, { value: config.description ?? "", onChange: (e) => set({ description: e.target.value }), rows: 3 })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.task_priority") }),
+      /* @__PURE__ */ jsxs(Select, { value: String(config.priority ?? 2), onValueChange: (v) => set({ priority: Number(v) }), children: [
+        /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+        /* @__PURE__ */ jsx(SelectContent, { children: TASK_PRIORITIES.map((p) => /* @__PURE__ */ jsx(SelectItem, { value: String(p.value), children: t(`automation.priorities.${p.key}`) }, p.value)) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.task_due_in_days") }),
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          type: "number",
+          min: 0,
+          value: config.due_in_days ?? "",
+          onChange: (e) => set({ due_in_days: e.target.value === "" ? void 0 : Number(e.target.value) })
+        }
+      )
+    ] })
+  ] });
+}
+function NotifyInternalFields({ config, set, t, members }) {
+  const userIds = Array.isArray(config.user_ids) ? config.user_ids : [];
+  function toggle(id) {
+    set({ user_ids: userIds.includes(id) ? userIds.filter((u) => u !== id) : [...userIds, id] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.notify_recipients") }),
+      /* @__PURE__ */ jsx("div", { className: "max-h-40 space-y-1 overflow-y-auto rounded-md border p-2", children: members.map((m) => /* @__PURE__ */ jsxs("label", { className: "flex cursor-pointer items-center gap-2 text-sm", children: [
+        /* @__PURE__ */ jsx("input", { type: "checkbox", checked: userIds.includes(m.id), onChange: () => toggle(m.id), className: "rounded" }),
+        m.name
+      ] }, m.id)) })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.notify_message") }),
+      /* @__PURE__ */ jsx(Textarea, { value: config.message ?? "", onChange: (e) => set({ message: e.target.value }), rows: 3 })
+    ] })
+  ] });
+}
+function TagFields({ config, set, t }) {
+  const action = config.action ?? "attach";
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.tag_action") }),
+      /* @__PURE__ */ jsxs(Select, { value: action, onValueChange: (v) => set({ action: v }), children: [
+        /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+        /* @__PURE__ */ jsxs(SelectContent, { children: [
+          /* @__PURE__ */ jsx(SelectItem, { value: "attach", children: t("automation.fields.tag_attach") }),
+          /* @__PURE__ */ jsx(SelectItem, { value: "detach", children: t("automation.fields.tag_detach") })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.tag_name") }),
+      /* @__PURE__ */ jsx(Input, { value: config.tag ?? "", onChange: (e) => set({ tag: e.target.value }) })
+    ] }),
+    action === "attach" && /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+      /* @__PURE__ */ jsx(Label, { children: t("automation.fields.tag_color") }),
+      /* @__PURE__ */ jsx(Input, { type: "color", value: config.color ?? "#64748b", onChange: (e) => set({ color: e.target.value }) })
+    ] })
+  ] });
+}
+function ChangeLeadStageFields({ config, set, t, pipelines }) {
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+    /* @__PURE__ */ jsx(Label, { children: t("automation.fields.pipeline_stage") }),
+    /* @__PURE__ */ jsxs(Select, { value: config.stage_id ?? "", onValueChange: (v) => set({ stage_id: v }), children: [
+      /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+      /* @__PURE__ */ jsx(SelectContent, { children: pipelines.map((pipeline) => /* @__PURE__ */ jsx(SelectGroupByPipeline, { pipeline }, pipeline.id)) })
+    ] })
+  ] });
+}
+function SelectGroupByPipeline({ pipeline }) {
+  return /* @__PURE__ */ jsx(Fragment, { children: pipeline.stages.map((stage) => /* @__PURE__ */ jsxs(SelectItem, { value: stage.id, children: [
+    pipeline.name,
+    " — ",
+    stage.name
+  ] }, stage.id)) });
+}
+function Palette() {
+  const t = useTranslator();
+  function onDragStart(e, nodeType) {
+    e.dataTransfer.setData("application/workflow-node-type", nodeType);
+    e.dataTransfer.effectAllowed = "move";
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "w-48 shrink-0 space-y-1 border-r p-3", children: [
+    /* @__PURE__ */ jsx("p", { className: "text-muted-foreground mb-2 text-xs font-medium uppercase", children: t("automation.canvas.palette_title") }),
+    PALETTE_NODE_TYPES.map((nodeType) => /* @__PURE__ */ jsx(
+      "div",
+      {
+        draggable: true,
+        onDragStart: (e) => onDragStart(e, nodeType),
+        className: "bg-card cursor-grab rounded-md border px-2 py-1.5 text-xs active:cursor-grabbing",
+        children: t(`automation.node_types.${nodeType}`)
+      },
+      nodeType
+    ))
+  ] });
+}
+const NODE_ICON = {
+  start: Play,
+  condition: GitBranch,
+  wait: Hourglass,
+  end: CircleCheckBig,
+  send_message: MessageSquare,
+  create_task: ListTodo,
+  notify_internal: Bell,
+  tag: Tag,
+  change_lead_stage: ArrowRightLeft
+};
+const NODE_COLOR = {
+  start: "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40",
+  condition: "border-amber-400 bg-amber-50 dark:bg-amber-950/40",
+  wait: "border-slate-400 bg-slate-50 dark:bg-slate-900/40",
+  end: "border-slate-400 bg-slate-50 dark:bg-slate-900/40",
+  send_message: "border-blue-400 bg-blue-50 dark:bg-blue-950/40",
+  create_task: "border-blue-400 bg-blue-50 dark:bg-blue-950/40",
+  notify_internal: "border-blue-400 bg-blue-50 dark:bg-blue-950/40",
+  tag: "border-blue-400 bg-blue-50 dark:bg-blue-950/40",
+  change_lead_stage: "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+};
+function WorkflowNodeCard({ data, selected }) {
+  const t = useTranslator();
+  const Icon = NODE_ICON[data.nodeType] ?? HelpCircle;
+  const color = NODE_COLOR[data.nodeType] ?? "border-red-400 bg-red-50 dark:bg-red-950/40";
+  const isCondition = data.nodeType === "condition";
+  const isEnd = data.nodeType === "end";
+  const isStart = data.nodeType === "start";
+  return /* @__PURE__ */ jsxs("div", { className: `min-w-[180px] rounded-lg border-2 px-3 py-2 shadow-sm ${color} ${selected ? "ring-ring ring-2 ring-offset-2" : ""}`, children: [
+    !isStart && /* @__PURE__ */ jsx(Handle, { type: "target", position: Position.Top, className: "!bg-muted-foreground !h-2 !w-2" }),
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-sm font-medium", children: [
+      /* @__PURE__ */ jsx(Icon, { className: "h-4 w-4 shrink-0" }),
+      /* @__PURE__ */ jsx("span", { children: t(`automation.node_types.${data.nodeType}`) })
+    ] }),
+    data.summary && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground mt-1 line-clamp-2 text-xs", children: data.summary }),
+    !isEnd && !isCondition && /* @__PURE__ */ jsx(Handle, { type: "source", position: Position.Bottom, className: "!bg-muted-foreground !h-2 !w-2" }),
+    isCondition && /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Handle, { id: "true", type: "source", position: Position.Bottom, style: { left: "30%" }, className: "!h-2 !w-2 !bg-emerald-500" }),
+      /* @__PURE__ */ jsx(Handle, { id: "false", type: "source", position: Position.Bottom, style: { left: "70%" }, className: "!h-2 !w-2 !bg-red-500" }),
+      /* @__PURE__ */ jsxs("div", { className: "text-muted-foreground mt-1 flex justify-between text-[10px]", children: [
+        /* @__PURE__ */ jsx("span", { children: t("automation.canvas.branch_true") }),
+        /* @__PURE__ */ jsx("span", { children: t("automation.canvas.branch_false") })
+      ] })
+    ] })
+  ] });
+}
+const nodeTypes = { workflowNode: WorkflowNodeCard };
+function WorkflowCanvas(props) {
+  return /* @__PURE__ */ jsx(ReactFlowProvider, { children: /* @__PURE__ */ jsx(WorkflowCanvasInner, { ...props }) });
+}
+function WorkflowCanvasInner({ initialGraph, initialName, initialIsActive, pipelines, members, saving, errors, onSave, headerActions }) {
+  var _a;
+  const t = useTranslator();
+  const { screenToFlowPosition } = useReactFlow();
+  const initial = useMemo(() => graphToFlow(initialGraph, t), [initialGraph, t]);
+  const [nodes, setNodes, onNodesChangeRaw] = useNodesState(initial.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
+  const [name, setName] = useState(initialName);
+  const [isActive, setIsActive] = useState(initialIsActive);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [clientErrors, setClientErrors] = useState([]);
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+  const startNodeId = (_a = nodes.find((n) => n.data.nodeType === "start")) == null ? void 0 : _a.id;
+  const onNodesChange = useCallback(
+    (changes) => {
+      const filtered = changes.filter((change) => !(change.type === "remove" && change.id === startNodeId));
+      onNodesChangeRaw(filtered);
+    },
+    [onNodesChangeRaw, startNodeId]
+  );
+  const onConnect = useCallback((connection) => setEdges((eds) => addEdge(connection, eds)), [setEdges]);
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      const nodeType = e.dataTransfer.getData("application/workflow-node-type");
+      if (!nodeType) return;
+      const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      const id = newNodeId();
+      const config = defaultConfigFor(nodeType);
+      setNodes((nds) => [
+        ...nds,
+        { id, type: "workflowNode", position, data: { nodeType, config, summary: summarizeNode(nodeType, config, t) } }
+      ]);
+    },
+    [screenToFlowPosition, setNodes, t]
+  );
+  function updateSelectedNodeConfig(config) {
+    if (!selectedNodeId) return;
+    setNodes(
+      (nds) => nds.map((n) => n.id === selectedNodeId ? { ...n, data: { ...n.data, config, summary: summarizeNode(n.data.nodeType, config, t) } } : n)
+    );
+  }
+  function deleteSelectedNode() {
+    if (!selectedNodeId || selectedNodeId === startNodeId) return;
+    setNodes((nds) => nds.filter((n) => n.id !== selectedNodeId));
+    setEdges((eds) => eds.filter((e) => e.source !== selectedNodeId && e.target !== selectedNodeId));
+    setSelectedNodeId(null);
+  }
+  function handleSave() {
+    const graph = flowToGraph(nodes, edges);
+    const graphErrors = validateGraphShape(graph);
+    if (graphErrors.length > 0) {
+      setClientErrors(graphErrors);
+      return;
+    }
+    setClientErrors([]);
+    onSave({ name, is_active: isActive, graph });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "flex h-full flex-col", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4 border-b p-3", children: [
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          value: name,
+          onChange: (e) => setName(e.target.value),
+          placeholder: t("automation.canvas.name_placeholder"),
+          className: "max-w-xs"
+        }
+      ),
+      errors.name && /* @__PURE__ */ jsx("p", { className: "text-destructive text-xs", children: errors.name }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx(Switch, { checked: isActive, onCheckedChange: setIsActive, id: "workflow-active" }),
+        /* @__PURE__ */ jsx(Label, { htmlFor: "workflow-active", children: t("automation.canvas.active_toggle") })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "ml-auto flex items-center gap-2", children: [
+        headerActions,
+        /* @__PURE__ */ jsx(Button, { type: "button", onClick: handleSave, disabled: saving, children: saving ? t("automation.canvas.saving") : t("automation.canvas.save") })
+      ] })
+    ] }),
+    clientErrors.length > 0 && /* @__PURE__ */ jsx("div", { className: "bg-destructive/10 text-destructive space-y-0.5 border-b px-3 py-2 text-xs", children: clientErrors.map((key) => /* @__PURE__ */ jsx("p", { children: t(key) }, key)) }),
+    errors.graph && /* @__PURE__ */ jsx("div", { className: "bg-destructive/10 text-destructive border-b px-3 py-2 text-xs", children: errors.graph }),
+    /* @__PURE__ */ jsxs("div", { className: "flex min-h-0 flex-1", children: [
+      /* @__PURE__ */ jsx(Palette, {}),
+      /* @__PURE__ */ jsx("div", { className: "min-w-0 flex-1", onDrop, onDragOver: (e) => e.preventDefault(), children: /* @__PURE__ */ jsxs(
+        ReactFlow,
+        {
+          nodes,
+          edges,
+          onNodesChange,
+          onEdgesChange,
+          onConnect,
+          onNodeClick: (_, node) => setSelectedNodeId(node.id),
+          onPaneClick: () => setSelectedNodeId(null),
+          nodeTypes,
+          fitView: true,
+          children: [
+            /* @__PURE__ */ jsx(Background, {}),
+            /* @__PURE__ */ jsx(Controls, {})
+          ]
+        }
+      ) }),
+      /* @__PURE__ */ jsx(
+        InspectorPanel,
+        {
+          node: selectedNode,
+          onChange: updateSelectedNodeConfig,
+          onDelete: deleteSelectedNode,
+          pipelines,
+          members
+        }
+      )
+    ] })
+  ] });
+}
+const DEFAULT_GRAPH = {
+  nodes: [
+    { id: "n_start", type: "start", config: { trigger: "lead_created" } },
+    { id: "n_end", type: "end", config: {} }
+  ],
+  edges: [{ from: "n_start", to: "n_end", branch: null }]
+};
+function AutomationCreate({ pipelines, members }) {
+  const t = useTranslator();
+  const breadcrumbs2 = [
+    { title: t("automation.title.index"), href: route("automation.workflows.index") },
+    { title: t("automation.title.create"), href: route("automation.workflows.create") }
+  ];
+  const [processing, setProcessing] = useState(false);
+  const [errors, setErrors] = useState({});
+  function handleSave(data) {
+    router.post(route("automation.workflows.store"), data, {
+      onStart: () => setProcessing(true),
+      onError: (e) => setErrors(e),
+      onFinish: () => setProcessing(false)
+    });
+  }
+  return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
+    /* @__PURE__ */ jsx(Head, { title: t("automation.title.create") }),
+    /* @__PURE__ */ jsx("div", { className: "flex min-h-0 flex-1 flex-col", children: /* @__PURE__ */ jsx(
+      WorkflowCanvas,
+      {
+        initialGraph: DEFAULT_GRAPH,
+        initialName: "",
+        initialIsActive: false,
+        pipelines,
+        members,
+        saving: processing,
+        errors,
+        onSave: handleSave
+      }
+    ) })
+  ] });
+}
+const __vite_glob_0_16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: AutomationCreate
+}, Symbol.toStringTag, { value: "Module" }));
+function AutomationIndex({ workflows }) {
+  const t = useTranslator();
+  const breadcrumbs2 = [{ title: t("automation.title.index"), href: route("automation.workflows.index") }];
+  return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
+    /* @__PURE__ */ jsx(Head, { title: t("automation.title.index") }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-1 flex-col gap-6 p-4 md:p-6", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between", children: [
+        /* @__PURE__ */ jsx(PageHeader, { title: t("automation.title.index") }),
+        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", children: /* @__PURE__ */ jsxs(Link, { href: route("automation.workflows.create"), children: [
+          /* @__PURE__ */ jsx(Plus, { className: "mr-1 h-4 w-4" }),
+          t("automation.index.create_button")
+        ] }) })
+      ] }),
+      workflows.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "text-muted-foreground flex flex-col items-center gap-2 py-16", children: [
+        /* @__PURE__ */ jsx(GitBranch, { className: "h-10 w-10 opacity-30" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm", children: t("automation.index.empty") })
+      ] }) : /* @__PURE__ */ jsx("div", { className: "rounded-md border", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+        /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "bg-muted/30 border-b text-left", children: [
+          /* @__PURE__ */ jsx("th", { className: "px-4 py-3 font-medium", children: t("automation.index.column_name") }),
+          /* @__PURE__ */ jsx("th", { className: "px-4 py-3 font-medium", children: t("automation.index.column_status") }),
+          /* @__PURE__ */ jsx("th", { className: "px-4 py-3 font-medium", children: t("automation.index.column_updated") })
+        ] }) }),
+        /* @__PURE__ */ jsx("tbody", { children: workflows.map((workflow) => /* @__PURE__ */ jsxs("tr", { className: "hover:bg-muted/20 border-b last:border-0", children: [
+          /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
+            Link,
+            {
+              href: route("automation.workflows.show", workflow.id),
+              className: "font-medium underline-offset-2 hover:underline",
+              children: workflow.name
+            }
+          ) }),
+          /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(Badge, { variant: workflow.is_active ? "default" : "secondary", children: workflow.is_active ? t("automation.index.status_active") : t("automation.index.status_inactive") }) }),
+          /* @__PURE__ */ jsx("td", { className: "text-muted-foreground px-4 py-3", children: new Date(workflow.updated_at).toLocaleString() })
+        ] }, workflow.id)) })
+      ] }) })
+    ] })
+  ] });
+}
+const __vite_glob_0_17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: AutomationIndex
+}, Symbol.toStringTag, { value: "Module" }));
+const SUBJECT_TYPES = ["lead", "contact", "conversation"];
+function EnrollDialog({ enrollRoute }) {
+  const t = useTranslator();
+  const [open, setOpen] = useState(false);
+  const { data, setData, post, processing, errors, reset } = useForm({ subject_type: "lead", subject_id: "" });
+  function submit(e) {
+    e.preventDefault();
+    post(enrollRoute, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setOpen(false);
+        reset();
+      }
+    });
+  }
+  return /* @__PURE__ */ jsxs(Dialog, { open, onOpenChange: setOpen, children: [
+    /* @__PURE__ */ jsx(DialogTrigger, { asChild: true, children: /* @__PURE__ */ jsx(Button, { type: "button", variant: "outline", children: t("automation.canvas.run_manually") }) }),
+    /* @__PURE__ */ jsxs(DialogContent, { className: "sm:max-w-sm", children: [
+      /* @__PURE__ */ jsx(DialogHeader, { children: /* @__PURE__ */ jsx(DialogTitle, { children: t("automation.enroll.title") }) }),
+      /* @__PURE__ */ jsxs("form", { onSubmit: submit, className: "space-y-3", children: [
+        /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsx(Label, { children: t("automation.enroll.subject_type") }),
+          /* @__PURE__ */ jsxs(Select, { value: data.subject_type, onValueChange: (v) => setData("subject_type", v), children: [
+            /* @__PURE__ */ jsx(SelectTrigger, { children: /* @__PURE__ */ jsx(SelectValue, {}) }),
+            /* @__PURE__ */ jsx(SelectContent, { children: SUBJECT_TYPES.map((type) => /* @__PURE__ */ jsx(SelectItem, { value: type, children: type }, type)) })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsx(Label, { children: t("automation.enroll.subject_id") }),
+          /* @__PURE__ */ jsx(Input, { value: data.subject_id, onChange: (e) => setData("subject_id", e.target.value), placeholder: "uuid" }),
+          errors.subject_id && /* @__PURE__ */ jsx("p", { className: "text-destructive text-xs", children: errors.subject_id })
+        ] }),
+        /* @__PURE__ */ jsx(DialogFooter, { children: /* @__PURE__ */ jsx(Button, { type: "submit", disabled: processing, children: t("automation.enroll.submit") }) })
+      ] })
+    ] })
+  ] });
+}
+function AutomationShow({ workflow, pipelines, members }) {
+  const t = useTranslator();
+  const breadcrumbs2 = [
+    { title: t("automation.title.index"), href: route("automation.workflows.index") },
+    { title: workflow.name, href: route("automation.workflows.show", workflow.id) }
+  ];
+  const [processing, setProcessing] = useState(false);
+  const [errors, setErrors] = useState({});
+  function handleSave(data) {
+    router.put(route("automation.workflows.update", workflow.id), data, {
+      preserveScroll: true,
+      onStart: () => setProcessing(true),
+      onError: (e) => setErrors(e),
+      onFinish: () => setProcessing(false)
+    });
+  }
+  function handleDelete() {
+    if (!confirm(t("automation.canvas.delete_confirm"))) return;
+    router.delete(route("automation.workflows.destroy", workflow.id));
+  }
+  return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
+    /* @__PURE__ */ jsx(Head, { title: workflow.name }),
+    /* @__PURE__ */ jsx("div", { className: "flex min-h-0 flex-1 flex-col", children: /* @__PURE__ */ jsx(
+      WorkflowCanvas,
+      {
+        initialGraph: workflow.graph,
+        initialName: workflow.name,
+        initialIsActive: workflow.is_active,
+        pipelines,
+        members,
+        saving: processing,
+        errors,
+        onSave: handleSave,
+        headerActions: /* @__PURE__ */ jsxs(Fragment, { children: [
+          /* @__PURE__ */ jsx(EnrollDialog, { enrollRoute: route("automation.workflows.enroll", workflow.id) }),
+          /* @__PURE__ */ jsx(Button, { type: "button", variant: "destructive", size: "icon", onClick: handleDelete, title: t("automation.canvas.delete"), children: /* @__PURE__ */ jsx(Trash2, { className: "h-4 w-4" }) })
+        ] })
+      }
+    ) })
+  ] });
+}
+const __vite_glob_0_18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: AutomationShow
+}, Symbol.toStringTag, { value: "Module" }));
 function AdminWorkspacePlans({ workspace, items, channel_usage }) {
   const grant = (itemCode) => {
     router.post(`/admin/workspaces/${workspace.id}/plans`, { item_code: itemCode });
@@ -2847,23 +3550,7 @@ function AdminWorkspacePlans({ workspace, items, channel_usage }) {
                 /* @__PURE__ */ jsx(TableCell, { className: "tabular-nums", children: item.price_cents === 0 ? "Miễn phí" : `${item.price_cents.toLocaleString()} ${item.currency}` }),
                 /* @__PURE__ */ jsx(TableCell, { children: /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-1", children: item.flags.map((flag) => /* @__PURE__ */ jsx(Badge, { variant: "secondary", className: "text-xs", children: flag }, flag)) }) }),
                 /* @__PURE__ */ jsx(TableCell, { children: item.active ? /* @__PURE__ */ jsx(Badge, { variant: "default", children: "Đang dùng" }) : /* @__PURE__ */ jsx(Badge, { variant: "outline", children: "Chưa cấp" }) }),
-                /* @__PURE__ */ jsx(TableCell, { className: "text-right", children: item.active ? /* @__PURE__ */ jsx(
-                  Button,
-                  {
-                    size: "sm",
-                    variant: "destructive",
-                    onClick: () => revoke(item.code),
-                    children: "Thu hồi"
-                  }
-                ) : /* @__PURE__ */ jsx(
-                  Button,
-                  {
-                    size: "sm",
-                    variant: "default",
-                    onClick: () => grant(item.code),
-                    children: "Cấp gói"
-                  }
-                ) })
+                /* @__PURE__ */ jsx(TableCell, { className: "text-right", children: item.active ? /* @__PURE__ */ jsx(Button, { size: "sm", variant: "destructive", onClick: () => revoke(item.code), children: "Thu hồi" }) : /* @__PURE__ */ jsx(Button, { size: "sm", variant: "default", onClick: () => grant(item.code), children: "Cấp gói" }) })
               ] }, item.id))
             ] })
           ] }) })
@@ -2872,7 +3559,7 @@ function AdminWorkspacePlans({ workspace, items, channel_usage }) {
     }
   );
 }
-const __vite_glob_0_16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: AdminWorkspacePlans
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3024,20 +3711,6 @@ function QuickCreateLookup({ storeRoute, triggerLabel, dialogTitle, placeholder,
     ] })
   ] });
 }
-const Textarea = React.forwardRef(({ className, ...props }, ref) => {
-  return /* @__PURE__ */ jsx(
-    "textarea",
-    {
-      className: cn(
-        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        className
-      ),
-      ref,
-      ...props
-    }
-  );
-});
-Textarea.displayName = "Textarea";
 function CustomFieldInput({ definition, value, error, onChange, disabled = false }) {
   const t = useTranslator();
   const label = /* @__PURE__ */ jsxs(Label, { className: "text-sm font-medium", children: [
@@ -3409,7 +4082,7 @@ function ClientCreate({ groups, clientFieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ClientCreate
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3437,7 +4110,7 @@ function ClientEdit({ client, groups, clientFieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ClientEdit
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3539,7 +4212,7 @@ function ClientGroups({ groups }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ClientGroups
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3659,7 +4332,7 @@ function ClientsIndex({ clients, groups, filters }) {
     ] })
   ] });
 }
-const __vite_glob_0_20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ClientsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4014,43 +4687,6 @@ function VaultList({ clientId, entries, canEdit }) {
     ] }) })
   ] });
 }
-const Tabs = TabsPrimitive.Root;
-const TabsList = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
-  TabsPrimitive.List,
-  {
-    ref,
-    className: cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className
-    ),
-    ...props
-  }
-));
-TabsList.displayName = TabsPrimitive.List.displayName;
-const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
-  TabsPrimitive.Trigger,
-  {
-    ref,
-    className: cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-      className
-    ),
-    ...props
-  }
-));
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
-const TabsContent = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
-  TabsPrimitive.Content,
-  {
-    ref,
-    className: cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    ),
-    ...props
-  }
-));
-TabsContent.displayName = TabsPrimitive.Content.displayName;
 function ActivityItemCard({ activity }) {
   const t = useTranslator();
   const timeAgo = formatDistanceToNow(new Date(activity.occurred_at), { addSuffix: true });
@@ -4328,6 +4964,43 @@ function TagInput({ tags: initialTags, attachableType, attachableId, availableTa
     ] })
   ] });
 }
+const Tabs = TabsPrimitive.Root;
+const TabsList = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
+  TabsPrimitive.List,
+  {
+    ref,
+    className: cn(
+      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      className
+    ),
+    ...props
+  }
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
+const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
+  TabsPrimitive.Trigger,
+  {
+    ref,
+    className: cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+      className
+    ),
+    ...props
+  }
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+const TabsContent = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
+  TabsPrimitive.Content,
+  {
+    ref,
+    className: cn(
+      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      className
+    ),
+    ...props
+  }
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
 function ClientShow({
   client,
   clientFieldDefs,
@@ -4451,7 +5124,7 @@ function ClientShow({
     ] })
   ] });
 }
-const __vite_glob_0_21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ClientShow
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4504,7 +5177,7 @@ function LeadAssignPopover({ lead, members }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadAssignPopover
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4555,7 +5228,7 @@ function LeadCard({ lead, draggable, onDragStart }) {
     }
   );
 }
-const __vite_glob_0_23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadCard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4648,7 +5321,7 @@ function LeadConvertDialog({ lead, clients }) {
     ] })
   ] });
 }
-const __vite_glob_0_24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadConvertDialog
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4856,7 +5529,7 @@ function LeadForm({ lead, pipelines, sources, members, fieldDefs, submitRoute, m
     ] }) })
   ] });
 }
-const __vite_glob_0_25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4884,7 +5557,7 @@ function LeadCreate({ pipelines, sources, members, fieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadCreate
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4914,7 +5587,7 @@ function LeadEdit({ lead, pipelines, sources, members, fieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadEdit
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5046,7 +5719,7 @@ function LeadsIndex({ leads, pipelines, filters }) {
     ] })
   ] });
 }
-const __vite_glob_0_28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5156,7 +5829,7 @@ function LeadsKanban({ board, activePipeline, pipelines }) {
     ] })
   ] });
 }
-const __vite_glob_0_29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadsKanban
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5318,7 +5991,7 @@ function LeadShow({ lead, fieldDefs, sources, members, clients, allPipelineStage
     ] })
   ] });
 }
-const __vite_glob_0_30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadShow
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5556,7 +6229,7 @@ function Dashboard() {
     ] })
   ] });
 }
-const __vite_glob_0_31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Dashboard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5629,28 +6302,6 @@ function HeadingSmall({ title, description }) {
     /* @__PURE__ */ jsx("h3", { className: "mb-0.5 text-base font-medium", children: title }),
     description && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: description })
   ] });
-}
-function Switch({ className, ...props }) {
-  return /* @__PURE__ */ jsx(
-    SwitchPrimitive.Root,
-    {
-      "data-slot": "switch",
-      className: cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      ),
-      ...props,
-      children: /* @__PURE__ */ jsx(
-        SwitchPrimitive.Thumb,
-        {
-          "data-slot": "switch-thumb",
-          className: cn(
-            "bg-background pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
-          )
-        }
-      )
-    }
-  );
 }
 function Heading({ title, description }) {
   return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsxs("div", { className: "mb-8 space-y-0.5", children: [
@@ -5816,7 +6467,7 @@ function EmailTemplateEdit({ template, mergeTokens }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: EmailTemplateEdit
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5857,26 +6508,1261 @@ function EmailTemplatesIndex({ templates, types }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_36 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: EmailTemplatesIndex
 }, Symbol.toStringTag, { value: "Module" }));
+const CHANNEL_BADGE = {
+  zalo_personal: "Z",
+  messenger: "M",
+  tiktok: "T"
+};
+function AccountRail({ accounts, totalCount, activeAccountId, onSelect }) {
+  const activeAccounts = accounts.filter((acc) => acc.status !== "needs_qr");
+  if (activeAccounts.length === 0) return null;
+  return /* @__PURE__ */ jsxs("div", { className: "border-b", children: [
+    /* @__PURE__ */ jsx(RailRow, { label: "Tất cả hộp thư", count: totalCount, active: activeAccountId === null, onClick: () => onSelect(null) }),
+    activeAccounts.map((acc) => /* @__PURE__ */ jsx(
+      RailRow,
+      {
+        label: acc.display_name ?? "Tài khoản chưa đặt tên",
+        count: acc.conversations_count,
+        active: activeAccountId === acc.id,
+        badge: CHANNEL_BADGE[acc.channel] ?? "?",
+        needsAttention: acc.status === "session_lost" || acc.status === "needs_qr",
+        onClick: () => onSelect(acc.id)
+      },
+      acc.id
+    ))
+  ] });
+}
+function RailRow({
+  label,
+  count,
+  active,
+  badge,
+  needsAttention,
+  onClick
+}) {
+  return /* @__PURE__ */ jsxs(
+    "button",
+    {
+      type: "button",
+      className: cn("hover:bg-muted/50 flex w-full items-center justify-between px-4 py-2 text-sm", active && "bg-muted font-medium"),
+      onClick,
+      children: [
+        /* @__PURE__ */ jsxs("span", { className: "flex min-w-0 items-center gap-2", children: [
+          badge && /* @__PURE__ */ jsx("span", { className: "bg-muted-foreground/10 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold", children: badge }),
+          /* @__PURE__ */ jsx("span", { className: "truncate", children: label }),
+          needsAttention && /* @__PURE__ */ jsx("span", { className: "h-1.5 w-1.5 shrink-0 rounded-full bg-red-500", title: "Cần quét lại QR" })
+        ] }),
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground shrink-0 text-xs", children: count })
+      ]
+    }
+  );
+}
+const REACTION_PALETTE = ["/-heart", "/-strong", ":>", ":o", ":-((", ":-h"];
+const REACTION_ICON_EMOJI = {
+  "/-heart": "❤️",
+  "/-strong": "👍",
+  ":>": "😆",
+  ":o": "😮",
+  ":-((": "😢",
+  ":-h": "😡",
+  ":-*": "😘",
+  ":')": "🥲",
+  "/-ok": "👌",
+  "/-rose": "🌹",
+  "/-break": "💔",
+  "/-weak": "👎",
+  ":))": "🤣"
+};
+function reactionEmoji(icon) {
+  return REACTION_ICON_EMOJI[icon] ?? icon;
+}
+function reactionChips(reactions) {
+  const chips = [];
+  for (const r of reactions ?? []) {
+    const emoji = reactionEmoji(r.icon);
+    const hit = chips.find((c) => c.emoji === emoji);
+    if (hit) hit.count += 1;
+    else chips.push({ emoji, count: 1 });
+  }
+  return chips;
+}
+function isStreamMessage(item) {
+  return item.item_type === "message";
+}
+function isOutbound(msg) {
+  return msg.direction !== "in";
+}
+function isGroup(peer) {
+  return peer.thread_type === 1;
+}
+function initials(name) {
+  const clean = (name ?? "").trim();
+  if (!clean) return "?";
+  const parts = clean.split(/\s+/).filter(Boolean);
+  const chars = parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : clean.slice(0, 2);
+  return chars.toUpperCase();
+}
+function messageTime(msg) {
+  const iso = msg.platform_sent_at ?? msg.created_at;
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+function dayLabel(msg) {
+  const iso = msg.platform_sent_at ?? msg.created_at;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? "Hôm nay" : d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function messageBodyIsRedundant(msg) {
+  return msg.type === "sticker" || msg.type === "bank_card";
+}
+function messagePreview(msg) {
+  if (!messageBodyIsRedundant(msg) && msg.body && msg.body.trim()) return msg.body;
+  switch (msg.type) {
+    case "image":
+      return "[Hình ảnh]";
+    case "gif":
+      return "[GIF]";
+    case "video":
+      return "[Video]";
+    case "audio":
+      return "[Tin nhắn thoại]";
+    case "file":
+      return "[Tệp đính kèm]";
+    case "sticker":
+      return "[Sticker]";
+    case "business_card":
+      return "[Danh thiếp]";
+    case "bank_card":
+      return "[Tài khoản ngân hàng]";
+    case "call":
+      return "[Cuộc gọi]";
+    default:
+      return "";
+  }
+}
+function ChatAvatar({ name, src, className }) {
+  return /* @__PURE__ */ jsxs(Avatar, { className: cn("h-8 w-8", className), children: [
+    src ? /* @__PURE__ */ jsx(AvatarImage, { src, alt: name ?? "" }) : null,
+    /* @__PURE__ */ jsx(AvatarFallback, { className: "text-[11px]", children: initials(name) })
+  ] });
+}
+function formatTime(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+function GapMarker({ event }) {
+  var _a;
+  if (event.kind === "group_system" || event.kind === "friend_system") {
+    return /* @__PURE__ */ jsx("div", { className: "my-2 flex items-center justify-center", children: /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground flex items-center gap-1.5 text-[11px]", children: [
+      /* @__PURE__ */ jsx(Info, { className: "h-3 w-3" }),
+      ((_a = event.payload) == null ? void 0 : _a.label) ?? "Sự kiện hệ thống",
+      " · ",
+      formatTime(event.stream_at)
+    ] }) });
+  }
+  const start = formatTime(event.gap_started_at);
+  const end = event.gap_ended_at ? formatTime(event.gap_ended_at) : null;
+  return /* @__PURE__ */ jsx("div", { className: "my-3 flex items-center justify-center", children: /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-500", children: [
+    /* @__PURE__ */ jsx(AlertTriangle, { className: "h-3 w-3" }),
+    "Có thể thiếu tin nhắn · ",
+    start,
+    end ? ` – ${end}` : ""
+  ] }) });
+}
+function TypeLabel({ text }) {
+  return /* @__PURE__ */ jsx("span", { className: "text-xs opacity-70", children: text });
+}
+function AudioMessage({ msg }) {
+  if (!msg.media_url) return /* @__PURE__ */ jsx(TypeLabel, { text: "[Tin nhắn thoại]" });
+  return /* @__PURE__ */ jsx("audio", { src: msg.media_url, controls: true, className: "max-w-[220px]" });
+}
+function BankCardMessage({ msg }) {
+  var _a;
+  const card = (_a = msg.media_meta) == null ? void 0 : _a.bank_card;
+  const [copied, setCopied] = useState(false);
+  if (!card || !card.account_number && !card.bank_name) {
+    return /* @__PURE__ */ jsx(TypeLabel, { text: "[Tài khoản ngân hàng]" });
+  }
+  const copyAccountNumber = () => {
+    if (!card.account_number || !navigator.clipboard) return;
+    navigator.clipboard.writeText(card.account_number).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {
+    });
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "w-72 max-w-full rounded-xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-3.5 text-white shadow-md", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+      card.logo_url ? /* @__PURE__ */ jsx("img", { src: card.logo_url, alt: "", className: "h-8 w-8 shrink-0 rounded-md bg-white object-contain p-0.5", loading: "lazy" }) : /* @__PURE__ */ jsx("span", { className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white/10", children: /* @__PURE__ */ jsx(Landmark, { className: "h-4.5 w-4.5" }) }),
+      /* @__PURE__ */ jsx("span", { className: "text-sm leading-tight font-medium", children: card.bank_name ?? "Tài khoản ngân hàng" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-3 flex items-end justify-between gap-3", children: [
+      /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+        card.account_number && /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsx("span", { className: "font-mono text-base font-semibold tracking-wider", children: card.account_number }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: copyAccountNumber,
+              className: "rounded p-1 opacity-70 transition-opacity hover:bg-white/10 hover:opacity-100",
+              "aria-label": "Sao chép số tài khoản",
+              title: "Sao chép số tài khoản",
+              children: copied ? /* @__PURE__ */ jsx(Check, { className: "h-3.5 w-3.5 text-emerald-400" }) : /* @__PURE__ */ jsx(Copy, { className: "h-3.5 w-3.5" })
+            }
+          )
+        ] }),
+        card.account_holder && /* @__PURE__ */ jsx("div", { className: "mt-0.5 truncate text-xs text-white/70", children: card.account_holder })
+      ] }),
+      card.qr_url && /* @__PURE__ */ jsx("a", { href: card.qr_url, target: "_blank", rel: "noreferrer", className: "shrink-0", title: "Mở ảnh QR", children: /* @__PURE__ */ jsx(
+        "img",
+        {
+          src: card.qr_url,
+          alt: "VietQR chuyển khoản",
+          className: "h-20 w-20 rounded-md border-2 border-white/25 bg-white object-contain",
+          loading: "lazy"
+        }
+      ) })
+    ] })
+  ] });
+}
+function BusinessCardMessage({ msg }) {
+  var _a;
+  const card = ((_a = msg.media_meta) == null ? void 0 : _a.business_card) ?? {};
+  return /* @__PURE__ */ jsxs("div", { className: "flex min-w-[220px] items-center gap-3", children: [
+    card.thumbnail ? /* @__PURE__ */ jsx("img", { src: card.thumbnail, alt: card.name ?? "Danh thiếp", className: "h-10 w-10 shrink-0 rounded-full object-cover", loading: "lazy" }) : /* @__PURE__ */ jsx("span", { className: "bg-background/80 flex h-10 w-10 shrink-0 items-center justify-center rounded-full", children: /* @__PURE__ */ jsx(Contact, { className: "h-5 w-5 opacity-80" }) }),
+    /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1 leading-tight", children: [
+      /* @__PURE__ */ jsx("div", { className: "truncate font-medium", children: card.name ?? "Danh thiếp" }),
+      card.title && /* @__PURE__ */ jsx("div", { className: "truncate text-xs opacity-70", children: card.title }),
+      card.phone && /* @__PURE__ */ jsx("div", { className: "text-xs opacity-80", children: card.phone }),
+      card.url && /* @__PURE__ */ jsx("a", { href: card.url, target: "_blank", rel: "noreferrer", className: "text-xs underline opacity-80 hover:opacity-100", children: "Xem trên Zalo" })
+    ] }),
+    card.qr_code_url && /* @__PURE__ */ jsx("a", { href: card.qr_code_url, target: "_blank", rel: "noreferrer", className: "shrink-0", children: /* @__PURE__ */ jsx("img", { src: card.qr_code_url, alt: "QR danh thiếp", className: "h-14 w-14 rounded bg-white object-contain p-0.5", loading: "lazy" }) })
+  ] });
+}
+function formatDuration$1(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+function callSummary(call) {
+  const video = call.media === "video" || call.type === 2 || call.type === "video";
+  const seconds = call.duration_seconds ?? call.duration ?? 0;
+  const outcome = call.outcome ?? (seconds > 0 ? "completed" : "missed");
+  const kind = video ? "video" : "thoại";
+  switch (outcome) {
+    case "completed":
+      return { label: `Cuộc gọi ${kind} · ${formatDuration$1(seconds)}`, missed: false, video };
+    case "busy":
+      return { label: `Cuộc gọi ${kind} · máy bận`, missed: true, video };
+    case "canceled":
+      return { label: `Cuộc gọi ${kind} đã hủy`, missed: true, video };
+    default:
+      return { label: `Cuộc gọi ${kind} nhỡ`, missed: true, video };
+  }
+}
+function CallMessage({ msg }) {
+  var _a;
+  const { label, missed, video } = callSummary(((_a = msg.media_meta) == null ? void 0 : _a.call) ?? {});
+  const Icon = missed ? PhoneMissed : video ? Video : Phone;
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+    /* @__PURE__ */ jsx(Icon, { className: cn("h-4 w-4", missed ? "text-red-400" : "opacity-80") }),
+    /* @__PURE__ */ jsx("span", { children: label })
+  ] });
+}
+function FileMessage({ msg, mine }) {
+  var _a;
+  const name = ((_a = msg.media_meta) == null ? void 0 : _a.media_filename) ?? "Tệp đính kèm";
+  const dotIndex = name.lastIndexOf(".");
+  const extension = dotIndex > 0 && dotIndex < name.length - 1 ? name.slice(dotIndex + 1).toUpperCase() : null;
+  return /* @__PURE__ */ jsxs(
+    "a",
+    {
+      href: msg.media_url ?? "#",
+      target: "_blank",
+      rel: "noreferrer",
+      className: cn("flex items-center gap-2.5", mine ? "text-primary-foreground" : "text-foreground"),
+      children: [
+        /* @__PURE__ */ jsx("span", { className: cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", mine ? "bg-white/15" : "bg-background/80"), children: /* @__PURE__ */ jsx(FileText, { className: "h-5 w-5 opacity-80" }) }),
+        /* @__PURE__ */ jsxs("span", { className: "min-w-0 leading-tight", children: [
+          /* @__PURE__ */ jsx("span", { className: "block max-w-[200px] truncate font-medium", children: name }),
+          /* @__PURE__ */ jsx("span", { className: "block text-xs opacity-70", children: extension ? `${extension} · Bấm để tải` : "Bấm để tải" })
+        ] }),
+        /* @__PURE__ */ jsx(Download, { className: "h-4 w-4 shrink-0 opacity-60" })
+      ]
+    }
+  );
+}
+function ImageMessage({ msg }) {
+  if (!msg.media_url) return /* @__PURE__ */ jsx(TypeLabel, { text: msg.type === "gif" ? "[GIF]" : "[Hình ảnh]" });
+  return /* @__PURE__ */ jsx("a", { href: msg.media_url, target: "_blank", rel: "noreferrer", className: "block", children: /* @__PURE__ */ jsx(
+    "img",
+    {
+      src: msg.media_url,
+      alt: msg.body ?? "image",
+      className: "max-h-72 max-w-full rounded-lg object-cover",
+      loading: "lazy",
+      decoding: "async"
+    }
+  ) });
+}
+function StickerMessage({ msg }) {
+  var _a;
+  const sticker = (_a = msg.media_meta) == null ? void 0 : _a.sticker;
+  const url = (sticker == null ? void 0 : sticker.url) ?? (sticker == null ? void 0 : sticker.thumbnail) ?? msg.media_url;
+  if (!url) return /* @__PURE__ */ jsx(TypeLabel, { text: "[Sticker]" });
+  return /* @__PURE__ */ jsx("img", { src: url, alt: (sticker == null ? void 0 : sticker.description) ?? "sticker", className: "h-28 w-28 object-contain", loading: "lazy" });
+}
+function VideoMessage({ msg }) {
+  if (!msg.media_url) return /* @__PURE__ */ jsx(TypeLabel, { text: "[Video]" });
+  return /* @__PURE__ */ jsx("video", { src: msg.media_url, controls: true, preload: "none", className: "max-h-72 max-w-full rounded-lg" });
+}
+function attachmentIsBare(msg) {
+  return msg.type === "sticker" || msg.type === "image" || msg.type === "gif" || msg.type === "video" || msg.type === "bank_card";
+}
+function MessageAttachment({ msg, mine }) {
+  switch (msg.type) {
+    case "sticker":
+      return /* @__PURE__ */ jsx(StickerMessage, { msg });
+    case "image":
+    case "gif":
+      return /* @__PURE__ */ jsx(ImageMessage, { msg });
+    case "video":
+      return /* @__PURE__ */ jsx(VideoMessage, { msg });
+    case "audio":
+      return /* @__PURE__ */ jsx(AudioMessage, { msg });
+    case "file":
+      return /* @__PURE__ */ jsx(FileMessage, { msg, mine });
+    case "business_card":
+      return /* @__PURE__ */ jsx(BusinessCardMessage, { msg });
+    case "bank_card":
+      return /* @__PURE__ */ jsx(BankCardMessage, { msg });
+    case "call":
+      return /* @__PURE__ */ jsx(CallMessage, { msg });
+    default:
+      return null;
+  }
+}
+function quoteLabel(quote) {
+  if (quote.text && quote.text.trim()) return quote.text;
+  const t = `${quote.attach_type ?? ""} ${quote.msg_type ?? ""}`;
+  if (/photo|image|gif/i.test(t)) return "[Hình ảnh]";
+  if (/video/i.test(t)) return "[Video]";
+  if (/voice|audio/i.test(t)) return "[Tin nhắn thoại]";
+  if (/file/i.test(t)) return "[Tệp đính kèm]";
+  if (/sticker/i.test(t) || quote.sticker_ref) return "[Sticker]";
+  return quote.thumb ? "[Hình ảnh]" : "Tin được trả lời";
+}
+function MessageQuote({ quote, mine }) {
+  var _a;
+  const sender = quote.sender_name ?? ((_a = quote.sender) == null ? void 0 : _a.name) ?? null;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: cn(
+        "mb-1 flex items-center gap-2 rounded border-l-2 py-0.5 pr-2 pl-2 text-xs",
+        mine ? "border-primary-foreground/50 bg-primary-foreground/10 text-primary-foreground/85" : "border-foreground/30 bg-foreground/5 text-muted-foreground"
+      ),
+      children: [
+        quote.thumb && /* @__PURE__ */ jsx("img", { src: quote.thumb, alt: "", className: "h-9 w-9 shrink-0 rounded object-cover", loading: "lazy", decoding: "async" }),
+        /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+          sender && /* @__PURE__ */ jsx("div", { className: "font-medium", children: sender }),
+          /* @__PURE__ */ jsx("div", { className: "line-clamp-2 break-words opacity-90", children: quoteLabel(quote) })
+        ] })
+      ]
+    }
+  );
+}
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+const TRAILING_PUNCTUATION = /[.,;:!?)\]]+$/;
+const IMAGE_URL_PATTERN = /\.(png|jpe?g|gif|webp)($|\?)/i;
+const LINK_DISPLAY_MAX = 64;
+const LINK_DISPLAY_HEAD = 48;
+function truncateUrlForDisplay(url) {
+  if (url.length <= LINK_DISPLAY_MAX) return url;
+  return `${url.slice(0, LINK_DISPLAY_HEAD)}…${url.slice(-12)}`;
+}
+function LinkifiedText({ text }) {
+  const cleaned = text.replace(/^\[Link\]\s*/, "");
+  const parts = cleaned.split(URL_PATTERN);
+  if (parts.length === 1) return /* @__PURE__ */ jsx(Fragment, { children: cleaned });
+  return /* @__PURE__ */ jsx(Fragment, { children: parts.map((part, index) => {
+    var _a;
+    if (!part.startsWith("http://") && !part.startsWith("https://")) {
+      return /* @__PURE__ */ jsx(Fragment$1, { children: part }, index);
+    }
+    const trailing = ((_a = part.match(TRAILING_PUNCTUATION)) == null ? void 0 : _a[0]) ?? "";
+    const url = trailing ? part.slice(0, -trailing.length) : part;
+    return /* @__PURE__ */ jsxs(Fragment$1, { children: [
+      IMAGE_URL_PATTERN.test(url) ? /* @__PURE__ */ jsx(ImageLink, { url }) : /* @__PURE__ */ jsx(
+        "a",
+        {
+          href: url,
+          target: "_blank",
+          rel: "noreferrer",
+          title: url,
+          className: "underline underline-offset-2 opacity-90 hover:opacity-100",
+          children: truncateUrlForDisplay(url)
+        }
+      ),
+      trailing
+    ] }, index);
+  }) });
+}
+function ImageLink({ url }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return /* @__PURE__ */ jsx("a", { href: url, target: "_blank", rel: "noreferrer", className: "underline underline-offset-2 opacity-90 hover:opacity-100", children: url });
+  }
+  return /* @__PURE__ */ jsx("a", { href: url, target: "_blank", rel: "noreferrer", className: "block w-fit", children: /* @__PURE__ */ jsx(
+    "img",
+    {
+      src: url,
+      alt: "",
+      className: "my-1 max-h-72 max-w-full rounded-lg object-contain",
+      loading: "lazy",
+      decoding: "async",
+      onError: () => setFailed(true)
+    }
+  ) });
+}
+function MessageBubble({ msg, peer, showSender, onReply, onReact }) {
+  var _a, _b;
+  const mine = isOutbound(msg);
+  const group = isGroup(peer);
+  const recalled = !!msg.recalled_at;
+  const hasBody = !messageBodyIsRedundant(msg) && !!(msg.body && msg.body.trim());
+  const quote = ((_a = msg.media_meta) == null ? void 0 : _a.quote) ?? null;
+  const bare = !recalled && attachmentIsBare(msg) && !hasBody && !quote;
+  const hasMedia = msg.type !== "text";
+  const chips = reactionChips(msg.reactions);
+  const [showPalette, setShowPalette] = useState(false);
+  const canInteract = !recalled && msg.quotable === true;
+  const participant = group && msg.sender_uid ? (_b = peer.participants) == null ? void 0 : _b[msg.sender_uid] : null;
+  const senderName = group ? msg.sender_name ?? (participant == null ? void 0 : participant.name) ?? peer.peer_name : peer.peer_name;
+  const senderAvatar = group ? (participant == null ? void 0 : participant.avatar) ?? null : peer.peer_avatar_url;
+  return /* @__PURE__ */ jsxs("div", { className: cn("group flex w-full gap-2", mine ? "justify-end" : "justify-start"), children: [
+    !mine && /* @__PURE__ */ jsx("div", { className: "w-8 shrink-0 self-end", children: showSender ? /* @__PURE__ */ jsx(ChatAvatar, { name: senderName, src: senderAvatar }) : null }),
+    mine && canInteract && (onReply || onReact) && /* @__PURE__ */ jsx(BubbleActions, { msg, onReply, onReact, showPalette, setShowPalette }),
+    /* @__PURE__ */ jsxs("div", { className: cn("flex max-w-[72%] min-w-0 flex-col", mine ? "items-end" : "items-start"), children: [
+      !mine && group && showSender && senderName && /* @__PURE__ */ jsx("span", { className: "text-muted-foreground mb-0.5 px-1 text-xs", children: senderName }),
+      /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: cn(
+            "w-fit max-w-full text-sm",
+            bare ? "p-0" : cn("rounded-2xl px-3 py-2", mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"),
+            msg.pending && "opacity-70"
+          ),
+          children: recalled ? (
+            // P03 — tin thu hồi: ẩn body/media, dòng italic trung tính
+            /* @__PURE__ */ jsxs("p", { className: "flex items-center gap-1 italic opacity-70", children: [
+              /* @__PURE__ */ jsx(Ban, { className: "h-3.5 w-3.5" }),
+              " Tin nhắn đã được thu hồi"
+            ] })
+          ) : /* @__PURE__ */ jsxs(Fragment, { children: [
+            quote && /* @__PURE__ */ jsx(MessageQuote, { quote, mine }),
+            /* @__PURE__ */ jsx(MessageAttachment, { msg, mine }),
+            hasBody && // overflow-wrap:anywhere (không phải break-word): tính cả vào intrinsic min-content
+            // → URL dài không phá width; break-word chỉ bẻ khi render, không chặn nong khung
+            /* @__PURE__ */ jsx("p", { className: cn("[overflow-wrap:anywhere] whitespace-pre-wrap", hasMedia && !bare ? "mt-1" : ""), children: /* @__PURE__ */ jsx(LinkifiedText, { text: msg.body }) })
+          ] })
+        }
+      ),
+      chips.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-0.5 flex gap-1 px-1", children: chips.map((c) => /* @__PURE__ */ jsxs("span", { className: "bg-muted rounded-full border px-1.5 py-0.5 text-[11px] leading-none", children: [
+        c.emoji,
+        c.count > 1 && /* @__PURE__ */ jsx("span", { className: "text-muted-foreground ml-0.5", children: c.count })
+      ] }, c.emoji)) }),
+      /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground mt-0.5 flex items-center gap-1 px-1 text-[10px]", children: [
+        messageTime(msg),
+        mine && msg.pending && /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-0.5 opacity-80", children: [
+          /* @__PURE__ */ jsx(Clock3, { className: "h-3 w-3" }),
+          " Đang gửi"
+        ] }),
+        mine && !group && !recalled && !msg.pending && (msg.seen_at ? /* @__PURE__ */ jsxs("span", { className: "text-primary flex items-center gap-0.5", children: [
+          /* @__PURE__ */ jsx(CheckCheck, { className: "h-3 w-3" }),
+          " Đã xem"
+        ] }) : msg.delivered_at ? /* @__PURE__ */ jsx(CheckCheck, { className: "h-3 w-3" }) : msg.source_id ? /* @__PURE__ */ jsx(Check, { className: "h-3 w-3" }) : null)
+      ] })
+    ] }),
+    !mine && canInteract && (onReply || onReact) && /* @__PURE__ */ jsx(BubbleActions, { msg, onReply, onReact, showPalette, setShowPalette })
+  ] });
+}
+function BubbleActions({
+  msg,
+  onReply,
+  onReact,
+  showPalette,
+  setShowPalette
+}) {
+  return /* @__PURE__ */ jsxs("div", { className: "relative flex items-center gap-0.5 self-center opacity-0 transition-opacity group-hover:opacity-100", children: [
+    onReply && /* @__PURE__ */ jsx("button", { type: "button", className: "text-muted-foreground hover:bg-muted rounded p-1", onClick: () => onReply(msg), "aria-label": "Trả lời", children: /* @__PURE__ */ jsx(Reply, { className: "h-3.5 w-3.5" }) }),
+    onReact && /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        className: "text-muted-foreground hover:bg-muted rounded p-1",
+        onClick: () => setShowPalette(!showPalette),
+        "aria-label": "Thả cảm xúc",
+        children: /* @__PURE__ */ jsx(SmilePlus, { className: "h-3.5 w-3.5" })
+      }
+    ),
+    showPalette && onReact && /* @__PURE__ */ jsx("div", { className: "bg-popover absolute bottom-full left-0 z-10 mb-1 flex gap-1 rounded-full border px-2 py-1 shadow-md", children: REACTION_PALETTE.map((icon) => /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        className: "hover:scale-125",
+        onClick: () => {
+          setShowPalette(false);
+          onReact(msg, icon);
+        },
+        children: reactionEmoji(icon)
+      },
+      icon
+    )) })
+  ] });
+}
+const NEAR_BOTTOM_PX = 160;
+const LOAD_MORE_THRESHOLD_PX = 80;
+function ChatThread({ items, peer, loading, hasMore, loadingMore, onLoadMore, onReply, onReact }) {
+  const containerRef = useRef(null);
+  const anchorRef = useRef({
+    firstId: null,
+    lastId: null,
+    scrollHeight: 0
+  });
+  useLayoutEffect(() => {
+    if (items.length === 0) {
+      anchorRef.current = { firstId: null, lastId: null, scrollHeight: 0 };
+      return;
+    }
+    const el = containerRef.current;
+    if (!el) return;
+    const firstId = items[0].id;
+    const lastItem = items[items.length - 1];
+    const prev = anchorRef.current;
+    if (lastItem.id !== prev.lastId) {
+      if (prev.lastId === null) {
+        el.scrollTop = el.scrollHeight;
+      } else {
+        const nearBottom = prev.scrollHeight - (el.scrollTop + el.clientHeight) < NEAR_BOTTOM_PX;
+        if (nearBottom || isStreamMessage(lastItem) && isOutbound(lastItem)) {
+          el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+        }
+      }
+    } else if (firstId !== prev.firstId) {
+      el.scrollTop += el.scrollHeight - prev.scrollHeight;
+    }
+    anchorRef.current = { firstId, lastId: lastItem.id, scrollHeight: el.scrollHeight };
+    if (hasMore && !loadingMore && el.scrollHeight <= el.clientHeight) {
+      onLoadMore == null ? void 0 : onLoadMore();
+    }
+  }, [items]);
+  function handleScroll(e) {
+    if (hasMore && !loadingMore && e.currentTarget.scrollTop < LOAD_MORE_THRESHOLD_PX) {
+      onLoadMore == null ? void 0 : onLoadMore();
+    }
+  }
+  if (loading) {
+    return /* @__PURE__ */ jsx("div", { className: "flex-1 space-y-3 overflow-y-auto p-4", children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs("div", { className: i % 2 ? "flex justify-end" : "flex justify-start gap-2", children: [
+      i % 2 === 0 && /* @__PURE__ */ jsx(Skeleton, { className: "h-8 w-8 rounded-full" }),
+      /* @__PURE__ */ jsx(Skeleton, { className: "h-10 w-48 rounded-2xl" })
+    ] }, i)) });
+  }
+  if (items.length === 0) {
+    return /* @__PURE__ */ jsxs("div", { className: "text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-4 text-sm", children: [
+      /* @__PURE__ */ jsx(MessageCircle, { className: "h-8 w-8 opacity-30" }),
+      "Chưa có tin nhắn nào."
+    ] });
+  }
+  let lastDay = "";
+  let lastMessage = null;
+  return /* @__PURE__ */ jsxs("div", { ref: containerRef, onScroll: handleScroll, className: "flex-1 space-y-1 overflow-y-auto p-4", children: [
+    loadingMore && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground py-1 text-center text-[11px]", children: "Đang tải tin cũ hơn…" }),
+    items.map((item) => {
+      if (!isStreamMessage(item)) {
+        lastMessage = null;
+        return /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx(GapMarker, { event: item }) }, item.id);
+      }
+      const day = dayLabel(item);
+      const showDay = day !== lastDay;
+      lastDay = day;
+      const showSender = showDay || !lastMessage || isOutbound(lastMessage) !== isOutbound(item) || (lastMessage.sender_uid ?? null) !== (item.sender_uid ?? null);
+      lastMessage = item;
+      return /* @__PURE__ */ jsxs("div", { children: [
+        showDay && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground my-3 text-center text-[11px]", children: /* @__PURE__ */ jsx("span", { className: "bg-muted rounded-full px-2 py-0.5", children: day }) }),
+        /* @__PURE__ */ jsx("div", { className: showSender ? "mt-2" : "", children: /* @__PURE__ */ jsx(MessageBubble, { msg: item, peer, showSender, onReply, onReact }) })
+      ] }, item.id);
+    })
+  ] });
+}
+const alertVariants = cva(
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  {
+    variants: {
+      variant: {
+        default: "bg-background text-foreground",
+        destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+const Alert = React.forwardRef(
+  ({ className, variant, ...props }, ref) => /* @__PURE__ */ jsx("div", { ref, role: "alert", className: cn(alertVariants({ variant }), className), ...props })
+);
+Alert.displayName = "Alert";
+const AlertTitle = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx("h5", { ref, className: cn("mb-1 font-medium leading-none tracking-tight", className), ...props }));
+AlertTitle.displayName = "AlertTitle";
+const AlertDescription = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx("div", { ref, className: cn("text-sm [&_p]:leading-relaxed", className), ...props }));
+AlertDescription.displayName = "AlertDescription";
+function ConnectionBanner({ accounts }) {
+  const needsAttention = accounts.filter((acc) => acc.status === "session_lost" || acc.status === "needs_qr");
+  if (needsAttention.length === 0) return null;
+  return /* @__PURE__ */ jsx(Fragment, { children: needsAttention.map((acc) => /* @__PURE__ */ jsxs(Alert, { variant: acc.status === "session_lost" ? "destructive" : "default", className: "rounded-none border-x-0 px-3 py-2", children: [
+    /* @__PURE__ */ jsx(AlertTriangle, { className: "h-4 w-4" }),
+    /* @__PURE__ */ jsxs(AlertDescription, { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("span", { children: [
+        "Tài khoản ",
+        /* @__PURE__ */ jsx("strong", { children: acc.display_name ?? "Zalo" }),
+        " ",
+        acc.status === "session_lost" ? "mất kết nối. Tin nhắn mới có thể chưa nhận được." : "chưa kết nối.",
+        " Cần quét lại QR."
+      ] }),
+      /* @__PURE__ */ jsx(
+        Button,
+        {
+          size: "sm",
+          variant: "outline",
+          className: "ml-3 h-7 shrink-0",
+          onClick: () => router.visit(route("integrations.zalo.index")),
+          children: "Quét QR"
+        }
+      )
+    ] })
+  ] }, acc.id)) });
+}
+function xsrf() {
+  var _a;
+  return decodeURIComponent(((_a = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a[1]) ?? "");
+}
+const JSON_HEADERS = () => ({
+  "X-Requested-With": "XMLHttpRequest",
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  "X-XSRF-TOKEN": xsrf()
+});
+function ConversationPanel({ conversationId }) {
+  var _a;
+  const [data, setData] = useState(null);
+  const [noteInput, setNoteInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const reload = useCallback(() => {
+    fetch(route("inbox.panel", conversationId), {
+      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
+    }).then((r) => r.json()).then(setData).catch(() => {
+    });
+  }, [conversationId]);
+  useEffect(reload, [reload]);
+  function assign(userId) {
+    setBusy(true);
+    fetch(route("inbox.assign", conversationId), {
+      method: "PATCH",
+      headers: JSON_HEADERS(),
+      body: JSON.stringify({ user_id: userId })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        alert(json.message ?? "Không gán được.");
+        return;
+      }
+      setData((prev) => prev ? { ...prev, assigned_user: json.assigned_user } : prev);
+    }).catch(() => alert("Không kết nối được server.")).finally(() => setBusy(false));
+  }
+  function syncTags(names) {
+    setBusy(true);
+    fetch(route("tags.sync"), {
+      method: "POST",
+      headers: JSON_HEADERS(),
+      body: JSON.stringify({ attachable_type: "conversation", attachable_id: conversationId, tags: names })
+    }).then((r) => {
+      if (r.status === 403) alert("Bạn không có quyền quản lý label.");
+      reload();
+    }).catch(() => alert("Không kết nối được server.")).finally(() => setBusy(false));
+  }
+  function addNote() {
+    const body = noteInput.trim();
+    if (!body) return;
+    setBusy(true);
+    fetch(route("notes.store"), {
+      method: "POST",
+      headers: JSON_HEADERS(),
+      body: JSON.stringify({ noteable_type: "conversation", noteable_id: conversationId, body })
+    }).then(() => {
+      setNoteInput("");
+      reload();
+    }).catch(() => alert("Không kết nối được server.")).finally(() => setBusy(false));
+  }
+  if (!data) return null;
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-4 border-t pt-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1", children: [
+      /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground flex items-center gap-1 text-xs font-medium", children: [
+        /* @__PURE__ */ jsx(UserCheck, { className: "h-3.5 w-3.5" }),
+        " Phụ trách"
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "select",
+        {
+          className: "border-input bg-background h-8 w-full rounded-md border px-2 text-xs",
+          value: ((_a = data.assigned_user) == null ? void 0 : _a.id) ?? "",
+          disabled: busy,
+          onChange: (e) => assign(e.target.value === "" ? null : Number(e.target.value)),
+          children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: "— Chưa gán —" }),
+            data.members.map((m) => /* @__PURE__ */ jsx("option", { value: m.id, children: m.name }, m.id))
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1", children: [
+      /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground flex items-center gap-1 text-xs font-medium", children: [
+        /* @__PURE__ */ jsx(Tag, { className: "h-3.5 w-3.5" }),
+        " Label"
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-1", children: data.tags.map((t) => /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          className: "rounded-full border px-2 py-0.5 text-[11px] hover:line-through",
+          style: t.color ? { borderColor: t.color, color: t.color } : void 0,
+          title: "Bấm để gỡ",
+          disabled: busy,
+          onClick: () => syncTags(data.tags.filter((x) => x.id !== t.id).map((x) => x.name)),
+          children: t.name
+        },
+        t.id
+      )) }),
+      /* @__PURE__ */ jsxs(
+        "form",
+        {
+          onSubmit: (e) => {
+            e.preventDefault();
+            const name = tagInput.trim();
+            if (!name) return;
+            setTagInput("");
+            syncTags([...data.tags.map((t) => t.name), name]);
+          },
+          className: "flex gap-1",
+          children: [
+            /* @__PURE__ */ jsx(Input, { value: tagInput, onChange: (e) => setTagInput(e.target.value), placeholder: "Thêm label...", className: "h-7 text-xs" }),
+            /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", variant: "secondary", className: "h-7 text-xs", disabled: busy || !tagInput.trim(), children: "+" })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "space-y-1", children: [
+      /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground flex items-center gap-1 text-xs font-medium", children: [
+        /* @__PURE__ */ jsx(StickyNote, { className: "h-3.5 w-3.5" }),
+        " Note nội bộ"
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "max-h-40 space-y-1 overflow-y-auto", children: data.notes.map((n) => /* @__PURE__ */ jsxs("div", { className: "rounded border border-amber-200 bg-amber-50 p-1.5 text-xs dark:border-amber-900 dark:bg-amber-950", children: [
+        /* @__PURE__ */ jsx("p", { className: "whitespace-pre-wrap", children: n.body }),
+        /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground mt-0.5 text-[10px]", children: [
+          n.author_name,
+          " · ",
+          new Date(n.created_at).toLocaleString("vi-VN")
+        ] })
+      ] }, n.id)) }),
+      /* @__PURE__ */ jsxs(
+        "form",
+        {
+          onSubmit: (e) => {
+            e.preventDefault();
+            addNote();
+          },
+          className: "flex gap-1",
+          children: [
+            /* @__PURE__ */ jsx(
+              Input,
+              {
+                value: noteInput,
+                onChange: (e) => setNoteInput(e.target.value),
+                placeholder: "Ghi chú riêng cho team...",
+                className: "h-7 text-xs"
+              }
+            ),
+            /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", variant: "secondary", className: "h-7 text-xs", disabled: busy || !noteInput.trim(), children: "Lưu" })
+          ]
+        }
+      )
+    ] })
+  ] });
+}
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+function xsrfToken() {
+  var _a;
+  return decodeURIComponent(((_a = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a[1]) ?? "");
+}
+function notify(msg) {
+  alert(msg);
+}
+function MessageComposer({
+  conversationId,
+  disabled,
+  onSent,
+  onPending,
+  onSettled,
+  replyTo,
+  onClearReply,
+  peerName,
+  canSendMedia = false,
+  canSendSticker = false
+}) {
+  const [text, setText] = useState("");
+  const [attachment, setAttachment] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const fileInputRef = useRef(null);
+  const [stickerOpen, setStickerOpen] = useState(false);
+  const [stickerQuery, setStickerQuery] = useState("");
+  const [stickerResults, setStickerResults] = useState([]);
+  const [stickerLoading, setStickerLoading] = useState(false);
+  const [quickReplies, setQuickReplies] = useState(null);
+  const slashQuery = text.startsWith("/") ? text.slice(1).toLowerCase() : null;
+  const slashMatches = slashQuery !== null && quickReplies !== null ? quickReplies.filter((q) => q.title.toLowerCase().includes(slashQuery)).slice(0, 8) : [];
+  useEffect(() => {
+    if (slashQuery === null || quickReplies !== null) return;
+    fetch(route("inbox.quick-replies.index"), {
+      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
+    }).then((r) => r.json()).then((json) => setQuickReplies(Array.isArray(json) ? json : [])).catch(() => setQuickReplies([]));
+  }, [slashQuery, quickReplies]);
+  function insertQuickReply(item) {
+    setText(item.body.replaceAll("{ten_khach}", peerName ?? "bạn"));
+  }
+  useEffect(() => {
+    return () => {
+      if (attachment == null ? void 0 : attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+    };
+  }, [attachment]);
+  function clearAttachment() {
+    setAttachment((prev) => {
+      if (prev == null ? void 0 : prev.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+  function uploadFile(file) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      notify("Tệp vượt giới hạn 20MB.");
+      return;
+    }
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    fetch(route("inbox.attachments.store", conversationId), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "X-XSRF-TOKEN": xsrfToken()
+      },
+      body: form
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        notify(json.message ?? "Không tải được tệp lên.");
+        return;
+      }
+      clearAttachment();
+      setAttachment({
+        id: json.attachment_id,
+        filename: json.filename,
+        mediaKind: json.media_kind,
+        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+        file
+      });
+    }).catch(() => notify("Không kết nối được server.")).finally(() => setUploading(false));
+  }
+  function handlePaste(e) {
+    var _a, _b;
+    const file = (_b = (_a = e.clipboardData) == null ? void 0 : _a.files) == null ? void 0 : _b[0];
+    if (canSendMedia && file && file.type.startsWith("image/")) {
+      e.preventDefault();
+      uploadFile(file);
+    }
+  }
+  function restoreComposer(sentText, sentAttachment) {
+    setText((current) => current === "" ? sentText : current);
+    if (sentAttachment) {
+      setAttachment(
+        (current) => current ?? {
+          ...sentAttachment,
+          previewUrl: sentAttachment.file.type.startsWith("image/") ? URL.createObjectURL(sentAttachment.file) : null
+        }
+      );
+    }
+  }
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = text.trim();
+    if (!trimmed && !attachment || uploading) return;
+    const sentText = trimmed;
+    const sentAttachment = attachment;
+    const sentReplyToId = (replyTo == null ? void 0 : replyTo.id) ?? null;
+    const tempId = `pending-${crypto.randomUUID()}`;
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    onPending({
+      id: tempId,
+      conversation_id: conversationId,
+      direction: "out",
+      type: sentAttachment ? sentAttachment.mediaKind : "text",
+      body: sentText || null,
+      // objectURL riêng cho bubble (parent revoke khi settle) — độc lập preview composer
+      media_url: (sentAttachment == null ? void 0 : sentAttachment.file.type.startsWith("image/")) ? URL.createObjectURL(sentAttachment.file) : null,
+      media_meta: sentAttachment ? { media_kind: sentAttachment.mediaKind, media_filename: sentAttachment.filename } : null,
+      platform_sent_at: now,
+      sender_name: null,
+      created_at: now,
+      pending: true
+    });
+    setText("");
+    clearAttachment();
+    onClearReply == null ? void 0 : onClearReply();
+    fetch(route("inbox.send", conversationId), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": xsrfToken()
+      },
+      body: JSON.stringify({
+        text: sentText || null,
+        attachment_id: (sentAttachment == null ? void 0 : sentAttachment.id) ?? null,
+        reply_to_message_id: sentReplyToId
+      })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        onSettled(tempId, null);
+        restoreComposer(sentText, sentAttachment);
+        notify(json.message ?? "Không gửi được tin nhắn. Vui lòng thử lại.");
+        return;
+      }
+      onSettled(tempId, json);
+    }).catch(() => {
+      onSettled(tempId, null);
+      restoreComposer(sentText, sentAttachment);
+      notify("Không kết nối được server.");
+    });
+  }
+  function searchStickers() {
+    const q = stickerQuery.trim();
+    if (!q || stickerLoading) return;
+    setStickerLoading(true);
+    fetch(`${route("inbox.stickers", conversationId)}?q=${encodeURIComponent(q)}`, {
+      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        notify(json.message ?? "Không tìm được sticker.");
+        return;
+      }
+      setStickerResults(json.stickers ?? []);
+    }).catch(() => notify("Không kết nối được server.")).finally(() => setStickerLoading(false));
+  }
+  function sendSticker(sticker) {
+    if (sending) return;
+    setSending(true);
+    setStickerOpen(false);
+    fetch(route("inbox.send", conversationId), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": xsrfToken()
+      },
+      body: JSON.stringify({
+        sticker: {
+          id: sticker.id,
+          cate_id: sticker.cateId,
+          type: sticker.type,
+          url: sticker.url,
+          thumbnail: sticker.thumbnail
+        }
+      })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        notify(json.message ?? "Không gửi được sticker.");
+        return;
+      }
+      onSent(json);
+    }).catch(() => notify("Không kết nối được server.")).finally(() => setSending(false));
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "border-t", children: [
+    replyTo && /* @__PURE__ */ jsxs("div", { className: "border-primary bg-muted/50 mx-3 mt-2 flex items-center gap-2 rounded border-l-2 px-2 py-1", children: [
+      /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+        /* @__PURE__ */ jsxs("p", { className: "text-primary text-[11px] font-medium", children: [
+          "Trả lời ",
+          replyTo.senderName
+        ] }),
+        /* @__PURE__ */ jsx("p", { className: "text-muted-foreground truncate text-xs", children: replyTo.text })
+      ] }),
+      /* @__PURE__ */ jsx(Button, { type: "button", size: "sm", variant: "ghost", className: "h-6 w-6 p-0", onClick: onClearReply, "aria-label": "Bỏ trả lời", children: /* @__PURE__ */ jsx(X, { className: "h-3.5 w-3.5" }) })
+    ] }),
+    stickerOpen && /* @__PURE__ */ jsxs("div", { className: "mx-3 mt-2 rounded border p-2", children: [
+      /* @__PURE__ */ jsxs(
+        "form",
+        {
+          onSubmit: (e) => {
+            e.preventDefault();
+            searchStickers();
+          },
+          className: "flex gap-1",
+          children: [
+            /* @__PURE__ */ jsx(
+              Input,
+              {
+                value: stickerQuery,
+                onChange: (e) => setStickerQuery(e.target.value),
+                placeholder: "Tìm sticker (vd: hello, cảm ơn)...",
+                className: "h-7 text-xs",
+                autoFocus: true
+              }
+            ),
+            /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", variant: "secondary", className: "h-7 text-xs", disabled: stickerLoading || !stickerQuery.trim(), children: stickerLoading ? "..." : "Tìm" })
+          ]
+        }
+      ),
+      stickerResults.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-2 grid max-h-40 grid-cols-6 gap-1 overflow-y-auto", children: stickerResults.map((s) => /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          className: "hover:bg-muted rounded p-1",
+          onClick: () => sendSticker(s),
+          disabled: sending,
+          children: s.url || s.thumbnail ? /* @__PURE__ */ jsx(
+            "img",
+            {
+              src: s.url ?? s.thumbnail ?? "",
+              alt: s.description ?? "sticker",
+              className: "h-12 w-12 object-contain",
+              loading: "lazy"
+            }
+          ) : /* @__PURE__ */ jsxs("span", { className: "text-xs", children: [
+            "#",
+            s.id
+          ] })
+        },
+        s.id
+      )) })
+    ] }),
+    slashMatches.length > 0 && /* @__PURE__ */ jsx("div", { className: "mx-3 mt-2 rounded border", children: slashMatches.map((q) => /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        className: "hover:bg-muted block w-full px-2 py-1.5 text-left",
+        onClick: () => insertQuickReply(q),
+        children: [
+          /* @__PURE__ */ jsxs("span", { className: "text-xs font-medium", children: [
+            "/",
+            q.title
+          ] }),
+          /* @__PURE__ */ jsx("span", { className: "text-muted-foreground ml-2 truncate text-xs", children: q.body.slice(0, 60) })
+        ]
+      },
+      q.id
+    )) }),
+    attachment && /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 px-3 pt-2", children: [
+      attachment.previewUrl ? /* @__PURE__ */ jsx("img", { src: attachment.previewUrl, alt: attachment.filename, className: "h-14 w-14 rounded-md object-cover" }) : /* @__PURE__ */ jsx(FileText, { className: "text-muted-foreground h-8 w-8" }),
+      /* @__PURE__ */ jsx("span", { className: "text-muted-foreground max-w-[240px] truncate text-xs", children: attachment.filename }),
+      /* @__PURE__ */ jsx(Button, { type: "button", size: "sm", variant: "ghost", className: "h-6 w-6 p-0", onClick: clearAttachment, "aria-label": "Bỏ đính kèm", children: /* @__PURE__ */ jsx(X, { className: "h-3.5 w-3.5" }) })
+    ] }),
+    /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "flex gap-2 p-3", children: [
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          ref: fileInputRef,
+          type: "file",
+          className: "hidden",
+          onChange: (e) => {
+            var _a;
+            const file = (_a = e.target.files) == null ? void 0 : _a[0];
+            if (file) uploadFile(file);
+          }
+        }
+      ),
+      canSendMedia && /* @__PURE__ */ jsx(
+        Button,
+        {
+          type: "button",
+          size: "sm",
+          variant: "ghost",
+          disabled: disabled || uploading,
+          onClick: () => {
+            var _a;
+            return (_a = fileInputRef.current) == null ? void 0 : _a.click();
+          },
+          "aria-label": "Đính kèm tệp",
+          children: /* @__PURE__ */ jsx(Paperclip, { className: `h-4 w-4 ${uploading ? "animate-pulse" : ""}` })
+        }
+      ),
+      canSendSticker && /* @__PURE__ */ jsx(
+        Button,
+        {
+          type: "button",
+          size: "sm",
+          variant: "ghost",
+          disabled: disabled || sending,
+          onClick: () => setStickerOpen(!stickerOpen),
+          "aria-label": "Gửi sticker",
+          children: /* @__PURE__ */ jsx(SmilePlus, { className: "h-4 w-4" })
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          value: text,
+          onChange: (e) => setText(e.target.value),
+          onPaste: handlePaste,
+          placeholder: uploading ? "Đang tải tệp lên..." : "Nhập tin nhắn...",
+          className: "flex-1",
+          disabled
+        }
+      ),
+      /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", disabled: disabled || uploading || !text.trim() && !attachment, children: /* @__PURE__ */ jsx(Send, { className: "h-4 w-4" }) })
+    ] })
+  ] });
+}
 const ZALO_QUOTA_KEY = "quota.conversations.zalo_personal";
+const TYPING_TTL_MS = 8e3;
 function showToast(msg) {
   alert(msg);
 }
-function InboxIndex({ conversations, filters }) {
+function InboxIndex({
+  conversations,
+  filters,
+  selectedConversation,
+  channelAccounts = [],
+  seenSyncEnabled = false,
+  canManageZalo = false,
+  channelCapabilities = {}
+}) {
   var _a;
   const { auth, activeWorkspace } = usePage().props;
   const [convList, setConvList] = useState(conversations.data);
   const [activeConv, setActiveConv] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [items, setItems] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState(filters.q ?? "");
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState(null);
-  const messagesEndRef = useRef(null);
-  const { data, setData, post, processing, reset, errors } = useForm({ text: "" });
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [typing, setTyping] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const [seenSync, setSeenSync] = useState(seenSyncEnabled);
+  const [seenSyncSaving, setSeenSyncSaving] = useState(false);
+  function toggleSeenSync() {
+    var _a2;
+    if (seenSyncSaving) return;
+    setSeenSyncSaving(true);
+    fetch(route("inbox.settings.seen-sync"), {
+      method: "PUT",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(((_a2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a2[1]) ?? "")
+      },
+      body: JSON.stringify({ enabled: !seenSync })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        showToast(json.message ?? "Không đổi được cài đặt.");
+        return;
+      }
+      setSeenSync(json.enabled);
+    }).catch(() => showToast("Không kết nối được server.")).finally(() => setSeenSyncSaving(false));
+  }
+  const activeConvRef = useRef(null);
+  const streamVersionRef = useRef(null);
+  const lastRefetchRef = useRef(0);
+  const unreadWhileHiddenRef = useRef(false);
+  function markConversationRead(convId) {
+    var _a2;
+    setConvList((prev) => prev.map((c) => c.id === convId ? { ...c, unread_count: 0 } : c));
+    fetch(route("inbox.read", convId), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(((_a2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a2[1]) ?? "")
+      }
+    }).catch(() => {
+    });
+  }
+  function refetchActiveThread() {
+    const conv = activeConvRef.current;
+    if (!conv || Date.now() - lastRefetchRef.current < 5e3) return;
+    lastRefetchRef.current = Date.now();
+    fetch(route("inbox.stream", conv.id), {
+      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
+    }).then((r) => r.json()).then((responseData) => {
+      setItems(responseData.items ?? []);
+      setNextCursor(responseData.next_cursor ?? null);
+      streamVersionRef.current = responseData.stream_version ?? null;
+    }).catch(() => {
+    });
+  }
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      refetchActiveThread();
+      if (unreadWhileHiddenRef.current && activeConvRef.current) {
+        unreadWhileHiddenRef.current = false;
+        markConversationRead(activeConvRef.current.id);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+  function handleResync() {
+    var _a2;
+    if (syncing) return;
+    setSyncing(true);
+    fetch(route("inbox.resync"), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(((_a2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a2[1]) ?? "")
+      }
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        showToast(json.message ?? "Không đồng bộ được. Kiểm tra bridge đã chạy chưa.");
+        return;
+      }
+      showToast("Đã yêu cầu đồng bộ — tin nhắn thiếu sẽ về trong giây lát.");
+      router.reload({ only: ["conversations"] });
+    }).catch(() => showToast("Không kết nối được server.")).finally(() => setSyncing(false));
+  }
   const entitlements = ((_a = auth.membership) == null ? void 0 : _a.entitlements) ?? null;
   const zaloLimit = (entitlements == null ? void 0 : entitlements.quotas[ZALO_QUOTA_KEY]) ?? null;
   const zaloRemaining = (entitlements == null ? void 0 : entitlements.remaining[ZALO_QUOTA_KEY]) ?? null;
@@ -5885,64 +7771,123 @@ function InboxIndex({ conversations, filters }) {
     setConvList(conversations.data);
   }, [conversations.data]);
   useEffect(() => {
-    var _a2;
-    (_a2 = messagesEndRef.current) == null ? void 0 : _a2.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (selectedConversation) handleSelectConv(selectedConversation);
+  }, []);
   useEffect(() => {
     const workspaceId = activeWorkspace == null ? void 0 : activeWorkspace.id;
     if (!workspaceId || typeof window === "undefined" || !window.Echo) return;
     const channel = window.Echo.private(`workspace.${workspaceId}.conversations`);
     channel.listen("MessageReceived", (payload) => {
-      const { message, conversation_id, last_message_at, unread_count } = payload;
+      var _a2, _b;
+      const { message, conversation_id, last_message_at, unread_count, gap_event } = payload;
+      const viewingThisConversation = conversation_id === ((_a2 = activeConvRef.current) == null ? void 0 : _a2.id);
+      const readImmediately = viewingThisConversation && document.visibilityState === "visible";
+      if (viewingThisConversation && message.direction === "in") {
+        if (readImmediately) markConversationRead(conversation_id);
+        else unreadWhileHiddenRef.current = true;
+      }
+      if (conversation_id === ((_b = activeConvRef.current) == null ? void 0 : _b.id) && payload.stream_version != null) {
+        const known = streamVersionRef.current;
+        if (known != null && payload.stream_version > known + 1) {
+          refetchActiveThread();
+        } else {
+          streamVersionRef.current = payload.stream_version;
+        }
+      }
       setActiveConv((current) => {
-        if ((current == null ? void 0 : current.id) === conversation_id) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === message.id)) return prev;
-            return [...prev, message];
-          });
+        var _a3;
+        if ((current == null ? void 0 : current.id) !== conversation_id) return current;
+        setItems((prev) => {
+          if (prev.some((it) => it.id === message.id)) return prev;
+          const next = gap_event && !prev.some((it) => it.id === gap_event.id) ? [...prev, gap_event] : prev;
+          return [...next, { ...message, item_type: "message" }];
+        });
+        const senderProfile = payload.sender_participant;
+        if (!senderProfile || !message.sender_uid) return current;
+        const known = (_a3 = current.participants) == null ? void 0 : _a3[message.sender_uid];
+        if (known && known.name === senderProfile.name && known.avatar === senderProfile.avatar) return current;
+        const merged = { ...current, participants: { ...current.participants, [message.sender_uid]: senderProfile } };
+        activeConvRef.current = merged;
+        return merged;
+      });
+      setConvList((prev) => {
+        if (!prev.some((c) => c.id === conversation_id)) {
+          queueMicrotask(() => router.reload({ only: ["conversations"] }));
+          return prev;
+        }
+        const updated = prev.map(
+          (c) => c.id === conversation_id ? { ...c, unread_count: readImmediately ? 0 : unread_count, last_message_at, last_message_preview: messagePreview(message) } : c
+        );
+        return [...updated].sort((a, b) => (b.last_message_at ?? "").localeCompare(a.last_message_at ?? ""));
+      });
+    });
+    channel.listen("MessageStateChanged", (payload) => {
+      setItems(
+        (prev) => prev.map(
+          (item) => isStreamMessage(item) && item.id === payload.message_id ? {
+            ...item,
+            recalled_at: payload.recalled_at,
+            delivered_at: payload.delivered_at,
+            seen_at: payload.seen_at,
+            reactions: payload.reactions
+          } : item
+        )
+      );
+    });
+    channel.listen("ConversationTyping", (payload) => {
+      setTyping({ convId: payload.conversation_id, until: Date.now() + TYPING_TTL_MS });
+    });
+    channel.listen("ConversationSystemLine", (payload) => {
+      setActiveConv((current) => {
+        if ((current == null ? void 0 : current.id) === payload.item.conversation_id) {
+          setItems((prev) => prev.some((it) => it.id === payload.item.id) ? prev : [...prev, payload.item]);
         }
         return current;
       });
-      setConvList(
-        (prev) => prev.map(
-          (c) => c.id === conversation_id ? {
-            ...c,
-            unread_count,
-            last_message_at,
-            last_message_preview: message.body ?? c.last_message_preview
-          } : c
-        )
-      );
     });
     return () => {
       window.Echo.leave(`workspace.${workspaceId}.conversations`);
     };
   }, [activeWorkspace == null ? void 0 : activeWorkspace.id]);
+  useEffect(() => {
+    if (!typing) return;
+    const timer = setInterval(() => {
+      setTyping((current) => current && current.until <= Date.now() ? null : current);
+    }, 1e3);
+    return () => clearInterval(timer);
+  }, [typing]);
   function handleSelectConv(conv) {
     setActiveConv(conv);
-    setMessages([]);
+    activeConvRef.current = conv;
+    unreadWhileHiddenRef.current = false;
+    setReplyTo(null);
+    window.history.replaceState(window.history.state, "", route("inbox.show", conv.id));
+    setItems([]);
+    setNextCursor(null);
     setLeadError(null);
     setLoadingMessages(true);
     setConvList((prev) => prev.map((c) => c.id === conv.id ? { ...c, unread_count: 0 } : c));
-    fetch(route("inbox.messages", conv.id), {
+    fetch(route("inbox.stream", conv.id), {
       headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
     }).then((r) => r.json()).then((responseData) => {
-      setMessages(responseData.data ?? []);
+      setItems(responseData.items ?? []);
+      setNextCursor(responseData.next_cursor ?? null);
+      streamVersionRef.current = responseData.stream_version ?? null;
     }).catch(() => showToast("Không tải được tin nhắn. Vui lòng thử lại.")).finally(() => setLoadingMessages(false));
   }
-  function handleSend(e) {
-    e.preventDefault();
-    if (!activeConv || !data.text.trim()) return;
-    post(route("inbox.send", activeConv.id), {
-      preserveState: true,
-      onSuccess: () => {
-        reset("text");
-        handleSelectConv(activeConv);
-      },
-      onError: (errs) => {
-        const msg = errs.text ?? errs.quota ?? errs.rate ?? errs.circuit;
-        if (msg) showToast(msg);
-      }
+  const loadingMoreRef = useRef(false);
+  function handleLoadMore() {
+    if (!activeConv || !nextCursor || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    fetch(`${route("inbox.stream", activeConv.id)}?cursor=${encodeURIComponent(nextCursor)}`, {
+      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" }
+    }).then((r) => r.json()).then((responseData) => {
+      setItems((prev) => [...responseData.items ?? [], ...prev]);
+      setNextCursor(responseData.next_cursor ?? null);
+    }).catch(() => showToast("Không tải được tin cũ hơn. Vui lòng thử lại.")).finally(() => {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
     });
   }
   function handleCreateLead() {
@@ -5965,21 +7910,120 @@ function InboxIndex({ conversations, filters }) {
         return;
       }
       setActiveConv((prev) => prev ? { ...prev, lead_id: json.lead_id } : prev);
-      setConvList(
-        (prev) => prev.map((c) => c.id === activeConv.id ? { ...c, lead_id: json.lead_id } : c)
-      );
+      setConvList((prev) => prev.map((c) => c.id === activeConv.id ? { ...c, lead_id: json.lead_id } : c));
     }).catch(() => setLeadError("Không kết nối được server.")).finally(() => setLeadLoading(false));
+  }
+  function handleReact(msg, icon) {
+    var _a2;
+    if (!activeConv) return;
+    fetch(route("inbox.reaction", [activeConv.id, msg.id]), {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(((_a2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a2[1]) ?? "")
+      },
+      body: JSON.stringify({ icon })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        showToast(json.message ?? "Không thả được cảm xúc.");
+        return;
+      }
+      setItems(
+        (prev) => prev.map(
+          (item) => isStreamMessage(item) && item.id === msg.id ? { ...item, reactions: json.reactions ?? item.reactions } : item
+        )
+      );
+    }).catch(() => showToast("Không kết nối được server."));
+  }
+  function handlePendingMessage(temp) {
+    setItems((prev) => [...prev, { ...temp, item_type: "message" }]);
+    setConvList((prev) => {
+      const updated = prev.map(
+        (c) => c.id === temp.conversation_id ? { ...c, last_message_at: temp.created_at, last_message_preview: messagePreview(temp) } : c
+      );
+      return [...updated].sort((a, b) => (b.last_message_at ?? "").localeCompare(a.last_message_at ?? ""));
+    });
+  }
+  function handleMessageSent(real) {
+    setItems((prev) => prev.some((it) => it.id === real.id) ? prev : [...prev, { ...real, item_type: "message" }]);
+    setConvList((prev) => {
+      const updated = prev.map(
+        (c) => c.id === real.conversation_id ? { ...c, last_message_at: real.platform_sent_at ?? real.created_at, last_message_preview: messagePreview(real) } : c
+      );
+      return [...updated].sort((a, b) => (b.last_message_at ?? "").localeCompare(a.last_message_at ?? ""));
+    });
+  }
+  function handleSendSettled(tempId, real) {
+    setItems((prev) => {
+      var _a2;
+      const temp = prev.find((it) => it.id === tempId);
+      if (temp && isStreamMessage(temp) && ((_a2 = temp.media_url) == null ? void 0 : _a2.startsWith("blob:"))) URL.revokeObjectURL(temp.media_url);
+      if (!real) return prev.filter((it) => it.id !== tempId);
+      const alreadyAppended = prev.some((it) => it.id === real.id);
+      return prev.flatMap((it) => it.id === tempId ? alreadyAppended ? [] : [{ ...real, item_type: "message" }] : [it]);
+    });
+  }
+  function handleReply(msg) {
+    setReplyTo({
+      id: msg.id,
+      text: msg.body ?? `[${msg.type}]`,
+      senderName: msg.direction === "in" ? msg.sender_name ?? (activeConv == null ? void 0 : activeConv.peer_name) ?? "Khách" : "Bạn"
+    });
+  }
+  function handleVerifyPhone() {
+    var _a2;
+    if (!activeConv || !phoneInput.trim() || phoneSaving) return;
+    setPhoneSaving(true);
+    setPhoneError(null);
+    fetch(route("inbox.phone.update", activeConv.id), {
+      method: "PUT",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(((_a2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)) == null ? void 0 : _a2[1]) ?? "")
+      },
+      body: JSON.stringify({ phone: phoneInput.trim() })
+    }).then(async (r) => {
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setPhoneError(json.message ?? "Không xác minh được SĐT.");
+        return;
+      }
+      setPhoneInput("");
+      setActiveConv((prev) => prev ? { ...prev, peer_phone: json.peer_phone, contact_id: json.contact_id ?? prev.contact_id } : prev);
+      setConvList((prev) => prev.map((c) => c.id === activeConv.id ? { ...c, peer_phone: json.peer_phone } : c));
+    }).catch(() => setPhoneError("Không kết nối được server.")).finally(() => setPhoneSaving(false));
   }
   function handleSearch(e) {
     e.preventDefault();
     router.get(route("inbox.index"), { ...filters, q: search }, { preserveState: true, replace: true });
   }
+  function handleSelectAccount(accountId) {
+    router.get(route("inbox.index"), { ...filters, channel_account_id: accountId ?? void 0 }, { preserveState: true, replace: true });
+  }
   const breadcrumbs2 = [{ title: "Inbox", href: route("inbox.index") }];
+  const caps = activeConv && channelCapabilities[activeConv.channel] || {};
+  const convQuotaRemaining = activeConv ? (entitlements == null ? void 0 : entitlements.remaining[`quota.conversations.${activeConv.channel}`]) ?? null : null;
+  const convQuotaExhausted = convQuotaRemaining !== null && convQuotaRemaining <= 0;
   return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
     /* @__PURE__ */ jsx(Head, { title: "Inbox" }),
+    /* @__PURE__ */ jsx(ConnectionBanner, { accounts: channelAccounts }),
     /* @__PURE__ */ jsxs("div", { className: "flex h-[calc(100vh-64px)] overflow-hidden", children: [
       /* @__PURE__ */ jsxs("div", { className: "flex w-80 flex-shrink-0 flex-col border-r", children: [
-        /* @__PURE__ */ jsxs("div", { className: "border-b p-3 space-y-2", children: [
+        /* @__PURE__ */ jsx(
+          AccountRail,
+          {
+            accounts: channelAccounts,
+            totalCount: conversations.total,
+            activeAccountId: filters.channel_account_id ?? null,
+            onSelect: handleSelectAccount
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "space-y-2 border-b p-3", children: [
           /* @__PURE__ */ jsxs("form", { onSubmit: handleSearch, className: "flex gap-2", children: [
             /* @__PURE__ */ jsx(
               Input,
@@ -5992,20 +8036,50 @@ function InboxIndex({ conversations, filters }) {
             ),
             /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", variant: "secondary", children: "Tìm" })
           ] }),
+          /* @__PURE__ */ jsx("div", { className: "flex gap-1", children: [
+            ["", "Tất cả"],
+            ["1", "Chưa đọc"]
+          ].map(([value, label]) => /* @__PURE__ */ jsx(
+            Button,
+            {
+              type: "button",
+              size: "sm",
+              variant: (filters.unread ?? "") === value ? "default" : "outline",
+              className: "h-6 flex-1 text-[11px]",
+              onClick: () => router.get(
+                route("inbox.index"),
+                { ...filters, unread: value || void 0 },
+                { preserveState: true, replace: true }
+              ),
+              children: label
+            },
+            value
+          )) }),
+          /* @__PURE__ */ jsxs(Button, { type: "button", size: "sm", variant: "outline", className: "w-full", disabled: syncing, onClick: handleResync, children: [
+            /* @__PURE__ */ jsx(RefreshCw, { className: `mr-1 h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}` }),
+            syncing ? "Đang đồng bộ..." : "Đồng bộ tin nhắn"
+          ] }),
+          canManageZalo && /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              className: "text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-[11px]",
+              disabled: seenSyncSaving,
+              onClick: toggleSeenSync,
+              title: "Bật = khách thấy shop đã xem tin (áp lực trả lời). Cân nhắc trước khi bật.",
+              children: [
+                /* @__PURE__ */ jsx("span", { children: 'Báo "đã xem" cho khách' }),
+                /* @__PURE__ */ jsx(Badge, { variant: seenSync ? "default" : "outline", className: "text-[10px]", children: seenSync ? "BẬT" : "TẮT" })
+              ]
+            }
+          ),
           zaloLimit !== null && zaloRemaining !== null && /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between text-xs", children: [
             /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Hội thoại tháng này" }),
-            /* @__PURE__ */ jsxs(
-              Badge,
-              {
-                variant: quotaExhausted ? "destructive" : "secondary",
-                className: "text-[10px]",
-                children: [
-                  zaloLimit - zaloRemaining,
-                  "/",
-                  zaloLimit
-                ]
-              }
-            )
+            /* @__PURE__ */ jsxs(Badge, { variant: quotaExhausted ? "destructive" : "secondary", className: "text-[10px]", children: [
+              zaloLimit - zaloRemaining,
+              "/",
+              zaloLimit
+            ] })
           ] })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto", children: [
@@ -6013,21 +8087,31 @@ function InboxIndex({ conversations, filters }) {
             /* @__PURE__ */ jsx(MessageCircle, { className: "mx-auto mb-2 h-8 w-8 opacity-30" }),
             "Chưa có hội thoại nào."
           ] }),
-          convList.map((conv) => /* @__PURE__ */ jsxs(
-            "button",
-            {
-              className: `w-full border-b px-4 py-3 text-left hover:bg-muted/50 transition-colors ${(activeConv == null ? void 0 : activeConv.id) === conv.id ? "bg-muted" : ""}`,
-              onClick: () => handleSelectConv(conv),
-              children: [
-                /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
-                  /* @__PURE__ */ jsx("span", { className: "max-w-[160px] truncate text-sm font-medium", children: conv.peer_name ?? conv.peer_phone ?? conv.peer_uid }),
-                  conv.unread_count > 0 && /* @__PURE__ */ jsx(Badge, { variant: "default", className: "h-4 min-w-4 px-1 text-[10px]", children: conv.unread_count })
-                ] }),
-                conv.last_message_preview && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground mt-0.5 truncate text-xs", children: conv.last_message_preview })
-              ]
-            },
-            conv.id
-          ))
+          convList.map((conv) => {
+            var _a2;
+            return /* @__PURE__ */ jsx(
+              "button",
+              {
+                className: `hover:bg-muted/50 w-full border-b px-4 py-3 text-left transition-colors ${(activeConv == null ? void 0 : activeConv.id) === conv.id ? "bg-muted" : ""}`,
+                onClick: () => handleSelectConv(conv),
+                children: /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+                  /* @__PURE__ */ jsx(ChatAvatar, { name: conv.peer_name ?? conv.peer_uid, src: conv.peer_avatar_url, className: "h-9 w-9 shrink-0" }),
+                  /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+                      /* @__PURE__ */ jsx("span", { className: "truncate text-sm font-medium", children: conv.peer_name ?? conv.peer_phone ?? conv.peer_uid }),
+                      conv.unread_count > 0 && /* @__PURE__ */ jsx(Badge, { variant: "default", className: "h-4 min-w-4 shrink-0 px-1 text-[10px]", children: conv.unread_count })
+                    ] }),
+                    (typing == null ? void 0 : typing.convId) === conv.id ? /* @__PURE__ */ jsx("p", { className: "text-primary mt-0.5 truncate text-xs italic", children: "đang nhập…" }) : conv.last_message_preview && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground mt-0.5 truncate text-xs", children: conv.last_message_preview }),
+                    ((_a2 = conv.channel_account) == null ? void 0 : _a2.display_name) && /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground/70 mt-0.5 truncate text-[11px]", children: [
+                      "↳ nhận qua: ",
+                      conv.channel_account.display_name
+                    ] })
+                  ] })
+                ] })
+              },
+              conv.id
+            );
+          })
         ] }),
         conversations.last_page > 1 && /* @__PURE__ */ jsxs("div", { className: "flex justify-center gap-2 border-t p-2", children: [
           conversations.prev_page_url && /* @__PURE__ */ jsx(Button, { variant: "ghost", size: "sm", onClick: () => router.get(conversations.prev_page_url), children: "←" }),
@@ -6043,72 +8127,91 @@ function InboxIndex({ conversations, filters }) {
         /* @__PURE__ */ jsx(MessageCircle, { className: "mx-auto mb-3 h-12 w-12 opacity-20" }),
         /* @__PURE__ */ jsx("p", { className: "text-sm", children: "Chọn một hội thoại để bắt đầu" })
       ] }) }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsxs("div", { className: "border-b px-4 py-2 text-sm font-medium", children: [
-          activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid,
-          activeConv.peer_phone && /* @__PURE__ */ jsx("span", { className: "text-muted-foreground ml-2 text-xs", children: activeConv.peer_phone })
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 border-b px-4 py-2", children: [
+          /* @__PURE__ */ jsx(ChatAvatar, { name: activeConv.peer_name ?? activeConv.peer_uid, src: activeConv.peer_avatar_url }),
+          /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-medium", children: activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid }),
+            activeConv.peer_phone && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground text-xs", children: activeConv.peer_phone })
+          ] })
         ] }),
-        /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto p-4 space-y-3", children: [
-          loadingMessages && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground text-center text-sm", children: "Đang tải..." }),
-          messages.map((msg) => /* @__PURE__ */ jsx(
-            "div",
-            {
-              className: `flex ${msg.direction === "out" ? "justify-end" : "justify-start"}`,
-              children: /* @__PURE__ */ jsxs(
-                "div",
-                {
-                  className: `max-w-[70%] rounded-lg px-3 py-2 text-sm ${msg.direction === "out" ? "bg-primary text-primary-foreground" : "bg-muted"}`,
-                  children: [
-                    msg.media_url && /* @__PURE__ */ jsxs("div", { className: "mb-1 text-xs opacity-70", children: [
-                      "[",
-                      msg.type,
-                      "]"
-                    ] }),
-                    msg.body && /* @__PURE__ */ jsx("p", { className: "whitespace-pre-wrap", children: msg.body })
-                  ]
-                }
-              )
-            },
-            msg.id
-          )),
-          /* @__PURE__ */ jsx("div", { ref: messagesEndRef })
-        ] }),
-        quotaExhausted && messages.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "border-t p-3 text-center", children: [
+        /* @__PURE__ */ jsx(
+          ChatThread,
+          {
+            items,
+            peer: activeConv,
+            loading: loadingMessages,
+            hasMore: nextCursor !== null,
+            loadingMore,
+            onLoadMore: handleLoadMore,
+            onReply: caps.canQuoteReply ? handleReply : void 0,
+            onReact: caps.canReact ? handleReact : void 0
+          }
+        ),
+        (typing == null ? void 0 : typing.convId) === activeConv.id && /* @__PURE__ */ jsx("div", { className: "text-muted-foreground px-4 pb-1 text-xs italic", children: "đang nhập…" }),
+        convQuotaExhausted && items.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "border-t p-3 text-center", children: [
           /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground mb-2 text-xs", children: [
             "Đã đạt giới hạn hội thoại tháng này (",
             zaloLimit,
             " hội thoại)."
           ] }),
+          /* @__PURE__ */ jsx(Button, { size: "sm", variant: "default", onClick: () => router.visit("/admin/billing/upgrade"), children: "Nâng gói" })
+        ] }) : (
+          // key theo conversation — reset text/đính kèm khi đổi hội thoại
           /* @__PURE__ */ jsx(
-            Button,
+            MessageComposer,
             {
-              size: "sm",
-              variant: "default",
-              onClick: () => router.visit("/admin/billing/upgrade"),
-              children: "Nâng gói"
-            }
+              conversationId: activeConv.id,
+              onSent: handleMessageSent,
+              onPending: handlePendingMessage,
+              onSettled: handleSendSettled,
+              replyTo,
+              onClearReply: () => setReplyTo(null),
+              peerName: activeConv.peer_name,
+              canSendMedia: caps.canSendMedia === true,
+              canSendSticker: caps.canSendSticker === true
+            },
+            activeConv.id
           )
-        ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-          /* @__PURE__ */ jsxs("form", { onSubmit: handleSend, className: "flex gap-2 border-t p-3", children: [
+        )
+      ] }) }),
+      /* @__PURE__ */ jsx("div", { className: "w-64 flex-shrink-0 border-l", children: activeConv ? /* @__PURE__ */ jsxs("div", { className: "space-y-4 p-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+          /* @__PURE__ */ jsx(
+            ChatAvatar,
+            {
+              name: activeConv.peer_name ?? activeConv.peer_uid,
+              src: activeConv.peer_avatar_url,
+              className: "mx-auto mb-2 h-12 w-12"
+            }
+          ),
+          /* @__PURE__ */ jsx("p", { className: "text-sm font-medium", children: activeConv.peer_name ?? "Không rõ tên" }),
+          activeConv.peer_phone && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-xs", children: activeConv.peer_phone })
+        ] }),
+        activeConv.thread_type !== 1 && !activeConv.peer_phone && /* @__PURE__ */ jsxs("div", { className: "space-y-1", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-1", children: [
             /* @__PURE__ */ jsx(
               Input,
               {
-                value: data.text,
-                onChange: (e) => setData("text", e.target.value),
-                placeholder: "Nhập tin nhắn...",
-                className: "flex-1",
-                disabled: processing
+                value: phoneInput,
+                onChange: (e) => setPhoneInput(e.target.value),
+                placeholder: "SĐT khách...",
+                className: "h-7 text-xs",
+                disabled: phoneSaving
               }
             ),
-            /* @__PURE__ */ jsx(Button, { type: "submit", size: "sm", disabled: processing || !data.text.trim(), children: /* @__PURE__ */ jsx(Send, { className: "h-4 w-4" }) })
+            /* @__PURE__ */ jsx(
+              Button,
+              {
+                size: "sm",
+                variant: "secondary",
+                className: "h-7 text-xs",
+                disabled: phoneSaving || !phoneInput.trim(),
+                onClick: handleVerifyPhone,
+                children: phoneSaving ? "..." : "Xác minh"
+              }
+            )
           ] }),
-          errors.text && /* @__PURE__ */ jsx("p", { className: "px-3 pb-2 text-xs text-red-500", children: errors.text })
-        ] })
-      ] }) }),
-      /* @__PURE__ */ jsx("div", { className: "w-64 flex-shrink-0 border-l", children: activeConv ? /* @__PURE__ */ jsxs("div", { className: "p-4 space-y-4", children: [
-        /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
-          /* @__PURE__ */ jsx("div", { className: "bg-muted mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full", children: /* @__PURE__ */ jsx(User, { className: "h-6 w-6" }) }),
-          /* @__PURE__ */ jsx("p", { className: "text-sm font-medium", children: activeConv.peer_name ?? "Không rõ tên" }),
-          activeConv.peer_phone && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-xs", children: activeConv.peer_phone })
+          phoneError && /* @__PURE__ */ jsx("p", { className: "text-destructive text-[11px]", children: phoneError })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "space-y-1 text-xs", children: [
           /* @__PURE__ */ jsxs("div", { className: "flex justify-between", children: [
@@ -6137,23 +8240,15 @@ function InboxIndex({ conversations, filters }) {
             ]
           }
         ) : /* @__PURE__ */ jsxs(Fragment, { children: [
-          activeConv.thread_type !== 1 ? /* @__PURE__ */ jsx(
-            Button,
-            {
-              size: "sm",
-              className: "w-full",
-              disabled: leadLoading,
-              onClick: handleCreateLead,
-              children: leadLoading ? "Đang tạo..." : "Tạo Lead"
-            }
-          ) : /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-center text-xs", children: "Hội thoại nhóm — không tạo Lead" }),
+          activeConv.thread_type !== 1 ? /* @__PURE__ */ jsx(Button, { size: "sm", className: "w-full", disabled: leadLoading, onClick: handleCreateLead, children: leadLoading ? "Đang tạo..." : "Tạo Lead" }) : /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-center text-xs", children: "Hội thoại nhóm — không tạo Lead" }),
           leadError && /* @__PURE__ */ jsx("p", { className: "text-destructive text-xs", children: leadError })
-        ] })
+        ] }),
+        /* @__PURE__ */ jsx(ConversationPanel, { conversationId: activeConv.id }, activeConv.id)
       ] }) : /* @__PURE__ */ jsx("div", { className: "text-muted-foreground p-4 text-center text-sm", children: "Chọn hội thoại để xem thông tin" }) })
     ] })
   ] });
 }
-const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: InboxIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6169,7 +8264,7 @@ function IntegrationCardItem({ card }) {
   const href = ZALO_HREF[card.key] ?? `/integrations/${card.key}`;
   return /* @__PURE__ */ jsxs(Card, { className: !card.enabled ? "opacity-60" : "", children: [
     /* @__PURE__ */ jsxs(CardHeader, { className: "flex flex-row items-center gap-3 pb-2", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-muted-foreground", children: CATEGORY_ICONS[card.category] ?? /* @__PURE__ */ jsx(MessageSquare, { className: "h-6 w-6" }) }),
+      card.logo ? /* @__PURE__ */ jsx("img", { src: card.logo, alt: card.name, className: "h-6 w-6 shrink-0 rounded object-contain" }) : /* @__PURE__ */ jsx("div", { className: "text-muted-foreground", children: CATEGORY_ICONS[card.category] ?? /* @__PURE__ */ jsx(MessageSquare, { className: "h-6 w-6" }) }),
       /* @__PURE__ */ jsx(CardTitle, { className: "text-base", children: card.name }),
       /* @__PURE__ */ jsx(Badge, { variant: "secondary", className: "ml-auto text-xs capitalize", children: t(`platform.integrations.category.${card.category}`) })
     ] }),
@@ -6177,15 +8272,13 @@ function IntegrationCardItem({ card }) {
     /* @__PURE__ */ jsx(CardFooter, { children: card.enabled ? /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: card.connected ? "outline" : "default", children: /* @__PURE__ */ jsx(Link, { href, children: card.connected ? t("platform.integrations.manage") : t("platform.integrations.connect") }) }) : /* @__PURE__ */ jsx(Button, { size: "sm", disabled: true, children: t("platform.integrations.connect") }) })
   ] });
 }
-const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   IntegrationCardItem
 }, Symbol.toStringTag, { value: "Module" }));
 function IntegrationsIndex({ cards: cards2 }) {
   const t = useTranslator();
-  const breadcrumbs2 = [
-    { title: t("platform.nav.integrations"), href: "/integrations" }
-  ];
+  const breadcrumbs2 = [{ title: t("platform.nav.integrations"), href: "/integrations" }];
   return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
     /* @__PURE__ */ jsx(Head, { title: t("platform.nav.integrations") }),
     /* @__PURE__ */ jsxs("div", { className: "flex flex-1 flex-col gap-6 p-4 md:p-6", children: [
@@ -6197,7 +8290,7 @@ function IntegrationsIndex({ cards: cards2 }) {
     ] })
   ] });
 }
-const __vite_glob_0_36 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_39 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: IntegrationsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6219,7 +8312,8 @@ const INITIAL_QR = {
   qrToken: null,
   phase: "idle",
   qrImage: null,
-  error: null
+  error: null,
+  expectedAccountUid: null
 };
 function ZaloConnectionsIndex({ connections }) {
   const breadcrumbs2 = [
@@ -6245,7 +8339,7 @@ function ZaloConnectionsIndex({ connections }) {
         }));
         if (data.phase === "ready") {
           clearPoll();
-          await promoteConnection(qrState.connectionId, qrState.qrToken);
+          await promoteConnection(qrState.connectionId, qrState.qrToken, qrState.expectedAccountUid);
         }
       } catch {
       }
@@ -6258,8 +8352,8 @@ function ZaloConnectionsIndex({ connections }) {
       pollRef.current = null;
     }
   };
-  const startQrLogin = async () => {
-    setQrState({ ...INITIAL_QR, open: true, phase: "starting" });
+  const startQrLogin = async (expectedAccountUid = null) => {
+    setQrState({ ...INITIAL_QR, open: true, phase: "starting", expectedAccountUid });
     try {
       const res = await fetch("/integrations/zalo", {
         method: "POST",
@@ -6285,7 +8379,7 @@ function ZaloConnectionsIndex({ connections }) {
       setQrState((prev) => ({ ...prev, phase: "error", error: String(e) }));
     }
   };
-  const promoteConnection = async (connectionId, qrToken) => {
+  const promoteConnection = async (connectionId, qrToken, expectedAccountUid) => {
     try {
       const res = await fetch("/integrations/zalo/promote", {
         method: "POST",
@@ -6295,12 +8389,18 @@ function ZaloConnectionsIndex({ connections }) {
           "X-Requested-With": "XMLHttpRequest",
           "X-XSRF-TOKEN": getCsrfToken()
         },
-        body: JSON.stringify({ connection_id: connectionId, qr_token: qrToken })
+        body: JSON.stringify({ connection_id: connectionId, qr_token: qrToken, expected_account_uid: expectedAccountUid })
       });
       const data = await res.json();
       if (data.ok) {
         setQrState((prev) => ({ ...prev, phase: "done" }));
         router.reload({ only: ["connections"] });
+      } else if (data.error_code === "zalo_account_mismatch") {
+        setQrState((prev) => ({
+          ...prev,
+          phase: "error",
+          error: "Đã quét nhầm tài khoản Zalo khác — vui lòng quét đúng tài khoản cần đăng nhập lại."
+        }));
       } else {
         setQrState((prev) => ({ ...prev, phase: "error", error: data.message ?? "promote_failed" }));
       }
@@ -6308,11 +8408,25 @@ function ZaloConnectionsIndex({ connections }) {
       setQrState((prev) => ({ ...prev, phase: "error", error: String(e) }));
     }
   };
-  const disconnectConnection = (id) => {
+  const disconnectConnection = async (id) => {
     if (!confirm("Xác nhận ngắt kết nối Zalo này?")) return;
-    router.delete(`/integrations/zalo/${id}`, {
-      preserveScroll: true
-    });
+    try {
+      const res = await fetch(`/integrations/zalo/${id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-XSRF-TOKEN": getCsrfToken()
+        }
+      });
+      if (!res.ok) {
+        alert("Ngắt kết nối thất bại. Vui lòng thử lại.");
+        return;
+      }
+      router.reload({ only: ["connections"] });
+    } catch {
+      alert("Không kết nối được server.");
+    }
   };
   return /* @__PURE__ */ jsxs(AppLayout, { breadcrumbs: breadcrumbs2, children: [
     /* @__PURE__ */ jsx(Head, { title: "Kết nối Zalo" }),
@@ -6322,9 +8436,9 @@ function ZaloConnectionsIndex({ connections }) {
           /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold", children: "Kết nối Zalo cá nhân" }),
           /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: "Quản lý tài khoản Zalo cá nhân kết nối vào workspace." })
         ] }),
-        /* @__PURE__ */ jsx(Button, { onClick: startQrLogin, disabled: qrState.open && qrState.phase !== "done" && qrState.phase !== "error", children: "+ Thêm tài khoản Zalo" })
+        /* @__PURE__ */ jsx(Button, { onClick: () => startQrLogin(), disabled: qrState.open && qrState.phase !== "done" && qrState.phase !== "error", children: "+ Thêm tài khoản Zalo" })
       ] }),
-      qrState.open && /* @__PURE__ */ jsxs("div", { className: "rounded-lg border p-6 space-y-4", children: [
+      qrState.open && /* @__PURE__ */ jsxs("div", { className: "space-y-4 rounded-lg border p-6", children: [
         /* @__PURE__ */ jsx("h3", { className: "font-medium", children: "Đăng nhập bằng mã QR" }),
         qrState.phase === "starting" && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: "Đang khởi động..." }),
         (qrState.phase === "logging_in" || qrState.phase === "qr_waiting") && !qrState.qrImage && /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: "Đang tạo mã QR..." }),
@@ -6338,10 +8452,18 @@ function ZaloConnectionsIndex({ connections }) {
           "Lỗi: ",
           qrState.error
         ] }),
-        /* @__PURE__ */ jsx(Button, { variant: "outline", size: "sm", onClick: () => {
-          clearPoll();
-          setQrState(INITIAL_QR);
-        }, children: "Đóng" })
+        /* @__PURE__ */ jsx(
+          Button,
+          {
+            variant: "outline",
+            size: "sm",
+            onClick: () => {
+              clearPoll();
+              setQrState(INITIAL_QR);
+            },
+            children: "Đóng"
+          }
+        )
       ] }),
       connections.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm", children: 'Chưa có tài khoản Zalo nào. Nhấn "Thêm tài khoản Zalo" để bắt đầu.' }) : /* @__PURE__ */ jsx("div", { className: "divide-y rounded-lg border", children: connections.map((conn) => /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-4 py-3", children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
@@ -6353,16 +8475,8 @@ function ZaloConnectionsIndex({ connections }) {
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
           /* @__PURE__ */ jsx(Badge, { variant: STATE_VARIANTS[conn.state], children: STATE_LABELS[conn.state] }),
-          conn.state === "session_lost" && /* @__PURE__ */ jsx(Button, { size: "sm", variant: "outline", onClick: startQrLogin, children: "Đăng nhập lại" }),
-          /* @__PURE__ */ jsx(
-            Button,
-            {
-              size: "sm",
-              variant: "destructive",
-              onClick: () => disconnectConnection(conn.id),
-              children: "Ngắt kết nối"
-            }
-          )
+          conn.state === "session_lost" && /* @__PURE__ */ jsx(Button, { size: "sm", variant: "outline", onClick: () => startQrLogin(conn.personal_uid), children: "Đăng nhập lại" }),
+          /* @__PURE__ */ jsx(Button, { size: "sm", variant: "destructive", onClick: () => disconnectConnection(conn.id), children: "Ngắt kết nối" })
         ] })
       ] }, conn.id)) })
     ] }) })
@@ -6371,7 +8485,7 @@ function ZaloConnectionsIndex({ connections }) {
 function getCsrfToken() {
   return (document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1] ? decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) ?? [])[1]) : "";
 }
-const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_40 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ZaloConnectionsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6415,7 +8529,7 @@ function NotificationsIndex({ notifications, unread_count }) {
     ] })
   ] });
 }
-const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_41 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: NotificationsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6557,7 +8671,7 @@ function ProjectCreate({ clients, statuses, members, fieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_39 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_42 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectCreate
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6587,7 +8701,7 @@ function ProjectEdit({ project, clients, statuses, members, fieldDefs }) {
     ] })
   ] });
 }
-const __vite_glob_0_40 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_43 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectEdit
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6701,7 +8815,7 @@ function ProjectsIndex({ projects, statuses, filters, can }) {
     ] })
   ] });
 }
-const __vite_glob_0_41 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_44 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7206,7 +9320,7 @@ function ProjectShow({ project, statuses, can, workspaceMembers = [] }) {
     ] })
   ] });
 }
-const __vite_glob_0_42 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectShow
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7497,7 +9611,7 @@ function TasksIndex({ tasks, filters, can, relatedRecords, members }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_43 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TasksIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7636,7 +9750,7 @@ function TasksKanban({ columns, can, relatedRecords = {}, members = [] }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_44 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TasksKanban
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7964,7 +10078,7 @@ function TaskShow({ task, can, relatedRecords = {}, members = [] }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TaskShow
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8010,7 +10124,7 @@ function Appearance() {
     ] }) })
   ] });
 }
-const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Appearance
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8264,7 +10378,7 @@ function CustomFieldsIndex({ definitions, entityTypes, fieldTypes, optionTypes, 
     ] }) })
   ] });
 }
-const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CustomFieldsIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8367,7 +10481,7 @@ function LookupTable({ items, storeRoute, updateRouteFn, deleteRouteFn, addLabel
     ] }) })
   ] });
 }
-const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LookupTable
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8506,7 +10620,7 @@ function StageList({ pipelineId, stages, stageTypes, storeRoute }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: StageList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8532,7 +10646,7 @@ function LeadSourcesSettings({ sources }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: LeadSourcesSettings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8650,7 +10764,7 @@ function PipelinesSettings({ pipelines, stageTypes }) {
     ] })
   ] });
 }
-const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: PipelinesSettings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8676,7 +10790,7 @@ function ProjectStatusesSettings({ statuses }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_55 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectStatusesSettings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8894,7 +11008,7 @@ function TeamSelect({
     ] })
   ] });
 }
-const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_56 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: MembersSettings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -9003,7 +11117,7 @@ function Password() {
     ] }) })
   ] });
 }
-const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_57 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Password
 }, Symbol.toStringTag, { value: "Module" }));
@@ -9158,7 +11272,7 @@ function Profile({ mustVerifyEmail, status }) {
     ] })
   ] });
 }
-const __vite_glob_0_55 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_58 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Profile
 }, Symbol.toStringTag, { value: "Module" }));
@@ -9327,7 +11441,7 @@ function TeamsSettings({ teams }) {
     ] })
   ] });
 }
-const __vite_glob_0_56 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_59 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TeamsSettings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -9421,15 +11535,15 @@ function SelectField({
     /* @__PURE__ */ jsx(InputError, { message: error })
   ] });
 }
-const __vite_glob_0_57 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_60 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: WorkspaceSettings
 }, Symbol.toStringTag, { value: "Module" }));
 const FEATURES = [
-  { key: "workspaces", icon: Building2 },
-  { key: "roles", icon: ShieldCheck },
-  { key: "teams", icon: Network },
-  { key: "realtime", icon: Zap }
+  { key: "inbox", icon: MessagesSquare },
+  { key: "crm", icon: UserPlus },
+  { key: "automation", icon: Zap },
+  { key: "teams", icon: ShieldCheck }
 ];
 function LandingFeatures() {
   const t = useTranslator();
@@ -9445,7 +11559,7 @@ function LandingFeatures() {
     ] }, key)) })
   ] });
 }
-const BRAND$1 = "Chó Rách Management";
+const BRAND$1 = "Yona";
 function LandingFooter() {
   const t = useTranslator();
   const year = (/* @__PURE__ */ new Date()).getFullYear();
@@ -9476,7 +11590,7 @@ function AppearanceToggleDropdown({ className }) {
     ] }, value)) })
   ] });
 }
-const BRAND = "Chó Rách Management";
+const BRAND = "Yona";
 function LandingHeader() {
   const { auth } = usePage().props;
   const t = useTranslator();
@@ -9837,11 +11951,11 @@ function Welcome() {
     ] })
   ] });
 }
-const __vite_glob_0_58 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_61 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Welcome
 }, Symbol.toStringTag, { value: "Module" }));
-const appPages = /* @__PURE__ */ Object.assign({ "./pages/admin/auth/forgot-password.tsx": __vite_glob_0_0, "./pages/admin/auth/login.tsx": __vite_glob_0_1, "./pages/admin/auth/reset-password.tsx": __vite_glob_0_2, "./pages/admin/dashboard.tsx": __vite_glob_0_3, "./pages/admin/workspaces/index.tsx": __vite_glob_0_4, "./pages/admin/workspaces/show.tsx": __vite_glob_0_5, "./pages/announcements/admin/create.tsx": __vite_glob_0_6, "./pages/announcements/admin/edit.tsx": __vite_glob_0_7, "./pages/announcements/admin/index.tsx": __vite_glob_0_8, "./pages/announcements/index.tsx": __vite_glob_0_9, "./pages/auth/confirm-password.tsx": __vite_glob_0_10, "./pages/auth/forgot-password.tsx": __vite_glob_0_11, "./pages/auth/login.tsx": __vite_glob_0_12, "./pages/auth/register.tsx": __vite_glob_0_13, "./pages/auth/reset-password.tsx": __vite_glob_0_14, "./pages/auth/verify-email.tsx": __vite_glob_0_15, "./pages/billing/workspace-plans/index.tsx": __vite_glob_0_16, "./pages/crm/clients/create.tsx": __vite_glob_0_17, "./pages/crm/clients/edit.tsx": __vite_glob_0_18, "./pages/crm/clients/groups.tsx": __vite_glob_0_19, "./pages/crm/clients/index.tsx": __vite_glob_0_20, "./pages/crm/clients/show.tsx": __vite_glob_0_21, "./pages/crm/leads/components/lead-assign-popover.tsx": __vite_glob_0_22, "./pages/crm/leads/components/lead-card.tsx": __vite_glob_0_23, "./pages/crm/leads/components/lead-convert-dialog.tsx": __vite_glob_0_24, "./pages/crm/leads/components/lead-form.tsx": __vite_glob_0_25, "./pages/crm/leads/create.tsx": __vite_glob_0_26, "./pages/crm/leads/edit.tsx": __vite_glob_0_27, "./pages/crm/leads/index.tsx": __vite_glob_0_28, "./pages/crm/leads/kanban.tsx": __vite_glob_0_29, "./pages/crm/leads/show.tsx": __vite_glob_0_30, "./pages/dashboard.tsx": __vite_glob_0_31, "./pages/email/email-templates/edit.tsx": __vite_glob_0_32, "./pages/email/email-templates/index.tsx": __vite_glob_0_33, "./pages/inbox/index.tsx": __vite_glob_0_34, "./pages/integration/components/integration-card.tsx": __vite_glob_0_35, "./pages/integration/index.tsx": __vite_glob_0_36, "./pages/integration/zalo/index.tsx": __vite_glob_0_37, "./pages/notifications/index.tsx": __vite_glob_0_38, "./pages/projects/create.tsx": __vite_glob_0_39, "./pages/projects/edit.tsx": __vite_glob_0_40, "./pages/projects/index.tsx": __vite_glob_0_41, "./pages/projects/show.tsx": __vite_glob_0_42, "./pages/projects/tasks/index.tsx": __vite_glob_0_43, "./pages/projects/tasks/kanban.tsx": __vite_glob_0_44, "./pages/projects/tasks/show.tsx": __vite_glob_0_45, "./pages/settings/appearance.tsx": __vite_glob_0_46, "./pages/settings/custom-fields/index.tsx": __vite_glob_0_47, "./pages/settings/lookups/_lookup-table.tsx": __vite_glob_0_48, "./pages/settings/lookups/_stage-list.tsx": __vite_glob_0_49, "./pages/settings/lookups/lead-sources.tsx": __vite_glob_0_50, "./pages/settings/lookups/pipelines.tsx": __vite_glob_0_51, "./pages/settings/lookups/project-statuses.tsx": __vite_glob_0_52, "./pages/settings/members.tsx": __vite_glob_0_53, "./pages/settings/password.tsx": __vite_glob_0_54, "./pages/settings/profile.tsx": __vite_glob_0_55, "./pages/settings/teams.tsx": __vite_glob_0_56, "./pages/settings/workspace.tsx": __vite_glob_0_57, "./pages/welcome.tsx": __vite_glob_0_58 });
+const appPages = /* @__PURE__ */ Object.assign({ "./pages/admin/auth/forgot-password.tsx": __vite_glob_0_0, "./pages/admin/auth/login.tsx": __vite_glob_0_1, "./pages/admin/auth/reset-password.tsx": __vite_glob_0_2, "./pages/admin/dashboard.tsx": __vite_glob_0_3, "./pages/admin/workspaces/index.tsx": __vite_glob_0_4, "./pages/admin/workspaces/show.tsx": __vite_glob_0_5, "./pages/announcements/admin/create.tsx": __vite_glob_0_6, "./pages/announcements/admin/edit.tsx": __vite_glob_0_7, "./pages/announcements/admin/index.tsx": __vite_glob_0_8, "./pages/announcements/index.tsx": __vite_glob_0_9, "./pages/auth/confirm-password.tsx": __vite_glob_0_10, "./pages/auth/forgot-password.tsx": __vite_glob_0_11, "./pages/auth/login.tsx": __vite_glob_0_12, "./pages/auth/register.tsx": __vite_glob_0_13, "./pages/auth/reset-password.tsx": __vite_glob_0_14, "./pages/auth/verify-email.tsx": __vite_glob_0_15, "./pages/automation/create.tsx": __vite_glob_0_16, "./pages/automation/index.tsx": __vite_glob_0_17, "./pages/automation/show.tsx": __vite_glob_0_18, "./pages/billing/workspace-plans/index.tsx": __vite_glob_0_19, "./pages/crm/clients/create.tsx": __vite_glob_0_20, "./pages/crm/clients/edit.tsx": __vite_glob_0_21, "./pages/crm/clients/groups.tsx": __vite_glob_0_22, "./pages/crm/clients/index.tsx": __vite_glob_0_23, "./pages/crm/clients/show.tsx": __vite_glob_0_24, "./pages/crm/leads/components/lead-assign-popover.tsx": __vite_glob_0_25, "./pages/crm/leads/components/lead-card.tsx": __vite_glob_0_26, "./pages/crm/leads/components/lead-convert-dialog.tsx": __vite_glob_0_27, "./pages/crm/leads/components/lead-form.tsx": __vite_glob_0_28, "./pages/crm/leads/create.tsx": __vite_glob_0_29, "./pages/crm/leads/edit.tsx": __vite_glob_0_30, "./pages/crm/leads/index.tsx": __vite_glob_0_31, "./pages/crm/leads/kanban.tsx": __vite_glob_0_32, "./pages/crm/leads/show.tsx": __vite_glob_0_33, "./pages/dashboard.tsx": __vite_glob_0_34, "./pages/email/email-templates/edit.tsx": __vite_glob_0_35, "./pages/email/email-templates/index.tsx": __vite_glob_0_36, "./pages/inbox/index.tsx": __vite_glob_0_37, "./pages/integration/components/integration-card.tsx": __vite_glob_0_38, "./pages/integration/index.tsx": __vite_glob_0_39, "./pages/integration/zalo/index.tsx": __vite_glob_0_40, "./pages/notifications/index.tsx": __vite_glob_0_41, "./pages/projects/create.tsx": __vite_glob_0_42, "./pages/projects/edit.tsx": __vite_glob_0_43, "./pages/projects/index.tsx": __vite_glob_0_44, "./pages/projects/show.tsx": __vite_glob_0_45, "./pages/projects/tasks/index.tsx": __vite_glob_0_46, "./pages/projects/tasks/kanban.tsx": __vite_glob_0_47, "./pages/projects/tasks/show.tsx": __vite_glob_0_48, "./pages/settings/appearance.tsx": __vite_glob_0_49, "./pages/settings/custom-fields/index.tsx": __vite_glob_0_50, "./pages/settings/lookups/_lookup-table.tsx": __vite_glob_0_51, "./pages/settings/lookups/_stage-list.tsx": __vite_glob_0_52, "./pages/settings/lookups/lead-sources.tsx": __vite_glob_0_53, "./pages/settings/lookups/pipelines.tsx": __vite_glob_0_54, "./pages/settings/lookups/project-statuses.tsx": __vite_glob_0_55, "./pages/settings/members.tsx": __vite_glob_0_56, "./pages/settings/password.tsx": __vite_glob_0_57, "./pages/settings/profile.tsx": __vite_glob_0_58, "./pages/settings/teams.tsx": __vite_glob_0_59, "./pages/settings/workspace.tsx": __vite_glob_0_60, "./pages/welcome.tsx": __vite_glob_0_61 });
 function resolvePage(name) {
   return appPages[`./pages/${name}.tsx`];
 }

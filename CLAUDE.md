@@ -1,8 +1,8 @@
-# Chó rách CRM
+# Yona
 
-**Codename / repo:** cho-rach-management (github.com/locflamedia/cho-rach-management)
-**Tên sản phẩm:** Cho Rach Management
-**Định vị:** "Quản lý khách hàng tập trung & tự động hóa"
+**Codename / repo:** yona (github.com/locflamedia/yona)
+**Tên sản phẩm:** Yona — domain **yona.vn** (rebrand 22/07/2026; tên cũ "Chó rách CRM" / repo cho-rach-management)
+**Định vị:** **Conversational CRM & Automation** (chốt 22/07/2026) — CRM lấy hội thoại làm cửa vào: gom tin nhắn khách từ mọi kênh chat về một inbox (Zalo trước, thêm kênh = thêm driver), biến hội thoại thành khách hàng, tự động hóa chăm sóc. Nội dung định vị/marketing KHÔNG giới hạn theo kênh cụ thể — hướng đa kênh tương lai
 **Status:** Đang phát triển, bootstrapped, team 3 dev
 
 ## Là gì
@@ -49,7 +49,7 @@ Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 - **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo = nguồn làm giàu CDP.
 
 ## Ghi chú công cụ
-- Figma FigJam board "Chó rách CRM" (file key YAvnMFXP9hAHb2CSaLy7sB). Lưu ý: mỗi lần tạo diagram là một node mới — cần xóa bản cũ thủ công.
+- Figma FigJam board (file key YAvnMFXP9hAHb2CSaLy7sB) — board trên Figma vẫn mang tên cũ "Chó rách CRM". Lưu ý: mỗi lần tạo diagram là một node mới — cần xóa bản cũ thủ công.
 
 
 
@@ -73,7 +73,7 @@ Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.j
 ## Projects
 | Name | What |
 |------|------|
-| **Chó rách CRM** | SaaS CRM + quản lý dự án cho SME Việt. Repo: cho-rach-management. Định vị: "Quản lý khách hàng tập trung & tự động hóa" |
+| **Yona** | SaaS CRM + quản lý dự án cho SME Việt. Repo: yona. Định vị: "Quản lý khách hàng tập trung & tự động hóa" |
 
 ## Key Decisions (đã chốt — đừng làm sai lại)
 - **Inbox Phase 1 = Zalo CÁ NHÂN, KHÔNG phải Zalo OA** (OA phức tạp, chưa có tài khoản test). Zalo cá nhân không có API chính thức → dùng QR login/web automation (zca-js); có rủi ro ToS/khóa acc.

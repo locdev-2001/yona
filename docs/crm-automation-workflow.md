@@ -2,7 +2,7 @@
 
 > The **Automation** bounded context: 1 trigger→condition→action graph-execution engine, phục vụ cả inbox auto-reply (Phase 4) lẫn Marketing workflow (Phase 5) — không phải 2 hệ thống riêng. Companion to [system-architecture.md](system-architecture.md) (bounded contexts, Integration Driver pattern), [crm-domain-definition.md](crm-domain-definition.md) (module map), [crm-conversations-inbox.md](crm-conversations-inbox.md) (Conversation/Message — nguồn trigger event, escalate→Ticket), [crm-marketplace.md](crm-marketplace.md) (`module.marketing` entitlement).
 
-Date: 2026-07-04 · Status: **designed, chưa build** (roadmap "later" — [development-roadmap.md](development-roadmap.md) M4)
+Date: 2026-07-04 · Cập nhật: 2026-07-22 · Status: **v1 ĐÃ BUILD** — WorkflowEngine + node handlers (send_message/create_task/tag/condition) + workflow canvas (@xyflow/react) + RLS + tests. Doc này = thiết kế đầy đủ; chưa làm: trigger tự động từ event, entitlement gate trong engine
 
 ## Scope (v1)
 

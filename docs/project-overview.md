@@ -1,42 +1,45 @@
-# Chó Rách Management — Mô tả dự án & Bản kiểm kê tính năng hiện tại
+# Yona — Mô tả dự án & Bản kiểm kê tính năng hiện tại
 
 > Tài liệu mô tả **dự án hiện đang là gì trên thực tế** (đối chiếu code, không phải tầm nhìn). Mục đích: làm nền để phân tích **định hướng phát triển tiếp theo**.
 >
 > Bản này là *ảnh chụp hiện trạng* (state-of-the-code). README ([../README.md](../README.md)) là *bản pitch tầm nhìn dài hạn*; nơi hai bên lệch nhau, **tài liệu này là nguồn đúng theo code**.
 
-Cập nhật: 2026-06-25 · Mốc đã đạt: **M1 — CRM Core (M0 + M1) hoàn tất** · Trạng thái: production-ready cho lõi CRM
+Cập nhật: 2026-07-22 · Mốc đã đạt: **GĐ1 code-complete** (2026-07-11: lõi CRM + Inbox Zalo full messaging + billing metering/entitlements + automation engine v1) · Còn chặn launch: chốt số quota gói, tài khoản Zalo test, import CSV + payment drivers
 
 ---
 
 ## 1. Tóm tắt điều hành
 
-Chó Rách Management là một **SaaS CRM đa người thuê (multi-tenant) all-in-one**, xây trên Laravel 13 + PostgreSQL 16 + Inertia/React 19. Mỗi khách hàng doanh nghiệp là một **workspace** — ranh giới dữ liệu cứng được bảo vệ 3 lớp (Eloquent global scope + middleware + PostgreSQL Row-Level Security default-deny).
+Yona là một **Conversational CRM & Automation đa người thuê (multi-tenant)**, xây trên Laravel 13 + PostgreSQL 16 + Inertia/React 19. Mỗi khách hàng doanh nghiệp là một **workspace** — ranh giới dữ liệu cứng được bảo vệ 3 lớp (Eloquent global scope + middleware + PostgreSQL Row-Level Security default-deny).
 
-**Đã build và chạy được hôm nay** (mốc M0 + M1):
+**Đã build và chạy được hôm nay** (GĐ1 code-complete):
 
 - **Nền tảng platform** đầy đủ: đa người thuê, định danh toàn cục + membership, team phân cấp (closure table), RBAC 2 mặt phẳng, audit log bất biến, custom fields engine, các tính năng cross-cutting (attachments/tags/notes/comments/activity/reminders/email templates/notifications).
 - **Admin plane** tách biệt: guard `admin` riêng, panel workspaces read-only, impersonation có kiểm toán kép, quản lý + phát hành Product Announcements.
 - **CRM Sales core**: Client (công ty) ↔ Contact (người), nhóm khách hàng, vault mã hoá, Lead + pipeline kanban kéo-thả, gán + thông báo, lost/junk + restore, convert Lead → Client + Contact (transaction an toàn).
 - **Projects & Tasks**: dự án gắn khách hàng + milestone kanban + members + file + thảo luận; task đa hình + đa người thực hiện + checklist + bộ đếm giờ/timesheet.
 - **Frontend** hoàn chỉnh cho lõi: app shell, settings đầy đủ, dark mode, đa ngôn ngữ (vi/en), notification feed, What's New feed.
+- **Inbox Zalo cá nhân (full messaging)**: bridge zca-js (services/zalo-bridge, QR login, generic dispatcher 146 method), webhook idempotent, realtime Reverb (Echo private channel), media/sticker/bank-card/danh thiếp, mark-read, hội thoại → Liên hệ nháp → Lead, participants nhóm. Khung kênh chung: `ChannelDriver` contract + `ChannelManager` (thêm kênh = thêm driver).
+- **Billing/Metering**: đếm hội thoại per-channel (chỉ khi tenant trả lời; luôn nhận inbound kể cả hết quota), entitlements/plan grant, `OutboundSendPipeline` (quota gate + meter tập trung). Số quota gói còn PLACEHOLDER chờ chốt.
+- **Automation engine v1**: WorkflowEngine graph trigger→condition→action, node handlers (send_message/create_task/tag/condition), workflow canvas FE (@xyflow/react), RLS + tests.
 
-**Quy mô codebase**: ~39 model · 61 controller · 66 migration · 19 policy · ~545 test (Pest) + Playwright E2E.
+**Quy mô codebase**: ~55 model · 76 controller · 113 migration · 20 policy · ~819 test (Pest) + Playwright E2E.
 
-**Chưa build (kế hoạch)**: Support/Ticket + SLA · Conversations/Inbox (live chat omnichannel) · Marketplace + Entitlements (billing) · Marketing (campaign/segment/scoring) · Client Portal (M2) · Webhooks + inbound API · Import dữ liệu · Reporting/BI.
+**Chưa build (kế hoạch)**: Support/Ticket + SLA · Inbox Messenger/TikTok (GĐ2) · Payment drivers VNPay/MoMo · Import dữ liệu (CSV) · Marketing (campaign/segment/scoring) · Client Portal (M2) · Webhooks + inbound API · Reporting/BI · IdentityResolver dedup SĐT (CDP Layer 1 contract đã có, resolver chưa).
 
 ---
 
 ## 2. Định vị sản phẩm
 
-CRM = hệ thống + quy trình quản lý mọi tương tác với khách hàng, từ người lạ quan tâm (lead) → khách mua → quan hệ lâu dài. Dự án bao trùm cả ba mặt:
+**Định vị chính thức (chốt 22/07/2026): Conversational CRM & Automation** — CRM lấy hội thoại làm cửa vào (inbox đa kênh → Liên hệ nháp → Lead → Pipeline) + tự động hóa chăm sóc. Dự án bao trùm cả ba mặt của một CRM:
 
 | Mặt | Vai trò | Trạng thái |
 |---|---|---|
-| **Operational** | Tự động hoá quy trình sales/support/marketing | Sales ✅ · Support/Marketing ⬜ |
+| **Operational** | Tự động hoá quy trình sales/support/marketing | Sales ✅ · Automation engine v1 ✅ · Support/Marketing ⬜ |
 | **Analytical** | Biến dữ liệu thành insight, forecast, báo cáo | Hạ tầng (activity/audit) ✅ · Reporting/BI ⬜ |
-| **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên phòng ban | Timeline + notes + activity ✅ · Inbox ⬜ |
+| **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên phòng ban | Timeline + notes + activity ✅ · Inbox Zalo ✅ (Messenger/TikTok ⬜) |
 
-Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh dự kiến: **base miễn phí + add-on tính phí qua marketplace** (chưa build).
+Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh: **base miễn phí + add-on tính phí qua marketplace** — entitlements + metering đã build; payment drivers (VNPay/MoMo) chưa.
 
 ---
 
@@ -52,15 +55,14 @@ CRM = hệ thống + quy trình quản lý mọi tương tác với khách hàng
 | UI | Tailwind CSS v4 + Radix UI (shadcn-style) + lucide-react; **drag-drop dùng HTML5 native** |
 | Data/state | TanStack Query + TanStack Table v8 · date-fns |
 | Phân quyền | spatie/laravel-permission v8 (team-aware: `team_foreign_key = workspace_id`) + Policies |
-| Realtime | Laravel Reverb (đã cài hạ tầng; chưa hook subscribe vào UI) |
+| Realtime | Laravel Reverb — realtime inbox (Echo private channel per-workspace) |
 | Queue/Jobs | Laravel Horizon (Redis) |
 | Quan sát | Laravel Pulse + Telescope + Sentry |
 | Routing FE | Ziggy (route names sang JS) |
 | Markdown | league/commonmark (render announcement an toàn XSS) |
-| Test | Pest (unit/feature, ~545 test) + Playwright (E2E) |
+| Test | Pest (unit/feature, ~819 test) + Playwright (E2E) |
 | Format/Lint | Pint (PHP) + Prettier + ESLint — chạy qua `make format` |
-
-> Lưu ý lệch so với README: README liệt kê dnd-kit, React Hook Form + Zod, Recharts, sonner, cmdk như mặc định. **Thực tế** kanban hiện dùng HTML5 drag-drop, chưa thêm các thư viện form/chart/command-palette đó.
+| Workflow canvas | @xyflow/react (automation graph editor) |
 
 ### 3.2 Hai mặt phẳng quyền (2 guard, 2 bảng định danh)
 
@@ -83,13 +85,13 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 
 1. **App — `BelongsToWorkspace` trait**: global scope tự lọc theo `currentWorkspace`, hook `creating` tự đóng dấu `workspace_id`.
 2. **Middleware `IdentifyWorkspace`**: suy ra workspace active **từ session phía server** (không tin client), kiểm tra user có `workspace_member` active (else 403), bind `app.current_workspace` cho RLS.
-3. **PostgreSQL RLS default-deny**: mọi bảng workspace-scoped có policy `workspace_id = current_setting('app.current_workspace')`. App chạy bằng role non-owner `crm_app`; DDL/audit/cross-workspace dùng role `pgsql_privileged`. CI test (`RlsPolicyCoverageTest`) tự quét đảm bảo mọi bảng có policy.
+3. **PostgreSQL RLS default-deny**: mọi bảng workspace-scoped có policy `workspace_id = current_setting('app.current_workspace')`. App chạy bằng role non-owner `yona_app`; DDL/audit/cross-workspace dùng role `pgsql_privileged`. CI test (`RlsPolicyCoverageTest`) tự quét đảm bảo mọi bảng có policy.
 
 `ResetTenantContext` xoá context đầu mỗi request (an toàn với connection pooling/Octane). `App\Support\TenantScope` là **single source of truth** để bind/forget RLS + spatie team-id — đã hợp nhất sau bug scope-bleed (xem [[shared-session-scope-bleed]] và changelog 2026-06-25).
 
 ### 3.4 Mô hình dữ liệu lõi (THỰC TẾ — Client/Contact/Lead, KHÔNG phải Account/Deal)
 
-> **Quyết định khóa #2**: mô hình **Client/Contact/Lead/Pipeline** thay cho Account/Deal kiểu HubSpot. Bảng `accounts`/`deals` **không tồn tại** trong code. README còn vẽ Account/Deal → cần xem là lỗi thời.
+> **Quyết định khóa #2**: mô hình **Client/Contact/Lead/Pipeline** thay cho Account/Deal kiểu HubSpot. Bảng `accounts`/`deals` **không tồn tại** trong code.
 
 ```
 ┌─────────┐   convert (transaction G7)   ┌──────────┐
@@ -232,9 +234,36 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 - **Notifications**: bell + unread badge, dropdown 5 mục gần nhất, trang full pagination, mark read/read-all; scope qua `$user->notifications()` (404 nếu không thuộc user).
 - **Announcements (What's New)**: feed phân trang + category badge + cover image; **modal auto-popup** cho announcement chưa đọc lần đầu (guard theo session); mark read idempotent.
 - **i18n**: vi/en, hook translator + interpolation `:param`, namespace động; đổi ngôn ngữ lưu `user.locale` + session (`SetLocale`).
-- **Observability**: Pulse + Telescope + Sentry; Horizon cho queue; Reverb đã cài (chưa subscribe realtime vào UI).
+- **Observability**: Pulse + Telescope + Sentry; Horizon cho queue; Reverb realtime cho inbox (notification/announcement chưa realtime).
 
-**Khoảng trống**: realtime đẩy notification/announcement qua Reverb chưa hook; reminders consumer (UI) chưa render; notification action-link chưa click-through; filter/search announcement; command palette ⌘K; export/import cấu hình.
+**Khoảng trống**: realtime đẩy notification/announcement qua Reverb chưa hook (inbox đã realtime); reminders consumer (UI) chưa render; notification action-link chưa click-through; filter/search announcement; command palette ⌘K; export/import cấu hình.
+
+### H. Conversations / Inbox Zalo cá nhân ✅ (GĐ1, merge 2026-07-11)
+
+**Mục đích**: cửa vào Conversational CRM — gom tin nhắn Zalo cá nhân về một inbox, biến hội thoại thành Lead.
+
+**Năng lực**:
+- **Bridge Zalo cá nhân** (`services/zalo-bridge`, Node + zca-js): QR login promote slot, session persist, generic dispatcher `POST /zca/:method` (allowlist reflection 146 method, guard outbound/destructive/elevated secret), relay forwarder 10 loại event về Laravel.
+- **Ingest idempotent** (`InboundMessageService`): webhook → upsert conversation (unique `channel_account_id + peer_uid`) + message (dedup `source_id`, backfill `old_messages` replay-safe), enrich type (image/video/file/sticker/bank_card/danh thiếp), participants nhóm, replay-upgrade tin cũ.
+- **Realtime**: Reverb + Echo private channel per-workspace; auto mark-read khi tab hiện; unread badge; stream version chống lệch UI đa tab.
+- **Gửi tin** (`OutboundSendPipeline` — money-path): quota gate per-channel TRƯỚC transport → driver policy (cửa sổ 7h–22h, cap 3 tin QC/số/ngày, reply-exempt) → transport → persist + meter. Media/sticker/quote/reaction/recall theo `ChannelCapabilities`.
+- **CRM layer**: hội thoại = Liên hệ nháp khi chưa gắn Contact; convert → Lead (dedup contract CDP Phase-08); phone enrichment từ danh thiếp/bank card.
+- **Khung kênh chung**: `ChannelDriver` contract + `ChannelManager`; UI inbox channel-agnostic (`components/inbox/*`) — thêm Messenger/TikTok = thêm driver, 0 sửa lõi.
+
+**Docs chi tiết**: [features/messaging/README.md](features/messaging/README.md) (13 flow doc).
+**Khoảng trống**: chỉ mới kênh Zalo cá nhân (rủi ro ToS — không có API chính thức); notification khi `session_lost` chưa có; web widget/Messenger/Email chưa build.
+
+### I. Billing: Metering + Entitlements ✅ (core, GĐ1)
+
+**Năng lực**:
+- **Metering per-channel** (`MeteringService` + `channel_usage`): đếm hội thoại theo từng kênh, CHỈ khi tenant trả lời (inbound không tính); luôn nhận inbound kể cả hết quota (bảo toàn lead capture).
+- **Entitlements/plan**: marketplace items + `workspace_purchases` + plan grant; gate tính năng per-workspace.
+- **Khoảng trống**: số quota 3 gói (Free/Team/Business) còn PLACEHOLDER chờ founder chốt; payment drivers VNPay/MoMo chưa build; admin catalog/billing UI chưa có.
+
+### J. Automation / Workflow engine v1 ✅
+
+**Năng lực**: `WorkflowEngine` chạy graph trigger→condition→action (bảng `workflows`/`workflow_runs`/`workflow_run_logs`, RLS đủ); node handlers v1: send_message (qua ChannelManager + pipeline), create_task, tag, condition; enroll theo subject lead/conversation; workflow canvas FE (@xyflow/react); permission `automation.manage`.
+**Khoảng trống**: trigger tự động từ event (mới enroll thủ công/service-call); entitlement gate `module.marketing` chưa enforce trong engine; node registry v1 cố định (thiết kế đầy đủ: [crm-automation-workflow.md](crm-automation-workflow.md)).
 
 ---
 
@@ -250,9 +279,10 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 | CRM Sales (Client/Contact/Lead/Pipeline/Convert) | ✅ | Production-ready |
 | Projects & Tasks & Timers | ✅ | Dùng được; vài TODO P09 treo |
 | Frontend/Settings/i18n/Feeds | ✅ | Production-ready cho lõi |
+| Conversations / Inbox Zalo cá nhân (full messaging + bridge) | ✅ | Dùng được; cần verify tay bằng tài khoản Zalo test |
+| Billing: Metering per-channel + Entitlements | ✅ | Core xong; quota PLACEHOLDER + payment drivers ⬜ |
+| Automation engine v1 (workflow graph + canvas) | ✅ | v1; trigger tự động từ event ⬜ |
 | Support / Ticket + SLA | ⬜ | Chưa build (hạ tầng sẵn ~90%) |
-| Conversations / Inbox (live chat omnichannel) | ⬜ | Chưa build (Reverb sẵn) |
-| Marketplace + Entitlements (billing) | ⬜ | Chưa build (chỉ có design doc) |
 | Marketing (campaign/segment/scoring) | ⬜ | Chưa build |
 | Client Portal (M2) | ⬜ | Cột DB sẵn; chưa có auth flow |
 | Webhooks + inbound API (Sanctum) | ⬜ | Chưa build (event stream sẵn) |
@@ -263,14 +293,13 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 
 ## 6. Khoảng trống & nợ kỹ thuật hiện tại (việc nên dọn trước/song song)
 
-1. **README lỗi thời**: còn mô tả Account/Deal + thư viện FE chưa dùng → nên cập nhật về Client/Lead và stack thực tế (P0, rẻ).
-2. **Job async chưa chắc lên scheduler**: dispatch reminders + purge audit theo `audit_retention` cần verify/đăng ký vào `schedule` với RLS context per-workspace.
-3. **Merge-field contracts dở** (Client/Contact stub) → email tự động (assignment, lead lifecycle) chưa đủ.
-4. **TODO P09 treo** ở Projects/Tasks: gỡ assignee khi xoá member, reassign task khi xoá milestone, progress auto-calc hiệu năng.
-5. **UI còn thiếu cho quyền đã định nghĩa**: audit viewer (tenant + platform), admin management, billing/monitoring (platform).
-6. **Realtime chưa hoàn tất vòng**: Reverb cài rồi nhưng UI chưa subscribe (notification/announcement/kanban vẫn polling/refresh).
-7. **Notification preferences** (kênh + mute theo loại) chưa có → khó scale số lượng thông báo.
-8. **Bulk/Import/Export** vắng mặt toàn hệ → cản trở onboarding khách có sẵn dữ liệu.
+1. **Job async chưa chắc lên scheduler**: dispatch reminders + purge audit theo `audit_retention` cần verify/đăng ký vào `schedule` với RLS context per-workspace.
+2. **Merge-field contracts dở** (Client/Contact stub) → email tự động (assignment, lead lifecycle) chưa đủ.
+3. **TODO P09 treo** ở Projects/Tasks: gỡ assignee khi xoá member, reassign task khi xoá milestone, progress auto-calc hiệu năng.
+4. **UI còn thiếu cho quyền đã định nghĩa**: audit viewer (tenant + platform), admin management, billing/monitoring (platform).
+5. **Realtime ngoài inbox chưa hook**: inbox đã realtime qua Reverb; notification/announcement/kanban vẫn polling/refresh.
+6. **Notification preferences** (kênh + mute theo loại) chưa có → khó scale số lượng thông báo; notification `session_lost` (bridge mất phiên Zalo) chưa có.
+7. **Bulk/Import/Export** vắng mặt toàn hệ → cản trở onboarding khách có sẵn dữ liệu.
 
 ---
 
@@ -285,8 +314,8 @@ Xếp theo **độ sẵn sàng** (hạ tầng tái dùng được nhiều = làm
 | 3 | **Client Portal (M2)** | ~75% | Cột portal đã có trên Contact; cờ visible_to_customer rải khắp activity/comment/attachment | Guard portal, OTP/email verify, password reset, resource lọc field nhạy cảm, trang self-service |
 | 4 | **Lead scoring + auto-assignment** | ~70% | Lead/source/pipeline/assignment + event stream sẵn | Rule engine (round-robin/skill/territory), công thức scoring, job dispatch |
 | 5 | **Reporting/BI + Pipeline analytics** | ~70% | Activity/audit + denormalized fields; posture compute-on-read | Query/repository layer cho rollup, dashboard (forecast, conversion, win/loss), chart lib |
-| 6 | **Conversations / Inbox (live chat)** | ~60% | Reverb đã cài; attachments/contacts/escalate-to-ticket có chỗ bám | Channels (web widget → Zalo/FB/email), conversations/messages, realtime presence/typing, routing |
-| 7 | **Marketplace + Entitlements (billing)** | ~55% | Design doc đầy đủ; cần cho quota/feature-gate | Catalog items, workspace_purchases, `Entitlements::for()` resolver + gate, tích hợp payment provider |
+| 6 | **Payment drivers (VNPay/MoMo)** | ~70% | Entitlements + purchases + metering đã chạy; chỉ thiếu cổng thanh toán | Driver `PaymentProvider` per cổng, webhook confirm, reconcile |
+| 7 | **Inbox kênh mới (Messenger/TikTok — GĐ2)** | ~70% | `ChannelDriver` contract + UI inbox channel-agnostic sẵn | Driver per kênh + OAuth/webhook riêng từng nền tảng |
 | 8 | **Webhooks + inbound API (Sanctum)** | ~60% | Event domain + logic ở Service (controller mỏng) nên API gọi lại được core | Resource serializers, webhook dispatch (HMAC + retry), token scope theo membership |
 | 9 | **Bulk ops + Import (CSV)** | ~65% | CRUD + validation custom fields sẵn | Importer (Lead/Contact/Client), bulk assign/status, idempotency/dedup |
 
@@ -298,7 +327,7 @@ Xếp theo **độ sẵn sàng** (hạ tầng tái dùng được nhiều = làm
 
 | Tài liệu | Nội dung |
 |---|---|
-| [README.md](../README.md) | Pitch tầm nhìn (lưu ý phần data-model Account/Deal đã lỗi thời) |
+| [README.md](../README.md) | Pitch tầm nhìn tổng quan |
 | [system-architecture.md](system-architecture.md) | Kiến trúc: bounded context, data model, isolation, RBAC, TX, async, scale, frontend |
 | [crm-authorization-model.md](crm-authorization-model.md) | Phân quyền 2 mặt phẳng (Platform + Workspace) |
 | [crm-domain-definition.md](crm-domain-definition.md) | Định nghĩa entity, quan hệ, vòng đời, thuật ngữ |

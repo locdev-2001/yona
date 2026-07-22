@@ -10,37 +10,37 @@ return [
             'dashboard' => 'Go to dashboard',
         ],
         'hero' => [
-            'eyebrow' => 'CRM for fast-moving teams',
-            'title' => 'Manage customers without the chaos',
-            'subtitle' => 'Bring your customers, deals and team tasks into one tidy place. Realtime, multi-workspace, with record-level permissions.',
+            'eyebrow' => 'Conversational CRM & Automation',
+            'title' => 'Turn conversations into customers',
+            'subtitle' => 'Bring every customer conversation from any messaging channel into one inbox — never miss a lead, automate follow-ups, close deals faster.',
             'cta_primary' => 'Get started free',
             'cta_secondary' => 'Log in',
             'cta_dashboard' => 'Go to dashboard',
             'hint' => 'No credit card required · Cancel anytime',
         ],
         'features' => [
-            'title' => 'Everything you need to nurture customers',
-            'subtitle' => 'A multi-tenant platform with tight permissions and instant updates for the whole team.',
-            'workspaces' => [
-                'title' => 'Multiple workspaces',
-                'description' => 'A separate workspace per department or client, with strictly isolated data.',
+            'title' => 'From conversation to closed deal',
+            'subtitle' => 'Omnichannel inbox, CRM pipeline and care automation in one platform — your whole team in sync, realtime.',
+            'inbox' => [
+                'title' => 'Omnichannel inbox',
+                'description' => 'Every customer message from every chat channel in one place — reply fast, never drop a conversation.',
             ],
-            'roles' => [
-                'title' => 'Role-based access',
-                'description' => 'Owner, admin, member… control exactly who can see and do what, down to each record.',
+            'crm' => [
+                'title' => 'Conversations become customers',
+                'description' => 'Turn a conversation into a Lead in one click and track it through a drag-and-drop pipeline to the close.',
+            ],
+            'automation' => [
+                'title' => 'Care automation',
+                'description' => 'Workflows send messages, create tasks and tag customers on script — every customer gets follow-up on time.',
             ],
             'teams' => [
-                'title' => 'Team hierarchy',
-                'description' => 'Organize users into a hierarchy that decides who can see which records.',
-            ],
-            'realtime' => [
-                'title' => 'Realtime updates',
-                'description' => 'Every change shows up instantly for the whole team via realtime broadcasting.',
+                'title' => 'Teams & permissions',
+                'description' => 'Multiple workspaces, record-level permissions and realtime updates for the whole team.',
             ],
         ],
         'footer' => [
-            'tagline' => 'A tidy CRM for modern teams.',
-            'copyright' => '© :year Chó Rách Management. All rights reserved.',
+            'tagline' => 'Conversational CRM & Automation for Vietnamese SMEs.',
+            'copyright' => '© :year Yona. All rights reserved.',
         ],
     ],
     'nav' => [

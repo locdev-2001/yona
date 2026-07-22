@@ -16,13 +16,13 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 
 **Phase-08 hardening**: Add atomic check-and-increment primitive (Redis Lua script) to eliminate TOCTOU entirely.
 
-**Related**: `modules/channel-zalo/src/Services/SendRateLimiter.php` line ~70.
+**Related**: `app/Modules/Integration/Chat/ZaloPersonal/SendRateLimiter.php` line ~70.
 
 ---
 
 ### PostgreSQL superuser bypass (Non-superuser enforcement)
 
-**Finding**: If `.env` APP_DB_USER is a PostgreSQL `superuser` role, RLS policies are **silently bypassed**. Default bootstrap users (e.g., `postgres`) bypass RLS. Production setup must use **non-superuser application role** (e.g., `crm_app`).
+**Finding**: If `.env` APP_DB_USER is a PostgreSQL `superuser` role, RLS policies are **silently bypassed**. Default bootstrap users (e.g., `postgres`) bypass RLS. Production setup must use **non-superuser application role** (e.g., `yona_app`).
 
 **Phase-07 mitigation**: None (manual bootstrap step).
 

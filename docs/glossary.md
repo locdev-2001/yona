@@ -1,12 +1,13 @@
 # Glossary
 
-Decoder ring cho dự án Chó Rách CRM — thuật ngữ, viết tắt, codename, tên gọi nội bộ.
+Decoder ring cho dự án Yona — thuật ngữ, viết tắt, codename, tên gọi nội bộ.
 
 > Liên quan: roadmap [development-roadmap.md](development-roadmap.md) · định vị/hiện trạng [project-overview.md](project-overview.md) · domain [crm-domain-definition.md](crm-domain-definition.md) · kiến trúc [system-architecture.md](system-architecture.md). Mục tiêu/north-star: xem CLAUDE.md + bộ nhớ dự án. CDP Layer / Phase ↔ GĐ trong roadmap.
 
 ## Acronyms & Terms
 | Term | Meaning | Context |
 |------|---------|---------|
+| Conversational CRM & Automation | Định vị chính thức (chốt 22/07/2026) | CRM lấy hội thoại nhắn tin làm cửa vào (inbox → Liên hệ nháp → Lead) + tự động hóa chăm sóc — category của Kommo/respond.io |
 | CDP | Customer Data Platform | Hồ sơ khách hợp nhất; **trục trung tâm** — mọi nguồn đổ vào, mọi hành động đọc ra |
 | CDP Layer 1 | Hợp nhất danh tính (identity unification) | **GĐ1** — dedup theo SĐT |
 | CDP Layer 2 | Cá nhân hóa hành vi (behavioral personalization) | **GĐ4** |
@@ -30,12 +31,12 @@ Decoder ring cho dự án Chó Rách CRM — thuật ngữ, viết tắt, codena
 | Cửa sổ cho phép | Khung thời gian nền tảng cho phép chủ động nhắn khách |
 | Ghi nguồn | Lưu rõ khách "đến từ đâu" để báo cáo kênh |
 
-## Product Name Candidates (chưa chốt)
-| Codename | Status |
-|----------|--------|
-| Guồng | Ứng viên tên sản phẩm — cần check domain + ipvietnam.gov.vn |
-| Mạch | Ứng viên tên sản phẩm — cần check domain + ipvietnam.gov.vn |
-| Chó rách CRM | Tên nội bộ / repo hiện tại |
+## Tên sản phẩm (đã chốt 22/07/2026)
+| Tên | Status |
+|-----|--------|
+| **Yona** | Tên chính thức — domain **yona.vn**, repo github.com/locflamedia/yona |
+| Chó rách CRM / cho-rach-management | Tên cũ trước rebrand 22/07/2026 (còn xuất hiện trong journals/plans lịch sử) |
+| Guồng, Mạch | Ứng viên cũ, đã loại |
 
 ## Integrations & Tools
 | Name | Role |
@@ -47,7 +48,7 @@ Decoder ring cho dự án Chó Rách CRM — thuật ngữ, viết tắt, codena
 | Messenger | Kênh inbox GĐ2 |
 | TikTok | Kênh inbox GĐ2 (nhiều giới hạn nhất, làm sau cùng) |
 | VNPay / MoMo | Thanh toán nội địa GĐ1 (driver `payment-*` cắm vào `PaymentProvider`) |
-| Figma FigJam | Board "Chó rách CRM", file key YAvnMFXP9hAHb2CSaLy7sB (PDF export đã gỡ khỏi repo; nội dung mục tiêu/roadmap lưu ở docs + bộ nhớ) |
+| Figma FigJam | File key YAvnMFXP9hAHb2CSaLy7sB — board trên Figma vẫn mang tên cũ "Chó rách CRM" (PDF export đã gỡ khỏi repo; nội dung mục tiêu/roadmap lưu ở docs + bộ nhớ) |
 
 ## Legal / Compliance
 | Term | Meaning |

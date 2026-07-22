@@ -11,37 +11,37 @@ return [
             'dashboard' => 'Vào Dashboard',
         ],
         'hero' => [
-            'eyebrow' => 'CRM cho đội nhóm tăng tốc',
-            'title' => 'Quản lý khách hàng, không rối như tơ vò',
-            'subtitle' => 'Gom khách hàng, giao dịch và công việc của cả đội vào một nơi gọn gàng. Realtime, đa không gian làm việc, phân quyền tới từng bản ghi.',
+            'eyebrow' => 'Conversational CRM & Automation',
+            'title' => 'Biến hội thoại thành khách hàng',
+            'subtitle' => 'Gom tin nhắn khách từ mọi kênh chat về một inbox — không sót khách, tự động chăm sóc, chốt đơn nhanh hơn.',
             'cta_primary' => 'Bắt đầu miễn phí',
             'cta_secondary' => 'Đăng nhập',
             'cta_dashboard' => 'Vào Dashboard',
             'hint' => 'Không cần thẻ tín dụng · Hủy bất cứ lúc nào',
         ],
         'features' => [
-            'title' => 'Đủ thứ cần để chăm khách hàng',
-            'subtitle' => 'Nền tảng đa tenant, phân quyền chặt, cập nhật tức thì cho cả đội.',
-            'workspaces' => [
-                'title' => 'Đa không gian làm việc',
-                'description' => 'Mỗi phòng ban hay khách hàng một workspace riêng, dữ liệu tách bạch tuyệt đối.',
+            'title' => 'Từ hội thoại đến chốt đơn',
+            'subtitle' => 'Inbox đa kênh, CRM pipeline và tự động hóa chăm sóc trong một nền tảng — cả đội cùng nhịp, realtime.',
+            'inbox' => [
+                'title' => 'Inbox đa kênh',
+                'description' => 'Gom tin nhắn khách từ mọi kênh chat về một nơi — trả lời nhanh, không sót hội thoại nào.',
             ],
-            'roles' => [
-                'title' => 'Phân quyền theo vai trò',
-                'description' => 'Owner, admin, member… kiểm soát rõ ai được thấy và làm gì tới từng bản ghi.',
+            'crm' => [
+                'title' => 'Hội thoại thành khách hàng',
+                'description' => 'Một chạm biến hội thoại thành Lead, theo dõi qua pipeline kéo-thả tới khi chốt đơn.',
+            ],
+            'automation' => [
+                'title' => 'Tự động hóa chăm sóc',
+                'description' => 'Workflow tự nhắn tin, tạo việc, gắn nhãn theo kịch bản — khách nào cũng được chăm đúng lúc.',
             ],
             'teams' => [
-                'title' => 'Cây đội nhóm',
-                'description' => 'Tổ chức người dùng theo cấp bậc, quyết định mỗi người thấy được những bản ghi nào.',
-            ],
-            'realtime' => [
-                'title' => 'Cập nhật realtime',
-                'description' => 'Mọi thay đổi hiện ngay cho cả đội nhờ broadcasting thời gian thực.',
+                'title' => 'Đội nhóm & phân quyền',
+                'description' => 'Đa không gian làm việc, phân quyền tới từng bản ghi, cập nhật realtime cho cả đội.',
             ],
         ],
         'footer' => [
-            'tagline' => 'CRM gọn gàng cho đội nhóm Việt.',
-            'copyright' => '© :year Chó Rách Management. Đã đăng ký bản quyền.',
+            'tagline' => 'Conversational CRM & Automation cho SME Việt.',
+            'copyright' => '© :year Yona. Đã đăng ký bản quyền.',
         ],
     ],
     'nav' => [

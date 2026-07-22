@@ -2,7 +2,7 @@
 
 > Living document — phases, milestones, progress. Maintained per `.claude/rules/documentation-management.md`. Pipeline defined in `crm-build-pipeline.md`.
 
-Last updated: 2026-07-04
+Last updated: 2026-07-22
 
 ## Status legend
 ✅ done · 🟡 in progress · ⬜ not started
@@ -40,9 +40,10 @@ Last updated: 2026-07-04
 | **4** | **Traditional Laravel Refactor** (2026-06-28) — `app/Models`, `app/Http/Controllers/{Domain}`, `app/Services` (MeteringService concrete); **only module:** `app/Modules/Integration/` (driver pattern); xóa `module.json`/ModuleRegistry/topo-sort | ✅ |
 | **5** | **GĐ1 — Inbox + Channel-Zalo + CDP (contract) + Billing + Payment-manual** — inbox Zalo webhook + idempotent message, conv→Lead (dedup contract Phase-08), plan grant, metering per-channel, 18 audit findings fixed | ✅ |
 | **5-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; code-standards.md + getting-started.md + feature-docs; quotas PLACEHOLDER (founder decision), Zalo test account pending | ✅ |
+| **5b** | **Inbox full messaging** (merge 2026-07-11) — taxonomy 4 loại event, media/sticker/bank-card/danh thiếp, mark-read + realtime đa tab, MessagePublisher + serializer, linkify | ✅ |
 | **6** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
 | (later) | Support (Ticket + SLA), Marketing, Webhooks, API, Client Portal | ⬜ |
-| (later) | Automation/Workflow engine (trigger→condition→action) — **design ready**, see [crm-automation-workflow.md](crm-automation-workflow.md) | ⬜ |
+| **5c** | **Automation/Workflow engine v1** — WorkflowEngine graph + node handlers + canvas FE; còn: trigger tự động từ event, entitlement gate ([crm-automation-workflow.md](crm-automation-workflow.md)) | ✅ (v1) |
 
 **Primary Plan:** [plans/260628-traditional-laravel-refactor/plan.md](../../plans/260628-traditional-laravel-refactor/plan.md)
 
@@ -55,6 +56,8 @@ Last updated: 2026-07-04
     1. **Quota PLACEHOLDER**: 3 gói (Free/Team/Business) còn chưa định số. Founder chốt trước tuần ~2026-07-07.
     2. **Zalo test account**: Bridge + realtime cần verify tay bằng personal Zalo account (QR login).
     3. **Phase-08**: Implement IdentityResolver (phone dedup), import CSV, payment drivers (VNPay/MoMo).
+- **Inbox full messaging** ✅ 2026-07-11 — inbox = module nhắn tin đầy đủ, 1 khung mọi kênh (merge c9af28d, gate 772 pest).
+- **Rebrand Yona** ✅ 2026-07-22 — đổi tên sản phẩm/DB/repo docs; định vị chốt: **Conversational CRM & Automation**; fix migrate (role cũ) + test infra (819 pest).
 - **M3.5 — GĐ1.5**: Import + payment drivers (Phase 4.8 / Phase-08) ⬜
 - **M4 — Support + Marketing**: Tickets/SLA + campaigns + scoring (Phase 5) ⬜
 - **M5 — Client Portal**: Contact portal login + self-service views (Phase 6) ⬜

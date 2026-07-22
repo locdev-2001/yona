@@ -1,11 +1,11 @@
 import { useTranslator } from '@/lib/i18n';
-import { Building2, Network, ShieldCheck, Zap, type LucideIcon } from 'lucide-react';
+import { MessagesSquare, ShieldCheck, UserPlus, Zap, type LucideIcon } from 'lucide-react';
 
 const FEATURES: { key: string; icon: LucideIcon }[] = [
-    { key: 'workspaces', icon: Building2 },
-    { key: 'roles', icon: ShieldCheck },
-    { key: 'teams', icon: Network },
-    { key: 'realtime', icon: Zap },
+    { key: 'inbox', icon: MessagesSquare },
+    { key: 'crm', icon: UserPlus },
+    { key: 'automation', icon: Zap },
+    { key: 'teams', icon: ShieldCheck },
 ];
 
 export function LandingFeatures() {
