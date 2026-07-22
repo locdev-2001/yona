@@ -8,6 +8,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Integration\ChannelManager;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Integration\Contracts\ChannelCapabilities;
 use App\Modules\Integration\Contracts\ChannelDriver;
 use Illuminate\Database\QueryException;
 
@@ -223,11 +224,19 @@ it('ChannelManager hasAny returns true after driver registered', function () {
 
             public function disconnect(string $workspaceId): void {}
 
-            public function sendMessage(Conversation $c, array $p): void {}
+            public function sendMessage(Conversation $c, array $p): Message
+            {
+                return new Message;
+            }
 
             public function parseInbound(array $raw): array
             {
                 return [];
+            }
+
+            public function capabilities(): ChannelCapabilities
+            {
+                return new ChannelCapabilities;
             }
         };
     });

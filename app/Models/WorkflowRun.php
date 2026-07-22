@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * WorkflowRun — 1 row = 1 lần enroll của 1 subject vào 1 Workflow.
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $subject_id
  * @property string|null $current_node_id
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $resume_at
+ * @property Carbon|null $resume_at
  * @property int $loop_count
  */
 class WorkflowRun extends Model

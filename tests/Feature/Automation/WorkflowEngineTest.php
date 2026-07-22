@@ -9,6 +9,7 @@ use App\Models\WorkflowRun;
 use App\Models\WorkflowRunLog;
 use App\Models\Workspace;
 use App\Modules\Automation\WorkflowEngine;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Bus;
 
 // Phase 02 — WorkflowEngine core: graph walk, loop cap, dedup, resume.
@@ -272,7 +273,7 @@ it('AdvanceWorkflowRunJob implements the ShouldBeUnique contract keyed on workfl
     $run = app(WorkflowEngine::class)->enroll($workflow, 'lead', $lead->id);
     $job = new AdvanceWorkflowRunJob($run->workspace_id, $run->id);
 
-    expect($job)->toBeInstanceOf(Illuminate\Contracts\Queue\ShouldBeUnique::class);
+    expect($job)->toBeInstanceOf(ShouldBeUnique::class);
     expect($job->uniqueId())->toBe($run->id);
 
     AdvanceWorkflowRunJob::dispatch($run->workspace_id, $run->id);

@@ -30,10 +30,10 @@ class ResumeWaitingWorkflowRuns extends Command
 
     /**
      * @param  list<array{id: string, workspace_id: string}>|null  $dueRuns  Explicit list for
-     *   tests (avoids the pgsql_privileged cross-connection transaction-visibility issue —
-     *   Postgres READ COMMITTED means uncommitted rows on the default test connection are
-     *   never visible to a separate connection, even within the same test — same constraint
-     *   documented on ReminderService::dispatchDue()). Production callers pass null.
+     *                                                                       tests (avoids the pgsql_privileged cross-connection transaction-visibility issue —
+     *                                                                       Postgres READ COMMITTED means uncommitted rows on the default test connection are
+     *                                                                       never visible to a separate connection, even within the same test — same constraint
+     *                                                                       documented on ReminderService::dispatchDue()). Production callers pass null.
      */
     public function dispatchDue(?array $dueRuns = null): int
     {
