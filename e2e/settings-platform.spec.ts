@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // Capstone flow (brief): sign in as a workspace admin, create a team, then
 // invite a member and assign a role — exercising the platform-foundation UI
 // end to end. Runs against the dev server seeded by FoundationSeeder
-// (test@example.com is an admin of "Chó Rách"). Vietnamese is the default UI
+// (test@example.com is an admin of "Yona"). Vietnamese is the default UI
 // locale. Unique suffixes keep re-runs idempotent.
 
 const ADMIN_EMAIL = 'test@example.com';

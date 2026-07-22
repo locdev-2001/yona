@@ -55,8 +55,8 @@ See [crm-authorization-model.md](../../crm-authorization-model.md) for role defi
 5. **Database-level enforcement** (Layer 3):
    - PostgreSQL RLS policies run **after** the app scope filter (defense-in-depth).
    - Every workspace-scoped table has `ENABLE ROW LEVEL SECURITY` and a policy: `workspace_id = current_setting('app.current_workspace')::uuid`.
-   - The app's database role `crm_app` has **no owner privileges** and is bound by RLS: even if the app scope filter is bypassed, a query cannot read/write rows from other workspaces.
-   - The privileged role (`crm_owner`) used for audit writes bypasses RLS.
+   - The app's database role `yona_app` has **no owner privileges** and is bound by RLS: even if the app scope filter is bypassed, a query cannot read/write rows from other workspaces.
+   - The privileged role (`yona_owner`) used for audit writes bypasses RLS.
 
 ```mermaid
 sequenceDiagram

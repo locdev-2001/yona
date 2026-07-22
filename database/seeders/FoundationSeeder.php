@@ -36,9 +36,9 @@ class FoundationSeeder extends Seeder
         $admin->syncRoles([PlatformRole::SuperAdmin->value]);
 
         $workspace = Workspace::firstOrCreate(
-            ['slug' => 'cho-rach'],
+            ['slug' => 'yona'],
             [
-                'name' => 'Chó Rách',
+                'name' => 'Yona',
                 'base_currency' => 'VND',
                 'timezone' => 'Asia/Ho_Chi_Minh',
                 'locale' => 'vi',

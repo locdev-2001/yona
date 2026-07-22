@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
  * Layer 3 of tenant isolation (arch §4, BR-X18): Postgres Row-Level Security,
  * default-deny. Even a query that escapes the Eloquent global scope (raw SQL,
  * a forgotten trait) cannot cross workspaces. Run as the owner; the runtime
- * `crm_app` role is non-owner/non-superuser so policies bind to it.
+ * `yona_app` role is non-owner/non-superuser so policies bind to it.
  *
  * `nullif(current_setting(...,true), '')::uuid` yields NULL when the tenant
  * context is unset or cleared → `workspace_id = NULL` matches nothing

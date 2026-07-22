@@ -1,4 +1,4 @@
-# Getting Started — Chó Rách Management
+# Getting Started — Yona
 
 > Quick start guide for local development. From fresh checkout to first login and Zalo connection test.
 
@@ -15,8 +15,8 @@
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/locflamedia/cho-rach-management.git
-cd cho-rach-management
+git clone https://github.com/locflamedia/yona.git
+cd yona
 
 # Copy env template
 cp .env.example .env
@@ -30,14 +30,14 @@ pnpm install  # or npm install
 
 ## 2. Database Setup
 
-Canonical names: dev DB `crm`, test DB `crm_test`, roles `crm_app` (runtime,
-RLS-enforced) + `crm_owner` (schema owner, migrations). Details in
+Canonical names: dev DB `yona`, test DB `yona_test`, roles `yona_app` (runtime,
+RLS-enforced) + `yona_owner` (schema owner, migrations). Details in
 [local-development.md](local-development.md).
 
 ```bash
 # Create both databases (as the superuser)
-createdb -h 127.0.0.1 -U postgres crm
-createdb -h 127.0.0.1 -U postgres crm_test
+createdb -h 127.0.0.1 -U postgres yona
+createdb -h 127.0.0.1 -U postgres yona_test
 
 # Generate app key
 php artisan key:generate
@@ -159,8 +159,8 @@ php artisan serve --port=8001
 ### Database Connection Refused
 
 - Verify PostgreSQL is running: `psql -h 127.0.0.1 -U postgres -c "SELECT 1"`
-- Check `.env` has correct host/port/user/password (`DB_USERNAME=crm_app`).
-- Ensure the `crm` database exists and roles are set up (`make db-roles`).
+- Check `.env` has correct host/port/user/password (`DB_USERNAME=yona_app`).
+- Ensure the `yona` database exists and roles are set up (`make db-roles`).
 
 ### Zalo Bridge Connection Failed
 

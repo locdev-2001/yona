@@ -1,4 +1,4 @@
-# Chó Rách Management — dev shortcuts (host workflow).
+# Yona — dev shortcuts (host workflow).
 # Requires local PHP 8.4 + Postgres + Redis. See docs/local-development.md.
 
 # Force PHP 8.4 into the recipe PATH (harness/make shells may default to 8.3).
@@ -24,10 +24,10 @@ setup: ## First-time: deps + env + key + DB roles + migrate + assets
 	pnpm install
 	@test -f .env || cp .env.example .env
 	@grep -q "APP_KEY=base64:" .env || $(ARTISAN) key:generate
-	$(PSQL) -d crm      -f database/sql/setup-roles.sql
-	$(PSQL) -d crm_test -f database/sql/setup-roles.sql
+	$(PSQL) -d yona      -f database/sql/setup-roles.sql
+	$(PSQL) -d yona_test -f database/sql/setup-roles.sql
 	$(ARTISAN) migrate --database=pgsql_privileged --force
-	DB_DATABASE=crm_test $(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=yona_test $(ARTISAN) migrate --database=pgsql_privileged --force
 	pnpm run build
 	@echo "✓ setup done"
 
@@ -64,17 +64,17 @@ workers: ## Run full pipeline (Horizon queues + Reverb websocket)
 	wait
 
 ## ── Database ───────────────────────────────────────────
-# Roles: crm_app (runtime, RLS-enforced) + crm_owner (schema owner, BYPASSRLS,
+# Roles: yona_app (runtime, RLS-enforced) + yona_owner (schema owner, BYPASSRLS,
 # NOSUPERUSER). setup-roles.sql creates both — run as the real superuser.
-db-roles: ## Create/grant crm_app + crm_owner roles (real RLS) on both DBs
-	$(PSQL) -d crm      -f database/sql/setup-roles.sql
-	$(PSQL) -d crm_test -f database/sql/setup-roles.sql
+db-roles: ## Create/grant yona_app + yona_owner roles (real RLS) on both DBs
+	$(PSQL) -d yona      -f database/sql/setup-roles.sql
+	$(PSQL) -d yona_test -f database/sql/setup-roles.sql
 
 migrate: ## Run pending migrations (additive, forward-only) on dev + test DBs
 	$(ARTISAN) migrate --database=pgsql_privileged --force
-	DB_DATABASE=crm_test $(ARTISAN) migrate --database=pgsql_privileged --force
-	DB_DATABASE=crm_test $(ARTISAN) db:seed --class=PlatformPermissionSeeder --force
-	DB_DATABASE=crm_test $(ARTISAN) db:seed --class=AdminPermissionSeeder --force
+	DB_DATABASE=yona_test $(ARTISAN) migrate --database=pgsql_privileged --force
+	DB_DATABASE=yona_test $(ARTISAN) db:seed --class=PlatformPermissionSeeder --force
+	DB_DATABASE=yona_test $(ARTISAN) db:seed --class=AdminPermissionSeeder --force
 
 seed: ## Run seeders (idempotent foundation data)
 	$(ARTISAN) db:seed --force

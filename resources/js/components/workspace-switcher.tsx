@@ -38,7 +38,7 @@ export function WorkspaceSwitcher() {
                                 <AppLogoIcon className="text-sidebar-primary-foreground size-5 fill-current" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">{active?.name ?? 'Chó Rách'}</span>
+                                <span className="truncate font-semibold">{active?.name ?? 'Yona'}</span>
                                 {role && <span className="text-muted-foreground truncate text-xs">{t(`platform.roles.${role}`)}</span>}
                             </div>
                             <ChevronsUpDown className="ml-auto" />

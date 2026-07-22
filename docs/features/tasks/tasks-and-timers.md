@@ -118,7 +118,7 @@ NOT_STARTED (1) ←→ IN_PROGRESS (4) ←→ TESTING (3) ←→ AWAITING_FEEDBA
 
 - **G12**: `related_type` and `related_id` must both be set or both null (atomic)
 - **G12**: assignee user_ids and checklist `assigned_user_id` must be active `WorkspaceMember` (not just `exists:users`)
-- **G4**: all 5 task tables have Postgres RLS `FORCE` with `workspace_id = current_workspace` predicate; `crm_app` GRANT via migration 700007
+- **G4**: all 5 task tables have Postgres RLS `FORCE` with `workspace_id = current_workspace` predicate; `yona_app` GRANT via migration 700007
 - **G6**: `Task::customFieldEntityType()` returns `'task'` — required abstract for `HasCustomFields`
 - **G3**: `'task'`, `'task_checklist_item'`, `'task_timer'` registered in `MorphMapServiceProvider`
 - **BR-X15**: non-enumeration → `abort(404)` not 403 (in `TaskPolicy::view`)

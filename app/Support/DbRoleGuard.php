@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * P10 — boot-guard 2-DB-role: runtime KHÔNG bao giờ được là superuser.
- * crm_app = RLS FORCE; crm_owner = BYPASSRLS nhưng NOSUPERUSER
+ * yona_app = RLS FORCE; yona_owner = BYPASSRLS nhưng NOSUPERUSER
  * (runbook docs/database-safety.md). Superuser bypass RLS toàn cluster →
  * cấu hình sai = tenant isolation chết im lặng.
  */

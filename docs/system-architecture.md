@@ -1,4 +1,4 @@
-# System Architecture — Chó Rách Management (Traditional Laravel + Integration Module)
+# System Architecture — Yona (Traditional Laravel + Integration Module)
 
 > Domain architecture for an all-in-one, multi-tenant SaaS CRM on **Laravel 13 + PostgreSQL 16 + Eloquent + Inertia/React + Redis**. Living doc. Maps the domain docs (`crm-domain-definition`, `crm-business-rules`, `crm-field-dictionary`, `crm-actors-and-use-cases`) onto a concrete, Laravel-idiomatic design.
 > Build order: **Sales-first**, but the model covers Support + Marketing from day one. Source of BR-* references: `crm-business-rules.md`.

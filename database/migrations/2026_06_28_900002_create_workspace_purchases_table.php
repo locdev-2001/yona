@@ -40,7 +40,7 @@ return new class extends Migration
         DB::statement('ALTER TABLE workspace_purchases FORCE ROW LEVEL SECURITY');
         DB::statement('DROP POLICY IF EXISTS ws_isolation ON workspace_purchases');
         DB::statement("CREATE POLICY ws_isolation ON workspace_purchases USING ({$predicate}) WITH CHECK ({$predicate})");
-        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON workspace_purchases TO crm_app');
+        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON workspace_purchases TO yona_app');
     }
 
     public function down(): void

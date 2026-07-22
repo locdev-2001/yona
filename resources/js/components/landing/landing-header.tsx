@@ -6,7 +6,7 @@ import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
-const BRAND = 'Chó Rách Management';
+const BRAND = 'Yona';
 
 export function LandingHeader() {
     const { auth } = usePage<SharedData>().props;

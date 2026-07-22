@@ -91,7 +91,7 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([]) : [],
         ],
 
-        // Runtime connection — connects as the NON-superuser `crm_app`
+        // Runtime connection — connects as the NON-superuser `yona_app`
         // role so Postgres Row-Level Security policies actually enforce
         // (superusers + table owners bypass RLS). All app/web/test queries
         // flow through this; tenant context is set per-request via
@@ -101,8 +101,8 @@ return [
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'crm'),
-            'username' => env('DB_USERNAME', 'crm_app'),
+            'database' => env('DB_DATABASE', 'yona'),
+            'username' => env('DB_USERNAME', 'yona_app'),
             'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
@@ -111,18 +111,18 @@ return [
             'sslmode' => 'prefer',
         ],
 
-        // Privileged connection — schema owner (`crm_owner`, NOSUPERUSER + BYPASSRLS).
+        // Privileged connection — schema owner (`yona_owner`, NOSUPERUSER + BYPASSRLS).
         // Used for: schema migrations (DDL), append-only audit writes the app
         // role may not mutate, and cross-workspace platform-plane reads. NEVER
         // bound to a customer-plane request path. Shares DB_DATABASE so test
-        // runs can target crm_test via a DB_DATABASE override.
+        // runs can target yona_test via a DB_DATABASE override.
         'pgsql_privileged' => [
             'driver' => 'pgsql',
             'url' => env('DB_PRIVILEGED_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'crm'),
-            'username' => env('DB_PRIVILEGED_USERNAME', 'crm_owner'),
+            'database' => env('DB_DATABASE', 'yona'),
+            'username' => env('DB_PRIVILEGED_USERNAME', 'yona_owner'),
             'password' => env('DB_PRIVILEGED_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',

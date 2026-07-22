@@ -8,10 +8,10 @@ Stack: PHP 8.4 (Laravel 13) · PostgreSQL · Redis 7 · Node 22 (Vite) · Reverb
 
 | Thing | Name |
 |---|---|
-| Dev database | `crm` |
-| Test database | `crm_test` |
-| Runtime role (RLS-enforced) | `crm_app` |
-| Privileged role (schema owner, BYPASSRLS, NOSUPERUSER) | `crm_owner` |
+| Dev database | `yona` |
+| Test database | `yona_test` |
+| Runtime role (RLS-enforced) | `yona_app` |
+| Privileged role (schema owner, BYPASSRLS, NOSUPERUSER) | `yona_owner` |
 | Laravel runtime connection | `pgsql` |
 | Laravel privileged connection | `pgsql_privileged` |
 
@@ -24,8 +24,8 @@ boot if it does; see `database-safety.md`).
 Create the two databases once (as the superuser), then one command:
 
 ```bash
-createdb -h 127.0.0.1 -U postgres crm
-createdb -h 127.0.0.1 -U postgres crm_test
+createdb -h 127.0.0.1 -U postgres yona
+createdb -h 127.0.0.1 -U postgres yona_test
 make setup    # deps + .env + APP_KEY + roles + migrate + assets
 ```
 
@@ -39,9 +39,9 @@ make dev      # server + queue + logs + Vite (composer run dev)
 
 ```bash
 make dev            # run the app (http://localhost:8000)
-make migrate        # pending migrations on dev + test DBs (as crm_owner)
+make migrate        # pending migrations on dev + test DBs (as yona_owner)
 make db-roles       # re-apply role grants (idempotent; run after adding tables)
-make test           # Pest suite (runs on crm_test, RLS enforced)
+make test           # Pest suite (runs on yona_test, RLS enforced)
 make check          # pint --test + phpstan + tests
 make bridge         # Zalo personal bridge (foreground)
 make workers        # Horizon + Reverb
@@ -54,20 +54,20 @@ owners bypass RLS**. So the app uses **two roles**:
 
 | Role | Connection | Used for |
 |---|---|---|
-| `crm_app` (non-superuser, non-owner) | `pgsql` (runtime/default) | All web + test queries — **subject to RLS**. Tenant set per request via `set_config('app.current_workspace', …)`. |
-| `crm_owner` (schema owner, BYPASSRLS, NOSUPERUSER) | `pgsql_privileged` | Migrations (DDL), append-only audit writes, webhook workspace resolve, cross-workspace platform reads. |
+| `yona_app` (non-superuser, non-owner) | `pgsql` (runtime/default) | All web + test queries — **subject to RLS**. Tenant set per request via `set_config('app.current_workspace', …)`. |
+| `yona_owner` (schema owner, BYPASSRLS, NOSUPERUSER) | `pgsql_privileged` | Migrations (DDL), append-only audit writes, webhook workspace resolve, cross-workspace platform reads. |
 
 - `make db-roles` runs `database/sql/setup-roles.sql` (idempotent, as the real
-  superuser `postgres`) on `crm` + `crm_test`: creates both roles, grants DML to
-  `crm_app`, transfers DB/schema ownership to `crm_owner`, and re-applies the
+  superuser `postgres`) on `yona` + `yona_test`: creates both roles, grants DML to
+  `yona_app`, transfers DB/schema ownership to `yona_owner`, and re-applies the
   `audit_logs` immutability revoke.
 - `make migrate` runs as the owner (`--database=pgsql_privileged`) on both DBs.
-- `.env`: `DB_DATABASE=crm`, `DB_USERNAME=crm_app`,
-  `DB_PRIVILEGED_USERNAME=crm_owner` (local trust auth, empty passwords).
+- `.env`: `DB_DATABASE=yona`, `DB_USERNAME=yona_app`,
+  `DB_PRIVILEGED_USERNAME=yona_owner` (local trust auth, empty passwords).
 - Requires local trust auth for the roles (default `pg_hba.conf` for
   local/127.0.0.1). If login fails, add a trust line for the role — do not
   weaken auth beyond local.
-- CI mirrors this exactly (`.github/workflows/ci.yml`): a throwaway `crm_test`
+- CI mirrors this exactly (`.github/workflows/ci.yml`): a throwaway `yona_test`
   is bootstrapped with the same `setup-roles.sql`, so tests run RLS-enforced
   there too.
 

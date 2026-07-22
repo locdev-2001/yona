@@ -1,4 +1,4 @@
-# Chó Rách Management — Design System
+# Yona — Design System
 
 > Single source of truth for visual design. Living doc. Cross-links: [`system-architecture`](./system-architecture.md) (§9b Frontend stack), [`crm-domain-definition`](./crm-domain-definition.md), [`crm-business-rules`](./crm-business-rules.md).
 > Status: live · Updated: 2026-06-13
