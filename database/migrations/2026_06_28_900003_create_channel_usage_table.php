@@ -31,7 +31,7 @@ return new class extends Migration
         DB::statement('ALTER TABLE channel_usage FORCE ROW LEVEL SECURITY');
         DB::statement('DROP POLICY IF EXISTS ws_isolation ON channel_usage');
         DB::statement("CREATE POLICY ws_isolation ON channel_usage USING ({$predicate}) WITH CHECK ({$predicate})");
-        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON channel_usage TO crm_app');
+        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON channel_usage TO yona_app');
     }
 
     public function down(): void

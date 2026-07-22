@@ -1,6 +1,6 @@
 # Code Standards & Conventions
 
-Enforceable patterns for the Chó Rách CRM codebase. Extracted from Phase-04 bug-sweep findings + refactor to traditional Laravel (2026-06-28).
+Enforceable patterns for the Yona codebase. Extracted from Phase-04 bug-sweep findings + refactor to traditional Laravel (2026-06-28).
 
 > **Nguyên tắc trục (đọc trước):** [Rule 16 — Layered Architecture](#16-layered-architecture--core-is-channel-agnostic-upper-knows-only-lower). Không hardcode logic của **một kênh/cá nhân/case cụ thể** vào lõi. Layer trên chỉ biết layer ngay dưới. Lõi trung tính kênh (channel-agnostic). Mọi rule khác phục vụ nguyên tắc này.
 

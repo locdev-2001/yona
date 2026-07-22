@@ -60,7 +60,7 @@ return [
     'storage' => [
         'database' => [
             // Observability tables use the privileged owner connection: the
-            // runtime `pgsql` role (crm_app) is RLS-scoped and may not
+            // runtime `pgsql` role (yona_app) is RLS-scoped and may not
             // create/own non-tenant tables. See docs/local-development.md.
             'connection' => env('TELESCOPE_DB_CONNECTION', 'pgsql_privileged'),
             'chunk' => 1000,

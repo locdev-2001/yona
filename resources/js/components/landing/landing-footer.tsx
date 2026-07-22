@@ -1,7 +1,7 @@
 import AppLogoIcon from '@/components/app-logo-icon';
 import { useTranslator } from '@/lib/i18n';
 
-const BRAND = 'Chó Rách Management';
+const BRAND = 'Yona';
 
 export function LandingFooter() {
     const t = useTranslator();

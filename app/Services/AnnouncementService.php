@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  * Server-controlled fields (created_by, updated_by, status, published_at) are
  * set exclusively here — never from request body (BR-X12).
  *
- * Uses the default runtime DB connection (crm_app). Announcements are a
+ * Uses the default runtime DB connection (yona_app). Announcements are a
  * GLOBAL table — no workspace context, no RLS, no BelongsToWorkspace.
  */
 class AnnouncementService

@@ -66,7 +66,7 @@ class ZaloConnection extends Model
      */
     public static function nextConnectionId(): int
     {
-        // P10 hardening [d]: connection MẶC ĐỊNH — sequence đã GRANT cho crm_app
+        // P10 hardening [d]: connection MẶC ĐỊNH — sequence đã GRANT cho yona_app
         // (migration 2026_07_04_300001), không cần privileged cho nextval.
         $row = DB::selectOne("SELECT nextval('zalo_connection_id_seq') AS id");
 

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
  * taggables pivot is MANDATORY — G4 requires pivot tables with workspace_id
  * to carry RLS + appear in RlsPolicyCoverageTest whitelist.
  *
- * Run as pgsql_privileged (owner role); the runtime crm_app role is
+ * Run as pgsql_privileged (owner role); the runtime yona_app role is
  * non-owner so policies bind to it (default-deny when context unset).
  */
 return new class extends Migration
@@ -34,8 +34,8 @@ return new class extends Migration
             $db->statement("DROP POLICY IF EXISTS ws_isolation ON {$table}");
             $db->statement("CREATE POLICY ws_isolation ON {$table} USING ({$predicate}) WITH CHECK ({$predicate})");
             // Grant DML to the runtime app role (may not be auto-granted when tables
-            // are created by the superuser rather than crm_owner).
-            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO crm_app");
+            // are created by the superuser rather than yona_owner).
+            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO yona_app");
         }
     }
 

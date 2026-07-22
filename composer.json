@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "cho-rach/management",
+    "name": "yona/crm",
     "type": "project",
-    "description": "Chó Rách Management — multi-tenant enterprise SaaS CRM (Sales + Support + Marketing).",
+    "description": "Yona — Conversational CRM & Automation. Multi-tenant SaaS: omnichannel inbox + CRM + workflow automation.",
     "keywords": [
         "crm",
         "saas",

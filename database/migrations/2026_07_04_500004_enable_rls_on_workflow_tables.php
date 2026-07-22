@@ -28,7 +28,7 @@ return new class extends Migration
             $db->statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY");
             $db->statement("DROP POLICY IF EXISTS ws_isolation ON {$table}");
             $db->statement("CREATE POLICY ws_isolation ON {$table} USING ({$predicate}) WITH CHECK ({$predicate})");
-            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO cho_rach_app");
+            $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$table} TO yona_app");
         }
     }
 

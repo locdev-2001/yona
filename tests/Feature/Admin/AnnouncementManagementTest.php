@@ -157,7 +157,7 @@ it('records a create audit log entry when an announcement is stored', function (
     $announcement = Announcement::where('title', 'Audit Create Test')->first();
 
     // Announcements are global (workspace_id = NULL). Their audit entries are
-    // written via pgsql_privileged and hidden from the runtime crm_app
+    // written via pgsql_privileged and hidden from the runtime yona_app
     // connection by RLS (NULL ≠ UUID). Read through the privileged connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', (new Announcement)->getMorphClass())
@@ -181,7 +181,7 @@ it('records an update audit log entry when an announcement is updated', function
     ]);
 
     // Read via privileged connection — global audit entries have workspace_id = NULL,
-    // which RLS hides from the runtime crm_app connection.
+    // which RLS hides from the runtime yona_app connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', (new Announcement)->getMorphClass())
         ->where('entity_id', $announcement->id)
@@ -199,7 +199,7 @@ it('records a delete audit log entry when an announcement is destroyed', functio
     $this->delete(route('admin.announcements.destroy', $announcement));
 
     // Read via privileged connection — global audit entries have workspace_id = NULL,
-    // which RLS hides from the runtime crm_app connection.
+    // which RLS hides from the runtime yona_app connection.
     $logEntry = DB::connection('pgsql_privileged')->table('audit_logs')
         ->where('entity_type', (new Announcement)->getMorphClass())
         ->where('entity_id', $announcement->id)

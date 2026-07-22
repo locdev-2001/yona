@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Layer 3 tenant isolation (BR-X18) for the Phase 01 lookup tables.
  * Mirrors enable_rls_on_tenant_tables — same predicate, same policy name.
- * Run as privileged owner; `crm_app` (runtime role) is non-owner so
+ * Run as privileged owner; `yona_app` (runtime role) is non-owner so
  * policies bind to it.
  */
 return new class extends Migration

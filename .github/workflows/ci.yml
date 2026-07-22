@@ -31,7 +31,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: crm_test
+          POSTGRES_DB: yona_test
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -56,17 +56,17 @@ jobs:
         run: vendor/bin/pint --test
       - name: Static analysis (Larastan)
         run: vendor/bin/phpstan analyse --no-progress || true
-      - name: Setup DB roles (crm_app RLS-enforced + crm_owner)
-        run: psql -h 127.0.0.1 -U postgres -d crm_test -f database/sql/setup-roles.sql
+      - name: Setup DB roles (yona_app RLS-enforced + yona_owner)
+        run: psql -h 127.0.0.1 -U postgres -d yona_test -f database/sql/setup-roles.sql
       - name: Migrate + test (Pest)
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
           DB_PORT: 5432
-          DB_DATABASE: crm_test
-          DB_USERNAME: crm_app
+          DB_DATABASE: yona_test
+          DB_USERNAME: yona_app
           DB_PASSWORD: ''
-          DB_PRIVILEGED_USERNAME: crm_owner
+          DB_PRIVILEGED_USERNAME: yona_owner
           DB_PRIVILEGED_PASSWORD: ''
           REDIS_HOST: 127.0.0.1
         run: |
