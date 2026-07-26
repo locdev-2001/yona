@@ -70,7 +70,7 @@ class ChannelRegistry extends Manager
     }
 
     /**
-     * Manager yêu cầu default driver — trả '' để báo "chưa có default".
+     * Lớp cha đòi một driver mặc định — trả '' để báo "không có mặc định".
      * Caller nên gọi driver('zalo_personal') tường minh.
      */
     public function getDefaultDriver(): string

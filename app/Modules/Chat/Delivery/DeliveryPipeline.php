@@ -36,7 +36,7 @@ class DeliveryPipeline
 {
     public function __construct(
         private readonly MeteringService $meteringService,
-        private readonly BroadcastService $messagePublisher,
+        private readonly BroadcastService $broadcast,
     ) {}
 
     /**
@@ -49,7 +49,7 @@ class DeliveryPipeline
         $this->meteringService->meterReply($conversation);
 
         try {
-            $this->messagePublisher->publish($conversation, $sent, 'out');
+            $this->broadcast->publish($conversation, $sent, 'out');
         } catch (\Throwable $e) {
             report($e);
         }

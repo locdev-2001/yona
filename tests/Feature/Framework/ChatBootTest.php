@@ -303,3 +303,46 @@ it('mọi route inbox đang có vẫn resolve', function () {
         ->and($raw->gatherMiddleware())->not->toContain('auth')
         ->and($raw->gatherMiddleware())->not->toContain('workspace');
 });
+
+it('tầng nghiệp vụ không biết HTTP vào', function () {
+    $files = [];
+    foreach (['app/Modules/Chat', 'app/Modules/Payment'] as $dir) {
+        $found = iterator_to_array(new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(base_path($dir), FilesystemIterator::SKIP_DOTS)
+        ));
+        expect($found)->not->toBeEmpty("Thư mục rỗng hoặc đã đổi chỗ: {$dir}");
+        $files = array_merge($files, array_map(fn ($f) => (string) $f, $found));
+    }
+
+    // `Illuminate\Http\Client\*` KHÔNG nằm trong danh sách cấm: đó là HTTP đi RA.
+    // Adapter gọi ra ngoài là toàn bộ công việc của nó. Thứ bị cấm là HTTP đi VÀO —
+    // module nhận Request hay trả JsonResponse nghĩa là nghiệp vụ bị trói vào đúng
+    // một cách gọi, và mở ra API sẽ phải chép lại.
+    $forbidden = [
+        'Illuminate\Http\Request',
+        'Illuminate\Http\JsonResponse',
+        'Illuminate\Http\RedirectResponse',
+        'Illuminate\Http\Resources\\',
+        'Illuminate\Foundation\Http\\',
+        'Inertia\\',
+    ];
+
+    $violations = [];
+    foreach ($files as $file) {
+        if (! str_ends_with($file, '.php')) {
+            continue;
+        }
+        $content = (string) file_get_contents($file);
+        foreach ($forbidden as $needle) {
+            if (str_contains($content, 'use '.$needle)) {
+                $violations[] = basename($file).' → '.$needle;
+            }
+        }
+        // Gọi helper của tầng biên vào cũng là biết HTTP, dù không có `use` nào.
+        if (preg_match('/(^|[^a-zA-Z_>$\\\\])(auth|route|session|request)\s*\(/m', preg_replace('#^\s*(\*|//).*$#m', '', $content))) {
+            $violations[] = basename($file).' → gọi helper của biên vào';
+        }
+    }
+
+    expect($violations)->toBe([]);
+});
