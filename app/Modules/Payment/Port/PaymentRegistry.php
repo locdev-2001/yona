@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Modules\Integration;
+namespace App\Modules\Payment\Port;
 
-use App\Modules\Integration\Contracts\PaymentDriver;
 use InvalidArgumentException;
 
 /**
- * PaymentManager — driver registry cho PaymentDriver.
+ * PaymentRegistry — driver registry cho PaymentDriver.
  *
  * payment-manual extend('manual', ...) trong boot().
  * VNPay/MoMo extend('vnpay', ...) / extend('momo', ...) GĐ2+.
@@ -14,7 +13,7 @@ use InvalidArgumentException;
  * ponytail: driver pattern tối giản — không cần full DriverManager từ Laravel
  * vì chỉ có 1 driver ở GĐ1. Thêm khi GĐ2 cần.
  */
-class PaymentManager
+class PaymentRegistry
 {
     /** @var array<string, callable(): PaymentDriver> */
     private array $drivers = [];

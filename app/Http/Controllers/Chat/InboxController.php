@@ -30,8 +30,8 @@ use Inertia\Response;
  * send:     gọi ChannelRegistry→driver→sendMessage (KHÔNG biết kênh cụ thể).
  *           Bắt SendException (app contract) → 422.
  *
- * Internal-first: ChannelRegistry nằm trong app/Modules/Integration/. Xóa module
- * → class không tồn tại → channelsAvailable=false (empty state) + send() → 422.
+ * Sổ đăng ký kênh luôn tồn tại: chat là chức năng lõi, không tắt được. Kênh nội
+ * bộ là đế nên registry không bao giờ rỗng — cái tắt được chỉ là phích cắm ngoài.
  */
 class InboxController extends Controller
 {
@@ -79,10 +79,7 @@ class InboxController extends Controller
 
         $conversations = $query->with(['channelAccount:id,display_name', 'assignedUser:id,name'])->paginate(30)->withQueryString();
 
-        // Internal-first: Integration module xóa → class vắng → empty state (N2).
-        $channelsAvailable = class_exists(ChannelRegistry::class)
-            ? app(ChannelRegistry::class)->hasAny()
-            : false;
+        $channelsAvailable = app(ChannelRegistry::class)->hasAny();
 
         // P07 — danh sách tài khoản kênh (đa tài khoản) + count hội thoại active/account,
         // thay $zaloConnection first() cũ (giả định 1 kết nối/workspace).
@@ -116,10 +113,6 @@ class InboxController extends Controller
      */
     private function channelCapabilities(array $channels): array
     {
-        if (! class_exists(ChannelRegistry::class)) {
-            return [];
-        }
-
         $manager = app(ChannelRegistry::class);
         $map = [];
         foreach ($channels as $channel) {
@@ -275,14 +268,6 @@ class InboxController extends Controller
 
         if ($outbound->isEmpty()) {
             return response()->json(['message' => 'Nội dung không được để trống.'], 422);
-        }
-
-        // Internal-first: Integration module xóa → không có driver → 422 thay vì fatal.
-        if (! class_exists(ChannelRegistry::class)) {
-            return response()->json([
-                'message' => 'Kênh không khả dụng.',
-                'error_code' => 'channel_unavailable',
-            ], 422);
         }
 
         try {

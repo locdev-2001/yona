@@ -7,11 +7,10 @@ use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
 use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
 use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Modules\Integration\IntegrationServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Service provider cho Zalo personal channel driver (sống trong Integration module).
+ * Service provider cho Zalo personal channel driver.
  *
  * Đăng ký:
  *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter; P11: metering ở DeliveryPipeline)
@@ -22,13 +21,11 @@ use Illuminate\Support\ServiceProvider;
  *   - Connection CRUD: routes/web.php (integrations.zalo.*)
  *   - Alias: bootstrap/app.php withMiddleware $middleware->alias([...])
  *
- * Re-home: được IntegrationServiceProvider register (KHÔNG còn module framework auto-discovery).
- * Internal-first: xóa app/Modules/Integration/ → provider + driver biến mất cùng nhau.
+ * Khai báo thẳng ở bootstrap/providers.php; tự tắt bên trong qua config.
  *
  * Migrations KHÔNG load ở đây — đã chuyển sang database/migrations/ (Laravel thuần).
  *
  * @see ChannelRegistry
- * @see IntegrationServiceProvider
  */
 class ZaloPersonalServiceProvider extends ServiceProvider
 {

@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  * Billing service provider — CORE, luôn on.
  *
  * MeteringService = class concrete, KHÔNG còn binding interface→impl.
- * PaymentManager singleton đã chuyển sang IntegrationServiceProvider
+ * PaymentRegistry singleton đã chuyển sang IntegrationServiceProvider
  * (manager sống cùng module driver — internal-first).
  */
 class BillingServiceProvider extends ServiceProvider

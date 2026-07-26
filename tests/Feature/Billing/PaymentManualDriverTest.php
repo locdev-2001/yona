@@ -2,17 +2,17 @@
 
 use App\Models\MarketplaceItem;
 use App\Models\Workspace;
-use App\Modules\Integration\Contracts\PaymentDriver;
-use App\Modules\Integration\Payment\Manual\ManualPaymentDriver;
-use App\Modules\Integration\PaymentManager;
+use App\Modules\Payment\Adapter\Manual\ManualPaymentDriver;
+use App\Modules\Payment\Port\PaymentDriver;
+use App\Modules\Payment\Port\PaymentRegistry;
 use App\Services\EntitlementService;
 use App\Services\GrantPlanService;
 use Illuminate\Support\Facades\DB;
 
 // ── Driver registry ───────────────────────────────────────────────────────────
 
-it('PaymentManager: driver(manual) instanceof ManualPaymentDriver', function () {
-    $manager = app(PaymentManager::class);
+it('PaymentRegistry: driver(manual) instanceof ManualPaymentDriver', function () {
+    $manager = app(PaymentRegistry::class);
 
     expect($manager->driver('manual'))->toBeInstanceOf(ManualPaymentDriver::class);
 });
@@ -24,10 +24,10 @@ it('ManualPaymentDriver implements PaymentDriver contract', function () {
         ->and($provider->key())->toBe('manual');
 });
 
-// ── 0 sửa lõi: thêm driver KHÔNG sửa PaymentManager/PaymentProvider ─────────
+// ── 0 sửa lõi: thêm driver KHÔNG sửa PaymentRegistry/PaymentProvider ─────────
 
-it('PaymentManager still has only its original methods (no core edit)', function () {
-    $manager = app(PaymentManager::class);
+it('PaymentRegistry still has only its original methods (no core edit)', function () {
+    $manager = app(PaymentRegistry::class);
 
     // Chỉ kiểm phương thức public của lõi vẫn tồn tại đúng
     expect(method_exists($manager, 'extend'))->toBeTrue()

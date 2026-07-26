@@ -12,7 +12,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * Migrations now in database/migrations/ (run by default — loadMigrationsFrom removed).
  * Routes merged into routes/web.php + routes/channels.php.
- * ChannelRegistry registry moved to App\Modules\Integration\IntegrationServiceProvider.
+ * Sổ đăng ký kênh sống ở App\Modules\Chat\ChatServiceProvider.
  * Metering moved to App\Services\MeteringService (concrete — no binding needed).
  */
 class InboxServiceProvider extends ServiceProvider
