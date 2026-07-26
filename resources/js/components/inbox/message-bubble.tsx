@@ -46,7 +46,9 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     // Nhóm: avatar lấy từ hồ sơ thành viên của luồng (dựng từ bí danh), còn tên
     // ưu tiên tên đi kèm trong chính tin — đó là tên tại thời điểm gửi.
     const participant = group && msg.sender_uid ? peer.members?.[msg.sender_uid] : null;
-    const senderName = group ? (msg.sender_name ?? participant?.name ?? peer.thread_name) : peer.thread_name;
+    // Trong nhóm, KHÔNG bao giờ lấy tên nhóm làm tên người gửi: chưa biết tên thì
+    // để trống còn hơn gán nhầm tên của cả nhóm cho một người.
+    const senderName = group ? (msg.sender_name ?? participant?.name ?? msg.sender_uid ?? '') : peer.thread_name;
     const senderAvatar = group ? (participant?.avatar ?? null) : peer.thread_avatar;
 
     return (
