@@ -6,12 +6,17 @@ use App\Models\Conversation;
 use App\Models\WorkflowRun;
 use App\Modules\Automation\Contracts\NodeHandler;
 use App\Modules\Automation\NodeHandlerResult;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
+use App\Modules\Chat\Port\ChannelRegistry;
 use Throwable;
 
 /**
- * Gửi tin nhắn (action) — delegate ChannelManager::driver()->sendMessage()
+ * Gửi tin nhắn (action) — qua DeliveryPipeline như mọi đường gửi khác
  * (docs/crm-automation-workflow.md §Node Handler registry).
+ *
+ * Đi qua pipeline chứ không gọi thẳng driver: tin automation vẫn được thống kê
+ * và broadcast như tin người gửi.
  *
  * Channel resolve theo subject (§Execution semantics dòng 78):
  * - subject=Conversation (trigger tin nhắn đến) → trả lời ngay hội thoại đó.
@@ -22,7 +27,10 @@ use Throwable;
  */
 class SendMessageNodeHandler implements NodeHandler
 {
-    public function __construct(private readonly ChannelManager $channels) {}
+    public function __construct(
+        private readonly ChannelRegistry $channels,
+        private readonly DeliveryPipeline $pipeline,
+    ) {}
 
     public function type(): string
     {
@@ -40,7 +48,9 @@ class SendMessageNodeHandler implements NodeHandler
             default => null,
         };
 
-        if ($conversation === null) {
+        // instanceof chứ không phải !== null: subject() trả Model chung, thu hẹp
+        // kiểu ở đây để money-path bên dưới nhận đúng Conversation.
+        if (! $conversation instanceof Conversation) {
             $channelLabel = $channel ?? 'unknown';
 
             return NodeHandlerResult::skipped(
@@ -49,10 +59,20 @@ class SendMessageNodeHandler implements NodeHandler
             );
         }
 
+        $body = trim((string) ($node['config']['body'] ?? ''));
+
+        // Chặn tường minh thay vì gửi tin trắng cho khách — node cấu hình thiếu
+        // nội dung là lỗi cấu hình, phải hiện trong audit log của workflow.
+        if ($body === '') {
+            return NodeHandlerResult::failed('send message failed: nội dung tin trống');
+        }
+
         try {
-            $this->channels->driver($conversation->channel)->sendMessage($conversation, [
-                'body' => $node['config']['body'] ?? '',
-            ]);
+            $this->pipeline->send(
+                $this->channels->driver($conversation->channel),
+                $conversation,
+                OutboundMessage::text($body),
+            );
         } catch (Throwable $e) {
             // Broad catch is deliberate (never let a driver error crash the
             // engine loop) — include the exception class so a genuine driver

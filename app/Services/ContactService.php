@@ -178,7 +178,7 @@ class ContactService
     public function resolveOrCreateFromPeer(
         string $workspaceId,
         string $channel,
-        string $peerUid,
+        string $senderUid,
         ?string $phone,
         ?string $displayName,
     ): ?object {

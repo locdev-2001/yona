@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\Message;
@@ -12,25 +13,34 @@ use App\Models\WorkflowRunLog;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
-use App\Modules\Integration\ChannelManager;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\TagService;
 use Illuminate\Support\Str;
 
 // Phase 03 — Action node handlers: delegate to existing Domain Services.
 // Real services + real DB assertions throughout (matches this repo's testing
 // convention — see ReminderService/LeadConversionTest — rather than mocking
-// service calls), except ChannelManager's outbound send, which needs a fake
+// service calls), except ChannelRegistry's outbound send, which needs a fake
 // driver registered per-test (the real Zalo driver needs a live bridge).
 
 class FakeSendOnlyChannelDriver implements ChannelDriver
 {
     public array $sent = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'test_fake_channel';
+        return new ChannelDescriptor(
+            key: 'test_fake_channel',
+            label: 'Kênh test',
+            category: 'chat',
+            logo: '',
+            badge: 'T',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function connect(string $workspaceId, array $params): void {}
@@ -41,11 +51,13 @@ class FakeSendOnlyChannelDriver implements ChannelDriver
     {
         $this->sent[] = [$conversation->id, $payload];
 
+        // Đọc đúng key của contract ('text'). Fake này từng đọc 'body' — cùng key
+        // sai mà handler dùng — nên tin rỗng vẫn qua được CI.
         return Message::create([
             'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
             'direction' => 'out',
-            'body' => $payload['body'] ?? '',
+            'body' => $payload['text'] ?? '',
             'source_id' => 'test-'.Str::uuid(),
         ]);
     }
@@ -66,7 +78,7 @@ function makeConversationForLead(Workspace $ws, string $leadId, string $channel 
     return Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => $channel,
-        'peer_uid' => 'peer-'.Str::uuid(),
+        'sender_uid' => 'peer-'.Str::uuid(),
         'thread_type' => 0,
         'lead_id' => $leadId,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
@@ -95,7 +107,7 @@ it('SendMessageNodeHandler sends on the resolved conversation for a lead subject
     actingInWorkspace($ws, $user);
 
     $fakeDriver = new FakeSendOnlyChannelDriver;
-    app(ChannelManager::class)->extend('test_fake_channel', fn () => $fakeDriver);
+    app(ChannelRegistry::class)->extend('test_fake_channel', fn () => $fakeDriver);
 
     $lead = Lead::factory()->create();
     $conversation = makeConversationForLead($ws, $lead->id);
@@ -111,7 +123,8 @@ it('SendMessageNodeHandler sends on the resolved conversation for a lead subject
     expect($run->status)->toBe(WorkflowRun::STATUS_COMPLETED);
     expect($fakeDriver->sent)->toHaveCount(1);
     expect($fakeDriver->sent[0][0])->toBe($conversation->id);
-    expect($fakeDriver->sent[0][1]['body'])->toBe('hello from automation');
+    expect($fakeDriver->sent[0][1]['text'])->toBe('hello from automation');
+    expect(Message::where('conversation_id', $conversation->id)->value('body'))->toBe('hello from automation');
 });
 
 it('SendMessageNodeHandler skips (not fails) when no conversation exists on the chosen channel', function () {
@@ -121,7 +134,7 @@ it('SendMessageNodeHandler skips (not fails) when no conversation exists on the 
     actingInWorkspace($ws, $user);
 
     $fakeDriver = new FakeSendOnlyChannelDriver;
-    app(ChannelManager::class)->extend('test_fake_channel', fn () => $fakeDriver);
+    app(ChannelRegistry::class)->extend('test_fake_channel', fn () => $fakeDriver);
 
     $lead = Lead::factory()->create();
     // No conversation created for this lead on any channel.

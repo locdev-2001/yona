@@ -5,11 +5,12 @@ use App\Models\ChannelAccount;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\ProfileIdentity;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Services\Inbox\PhoneEnrichmentService;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -30,15 +31,15 @@ function peSetup(): array
     return [$workspace, $user];
 }
 
-function peConversation(Workspace $workspace, string $peerUid, int $threadType = 0): Conversation
+function peConversation(Workspace $workspace, string $senderUid, int $threadType = 0): Conversation
 {
     return Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => (string) Str::uuid(),
-        'peer_uid' => $peerUid,
-        'thread_type' => $threadType,
-        'peer_name' => 'Khách '.$peerUid,
+        'sender_uid' => $senderUid,
+        'thread_kind' => $threadType === 1 ? 'group' : 'direct',
+        'thread_name' => 'Khách '.$senderUid,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 }
@@ -59,7 +60,7 @@ function peBusinessCardMessage(Conversation $conversation, string $phone, string
 
 // ── Business card lift ───────────────────────────────────────────────────────
 
-it('khách gửi danh thiếp → peer_phone + phone_source=business_card + contact tự link (0 API call)', function () {
+it('khách gửi danh thiếp → số vào bí danh + liên hệ tự link (0 lời gọi API)', function () {
     [$workspace] = peSetup();
     $conversation = peConversation($workspace, 'peer_bc_1');
     $message = peBusinessCardMessage($conversation, '0901 234 567');
@@ -68,23 +69,21 @@ it('khách gửi danh thiếp → peer_phone + phone_source=business_card + cont
 
     $conversation->refresh();
     expect($applied)->toBeTrue()
-        ->and($conversation->peer_phone)->toBe('0901234567')
-        ->and($conversation->phone_source)->toBe('business_card')
-        ->and($conversation->phone_enriched_at)->not->toBeNull()
+        ->and($conversation->senderPhone())->toBe('0901234567')
         ->and($conversation->contact_id)->not->toBeNull();
 
     $contact = Contact::find($conversation->contact_id);
     expect($contact->phone)->toBe('0901234567');
 });
 
-it('listener MessageReceived tự lift khi ingest danh thiếp (hook không sửa InboundMessageService)', function () {
+it('listener MessageReceived tự lift khi ingest danh thiếp (hook không sửa IntakeService)', function () {
     [$workspace] = peSetup();
     $conversation = peConversation($workspace, 'peer_bc_2');
     $message = peBusinessCardMessage($conversation, '0912345678');
 
     event(new MessageReceived($message));
 
-    expect($conversation->fresh()->peer_phone)->toBe('0912345678');
+    expect($conversation->fresh()->senderPhone())->toBe('0912345678');
 });
 
 it('danh thiếp do MÌNH gửi (direction out) KHÔNG lift — consent chỉ khi khách chủ động gửi', function () {
@@ -95,7 +94,7 @@ it('danh thiếp do MÌNH gửi (direction out) KHÔNG lift — consent chỉ kh
     $applied = app(PhoneEnrichmentService::class)->liftFromBusinessCard($message);
 
     expect($applied)->toBeFalse()
-        ->and($conversation->fresh()->peer_phone)->toBeNull();
+        ->and($conversation->fresh()->senderPhone())->toBeNull();
 });
 
 it('danh thiếp trong NHÓM không lift (SĐT không thuộc về group thread)', function () {
@@ -104,7 +103,7 @@ it('danh thiếp trong NHÓM không lift (SĐT không thuộc về group thread)
     $message = peBusinessCardMessage($group, '0911222333');
 
     expect(app(PhoneEnrichmentService::class)->liftFromBusinessCard($message))->toBeFalse()
-        ->and($group->fresh()->peer_phone)->toBeNull();
+        ->and($group->fresh()->senderPhone())->toBeNull();
 });
 
 // ── Nguồn mạnh/yếu ───────────────────────────────────────────────────────────
@@ -116,15 +115,15 @@ it('KHÔNG ghi đè nguồn mạnh bằng nguồn yếu; cùng hạng = take-lat
 
     // manual_verified (mạnh nhất)
     expect($service->applyPhone($conversation, '0901111111', 'manual_verified', now()))->toBeTrue();
-    expect($conversation->fresh()->phone_source)->toBe('manual_verified');
+    expect(ProfileIdentity::where('profile_id', $conversation->fresh()->profile_id)->where('key', 'phone')->value('source'))->toBe('manual_verified');
 
     // business_card yếu hơn → KHÔNG ghi đè
     expect($service->applyPhone($conversation->fresh(), '0902222222', 'business_card'))->toBeFalse();
-    expect($conversation->fresh()->peer_phone)->toBe('0901111111');
+    expect($conversation->fresh()->senderPhone())->toBe('0901111111');
 
     // manual_verified cùng hạng → take-latest (sửa typo)
     expect($service->applyPhone($conversation->fresh(), '0903333333', 'manual_verified', now()))->toBeTrue();
-    expect($conversation->fresh()->peer_phone)->toBe('0903333333');
+    expect($conversation->fresh()->senderPhone())->toBe('0903333333');
 });
 
 // ── Rule #1 CDP: 2 nguồn cùng SĐT → 1 hồ sơ ─────────────────────────────────
@@ -183,7 +182,7 @@ it('nhập tay: driver verify FAIL (uid không khớp / không resolve) → 422,
     $response = $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '0901234567']);
 
     $response->assertStatus(422);
-    expect($conversation->fresh()->peer_phone)->toBeNull();
+    expect($conversation->fresh()->senderPhone())->toBeNull();
 });
 
 it('nhập tay: phone sai format → 422 validation', function () {
@@ -196,7 +195,7 @@ it('nhập tay: phone sai format → 422 validation', function () {
 
 // ── Review LOW-3: 2 nhánh reject findUser tường minh ─────────────────────────
 
-function peConversationWithSlot(Workspace $workspace, string $peerUid): Conversation
+function peConversationWithSlot(Workspace $workspace, string $senderUid): Conversation
 {
     $account = ChannelAccount::create([
         'workspace_id' => $workspace->id,
@@ -211,7 +210,7 @@ function peConversationWithSlot(Workspace $workspace, string $peerUid): Conversa
         'state' => 'connected',
         'lock_version' => 0,
     ]);
-    $conversation = peConversation($workspace, $peerUid);
+    $conversation = peConversation($workspace, $senderUid);
     $conversation->update(['channel_account_id' => $account->id]);
 
     return $conversation->fresh();
@@ -227,10 +226,10 @@ it('verify: findUser KHÔNG resolve (bridge 500 / số không dùng Zalo) → 42
 
     $this->putJson(route('inbox.phone.update', $conversation->id), ['phone' => '0901234567'])
         ->assertStatus(422);
-    expect($conversation->fresh()->peer_phone)->toBeNull();
+    expect($conversation->fresh()->senderPhone())->toBeNull();
 });
 
-it('verify: findUser resolve nhưng uid KHÔNG khớp peer_uid → 422, không lưu', function () {
+it('verify: findUser resolve nhưng uid KHÔNG khớp sender_uid → 422, không lưu', function () {
     [$workspace] = peSetup();
     $conversation = peConversationWithSlot($workspace, 'peer_v_mismatch');
 
@@ -242,7 +241,7 @@ it('verify: findUser resolve nhưng uid KHÔNG khớp peer_uid → 422, không l
 
     $response->assertStatus(422);
     expect($response->json('error_code'))->toBe('phone_mismatch')
-        ->and($conversation->fresh()->peer_phone)->toBeNull();
+        ->and($conversation->fresh()->senderPhone())->toBeNull();
 });
 
 it('verify: throttle 5/phút → lần 6 trả 429 (review MED-1)', function () {

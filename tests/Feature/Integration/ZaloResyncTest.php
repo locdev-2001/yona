@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\ZaloBackfillService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloBackfillService;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -76,7 +76,7 @@ function insertZaloSlot(string $workspaceId, string $state = 'connected', ?strin
  * Insert conversation nhóm (thread_type=1) qua default connection (RLS session var đã set).
  * Phải gọi sau actingInWorkspace() / setWorkspaceContext().
  */
-function insertGroupConversation(string $workspaceId, string $channelAccountId, string $peerUid): string
+function insertGroupConversation(string $workspaceId, string $channelAccountId, string $senderUid): string
 {
     $convId = (string) Str::uuid();
     DB::table('conversations')->insert([
@@ -84,9 +84,9 @@ function insertGroupConversation(string $workspaceId, string $channelAccountId, 
         'workspace_id' => $workspaceId,
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_type' => 1,
-        'peer_name' => 'Nhóm Test',
+        'thread_name' => 'Nhóm Test',
         'conversation_number' => random_int(1, 99999),
         'unread_count' => 0,
         'created_at' => now(),
@@ -99,7 +99,7 @@ function insertGroupConversation(string $workspaceId, string $channelAccountId, 
 /**
  * Insert conversation 1-1 (thread_type=0) qua default connection.
  */
-function insertDmConversation(string $workspaceId, string $channelAccountId, string $peerUid): string
+function insertDmConversation(string $workspaceId, string $channelAccountId, string $senderUid): string
 {
     $convId = (string) Str::uuid();
     DB::table('conversations')->insert([
@@ -107,9 +107,9 @@ function insertDmConversation(string $workspaceId, string $channelAccountId, str
         'workspace_id' => $workspaceId,
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Em Bé',
+        'thread_name' => 'Em Bé',
         'conversation_number' => random_int(1, 99999),
         'unread_count' => 0,
         'created_at' => now(),

@@ -2,62 +2,28 @@
 
 namespace App\Services;
 
-use App\Exceptions\QuotaExceededException;
 use App\Models\Conversation;
 use Illuminate\Support\Facades\DB;
 
 /**
- * MeteringService — đếm hội thoại per-channel per-month (billing CORE, luôn on).
+ * MeteringService — THỐNG KÊ hội thoại per-channel per-month.
  *
- * Concrete class, KHÔNG implement interface (no-op fail-safe đã bỏ — billing là CORE).
+ * Chỉ đo, KHÔNG chặn (quyết định founder 25/07/2026): cho dùng không giới hạn
+ * trong giai đoạn tạo thói quen dùng, số liệu tích lũy để xây chính sách gói
+ * cước sau. Áp hạn mức ngay từ đầu gây phản ứng ngược.
  *
- * F1 race-safe: meterReply dùng 1 UPDATE compare-set + ON CONFLICT DO UPDATE.
- * F5: canReplyOnExisting = luôn true nếu conv.last_metered_period == currentPeriod()
- *     (hội thoại đã tính kỳ này → vẫn trả lời được kể cả hết quota).
- * F13/F20: canStartNew gate hội thoại MỚI; canReplyOnExisting KHÔNG bao giờ false.
+ * Vì vậy service này không có method nào ném exception hay trả false. Muốn
+ * dựng lại gate sau này thì thêm một lớp policy riêng đọc số liệu ở đây —
+ * đừng nhét điều kiện chặn ngược vào bộ đếm.
+ *
+ * F1 race-safe: meterReply dùng 1 UPDATE compare-set + ON CONFLICT DO UPDATE,
+ * nên 1 hội thoại/kênh/kỳ chỉ tăng answered_count đúng một lần.
+ * F14: chỉ đếm khi tenant TRẢ LỜI; tin inbound không bao giờ đi qua đây.
  *
  * Isolation: KHÔNG import Models của channel-zalo (N1).
  */
 class MeteringService
 {
-    public function __construct(private readonly EntitlementService $resolver) {}
-
-    /**
-     * Hội thoại đã tồn tại: luôn cho phép gửi.
-     *
-     * F5: nếu conv đã được meter trong kỳ hiện tại → không bao giờ chặn
-     * kể cả remaining = 0.
-     */
-    public function canReplyOnExisting(Conversation $conversation): bool
-    {
-        // F5: conv đã tính kỳ này → luôn cho gửi (không kiểm quota)
-        if ($conversation->last_metered_period === $this->currentPeriod()) {
-            return true;
-        }
-
-        // Conv chưa tính kỳ này — kiểm quota còn không để fallback
-        // (không chặn — hội thoại cũ vẫn được gửi; chỉ sẽ đếm khi meterReply)
-        // ponytail: luôn true theo contract (F13/F20). Hội thoại cũ không bao giờ chặn.
-        return true;
-    }
-
-    /**
-     * Hội thoại MỚI: false khi hết quota.
-     * Chỉ gọi từ OutboundController khi mở hội thoại mới — KHÔNG gọi từ webhook.
-     */
-    public function canStartNew(string $channel): bool
-    {
-        $workspaceId = currentWorkspace()?->id;
-        if (! $workspaceId) {
-            return true; // fail-open nếu không có context (không lý do để chặn)
-        }
-
-        $quotaKey = "quota.conversations.{$channel}";
-        $remaining = $this->resolver->remaining($workspaceId, $quotaKey);
-
-        return $remaining > 0;
-    }
-
     /**
      * Đếm 1 hội thoại/kênh/tháng khi tenant gửi outbound (F1 race-safe).
      *
@@ -112,28 +78,5 @@ class MeteringService
     public function currentPeriod(): string
     {
         return now('Asia/Ho_Chi_Minh')->format('Y-m');
-    }
-
-    /**
-     * Assert hội thoại có thể gửi (F1-audit).
-     *
-     * Conv đã metered kỳ này (last_metered_period == currentPeriod) → luôn pass.
-     * Conv chưa metered kỳ này (mới hoặc kỳ cũ) + hết quota → throw.
-     *
-     * ZaloSendService gọi method này thay vì tự kiểm if (! canStartNew).
-     *
-     * @throws QuotaExceededException
-     */
-    public function assertCanSend(Conversation $conversation): void
-    {
-        // Conv đã tính kỳ này → luôn cho gửi (F5)
-        if ($conversation->last_metered_period === $this->currentPeriod()) {
-            return;
-        }
-
-        // Conv chưa tính kỳ này → kiểm quota; nếu hết → chặn
-        if (! $this->canStartNew($conversation->channel)) {
-            throw new QuotaExceededException;
-        }
     }
 }

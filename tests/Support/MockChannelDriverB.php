@@ -3,24 +3,34 @@
 namespace Tests\Support;
 
 use App\Contracts\SendException;
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 
 /**
  * P11 — Mock kênh B: policy TRÁI với A và Zalo — CÓ receipts (per_member) +
  * react, KHÔNG media, policy chặn tin >100 ký tự (chứng minh policy driver-owned,
  * không phải bộ 3 field {windowHours, dailyCap, allowedHours}).
  */
-class MockChannelDriverB implements ChannelDriver
+class MockChannelDriverB extends AbstractChannelDriver
 {
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'mock_b';
+        return new ChannelDescriptor(
+            key: 'mock_b',
+            label: 'Kênh giả B',
+            category: 'chat',
+            logo: '',
+            badge: 'B',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function capabilities(): ChannelCapabilities
@@ -35,10 +45,6 @@ class MockChannelDriverB implements ChannelDriver
             receiptGranularity: 'per_member',
         );
     }
-
-    public function connect(string $workspaceId, array $params): void {}
-
-    public function disconnect(string $workspaceId): void {}
 
     public function sendMessage(Conversation $conversation, array $payload): Message
     {

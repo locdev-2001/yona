@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * Thứ tự bắt buộc, gọi từ RekeyConversationsToChannelAccount:
  *   (a) createChannelAccounts    (b) attachConnectionsToAccounts
  *   (c) backfillConversationAccountId
- *   (d) DuplicateConversationMerger (class riêng)
+ *   (d) DedupConversation (class riêng)
  *   (e) backfillAliases
  */
 class ChannelAccountBackfiller

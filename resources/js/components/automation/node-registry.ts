@@ -38,7 +38,7 @@ export const PALETTE_NODE_TYPES: WorkflowNodeType[] = [
 export const TRIGGER_KEYS = ['lead_created', 'lead_assigned', 'lead_stage_changed', 'message_received', 'manual'] as const;
 export type TriggerKey = (typeof TRIGGER_KEYS)[number];
 
-/** Only 1 channel driver registered today (app/Modules/Integration/Chat/ZaloPersonal/ZaloPersonalServiceProvider.php:55).
+/** Only 1 channel driver registered today (app/Modules/Chat/Adapter/ZaloPersonal/ZaloPersonalServiceProvider.php).
  * Add the next channel here when a 2nd driver ships — no other frontend/backend list to keep in sync. */
 export const CHANNEL_KEYS = ['zalo_personal'] as const;
 export type ChannelKey = (typeof CHANNEL_KEYS)[number];

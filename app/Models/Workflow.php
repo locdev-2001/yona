@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Workflow — graph định nghĩa trigger→condition→action (1 rule đơn giản =
  * graph 3 node). WorkflowEngine chỉ đi-bộ graph, không hiểu nghĩa business
  * của node (docs/crm-automation-workflow.md).
+ *
+ * @property array{nodes?: list<array<string, mixed>>, edges?: list<array<string, mixed>>} $graph
  */
 class Workflow extends Model
 {

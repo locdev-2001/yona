@@ -15,7 +15,13 @@ import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
-import { contentLabelFromObject, enrichInboundBody, parseZinstantBankCardSource } from './inbound-content.mjs';
+import {
+    contentLabelFromObject,
+    enrichInboundBody,
+    parseZinstantBankCardSource,
+    stickerUrlFromId,
+    withStickerUrl,
+} from './inbound-content.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
@@ -1261,7 +1267,9 @@ async function resolveStickerForWebhook(api, raw) {
         }
     }
 
-    const url = merged.url || merged.href || merged.stickerUrl || merged.stickerWebpUrl || merged.uri || null;
+    const url =
+        merged.url || merged.href || merged.stickerUrl || merged.stickerWebpUrl || merged.uri ||
+        stickerUrlFromId(sid);
     const thumbnail =
         merged.thumbnail || merged.thumb || merged.stickerSpriteUrl || merged.stickerUrl || url || null;
     const description = merged.description ?? merged.text ?? merged.title ?? null;
@@ -1528,7 +1536,9 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
 
     // DRY (bug 11/07 file/ảnh/bankcard lọt raw JSON): dùng CHUNG parseInboundDescriptor với
     // live lane để MỌI loại tin ra đúng kind + content. parseInboundDescriptor sync → gọi thẳng;
-    // async resolve (sticker detail, QR card) bỏ qua ở backfill (giữ raw cơ bản, đủ hiển thị).
+    // async resolve (sticker detail, QR card) bỏ qua ở backfill — kéo hàng trăm tin
+    // cũ mà mỗi cái một lời gọi API là đúng cách để bị khóa tài khoản. Thứ nào thiếu
+    // mà dựng lại được không cần API thì dựng tại chỗ (xem withStickerUrl).
     const desc = parseInboundDescriptor({ data: rawD, threadId: groupId, type: threadType });
 
     const payload = {
@@ -1555,7 +1565,10 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
         payload.bank_card_source = desc.bank_card_source;
         payload.content = desc.bank_card_source.label;
     } else if (desc.inbound_kind === 'sticker') {
-        payload.sticker = desc.sticker;
+        // KHÔNG gọi API tra chi tiết ở đây — xem ghi chú trên. Nhưng raw thì
+        // thiếu địa chỉ ảnh, và giao diện hiện chữ "[Sticker]" thay vì hình.
+        // Dựng địa chỉ từ mã: không tốn lời gọi nào.
+        payload.sticker = withStickerUrl(desc.sticker);
     } else if (desc.inbound_kind === 'business_card') {
         payload.business_card = desc.business_card;
         payload.content = desc.caption != null ? String(desc.caption) : '';

@@ -4,12 +4,14 @@ use App\Events\MessageReceived;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SessionGapMaterializer;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\MemberStore;
+use App\Modules\Identity\Contracts\IdentityResolver;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -21,14 +23,16 @@ use Illuminate\Support\Str;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function platformMetaService(): InboundMessageService
+function platformMetaService(): IntakeService
 {
-    return new InboundMessageService(
+    return new IntakeService(
         app(MeteringService::class),
-        app(SessionGapMaterializer::class),
-        app(MessageSourceResolver::class),
-        app(MessageStateService::class),
-        app(MessagePublisher::class),
+        app(GapMarkerService::class),
+        app(DuplicateResolver::class),
+        app(MessageStatusService::class),
+        app(BroadcastService::class),
+        app(MemberStore::class),
+        app(IdentityResolver::class),
     );
 }
 
@@ -55,12 +59,12 @@ function sampleListenerData(string $msgId = 'msg_777'): array
     ];
 }
 
-function inboundPayloadWithMeta(string $peerUid, string $accountId, string $msgId): array
+function inboundPayloadWithMeta(string $senderUid, string $accountId, string $msgId): array
 {
     return [
         'channel_account_id' => $accountId,
         'channel' => 'zalo_personal',
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'thread_type' => 0,
         'direction' => 'in',
         'type' => 'text',
@@ -77,7 +81,7 @@ it('parseInbound giữ TOÀN BỘ raw listener_data trong zca_message (quyết �
     $driver = app(ZaloChannelDriver::class);
 
     $normalized = $driver->parseInbound([
-        'peer_uid' => '111222333',
+        'thread_uid' => '111222333',
         'thread_id' => '111222333',
         'thread_type' => 0,
         'inbound_kind' => 'text',
@@ -108,7 +112,7 @@ it('parseInbound không có listener_data (backfill/legacy) → platform_meta r�
     $driver = app(ZaloChannelDriver::class);
 
     $normalized = $driver->parseInbound([
-        'peer_uid' => '111222333',
+        'thread_uid' => '111222333',
         'inbound_kind' => 'text',
         'content' => 'tin backfill',
         'source_id' => 'msg_old',

@@ -1,8 +1,279 @@
 # Code Standards & Conventions
 
-Enforceable patterns for the Yona codebase. Extracted from Phase-04 bug-sweep findings + refactor to traditional Laravel (2026-06-28).
+Quy ước bắt buộc cho codebase Yona.
 
-> **Nguyên tắc trục (đọc trước):** [Rule 16 — Layered Architecture](#16-layered-architecture--core-is-channel-agnostic-upper-knows-only-lower). Không hardcode logic của **một kênh/cá nhân/case cụ thể** vào lõi. Layer trên chỉ biết layer ngay dưới. Lõi trung tính kênh (channel-agnostic). Mọi rule khác phục vụ nguyên tắc này.
+> **Đọc §0 trước mọi thứ khác.** Đó là quy ước kiến trúc xuyên suốt, chốt 25/07/2026. Mọi rule bên dưới phục vụ nó; rule nào mâu thuẫn thì §0 thắng.
+
+---
+
+# §0 — Quy ước kiến trúc xuyên suốt
+
+## 0.1 Chia theo CHỨC NĂNG, không chia theo "đồ bên ngoài"
+
+Module là một **chức năng** của sản phẩm: nhắn tin, thanh toán, email, nhập dữ liệu. Mỗi chức năng có phần lõi tự sống được, **không biết** nhà cung cấp bên ngoài nào tồn tại. Nhà cung cấp **cắm vào** lõi qua hợp đồng.
+
+**CẤM tạo module gom theo tiêu chí "cái này gọi ra ngoài".** Zalo không phải "một loại tích hợp" — Zalo là *một adapter của chức năng nhắn tin*. VNPay là *một adapter của chức năng thanh toán*. Hai thứ đó không liên quan gì nhau, không được ở chung một module.
+
+```
+❌ Modules/Integration/Chat/ZaloPersonal     "chat là một loại tích hợp"  — lộn ngược
+✅ Modules/Chat/Adapter/ZaloPersonal         "Zalo là một phích cắm vào chat" — đúng chiều
+```
+
+## 0.2 Hình dạng lặp lại: lõi ở giữa, hai cổng vào/ra
+
+Gần như mọi chức năng đều có **vào** và **ra**. Lõi không cần biết vào từ đâu, ra đi đâu.
+
+| Chức năng | Vào | Ra |
+|---|---|---|
+| Nhắn tin | tin từ Zalo/Messenger/TikTok | gửi tin ra kênh |
+| Thanh toán | IPN/callback báo đã trả | tạo yêu cầu thanh toán |
+| Email | thư trả lời, bounce | gửi mail |
+| Dữ liệu khách | file Excel, KiotViet/Sapo | đẩy ngược ra ngoài |
+
+Adapter đứng ở hai cổng, làm đúng một việc: **dịch giữa ngôn ngữ bên ngoài và ngôn ngữ của lõi**.
+
+## 0.3 Ba tầng, ba trách nhiệm
+
+```
+app/
+├── Http/                    BIÊN VÀO — nhận request, validate, điều hướng, trả response
+│   └── Controllers/<ChucNang>/      nhóm theo chức năng, nhưng ở tầng dùng chung
+├── Models/                  DỮ LIỆU — một thư mục phẳng duy nhất
+└── Modules/<ChucNang>/      NGHIỆP VỤ — chỉ logic, không gì khác
+```
+
+**Thư mục bên trong module đặt tên theo CÔNG ĐOẠN NGHIỆP VỤ**, không theo hướng kỹ thuật. `Inbound/`/`Outbound/` chỉ nói "đi vào"/"đi ra" — đọc xong vẫn không biết nó làm gì. Tên đúng phải kể được luồng:
+
+| Tầng | Nghĩa | Có ở mọi chức năng? |
+|---|---|---|
+| `Port/` | **CỔNG CẮM** — hợp đồng + sổ đăng ký: điều kiện để một nhà cung cấp cắm vào | ✔ |
+| `Adapter/<NhaCungCap>/` | **PHÍCH CẮM** — bắt tay nhà cung cấp, dịch hai chiều, policy riêng của họ | ✔ |
+| `Intake/` | **TIẾP NHẬN** — nhận sự kiện đã chuẩn hóa, khử trùng, kéo dữ liệu về | ✔ |
+| `Store/` | **LƯU TRỮ** | ✔ |
+| `Delivery/` | **ĐƯA ĐI** — mọi hành động chủ động đẩy ra nhà cung cấp | ✔ |
+| `<tầng riêng>` | tùy nghiệp vụ từng chức năng | — |
+
+`Port/` và `Adapter/` là một cặp: cổng là cái lỗ, phích là cái cắm vào. Cấm tách hợp đồng và sổ đăng ký thành hai tầng — chúng cùng trả lời một câu hỏi: "cắm vào bằng cách nào".
+
+Ví dụ áp cho chức năng nhắn tin:
+
+```
+app/Modules/Chat/
+├── Port/                 hợp đồng ChannelDriver + capability + ChannelRegistry
+├── Adapter/ZaloPersonal/ Intake · Delivery · Policy · Health  (cùng bộ từ, xem §0.7)
+├── Intake/               tin đến, khử trùng, kéo lịch sử về
+├── Store/                hội thoại · người trong hội thoại · tin · alias nguồn
+├── Delivery/             gửi tin · thả cảm xúc · báo đã xem · thu hồi
+├── Status/               trạng thái tin: đã nhận · đã xem · cảm xúc · đã thu hồi
+├── Timeline/             dòng hội thoại: gồm gì, thứ tự, con trỏ
+└── Broadcast/            phát thay đổi tới UI realtime
+```
+
+Cùng khung đó cho thanh toán: `Port/` · `Adapter/{VNPay,MoMo}/` · `Intake/` (IPN) · `Store/` (giao dịch) · `Delivery/` (tạo yêu cầu thanh toán) · `Ledger/` (tầng riêng).
+
+**Hai việc dễ xếp nhầm — kiểm bằng "kết quả đi về đâu", không phải "ai gọi trước":**
+- *Kéo lịch sử về* (resync): mình chủ động gọi ra, nhưng dữ liệu **đi vào** → `Intake/`.
+- *Báo đã xem*: nghe như trạng thái, nhưng mình **đẩy ra** nhà cung cấp → `Delivery/`. Trạng thái "khách đã xem tin của mình" mới thuộc `Status/`.
+
+**DTO nằm trong tầng sở hữu nó**, không gom vào một thư mục `Data/` chung — `Intake/InboundEvent`, `Delivery/OutboundEvent`, `Timeline/TimelineItem`. Nhìn tên là biết ai đẻ ra nó.
+
+**Vì sao Http KHÔNG nằm trong module:** HTTP chỉ là *một cách* gọi vào chức năng. Cùng nghiệp vụ đó còn được gọi từ queue job, từ command, từ API ngoài. Đặt controller trong module là trói chức năng vào một cách gọi.
+
+**Vì sao Model KHÔNG nằm trong module:** một model được nhiều chức năng dùng chung. `Conversation` là của Chat khi nhắn tin, nhưng CRM cũng đọc nó để chuyển thành Lead. Nhét vào một module là gán sở hữu sai và đẻ ra phụ thuộc chéo giữa các module.
+
+**Tên tầng dùng chung cho mọi chức năng** (`Port/`, `Adapter/`, `Intake/`, `Store/`, `Delivery/`) — học một lần, đọc module nào cũng quen. Tầng riêng của từng nghiệp vụ thì đặt theo ngôn ngữ nghiệp vụ đó.
+
+## 0.4 Ba mặt tiền, một lõi
+
+| File route | Dành cho | Xác thực | Độ ổn định |
+|---|---|---|---|
+| `routes/web.php` | điều hướng + render UI | session | đổi thoải mái |
+| `routes/web_api.php` | API do chính FE của web gọi | session | đổi thoải mái (FE đi cùng phiên bản) |
+| `routes/api.php` | API cho **bên ngoài** dùng | token | **hợp đồng công khai** — đổi là phá người dùng |
+
+**Mọi tính năng phải mở ra API được mà không viết lại lần thứ hai.** Đó là phép thử của kiến trúc này: nếu muốn mở một tính năng ra `api.php` mà phải chép logic từ controller web sang, thì logic đó đang nằm sai chỗ.
+
+Hệ quả bắt buộc:
+- **Nghiệp vụ không được sống trong controller.** Controller = validate + gọi module + định dạng đầu ra.
+- **Module không được biết HTTP.** Không nhận `Request`, không trả `JsonResponse`, không gọi `auth()`/`route()`/`session()`. Nhận DTO, trả DTO hoặc model.
+- **Định dạng đầu ra thuộc Http.** Cùng một kết quả nghiệp vụ: web render Inertia, web_api trả JSON cho FE, api trả JSON có phiên bản ổn định.
+- Webhook từ nhà cung cấp bên ngoài (bridge, cổng thanh toán) nằm ở `api.php` — chúng là hệ thống ngoài gọi vào.
+
+## 0.5 UI cũng gom theo chức năng
+
+```
+resources/js/
+├── components/
+│   ├── ui/              design system dùng chung (button, dialog, input…)
+│   ├── shared/          component dùng chéo nhiều chức năng
+│   └── <chuc-nang>/     component CỦA chức năng đó (inbox/, clients/, tasks/…)
+└── pages/<chuc-nang>/   trang của chức năng đó
+```
+
+Component chỉ phục vụ một chức năng thì nằm trong thư mục chức năng đó. Chỉ khi thật sự được ≥2 chức năng dùng mới đưa lên `shared/`. Không để component nghiệp vụ nằm trơ ở gốc `components/`.
+
+## 0.6 Sự kiện vào/ra phải có abstraction chung
+
+Một chức năng không chỉ có "một loại vào" và "một loại ra". Chat nhận tin mới, cảm xúc, đã xem, đã nhận, thu hồi, đang gõ, người gửi vào/rời nhóm, sự kiện lạ. Nếu mỗi loại tự có hình dạng riêng thì lõi phải biết hết, và thêm loại mới là sửa lõi.
+
+**Chuẩn hóa bằng hai gốc trừu tượng:**
+
+**Mỗi gốc trừu tượng đi kèm MỘT enum định danh, đối xứng hai chiều.** Lớp con mang **payload**; enum mang **danh tính**:
+
+| | Lớp con | Enum |
+|---|---|---|
+| Chứa gì | trường có kiểu, mỗi loại một khác | đúng một chuỗi ổn định |
+| Dùng để | xử lý trong code, PHPStan kiểm | lưu DB, đưa lên JSON, khai báo năng lực, duyệt hết bằng `cases()` |
+| Đổi tên class | tự do | **là breaking change** — nó nằm trong dữ liệu và trên dây |
+
+Tên class **không phải** định dạng lưu trữ. Đổi `MessageArrived` thành tên khác mà không có enum thì mọi hàng đã lưu và mọi client đã tích hợp đều hỏng.
+
+```php
+// Intake/InboundEventType.php
+enum InboundEventType: string
+{
+    case MessageArrived   = 'message_arrived';
+    case ReactionPlaced   = 'reaction_placed';
+    case MessageSeen      = 'message_seen';
+    case MessageDelivered = 'message_delivered';
+    case MessageRecalled  = 'message_recalled';
+    case ActionSubmitted  = 'action_submitted';
+    case SenderJoined     = 'sender_joined';
+    case SenderLeft       = 'sender_left';
+    case Unrecognized     = 'unrecognized';
+}
+
+// Intake/InboundEvent.php — gốc cho MỌI thứ đi vào
+abstract class InboundEvent
+{
+    abstract public function type(): InboundEventType;
+
+    public function __construct(
+        public readonly string $channel,
+        public readonly ?string $accountId,
+        public readonly string $senderUid,
+        public readonly ?CarbonInterface $occurredAt,
+        public readonly array $channelRef = [],     // tham chiếu thô của kênh, LÕI KHÔNG ĐỌC VÀO TRONG
+    ) {}
+}
+
+// Intake/Event/*.php — mỗi loại một lớp con, mang thêm đúng cái nó cần
+final class MessageArrived extends InboundEvent { /* type, body, media, quote… */ }
+final class ReactionPlaced extends InboundEvent { /* targetSourceId, icon */ }
+final class MessageSeen extends InboundEvent { /* targetSourceId */ }
+final class MessageRecalled extends InboundEvent { /* targetSourceId */ }
+final class ActionSubmitted extends InboundEvent { /* actionId, values */ }
+final class SenderJoined extends InboundEvent { /* vào nhóm */ }
+final class SenderLeft extends InboundEvent { /* rời nhóm */ }
+final class UnrecognizedInbound extends InboundEvent { /* cách ly, không đoán bừa */ }
+```
+
+**Nội dung tin CŨNG là sự kiện đi ra**, không phải khái niệm thứ ba. Chữ, ảnh, thẻ, nút, ô nhập đều là `OutboundEvent` — một tin là **danh sách sự kiện ra**, không phải một chuỗi. Cấm đẻ thêm từ "block"/"khối": đã có `OutboundEvent` thì mọi thứ đi ra gọi đúng từ đó (§0.7 luật 1).
+
+```php
+// Delivery/Event/OutboundEventType.php — ĐỐI XỨNG, không có ngoại lệ
+enum OutboundEventType: string
+{
+    case Text    = 'text';
+    case Media   = 'media';
+    case Card    = 'card';
+    case Actions = 'actions';   // nút bấm / chip gợi ý
+    case Input   = 'input';     // hỏi tên/SĐT ngay trong luồng chat
+    case Opaque  = 'opaque';    // loại lạ — giữ nguyên, KHÔNG vứt
+}
+
+// Delivery/Event/OutboundEvent.php — gốc cho MỌI thứ đi ra
+abstract class OutboundEvent
+{
+    abstract public function type(): OutboundEventType;
+    abstract public function plainText(): string;   // bản hạ cấp cho kênh chỉ hiểu chữ
+}
+
+final class TextEvent    extends OutboundEvent { /* text */ }
+final class MediaEvent   extends OutboundEvent { /* url, mime, caption */ }
+final class CardEvent    extends OutboundEvent { /* title, subtitle, imageUrl, actions[] */ }
+final class ActionsEvent extends OutboundEvent { /* actions[] */ }
+final class InputEvent   extends OutboundEvent { /* fields[], submitLabel */ }
+final class OpaqueEvent  extends OutboundEvent { /* raw — tương thích ngược */ }
+```
+
+`ActionSubmitted` (chiều vào) là bạn song sinh của `ActionsEvent`/`InputEvent` (chiều ra): khách bấm nút thì quay về đúng `actionId` mình đã đặt, **không** giả lập thành tin chữ. Đây cũng là điểm nối cho harness tự động trả lời.
+
+> **Thả cảm xúc, báo đã xem, thu hồi, kho sticker KHÔNG nằm trong cây này.** Chúng là **thao tác lên một tin đã có** hoặc năng lực riêng của kênh, không phải nội dung của một tin mới — chúng đi qua capability interface (`SupportsReactions`, `SupportsSeenReceipts`, `SupportsStickers`). Nhét chung sẽ phá luật ánh xạ 1-1 vì không phải kênh nào cũng có.
+
+Hễ có một gốc trừu tượng cần lưu hoặc truyền ra ngoài, nó phải có enum định danh đi kèm.
+
+Hai điều bắt buộc, có test enforce:
+
+1. **Enum và lớp con ánh xạ 1-1.** Thêm lớp con mà quên thêm case (hoặc ngược lại) ⇒ đỏ. Không có case "mồ côi", không có lớp con vô danh.
+2. **Khai báo năng lực dùng enum, không dùng `class-string`.** `supportedOutboundEvents(): list<OutboundEventType>` — đọc được, so sánh được, đưa xuống FE được. `list<class-string<OutboundEvent>>` thì FE không dùng nổi.
+
+**Hạ cấp nằm ở ADAPTER, không ở lõi.** Lõi đưa nguyên danh sách sự kiện xuống driver; kênh không render được loại nào thì adapter tự quy về chữ. Nếu lõi phải lọc theo kênh, tức là lõi biết kênh nào làm được gì — vi phạm thẳng luật bất biến #1.
+
+**Adapter là lớp dịch duy nhất:** payload nhà cung cấp → `InboundEvent` con phù hợp; `OutboundEvent` → payload nhà cung cấp. Lõi chỉ làm việc với hai gốc trừu tượng và các lớp con của chúng.
+
+Hệ quả: thêm một loại sự kiện = thêm một lớp con + adapter nào hỗ trợ thì dịch nó. Nhà cung cấp không có loại đó thì đơn giản là không bao giờ phát ra — **không cần sửa lõi, không cần cờ bật/tắt**.
+
+`UnrecognizedInbound` là bắt buộc: nhà cung cấp không chính thức có thể phát ra thứ ta chưa biết. Cách ly nó, đừng đoán bừa và cũng đừng nuốt im lặng.
+
+## 0.7 Đặt tên nhất quán — một khái niệm, một từ
+
+Lỗi hay gặp nhất không phải chia sai tầng, mà là **cùng một thứ gọi mỗi chỗ một tên**. Đọc code thành ra phải dịch trong đầu.
+
+**Luật 1 — Một khái niệm chỉ có một từ, xuyên suốt code, docs và lời nói:**
+
+| Khái niệm | Dùng | Tiếng Việt | CẤM dùng lẫn |
+|---|---|---|---|
+| Nơi tin nhắn đi qua | `channel` | kênh | platform, nền tảng |
+| Công ty/dịch vụ bên ngoài đứng sau kênh | `provider` | nhà cung cấp | vendor, bên thứ ba, đối tác |
+| Bên thứ ba cắm vào | `adapter` | phích cắm | integration, plugin, connector, driver\* |
+| Người ở đầu bên kia | `sender` | người gửi | peer, customer, contact\*\* |
+| Sự kiện đi vào | `InboundEvent` | sự kiện vào | envelope, payload, inbound message |
+| Sự kiện đi ra | `OutboundEvent` | sự kiện ra | command, action, request |
+| Dòng hội thoại | `timeline` | dòng hội thoại | stream, feed |
+
+\* `Driver` chỉ dùng làm **hậu tố class** của phích cắm (`ZaloChannelDriver`), không dùng làm tên tầng.
+\*\* `contact` là khái niệm của CDP, không phải của chat. Chat chỉ biết `sender`.
+
+> **Ngoại lệ đã chốt (founder 25/07/2026): cột `messages.platform_meta` giữ nguyên tên.** Đúng ra phải là `channel_ref` theo luật 1, nhưng đổi tên một cột không đổi hành vi gì trong khi bán kính sửa rất rộng. Ngoại lệ này **chỉ áp cho tên cột đó**; mọi tên biến, class, key mới vẫn phải dùng `channel`. Ghi ở đây để không ai "sửa cho đúng chuẩn" rồi kéo theo một đợt rename ngoài kế hoạch.
+
+**Luật 2 — Tầng bên trong adapter dùng LẠI đúng bộ từ của tầng ngoài**, không đẻ từ mới:
+
+```
+Adapter/<NhaCungCap>/
+├── <X>ChannelDriver.php    phích cắm chính
+├── Intake/                 payload nhà cung cấp → InboundEvent   (dịch vào)
+├── Delivery/               OutboundEvent → payload nhà cung cấp  (dịch ra)
+├── Policy/                 luật riêng của nhà cung cấp (giờ gửi, cap ToS)
+├── Health/                 circuit breaker, phát hiện phiên hỏng
+└── Exception/
+```
+
+Adapter là bản thu nhỏ của cùng hình dạng — nên dùng cùng tên tầng. **Cấm** `Transport/`, `Parsing/`, `Client/` — đó là từ mới cho việc đã có tên.
+
+**Luật 3 — Hậu tố class chọn trong bộ đóng**, mỗi vai trò đúng một hậu tố:
+
+| Vai trò | Hậu tố | Ví dụ |
+|---|---|---|
+| Nghiệp vụ một việc | `Service` | `SeenSyncService` |
+| Chuỗi bước có thứ tự bất biến | `Pipeline` | `DeliveryPipeline` |
+| Phích cắm | `Driver` | `ZaloChannelDriver` |
+| Sổ đăng ký | `Registry` | `ChannelRegistry` |
+| Luật của nhà cung cấp | `Policy` | `SendWindowPolicy` |
+| DTO sự kiện | *(không hậu tố)* | `MessageArrived`, `SendMessage` |
+
+Cấm `Manager`, `Helper`, `Util`, `Handler` — chúng không nói vai trò gì.
+
+**Luật 4 — Không lặp tên tầng vào tên class.** Namespace đã nói rồi: `Chat\Intake\IngestService` là thừa và lệch (`Ingest` ≠ `Intake`). Class trong tầng nào thì tên nói **việc cụ thể** của nó trong tầng đó.
+
+## 0.8 Bốn luật kiểm được bằng test
+
+1. **DTO qua cổng là ngôn ngữ của lõi, không phải của nhà cung cấp.** Adapter dịch, lõi không dịch. `OutboundMessage` là "một tin cần gửi", không phải "một payload Zalo".
+2. **Phụ thuộc một chiều: adapter biết lõi, lõi không biết adapter.** Thêm nhà cung cấp = thêm một thư mục adapter, **không sửa một dòng nào** trong các tầng lõi (`Intake/` `Store/` `Delivery/` …).
+3. **Lõi không rẽ nhánh theo tên nhà cung cấp.** Không `if ($channel === 'zalo')`, không `match($provider)`. Khác biệt sống trong adapter, hoặc là dữ liệu (capability flags), không phải mã rẽ nhánh.
+4. **Lõi không đọc vào ruột dữ liệu của nhà cung cấp.** Lưu/chuyển tiếp nguyên khối thì được; đọc key bên trong là vi phạm.
+
+---
 
 ## Model Organization
 
@@ -24,42 +295,43 @@ class Lead extends Model { ... }
 
 ---
 
-## External Integration (Driver Pattern)
+## Adapter bên ngoài (Driver Pattern)
 
-### 2. Driver Contract = `{X}Driver` in `app/Modules/Integration/Contracts/`
+### 2. Hợp đồng adapter nằm trong `Port/` CỦA CHỨC NĂNG
 
-**Rule:** External integrations (payment providers, messaging channels) implement a formal contract (interface) in the Integration module's Contracts folder.
-
-```php
-// app/Modules/Integration/Contracts/ChannelDriver.php
-interface ChannelDriver {
-    public function send(string $peerId, string $message): void;
-}
-
-// app/Modules/Integration/Chat/ZaloPersonal/ZaloChannelDriver.php
-class ZaloChannelDriver implements ChannelDriver {
-    public function send(string $peerId, string $message): void { ... }
-}
-```
-
-### 3. Register Drivers via `Manager::extend()` (Not Inheritance or Service Location)
-
-**Rule:** Register drivers in `IntegrationServiceProvider` using `Illuminate\Support\Manager::extend()`. Do NOT use inheritance from the driver class or direct service location.
+**Rule:** Hợp đồng để bên thứ ba cắm vào nằm ở `Port/` của **chức năng** đó, không thuộc một module "tích hợp" chung (§0.1).
 
 ```php
-// ✅ Correct (IntegrationServiceProvider)
-$manager = new ChannelManager($app);
-$manager->extend('zalo_personal', fn() => app(ZaloChannelDriver::class));
+// ✅ Đúng — hợp đồng thuộc chức năng nhắn tin
+// app/Modules/Chat/Port/ChannelDriver.php
+interface ChannelDriver { ... }
+// app/Modules/Chat/Adapter/ZaloPersonal/ZaloChannelDriver.php
+class ZaloChannelDriver implements ChannelDriver { ... }
 
-// Usage (core service — never hardcodes driver)
-app('channels')->driver('zalo_personal')->send($peer, $msg);
+// ✅ Đúng — hợp đồng thuộc chức năng thanh toán
+// app/Modules/Payment/Port/PaymentDriver.php
 
-// ❌ Wrong
-class InboundMessageService extends ZaloChannelDriver { ... }  // No inheritance
-app()->make('zalo_personal_driver');  // No direct service location
+// ❌ Sai — gom hai chức năng khác nhau vào một module chỉ vì "đều gọi ra ngoài"
+// app/Modules/Integration/Contracts/{ChannelDriver,PaymentDriver}.php
 ```
 
-**Reason:** Drivers are pluggable; core logic must not couple to implementation.
+### 3. Đăng ký adapter qua `Manager::extend()`, không kế thừa, không service location
+
+**Rule:** Adapter tự đăng ký vào registry của chức năng, trong ServiceProvider **của chính adapter đó**.
+
+```php
+// ✅ Đúng (ZaloPersonalServiceProvider — thuộc adapter)
+$registry->extend('zalo_personal', fn () => app(ZaloChannelDriver::class));
+
+// Lõi gọi qua registry — không bao giờ nhắc tên class adapter
+$registry->driver($conversation->channel)->sendMessage($conversation, $message);
+
+// ❌ Sai
+class IngestService extends ZaloChannelDriver { ... }   // không kế thừa
+app()->make('zalo_personal_driver');                    // không service location
+```
+
+**Reason:** Adapter cắm vào được thì cũng rút ra được; lõi không dính vào cài đặt cụ thể.
 
 ---
 
@@ -72,22 +344,23 @@ app()->make('zalo_personal_driver');  // No direct service location
 ```php
 // ✅ Correct (app/Services/MeteringService.php)
 class MeteringService {
-    public function assertCanSend(string $conversationId): void {
-        if ($quotaExhausted) throw new QuotaExceededException();
+    public function meterReply(Conversation $conversation): void {
+        // Race-safe compare-set + upsert in single transaction
+        // Tracks usage for analytics; no quota gate applied
     }
 }
 
-// Usage in ZaloSendService
-$this->metering->assertCanSend($conversationId);  // Direct, no abstraction
+// Usage in ZaloSendService (after bridge success)
+$this->metering->meterReply($conversation);  // Direct, no abstraction
 
 // ❌ Wrong
 interface MeteringGate {
-    public function assertCanSend(string $conversationId): void;
+    public function meterReply(Conversation $conversation): void;
 }
 // (causes "no-op binding" ambiguity in older phases)
 ```
 
-**Reason:** Quota enforcement is critical correctness logic. Concrete class forces explicit implementation; no risk of silent no-op.
+**Reason:** Metering correctness is critical for billing data integrity. Concrete class ensures explicit, testable implementation. As of 2026-07-25, metering tracks usage only; no quota enforcement logic remains in this service.
 
 ---
 
@@ -98,16 +371,20 @@ interface MeteringGate {
 **Rule:** Any route that restores a soft-deleted model MUST query with `->withTrashed()` to find the model in the first place.
 
 ```php
-// ✅ Correct (LeadRestoreController)
-public function restore(Lead $lead) {
-    // Implicit: $lead is resolved via model binding,
-    // but form must use withTrashed() in the query:
-    $lead = Lead::withTrashed()->findOrFail($id);
-    $lead->restore();
-    return redirect('/leads/' . $lead->id);
+// ✅ Correct — the route declares withTrashed() so model binding can resolve
+// a soft-deleted record (routes/web.php)
+Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])
+    ->name('leads.restore-status')->withTrashed();
+
+// app/Http/Controllers/Crm/Leads/LeadStatusActionController.php
+public function restore(Request $request, Lead $lead, LeadService $service): RedirectResponse {
+    $this->authorize('update', $lead);
+    $service->restore($lead);   // app/Services/LeadService.php
+
+    return back()->with('success', __('leads.flash.restored'));
 }
 
-// Or explicit (more readable):
+// Or explicit, when you resolve the model yourself:
 $lead = Lead::withTrashed()->find($id);
 if (! $lead || ! $lead->trashed()) {
     abort(404);
@@ -137,7 +414,8 @@ class Lead extends Model {
     protected $morphClass = 'lead';
 }
 
-// (In bootstrap/app.php or a compatibility shim file)
+// (In the module's alias table — e.g. app/Modules/Chat/compat-aliases.php,
+//  hooked into the autoloader by that module's ServiceProvider)
 // ✅ Correct
 if (! class_exists('App\Modules\CrmSales\Models\Lead', false)) {
     class_alias('App\Models\Lead', 'App\Modules\CrmSales\Models\Lead');
@@ -184,34 +462,39 @@ $this->authorize('create', Attachment::class);  // Too permissive; ignores paren
 
 ### 8. Queue Jobs Must Establish `app.current_workspace` Before Querying Tenant Tables
 
-**Rule:** When a queued job queries workspace-scoped models, it MUST call `TenantScope::set()` or bind `app('workspace')` before executing queries. Otherwise, RLS will default-deny all rows.
+**Rule:** When a queued job queries workspace-scoped models, it MUST run inside `TenantScope::runScoped()` (or call `TenantScope::bind()`) before executing queries. Otherwise, RLS will default-deny all rows.
 
 ```php
-// ✅ Correct (AnalyzeConversationJob)
-class AnalyzeConversationJob implements ShouldQueue {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
-    public function __construct(public Conversation $conversation) {}
-    
-    public function handle() {
-        // Establish workspace context for RLS
-        TenantScope::set($this->conversation->workspace_id);
-        
-        // Now query workspace tables safely
-        $contacts = Contact::where('workspace_id', ...)->get();
-        // ... analysis logic
+// ✅ Correct (app/Jobs/DebounceMessageReceivedTriggerJob.php)
+class DebounceMessageReceivedTriggerJob implements ShouldQueue {
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    // Scalar constructor args, not a hydrated model: the workspace id must be
+    // known before any workspace-scoped query can run.
+    public function __construct(
+        public readonly string $workspaceId,
+        public readonly string $conversationId,
+    ) {}
+
+    public function handle(WorkflowEngine $engine): void {
+        // runScoped() restores the previous context afterward instead of
+        // blindly clearing it, so a nested job cannot wipe an outer scope.
+        TenantScope::runScoped($this->workspaceId, function () use ($engine) {
+            $latest = Message::where('conversation_id', $this->conversationId)->max('created_at');
+            // ... enrollment logic
+        });
     }
 }
 
 // ❌ Wrong
-class AnalyzeConversationJob implements ShouldQueue {
+class DebounceMessageReceivedTriggerJob implements ShouldQueue {
     public function handle() {
-        $contacts = Contact::all();  // RLS denies everything; query returns empty
+        Message::where('conversation_id', $this->conversationId)->get();  // RLS denies everything; returns empty
     }
 }
 ```
 
-**Reason:** Queue jobs run in a separate process/transaction with no HTTP middleware context. RLS policy uses `current_user_id` (a Postgres role setting). Jobs must explicitly set workspace scope.
+**Reason:** Queue jobs run in a separate process/transaction with no HTTP middleware context. RLS policies read the `app.current_workspace` Postgres setting, which `TenantScope::bind()` sets. Jobs must explicitly establish workspace scope.
 
 ---
 
@@ -222,26 +505,27 @@ class AnalyzeConversationJob implements ShouldQueue {
 **Rule:** When receiving webhooks that create or update data with a unique constraint, use a `try/catch` block to handle race conditions (concurrent webhooks for same resource). Re-fetch on conflict (optimistic locking pattern).
 
 ```php
-// ✅ Correct (InboundMessageService::upsertConversation)
-public function upsertConversation($connectionId, $peerUid, ...) {
+// ✅ Correct (App\Modules\Chat\Intake\IntakeService::upsertConversation)
+protected function upsertConversation(array $normalized): Conversation {
     try {
         DB::beginTransaction();
-        
+
         // Attempt insert
         $conversation = Conversation::create([
-            'zalo_connection_id' => $connectionId,
-            'peer_uid' => $peerUid,
-            'workspace_id' => $workspace->id,
+            'channel' => $normalized['channel'],
+            'channel_account_id' => $normalized['channel_account_id'],
+            'peer_uid' => $normalized['peer_uid'],
         ]);
-        
+
         DB::commit();
         return $conversation;
     } catch (QueryException $e) {
-        if ($e->getCode() === '23505') {  // Unique violation
+        // Unique violation on conversations_channel_account_peer_unique
+        if ($e->getCode() === '23505') {
             DB::rollBack();
             // Conflict; fetch existing record
-            return Conversation::where('zalo_connection_id', $connectionId)
-                ->where('peer_uid', $peerUid)
+            return Conversation::where('channel_account_id', $normalized['channel_account_id'])
+                ->where('peer_uid', $normalized['peer_uid'])
                 ->firstOrFail();
         }
         throw;
@@ -288,23 +572,29 @@ public function ingest($payload) {
 
 ### 11. Conversation Unique Constraint = Per-Channel (NOT Cross-Channel Merge)
 
-**Rule:** The unique constraint on Conversation is `unique(channel, workspace_id, peer_uid)` (not just per peer). Same peer across Zalo + Messenger = 2 separate conversations until CDP dedup is implemented (Phase-08+).
+**Rule:** The unique key on Conversation is `(channel_account_id, peer_uid)` — per channel account, not per peer. Same peer across Zalo + Messenger = 2 separate conversations until CDP dedup is implemented (Phase-08+).
 
 ```php
-// Correct schema (database/migrations/..._create_conversations_table.php)
+// Columns (database/migrations/..._create_conversations_table.php)
 Schema::create('conversations', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->uuid('workspace_id')->index();
-    $table->string('channel');  // 'zalo_personal', 'messenger', etc.
+    $table->foreignUuid('workspace_id')->constrained('workspaces')->cascadeOnDelete();
+    $table->string('channel')->default('zalo_personal');  // 'zalo_personal', 'messenger', etc.
     $table->string('peer_uid');
     $table->string('peer_phone')->nullable();
     $table->string('peer_name')->nullable();
     // ... other fields
-    
-    // Composite unique (but per-channel for now; multi-channel redesign in Phase-08)
-    $table->unique(['workspace_id', 'channel', 'peer_uid']);
-    // NOT: $table->unique(['workspace_id', 'peer_uid']);  // Would wrongly merge channels
+    $table->softDeletes();
 });
+
+// channel_account_id — the channel-neutral key; it survives a reconnect, whereas a
+// per-session connection id does not. The unique index is PARTIAL so a soft-deleted
+// conversation does not block a new one for the same peer:
+DB::statement(
+    'CREATE UNIQUE INDEX conversations_channel_account_peer_unique
+     ON conversations (channel_account_id, peer_uid) WHERE deleted_at IS NULL'
+);
+// NOT: unique(workspace_id, peer_uid)  // Would wrongly merge channels
 
 // Why: Same person (e.g., alice@company.com) has:
 // - Zalo account: zalo_uid_123
@@ -326,7 +616,7 @@ Schema::create('conversations', function (Blueprint $table) {
 ```php
 // ✅ Correct
 $conversation->last_metered_period = '2026-06';
-$conversation->saveQuietly();  // Bypasses chatConversation::booted() auto-logging
+$conversation->saveQuietly();  // Bypasses model events → no audit observer entry
 
 // ❌ Wrong (will create unwanted audit entry)
 $conversation->last_metered_period = '2026-06';
@@ -344,10 +634,16 @@ $conversation->save();  // Triggers AuditLog creation
 **Rule:** Use `FormRequest::authorize()` (from spatie) to check permission before the controller method runs. Do NOT rely on inline `$this->authorize()` checks.
 
 ```php
-// ✅ Correct (app/Http/Requests/UpdateLeadRequest.php)
+// ✅ Correct (app/Http/Requests/Leads/UpdateLeadRequest.php)
 class UpdateLeadRequest extends FormRequest {
     public function authorize(): bool {
-        return $this->user()->can('update', $this->lead);
+        $lead = $this->route('lead');
+
+        if (! ($lead instanceof Lead)) {
+            return false;
+        }
+
+        return $this->user()?->can('update', $lead) ?? false;
     }
     
     public function rules(): array {
@@ -401,15 +697,19 @@ $temp = $payload;  // Temporary what?
 **Rule:** Every workspace-scoped table must have a test asserting that RLS policies correctly deny cross-workspace queries.
 
 ```php
-// ✅ Correct (tests/Feature/RlsPolicyCoverageTest.php)
-public function test_leads_table_has_rls_policy() {
+// ✅ Coverage net: tests/Feature/Rls/RlsPolicyCoverageTest.php asserts that every
+// workspace-scoped table has a ws_isolation policy in pg_policies — a table added
+// without an RLS migration fails immediately.
+
+// ✅ Per-table isolation assertion
+public function test_leads_table_denies_cross_workspace_reads() {
     $workspace1 = Workspace::factory()->create();
     $workspace2 = Workspace::factory()->create();
-    
+
     $lead = Lead::factory()->for($workspace1)->create();
-    
-    TenantScope::set($workspace2->id);
-    
+
+    TenantScope::bind($workspace2->id);
+
     $result = Lead::where('id', $lead->id)->first();
     $this->assertNull($result);  // RLS denied; correct
 }
@@ -421,7 +721,9 @@ public function test_leads_table_has_rls_policy() {
 
 ## Layered Architecture
 
-### 16. Layered Architecture — Core Is Channel-Agnostic, Upper Knows Only Lower
+### 16. Chia lớp — lõi mù nhà cung cấp, lớp trên chỉ biết lớp ngay dưới
+
+> Rule này là dạng chi tiết của §0.2 và §0.6, viết cho chức năng nhắn tin làm ví dụ. **Áp dụng y hệt cho mọi chức năng** — thay "kênh" bằng "cổng thanh toán", "nhà cung cấp email", v.v.
 
 **Rule:** Kiến trúc chia lớp rõ ràng, đọc vào là hiểu. **Cấm cố định (hardcode) logic của một kênh/nhà cung cấp/cá nhân/case cụ thể vào lớp dùng chung hoặc lớp lõi.** Đặc thù cụ thể sống trong driver/adapter của nó; lõi chỉ nói chuyện qua contract trung tính.
 
@@ -444,14 +746,14 @@ class ConversationService {
 // ✅ Đúng — lõi gọi contract; driver tự resolve chi tiết kênh
 class ConversationService {
     public function reply(Conversation $c, array $payload) {
-        app('channels')->driver($c->channel)->sendMessage($c, $payload); // core mù kênh/mù session
+        app(ChannelRegistry::class)->driver($c->channel)->sendMessage($c, $payload); // core mù kênh/mù session
     }
 }
 // Driver (module Zalo) tự map channel_account → slot đang connected. Thêm Messenger = thêm driver, KHÔNG sửa lõi.
 ```
 
 **Ranh giới bắt buộc:**
-- **Lõi (Models core, InboundMessageService, ConversationService, controllers inbox)** KHÔNG được import class/khái niệm của một kênh cụ thể (không `ZaloConnection`, không `connection_id`, không cookie/token).
+- **Lõi (Models core, `Chat\Intake\IntakeService`, `Chat\Delivery\DeliveryPipeline`, controller trong `app/Http/Controllers/Chat/`)** KHÔNG được import class/khái niệm của một kênh cụ thể (không `ZaloConnection`, không `connection_id`, không cookie/token).
 - Cột đặc thù kênh KHÔNG nằm trong bảng core → dùng khoá trung tính (`channel_account_id`), chi tiết ở bảng module.
 - Thêm một kênh mới **chỉ** = thêm một driver (L1–L3) + đăng ký `Manager::extend()`; **không** chạm L4/L5.
 - Không `if ($channel === 'zalo') {...}` trong lõi. Rẽ nhánh theo kênh = mùi coupling → đẩy xuống driver.
@@ -464,10 +766,18 @@ class ConversationService {
 
 | Pattern | Location | Reason |
 |---------|----------|--------|
+| **Module = chức năng, không phải "đồ bên ngoài"** | `app/Modules/<ChucNang>/` | §0.1 — Zalo là kênh của chat, không phải "một loại tích hợp" |
+| **Http + Models ở gốc, chỉ nghiệp vụ nằm trong module** | `app/Http/`, `app/Models/`, `app/Modules/` | §0.3 — HTTP chỉ là một cách gọi; model dùng chéo chức năng |
+| **Tầng trong module đặt theo CÔNG ĐOẠN nghiệp vụ** | `Port/ Adapter/ Intake/ Store/ Delivery/ …` | §0.3 — `Inbound/`/`Outbound/` chỉ nói hướng, không nói việc |
+| **DTO nằm trong tầng sở hữu nó** | `Intake/InboundEvent`, `Delivery/OutboundEvent` | §0.3 — nhìn tên biết ai đẻ ra |
+| **Sự kiện vào/ra có gốc trừu tượng chung** | `InboundEvent` / `OutboundEvent` + lớp con | §0.6 — thêm loại sự kiện không sửa lõi |
+| **Ba mặt tiền route, một lõi** | `web.php` · `web_api.php` · `api.php` | §0.4 — mọi tính năng mở ra API được, không viết lại |
+| **UI gom theo chức năng** | `components/<chuc-nang>/`, `pages/<chuc-nang>/` | §0.5 |
+| **Thông tin nghiệp vụ = cột thật, không JSON** | schema | §0.3 — payload thô của nhà cung cấp mới được để jsonb |
 | Models flat in `app/Models/` | All Eloquent models | Simplifies discovery, matches Laravel |
-| Driver interface in `Integration/Contracts/` | External integrations | Clear abstraction point |
-| Drivers registered via `Manager::extend()` | `IntegrationServiceProvider` | Pluggable, testable |
-| `MeteringService` concrete, not interface | `app/Services/` | Quota logic is critical; no ambiguity |
+| Hợp đồng adapter trong `Port/` của chức năng | `Modules/<ChucNang>/Port/` | Cổng và phích là một cặp |
+| Adapter tự đăng ký qua `Manager::extend()` | ServiceProvider của adapter | Pluggable, testable |
+| `MeteringService` concrete, not interface | `app/Services/` | Bộ đếm là core; không mập mờ |
 | Restore queries use `->withTrashed()` | Any restore route | Soft-deleted are hidden by default |
 | Cross-namespace shims use `class_alias()` | Bootstrap or compatibility layer | Morph alias registry safety |
 | Attachment authz checks parent | `AttachmentController` | Attachment is detail of parent |
@@ -478,13 +788,14 @@ class ConversationService {
 | Form requests enforce authorization | `FormRequest::authorize()` | Spatie pattern; prevents auth bypass |
 | Meaningful variable names | All code | Readability, prevent misuse |
 | RLS tested per table | Test suite | Verify isolation is configured |
-| **Layered arch; core channel-agnostic; upper knows only lower** | **Toàn codebase** | **Không hardcode logic 1 kênh vào lõi; thêm kênh = thêm driver, không sửa lõi** |
+| **Chia lớp; lõi mù nhà cung cấp; lớp trên chỉ biết lớp dưới** | **Toàn codebase** | **Thêm nhà cung cấp = thêm adapter, không sửa lõi** |
 
 ---
 
 ## References
 
-- [System Architecture](system-architecture.md) § Integration Driver Pattern, RLS.
+- **§0 ở đầu file này là quy ước chi phối — mọi rule khác phục vụ nó.**
+- [System Architecture](system-architecture.md) § Driver Pattern, RLS.
 - [CRM Authorization Model](crm-authorization-model.md) § Access control.
 - [Feature: Zalo Personal Connect](features/integration/zalo-personal-connect.md) § Driver example.
-- [Phase 4 Bug Sweep Report](plans/260628-traditional-laravel-refactor/reports/bug-sweep-findings.md) § Finding origins.
+- [Channel-Account Architecture](features/messaging/channel-account-architecture.md) § Layering reference.

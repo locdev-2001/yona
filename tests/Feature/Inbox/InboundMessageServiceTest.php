@@ -2,14 +2,18 @@
 
 use App\Events\MessageReceived;
 use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Models\Message;
+use App\Models\ProfileIdentity;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SessionGapMaterializer;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\MemberStore;
+use App\Modules\Identity\Contracts\IdentityResolver;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
@@ -18,18 +22,20 @@ use Mockery\MockInterface;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-function makeService(?MeteringService $meter = null): InboundMessageService
+function makeService(?MeteringService $meter = null): IntakeService
 {
-    return new InboundMessageService(
+    return new IntakeService(
         $meter ?? app(MeteringService::class),
-        app(SessionGapMaterializer::class),
-        app(MessageSourceResolver::class),
-        app(MessageStateService::class),
-        app(MessagePublisher::class),
+        app(GapMarkerService::class),
+        app(DuplicateResolver::class),
+        app(MessageStatusService::class),
+        app(BroadcastService::class),
+        app(MemberStore::class),
+        app(IdentityResolver::class),
     );
 }
 
-function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = null): array
+function basePayload(string $senderUid = 'peer_001', ?string $channelAccountId = null): array
 {
     // channel_account_id là uuid, không FK ràng buộc (xem migration 100002) — test không
     // cần channel_accounts row thật, chỉ cần cùng giá trị để mô phỏng "cùng account".
@@ -38,9 +44,9 @@ function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = n
     return [
         'channel_account_id' => $channelAccountId,
         'channel' => 'zalo_personal',
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Nguyễn Test',
+        'thread_name' => 'Nguyễn Test',
         'direction' => 'in',
         'type' => 'text',
         'body' => 'Xin chào!',
@@ -61,8 +67,6 @@ it('F13/F20: ingest ghi Conversation+Message và dispatch MessageReceived kể c
     // Gate throw bất kỳ exception — simulates billing crash
     $throwingGate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldReceive('meterReply')->andThrow(new RuntimeException('Billing dead'));
-        $m->shouldReceive('canStartNew')->andReturn(true);
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true);
     });
 
     $payload = basePayload();
@@ -93,8 +97,6 @@ it('F1/F14: direction=in → KHÔNG gọi meterReply', function () {
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -115,8 +117,6 @@ it('F1/F14: direction=out → gọi meterReply đúng 1 lần', function () {
             ->andReturnUsing(function () use (&$meterCallCount) {
                 $meterCallCount++;
             });
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -134,8 +134,6 @@ it('F14: direction=echo → KHÔNG gọi meterReply', function () {
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -151,8 +149,6 @@ it('F14: thiếu direction field → default in → KHÔNG gọi meterReply', fu
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -299,14 +295,14 @@ it('ingest 2 tin từ cùng peer → 1 Conversation + 2 Message', function () {
 
     $convCount = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', 'peer_dup')
+        ->where('sender_uid', 'peer_dup')
         ->count();
 
     expect($convCount)->toBe(1);
 
     $conv = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', 'peer_dup')
+        ->where('sender_uid', 'peer_dup')
         ->first();
 
     $msgCount = Message::where('conversation_id', $conv->id)->count();
@@ -344,7 +340,7 @@ it('channel auth: user của workspace khác bị denied', function () {
     expect($userA->membershipFor($wsA->id))->not->toBeNull();
 });
 
-// ── Race: 2 webhook đồng thời cùng (channel_account_id, peer_uid) ────────────
+// ── Race: 2 webhook đồng thời cùng (channel_account_id, sender_uid) ────────────
 //
 // Trước fix: read-check-write không atomic → cả 2 miss first() → cả 2 INSERT →
 // request thứ 2 hit conversations_channel_account_peer_unique → QueryException 23505 →
@@ -360,23 +356,23 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     actingInWorkspace($ws, $user);
 
     $channelAccountId = (string) Str::uuid();
-    $peerUid = 'peer_race_001';
+    $senderUid = 'peer_race_001';
 
     // Conversation conflicting đã tồn tại (request "kia" tạo trước, trong cùng workspace).
     $existing = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_type' => 0,
         'conversation_number' => 999,
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class), app(MessageSourceResolver::class), app(MessageStateService::class), app(MessagePublisher::class)) extends InboundMessageService
+    $racingService = new class(app(MeteringService::class), app(GapMarkerService::class), app(DuplicateResolver::class), app(MessageStatusService::class), app(BroadcastService::class), app(MemberStore::class), app(IdentityResolver::class)) extends IntakeService
     {
         private bool $firstLookup = true;
 
-        protected function findConversation(?string $channelAccountId, string $peerUid): ?Conversation
+        protected function findConversation(?string $channelAccountId, string $senderUid): ?Conversation
         {
             if ($this->firstLookup) {
                 $this->firstLookup = false;
@@ -384,12 +380,12 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
                 return null; // ép đi vào nhánh INSERT → đụng 23505
             }
 
-            return parent::findConversation($channelAccountId, $peerUid); // re-fetch thật trong catch
+            return parent::findConversation($channelAccountId, $senderUid); // re-fetch thật trong catch
         }
     };
 
-    $payload = basePayload($peerUid, $channelAccountId);
-    $payload['peer_name'] = 'Khách Race';
+    $payload = basePayload($senderUid, $channelAccountId);
+    $payload['thread_name'] = 'Khách Race';
     $payload['source_id'] = 'msg_race_001';
 
     // Không được throw — catch 23505 → re-fetch
@@ -400,18 +396,18 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
 
     $convCount = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', $peerUid)
+        ->where('sender_uid', $senderUid)
         ->count();
 
     expect($convCount)->toBe(1); // không duplicate
 
     // peer-info update của existing-row path được áp dụng sau re-fetch
-    expect($existing->fresh()->peer_name)->toBe('Khách Race');
+    expect($existing->fresh()->thread_name)->toBe('Khách Race');
 });
 
-// ── Participants: hồ sơ thành viên nhóm per-sender (avatar/tên) ───────────────
+// ── Thành viên luồng: ai đang ở trong hội thoại nào ──────────────────────────
 
-it('participants: tin nhóm có sender profile → upsert vào conversations.participants', function () {
+it('tin nhóm ghi người gửi thành một hàng thành viên', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
@@ -419,86 +415,194 @@ it('participants: tin nhóm có sender profile → upsert vào conversations.par
     actingInWorkspace($ws, $user);
 
     $payload = basePayload('group_001');
-    $payload['thread_type'] = 1;
+    $payload['thread_kind'] = 'group';
     $payload['sender_uid'] = 'uid_a';
     $payload['sender_name'] = 'Phước Lộc';
     $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
 
     $message = makeService()->ingest($payload);
-    $conv = Conversation::find($message->conversation_id);
+    $conversation = Conversation::find($message->conversation_id);
 
-    expect($conv->participants)->toBe([
-        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
-    ]);
+    $member = ConversationMember::where('conversation_id', $conversation->id)->where('sender_uid', 'uid_a')->first();
+    expect($member)->not->toBeNull()
+        ->and($member->profile_id)->not->toBeNull();
 
-    // Người gửi thứ hai → append entry, không ghi đè entry cũ
+    // Người gửi thứ hai là một hàng NỮA, không ghi đè hàng cũ — đây là điều mà
+    // một cột jsonb không bảo đảm được.
     $payload2 = basePayload('group_001', $payload['channel_account_id']);
-    $payload2['thread_type'] = 1;
+    $payload2['thread_kind'] = 'group';
     $payload2['sender_uid'] = 'uid_b';
     $payload2['sender_name'] = 'Beru';
-    $payload2['sender_avatar'] = 'https://s120.avatar.zalo.me/b.jpg';
-
     makeService()->ingest($payload2);
 
-    expect($conv->fresh()->participants)->toBe([
-        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
-        'uid_b' => ['name' => 'Beru', 'avatar' => 'https://s120.avatar.zalo.me/b.jpg'],
-    ]);
+    expect(ConversationMember::where('conversation_id', $conversation->id)->count())->toBe(2);
 });
 
-it('participants: tin backfill thiếu avatar KHÔNG xoá avatar đã có; tin không sender là no-op', function () {
+it('luồng nhóm KHÔNG đẻ danh tính cho uid của nhóm', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $payload = basePayload('group_002');
-    $payload['thread_type'] = 1;
-    $payload['sender_uid'] = 'uid_a';
+    $payload = basePayload('group_no_identity');
+    $payload['thread_kind'] = 'group';
+    $payload['thread_name'] = 'Nhóm Dev';
+    $payload['sender_uid'] = 'uid_member';
+
+    $message = makeService()->ingest($payload);
+    $conversation = Conversation::find($message->conversation_id);
+
+    // Một nhóm có uid nhưng không phải một con người.
+    expect($conversation->identity_id)->toBeNull()
+        ->and($conversation->profile_id)->toBeNull()
+        ->and($conversation->thread_name)->toBe('Nhóm Dev');
+
+    expect(ProfileIdentity::where('value', 'group_no_identity')->exists())->toBeFalse();
+});
+
+it('luồng 1-1 gắn thẳng vào hồ sơ', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('khach_1_1');
+    $payload['thread_name'] = 'Chị Lan';
+
+    $message = makeService()->ingest($payload);
+    $conversation = Conversation::find($message->conversation_id);
+
+    expect($conversation->profile_id)->not->toBeNull()
+        ->and($conversation->identity_id)->not->toBeNull()
+        ->and($conversation->thread_name)->toBe('Chị Lan');
+
+    // Đúng một hàng thành viên cho luồng 1-1: câu hỏi "người này ở đâu" chỉ có
+    // một đường trả lời, không phải một đường cho nhóm và một đường cho tin riêng.
+    expect(ConversationMember::where('conversation_id', $conversation->id)->count())->toBe(1);
+});
+
+it('avatar người gửi trong nhóm dựng được từ hồ sơ thành viên', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('group_avatar');
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_co_avatar';
     $payload['sender_name'] = 'Phước Lộc';
     $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
 
     $message = makeService()->ingest($payload);
-    $conv = Conversation::find($message->conversation_id);
+    $conversation = Conversation::find($message->conversation_id);
 
-    // Backfill: chỉ có sender_uid + name, không avatar → giữ avatar cũ
-    $backfill = basePayload('group_002', $payload['channel_account_id']);
-    $backfill['thread_type'] = 1;
-    $backfill['sender_uid'] = 'uid_a';
-    $backfill['sender_name'] = 'Phước Lộc';
+    // Bỏ cột jsonb mà quên nối lại nguồn mới là màn hình mất avatar — đã xảy ra
+    // một lần. Test này canh đúng chỗ đó.
+    $profiles = $conversation->memberProfiles();
 
-    makeService()->ingest($backfill);
-
-    expect($conv->fresh()->participants['uid_a'])
-        ->toBe(['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg']);
-
-    // Tin 1-1 không sender_uid → participants không đổi
-    $direct = basePayload('peer_solo', $payload['channel_account_id']);
-    $directMessage = makeService()->ingest($direct);
-
-    expect(Conversation::find($directMessage->conversation_id)->participants)->toBeNull();
+    expect($profiles)->toHaveKey('uid_co_avatar')
+        ->and($profiles['uid_co_avatar']['name'])->toBe('Phước Lộc')
+        ->and($profiles['uid_co_avatar']['avatar'])->toBe('https://s120.avatar.zalo.me/a.jpg');
 });
 
-it('participants: MessageReceived broadcast kèm sender_participant của người gửi', function () {
+it('trang hộp thư đẩy hồ sơ thành viên của hội thoại đang mở', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+    seedMember($ws, $user, 'admin');
+
+    $payload = basePayload('group_prop');
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_prop';
+    $payload['sender_name'] = 'Beru';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/b.jpg';
+
+    $conversationId = makeService()->ingest($payload)->conversation_id;
+
+    $this->get(route('inbox.show', $conversationId))
+        ->assertOk()
+        ->assertInertia(fn ($page) => expect($page->toArray()['props']['selectedConversation']['members']['uid_prop']['avatar'])
+            ->toBe('https://s120.avatar.zalo.me/b.jpg'));
+});
+
+it('hai người gửi khác nhau trong nhóm là hai bí danh khác nhau', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $payload = basePayload('group_003');
-    $payload['thread_type'] = 1;
-    $payload['sender_uid'] = 'uid_a';
-    $payload['sender_name'] = 'Phước Lộc';
-    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+    $accountId = (string) Str::uuid();
 
-    makeService()->ingest($payload);
+    foreach ([['uid_x', 'Phước Lộc'], ['uid_y', 'Beru']] as [$uid, $name]) {
+        $payload = basePayload('group_hai_nguoi', $accountId);
+        $payload['thread_kind'] = 'group';
+        $payload['sender_uid'] = $uid;
+        $payload['sender_name'] = $name;
+        $payload['sender_avatar'] = "https://avatar/{$uid}.jpg";
+        $message = makeService()->ingest($payload);
+    }
 
-    Event::assertDispatched(MessageReceived::class, function (MessageReceived $event) {
-        return $event->broadcastPayload['sender_participant'] === [
-            'name' => 'Phước Lộc',
-            'avatar' => 'https://s120.avatar.zalo.me/a.jpg',
-        ];
-    });
+    $conversation = Conversation::find($message->conversation_id);
+    $identityIds = ConversationMember::where('conversation_id', $conversation->id)->pluck('identity_id')->all();
+
+    // Model từng khai khóa chính tổ hợp bằng `$primaryKey = null`; Eloquent sinh
+    // UPDATE không có WHERE dùng được nên ghi một thành viên là ghi đè CẢ BẢNG,
+    // và mọi người trong mọi nhóm mang chung một bí danh. Test này canh đúng đó.
+    expect($identityIds)->toHaveCount(2)
+        ->and(array_unique($identityIds))->toHaveCount(2);
+
+    $profiles = $conversation->memberProfiles();
+    expect($profiles['uid_x']['name'])->toBe('Phước Lộc')
+        ->and($profiles['uid_y']['name'])->toBe('Beru')
+        ->and($profiles['uid_x']['avatar'])->not->toBe($profiles['uid_y']['avatar']);
+});
+
+it('ghi một thành viên KHÔNG đụng tới thành viên của hội thoại khác', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $first = basePayload('group_mot', (string) Str::uuid());
+    $first['thread_kind'] = 'group';
+    $first['sender_uid'] = 'uid_nhom_mot';
+    $first['sender_name'] = 'Người Một';
+    $convOne = Conversation::find(makeService()->ingest($first)->conversation_id);
+    $before = ConversationMember::where('conversation_id', $convOne->id)->first()->identity_id;
+
+    $second = basePayload('group_hai', (string) Str::uuid());
+    $second['thread_kind'] = 'group';
+    $second['sender_uid'] = 'uid_nhom_hai';
+    $second['sender_name'] = 'Người Hai';
+    makeService()->ingest($second);
+
+    expect(ConversationMember::where('conversation_id', $convOne->id)->first()->identity_id)->toBe($before);
+});
+
+it('endpoint dòng hội thoại trả kèm hồ sơ thành viên', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+    seedMember($ws, $user, 'admin');
+
+    $payload = basePayload('group_stream', (string) Str::uuid());
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_stream';
+    $payload['sender_name'] = 'Beru';
+    $payload['sender_avatar'] = 'https://avatar/beru.jpg';
+
+    $conversationId = makeService()->ingest($payload)->conversation_id;
+
+    // Danh sách hộp thư KHÔNG mang hồ sơ thành viên (một truy vấn mỗi hàng), nên
+    // khi chuyển hội thoại thì đây là nguồn duy nhất. Thiếu nó thì tên người gửi
+    // trong nhóm rơi về khóa thô, và chỉ tải lại trang mới đúng.
+    $this->getJson(route('inbox.stream', $conversationId))
+        ->assertOk()
+        ->assertJsonPath('members.uid_stream.name', 'Beru')
+        ->assertJsonPath('members.uid_stream.avatar', 'https://avatar/beru.jpg');
 });

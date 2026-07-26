@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * test ZaloSendService::send() (đường outbound). File này đóng nốt seam CÒN LẠI — đường
  * INBOUND thật qua webhook HTTP thật, KHÔNG mock MeteringService — xác nhận luật F13/F20
  * "luôn nhận inbound kể cả hết quota, không bao giờ đếm inbound vào answered_count" đúng
- * xuyên suốt webhook controller → InboundMessageService thật, không chỉ đúng ở tầng unit.
+ * xuyên suốt webhook controller → IntakeService thật, không chỉ đúng ở tầng unit.
  *
  * @group channel-zalo
  * @group billing

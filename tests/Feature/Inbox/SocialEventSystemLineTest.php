@@ -60,7 +60,7 @@ function seSetup(): array
         'workspace_id' => $wsId,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'group_se_'.uniqid(),
+        'sender_uid' => 'group_se_'.uniqid(),
         'thread_type' => 1,
         'conversation_number' => WorkspaceSequence::next('conversation', $wsId),
     ]);
@@ -90,13 +90,13 @@ it('group_event update (đổi tên) → dòng group_system + label + bump strea
     [$workspace, , $conversation, $connectionId] = seSetup();
     $svBefore = (int) $conversation->fresh()->stream_version;
 
-    $event = ['type' => 'update', 'act' => 'update', 'threadId' => $conversation->peer_uid, 'data' => ['groupName' => 'Team Bán Hàng']];
+    $event = ['type' => 'update', 'act' => 'update', 'threadId' => $conversation->sender_uid, 'data' => ['groupName' => 'Team Bán Hàng']];
 
-    sePostSocial($workspace, $connectionId, 'group_event', $conversation->peer_uid, $event, 'zps:se:rename1')
+    sePostSocial($workspace, $connectionId, 'group_event', $conversation->sender_uid, $event, 'zps:se:rename1')
         ->assertOk()->assertJsonPath('message', 'social_event_materialized');
 
     // Retry cùng source_id → không nhân đôi
-    sePostSocial($workspace, $connectionId, 'group_event', $conversation->peer_uid, $event, 'zps:se:rename1')->assertOk();
+    sePostSocial($workspace, $connectionId, 'group_event', $conversation->sender_uid, $event, 'zps:se:rename1')->assertOk();
 
     $rows = DB::table('conversation_events')->where('conversation_id', $conversation->id)->where('kind', 'group_system')->get();
     expect($rows)->toHaveCount(1);
@@ -110,7 +110,7 @@ it('group_event update (đổi tên) → dòng group_system + label + bump strea
 it('group_event act NGOÀI whitelist → 200, không row (không parse mù)', function () {
     [$workspace, , $conversation, $connectionId] = seSetup();
 
-    sePostSocial($workspace, $connectionId, 'group_event', $conversation->peer_uid, [
+    sePostSocial($workspace, $connectionId, 'group_event', $conversation->sender_uid, [
         'type' => 'new_pin_topic', 'data' => [],
     ], 'zps:se:pin1')->assertOk()->assertJsonPath('message', 'social_event_ignored');
 
@@ -137,7 +137,7 @@ it('friend_event ADD (type=0) trên thread 1-1 → dòng friend_system + activit
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_friend_1',
+        'sender_uid' => 'peer_friend_1',
         'thread_type' => 0,
         'contact_id' => $contact->id,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
@@ -160,7 +160,7 @@ it('stream trả dòng hệ thống với payload để FE render', function () 
     seedMember($workspace, $user, 'admin');
     actingInWorkspace($workspace, $user);
 
-    sePostSocial($workspace, $connectionId, 'group_event', $conversation->peer_uid, [
+    sePostSocial($workspace, $connectionId, 'group_event', $conversation->sender_uid, [
         'type' => 'join', 'data' => ['updateMembers' => [['id' => '1', 'dName' => 'Anh Bảy']]],
     ], 'zps:se:join1')->assertOk();
 

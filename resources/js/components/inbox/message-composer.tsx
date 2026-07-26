@@ -36,7 +36,7 @@ interface Props {
     onClearReply?: () => void;
     /** P07 — thay placeholder {ten_khach} trong canned reply. */
     peerName?: string | null;
-    /** P11 — capability flags: kênh không hỗ trợ → ẨN nút (không assume Zalo). */
+    /** Cờ năng lực: kênh không hỗ trợ → ẨN nút, không đoán theo tên kênh. */
     canSendMedia?: boolean;
     canSendSticker?: boolean;
 }

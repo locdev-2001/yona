@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Services\Inbox\SeenSyncService;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -40,8 +40,8 @@ function ssSetup(string $role = 'admin'): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_ss_'.uniqid(),
-        'thread_type' => 0,
+        'sender_uid' => 'peer_ss_'.uniqid(),
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -54,7 +54,7 @@ function ssSetup(string $role = 'admin'): array
         'source_id' => 'ss_in_'.uniqid(),
         'platform_sent_at' => now(),
         'platform_meta' => ['zca_message' => [
-            'msgId' => 'ss_m1', 'cliMsgId' => '999888', 'uidFrom' => $conversation->peer_uid,
+            'msgId' => 'ss_m1', 'cliMsgId' => '999888', 'uidFrom' => $conversation->sender_uid,
             'idTo' => '0', 'msgType' => 'webchat', 'st' => 3, 'at' => 0, 'cmd' => 501, 'ts' => '1751600000000',
         ]],
     ]);
@@ -73,7 +73,7 @@ it('DEFAULT OFF: mở thread KHÔNG bắn call nào (A4 founder)', function () {
 
 it('ON: mở thread → dispatcher sendSeenEvent nhận batch đúng field; debounce lần 2 trong 4s không bắn', function () {
     [, , $conversation] = ssSetup();
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     Http::fake(['*zca/sendSeenEvent*' => Http::response(['ok' => true, 'result' => ['status' => 0]], 200)]);
@@ -96,14 +96,14 @@ it('ON: mở thread → dispatcher sendSeenEvent nhận batch đúng field; debo
 
 it('ON nhưng NHÓM (thread_type=1) → không bắn (per-member, v1 bỏ)', function () {
     [$workspace] = ssSetup();
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     $group = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'group_ss',
-        'thread_type' => 1,
+        'sender_uid' => 'group_ss',
+        'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -115,9 +115,9 @@ it('ON nhưng NHÓM (thread_type=1) → không bắn (per-member, v1 bỏ)', fun
 it('toggle endpoint: admin bật/tắt OK; sales_rep (không có tenant.zalo.manage) → 403', function () {
     ssSetup();
 
-    $this->putJson(route('inbox.settings.seen-sync'), ['enabled' => true])
+    $this->putJson(route('inbox.settings.seen-sync', 'zalo_personal'), ['enabled' => true])
         ->assertOk()->assertJsonPath('enabled', true);
-    expect(app(SeenSyncService::class)->enabled())->toBeTrue();
+    expect(app(SeenSyncService::class)->enabled('zalo_personal'))->toBeTrue();
 
     // Member thường
     [$ws2] = [Workspace::factory()->create()];
@@ -125,12 +125,12 @@ it('toggle endpoint: admin bật/tắt OK; sales_rep (không có tenant.zalo.man
     actingInWorkspace($ws2, $rep);
     seedMember($ws2, $rep, 'sales_rep');
 
-    $this->putJson(route('inbox.settings.seen-sync'), ['enabled' => true])->assertForbidden();
+    $this->putJson(route('inbox.settings.seen-sync', 'zalo_personal'), ['enabled' => true])->assertForbidden();
 });
 
 it('watermark: sau lần sync thành công, mở lại (hết debounce) không gửi lại tin cũ', function () {
     [, , $conversation] = ssSetup();
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     Http::fake(['*zca/sendSeenEvent*' => Http::response(['ok' => true], 200)]);

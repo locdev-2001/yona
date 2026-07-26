@@ -3,7 +3,7 @@
 use App\Models\ChannelAccount;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\Zalo\PromoteAccountBinder;
+use App\Modules\Chat\Adapter\ZaloPersonal\PromoteAccountBinder;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -80,12 +80,12 @@ function makeZaloManager(Workspace $ws): User
 /**
  * Tạo conversation Zalo (key theo channel_account_id, P08) với $messageCount message
  * (source_id tuần tự). $channelAccountId mô phỏng data ĐÃ qua P02 backfill (dedup theo
- * DuplicateConversationMerger cần channel_account_id NOT NULL để tìm nhóm trùng).
+ * DedupConversation cần channel_account_id NOT NULL để tìm nhóm trùng).
  * Trả về conversation id (uuid).
  */
-function makeZaloConversation(string $workspaceId, string $peerUid, int $messageCount, string $sourcePrefix, ?string $channelAccountId = null): string
+function makeZaloConversation(string $workspaceId, string $senderUid, int $messageCount, string $sourcePrefix, ?string $channelAccountId = null): string
 {
-    // Default connection (transacted, RLS-bound) — khớp với InboundMessageService và
+    // Default connection (transacted, RLS-bound) — khớp với IntakeService và
     // PromoteAccountBinder trong promote(); rollback sạch sau test.
     $convId = (string) Str::uuid();
 
@@ -94,9 +94,9 @@ function makeZaloConversation(string $workspaceId, string $peerUid, int $message
         'workspace_id' => $workspaceId,
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Em Bé',
+        'thread_name' => 'Em Bé',
         'conversation_number' => random_int(1, 99999),
         'unread_count' => 0,
         'created_at' => now(),
@@ -312,7 +312,7 @@ it('reconnect keeps the prior conversation+messages intact (account-keyed — no
     // không fork (không có duplicate để merge vì slot mới CHƯA có conversation riêng).
     $activeConvs = DB::table('conversations')
         ->where('workspace_id', $ws->id)
-        ->where('peer_uid', $peer)
+        ->where('sender_uid', $peer)
         ->whereNull('deleted_at')
         ->get(['id', 'channel_account_id']);
 
@@ -327,7 +327,7 @@ it('reconnect keeps the prior conversation+messages intact (account-keyed — no
 
 // ── Test 4: Reconnect khi cả 2 slot có conversation cùng peer → merge message, né 23505 ──
 
-// Test "2 duplicate active conversations cho cùng (channel_account_id, peer_uid)" đã
+// Test "2 duplicate active conversations cho cùng (channel_account_id, sender_uid)" đã
 // XOÁ: kể từ P02(g) swap, constraint conversations_channel_account_peer_unique (partial,
 // deleted_at IS NULL) khiến kịch bản này KHÔNG THỂ xảy ra qua ứng dụng nữa — INSERT thứ 2
 // tự 23505 ngay lập tức, đúng như thiết kế. PromoteAccountBinder::mergeDuplicateConversationsFor()

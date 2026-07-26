@@ -64,7 +64,7 @@ class MessageSourceAlias extends Model
 
     /**
      * P06 — lookup message_id qua alias (source_id legacy hoặc source_id contract cũ
-     * qua reconnect). Dùng bởi InboundMessageService::findExistingBySource() sau khi
+     * qua reconnect). Dùng bởi IntakeService::findExistingBySource() sau khi
      * miss messages.source_id trực tiếp.
      */
     public static function messageIdFor(string $conversationId, string $sourceId): ?string
