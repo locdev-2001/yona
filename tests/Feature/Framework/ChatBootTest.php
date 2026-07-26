@@ -45,6 +45,7 @@ use App\Modules\Chat\Store\PhoneEnrichmentService;
 use App\Modules\Chat\Store\SystemLineService;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
 use App\Modules\Chat\Timeline\TimelineCursor;
+use App\Modules\Payment\Adapter\Manual\ManualPaymentDriver;
 use App\Modules\Payment\Port\PaymentRegistry;
 use App\Services\NoteService;
 use App\Services\TagService;
@@ -218,6 +219,21 @@ it('mọi service lõi chat resolve được từ container', function () {
         expect(app($class))->toBeInstanceOf($class);
     }
 
+    // Resolve được từ container KHÔNG có nghĩa là đã cắm vào sổ đăng ký: container
+    // tự dựng được mọi class cụ thể bằng phản chiếu, kể cả khi provider của phích
+    // cắm không hề chạy `extend()`. Gỡ ZaloPersonalServiceProvider khỏi
+    // bootstrap/providers.php mà bốn test này vẫn xanh — đã thử. Nên phải hỏi
+    // thẳng sổ đăng ký, đây mới là thứ đường gửi thật đi qua.
+    foreach ([
+        WidgetChannelDriver::KEY => WidgetChannelDriver::class,
+        'zalo_personal' => ZaloChannelDriver::class,
+    ] as $key => $driver) {
+        expect(app(ChannelRegistry::class)->driver($key))
+            ->toBeInstanceOf($driver, "Kênh chưa cắm vào sổ đăng ký: {$key}");
+    }
+
+    expect(app(PaymentRegistry::class)->driver('manual'))->toBeInstanceOf(ManualPaymentDriver::class);
+
     foreach (chatBootSingletons() as $class) {
         expect(app($class))->toBe(app($class), "Mất binding singleton: {$class}");
     }
@@ -225,9 +241,14 @@ it('mọi service lõi chat resolve được từ container', function () {
     // Bảng bí danh gõ sai một ký tự là một no-op hoàn toàn im lặng: worker vẫn
     // chết đúng như khi không có bảng. Bắt cả hai đầu — tên mới phải có thật, và
     // tên cũ phải thật sự dựng lên được qua móc autoloader.
-    foreach (require base_path('app/Modules/Chat/compat-aliases.php') as $old => $new) {
-        expect(class_exists($new) || interface_exists($new))->toBeTrue("Bí danh trỏ vào hư không: {$new}");
-        expect(class_exists($old) || interface_exists($old))->toBeTrue("Bí danh không dựng được tên cũ: {$old}");
+    foreach (['Chat', 'Payment'] as $module) {
+        $table = base_path("app/Modules/{$module}/compat-aliases.php");
+        expect(file_exists($table))->toBeTrue("Bảng bí danh biến mất: {$module}");
+
+        foreach (require $table as $old => $new) {
+            expect(class_exists($new) || interface_exists($new))->toBeTrue("Bí danh trỏ vào hư không: {$new}");
+            expect(class_exists($old) || interface_exists($old))->toBeTrue("Bí danh không dựng được tên cũ: {$old}");
+        }
     }
 
     foreach (chatBootControllers() as $controller) {
