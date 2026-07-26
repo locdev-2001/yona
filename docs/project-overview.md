@@ -20,7 +20,7 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 - **Projects & Tasks**: dự án gắn khách hàng + milestone kanban + members + file + thảo luận; task đa hình + đa người thực hiện + checklist + bộ đếm giờ/timesheet.
 - **Frontend** hoàn chỉnh cho lõi: app shell, settings đầy đủ, dark mode, đa ngôn ngữ (vi/en), notification feed, What's New feed.
 - **Inbox Zalo cá nhân (full messaging)**: bridge zca-js (services/zalo-bridge, QR login, generic dispatcher 146 method), webhook idempotent, realtime Reverb (Echo private channel), media/sticker/bank-card/danh thiếp, mark-read, hội thoại → Liên hệ nháp → Lead, participants nhóm. Khung kênh chung: `ChannelDriver` contract + `ChannelManager` (thêm kênh = thêm driver).
-- **Billing/Metering**: đếm hội thoại per-channel (chỉ khi tenant trả lời; luôn nhận inbound kể cả hết quota), entitlements/plan grant, `OutboundSendPipeline` (quota gate + meter tập trung). Số quota gói còn PLACEHOLDER chờ chốt.
+- **Billing/Metering**: đếm hội thoại per-channel (chỉ khi tenant trả lời; luôn nhận inbound kể cả không có quota limit), entitlements/plan grant. Metering là thống kê thuần; không còn quota gate chặn gửi (gỡ 25/07/2026). Số quota gói còn PLACEHOLDER; gửi không giới hạn.
 - **Automation engine v1**: WorkflowEngine graph trigger→condition→action, node handlers (send_message/create_task/tag/condition), workflow canvas FE (@xyflow/react), RLS + tests.
 
 **Quy mô codebase**: ~55 model · 76 controller · 113 migration · 20 policy · ~819 test (Pest) + Playwright E2E.
@@ -39,7 +39,7 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 | **Analytical** | Biến dữ liệu thành insight, forecast, báo cáo | Hạ tầng (activity/audit) ✅ · Reporting/BI ⬜ |
 | **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên phòng ban | Timeline + notes + activity ✅ · Inbox Zalo ✅ (Messenger/TikTok ⬜) |
 
-Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh: **base miễn phí + add-on tính phí qua marketplace** — entitlements + metering đã build; payment drivers (VNPay/MoMo) chưa.
+Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh: **base miễn phí + add-on tính phí qua marketplace** — entitlements + metering đã build (metering = thống kê, không chặn); payment drivers (VNPay/MoMo) chưa.
 
 ---
 

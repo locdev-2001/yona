@@ -179,7 +179,7 @@ php artisan serve --port=8001
 
 If "Quota exceeded" blocks sends:
 - This is expected behavior (F5 guard). Each conversation can only send once per billing period.
-- Workspace must have a plan with higher quota OR be on free tier.
+- Workspace can send unlimited (no quota limits). Usage is tracked for analytics.
 - Check **Settings → Billing** to see current plan.
 
 ## 8. Project Structure Quick Ref

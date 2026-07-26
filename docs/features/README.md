@@ -77,21 +77,21 @@ Quản lý dự án (Project) với milestone kanban, thành viên, file, thảo
 
 ## Module 8 — Conversations / Inbox (GĐ1 ✅)
 
-Realtime omnichannel live chat — Phase 1: Zalo personal webhook inbound, idempotent message ingestion, CDP dedup contract, quota gates, rate limiting. Related: [messaging](./messaging/README.md).
+Realtime omnichannel live chat — Phase 1: Zalo personal webhook inbound, idempotent message ingestion, CDP dedup contract, metering statistics, rate limiting. Related: [messaging](./messaging/README.md).
 
 | Feature | Purpose | Code entry |
 |---|---|---|
 | [Zalo Personal Inbox](./messaging/zalo-personal-inbox.md) | Receive inbound Zalo messages via webhook, store Conversation + Message, broadcast realtime. | `WebhookController` + `InboundMessageService` + Reverb |
 | [Outbound Send](./messaging/outbound-send.md) | Reply to conversation: circuit-breaker → quota → rate limit → bridge HTTP → persist + meter. | `ZaloSendService` + `SendRateLimiter` + bridge |
 | [Conversation to Lead](./messaging/conversation-to-lead.md) | Convert inbound conversation to Lead via CDP identity resolution (Phase-08: dedup by phone). | `ConversationLeadController` + `IdentityResolver` contract |
-| [Conversation Metering](./messaging/conversation-metering.md) | Race-safe count outbound per channel per month; F5: existing conv always allowed even if over quota. | `ConversationMeter` (MeteringGate contract) |
+| [Conversation Metering](./messaging/conversation-metering.md) | Race-safe count outbound per channel per month for billing analytics; no quota gate applied. | `MeteringService` |
 | [Plan Entitlements & Grant](./messaging/plan-entitlements-grant.md) | Workspace subscriptions; admin grants plans manually (Phase-07); resolves quota + remaining. | `GrantPlanService` + `EntitlementResolver` |
 | [Zalo Generic Dispatcher + Relay Forwarder](./messaging/zalo-generic-dispatcher.md) | Own 100% zca-js surface: `POST /zca/:method` allowlist reflection (146 method, tier gate) + forward 10 unwired events → `relay_events` (no silent drop, no metering). | `zca-dispatch.mjs` + `relay-forwarder.mjs` + `handleRelayEvent` |
 | [zca Capability Map](./messaging/zca-capability-map.md) | Living reference: 146 REST method / 16 event tier classification (READ/DESTRUCTIVE/MEDIA/DENY) — snapshot gate M1. | `src/zca-methods.snapshot.json` + `zca-adapter.mjs` |
 
 ## Module 9 — Billing + Entitlements (GĐ1 Core, Phase-08 Payment)
 
-Marketplace catalog, workspace purchases, quota/feature gates, entitlements resolver. Phase-07: manual grant (payment-manual driver); Phase-08: VNPay/MoMo drivers.
+Marketplace catalog, workspace purchases, feature flags, entitlements resolver. Phase-07: manual grant (payment-manual driver); Phase-08: VNPay/MoMo drivers.
 
 **Features:** Covered in [Module 8 (Conversation Metering + Plan Entitlements)](./messaging/).
 
