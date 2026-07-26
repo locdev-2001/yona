@@ -583,3 +583,26 @@ it('ghi một thành viên KHÔNG đụng tới thành viên của hội thoại
 
     expect(ConversationMember::where('conversation_id', $convOne->id)->first()->identity_id)->toBe($before);
 });
+
+it('endpoint dòng hội thoại trả kèm hồ sơ thành viên', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+    seedMember($ws, $user, 'admin');
+
+    $payload = basePayload('group_stream', (string) Str::uuid());
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_stream';
+    $payload['sender_name'] = 'Beru';
+    $payload['sender_avatar'] = 'https://avatar/beru.jpg';
+
+    $conversationId = makeService()->ingest($payload)->conversation_id;
+
+    // Danh sách hộp thư KHÔNG mang hồ sơ thành viên (một truy vấn mỗi hàng), nên
+    // khi chuyển hội thoại thì đây là nguồn duy nhất. Thiếu nó thì tên người gửi
+    // trong nhóm rơi về khóa thô, và chỉ tải lại trang mới đúng.
+    $this->getJson(route('inbox.stream', $conversationId))
+        ->assertOk()
+        ->assertJsonPath('members.uid_stream.name', 'Beru')
+        ->assertJsonPath('members.uid_stream.avatar', 'https://avatar/beru.jpg');
+});
