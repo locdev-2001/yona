@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Http;
  *
  * Thứ tự kiểm tra TRƯỚC khi gửi:
  *   1. Circuit-breaker (ZaloHealthMonitor) → ZaloCircuitOpenException
- *   2. (P11) metering ĐÃ hoist lên OutboundSendPipeline — driver không meter
+ *   2. (P11) metering ĐÃ hoist lên DeliveryPipeline — driver không meter
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (không retry — send không idempotent)
  *   5. Ghi Message direction=out → increment rate limiter (thống kê Ở PIPELINE)
@@ -71,7 +71,7 @@ class ZaloSendService
         }
 
         // P11 (BLK-4): metering KHÔNG còn ở driver — meterReply sống ở
-        // OutboundSendPipeline (core). Service này = policy Zalo + transport + persist.
+        // DeliveryPipeline (core). Service này = policy Zalo + transport + persist.
 
         // 2. Rate limiter (ToS Zalo — POLICY kênh) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
         // Tin trả lời khi khách có inbound ≤24h không phải QC → miễn cap, không tiêu quota cap.

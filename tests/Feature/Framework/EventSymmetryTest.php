@@ -7,9 +7,9 @@ use App\Modules\Chat\Delivery\Event\OpaqueEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Delivery\Event\TextEvent;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Intake\InboundEvent;
 use App\Modules\Chat\Intake\InboundEventType;
-use App\Modules\Integration\Data\OutboundMessage;
 
 /**
  * §0.6 — mỗi gốc trừu tượng đi kèm MỘT enum định danh, đối xứng hai chiều.

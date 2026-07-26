@@ -6,13 +6,13 @@ use App\Models\Conversation;
 use App\Models\WorkflowRun;
 use App\Modules\Automation\Contracts\NodeHandler;
 use App\Modules\Automation\NodeHandlerResult;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\Inbox\OutboundSendPipeline;
 use Throwable;
 
 /**
- * Gửi tin nhắn (action) — qua OutboundSendPipeline như mọi đường gửi khác
+ * Gửi tin nhắn (action) — qua DeliveryPipeline như mọi đường gửi khác
  * (docs/crm-automation-workflow.md §Node Handler registry).
  *
  * Đi qua pipeline chứ không gọi thẳng driver: tin automation vẫn được thống kê
@@ -29,7 +29,7 @@ class SendMessageNodeHandler implements NodeHandler
 {
     public function __construct(
         private readonly ChannelRegistry $channels,
-        private readonly OutboundSendPipeline $pipeline,
+        private readonly DeliveryPipeline $pipeline,
     ) {}
 
     public function type(): string

@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Services\Inbox\SeenSyncService;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;

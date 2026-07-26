@@ -10,7 +10,7 @@ use App\Models\Message;
  * Bước công bố sau khi Message đã persist — dùng chung mọi kênh, mọi hướng:
  * cập nhật cache hội thoại (last_message_at/preview, unread inbound) rồi
  * broadcast MessageReceived. Inbound (IntakeService) và outbound
- * (OutboundSendPipeline) cùng đi qua đây → FE thấy tin realtime + convList
+ * (DeliveryPipeline) cùng đi qua đây → FE thấy tin realtime + convList
  * đúng thứ tự + stream_version sync (P09) không phân biệt hướng.
  */
 class BroadcastService

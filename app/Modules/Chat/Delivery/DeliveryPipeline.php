@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Delivery;
 
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Port\ChannelDriver;
-use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\MeteringService;
 
 /**
@@ -33,7 +32,7 @@ use App\Services\MeteringService;
  * Driver chỉ lo POLICY kênh (giờ/cap ToS) + TRANSPORT + persist. Circuit-breaker,
  * echo-dedup, SendRateLimiter, outbox retry = đặc thù kênh, GIỮ trong driver.
  */
-class OutboundSendPipeline
+class DeliveryPipeline
 {
     public function __construct(
         private readonly MeteringService $meteringService,

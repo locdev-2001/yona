@@ -7,12 +7,12 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Status\MessageStatusService;
-use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\Inbox\OutboundSendPipeline;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\MockChannelDriverA;
@@ -22,7 +22,7 @@ use Tests\Support\MockChannelDriverB;
  * P11 — GOAL #4: khung omnichannel ĐÓNG BĂNG. Bộ test này chạy với 2 mock driver
  * policy TRÁI NGƯỢC, sống trong tests/Support/ — đăng ký kênh mới = 0 dòng sửa core.
  *
- * Money-path THẬT (BLK-4): mọi send đi OutboundSendPipeline → quota gate per-channel
+ * Money-path THẬT (BLK-4): mọi send đi DeliveryPipeline → quota gate per-channel
  * TRƯỚC transport + meterReply SAU. Contract test chạm metering thật, không mock.
  *
  * Allowlist "core" (đóng băng): docs/features/messaging/channel-framework-contract.md
@@ -148,7 +148,7 @@ it('send qua pipeline: meter PER-CHANNEL (mock_a usage +1, zalo_personal KHÔNG 
     $inbound = fwIngest('mock_a', (string) Str::uuid(), 'peer_meter', 'ma_in_1');
     $conversation = $inbound->conversation;
 
-    $message = app(OutboundSendPipeline::class)->send(
+    $message = app(DeliveryPipeline::class)->send(
         $driver,
         $conversation,
         OutboundMessage::text('trả lời khách'),
@@ -165,7 +165,7 @@ it('hết hạn mức KHÔNG chặn gửi — chỉ thống kê (quyết định
     [$workspace] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 1);
     [, $driver] = fwRegisterMock('mock_a');
-    $pipeline = app(OutboundSendPipeline::class);
+    $pipeline = app(DeliveryPipeline::class);
 
     // Conv 1 dùng hết hạn mức danh nghĩa (limit 1)
     $conv1 = fwIngest('mock_a', (string) Str::uuid(), 'peer_q1', 'q1_in')->conversation;
@@ -226,7 +226,7 @@ it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì
     fwGrantQuota($workspace, 'mock_b', 10);
     [, $driverA] = fwRegisterMock('mock_a');
     [, $driverB] = fwRegisterMock('mock_b');
-    $pipeline = app(OutboundSendPipeline::class);
+    $pipeline = app(DeliveryPipeline::class);
     $longText = str_repeat('x', 150);
 
     $convA = fwIngest('mock_a', (string) Str::uuid(), 'peer_pa', 'pa_in')->conversation;
@@ -248,8 +248,8 @@ it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là da
     // Mỗi mẫu phải khớp ÍT NHẤT một file: `glob()` trả [] cho thư mục không tồn
     // tại, nên một đợt di dời quét qua sẽ làm gate này xanh rỗng thay vì đỏ.
     $patterns = [
-        'app/Services/Inbox/*.php',
         'app/Modules/Chat/Broadcast/*.php',
+        'app/Modules/Chat/Delivery/*.php',
         'app/Modules/Chat/Intake/*.php',
         'app/Modules/Chat/Port/*.php',
         'app/Modules/Chat/Port/Capability/*.php',
