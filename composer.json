@@ -17,6 +17,7 @@
         "laravel/horizon": "^5.47",
         "laravel/pulse": "^1.7",
         "laravel/reverb": "^1.10",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.8",
         "opcodesio/log-viewer": "^3.24",

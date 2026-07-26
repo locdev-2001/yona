@@ -482,3 +482,48 @@ it('luồng 1-1 gắn thẳng vào hồ sơ', function () {
     // một đường trả lời, không phải một đường cho nhóm và một đường cho tin riêng.
     expect(ConversationMember::where('conversation_id', $conversation->id)->count())->toBe(1);
 });
+
+it('avatar người gửi trong nhóm dựng được từ hồ sơ thành viên', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $payload = basePayload('group_avatar');
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_co_avatar';
+    $payload['sender_name'] = 'Phước Lộc';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+
+    $message = makeService()->ingest($payload);
+    $conversation = Conversation::find($message->conversation_id);
+
+    // Bỏ cột jsonb mà quên nối lại nguồn mới là màn hình mất avatar — đã xảy ra
+    // một lần. Test này canh đúng chỗ đó.
+    $profiles = $conversation->memberProfiles();
+
+    expect($profiles)->toHaveKey('uid_co_avatar')
+        ->and($profiles['uid_co_avatar']['name'])->toBe('Phước Lộc')
+        ->and($profiles['uid_co_avatar']['avatar'])->toBe('https://s120.avatar.zalo.me/a.jpg');
+});
+
+it('trang hộp thư đẩy hồ sơ thành viên của hội thoại đang mở', function () {
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+    seedMember($ws, $user, 'admin');
+
+    $payload = basePayload('group_prop');
+    $payload['thread_kind'] = 'group';
+    $payload['sender_uid'] = 'uid_prop';
+    $payload['sender_name'] = 'Beru';
+    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/b.jpg';
+
+    $conversationId = makeService()->ingest($payload)->conversation_id;
+
+    $this->get(route('inbox.show', $conversationId))
+        ->assertOk()
+        ->assertInertia(fn ($page) => expect($page->toArray()['props']['selectedConversation']['members']['uid_prop']['avatar'])
+            ->toBe('https://s120.avatar.zalo.me/b.jpg'));
+});

@@ -103,7 +103,12 @@ class InboxController extends Controller
             'conversations' => $conversations,
             'filters' => $request->only(['q', 'unread', 'channel', 'channel_account_id', 'tag']),
             'channelsAvailable' => $channelsAvailable,
-            'selectedConversation' => $conversation,
+            // Kèm tên + avatar từng người trong luồng, dựng từ bí danh. Chỉ cho
+            // hội thoại ĐANG MỞ — gọi cho cả danh sách là một truy vấn mỗi hàng.
+            'selectedConversation' => $conversation === null ? null : [
+                ...$conversation->toArray(),
+                'members' => $conversation->memberProfiles(),
+            ],
             'channelAccounts' => $channelAccounts,
             // Danh tính kênh — FE lấy nhãn, ký hiệu, trang kết nối, khóa hạn mức
             // từ đây thay vì tự biết tên kênh nào.
