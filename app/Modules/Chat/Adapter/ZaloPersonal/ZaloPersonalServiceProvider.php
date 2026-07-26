@@ -31,7 +31,13 @@ class ZaloPersonalServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Driver gate: tắt qua config('integrations.zalo_personal.enabled') → driver/route không register.
+        // Khai kênh TỒN TẠI, kể cả khi đang tắt: trang tích hợp phải còn card
+        // thì mới có chỗ bật lại. Descriptor là hằng, dựng nó không tốn gì.
+        $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $registry) {
+            $registry->declare(ZaloChannelDriver::descriptorOf());
+        });
+
+        // Cổng bật/tắt chỉ chặn việc CẮM driver — đường gửi/nhận, không phải danh tính.
         if (! config('integrations.zalo_personal.enabled')) {
             return;
         }

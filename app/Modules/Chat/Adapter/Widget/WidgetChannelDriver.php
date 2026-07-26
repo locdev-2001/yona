@@ -2,12 +2,14 @@
 
 namespace App\Modules\Chat\Adapter\Widget;
 
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Port\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use Illuminate\Support\Str;
 
 /**
@@ -27,9 +29,28 @@ class WidgetChannelDriver extends AbstractChannelDriver
 
     public function __construct(private readonly WidgetInboundParser $parser) {}
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return self::KEY;
+        return self::descriptorOf();
+    }
+
+    /**
+     * Danh tính của kênh là HẰNG, không phụ thuộc instance — provider khai nó
+     * mà không phải dựng cả chuỗi phụ thuộc của driver.
+     */
+    public static function descriptorOf(): ChannelDescriptor
+    {
+        return new ChannelDescriptor(
+            key: self::KEY,
+            label: 'Kênh nội bộ',
+            category: 'chat',
+            logo: '/assets/images/icon_widget.png',
+            badge: 'W',
+            // Kênh nội bộ không có trang kết nối: nó luôn sẵn sàng, không có
+            // phiên nào để dựng. Giao diện phải ẩn nút thay vì gọi route().
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     /**

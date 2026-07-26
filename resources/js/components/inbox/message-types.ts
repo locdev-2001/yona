@@ -1,4 +1,4 @@
-// Channel-agnostic chat types + helpers — reused by every inbox channel (Zalo, Messenger, TikTok…).
+// Kiểu dữ liệu chat trung tính — dùng lại cho mọi kênh trong hộp thư.
 // Mirror the serialized Message/Conversation models (controller returns full models as JSON).
 
 export type MessageDirection = 'in' | 'out' | 'echo';
@@ -21,7 +21,7 @@ export interface BusinessCardMeta {
     contact_uid?: string | null;
 }
 
-/** Thẻ tài khoản ngân hàng (Zalo zinstant.bankcard) — bridge resolve từ template VietQR. */
+/** Thẻ tài khoản ngân hàng — adapter của kênh resolve từ template VietQR. */
 export interface BankCardMeta {
     bank_name?: string | null;
     bank_bin?: string | null;
@@ -172,7 +172,7 @@ export interface ChatPeer {
     peer_name: string | null;
     peer_phone: string | null;
     peer_avatar_url?: string | null;
-    thread_type: number; // 1 = group
+    thread_kind: string; // 'direct' | 'group'
     /** Group threads: sender_uid → profile (avatar/tên per-sender). */
     participants?: Record<string, ChatParticipant> | null;
 }
@@ -182,8 +182,8 @@ export function isOutbound(msg: Pick<ChatMessage, 'direction'>): boolean {
     return msg.direction !== 'in';
 }
 
-export function isGroup(peer: Pick<ChatPeer, 'thread_type'>): boolean {
-    return peer.thread_type === 1;
+export function isGroup(peer: Pick<ChatPeer, 'thread_kind'>): boolean {
+    return peer.thread_kind === 'group';
 }
 
 /** "Phước Lộc" → "PL", max 2 chars. */

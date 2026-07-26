@@ -2,30 +2,70 @@
 
 namespace App\Http\ViewModels;
 
-use App\Models\ZaloConnection;
+use App\Models\ChannelAccount;
+use App\Modules\Chat\Port\ChannelDescriptor;
+use App\Modules\Chat\Port\ChannelRegistry;
+use Illuminate\Support\Facades\Route;
 
 /**
- * Catalog of available integrations for the /integrations page.
+ * Danh mục tích hợp cho trang `/integrations`.
  *
- * ponytail: 1 real entry. Add an entry when a real driver exists — no ComingSoon scaffolding.
- * No enums — 1 category (chat), 2 bool states, enums would be YAGNI.
+ * Đây là một MÀN HÌNH, không phải nơi code tích hợp trú: nó hỏi sổ đăng ký "có
+ * phích cắm nào, đã kết nối chưa" rồi vẽ ra. Thêm một kênh là card tự hiện,
+ * không sửa file này.
  */
 class IntegrationCatalog
 {
+    public function __construct(private readonly ChannelRegistry $channels) {}
+
     /**
-     * @return array<int, array{key: string, name: string, category: string, logo: string, enabled: bool, connected: bool}>
+     * @return list<array{key: string, name: string, category: string, logo: string, enabled: bool, connected: bool, href: string|null}>
      */
     public function cards(): array
     {
-        return [
-            [
-                'key' => 'zalo_personal',
-                'name' => 'Zalo cá nhân',
-                'category' => 'chat',
-                'logo' => '/assets/images/icon_zalo.png', // per-integration logo; card falls back to category icon if empty
-                'enabled' => (bool) config('integrations.zalo_personal.enabled'),
-                'connected' => ZaloConnection::query()->exists(), // workspace-scoped via RLS
+        $connectedChannels = ChannelAccount::query()
+            ->where('status', 'connected')
+            ->distinct()
+            ->pluck('channel')
+            ->all();
+
+        return array_values(array_map(
+            fn (ChannelDescriptor $descriptor) => [
+                'key' => $descriptor->key,
+                'name' => $descriptor->label,
+                'category' => $descriptor->category,
+                'logo' => $descriptor->logo,
+                'enabled' => $this->enabled($descriptor->key),
+                // Chặt hơn bản cũ (`ZaloConnection::exists()`): một phiên đã hỏng
+                // vẫn để lại hàng kết nối, nhưng nó KHÔNG còn nhận được tin.
+                'connected' => in_array($descriptor->key, $connectedChannels, true),
+                // Dựng URL là việc của tầng biên vào; kênh không có trang kết
+                // nối riêng thì trả null và giao diện ẩn nút.
+                'href' => $this->connectUrl($descriptor),
             ],
-        ];
+            $this->channels->descriptors(),
+        ));
+    }
+
+    /**
+     * Route của phích cắm ngoài chỉ được đăng ký khi kênh đó đang bật — hỏi
+     * router trước, đừng gọi `route()` rồi bắt ngoại lệ.
+     */
+    private function connectUrl(ChannelDescriptor $descriptor): ?string
+    {
+        if ($descriptor->connectRouteName === null || ! Route::has($descriptor->connectRouteName)) {
+            return null;
+        }
+
+        return route($descriptor->connectRouteName);
+    }
+
+    /**
+     * Kênh không khai cổng config nào thì luôn bật — đó là kênh nội bộ, tắt nó
+     * đi là làm chat chết.
+     */
+    private function enabled(string $key): bool
+    {
+        return (bool) config("integrations.{$key}.enabled", true);
     }
 }

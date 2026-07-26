@@ -497,7 +497,7 @@ it('ChannelRegistry has zalo_personal driver registered', function () {
 
     $driver = $manager->driver('zalo_personal');
     expect($driver)->toBeInstanceOf(ZaloChannelDriver::class);
-    expect($driver->channelKey())->toBe('zalo_personal');
+    expect($driver->descriptor()->key)->toBe('zalo_personal');
 })->group('channel-zalo');
 
 // ── connection_id sequence cross-tenant ──────────────────────────────────────

@@ -3,10 +3,12 @@
 namespace Tests\Support;
 
 use App\Contracts\SendException;
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Port\AbstractChannelDriver;
 use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 
 /**
  * P11 — Mock kênh A: policy TRÁI NGƯỢC Zalo — không receipts, không media,
@@ -18,9 +20,17 @@ class MockChannelDriverA extends AbstractChannelDriver
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'mock_a';
+        return new ChannelDescriptor(
+            key: 'mock_a',
+            label: 'Kênh giả A',
+            category: 'chat',
+            logo: '',
+            badge: 'A',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function capabilities(): ChannelCapabilities

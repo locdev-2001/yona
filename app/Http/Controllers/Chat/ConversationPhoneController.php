@@ -26,7 +26,7 @@ class ConversationPhoneController extends Controller
             'phone' => ['required', 'string', 'regex:/^[0-9+][0-9 .\-()]{7,19}$/'],
         ]);
 
-        if ($conversation->thread_type === 1) {
+        if ($conversation->isGroup()) {
             return response()->json(['message' => 'Hội thoại nhóm không có SĐT khách.'], 422);
         }
 

@@ -18,8 +18,9 @@ class WidgetServiceProvider extends ServiceProvider
     {
         $this->app->singleton(WidgetInboundParser::class, fn () => new WidgetInboundParser);
 
-        $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $manager) {
-            $manager->extend(WidgetChannelDriver::KEY, fn () => app(WidgetChannelDriver::class));
+        $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $registry) {
+            $registry->declare(WidgetChannelDriver::descriptorOf());
+            $registry->extend(WidgetChannelDriver::KEY, fn () => app(WidgetChannelDriver::class));
         });
     }
 }

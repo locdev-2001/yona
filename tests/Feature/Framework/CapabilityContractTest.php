@@ -56,7 +56,7 @@ function ccSetup(string $role = 'admin'): array
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
         'peer_uid' => 'peer_cc_'.uniqid(),
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -90,7 +90,7 @@ function ccRegisterBareChannel(Workspace $workspace): Conversation
         'workspace_id' => $workspace->id,
         'channel' => 'mock_a',
         'peer_uid' => 'peer_bare_'.uniqid(),
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 }
@@ -100,7 +100,7 @@ function ccRegisterBareChannel(Workspace $workspace): Conversation
 it('kênh không hỗ trợ seen → bỏ qua êm, không throw', function () {
     [$workspace] = ccSetup();
     $bare = ccRegisterBareChannel($workspace);
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     Message::create([
@@ -165,7 +165,7 @@ it('reaction thành công → ghi message_reactions SAU khi platform trả 2xx',
 it('seen-sync tôn trọng debounce 4s + watermark', function () {
     [, , $conversation] = ccSetup();
     ccInboundMessage($conversation, 'a');
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     Http::fake(['*zca/sendSeenEvent*' => Http::response(['ok' => true], 200)]);
@@ -186,14 +186,14 @@ it('seen-sync tôn trọng debounce 4s + watermark', function () {
 
 it('seen-sync bỏ qua hội thoại nhóm', function () {
     [$workspace] = ccSetup();
-    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY, true);
+    app(SettingsService::class)->set(SeenSyncService::SETTING_KEY.'.zalo_personal', true);
     Cache::flush();
 
     $group = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'peer_uid' => 'group_cc_'.uniqid(),
-        'thread_type' => 1,
+        'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
     ccInboundMessage($group, 'g');

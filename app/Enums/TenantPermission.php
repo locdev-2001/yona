@@ -67,6 +67,11 @@ enum TenantPermission: string
     // --- Tags (cross-cutting: tag/untag any entity) ---
     case TagsManage = 'tenant.tags.manage';
 
+    // --- Kênh nhắn tin ---
+    // Quyền quản trị chung cho kênh không có quyền riêng của nhà cung cấp.
+    // Mỗi phích cắm tự khai quyền của mình trong descriptor; lõi chỉ đọc.
+    case ChannelManage = 'tenant.channel.manage';
+
     // --- Zalo channel (P07 channel-zalo) ---
     case ZaloManage = 'tenant.zalo.manage';
 

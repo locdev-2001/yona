@@ -39,7 +39,7 @@ class PhoneEnrichmentService
         }
 
         $conversation = $message->conversation;
-        if ($conversation === null || $conversation->thread_type === 1) {
+        if ($conversation === null || $conversation->isGroup()) {
             return false;
         }
 

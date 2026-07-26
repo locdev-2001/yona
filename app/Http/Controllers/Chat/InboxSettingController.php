@@ -2,28 +2,33 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Modules\Chat\Delivery\SeenSyncService;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * P06b — toggle seen-sync per-workspace. DEFAULT OFF (A4 founder). Chỉ
- * tenant.zalo.manage bật/tắt — founder quyết định bật ON sau spike rate P09.
+ * Bật/tắt báo-đã-xem cho TỪNG kênh. Mặc định TẮT.
+ *
+ * Quyền lấy từ descriptor của chính kênh đó — controller không biết tên kênh nào.
  */
 class InboxSettingController extends Controller
 {
-    public function updateSeenSync(Request $request, SettingsService $settings): JsonResponse
-    {
-        abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
+    public function updateSeenSync(
+        Request $request,
+        string $channel,
+        SettingsService $settings,
+        ChannelRegistry $channels,
+    ): JsonResponse {
+        abort_unless(auth()->user()?->can($channels->descriptor($channel)->managePermission->value), 403);
 
         $validated = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
 
-        $settings->set(SeenSyncService::SETTING_KEY, (bool) $validated['enabled']);
+        $settings->set(SeenSyncService::SETTING_KEY.'.'.$channel, (bool) $validated['enabled']);
 
         return response()->json(['ok' => true, 'enabled' => (bool) $validated['enabled']]);
     }

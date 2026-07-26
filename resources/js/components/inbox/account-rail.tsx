@@ -1,3 +1,4 @@
+import { type ChannelDescriptorMap, descriptorFor } from '@/components/inbox/channel-descriptor';
 import { cn } from '@/lib/utils';
 
 export interface ChannelAccountInfo {
@@ -9,21 +10,16 @@ export interface ChannelAccountInfo {
     conversations_count: number;
 }
 
-const CHANNEL_BADGE: Record<string, string> = {
-    zalo_personal: 'Z',
-    messenger: 'M',
-    tiktok: 'T',
-};
-
 interface Props {
     accounts: ChannelAccountInfo[];
+    descriptors?: ChannelDescriptorMap;
     totalCount: number;
     activeAccountId: string | null;
     onSelect: (accountId: string | null) => void;
 }
 
-/** P07 — rail trái 2 tầng: lọc theo tài khoản kết nối (shop có thể cắm nhiều số Zalo). */
-export function AccountRail({ accounts, totalCount, activeAccountId, onSelect }: Props) {
+/** Rail trái 2 tầng: lọc theo tài khoản kênh (một shop có thể cắm nhiều tài khoản). */
+export function AccountRail({ accounts, descriptors, totalCount, activeAccountId, onSelect }: Props) {
     // Rail = filter hội thoại của account đang hoạt động (connected/session_lost).
     // needs_qr (đang chờ quét lần đầu) không có hội thoại để lọc — ConnectionBanner lo phần nhắc.
     const activeAccounts = accounts.filter((acc) => acc.status !== 'needs_qr');
@@ -38,7 +34,7 @@ export function AccountRail({ accounts, totalCount, activeAccountId, onSelect }:
                     label={acc.display_name ?? 'Tài khoản chưa đặt tên'}
                     count={acc.conversations_count}
                     active={activeAccountId === acc.id}
-                    badge={CHANNEL_BADGE[acc.channel] ?? '?'}
+                    badge={descriptorFor(descriptors, acc.channel).badge}
                     needsAttention={acc.status === 'session_lost' || acc.status === 'needs_qr'}
                     onClick={() => onSelect(acc.id)}
                 />

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Contracts\SendException;
-use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Chat\SendMessageRequest;
 use App\Models\ChannelAccount;
@@ -15,6 +14,7 @@ use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\Exception\ComposeMessageException;
 use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
 use Illuminate\Http\JsonResponse;
@@ -82,6 +82,8 @@ class InboxController extends Controller
 
         $channelsAvailable = app(ChannelRegistry::class)->hasAny();
 
+        $descriptors = app(ChannelRegistry::class)->descriptors();
+
         // P07 — danh sách tài khoản kênh (đa tài khoản) + count hội thoại active/account,
         // thay $zaloConnection first() cũ (giả định 1 kết nối/workspace).
         // Account đã ngắt CHỦ ĐỘNG (disconnected) biến mất khỏi mọi UI inbox —
@@ -98,12 +100,45 @@ class InboxController extends Controller
             'channelsAvailable' => $channelsAvailable,
             'selectedConversation' => $conversation,
             'channelAccounts' => $channelAccounts,
-            // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage thấy nút)
-            'seenSyncEnabled' => app(SeenSyncService::class)->enabled(),
-            'canManageZalo' => (bool) auth()->user()?->can(TenantPermission::ZaloManage->value),
+            // Danh tính kênh — FE lấy nhãn, ký hiệu, trang kết nối, khóa hạn mức
+            // từ đây thay vì tự biết tên kênh nào.
+            'channelDescriptors' => array_map(fn (ChannelDescriptor $d) => $d->toArray(), $descriptors),
+            'seenSyncEnabled' => $this->seenSyncByChannel($descriptors),
+            'canManageChannel' => $this->manageableChannels($descriptors),
             // P11 — capability flags per-kênh: FE ẩn/hiện nút theo flags, KHÔNG biết kênh
             'channelCapabilities' => $this->channelCapabilities($channelAccounts->pluck('channel')->unique()->values()->all()),
         ]);
+    }
+
+    /**
+     * Quyền quản trị TỪNG kênh — quyền do descriptor của kênh khai, không phải
+     * một cờ chung mang tên một nhà cung cấp.
+     *
+     * @param  array<string, ChannelDescriptor>  $descriptors
+     * @return array<string, bool>
+     */
+    private function manageableChannels(array $descriptors): array
+    {
+        $user = auth()->user();
+
+        return array_map(
+            fn (ChannelDescriptor $descriptor) => (bool) $user?->can($descriptor->managePermission->value),
+            $descriptors,
+        );
+    }
+
+    /**
+     * Trạng thái báo-đã-xem theo TỪNG kênh: "đã xem" là diện của kênh, bật cho
+     * kênh này không có nghĩa là bật cho kênh khác.
+     *
+     * @param  array<string, ChannelDescriptor>  $descriptors
+     * @return array<string, bool>
+     */
+    private function seenSyncByChannel(array $descriptors): array
+    {
+        $seenSync = app(SeenSyncService::class);
+
+        return array_map(fn (ChannelDescriptor $descriptor) => $seenSync->enabled($descriptor->key), $descriptors);
     }
 
     /**
@@ -136,7 +171,11 @@ class InboxController extends Controller
      */
     public function resync(ChannelRegistry $channels): JsonResponse
     {
-        abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
+        // Kéo lịch sử chạm nhiều kênh cùng lúc — đòi quyền quản trị của MỌI kênh
+        // làm được việc đó, chứ không phải quyền của riêng một nhà cung cấp.
+        foreach ($channels->supporting(SupportsHistoryResync::class) as $key => $driver) {
+            abort_unless(auth()->user()?->can($channels->descriptor($key)->managePermission->value), 403);
+        }
 
         $workspaceId = (string) currentWorkspace()?->id;
 

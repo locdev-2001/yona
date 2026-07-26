@@ -109,7 +109,7 @@ it('mock driver đăng ký runtime resolve được + capabilities shape đầy 
         [$manager] = fwRegisterMock($key);
         $driver = $manager->driver($key);
 
-        expect($driver->channelKey())->toBe($key);
+        expect($driver->descriptor()->key)->toBe($key);
         $caps = $driver->capabilities()->toArray();
         foreach (['canSendMedia', 'canSendSticker', 'canQuoteReply', 'canReact', 'hasSeenReceipts', 'hasTyping', 'receiptGranularity'] as $flag) {
             expect($caps)->toHaveKey($flag);

@@ -37,7 +37,7 @@ function peConversation(Workspace $workspace, string $peerUid, int $threadType =
         'channel' => 'zalo_personal',
         'channel_account_id' => (string) Str::uuid(),
         'peer_uid' => $peerUid,
-        'thread_type' => $threadType,
+        'thread_kind' => $threadType === 1 ? 'group' : 'direct',
         'peer_name' => 'Khách '.$peerUid,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

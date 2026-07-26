@@ -6,16 +6,31 @@ use Illuminate\Support\Manager;
 use InvalidArgumentException;
 
 /**
- * Driver-manager cho inbox channels (Zalo, Messenger, TikTok, ...).
+ * Sổ đăng ký kênh nhắn tin.
  *
- * Channel driver (Integration/Chat/*, ...) đăng ký qua:
- *   app(ChannelRegistry::class)->extend('zalo_personal', fn() => new ZaloChannelDriver(...))
+ * Có HAI mức, cố ý tách rời:
+ *   - `declare()` — kênh này TỒN TẠI trong bản dựng. Khai vô điều kiện.
+ *   - `extend()`  — kênh này CẮM ĐƯỢC ngay bây giờ. Chỉ khi cổng config bật.
  *
- * Inbox core gọi driver() — KHÔNG import class driver cụ thể (N1 cô lập).
- * Tắt driver → hasAny() = false → inbox empty state (N2).
+ * Tách ra vì trang tích hợp phải hiện cả kênh đang tắt — đó chính là chỗ để
+ * người dùng bật nó lên; gộp hai mức thì tắt kênh là mất luôn đường bật lại.
+ * Đường gửi/nhận chỉ nhìn mức thứ hai.
+ *
+ * Lõi gọi `driver()` và không import class driver nào.
  */
 class ChannelRegistry extends Manager
 {
+    /** @var array<string, ChannelDescriptor> */
+    private array $declared = [];
+
+    /**
+     * Khai một kênh tồn tại, bất kể nó có đang bật hay không.
+     */
+    public function declare(ChannelDescriptor $descriptor): void
+    {
+        $this->declared[$descriptor->key] = $descriptor;
+    }
+
     /**
      * Trả về ChannelDriver theo key kênh.
      *
@@ -52,6 +67,39 @@ class ChannelRegistry extends Manager
         }
 
         return $drivers;
+    }
+
+    /**
+     * Danh tính của một kênh — kể cả kênh đang tắt.
+     *
+     * @throws InvalidArgumentException kênh không tồn tại trong bản dựng
+     */
+    public function descriptor(string $key): ChannelDescriptor
+    {
+        return $this->descriptors()[$key]
+            ?? throw new InvalidArgumentException("Kênh [{$key}] không tồn tại.");
+    }
+
+    /**
+     * Danh tính của MỌI kênh trong bản dựng, theo khóa.
+     *
+     * Gồm cả kênh đã khai nhưng đang tắt. Driver nào cắm vào bằng `extend()` mà
+     * chưa khai thì lấy descriptor từ chính nó — đó là đường của driver dựng
+     * lúc chạy (mock trong test), và nó phải dựng driver lên để hỏi.
+     *
+     * @return array<string, ChannelDescriptor>
+     */
+    public function descriptors(): array
+    {
+        $derived = [];
+
+        // Chỉ dựng driver cho những kênh CHƯA khai — kênh đã khai thì lấy thẳng
+        // descriptor, không kéo theo chuỗi phụ thuộc của nó.
+        foreach (array_keys(array_diff_key($this->customCreators, $this->declared)) as $key) {
+            $derived[$key] = $this->driver($key)->descriptor();
+        }
+
+        return [...$this->declared, ...$derived];
     }
 
     /**

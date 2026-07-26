@@ -58,7 +58,7 @@ class MessageStatusService
 
     /**
      * Receipts 1-1 (kind seen|delivered). Nhóm là per-member (seenUids) — scalar
-     * SAI cho nhóm → caller đã lọc is_group, đây guard thêm theo thread_type.
+     * SAI cho nhóm → caller đã lọc nhóm, đây là lớp chặn thứ hai.
      *
      * @param  list<array{target_msg_id: string, kind: string}>  $receipts
      */
@@ -71,7 +71,7 @@ class MessageStatusService
             $message = $messages[$receipt['target_msg_id']] ?? null;
 
             // Chatty drop-on-miss có chủ đích. Guard: chỉ tin MÌNH gửi + thread 1-1.
-            if ($message === null || $message->direction === 'in' || $message->conversation?->thread_type === 1) {
+            if ($message === null || $message->direction === 'in' || $message->conversation?->isGroup()) {
                 continue;
             }
 

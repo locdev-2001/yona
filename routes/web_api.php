@@ -83,6 +83,6 @@ Route::middleware(['auth', 'workspace'])->group(function () {
     Route::get('/inbox/conversations/{conversation}/panel', ConversationPanelController::class)
         ->name('inbox.panel');
     // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage).
-    Route::put('/inbox/settings/seen-sync', [InboxSettingController::class, 'updateSeenSync'])
+    Route::put('/inbox/settings/seen-sync/{channel}', [InboxSettingController::class, 'updateSeenSync'])
         ->name('inbox.settings.seen-sync');
 });

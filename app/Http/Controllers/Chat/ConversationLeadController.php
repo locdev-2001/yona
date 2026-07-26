@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Guard bất biến:
  *   - Idempotency: conversation.lead_id đã set → trả Lead cũ (KHÔNG tạo mới).
- *   - Group guard: thread_type=1 (group) → 422.
+ *   - Hội thoại nhóm → 422: một nhóm không phải một người.
  *   - Dedup SĐT: peer_phone → ContactService::resolveOrCreateFromPeer → set contact_id.
  *   - Tạo Lead qua LeadService::createFromContact — KHÔNG tự viết logic Lead.
  *   - Link 2 chiều: conversation.lead_id + leads.conversation_id + leads.contact_id.
@@ -30,7 +30,7 @@ class ConversationLeadController extends Controller
         $this->authorize('update', $conversation);
 
         // Guard: group thread không tạo Lead
-        if ($conversation->thread_type === 1) {
+        if ($conversation->isGroup()) {
             return response()->json([
                 'message' => 'Không thể tạo Lead từ hội thoại nhóm.',
             ], 422);
