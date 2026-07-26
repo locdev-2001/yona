@@ -161,7 +161,11 @@ class IdentityResolveService implements IdentityResolver
             $identity->attributes = [...$identity->attributes, ...$observation->attributes];
         }
 
-        $identity->channel_profiles = [...$identity->channel_profiles, ...$this->channelProfile($observation)];
+        // Trộn TỪNG TRƯỜNG, không đè cả khối: một lần gặp lại mà nhà cung cấp
+        // không trả tên/avatar sẽ ghi đè hồ sơ đang có bằng hai giá trị rỗng.
+        // Đã xảy ra thật — kéo lịch sử về không mang theo avatar, và mỗi lần bấm
+        // "đồng bộ" là avatar của cả nhóm biến mất.
+        $identity->channel_profiles = $this->mergeChannelProfiles($identity->channel_profiles, $observation);
 
         // Đã xác minh chỉ đi một chiều: một lần gặp sau không chứng minh được
         // điều ngược lại.
@@ -174,20 +178,51 @@ class IdentityResolveService implements IdentityResolver
         return $identity;
     }
 
-    /** @return array<string, array{name: string|null, avatar: string|null, seen_at: string}> */
+    /**
+     * Hồ sơ theo kênh cho một bí danh MỚI — lúc này chưa có gì để giữ.
+     *
+     * @return array<string, array{name: string|null, avatar: string|null, seen_at: string}>
+     */
     private function channelProfile(ObservedIdentity $observation): array
     {
         if ($observation->channels === []) {
             return [];
         }
 
-        $entry = [
+        return array_fill_keys($observation->channels, [
             'name' => $observation->displayName,
             'avatar' => $observation->avatarUrl,
             'seen_at' => now()->toIso8601String(),
-        ];
+        ]);
+    }
 
-        return array_fill_keys($observation->channels, $entry);
+    /**
+     * Trộn hồ sơ theo kênh, giữ lại thứ đã biết.
+     *
+     * Giá trị rỗng KHÔNG ghi đè giá trị đang có: nhà cung cấp trả thiếu trường
+     * là chuyện thường, còn mất avatar là thứ người dùng nhìn thấy ngay.
+     *
+     * @param  array<string, array<string, mixed>>  $current
+     * @return array<string, array<string, mixed>>
+     */
+    private function mergeChannelProfiles(array $current, ObservedIdentity $observation): array
+    {
+        foreach ($observation->channels as $channel) {
+            $entry = $current[$channel] ?? [];
+
+            if ($observation->displayName !== null && $observation->displayName !== '') {
+                $entry['name'] = $observation->displayName;
+            }
+
+            if ($observation->avatarUrl !== null && $observation->avatarUrl !== '') {
+                $entry['avatar'] = $observation->avatarUrl;
+            }
+
+            $entry['seen_at'] = now()->toIso8601String();
+            $current[$channel] = $entry;
+        }
+
+        return $current;
     }
 
     private function present(ProfileIdentity $identity): ResolvedIdentity

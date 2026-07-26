@@ -176,3 +176,28 @@ it('lệnh đối soát sửa được cờ đã lệch', function () {
     expect($fixed)->toBeGreaterThan(0)
         ->and(Profile::find($resolved->profileId)->is_identified)->toBeTrue();
 });
+
+it('gặp lại mà không có avatar thì KHÔNG xóa avatar đang có', function () {
+    $workspace = idSetup();
+    $account = idAccount($workspace);
+    $resolver = app(IdentityResolver::class);
+
+    $resolver->observe(observed($workspace, 'zalo_personal_uid', 'uid_avatar', $account, [
+        'displayName' => 'Beru',
+        'avatarUrl' => 'https://s120.avatar.zalo.me/beru.jpg',
+        'channels' => ['zalo_personal'],
+    ]));
+
+    // Kéo lịch sử về không mang theo tên/avatar. Trước đây mỗi lần bấm "đồng bộ
+    // tin nhắn" là avatar của cả nhóm biến mất — vì hồ sơ theo kênh bị ghi đè
+    // nguyên khối bằng hai giá trị rỗng.
+    $resolver->observe(observed($workspace, 'zalo_personal_uid', 'uid_avatar', $account, [
+        'channels' => ['zalo_personal'],
+    ]));
+
+    $identity = ProfileIdentity::where('value', 'uid_avatar')->sole();
+
+    expect($identity->channel_profiles['zalo_personal']['avatar'])->toBe('https://s120.avatar.zalo.me/beru.jpg')
+        ->and($identity->channel_profiles['zalo_personal']['name'])->toBe('Beru')
+        ->and($identity->display_name)->toBe('Beru');
+});
