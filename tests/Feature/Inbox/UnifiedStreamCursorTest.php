@@ -70,7 +70,7 @@ it('returns messages and the gap marker merged in chronological order', function
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_stream_1',
+        'sender_uid' => 'peer_stream_1',
         'thread_type' => 0,
         'conversation_number' => 1,
     ]);
@@ -100,7 +100,7 @@ it('paginates backward via cursor without gaps or duplicates across the page bou
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_stream_2',
+        'sender_uid' => 'peer_stream_2',
         'thread_type' => 0,
         'conversation_number' => 2,
     ]);
@@ -153,7 +153,7 @@ it('an out-of-order (late-arriving, older platform_sent_at) message is re-sorted
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_stream_ooo',
+        'sender_uid' => 'peer_stream_ooo',
         'thread_type' => 0,
         'conversation_number' => 4,
     ]);
@@ -182,7 +182,7 @@ it('reports the current stream_version in the response', function () {
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_stream_3',
+        'sender_uid' => 'peer_stream_3',
         'thread_type' => 0,
         'conversation_number' => 3,
     ]);
@@ -203,7 +203,7 @@ it('stream item includes recalled_at, delivered_at, seen_at and reactions', func
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_state_stream',
+        'sender_uid' => 'peer_state_stream',
         'thread_type' => 0,
         'conversation_number' => 77,
     ]);

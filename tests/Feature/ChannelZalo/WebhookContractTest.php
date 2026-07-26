@@ -1,12 +1,13 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\ChannelManager;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Services\InboundMessageService;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +68,7 @@ it('returns 202 and creates no orphan when connection_id not mapped', function (
     // Không có conversation/message orphan
     $orphan = DB::connection('pgsql_privileged')
         ->table('conversations')
-        ->where('peer_uid', 'ghost_peer')
+        ->where('sender_uid', 'ghost_peer')
         ->first();
     expect($orphan)->toBeNull();
 })->group('channel-zalo');
@@ -102,7 +103,7 @@ it('inbound webhook creates conversation and message', function () {
     // Verify: Conversation tồn tại trong ws
     TenantScope::bind($ws->id);
 
-    $conv = Conversation::where('peer_uid', 'peer_contract_001')->first();
+    $conv = Conversation::where('sender_uid', 'peer_contract_001')->first();
     expect($conv)->not->toBeNull();
     expect($conv->contact_id)->toBeNull(); // F23: Liên hệ nháp
     expect($conv->channel)->toBe('zalo_personal');
@@ -245,7 +246,7 @@ it('inbound returns 503 when DB throws QueryException (transient) so outbox retr
     $connId = createZaloConnection($ws->id, 'uid_transient');
 
     // Simulate DB error trong ingest (transient — outbox phải retry)
-    $this->mock(InboundMessageService::class, function ($mock) {
+    $this->mock(IntakeService::class, function ($mock) {
         $mock->shouldReceive('ingest')->once()->andThrow(
             new QueryException('pgsql', 'SELECT 1', [], new PDOException('connection refused'))
         );
@@ -293,7 +294,7 @@ it('inbound returns 503 when unexpected exception thrown (retry safer than drop)
     $ws = Workspace::factory()->create();
     $connId = createZaloConnection($ws->id, 'uid_unexpected');
 
-    $this->mock(InboundMessageService::class, function ($mock) {
+    $this->mock(IntakeService::class, function ($mock) {
         $mock->shouldReceive('ingest')->once()->andThrow(new RuntimeException('random crash'));
     });
 
@@ -489,15 +490,15 @@ it('bridge_session session_ok closes the account gap window so the NEXT gap gets
     $priv('workspaces')->where('id', $wsId)->delete();
 })->group('channel-zalo');
 
-// ── ChannelManager driver registration ───────────────────────────────────────
+// ── ChannelRegistry driver registration ───────────────────────────────────────
 
-it('ChannelManager has zalo_personal driver registered', function () {
-    $manager = app(ChannelManager::class);
+it('ChannelRegistry has zalo_personal driver registered', function () {
+    $manager = app(ChannelRegistry::class);
     expect($manager->hasAny())->toBeTrue();
 
     $driver = $manager->driver('zalo_personal');
     expect($driver)->toBeInstanceOf(ZaloChannelDriver::class);
-    expect($driver->channelKey())->toBe('zalo_personal');
+    expect($driver->descriptor()->key)->toBe('zalo_personal');
 })->group('channel-zalo');
 
 // ── connection_id sequence cross-tenant ──────────────────────────────────────
@@ -589,11 +590,13 @@ it('inbound nhóm với sender profile → persist participants trên conversati
 
     TenantScope::bind($ws->id);
 
-    $conv = Conversation::where('peer_uid', 'group_contract_001')->first();
+    $conv = Conversation::where('sender_uid', 'group_contract_001')->first();
     expect($conv)->not->toBeNull();
-    expect($conv->participants)->toBe([
-        'member_uid_1' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/member1.jpg'],
-    ]);
+    // Thành viên nhóm là một HÀNG, không phải một khóa trong jsonb.
+    $member = ConversationMember::where('conversation_id', $conv->id)
+        ->where('sender_uid', 'member_uid_1')->first();
+    expect($member)->not->toBeNull();
+    expect($member->profile_id)->not->toBeNull();
 
     $msg = Message::where('source_id', 'src_contract_group_001')->first();
     expect($msg->sender_uid)->toBe('member_uid_1');

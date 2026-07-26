@@ -40,7 +40,7 @@ function oiSetup(bool $withSlot = true): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_oi_'.uniqid(),
+        'sender_uid' => 'peer_oi_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -143,7 +143,7 @@ it('quote reply_to của conversation khác → 404', function () {
     $otherConv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_khac_'.uniqid(),
+        'sender_uid' => 'peer_khac_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

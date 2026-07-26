@@ -1,18 +1,18 @@
 <?php
 
 use App\Contracts\SendException;
-use App\Exceptions\QuotaExceededException;
 use App\Models\ChannelUsage;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
-use App\Modules\Integration\ChannelManager;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\OutboundSendPipeline;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Status\MessageStatusService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\MockChannelDriverA;
@@ -22,7 +22,7 @@ use Tests\Support\MockChannelDriverB;
  * P11 — GOAL #4: khung omnichannel ĐÓNG BĂNG. Bộ test này chạy với 2 mock driver
  * policy TRÁI NGƯỢC, sống trong tests/Support/ — đăng ký kênh mới = 0 dòng sửa core.
  *
- * Money-path THẬT (BLK-4): mọi send đi OutboundSendPipeline → quota gate per-channel
+ * Money-path THẬT (BLK-4): mọi send đi DeliveryPipeline → quota gate per-channel
  * TRƯỚC transport + meterReply SAU. Contract test chạm metering thật, không mock.
  *
  * Allowlist "core" (đóng băng): docs/features/messaging/channel-framework-contract.md
@@ -40,19 +40,19 @@ function fwSetup(): array
     return [$workspace, $user];
 }
 
-function fwIngest(string $channel, string $accountId, string $peerUid, string $sourceId, string $direction = 'in'): Message
+function fwIngest(string $channel, string $accountId, string $senderUid, string $sourceId, string $direction = 'in'): Message
 {
-    $driver = app(ChannelManager::class)->driver($channel);
+    $driver = app(ChannelRegistry::class)->driver($channel);
     $normalized = $driver->parseInbound([
         'channel_account_id' => $accountId,
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'source_id' => $sourceId,
-        'body' => 'tin từ '.$peerUid,
+        'body' => 'tin từ '.$senderUid,
         'direction' => $direction,
         'platform_sent_at' => now()->toDateTimeString(),
     ]);
 
-    return app(InboundMessageService::class)->ingest($normalized);
+    return app(IntakeService::class)->ingest($normalized);
 }
 
 function fwGrantQuota(Workspace $workspace, string $channel, int $limit): void
@@ -90,10 +90,10 @@ function fwGrantQuota(Workspace $workspace, string $channel, int $limit): void
     ]);
 }
 
-/** @return array{0: ChannelManager, 1: MockChannelDriverA|MockChannelDriverB} */
+/** @return array{0: ChannelRegistry, 1: MockChannelDriverA|MockChannelDriverB} */
 function fwRegisterMock(string $key): array
 {
-    $manager = app(ChannelManager::class);
+    $manager = app(ChannelRegistry::class);
     $driver = $key === 'mock_a' ? new MockChannelDriverA : new MockChannelDriverB;
     $manager->extend($key, fn () => $driver);
 
@@ -109,7 +109,7 @@ it('mock driver đăng ký runtime resolve được + capabilities shape đầy 
         [$manager] = fwRegisterMock($key);
         $driver = $manager->driver($key);
 
-        expect($driver->channelKey())->toBe($key);
+        expect($driver->descriptor()->key)->toBe($key);
         $caps = $driver->capabilities()->toArray();
         foreach (['canSendMedia', 'canSendSticker', 'canQuoteReply', 'canReact', 'hasSeenReceipts', 'hasTyping', 'receiptGranularity'] as $flag) {
             expect($caps)->toHaveKey($flag);
@@ -141,14 +141,18 @@ it('ingest account-keyed cho kênh mock: cùng (account, peer) → 1 conversatio
 // ── Money-path: metering per-channel + gate trước transport ──────────────────
 
 it('send qua pipeline: meter PER-CHANNEL (mock_a usage +1, zalo_personal KHÔNG đổi)', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 10);
     [, $driver] = fwRegisterMock('mock_a');
 
     $inbound = fwIngest('mock_a', (string) Str::uuid(), 'peer_meter', 'ma_in_1');
     $conversation = $inbound->conversation;
 
-    $message = app(OutboundSendPipeline::class)->send($driver, $conversation, ['text' => 'trả lời khách']);
+    $message = app(DeliveryPipeline::class)->send(
+        $driver,
+        $conversation,
+        OutboundMessage::text('trả lời khách'),
+    );
 
     expect($message->direction)->toBe('out');
 
@@ -157,33 +161,27 @@ it('send qua pipeline: meter PER-CHANNEL (mock_a usage +1, zalo_personal KHÔNG 
         ->and(ChannelUsage::where('channel', 'zalo_personal')->count())->toBe(0);
 });
 
-it('quota per-channel hết → pipeline chặn TRƯỚC transport (driver KHÔNG được gọi) — DoS #4 bất khả', function () {
+it('hết hạn mức KHÔNG chặn gửi — chỉ thống kê (quyết định founder 25/07)', function () {
     [$workspace] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 1);
     [, $driver] = fwRegisterMock('mock_a');
-    $pipeline = app(OutboundSendPipeline::class);
+    $pipeline = app(DeliveryPipeline::class);
 
-    // Conv 1: dùng hết quota (limit 1)
+    // Conv 1 dùng hết hạn mức danh nghĩa (limit 1)
     $conv1 = fwIngest('mock_a', (string) Str::uuid(), 'peer_q1', 'q1_in')->conversation;
-    $pipeline->send($driver, $conv1, ['text' => 'reply 1']);
+    $pipeline->send($driver, $conv1, OutboundMessage::text('reply 1'));
 
-    // Conv 1 đã meter kỳ này → vẫn gửi tiếp được (F5 — hội thoại cũ không giới hạn).
-    // refresh(): meterReply ghi last_metered_period qua compare-set DB (model in-memory stale).
-    $pipeline->send($driver, $conv1->refresh(), ['text' => 'reply 2']);
-
-    // Conv 2 MỚI → hết quota → chặn TRƯỚC khi driver chạm platform
+    // Conv 2 MỚI, đã vượt hạn mức → VẪN gửi được, và vẫn được đếm.
     $conv2 = fwIngest('mock_a', (string) Str::uuid(), 'peer_q2', 'q2_in')->conversation;
-    $sentBefore = count($driver->sentPayloads);
+    $message = $pipeline->send($driver, $conv2, OutboundMessage::text('reply 2'));
 
-    expect(fn () => $pipeline->send($driver, $conv2, ['text' => 'reply 3']))
-        ->toThrow(QuotaExceededException::class);
-
-    expect(count($driver->sentPayloads))->toBe($sentBefore)
-        ->and((int) ChannelUsage::where('channel', 'mock_a')->sole()->answered_count)->toBe(1);
+    expect($message->direction)->toBe('out')
+        ->and(count($driver->sentPayloads))->toBe(2)
+        ->and((int) ChannelUsage::where('channel', 'mock_a')->sole()->answered_count)->toBe(2);
 });
 
 it('LUÔN nhận inbound kể cả hết quota (F13/F20 — lead capture bất khả xâm phạm)', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 0); // hết quota ngay từ đầu
     fwRegisterMock('mock_a');
 
@@ -201,7 +199,7 @@ it('state-events (recall/receipt/reaction) chạy nguyên trên kênh mock — c
 
     $accountId = (string) Str::uuid();
     $inbound = fwIngest('mock_b', $accountId, 'peer_state', 'mb_state_1');
-    $stateService = new MessageStateService(new MessageSourceResolver);
+    $stateService = new MessageStatusService(new DuplicateResolver);
 
     // Recall
     expect($stateService->applyRecall($accountId, ['target_msg_id' => 'mb_state_1']))->toBe('applied')
@@ -223,19 +221,19 @@ it('state-events (recall/receipt/reaction) chạy nguyên trên kênh mock — c
 // ── Policy driver-owned (không phải bộ field chung) ──────────────────────────
 
 it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì không', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 10);
     fwGrantQuota($workspace, 'mock_b', 10);
     [, $driverA] = fwRegisterMock('mock_a');
     [, $driverB] = fwRegisterMock('mock_b');
-    $pipeline = app(OutboundSendPipeline::class);
+    $pipeline = app(DeliveryPipeline::class);
     $longText = str_repeat('x', 150);
 
     $convA = fwIngest('mock_a', (string) Str::uuid(), 'peer_pa', 'pa_in')->conversation;
     $convB = fwIngest('mock_b', (string) Str::uuid(), 'peer_pb', 'pb_in')->conversation;
 
-    expect($pipeline->send($driverA, $convA, ['text' => $longText])->direction)->toBe('out');
-    expect(fn () => $pipeline->send($driverB, $convB, ['text' => $longText]))
+    expect($pipeline->send($driverA, $convA, OutboundMessage::text($longText))->direction)->toBe('out');
+    expect(fn () => $pipeline->send($driverB, $convB, OutboundMessage::text($longText)))
         ->toThrow(SendException::class);
 
     // Review MED-5: transport FAIL → KHÔNG meter (meterReply chỉ sau thành công) — khoá bằng test
@@ -246,15 +244,29 @@ it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì
 
 it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là data, không phải branch)', function () {
     // Review MED-3: file list KHỚP allowlist doc channel-framework-contract.md
-    $coreFiles = array_merge(
-        glob(base_path('app/Services/Inbox/*.php')) ?: [],
-        [base_path('app/Services/InboundMessageService.php')],
-        glob(base_path('app/Modules/Integration/Contracts/*.php')) ?: [],
-        [base_path('app/Modules/Integration/ChannelManager.php')],
-        glob(base_path('app/Http/Controllers/Inbox/*.php')) ?: [],
-        glob(base_path('resources/js/components/inbox/*.ts*')) ?: [],
-        glob(base_path('resources/js/pages/inbox/*.tsx')) ?: [],
-    );
+    //
+    // Mỗi mẫu phải khớp ÍT NHẤT một file: `glob()` trả [] cho thư mục không tồn
+    // tại, nên một đợt di dời quét qua sẽ làm gate này xanh rỗng thay vì đỏ.
+    $patterns = [
+        'app/Modules/Chat/Broadcast/*.php',
+        'app/Modules/Chat/Delivery/*.php',
+        'app/Modules/Chat/Intake/*.php',
+        'app/Modules/Chat/Port/*.php',
+        'app/Modules/Chat/Port/Capability/*.php',
+        'app/Modules/Chat/Status/*.php',
+        'app/Modules/Chat/Store/*.php',
+        'app/Modules/Chat/Timeline/*.php',
+        'app/Http/Controllers/Chat/*.php',
+        'resources/js/components/inbox/*.ts*',
+        'resources/js/pages/inbox/*.tsx',
+    ];
+
+    $coreFiles = [];
+    foreach ($patterns as $pattern) {
+        $matched = glob(base_path($pattern)) ?: [];
+        expect($matched)->not->toBeEmpty("Mẫu không khớp file nào (đường dẫn đã đổi?): {$pattern}");
+        $coreFiles = array_merge($coreFiles, $matched);
+    }
 
     $violations = [];
     foreach ($coreFiles as $file) {

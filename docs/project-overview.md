@@ -19,8 +19,8 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 - **CRM Sales core**: Client (công ty) ↔ Contact (người), nhóm khách hàng, vault mã hoá, Lead + pipeline kanban kéo-thả, gán + thông báo, lost/junk + restore, convert Lead → Client + Contact (transaction an toàn).
 - **Projects & Tasks**: dự án gắn khách hàng + milestone kanban + members + file + thảo luận; task đa hình + đa người thực hiện + checklist + bộ đếm giờ/timesheet.
 - **Frontend** hoàn chỉnh cho lõi: app shell, settings đầy đủ, dark mode, đa ngôn ngữ (vi/en), notification feed, What's New feed.
-- **Inbox Zalo cá nhân (full messaging)**: bridge zca-js (services/zalo-bridge, QR login, generic dispatcher 146 method), webhook idempotent, realtime Reverb (Echo private channel), media/sticker/bank-card/danh thiếp, mark-read, hội thoại → Liên hệ nháp → Lead, participants nhóm. Khung kênh chung: `ChannelDriver` contract + `ChannelManager` (thêm kênh = thêm driver).
-- **Billing/Metering**: đếm hội thoại per-channel (chỉ khi tenant trả lời; luôn nhận inbound kể cả hết quota), entitlements/plan grant, `OutboundSendPipeline` (quota gate + meter tập trung). Số quota gói còn PLACEHOLDER chờ chốt.
+- **Inbox Zalo cá nhân (full messaging)**: bridge zca-js (services/zalo-bridge, QR login, generic dispatcher 146 method), webhook idempotent, realtime Reverb (Echo private channel), media/sticker/bank-card/danh thiếp, mark-read, hội thoại → Liên hệ nháp → Lead, participants nhóm. Khung kênh chung: `ChannelDriver` contract + `ChannelRegistry` (thêm kênh = thêm driver).
+- **Billing/Metering**: đếm hội thoại per-channel (chỉ khi tenant trả lời; luôn nhận inbound kể cả không có quota limit), entitlements/plan grant. Metering là thống kê thuần; không còn quota gate chặn gửi (gỡ 25/07/2026). Số quota gói còn PLACEHOLDER; gửi không giới hạn.
 - **Automation engine v1**: WorkflowEngine graph trigger→condition→action, node handlers (send_message/create_task/tag/condition), workflow canvas FE (@xyflow/react), RLS + tests.
 
 **Quy mô codebase**: ~55 model · 76 controller · 113 migration · 20 policy · ~819 test (Pest) + Playwright E2E.
@@ -39,7 +39,7 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 | **Analytical** | Biến dữ liệu thành insight, forecast, báo cáo | Hạ tầng (activity/audit) ✅ · Reporting/BI ⬜ |
 | **Collaborative** | Chia sẻ ngữ cảnh khách hàng xuyên phòng ban | Timeline + notes + activity ✅ · Inbox Zalo ✅ (Messenger/TikTok ⬜) |
 
-Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh: **base miễn phí + add-on tính phí qua marketplace** — entitlements + metering đã build; payment drivers (VNPay/MoMo) chưa.
+Định hướng kiến trúc: không chỉ *lưu trữ* dữ liệu mà còn *hành động* trên dữ liệu (đã đặt nền bằng activity/event stream làm xương sống cho tự động hoá/AI sau này). Mô hình kinh doanh: **base miễn phí + add-on tính phí qua marketplace** — entitlements + metering đã build (metering = thống kê, không chặn); payment drivers (VNPay/MoMo) chưa.
 
 ---
 
@@ -52,7 +52,7 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 | Backend | Laravel 13, PHP 8.4 |
 | Database | PostgreSQL 16+ (JSONB + GIN index, Row-Level Security, 2 role/2 connection) |
 | Frontend | Inertia 3 + React 19 + TypeScript 5.7 |
-| UI | Tailwind CSS v4 + Radix UI (shadcn-style) + lucide-react; **drag-drop dùng HTML5 native** |
+| UI | Tailwind CSS v4 + Radix UI (shadcn-style) + lucide-react; **drag-drop dùng HTML5 widget** |
 | Data/state | TanStack Query + TanStack Table v8 · date-fns |
 | Phân quyền | spatie/laravel-permission v8 (team-aware: `team_foreign_key = workspace_id`) + Policies |
 | Realtime | Laravel Reverb — realtime inbox (Echo private channel per-workspace) |
@@ -244,11 +244,11 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 
 **Năng lực**:
 - **Bridge Zalo cá nhân** (`services/zalo-bridge`, Node + zca-js): QR login promote slot, session persist, generic dispatcher `POST /zca/:method` (allowlist reflection 146 method, guard outbound/destructive/elevated secret), relay forwarder 10 loại event về Laravel.
-- **Ingest idempotent** (`InboundMessageService`): webhook → upsert conversation (unique `channel_account_id + peer_uid`) + message (dedup `source_id`, backfill `old_messages` replay-safe), enrich type (image/video/file/sticker/bank_card/danh thiếp), participants nhóm, replay-upgrade tin cũ.
+- **Ingest idempotent** (`IntakeService`): webhook → upsert conversation (unique `channel_account_id + peer_uid`) + message (dedup `source_id`, backfill `old_messages` replay-safe), enrich type (image/video/file/sticker/bank_card/danh thiếp), participants nhóm, replay-upgrade tin cũ.
 - **Realtime**: Reverb + Echo private channel per-workspace; auto mark-read khi tab hiện; unread badge; stream version chống lệch UI đa tab.
-- **Gửi tin** (`OutboundSendPipeline` — money-path): quota gate per-channel TRƯỚC transport → driver policy (cửa sổ 7h–22h, cap 3 tin QC/số/ngày, reply-exempt) → transport → persist + meter. Media/sticker/quote/reaction/recall theo `ChannelCapabilities`.
+- **Gửi tin** (`DeliveryPipeline` — money-path): driver policy (cửa sổ 7h–22h, cap 3 tin QC/số/ngày, reply-exempt) → transport → persist → đếm metering → broadcast. Không có bước chặn hạn mức nào trước transport. Media/sticker/quote/reaction/recall theo `ChannelCapabilities`.
 - **CRM layer**: hội thoại = Liên hệ nháp khi chưa gắn Contact; convert → Lead (dedup contract CDP Phase-08); phone enrichment từ danh thiếp/bank card.
-- **Khung kênh chung**: `ChannelDriver` contract + `ChannelManager`; UI inbox channel-agnostic (`components/inbox/*`) — thêm Messenger/TikTok = thêm driver, 0 sửa lõi.
+- **Khung kênh chung**: `ChannelDriver` contract + `ChannelRegistry`; UI inbox channel-agnostic (`components/inbox/*`) — thêm Messenger/TikTok = thêm driver, 0 sửa lõi.
 
 **Docs chi tiết**: [features/messaging/README.md](features/messaging/README.md) (13 flow doc).
 **Khoảng trống**: chỉ mới kênh Zalo cá nhân (rủi ro ToS — không có API chính thức); notification khi `session_lost` chưa có; web widget/Messenger/Email chưa build.
@@ -262,7 +262,7 @@ Chi tiết: [crm-authorization-model.md](crm-authorization-model.md).
 
 ### J. Automation / Workflow engine v1 ✅
 
-**Năng lực**: `WorkflowEngine` chạy graph trigger→condition→action (bảng `workflows`/`workflow_runs`/`workflow_run_logs`, RLS đủ); node handlers v1: send_message (qua ChannelManager + pipeline), create_task, tag, condition; enroll theo subject lead/conversation; workflow canvas FE (@xyflow/react); permission `automation.manage`.
+**Năng lực**: `WorkflowEngine` chạy graph trigger→condition→action (bảng `workflows`/`workflow_runs`/`workflow_run_logs`, RLS đủ); node handlers v1: send_message (qua `ChannelRegistry` + `DeliveryPipeline`), create_task, tag, condition; enroll theo subject lead/conversation; workflow canvas FE (@xyflow/react); permission `automation.manage`.
 **Khoảng trống**: trigger tự động từ event (mới enroll thủ công/service-call); entitlement gate `module.marketing` chưa enforce trong engine; node registry v1 cố định (thiết kế đầy đủ: [crm-automation-workflow.md](crm-automation-workflow.md)).
 
 ---

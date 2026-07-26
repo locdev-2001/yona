@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * P01b/P07 — canned reply per-workspace (channel-agnostic).
- * Placeholder `{ten_khach}` được composer FE thay bằng peer_name lúc chèn.
+ * Placeholder `{ten_khach}` được composer FE thay bằng tên luồng lúc chèn.
  *
  * @property string $id
  * @property string $workspace_id

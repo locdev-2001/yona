@@ -15,7 +15,7 @@ use Illuminate\Support\ServiceProvider;
 
 /**
  * Automation module — registry cho node handlers (Manager pattern, như
- * IntegrationServiceProvider/ChannelManager). Flow handlers (Phase 02) +
+ * IntegrationServiceProvider/ChannelRegistry). Flow handlers (Phase 02) +
  * action handlers (Phase 03) — action handlers resolve via app() so their
  * constructor-injected services (TaskService, NotificationService, ...) are
  * auto-wired by the container.

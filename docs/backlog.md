@@ -16,7 +16,7 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 
 **Phase-08 hardening**: Add atomic check-and-increment primitive (Redis Lua script) to eliminate TOCTOU entirely.
 
-**Related**: `app/Modules/Integration/Chat/ZaloPersonal/SendRateLimiter.php` line ~70.
+**Related**: `app/Modules/Chat/Adapter/ZaloPersonal/Policy/SendRateLimiter.php` line ~70.
 
 ---
 
@@ -31,7 +31,7 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 2. Seed `DatabaseUserNonSuperuserTest::testAppRoleNotSuperuser()` assertion during feature tests (fail if superuser detected).
 3. Document in DEPLOYMENT.md: "Use non-superuser role for APP_DB_USER".
 
-**Related**: [system-architecture.md](./system-architecture.md) § 4 Multi-tenant enforcement.
+**Related**: [system-architecture.md](./system-architecture.md) § 7 Security & Isolation.
 
 ---
 
@@ -47,16 +47,16 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 **Phase-08 enhancement**:
 1. Add `libphonenumber-php` dependency.
 2. Implement `PhoneNormalizer` service: `normalizeVN($input) → '0xxx' | null`.
-3. Use in IdentityResolver::resolveByPhone(), contact form validation, import CSV.
+3. Use in ContactService::resolveByPhone(), contact form validation, import CSV.
 4. Add `PhoneNormalizerTest` (happy path + edge cases + invalid).
 
-**Related**: `modules/cdp/src/Contracts/IdentityResolver.php`, Phase-08 cdp-dedup spec.
+**Related**: `app/Services/ContactService.php`, Phase-08 cdp-dedup spec.
 
 ---
 
 ### Merge Identities: mergeIdentities() contract (Phase-08)
 
-**Finding**: GĐ1 defines `IdentityResolver::mergeIdentities(primary_id, duplicate_id)` contract but no-op (Phase-07). Phase-08 must implement actual merge:
+**Finding**: GĐ1 defines `ContactService::mergeIdentities(workspace_id, primary_id, duplicate_id)` but it only flags `needs_merge_review` (Phase-07). Phase-08 must implement actual merge:
 
 **Phase-08 implementation steps**:
 1. Fetch both Contact records (lock both for update).
@@ -69,7 +69,7 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 5. Audit: `MergeIdentities` event + both contact IDs logged.
 6. Idempotency: Check if already merged (via soft-delete or merged_into_id field).
 
-**Related**: `modules/cdp/src/Contracts/IdentityResolver.php::mergeIdentities()`, conversation-to-lead doc.
+**Related**: `app/Services/ContactService.php::mergeIdentities()`, [conversation-to-lead.md](./features/messaging/conversation-to-lead.md).
 
 ---
 
@@ -85,7 +85,7 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
    - `updated_at < now() - 30 days` (older than threshold; configurable).
    - NOT referenced by any Conversation, Task, or Activity.
 3. Log cleanup stats (count deleted).
-4. Add toggle in EntitlementResolver or config: `contact.cleanup_orphans_enabled`.
+4. Add toggle in EntitlementService or config: `contact.cleanup_orphans_enabled`.
 
 **Related**: Phase-08 CDP dedup flow.
 
@@ -111,7 +111,7 @@ Hoãn + low-priority findings từ GĐ1 audit, để dành cho Phase-08+ hoặc 
 ## Phase-08 Priorities (Ordered)
 
 **Critical (must-do before launch):**
-1. Implement `IdentityResolver` phone dedup + mergeIdentities (GĐ1 depends on contract).
+1. Implement `ContactService` phone dedup + mergeIdentities (GĐ1 depends on contract).
 2. Add import CSV task (GĐ1 feature).
 3. Implement PaymentProvider drivers (VNPay + MoMo).
 4. Test suite for Zalo bridge + realtime (manual if no test account).
@@ -147,15 +147,15 @@ GĐ1 uses **zca-js** (reverse-engineered Zalo client, unofficial). Limitations:
 
 ### Metering Period: Calendar Month (Not Rolling 30d)
 
-`currentPeriod() = now('Asia/Ho_Chi_Minh')->format('Y-m')` = calendar month. Switching periods at midnight resets quota atomically.
+`currentPeriod() = now('Asia/Ho_Chi_Minh')->format('Y-m')` = calendar month. Usage tracked per period for analytics.
 
-**Trade-off**: Simpler than rolling window; predictable. Customer expects month-based billing.
+**Trade-off**: Simpler than rolling window; predictable. Matches customer billing cycle expectations.
 
-### Free Defaults: PLACEHOLDER Numbers
+### Free Defaults: Flags Only
 
-`EntitlementResolver::FREE_DEFAULTS` hardcodes 50 conversations/month + 3 seats. Founder decision pending (~2026-07-07).
+`EntitlementService::FREE_DEFAULTS` hardcodes feature flags for free tier (e.g., `module.inbox`). As of 2026-07-25, quota limits have been removed; all workspaces send unlimited (usage is tracked for analytics only).
 
-**Phase-08 change**: Update seed + constant, re-test EntitlementResolverTest.
+**Phase-08 change**: Update seed + constant, re-test entitlement coverage in `tests/Feature/Billing/MeteringRaceTest.php`.
 
 ---
 
@@ -173,7 +173,7 @@ GĐ1 uses **zca-js** (reverse-engineered Zalo client, unofficial). Limitations:
 
 ## Reference
 
-- **GĐ1 Audit Report**: 18 findings (critical/major/low) in `plans/260627-modular-standardization/reports/`.
+- **GĐ1 Audit Report**: 18 findings (critical/major/low); the deferred ones are the sections above.
 - **Feature Docs**: [features/messaging/](./features/messaging/).
-- **System Architecture**: [system-architecture.md](./system-architecture.md) § 3.6b.
+- **System Architecture**: [system-architecture.md](./system-architecture.md).
 - **Project Changelog**: [project-changelog.md](./project-changelog.md) § GĐ1 release.

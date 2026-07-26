@@ -1,4 +1,5 @@
 import { AccountRail, type ChannelAccountInfo } from '@/components/inbox/account-rail';
+import { descriptorFor, type ChannelDescriptorMap } from '@/components/inbox/channel-descriptor';
 import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
@@ -38,12 +39,12 @@ interface MessageReceivedPayload {
 interface Conversation {
     id: string;
     channel: string;
-    peer_uid: string;
-    peer_name: string | null;
-    peer_avatar_url: string | null;
-    peer_phone: string | null;
-    thread_type: number;
-    participants: Record<string, ChatParticipant> | null;
+    sender_uid: string;
+    thread_name: string | null;
+    thread_avatar: string | null;
+    members?: Record<string, ChatParticipant> | null;
+    sender_phone: string | null;
+    thread_kind: string;
     unread_count: number;
     last_message_at: string | null;
     last_message_preview: string | null;
@@ -67,9 +68,12 @@ interface Props {
     selectedConversation?: Conversation | null;
     channelAccounts?: ChannelAccountInfo[];
     channelsAvailable?: boolean;
-    /** P06b — seen-sync per-workspace (default OFF). */
-    seenSyncEnabled?: boolean;
-    canManageZalo?: boolean;
+    /** Báo-đã-xem theo TỪNG kênh (mặc định tắt). */
+    seenSyncEnabled?: Record<string, boolean>;
+    /** Quyền quản trị theo TỪNG kênh — quyền do descriptor của kênh khai. */
+    canManageChannel?: Record<string, boolean>;
+    /** Danh tính kênh: nhãn, ký hiệu, trang kết nối, khóa hạn mức. */
+    channelDescriptors?: ChannelDescriptorMap;
     /** P11 — flags per-kênh: FE ẩn/hiện nút theo flags, KHÔNG if(channel===...). */
     channelCapabilities?: Record<string, ChannelCaps>;
 }
@@ -84,8 +88,6 @@ interface ChannelCaps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-const ZALO_QUOTA_KEY = 'quota.conversations.zalo_personal';
 
 /** P03 — typing tự tắt sau 8s không có event mới (timeout đã chốt, verify LAB sau). */
 const TYPING_TTL_MS = 8000;
@@ -103,8 +105,9 @@ export default function InboxIndex({
     filters,
     selectedConversation,
     channelAccounts = [],
-    seenSyncEnabled = false,
-    canManageZalo = false,
+    seenSyncEnabled = {},
+    canManageChannel = {},
+    channelDescriptors = {},
     channelCapabilities = {},
 }: Props) {
     const { auth, activeWorkspace } = usePage<SharedData>().props;
@@ -129,13 +132,13 @@ export default function InboxIndex({
     // P06a — tin đang trả lời (reply bar composer)
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
     // P06b — seen-sync toggle (default OFF — A4)
-    const [seenSync, setSeenSync] = useState(seenSyncEnabled);
+    const [seenSyncByChannel, setSeenSyncByChannel] = useState(seenSyncEnabled);
     const [seenSyncSaving, setSeenSyncSaving] = useState(false);
 
-    function toggleSeenSync() {
+    function toggleSeenSync(channel: string) {
         if (seenSyncSaving) return;
         setSeenSyncSaving(true);
-        fetch(route('inbox.settings.seen-sync'), {
+        fetch(route('inbox.settings.seen-sync', channel), {
             method: 'PUT',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -143,7 +146,7 @@ export default function InboxIndex({
                 'Content-Type': 'application/json',
                 'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
-            body: JSON.stringify({ enabled: !seenSync }),
+            body: JSON.stringify({ enabled: !seenSyncByChannel[channel] }),
         })
             .then(async (r) => {
                 const json = await r.json().catch(() => ({}));
@@ -151,7 +154,7 @@ export default function InboxIndex({
                     showToast(json.message ?? 'Không đổi được cài đặt.');
                     return;
                 }
-                setSeenSync(json.enabled);
+                setSeenSyncByChannel((prev) => ({ ...prev, [channel]: json.enabled }));
             })
             .catch(() => showToast('Không kết nối được server.'))
             .finally(() => setSeenSyncSaving(false));
@@ -238,10 +241,19 @@ export default function InboxIndex({
 
     // Entitlements snapshot từ Inertia shared data
     const entitlements = auth.membership?.entitlements ?? null;
-    const zaloLimit = entitlements?.quotas[ZALO_QUOTA_KEY] ?? null;
-    const zaloRemaining = entitlements?.remaining[ZALO_QUOTA_KEY] ?? null;
-    // Chỉ gate khi có quota rõ ràng VÀ remaining = 0
-    const quotaExhausted = zaloRemaining !== null && zaloRemaining <= 0;
+    // Mức dùng của TỪNG kênh đang có tài khoản kết nối — không phải của riêng
+    // một kênh nào. Khóa hạn mức lấy từ descriptor, không tự ghép chuỗi.
+    const channelUsage = channelAccounts
+        .map((acc) => acc.channel)
+        .filter((channel, i, all) => all.indexOf(channel) === i)
+        .map((channel) => {
+            const descriptor = descriptorFor(channelDescriptors, channel);
+            const limit = entitlements?.quotas[descriptor.quotaKey] ?? null;
+            const remaining = entitlements?.remaining[descriptor.quotaKey] ?? null;
+
+            return { channel, label: descriptor.label, limit, remaining };
+        })
+        .filter((usage) => usage.limit !== null && usage.remaining !== null);
 
     // Sync convList khi Inertia reload conversations prop
     useEffect(() => {
@@ -296,17 +308,20 @@ export default function InboxIndex({
                     return [...next, { ...message, item_type: 'message' as const }];
                 });
 
-                // Merge hồ sơ người gửi (nhóm) — thành viên mới nhắn lần đầu có avatar ngay, không chờ reload
+                // Thành viên mới nhắn lần đầu: chèn hồ sơ của họ vào ngay để có
+                // avatar mà không phải tải lại trang.
                 const senderProfile = payload.sender_participant;
                 if (!senderProfile || !message.sender_uid) return current;
-                const known = current.participants?.[message.sender_uid];
+                const known = current.members?.[message.sender_uid];
                 if (known && known.name === senderProfile.name && known.avatar === senderProfile.avatar) return current;
-                const merged = { ...current, participants: { ...current.participants, [message.sender_uid]: senderProfile } };
+
+                const merged = { ...current, members: { ...current.members, [message.sender_uid]: senderProfile } };
                 activeConvRef.current = merged;
+
                 return merged;
             });
 
-            // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước, kiểu Zalo).
+            // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước).
             // Hội thoại chưa có trong list (người mới nhắn) → reload nhẹ vì payload thiếu data hội thoại đầy đủ.
             setConvList((prev) => {
                 if (!prev.some((c) => c.id === conversation_id)) {
@@ -394,6 +409,19 @@ export default function InboxIndex({
                 setItems(responseData.items ?? []);
                 setNextCursor(responseData.next_cursor ?? null);
                 streamVersionRef.current = responseData.stream_version ?? null; // P09
+
+                // Hồ sơ thành viên chỉ đi kèm ở đây, KHÔNG ở danh sách hội thoại
+                // (gọi cho cả danh sách là một truy vấn mỗi hàng). Không gắn vào
+                // đây thì chuyển hội thoại xong tên người gửi trong nhóm rơi về
+                // khóa thô, và chỉ tải lại trang mới đúng.
+                setActiveConv((prev) => {
+                    if (prev?.id !== conv.id) return prev;
+
+                    const withMembers = { ...prev, members: responseData.members ?? prev.members ?? null };
+                    activeConvRef.current = withMembers;
+
+                    return withMembers;
+                });
             })
             .catch(() => showToast('Không tải được tin nhắn. Vui lòng thử lại.'))
             .finally(() => setLoadingMessages(false));
@@ -525,7 +553,7 @@ export default function InboxIndex({
         setReplyTo({
             id: msg.id,
             text: msg.body ?? `[${msg.type}]`,
-            senderName: msg.direction === 'in' ? (msg.sender_name ?? activeConv?.peer_name ?? 'Khách') : 'Bạn',
+            senderName: msg.direction === 'in' ? (msg.sender_name ?? activeConv?.thread_name ?? 'Khách') : 'Bạn',
         });
     }
 
@@ -552,8 +580,8 @@ export default function InboxIndex({
                     return;
                 }
                 setPhoneInput('');
-                setActiveConv((prev) => (prev ? { ...prev, peer_phone: json.peer_phone, contact_id: json.contact_id ?? prev.contact_id } : prev));
-                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, peer_phone: json.peer_phone } : c)));
+                setActiveConv((prev) => (prev ? { ...prev, sender_phone: json.sender_phone, contact_id: json.contact_id ?? prev.contact_id } : prev));
+                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, sender_phone: json.sender_phone } : c)));
             })
             .catch(() => setPhoneError('Không kết nối được server.'))
             .finally(() => setPhoneSaving(false));
@@ -570,24 +598,20 @@ export default function InboxIndex({
 
     const breadcrumbs = [{ title: 'Inbox', href: route('inbox.index') }];
 
-    // P11 — kênh không đăng ký/không hỗ trợ → all-false → nút tự ẩn (không assume Zalo)
+    // Kênh chưa đăng ký hoặc không hỗ trợ → all-false → nút tự ẩn
     const caps: ChannelCaps = (activeConv && channelCapabilities[activeConv.channel]) || {};
-
-    // Review M3: quota gate composer theo KÊNH của hội thoại đang mở (không assume Zalo).
-    // Badge usage cột trái vẫn theo ZALO_QUOTA_KEY — seam đã khai trong channel-framework-contract.md.
-    const convQuotaRemaining = activeConv ? (entitlements?.remaining[`quota.conversations.${activeConv.channel}`] ?? null) : null;
-    const convQuotaExhausted = convQuotaRemaining !== null && convQuotaRemaining <= 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
 
-            <ConnectionBanner accounts={channelAccounts} />
+            <ConnectionBanner accounts={channelAccounts} descriptors={channelDescriptors} />
             <div className="flex h-[calc(100vh-64px)] overflow-hidden">
                 {/* ── Cột trái: rail tài khoản + danh sách hội thoại ────── */}
                 <div className="flex w-80 flex-shrink-0 flex-col border-r">
                     <AccountRail
                         accounts={channelAccounts}
+                        descriptors={channelDescriptors}
                         totalCount={conversations.total}
                         activeAccountId={filters.channel_account_id ?? null}
                         onSelect={handleSelectAccount}
@@ -638,31 +662,37 @@ export default function InboxIndex({
                             {syncing ? 'Đang đồng bộ...' : 'Đồng bộ tin nhắn'}
                         </Button>
 
-                        {/* P06b — seen-sync toggle: chỉ tenant.zalo.manage; default OFF (khách sẽ thấy "đã xem") */}
-                        {canManageZalo && (
-                            <button
-                                type="button"
-                                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-[11px]"
-                                disabled={seenSyncSaving}
-                                onClick={toggleSeenSync}
-                                title="Bật = khách thấy shop đã xem tin (áp lực trả lời). Cân nhắc trước khi bật."
-                            >
-                                <span>Báo "đã xem" cho khách</span>
-                                <Badge variant={seenSync ? 'default' : 'outline'} className="text-[10px]">
-                                    {seenSync ? 'BẬT' : 'TẮT'}
-                                </Badge>
-                            </button>
-                        )}
+                        {/* Báo-đã-xem bật theo từng kênh: mức áp lực trả lời mà nó
+                            tạo ra khác nhau giữa các kênh. */}
+                        {channelUsage
+                            .filter((usage) => canManageChannel[usage.channel])
+                            .map((usage) => (
+                                <button
+                                    key={usage.channel}
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-[11px]"
+                                    disabled={seenSyncSaving}
+                                    onClick={() => toggleSeenSync(usage.channel)}
+                                    title="Bật = khách thấy shop đã xem tin (áp lực trả lời). Cân nhắc trước khi bật."
+                                >
+                                    <span>Báo "đã xem" — {usage.label}</span>
+                                    <Badge variant={seenSyncByChannel[usage.channel] ? 'default' : 'outline'} className="text-[10px]">
+                                        {seenSyncByChannel[usage.channel] ? 'BẬT' : 'TẮT'}
+                                    </Badge>
+                                </button>
+                            ))}
 
-                        {/* Usage badge — chỉ hiện khi có quota data */}
-                        {zaloLimit !== null && zaloRemaining !== null && (
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-muted-foreground">Hội thoại tháng này</span>
-                                <Badge variant={quotaExhausted ? 'destructive' : 'secondary'} className="text-[10px]">
-                                    {zaloLimit - zaloRemaining}/{zaloLimit}
+                        {/* Thống kê mức dùng — thông tin thuần, KHÔNG chặn gửi.
+                            Hiện cả phần vượt: 52/50 là con số thật, giấu đi thì
+                            người dùng không biết mình đang ở đâu. */}
+                        {channelUsage.map((usage) => (
+                            <div key={usage.channel} className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">{usage.label} tháng này</span>
+                                <Badge variant="secondary" className="text-[10px]">
+                                    {usage.limit! - usage.remaining!}/{usage.limit}
                                 </Badge>
                             </div>
-                        )}
+                        ))}
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
@@ -682,10 +712,12 @@ export default function InboxIndex({
                                 onClick={() => handleSelectConv(conv)}
                             >
                                 <div className="flex items-center gap-3">
-                                    <ChatAvatar name={conv.peer_name ?? conv.peer_uid} src={conv.peer_avatar_url} className="h-9 w-9 shrink-0" />
+                                    <ChatAvatar name={conv.thread_name ?? conv.sender_uid} src={conv.thread_avatar} className="h-9 w-9 shrink-0" />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-sm font-medium">{conv.peer_name ?? conv.peer_phone ?? conv.peer_uid}</span>
+                                            <span className="truncate text-sm font-medium">
+                                                {conv.thread_name ?? conv.sender_phone ?? conv.sender_uid}
+                                            </span>
                                             {conv.unread_count > 0 && (
                                                 <Badge variant="default" className="h-4 min-w-4 shrink-0 px-1 text-[10px]">
                                                     {conv.unread_count}
@@ -742,12 +774,12 @@ export default function InboxIndex({
                     ) : (
                         <>
                             <div className="flex items-center gap-2 border-b px-4 py-2">
-                                <ChatAvatar name={activeConv.peer_name ?? activeConv.peer_uid} src={activeConv.peer_avatar_url} />
+                                <ChatAvatar name={activeConv.thread_name ?? activeConv.sender_uid} src={activeConv.thread_avatar} />
                                 <div className="min-w-0">
                                     <div className="truncate text-sm font-medium">
-                                        {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid}
+                                        {activeConv.thread_name ?? activeConv.sender_phone ?? activeConv.sender_uid}
                                     </div>
-                                    {activeConv.peer_phone && <div className="text-muted-foreground text-xs">{activeConv.peer_phone}</div>}
+                                    {activeConv.sender_phone && <div className="text-muted-foreground text-xs">{activeConv.sender_phone}</div>}
                                 </div>
                             </div>
 
@@ -765,29 +797,19 @@ export default function InboxIndex({
                             {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
                             {typing?.convId === activeConv.id && <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>}
 
-                            {/* Composer — disabled khi quota KÊNH hết VÀ conversation MỚI (chưa có tin) */}
-                            {convQuotaExhausted && items.length === 0 ? (
-                                <div className="border-t p-3 text-center">
-                                    <p className="text-muted-foreground mb-2 text-xs">Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).</p>
-                                    <Button size="sm" variant="default" onClick={() => router.visit('/admin/billing/upgrade')}>
-                                        Nâng gói
-                                    </Button>
-                                </div>
-                            ) : (
-                                // key theo conversation — reset text/đính kèm khi đổi hội thoại
-                                <MessageComposer
-                                    key={activeConv.id}
-                                    conversationId={activeConv.id}
-                                    onSent={handleMessageSent}
-                                    onPending={handlePendingMessage}
-                                    onSettled={handleSendSettled}
-                                    replyTo={replyTo}
-                                    onClearReply={() => setReplyTo(null)}
-                                    peerName={activeConv.peer_name}
-                                    canSendMedia={caps.canSendMedia === true}
-                                    canSendSticker={caps.canSendSticker === true}
-                                />
-                            )}
+                            {/* key theo conversation — reset text/đính kèm khi đổi hội thoại */}
+                            <MessageComposer
+                                key={activeConv.id}
+                                conversationId={activeConv.id}
+                                onSent={handleMessageSent}
+                                onPending={handlePendingMessage}
+                                onSettled={handleSendSettled}
+                                replyTo={replyTo}
+                                onClearReply={() => setReplyTo(null)}
+                                peerName={activeConv.thread_name}
+                                canSendMedia={caps.canSendMedia === true}
+                                canSendSticker={caps.canSendSticker === true}
+                            />
                         </>
                     )}
                 </div>
@@ -798,16 +820,16 @@ export default function InboxIndex({
                         <div className="space-y-4 p-4">
                             <div className="text-center">
                                 <ChatAvatar
-                                    name={activeConv.peer_name ?? activeConv.peer_uid}
-                                    src={activeConv.peer_avatar_url}
+                                    name={activeConv.thread_name ?? activeConv.sender_uid}
+                                    src={activeConv.thread_avatar}
                                     className="mx-auto mb-2 h-12 w-12"
                                 />
-                                <p className="text-sm font-medium">{activeConv.peer_name ?? 'Không rõ tên'}</p>
-                                {activeConv.peer_phone && <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>}
+                                <p className="text-sm font-medium">{activeConv.thread_name ?? 'Không rõ tên'}</p>
+                                {activeConv.sender_phone && <p className="text-muted-foreground text-xs">{activeConv.sender_phone}</p>}
                             </div>
 
                             {/* P05 — nhập tay SĐT + verify (chỉ 1-1, chưa có SĐT) */}
-                            {activeConv.thread_type !== 1 && !activeConv.peer_phone && (
+                            {activeConv.thread_kind !== 'group' && !activeConv.sender_phone && (
                                 <div className="space-y-1">
                                     <div className="flex gap-1">
                                         <Input
@@ -858,8 +880,8 @@ export default function InboxIndex({
                                 </Button>
                             ) : (
                                 <>
-                                    {/* thread_type 1 = nhóm → không tạo Lead */}
-                                    {activeConv.thread_type !== 1 ? (
+                                    {/* Nhóm không phải một người → không tạo Lead */}
+                                    {activeConv.thread_kind !== 'group' ? (
                                         <Button size="sm" className="w-full" disabled={leadLoading} onClick={handleCreateLead}>
                                             {leadLoading ? 'Đang tạo...' : 'Tạo Lead'}
                                         </Button>

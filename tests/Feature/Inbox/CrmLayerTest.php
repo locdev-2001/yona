@@ -27,9 +27,9 @@ function crmSetup(): array
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'mock_channel', // channel-agnostic — không cần zalo
-        'peer_uid' => 'peer_crm_'.uniqid(),
+        'sender_uid' => 'peer_crm_'.uniqid(),
         'thread_type' => 0,
-        'peer_name' => 'Khách CRM',
+        'thread_name' => 'Khách CRM',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -66,7 +66,7 @@ it('filter unread=1 chỉ trả hội thoại còn tin chưa đọc', function (
     $other = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'mock_channel',
-        'peer_uid' => 'peer_crm_other_'.uniqid(),
+        'sender_uid' => 'peer_crm_other_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

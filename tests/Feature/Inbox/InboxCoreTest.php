@@ -1,15 +1,17 @@
 <?php
 
+use App\Enums\TenantPermission;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
-use App\Modules\Integration\ChannelManager;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
 use Illuminate\Database\QueryException;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────
@@ -23,9 +25,9 @@ it('creates a conversation and message in the same workspace', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_001',
+        'sender_uid' => 'zalo_uid_001',
         'thread_type' => 0,
-        'peer_name' => 'Khách test',
+        'thread_name' => 'Khách test',
         'contact_id' => null, // F23: Liên hệ nháp
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -57,7 +59,7 @@ it('POST inbox.read đưa unread_count về 0 (idempotent)', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_read',
+        'sender_uid' => 'zalo_uid_read',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -85,7 +87,7 @@ it('conversation from workspace A is not visible in workspace B query (RLS)', fu
     $conv = Conversation::create([
         'workspace_id' => $ws1->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_secret_uid',
+        'sender_uid' => 'zalo_secret_uid',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws1->id),
     ]);
@@ -110,7 +112,7 @@ it('message from workspace A is not visible in workspace B (RLS)', function () {
     $conv = Conversation::create([
         'workspace_id' => $ws1->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'uid_ws1_only',
+        'sender_uid' => 'uid_ws1_only',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws1->id),
     ]);
@@ -133,9 +135,9 @@ it('message from workspace A is not visible in workspace B (RLS)', function () {
     expect($found)->toBeNull();
 });
 
-// ── Unique(channel_account_id, peer_uid) idempotent upsert (P08 re-key) ──────
+// ── Unique(channel_account_id, sender_uid) idempotent upsert (P08 re-key) ──────
 
-it('conversations unique(channel_account_id, peer_uid) enforces idempotency', function () {
+it('conversations unique(channel_account_id, sender_uid) enforces idempotency', function () {
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
@@ -152,17 +154,17 @@ it('conversations unique(channel_account_id, peer_uid) enforces idempotency', fu
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_abc',
+        'sender_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);
 
-    // Thử insert lại cùng (channel_account_id, peer_uid) → phải throw
+    // Thử insert lại cùng (channel_account_id, sender_uid) → phải throw
     expect(fn () => Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_abc',
+        'sender_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]))->toThrow(QueryException::class);
@@ -179,7 +181,7 @@ it('soft-deleted conversation is hidden by global scope', function () {
     $conv = Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_soft_delete',
+        'sender_uid' => 'peer_soft_delete',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);
@@ -195,29 +197,37 @@ it('soft-deleted conversation is hidden by global scope', function () {
         ->and($trashed->deleted_at)->not->toBeNull();
 });
 
-// ── ChannelManager ────────────────────────────────────────────────────────────
+// ── ChannelRegistry ────────────────────────────────────────────────────────────
 
-it('ChannelManager singleton resolves from container', function () {
-    $manager = app(ChannelManager::class);
-    expect($manager)->toBeInstanceOf(ChannelManager::class);
+it('ChannelRegistry singleton resolves from container', function () {
+    $manager = app(ChannelRegistry::class);
+    expect($manager)->toBeInstanceOf(ChannelRegistry::class);
 });
 
-it('ChannelManager hasAny returns true when zalo_personal driver is registered (channel-zalo module)', function () {
+it('ChannelRegistry hasAny returns true when zalo_personal driver is registered (channel-zalo module)', function () {
     // channel-zalo ServiceProvider đã register 'zalo_personal' driver khi boot
-    $manager = app(ChannelManager::class);
+    $manager = app(ChannelRegistry::class);
     expect($manager->hasAny())->toBeTrue();
     expect($manager->driver('zalo_personal'))->toBeInstanceOf(ZaloChannelDriver::class);
 });
 
-it('ChannelManager hasAny returns true after driver registered', function () {
-    $manager = app(ChannelManager::class);
+it('ChannelRegistry hasAny returns true after driver registered', function () {
+    $manager = app(ChannelRegistry::class);
 
     $manager->extend('test_channel', function () {
         return new class implements ChannelDriver
         {
-            public function channelKey(): string
+            public function descriptor(): ChannelDescriptor
             {
-                return 'test_channel';
+                return new ChannelDescriptor(
+                    key: 'test_channel',
+                    label: 'Kênh test',
+                    category: 'chat',
+                    logo: '',
+                    badge: 'T',
+                    connectRouteName: null,
+                    managePermission: TenantPermission::ChannelManage,
+                );
             }
 
             public function connect(string $workspaceId, array $params): void {}

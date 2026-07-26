@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
-use App\Services\Inbox\MessageItemSerializer;
+use App\Modules\Chat\Timeline\MessageItemSerializer;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -19,7 +19,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  * Payload bao gồm message + conversation_id + last_message_at + unread_count
  * để UI cập nhật list + bubble không cần fetch lại.
  *
- * P05: $gapEvent (nếu có, từ SessionGapMaterializer) đi kèm ngay trong cùng
+ * P05: $gapEvent (nếu có, từ GapMarkerService) đi kèm ngay trong cùng
  * broadcast — FE chèn marker "có thể thiếu tin" vào đúng vị trí ngay lập tức,
  * không cần round-trip refetch riêng cho trường hợp realtime.
  *
@@ -53,10 +53,11 @@ class MessageReceived implements ShouldBroadcast
             // trong thread → FE dedup theo id bỏ qua, không ghi đè reactions thật.
             'message' => MessageItemSerializer::fromModel($message),
             'conversation_id' => $message->conversation_id,
-            // Hồ sơ người gửi (nhóm) — FE merge vào participants map của conversation
+            // Hồ sơ người gửi trong nhóm — lấy thẳng từ tin, không từ một bản
+            // sao nào: tên trong tin là tên tại thời điểm gửi.
             // đang mở, tránh initials fallback khi thành viên mới nhắn lần đầu realtime.
             'sender_participant' => $message->sender_uid !== null
-                ? (($conversation?->participants ?? [])[$message->sender_uid] ?? null)
+                ? ($conversation?->memberProfiles()[$message->sender_uid] ?? array_filter(['name' => $message->sender_name])) ?: null
                 : null,
             'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
             'unread_count' => $conversation ? $conversation->unread_count : 0,

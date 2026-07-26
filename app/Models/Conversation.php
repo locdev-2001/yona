@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * P07 — Conversation entity. Inbox hội thoại per-channel per-peer.
@@ -24,19 +25,17 @@ use Illuminate\Support\Carbon;
  * @property string $workspace_id
  * @property string $channel
  * @property string|null $channel_account_id
- * @property string $peer_uid
+ * @property string $sender_uid
  * @property int $thread_type
- * @property string|null $peer_phone
- * @property string|null $peer_name
- * @property string|null $peer_avatar_url
+ * @property string $thread_kind
  * @property string|null $contact_id
  * @property string|null $lead_id
  * @property int $conversation_number
- * @property array<string, array{name: string|null, avatar: string|null}>|null $participants
  * @property Carbon|null $last_message_at
  * @property string|null $last_message_preview
  * @property int $unread_count
  * @property string|null $last_metered_period
+ * @property string|null $agent_unlocked_period
  * @property int $lock_version
  * @property int $stream_version
  * @property int|null $created_by
@@ -52,12 +51,13 @@ class Conversation extends Model
     protected $fillable = [
         'channel',
         'channel_account_id',
-        'peer_uid',
+        'sender_uid',
         'thread_type',
-        'peer_phone',
-        'phone_source',
-        'peer_name',
-        'peer_avatar_url',
+        'thread_kind',
+        'thread_name',
+        'thread_avatar',
+        'identity_id',
+        'profile_id',
         'contact_id',
         'lead_id',
         'conversation_number',
@@ -65,6 +65,7 @@ class Conversation extends Model
         'last_message_preview',
         'unread_count',
         'last_metered_period',
+        'agent_unlocked_period',
         'created_by',
         'updated_by',
     ];
@@ -73,15 +74,13 @@ class Conversation extends Model
     {
         return [
             'thread_type' => 'integer',
-            'participants' => 'array',
+            'thread_kind' => 'string',
             'unread_count' => 'integer',
             'lock_version' => 'integer',
             'stream_version' => 'integer',
             'conversation_number' => 'integer',
             'last_message_at' => 'datetime',
             'deleted_at' => 'datetime',
-            'phone_verified_at' => 'datetime',
-            'phone_enriched_at' => 'datetime',
         ];
     }
 
@@ -111,29 +110,125 @@ class Conversation extends Model
         return $this->contact_id === null;
     }
 
+    /** Loại luồng: nhắn riêng. */
+    public const KIND_DIRECT = 'direct';
+
+    /** Loại luồng: nhóm nhiều người. */
+    public const KIND_GROUP = 'group';
+
     /**
-     * Upsert hồ sơ thành viên nhóm (keyed sender_uid) từ tin inbound có sender profile.
-     * Field null giữ giá trị cũ (backfill/tin thiếu profile không xoá dữ liệu đã có);
-     * chỉ save khi thực sự đổi — tin liên tiếp cùng người gửi là no-op.
+     * Luồng này có nhiều người không.
+     *
+     * Đây là chỗ DUY NHẤT được biết cách suy ra điều đó. Còn đọc `thread_type`
+     * rải rác là còn chỗ quên khi thêm loại luồng thứ ba.
      */
-    public function rememberParticipant(?string $uid, ?string $name, ?string $avatar): void
+    public function isGroup(): bool
     {
-        if ($uid === null || $uid === '' || ($name === null && $avatar === null)) {
-            return;
+        return $this->threadKind() === self::KIND_GROUP;
+    }
+
+    /**
+     * Cột số nguyên cũ chỉ dùng làm phương án dự phòng cho cửa sổ giữa lúc thêm
+     * cột và lúc điền xong. Sau đó nó không còn được đọc ở đâu ngoài lớp dịch
+     * của kênh.
+     */
+    public function threadKind(): string
+    {
+        return $this->thread_kind ?? ((int) $this->thread_type === 1 ? self::KIND_GROUP : self::KIND_DIRECT);
+    }
+
+    /**
+     * Cột số nguyên cũ là GƯƠNG của `thread_kind`, giữ đồng bộ ở đúng một chỗ.
+     *
+     * Nó không còn được đọc ở đâu ngoài lớp dịch của kênh, nhưng vẫn phải đúng:
+     * nếu phải quay đầu về bản trước, code cũ đọc chính cột này để biết đâu là
+     * nhóm. Đây là chuyện tương thích schema nên nó thuộc tầng dữ liệu — lõi
+     * nghiệp vụ không được biết cột cũ tồn tại. Xóa cùng lúc với cột, ở P5.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $conversation): void {
+            $conversation->thread_type = $conversation->threadKind() === self::KIND_GROUP ? 1 : 0;
+        });
+    }
+
+    /** @return BelongsTo<Profile, $this> */
+    public function profile(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class);
+    }
+
+    /** @return HasMany<ConversationMember, $this> */
+    public function members(): HasMany
+    {
+        return $this->hasMany(ConversationMember::class);
+    }
+
+    /**
+     * Số điện thoại của người ở đầu bên kia — đọc từ bí danh, không phải từ một
+     * bản sao trên chính luồng.
+     *
+     * Đây là truy vấn theo TỪNG luồng, cố ý không dùng cho danh sách hộp thư:
+     * danh sách hiển thị `thread_name`, còn số điện thoại chỉ hiện ở màn hình
+     * chi tiết một hội thoại.
+     */
+    public function senderPhone(): ?string
+    {
+        if ($this->profile_id === null) {
+            return null;
         }
 
-        $participants = $this->participants ?? [];
-        $current = $participants[$uid] ?? [];
-        $merged = [
-            'name' => $name ?? ($current['name'] ?? null),
-            'avatar' => $avatar ?? ($current['avatar'] ?? null),
-        ];
+        return ProfileIdentity::query()
+            ->where('profile_id', $this->profile_id)
+            ->where('key', 'phone')
+            ->orderByDesc('is_verified')
+            ->orderByDesc('last_seen_at')
+            // Cột thời gian chỉ chính xác tới giây, nên hai số học được trong
+            // cùng một giây sẽ hòa. Khóa của bảng là uuid có thứ tự thời gian —
+            // nó phân định được, và phân định đúng chiều.
+            ->orderByDesc('id')
+            ->value('value');
+    }
 
-        if ($merged === $current) {
-            return;
+    /**
+     * Tên và avatar của từng người trong luồng, theo khóa thô của họ.
+     *
+     * Dựng từ `conversation_members` nối sang bí danh — nguồn duy nhất. Trước
+     * đây thông tin này là một bản sao trong cột jsonb trên chính luồng, và bản
+     * sao đó lệch dần với hồ sơ thật.
+     *
+     * Chỉ dùng cho MÀN HÌNH MỘT HỘI THOẠI. Danh sách hộp thư không gọi — nó
+     * hiển thị `thread_name`, và gọi ở đó là một truy vấn cho mỗi hàng.
+     *
+     * @return array<string, array{name: string|null, avatar: string|null}>
+     */
+    public function memberProfiles(): array
+    {
+        // Truy vấn thẳng, không dựng model: đây là một PHÉP CHIẾU gồm cột của
+        // hai bảng. Dựng `ConversationMember` từ nó là gán cho model những thuộc
+        // tính nó không có, và không kiểu nào kiểm được.
+        $rows = DB::table('conversation_members')
+            ->where('conversation_members.conversation_id', $this->id)
+            ->where('conversation_members.workspace_id', $this->workspace_id)
+            ->leftJoin('profile_identities', 'profile_identities.id', '=', 'conversation_members.identity_id')
+            ->get([
+                'conversation_members.sender_uid',
+                'profile_identities.display_name',
+                'profile_identities.channel_profiles',
+            ]);
+
+        $profiles = [];
+
+        foreach ($rows as $row) {
+            $channelProfiles = json_decode((string) ($row->channel_profiles ?? '{}'), true) ?: [];
+            $entry = $channelProfiles[$this->channel] ?? reset($channelProfiles) ?: [];
+
+            $profiles[$row->sender_uid] = [
+                'name' => $row->display_name,
+                'avatar' => $entry['avatar'] ?? null,
+            ];
         }
 
-        $participants[$uid] = $merged;
-        $this->forceFill(['participants' => $participants])->save();
+        return $profiles;
     }
 }

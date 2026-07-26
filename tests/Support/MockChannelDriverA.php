@@ -3,34 +3,40 @@
 namespace Tests\Support;
 
 use App\Contracts\SendException;
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 
 /**
  * P11 — Mock kênh A: policy TRÁI NGƯỢC Zalo — không receipts, không media,
  * không sticker, không quote/react, không typing. Ép core/UI KHÔNG assume Zalo.
  * Sống trong tests/Support — đăng ký kênh mới KHÔNG sửa file production nào.
  */
-class MockChannelDriverA implements ChannelDriver
+class MockChannelDriverA extends AbstractChannelDriver
 {
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'mock_a';
+        return new ChannelDescriptor(
+            key: 'mock_a',
+            label: 'Kênh giả A',
+            category: 'chat',
+            logo: '',
+            badge: 'A',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function capabilities(): ChannelCapabilities
     {
         return new ChannelCapabilities; // all-false, receiptGranularity none
     }
-
-    public function connect(string $workspaceId, array $params): void {}
-
-    public function disconnect(string $workspaceId): void {}
 
     public function sendMessage(Conversation $conversation, array $payload): Message
     {
@@ -61,11 +67,11 @@ class MockChannelDriverA implements ChannelDriver
         return [
             'channel' => 'mock_a',
             'channel_account_id' => $raw['channel_account_id'] ?? null,
-            'peer_uid' => (string) ($raw['peer_uid'] ?? ''),
-            'peer_name' => $raw['peer_name'] ?? null,
-            'peer_avatar' => null,
-            'peer_phone' => null,
-            'thread_type' => (int) ($raw['thread_type'] ?? 0),
+            'thread_uid' => (string) ($raw['thread_uid'] ?? $raw['sender_uid'] ?? ''),
+            'thread_name' => $raw['thread_name'] ?? null,
+            'thread_avatar' => null,
+            'sender_phone' => null,
+            'thread_kind' => ($raw['thread_kind'] ?? null) ?: (((int) ($raw['thread_type'] ?? 0)) === 1 ? 'group' : 'direct'),
             'direction' => $raw['direction'] ?? 'in',
             'source_id' => $raw['source_id'] ?? null,
             'type' => 'text',

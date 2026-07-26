@@ -93,7 +93,7 @@ class ZaloConnection extends Model
      * P08 — lookup channel_account_id từ connection_id qua pgsql_privileged (bypass
      * RLS). Bao gồm cả connection đã soft-delete — reconnect mint connection_id mới
      * nhưng cùng tài khoản (channel_account_id); inbound dùng account_id này để key
-     * conversation trực tiếp (channel_account_id, peer_uid) — 1 nguồn sự thật.
+     * conversation trực tiếp (channel_account_id, sender_uid) — 1 nguồn sự thật.
      */
     public static function channelAccountIdForConnection(int $connectionId): ?string
     {

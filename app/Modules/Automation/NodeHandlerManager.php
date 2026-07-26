@@ -7,7 +7,7 @@ use Illuminate\Support\Manager;
 
 /**
  * Driver-manager cho node type (condition, wait, end, action handlers...).
- * Mirror ChannelManager (app/Modules/Integration/ChannelManager.php) — cùng
+ * Mirror ChannelRegistry (app/Modules/Chat/Port/ChannelRegistry.php) — cùng
  * shape, khác domain. Thêm node-type mới = 1 class + 1 extend(), Engine
  * không đổi.
  */

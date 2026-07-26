@@ -4,7 +4,7 @@ import type { ChatMessage } from '../message-types';
 import { TypeLabel } from './type-label';
 
 /**
- * Thẻ tài khoản ngân hàng như trên Zalo: logo + tên ngân hàng, số tài khoản
+ * Thẻ tài khoản ngân hàng: logo + tên ngân hàng, số tài khoản
  * (kèm nút sao chép — thao tác CRM hay dùng nhất), chủ tài khoản, ảnh VietQR.
  * Tin cũ chưa được bridge resolve (thiếu meta) → nhãn fallback.
  */

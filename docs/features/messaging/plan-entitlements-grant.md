@@ -4,14 +4,14 @@ Module: `app/Services` + `app/Http/Controllers/Billing/Admin` (plain Laravel —
 
 ## Purpose
 
-Manage workspace entitlements (feature flags + quotas) via `marketplace_items` (global plan/addon catalog) + `workspace_purchases` (tenant's active purchases). Platform admin grants/revokes plans manually through an admin panel (no payment flow yet — VNPay/MoMo are a documented future roadmap item, not implemented). `EntitlementService` resolves a workspace's aggregate entitlements + quota remaining.
+Manage workspace entitlements (feature flags) via `marketplace_items` (global plan/addon catalog) + `workspace_purchases` (tenant's active purchases). Platform admin grants/revokes plans manually through an admin panel (no payment flow yet — VNPay/MoMo are a documented future roadmap item, not implemented). `EntitlementService` resolves a workspace's aggregate entitlements + usage tracking for analytics.
 
-**Value:** Foundation for monetization — quota gating works today via manual grants; a payment provider can be added later purely as a new way to call `GrantPlanService::grant()`, without touching the entitlement-resolution side.
+**Value:** Foundation for monetization — feature flag gating works today via manual grants; usage is tracked for future billing policies. A payment provider can be added later purely as a new way to call `GrantPlanService::grant()`, without touching the entitlement-resolution side.
 
 ## Actors & permissions
 
 - **Platform admin** (`admin` guard, permission `platform.billing.manage`) → view a workspace's available plans/addons + current usage, grant or revoke an item via the admin panel.
-- **`EntitlementService`** → resolves a workspace's aggregate entitlements (cached 5 min) and remaining quota (never cached — computed live from `channel_usage`).
+- **`EntitlementService`** → resolves a workspace's aggregate entitlements (cached 5 min, flags only as of 2026-07-25) and usage stats (never cached — computed live from `channel_usage`).
 - **`GrantPlanService`** → single source of truth for grant/revoke; called by the admin controller today, callable from a future payment webhook the same way.
 
 Link: [admin/admin-auth.md](../admin/admin-auth.md) (admin guard scope).
@@ -26,7 +26,7 @@ Link: [admin/admin-auth.md](../admin/admin-auth.md) (admin guard scope).
 - Service: `App\Services\GrantPlanService::grant()` / `::revoke()`.
 
 **Frontend entitlements** (Inertia share):
-- `EntitlementService::snapshot($workspaceId)` — called wherever the app needs to share `{flags, quotas, remaining}` with the FE (quota badges, feature gates).
+- `EntitlementService::snapshot($workspaceId)` — called wherever the app needs to share `{flags, usage}` with the FE (usage badges, feature flags).
 
 ## Operational flow (step-by-step)
 
@@ -84,15 +84,15 @@ sequenceDiagram
     else cache miss
         Svc->>DB: WorkspacePurchase::withoutGlobalScope('workspace')<br/>->where(workspace_id, status='active')->with('item')->get()
         alt no active purchases
-            Svc->>Svc: return FREE_DEFAULTS<br/>{flags: [module.inbox], quotas: {conversations.zalo_personal: 50, seats: 3}}
+            Svc->>Svc: return FREE_DEFAULTS<br/>{flags: [module.inbox]}
         else has active purchases
-            Svc->>Svc: merge: flags = union, quotas = max(per key) across all active items
+            Svc->>Svc: merge: flags = union across all active items
         end
-        Svc->>Cache: store {flags, quotas} for 300s
+        Svc->>Cache: store {flags} for 300s
     end
-    Svc->>Svc: for each quota.conversations.* key: remaining(workspace_id, key)<br/>— NEVER cached, queried live every call
+    Svc->>Svc: for display: query ChannelUsage (current period)<br/>— NEVER cached, queried live every call
     Svc->>DB: ChannelUsage::withoutGlobalScope('workspace')<br/>->where(workspace_id, channel, period=currentPeriod)->value(answered_count)
-    Svc-->>Caller: {flags, quotas, remaining}
+    Svc-->>Caller: {flags, usage}
 ```
 
 **Steps (Admin Grant):**
@@ -110,11 +110,11 @@ sequenceDiagram
 
 **Steps (Resolve Entitlements):**
 1. Caller invokes `EntitlementService::snapshot($workspaceId)`.
-2. Internally resolves `{flags, quotas}` via `Cache::remember("billing:entitlements:{$workspaceId}", 300, ...)`.
+2. Internally resolves `{flags}` via `Cache::remember("billing:entitlements:{$workspaceId}", 300, ...)`.
 3. Cache miss → queries all `status='active'` `WorkspacePurchase` rows for the workspace, eager-loads each `item`; if none → returns the hardcoded `FREE_DEFAULTS` constant (not a DB-seeded row) without any query beyond the purchases check.
-4. If purchases exist → merges: `flags` is a union across all active items' `getFlags()`; each quota key takes the `max()` across all active items' `getQuotas()` (multiple active purchases only ever raise a limit, never lower it).
-5. `remaining()` is computed **live on every call**, deliberately never cached (it changes on every `meterReply()`) — queries `channel_usage.answered_count` for the current period and subtracts from the (cached) limit.
-6. `snapshot()` returns `{flags, quotas, remaining}` for the FE to render quota badges / feature gates.
+4. If purchases exist → merges: `flags` is a union across all active items' `getFlags()` (as of 2026-07-25, quotas have been removed — entitlements are feature flags only).
+5. For display/analytics: `usage()` is queried **live on every call** — queries `channel_usage.answered_count` for the current period (never cached, changes on every `meterReply()`).
+6. `snapshot()` returns `{flags, usage}` for the FE to render usage badges (informational only, no gates).
 
 ## Data touched
 
@@ -143,12 +143,12 @@ sequenceDiagram
 
 ## Business rules applied
 
-- **F21 (Free defaults):** A workspace with zero active purchases gets `FREE_DEFAULTS` — `{flags: ['module.inbox'], quotas: {'quota.conversations.zalo_personal': 50, 'quota.seats': 3}}` — hardcoded in `EntitlementService`, explicitly commented as a **placeholder pending founder sign-off before launch**, not queried from a seeded "free plan" row.
+- **Free defaults:** A workspace with zero active purchases gets `FREE_DEFAULTS` — `{flags: ['module.inbox']}` (feature flags only; quotas removed as of 2026-07-25) — hardcoded in `EntitlementService`, not queried from a seeded "free plan" row.
 - **F11 (Workspace isolation):** Every entitlement/usage query filters explicitly by `workspace_id` (RLS is bypassed by design here, so this manual filter is the actual isolation boundary for this service).
-- **Aggregate entitlements:** Multiple simultaneously-active purchases (e.g. a base plan + an addon) merge: flags union, quotas take the max per key — never additive, never a min.
+- **Aggregate entitlements:** Multiple simultaneously-active purchases (e.g. a base plan + an addon) merge: flags union (as of 2026-07-25, quotas have been removed).
 - **Idempotent grant:** Re-granting an item the workspace already has updates the existing row in place rather than creating a duplicate (`(workspace_id, item_id)` is the effective business key `GrantPlanService` looks up by, though it isn't a DB-level unique constraint).
 
-Link: [crm-business-rules.md](../crm-business-rules.md) § F11, F21.
+Link: [crm-business-rules.md](../crm-business-rules.md) § F11.
 
 ## Edge cases & error handling
 
@@ -158,8 +158,8 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § F11, F21.
 | **Re-granting an item the workspace already has** | Idempotent — updates the existing row's `status`/`quantity`/`current_period_end`/`external_ref` rather than erroring or duplicating. |
 | **Revoking an item with no active purchase row** | `revoke()` returns `null` silently — no error, no-op. |
 | **Cache miss right after a grant/revoke** | Expected and immediate — `forgetCache()` runs synchronously as part of the same request that mutated the purchase. |
-| **Workspace has no active purchase** | `EntitlementService` returns `FREE_DEFAULTS` (50 conversations/month, 3 seats) — values explicitly marked as a pre-launch placeholder in code. |
-| **Quota limit is `null` for a key** | `remaining()` returns `PHP_INT_MAX` (unlimited, no blocking). |
+| **Workspace has no active purchase** | `EntitlementService` returns `FREE_DEFAULTS` (feature flags only; quotas removed as of 2026-07-25). |
+| **Usage tracking unavailable** | `usage()` queries live from `channel_usage`; if missing or query fails, gracefully handled (reported as 0 for display). |
 | **Multiple active purchases for the same workspace** | Flags union, quotas take the max per key across all of them — no conflict resolution needed since it's a pure aggregate, not a priority ordering. |
 | **Payment provider integration (VNPay/MoMo)** | Not implemented. Documented as a future roadmap item (project `CLAUDE.md`) — when built, it would call the same `GrantPlanService::grant()` this admin flow already uses, not a separate code path. |
 

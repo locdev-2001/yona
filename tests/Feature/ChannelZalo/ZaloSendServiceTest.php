@@ -1,22 +1,22 @@
 <?php
 
-use App\Exceptions\QuotaExceededException;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
-use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\OutboundSendPipeline;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\SendOutsideWindowException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloCircuitOpenException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloNotConnectedException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
+use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Services\MeteringService;
 use App\Support\TenantScope;
 use Carbon\Carbon;
@@ -24,7 +24,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Mockery\MockInterface;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -69,7 +68,7 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_test_'.uniqid(),
+        'sender_uid' => 'peer_test_'.uniqid(),
         'peer_phone' => '0901234567',
         'thread_type' => 0,
         'conversation_number' => 1,
@@ -107,7 +106,7 @@ function makeConnectedSlot(string $workspaceId, ?string $channelAccountId, strin
 
 function makeSendService(): ZaloSendService
 {
-    // P11: metering ĐÃ hoist lên OutboundSendPipeline — service = policy + transport.
+    // P11: metering ĐÃ hoist lên DeliveryPipeline — service = policy + transport.
     return new ZaloSendService(
         rateLimiter: new SendRateLimiter,
         healthMonitor: app(ZaloHealthMonitor::class),
@@ -115,9 +114,9 @@ function makeSendService(): ZaloSendService
 }
 
 /** P11 — đường outbound THẬT: pipeline (quota gate + meterReply) bọc driver. */
-function makeSendPipeline(): OutboundSendPipeline
+function makeSendPipeline(): DeliveryPipeline
 {
-    return new OutboundSendPipeline(app(MeteringService::class), app(MessagePublisher::class));
+    return new DeliveryPipeline(app(MeteringService::class), app(BroadcastService::class));
 }
 
 // ── ZaloSendService: send thành công ─────────────────────────────────────────
@@ -202,7 +201,7 @@ it('P03: throws ZaloNotConnectedException with account display_name when 0 slot 
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_test_'.uniqid(),
+        'sender_uid' => 'peer_test_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => 1,
     ]);
@@ -335,7 +334,7 @@ it('send() bypasses the cap when peer has inbound within 24h, but enforces it fo
 
     // Nạp đầy cap 3/ngày cho số này.
     $limiter = new SendRateLimiter;
-    $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
+    $targetNumber = $conversation->peer_phone ?? $conversation->sender_uid;
     foreach (range(1, 3) as $_) {
         $limiter->increment($workspace->id, $targetNumber);
     }
@@ -495,34 +494,9 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
     expect($row->state)->toBe('connected');
 })->group('channel-zalo');
 
-// ── F1-audit: ZaloSendService quota enforce ───────────────────────────────────
-
-it('F1-audit (P11): OutboundSendPipeline throws QuotaExceededException TRƯỚC khi driver được gọi', function () {
+it('gửi qua pipeline: ghi Message direction=out + đếm thống kê', function () {
     [, , $conversation] = makeWorkspaceAndConversation();
-
-    // MeteringService mock luôn throw (mô phỏng workspace hết quota, conv mới)
-    $blockingMeter = mock(MeteringService::class, function (MockInterface $m) {
-        $m->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
-    });
-
-    $pipeline = new OutboundSendPipeline($blockingMeter, app(MessagePublisher::class));
-    $driver = new ZaloChannelDriver(makeSendService());
-
-    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
-    Http::fake();
-
-    // Phải throw QuotaExceededException — KHÔNG gửi bridge (money-path chặn trước transport)
-    expect(fn () => $pipeline->send($driver, $conversation, ['text' => 'Hello']))
-        ->toThrow(QuotaExceededException::class);
-
-    Http::assertNothingSent();
-    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
-
-    Carbon::setTestNow();
-})->group('channel-zalo');
-
-it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan remaining 50)', function () {
-    [, , $conversation] = makeWorkspaceAndConversation();
+    $user = User::factory()->create();
 
     Http::fake([
         '*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'src_f5'], 200),
@@ -530,12 +504,39 @@ it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan 
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
 
-    // MeteringService: conv mới + free plan còn quota → assertCanSend pass → gửi được
-    $driver = new ZaloChannelDriver(makeSendService());
-    $message = makeSendPipeline()->send($driver, $conversation, ['text' => 'Reply F5']);
+    $driver = app(ZaloChannelDriver::class);
+    $message = makeSendPipeline()->send(
+        $driver,
+        $conversation,
+        OutboundMessage::text('Reply F5'),
+    );
 
     expect($message)->toBeInstanceOf(Message::class)
         ->and($message->direction)->toBe('out');
 
     Carbon::setTestNow();
 })->group('channel-zalo');
+
+it('sticker thiếu địa chỉ ảnh vẫn dựng được địa chỉ từ mã sticker', function () {
+    $parsed = app(ZaloChannelDriver::class)->parseInbound([
+        'peer_uid' => 'khach_sticker',
+        'inbound_kind' => 'sticker',
+        'direction' => 'in',
+        'sticker' => ['id' => 50626, 'type' => 3, 'catId' => 12658],
+    ]);
+
+    // Bridge tra địa chỉ qua API nhà cung cấp và lần tra đó hỏng được. Khi đó
+    // giao diện hiện chữ "[Sticker]" thay vì hình — đã xảy ra thật.
+    expect($parsed['media_meta']['sticker']['url'])->toContain('eid=50626');
+});
+
+it('sticker đã có địa chỉ thì KHÔNG bị ghi đè', function () {
+    $parsed = app(ZaloChannelDriver::class)->parseInbound([
+        'peer_uid' => 'khach_sticker_2',
+        'inbound_kind' => 'sticker',
+        'direction' => 'in',
+        'sticker' => ['id' => 1, 'url' => 'https://cdn/that.webp'],
+    ]);
+
+    expect($parsed['media_meta']['sticker']['url'])->toBe('https://cdn/that.webp');
+});

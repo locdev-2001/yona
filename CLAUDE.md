@@ -14,6 +14,7 @@ SME Việt Nam, mảng kinh doanh online — kể cả hộ kinh doanh, nhà ph�
 
 ## Mô hình kinh doanh
 SaaS freemium: free core → add-on trả phí. Tính phí theo **conversation metering** (đếm per-channel).
+**Trạng thái 25/07/2026:** CHƯA áp hạn mức — dùng không giới hạn, chỉ thống kê. Số liệu tích lũy để xây chính sách gói cước sau; áp hạn mức ngay từ đầu gây phản ứng ngược.
 Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 
 ## Tech Stack
@@ -23,6 +24,8 @@ Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 - Auth/Perm: RBAC
 
 ## Kiến trúc trọng tâm
+**Quy ước kiến trúc xuyên suốt: `docs/code-standards.md` §0 — ĐỌC TRƯỚC KHI VIẾT CODE.** Tóm tắt: module chia theo **chức năng** (không có module "Integration" gom đồ bên ngoài); `app/Http/` + `app/Models/` ở gốc, module chỉ chứa nghiệp vụ; ba mặt tiền route `web.php` / `web_api.php` / `api.php` cùng gọi một lõi — mọi tính năng phải mở ra API được mà không viết lại; UI gom theo chức năng.
+
 **CDP làm trục trung tâm** — mọi nguồn (inbox, import, tích hợp) đổ vào; mọi hành động (automation, báo cáo) đọc ra.
 **Addons/Entitlements framework** = nền monetization, dựng ngay Phase 1.
 
@@ -45,7 +48,8 @@ Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 ## Quyết định đã chốt (không làm sai lại)
 - Hội thoại đếm **per-channel**, không gộp theo người CDP. Cùng người trên Zalo + Mess = 2 hội thoại.
 - Bộ đếm chỉ tính khi **tenant trả lời**, không tính inbound.
-- **Luôn nhận inbound** kể cả hết quota — bảo toàn lead capture.
+- **Không chặn gì cả** (chốt 25/07/2026): gate hạn mức đã gỡ khỏi code, bộ đếm giữ nguyên. Gate chỉ dựng lại khi mở gói thu phí.
+- **Luôn nhận inbound** — bảo toàn lead capture.
 - **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo = nguồn làm giàu CDP.
 
 ## Ghi chú công cụ
@@ -66,7 +70,7 @@ Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.j
 | **Liên hệ nháp** | Người lạ nhắn lần đầu, chưa vào pipeline |
 | **Lead** | Liên hệ đã xác nhận có nhu cầu, đưa vào Pipeline |
 | **Entitlements** | Khung bật/tắt tính năng theo gói đã mua (nền monetization) |
-| **Conversation metering** | Tính phí theo số hội thoại, **đếm theo từng kênh** |
+| **Conversation metering** | Đếm số hội thoại theo **từng kênh** — hiện chỉ THỐNG KÊ, chưa dùng để chặn hay tính phí |
 | **Zalo cá nhân** | Kênh inbox Phase 1 (không phải OA — OA hoãn vì chưa có tài khoản test) |
 → Full glossary: docs/glossary.md
 
@@ -79,7 +83,8 @@ Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.j
 - **Inbox Phase 1 = Zalo CÁ NHÂN, KHÔNG phải Zalo OA** (OA phức tạp, chưa có tài khoản test). Zalo cá nhân không có API chính thức → dùng QR login/web automation (zca-js); có rủi ro ToS/khóa acc.
 - Hội thoại đếm **theo từng kênh**, KHÔNG gộp theo người CDP (cùng người trên Zalo + Mess = 2 hội thoại).
 - Bộ đếm hội thoại chỉ tính khi **tenant trả lời**, không tính tin inbound.
-- **Luôn nhận inbound** kể cả khi hết quota — để không mất lead.
+- **Gate hạn mức đã gỡ hoàn toàn** (25/07/2026) — cho dùng không giới hạn, chỉ thống kê. Đừng tự dựng lại gate khi chưa có lệnh.
+- **Luôn nhận inbound** — để không mất lead.
 - **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ tích hợp làm giàu dữ liệu cho CDP.
 
 ## Preferences

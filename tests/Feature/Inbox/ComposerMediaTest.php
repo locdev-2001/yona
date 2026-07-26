@@ -1,6 +1,5 @@
 <?php
 
-use App\Exceptions\QuotaExceededException;
 use App\Models\Attachment;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
@@ -10,7 +9,6 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Services\MeteringService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +34,7 @@ function cmSetup(): array
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_media_'.uniqid(),
+        'sender_uid' => 'peer_media_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -111,35 +109,6 @@ it('route show: file KHÔNG inline-safe (pdf) ép Content-Disposition attachment
     $response->assertOk()
         ->assertHeader('X-Content-Type-Options', 'nosniff');
     expect($response->headers->get('Content-Disposition'))->toStartWith('attachment');
-});
-
-it('send media khi hết quota → 422 quota_exceeded, KHÔNG gọi bridge (review M2)', function () {
-    Storage::fake(config('filesystems.default'));
-    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
-    [$workspace, , $conversation] = cmSetup();
-    cmConnectSlot($workspace, $conversation);
-
-    $upload = $this->post(route('inbox.attachments.store', $conversation->id), [
-        'file' => UploadedFile::fake()->image('bi-chan.png'),
-    ])->json();
-
-    $this->mock(MeteringService::class, function ($mock) {
-        $mock->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
-        $mock->shouldReceive('meterReply')->never();
-    });
-
-    Http::fake();
-
-    $response = $this->postJson(route('inbox.send', $conversation->id), [
-        'attachment_id' => $upload['attachment_id'],
-    ]);
-
-    $response->assertStatus(422);
-    expect($response->json('error_code'))->toBe('quota_exceeded');
-    Http::assertNothingSent();
-    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
-
-    Carbon::setTestNow();
 });
 
 it('upload quá 20MB bị chặn 422', function () {
@@ -231,7 +200,7 @@ it('send attachment của conversation khác → 404, không gửi bridge', func
     $otherConv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_khac_'.uniqid(),
+        'sender_uid' => 'peer_khac_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -331,7 +300,7 @@ it('inbox:prune-transient xóa pending hết hạn + attachment chưa gửi quá
         $convId = (string) Str::uuid();
         $priv('conversations')->insert([
             'id' => $convId, 'workspace_id' => $wsId, 'channel' => 'zalo_personal',
-            'peer_uid' => 'peer_prune', 'thread_type' => 0, 'conversation_number' => 1,
+            'sender_uid' => 'peer_prune', 'thread_type' => 0, 'conversation_number' => 1,
             'created_at' => now(), 'updated_at' => now(),
         ]);
 

@@ -8,6 +8,7 @@ use App\Models\PipelineStage;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
 
 // ── conv→Lead: happy path ─────────────────────────────────────────────────────
 
@@ -27,9 +28,9 @@ it('store creates a Lead from a Conversation (source=Zalo, 2-way link)', functio
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_lead_001',
-        'peer_name' => 'Nguyễn Văn A',
-        'thread_type' => 0,
+        'sender_uid' => 'zalo_uid_lead_001',
+        'thread_name' => 'Nguyễn Văn A',
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -67,8 +68,8 @@ it('store is idempotent — second call returns existing lead_id without creatin
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_idem',
-        'thread_type' => 0,
+        'sender_uid' => 'zalo_uid_idem',
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -93,7 +94,7 @@ it('store is idempotent — second call returns existing lead_id without creatin
 
 // ── Group thread guard ────────────────────────────────────────────────────────
 
-it('store returns 422 for group conversation (thread_type=1)', function () {
+it('store returns 422 for group conversation', function () {
     $workspace = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($workspace, $user);
@@ -102,8 +103,8 @@ it('store returns 422 for group conversation (thread_type=1)', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_group_001',
-        'thread_type' => 1, // group
+        'sender_uid' => 'zalo_group_001',
+        'thread_kind' => 'group', // group
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -132,22 +133,26 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
     $conv1 = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_phone_1',
-        'peer_phone' => $sharedPhone,
-        'peer_name' => 'Khách A',
-        'thread_type' => 0,
+        'sender_uid' => 'zalo_uid_phone_1',
+        'thread_name' => 'Khách A',
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
     $conv2 = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_phone_2',
-        'peer_phone' => $sharedPhone,
-        'peer_name' => 'Khách A (dup)',
-        'thread_type' => 0,
+        'sender_uid' => 'zalo_uid_phone_2',
+        'thread_name' => 'Khách A (dup)',
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
+
+    // Số điện thoại nay sống ở bí danh, không phải một cột trên hội thoại — đi
+    // đúng đường mà sản phẩm đi: học được số rồi mới tạo Lead.
+    $enrichment = app(PhoneEnrichmentService::class);
+    $enrichment->applyPhone($conv1, $sharedPhone, 'manual_verified', now());
+    $enrichment->applyPhone($conv2, $sharedPhone, 'manual_verified', now());
 
     $r1 = $this->postJson(route('inbox.lead.store', $conv1->id));
     $r1->assertOk();
@@ -184,8 +189,8 @@ it('inbox index does not return conversations from another workspace (RLS)', fun
     Conversation::create([
         'workspace_id' => $wsA->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'ws_a_secret_uid',
-        'thread_type' => 0,
+        'sender_uid' => 'ws_a_secret_uid',
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $wsA->id),
     ]);
 
@@ -194,7 +199,7 @@ it('inbox index does not return conversations from another workspace (RLS)', fun
     seedMember($wsB, $userB, 'admin');
 
     // Kiểm tra RLS trực tiếp qua Eloquent (InboxController dùng cùng model)
-    $found = Conversation::where('peer_uid', 'ws_a_secret_uid')->first();
+    $found = Conversation::where('sender_uid', 'ws_a_secret_uid')->first();
     expect($found)->toBeNull();
 
     // Tổng số conversations trong scope WS-B = 0
