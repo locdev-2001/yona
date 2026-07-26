@@ -50,7 +50,7 @@ function msSetup(): array
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
         'peer_uid' => 'peer_state_'.uniqid(),
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -153,7 +153,7 @@ it('receipt cho tin direction=in bị bỏ qua (receipt là trạng thái tin M�
     Event::assertNotDispatched(MessageStateChanged::class);
 });
 
-it('GROUP receipt guard cứng: thread_type=1 KHÔNG mutate scalar seen_at/delivered_at', function () {
+it('GROUP receipt guard cứng: hội thoại nhóm KHÔNG mutate scalar seen_at/delivered_at', function () {
     Event::fake([MessageStateChanged::class]);
     [$workspace, $account] = msSetup();
 
@@ -162,7 +162,7 @@ it('GROUP receipt guard cứng: thread_type=1 KHÔNG mutate scalar seen_at/deliv
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
         'peer_uid' => 'group_'.uniqid(),
-        'thread_type' => 1,
+        'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
     $message = msMessage($group, 'zmsg_group_1', 'out', 1);
@@ -322,7 +322,7 @@ function msWebhookSetup(): array
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
         'peer_uid' => 'peer_wh_'.uniqid(),
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $wsId),
     ]);
 

@@ -18,7 +18,7 @@ interface Props {
     mine: boolean;
 }
 
-/** Trích dẫn tin được trả lời (kiểu Zalo), trong bubble phía trên nội dung. */
+/** Trích dẫn tin được trả lời, nằm trong bong bóng phía trên nội dung. */
 export function MessageQuote({ quote, mine }: Props) {
     const sender = quote.sender_name ?? quote.sender?.name ?? null;
 

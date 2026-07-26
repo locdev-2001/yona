@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $channel_account_id
  * @property string $peer_uid
  * @property int $thread_type
+ * @property string $thread_kind
  * @property string|null $peer_phone
  * @property string|null $peer_name
  * @property string|null $peer_avatar_url
@@ -55,6 +56,7 @@ class Conversation extends Model
         'channel_account_id',
         'peer_uid',
         'thread_type',
+        'thread_kind',
         'peer_phone',
         'phone_source',
         'peer_name',
@@ -75,6 +77,7 @@ class Conversation extends Model
     {
         return [
             'thread_type' => 'integer',
+            'thread_kind' => 'string',
             'participants' => 'array',
             'unread_count' => 'integer',
             'lock_version' => 'integer',
@@ -137,5 +140,47 @@ class Conversation extends Model
 
         $participants[$uid] = $merged;
         $this->forceFill(['participants' => $participants])->save();
+    }
+
+    /** Loại luồng: nhắn riêng. */
+    public const KIND_DIRECT = 'direct';
+
+    /** Loại luồng: nhóm nhiều người. */
+    public const KIND_GROUP = 'group';
+
+    /**
+     * Luồng này có nhiều người không.
+     *
+     * Đây là chỗ DUY NHẤT được biết cách suy ra điều đó. Còn đọc `thread_type`
+     * rải rác là còn chỗ quên khi thêm loại luồng thứ ba.
+     */
+    public function isGroup(): bool
+    {
+        return $this->threadKind() === self::KIND_GROUP;
+    }
+
+    /**
+     * Cột số nguyên cũ chỉ dùng làm phương án dự phòng cho cửa sổ giữa lúc thêm
+     * cột và lúc điền xong. Sau đó nó không còn được đọc ở đâu ngoài lớp dịch
+     * của kênh.
+     */
+    public function threadKind(): string
+    {
+        return $this->thread_kind ?? ((int) $this->thread_type === 1 ? self::KIND_GROUP : self::KIND_DIRECT);
+    }
+
+    /**
+     * Cột số nguyên cũ là GƯƠNG của `thread_kind`, giữ đồng bộ ở đúng một chỗ.
+     *
+     * Nó không còn được đọc ở đâu ngoài lớp dịch của kênh, nhưng vẫn phải đúng:
+     * nếu phải quay đầu về bản trước, code cũ đọc chính cột này để biết đâu là
+     * nhóm. Đây là chuyện tương thích schema nên nó thuộc tầng dữ liệu — lõi
+     * nghiệp vụ không được biết cột cũ tồn tại. Xóa cùng lúc với cột, ở P5.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $conversation): void {
+            $conversation->thread_type = $conversation->threadKind() === self::KIND_GROUP ? 1 : 0;
+        });
     }
 }

@@ -192,7 +192,7 @@ function chatBootHttpSurface(): array
         'inbox.read' => 'POST inbox/conversations/{conversation}/read',
         'inbox.resync' => 'POST inbox/resync',
         'inbox.send' => 'POST inbox/conversations/{conversation}/messages',
-        'inbox.settings.seen-sync' => 'PUT inbox/settings/seen-sync',
+        'inbox.settings.seen-sync' => 'PUT inbox/settings/seen-sync/{channel}',
         'inbox.show' => 'GET|HEAD inbox/{conversation}',
         'inbox.stickers' => 'GET|HEAD inbox/conversations/{conversation}/stickers',
         'inbox.stream' => 'GET|HEAD inbox/conversations/{conversation}/stream',

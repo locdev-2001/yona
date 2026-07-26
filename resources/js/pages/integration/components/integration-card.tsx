@@ -6,6 +6,8 @@ import { Link } from '@inertiajs/react';
 import { MessageSquare } from 'lucide-react';
 
 export interface IntegrationCard {
+    /** Đường tới trang kết nối, `null` = kênh không có trang riêng. */
+    href?: string | null;
     key: string;
     name: string;
     category: string;
@@ -23,13 +25,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     chat: <MessageSquare className="h-6 w-6" />,
 };
 
-const ZALO_HREF: Record<string, string> = {
-    zalo_personal: '/integrations/zalo',
-};
-
 export function IntegrationCardItem({ card }: Props) {
     const t = useTranslator();
-    const href = ZALO_HREF[card.key] ?? `/integrations/${card.key}`;
+    const href = card.href ?? `/integrations/${card.key}`;
 
     return (
         <Card className={!card.enabled ? 'opacity-60' : ''}>

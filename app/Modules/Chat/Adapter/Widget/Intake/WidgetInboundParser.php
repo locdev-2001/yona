@@ -2,6 +2,7 @@
 
 namespace App\Modules\Chat\Adapter\Widget\Intake;
 
+use App\Models\Conversation;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 
@@ -33,7 +34,7 @@ class WidgetInboundParser
             'peer_name' => $raw['visitor_name'] ?? null,
             'peer_avatar' => null,
             'peer_phone' => null,
-            'thread_type' => 0, // kênh nội bộ chỉ có 1-1
+            'thread_kind' => Conversation::KIND_DIRECT, // kênh nội bộ chỉ có 1-1
             'direction' => 'in',
             'source_id' => isset($raw['source_id']) ? (string) $raw['source_id'] : null,
             'type' => (string) ($raw['type'] ?? 'text'),

@@ -16,9 +16,13 @@ use App\Models\Message;
 interface ChannelDriver
 {
     /**
-     * Key định danh kênh (vd: 'zalo_personal', 'messenger').
+     * Danh tính của kênh — tên, nhãn, ký hiệu, quyền quản trị, trang kết nối.
+     *
+     * `AbstractChannelDriver` CỐ Ý không cho mặc định: đây là thứ duy nhất mỗi
+     * phích cắm bắt buộc phải tự khai. Có mặc định là mở đường cho một kênh
+     * chạy được mà không có danh tính, rồi giao diện hiện ô trống.
      */
-    public function channelKey(): string;
+    public function descriptor(): ChannelDescriptor;
 
     /**
      * Khởi tạo kết nối (QR login, token, v.v.).
@@ -64,7 +68,7 @@ interface ChannelDriver
      *   peer_name: string|null,
      *   peer_avatar: string|null,
      *   peer_phone: string|null,
-     *   thread_type: int,
+     *   thread_kind: string,
      *   direction: string,
      *   source_id: string|null,
      *   type: string,

@@ -3,6 +3,7 @@
 namespace App\Modules\Chat\Adapter\ZaloPersonal;
 
 use App\Contracts\SendException;
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
@@ -22,6 +23,7 @@ use App\Modules\Chat\Port\Capability\SupportsReactions;
 use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
 use App\Modules\Chat\Port\Capability\SupportsStickers;
 use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use App\Modules\Chat\Port\ChannelDriver;
 use Illuminate\Support\Collection;
 
@@ -42,6 +44,9 @@ use Illuminate\Support\Collection;
  */
 class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistoryResync, SupportsPhoneVerification, SupportsReactions, SupportsSeenReceipts, SupportsStickers
 {
+    /** Khóa định danh kênh — dùng trong DB, hạn mức, và sổ đăng ký. */
+    public const KEY = 'zalo_personal';
+
     /** Zalo cho kéo lịch sử lùi tối đa 30 ngày (quyết định founder 05/07). */
     private const RESYNC_DEEP_DAYS = 30;
 
@@ -51,9 +56,26 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
         private readonly ZaloBackfillService $backfillService,
     ) {}
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'zalo_personal';
+        return self::descriptorOf();
+    }
+
+    /**
+     * Danh tính của kênh là HẰNG, không phụ thuộc instance — provider khai nó
+     * mà không phải dựng cả chuỗi phụ thuộc của driver.
+     */
+    public static function descriptorOf(): ChannelDescriptor
+    {
+        return new ChannelDescriptor(
+            key: self::KEY,
+            label: 'Zalo cá nhân',
+            category: 'chat',
+            logo: '/assets/images/icon_zalo.png',
+            badge: 'Z',
+            connectRouteName: 'integrations.zalo.index',
+            managePermission: TenantPermission::ZaloManage,
+        );
     }
 
     /**
@@ -110,7 +132,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
      *   sender_avatar  = payload.sender.avatar (nuôi conversations.participants)
      *   platform_sent_at = payload.platform_sent_at (ms unix → Carbon)
      *   channel_account_id = payload.channel_account_id (resolved bởi webhook controller — P08)
-     *   thread_type    = payload.thread_type (0=user, 1=group)
+     *   thread_kind    = dịch từ payload.thread_type (0=user → direct, 1=group)
      *   channel        = 'zalo_personal'
      *
      * @param  array<string, mixed>  $raw
@@ -178,7 +200,10 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
             'peer_name' => $user['name'] ?? null,
             'peer_avatar' => $user['avatar'] ?? null,
             'peer_phone' => null, // enrich async khi có business_card.phone
-            'thread_type' => isset($raw['thread_type']) ? (int) $raw['thread_type'] : 0,
+            // Lớp dịch: `thread_type` là số của Zalo, lõi không được thấy nó.
+            'thread_kind' => ((int) ($raw['thread_type'] ?? 0)) === 1
+                ? Conversation::KIND_GROUP
+                : Conversation::KIND_DIRECT,
             'direction' => $direction,
             'source_id' => isset($raw['source_id']) ? (string) $raw['source_id'] : null,
             'type' => $type,

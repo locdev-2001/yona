@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -31,7 +30,7 @@ class MessageInteractionController extends Controller
         InteractionPipeline $pipeline,
     ): JsonResponse {
         $this->authorize('update', $conversation);
-        abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
+        abort_unless(auth()->user()?->can($channels->descriptor($conversation->channel)->managePermission->value), 403);
         abort_unless($message->conversation_id === $conversation->id, 404);
 
         $validated = $request->validate([

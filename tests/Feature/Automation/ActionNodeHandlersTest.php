@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TenantPermission;
 use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\Message;
@@ -13,6 +14,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
 use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\TagService;
@@ -28,9 +30,17 @@ class FakeSendOnlyChannelDriver implements ChannelDriver
 {
     public array $sent = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return 'test_fake_channel';
+        return new ChannelDescriptor(
+            key: 'test_fake_channel',
+            label: 'Kênh test',
+            category: 'chat',
+            logo: '',
+            badge: 'T',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function connect(string $workspaceId, array $params): void {}

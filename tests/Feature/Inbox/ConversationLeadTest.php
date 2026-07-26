@@ -29,7 +29,7 @@ it('store creates a Lead from a Conversation (source=Zalo, 2-way link)', functio
         'channel' => 'zalo_personal',
         'peer_uid' => 'zalo_uid_lead_001',
         'peer_name' => 'Nguyễn Văn A',
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -68,7 +68,7 @@ it('store is idempotent — second call returns existing lead_id without creatin
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'peer_uid' => 'zalo_uid_idem',
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -93,7 +93,7 @@ it('store is idempotent — second call returns existing lead_id without creatin
 
 // ── Group thread guard ────────────────────────────────────────────────────────
 
-it('store returns 422 for group conversation (thread_type=1)', function () {
+it('store returns 422 for group conversation', function () {
     $workspace = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($workspace, $user);
@@ -103,7 +103,7 @@ it('store returns 422 for group conversation (thread_type=1)', function () {
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'peer_uid' => 'zalo_group_001',
-        'thread_type' => 1, // group
+        'thread_kind' => 'group', // group
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -135,7 +135,7 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
         'peer_uid' => 'zalo_uid_phone_1',
         'peer_phone' => $sharedPhone,
         'peer_name' => 'Khách A',
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -145,7 +145,7 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
         'peer_uid' => 'zalo_uid_phone_2',
         'peer_phone' => $sharedPhone,
         'peer_name' => 'Khách A (dup)',
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
@@ -185,7 +185,7 @@ it('inbox index does not return conversations from another workspace (RLS)', fun
         'workspace_id' => $wsA->id,
         'channel' => 'zalo_personal',
         'peer_uid' => 'ws_a_secret_uid',
-        'thread_type' => 0,
+        'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $wsA->id),
     ]);
 

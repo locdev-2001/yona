@@ -28,9 +28,16 @@ class SeenSyncService
 
     public function __construct(private readonly SettingsService $settings) {}
 
-    public function enabled(): bool
+    /**
+     * Báo-đã-xem bật hay tắt cho MỘT kênh.
+     *
+     * Per-kênh chứ không phải một công tắc chung: "khách biết shop đã xem" là
+     * áp lực trả lời, và mức áp lực đó khác nhau giữa các kênh. Một công tắc
+     * chung buộc mọi kênh chịu chung quyết định.
+     */
+    public function enabled(string $channel): bool
     {
-        return (bool) $this->settings->get(self::SETTING_KEY, false);
+        return (bool) $this->settings->get(self::SETTING_KEY.'.'.$channel, false);
     }
 
     /**
@@ -40,7 +47,7 @@ class SeenSyncService
     public function syncOnThreadOpen(Conversation $conversation): void
     {
         try {
-            if (! $this->enabled() || $conversation->thread_type === 1) {
+            if (! $this->enabled($conversation->channel) || $conversation->isGroup()) {
                 return; // OFF hoặc nhóm (per-member — v1 bỏ)
             }
 

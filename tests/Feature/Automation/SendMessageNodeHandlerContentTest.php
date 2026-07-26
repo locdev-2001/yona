@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TenantPermission;
 use App\Events\MessageReceived;
 use App\Models\ChannelUsage;
 use App\Models\Conversation;
@@ -15,6 +16,7 @@ use App\Modules\Automation\WorkflowEngine;
 use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\EntitlementService;
@@ -43,9 +45,17 @@ class ContentAssertingChannelDriver implements ChannelDriver
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
 
-    public function channelKey(): string
+    public function descriptor(): ChannelDescriptor
     {
-        return SMN_CHANNEL;
+        return new ChannelDescriptor(
+            key: SMN_CHANNEL,
+            label: 'Kênh test',
+            category: 'chat',
+            logo: '',
+            badge: 'T',
+            connectRouteName: null,
+            managePermission: TenantPermission::ChannelManage,
+        );
     }
 
     public function connect(string $workspaceId, array $params): void {}

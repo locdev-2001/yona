@@ -54,7 +54,7 @@ class DuplicateResolver
 
         $found = Message::whereHas('conversation', fn ($q) => $q->where('channel_account_id', $channelAccountId))
             ->whereIn('source_id', $sourceIds)
-            ->with('conversation:id,thread_type,workspace_id')
+            ->with('conversation:id,thread_kind,workspace_id')
             ->get()
             ->keyBy('source_id')
             ->all();
@@ -67,7 +67,7 @@ class DuplicateResolver
 
             if ($aliases->isNotEmpty()) {
                 $aliasMessages = Message::whereIn('id', $aliases->pluck('message_id'))
-                    ->with('conversation:id,thread_type,workspace_id')
+                    ->with('conversation:id,thread_kind,workspace_id')
                     ->get()
                     ->keyBy('id');
                 foreach ($aliases as $alias) {

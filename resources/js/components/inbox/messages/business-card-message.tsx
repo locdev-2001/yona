@@ -1,7 +1,7 @@
 import { Contact } from 'lucide-react';
 import type { ChatMessage } from '../message-types';
 
-/** Danh thiếp Zalo: avatar + tên + SĐT + link profile + QR (nếu bridge resolve được). */
+/** Danh thiếp khách gửi: avatar + tên + SĐT + link hồ sơ + QR (nếu kênh resolve được). */
 export function BusinessCardMessage({ msg }: { msg: ChatMessage }) {
     const card = msg.media_meta?.business_card ?? {};
 
@@ -20,7 +20,7 @@ export function BusinessCardMessage({ msg }: { msg: ChatMessage }) {
                 {card.phone && <div className="text-xs opacity-80">{card.phone}</div>}
                 {card.url && (
                     <a href={card.url} target="_blank" rel="noreferrer" className="text-xs underline opacity-80 hover:opacity-100">
-                        Xem trên Zalo
+                        Xem hồ sơ
                     </a>
                 )}
             </div>

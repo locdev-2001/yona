@@ -19,6 +19,19 @@ use Illuminate\Support\Facades\Cache;
  */
 class EntitlementService
 {
+    /**
+     * Tiền tố khóa hạn mức hội thoại — NGUỒN SỰ THẬT DUY NHẤT của công thức này.
+     *
+     * `ChannelDescriptor::quotaKey()` dẫn xuất từ đây. Hai chỗ tự dựng khóa theo
+     * hai công thức thì giao diện sẽ hiện hạn mức của kênh khác, không lỗi nào báo.
+     */
+    public const QUOTA_CONVERSATIONS_PREFIX = 'quota.conversations.';
+
+    public static function quotaKeyForChannel(string $channel): string
+    {
+        return self::QUOTA_CONVERSATIONS_PREFIX.$channel;
+    }
+
     private const CACHE_TTL = 300; // 5 phút
 
     /**
@@ -67,8 +80,7 @@ class EntitlementService
             return PHP_INT_MAX; // unlimited
         }
 
-        // Extract channel từ quota key: 'quota.conversations.zalo_personal' → 'zalo_personal'
-        $channel = str_replace('quota.conversations.', '', $quotaKey);
+        $channel = str_replace(self::QUOTA_CONVERSATIONS_PREFIX, '', $quotaKey);
         $period = now('Asia/Ho_Chi_Minh')->format('Y-m');
 
         // Query trực tiếp (bypass RLS global scope vì chạy trong webhook context có scope)
@@ -91,7 +103,7 @@ class EntitlementService
 
         $remaining = [];
         foreach ($entitlements['quotas'] as $key => $limit) {
-            if (str_starts_with($key, 'quota.conversations.')) {
+            if (str_starts_with($key, self::QUOTA_CONVERSATIONS_PREFIX)) {
                 $remaining[$key] = $this->remaining($workspaceId, $key);
             }
         }

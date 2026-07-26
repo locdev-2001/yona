@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TenantPermission;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -8,6 +9,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDescriptor;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
 use Illuminate\Database\QueryException;
@@ -215,9 +217,17 @@ it('ChannelRegistry hasAny returns true after driver registered', function () {
     $manager->extend('test_channel', function () {
         return new class implements ChannelDriver
         {
-            public function channelKey(): string
+            public function descriptor(): ChannelDescriptor
             {
-                return 'test_channel';
+                return new ChannelDescriptor(
+                    key: 'test_channel',
+                    label: 'Kênh test',
+                    category: 'chat',
+                    logo: '',
+                    badge: 'T',
+                    connectRouteName: null,
+                    managePermission: TenantPermission::ChannelManage,
+                );
             }
 
             public function connect(string $workspaceId, array $params): void {}

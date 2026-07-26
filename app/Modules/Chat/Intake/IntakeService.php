@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  *   channel_account_id?: string|null,
  *   channel?: string,
  *   peer_uid: string,
- *   thread_type?: int,
+ *   thread_kind?: string,
  *   peer_name?: string|null,
  *   peer_avatar?: string|null,
  *   peer_phone?: string|null,
@@ -102,8 +102,8 @@ class IntakeService
      */
     protected function upsertConversation(array $normalized): Conversation
     {
-        // P11 review MED-1: KHÔNG fallback kênh mặc định — driver quên key 'channel'
         // sẽ meter sai kênh IM LẶNG (phá per-channel). Fail-loud → webhook 422 dead-letter.
+        $threadKind = $normalized['thread_kind'] ?? Conversation::KIND_DIRECT;
         $channel = $normalized['channel'] ?? throw new \InvalidArgumentException('normalized payload thiếu key channel — driver phải set channelKey');
         $channelAccountId = $normalized['channel_account_id'] ?? null;
         $peerUid = $normalized['peer_uid'];
@@ -121,12 +121,12 @@ class IntakeService
             // (25P02) khiến re-fetch trong catch fail. DB::transaction() rollback chỉ
             // savepoint → connection còn dùng được cho re-fetch (an toàn cả khi ingest
             // chạy trong một transaction ngoài).
-            return DB::transaction(function () use ($channel, $channelAccountId, $peerUid, $normalized) {
+            return DB::transaction(function () use ($channel, $channelAccountId, $peerUid, $normalized, $threadKind) {
                 $conversation = new Conversation([
                     'channel' => $channel,
                     'channel_account_id' => $channelAccountId,
                     'peer_uid' => $peerUid,
-                    'thread_type' => $normalized['thread_type'] ?? 0,
+                    'thread_kind' => $threadKind,
                     'peer_name' => $normalized['peer_name'] ?? null,
                     'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
                     'peer_phone' => $normalized['peer_phone'] ?? null,
