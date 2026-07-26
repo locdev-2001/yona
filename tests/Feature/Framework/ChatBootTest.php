@@ -48,6 +48,7 @@ use App\Modules\Integration\IntegrationCatalog;
 use App\Modules\Integration\PaymentManager;
 use App\Services\NoteService;
 use App\Services\TagService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -283,4 +284,22 @@ it('mọi route inbox đang có vẫn resolve', function () {
         expect($registered)->toHaveKey($name);
         expect($registered[$name])->toBe($signature);
     }
+
+    // Tách file route đổi THỨ TỰ đăng ký, và thứ tự mới là thứ quyết định URI
+    // nào thắng. `GET /inbox/{conversation}` là mẫu bắt-tất; nó đăng ký trước
+    // thì `/inbox/quick-replies` rơi vào tay InboxController và FE nhận HTML
+    // thay vì JSON — không test nào ở trên bắt được, vì cả hai route vẫn tồn
+    // tại đúng tên và đúng đường dẫn.
+    $matched = Route::getRoutes()->match(
+        Request::create('/inbox/quick-replies', 'GET')
+    );
+    expect($matched->getName())->toBe('inbox.quick-replies.index');
+
+    // Đường tải ảnh của bridge KHÔNG được lọt vào group session: bridge là
+    // khách vãng lai, chỉ mang chữ ký. Kéo nó vào `auth` là gửi ảnh chết mà
+    // không có test nào khác chạm tới.
+    $raw = collect(Route::getRoutes())->first(fn ($r) => $r->getName() === 'inbox.attachments.raw');
+    expect($raw->gatherMiddleware())->toContain('signed')
+        ->and($raw->gatherMiddleware())->not->toContain('auth')
+        ->and($raw->gatherMiddleware())->not->toContain('workspace');
 });

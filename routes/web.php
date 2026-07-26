@@ -6,6 +6,9 @@ use App\Http\Controllers\Announcements\AnnouncementReadController;
 use App\Http\Controllers\Announcements\WhatsNewController;
 use App\Http\Controllers\Automation\WorkflowController;
 use App\Http\Controllers\Billing\Admin\WorkspacePlanController;
+use App\Http\Controllers\Chat\ConversationAttachmentController;
+use App\Http\Controllers\Chat\InboxController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloConnectionController;
 use App\Http\Controllers\Crm\Clients\ClientController;
 use App\Http\Controllers\Crm\Clients\ClientCustomerAdminController;
 use App\Http\Controllers\Crm\Clients\ClientGroupController;
@@ -33,18 +36,7 @@ use App\Http\Controllers\Identity\Settings\MemberController;
 use App\Http\Controllers\Identity\Settings\PasswordController;
 use App\Http\Controllers\Identity\Settings\ProfileController;
 use App\Http\Controllers\Identity\Settings\TeamController;
-use App\Http\Controllers\Chat\ConversationAssignController;
-use App\Http\Controllers\Chat\ConversationAttachmentController;
-use App\Http\Controllers\Chat\ConversationLeadController;
-use App\Http\Controllers\Chat\ConversationPanelController;
-use App\Http\Controllers\Chat\ConversationPhoneController;
-use App\Http\Controllers\Chat\ConversationStreamController;
-use App\Http\Controllers\Chat\InboxController;
-use App\Http\Controllers\Chat\InboxSettingController;
-use App\Http\Controllers\Chat\MessageInteractionController;
-use App\Http\Controllers\Chat\QuickReplyController;
 use App\Http\Controllers\Integration\IntegrationController;
-use App\Http\Controllers\Chat\ZaloPersonal\ZaloConnectionController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Projects\Projects\ProjectController;
 use App\Http\Controllers\Projects\Projects\ProjectDiscussionController;
@@ -222,59 +214,13 @@ Route::middleware(['auth'])->group(function () {
         // Zalo personal connection CRUD (QR connect / list / promote / logout).
         // auth + workspace already applied by the enclosing group. Toggle via config/integrations.php.
         if (config('integrations.zalo_personal.enabled')) {
-            Route::prefix('integrations')->name('integrations.zalo.')->group(function () {
-                Route::controller(ZaloConnectionController::class)
-                    ->prefix('zalo')
-                    ->group(function () {
-                        Route::get('/', 'index')->name('index');
-                        Route::post('/', 'store')->name('store');
-                        Route::get('/qr-status', 'qr')->name('qr');
-                        Route::post('/promote', 'promote')->name('promote');
-                        Route::delete('/{zaloConnection}', 'destroy')->name('destroy');
-                    });
-            });
+            Route::get('integrations/zalo', [ZaloConnectionController::class, 'index'])
+                ->name('integrations.zalo.index');
         }
 
-        // P07 — Inbox (channel-agnostic conversation list + send + conv→Lead).
+        // P07 — Inbox: hai trang Inertia. Mọi endpoint JSON của inbox đã sang
+        // routes/web_api.php (§0.4 — ba mặt tiền, một lõi).
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
-        Route::post('/inbox/resync', [InboxController::class, 'resync'])->name('inbox.resync');
-        Route::get('/inbox/conversations/{conversation}/messages', [InboxController::class, 'messages'])
-            ->name('inbox.messages');
-        // P05 — stream hợp nhất messages + gap marker (session_gap), keyset cursor.
-        Route::get('/inbox/conversations/{conversation}/stream', ConversationStreamController::class)
-            ->name('inbox.stream');
-        // Tin đến khi hội thoại đang mở trên màn hình → FE đánh dấu đã đọc ngay.
-        Route::post('/inbox/conversations/{conversation}/read', [InboxController::class, 'markRead'])
-            ->name('inbox.read');
-        Route::post('/inbox/conversations/{conversation}/messages', [InboxController::class, 'send'])
-            ->name('inbox.send');
-        Route::post('/inbox/conversations/{conversation}/lead', [ConversationLeadController::class, 'store'])
-            ->name('inbox.lead.store');
-        // P04 — composer media: upload multipart trước, send JSON {attachment_id} sau.
-        Route::post('/inbox/conversations/{conversation}/attachments', [ConversationAttachmentController::class, 'store'])
-            ->name('inbox.attachments.store');
-        Route::get('/inbox/attachments/{attachmentKey}', [ConversationAttachmentController::class, 'show'])
-            ->name('inbox.attachments.show');
-        // P05 — nhập tay SĐT + verify qua kênh (manual_verified).
-        Route::put('/inbox/conversations/{conversation}/phone', [ConversationPhoneController::class, 'update'])
-            ->name('inbox.phone.update');
-        // P06a — reaction (dispatcher caller đầu tiên) + sticker search.
-        Route::post('/inbox/conversations/{conversation}/messages/{message}/reaction', [MessageInteractionController::class, 'react'])
-            ->name('inbox.reaction');
-        Route::get('/inbox/conversations/{conversation}/stickers', [MessageInteractionController::class, 'stickers'])
-            ->name('inbox.stickers');
-        // P07 — tầng CRM channel-agnostic: gán, panel (label/note/member), canned replies.
-        Route::patch('/inbox/conversations/{conversation}/assign', [ConversationAssignController::class, 'update'])
-            ->name('inbox.assign');
-        Route::get('/inbox/conversations/{conversation}/panel', ConversationPanelController::class)
-            ->name('inbox.panel');
-        // P06b — seen-sync toggle (default OFF, chỉ tenant.zalo.manage).
-        Route::put('/inbox/settings/seen-sync', [InboxSettingController::class, 'updateSeenSync'])
-            ->name('inbox.settings.seen-sync');
-        Route::get('/inbox/quick-replies', [QuickReplyController::class, 'index'])->name('inbox.quick-replies.index');
-        Route::post('/inbox/quick-replies', [QuickReplyController::class, 'store'])->name('inbox.quick-replies.store');
-        Route::put('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'update'])->name('inbox.quick-replies.update');
-        Route::delete('/inbox/quick-replies/{quickReply}', [QuickReplyController::class, 'destroy'])->name('inbox.quick-replies.destroy');
         // Deep-link tới 1 hội thoại — reload-safe + share được. Cùng controller index, preselect.
         Route::get('/inbox/{conversation}', [InboxController::class, 'index'])
             ->whereUuid('conversation')
