@@ -55,8 +55,8 @@ class ConditionNodeHandler implements NodeHandler
             // Loose compare handles cross-type field values, but a null field
             // (unset attribute) must never satisfy "equals" against a falsy
             // expected value (0/""/false) — PHP's `null == 0` is true.
-            'equals' => $value !== null && $value == $expected, // @phpstan-ignore-line
-            'not_equals' => $value === null || $value != $expected, // @phpstan-ignore-line
+            'equals' => $value !== null && $value == $expected,
+            'not_equals' => $value === null || $value != $expected,
             'contains' => is_string($value) && str_contains($value, (string) $expected),
             'greater_than' => is_numeric($value) && is_numeric($expected) && $value > $expected,
             'less_than' => is_numeric($value) && is_numeric($expected) && $value < $expected,

@@ -32,11 +32,11 @@ final class MessageItemSerializer
             'media_meta' => $message->media_meta,
             'source_id' => $message->source_id,
             // Khớp stream_at của GET stream: COALESCE(platform_sent_at, created_at)
-            'platform_sent_at' => ($message->platform_sent_at ?? $message->created_at)?->toIso8601String(),
+            'platform_sent_at' => ($message->platform_sent_at ?? $message->created_at)->toIso8601String(),
             'sender_uid' => $message->sender_uid,
             'sender_name' => $message->sender_name,
             'sent_by' => $message->sent_by,
-            'created_at' => $message->created_at?->toIso8601String(),
+            'created_at' => $message->created_at->toIso8601String(),
             'recalled_at' => $message->recalled_at?->toIso8601String(),
             'delivered_at' => $message->delivered_at?->toIso8601String(),
             'seen_at' => $message->seen_at?->toIso8601String(),
