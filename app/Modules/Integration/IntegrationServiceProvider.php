@@ -2,7 +2,7 @@
 
 namespace App\Modules\Integration;
 
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloPersonalServiceProvider;
 use App\Modules\Integration\Payment\Manual\ManualPaymentServiceProvider;
 use Illuminate\Support\ServiceProvider;
 

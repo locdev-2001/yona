@@ -22,6 +22,14 @@ use App\Models\WorkspaceSequence;
 use App\Modules\Automation\Handlers\SendMessageNodeHandler;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloInteractionService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloBackfillService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloStateEventParser;
+use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
+use App\Modules\Chat\Adapter\ZaloPersonal\PromoteAccountBinder;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\InteractionPipeline;
@@ -30,24 +38,16 @@ use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\DedupConversation;
 use App\Modules\Chat\Store\GapMarkerService;
 use App\Modules\Chat\Store\PhoneEnrichmentService;
 use App\Modules\Chat\Store\SystemLineService;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
 use App\Modules\Chat\Timeline\TimelineCursor;
-use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloInteractionService;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Modules\Integration\IntegrationCatalog;
 use App\Modules\Integration\PaymentManager;
 use App\Services\NoteService;
-use App\Services\Rekey\DuplicateConversationMerger;
 use App\Services\TagService;
-use App\Services\Zalo\PromoteAccountBinder;
-use App\Services\ZaloBackfillService;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -109,7 +109,7 @@ function chatBootServices(): array
         // Mối nối cắt ngang module — không test nào khác canh chúng
         SendMessageNodeHandler::class,
         LiftPhoneFromBusinessCard::class,
-        DuplicateConversationMerger::class,
+        DedupConversation::class,
     ];
 }
 

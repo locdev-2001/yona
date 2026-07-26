@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\ZaloBackfillService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloBackfillService;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;

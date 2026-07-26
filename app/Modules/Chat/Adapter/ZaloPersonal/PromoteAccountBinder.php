@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services\Zalo;
+namespace App\Modules\Chat\Adapter\ZaloPersonal;
 
 use App\Models\ChannelAccount;
 use App\Models\ZaloConnection;
-use App\Services\Rekey\DuplicateConversationMerger;
+use App\Modules\Chat\Store\DedupConversation;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * → bật slot mới → dọn conversation trùng (nếu có). Đảo thứ tự bật/tắt va
  * partial unique P02(g) `(channel_account_id) WHERE state='connected'` → 23505.
  *
- * DuplicateConversationMerger (P02, tự chứa — không còn phụ thuộc
+ * DedupConversation (P02, tự chứa — không còn phụ thuộc
  * ZaloConversationMerger, class đó xoá ở P08) dọn nhóm (channel_account_id,
  * peer_uid) trùng nếu có: race hẹp khi inbound lỡ đến slot mới TRƯỚC khi bind
  * transaction này commit (slot chưa có channel_account_id lúc đó, upsertConversation
@@ -44,7 +44,7 @@ use Illuminate\Support\Facades\DB;
  */
 class PromoteAccountBinder
 {
-    public function __construct(private readonly DuplicateConversationMerger $duplicateMerger) {}
+    public function __construct(private readonly DedupConversation $duplicateMerger) {}
 
     /**
      * @param  array<string, mixed>  $profile  {personal_uid?, display_name?, avatar_url?}

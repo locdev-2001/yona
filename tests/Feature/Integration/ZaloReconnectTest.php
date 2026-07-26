@@ -3,7 +3,7 @@
 use App\Models\ChannelAccount;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\Zalo\PromoteAccountBinder;
+use App\Modules\Chat\Adapter\ZaloPersonal\PromoteAccountBinder;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -80,7 +80,7 @@ function makeZaloManager(Workspace $ws): User
 /**
  * Tạo conversation Zalo (key theo channel_account_id, P08) với $messageCount message
  * (source_id tuần tự). $channelAccountId mô phỏng data ĐÃ qua P02 backfill (dedup theo
- * DuplicateConversationMerger cần channel_account_id NOT NULL để tìm nhóm trùng).
+ * DedupConversation cần channel_account_id NOT NULL để tìm nhóm trùng).
  * Trả về conversation id (uuid).
  */
 function makeZaloConversation(string $workspaceId, string $peerUid, int $messageCount, string $sourcePrefix, ?string $channelAccountId = null): string

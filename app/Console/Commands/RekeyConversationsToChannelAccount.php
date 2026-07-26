@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Modules\Chat\Store\DedupConversation;
 use App\Services\Rekey\ChannelAccountBackfiller;
-use App\Services\Rekey\DuplicateConversationMerger;
 use App\Services\Rekey\LeadConflictPreflight;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,7 @@ class RekeyConversationsToChannelAccount extends Command
 
     public function handle(
         ChannelAccountBackfiller $backfiller,
-        DuplicateConversationMerger $merger,
+        DedupConversation $merger,
         LeadConflictPreflight $preflight,
     ): int {
         if ($this->option('dry-run')) {
@@ -122,7 +122,7 @@ class RekeyConversationsToChannelAccount extends Command
 
     private function runBackfill(
         ChannelAccountBackfiller $backfiller,
-        DuplicateConversationMerger $merger,
+        DedupConversation $merger,
         LeadConflictPreflight $preflight,
     ): int {
         $this->line('(a) Tạo channel_accounts: '.$backfiller->createChannelAccounts());
