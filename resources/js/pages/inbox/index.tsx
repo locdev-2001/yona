@@ -409,6 +409,19 @@ export default function InboxIndex({
                 setItems(responseData.items ?? []);
                 setNextCursor(responseData.next_cursor ?? null);
                 streamVersionRef.current = responseData.stream_version ?? null; // P09
+
+                // Hồ sơ thành viên chỉ đi kèm ở đây, KHÔNG ở danh sách hội thoại
+                // (gọi cho cả danh sách là một truy vấn mỗi hàng). Không gắn vào
+                // đây thì chuyển hội thoại xong tên người gửi trong nhóm rơi về
+                // khóa thô, và chỉ tải lại trang mới đúng.
+                setActiveConv((prev) => {
+                    if (prev?.id !== conv.id) return prev;
+
+                    const withMembers = { ...prev, members: responseData.members ?? prev.members ?? null };
+                    activeConvRef.current = withMembers;
+
+                    return withMembers;
+                });
             })
             .catch(() => showToast('Không tải được tin nhắn. Vui lòng thử lại.'))
             .finally(() => setLoadingMessages(false));
