@@ -5,11 +5,11 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SessionGapMaterializer;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
@@ -18,14 +18,14 @@ use Mockery\MockInterface;
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-function makeService(?MeteringService $meter = null): InboundMessageService
+function makeService(?MeteringService $meter = null): IntakeService
 {
-    return new InboundMessageService(
+    return new IntakeService(
         $meter ?? app(MeteringService::class),
-        app(SessionGapMaterializer::class),
-        app(MessageSourceResolver::class),
-        app(MessageStateService::class),
-        app(MessagePublisher::class),
+        app(GapMarkerService::class),
+        app(DuplicateResolver::class),
+        app(MessageStatusService::class),
+        app(BroadcastService::class),
     );
 }
 
@@ -362,7 +362,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class), app(SessionGapMaterializer::class), app(MessageSourceResolver::class), app(MessageStateService::class), app(MessagePublisher::class)) extends InboundMessageService
+    $racingService = new class(app(MeteringService::class), app(GapMarkerService::class), app(DuplicateResolver::class), app(MessageStatusService::class), app(BroadcastService::class)) extends IntakeService
     {
         private bool $firstLookup = true;
 

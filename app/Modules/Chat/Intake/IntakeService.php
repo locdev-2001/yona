@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Chat\Intake;
 
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\WorkspaceSequence;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SessionGapMaterializer;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
+use App\Services\MeteringService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -46,14 +46,14 @@ use Illuminate\Support\Facades\DB;
  *   platform_meta?: array<string, mixed>,
  * } $normalized
  */
-class InboundMessageService
+class IntakeService
 {
     public function __construct(
         private readonly MeteringService $meteringService,
-        private readonly SessionGapMaterializer $gapMaterializer,
-        private readonly MessageSourceResolver $sourceResolver,
-        private readonly MessageStateService $messageStateService,
-        private readonly MessagePublisher $messagePublisher,
+        private readonly GapMarkerService $gapMaterializer,
+        private readonly DuplicateResolver $sourceResolver,
+        private readonly MessageStatusService $messageStateService,
+        private readonly BroadcastService $messagePublisher,
     ) {}
 
     public function ingest(array $normalized): Message
@@ -87,7 +87,7 @@ class InboundMessageService
             }
         }
 
-        // --- Cache hội thoại + broadcast realtime (MessagePublisher — dùng chung outbound pipeline) ---
+        // --- Cache hội thoại + broadcast realtime (BroadcastService — dùng chung outbound pipeline) ---
         $this->messagePublisher->publish($conversation, $message, $direction, $gapMaterialized);
 
         return $message;
@@ -266,7 +266,7 @@ class InboundMessageService
     }
 
     /**
-     * P06 — replay/dedup theo source_id (P02 tách ra MessageSourceResolver dùng
+     * P06 — replay/dedup theo source_id (P02 tách ra DuplicateResolver dùng
      * chung với message-state events).
      */
     private function findExistingBySource(string $conversationId, string $sourceId): ?Message

@@ -4,9 +4,9 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -245,7 +245,7 @@ it('inbound returns 503 when DB throws QueryException (transient) so outbox retr
     $connId = createZaloConnection($ws->id, 'uid_transient');
 
     // Simulate DB error trong ingest (transient — outbox phải retry)
-    $this->mock(InboundMessageService::class, function ($mock) {
+    $this->mock(IntakeService::class, function ($mock) {
         $mock->shouldReceive('ingest')->once()->andThrow(
             new QueryException('pgsql', 'SELECT 1', [], new PDOException('connection refused'))
         );
@@ -293,7 +293,7 @@ it('inbound returns 503 when unexpected exception thrown (retry safer than drop)
     $ws = Workspace::factory()->create();
     $connId = createZaloConnection($ws->id, 'uid_unexpected');
 
-    $this->mock(InboundMessageService::class, function ($mock) {
+    $this->mock(IntakeService::class, function ($mock) {
         $mock->shouldReceive('ingest')->once()->andThrow(new RuntimeException('random crash'));
     });
 

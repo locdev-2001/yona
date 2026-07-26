@@ -5,7 +5,7 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 use Illuminate\Support\Carbon;
 
 /**
- * P02 — parse relay_event zca → DTO trung tính cho MessageStateService (Rule 16:
+ * P02 — parse relay_event zca → DTO trung tính cho MessageStatusService (Rule 16:
  * shape platform sống ở driver, core mù zca).
  *
  * TARGET per-event, KHÔNG phải 1 resolver theo envelope source_id (Codex BLK-1,

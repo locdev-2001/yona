@@ -7,11 +7,11 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Status\MessageStatusService;
 use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\OutboundSendPipeline;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -52,7 +52,7 @@ function fwIngest(string $channel, string $accountId, string $peerUid, string $s
         'platform_sent_at' => now()->toDateTimeString(),
     ]);
 
-    return app(InboundMessageService::class)->ingest($normalized);
+    return app(IntakeService::class)->ingest($normalized);
 }
 
 function fwGrantQuota(Workspace $workspace, string $channel, int $limit): void
@@ -199,7 +199,7 @@ it('state-events (recall/receipt/reaction) chạy nguyên trên kênh mock — c
 
     $accountId = (string) Str::uuid();
     $inbound = fwIngest('mock_b', $accountId, 'peer_state', 'mb_state_1');
-    $stateService = new MessageStateService(new MessageSourceResolver);
+    $stateService = new MessageStatusService(new DuplicateResolver);
 
     // Recall
     expect($stateService->applyRecall($accountId, ['target_msg_id' => 'mb_state_1']))->toBe('applied')
@@ -249,9 +249,13 @@ it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là da
     // tại, nên một đợt di dời quét qua sẽ làm gate này xanh rỗng thay vì đỏ.
     $patterns = [
         'app/Services/Inbox/*.php',
-        'app/Services/InboundMessageService.php',
+        'app/Modules/Chat/Broadcast/*.php',
+        'app/Modules/Chat/Intake/*.php',
         'app/Modules/Chat/Port/*.php',
         'app/Modules/Chat/Port/Capability/*.php',
+        'app/Modules/Chat/Status/*.php',
+        'app/Modules/Chat/Store/*.php',
+        'app/Modules/Chat/Timeline/*.php',
         'app/Http/Controllers/Inbox/*.php',
         'resources/js/components/inbox/*.ts*',
         'resources/js/pages/inbox/*.tsx',

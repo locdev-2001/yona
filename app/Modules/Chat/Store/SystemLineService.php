@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Store;
 
 use App\Events\ConversationSystemLine;
 use App\Models\Conversation;
@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
  * Idempotent: dedup_key (source_id envelope) unique partial → insertOrIgnore,
  * bridge retry không nhân đôi dòng. KHÔNG meter, KHÔNG đụng unread/preview.
  */
-class SocialEventMaterializer
+class SystemLineService
 {
     private const SYSTEM_LINE_RANK = 3; // giữa message (0) và gap marker (5)
 

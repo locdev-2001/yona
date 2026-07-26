@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Timeline;
 
 /**
  * P05 (inbox-multichannel-relayer) — encode/decode cursor keyset
  * (stream_at, stream_rank, id) cho ConversationStreamController. Cursor
  * opaque với FE — chỉ round-trip lại nguyên văn cho request trang kế.
  */
-class StreamCursor
+class TimelineCursor
 {
     public static function encode(string $streamAt, int $streamRank, string $id): string
     {

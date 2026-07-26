@@ -5,6 +5,7 @@ namespace App\Services\Inbox;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\MeteringService;
@@ -20,7 +21,7 @@ use App\Services\MeteringService;
  *  1. Policy kênh + transport + persist (driver-owned).
  *  2. meterReply — thống kê per-channel, CHỈ sau khi transport thành công, cho
  *     MỌI nguồn gửi. Tin inbound không bao giờ đi qua đây (F13/F20 ở
- *     InboundMessageService).
+ *     IntakeService).
  *  3. Publish (cache hội thoại + broadcast MessageReceived) — tab người gửi
  *     append tại chỗ, đồng nghiệp thấy realtime, stream_version sync.
  *     Fail-safe: tin ĐÃ đi platform → lỗi publish không được ném ra user.
@@ -36,7 +37,7 @@ class OutboundSendPipeline
 {
     public function __construct(
         private readonly MeteringService $meteringService,
-        private readonly MessagePublisher $messagePublisher,
+        private readonly BroadcastService $messagePublisher,
     ) {}
 
     /**

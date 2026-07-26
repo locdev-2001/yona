@@ -12,10 +12,10 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Status\MessageStatusService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -70,9 +70,9 @@ function msMessage(Conversation $conversation, string $sourceId, string $directi
     ]);
 }
 
-function msService(): MessageStateService
+function msService(): MessageStatusService
 {
-    return new MessageStateService(new MessageSourceResolver);
+    return new MessageStatusService(new DuplicateResolver);
 }
 
 // ── Recall (undo) ────────────────────────────────────────────────────────────

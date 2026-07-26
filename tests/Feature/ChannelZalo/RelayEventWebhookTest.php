@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
  * P02 (inbox-full-messaging-framework) — relay_event ĐI THEO messages, NGỪNG
  * ghi kho relay_events (bảng drop ở P09).
  *
- * - undo/seen/delivered/reaction → MessageStateService (test chi tiết:
+ * - undo/seen/delivered/reaction → MessageStatusService (test chi tiết:
  *   tests/Feature/Inbox/MessageStateTest.php)
  * - typing → broadcast-only, KHÔNG DB
  * - event LẠ → 200 + structured log, KHÔNG kho, KHÔNG drop im lặng

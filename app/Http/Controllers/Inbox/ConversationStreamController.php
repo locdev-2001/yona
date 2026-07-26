@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
-use App\Services\Inbox\MessageItemSerializer;
+use App\Modules\Chat\Timeline\MessageItemSerializer;
+use App\Modules\Chat\Timeline\TimelineCursor;
 use App\Services\Inbox\SeenSyncService;
-use App\Services\Inbox\StreamCursor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -32,7 +32,7 @@ class ConversationStreamController extends Controller
         $this->authorize('view', $conversation);
 
         $limit = min(200, max(1, (int) $request->integer('limit', self::DEFAULT_LIMIT)));
-        $cursor = StreamCursor::decode($request->string('cursor')->toString() ?: null);
+        $cursor = TimelineCursor::decode($request->string('cursor')->toString() ?: null);
 
         $messageItems = $this->fetchMessageItems($conversation->id, $cursor, $limit);
         $eventItems = $this->fetchEventItems($conversation->id, $cursor, $limit);
@@ -57,7 +57,7 @@ class ConversationStreamController extends Controller
         $nextCursor = null;
         if ($hasMore && $page->isNotEmpty()) {
             $oldest = $page->first();
-            $nextCursor = StreamCursor::encode((string) $oldest->stream_at, (int) $oldest->stream_rank, (string) $oldest->id);
+            $nextCursor = TimelineCursor::encode((string) $oldest->stream_at, (int) $oldest->stream_rank, (string) $oldest->id);
         }
 
         if ($cursor === null && $conversation->unread_count > 0) {

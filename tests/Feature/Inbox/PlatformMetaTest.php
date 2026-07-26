@@ -4,12 +4,12 @@ use App\Events\MessageReceived;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SessionGapMaterializer;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -21,14 +21,14 @@ use Illuminate\Support\Str;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function platformMetaService(): InboundMessageService
+function platformMetaService(): IntakeService
 {
-    return new InboundMessageService(
+    return new IntakeService(
         app(MeteringService::class),
-        app(SessionGapMaterializer::class),
-        app(MessageSourceResolver::class),
-        app(MessageStateService::class),
-        app(MessagePublisher::class),
+        app(GapMarkerService::class),
+        app(DuplicateResolver::class),
+        app(MessageStatusService::class),
+        app(BroadcastService::class),
     );
 }
 

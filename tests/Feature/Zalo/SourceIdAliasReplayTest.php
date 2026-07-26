@@ -5,7 +5,7 @@ use App\Models\Message;
 use App\Models\MessageSourceAlias;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\InboundMessageService;
+use App\Modules\Chat\Intake\IntakeService;
 use Illuminate\Support\Str;
 
 /**
@@ -63,7 +63,7 @@ it('spike #10: inbound whose source_id only matches an alias (not messages.sourc
         'platform_sent_at' => now()->subDay()->toDateTimeString(),
     ];
 
-    $replayed = app(InboundMessageService::class)->ingest($payload);
+    $replayed = app(IntakeService::class)->ingest($payload);
 
     // KHÔNG tạo message mới — trả về đúng row hiện có, tìm qua alias.
     expect($replayed->id)->toBe($existingMessage->id);
@@ -108,7 +108,7 @@ it('a source_id matching neither messages nor aliases still creates a new messag
         'platform_sent_at' => now()->toDateTimeString(),
     ];
 
-    app(InboundMessageService::class)->ingest($payload);
+    app(IntakeService::class)->ingest($payload);
 
     expect(Message::where('conversation_id', $conversation->id)->count())->toBe(2);
 })->group('zalo-source-id');

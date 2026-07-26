@@ -85,7 +85,7 @@ function makeZaloManager(Workspace $ws): User
  */
 function makeZaloConversation(string $workspaceId, string $peerUid, int $messageCount, string $sourcePrefix, ?string $channelAccountId = null): string
 {
-    // Default connection (transacted, RLS-bound) — khớp với InboundMessageService và
+    // Default connection (transacted, RLS-bound) — khớp với IntakeService và
     // PromoteAccountBinder trong promote(); rollback sạch sau test.
     $convId = (string) Str::uuid();
 

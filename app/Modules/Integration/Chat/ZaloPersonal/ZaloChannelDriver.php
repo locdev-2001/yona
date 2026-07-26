@@ -90,7 +90,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
     }
 
     /**
-     * Parse raw webhook payload từ bridge thành normalized shape cho InboundMessageService.
+     * Parse raw webhook payload từ bridge thành normalized shape cho IntakeService.
      *
      * Field mapping (bridge → normalized):
      *   peer_uid       = payload.peer_uid

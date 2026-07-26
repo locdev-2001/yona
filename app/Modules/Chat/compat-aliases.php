@@ -1,10 +1,19 @@
 <?php
 
+use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\AbstractChannelDriver;
 use App\Modules\Chat\Port\ChannelCapabilities;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Port\Exception\UnsupportedCapabilityException;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
+use App\Modules\Chat\Store\SystemLineService;
+use App\Modules\Chat\Timeline\MessageItemSerializer;
+use App\Modules\Chat\Timeline\TimelineCursor;
 
 /*
  * Bí danh tương thích ngược: FQCN CŨ => FQCN MỚI.
@@ -29,4 +38,15 @@ return [
     'App\Modules\Integration\Contracts\ChannelDriver' => ChannelDriver::class,
     'App\Modules\Chat\Exceptions\UnsupportedCapabilityException' => UnsupportedCapabilityException::class,
     'App\Modules\Chat\Support\AbstractChannelDriver' => AbstractChannelDriver::class,
+
+    // Cụm 2 — Intake/ · Store/ · Status/ · Timeline/ · Broadcast/
+    'App\Services\InboundMessageService' => IntakeService::class,
+    'App\Services\Inbox\MessageItemSerializer' => MessageItemSerializer::class,
+    'App\Services\Inbox\MessagePublisher' => BroadcastService::class,
+    'App\Services\Inbox\MessageSourceResolver' => DuplicateResolver::class,
+    'App\Services\Inbox\MessageStateService' => MessageStatusService::class,
+    'App\Services\Inbox\PhoneEnrichmentService' => PhoneEnrichmentService::class,
+    'App\Services\Inbox\SessionGapMaterializer' => GapMarkerService::class,
+    'App\Services\Inbox\SocialEventMaterializer' => SystemLineService::class,
+    'App\Services\Inbox\StreamCursor' => TimelineCursor::class,
 ];

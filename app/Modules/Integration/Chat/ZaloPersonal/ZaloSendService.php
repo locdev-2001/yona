@@ -266,7 +266,7 @@ class ZaloSendService
         }
 
         // P05 invariant: MỌI Message insert mới +1 stream_version (khớp
-        // InboundMessageService::createMessage) — echo bridge về sau chỉ là
+        // IntakeService::createMessage) — echo bridge về sau chỉ là
         // replay no-op theo source_id, không bump lần hai. Race-merge (echo đã
         // insert + bump trước) → KHÔNG bump lần hai.
         if ($createdNew) {

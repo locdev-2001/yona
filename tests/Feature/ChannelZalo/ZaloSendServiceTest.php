@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
@@ -15,7 +16,6 @@ use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\Inbox\MessagePublisher;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\MeteringService;
 use App\Support\TenantScope;
@@ -116,7 +116,7 @@ function makeSendService(): ZaloSendService
 /** P11 — đường outbound THẬT: pipeline (quota gate + meterReply) bọc driver. */
 function makeSendPipeline(): OutboundSendPipeline
 {
-    return new OutboundSendPipeline(app(MeteringService::class), app(MessagePublisher::class));
+    return new OutboundSendPipeline(app(MeteringService::class), app(BroadcastService::class));
 }
 
 // ── ZaloSendService: send thành công ─────────────────────────────────────────

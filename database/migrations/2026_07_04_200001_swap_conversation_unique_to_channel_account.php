@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
  * *** HOÃN — KHÔNG chạy migration này cho tới khi ***:
  *   1. P03 (outbound) đã đổi ZaloSendService::resolveConnection sang
  *      channel_account_id (nếu không, gửi tin sẽ gãy ngay khi cột bị drop).
- *   2. P06 (source_id contract) alias-lookup live trong InboundMessageService
+ *   2. P06 (source_id contract) alias-lookup live trong IntakeService
  *      (nếu không, ingest có thể tạo message trùng khi replay legacy source_id).
  * Đây là 2 điều kiện CODE (không tự query DB được) — enforce bằng thứ tự thực
  * thi plan, KHÔNG chạy `php artisan migrate` cho riêng file này sớm.

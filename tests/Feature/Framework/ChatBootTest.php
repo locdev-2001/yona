@@ -22,8 +22,17 @@ use App\Models\WorkspaceSequence;
 use App\Modules\Automation\Handlers\SendMessageNodeHandler;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
+use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Delivery\InteractionPipeline;
+use App\Modules\Chat\Intake\DuplicateResolver;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
+use App\Modules\Chat\Store\SystemLineService;
+use App\Modules\Chat\Timeline\MessageItemSerializer;
+use App\Modules\Chat\Timeline\TimelineCursor;
 use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
@@ -32,17 +41,8 @@ use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Modules\Integration\IntegrationCatalog;
 use App\Modules\Integration\PaymentManager;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessageItemSerializer;
-use App\Services\Inbox\MessagePublisher;
-use App\Services\Inbox\MessageSourceResolver;
-use App\Services\Inbox\MessageStateService;
 use App\Services\Inbox\OutboundSendPipeline;
-use App\Services\Inbox\PhoneEnrichmentService;
 use App\Services\Inbox\SeenSyncService;
-use App\Services\Inbox\SessionGapMaterializer;
-use App\Services\Inbox\SocialEventMaterializer;
-use App\Services\Inbox\StreamCursor;
 use App\Services\NoteService;
 use App\Services\Rekey\DuplicateConversationMerger;
 use App\Services\TagService;
@@ -74,17 +74,17 @@ function chatBootServices(): array
 {
     return [
         // Lõi — tiếp nhận, lưu trữ, đưa đi, trạng thái, dòng hội thoại, phát realtime
-        InboundMessageService::class,
+        IntakeService::class,
         MessageItemSerializer::class,
-        MessagePublisher::class,
-        MessageSourceResolver::class,
-        MessageStateService::class,
+        BroadcastService::class,
+        DuplicateResolver::class,
+        MessageStatusService::class,
         OutboundSendPipeline::class,
         PhoneEnrichmentService::class,
         SeenSyncService::class,
-        SessionGapMaterializer::class,
-        SocialEventMaterializer::class,
-        StreamCursor::class,
+        GapMarkerService::class,
+        SystemLineService::class,
+        TimelineCursor::class,
         InteractionPipeline::class,
 
         // Cổng cắm + sổ đăng ký
@@ -219,6 +219,14 @@ it('mọi service lõi chat resolve được từ container', function () {
 
     foreach (chatBootSingletons() as $class) {
         expect(app($class))->toBe(app($class), "Mất binding singleton: {$class}");
+    }
+
+    // Bảng bí danh gõ sai một ký tự là một no-op hoàn toàn im lặng: worker vẫn
+    // chết đúng như khi không có bảng. Bắt cả hai đầu — tên mới phải có thật, và
+    // tên cũ phải thật sự dựng lên được qua móc autoloader.
+    foreach (require base_path('app/Modules/Chat/compat-aliases.php') as $old => $new) {
+        expect(class_exists($new) || interface_exists($new))->toBeTrue("Bí danh trỏ vào hư không: {$new}");
+        expect(class_exists($old) || interface_exists($old))->toBeTrue("Bí danh không dựng được tên cũ: {$old}");
     }
 
     foreach (chatBootControllers() as $controller) {

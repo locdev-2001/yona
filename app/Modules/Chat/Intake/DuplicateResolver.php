@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Intake;
 
 use App\Models\Message;
 use App\Models\MessageSourceAlias;
@@ -11,7 +11,7 @@ use App\Models\MessageSourceAlias;
  * message-state events (per-account: event zca không mang conversation_id,
  * chỉ có msgId + connection → channel_account).
  */
-class MessageSourceResolver
+class DuplicateResolver
 {
     public function find(string $conversationId, string $sourceId): ?Message
     {

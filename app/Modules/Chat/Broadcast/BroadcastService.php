@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Broadcast;
 
 use App\Events\MessageReceived;
 use App\Models\Conversation;
@@ -9,11 +9,11 @@ use App\Models\Message;
 /**
  * Bước công bố sau khi Message đã persist — dùng chung mọi kênh, mọi hướng:
  * cập nhật cache hội thoại (last_message_at/preview, unread inbound) rồi
- * broadcast MessageReceived. Inbound (InboundMessageService) và outbound
+ * broadcast MessageReceived. Inbound (IntakeService) và outbound
  * (OutboundSendPipeline) cùng đi qua đây → FE thấy tin realtime + convList
  * đúng thứ tự + stream_version sync (P09) không phân biệt hướng.
  */
-class MessagePublisher
+class BroadcastService
 {
     /** @param array<string, mixed>|null $gapEvent */
     public function publish(Conversation $conversation, Message $message, string $direction, ?array $gapEvent = null): void

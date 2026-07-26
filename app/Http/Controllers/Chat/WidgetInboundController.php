@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * Đường vào của kênh nội bộ.
  *
  * Đi qua ĐÚNG một điểm nhập với webhook Zalo: driver dịch payload rồi
- * `InboundMessageService::ingest` lo phần còn lại. Viết đường ingest riêng "cho
+ * `IntakeService::ingest` lo phần còn lại. Viết đường ingest riêng "cho
  * nhanh" là tạo ra hai đường sẽ lệch dần khỏi nhau — khử trùng, đếm, broadcast
  * đều phải nhân đôi.
  *
@@ -27,7 +27,7 @@ class WidgetInboundController extends Controller
     public function __invoke(
         Request $request,
         ChannelRegistry $channels,
-        InboundMessageService $inbound,
+        IntakeService $inbound,
     ): JsonResponse {
         $validated = $request->validate([
             'channel_account_id' => ['required', 'uuid'],
