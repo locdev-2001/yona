@@ -240,8 +240,6 @@ export default function InboxIndex({
     const entitlements = auth.membership?.entitlements ?? null;
     const zaloLimit = entitlements?.quotas[ZALO_QUOTA_KEY] ?? null;
     const zaloRemaining = entitlements?.remaining[ZALO_QUOTA_KEY] ?? null;
-    // Chỉ gate khi có quota rõ ràng VÀ remaining = 0
-    const quotaExhausted = zaloRemaining !== null && zaloRemaining <= 0;
 
     // Sync convList khi Inertia reload conversations prop
     useEffect(() => {
@@ -573,11 +571,6 @@ export default function InboxIndex({
     // P11 — kênh không đăng ký/không hỗ trợ → all-false → nút tự ẩn (không assume Zalo)
     const caps: ChannelCaps = (activeConv && channelCapabilities[activeConv.channel]) || {};
 
-    // Review M3: quota gate composer theo KÊNH của hội thoại đang mở (không assume Zalo).
-    // Badge usage cột trái vẫn theo ZALO_QUOTA_KEY — seam đã khai trong channel-framework-contract.md.
-    const convQuotaRemaining = activeConv ? (entitlements?.remaining[`quota.conversations.${activeConv.channel}`] ?? null) : null;
-    const convQuotaExhausted = convQuotaRemaining !== null && convQuotaRemaining <= 0;
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inbox" />
@@ -654,12 +647,12 @@ export default function InboxIndex({
                             </button>
                         )}
 
-                        {/* Usage badge — chỉ hiện khi có quota data */}
+                        {/* Thống kê mức dùng — thông tin thuần, KHÔNG chặn gửi */}
                         {zaloLimit !== null && zaloRemaining !== null && (
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Hội thoại tháng này</span>
-                                <Badge variant={quotaExhausted ? 'destructive' : 'secondary'} className="text-[10px]">
-                                    {zaloLimit - zaloRemaining}/{zaloLimit}
+                                <Badge variant="secondary" className="text-[10px]">
+                                    {zaloLimit - zaloRemaining}
                                 </Badge>
                             </div>
                         )}
@@ -765,29 +758,19 @@ export default function InboxIndex({
                             {/* P03 — typing indicator: chỉ hiện khi đúng hội thoại đang mở */}
                             {typing?.convId === activeConv.id && <div className="text-muted-foreground px-4 pb-1 text-xs italic">đang nhập…</div>}
 
-                            {/* Composer — disabled khi quota KÊNH hết VÀ conversation MỚI (chưa có tin) */}
-                            {convQuotaExhausted && items.length === 0 ? (
-                                <div className="border-t p-3 text-center">
-                                    <p className="text-muted-foreground mb-2 text-xs">Đã đạt giới hạn hội thoại tháng này ({zaloLimit} hội thoại).</p>
-                                    <Button size="sm" variant="default" onClick={() => router.visit('/admin/billing/upgrade')}>
-                                        Nâng gói
-                                    </Button>
-                                </div>
-                            ) : (
-                                // key theo conversation — reset text/đính kèm khi đổi hội thoại
-                                <MessageComposer
-                                    key={activeConv.id}
-                                    conversationId={activeConv.id}
-                                    onSent={handleMessageSent}
-                                    onPending={handlePendingMessage}
-                                    onSettled={handleSendSettled}
-                                    replyTo={replyTo}
-                                    onClearReply={() => setReplyTo(null)}
-                                    peerName={activeConv.peer_name}
-                                    canSendMedia={caps.canSendMedia === true}
-                                    canSendSticker={caps.canSendSticker === true}
-                                />
-                            )}
+                            {/* key theo conversation — reset text/đính kèm khi đổi hội thoại */}
+                            <MessageComposer
+                                key={activeConv.id}
+                                conversationId={activeConv.id}
+                                onSent={handleMessageSent}
+                                onPending={handlePendingMessage}
+                                onSettled={handleSendSettled}
+                                replyTo={replyTo}
+                                onClearReply={() => setReplyTo(null)}
+                                peerName={activeConv.peer_name}
+                                canSendMedia={caps.canSendMedia === true}
+                                canSendSticker={caps.canSendSticker === true}
+                            />
                         </>
                     )}
                 </div>

@@ -1,6 +1,5 @@
 <?php
 
-use App\Exceptions\QuotaExceededException;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -15,6 +14,7 @@ use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
+use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\Inbox\MessagePublisher;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\MeteringService;
@@ -24,7 +24,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Mockery\MockInterface;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -495,34 +494,9 @@ it('promote updates ZaloConnection state to connected when bridge promote ok', f
     expect($row->state)->toBe('connected');
 })->group('channel-zalo');
 
-// ── F1-audit: ZaloSendService quota enforce ───────────────────────────────────
-
-it('F1-audit (P11): OutboundSendPipeline throws QuotaExceededException TRƯỚC khi driver được gọi', function () {
+it('gửi qua pipeline: ghi Message direction=out + đếm thống kê', function () {
     [, , $conversation] = makeWorkspaceAndConversation();
-
-    // MeteringService mock luôn throw (mô phỏng workspace hết quota, conv mới)
-    $blockingMeter = mock(MeteringService::class, function (MockInterface $m) {
-        $m->shouldReceive('assertCanSend')->andThrow(new QuotaExceededException);
-    });
-
-    $pipeline = new OutboundSendPipeline($blockingMeter, app(MessagePublisher::class));
-    $driver = new ZaloChannelDriver(makeSendService());
-
-    Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
-    Http::fake();
-
-    // Phải throw QuotaExceededException — KHÔNG gửi bridge (money-path chặn trước transport)
-    expect(fn () => $pipeline->send($driver, $conversation, ['text' => 'Hello']))
-        ->toThrow(QuotaExceededException::class);
-
-    Http::assertNothingSent();
-    expect(Message::where('conversation_id', $conversation->id)->count())->toBe(0);
-
-    Carbon::setTestNow();
-})->group('channel-zalo');
-
-it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan remaining 50)', function () {
-    [, , $conversation] = makeWorkspaceAndConversation();
+    $user = User::factory()->create();
 
     Http::fake([
         '*personal-messages/send*' => Http::response(['ok' => true, 'source_id' => 'src_f5'], 200),
@@ -530,9 +504,12 @@ it('F1-audit: ZaloSendService::send PASS khi conv mới + còn quota (free plan 
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
 
-    // MeteringService: conv mới + free plan còn quota → assertCanSend pass → gửi được
     $driver = new ZaloChannelDriver(makeSendService());
-    $message = makeSendPipeline()->send($driver, $conversation, ['text' => 'Reply F5']);
+    $message = makeSendPipeline()->send(
+        $driver,
+        $conversation,
+        OutboundMessage::text('Reply F5'),
+    );
 
     expect($message)->toBeInstanceOf(Message::class)
         ->and($message->direction)->toBe('out');

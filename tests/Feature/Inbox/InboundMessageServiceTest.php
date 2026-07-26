@@ -61,8 +61,6 @@ it('F13/F20: ingest ghi Conversation+Message và dispatch MessageReceived kể c
     // Gate throw bất kỳ exception — simulates billing crash
     $throwingGate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldReceive('meterReply')->andThrow(new RuntimeException('Billing dead'));
-        $m->shouldReceive('canStartNew')->andReturn(true);
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true);
     });
 
     $payload = basePayload();
@@ -93,8 +91,6 @@ it('F1/F14: direction=in → KHÔNG gọi meterReply', function () {
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -115,8 +111,6 @@ it('F1/F14: direction=out → gọi meterReply đúng 1 lần', function () {
             ->andReturnUsing(function () use (&$meterCallCount) {
                 $meterCallCount++;
             });
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -134,8 +128,6 @@ it('F14: direction=echo → KHÔNG gọi meterReply', function () {
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();
@@ -151,8 +143,6 @@ it('F14: thiếu direction field → default in → KHÔNG gọi meterReply', fu
 
     $gate = mock(MeteringService::class, function (MockInterface $m) {
         $m->shouldNotReceive('meterReply');
-        $m->shouldReceive('canStartNew')->andReturn(true)->byDefault();
-        $m->shouldReceive('canReplyOnExisting')->andReturn(true)->byDefault();
     });
 
     $payload = basePayload();

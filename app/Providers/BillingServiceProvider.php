@@ -27,9 +27,9 @@ class BillingServiceProvider extends ServiceProvider
     {
         $this->app->singleton(EntitlementService::class, fn () => new EntitlementService);
 
-        $this->app->singleton(MeteringService::class, function ($app) {
-            return new MeteringService($app->make(EntitlementService::class));
-        });
+        // MeteringService là bộ đếm thuần, không phụ thuộc entitlements
+        // (không còn gate hạn mức — xem docblock MeteringService).
+        $this->app->singleton(MeteringService::class, fn () => new MeteringService);
     }
 
     public function boot(): void
