@@ -8,6 +8,7 @@ use App\Models\PipelineStage;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
 
 // ── conv→Lead: happy path ─────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ it('store creates a Lead from a Conversation (source=Zalo, 2-way link)', functio
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'sender_uid' => 'zalo_uid_lead_001',
-        'peer_name' => 'Nguyễn Văn A',
+        'thread_name' => 'Nguyễn Văn A',
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -133,8 +134,7 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'sender_uid' => 'zalo_uid_phone_1',
-        'peer_phone' => $sharedPhone,
-        'peer_name' => 'Khách A',
+        'thread_name' => 'Khách A',
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -143,11 +143,16 @@ it('two conversations with same peer_phone resolve to the same Contact', functio
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'sender_uid' => 'zalo_uid_phone_2',
-        'peer_phone' => $sharedPhone,
-        'peer_name' => 'Khách A (dup)',
+        'thread_name' => 'Khách A (dup)',
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
+
+    // Số điện thoại nay sống ở bí danh, không phải một cột trên hội thoại — đi
+    // đúng đường mà sản phẩm đi: học được số rồi mới tạo Lead.
+    $enrichment = app(PhoneEnrichmentService::class);
+    $enrichment->applyPhone($conv1, $sharedPhone, 'manual_verified', now());
+    $enrichment->applyPhone($conv2, $sharedPhone, 'manual_verified', now());
 
     $r1 = $this->postJson(route('inbox.lead.store', $conv1->id));
     $r1->assertOk();

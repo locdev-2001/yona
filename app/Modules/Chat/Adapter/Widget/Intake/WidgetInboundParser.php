@@ -31,9 +31,9 @@ class WidgetInboundParser
                 ? (string) $raw['channel_account_id']
                 : null,
             'thread_uid' => (string) ($raw['visitor_id'] ?? $raw['sender_uid'] ?? ''),
-            'peer_name' => $raw['visitor_name'] ?? null,
-            'peer_avatar' => null,
-            'peer_phone' => null,
+            'thread_name' => $raw['visitor_name'] ?? null,
+            'thread_avatar' => null,
+            'sender_phone' => null,
             'thread_kind' => Conversation::KIND_DIRECT, // kênh nội bộ chỉ có 1-1
             'direction' => 'in',
             'source_id' => isset($raw['source_id']) ? (string) $raw['source_id'] : null,

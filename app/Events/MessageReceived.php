@@ -53,10 +53,11 @@ class MessageReceived implements ShouldBroadcast
             // trong thread → FE dedup theo id bỏ qua, không ghi đè reactions thật.
             'message' => MessageItemSerializer::fromModel($message),
             'conversation_id' => $message->conversation_id,
-            // Hồ sơ người gửi (nhóm) — FE merge vào participants map của conversation
+            // Hồ sơ người gửi trong nhóm — lấy thẳng từ tin, không từ một bản
+            // sao nào: tên trong tin là tên tại thời điểm gửi.
             // đang mở, tránh initials fallback khi thành viên mới nhắn lần đầu realtime.
             'sender_participant' => $message->sender_uid !== null
-                ? (($conversation?->participants ?? [])[$message->sender_uid] ?? null)
+                ? array_filter(['name' => $message->sender_name]) ?: null
                 : null,
             'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
             'unread_count' => $conversation ? $conversation->unread_count : 0,

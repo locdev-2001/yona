@@ -75,7 +75,7 @@ class ConversationPhoneController extends Controller
 
         return response()->json([
             'ok' => true,
-            'peer_phone' => $conversation->peer_phone,
+            'sender_phone' => $conversation->senderPhone(),
             'phone_source' => $conversation->phone_source,
             'contact_id' => $conversation->contact_id,
         ]);

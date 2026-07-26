@@ -43,10 +43,11 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     // P06a — chỉ tin có platform metadata mới quote/react được (tin cũ: disable trung thực)
     const canInteract = !recalled && msg.quotable === true;
 
-    // Group → per-sender profile từ participants map (upsert từ tin live, áp hồi tố cho tin backfill); 1-1 → peer.
-    const participant = group && msg.sender_uid ? peer.participants?.[msg.sender_uid] : null;
-    const senderName = group ? (msg.sender_name ?? participant?.name ?? peer.peer_name) : peer.peer_name;
-    const senderAvatar = group ? (participant?.avatar ?? null) : peer.peer_avatar_url;
+    // Nhóm: tên người gửi đi kèm trong chính tin nhắn — tên tại thời điểm gửi,
+    // không phải tên hiện tại của họ.
+    const participant = group && msg.sender_name ? { name: msg.sender_name, avatar: null } : null;
+    const senderName = group ? (msg.sender_name ?? participant?.name ?? peer.thread_name) : peer.thread_name;
+    const senderAvatar = group ? (participant?.avatar ?? null) : peer.thread_avatar;
 
     return (
         <div className={cn('group flex w-full gap-2', mine ? 'justify-end' : 'justify-start')}>

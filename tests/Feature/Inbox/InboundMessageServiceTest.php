@@ -46,7 +46,7 @@ function basePayload(string $senderUid = 'peer_001', ?string $channelAccountId =
         'channel' => 'zalo_personal',
         'thread_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Nguyễn Test',
+        'thread_name' => 'Nguyễn Test',
         'direction' => 'in',
         'type' => 'text',
         'body' => 'Xin chào!',
@@ -385,7 +385,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     };
 
     $payload = basePayload($senderUid, $channelAccountId);
-    $payload['peer_name'] = 'Khách Race';
+    $payload['thread_name'] = 'Khách Race';
     $payload['source_id'] = 'msg_race_001';
 
     // Không được throw — catch 23505 → re-fetch
@@ -402,7 +402,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     expect($convCount)->toBe(1); // không duplicate
 
     // peer-info update của existing-row path được áp dụng sau re-fetch
-    expect($existing->fresh()->peer_name)->toBe('Khách Race');
+    expect($existing->fresh()->thread_name)->toBe('Khách Race');
 });
 
 // ── Thành viên luồng: ai đang ở trong hội thoại nào ──────────────────────────
@@ -447,7 +447,7 @@ it('luồng nhóm KHÔNG đẻ danh tính cho uid của nhóm', function () {
 
     $payload = basePayload('group_no_identity');
     $payload['thread_kind'] = 'group';
-    $payload['peer_name'] = 'Nhóm Dev';
+    $payload['thread_name'] = 'Nhóm Dev';
     $payload['sender_uid'] = 'uid_member';
 
     $message = makeService()->ingest($payload);
@@ -469,7 +469,7 @@ it('luồng 1-1 gắn thẳng vào hồ sơ', function () {
     actingInWorkspace($ws, $user);
 
     $payload = basePayload('khach_1_1');
-    $payload['peer_name'] = 'Chị Lan';
+    $payload['thread_name'] = 'Chị Lan';
 
     $message = makeService()->ingest($payload);
     $conversation = Conversation::find($message->conversation_id);

@@ -8,6 +8,7 @@ use App\Http\Requests\Chat\SendMessageRequest;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\ProfileIdentity;
 use App\Modules\Chat\Delivery\ComposeMessageInput;
 use App\Modules\Chat\Delivery\ComposeMessageService;
 use App\Modules\Chat\Delivery\DeliveryPipeline;
@@ -54,9 +55,13 @@ class InboxController extends Controller
 
         if ($search = $request->string('q')->toString()) {
             $query->where(function ($q) use ($search) {
-                $q->where('peer_name', 'ilike', '%'.$search.'%')
-                    ->orWhere('peer_phone', 'ilike', '%'.$search.'%')
-                    ->orWhere('sender_uid', 'ilike', '%'.$search.'%');
+                // Tên hiển thị của luồng, khóa thô, hoặc bất kỳ bí danh nào của
+                // người trong luồng — số điện thoại nay sống ở bí danh.
+                $q->where('thread_name', 'ilike', '%'.$search.'%')
+                    ->orWhere('sender_uid', 'ilike', '%'.$search.'%')
+                    ->orWhereIn('profile_id', ProfileIdentity::query()
+                        ->where('value', 'ilike', '%'.$search.'%')
+                        ->select('profile_id'));
             });
         }
 

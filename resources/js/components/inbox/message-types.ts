@@ -169,12 +169,11 @@ export interface ChatParticipant {
 /** The peer side of a thread — a Conversation is structurally compatible. */
 export interface ChatPeer {
     sender_uid: string;
-    peer_name: string | null;
-    peer_phone: string | null;
-    peer_avatar_url?: string | null;
+    thread_name: string | null;
+    sender_phone: string | null;
+    thread_avatar?: string | null;
     thread_kind: string; // 'direct' | 'group'
     /** Group threads: sender_uid → profile (avatar/tên per-sender). */
-    participants?: Record<string, ChatParticipant> | null;
 }
 
 /** Outbound = anything the connected account sent — portal ('out') OR own phone ('echo'). Only 'in' is the peer. */

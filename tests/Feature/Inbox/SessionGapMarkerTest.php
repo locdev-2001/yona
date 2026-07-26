@@ -32,7 +32,7 @@ function gapPayload(string $channelAccountId, string $senderUid, ?string $platfo
         'channel_account_id' => $channelAccountId,
         'thread_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Peer Gap',
+        'thread_name' => 'Peer Gap',
         'direction' => 'in',
         'type' => 'text',
         'body' => 'tin',

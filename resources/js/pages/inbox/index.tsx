@@ -40,11 +40,10 @@ interface Conversation {
     id: string;
     channel: string;
     sender_uid: string;
-    peer_name: string | null;
-    peer_avatar_url: string | null;
-    peer_phone: string | null;
+    thread_name: string | null;
+    thread_avatar: string | null;
+    sender_phone: string | null;
     thread_kind: string;
-    participants: Record<string, ChatParticipant> | null;
     unread_count: number;
     last_message_at: string | null;
     last_message_preview: string | null;
@@ -308,14 +307,9 @@ export default function InboxIndex({
                     return [...next, { ...message, item_type: 'message' as const }];
                 });
 
-                // Merge hồ sơ người gửi (nhóm) — thành viên mới nhắn lần đầu có avatar ngay, không chờ reload
-                const senderProfile = payload.sender_participant;
-                if (!senderProfile || !message.sender_uid) return current;
-                const known = current.participants?.[message.sender_uid];
-                if (known && known.name === senderProfile.name && known.avatar === senderProfile.avatar) return current;
-                const merged = { ...current, participants: { ...current.participants, [message.sender_uid]: senderProfile } };
-                activeConvRef.current = merged;
-                return merged;
+                // Tên người gửi trong nhóm đi kèm ngay trong tin — không còn bản
+                // sao nào trên hội thoại để phải trộn vào.
+                return current;
             });
 
             // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước).
@@ -537,7 +531,7 @@ export default function InboxIndex({
         setReplyTo({
             id: msg.id,
             text: msg.body ?? `[${msg.type}]`,
-            senderName: msg.direction === 'in' ? (msg.sender_name ?? activeConv?.peer_name ?? 'Khách') : 'Bạn',
+            senderName: msg.direction === 'in' ? (msg.sender_name ?? activeConv?.thread_name ?? 'Khách') : 'Bạn',
         });
     }
 
@@ -564,8 +558,8 @@ export default function InboxIndex({
                     return;
                 }
                 setPhoneInput('');
-                setActiveConv((prev) => (prev ? { ...prev, peer_phone: json.peer_phone, contact_id: json.contact_id ?? prev.contact_id } : prev));
-                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, peer_phone: json.peer_phone } : c)));
+                setActiveConv((prev) => (prev ? { ...prev, sender_phone: json.sender_phone, contact_id: json.contact_id ?? prev.contact_id } : prev));
+                setConvList((prev) => prev.map((c) => (c.id === activeConv.id ? { ...c, sender_phone: json.sender_phone } : c)));
             })
             .catch(() => setPhoneError('Không kết nối được server.'))
             .finally(() => setPhoneSaving(false));
@@ -696,10 +690,10 @@ export default function InboxIndex({
                                 onClick={() => handleSelectConv(conv)}
                             >
                                 <div className="flex items-center gap-3">
-                                    <ChatAvatar name={conv.peer_name ?? conv.sender_uid} src={conv.peer_avatar_url} className="h-9 w-9 shrink-0" />
+                                    <ChatAvatar name={conv.thread_name ?? conv.sender_uid} src={conv.thread_avatar} className="h-9 w-9 shrink-0" />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-sm font-medium">{conv.peer_name ?? conv.peer_phone ?? conv.sender_uid}</span>
+                                            <span className="truncate text-sm font-medium">{conv.thread_name ?? conv.sender_phone ?? conv.sender_uid}</span>
                                             {conv.unread_count > 0 && (
                                                 <Badge variant="default" className="h-4 min-w-4 shrink-0 px-1 text-[10px]">
                                                     {conv.unread_count}
@@ -756,12 +750,12 @@ export default function InboxIndex({
                     ) : (
                         <>
                             <div className="flex items-center gap-2 border-b px-4 py-2">
-                                <ChatAvatar name={activeConv.peer_name ?? activeConv.sender_uid} src={activeConv.peer_avatar_url} />
+                                <ChatAvatar name={activeConv.thread_name ?? activeConv.sender_uid} src={activeConv.thread_avatar} />
                                 <div className="min-w-0">
                                     <div className="truncate text-sm font-medium">
-                                        {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.sender_uid}
+                                        {activeConv.thread_name ?? activeConv.sender_phone ?? activeConv.sender_uid}
                                     </div>
-                                    {activeConv.peer_phone && <div className="text-muted-foreground text-xs">{activeConv.peer_phone}</div>}
+                                    {activeConv.sender_phone && <div className="text-muted-foreground text-xs">{activeConv.sender_phone}</div>}
                                 </div>
                             </div>
 
@@ -788,7 +782,7 @@ export default function InboxIndex({
                                 onSettled={handleSendSettled}
                                 replyTo={replyTo}
                                 onClearReply={() => setReplyTo(null)}
-                                peerName={activeConv.peer_name}
+                                peerName={activeConv.thread_name}
                                 canSendMedia={caps.canSendMedia === true}
                                 canSendSticker={caps.canSendSticker === true}
                             />
@@ -802,16 +796,16 @@ export default function InboxIndex({
                         <div className="space-y-4 p-4">
                             <div className="text-center">
                                 <ChatAvatar
-                                    name={activeConv.peer_name ?? activeConv.sender_uid}
-                                    src={activeConv.peer_avatar_url}
+                                    name={activeConv.thread_name ?? activeConv.sender_uid}
+                                    src={activeConv.thread_avatar}
                                     className="mx-auto mb-2 h-12 w-12"
                                 />
-                                <p className="text-sm font-medium">{activeConv.peer_name ?? 'Không rõ tên'}</p>
-                                {activeConv.peer_phone && <p className="text-muted-foreground text-xs">{activeConv.peer_phone}</p>}
+                                <p className="text-sm font-medium">{activeConv.thread_name ?? 'Không rõ tên'}</p>
+                                {activeConv.sender_phone && <p className="text-muted-foreground text-xs">{activeConv.sender_phone}</p>}
                             </div>
 
                             {/* P05 — nhập tay SĐT + verify (chỉ 1-1, chưa có SĐT) */}
-                            {activeConv.thread_kind !== 'group' && !activeConv.peer_phone && (
+                            {activeConv.thread_kind !== 'group' && !activeConv.sender_phone && (
                                 <div className="space-y-1">
                                     <div className="flex gap-1">
                                         <Input
