@@ -23,25 +23,30 @@ export function ConnectionBanner({ accounts, descriptors }: { accounts: ChannelA
                 const descriptor = descriptorFor(descriptors, acc.channel);
 
                 return (
-                <Alert key={acc.id} variant={acc.status === 'session_lost' ? 'destructive' : 'default'} className="rounded-none border-x-0 px-3 py-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                        <span>
-                            Tài khoản <strong>{acc.display_name ?? descriptor.label}</strong>{' '}
-                            {acc.status === 'session_lost' ? 'mất kết nối. Tin nhắn mới có thể chưa nhận được.' : 'chưa kết nối.'} Cần quét lại QR.
-                        </span>
-                        {descriptor.connectRouteName && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="ml-3 h-7 shrink-0"
-                                onClick={() => router.visit(route(descriptor.connectRouteName!))}
-                            >
-                                Kết nối lại
-                            </Button>
-                        )}
-                    </AlertDescription>
-                </Alert>
+                    <Alert
+                        key={acc.id}
+                        variant={acc.status === 'session_lost' ? 'destructive' : 'default'}
+                        className="rounded-none border-x-0 px-3 py-2"
+                    >
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="flex items-center justify-between">
+                            <span>
+                                Tài khoản <strong>{acc.display_name ?? descriptor.label}</strong>{' '}
+                                {acc.status === 'session_lost' ? 'mất kết nối. Tin nhắn mới có thể chưa nhận được.' : 'chưa kết nối.'} Cần quét lại
+                                QR.
+                            </span>
+                            {descriptor.connectRouteName && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="ml-3 h-7 shrink-0"
+                                    onClick={() => router.visit(route(descriptor.connectRouteName!))}
+                                >
+                                    Kết nối lại
+                                </Button>
+                            )}
+                        </AlertDescription>
+                    </Alert>
                 );
             })}
         </>
