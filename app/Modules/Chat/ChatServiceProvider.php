@@ -2,6 +2,8 @@
 
 namespace App\Modules\Chat;
 
+use App\Http\Support\RoutedMediaUrlFactory;
+use App\Modules\Chat\Delivery\MediaUrlFactory;
 use App\Modules\Chat\Port\ChannelRegistry;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +23,10 @@ class ChatServiceProvider extends ServiceProvider
         // Sổ đăng ký kênh sống ở đây chứ không ở provider của phích cắm nào: nó
         // phải tồn tại kể cả khi không có phích cắm ngoài nào được bật.
         $this->app->singleton(ChannelRegistry::class, fn ($app) => new ChannelRegistry($app));
+
+        // Cài đặt sống ở tầng biên vào: dựng URL là việc của HTTP, module chỉ
+        // biết cái cổng.
+        $this->app->bind(MediaUrlFactory::class, RoutedMediaUrlFactory::class);
     }
 
     /**

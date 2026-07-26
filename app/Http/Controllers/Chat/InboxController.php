@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Chat;
 use App\Contracts\SendException;
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
-use App\Models\Attachment;
+use App\Http\Requests\Chat\SendMessageRequest;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Delivery\ComposeMessageInput;
+use App\Modules\Chat\Delivery\ComposeMessageService;
 use App\Modules\Chat\Delivery\DeliveryPipeline;
-use App\Modules\Chat\Delivery\OutboundMessage;
+use App\Modules\Chat\Delivery\Exception\ComposeMessageException;
 use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
 use App\Modules\Chat\Port\ChannelRegistry;
@@ -18,7 +20,6 @@ use App\Modules\Chat\Timeline\MessageItemSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -198,76 +199,20 @@ class InboxController extends Controller
      * Gửi outbound qua ChannelRegistry (channel-agnostic).
      * Driver wrap exceptions thành SendException.
      */
-    public function send(Request $request, Conversation $conversation): JsonResponse
+    public function send(SendMessageRequest $request, Conversation $conversation): JsonResponse
     {
         $this->authorize('update', $conversation);
 
-        $validated = $request->validate([
-            'text' => ['nullable', 'string', 'max:5000'],
-            'attachment_id' => ['nullable', 'uuid'],
-            // P06a — quote-reply + sticker
-            'reply_to_message_id' => ['nullable', 'uuid'],
-            'sticker' => ['nullable', 'array'],
-            'sticker.id' => ['required_with:sticker', 'integer', 'min:1'],
-            'sticker.cate_id' => ['required_with:sticker', 'integer', 'min:0'],
-            'sticker.type' => ['nullable', 'integer'],
-            'sticker.url' => ['nullable', 'url:http,https'],
-            'sticker.thumbnail' => ['nullable', 'url:http,https'],
-        ]);
-
-        $text = isset($validated['text']) ? trim((string) $validated['text']) : '';
-
-        // P06a — reply: tin gốc phải thuộc đúng conversation này
-        $replyTo = null;
-        if (! empty($validated['reply_to_message_id'])) {
-            $replyTo = Message::where('id', $validated['reply_to_message_id'])
-                ->where('conversation_id', $conversation->id)
-                ->firstOrFail();
-
-            if ($text === '') {
-                return response()->json(['message' => 'Trả lời trích dẫn cần nội dung text.'], 422);
-            }
-
-            // Review LOW-1: bridge nhánh file không gắn quote → khách KHÔNG thấy trích
-            // dẫn dù portal hiển thị. Chặn trung thực thay vì drop im lặng.
-            if (! empty($validated['attachment_id'])) {
-                return response()->json(['message' => 'Chưa hỗ trợ trả lời trích dẫn kèm tệp — gửi tách 2 tin.'], 422);
-            }
-        }
-
-        $sticker = $validated['sticker'] ?? null;
-
-        // P04 — media: resolve attachment đã upload (phải thuộc đúng conversation này).
-        $media = null;
-        if (! empty($validated['attachment_id'])) {
-            $attachment = Attachment::where('id', $validated['attachment_id'])
-                ->where('attachable_type', 'conversation')
-                ->where('attachable_id', $conversation->id)
-                ->firstOrFail();
-
-            $media = [
-                // Bridge fetch: signed URL TTL ngắn (A3 — private disk, không public).
-                'file_url' => URL::temporarySignedRoute('inbox.attachments.raw', now()->addMinutes(15), [
-                    'attachmentKey' => $attachment->attachment_key,
-                    'ws' => $conversation->workspace_id,
-                ]),
-                // Hiển thị chat: URL bền, quyền = xem conversation (không hết hạn).
-                'display_url' => route('inbox.attachments.show', $attachment->attachment_key),
-                'media_kind' => $attachment->mediaKind(),
-                'filename' => $attachment->original_name,
-                'attachment_id' => $attachment->id,
-            ];
-        }
-
-        $outbound = new OutboundMessage(
-            text: $text !== '' ? $text : null,
-            media: $media,
-            sticker: $sticker,
-            replyTo: $replyTo,
-        );
-
-        if ($outbound->isEmpty()) {
-            return response()->json(['message' => 'Nội dung không được để trống.'], 422);
+        try {
+            $outbound = app(ComposeMessageService::class)->compose(
+                $conversation,
+                ComposeMessageInput::fromValidated($request->validated()),
+            );
+        } catch (ComposeMessageException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error_code' => $e->errorCode,
+            ], 422);
         }
 
         try {
