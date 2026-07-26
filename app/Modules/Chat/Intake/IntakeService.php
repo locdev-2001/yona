@@ -50,10 +50,10 @@ class IntakeService
 {
     public function __construct(
         private readonly MeteringService $meteringService,
-        private readonly GapMarkerService $gapMaterializer,
+        private readonly GapMarkerService $gapMarker,
         private readonly DuplicateResolver $sourceResolver,
         private readonly MessageStatusService $messageStateService,
-        private readonly BroadcastService $messagePublisher,
+        private readonly BroadcastService $broadcast,
     ) {}
 
     public function ingest(array $normalized): Message
@@ -73,7 +73,7 @@ class IntakeService
         $direction = $normalized['direction'] ?? 'in';
 
         // --- P05: gap marker TRƯỚC khi message post-gap "visible" (chokepoint) ---
-        $gapMaterialized = $this->gapMaterializer->materializeIfNeeded($conversation, $normalized['platform_sent_at'] ?? null);
+        $gapMarked = $this->gapMarker->materializeIfNeeded($conversation, $normalized['platform_sent_at'] ?? null);
 
         // --- Upsert Message (idempotent per source_id) ---
         $message = $this->upsertMessage($conversation, $normalized, $direction);
@@ -88,7 +88,7 @@ class IntakeService
         }
 
         // --- Cache hội thoại + broadcast realtime (BroadcastService — dùng chung outbound pipeline) ---
-        $this->messagePublisher->publish($conversation, $message, $direction, $gapMaterialized);
+        $this->broadcast->publish($conversation, $message, $direction, $gapMarked);
 
         return $message;
     }
