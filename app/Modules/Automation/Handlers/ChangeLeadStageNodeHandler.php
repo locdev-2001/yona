@@ -35,7 +35,10 @@ class ChangeLeadStageNodeHandler implements NodeHandler
 
         $lead = $run->subject();
 
-        if ($lead === null) {
+        // Kiểm KIỂU chứ không chỉ kiểm chuỗi `subject_type`: quan hệ morph trỏ
+        // đi đâu là do dữ liệu quyết, và một hàng hỏng sẽ đưa vào đây thứ không
+        // phải Lead.
+        if (! $lead instanceof Lead) {
             return NodeHandlerResult::skipped('lead not found', branch: null);
         }
 
