@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Chat\Adapter\Native;
+namespace App\Modules\Chat\Adapter\Widget;
 
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Chat\Adapter\Native\Intake\NativeInboundParser;
+use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Support\AbstractChannelDriver;
@@ -18,14 +18,14 @@ use Illuminate\Support\Str;
  * driver thì xử khác đi", đó chính là rẽ nhánh theo kênh trong lõi — vi phạm
  * thẳng luật bất biến #1.
  *
- * Một `channel_accounts` với `channel='native'` = một widget (xem P7). Nhiều
+ * Một `channel_accounts` với `channel='widget'` = một widget (xem P7). Nhiều
  * widget mỗi workspace là chuyện bình thường, khóa unique sẵn có đã cho.
  */
-class NativeChannelDriver extends AbstractChannelDriver
+class WidgetChannelDriver extends AbstractChannelDriver
 {
-    public const KEY = 'native';
+    public const KEY = 'widget';
 
-    public function __construct(private readonly NativeInboundParser $parser) {}
+    public function __construct(private readonly WidgetInboundParser $parser) {}
 
     public function channelKey(): string
     {
@@ -63,7 +63,7 @@ class NativeChannelDriver extends AbstractChannelDriver
             'direction' => 'out',
             'type' => 'text',
             'body' => $body,
-            'source_id' => 'native_'.Str::uuid()->toString(),
+            'source_id' => 'widget_'.Str::uuid()->toString(),
             'platform_sent_at' => now(),
             'sent_by' => $payload['sent_by'] ?? null,
         ]);

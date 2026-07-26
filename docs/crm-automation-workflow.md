@@ -94,7 +94,7 @@ Nguyên tắc: mỗi layer chỉ gọi xuống layer ngay dưới. Thêm node-ty
 - Node điều kiện: 2 output (Đúng/Sai); field khả dụng tùy subject_type (xem Node Handler registry).
 - Đã build thử 1 demo tương tác (vanilla JS, local only) để duyệt UX kéo-thả — không phải bản implementation thật.
 
-## Rejected alternatives
+## Rejected alterwidgets
 
 - 2 engine song song (rule phẳng riêng + workflow canvas riêng) — gộp thành 1 (rule = graph 3 node), tránh trùng lặp maintain.
 - Package rule-engine/business-rules ngoài, hoặc statechart lib (kiểu XState) cho graph walk — `Manager` pattern + vòng lặp `while` tự viết đã đủ ở quy mô này.

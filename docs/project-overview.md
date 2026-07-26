@@ -52,7 +52,7 @@ Yona là một **Conversational CRM & Automation đa người thuê (multi-tenan
 | Backend | Laravel 13, PHP 8.4 |
 | Database | PostgreSQL 16+ (JSONB + GIN index, Row-Level Security, 2 role/2 connection) |
 | Frontend | Inertia 3 + React 19 + TypeScript 5.7 |
-| UI | Tailwind CSS v4 + Radix UI (shadcn-style) + lucide-react; **drag-drop dùng HTML5 native** |
+| UI | Tailwind CSS v4 + Radix UI (shadcn-style) + lucide-react; **drag-drop dùng HTML5 widget** |
 | Data/state | TanStack Query + TanStack Table v8 · date-fns |
 | Phân quyền | spatie/laravel-permission v8 (team-aware: `team_foreign_key = workspace_id`) + Policies |
 | Realtime | Laravel Reverb — realtime inbox (Echo private channel per-workspace) |

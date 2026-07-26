@@ -15,16 +15,16 @@ use Symfony\Component\HttpFoundation\Response;
  * Chưa cấu hình secret ⇒ từ chối. Không cho chuỗi rỗng khớp chuỗi rỗng: một
  * biến môi trường quên đặt sẽ biến endpoint này thành cửa mở toang.
  *
- * Alias: native.channel.secret
+ * Alias: widget.channel.secret
  */
-class VerifyNativeChannelSecret
+class VerifyWidgetChannelSecret
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $expected = config('integrations.native.inbound_secret', '');
+        $expected = config('integrations.widget.inbound_secret', '');
 
         if ($expected === '' || $expected === null) {
-            abort(401, 'Native channel secret not configured.');
+            abort(401, 'Widget channel secret not configured.');
         }
 
         $provided = $request->header('X-Yona-Channel-Secret', '');

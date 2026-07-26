@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Chat\Adapter\Native\Intake;
+namespace App\Modules\Chat\Adapter\Widget\Intake;
 
-use App\Modules\Chat\Adapter\Native\NativeChannelDriver;
+use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 
 /**
@@ -13,7 +13,7 @@ use App\Modules\Chat\Delivery\Event\OutboundEvent;
  * shape rồi" là mở ra đường ingest thứ hai, và đường thứ hai luôn lệch dần khỏi
  * đường thứ nhất.
  */
-class NativeInboundParser
+class WidgetInboundParser
 {
     /**
      * @param  array<string, mixed>  $raw
@@ -25,7 +25,7 @@ class NativeInboundParser
         $body = $raw['body'] ?? ($events === [] ? null : OutboundEvent::flatten($events));
 
         return [
-            'channel' => NativeChannelDriver::KEY,
+            'channel' => WidgetChannelDriver::KEY,
             'channel_account_id' => isset($raw['channel_account_id']) && $raw['channel_account_id'] !== ''
                 ? (string) $raw['channel_account_id']
                 : null,
