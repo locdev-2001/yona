@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Integration;
+namespace App\Http\ViewModels;
 
 use App\Models\ZaloConnection;
 

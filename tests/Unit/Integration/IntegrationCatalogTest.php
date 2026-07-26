@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\ViewModels\IntegrationCatalog;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\IntegrationCatalog;
 use Tests\TestCase;
 
 uses(TestCase::class);

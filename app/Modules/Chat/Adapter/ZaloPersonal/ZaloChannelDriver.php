@@ -28,7 +28,7 @@ use Illuminate\Support\Collection;
 /**
  * Channel driver cho Zalo cá nhân (zca-js bridge).
  *
- * Implements ChannelDriver contract (App\Modules\Integration) — inbox core không import class này.
+ * Cài hợp đồng ChannelDriver ở Port/ — lõi không import class này.
  * Đăng ký qua ChannelRegistry::extend('zalo_personal', ...) trong ZaloPersonalServiceProvider.
  *
  * D-2 (outbound/QR/send): sendMessage → ZaloSendService.

@@ -50,8 +50,6 @@ use Throwable;
  */
 class ZaloPersonalWebhookController extends Controller
 {
-    // Internal-first: ChannelRegistry (app/Modules/Integration/) resolve lazily trong
-    // handleInbound — KHÔNG inject qua constructor để route:list không fatal khi xóa Integration.
     public function __construct(
         private readonly IntakeService $inboundMessageService,
     ) {}

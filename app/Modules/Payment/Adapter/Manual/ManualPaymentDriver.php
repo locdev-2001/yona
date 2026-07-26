@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Integration\Payment\Manual;
+namespace App\Modules\Payment\Adapter\Manual;
 
 use App\Models\WorkspacePurchase;
-use App\Modules\Integration\Contracts\PaymentDriver;
+use App\Modules\Payment\Port\PaymentDriver;
 
 /**
  * ManualPaymentDriver — GĐ1: admin duyệt tay, không qua gateway ngoài.

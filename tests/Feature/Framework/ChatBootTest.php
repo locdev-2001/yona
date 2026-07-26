@@ -14,6 +14,7 @@ use App\Http\Controllers\Chat\WidgetInboundController;
 use App\Http\Controllers\Chat\ZaloPersonal\ZaloConnectionController;
 use App\Http\Controllers\Chat\ZaloPersonal\ZaloPersonalWebhookController;
 use App\Http\Controllers\Integration\IntegrationController;
+use App\Http\ViewModels\IntegrationCatalog;
 use App\Listeners\LiftPhoneFromBusinessCard;
 use App\Models\Conversation;
 use App\Models\User;
@@ -44,8 +45,7 @@ use App\Modules\Chat\Store\PhoneEnrichmentService;
 use App\Modules\Chat\Store\SystemLineService;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
 use App\Modules\Chat\Timeline\TimelineCursor;
-use App\Modules\Integration\IntegrationCatalog;
-use App\Modules\Integration\PaymentManager;
+use App\Modules\Payment\Port\PaymentRegistry;
 use App\Services\NoteService;
 use App\Services\TagService;
 use Illuminate\Http\Request;
@@ -91,7 +91,7 @@ function chatBootServices(): array
         // Cổng cắm + sổ đăng ký
         ChannelRegistry::class,
         IntegrationCatalog::class,
-        PaymentManager::class,
+        PaymentRegistry::class,
 
         // Phích cắm kênh nội bộ
         WidgetChannelDriver::class,
@@ -128,7 +128,7 @@ function chatBootSingletons(): array
 {
     return [
         ChannelRegistry::class,
-        PaymentManager::class,
+        PaymentRegistry::class,
     ];
 }
 

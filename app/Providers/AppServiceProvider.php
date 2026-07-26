@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Models\EmailTemplate;
 use App\Models\User;
-use App\Modules\Integration\IntegrationServiceProvider;
 use App\Policies\EmailTemplatePolicy;
 use App\Support\DbRoleGuard;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Internal-first: register Integration module nếu nó tồn tại. Xóa thư mục
-        // app/Modules/Integration/ → class_exists false → skip → inbox/billing core
-        // vẫn build/chạy (không fatal). KHÔNG hard-reference trong bootstrap/providers.php.
-        if (class_exists(IntegrationServiceProvider::class)) {
-            $this->app->register(IntegrationServiceProvider::class);
-        }
+        // Chat và Payment là hai chức năng của sản phẩm, khai báo thẳng ở
+        // bootstrap/providers.php. Không còn cổng class_exists nào ở đây: cổng đó
+        // trả false khi FQCN đổi mà quên sửa, rồi bỏ qua provider trong im lặng —
+        // hỏng kiểu đó không có lỗi, chỉ có tin nhắn không gửi được.
     }
 
     /**
