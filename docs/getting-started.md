@@ -189,12 +189,13 @@ If "Quota exceeded" blocks sends:
 | `app/Models` | All Eloquent models (~50) |
 | `app/Http/Controllers/{Domain}` | Route handlers by business domain |
 | `app/Services` | Business logic, external calls, complex queries |
+| `app/Modules/Chat/Adapter/Widget` | Kênh nội bộ — đế của chat, luôn bật |
 | `app/Modules/Integration` | Driver registration point (Zalo, payment) |
 | `database/migrations` | Schema + RLS policies |
 | `resources/js/pages/{domain}` | React pages (Inertia) |
 | `routes/web.php` | Customer routes |
 | `routes/api.php` | API + webhook routes |
-| `config/integrations.php` | Toggle integration drivers (env-based) |
+| `config/integrations.php` | Bật/tắt phích cắm ngoài; kênh `widget` KHÔNG có cờ tắt |
 | `tests` | Pest test suite |
 
 ## 9. Next Steps
