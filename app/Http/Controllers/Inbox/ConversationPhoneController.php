@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Inbox;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Modules\Chat\Port\Capability\SupportsPhoneVerification;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\Inbox\PhoneEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,7 +41,7 @@ class ConversationPhoneController extends Controller
             ], 429);
         }
 
-        $driver = app(ChannelManager::class)->driver($conversation->channel);
+        $driver = app(ChannelRegistry::class)->driver($conversation->channel);
 
         // Kênh chưa hỗ trợ xác minh → KHÔNG nhận số nhập tay. Lưu số chưa xác
         // minh là làm bẩn nguồn định danh mạnh nhất của hệ thống.

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Chat;
 
+use App\Modules\Chat\Port\ChannelRegistry;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -16,6 +17,10 @@ class ChatServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerCompatAliases();
+
+        // Sổ đăng ký kênh sống ở đây chứ không ở provider của phích cắm nào: nó
+        // phải tồn tại kể cả khi không có phích cắm ngoài nào được bật.
+        $this->app->singleton(ChannelRegistry::class, fn ($app) => new ChannelRegistry($app));
     }
 
     /**

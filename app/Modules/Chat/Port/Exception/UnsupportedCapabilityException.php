@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Chat\Exceptions;
+namespace App\Modules\Chat\Port\Exception;
 
 use RuntimeException;
 

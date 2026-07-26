@@ -12,7 +12,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * Migrations now in database/migrations/ (run by default — loadMigrationsFrom removed).
  * Routes merged into routes/web.php + routes/channels.php.
- * ChannelManager registry moved to App\Modules\Integration\IntegrationServiceProvider.
+ * ChannelRegistry registry moved to App\Modules\Integration\IntegrationServiceProvider.
  * Metering moved to App\Services\MeteringService (concrete — no binding needed).
  */
 class InboxServiceProvider extends ServiceProvider

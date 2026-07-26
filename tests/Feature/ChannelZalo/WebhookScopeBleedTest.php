@@ -5,7 +5,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Http\Request;
@@ -345,7 +345,7 @@ function simulateZaloWebhook(array $payload): array
     bindWorkspaceContext($workspaceId);
 
     try {
-        $channelManager = app(ChannelManager::class);
+        $channelManager = app(ChannelRegistry::class);
         $ingestService = app(InboundMessageService::class);
 
         $driver = $channelManager->driver('zalo_personal');

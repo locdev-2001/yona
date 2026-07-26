@@ -6,10 +6,10 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
 use Illuminate\Database\QueryException;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────
@@ -195,22 +195,22 @@ it('soft-deleted conversation is hidden by global scope', function () {
         ->and($trashed->deleted_at)->not->toBeNull();
 });
 
-// ── ChannelManager ────────────────────────────────────────────────────────────
+// ── ChannelRegistry ────────────────────────────────────────────────────────────
 
-it('ChannelManager singleton resolves from container', function () {
-    $manager = app(ChannelManager::class);
-    expect($manager)->toBeInstanceOf(ChannelManager::class);
+it('ChannelRegistry singleton resolves from container', function () {
+    $manager = app(ChannelRegistry::class);
+    expect($manager)->toBeInstanceOf(ChannelRegistry::class);
 });
 
-it('ChannelManager hasAny returns true when zalo_personal driver is registered (channel-zalo module)', function () {
+it('ChannelRegistry hasAny returns true when zalo_personal driver is registered (channel-zalo module)', function () {
     // channel-zalo ServiceProvider đã register 'zalo_personal' driver khi boot
-    $manager = app(ChannelManager::class);
+    $manager = app(ChannelRegistry::class);
     expect($manager->hasAny())->toBeTrue();
     expect($manager->driver('zalo_personal'))->toBeInstanceOf(ZaloChannelDriver::class);
 });
 
-it('ChannelManager hasAny returns true after driver registered', function () {
-    $manager = app(ChannelManager::class);
+it('ChannelRegistry hasAny returns true after driver registered', function () {
+    $manager = app(ChannelRegistry::class);
 
     $manager->extend('test_channel', function () {
         return new class implements ChannelDriver

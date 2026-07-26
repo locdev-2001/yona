@@ -5,8 +5,8 @@ namespace Tests\Support;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Chat\Support\AbstractChannelDriver;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
+use App\Modules\Chat\Port\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
 
 /**
  * P11 — Mock kênh A: policy TRÁI NGƯỢC Zalo — không receipts, không media,

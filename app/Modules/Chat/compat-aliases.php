@@ -1,5 +1,11 @@
 <?php
 
+use App\Modules\Chat\Port\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Port\Exception\UnsupportedCapabilityException;
+
 /*
  * Bí danh tương thích ngược: FQCN CŨ => FQCN MỚI.
  *
@@ -17,6 +23,10 @@
  */
 
 return [
-    // Cụm 0 dựng khung rỗng — mỗi cụm di dời sau đó tự thêm dòng của mình
-    // TRƯỚC khi chạy `git mv`.
+    // Cụm 1 — Port/
+    'App\Modules\Integration\ChannelManager' => ChannelRegistry::class,
+    'App\Modules\Integration\Contracts\ChannelCapabilities' => ChannelCapabilities::class,
+    'App\Modules\Integration\Contracts\ChannelDriver' => ChannelDriver::class,
+    'App\Modules\Chat\Exceptions\UnsupportedCapabilityException' => UnsupportedCapabilityException::class,
+    'App\Modules\Chat\Support\AbstractChannelDriver' => AbstractChannelDriver::class,
 ];

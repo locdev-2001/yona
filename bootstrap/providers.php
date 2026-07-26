@@ -27,7 +27,7 @@ use App\Providers\TenancyServiceProvider;
  * ZaloPersonal + Manual driver providers (gate qua config('integrations.*')).
  *
  * Metering KHÔNG phụ thuộc thứ tự provider — MeteringService là class concrete
- * (không binding interface). ChannelManager/PaymentManager bind trong Integration
+ * (không binding interface). ChannelRegistry/PaymentManager bind trong Integration
  * TRƯỚC khi driver extend (cùng provider chain — callAfterResolving đảm bảo thứ tự).
  */
 return [

@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Modules\Chat\Support;
+namespace App\Modules\Chat\Port;
 
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
  * Xương chung cho mọi phích cắm kênh.

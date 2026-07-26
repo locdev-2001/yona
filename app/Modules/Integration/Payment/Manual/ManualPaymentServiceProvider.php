@@ -14,7 +14,7 @@ use Illuminate\Support\ServiceProvider;
  * Re-home: được IntegrationServiceProvider register (KHÔNG còn module framework auto-discovery).
  * Internal-first: xóa app/Modules/Integration/ → provider + driver biến mất cùng nhau.
  *
- * Bài học từ ChannelManager: closure extend PHẢI dùng app() helper,
+ * Bài học từ ChannelRegistry: closure extend PHẢI dùng app() helper,
  * KHÔNG dùng $this->app trong closure (binding context khác nhau).
  *
  * @see PaymentManager

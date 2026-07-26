@@ -10,7 +10,7 @@ use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\Inbox\MessageItemSerializer;
 use App\Services\Inbox\OutboundSendPipeline;
@@ -27,10 +27,10 @@ use Inertia\Response;
  *
  * index:    list Conversations workspace, filter, paginate → Inertia inbox/index.
  * messages: paginate Messages asc, đánh dấu đã đọc.
- * send:     gọi ChannelManager→driver→sendMessage (KHÔNG biết kênh cụ thể).
+ * send:     gọi ChannelRegistry→driver→sendMessage (KHÔNG biết kênh cụ thể).
  *           Bắt SendException (app contract) → 422.
  *
- * Internal-first: ChannelManager nằm trong app/Modules/Integration/. Xóa module
+ * Internal-first: ChannelRegistry nằm trong app/Modules/Integration/. Xóa module
  * → class không tồn tại → channelsAvailable=false (empty state) + send() → 422.
  */
 class InboxController extends Controller
@@ -80,8 +80,8 @@ class InboxController extends Controller
         $conversations = $query->with(['channelAccount:id,display_name', 'assignedUser:id,name'])->paginate(30)->withQueryString();
 
         // Internal-first: Integration module xóa → class vắng → empty state (N2).
-        $channelsAvailable = class_exists(ChannelManager::class)
-            ? app(ChannelManager::class)->hasAny()
+        $channelsAvailable = class_exists(ChannelRegistry::class)
+            ? app(ChannelRegistry::class)->hasAny()
             : false;
 
         // P07 — danh sách tài khoản kênh (đa tài khoản) + count hội thoại active/account,
@@ -116,11 +116,11 @@ class InboxController extends Controller
      */
     private function channelCapabilities(array $channels): array
     {
-        if (! class_exists(ChannelManager::class)) {
+        if (! class_exists(ChannelRegistry::class)) {
             return [];
         }
 
-        $manager = app(ChannelManager::class);
+        $manager = app(ChannelRegistry::class);
         $map = [];
         foreach ($channels as $channel) {
             try {
@@ -140,7 +140,7 @@ class InboxController extends Controller
      * Mỗi lần gọi là một loạt request tới nền tảng bên ngoài, nên phải có quyền
      * và có ngưỡng — trước đây không có cả hai.
      */
-    public function resync(ChannelManager $channels): JsonResponse
+    public function resync(ChannelRegistry $channels): JsonResponse
     {
         abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
 
@@ -202,7 +202,7 @@ class InboxController extends Controller
 
     /**
      * POST /inbox/conversations/{conversation}/messages
-     * Gửi outbound qua ChannelManager (channel-agnostic).
+     * Gửi outbound qua ChannelRegistry (channel-agnostic).
      * Driver wrap exceptions thành SendException.
      */
     public function send(Request $request, Conversation $conversation): JsonResponse
@@ -278,7 +278,7 @@ class InboxController extends Controller
         }
 
         // Internal-first: Integration module xóa → không có driver → 422 thay vì fatal.
-        if (! class_exists(ChannelManager::class)) {
+        if (! class_exists(ChannelRegistry::class)) {
             return response()->json([
                 'message' => 'Kênh không khả dụng.',
                 'error_code' => 'channel_unavailable',
@@ -286,8 +286,8 @@ class InboxController extends Controller
         }
 
         try {
-            /** @var ChannelManager $channelManager */
-            $channelManager = app(ChannelManager::class);
+            /** @var ChannelRegistry $channelManager */
+            $channelManager = app(ChannelRegistry::class);
             // MỌI outbound đi qua OutboundSendPipeline — transport, thống kê,
             // broadcast nằm chung một chỗ cho mọi kênh.
             $message = app(OutboundSendPipeline::class)->send(

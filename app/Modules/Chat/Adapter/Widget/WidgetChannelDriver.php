@@ -7,7 +7,7 @@ use App\Models\Message;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
-use App\Modules\Chat\Support\AbstractChannelDriver;
+use App\Modules\Chat\Port\AbstractChannelDriver;
 use Illuminate\Support\Str;
 
 /**

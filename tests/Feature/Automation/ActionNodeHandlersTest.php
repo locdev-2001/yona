@@ -12,16 +12,16 @@ use App\Models\WorkflowRunLog;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
-use App\Modules\Integration\ChannelManager;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\TagService;
 use Illuminate\Support\Str;
 
 // Phase 03 — Action node handlers: delegate to existing Domain Services.
 // Real services + real DB assertions throughout (matches this repo's testing
 // convention — see ReminderService/LeadConversionTest — rather than mocking
-// service calls), except ChannelManager's outbound send, which needs a fake
+// service calls), except ChannelRegistry's outbound send, which needs a fake
 // driver registered per-test (the real Zalo driver needs a live bridge).
 
 class FakeSendOnlyChannelDriver implements ChannelDriver
@@ -97,7 +97,7 @@ it('SendMessageNodeHandler sends on the resolved conversation for a lead subject
     actingInWorkspace($ws, $user);
 
     $fakeDriver = new FakeSendOnlyChannelDriver;
-    app(ChannelManager::class)->extend('test_fake_channel', fn () => $fakeDriver);
+    app(ChannelRegistry::class)->extend('test_fake_channel', fn () => $fakeDriver);
 
     $lead = Lead::factory()->create();
     $conversation = makeConversationForLead($ws, $lead->id);
@@ -124,7 +124,7 @@ it('SendMessageNodeHandler skips (not fails) when no conversation exists on the 
     actingInWorkspace($ws, $user);
 
     $fakeDriver = new FakeSendOnlyChannelDriver;
-    app(ChannelManager::class)->extend('test_fake_channel', fn () => $fakeDriver);
+    app(ChannelRegistry::class)->extend('test_fake_channel', fn () => $fakeDriver);
 
     $lead = Lead::factory()->create();
     // No conversation created for this lead on any channel.

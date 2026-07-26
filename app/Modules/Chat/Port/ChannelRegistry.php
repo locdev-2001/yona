@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Modules\Integration;
+namespace App\Modules\Chat\Port;
 
-use App\Modules\Integration\Contracts\ChannelDriver;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 
@@ -10,12 +9,12 @@ use InvalidArgumentException;
  * Driver-manager cho inbox channels (Zalo, Messenger, TikTok, ...).
  *
  * Channel driver (Integration/Chat/*, ...) đăng ký qua:
- *   app(ChannelManager::class)->extend('zalo_personal', fn() => new ZaloChannelDriver(...))
+ *   app(ChannelRegistry::class)->extend('zalo_personal', fn() => new ZaloChannelDriver(...))
  *
  * Inbox core gọi driver() — KHÔNG import class driver cụ thể (N1 cô lập).
  * Tắt driver → hasAny() = false → inbox empty state (N2).
  */
-class ChannelManager extends Manager
+class ChannelRegistry extends Manager
 {
     /**
      * Trả về ChannelDriver theo key kênh.

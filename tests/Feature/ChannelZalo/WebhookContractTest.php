@@ -4,7 +4,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Services\InboundMessageService;
 use App\Support\TenantScope;
@@ -489,10 +489,10 @@ it('bridge_session session_ok closes the account gap window so the NEXT gap gets
     $priv('workspaces')->where('id', $wsId)->delete();
 })->group('channel-zalo');
 
-// ── ChannelManager driver registration ───────────────────────────────────────
+// ── ChannelRegistry driver registration ───────────────────────────────────────
 
-it('ChannelManager has zalo_personal driver registered', function () {
-    $manager = app(ChannelManager::class);
+it('ChannelRegistry has zalo_personal driver registered', function () {
+    $manager = app(ChannelRegistry::class);
     expect($manager->hasAny())->toBeTrue();
 
     $driver = $manager->driver('zalo_personal');

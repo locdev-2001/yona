@@ -12,9 +12,9 @@ use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
-use App\Modules\Integration\ChannelManager;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDriver;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\EntitlementService;
 use App\Services\Inbox\OutboundSendPipeline;
@@ -132,7 +132,7 @@ function smnSetup(): array
     smnGrantQuota($workspace);
 
     $driver = new ContentAssertingChannelDriver;
-    app(ChannelManager::class)->extend(SMN_CHANNEL, fn () => $driver);
+    app(ChannelRegistry::class)->extend(SMN_CHANNEL, fn () => $driver);
 
     return [$workspace, $user, $driver];
 }

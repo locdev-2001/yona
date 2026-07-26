@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Delivery\InteractionPipeline;
-use App\Modules\Chat\Exceptions\UnsupportedCapabilityException;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Port\Exception\UnsupportedCapabilityException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,7 +27,7 @@ class MessageInteractionController extends Controller
         Request $request,
         Conversation $conversation,
         Message $message,
-        ChannelManager $channels,
+        ChannelRegistry $channels,
         InteractionPipeline $pipeline,
     ): JsonResponse {
         $this->authorize('update', $conversation);
@@ -86,7 +86,7 @@ class MessageInteractionController extends Controller
     public function stickers(
         Request $request,
         Conversation $conversation,
-        ChannelManager $channels,
+        ChannelRegistry $channels,
         InteractionPipeline $pipeline,
     ): JsonResponse {
         $this->authorize('update', $conversation);

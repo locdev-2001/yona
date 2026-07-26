@@ -14,17 +14,13 @@ use Illuminate\Support\ServiceProvider;
  * vẫn build/chạy (chỉ mất gửi-ngoài). KHÔNG add vào bootstrap/providers.php
  * (hard-reference sẽ fatal khi xóa).
  *
- * ChannelManager: singleton driver registry. Driver (Chat/ZaloPersonal/, ...)
- * đăng ký qua extend() trong service provider riêng của driver.
+ * Sổ đăng ký kênh đã chuyển sang ChatServiceProvider (cụm 1) — phần còn lại ở
+ * đây teo dần theo từng cụm và biến mất hẳn ở cụm 7.
  */
 class IntegrationServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(ChannelManager::class, function ($app) {
-            return new ChannelManager($app);
-        });
-
         $this->app->singleton(PaymentManager::class, fn () => new PaymentManager);
 
         // Re-home driver providers INTO Integration — không còn module-framework auto-discovery.

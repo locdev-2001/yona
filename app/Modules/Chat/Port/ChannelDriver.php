@@ -1,18 +1,17 @@
 <?php
 
-namespace App\Modules\Integration\Contracts;
+namespace App\Modules\Chat\Port;
 
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Integration\ChannelManager;
 
 /**
  * Contract cho kênh inbox (Zalo, Messenger, TikTok, ...).
  *
  * Inbox core gọi contract này — không biết driver cụ thể.
- * Impl (ZaloChannelDriver, v.v.) đăng ký qua ChannelManager::extend().
+ * Impl (ZaloChannelDriver, v.v.) đăng ký qua ChannelRegistry::extend().
  *
- * @see ChannelManager
+ * @see ChannelRegistry
  */
 interface ChannelDriver
 {
