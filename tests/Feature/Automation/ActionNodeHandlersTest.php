@@ -41,11 +41,13 @@ class FakeSendOnlyChannelDriver implements ChannelDriver
     {
         $this->sent[] = [$conversation->id, $payload];
 
+        // Đọc đúng key của contract ('text'). Fake này từng đọc 'body' — cùng key
+        // sai mà handler dùng — nên tin rỗng vẫn qua được CI.
         return Message::create([
             'workspace_id' => $conversation->workspace_id,
             'conversation_id' => $conversation->id,
             'direction' => 'out',
-            'body' => $payload['body'] ?? '',
+            'body' => $payload['text'] ?? '',
             'source_id' => 'test-'.Str::uuid(),
         ]);
     }
@@ -111,7 +113,8 @@ it('SendMessageNodeHandler sends on the resolved conversation for a lead subject
     expect($run->status)->toBe(WorkflowRun::STATUS_COMPLETED);
     expect($fakeDriver->sent)->toHaveCount(1);
     expect($fakeDriver->sent[0][0])->toBe($conversation->id);
-    expect($fakeDriver->sent[0][1]['body'])->toBe('hello from automation');
+    expect($fakeDriver->sent[0][1]['text'])->toBe('hello from automation');
+    expect(Message::where('conversation_id', $conversation->id)->value('body'))->toBe('hello from automation');
 });
 
 it('SendMessageNodeHandler skips (not fails) when no conversation exists on the chosen channel', function () {

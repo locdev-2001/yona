@@ -1,7 +1,6 @@
 <?php
 
 use App\Contracts\SendException;
-use App\Exceptions\QuotaExceededException;
 use App\Models\ChannelUsage;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -9,6 +8,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
 use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\MessageSourceResolver;
 use App\Services\Inbox\MessageStateService;
@@ -141,14 +141,18 @@ it('ingest account-keyed cho kênh mock: cùng (account, peer) → 1 conversatio
 // ── Money-path: metering per-channel + gate trước transport ──────────────────
 
 it('send qua pipeline: meter PER-CHANNEL (mock_a usage +1, zalo_personal KHÔNG đổi)', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 10);
     [, $driver] = fwRegisterMock('mock_a');
 
     $inbound = fwIngest('mock_a', (string) Str::uuid(), 'peer_meter', 'ma_in_1');
     $conversation = $inbound->conversation;
 
-    $message = app(OutboundSendPipeline::class)->send($driver, $conversation, ['text' => 'trả lời khách']);
+    $message = app(OutboundSendPipeline::class)->send(
+        $driver,
+        $conversation,
+        OutboundMessage::text('trả lời khách'),
+    );
 
     expect($message->direction)->toBe('out');
 
@@ -157,33 +161,27 @@ it('send qua pipeline: meter PER-CHANNEL (mock_a usage +1, zalo_personal KHÔNG 
         ->and(ChannelUsage::where('channel', 'zalo_personal')->count())->toBe(0);
 });
 
-it('quota per-channel hết → pipeline chặn TRƯỚC transport (driver KHÔNG được gọi) — DoS #4 bất khả', function () {
+it('hết hạn mức KHÔNG chặn gửi — chỉ thống kê (quyết định founder 25/07)', function () {
     [$workspace] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 1);
     [, $driver] = fwRegisterMock('mock_a');
     $pipeline = app(OutboundSendPipeline::class);
 
-    // Conv 1: dùng hết quota (limit 1)
+    // Conv 1 dùng hết hạn mức danh nghĩa (limit 1)
     $conv1 = fwIngest('mock_a', (string) Str::uuid(), 'peer_q1', 'q1_in')->conversation;
-    $pipeline->send($driver, $conv1, ['text' => 'reply 1']);
+    $pipeline->send($driver, $conv1, OutboundMessage::text('reply 1'));
 
-    // Conv 1 đã meter kỳ này → vẫn gửi tiếp được (F5 — hội thoại cũ không giới hạn).
-    // refresh(): meterReply ghi last_metered_period qua compare-set DB (model in-memory stale).
-    $pipeline->send($driver, $conv1->refresh(), ['text' => 'reply 2']);
-
-    // Conv 2 MỚI → hết quota → chặn TRƯỚC khi driver chạm platform
+    // Conv 2 MỚI, đã vượt hạn mức → VẪN gửi được, và vẫn được đếm.
     $conv2 = fwIngest('mock_a', (string) Str::uuid(), 'peer_q2', 'q2_in')->conversation;
-    $sentBefore = count($driver->sentPayloads);
+    $message = $pipeline->send($driver, $conv2, OutboundMessage::text('reply 2'));
 
-    expect(fn () => $pipeline->send($driver, $conv2, ['text' => 'reply 3']))
-        ->toThrow(QuotaExceededException::class);
-
-    expect(count($driver->sentPayloads))->toBe($sentBefore)
-        ->and((int) ChannelUsage::where('channel', 'mock_a')->sole()->answered_count)->toBe(1);
+    expect($message->direction)->toBe('out')
+        ->and(count($driver->sentPayloads))->toBe(2)
+        ->and((int) ChannelUsage::where('channel', 'mock_a')->sole()->answered_count)->toBe(2);
 });
 
 it('LUÔN nhận inbound kể cả hết quota (F13/F20 — lead capture bất khả xâm phạm)', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 0); // hết quota ngay từ đầu
     fwRegisterMock('mock_a');
 
@@ -223,7 +221,7 @@ it('state-events (recall/receipt/reaction) chạy nguyên trên kênh mock — c
 // ── Policy driver-owned (không phải bộ field chung) ──────────────────────────
 
 it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì không', function () {
-    [$workspace] = fwSetup();
+    [$workspace, $user] = fwSetup();
     fwGrantQuota($workspace, 'mock_a', 10);
     fwGrantQuota($workspace, 'mock_b', 10);
     [, $driverA] = fwRegisterMock('mock_a');
@@ -234,8 +232,8 @@ it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì
     $convA = fwIngest('mock_a', (string) Str::uuid(), 'peer_pa', 'pa_in')->conversation;
     $convB = fwIngest('mock_b', (string) Str::uuid(), 'peer_pb', 'pb_in')->conversation;
 
-    expect($pipeline->send($driverA, $convA, ['text' => $longText])->direction)->toBe('out');
-    expect(fn () => $pipeline->send($driverB, $convB, ['text' => $longText]))
+    expect($pipeline->send($driverA, $convA, OutboundMessage::text($longText))->direction)->toBe('out');
+    expect(fn () => $pipeline->send($driverB, $convB, OutboundMessage::text($longText)))
         ->toThrow(SendException::class);
 
     // Review MED-5: transport FAIL → KHÔNG meter (meterReply chỉ sau thành công) — khoá bằng test

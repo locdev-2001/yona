@@ -9,7 +9,6 @@ namespace App\Contracts;
  * của SendException để InboxController bắt 1 lần duy nhất.
  *
  * error_code values dùng chung (FE hiển thị toast theo code):
- *   - 'quota_exceeded'  — hết quota billing
  *   - 'circuit_open'    — circuit breaker mở, kênh bị treo
  *   - 'outside_window'  — ngoài cửa sổ giờ cho phép
  *   - 'rate_cap'        — vượt giới hạn tần suất

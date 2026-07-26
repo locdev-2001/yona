@@ -41,8 +41,8 @@ interface ChannelDriver
      * + TRANSPORT + persist Message. Trả về đúng Message vừa ghi — caller KHÔNG
      * được tự query "message out mới nhất" (race khi 2 người gửi song song).
      *
-     * ĐÓNG BĂNG P11 (BLK-4): KHÔNG metering trong driver — quota gate + meterReply
-     * sống ở OutboundSendPipeline (core). Mọi kênh (cả mock) ĐI QUA pipeline.
+     * ĐÓNG BĂNG P11 (BLK-4): KHÔNG metering trong driver — meterReply sống ở
+     * OutboundSendPipeline (core). Mọi kênh (cả mock) ĐI QUA pipeline.
      *
      * @param  array<string, mixed>  $payload  body/media/type theo kênh
      */

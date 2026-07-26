@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $last_message_preview
  * @property int $unread_count
  * @property string|null $last_metered_period
+ * @property string|null $agent_unlocked_period
  * @property int $lock_version
  * @property int $stream_version
  * @property int|null $created_by
@@ -65,6 +66,7 @@ class Conversation extends Model
         'last_message_preview',
         'unread_count',
         'last_metered_period',
+        'agent_unlocked_period',
         'created_by',
         'updated_by',
     ];

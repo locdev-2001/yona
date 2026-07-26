@@ -19,9 +19,9 @@ use Illuminate\Support\Facades\DB;
  * Service này KHÔNG biết kênh cụ thể — nhận normalized payload đã parse.
  *
  * Nguyên tắc bất biến:
- *  F13/F20: LUÔN ghi Conversation+Message kể cả hết quota — KHÔNG gọi gate inbound.
+ *  F13/F20: LUÔN ghi Conversation+Message — inbound không bao giờ bị chặn.
  *  F14:     direction='in' (default fail-safe khi thiếu field) — KHÔNG meter.
- *           direction='out' → meterReply() trong try/catch (fail-safe: lỗi gate KHÔNG chặn).
+ *           direction='out' → meterReply() trong try/catch (fail-safe: lỗi đếm KHÔNG chặn ghi tin).
  *  F14 idempotency: updateOrCreate theo (conversation_id, source_id) — trùng source_id = no-op.
  *
  * @param array{
@@ -78,12 +78,12 @@ class InboundMessageService
         // --- Upsert Message (idempotent per source_id) ---
         $message = $this->upsertMessage($conversation, $normalized, $direction);
 
-        // --- Meter outbound (F1) — fail-safe, lỗi KHÔNG chặn ---
+        // --- Thống kê outbound (F1) — fail-safe, lỗi KHÔNG chặn ghi tin ---
         if ($direction === 'out') {
             try {
                 $this->meteringService->meterReply($conversation);
             } catch (\Throwable) {
-                // ponytail: fail-safe F13/F20 — lỗi gate không chặn ghi/broadcast
+                // ponytail: fail-safe F13/F20 — lỗi đếm không chặn ghi/broadcast
             }
         }
 

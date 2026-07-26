@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
 use App\Modules\Integration\ChannelManager;
+use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\Inbox\MessageItemSerializer;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\Inbox\SeenSyncService;
@@ -258,7 +259,14 @@ class InboxController extends Controller
             ];
         }
 
-        if ($text === '' && $media === null && $sticker === null) {
+        $outbound = new OutboundMessage(
+            text: $text !== '' ? $text : null,
+            media: $media,
+            sticker: $sticker,
+            replyTo: $replyTo,
+        );
+
+        if ($outbound->isEmpty()) {
             return response()->json(['message' => 'Nội dung không được để trống.'], 422);
         }
 
@@ -273,17 +281,12 @@ class InboxController extends Controller
         try {
             /** @var ChannelManager $channelManager */
             $channelManager = app(ChannelManager::class);
-            // P11 (BLK-4): MỌI outbound đi qua OutboundSendPipeline — quota gate
-            // TRƯỚC transport + meterReply SAU (money-path core, kênh nào cũng chạm).
+            // MỌI outbound đi qua OutboundSendPipeline — transport, thống kê,
+            // broadcast nằm chung một chỗ cho mọi kênh.
             $message = app(OutboundSendPipeline::class)->send(
                 $channelManager->driver($conversation->channel),
                 $conversation,
-                [
-                    'text' => $text !== '' ? $text : null,
-                    'media' => $media,
-                    'reply_to' => $replyTo,
-                    'sticker' => $sticker,
-                ],
+                $outbound,
             );
 
             // Shape = stream item — FE append thẳng vào thread, KHÔNG reload.
@@ -301,15 +304,6 @@ class InboxController extends Controller
                 'message' => 'Kênh không khả dụng.',
                 'error_code' => 'channel_unavailable',
             ], 422);
-        } catch (\RuntimeException $e) {
-            // QuotaExceededException từ metering (chưa wrap thành SendException) — fail-safe
-            if (str_contains(get_class($e), 'Quota')) {
-                return response()->json([
-                    'message' => 'Hết quota hội thoại tháng này. Nâng gói để tiếp tục.',
-                    'error_code' => 'quota_exceeded',
-                ], 422);
-            }
-            throw $e;
         }
     }
 }

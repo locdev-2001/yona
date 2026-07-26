@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Http;
  *   2. (P11) metering ĐÃ hoist lên OutboundSendPipeline — driver không meter
  *   3. SendRateLimiter (7h-22h + cap ≤3 QC/số/ngày) → throw
  *   4. HTTP → bridge /personal-messages/send (không retry — send không idempotent)
- *   5. Ghi Message direction=out → increment rate limiter (meterReply Ở PIPELINE)
+ *   5. Ghi Message direction=out → increment rate limiter (thống kê Ở PIPELINE)
  *
  * Lỗi bridge:
  *   - 503 / not_logged_in → ZaloNotConnectedException (ghi health monitor)
@@ -70,7 +70,7 @@ class ZaloSendService
             throw new ZaloCircuitOpenException;
         }
 
-        // P11 (BLK-4): metering KHÔNG còn ở driver — quota gate + meterReply sống ở
+        // P11 (BLK-4): metering KHÔNG còn ở driver — meterReply sống ở
         // OutboundSendPipeline (core). Service này = policy Zalo + transport + persist.
 
         // 2. Rate limiter (ToS Zalo — POLICY kênh) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
