@@ -38,6 +38,39 @@ class ChannelManager extends Manager
     }
 
     /**
+     * Mọi driver đã đăng ký, theo key.
+     *
+     * Dựng instance cho TẤT CẢ key nên kéo theo toàn bộ dependency chain —
+     * đừng gọi trong middleware chạy mọi request.
+     *
+     * @return array<string, ChannelDriver>
+     */
+    public function all(): array
+    {
+        $drivers = [];
+        foreach (array_keys($this->customCreators) as $key) {
+            $drivers[$key] = $this->driver($key);
+        }
+
+        return $drivers;
+    }
+
+    /**
+     * Lọc driver theo diện tương tác chúng hỗ trợ.
+     *
+     * Thay cho việc lõi hardcode `driver('zalo_personal')` khi cần "kênh nào
+     * làm được việc X" — đó chính là literal tên kênh mà grep gate không bắt
+     * được vì nó là chuỗi, không phải tên class.
+     *
+     * @param  class-string  $capability
+     * @return array<string, ChannelDriver>
+     */
+    public function supporting(string $capability): array
+    {
+        return array_filter($this->all(), fn (ChannelDriver $driver) => $driver instanceof $capability);
+    }
+
+    /**
      * Manager yêu cầu default driver — trả '' để báo "chưa có default".
      * Caller nên gọi driver('zalo_personal') tường minh.
      */

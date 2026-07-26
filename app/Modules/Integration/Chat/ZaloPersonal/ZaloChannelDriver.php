@@ -5,6 +5,14 @@ namespace App\Modules\Integration\Chat\ZaloPersonal;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\ZaloConnection;
+use App\Modules\Chat\Delivery\Event\OutboundEventType;
+use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
+use App\Modules\Chat\Port\Capability\SupportsPhoneVerification;
+use App\Modules\Chat\Port\Capability\SupportsReactions;
+use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
+use App\Modules\Chat\Port\Capability\SupportsStickers;
+use App\Modules\Chat\Support\AbstractChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
@@ -12,6 +20,8 @@ use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedExcepti
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
 use App\Modules\Integration\Contracts\ChannelCapabilities;
 use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Services\ZaloBackfillService;
+use Illuminate\Support\Collection;
 
 /**
  * Channel driver cho Zalo cá nhân (zca-js bridge).
@@ -22,12 +32,22 @@ use App\Modules\Integration\Contracts\ChannelDriver;
  * D-2 (outbound/QR/send): sendMessage → ZaloSendService.
  * D-1 (inbound): parseInbound() đã đầy đủ cho webhook RLS-bind flow.
  *
+ * Diện tương tác khai qua capability interface — lõi hỏi `instanceof`, không
+ * `method_exists`. Quên implement là PHPStan đỏ chứ không im lặng lúc chạy.
+ *
  * @see ZaloPersonalServiceProvider
  * @see ChannelDriver
  */
-class ZaloChannelDriver implements ChannelDriver
+class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistoryResync, SupportsPhoneVerification, SupportsReactions, SupportsSeenReceipts, SupportsStickers
 {
-    public function __construct(private readonly ZaloSendService $sendService) {}
+    /** Zalo cho kéo lịch sử lùi tối đa 30 ngày (quyết định founder 05/07). */
+    private const RESYNC_DEEP_DAYS = 30;
+
+    public function __construct(
+        private readonly ZaloSendService $sendService,
+        private readonly ZaloInteractionService $interactionService,
+        private readonly ZaloBackfillService $backfillService,
+    ) {}
 
     public function channelKey(): string
     {
@@ -52,6 +72,21 @@ class ZaloChannelDriver implements ChannelDriver
             canSendSeen: true,
             receiptGranularity: 'thread',
         );
+    }
+
+    /**
+     * Zalo cá nhân chỉ render được chữ và ảnh nguyên bản.
+     *
+     * Thẻ, nút, ô nhập bị HẠ CẤP về chữ — `OutboundMessage` đã rút sẵn bản chữ
+     * thuần của mọi sự kiện, nên `$payload['text']` chính là bản đã hạ cấp. Zalo
+     * không có khái niệm nút bấm, giả lập bằng danh sách chữ là thứ khách đọc
+     * được, còn hơn nuốt mất nội dung.
+     *
+     * @return list<OutboundEventType>
+     */
+    public function supportedOutboundEvents(): array
+    {
+        return [OutboundEventType::Text, OutboundEventType::Media];
     }
 
     /**
@@ -238,20 +273,71 @@ class ZaloChannelDriver implements ChannelDriver
      *
      * @throws ZaloNotConnectedException bridge/slot không sẵn sàng
      */
-    public function verifyPeerPhone(Conversation $conversation, string $phone): bool
+    public function verifySenderPhone(Conversation $conversation, string $phone): bool
     {
-        return app(ZaloInteractionService::class)->verifyPeerPhone($conversation, $phone);
+        return $this->interactionService->verifyPeerPhone($conversation, $phone);
     }
 
     /**
-     * P06b — seen-sync (default OFF, A4): SeenSyncService gọi qua method_exists
-     * (kênh không hỗ trợ → im lặng bỏ qua, không phải lỗi).
+     * P06b — seen-sync (default OFF, A4).
      *
-     * @param  list<array<string, mixed>>  $platformMessages  platform_meta.zca_message các tin inbound
+     * Nhận Message chứ không nhận metadata nền tảng: lõi chỉ chọn TIN NÀO cần
+     * báo, việc bóc `platform_meta.zca_message` là ruột Zalo nên sống ở đây.
+     *
+     * @param  Collection<int, Message>  $messages
      */
-    public function sendSeen(Conversation $conversation, array $platformMessages): bool
+    public function sendSeen(Conversation $conversation, Collection $messages): bool
     {
-        return app(ZaloInteractionService::class)->sendSeenBatch($conversation, $platformMessages);
+        $zcaMessages = $messages
+            ->pluck('platform_meta.zca_message')
+            ->filter(fn ($zca) => is_array($zca) && $zca !== [])
+            ->values()
+            ->all();
+
+        if ($zcaMessages === []) {
+            return false;
+        }
+
+        return $this->interactionService->sendSeenBatch($conversation, $zcaMessages);
+    }
+
+    /**
+     * P06a — thả/gỡ cảm xúc. Gate metadata nằm trong ZaloInteractionService:
+     * thiếu msgId/cliMsgId là không gọi được API, phải báo lỗi chứ không
+     * optimistic ghi DB rồi lệch hai chiều.
+     */
+    public function react(Conversation $conversation, Message $message, string $icon): void
+    {
+        $this->interactionService->addReaction($conversation, $message, $icon);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function searchStickers(Conversation $conversation, string $keyword): array
+    {
+        return $this->interactionService->searchStickers($conversation, $keyword);
+    }
+
+    /**
+     * Kéo lịch sử bị mất trên MỌI slot đang kết nối của workspace.
+     *
+     * Vòng lặp per-connection sống ở đây chứ không ở controller: "một tài khoản
+     * Zalo có thể có nhiều phiên" là đặc thù của kênh này, kênh khác không có.
+     */
+    public function resyncHistory(string $workspaceId): int
+    {
+        $connections = ZaloConnection::where('workspace_id', $workspaceId)
+            ->where('state', 'connected')
+            ->whereNull('deleted_at')
+            ->get(['connection_id']);
+
+        $fetched = 0;
+        foreach ($connections as $connection) {
+            $fetched += $this->backfillService->run($connection->connection_id, self::RESYNC_DEEP_DAYS);
+        }
+
+        return $fetched;
     }
 
     /**
@@ -306,13 +392,6 @@ class ZaloChannelDriver implements ChannelDriver
         ], fn ($v) => $v !== null && $v !== '');
     }
 
-    public function connect(string $workspaceId, array $params): void
-    {
-        // QR flow quản lý qua ZaloConnectionController — không cần impl ở đây
-    }
-
-    public function disconnect(string $workspaceId): void
-    {
-        // Logout qua ZaloConnectionController::destroy — không cần impl ở đây
-    }
+    // connect/disconnect kế thừa no-op từ AbstractChannelDriver: luồng QR và
+    // logout sống ở ZaloConnectionController, không đi qua contract.
 }

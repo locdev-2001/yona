@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Automation\AutomationServiceProvider;
+use App\Modules\Chat\Adapter\Native\NativeServiceProvider;
 use App\Providers\AnnouncementsServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\BillingServiceProvider;
@@ -43,4 +44,6 @@ return [
     CrmSalesServiceProvider::class,
     BillingServiceProvider::class,
     InboxServiceProvider::class,
+    // Kênh nội bộ: đế của chat, luôn bật — KHÔNG gate qua config như phích cắm ngoài.
+    NativeServiceProvider::class,
 ];

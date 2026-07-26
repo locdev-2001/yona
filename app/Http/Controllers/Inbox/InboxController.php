@@ -9,15 +9,15 @@ use App\Models\Attachment;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\ZaloConnection;
+use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
 use App\Modules\Integration\ChannelManager;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\Inbox\MessageItemSerializer;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Services\Inbox\SeenSyncService;
-use App\Services\ZaloBackfillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -133,24 +133,31 @@ class InboxController extends Controller
         return $map;
     }
 
-    /** Resync thủ công kéo lịch sử lùi tối đa 30 ngày (quyết định founder 05/07). */
-    private const RESYNC_DEEP_DAYS = 30;
-
     /**
      * POST /inbox/resync
-     * Kéo backfill tin 1-1 + nhóm bị mất, deep sync lùi 30 ngày (cursor phía bridge).
-     * Tin mới sẽ vào DB async qua webhook (idempotent ingest).
+     * Kéo lại lịch sử bị mất trên MỌI kênh làm được việc đó.
+     *
+     * Mỗi lần gọi là một loạt request tới nền tảng bên ngoài, nên phải có quyền
+     * và có ngưỡng — trước đây không có cả hai.
      */
-    public function resync(ZaloBackfillService $backfillService): JsonResponse
+    public function resync(ChannelManager $channels): JsonResponse
     {
-        // RLS tự lọc theo workspace — chỉ lấy connection của workspace hiện tại
-        $connections = ZaloConnection::where('state', 'connected')
-            ->whereNull('deleted_at')
-            ->get(['connection_id']);
+        abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
 
+        $workspaceId = (string) currentWorkspace()?->id;
+
+        if (! RateLimiter::attempt('inbox-resync:'.$workspaceId, 1, fn () => true, 300)) {
+            return response()->json([
+                'message' => 'Đang đồng bộ — thử lại sau 5 phút.',
+                'error_code' => 'resync_rate_limited',
+            ], 429);
+        }
+
+        // Ngưỡng ngày lùi là hằng của TỪNG kênh — lõi không được biết giá trị đó.
         $totalFetched = 0;
-        foreach ($connections as $conn) {
-            $totalFetched += $backfillService->run($conn->connection_id, self::RESYNC_DEEP_DAYS);
+        foreach ($channels->supporting(SupportsHistoryResync::class) as $driver) {
+            /** @var SupportsHistoryResync $driver */
+            $totalFetched += $driver->resyncHistory($workspaceId);
         }
 
         return response()->json(['ok' => true, 'fetched' => $totalFetched]);

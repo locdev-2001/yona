@@ -168,34 +168,47 @@ final class SenderLeft extends InboundEvent { /* rời nhóm */ }
 final class UnrecognizedEvent extends InboundEvent { /* cách ly, không đoán bừa */ }
 ```
 
+**Nội dung tin CŨNG là sự kiện đi ra**, không phải khái niệm thứ ba. Chữ, ảnh, thẻ, nút, ô nhập đều là `OutboundEvent` — một tin là **danh sách sự kiện ra**, không phải một chuỗi. Cấm đẻ thêm từ "block"/"khối": đã có `OutboundEvent` thì mọi thứ đi ra gọi đúng từ đó (§0.7 luật 1).
+
 ```php
-// Delivery/OutboundEventType.php — ĐỐI XỨNG, không có ngoại lệ
+// Delivery/Event/OutboundEventType.php — ĐỐI XỨNG, không có ngoại lệ
 enum OutboundEventType: string
 {
-    case SendMessage   = 'send_message';
-    case PlaceReaction = 'place_reaction';
-    case MarkSeen      = 'mark_seen';
-    case RecallMessage = 'recall_message';
+    case Text    = 'text';
+    case Media   = 'media';
+    case Sticker = 'sticker';
+    case Card    = 'card';
+    case Actions = 'actions';   // nút bấm / chip gợi ý
+    case Input   = 'input';     // hỏi tên/SĐT ngay trong luồng chat
+    case Opaque  = 'opaque';    // loại lạ — giữ nguyên, KHÔNG vứt
 }
 
-// Delivery/OutboundEvent.php — gốc cho MỌI thứ đi ra
+// Delivery/Event/OutboundEvent.php — gốc cho MỌI thứ đi ra
 abstract class OutboundEvent
 {
     abstract public function type(): OutboundEventType;
+    abstract public function plainText(): string;   // bản hạ cấp cho kênh chỉ hiểu chữ
 }
 
-final class SendMessage extends OutboundEvent { /* nội dung */ }
-final class PlaceReaction extends OutboundEvent { /* target, icon */ }
-final class MarkSeen extends OutboundEvent { /* targets */ }
-final class RecallMessage extends OutboundEvent { /* target */ }
+final class TextEvent    extends OutboundEvent { /* text */ }
+final class CardEvent    extends OutboundEvent { /* title, subtitle, imageUrl, actions[] */ }
+final class ActionsEvent extends OutboundEvent { /* actions[] */ }
+final class InputEvent   extends OutboundEvent { /* fields[], submitLabel */ }
+final class OpaqueEvent  extends OutboundEvent { /* raw — tương thích ngược */ }
 ```
 
-**Luật đối xứng — áp cho MỌI gốc trừu tượng, không riêng sự kiện.** Nội dung tin cũng vậy: `MessageBlock` ↔ `MessageBlockType`. Hễ có một gốc trừu tượng cần lưu hoặc truyền ra ngoài, nó phải có enum định danh đi kèm.
+`ActionSubmitted` (chiều vào) là bạn song sinh của `ActionsEvent`/`InputEvent` (chiều ra): khách bấm nút thì quay về đúng `actionId` mình đã đặt, **không** giả lập thành tin chữ. Đây cũng là điểm nối cho harness tự động trả lời.
+
+> **Thả cảm xúc, báo đã xem, thu hồi KHÔNG nằm trong cây này.** Chúng là **thao tác lên một tin đã có**, không phải nội dung của một tin mới — chúng đi qua capability interface (`SupportsReactions`, `SupportsSeenReceipts`). Nhét chung sẽ phá luật ánh xạ 1-1 vì không phải kênh nào cũng có.
+
+Hễ có một gốc trừu tượng cần lưu hoặc truyền ra ngoài, nó phải có enum định danh đi kèm.
 
 Hai điều bắt buộc, có test enforce:
 
 1. **Enum và lớp con ánh xạ 1-1.** Thêm lớp con mà quên thêm case (hoặc ngược lại) ⇒ đỏ. Không có case "mồ côi", không có lớp con vô danh.
-2. **Khai báo năng lực dùng enum, không dùng `class-string`.** `supportedInboundEvents(): list<InboundEventType>` — đọc được, so sánh được, đưa xuống FE được. `list<class-string<InboundEvent>>` thì FE không dùng nổi.
+2. **Khai báo năng lực dùng enum, không dùng `class-string`.** `supportedOutboundEvents(): list<OutboundEventType>` — đọc được, so sánh được, đưa xuống FE được. `list<class-string<OutboundEvent>>` thì FE không dùng nổi.
+
+**Hạ cấp nằm ở ADAPTER, không ở lõi.** Lõi đưa nguyên danh sách sự kiện xuống driver; kênh không render được loại nào thì adapter tự quy về chữ. Nếu lõi phải lọc theo kênh, tức là lõi biết kênh nào làm được gì — vi phạm thẳng luật bất biến #1.
 
 **Adapter là lớp dịch duy nhất:** payload nhà cung cấp → `InboundEvent` con phù hợp; `OutboundEvent` → payload nhà cung cấp. Lõi chỉ làm việc với hai gốc trừu tượng và các lớp con của chúng.
 
