@@ -30,7 +30,7 @@ function composeSetup(): array
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'widget',
-        'peer_uid' => 'khach_'.Str::random(6),
+        'sender_uid' => 'khach_'.Str::random(6),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

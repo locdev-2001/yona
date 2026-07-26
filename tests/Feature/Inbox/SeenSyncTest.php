@@ -40,7 +40,7 @@ function ssSetup(string $role = 'admin'): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_ss_'.uniqid(),
+        'sender_uid' => 'peer_ss_'.uniqid(),
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -54,7 +54,7 @@ function ssSetup(string $role = 'admin'): array
         'source_id' => 'ss_in_'.uniqid(),
         'platform_sent_at' => now(),
         'platform_meta' => ['zca_message' => [
-            'msgId' => 'ss_m1', 'cliMsgId' => '999888', 'uidFrom' => $conversation->peer_uid,
+            'msgId' => 'ss_m1', 'cliMsgId' => '999888', 'uidFrom' => $conversation->sender_uid,
             'idTo' => '0', 'msgType' => 'webchat', 'st' => 3, 'at' => 0, 'cmd' => 501, 'ts' => '1751600000000',
         ]],
     ]);
@@ -102,7 +102,7 @@ it('ON nhưng NHÓM (thread_type=1) → không bắn (per-member, v1 bỏ)', fun
     $group = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'group_ss',
+        'sender_uid' => 'group_ss',
         'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

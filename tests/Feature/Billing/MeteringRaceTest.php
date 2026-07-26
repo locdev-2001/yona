@@ -31,7 +31,7 @@ it('F1: meterReply called twice same period → answered_count === 1', function 
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_race_001',
+        'sender_uid' => 'zalo_race_001',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -63,7 +63,7 @@ it('F1: meterReply in different periods → counted separately', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_period_002',
+        'sender_uid' => 'zalo_period_002',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -151,7 +151,7 @@ it('F9-audit: meterReply 2 lần cùng kỳ → last_metered_period set đúng (
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_atomic_f9_'.uniqid(),
+        'sender_uid' => 'zalo_atomic_f9_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

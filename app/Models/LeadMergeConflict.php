@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $workspace_id
  * @property string $channel_account_id
- * @property string $peer_uid
+ * @property string $sender_uid
  * @property string $source_conversation_id
  * @property string $target_conversation_id
  * @property string $source_lead_id
@@ -32,7 +32,7 @@ class LeadMergeConflict extends Model
 
     protected $fillable = [
         'channel_account_id',
-        'peer_uid',
+        'sender_uid',
         'source_conversation_id',
         'target_conversation_id',
         'source_lead_id',

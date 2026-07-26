@@ -123,7 +123,7 @@ it('nhận được tin qua kênh nội bộ khi Zalo đã tắt', function () {
         ->first();
 
     expect($conversation)->not->toBeNull();
-    expect($conversation->peer_uid)->toBe('khach_001');
+    expect($conversation->sender_uid)->toBe('khach_001');
     expect($message->direction)->toBe('in');
     expect($message->body)->toBe('cho hỏi còn phòng không ạ');
 });
@@ -153,7 +153,7 @@ it('POST /api/channels/widget/inbound tạo hội thoại + tin THẬT trong DB'
     TenantScope::runScoped($workspaceId, function () use ($workspaceId, $accountId, $visitorId, $sourceId) {
         $conversation = Conversation::where('workspace_id', $workspaceId)
             ->where('channel', WidgetChannelDriver::KEY)
-            ->where('peer_uid', $visitorId)
+            ->where('sender_uid', $visitorId)
             ->first();
 
         expect($conversation)->not->toBeNull();
@@ -190,7 +190,7 @@ it('đường vào HTTP khử trùng theo source_id — gửi lại KHÔNG đẻ
 
     TenantScope::runScoped($workspaceId, function () use ($workspaceId, $visitorId, $sourceId) {
         $conversation = Conversation::where('workspace_id', $workspaceId)
-            ->where('peer_uid', $visitorId)
+            ->where('sender_uid', $visitorId)
             ->first();
 
         expect($conversation)->not->toBeNull();
@@ -231,7 +231,7 @@ it('agent gửi được tin trong hội thoại nội bộ khi Zalo đã tắt'
         'workspace_id' => $workspace->id,
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account->id,
-        'peer_uid' => 'khach_003',
+        'sender_uid' => 'khach_003',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -257,7 +257,7 @@ it('kênh nội bộ render được MỌI loại sự kiện, không hạ cấp
         'workspace_id' => $workspace->id,
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account->id,
-        'peer_uid' => 'khach_004',
+        'sender_uid' => 'khach_004',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -284,7 +284,7 @@ it('tin kênh nội bộ vẫn được thống kê và phát realtime — khôn
         'workspace_id' => $workspace->id,
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account->id,
-        'peer_uid' => 'khach_005',
+        'sender_uid' => 'khach_005',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

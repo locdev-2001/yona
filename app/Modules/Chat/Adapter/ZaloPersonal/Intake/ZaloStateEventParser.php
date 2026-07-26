@@ -114,11 +114,11 @@ class ZaloStateEventParser
     }
 
     /**
-     * typing: payload[0] = {type, data:{uid|gid, ts}, threadId}. Trả peer_uid
+     * typing: payload[0] = {type, data:{uid|gid, ts}, threadId}. Trả sender_uid
      * (= threadId: uid người gõ ở 1-1, gid ở nhóm) để resolve conversation.
      *
      * @param  array<int, mixed>  $payload
-     * @return array{peer_uid: string, typist_uid: string|null}|null
+     * @return array{sender_uid: string, typist_uid: string|null}|null
      */
     public function parseTyping(array $payload): ?array
     {
@@ -130,7 +130,7 @@ class ZaloStateEventParser
         }
 
         return [
-            'peer_uid' => (string) $threadId,
+            'sender_uid' => (string) $threadId,
             'typist_uid' => isset($item['data']['uid']) ? (string) $item['data']['uid'] : null,
         ];
     }

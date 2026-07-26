@@ -25,7 +25,7 @@ it('creates a conversation and message in the same workspace', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_001',
+        'sender_uid' => 'zalo_uid_001',
         'thread_type' => 0,
         'peer_name' => 'Khách test',
         'contact_id' => null, // F23: Liên hệ nháp
@@ -59,7 +59,7 @@ it('POST inbox.read đưa unread_count về 0 (idempotent)', function () {
     $conv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_uid_read',
+        'sender_uid' => 'zalo_uid_read',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -87,7 +87,7 @@ it('conversation from workspace A is not visible in workspace B query (RLS)', fu
     $conv = Conversation::create([
         'workspace_id' => $ws1->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'zalo_secret_uid',
+        'sender_uid' => 'zalo_secret_uid',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws1->id),
     ]);
@@ -112,7 +112,7 @@ it('message from workspace A is not visible in workspace B (RLS)', function () {
     $conv = Conversation::create([
         'workspace_id' => $ws1->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'uid_ws1_only',
+        'sender_uid' => 'uid_ws1_only',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws1->id),
     ]);
@@ -135,9 +135,9 @@ it('message from workspace A is not visible in workspace B (RLS)', function () {
     expect($found)->toBeNull();
 });
 
-// ── Unique(channel_account_id, peer_uid) idempotent upsert (P08 re-key) ──────
+// ── Unique(channel_account_id, sender_uid) idempotent upsert (P08 re-key) ──────
 
-it('conversations unique(channel_account_id, peer_uid) enforces idempotency', function () {
+it('conversations unique(channel_account_id, sender_uid) enforces idempotency', function () {
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
@@ -154,17 +154,17 @@ it('conversations unique(channel_account_id, peer_uid) enforces idempotency', fu
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_abc',
+        'sender_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);
 
-    // Thử insert lại cùng (channel_account_id, peer_uid) → phải throw
+    // Thử insert lại cùng (channel_account_id, sender_uid) → phải throw
     expect(fn () => Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_abc',
+        'sender_uid' => 'peer_abc',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]))->toThrow(QueryException::class);
@@ -181,7 +181,7 @@ it('soft-deleted conversation is hidden by global scope', function () {
     $conv = Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_soft_delete',
+        'sender_uid' => 'peer_soft_delete',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);

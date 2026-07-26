@@ -55,7 +55,7 @@ function ccSetup(string $role = 'admin'): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_cc_'.uniqid(),
+        'sender_uid' => 'peer_cc_'.uniqid(),
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -75,7 +75,7 @@ function ccInboundMessage(Conversation $conversation, string $suffix = ''): Mess
         'source_id' => 'cc_in_'.$suffix.uniqid(),
         'platform_sent_at' => now(),
         'platform_meta' => ['zca_message' => [
-            'msgId' => 'cc_m'.$suffix, 'cliMsgId' => '123456', 'uidFrom' => $conversation->peer_uid,
+            'msgId' => 'cc_m'.$suffix, 'cliMsgId' => '123456', 'uidFrom' => $conversation->sender_uid,
             'idTo' => '0', 'msgType' => 'webchat', 'ts' => '1751600000000',
         ]],
     ]);
@@ -89,7 +89,7 @@ function ccRegisterBareChannel(Workspace $workspace): Conversation
     return Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'mock_a',
-        'peer_uid' => 'peer_bare_'.uniqid(),
+        'sender_uid' => 'peer_bare_'.uniqid(),
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -192,7 +192,7 @@ it('seen-sync bỏ qua hội thoại nhóm', function () {
     $group = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'group_cc_'.uniqid(),
+        'sender_uid' => 'group_cc_'.uniqid(),
         'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

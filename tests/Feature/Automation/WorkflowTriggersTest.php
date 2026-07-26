@@ -201,7 +201,7 @@ it('debounces rapid-fire MessageReceived: only the latest message triggers enrol
     $conversation = Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer-'.Str::uuid(),
+        'sender_uid' => 'peer-'.Str::uuid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),
     ]);

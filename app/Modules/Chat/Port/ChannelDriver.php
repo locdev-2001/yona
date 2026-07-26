@@ -64,7 +64,7 @@ interface ChannelDriver
      * @return array{
      *   channel: string,
      *   channel_account_id: string|null,
-     *   peer_uid: string,
+     *   thread_uid: string,
      *   peer_name: string|null,
      *   peer_avatar: string|null,
      *   peer_phone: string|null,

@@ -78,7 +78,7 @@ function makeConversationForLead(Workspace $ws, string $leadId, string $channel 
     return Conversation::create([
         'workspace_id' => $ws->id,
         'channel' => $channel,
-        'peer_uid' => 'peer-'.Str::uuid(),
+        'sender_uid' => 'peer-'.Str::uuid(),
         'thread_type' => 0,
         'lead_id' => $leadId,
         'conversation_number' => WorkspaceSequence::next('conversation', $ws->id),

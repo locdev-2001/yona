@@ -30,7 +30,7 @@ class WidgetInboundParser
             'channel_account_id' => isset($raw['channel_account_id']) && $raw['channel_account_id'] !== ''
                 ? (string) $raw['channel_account_id']
                 : null,
-            'peer_uid' => (string) ($raw['visitor_id'] ?? $raw['peer_uid'] ?? ''),
+            'thread_uid' => (string) ($raw['visitor_id'] ?? $raw['sender_uid'] ?? ''),
             'peer_name' => $raw['visitor_name'] ?? null,
             'peer_avatar' => null,
             'peer_phone' => null,

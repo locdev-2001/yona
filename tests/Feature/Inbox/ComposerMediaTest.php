@@ -34,7 +34,7 @@ function cmSetup(): array
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_media_'.uniqid(),
+        'sender_uid' => 'peer_media_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -200,7 +200,7 @@ it('send attachment của conversation khác → 404, không gửi bridge', func
     $otherConv = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_khac_'.uniqid(),
+        'sender_uid' => 'peer_khac_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -300,7 +300,7 @@ it('inbox:prune-transient xóa pending hết hạn + attachment chưa gửi quá
         $convId = (string) Str::uuid();
         $priv('conversations')->insert([
             'id' => $convId, 'workspace_id' => $wsId, 'channel' => 'zalo_personal',
-            'peer_uid' => 'peer_prune', 'thread_type' => 0, 'conversation_number' => 1,
+            'sender_uid' => 'peer_prune', 'thread_type' => 0, 'conversation_number' => 1,
             'created_at' => now(), 'updated_at' => now(),
         ]);
 

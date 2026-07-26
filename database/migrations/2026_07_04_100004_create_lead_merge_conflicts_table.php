@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignUuid('workspace_id')->constrained('workspaces')->cascadeOnDelete();
 
             $table->uuid('channel_account_id');
-            $table->string('peer_uid');
+            $table->string('sender_uid');
 
             $table->uuid('source_conversation_id');
             $table->uuid('target_conversation_id');

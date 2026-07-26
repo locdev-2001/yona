@@ -29,7 +29,7 @@ function makeService(?MeteringService $meter = null): IntakeService
     );
 }
 
-function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = null): array
+function basePayload(string $senderUid = 'peer_001', ?string $channelAccountId = null): array
 {
     // channel_account_id là uuid, không FK ràng buộc (xem migration 100002) — test không
     // cần channel_accounts row thật, chỉ cần cùng giá trị để mô phỏng "cùng account".
@@ -38,7 +38,7 @@ function basePayload(string $peerUid = 'peer_001', ?string $channelAccountId = n
     return [
         'channel_account_id' => $channelAccountId,
         'channel' => 'zalo_personal',
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'thread_type' => 0,
         'peer_name' => 'Nguyễn Test',
         'direction' => 'in',
@@ -289,14 +289,14 @@ it('ingest 2 tin từ cùng peer → 1 Conversation + 2 Message', function () {
 
     $convCount = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', 'peer_dup')
+        ->where('sender_uid', 'peer_dup')
         ->count();
 
     expect($convCount)->toBe(1);
 
     $conv = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', 'peer_dup')
+        ->where('sender_uid', 'peer_dup')
         ->first();
 
     $msgCount = Message::where('conversation_id', $conv->id)->count();
@@ -334,7 +334,7 @@ it('channel auth: user của workspace khác bị denied', function () {
     expect($userA->membershipFor($wsA->id))->not->toBeNull();
 });
 
-// ── Race: 2 webhook đồng thời cùng (channel_account_id, peer_uid) ────────────
+// ── Race: 2 webhook đồng thời cùng (channel_account_id, sender_uid) ────────────
 //
 // Trước fix: read-check-write không atomic → cả 2 miss first() → cả 2 INSERT →
 // request thứ 2 hit conversations_channel_account_peer_unique → QueryException 23505 →
@@ -350,13 +350,13 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     actingInWorkspace($ws, $user);
 
     $channelAccountId = (string) Str::uuid();
-    $peerUid = 'peer_race_001';
+    $senderUid = 'peer_race_001';
 
     // Conversation conflicting đã tồn tại (request "kia" tạo trước, trong cùng workspace).
     $existing = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_type' => 0,
         'conversation_number' => 999,
     ]);
@@ -366,7 +366,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     {
         private bool $firstLookup = true;
 
-        protected function findConversation(?string $channelAccountId, string $peerUid): ?Conversation
+        protected function findConversation(?string $channelAccountId, string $senderUid): ?Conversation
         {
             if ($this->firstLookup) {
                 $this->firstLookup = false;
@@ -374,11 +374,11 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
                 return null; // ép đi vào nhánh INSERT → đụng 23505
             }
 
-            return parent::findConversation($channelAccountId, $peerUid); // re-fetch thật trong catch
+            return parent::findConversation($channelAccountId, $senderUid); // re-fetch thật trong catch
         }
     };
 
-    $payload = basePayload($peerUid, $channelAccountId);
+    $payload = basePayload($senderUid, $channelAccountId);
     $payload['peer_name'] = 'Khách Race';
     $payload['source_id'] = 'msg_race_001';
 
@@ -390,7 +390,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
 
     $convCount = Conversation::withTrashed()
         ->where('channel_account_id', $channelAccountId)
-        ->where('peer_uid', $peerUid)
+        ->where('sender_uid', $senderUid)
         ->count();
 
     expect($convCount)->toBe(1); // không duplicate

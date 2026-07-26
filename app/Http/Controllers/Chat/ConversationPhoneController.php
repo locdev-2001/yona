@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
- * P05 — nhập tay SĐT khách + verify qua kênh (findUser: uid phải khớp peer_uid).
+ * P05 — nhập tay SĐT khách + verify qua kênh (findUser: uid phải khớp sender_uid).
  * Verify pass → phone_source='manual_verified' (nguồn mạnh nhất). Verify fail
  * (số không dùng Zalo HOẶC uid không khớp) → TỪ CHỐI lưu (LOW-2: cả 2 nhánh).
  */
@@ -32,7 +32,7 @@ class ConversationPhoneController extends Controller
 
         // Review MED-1: mỗi verify = 1 findUser API không chính thức. Throttle
         // 5/phút/(user,workspace) — chặn burst bot-like (vector khóa acc) + chặn
-        // oracle dò SĐT (iterate phone → true/false thuộc peer_uid).
+        // oracle dò SĐT (iterate phone → true/false thuộc sender_uid).
         $rateKey = 'phone-verify:'.$conversation->workspace_id.':'.auth()->id();
         if (! RateLimiter::attempt($rateKey, 5, fn () => true, 60)) {
             return response()->json([

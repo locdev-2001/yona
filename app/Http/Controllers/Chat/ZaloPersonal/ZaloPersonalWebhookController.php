@@ -356,7 +356,7 @@ class ZaloPersonalWebhookController extends Controller
         }
     }
 
-    /** @param array{peer_uid: string, typist_uid: string|null}|null $typing */
+    /** @param array{sender_uid: string, typist_uid: string|null}|null $typing */
     private function broadcastTyping(?string $channelAccountId, ?array $typing): void
     {
         if ($typing === null || $channelAccountId === null) {
@@ -364,7 +364,7 @@ class ZaloPersonalWebhookController extends Controller
         }
 
         $conversation = Conversation::where('channel_account_id', $channelAccountId)
-            ->where('peer_uid', $typing['peer_uid'])
+            ->where('sender_uid', $typing['sender_uid'])
             ->first();
 
         if ($conversation !== null) {
@@ -412,7 +412,7 @@ class ZaloPersonalWebhookController extends Controller
         }
 
         $conversation = Conversation::where('channel_account_id', $channelAccountId)
-            ->where('peer_uid', $threadId)
+            ->where('sender_uid', $threadId)
             ->first();
 
         if ($conversation === null) {

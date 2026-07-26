@@ -95,7 +95,7 @@ class PhoneEnrichmentService
         $contact = $this->contactService->resolveOrCreateFromPeer(
             $conversation->workspace_id,
             $conversation->channel,
-            $conversation->peer_uid,
+            $conversation->sender_uid,
             $normalizedPhone,
             $conversation->peer_name,
         );

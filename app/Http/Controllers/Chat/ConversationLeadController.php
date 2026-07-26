@@ -52,7 +52,7 @@ class ConversationLeadController extends Controller
             $contact = app(ContactService::class)->resolveOrCreateFromPeer(
                 workspaceId: $conversation->workspace_id,
                 channel: $conversation->channel,
-                peerUid: $conversation->peer_uid,
+                senderUid: $conversation->sender_uid,
                 phone: $conversation->peer_phone,
                 displayName: $conversation->peer_name,
             );

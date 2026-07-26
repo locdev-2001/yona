@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * P02 (inbox-multichannel-relayer) — orchestrator re-key conversations
- * từ (zalo_connection_id, peer_uid) sang (channel_account_id, peer_uid).
+ * từ (zalo_connection_id, sender_uid) sang (channel_account_id, sender_uid).
  *
  * --dry-run  : read-only, xuất report đối chiếu spike (không ghi DB).
  * --backfill : chạy (a)→(f). Idempotent — chạy lại an toàn (resumable).
@@ -56,11 +56,11 @@ class RekeyConversationsToChannelAccount extends Command
         $db = DB::connection('pgsql_privileged');
 
         $forkGroups = $db->select('
-            SELECT c.workspace_id, zc.personal_uid, c.peer_uid, COUNT(*) AS conv_count
+            SELECT c.workspace_id, zc.personal_uid, c.sender_uid, COUNT(*) AS conv_count
             FROM conversations c
             JOIN zalo_connections zc ON zc.connection_id = c.zalo_connection_id
             WHERE c.deleted_at IS NULL
-            GROUP BY c.workspace_id, zc.personal_uid, c.peer_uid
+            GROUP BY c.workspace_id, zc.personal_uid, c.sender_uid
             HAVING COUNT(*) > 1
         ');
         $convsInForkGroups = array_sum(array_map(fn ($g) => (int) $g->conv_count, $forkGroups));
@@ -71,12 +71,12 @@ class RekeyConversationsToChannelAccount extends Command
               COUNT(*) FILTER (WHERE lead_kinds = 1) AS one_lead,
               COUNT(*) FILTER (WHERE lead_kinds = 0) AS no_lead
             FROM (
-              SELECT c.workspace_id, zc.personal_uid, c.peer_uid,
+              SELECT c.workspace_id, zc.personal_uid, c.sender_uid,
                      COUNT(DISTINCT c.lead_id) FILTER (WHERE c.lead_id IS NOT NULL) AS lead_kinds
               FROM conversations c
               JOIN zalo_connections zc ON zc.connection_id = c.zalo_connection_id
               WHERE c.deleted_at IS NULL
-              GROUP BY c.workspace_id, zc.personal_uid, c.peer_uid
+              GROUP BY c.workspace_id, zc.personal_uid, c.sender_uid
               HAVING COUNT(*) > 1
             ) grouped
         ');
@@ -110,9 +110,9 @@ class RekeyConversationsToChannelAccount extends Command
 
         $csvPath = base_path('plans/reports/rekey-dryrun-'.now()->format('Y-m-d').'.csv');
         $fh = fopen($csvPath, 'w');
-        fputcsv($fh, ['workspace_id', 'personal_uid', 'peer_uid', 'conv_count']);
+        fputcsv($fh, ['workspace_id', 'personal_uid', 'sender_uid', 'conv_count']);
         foreach ($forkGroups as $group) {
-            fputcsv($fh, [$group->workspace_id, $group->personal_uid, $group->peer_uid, $group->conv_count]);
+            fputcsv($fh, [$group->workspace_id, $group->personal_uid, $group->sender_uid, $group->conv_count]);
         }
         fclose($fh);
         $this->info("Report: {$csvPath}");
@@ -131,17 +131,17 @@ class RekeyConversationsToChannelAccount extends Command
 
         $conflicts = $preflight->detect();
         $conflictKeys = array_map(
-            fn ($c) => $c['channel_account_id'].'|'.$c['peer_uid'],
+            fn ($c) => $c['channel_account_id'].'|'.$c['sender_uid'],
             $conflicts
         );
 
         $mergedGroups = 0;
         foreach ($merger->duplicateGroups() as $group) {
-            $key = $group->channel_account_id.'|'.$group->peer_uid;
+            $key = $group->channel_account_id.'|'.$group->sender_uid;
             if (in_array($key, $conflictKeys, true)) {
                 continue;
             }
-            $merger->mergeGroup($group->channel_account_id, $group->peer_uid);
+            $merger->mergeGroup($group->channel_account_id, $group->sender_uid);
             $mergedGroups++;
         }
         $this->line("(d) Gộp nhóm trùng: {$mergedGroups} (bỏ qua ".count($conflictKeys).' nhóm both_have_lead)');

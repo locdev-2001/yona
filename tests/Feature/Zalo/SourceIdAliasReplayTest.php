@@ -26,7 +26,7 @@ it('spike #10: inbound whose source_id only matches an alias (not messages.sourc
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => 'peer_replay_1',
+        'sender_uid' => 'peer_replay_1',
         'thread_type' => 0,
         'conversation_number' => 1,
     ]);
@@ -54,7 +54,7 @@ it('spike #10: inbound whose source_id only matches an alias (not messages.sourc
     $payload = [
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => 'peer_replay_1',
+        'thread_uid' => 'peer_replay_1',
         'thread_type' => 0,
         'direction' => 'in',
         'type' => 'text',
@@ -82,7 +82,7 @@ it('a source_id matching neither messages nor aliases still creates a new messag
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => 'peer_replay_2',
+        'sender_uid' => 'peer_replay_2',
         'thread_type' => 0,
         'conversation_number' => 2,
     ]);
@@ -99,7 +99,7 @@ it('a source_id matching neither messages nor aliases still creates a new messag
     $payload = [
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => 'peer_replay_2',
+        'thread_uid' => 'peer_replay_2',
         'thread_type' => 0,
         'direction' => 'in',
         'type' => 'text',
@@ -120,7 +120,7 @@ it('spike #13: alias coverage — every message with a source_id has a matching 
 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
-        'peer_uid' => 'peer_coverage',
+        'sender_uid' => 'peer_coverage',
         'thread_type' => 0,
         'conversation_number' => 3,
     ]);

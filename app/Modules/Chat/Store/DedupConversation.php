@@ -6,7 +6,7 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
- * P02(d) (inbox-multichannel-relayer) — gộp nhóm (channel_account_id, peer_uid)
+ * P02(d) (inbox-multichannel-relayer) — gộp nhóm (channel_account_id, sender_uid)
  * có >1 conversation active về 1 canonical. Ưu tiên conv đã có lead_id (remap
  * lead trước soft-delete), fallback conv có tin nhắn sớm nhất.
  *
@@ -42,24 +42,24 @@ class DedupConversation
         return new self($connection);
     }
 
-    /** Nhóm (channel_account_id, peer_uid) có >1 conversation active. */
+    /** Nhóm (channel_account_id, sender_uid) có >1 conversation active. */
     public function duplicateGroups(): array
     {
         return $this->db->table('conversations')
-            ->select('workspace_id', 'channel_account_id', 'peer_uid', DB::raw('COUNT(*) as conv_count'))
+            ->select('workspace_id', 'channel_account_id', 'sender_uid', DB::raw('COUNT(*) as conv_count'))
             ->whereNotNull('channel_account_id')
             ->whereNull('deleted_at')
-            ->groupBy('workspace_id', 'channel_account_id', 'peer_uid')
+            ->groupBy('workspace_id', 'channel_account_id', 'sender_uid')
             ->havingRaw('COUNT(*) > 1')
             ->get()
             ->all();
     }
 
-    public function mergeGroup(string $channelAccountId, string $peerUid): void
+    public function mergeGroup(string $channelAccountId, string $senderUid): void
     {
         $convs = $this->db->table('conversations')
             ->where('channel_account_id', $channelAccountId)
-            ->where('peer_uid', $peerUid)
+            ->where('sender_uid', $senderUid)
             ->whereNull('deleted_at')
             ->get(['id', 'lead_id', 'created_at']);
 

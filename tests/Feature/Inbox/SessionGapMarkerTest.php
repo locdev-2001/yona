@@ -25,12 +25,12 @@ function makeGapAccount(Workspace $ws, ?string $gapStartedAt): ChannelAccount
     ]);
 }
 
-function gapPayload(string $channelAccountId, string $peerUid, ?string $platformSentAt, ?string $sourceId = null): array
+function gapPayload(string $channelAccountId, string $senderUid, ?string $platformSentAt, ?string $sourceId = null): array
 {
     return [
         'channel' => 'zalo_personal',
         'channel_account_id' => $channelAccountId,
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'thread_type' => 0,
         'peer_name' => 'Peer Gap',
         'direction' => 'in',
@@ -50,7 +50,7 @@ it('materializes a session_gap marker for the first post-gap message and increme
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_gap_1',
+        'sender_uid' => 'peer_gap_1',
         'thread_type' => 0,
         'conversation_number' => 1,
     ]);
@@ -81,7 +81,7 @@ it('is idempotent — a second post-gap message does not duplicate the marker', 
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_gap_2',
+        'sender_uid' => 'peer_gap_2',
         'thread_type' => 0,
         'conversation_number' => 2,
     ]);
@@ -106,7 +106,7 @@ it('does not create a marker when there is no gap window (gap_started_at null)',
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_no_gap',
+        'sender_uid' => 'peer_no_gap',
         'thread_type' => 0,
         'conversation_number' => 3,
     ]);
@@ -128,7 +128,7 @@ it('does not create a marker for a message BEFORE gap_started_at', function () {
     $conversation = Conversation::create([
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_pre_gap',
+        'sender_uid' => 'peer_pre_gap',
         'thread_type' => 0,
         'conversation_number' => 4,
     ]);

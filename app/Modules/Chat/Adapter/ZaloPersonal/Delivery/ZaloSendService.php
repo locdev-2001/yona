@@ -77,7 +77,7 @@ class ZaloSendService
 
         // 2. Rate limiter (ToS Zalo — POLICY kênh) — cap ≤3/ngày CHỈ áp tin CHỦ ĐỘNG (QC).
         // Tin trả lời khi khách có inbound ≤24h không phải QC → miễn cap, không tiêu quota cap.
-        $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
+        $targetNumber = $conversation->peer_phone ?? $conversation->sender_uid;
         $isReply = $this->isReplyToRecentInbound($conversation);
         $this->rateLimiter->assertCanSend($conversation->workspace_id, $targetNumber, isReply: $isReply);
 
@@ -109,7 +109,7 @@ class ZaloSendService
     {
         $payload = [
             'connection_id' => $connection->connection_id,
-            'thread_id' => $conversation->peer_uid,
+            'thread_id' => $conversation->sender_uid,
             'thread_type' => $conversation->thread_type,
             'text' => $text,
         ];

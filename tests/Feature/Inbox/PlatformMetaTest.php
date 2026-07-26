@@ -55,12 +55,12 @@ function sampleListenerData(string $msgId = 'msg_777'): array
     ];
 }
 
-function inboundPayloadWithMeta(string $peerUid, string $accountId, string $msgId): array
+function inboundPayloadWithMeta(string $senderUid, string $accountId, string $msgId): array
 {
     return [
         'channel_account_id' => $accountId,
         'channel' => 'zalo_personal',
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'thread_type' => 0,
         'direction' => 'in',
         'type' => 'text',
@@ -77,7 +77,7 @@ it('parseInbound giữ TOÀN BỘ raw listener_data trong zca_message (quyết �
     $driver = app(ZaloChannelDriver::class);
 
     $normalized = $driver->parseInbound([
-        'peer_uid' => '111222333',
+        'thread_uid' => '111222333',
         'thread_id' => '111222333',
         'thread_type' => 0,
         'inbound_kind' => 'text',
@@ -108,7 +108,7 @@ it('parseInbound không có listener_data (backfill/legacy) → platform_meta r�
     $driver = app(ZaloChannelDriver::class);
 
     $normalized = $driver->parseInbound([
-        'peer_uid' => '111222333',
+        'thread_uid' => '111222333',
         'inbound_kind' => 'text',
         'content' => 'tin backfill',
         'source_id' => 'msg_old',
