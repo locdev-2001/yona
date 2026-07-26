@@ -156,3 +156,73 @@ it('thành viên không có quyền quản trị kênh thì bị chặn ở thao
     $this->postJson(route('inbox.reaction', [$conversation->id, $message->id]), ['icon' => '/-strong'])
         ->assertForbidden();
 });
+
+it('lõi và giao diện không nhắc tên kênh nào', function () {
+    // Mỗi thư mục phải tồn tại và có file trước khi soi nội dung: `glob` trả
+    // rỗng cho đường dẫn không có, nên một đợt di dời quét qua sẽ biến gate này
+    // thành xanh rỗng thay vì đỏ.
+    $scopes = [
+        'app/Modules/Chat/Port/*.php',
+        'app/Modules/Chat/Intake/*.php',
+        'app/Modules/Chat/Store/*.php',
+        'app/Modules/Chat/Delivery/*.php',
+        'app/Modules/Chat/Status/*.php',
+        'app/Modules/Chat/Timeline/*.php',
+        'app/Modules/Chat/Broadcast/*.php',
+        'app/Http/Controllers/Chat/*.php',
+        'resources/js/components/inbox/*.ts*',
+        'resources/js/pages/inbox/*.tsx',
+    ];
+
+    $violations = [];
+
+    foreach ($scopes as $pattern) {
+        $files = glob(base_path($pattern)) ?: [];
+        expect($files)->not->toBeEmpty("Mẫu không khớp file nào (đường dẫn đã đổi?): {$pattern}");
+
+        foreach ($files as $file) {
+            // Bỏ chú thích trước khi soi: nhắc tên một kênh trong câu giải thích
+            // không phải là rẽ nhánh theo kênh. Thứ cần chặn là CODE.
+            $code = preg_replace(['#/\*.*?\*/#s', '#//[^\n]*#'], '', (string) file_get_contents($file));
+
+            foreach (['zalo', 'messenger', 'tiktok'] as $channel) {
+                if (preg_match('/'.$channel.'/i', (string) $code)) {
+                    $violations[] = basename($file).' → '.$channel;
+                }
+            }
+        }
+    }
+
+    expect($violations)->toBe([]);
+});
+
+it('thread_type chỉ còn sống ở lớp dịch của phích cắm', function () {
+    $scopes = [
+        'app/Modules/Chat/Port/*.php',
+        'app/Modules/Chat/Intake/*.php',
+        'app/Modules/Chat/Store/*.php',
+        'app/Modules/Chat/Delivery/*.php',
+        'app/Modules/Chat/Status/*.php',
+        'app/Modules/Chat/Timeline/*.php',
+        'app/Modules/Chat/Broadcast/*.php',
+        'app/Http/Controllers/Chat/*.php',
+    ];
+
+    // Gom vi phạm rồi so với mảng rỗng, KHÔNG dùng `not->toContain(needle, message)`:
+    // `toContain` nhận biến tham số nên chuỗi thứ hai bị hiểu là một needle nữa,
+    // và phép khẳng định im lặng không bắt gì cả. Đã thử, nó xanh khi phải đỏ.
+    $violations = [];
+
+    foreach ($scopes as $pattern) {
+        $files = glob(base_path($pattern)) ?: [];
+        expect($files)->not->toBeEmpty("Mẫu không khớp file nào: {$pattern}");
+
+        foreach ($files as $file) {
+            if (str_contains((string) file_get_contents($file), 'thread_type')) {
+                $violations[] = basename($file);
+            }
+        }
+    }
+
+    expect($violations)->toBe([]);
+});
