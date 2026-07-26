@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
 use App\Modules\Chat\Timeline\TimelineCursor;
-use App\Services\Inbox\SeenSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

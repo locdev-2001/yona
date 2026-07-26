@@ -23,7 +23,9 @@ use App\Modules\Automation\Handlers\SendMessageNodeHandler;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
 use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\InteractionPipeline;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
@@ -41,8 +43,6 @@ use App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Modules\Integration\IntegrationCatalog;
 use App\Modules\Integration\PaymentManager;
-use App\Services\Inbox\OutboundSendPipeline;
-use App\Services\Inbox\SeenSyncService;
 use App\Services\NoteService;
 use App\Services\Rekey\DuplicateConversationMerger;
 use App\Services\TagService;
@@ -79,7 +79,7 @@ function chatBootServices(): array
         BroadcastService::class,
         DuplicateResolver::class,
         MessageStatusService::class,
-        OutboundSendPipeline::class,
+        DeliveryPipeline::class,
         PhoneEnrichmentService::class,
         SeenSyncService::class,
         GapMarkerService::class,

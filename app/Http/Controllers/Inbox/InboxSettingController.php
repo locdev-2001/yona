@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
-use App\Services\Inbox\SeenSyncService;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

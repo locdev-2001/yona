@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Integration\Data;
+namespace App\Modules\Chat\Delivery;
 
 use App\Models\Message;
 use App\Modules\Chat\Delivery\Event\OutboundEvent;

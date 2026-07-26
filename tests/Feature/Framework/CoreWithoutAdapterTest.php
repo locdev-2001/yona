@@ -9,15 +9,15 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\Event\Action;
 use App\Modules\Chat\Delivery\Event\ActionsEvent;
 use App\Modules\Chat\Delivery\Event\CardEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Delivery\Event\TextEvent;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\Inbox\OutboundSendPipeline;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -238,7 +238,7 @@ it('agent gửi được tin trong hội thoại nội bộ khi Zalo đã tắt'
 
     $channels = app(ChannelRegistry::class);
 
-    $message = app(OutboundSendPipeline::class)->send(
+    $message = app(DeliveryPipeline::class)->send(
         $channels->driver(WidgetChannelDriver::KEY),
         $conversation,
         OutboundMessage::text('còn phòng ạ'),
@@ -267,7 +267,7 @@ it('kênh nội bộ render được MỌI loại sự kiện, không hạ cấp
     expect($driver->supportedOutboundEvents())
         ->toEqualCanonicalizing(OutboundEventType::cases());
 
-    $message = app(OutboundSendPipeline::class)->send($driver, $conversation, OutboundMessage::events([
+    $message = app(DeliveryPipeline::class)->send($driver, $conversation, OutboundMessage::events([
         new TextEvent('Phòng còn trống ạ'),
         new CardEvent(title: 'Deluxe', subtitle: '1.2 triệu/đêm'),
         new ActionsEvent([new Action('book', 'Đặt ngay')]),
@@ -289,7 +289,7 @@ it('tin kênh nội bộ vẫn được thống kê và phát realtime — khôn
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    app(OutboundSendPipeline::class)->send(
+    app(DeliveryPipeline::class)->send(
         app(ChannelRegistry::class)->driver(WidgetChannelDriver::KEY),
         $conversation,
         OutboundMessage::text('đã ghi nhận ạ'),

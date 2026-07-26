@@ -10,7 +10,7 @@ use Illuminate\Support\ServiceProvider;
  * Service provider cho Zalo personal channel driver (sống trong Integration module).
  *
  * Đăng ký:
- *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter; P11: metering ở OutboundSendPipeline)
+ *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter; P11: metering ở DeliveryPipeline)
  *   - ZaloChannelDriver vào ChannelRegistry (extend 'zalo_personal')
  *
  * Routes + middleware alias 'zalo.bridge.secret' nay sống ở Laravel routing chuẩn:

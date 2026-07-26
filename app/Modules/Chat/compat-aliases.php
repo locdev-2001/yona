@@ -1,6 +1,9 @@
 <?php
 
 use App\Modules\Chat\Broadcast\BroadcastService;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\AbstractChannelDriver;
@@ -49,4 +52,9 @@ return [
     'App\Services\Inbox\SessionGapMaterializer' => GapMarkerService::class,
     'App\Services\Inbox\SocialEventMaterializer' => SystemLineService::class,
     'App\Services\Inbox\StreamCursor' => TimelineCursor::class,
+
+    // Cụm 3 — Delivery/
+    'App\Modules\Integration\Data\OutboundMessage' => OutboundMessage::class,
+    'App\Services\Inbox\OutboundSendPipeline' => DeliveryPipeline::class,
+    'App\Services\Inbox\SeenSyncService' => SeenSyncService::class,
 ];

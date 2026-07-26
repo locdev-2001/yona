@@ -12,12 +12,12 @@ use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
 use App\Models\WorkspaceSequence;
 use App\Modules\Automation\WorkflowEngine;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
 use App\Modules\Chat\Port\ChannelCapabilities;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\EntitlementService;
-use App\Services\Inbox\OutboundSendPipeline;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -28,7 +28,7 @@ use Illuminate\Support\Str;
  * Ba bất biến bị khóa ở đây:
  *   1. Automation gửi đúng nội dung cấu hình (trước đây gửi tin RỖNG vì lệch key
  *      payload: handler gửi 'body', driver đọc 'text').
- *   2. Automation đi chung OutboundSendPipeline → vẫn đếm answered_count.
+ *   2. Automation đi chung DeliveryPipeline → vẫn đếm answered_count.
  *   3. Automation KHÔNG bị quota-gate, nhưng cũng KHÔNG mở khóa gate cho người
  *      gửi tay: hội thoại chỉ được automation chạm vẫn chặn agent khi hết quota.
  *      Nếu thiếu bất biến này, tenant bật một workflow auto-reply là vô hiệu hóa
@@ -228,7 +228,7 @@ it('automation KHÔNG gửi khi nội dung node để trống — báo failed th
 
 // ── 2. Đếm ────────────────────────────────────────────────────────────────────
 
-it('automation vẫn tăng answered_count (đi chung OutboundSendPipeline)', function () {
+it('automation vẫn tăng answered_count (đi chung DeliveryPipeline)', function () {
     [$workspace, $user] = smnSetup();
     $lead = Lead::factory()->create();
     smnConversation($workspace, $lead->id);
@@ -268,7 +268,7 @@ it('người gửi tay vượt mức dùng VẪN gửi được — không còn 
 
     $conversation = smnConversation($workspace);
 
-    $message = app(OutboundSendPipeline::class)->send(
+    $message = app(DeliveryPipeline::class)->send(
         $driver,
         $conversation,
         OutboundMessage::text('agent gửi tay khi đã vượt mức'),
@@ -280,7 +280,7 @@ it('người gửi tay vượt mức dùng VẪN gửi được — không còn 
 
 it('vượt mức vẫn tiếp tục cộng dồn thống kê — số liệu không bị kẹp trần', function () {
     [$workspace, , $driver] = smnSetup();
-    $pipeline = app(OutboundSendPipeline::class);
+    $pipeline = app(DeliveryPipeline::class);
 
     // Gửi nhiều hội thoại hơn hạn mức danh nghĩa
     for ($i = 0; $i < SMN_QUOTA_LIMIT + 2; $i++) {

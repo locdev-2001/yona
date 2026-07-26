@@ -9,12 +9,12 @@ use App\Models\Attachment;
 use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Delivery\DeliveryPipeline;
+use App\Modules\Chat\Delivery\OutboundMessage;
+use App\Modules\Chat\Delivery\SeenSyncService;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Timeline\MessageItemSerializer;
-use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\Inbox\OutboundSendPipeline;
-use App\Services\Inbox\SeenSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -288,9 +288,9 @@ class InboxController extends Controller
         try {
             /** @var ChannelRegistry $channelManager */
             $channelManager = app(ChannelRegistry::class);
-            // MỌI outbound đi qua OutboundSendPipeline — transport, thống kê,
+            // MỌI outbound đi qua DeliveryPipeline — transport, thống kê,
             // broadcast nằm chung một chỗ cho mọi kênh.
-            $message = app(OutboundSendPipeline::class)->send(
+            $message = app(DeliveryPipeline::class)->send(
                 $channelManager->driver($conversation->channel),
                 $conversation,
                 $outbound,

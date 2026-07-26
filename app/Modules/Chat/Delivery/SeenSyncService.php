@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Delivery;
 
 use App\Models\Conversation;
 use App\Models\Message;
