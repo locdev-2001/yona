@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloPersonalWebhookController;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;

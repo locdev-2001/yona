@@ -1,5 +1,17 @@
 <?php
 
+use App\Http\Controllers\Chat\ConversationAssignController;
+use App\Http\Controllers\Chat\ConversationAttachmentController;
+use App\Http\Controllers\Chat\ConversationLeadController;
+use App\Http\Controllers\Chat\ConversationPanelController;
+use App\Http\Controllers\Chat\ConversationPhoneController;
+use App\Http\Controllers\Chat\ConversationStreamController;
+use App\Http\Controllers\Chat\InboxController;
+use App\Http\Controllers\Chat\InboxSettingController;
+use App\Http\Controllers\Chat\MessageInteractionController;
+use App\Http\Controllers\Chat\QuickReplyController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloConnectionController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloPersonalWebhookController;
 use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloInteractionService;
 use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
 use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
@@ -89,4 +101,18 @@ return [
     'App\Services\Rekey\DuplicateConversationMerger' => DedupConversation::class,
     'App\Services\Zalo\PromoteAccountBinder' => PromoteAccountBinder::class,
     'App\Services\ZaloBackfillService' => ZaloBackfillService::class,
+
+    // Cụm 5 — Controllers/Chat/
+    'App\Http\Controllers\Inbox\ConversationAssignController' => ConversationAssignController::class,
+    'App\Http\Controllers\Inbox\ConversationAttachmentController' => ConversationAttachmentController::class,
+    'App\Http\Controllers\Inbox\ConversationLeadController' => ConversationLeadController::class,
+    'App\Http\Controllers\Inbox\ConversationPanelController' => ConversationPanelController::class,
+    'App\Http\Controllers\Inbox\ConversationPhoneController' => ConversationPhoneController::class,
+    'App\Http\Controllers\Inbox\ConversationStreamController' => ConversationStreamController::class,
+    'App\Http\Controllers\Inbox\InboxController' => InboxController::class,
+    'App\Http\Controllers\Inbox\InboxSettingController' => InboxSettingController::class,
+    'App\Http\Controllers\Inbox\MessageInteractionController' => MessageInteractionController::class,
+    'App\Http\Controllers\Inbox\QuickReplyController' => QuickReplyController::class,
+    'App\Http\Controllers\Integration\ZaloConnectionController' => ZaloConnectionController::class,
+    'App\Http\Controllers\Integration\ZaloPersonalWebhookController' => ZaloPersonalWebhookController::class,
 ];

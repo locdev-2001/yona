@@ -256,7 +256,7 @@ it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là da
         'app/Modules/Chat/Status/*.php',
         'app/Modules/Chat/Store/*.php',
         'app/Modules/Chat/Timeline/*.php',
-        'app/Http/Controllers/Inbox/*.php',
+        'app/Http/Controllers/Chat/*.php',
         'resources/js/components/inbox/*.ts*',
         'resources/js/pages/inbox/*.tsx',
     ];

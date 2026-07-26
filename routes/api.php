@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Chat\WidgetInboundController;
-use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloPersonalWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Zalo personal bridge webhook (HMAC-authed; no session/CSRF). Toggle via config/integrations.php.
