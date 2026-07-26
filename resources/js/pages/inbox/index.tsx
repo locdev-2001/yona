@@ -42,6 +42,7 @@ interface Conversation {
     sender_uid: string;
     thread_name: string | null;
     thread_avatar: string | null;
+    members?: Record<string, ChatParticipant> | null;
     sender_phone: string | null;
     thread_kind: string;
     unread_count: number;
@@ -307,9 +308,17 @@ export default function InboxIndex({
                     return [...next, { ...message, item_type: 'message' as const }];
                 });
 
-                // Tên người gửi trong nhóm đi kèm ngay trong tin — không còn bản
-                // sao nào trên hội thoại để phải trộn vào.
-                return current;
+                // Thành viên mới nhắn lần đầu: chèn hồ sơ của họ vào ngay để có
+                // avatar mà không phải tải lại trang.
+                const senderProfile = payload.sender_participant;
+                if (!senderProfile || !message.sender_uid) return current;
+                const known = current.members?.[message.sender_uid];
+                if (known && known.name === senderProfile.name && known.avatar === senderProfile.avatar) return current;
+
+                const merged = { ...current, members: { ...current.members, [message.sender_uid]: senderProfile } };
+                activeConvRef.current = merged;
+
+                return merged;
             });
 
             // Cập nhật list: bump unread+preview rồi đẩy hội thoại lên đầu (mới nhất trước).

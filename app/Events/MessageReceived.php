@@ -57,7 +57,7 @@ class MessageReceived implements ShouldBroadcast
             // sao nào: tên trong tin là tên tại thời điểm gửi.
             // đang mở, tránh initials fallback khi thành viên mới nhắn lần đầu realtime.
             'sender_participant' => $message->sender_uid !== null
-                ? array_filter(['name' => $message->sender_name]) ?: null
+                ? ($conversation?->memberProfiles()[$message->sender_uid] ?? array_filter(['name' => $message->sender_name])) ?: null
                 : null,
             'last_message_at' => $conversation?->last_message_at?->toIso8601String(),
             'unread_count' => $conversation ? $conversation->unread_count : 0,

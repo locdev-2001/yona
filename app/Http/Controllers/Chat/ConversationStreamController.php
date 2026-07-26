@@ -71,6 +71,7 @@ class ConversationStreamController extends Controller
         }
 
         return response()->json([
+            'members' => $conversation->memberProfiles(),
             'items' => $page->map(fn ($item) => $this->formatItem($item, $reactionsByMessage)),
             'next_cursor' => $nextCursor,
             'stream_version' => $conversation->stream_version,

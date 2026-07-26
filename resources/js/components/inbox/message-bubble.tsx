@@ -43,9 +43,9 @@ export function MessageBubble({ msg, peer, showSender, onReply, onReact }: Props
     // P06a — chỉ tin có platform metadata mới quote/react được (tin cũ: disable trung thực)
     const canInteract = !recalled && msg.quotable === true;
 
-    // Nhóm: tên người gửi đi kèm trong chính tin nhắn — tên tại thời điểm gửi,
-    // không phải tên hiện tại của họ.
-    const participant = group && msg.sender_name ? { name: msg.sender_name, avatar: null } : null;
+    // Nhóm: avatar lấy từ hồ sơ thành viên của luồng (dựng từ bí danh), còn tên
+    // ưu tiên tên đi kèm trong chính tin — đó là tên tại thời điểm gửi.
+    const participant = group && msg.sender_uid ? peer.members?.[msg.sender_uid] : null;
     const senderName = group ? (msg.sender_name ?? participant?.name ?? peer.thread_name) : peer.thread_name;
     const senderAvatar = group ? (participant?.avatar ?? null) : peer.thread_avatar;
 

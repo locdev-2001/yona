@@ -172,6 +172,8 @@ export interface ChatPeer {
     thread_name: string | null;
     sender_phone: string | null;
     thread_avatar?: string | null;
+    /** Tên + avatar từng người trong luồng, theo khóa thô — dựng từ bí danh. */
+    members?: Record<string, ChatParticipant> | null;
     thread_kind: string; // 'direct' | 'group'
     /** Group threads: sender_uid → profile (avatar/tên per-sender). */
 }

@@ -188,4 +188,42 @@ class Conversation extends Model
             ->orderByDesc('id')
             ->value('value');
     }
+
+    /**
+     * Tên và avatar của từng người trong luồng, theo khóa thô của họ.
+     *
+     * Dựng từ `conversation_members` nối sang bí danh — nguồn duy nhất. Trước
+     * đây thông tin này là một bản sao trong cột jsonb trên chính luồng, và bản
+     * sao đó lệch dần với hồ sơ thật.
+     *
+     * Chỉ dùng cho MÀN HÌNH MỘT HỘI THOẠI. Danh sách hộp thư không gọi — nó
+     * hiển thị `thread_name`, và gọi ở đó là một truy vấn cho mỗi hàng.
+     *
+     * @return array<string, array{name: string|null, avatar: string|null}>
+     */
+    public function memberProfiles(): array
+    {
+        $rows = ConversationMember::query()
+            ->where('conversation_id', $this->id)
+            ->leftJoin('profile_identities', 'profile_identities.id', '=', 'conversation_members.identity_id')
+            ->get([
+                'conversation_members.sender_uid',
+                'profile_identities.display_name',
+                'profile_identities.channel_profiles',
+            ]);
+
+        $profiles = [];
+
+        foreach ($rows as $row) {
+            $channelProfiles = json_decode((string) ($row->channel_profiles ?? '{}'), true) ?: [];
+            $entry = $channelProfiles[$this->channel] ?? reset($channelProfiles) ?: [];
+
+            $profiles[$row->sender_uid] = [
+                'name' => $row->display_name,
+                'avatar' => $entry['avatar'] ?? null,
+            ];
+        }
+
+        return $profiles;
+    }
 }
