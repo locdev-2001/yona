@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Chat\Adapter\Native\NativeChannelDriver;
+use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
 use App\Modules\Integration\ChannelManager;
 use App\Services\InboundMessageService;
 use App\Support\TenantScope;
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * Không có phiên đăng nhập: xác thực bằng secret ở middleware, và ngữ cảnh
  * workspace suy ra từ tài khoản kênh chứ KHÔNG nhận từ client.
  */
-class NativeInboundController extends Controller
+class WidgetInboundController extends Controller
 {
     public function __invoke(
         Request $request,
@@ -43,7 +43,7 @@ class NativeInboundController extends Controller
         $account = DB::connection('pgsql_privileged')
             ->table('channel_accounts')
             ->where('id', $validated['channel_account_id'])
-            ->where('channel', NativeChannelDriver::KEY)
+            ->where('channel', WidgetChannelDriver::KEY)
             ->first(['id', 'workspace_id']);
 
         if ($account === null) {
@@ -51,7 +51,7 @@ class NativeInboundController extends Controller
         }
 
         $message = TenantScope::runScoped($account->workspace_id, function () use ($channels, $inbound, $validated, $account) {
-            $normalized = $channels->driver(NativeChannelDriver::KEY)->parseInbound([
+            $normalized = $channels->driver(WidgetChannelDriver::KEY)->parseInbound([
                 ...$validated,
                 'channel_account_id' => $account->id,
             ]);

@@ -3,8 +3,8 @@
 return [
     // Kênh nội bộ — ĐẾ của module chat, không có cờ bật/tắt. Tắt nó là làm chat
     // chết, đúng thứ kiến trúc này tồn tại để loại bỏ.
-    'native' => [
-        'inbound_secret' => env('NATIVE_CHANNEL_INBOUND_SECRET'),
+    'widget' => [
+        'inbound_secret' => env('WIDGET_CHANNEL_INBOUND_SECRET'),
     ],
 
     // Phích cắm bên ngoài — tắt được, tắt xong chat vẫn chạy.

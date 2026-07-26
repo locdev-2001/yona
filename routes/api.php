@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Chat\NativeInboundController;
+use App\Http\Controllers\Chat\WidgetInboundController;
 use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +13,6 @@ if (config('integrations.zalo_personal.enabled')) {
 
 // Kênh nội bộ — transport riêng của kênh, KHÔNG phải API sản phẩm cho bên thứ ba
 // (cái đó là /api/v1 ở P6). Không có cờ config: kênh nội bộ luôn bật.
-Route::post('channels/native/inbound', NativeInboundController::class)
-    ->middleware('native.channel.secret')
-    ->name('channels.native.inbound');
+Route::post('channels/widget/inbound', WidgetInboundController::class)
+    ->middleware('widget.channel.secret')
+    ->name('channels.widget.inbound');

@@ -8,7 +8,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyWorkspace;
 use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\SetLocale;
-use App\Http\Middleware\VerifyNativeChannelSecret;
+use App\Http\Middleware\VerifyWidgetChannelSecret;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.can' => AdminCan::class,
             'no.impersonation' => BlockDuringImpersonation::class,
             'zalo.bridge.secret' => VerifyZaloBridgeSecret::class,
-            'native.channel.secret' => VerifyNativeChannelSecret::class,
+            'widget.channel.secret' => VerifyWidgetChannelSecret::class,
         ]);
 
         // Guard-aware redirects: admin routes redirect to admin endpoints.
