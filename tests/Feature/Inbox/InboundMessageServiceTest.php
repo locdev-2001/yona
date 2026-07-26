@@ -2,7 +2,9 @@
 
 use App\Events\MessageReceived;
 use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Models\Message;
+use App\Models\ProfileIdentity;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Modules\Chat\Broadcast\BroadcastService;
@@ -10,6 +12,8 @@ use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Status\MessageStatusService;
 use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\MemberStore;
+use App\Modules\Identity\Contracts\IdentityResolver;
 use App\Services\MeteringService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
@@ -26,6 +30,8 @@ function makeService(?MeteringService $meter = null): IntakeService
         app(DuplicateResolver::class),
         app(MessageStatusService::class),
         app(BroadcastService::class),
+        app(MemberStore::class),
+        app(IdentityResolver::class),
     );
 }
 
@@ -362,7 +368,7 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     ]);
 
     // Subclass: findConversation() lần đầu trả null (cửa sổ race), lần sau gọi thật.
-    $racingService = new class(app(MeteringService::class), app(GapMarkerService::class), app(DuplicateResolver::class), app(MessageStatusService::class), app(BroadcastService::class)) extends IntakeService
+    $racingService = new class(app(MeteringService::class), app(GapMarkerService::class), app(DuplicateResolver::class), app(MessageStatusService::class), app(BroadcastService::class), app(MemberStore::class), app(IdentityResolver::class)) extends IntakeService
     {
         private bool $firstLookup = true;
 
@@ -399,9 +405,9 @@ it('upsertConversation: INSERT đụng unique (23505) → re-fetch existing, kh�
     expect($existing->fresh()->peer_name)->toBe('Khách Race');
 });
 
-// ── Participants: hồ sơ thành viên nhóm per-sender (avatar/tên) ───────────────
+// ── Thành viên luồng: ai đang ở trong hội thoại nào ──────────────────────────
 
-it('participants: tin nhóm có sender profile → upsert vào conversations.participants', function () {
+it('tin nhóm ghi người gửi thành một hàng thành viên', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
@@ -409,86 +415,70 @@ it('participants: tin nhóm có sender profile → upsert vào conversations.par
     actingInWorkspace($ws, $user);
 
     $payload = basePayload('group_001');
-    $payload['thread_type'] = 1;
+    $payload['thread_kind'] = 'group';
     $payload['sender_uid'] = 'uid_a';
     $payload['sender_name'] = 'Phước Lộc';
     $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
 
     $message = makeService()->ingest($payload);
-    $conv = Conversation::find($message->conversation_id);
+    $conversation = Conversation::find($message->conversation_id);
 
-    expect($conv->participants)->toBe([
-        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
-    ]);
+    $member = ConversationMember::where('conversation_id', $conversation->id)->where('sender_uid', 'uid_a')->first();
+    expect($member)->not->toBeNull()
+        ->and($member->profile_id)->not->toBeNull();
 
-    // Người gửi thứ hai → append entry, không ghi đè entry cũ
+    // Người gửi thứ hai là một hàng NỮA, không ghi đè hàng cũ — đây là điều mà
+    // một cột jsonb không bảo đảm được.
     $payload2 = basePayload('group_001', $payload['channel_account_id']);
-    $payload2['thread_type'] = 1;
+    $payload2['thread_kind'] = 'group';
     $payload2['sender_uid'] = 'uid_b';
     $payload2['sender_name'] = 'Beru';
-    $payload2['sender_avatar'] = 'https://s120.avatar.zalo.me/b.jpg';
-
     makeService()->ingest($payload2);
 
-    expect($conv->fresh()->participants)->toBe([
-        'uid_a' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg'],
-        'uid_b' => ['name' => 'Beru', 'avatar' => 'https://s120.avatar.zalo.me/b.jpg'],
-    ]);
+    expect(ConversationMember::where('conversation_id', $conversation->id)->count())->toBe(2);
 });
 
-it('participants: tin backfill thiếu avatar KHÔNG xoá avatar đã có; tin không sender là no-op', function () {
+it('luồng nhóm KHÔNG đẻ danh tính cho uid của nhóm', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $payload = basePayload('group_002');
-    $payload['thread_type'] = 1;
-    $payload['sender_uid'] = 'uid_a';
-    $payload['sender_name'] = 'Phước Lộc';
-    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+    $payload = basePayload('group_no_identity');
+    $payload['thread_kind'] = 'group';
+    $payload['peer_name'] = 'Nhóm Dev';
+    $payload['sender_uid'] = 'uid_member';
 
     $message = makeService()->ingest($payload);
-    $conv = Conversation::find($message->conversation_id);
+    $conversation = Conversation::find($message->conversation_id);
 
-    // Backfill: chỉ có sender_uid + name, không avatar → giữ avatar cũ
-    $backfill = basePayload('group_002', $payload['channel_account_id']);
-    $backfill['thread_type'] = 1;
-    $backfill['sender_uid'] = 'uid_a';
-    $backfill['sender_name'] = 'Phước Lộc';
+    // Một nhóm có uid nhưng không phải một con người.
+    expect($conversation->identity_id)->toBeNull()
+        ->and($conversation->profile_id)->toBeNull()
+        ->and($conversation->thread_name)->toBe('Nhóm Dev');
 
-    makeService()->ingest($backfill);
-
-    expect($conv->fresh()->participants['uid_a'])
-        ->toBe(['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/a.jpg']);
-
-    // Tin 1-1 không sender_uid → participants không đổi
-    $direct = basePayload('peer_solo', $payload['channel_account_id']);
-    $directMessage = makeService()->ingest($direct);
-
-    expect(Conversation::find($directMessage->conversation_id)->participants)->toBeNull();
+    expect(ProfileIdentity::where('value', 'group_no_identity')->exists())->toBeFalse();
 });
 
-it('participants: MessageReceived broadcast kèm sender_participant của người gửi', function () {
+it('luồng 1-1 gắn thẳng vào hồ sơ', function () {
     Event::fake([MessageReceived::class]);
 
     $ws = Workspace::factory()->create();
     $user = User::factory()->create();
     actingInWorkspace($ws, $user);
 
-    $payload = basePayload('group_003');
-    $payload['thread_type'] = 1;
-    $payload['sender_uid'] = 'uid_a';
-    $payload['sender_name'] = 'Phước Lộc';
-    $payload['sender_avatar'] = 'https://s120.avatar.zalo.me/a.jpg';
+    $payload = basePayload('khach_1_1');
+    $payload['peer_name'] = 'Chị Lan';
 
-    makeService()->ingest($payload);
+    $message = makeService()->ingest($payload);
+    $conversation = Conversation::find($message->conversation_id);
 
-    Event::assertDispatched(MessageReceived::class, function (MessageReceived $event) {
-        return $event->broadcastPayload['sender_participant'] === [
-            'name' => 'Phước Lộc',
-            'avatar' => 'https://s120.avatar.zalo.me/a.jpg',
-        ];
-    });
+    expect($conversation->profile_id)->not->toBeNull()
+        ->and($conversation->identity_id)->not->toBeNull()
+        ->and($conversation->thread_name)->toBe('Chị Lan');
+
+    // Đúng một hàng thành viên cho luồng 1-1: câu hỏi "người này ở đâu" chỉ có
+    // một đường trả lời, không phải một đường cho nhóm và một đường cho tin riêng.
+    expect(ConversationMember::where('conversation_id', $conversation->id)->count())->toBe(1);
 });

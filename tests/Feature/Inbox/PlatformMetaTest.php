@@ -10,6 +10,8 @@ use App\Modules\Chat\Intake\DuplicateResolver;
 use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Status\MessageStatusService;
 use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\MemberStore;
+use App\Modules\Identity\Contracts\IdentityResolver;
 use App\Services\MeteringService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -29,6 +31,8 @@ function platformMetaService(): IntakeService
         app(DuplicateResolver::class),
         app(MessageStatusService::class),
         app(BroadcastService::class),
+        app(MemberStore::class),
+        app(IdentityResolver::class),
     );
 }
 

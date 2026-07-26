@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
@@ -591,9 +592,11 @@ it('inbound nhóm với sender profile → persist participants trên conversati
 
     $conv = Conversation::where('sender_uid', 'group_contract_001')->first();
     expect($conv)->not->toBeNull();
-    expect($conv->participants)->toBe([
-        'member_uid_1' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/member1.jpg'],
-    ]);
+    // Thành viên nhóm là một HÀNG, không phải một khóa trong jsonb.
+    $member = ConversationMember::where('conversation_id', $conv->id)
+        ->where('sender_uid', 'member_uid_1')->first();
+    expect($member)->not->toBeNull();
+    expect($member->profile_id)->not->toBeNull();
 
     $msg = Message::where('source_id', 'src_contract_group_001')->first();
     expect($msg->sender_uid)->toBe('member_uid_1');
