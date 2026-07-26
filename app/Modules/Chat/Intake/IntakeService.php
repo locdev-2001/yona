@@ -8,6 +8,9 @@ use App\Models\WorkspaceSequence;
 use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Status\MessageStatusService;
 use App\Modules\Chat\Store\GapMarkerService;
+use App\Modules\Chat\Store\MemberStore;
+use App\Modules\Identity\Contracts\IdentityResolver;
+use App\Modules\Identity\Data\ObservedIdentity;
 use App\Services\MeteringService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +57,8 @@ class IntakeService
         private readonly DuplicateResolver $sourceResolver,
         private readonly MessageStatusService $messageStateService,
         private readonly BroadcastService $broadcast,
+        private readonly MemberStore $members,
+        private readonly IdentityResolver $identities,
     ) {}
 
     public function ingest(array $normalized): Message
@@ -61,13 +66,21 @@ class IntakeService
         // --- Upsert Conversation ---
         $conversation = $this->upsertConversation($normalized);
 
-        // --- Hồ sơ thành viên nhóm: FE tra participants[sender_uid] → avatar/tên,
-        //     áp hồi tố cho cả tin backfill (lane backfill không resolve profile) ---
-        $conversation->rememberParticipant(
-            $normalized['sender_uid'] ?? null,
-            $normalized['sender_name'] ?? null,
-            $normalized['sender_avatar'] ?? null,
-        );
+        // --- Ai vừa xuất hiện trong luồng ---
+        // Với nhóm, người gửi là một thành viên; với 1-1 thì chính là đối phương.
+        // Cả hai đều được ghi thành một hàng thành viên: một đường trả lời duy nhất
+        // cho câu "người này ở đâu".
+        $memberUid = $normalized['sender_uid'] ?? ($conversation->isGroup() ? null : $conversation->sender_uid);
+
+        if ($memberUid !== null && $memberUid !== '') {
+            $this->members->remember(
+                $conversation,
+                (string) $memberUid,
+                $conversation->channel,
+                $normalized['sender_name'] ?? ($conversation->isGroup() ? null : $normalized['peer_name'] ?? null),
+                $normalized['sender_avatar'] ?? ($conversation->isGroup() ? null : $normalized['peer_avatar'] ?? null),
+            );
+        }
 
         // --- Direction fail-safe (F14): default 'in' nếu không có field ---
         $direction = $normalized['direction'] ?? 'in';
@@ -132,10 +145,14 @@ class IntakeService
                     'peer_name' => $normalized['peer_name'] ?? null,
                     'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
                     'peer_phone' => $normalized['peer_phone'] ?? null,
+                    // Nhóm: tên thật của nhóm. 1-1: bản cache tên người, làm mới mỗi tin đến.
+                    'thread_name' => $normalized['peer_name'] ?? null,
+                    'thread_avatar' => $normalized['peer_avatar'] ?? null,
                     'conversation_number' => WorkspaceSequence::next('conversation'),
                     'contact_id' => null, // F23: Liên hệ nháp
                 ]);
                 $conversation->save();
+                $this->linkThreadIdentity($conversation, $normalized);
 
                 return $conversation;
             });
@@ -154,6 +171,38 @@ class IntakeService
 
             throw $e;
         }
+    }
+
+    /**
+     * Gắn luồng vào tầng định danh — CHỈ với luồng 1-1.
+     *
+     * Nhóm KHÔNG đẻ danh tính: một nhóm có uid nhưng không phải một con người.
+     * Tên và avatar nhóm sống trên chính luồng. Đây là chỗ DUY NHẤT mô hình
+     * không đối xứng, ghi rõ ở đây để không ai "sửa cho đều" về sau.
+     *
+     * @param  array<string, mixed>  $normalized
+     */
+    protected function linkThreadIdentity(Conversation $conversation, array $normalized): void
+    {
+        if ($conversation->isGroup()) {
+            return;
+        }
+
+        $resolved = $this->identities->observe(new ObservedIdentity(
+            workspaceId: $conversation->workspace_id,
+            key: $conversation->channel.'_uid',
+            value: $conversation->sender_uid,
+            source: $conversation->channel,
+            channelAccountId: $conversation->channel_account_id,
+            displayName: $normalized['peer_name'] ?? null,
+            avatarUrl: $normalized['peer_avatar'] ?? null,
+            channels: [$conversation->channel],
+        ));
+
+        $conversation->forceFill([
+            'identity_id' => $resolved->identityId,
+            'profile_id' => $resolved->profileId,
+        ])->save();
     }
 
     /**
@@ -177,10 +226,17 @@ class IntakeService
             'peer_name' => $normalized['peer_name'] ?? null,
             'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
             'peer_phone' => $normalized['peer_phone'] ?? null,
+            'thread_name' => $normalized['peer_name'] ?? null,
+            'thread_avatar' => $normalized['peer_avatar'] ?? null,
         ], fn ($v) => $v !== null);
 
         if ($updates !== []) {
             $conversation->fill($updates)->save();
+        }
+
+        // Luồng cũ có từ trước tầng định danh thì chưa có khóa — gắn lúc gặp lại.
+        if ($conversation->profile_id === null) {
+            $this->linkThreadIdentity($conversation, $normalized);
         }
 
         return $conversation;

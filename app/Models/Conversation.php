@@ -57,6 +57,10 @@ class Conversation extends Model
         'sender_uid',
         'thread_type',
         'thread_kind',
+        'thread_name',
+        'thread_avatar',
+        'identity_id',
+        'profile_id',
         'peer_phone',
         'phone_source',
         'peer_name',
@@ -182,5 +186,17 @@ class Conversation extends Model
         static::saving(function (self $conversation): void {
             $conversation->thread_type = $conversation->threadKind() === self::KIND_GROUP ? 1 : 0;
         });
+    }
+
+    /** @return BelongsTo<Profile, $this> */
+    public function profile(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class);
+    }
+
+    /** @return HasMany<ConversationMember, $this> */
+    public function members(): HasMany
+    {
+        return $this->hasMany(ConversationMember::class);
     }
 }

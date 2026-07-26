@@ -4,6 +4,7 @@ use App\Modules\Automation\AutomationServiceProvider;
 use App\Modules\Chat\Adapter\Widget\WidgetServiceProvider;
 use App\Modules\Chat\Adapter\ZaloPersonal\ZaloPersonalServiceProvider;
 use App\Modules\Chat\ChatServiceProvider;
+use App\Modules\Identity\IdentityModuleServiceProvider;
 use App\Modules\Payment\PaymentServiceProvider;
 use App\Providers\AnnouncementsServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -46,6 +47,8 @@ return [
     InboxServiceProvider::class,
     // Chức năng nhắn tin: lõi, luôn bật. Nhận dần phần chat của Integration theo
     // từng cụm di dời của P3 — phải đứng TRƯỚC provider của mọi phích cắm kênh.
+    // Tầng định danh nằm dưới Chat — đăng ký trước để Chat luôn có cổng.
+    IdentityModuleServiceProvider::class,
     ChatServiceProvider::class,
     // Kênh nội bộ: đế của chat, luôn bật — KHÔNG gate qua config như phích cắm ngoài.
     WidgetServiceProvider::class,

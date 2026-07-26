@@ -14,6 +14,7 @@ use App\Models\ClientVaultEntry;
 use App\Models\Comment;
 use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Models\CustomFieldDefinition;
 use App\Models\EmailTemplate;
 use App\Models\Lead;
@@ -21,6 +22,8 @@ use App\Models\LeadSource;
 use App\Models\Note;
 use App\Models\Pipeline;
 use App\Models\PipelineStage;
+use App\Models\Profile;
+use App\Models\ProfileIdentity;
 use App\Models\Project;
 use App\Models\ProjectDiscussion;
 use App\Models\ProjectMilestone;
@@ -88,11 +91,14 @@ class MorphMapServiceProvider extends ServiceProvider
             'audit_log' => AuditLog::class,
             'comment' => Comment::class,
             'conversation' => Conversation::class,
+            'conversation_member' => ConversationMember::class,
             'custom_field_definition' => CustomFieldDefinition::class,
             'email_template' => EmailTemplate::class,
             'lead_source' => LeadSource::class,
             'note' => Note::class,
             'pipeline' => Pipeline::class,
+            'profile' => Profile::class,
+            'profile_identity' => ProfileIdentity::class,
             'pipeline_stage' => PipelineStage::class,
             'tag' => Tag::class,
             'team' => Team::class,
