@@ -1,6 +1,6 @@
 # Outbound Send (Zalo Personal)
 
-Module: `app/Http/Controllers/Inbox` + `app/Modules/Integration/Chat/ZaloPersonal` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-04
+Module: `app/Http/Controllers/Chat` + `app/Modules/Chat/Delivery` + `app/Modules/Chat/Adapter/ZaloPersonal` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-26
 
 ## Purpose
 
@@ -11,16 +11,17 @@ Reply to inbound Zalo conversations via `ZaloSendService::send()`: resolve the a
 ## Actors & permissions
 
 - **Workspace member** with `update` permission on the conversation (`ConversationPolicy::update()`, team-based visibility) → can send replies.
-- **System** (`InboxController::send()`) → acts on behalf of the authenticated member; validates text, then delegates to the channel driver.
+- **System** (`InboxController::send()`) → acts on behalf of the authenticated member; composes the outbound message via `ComposeMessageService`, then hands it to `DeliveryPipeline`.
 
 Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope.
 
 ## Trigger / entry points
 
-**Route** `POST /inbox/conversations/{conversation}/messages` (name `inbox.send`, `routes/web.php`):
-- Frontend form: text only (media not yet wired on this endpoint).
-- Controller: `app/Http/Controllers/Inbox/InboxController.php::send()`.
-- Driver dispatch: `ChannelManager::driver($conversation->channel)->sendMessage()` → `ZaloChannelDriver::sendMessage()` → `ZaloSendService::send()`.
+**Route** `POST /inbox/conversations/{conversation}/messages` (name `inbox.send`, `routes/web_api.php`):
+- Request body (`SendMessageRequest`): `text`, `attachment_id`, `reply_to_message_id`, `sticker` — at least one of them must produce content.
+- Controller: `app/Http/Controllers/Chat/InboxController.php::send()`.
+- Compose: `ComposeMessageService::compose()` turns the request into an `OutboundMessage` (no transport).
+- Driver dispatch: `DeliveryPipeline::send(ChannelRegistry::driver($conversation->channel), …)` → `ZaloChannelDriver::sendMessage()` → `ZaloSendService::send()`.
 
 ## Operational flow (step-by-step)
 
@@ -28,17 +29,27 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope
 sequenceDiagram
     participant User as Tenant Member<br/>(UI)
     participant Controller as InboxController::send()
+    participant Compose as ComposeMessageService
+    participant Pipeline as DeliveryPipeline
     participant Driver as ZaloChannelDriver
     participant ZaloSvc as ZaloSendService
     participant HealthMon as ZaloHealthMonitor
     participant Meter as MeteringService
+    participant Broadcast as BroadcastService
     participant Limiter as SendRateLimiter
     participant Bridge as Bridge<br/>(Node)
 
     User->>Controller: POST /inbox/conversations/{id}/messages (text)
     Controller->>Controller: authorize('update', conversation)
-    Controller->>Driver: sendMessage(conversation, {text})
-    Driver->>ZaloSvc: send(conversation, text, media=null)
+    Controller->>Compose: compose(conversation, input)
+    alt nothing to send
+        Compose-->>Controller: throw ComposeMessageException (empty_content) → 422
+    else
+        Compose-->>Controller: OutboundMessage
+    end
+    Controller->>Pipeline: send(driver, conversation, outbound)
+    Pipeline->>Driver: sendMessage(conversation, payload)
+    Driver->>ZaloSvc: send(conversation, text, media, quote, sticker)
 
     ZaloSvc->>ZaloSvc: resolveConnection(conversation)<br/>ZaloConnection::connectedForAccount(workspace_id, channel_account_id)
     alt 0 slots connected
@@ -81,28 +92,33 @@ sequenceDiagram
         Bridge-->>ZaloSvc: { source_id, ... }
     end
 
-    Note over ZaloSvc: 5. Persist + meter + reset
+    Note over ZaloSvc: 5. Persist + limiter + reset (channel-owned)
     ZaloSvc->>ZaloSvc: persistMessage() — Message::create(direction=out, source_id=bridge.source_id, sent_by=Auth::id())
-    ZaloSvc->>Meter: meterReply(conversation)
     ZaloSvc->>Limiter: increment(workspace_id, peer_phone)
     ZaloSvc->>HealthMon: reset(connection_id)
     ZaloSvc-->>Driver: return Message
-    Driver-->>Controller: void (no exception)
-    Controller->>User: 201 { ...Message }
+    Driver-->>Pipeline: return Message
+
+    Note over Pipeline: 6. Meter + publish (core, same for every channel)
+    Pipeline->>Meter: meterReply(conversation)
+    Pipeline->>Broadcast: publish(conversation, message, 'out')<br/>(failure reported, never surfaced — the message already left the platform)
+    Pipeline-->>Controller: return Message
+    Controller->>User: 201 { ...MessageItemSerializer::fromModel() }
 ```
 
 **Any exception from any step** propagates up through `ZaloChannelDriver::sendMessage()`, which wraps each into a channel-agnostic `App\Contracts\SendException` with an `error_code` (`circuit_open`, `outside_window`, `rate_cap`, `not_connected`, `split_brain`), and `InboxController::send()` catches it uniformly — **every failure returns HTTP `422`**, distinguished only by the JSON body's `error_code` (FE picks the toast message from this code, not from the HTTP status).
 
 **Steps:**
-1. Member submits reply text via UI form (media not yet supported on this endpoint).
-2. Controller authorizes via `ConversationPolicy::update()`; empty text → `422` before any driver call.
-3. `ZaloChannelDriver::sendMessage()` delegates to `ZaloSendService::send()`.
+1. Member submits the reply from the composer — text, a previously uploaded attachment, a sticker, or a quoted reply.
+2. Controller authorizes via `ConversationPolicy::update()`, then calls `ComposeMessageService::compose()`; nothing to send → `ComposeMessageException` → `422 { error_code: empty_content }` before any driver call.
+3. `DeliveryPipeline::send()` receives the driver resolved from `ChannelRegistry`; `ZaloChannelDriver::sendMessage()` delegates to `ZaloSendService::send()`.
 4. Service resolves the conversation's live connection via `channel_account_id` (`ZaloConnection::connectedForAccount()` — exactly one connected slot expected; the DB partial-unique index makes 0 or 1 the only reachable outcomes via the app, `>1` is a defense-in-depth branch).
 5. Circuit-breaker check (`ZaloHealthMonitor::isCircuitOpen()`) — open → fail fast, no bridge call.
 6. Rate limiter check (`SendRateLimiter::assertCanSend()`) — 7h–22h window + max 3 messages per peer phone/day (Zalo ToS).
 7. HTTP POST to bridge `/personal-messages/send` (15s timeout, 2×200ms retry). Non-2xx / timeout → `ZaloNotConnectedException`, **no Message row created**.
-8. On bridge success: persist `Message` (`direction=out`, `source_id` = bridge's `source_id` field, `sent_by = Auth::id()`), meter the reply (race-safe compare-set), increment the rate limiter, reset the circuit breaker.
-9. Controller returns `201` with the newly-created Message on success, or `422` with an `error_code` on any failure.
+8. On bridge success the channel service persists `Message` (`direction=out`, `source_id` = bridge's `source_id` field, `sent_by = Auth::id()`), increments the rate limiter, and resets the circuit breaker.
+9. Back in `DeliveryPipeline`: meter the reply (race-safe compare-set) and publish to the conversation stream. Metering and broadcast live here, not in the channel service, so every channel and every send origin is counted the same way.
+10. Controller returns `201` with the message serialized as a stream item (`MessageItemSerializer::fromModel()`) on success, or `422` with an `error_code` on any failure.
 
 ## Data touched
 
@@ -146,8 +162,9 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § F1, F3, F4, F8.
 
 | Scenario | Behavior |
 |---|---|
-| **Empty text** | `422 { message: "Nội dung không được để trống." }` — before any driver call. |
-| **Integration module missing/disabled** | `422 { error_code: channel_unavailable }`. |
+| **Nothing to send** | `422 { error_code: empty_content, message: "Nội dung không được để trống." }` — raised by `ComposeMessageService`, before any driver call. |
+| **Quoted reply with no text / with an attachment** | `422 { error_code: quote_requires_text }` / `422 { error_code: quote_with_attachment_unsupported }` — also before any driver call. |
+| **Conversation's channel has no registered driver** | `422 { error_code: channel_unavailable }`. |
 | **0 connected slots for the account** | `ZaloNotConnectedException` → wrapped `SendException(not_connected)` → `422`. |
 | **>1 connected slots for the account** (should be DB-impossible via the app) | `ZaloSplitBrainException` → `SendException(split_brain)` → `422`. |
 | **Circuit breaker open** | `SendException(circuit_open)` → `422`. |

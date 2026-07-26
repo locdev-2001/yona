@@ -80,11 +80,14 @@ npm run dev
 The Zalo bridge is a Node.js service that connects to Zalo personal accounts via QR login and sends webhooks to the app.
 
 ```bash
-# In zalo-bridge/ directory
-npm install
-node server.js
+# From project root
+make bridge
 
-# Runs on http://localhost:3456
+# Or manually, in services/zalo-bridge/
+pnpm install
+pnpm dev
+
+# Runs on http://127.0.0.1:3710
 # Webhook target: http://localhost:8000/api/integrations/zalo-personal/webhook
 ```
 
@@ -112,7 +115,7 @@ If you don't need Inbox testing, the app runs fine without the bridge (sends ret
 ### Prerequisites
 
 - Zalo personal account (any account, not OA).
-- Bridge running at `http://localhost:3456`.
+- Bridge running at `http://127.0.0.1:3710`.
 
 ### Steps
 
@@ -138,7 +141,7 @@ If you don't need Inbox testing, the app runs fine without the bridge (sends ret
 php artisan test
 
 # Specific test file
-php artisan test tests/Feature/Inbox/ConversationMeteringTest.php
+php artisan test tests/Feature/Inbox/InboxCoreTest.php
 
 # JavaScript tests (if configured)
 npm run test
@@ -164,8 +167,8 @@ php artisan serve --port=8001
 
 ### Zalo Bridge Connection Failed
 
-- Verify bridge is running: `curl http://localhost:3456/health`.
-- Check `.env`: `ZALO_BRIDGE_ENDPOINT=http://localhost:3456`.
+- Verify bridge is running: `curl http://127.0.0.1:3710/health`.
+- Check `.env`: `ZALO_BRIDGE_URL=http://127.0.0.1:3710`.
 - If QR won't scan, restart bridge + reload Integrations page.
 
 ### Inbound Message Not Appearing
@@ -177,10 +180,9 @@ php artisan serve --port=8001
 
 ### Quota Exceeded
 
-If "Quota exceeded" blocks sends:
-- This is expected behavior (F5 guard). Each conversation can only send once per billing period.
-- Workspace can send unlimited (no quota limits). Usage is tracked for analytics.
-- Check **Settings → Billing** to see current plan.
+Sends are never blocked by usage — the quota gate was removed. Workspaces send
+unlimited; conversation counts are recorded for analytics only. Check
+**Settings → Billing** to see current plan.
 
 ## 8. Project Structure Quick Ref
 
@@ -189,11 +191,13 @@ If "Quota exceeded" blocks sends:
 | `app/Models` | All Eloquent models (~50) |
 | `app/Http/Controllers/{Domain}` | Route handlers by business domain |
 | `app/Services` | Business logic, external calls, complex queries |
+| `app/Modules/{Automation,Chat,Payment}` | Business modules, split by function |
+| `app/Modules/Chat/Port` + `app/Modules/Payment/Port` | Driver contracts + registries (new channel/provider = new adapter) |
 | `app/Modules/Chat/Adapter/Widget` | Kênh nội bộ — đế của chat, luôn bật |
-| `app/Modules/Integration` | Driver registration point (Zalo, payment) |
 | `database/migrations` | Schema + RLS policies |
 | `resources/js/pages/{domain}` | React pages (Inertia) |
-| `routes/web.php` | Customer routes |
+| `routes/web.php` | Customer routes (session, renders Inertia) |
+| `routes/web_api.php` | JSON endpoints the web frontend calls — inbox + Zalo connection (loaded before `web.php`) |
 | `routes/api.php` | API + webhook routes |
 | `config/integrations.php` | Bật/tắt phích cắm ngoài; kênh `widget` KHÔNG có cờ tắt |
 | `tests` | Pest test suite |

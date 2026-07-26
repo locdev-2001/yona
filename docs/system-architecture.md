@@ -1,19 +1,21 @@
-# System Architecture — Yona (Traditional Laravel + Integration Module)
+# System Architecture — Yona (Traditional Laravel + Capability Modules)
 
 > Domain architecture for an all-in-one, multi-tenant SaaS CRM on **Laravel 13 + PostgreSQL 16 + Eloquent + Inertia/React + Redis**. Living doc. Maps the domain docs (`crm-domain-definition`, `crm-business-rules`, `crm-field-dictionary`, `crm-actors-and-use-cases`) onto a concrete, Laravel-idiomatic design.
 > Build order: **Sales-first**, but the model covers Support + Marketing from day one. Source of BR-* references: `crm-business-rules.md`.
 
-Date: 2026-06-13 · Updated: 2026-06-28 · Status: Refactored to Traditional Laravel (Phase-04 complete) · Owner: architecture
+Date: 2026-06-13 · Updated: 2026-07-26 · Status: Traditional Laravel + capability modules (Chat / Payment / Automation) · Owner: architecture
 
 ---
 
-## 0. Status: Refactored to Traditional Laravel (2026-06-28)
+## 0. Status: Standard Laravel + Capability Modules (2026-07-26)
 
 **Before (2026-06-27):** Custom modular framework (`module.json`, `ModuleServiceProvider`, `ModuleRegistry`, topo-sort loader, `ModuleAwareInertiaViewFinder`).
 
-**Current state (2026-06-28):** Refactored to **standard Laravel + exactly 1 Integration module**. All core (CRM/CDP/Inbox/Billing/Projects) is pure Laravel; extensibility via driver pattern (`Illuminate\Support\Manager`). This matches conventional Laravel practice and reduces framework-specific complexity.
+**2026-06-28:** Refactored to standard Laravel; the custom module system was replaced by the driver pattern (`Illuminate\Support\Manager`) hosted in a single catch-all `app/Modules/Integration/` module.
 
-Core architecture principles remain unchanged; integration driver pattern replaces the custom module system.
+**Current state (2026-07-26):** That catch-all module is gone. Modules are split **by capability**: `app/Modules/Chat/`, `app/Modules/Payment/`, `app/Modules/Automation/`. `app/Http/` and `app/Models/` stay at the application root — a module holds domain logic only, never its own HTTP layer. Chat and Payment each expose a neutral contract in `Port/` and keep vendor specifics in `Adapter/<Vendor>/`; Automation keeps `Contracts/` + `Handlers/`. Everything else (CRM/CDP/Billing/Projects) is pure Laravel. The binding convention lives in [code-standards.md](code-standards.md) §0.
+
+Core architecture principles remain unchanged; the driver pattern replaces the custom module system.
 
 ---
 
@@ -21,7 +23,7 @@ Core architecture principles remain unchanged; integration driver pattern replac
 
 Greenfield CRM. The hard parts are **the Platform layer** (tenant isolation, RBAC, audit, custom-fields) and **transactional correctness** of money/state paths (deal stage, won/lost, lead conversion, ticket SLA). Everything workspace-scoped is enforced at the data-access layer **and** Postgres RLS (defense-in-depth). Reporting/scoring/activity-feed are eventually consistent; deal/ticket/ownership are strongly consistent.
 
-## 2. Codebase Structure (Standard Laravel + 1 Integration Module)
+## 2. Codebase Structure (Standard Laravel + Capability Modules)
 
 ### Directory Tree
 
@@ -33,78 +35,95 @@ app/
 │   ├── Client.php, Contact.php, Lead.php
 │   ├── Conversation.php, Message.php, ZaloConnection.php
 │   ├── Project.php, ProjectMilestone.php, Task.php, TaskTimer.php
-│   ├── Ticket.php, Activity.php, Note.php, Attachment.php, Comment.php
+│   ├── Activity.php, Note.php, Attachment.php, Comment.php
 │   ├── Reminder.php, Tag.php, CustomFieldDefinition.php
-│   ├── AuditLog.php, Pipeline.php, Stage.php
-│   ├── Marketplace.php, WorkspacePurchase.php, ChannelUsage.php
+│   ├── AuditLog.php, Pipeline.php, PipelineStage.php
+│   ├── MarketplaceItem.php, WorkspacePurchase.php, ChannelUsage.php
 │   └── ... (all in `App\Models\` flat namespace)
 │
-├── Http/Controllers/
-│   ├── Identity/                # Auth, password reset, onboarding
-│   ├── Tenancy/                 # Workspace CRUD, switching
-│   ├── Admin/                   # Platform staff (impersonation, oversight)
-│   ├── Platform/                # RBAC, teams, custom fields, audit log, announcements
-│   ├── Crm/                     # Client, Contact, Lead, Pipeline CRUD
-│   ├── Projects/                # Project, Milestone, Task, Timer
-│   ├── Inbox/                   # Conversation, Message views
-│   ├── Shared/                  # Attachments, comments, notes, tags, reminders
-│   ├── Email/                   # Email template management
-│   ├── Billing/                 # Marketplace, purchases, entitlements
-│   └── Integration/             # ⭐ Integration drivers (Zalo connect, payment webhook)
-│       ├── ZaloPersonalWebhookController.php
-│       ├── IntegrationController.php
-│       └── ...
+├── Http/
+│   ├── Controllers/
+│   │   ├── Identity/            # Auth, onboarding, member settings, Admin/ impersonation
+│   │   ├── Tenancy/             # Workspace switching + workspace settings
+│   │   ├── Announcements/       # Product announcements board (+ Admin/ authoring)
+│   │   ├── Crm/                 # Client, Lead, pipeline settings
+│   │   ├── Projects/            # Project, Milestone, Task, Timer
+│   │   ├── Chat/                # ⭐ Conversation + message endpoints (was Inbox/)
+│   │   │   ├── InboxController.php, ConversationStreamController.php, ...
+│   │   │   ├── WidgetInboundController.php    # First-party channel intake
+│   │   │   └── ZaloPersonal/                  # Connection lifecycle + bridge webhook
+│   │   ├── Automation/          # Workflow builder
+│   │   ├── Shared/              # Attachments, comments, notes, tags, reminders, notifications
+│   │   ├── Email/               # Email template management
+│   │   ├── Settings/            # Appearance
+│   │   ├── Billing/Admin/       # Workspace plan management
+│   │   └── Integration/         # Integration catalog screen (IntegrationController.php)
+│   ├── Middleware/
+│   │   ├── IdentifyWorkspace.php    # 1️⃣ Bind workspace from session/header
+│   │   ├── ResetTenantContext.php   # 🔄 Clear workspace after request
+│   │   └── ...
+│   ├── Requests/                # Form validation (FormRequest::authorize())
+│   ├── Support/                 # HTTP-edge adapters (RoutedMediaUrlFactory, ...)
+│   └── ViewModels/              # Read-side shapes for Inertia props (IntegrationCatalog, ...)
 │
-├── Services/
+├── Services/                    # Cross-cutting business logic, not owned by one module
 │   ├── MeteringService.php      # ⭐ CONCRETE class (not interface); send-path calls directly
-│   ├── EntitlementService.php   # Resolve workspace entitlements + quotas
-│   ├── ContactService.php       # Dedup by phone (Phase-08 CDP Layer 1)
+│   ├── EntitlementService.php   # Resolve workspace entitlements
+│   ├── ContactService.php       # Dedup by phone (CDP Layer 1)
 │   ├── LeadService.php          # Lead conversion, funnel logic
-│   ├── InboundMessageService.php # Webhook ingestion, upsert idempotency
-│   ├── ZaloSendService.php      # Outbound send chain: health → quota → rate-limit → bridge
-│   ├── ChannelManager.php       # Registry: extend('zalo_personal', ...) driver pattern
-│   ├── PaymentManager.php       # Registry: extend('manual', ...) + manual driver
 │   ├── TemplatedMailer.php, NotificationService.php
 │   └── ...
 │
-├── Modules/Integration/         # ⭐ ONLY PRODUCTION MODULE (driver registration point)
-│   ├── IntegrationServiceProvider.php  # Boot: register drivers conditionally
-│   ├── IntegrationCatalog.php          # Hardcoded catalog: Zalo, later Messenger/TikTok
-│   ├── Contracts/
-│   │   ├── ChannelDriver.php      # send(peer_id, message): void
-│   │   └── PaymentDriver.php      # charge(amount), verify(ref), cancel(ref)
-│   │
-│   ├── Chat/
-│   │   └── ZaloPersonal/
-│   │       ├── ZaloChannelDriver.php        # Implements ChannelDriver
-│   │       ├── ZaloSendService.php          # Outbound chain (calls app(MeteringService))
-│   │       ├── ZaloHealthMonitor.php        # Circuit breaker per connection
-│   │       ├── SendRateLimiter.php          # 7h–22h + 3/phone/day enforcement
-│   │       ├── QrSession.php                # QR login state machine
-│   │       └── routes/                      # Zalo-specific: QR, auth callback
-│   │
-│   └── Payment/Manual/
-│       ├── ManualPaymentDriver.php          # Implements PaymentDriver (Phase-07 only)
-│       └── routes/
-│           └── manual-payment-callback.php  # Phase-08: VNPay/MoMo drivers extend here
+├── Modules/Chat/                # ⭐ Messaging capability — core is channel-agnostic
+│   ├── ChatServiceProvider.php  # Binds ChannelRegistry + MediaUrlFactory
+│   ├── Port/                    # Neutral contract the core talks to
+│   │   ├── ChannelDriver.php, AbstractChannelDriver.php, ChannelCapabilities.php
+│   │   ├── ChannelRegistry.php  # extends Illuminate\Support\Manager
+│   │   ├── Capability/          # Opt-in marker interfaces (SupportsReactions, ...)
+│   │   └── Exception/UnsupportedCapabilityException.php
+│   ├── Intake/                  # Inbound: IntakeService, DuplicateResolver, InboundEvent + Event/
+│   ├── Delivery/                # Outbound: ComposeMessageService, DeliveryPipeline,
+│   │                            #   InteractionPipeline, SeenSyncService, OutboundMessage,
+│   │                            #   MediaUrlFactory (port) + Event/ + Exception/
+│   ├── Store/                   # Persistence-side: GapMarkerService, SystemLineService,
+│   │                            #   PhoneEnrichmentService, DedupConversation
+│   ├── Status/MessageStatusService.php   # seen/delivered/undo/reaction on messages
+│   ├── Timeline/                # MessageItemSerializer, TimelineCursor (keyset paging)
+│   ├── Broadcast/BroadcastService.php    # Conversation cache + Reverb publish
+│   └── Adapter/
+│       ├── Widget/              # First-party channel — the floor of chat, never gated off
+│       └── ZaloPersonal/        # ⭐ External plug-in, gated by config
+│           ├── ZaloChannelDriver.php     # Implements ChannelDriver
+│           ├── ZaloPersonalServiceProvider.php
+│           ├── Delivery/        # ZaloSendService (policy → transport → persist),
+│           │                    #   ZaloInteractionService
+│           ├── Intake/          # ZaloStateEventParser, ZaloBackfillService
+│           ├── Health/ZaloHealthMonitor.php   # Circuit breaker per connection
+│           ├── Policy/SendRateLimiter.php     # 7h–22h + 3/phone/day on proactive sends
+│           └── Exception/       # ZaloNotConnectedException, RateCapException, ...
+│
+├── Modules/Payment/             # ⭐ Same shape as Chat: Port/ contract, Adapter/ plug-ins
+│   ├── PaymentServiceProvider.php
+│   ├── Port/                    # PaymentDriver.php, PaymentRegistry.php
+│   └── Adapter/Manual/          # ManualPaymentDriver + its provider (VNPay/MoMo land here)
+│
+├── Modules/Automation/          # ⭐ Workflow engine (see crm-automation-workflow.md)
+│   ├── AutomationServiceProvider.php, WorkflowEngine.php
+│   ├── NodeHandlerManager.php   # extends Illuminate\Support\Manager
+│   ├── Contracts/NodeHandler.php
+│   └── Handlers/                # Condition, Wait, Tag, SendMessage, CreateTask, ...
 │
 ├── Policies/                    # Authorization (spatie RBAC + model policies)
-├── Events/                      # Domain events (LeadConverted, DealWon, etc.)
+├── Events/                      # Domain events (LeadConverted, MessageReceived, etc.)
 ├── Enums/                       # Type-safe enums (ConversationStatus, LeadSource, etc.)
-├── Middleware/
-│   ├── IdentifyWorkspace.php    # 1️⃣ Bind workspace from session/header
-│   ├── ResetTenantContext.php   # 🔄 Clear workspace after request
-│   └── ...
-├── Http/Requests/              # Form validation (spatie FormRequest::authorize())
-├── Providers/
-│   ├── AppServiceProvider.php   # Register IntegrationServiceProvider conditionally
-│   └── RouteServiceProvider.php
+├── Providers/                   # Per-feature providers (Tenancy, Identity, Billing, Inbox, ...)
 │
 database/
 ├── migrations/                  # Schema + RLS policies (audit_logs has RLS)
 └── seeders/
     ├── DatabaseSeeder.php
-    ├── WorkspaceSeeder.php      # Test workspace + sample data
+    ├── FoundationSeeder.php     # Workspace + sample data
+    ├── PlanSeeder.php, PlatformPermissionSeeder.php, AdminPermissionSeeder.php
     └── ...
 
 resources/
@@ -113,35 +132,50 @@ resources/
 │   │   ├── crm/               # Client, Contact, Lead pages
 │   │   ├── projects/          # Project, Task pages
 │   │   ├── inbox/             # Conversation, Message pages
-│   │   ├── billing/           # Purchases, quota display
+│   │   ├── integration/       # Integration catalog + Zalo connection screen
+│   │   ├── automation/        # Workflow builder
+│   │   ├── billing/           # Purchases, usage display
 │   │   ├── settings/          # Workspace settings, member management
 │   │   └── admin/             # Platform admin panel
 │   ├── components/
-│   │   └── shared/            # Reusable (Button, Modal, Select, etc.)
-│   ├── services/
-│   │   ├── zalo-bridge/       # Bridge client (WebSocket + HTTP to Node.js backend)
-│   │   └── api/               # HTTP client (Axios)
+│   │   ├── inbox/             # Channel-agnostic thread UI (reused by every channel)
+│   │   └── shared/, ui/       # Reusable primitives (Button, Modal, Select, etc.)
+│   ├── layouts/               # app/, admin/, auth/, settings/ shells
+│   ├── hooks/, lib/, types/   # Shared client helpers + generated types
 │   └── app.tsx, ssr.jsx       # Inertia + React entry points
 │
 └── views/
     ├── app.blade.php          # HTML skeleton
     └── emails/                # Email templates (Blade)
 
-routes/
-├── web.php                    # Customer-facing routes (web guard, RLS via TenantScope)
-├── api.php                    # API routes (api guard, webhook routes)
-└── admin.php                  # Admin panel routes (admin guard)
+services/
+└── zalo-bridge/               # Node.js bridge process (zca-js); NOT part of the PHP app
+    └── src/zca-adapter.mjs    # Allowlisted zca method reflection
+
+routes/                        # Three façades over one core (code-standards.md §0.4)
+├── web.php                    # Inertia screens + admin panel (web/admin guards)
+├── web_api.php                # JSON called by this app's own FE (session auth)
+├── api.php                    # Stable outside contract + inbound webhooks
+├── channels.php               # Broadcast channel authorization
+└── console.php                # Scheduler + console commands (no app/Console/Kernel.php)
 
 config/
-├── integrations.php           # ⭐ Toggle integration drivers (ONLY feature flags for Integration)
+├── integrations.php           # ⭐ External plug-in toggles + first-party channel secret
 │                              #    env INTEGRATION_ZALO_PERSONAL=true|false
 │                              #    env INTEGRATION_PAYMENT_MANUAL=true|false
-│                              #    (core: inbox, billing, crm ALWAYS on)
+│                              #    env WIDGET_CHANNEL_INBOUND_SECRET (first-party channel,
+│                              #    no on/off flag — chat cannot run without it)
 ├── database.php
 ├── queue.php
 ├── services.php               # Branding, bridge endpoint, etc.
 └── ...
 ```
+
+`bootstrap/app.php` loads `web_api.php` **before** `web.php`: `GET /inbox/{conversation}` in
+`web.php` is a catch-all that would otherwise swallow `GET /inbox/quick-replies`.
+`bootstrap/providers.php` declares every provider directly — including `ChatServiceProvider`,
+`WidgetServiceProvider`, `ZaloPersonalServiceProvider` and `PaymentServiceProvider`. There is no
+`class_exists` guard: a defensive guard silently skips a provider the moment an FQCN moves.
 
 ### Key Decisions
 
@@ -149,15 +183,15 @@ config/
 
 2. **Controllers → `app/Http/Controllers/{Domain}/`** (organized by domain for clarity, but still in standard Laravel namespace). ~80+ controllers (CrmController, ProjectController, etc.).
 
-3. **Services → `app/Services/`** (business logic, external integration calls, complex queries).
-   - **`MeteringService` is CONCRETE** (not an interface with no-op binding). Send-path calls `app(MeteringService)->meterReply()` directly after bridge success. Tracks usage for analytics only (no quota enforcement).
-   - `EntitlementService`, `ContactService`, `LeadService`, `ChannelManager`, `PaymentManager`, etc.
+3. **`app/Services/` holds only what no single module owns** (cross-cutting business logic, complex queries). Messaging logic moved into `app/Modules/Chat/`; payment driver plumbing into `app/Modules/Payment/`.
+   - **`MeteringService` is CONCRETE** (not an interface with no-op binding). The send path calls `meterReply()` directly after transport succeeds. Tracks usage for analytics only (no quota enforcement).
+   - `EntitlementService`, `ContactService`, `LeadService`, `TemplatedMailer`, `NotificationService`, etc.
 
-4. **2 modules: `app/Modules/Integration/`** (driver pattern point) **and `app/Modules/Automation/`** (workflow node-handler registry, docs/crm-automation-workflow.md).
-   - `ChannelManager` and `NodeHandlerManager` extend `Illuminate\Support\Manager` (`PaymentManager` does NOT — it's a hand-rolled minimal registry, by its own `ponytail:` comment, since GĐ1 only ever has 1 payment driver).
-   - Drivers/handlers register: `Manager::extend('zalo_personal', fn() => app(ZaloChannelDriver::class))` / `Manager::extend('condition', fn() => new ConditionNodeHandler)`.
-   - **Internal-first:** core (inbox, billing) NEVER reference the managers. Instead, they resolve from container + gracefully handle absence (422 on missing driver).
-   - **Toggle:** `config/integrations.php` feature flags (env vars) for Integration. Automation has no on/off flag — it's designed as a core feature gated per-workspace by the `module.marketing` entitlement instead, planned for the permissions/entitlement phase, not yet enforced in the engine itself (docs/crm-automation-workflow.md §Permissions & entitlement).
+4. **3 modules: `app/Modules/{Chat,Payment,Automation}/`** — split by capability, not by "things that talk to the outside". A new channel or payment gateway is a new `Adapter/`, never an edit to the core.
+   - `ChannelRegistry` and `NodeHandlerManager` extend `Illuminate\Support\Manager` (`PaymentRegistry` does NOT — it's a hand-rolled minimal registry, by its own `ponytail:` comment, since GĐ1 only ever has 1 payment driver).
+   - Drivers/handlers register: `ChannelRegistry::extend('zalo_personal', fn() => app(ZaloChannelDriver::class))` / `NodeHandlerManager::extend('condition', fn() => new ConditionNodeHandler)`. Adapters attach via `callAfterResolving`, so declaration order in `bootstrap/providers.php` does not matter.
+   - **Port/Adapter split:** the core resolves `App\Modules\Chat\Port\ChannelDriver` and never names a vendor. Channel-specific behaviour (circuit breaker, echo dedup, rate cap, outbox retry) stays inside the adapter.
+   - **Toggle:** `config/integrations.php` feature flags (env vars) gate *external* plug-ins only; each adapter's own provider returns early when disabled. The first-party `Widget` channel has no flag — it is the floor chat stands on. Automation has no on/off flag either — it's designed as a core feature gated per-workspace by the `module.marketing` entitlement, planned for the permissions/entitlement phase, not yet enforced in the engine itself (docs/crm-automation-workflow.md §Permissions & entitlement).
 
 5. **RLS + Tenant isolation:**
    - `IdentifyWorkspace` middleware (1️⃣) binds `app('workspace')` from session/header.
@@ -171,11 +205,11 @@ config/
    - Shared components under `resources/js/components/shared/`.
 
 7. **Zalo bridge lives outside modules:**
-   - Bridge client in `services/zalo-bridge/` (fetches QR, handles callback, maintains session).
-   - Bridge endpoint: env `ZALO_BRIDGE_ENDPOINT` (default: `http://localhost:3456`).
-   - Webhook: `POST /api/integrations/zalo-personal/webhook` (handled by `app/Http/Controllers/Integration/ZaloPersonalWebhookController`).
+   - Bridge process in `services/zalo-bridge/` (fetches QR, handles callback, maintains session) — a separate Node.js service, not PHP.
+   - Bridge endpoint: `config('services.zalo_bridge.url')`, env `ZALO_BRIDGE_URL` (default: `http://127.0.0.1:3710`).
+   - Webhook: `POST /api/integrations/zalo-personal/webhook` (declared in `routes/api.php`, handled by `app/Http/Controllers/Chat/ZaloPersonal/ZaloPersonalWebhookController`).
    - **Generic dispatcher (P11)**: `POST {bridge}/zca/:method` — allowlist reflection 146 method (`src/zca-adapter.mjs` + snapshot M1 gate), tier guard (send→409, 39 destructive→403 trừ elevated secret + `TenantPermission::ZaloDestructive`, media→415, deny→403). B1 isolation: RLS `zalo_connections` là control chính + token-từ-session `HMAC(connection_id + workspace)` verify với binding ghi lúc promote (persist qua slot meta).
-   - **Relay forwarder**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty fire-and-forget; Laravel (P02/P09 inbox-full-messaging): undo/seen/delivered/reaction ĐI THEO `messages` qua `MessageStateService`, typing broadcast-only, lạ → structured log (kho `relay_events` ĐÃ DROP). Outbound MỌI kênh đi `OutboundSendPipeline` (rate-limit + meterReply — P11 freeze; quota gate removed 25/07). Flow docs: `features/messaging/{zalo-generic-dispatcher,message-state-pipeline,channel-framework-contract}.md`.
+   - **Relay forwarder**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty fire-and-forget; Laravel (P02/P09 inbox-full-messaging): undo/seen/delivered/reaction ĐI THEO `messages` qua `App\Modules\Chat\Status\MessageStatusService`, typing broadcast-only, lạ → structured log (kho `relay_events` ĐÃ DROP). Outbound MỌI kênh đi `App\Modules\Chat\Delivery\DeliveryPipeline` (rate-limit + meterReply; quota gate removed 25/07). Flow docs: `features/messaging/{zalo-generic-dispatcher,message-state-pipeline,channel-framework-contract}.md`.
 
 ---
 
@@ -193,7 +227,7 @@ ZaloPersonalWebhookController::__invoke()
   ├─ Verify HMAC
   ├─ TenantScope::bind(connection_id → workspace_id)  [RLS scope, via ZaloConnection::workspaceForConnection()]
   ├─ Resolve channel_account_id from connection_id (ZaloConnection::channelAccountIdForConnection())
-  └─ InboundMessageService::ingest()
+  └─ App\Modules\Chat\Intake\IntakeService::ingest()
       ├─ upsertConversation(channel_account_id, peer_uid, peer_phone, peer_name)
       │  └─ Unique (channel_account_id, peer_uid) per channel (stable across reconnects)
       ├─ upsertMessage(conversation_id, direction='in', text, source_id)
@@ -212,24 +246,34 @@ ZaloPersonalWebhookController::__invoke()
 ```
 Member UI: Click "Reply" → Type message
   ↓
-InboxController::send(conversation_id, text)  [POST /inbox/conversations/{conversation}/messages]
+InboxController::send(conversation, ...)  [POST /inbox/conversations/{conversation}/messages]
   ├─ Authorize: can('update', Conversation)
-  └─ ChannelManager::driver()->sendMessage() → ZaloSendService::send()
-      ├─ resolveConnection(conversation)  [channel_account_id → connected slot]
-      ├─ ZaloHealthMonitor::isCircuitOpen(connection_id)
-      │  └─ If open → 422 (all send failures return 422, distinguished by error_code)
-      ├─ SendRateLimiter::assertCanSend(peer_phone)
-      │  └─ 7h–22h (Ho Chi Minh) + ≤3/day
-      ├─ callBridge(connection_id, peer_id, text)
-      │  └─ HTTP POST to bridge, retry 2×200ms, timeout 15s
-      ├─ persistMessage(conversation_id, direction='out', text)  [RLS enforced]
-      ├─ meterReply(conversation_id, current_period)
-      │  └─ Race-safe: compare-set + ON CONFLICT upsert in single TX
-      ├─ increment(rate_limiter, peer_phone)  [Redis or memory]
-      └─ ZaloHealthMonitor::reset()  [success indicator]
+  ├─ ComposeMessageService::compose()  → OutboundMessage
+  │  └─ Normalize text, resolve quoted message + attachment, reject invalid
+  │     combinations (ComposeMessageException → 422 + error_code)
+  └─ DeliveryPipeline::send(ChannelRegistry::driver($conversation->channel), …)
+      ├─ 1. driver->sendMessage()  → ZaloSendService::send()
+      │     ├─ resolveConnection(conversation)  [channel_account_id → connected slot]
+      │     ├─ ZaloHealthMonitor::isCircuitOpen(connection_id)
+      │     │  └─ If open → 422 (all send failures return 422, distinguished by error_code)
+      │     ├─ SendRateLimiter::assertCanSend(workspace, target, isReply)
+      │     │  └─ 7h–22h (Ho Chi Minh) + ≤3/day — PROACTIVE sends only; a reply
+      │     │     inside the inbound window is exempt
+      │     ├─ callBridge(connection_id, peer_id, text)  [HTTP POST to bridge, retry, timeout]
+      │     ├─ persistMessage(conversation_id, direction='out', text)  [RLS enforced]
+      │     ├─ increment(rate_limiter, target)  [proactive sends only]
+      │     └─ ZaloHealthMonitor::reset()  [success indicator]
+      ├─ 2. MeteringService::meterReply(conversation)
+      │     └─ Race-safe: compare-set + ON CONFLICT upsert in single TX
+      └─ 3. BroadcastService::publish()  [conversation cache + MessageReceived]
+            └─ Fail-safe: the message already left the platform, so a publish
+               error is reported, never surfaced to the sender
 ```
 
-**Key:** `MeteringService` is injected directly (app()); no manager wrapper.
+**Key:** every outbound message from every source (inbox UI, automation, future API) goes through
+`DeliveryPipeline`. Calling `driver->sendMessage()` directly bypasses metering and broadcast — that
+is exactly how automation once sent messages nobody could count. Metering lives in the pipeline,
+not in the driver: the driver owns channel policy, transport and persistence only.
 
 ### 3.3 Metering (Statistics Only)
 
@@ -268,7 +312,7 @@ Cross-context communication happens through **domain events**, never direct tabl
 | **Marketing** | Campaigns, segments, scoring inputs | Campaign, Segment, CampaignRecipient |
 | **Automation** | Trigger→condition→action workflow execution (serves inbox auto-reply + Marketing); never writes into other contexts' tables | Workflow, WorkflowRun, WorkflowRunLog — schema + engine built (Phase 01-02); trigger wiring, action handlers, permissions/entitlement gate, and UI still in progress, see [crm-automation-workflow.md](crm-automation-workflow.md) |
 | **Billing** | Marketplace (free base + add-ons, one-time/subscription), purchases, entitlements; MeteringService | MarketplaceItem, WorkspacePurchase, ChannelUsage, MeteringService |
-| **Conversations** (Inbox) | Realtime omnichannel messaging (web/Zalo/FB/email), live chat, rate limiting | Channel, Conversation, Message, ZaloConnection, SendRateLimiter |
+| **Conversations** (Inbox) | Realtime omnichannel messaging (web/Zalo/FB/email), live chat, rate limiting | ChannelAccount, Conversation, ConversationEvent, Message, MessageReaction, ZaloConnection |
 
 **Invariant ownership:**
 - *Tenant isolation* (BR-X01/X11/X14/X18) → enforced by Platform (`BelongsToWorkspace` trait + middleware + RLS); every context inherits it.
@@ -280,55 +324,77 @@ Cross-context communication happens through **domain events**, never direct tabl
 
 ---
 
-## 5. Integration Driver Pattern
+## 5. Port / Adapter Driver Pattern
 
-Drivers use `Illuminate\Support\Manager` — same as Laravel's `StorageManager`, `CacheManager`, etc.
+Each capability module owns a `Port/` — the neutral contract the core is allowed to know — and one
+`Adapter/<Vendor>/` per plug-in. The channel registry uses `Illuminate\Support\Manager`, same as
+Laravel's `StorageManager` / `CacheManager`.
 
 ### 5.1 Channel Driver (Zalo + future Messenger/TikTok)
 
 ```php
-// In app/Modules/Integration/Chat/ZaloPersonal/ZaloChannelDriver.php
-class ZaloChannelDriver implements ChannelDriver {
-    public function send(string $peerId, string $message): void {
-        // HTTP to bridge, retry logic, RLS-scoped persist
-    }
+// app/Modules/Chat/Adapter/ZaloPersonal/ZaloChannelDriver.php
+namespace App\Modules\Chat\Adapter\ZaloPersonal;
+
+use App\Modules\Chat\Port\AbstractChannelDriver;
+
+class ZaloChannelDriver extends AbstractChannelDriver {
+    public function channelKey(): string { return 'zalo_personal'; }
+    public function capabilities(): ChannelCapabilities { ... }   // reactions, stickers, seen, ...
+    public function sendMessage(Conversation $c, array $payload): Message { ... }
+    public function parseInbound(array $raw): array { ... }
 }
 
-// In app/Modules/Integration/IntegrationServiceProvider.php
-protected function register() {
-    $this->app->singleton(ChannelManager::class, function ($app) {
-        $manager = new ChannelManager($app);
-        
-        if (config('integrations.zalo_personal.enabled')) {
-            $manager->extend('zalo_personal', 
-                fn() => app(ZaloChannelDriver::class)
-            );
-        }
-        
-        return $manager;
+// app/Modules/Chat/ChatServiceProvider.php — the registry exists even with zero plug-ins
+$this->app->singleton(ChannelRegistry::class, fn ($app) => new ChannelRegistry($app));
+
+// app/Modules/Chat/Adapter/ZaloPersonal/ZaloPersonalServiceProvider.php
+public function register(): void {
+    if (! config('integrations.zalo_personal.enabled')) {
+        return;                       // plug-in gates itself; the core is untouched
+    }
+    $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $registry) {
+        $registry->extend('zalo_personal', fn () => app(ZaloChannelDriver::class));
     });
 }
 
-// Usage in inbox (core)
-$send = app('channels')->driver('zalo_personal')->send($peer, $msg);
-// If driver missing → DriverNotFoundException → handle in controller (422)
+// Usage in the core — resolved by the conversation's channel, never by a hardcoded vendor name
+$driver = app(ChannelRegistry::class)->driver($conversation->channel);
+// Unregistered channel → InvalidArgumentException → 422 'channel_unavailable'
 ```
+
+Capabilities are opt-in marker interfaces under `Port/Capability/` (`SupportsReactions`,
+`SupportsStickers`, `SupportsSeenReceipts`, `SupportsHistoryResync`,
+`SupportsPhoneVerification`). Asking a driver for something it does not implement raises
+`Port\Exception\UnsupportedCapabilityException` instead of a vendor-shaped `if` in the core.
+
+The first-party `Adapter/Widget/` channel is registered by `WidgetServiceProvider` with no config
+flag: it is the floor the chat module stands on, so chat is always testable end-to-end even with
+every external plug-in disabled.
 
 ### 5.2 Payment Driver (Manual + future VNPay/MoMo)
 
 ```php
-// In app/Modules/Integration/Payment/Manual/ManualPaymentDriver.php
+// app/Modules/Payment/Adapter/Manual/ManualPaymentDriver.php
 class ManualPaymentDriver implements PaymentDriver {
-    public function charge(float $amount, string $ref): PaymentResult { ... }
-    public function verify(string $ref): PaymentResult { ... }
-    public function cancel(string $ref): PaymentResult { ... }
+    public function key(): string { return 'manual'; }
+    public function createCheckout(string $workspaceId, string $itemId, array $payload = []): array { ... }
+    public function verifyCallback(array $data): bool { ... }
+    public function refund(string $purchaseId, int $amountCents): bool { ... }
 }
 
-// Phase-08: Add VnpayPaymentDriver + MomoPaymentDriver, register same way
-// Core (billing) always calls app('payments')->driver($plan->payment_method)
+// app/Modules/Payment/Adapter/Manual/ManualPaymentServiceProvider.php
+$this->callAfterResolving(PaymentRegistry::class, function (PaymentRegistry $registry) {
+    $registry->extend('manual', fn () => app(ManualPaymentDriver::class));
+});
+
+// Adding VnpayPaymentDriver / MomoPaymentDriver = a new Adapter/ + its provider, no core edit.
+// Billing resolves by key: app(PaymentRegistry::class)->driver($method)
 ```
 
-**Internal-first:** Inbox + Billing are in `app/Services` and NEVER import `Integration\*`. They resolve drivers from container or handle gracefully.
+**Core stays vendor-blind:** the inbox and billing code paths name `Port\ChannelDriver` /
+`Port\PaymentDriver` and the registries — never an adapter class. A missing driver is handled
+gracefully (422), not assumed away.
 
 ---
 
@@ -345,7 +411,7 @@ UUID PKs everywhere (`uuid()` default). All workspace-scoped tables carry the **
 | `workspace_members` | `workspace_id, user_id, role, team_id, status, invited_at` | **Workspace membership.** `unique(workspace_id, user_id)`. |
 | `teams` | `workspace_id, name, parent_id` | Tree (cycle-guarded). Closure table for O(1) subtree reads. |
 | `pipelines` | `workspace_id, name, is_default` | One default per workspace. |
-| `stages` | `workspace_id, pipeline_id, name, order, probability, type` | `unique(pipeline_id, order)`. |
+| `pipeline_stages` | `workspace_id, pipeline_id, name, color, stage_order, probability, type (open/won/lost)` | `unique(workspace_id, pipeline_id, name)`. |
 | `custom_field_definitions` | `workspace_id, entity, key, label, type, options jsonb, validation jsonb, version, is_active` | `unique(workspace_id, entity, key)`. |
 | `audit_logs` | `workspace_id, entity_type, entity_id, action, actor_id, changes jsonb, occurred_at` | **RLS-protected.** Append-only. |
 
@@ -400,7 +466,7 @@ UUID PKs everywhere (`uuid()` default). All workspace-scoped tables carry the **
 
 - **Queue:** Laravel `queue:work` (configured: database or Redis driver).
 - **Events:** Domain events → event listeners (e.g., `LeadConverted` → update parent, notify assignee).
-- **Scheduled jobs:** Reminders, SLA checks, daily reporting (defined in `app/Console/Kernel.php`).
+- **Scheduled jobs:** Reminders (`reminders:dispatch-due`), workflow resume (`workflow:resume-waiting`), transient-message pruning (`inbox:prune-transient`) — declared in `routes/console.php`.
 - **Realtime:** Reverb broadcasts for live chat (Conversation message events).
 
 ---

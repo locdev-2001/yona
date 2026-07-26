@@ -1,8 +1,8 @@
 # Zalo Personal Inbox
 
-Module: `app/Modules/Integration/Chat/ZaloPersonal` + `app/Services` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor) · Status: live (GĐ1) · Updated: 2026-07-04
+Module: `app/Modules/Chat/Adapter/ZaloPersonal` + `app/Services` (plain Laravel — no `modules/` directory since the 2026-06-28 refactor; business modules are `app/Modules/{Automation,Chat,Payment}/`) · Status: live (GĐ1) · Updated: 2026-07-26
 
-> **04/07 — Inbox full messaging framework (P01a→P12):** inbox nâng từ text-only lên module nhắn tin đầy đủ — media composer, quote/reaction/sticker, message-state (recalled/receipts/reactions/typing), phone enrichment, CRM layer, seen-sync (OFF), khung omnichannel ĐÓNG BĂNG qua `OutboundSendPipeline` + `ChannelCapabilities`. Chi tiết: [README index](./README.md) + `channel-framework-contract.md`.
+> **04/07 — Inbox full messaging framework:** inbox nâng từ text-only lên module nhắn tin đầy đủ — media composer, quote/reaction/sticker, message-state (recalled/receipts/reactions/typing), phone enrichment, CRM layer, seen-sync (OFF), khung omnichannel ĐÓNG BĂNG qua `DeliveryPipeline` + `ChannelCapabilities`. Chi tiết: [README index](./README.md) + `channel-framework-contract.md`.
 
 ## Purpose
 
@@ -22,7 +22,7 @@ Link: [crm-authorization-model.md](../crm-authorization-model.md) § Inbox scope
 
 **Inbound webhook** `POST /api/integrations/zalo-personal/webhook`:
 - Bridge sends HMAC-signed payload when peer messages arrive.
-- Code: `app/Http/Controllers/Integration/ZaloPersonalWebhookController.php::__invoke()`.
+- Code: `app/Http/Controllers/Chat/ZaloPersonal/ZaloPersonalWebhookController.php::__invoke()`.
 - Route: `routes/api.php`. Middleware: `VerifyZaloBridgeSecret` (alias `zalo.bridge.secret`).
 
 **Entrypoint in bridge:**
@@ -37,7 +37,8 @@ sequenceDiagram
     participant MW as VerifyZaloBridgeSecret
     participant Webhook as ZaloPersonalWebhookController
     participant TenantScope as TenantScope
-    participant InboundSvc as InboundMessageService
+    participant InboundSvc as IntakeService
+    participant Publisher as BroadcastService
     participant RLS as PostgreSQL RLS
     participant Reverb as Reverb PrivateChannel
 
@@ -63,11 +64,11 @@ sequenceDiagram
         InboundSvc->>InboundSvc: upsertMessage(idempotent source_id)<br/>(fallback lookup via message_source_aliases)
         InboundSvc->>RLS: INSERT/UPDATE messages<br/>(conversation_id, source_id)
 
-        InboundSvc->>InboundSvc: updateConversationCache()<br/>(last_message_at, unread_count)
-        InboundSvc->>RLS: UPDATE conversations
-
         InboundSvc->>InboundSvc: meterReply() fail-safe, direction=out only<br/>(F1: inbound never metered)
-        InboundSvc->>Reverb: event(MessageReceived)<br/>Broadcast workspace.{id}.conversations
+
+        InboundSvc->>Publisher: publish()<br/>(shared publish step, inbound + outbound)
+        Publisher->>RLS: UPDATE conversations<br/>(last_message_at, preview, unread_count)
+        Publisher->>Reverb: event(MessageReceived)<br/>Broadcast workspace.{id}.conversations
         Reverb->>Reverb: Notify subscribed FE<br/>(real-time message + unread)
 
         Webhook-->>Bridge: 200 { ok: true }
@@ -81,11 +82,11 @@ sequenceDiagram
 3. Controller resets any leaked RLS scope (`TenantScope::forget()`, F19), then resolves workspace from `connection_id` via `ZaloConnection::workspaceForConnection()` (queries `pgsql_privileged`, bypassing RLS since the workspace isn't known yet).
 4. Unmapped `connection_id` → `202 { message: connection_not_mapped }` — no conversation/message created, no error surfaced to bridge (avoids orphan rows and unnecessary bridge retries).
 5. Mapped → `TenantScope::bind($workspaceId)`, then `channel_account_id` is resolved separately (`ZaloConnection::channelAccountIdForConnection($connectionId)`) purely to key the conversation upsert — it plays no role in workspace resolution.
-6. `InboundMessageService::ingest()` upserts Conversation idempotent on `(channel_account_id, peer_uid)` (F2) — stable key across reconnects.
+6. `IntakeService::ingest()` upserts Conversation idempotent on `(channel_account_id, peer_uid)` (F2) — stable key across reconnects.
 7. Service upserts Message idempotent on `(conversation_id, source_id)`, falling back to `message_source_aliases` lookup for pre-rekey source_id formats (F14: fail-safe direction='in' default).
-8. Service updates Conversation cache (last_message_at, unread_count atomic increment F16).
-9. Service calls `meterReply()` in a try/catch, only for `direction='out'` (F1: inbound is never metered — see [conversation-metering.md](./conversation-metering.md)).
-10. Event broadcasts via Reverb PrivateChannel `workspace.{id}.conversations` for real-time UI.
+8. Service calls `meterReply()` in a try/catch, only for `direction='out'` (F1: inbound is never metered — see [conversation-metering.md](./conversation-metering.md)).
+9. Service hands the persisted message to `BroadcastService::publish()` — the publish step shared with the outbound path — which updates the Conversation cache (last_message_at, last_message_preview, unread_count atomic increment F16).
+10. Same step broadcasts `MessageReceived` via Reverb PrivateChannel `workspace.{id}.conversations` for real-time UI.
 11. Webhook returns HTTP 200 to bridge (ACK — removes the message from the bridge's outbox).
 
 ## Data touched
@@ -135,11 +136,11 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § Inbox.
 | **HMAC signature invalid/missing/unconfigured** | Middleware aborts `401` before the controller runs. |
 | **`connection_id` missing or `<= 0`** | `400 { message: missing connection_id }`. |
 | **`connection_id` not mapped to a workspace** | `202 { message: connection_not_mapped }` — no orphan conversation/message, bridge does not retry (F13 always-accept still holds — the message is dropped only because there is no tenant to attribute it to). |
-| **Duplicate `source_id`** (bridge retry) | `InboundMessageService` idempotent upsert on `(conversation_id, source_id)`, with `message_source_aliases` fallback for pre-rekey formats → no-op, returns existing message, still `200`. |
+| **Duplicate `source_id`** (bridge retry) | `IntakeService` idempotent upsert on `(conversation_id, source_id)`, with `message_source_aliases` fallback for pre-rekey formats → no-op, returns existing message, still `200`. |
 | **Transient DB error** (`QueryException`/`PDOException`, e.g. deadlock, connection down) | `503 { message: transient_db_error }` → bridge outbox retries with backoff. |
 | **Malformed/permanently-invalid payload** (`InvalidArgumentException`, e.g. driver can't parse) | `422 { message: permanent_bad_payload }` → bridge dead-letters, does not retry forever. |
 | **Any other unhandled exception** | `503 { message: unexpected_error }` → treated as retry-safe rather than silently dropping the message. |
-| **Metering error during `direction='out'`** | Fail-safe: caught in `InboundMessageService::ingest()` — message still persisted and broadcast regardless (F13/F20). No quota gate to block on. |
+| **Metering error during `direction='out'`** | Fail-safe: caught in `IntakeService::ingest()` — message still persisted and broadcast regardless (F13/F20). No quota gate to block on. |
 
 ## Related
 
