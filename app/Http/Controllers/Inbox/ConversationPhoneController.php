@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inbox;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Modules\Chat\Port\Capability\SupportsPhoneVerification;
 use App\Modules\Integration\ChannelManager;
 use App\Services\Inbox\PhoneEnrichmentService;
 use Illuminate\Http\JsonResponse;
@@ -40,19 +41,16 @@ class ConversationPhoneController extends Controller
             ], 429);
         }
 
-        if (! class_exists(ChannelManager::class)) {
-            return response()->json(['message' => 'Kênh không khả dụng.', 'error_code' => 'channel_unavailable'], 422);
-        }
-
         $driver = app(ChannelManager::class)->driver($conversation->channel);
 
-        // Kênh chưa hỗ trợ verify → không nhận manual (không lưu SĐT chưa xác minh)
-        if (! method_exists($driver, 'verifyPeerPhone')) {
+        // Kênh chưa hỗ trợ xác minh → KHÔNG nhận số nhập tay. Lưu số chưa xác
+        // minh là làm bẩn nguồn định danh mạnh nhất của hệ thống.
+        if (! $driver instanceof SupportsPhoneVerification) {
             return response()->json(['message' => 'Kênh này chưa hỗ trợ xác minh SĐT.', 'error_code' => 'verify_unsupported'], 422);
         }
 
         try {
-            $verified = $driver->verifyPeerPhone($conversation, $validated['phone']);
+            $verified = $driver->verifySenderPhone($conversation, $validated['phone']);
         } catch (\Throwable $e) {
             report($e);
 

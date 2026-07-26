@@ -5,15 +5,15 @@ namespace Tests\Support;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Support\AbstractChannelDriver;
 use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
  * P11 — Mock kênh A: policy TRÁI NGƯỢC Zalo — không receipts, không media,
  * không sticker, không quote/react, không typing. Ép core/UI KHÔNG assume Zalo.
  * Sống trong tests/Support — đăng ký kênh mới KHÔNG sửa file production nào.
  */
-class MockChannelDriverA implements ChannelDriver
+class MockChannelDriverA extends AbstractChannelDriver
 {
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
@@ -27,10 +27,6 @@ class MockChannelDriverA implements ChannelDriver
     {
         return new ChannelCapabilities; // all-false, receiptGranularity none
     }
-
-    public function connect(string $workspaceId, array $params): void {}
-
-    public function disconnect(string $workspaceId): void {}
 
     public function sendMessage(Conversation $conversation, array $payload): Message
     {

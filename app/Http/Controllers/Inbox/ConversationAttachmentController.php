@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * show:  hiển thị trong chat — quyền = xem conversation (KHÔNG AttachmentPolicy
  *        view vì policy đó là uploader-only; media chat mọi member xem được).
  * raw:   bridge fetch — signed URL TTL ngắn, KHÔNG session → bind RLS thủ công
- *        từ param ws đã ký (pattern ZaloPersonalWebhookController).
+ *        từ param ws đã ký (cùng khuôn với webhook của adapter kênh).
  */
 class ConversationAttachmentController extends Controller
 {

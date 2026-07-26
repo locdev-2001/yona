@@ -5,15 +5,15 @@ namespace Tests\Support;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Support\AbstractChannelDriver;
 use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
 
 /**
  * P11 — Mock kênh B: policy TRÁI với A và Zalo — CÓ receipts (per_member) +
  * react, KHÔNG media, policy chặn tin >100 ký tự (chứng minh policy driver-owned,
  * không phải bộ 3 field {windowHours, dailyCap, allowedHours}).
  */
-class MockChannelDriverB implements ChannelDriver
+class MockChannelDriverB extends AbstractChannelDriver
 {
     /** @var list<array<string, mixed>> */
     public array $sentPayloads = [];
@@ -35,10 +35,6 @@ class MockChannelDriverB implements ChannelDriver
             receiptGranularity: 'per_member',
         );
     }
-
-    public function connect(string $workspaceId, array $params): void {}
-
-    public function disconnect(string $workspaceId): void {}
 
     public function sendMessage(Conversation $conversation, array $payload): Message
     {

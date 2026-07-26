@@ -504,7 +504,7 @@ it('gửi qua pipeline: ghi Message direction=out + đếm thống kê', functio
 
     Carbon::setTestNow(Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 10:00:00', 'Asia/Ho_Chi_Minh'));
 
-    $driver = new ZaloChannelDriver(makeSendService());
+    $driver = app(ZaloChannelDriver::class);
     $message = makeSendPipeline()->send(
         $driver,
         $conversation,

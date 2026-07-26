@@ -4,6 +4,7 @@ namespace App\Services\Inbox;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
 use App\Modules\Integration\ChannelManager;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
@@ -60,25 +61,20 @@ class SeenSyncService
                 $query->where('created_at', '>', $lastSyncedAt);
             }
 
-            $platformMessages = $query->get()
-                ->pluck('platform_meta.zca_message')
-                ->filter(fn ($zca) => is_array($zca) && $zca !== [])
-                ->values()
-                ->all();
+            $messages = $query->get();
 
-            if ($platformMessages === []) {
+            if ($messages->isEmpty()) {
                 return;
             }
 
-            if (! class_exists(ChannelManager::class)) {
-                return;
-            }
             $driver = app(ChannelManager::class)->driver($conversation->channel);
-            if (! method_exists($driver, 'sendSeen')) {
+            if (! $driver instanceof SupportsSeenReceipts) {
                 return; // kênh không hỗ trợ — không phải lỗi
             }
 
-            if ($driver->sendSeen($conversation, $platformMessages)) {
+            // Truyền nguyên Message xuống driver: lõi chọn TIN NÀO cần báo, việc
+            // bóc metadata nền tảng là ruột của kênh nên không leo lên đây.
+            if ($driver->sendSeen($conversation, $messages)) {
                 Cache::put($watermarkKey, now()->toDateTimeString(), now()->addDay());
             }
         } catch (\Throwable $e) {

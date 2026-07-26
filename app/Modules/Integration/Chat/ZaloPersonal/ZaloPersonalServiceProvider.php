@@ -46,6 +46,10 @@ class ZaloPersonalServiceProvider extends ServiceProvider
             );
         });
 
+        // Driver nhận qua constructor thay vì gọi app() trong thân method —
+        // cần đăng ký tường minh vì driver bị Manager cache suốt đời process.
+        $this->app->singleton(ZaloInteractionService::class, fn () => new ZaloInteractionService);
+
         // Đăng ký ZaloChannelDriver vào ChannelManager singleton.
         // Internal-first: ChannelManager sống cùng module Integration → luôn tồn tại khi provider này chạy.
         // Dùng app() helper trong closure (KHÔNG $this->app — binding context khác).
