@@ -121,7 +121,7 @@ None — inbound conversations start in "open" state. `Conversation.contact_id` 
 ## Business rules applied
 
 - **F2 (Dedup inbound per peer):** Conversation unique per `(channel_account_id, peer_uid)` — stable across reconnects (partial unique index, `deleted_at IS NULL`). Same peer → same conversation thread.
-- **F13/F20 (Always accept inbound):** Inbound messages are never routed through any metering gate at all (not merely "fail-safe" — `direction='in'` skips `meterReply()` entirely). Preserves lead capture regardless of billing plan/quota state.
+- **F13/F20 (Always accept inbound):** Inbound messages are never routed through any metering gate at all (not merely "fail-safe" — `direction='in'` skips `meterReply()` entirely). Preserves lead capture unconditionally (quota enforcement removed as of 2026-07-25).
 - **F14 (Fail-safe direction):** If webhook payload is missing `direction` → defaults to `in`; prevents accidental outbound counting.
 - **F6 (Webhook auth):** HMAC signature required at the middleware layer; unsigned/invalid payloads never reach the controller.
 - **F11/F19 (RLS scope-binding):** Workspace resolved and bound BEFORE touching conversation data; scope explicitly reset both before and after the request to prevent leaking across pooled connections.
@@ -139,7 +139,7 @@ Link: [crm-business-rules.md](../crm-business-rules.md) § Inbox.
 | **Transient DB error** (`QueryException`/`PDOException`, e.g. deadlock, connection down) | `503 { message: transient_db_error }` → bridge outbox retries with backoff. |
 | **Malformed/permanently-invalid payload** (`InvalidArgumentException`, e.g. driver can't parse) | `422 { message: permanent_bad_payload }` → bridge dead-letters, does not retry forever. |
 | **Any other unhandled exception** | `503 { message: unexpected_error }` → treated as retry-safe rather than silently dropping the message. |
-| **Metering gate error during `direction='out'`** | Fail-safe: caught in `InboundMessageService::ingest()` — message still persisted and broadcast regardless (F13/F20). |
+| **Metering error during `direction='out'`** | Fail-safe: caught in `InboundMessageService::ingest()` — message still persisted and broadcast regardless (F13/F20). No quota gate to block on. |
 
 ## Related
 

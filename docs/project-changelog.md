@@ -17,6 +17,14 @@ All notable changes to this project. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Changed — Gỡ quota gate, giữ metering thống kê (2026-07-25)
+
+- **Quyết định founder 25/07/2026**: Gỡ hoàn toàn gate hạn mức hội thoại. Cho dùng không giới hạn, vẫn thống kê.
+- **Xóa**: `App\Exceptions\QuotaExceededException`, `MeteringService::assertCanSend()`, `::canStartNew()`, `::canReplyOnExisting()`. Cột `conversations.agent_unlocked_period` (migration thêm rồi gỡ).
+- **Giữ**: `MeteringService::meterReply()` (race-safe compare-set), `ChannelUsage` bảng, `EntitlementService` (nhưng chỉ hiển thị số liệu, không chặn).
+- **Khác**: `SendRateLimiter::assertCanSend()` vẫn chạy (3 tin/ngày + 7h-22h per ToS Zalo, KHÔNG phải quota tính tiền).
+- **Docs**: `conversation-metering.md` viết lại (thống kê, không gate). `outbound-send.md`, `zalo-personal-inbox.md`, `system-architecture.md`, `project-overview.md` cập nhật bỏ mô tả gate.
+
 ### Changed — Định vị chính thức + docs refresh (2026-07-22)
 
 - **Định vị chốt: "Conversational CRM & Automation"** — thay "Quản lý khách hàng tập trung & tự động hóa" (generic, thiếu wedge hội thoại). Cập nhật đồng bộ: CLAUDE.md, README, glossary, composer.json, project-overview.

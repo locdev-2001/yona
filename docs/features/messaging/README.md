@@ -7,9 +7,9 @@ Navigate messaging features. GĐ1 implements Phase 1 inbox: Zalo personal webhoo
 | Feature | Purpose | Module |
 |---|---|---|
 | [Zalo Personal Inbox](./zalo-personal-inbox.md) | Webhook inbound → Conversation + Message, broadcast realtime. | inbox + channel-zalo |
-| [Outbound Send](./outbound-send.md) | Reply: circuit-breaker → quota → rate-limit → bridge HTTP → persist + meter. | channel-zalo |
+| [Outbound Send](./outbound-send.md) | Reply: circuit-breaker → rate-limit → bridge HTTP → persist + meter. | channel-zalo |
 | [Conversation to Lead](./conversation-to-lead.md) | Convert conversation to Lead via `ContactService` phone dedup + `LeadService` (direct calls, no contract layer). | `ConversationLeadController` |
-| [Conversation Metering](./conversation-metering.md) | Race-safe F1 metering; F5 existing conv unlimited; inbound never routed through the gate at all. | `App\Services\MeteringService` (concrete, no interface) |
+| [Conversation Metering](./conversation-metering.md) | Race-safe F1 metering per channel per month; no quota gate applied. Inbound never metered. | `App\Services\MeteringService` (concrete, no interface) |
 | [Plan Entitlements & Grant](./plan-entitlements-grant.md) | Workspace purchases, admin grant/revoke, quota resolve. | `App\Services\{GrantPlanService,EntitlementService}` |
 | [Channel-Account Architecture](./channel-account-architecture.md) | Account-keyed redesign (GĐ1 live): tách danh tính tài khoản khỏi session, 5 lớp, gap marker + fallback backfill, core mù session. Sửa #1 phân mảnh / #2 mất tin / #3 mở rộng. | inbox + channel-zalo |
 | [zca Capability Map](./zca-capability-map.md) | Bề mặt zca-js (146 REST / 16 event) + adapter generic L1 (dispatcher/forwarder/allowlist reflection) — sở hữu 100% bề mặt, chống "miss" khả năng khi nâng version. | channel-zalo |
@@ -24,7 +24,7 @@ Navigate messaging features. GĐ1 implements Phase 1 inbox: Zalo personal webhoo
 
 - **Inbox Phase 1 = Zalo cá nhân (NOT Zalo OA):** QR login via zca-js bridge. OA deferred to Phase 2 (no test account).
 - **Conversation = per-peer per-channel:** Same peer across Zalo + Messenger = 2 conversations (phone-based dedup only in CDP, Phase-08).
-- **Metering = per-channel per-month:** 1 conversation = 1 meter when tenant replies first time in period. Existing conversation = unlimited replies (F5).
+- **Metering = per-channel per-month:** 1 conversation = 1 meter when tenant replies first time in period (statistics only, no quota gate).
 - **Inbound always accepted (F13/F20):** Never reject inbound by quota — preserve lead capture.
 - **Rate limit = 7h–22h + ≤3/phone/day:** ToS compliance (Zalo commercial hours).
 - **Circuit-breaker = AccountHealthMonitor:** Track bridge health per connection; fail-fast if unhealthy (N retries → circuit open).
@@ -62,7 +62,6 @@ InboxController::send()  [POST /inbox/conversations/{conversation}/messages]
 ZaloSendService::send()
   ├─ resolveConnection() [account→slot via channel_account_id]
   ├─ ZaloHealthMonitor::isCircuitOpen() [F3: fail-fast]
-  ├─ MeteringService::assertCanSend() [F1/F5: quota or unlimited if existing]
   ├─ SendRateLimiter::assertCanSend() [F8: 7h-22h + 3 msg/phone/day]
   ├─ callBridge() [retry 2×200ms, timeout 15s, F4]
   │  └─ HTTP POST bridge /personal-messages/send
@@ -71,9 +70,9 @@ ZaloSendService::send()
   ├─ increment(rate_limiter) [Redis INCR if enabled, else memory]
   └─ ZaloHealthMonitor::reset() [success indicator]
 ```
-Every failure path above is wrapped into a `SendException` (or caught directly for `QuotaExceededException`) and surfaces as a uniform HTTP `422` with a distinguishing `error_code` — see [outbound-send.md](./outbound-send.md).
+Every failure path above is wrapped into a `SendException` and surfaces as a uniform HTTP `422` with a distinguishing `error_code` — see [outbound-send.md](./outbound-send.md).
 
-### Entitlements → Gate Flow
+### Entitlements + Metering (Statistics)
 
 ```
 Request entry (middleware/controller)
@@ -84,16 +83,15 @@ EntitlementResolver::snapshot(workspace_id)
   ├─ Redis cache hit (5 min TTL) → return cached
   ├─ OR Query WorkspacePurchase (active)
   │   ├─ No active → FREE_DEFAULTS
-  │   └─ Yes → merge entitlements
+  │   └─ Yes → merge entitlements (flags only)
   │       └─ Cache 5 min
-  ├─ For each quota:
-  │   ├─ Query ChannelUsage (current period)
-  │   └─ remaining = limit - answered_count
-  └─ Return {flags, quotas, remaining}
+  ├─ Query ChannelUsage (current period, NOT cached)
+  │   └─ answered_count per channel
+  └─ Return {flags, usage}
         ↓
     Inertia::share('entitlements', ...)
         ↓
-    FE renders quota badges + feature gates
+    FE renders usage badges (informational, no gates)
 ```
 
 ## Related Concepts

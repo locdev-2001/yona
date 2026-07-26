@@ -35,12 +35,11 @@ Grep gate (chạy trong contract test): **0** chỗ `if (channel === ...)` / `ma
 ## Money-path (BẤT BIẾN — nền monetization, pipeline enforce)
 ```
 InboxController::send → OutboundSendPipeline::send(driver, conversation, payload)
-  1. metering->assertCanSend   ← quota PER-CHANNEL, chặn TRƯỚC transport (conv mới + hết quota → throw)
-  2. driver->sendMessage       ← policy kênh + transport + persist (driver-owned)
-  3. metering->meterReply      ← đếm PER-CHANNEL, CHỈ sau transport thành công (reply-only)
+  1. driver->sendMessage       ← policy kênh + transport + persist (driver-owned)
+  2. metering->meterReply      ← đếm PER-CHANNEL, CHỈ sau transport thành công (reply-only, không chặn gửi)
 ```
 - Hội thoại đếm **per-channel** (cùng người trên 2 kênh = 2 hội thoại) — contract test enforce.
-- **Luôn nhận inbound** kể cả hết quota (F13/F20) — `InboundMessageService` không bao giờ gate.
+- **Luôn nhận inbound** (F13/F20) — `InboundMessageService` không bao giờ gate (không còn quota gate từ 25/07).
 - Circuit-breaker / echo-dedup / outbox retry / SendRateLimiter (NĐ91) = đặc thù kênh, SỐNG TRONG DRIVER.
 
 ## Capability ≠ Policy (MED-4)
@@ -60,7 +59,7 @@ Freeze này là **TẠM** (mock-verified). Các chỗ sau còn Zalo-cứng NGOÀ
 | Banner kết nối | `connection-banner.tsx` (hardcode route zalo) | route từ capability/props |
 | Seen-sync đọc meta | `SeenSyncService` (pluck key `platform_meta.zca_message`) | driver expose key/extractor |
 | Permission | `tenant.zalo.manage` gate reaction/seen | permission per-channel hoặc generic `tenant.channel.manage` |
-| Usage badge cột trái | `pages/inbox/index.tsx` (`ZALO_QUOTA_KEY` hardcode — composer gate ĐÃ per-channel, badge list-level thì chưa) | badge render per-channel từ `channelAccounts` + `entitlements.remaining` |
+| Usage badge cột trái | `pages/inbox/index.tsx` (hardcode giống Zalo — chưa per-channel) | badge render per-channel từ `channelAccounts` + `entitlements.usage` (thông tin, không chặn) |
 
 ## Mock reference
 `tests/Support/MockChannelDriverA.php` (tối giản nhất — không receipts/media) và `MockChannelDriverB.php` (receipts per_member + policy max-length) — copy làm skeleton.

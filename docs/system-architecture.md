@@ -150,7 +150,7 @@ config/
 2. **Controllers → `app/Http/Controllers/{Domain}/`** (organized by domain for clarity, but still in standard Laravel namespace). ~80+ controllers (CrmController, ProjectController, etc.).
 
 3. **Services → `app/Services/`** (business logic, external integration calls, complex queries).
-   - **`MeteringService` is CONCRETE** (not an interface with no-op binding). Send-path calls `app(MeteringService)->assertCanSend()` directly. Replaces the Phase-0 "topo-sort safety" concern — now it's the service's responsibility to be correct.
+   - **`MeteringService` is CONCRETE** (not an interface with no-op binding). Send-path calls `app(MeteringService)->meterReply()` directly after bridge success. Tracks usage for analytics only (no quota enforcement).
    - `EntitlementService`, `ContactService`, `LeadService`, `ChannelManager`, `PaymentManager`, etc.
 
 4. **2 modules: `app/Modules/Integration/`** (driver pattern point) **and `app/Modules/Automation/`** (workflow node-handler registry, docs/crm-automation-workflow.md).
@@ -175,7 +175,7 @@ config/
    - Bridge endpoint: env `ZALO_BRIDGE_ENDPOINT` (default: `http://localhost:3456`).
    - Webhook: `POST /api/integrations/zalo-personal/webhook` (handled by `app/Http/Controllers/Integration/ZaloPersonalWebhookController`).
    - **Generic dispatcher (P11)**: `POST {bridge}/zca/:method` — allowlist reflection 146 method (`src/zca-adapter.mjs` + snapshot M1 gate), tier guard (send→409, 39 destructive→403 trừ elevated secret + `TenantPermission::ZaloDestructive`, media→415, deny→403). B1 isolation: RLS `zalo_connections` là control chính + token-từ-session `HMAC(connection_id + workspace)` verify với binding ghi lúc promote (persist qua slot meta).
-   - **Relay forwarder**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty fire-and-forget; Laravel (P02/P09 inbox-full-messaging): undo/seen/delivered/reaction ĐI THEO `messages` qua `MessageStateService`, typing broadcast-only, lạ → structured log (kho `relay_events` ĐÃ DROP). Outbound MỌI kênh đi `OutboundSendPipeline` (quota gate + meterReply — P11 freeze). Flow docs: `features/messaging/{zalo-generic-dispatcher,message-state-pipeline,channel-framework-contract}.md`.
+   - **Relay forwarder**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty fire-and-forget; Laravel (P02/P09 inbox-full-messaging): undo/seen/delivered/reaction ĐI THEO `messages` qua `MessageStateService`, typing broadcast-only, lạ → structured log (kho `relay_events` ĐÃ DROP). Outbound MỌI kênh đi `OutboundSendPipeline` (rate-limit + meterReply — P11 freeze; quota gate removed 25/07). Flow docs: `features/messaging/{zalo-generic-dispatcher,message-state-pipeline,channel-framework-contract}.md`.
 
 ---
 
@@ -218,9 +218,6 @@ InboxController::send(conversation_id, text)  [POST /inbox/conversations/{conver
       ├─ resolveConnection(conversation)  [channel_account_id → connected slot]
       ├─ ZaloHealthMonitor::isCircuitOpen(connection_id)
       │  └─ If open → 422 (all send failures return 422, distinguished by error_code)
-      ├─ MeteringService::assertCanSend(conversation_id)
-      │  ├─ Exists in current period? → allowed
-      │  └─ New? → check quota
       ├─ SendRateLimiter::assertCanSend(peer_phone)
       │  └─ 7h–22h (Ho Chi Minh) + ≤3/day
       ├─ callBridge(connection_id, peer_id, text)
@@ -234,25 +231,25 @@ InboxController::send(conversation_id, text)  [POST /inbox/conversations/{conver
 
 **Key:** `MeteringService` is injected directly (app()); no manager wrapper.
 
-### 3.3 Metering (Quota Gate)
+### 3.3 Metering (Statistics Only)
 
 ```
-MeteringService::assertCanSend(conversation_id) 
-  → THROWS QuotaExceededException if:
-      ├─ Conversation created AFTER current period started AND
-      ├─ answered_count ≥ plan quota
-      └─ (already metered this period)
+MeteringService::meterReply(conversation_id)
+  → Race-safe atomic compare-set + upsert in single transaction
+  → Tracks usage in channel_usage per (workspace_id, channel, period)
+  → No quota gate applied; all sends allowed
   
-  ✅ ALLOWS if:
-      ├─ Conversation created BEFORE current period (F5: existing unlimited)
-      └─ OR answered_count < quota
+  Usage data (channel_usage):
+    ├─ answered_count per workspace/channel/month
+    └─ Used for analytics and future billing policies only
 
-WorkspacePurchase (billing)
-  ├─ IF no active purchase → FREE_DEFAULTS (50 conv/month, 3 seats)
-  └─ IF active → entitlements JSONB merged (max quotas, union flags)
+WorkspacePurchase (billing entitlements)
+  ├─ IF no active purchase → FREE_DEFAULTS (flags for free tier)
+  └─ IF active → entitlements JSONB merged (union flags)
 
 Cache (Redis, 5 min TTL):
-  └─ EntitlementResolver::snapshot(workspace_id) → {flags, quotas, remaining}
+  └─ EntitlementService::snapshot(workspace_id) → {flags} only
+     (quotas removed; no longer used for gating)
 ```
 
 ---

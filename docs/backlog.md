@@ -147,13 +147,13 @@ GĐ1 uses **zca-js** (reverse-engineered Zalo client, unofficial). Limitations:
 
 ### Metering Period: Calendar Month (Not Rolling 30d)
 
-`currentPeriod() = now('Asia/Ho_Chi_Minh')->format('Y-m')` = calendar month. Switching periods at midnight resets quota atomically.
+`currentPeriod() = now('Asia/Ho_Chi_Minh')->format('Y-m')` = calendar month. Usage tracked per period for analytics.
 
-**Trade-off**: Simpler than rolling window; predictable. Customer expects month-based billing.
+**Trade-off**: Simpler than rolling window; predictable. Matches customer billing cycle expectations.
 
-### Free Defaults: PLACEHOLDER Numbers
+### Free Defaults: Flags Only
 
-`EntitlementResolver::FREE_DEFAULTS` hardcodes 50 conversations/month + 3 seats. Founder decision pending (~2026-07-07).
+`EntitlementResolver::FREE_DEFAULTS` hardcodes feature flags for free tier (e.g., `module.inbox`). As of 2026-07-25, quota limits have been removed; all workspaces send unlimited (usage is tracked for analytics only).
 
 **Phase-08 change**: Update seed + constant, re-test EntitlementResolverTest.
 
