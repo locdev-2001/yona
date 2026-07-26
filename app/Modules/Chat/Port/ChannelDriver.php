@@ -49,7 +49,7 @@ interface ChannelDriver
 
     /**
      * Parse raw webhook payload từ bridge thành dạng chuẩn hóa cho inbox core
-     * (shape ĐÚNG cái InboundMessageService::ingest consume — P11 review MED-2 sync).
+     * (shape ĐÚNG cái IntakeService::ingest consume — P11 review MED-2 sync).
      *
      * CHƯA FREEZE (MED-4/C6): contract inbound đóng băng ở kênh thật thứ 2.
      * `channel` BẮT BUỘC (thiếu → ingest throw — không fallback im lặng).

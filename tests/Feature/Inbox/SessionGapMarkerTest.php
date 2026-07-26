@@ -4,10 +4,10 @@ use App\Models\ChannelAccount;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\InboundMessageService;
+use App\Modules\Chat\Intake\IntakeService;
 
 /**
- * P05 — SessionGapMaterializer: dấu ngăn 'session_gap' chèn khi hội thoại
+ * P05 — GapMarkerService: dấu ngăn 'session_gap' chèn khi hội thoại
  * nhận tin post-gap ĐẦU TIÊN (platform_sent_at > channel_accounts.gap_started_at).
  * Idempotent, KHÔNG đụng metering/unread/preview.
  *
@@ -59,7 +59,7 @@ it('materializes a session_gap marker for the first post-gap message and increme
 
     $before = $conversation->fresh()->stream_version;
 
-    $message = app(InboundMessageService::class)->ingest($payload);
+    $message = app(IntakeService::class)->ingest($payload);
 
     $events = DB::table('conversation_events')->where('conversation_id', $conversation->id)->get();
     expect($events)->toHaveCount(1);
@@ -86,7 +86,7 @@ it('is idempotent — a second post-gap message does not duplicate the marker', 
         'conversation_number' => 2,
     ]);
 
-    $service = app(InboundMessageService::class);
+    $service = app(IntakeService::class);
 
     $p1 = gapPayload($account->id, 'peer_gap_2', now()->toDateTimeString(), 'src_gap_a');
     $service->ingest($p1);
@@ -113,7 +113,7 @@ it('does not create a marker when there is no gap window (gap_started_at null)',
 
     $payload = gapPayload($account->id, 'peer_no_gap', now()->toDateTimeString());
 
-    app(InboundMessageService::class)->ingest($payload);
+    app(IntakeService::class)->ingest($payload);
 
     expect(DB::table('conversation_events')->where('conversation_id', $conversation->id)->count())->toBe(0);
 })->group('inbox-stream');
@@ -136,7 +136,7 @@ it('does not create a marker for a message BEFORE gap_started_at', function () {
     // Tin backfill/replay có platform_sent_at TRƯỚC gap_started_at (vd lịch sử group resync).
     $payload = gapPayload($account->id, 'peer_pre_gap', $gapStartedAt->clone()->subMinute()->toDateTimeString());
 
-    app(InboundMessageService::class)->ingest($payload);
+    app(IntakeService::class)->ingest($payload);
 
     expect(DB::table('conversation_events')->where('conversation_id', $conversation->id)->count())->toBe(0);
 })->group('inbox-stream');

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Modules\Chat\Port\Capability\SupportsPhoneVerification;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Services\Inbox\PhoneEnrichmentService;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;

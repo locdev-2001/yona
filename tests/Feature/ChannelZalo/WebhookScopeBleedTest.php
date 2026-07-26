@@ -5,8 +5,8 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -346,7 +346,7 @@ function simulateZaloWebhook(array $payload): array
 
     try {
         $channelManager = app(ChannelRegistry::class);
-        $ingestService = app(InboundMessageService::class);
+        $ingestService = app(IntakeService::class);
 
         $driver = $channelManager->driver('zalo_personal');
         $normalized = $driver->parseInbound($payload);

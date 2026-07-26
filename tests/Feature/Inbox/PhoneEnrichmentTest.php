@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Services\Inbox\PhoneEnrichmentService;
+use App\Modules\Chat\Store\PhoneEnrichmentService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -77,7 +77,7 @@ it('khách gửi danh thiếp → peer_phone + phone_source=business_card + cont
     expect($contact->phone)->toBe('0901234567');
 });
 
-it('listener MessageReceived tự lift khi ingest danh thiếp (hook không sửa InboundMessageService)', function () {
+it('listener MessageReceived tự lift khi ingest danh thiếp (hook không sửa IntakeService)', function () {
     [$workspace] = peSetup();
     $conversation = peConversation($workspace, 'peer_bc_2');
     $message = peBusinessCardMessage($conversation, '0912345678');

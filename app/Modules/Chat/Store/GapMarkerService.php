@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Store;
 
 use App\Models\Conversation;
 use Illuminate\Support\Carbon;
@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 /**
  * P05 (inbox-multichannel-relayer) — chèn dấu ngăn 'session_gap' TRƯỚC khi
- * message post-gap "visible" (chokepoint duy nhất: InboundMessageService::ingest,
+ * message post-gap "visible" (chokepoint duy nhất: IntakeService::ingest,
  * gọi TRƯỚC upsertMessage). Đóng blocker #1 (event chèn muộn mất marker).
  *
  * Cửa sổ gap là ACCOUNT-level (channel_accounts.gap_started_at, set bởi
@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
  * platform_sent_at với gap_started_at (giữ nguyên dù gap_open đã tắt).
  * Idempotent qua unique(conversation_id, kind, gap_started_at) — gọi lại an toàn.
  */
-class SessionGapMaterializer
+class GapMarkerService
 {
     private const KIND = 'session_gap';
 

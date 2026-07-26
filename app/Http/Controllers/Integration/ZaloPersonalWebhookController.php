@@ -8,11 +8,11 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
+use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\SystemLineService;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
-use App\Services\InboundMessageService;
-use App\Services\Inbox\MessageStateService;
-use App\Services\Inbox\SocialEventMaterializer;
 use App\Services\ZaloBackfillService;
 use App\Support\Activity\ActivityLogger;
 use App\Support\TenantScope;
@@ -35,11 +35,11 @@ use Throwable;
  *   4. try { xử lý } finally { TenantScope::forget() }
  *
  * Event types:
- *   - inbound        → parse + ingest (InboundMessageService, always-accept F13/F20)
+ *   - inbound        → parse + ingest (IntakeService, always-accept F13/F20)
  *   - bridge_session → update ZaloConnection.state
  *   - social_event   → log/no-op (YAGNI)
  *   - relay_event    → P02: undo/seen/delivered/reaction ĐI THEO messages
- *                      (MessageStateService); typing broadcast-only; lạ → log redacted.
+ *                      (MessageStatusService); typing broadcast-only; lạ → log redacted.
  *                      KHÔNG còn ghi relay_events (bảng drop ở P09).
  *
  * Route: POST /api/integrations/zalo-personal/webhook
@@ -53,7 +53,7 @@ class ZaloPersonalWebhookController extends Controller
     // Internal-first: ChannelRegistry (app/Modules/Integration/) resolve lazily trong
     // handleInbound — KHÔNG inject qua constructor để route:list không fatal khi xóa Integration.
     public function __construct(
-        private readonly InboundMessageService $inboundMessageService,
+        private readonly IntakeService $inboundMessageService,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -264,7 +264,7 @@ class ZaloPersonalWebhookController extends Controller
         $eventPayload = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
 
         $parser = app(ZaloStateEventParser::class);
-        $stateService = app(MessageStateService::class);
+        $stateService = app(MessageStatusService::class);
 
         switch ($relayEventType) {
             case 'undo':
@@ -382,7 +382,7 @@ class ZaloPersonalWebhookController extends Controller
 
     /**
      * P08 — social_event hết no-op: group_event/friend_event whitelist → dòng
-     * hệ thống conversation_events (taxonomy loại 3, SocialEventMaterializer).
+     * hệ thống conversation_events (taxonomy loại 3, SystemLineService).
      * Act ngoài whitelist / không map được conversation → 200 êm (không kho).
      * Shape: GroupEvent {type: string, act, threadId=groupId, data} ·
      * FriendEvent {type: number, threadId=uid người kia} — zca models.
@@ -423,7 +423,7 @@ class ZaloPersonalWebhookController extends Controller
         }
 
         try {
-            app(SocialEventMaterializer::class)->materialize(
+            app(SystemLineService::class)->materialize(
                 $conversation,
                 $line['kind'],
                 $dedupKey,

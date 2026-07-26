@@ -9,7 +9,7 @@ use App\Modules\Chat\Port\Capability\SupportsReactions;
 use App\Modules\Chat\Port\Capability\SupportsStickers;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\Exception\UnsupportedCapabilityException;
-use App\Services\Inbox\MessageStateService;
+use App\Modules\Chat\Status\MessageStatusService;
 use Illuminate\Support\Facades\RateLimiter;
 use InvalidArgumentException;
 use RuntimeException;
@@ -32,7 +32,7 @@ class InteractionPipeline
 
     private const STICKER_SEARCH_MAX_PER_MINUTE = 10;
 
-    public function __construct(private readonly MessageStateService $stateService) {}
+    public function __construct(private readonly MessageStatusService $stateService) {}
 
     /**
      * @throws UnsupportedCapabilityException kênh không có diện cảm xúc

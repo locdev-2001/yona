@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Timeline;
 
 use App\Models\Message;
 

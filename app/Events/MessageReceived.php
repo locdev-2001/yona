@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
-use App\Services\Inbox\MessageItemSerializer;
+use App\Modules\Chat\Timeline\MessageItemSerializer;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -19,7 +19,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  * Payload bao gồm message + conversation_id + last_message_at + unread_count
  * để UI cập nhật list + bubble không cần fetch lại.
  *
- * P05: $gapEvent (nếu có, từ SessionGapMaterializer) đi kèm ngay trong cùng
+ * P05: $gapEvent (nếu có, từ GapMarkerService) đi kèm ngay trong cùng
  * broadcast — FE chèn marker "có thể thiếu tin" vào đúng vị trí ngay lập tức,
  * không cần round-trip refetch riêng cho trường hợp realtime.
  *

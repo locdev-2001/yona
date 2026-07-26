@@ -14,9 +14,9 @@ use App\Modules\Chat\Delivery\Event\ActionsEvent;
 use App\Modules\Chat\Delivery\Event\CardEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Delivery\Event\TextEvent;
+use App\Modules\Chat\Intake\IntakeService;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
-use App\Services\InboundMessageService;
 use App\Services\Inbox\OutboundSendPipeline;
 use App\Support\TenantScope;
 use Illuminate\Support\Facades\DB;
@@ -116,7 +116,7 @@ it('nhận được tin qua kênh nội bộ khi Zalo đã tắt', function () {
     expect($normalized['channel'])->toBe(WidgetChannelDriver::KEY);
     expect($normalized['direction'])->toBe('in');
 
-    $message = app(InboundMessageService::class)->ingest($normalized);
+    $message = app(IntakeService::class)->ingest($normalized);
 
     $conversation = Conversation::where('workspace_id', $workspace->id)
         ->where('channel', WidgetChannelDriver::KEY)

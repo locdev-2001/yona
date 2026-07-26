@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services\Inbox;
+namespace App\Modules\Chat\Status;
 
 use App\Events\MessageStateChanged;
 use App\Models\Message;
 use App\Models\MessageReaction;
 use App\Models\PendingMessageState;
+use App\Modules\Chat\Intake\DuplicateResolver;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -23,9 +24,9 @@ use Illuminate\Support\Str;
  * chatty (receipt/reaction) → DROP có chủ đích (test chứng minh).
  * KHÔNG meter — mọi đường ở đây không chạm MeteringService.
  */
-class MessageStateService
+class MessageStatusService
 {
-    public function __construct(private readonly MessageSourceResolver $resolver) {}
+    public function __construct(private readonly DuplicateResolver $resolver) {}
 
     /**
      * @param  array{target_msg_id: string, recalled_at?: Carbon|string|null, payload?: array<string, mixed>}  $recall
