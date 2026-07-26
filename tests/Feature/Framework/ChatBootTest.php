@@ -1,13 +1,29 @@
 <?php
 
+use App\Http\Controllers\Chat\WidgetInboundController;
+use App\Http\Controllers\Inbox\ConversationAssignController;
+use App\Http\Controllers\Inbox\ConversationAttachmentController;
+use App\Http\Controllers\Inbox\ConversationLeadController;
+use App\Http\Controllers\Inbox\ConversationPanelController;
+use App\Http\Controllers\Inbox\ConversationPhoneController;
+use App\Http\Controllers\Inbox\ConversationStreamController;
+use App\Http\Controllers\Inbox\InboxController;
+use App\Http\Controllers\Inbox\InboxSettingController;
+use App\Http\Controllers\Inbox\MessageInteractionController;
+use App\Http\Controllers\Inbox\QuickReplyController;
+use App\Http\Controllers\Integration\IntegrationController;
+use App\Http\Controllers\Integration\ZaloConnectionController;
+use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
+use App\Listeners\LiftPhoneFromBusinessCard;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
+use App\Modules\Automation\Handlers\SendMessageNodeHandler;
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
 use App\Modules\Chat\Delivery\InteractionPipeline;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor;
@@ -28,6 +44,7 @@ use App\Services\Inbox\SessionGapMaterializer;
 use App\Services\Inbox\SocialEventMaterializer;
 use App\Services\Inbox\StreamCursor;
 use App\Services\NoteService;
+use App\Services\Rekey\DuplicateConversationMerger;
 use App\Services\TagService;
 use App\Services\Zalo\PromoteAccountBinder;
 use App\Services\ZaloBackfillService;
@@ -71,7 +88,7 @@ function chatBootServices(): array
         InteractionPipeline::class,
 
         // Cổng cắm + sổ đăng ký
-        ChannelManager::class,
+        ChannelRegistry::class,
         IntegrationCatalog::class,
         PaymentManager::class,
 
@@ -88,6 +105,58 @@ function chatBootServices(): array
         ZaloStateEventParser::class,
         PromoteAccountBinder::class,
         ZaloBackfillService::class,
+
+        // Mối nối cắt ngang module — không test nào khác canh chúng
+        SendMessageNodeHandler::class,
+        LiftPhoneFromBusinessCard::class,
+        DuplicateConversationMerger::class,
+    ];
+}
+
+/**
+ * Hai sổ đăng ký PHẢI là singleton.
+ *
+ * Mất chữ `singleton` thì mọi thứ vẫn resolve được, vẫn xanh ở phép thử
+ * `toBeInstanceOf` — nhưng mỗi lần `app()` lại dựng một sổ mới, và driver mà
+ * provider của phích cắm vừa `extend()` vào biến mất. Hỏng im lặng, chỉ lộ ra
+ * lúc gửi tin thật.
+ *
+ * @return list<class-string>
+ */
+function chatBootSingletons(): array
+{
+    return [
+        ChannelRegistry::class,
+        PaymentManager::class,
+    ];
+}
+
+/**
+ * Controller ở biên vào chat.
+ *
+ * `app($controller)` chỉ dựng constructor. Bốn chỗ nặng nhất của inbox lại nhận
+ * phụ thuộc qua THAM SỐ METHOD (`react`, `stickers`, `resync`, `__invoke`) —
+ * chỗ đó router mới resolve, nên phải đọc type-hint từng method mà dựng thử.
+ *
+ * @return list<class-string>
+ */
+function chatBootControllers(): array
+{
+    return [
+        ConversationAssignController::class,
+        ConversationAttachmentController::class,
+        ConversationLeadController::class,
+        ConversationPanelController::class,
+        ConversationPhoneController::class,
+        ConversationStreamController::class,
+        InboxController::class,
+        InboxSettingController::class,
+        IntegrationController::class,
+        MessageInteractionController::class,
+        QuickReplyController::class,
+        WidgetInboundController::class,
+        ZaloConnectionController::class,
+        ZaloPersonalWebhookController::class,
     ];
 }
 
@@ -136,9 +205,36 @@ function chatBootHttpSurface(): array
 }
 
 it('mọi service lõi chat resolve được từ container', function () {
+    // Bật tường minh: trên máy đặt INTEGRATION_ZALO_PERSONAL=false thì provider
+    // của phích cắm không chạy và test sẽ xanh rỗng.
+    config([
+        'integrations.zalo_personal.enabled' => true,
+        'integrations.payment_manual.enabled' => true,
+    ]);
+
     foreach (chatBootServices() as $class) {
         expect(class_exists($class))->toBeTrue("Class không tồn tại: {$class}");
         expect(app($class))->toBeInstanceOf($class);
+    }
+
+    foreach (chatBootSingletons() as $class) {
+        expect(app($class))->toBe(app($class), "Mất binding singleton: {$class}");
+    }
+
+    foreach (chatBootControllers() as $controller) {
+        expect(app($controller))->toBeInstanceOf($controller);
+
+        foreach ((new ReflectionClass($controller))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($method->getParameters() as $parameter) {
+                $type = $parameter->getType();
+
+                if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
+                    continue;
+                }
+
+                expect(app($type->getName()))->toBeInstanceOf($type->getName());
+            }
+        }
     }
 });
 

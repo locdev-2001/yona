@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\Inbox\SeenSyncService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
@@ -84,7 +84,7 @@ function ccInboundMessage(Conversation $conversation, string $suffix = ''): Mess
 /** Đăng ký kênh KHÔNG hỗ trợ diện tương tác nào, để test nhánh "không hỗ trợ". */
 function ccRegisterBareChannel(Workspace $workspace): Conversation
 {
-    app(ChannelManager::class)->extend('mock_a', fn () => new MockChannelDriverA);
+    app(ChannelRegistry::class)->extend('mock_a', fn () => new MockChannelDriverA);
 
     return Conversation::create([
         'workspace_id' => $workspace->id,

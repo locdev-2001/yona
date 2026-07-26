@@ -7,7 +7,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspacePurchase;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\MessageSourceResolver;
@@ -42,7 +42,7 @@ function fwSetup(): array
 
 function fwIngest(string $channel, string $accountId, string $peerUid, string $sourceId, string $direction = 'in'): Message
 {
-    $driver = app(ChannelManager::class)->driver($channel);
+    $driver = app(ChannelRegistry::class)->driver($channel);
     $normalized = $driver->parseInbound([
         'channel_account_id' => $accountId,
         'peer_uid' => $peerUid,
@@ -90,10 +90,10 @@ function fwGrantQuota(Workspace $workspace, string $channel, int $limit): void
     ]);
 }
 
-/** @return array{0: ChannelManager, 1: MockChannelDriverA|MockChannelDriverB} */
+/** @return array{0: ChannelRegistry, 1: MockChannelDriverA|MockChannelDriverB} */
 function fwRegisterMock(string $key): array
 {
-    $manager = app(ChannelManager::class);
+    $manager = app(ChannelRegistry::class);
     $driver = $key === 'mock_a' ? new MockChannelDriverA : new MockChannelDriverB;
     $manager->extend($key, fn () => $driver);
 
@@ -244,15 +244,25 @@ it('policy kênh do DRIVER quyết: mock_b chặn tin >100 ký tự, mock_a thì
 
 it('grep gate: 0 chỗ rẽ nhánh theo kênh trong core allowlist (flags là data, không phải branch)', function () {
     // Review MED-3: file list KHỚP allowlist doc channel-framework-contract.md
-    $coreFiles = array_merge(
-        glob(base_path('app/Services/Inbox/*.php')) ?: [],
-        [base_path('app/Services/InboundMessageService.php')],
-        glob(base_path('app/Modules/Integration/Contracts/*.php')) ?: [],
-        [base_path('app/Modules/Integration/ChannelManager.php')],
-        glob(base_path('app/Http/Controllers/Inbox/*.php')) ?: [],
-        glob(base_path('resources/js/components/inbox/*.ts*')) ?: [],
-        glob(base_path('resources/js/pages/inbox/*.tsx')) ?: [],
-    );
+    //
+    // Mỗi mẫu phải khớp ÍT NHẤT một file: `glob()` trả [] cho thư mục không tồn
+    // tại, nên một đợt di dời quét qua sẽ làm gate này xanh rỗng thay vì đỏ.
+    $patterns = [
+        'app/Services/Inbox/*.php',
+        'app/Services/InboundMessageService.php',
+        'app/Modules/Chat/Port/*.php',
+        'app/Modules/Chat/Port/Capability/*.php',
+        'app/Http/Controllers/Inbox/*.php',
+        'resources/js/components/inbox/*.ts*',
+        'resources/js/pages/inbox/*.tsx',
+    ];
+
+    $coreFiles = [];
+    foreach ($patterns as $pattern) {
+        $matched = glob(base_path($pattern)) ?: [];
+        expect($matched)->not->toBeEmpty("Mẫu không khớp file nào (đường dẫn đã đổi?): {$pattern}");
+        $coreFiles = array_merge($coreFiles, $matched);
+    }
 
     $violations = [];
     foreach ($coreFiles as $file) {

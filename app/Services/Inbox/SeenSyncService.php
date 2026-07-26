@@ -5,7 +5,7 @@ namespace App\Services\Inbox;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
 
@@ -67,7 +67,7 @@ class SeenSyncService
                 return;
             }
 
-            $driver = app(ChannelManager::class)->driver($conversation->channel);
+            $driver = app(ChannelRegistry::class)->driver($conversation->channel);
             if (! $driver instanceof SupportsSeenReceipts) {
                 return; // kênh không hỗ trợ — không phải lỗi
             }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Integration\Contracts;
+namespace App\Modules\Chat\Port;
 
 /**
  * P11 — UI feature flags per-kênh (ADDITIVE-ONLY, không seal): FE ẩn/hiện nút

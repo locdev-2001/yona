@@ -3,7 +3,7 @@
 namespace App\Modules\Chat\Adapter\Widget;
 
 use App\Modules\Chat\Adapter\Widget\Intake\WidgetInboundParser;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -18,7 +18,7 @@ class WidgetServiceProvider extends ServiceProvider
     {
         $this->app->singleton(WidgetInboundParser::class, fn () => new WidgetInboundParser);
 
-        $this->callAfterResolving(ChannelManager::class, function (ChannelManager $manager) {
+        $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $manager) {
             $manager->extend(WidgetChannelDriver::KEY, fn () => app(WidgetChannelDriver::class));
         });
     }

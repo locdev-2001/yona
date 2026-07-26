@@ -14,7 +14,7 @@ use App\Modules\Chat\Delivery\Event\ActionsEvent;
 use App\Modules\Chat\Delivery\Event\CardEvent;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Delivery\Event\TextEvent;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\OutboundSendPipeline;
@@ -95,7 +95,7 @@ function cwaFixedFixture(): array
 it('registry vẫn có kênh nội bộ khi Zalo đã tắt', function () {
     cwaSetup();
 
-    $channels = app(ChannelManager::class);
+    $channels = app(ChannelRegistry::class);
 
     expect($channels->hasAny())->toBeTrue();
     expect($channels->driver(WidgetChannelDriver::KEY))->toBeInstanceOf(WidgetChannelDriver::class);
@@ -106,7 +106,7 @@ it('nhận được tin qua kênh nội bộ khi Zalo đã tắt', function () {
 
     // Đi đúng một điểm nhập với webhook Zalo: driver dịch payload → IntakeService.
     // Không dựng đường ingest riêng nào cho kênh nội bộ.
-    $normalized = app(ChannelManager::class)->driver(WidgetChannelDriver::KEY)->parseInbound([
+    $normalized = app(ChannelRegistry::class)->driver(WidgetChannelDriver::KEY)->parseInbound([
         'channel_account_id' => $account->id,
         'visitor_id' => 'khach_001',
         'body' => 'cho hỏi còn phòng không ạ',
@@ -236,7 +236,7 @@ it('agent gửi được tin trong hội thoại nội bộ khi Zalo đã tắt'
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    $channels = app(ChannelManager::class);
+    $channels = app(ChannelRegistry::class);
 
     $message = app(OutboundSendPipeline::class)->send(
         $channels->driver(WidgetChannelDriver::KEY),
@@ -262,7 +262,7 @@ it('kênh nội bộ render được MỌI loại sự kiện, không hạ cấp
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 
-    $driver = app(ChannelManager::class)->driver(WidgetChannelDriver::KEY);
+    $driver = app(ChannelRegistry::class)->driver(WidgetChannelDriver::KEY);
 
     expect($driver->supportedOutboundEvents())
         ->toEqualCanonicalizing(OutboundEventType::cases());
@@ -290,7 +290,7 @@ it('tin kênh nội bộ vẫn được thống kê và phát realtime — khôn
     ]);
 
     app(OutboundSendPipeline::class)->send(
-        app(ChannelManager::class)->driver(WidgetChannelDriver::KEY),
+        app(ChannelRegistry::class)->driver(WidgetChannelDriver::KEY),
         $conversation,
         OutboundMessage::text('đã ghi nhận ạ'),
     );

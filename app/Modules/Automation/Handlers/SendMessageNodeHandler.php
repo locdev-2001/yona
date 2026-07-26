@@ -6,7 +6,7 @@ use App\Models\Conversation;
 use App\Models\WorkflowRun;
 use App\Modules\Automation\Contracts\NodeHandler;
 use App\Modules\Automation\NodeHandlerResult;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\Inbox\OutboundSendPipeline;
 use Throwable;
@@ -28,7 +28,7 @@ use Throwable;
 class SendMessageNodeHandler implements NodeHandler
 {
     public function __construct(
-        private readonly ChannelManager $channels,
+        private readonly ChannelRegistry $channels,
         private readonly OutboundSendPipeline $pipeline,
     ) {}
 

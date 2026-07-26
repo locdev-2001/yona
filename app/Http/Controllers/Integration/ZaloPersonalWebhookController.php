@@ -8,7 +8,7 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Workspace;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser;
 use App\Services\InboundMessageService;
 use App\Services\Inbox\MessageStateService;
@@ -50,7 +50,7 @@ use Throwable;
  */
 class ZaloPersonalWebhookController extends Controller
 {
-    // Internal-first: ChannelManager (app/Modules/Integration/) resolve lazily trong
+    // Internal-first: ChannelRegistry (app/Modules/Integration/) resolve lazily trong
     // handleInbound — KHÔNG inject qua constructor để route:list không fatal khi xóa Integration.
     public function __construct(
         private readonly InboundMessageService $inboundMessageService,
@@ -122,7 +122,7 @@ class ZaloPersonalWebhookController extends Controller
                 ? ZaloConnection::channelAccountIdForConnection($connectionId)
                 : null;
 
-            $driver = app(ChannelManager::class)->driver('zalo_personal');
+            $driver = app(ChannelRegistry::class)->driver('zalo_personal');
             $normalized = $driver->parseInbound($payload);
             $this->inboundMessageService->ingest($normalized);
 

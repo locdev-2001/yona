@@ -5,7 +5,7 @@ namespace App\Services\Inbox;
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Modules\Integration\Contracts\ChannelDriver;
+use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Integration\Data\OutboundMessage;
 use App\Services\MeteringService;
 

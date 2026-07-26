@@ -2,7 +2,7 @@
 
 namespace App\Modules\Integration\Chat\ZaloPersonal;
 
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\IntegrationServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
@@ -11,7 +11,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * Đăng ký:
  *   - ZaloSendService (singleton — ZaloHealthMonitor + SendRateLimiter; P11: metering ở OutboundSendPipeline)
- *   - ZaloChannelDriver vào ChannelManager (extend 'zalo_personal')
+ *   - ZaloChannelDriver vào ChannelRegistry (extend 'zalo_personal')
  *
  * Routes + middleware alias 'zalo.bridge.secret' nay sống ở Laravel routing chuẩn:
  *   - Webhook: routes/api.php (đăng ký qua bootstrap/app.php withRouting api:)
@@ -23,7 +23,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * Migrations KHÔNG load ở đây — đã chuyển sang database/migrations/ (Laravel thuần).
  *
- * @see ChannelManager
+ * @see ChannelRegistry
  * @see IntegrationServiceProvider
  */
 class ZaloPersonalServiceProvider extends ServiceProvider
@@ -50,10 +50,10 @@ class ZaloPersonalServiceProvider extends ServiceProvider
         // cần đăng ký tường minh vì driver bị Manager cache suốt đời process.
         $this->app->singleton(ZaloInteractionService::class, fn () => new ZaloInteractionService);
 
-        // Đăng ký ZaloChannelDriver vào ChannelManager singleton.
-        // Internal-first: ChannelManager sống cùng module Integration → luôn tồn tại khi provider này chạy.
+        // Đăng ký ZaloChannelDriver vào ChannelRegistry singleton.
+        // Internal-first: ChannelRegistry sống cùng module Integration → luôn tồn tại khi provider này chạy.
         // Dùng app() helper trong closure (KHÔNG $this->app — binding context khác).
-        $this->callAfterResolving(ChannelManager::class, function (ChannelManager $manager) {
+        $this->callAfterResolving(ChannelRegistry::class, function (ChannelRegistry $manager) {
             $manager->extend('zalo_personal', fn () => app(ZaloChannelDriver::class));
         });
     }

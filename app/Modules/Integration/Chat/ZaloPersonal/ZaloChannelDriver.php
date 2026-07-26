@@ -7,19 +7,19 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
+use App\Modules\Chat\Port\AbstractChannelDriver;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
 use App\Modules\Chat\Port\Capability\SupportsPhoneVerification;
 use App\Modules\Chat\Port\Capability\SupportsReactions;
 use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
 use App\Modules\Chat\Port\Capability\SupportsStickers;
-use App\Modules\Chat\Support\AbstractChannelDriver;
+use App\Modules\Chat\Port\ChannelCapabilities;
+use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
 use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
-use App\Modules\Integration\Contracts\ChannelCapabilities;
-use App\Modules\Integration\Contracts\ChannelDriver;
 use App\Services\ZaloBackfillService;
 use Illuminate\Support\Collection;
 
@@ -27,7 +27,7 @@ use Illuminate\Support\Collection;
  * Channel driver cho Zalo cá nhân (zca-js bridge).
  *
  * Implements ChannelDriver contract (App\Modules\Integration) — inbox core không import class này.
- * Đăng ký qua ChannelManager::extend('zalo_personal', ...) trong ZaloPersonalServiceProvider.
+ * Đăng ký qua ChannelRegistry::extend('zalo_personal', ...) trong ZaloPersonalServiceProvider.
  *
  * D-2 (outbound/QR/send): sendMessage → ZaloSendService.
  * D-1 (inbound): parseInbound() đã đầy đủ cho webhook RLS-bind flow.

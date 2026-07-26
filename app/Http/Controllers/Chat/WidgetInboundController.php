@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Chat\Adapter\Widget\WidgetChannelDriver;
-use App\Modules\Integration\ChannelManager;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\InboundMessageService;
 use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +26,7 @@ class WidgetInboundController extends Controller
 {
     public function __invoke(
         Request $request,
-        ChannelManager $channels,
+        ChannelRegistry $channels,
         InboundMessageService $inbound,
     ): JsonResponse {
         $validated = $request->validate([
