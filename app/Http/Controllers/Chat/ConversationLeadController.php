@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Pipeline;
+use App\Modules\Chat\Port\ChannelRegistry;
 use App\Services\ContactService;
 use App\Services\LeadService;
 use Illuminate\Database\QueryException;
@@ -25,8 +26,12 @@ use Illuminate\Support\Facades\DB;
  */
 class ConversationLeadController extends Controller
 {
-    public function store(Request $request, Conversation $conversation): JsonResponse
+    public function store(Request $request, Conversation $conversation, ChannelRegistry $channels): JsonResponse
     {
+        // Nguồn của Lead là NHÃN của kênh, do phích cắm khai. Gắn cứng một tên
+        // ở đây thì kênh thứ hai đẻ ra Lead mang nguồn sai.
+        $channelLabel = $channels->descriptor($conversation->channel)->label;
+
         $this->authorize('update', $conversation);
 
         // Guard: group thread không tạo Lead
@@ -60,7 +65,7 @@ class ConversationLeadController extends Controller
         }
 
         try {
-            $lead = DB::transaction(function () use ($conversation, $contactId) {
+            $lead = DB::transaction(function () use ($conversation, $contactId, $channelLabel) {
                 // Link contact_id vào conversation nếu resolve được (trong transaction để atomic với Lead)
                 if ($contactId !== null && $conversation->contact_id !== $contactId) {
                     $conversation->saveQuietly(); // avoid observer side-effects before mutation
@@ -83,11 +88,11 @@ class ConversationLeadController extends Controller
                     // Với trường hợp không có contact, tạo Lead từ stub đọc fields
                     contact: $this->resolveOrBuildDummyContact($conversation, $contactId),
                     attrs: array_filter([
-                        'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ Zalo',
+                        'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ '.$channelLabel,
                         'phone' => $conversation->peer_phone,
                         'pipeline_id' => $pipeline?->id,
                         'stage_id' => $firstStage?->id,
-                        'source' => 'Zalo',
+                        'source' => $channelLabel,
                         'contact_id' => $contactId,
                         'conversation_id' => $conversation->id,
                     ], fn ($v) => $v !== null),

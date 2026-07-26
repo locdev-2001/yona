@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\RateLimiter;
 /**
  * P05 — nhập tay SĐT khách + verify qua kênh (findUser: uid phải khớp sender_uid).
  * Verify pass → phone_source='manual_verified' (nguồn mạnh nhất). Verify fail
- * (số không dùng Zalo HOẶC uid không khớp) → TỪ CHỐI lưu (LOW-2: cả 2 nhánh).
+ * (số không dùng kênh đó HOẶC uid không khớp) → TỪ CHỐI lưu.
  */
 class ConversationPhoneController extends Controller
 {
@@ -42,6 +42,7 @@ class ConversationPhoneController extends Controller
         }
 
         $driver = app(ChannelRegistry::class)->driver($conversation->channel);
+        $channelLabel = app(ChannelRegistry::class)->descriptor($conversation->channel)->label;
 
         // Kênh chưa hỗ trợ xác minh → KHÔNG nhận số nhập tay. Lưu số chưa xác
         // minh là làm bẩn nguồn định danh mạnh nhất của hệ thống.
@@ -54,12 +55,12 @@ class ConversationPhoneController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['message' => 'Không xác minh được — kết nối Zalo chưa sẵn sàng.', 'error_code' => 'verify_unavailable'], 422);
+            return response()->json(['message' => 'Không xác minh được — kết nối '.$channelLabel.' chưa sẵn sàng.', 'error_code' => 'verify_unavailable'], 422);
         }
 
         if (! $verified) {
             return response()->json([
-                'message' => 'SĐT không khớp với tài khoản Zalo của khách này. Không lưu.',
+                'message' => 'SĐT không khớp với tài khoản '.$channelLabel.' của khách này. Không lưu.',
                 'error_code' => 'phone_mismatch',
             ], 422);
         }
