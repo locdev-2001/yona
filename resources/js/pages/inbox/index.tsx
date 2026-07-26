@@ -1,7 +1,7 @@
 import { AccountRail, type ChannelAccountInfo } from '@/components/inbox/account-rail';
+import { descriptorFor, type ChannelDescriptorMap } from '@/components/inbox/channel-descriptor';
 import { ChatAvatar } from '@/components/inbox/chat-avatar';
 import { ChatThread } from '@/components/inbox/chat-thread';
-import { type ChannelDescriptorMap, descriptorFor } from '@/components/inbox/channel-descriptor';
 import { ConnectionBanner } from '@/components/inbox/connection-banner';
 import { ConversationPanel } from '@/components/inbox/conversation-panel';
 import type { GapEvent } from '@/components/inbox/gap-marker';
@@ -715,7 +715,9 @@ export default function InboxIndex({
                                     <ChatAvatar name={conv.thread_name ?? conv.sender_uid} src={conv.thread_avatar} className="h-9 w-9 shrink-0" />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-sm font-medium">{conv.thread_name ?? conv.sender_phone ?? conv.sender_uid}</span>
+                                            <span className="truncate text-sm font-medium">
+                                                {conv.thread_name ?? conv.sender_phone ?? conv.sender_uid}
+                                            </span>
                                             {conv.unread_count > 0 && (
                                                 <Badge variant="default" className="h-4 min-w-4 shrink-0 px-1 text-[10px]">
                                                     {conv.unread_count}

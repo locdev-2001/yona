@@ -249,3 +249,47 @@ export async function enrichInboundBody(body, fetchImpl = fetch) {
     }
     return body;
 }
+
+/**
+ * Dựng địa chỉ ảnh sticker từ mã của nó.
+ *
+ * Dùng khi không tra được chi tiết qua API — hoặc vì lần tra hỏng, hoặc vì đang
+ * ở đường kéo lịch sử, nơi CỐ Ý không gọi API: kéo hàng trăm tin cũ mà mỗi
+ * sticker một lời gọi lên API không chính thức là đúng cách để bị khóa tài khoản.
+ *
+ * Dạng địa chỉ lấy từ chính những lần tra THÀNH CÔNG đã lưu, không phải đoán.
+ */
+export function stickerUrlFromId(id) {
+    const n = Number(id);
+
+    return Number.isFinite(n) && n > 0
+        ? `https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=${n}&size=130`
+        : null;
+}
+
+/** Mã sticker nằm ở một trong bốn tên trường, tùy dạng payload. */
+export function stickerIdFrom(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return null;
+    }
+
+    const id = raw.id ?? raw.sticker_id ?? raw.stickerId ?? raw.sid;
+
+    return id == null || id === '' ? null : id;
+}
+
+/**
+ * Bù địa chỉ ảnh cho một sticker thô, giữ nguyên nếu nó đã có.
+ *
+ * Không có bước này thì tin sticker kéo về từ lịch sử chỉ còn mã, và giao diện
+ * hiện chữ "[Sticker]" thay vì hình.
+ */
+export function withStickerUrl(raw) {
+    if (!raw || typeof raw !== 'object' || raw.url || raw.thumbnail) {
+        return raw;
+    }
+
+    const url = stickerUrlFromId(stickerIdFrom(raw));
+
+    return url ? { ...raw, url, thumbnail: url } : raw;
+}
