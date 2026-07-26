@@ -27,7 +27,7 @@ it('creates a conversation and message in the same workspace', function () {
         'channel' => 'zalo_personal',
         'sender_uid' => 'zalo_uid_001',
         'thread_type' => 0,
-        'peer_name' => 'Khách test',
+        'thread_name' => 'Khách test',
         'contact_id' => null, // F23: Liên hệ nháp
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

@@ -29,7 +29,7 @@ function crmSetup(): array
         'channel' => 'mock_channel', // channel-agnostic — không cần zalo
         'sender_uid' => 'peer_crm_'.uniqid(),
         'thread_type' => 0,
-        'peer_name' => 'Khách CRM',
+        'thread_name' => 'Khách CRM',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 

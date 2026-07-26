@@ -27,13 +27,9 @@ use Illuminate\Support\Carbon;
  * @property string $sender_uid
  * @property int $thread_type
  * @property string $thread_kind
- * @property string|null $peer_phone
- * @property string|null $peer_name
- * @property string|null $peer_avatar_url
  * @property string|null $contact_id
  * @property string|null $lead_id
  * @property int $conversation_number
- * @property array<string, array{name: string|null, avatar: string|null}>|null $participants
  * @property Carbon|null $last_message_at
  * @property string|null $last_message_preview
  * @property int $unread_count
@@ -61,10 +57,6 @@ class Conversation extends Model
         'thread_avatar',
         'identity_id',
         'profile_id',
-        'peer_phone',
-        'phone_source',
-        'peer_name',
-        'peer_avatar_url',
         'contact_id',
         'lead_id',
         'conversation_number',
@@ -82,15 +74,12 @@ class Conversation extends Model
         return [
             'thread_type' => 'integer',
             'thread_kind' => 'string',
-            'participants' => 'array',
             'unread_count' => 'integer',
             'lock_version' => 'integer',
             'stream_version' => 'integer',
             'conversation_number' => 'integer',
             'last_message_at' => 'datetime',
             'deleted_at' => 'datetime',
-            'phone_verified_at' => 'datetime',
-            'phone_enriched_at' => 'datetime',
         ];
     }
 
@@ -118,32 +107,6 @@ class Conversation extends Model
     public function isDraftContact(): bool
     {
         return $this->contact_id === null;
-    }
-
-    /**
-     * Upsert hồ sơ thành viên nhóm (keyed sender_uid) từ tin inbound có sender profile.
-     * Field null giữ giá trị cũ (backfill/tin thiếu profile không xoá dữ liệu đã có);
-     * chỉ save khi thực sự đổi — tin liên tiếp cùng người gửi là no-op.
-     */
-    public function rememberParticipant(?string $uid, ?string $name, ?string $avatar): void
-    {
-        if ($uid === null || $uid === '' || ($name === null && $avatar === null)) {
-            return;
-        }
-
-        $participants = $this->participants ?? [];
-        $current = $participants[$uid] ?? [];
-        $merged = [
-            'name' => $name ?? ($current['name'] ?? null),
-            'avatar' => $avatar ?? ($current['avatar'] ?? null),
-        ];
-
-        if ($merged === $current) {
-            return;
-        }
-
-        $participants[$uid] = $merged;
-        $this->forceFill(['participants' => $participants])->save();
     }
 
     /** Loại luồng: nhắn riêng. */
@@ -198,5 +161,31 @@ class Conversation extends Model
     public function members(): HasMany
     {
         return $this->hasMany(ConversationMember::class);
+    }
+
+    /**
+     * Số điện thoại của người ở đầu bên kia — đọc từ bí danh, không phải từ một
+     * bản sao trên chính luồng.
+     *
+     * Đây là truy vấn theo TỪNG luồng, cố ý không dùng cho danh sách hộp thư:
+     * danh sách hiển thị `thread_name`, còn số điện thoại chỉ hiện ở màn hình
+     * chi tiết một hội thoại.
+     */
+    public function senderPhone(): ?string
+    {
+        if ($this->profile_id === null) {
+            return null;
+        }
+
+        return ProfileIdentity::query()
+            ->where('profile_id', $this->profile_id)
+            ->where('key', 'phone')
+            ->orderByDesc('is_verified')
+            ->orderByDesc('last_seen_at')
+            // Cột thời gian chỉ chính xác tới giây, nên hai số học được trong
+            // cùng một giây sẽ hòa. Khóa của bảng là uuid có thứ tự thời gian —
+            // nó phân định được, và phân định đúng chiều.
+            ->orderByDesc('id')
+            ->value('value');
     }
 }

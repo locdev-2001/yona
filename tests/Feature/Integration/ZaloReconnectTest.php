@@ -96,7 +96,7 @@ function makeZaloConversation(string $workspaceId, string $senderUid, int $messa
         'channel_account_id' => $channelAccountId,
         'sender_uid' => $senderUid,
         'thread_type' => 0,
-        'peer_name' => 'Em Bé',
+        'thread_name' => 'Em Bé',
         'conversation_number' => random_int(1, 99999),
         'unread_count' => 0,
         'created_at' => now(),

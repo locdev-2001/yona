@@ -32,9 +32,9 @@ use Illuminate\Support\Facades\DB;
  *   channel?: string,
  *   thread_uid: string,
  *   thread_kind?: string,
- *   peer_name?: string|null,
- *   peer_avatar?: string|null,
- *   peer_phone?: string|null,
+ *   thread_name?: string|null,
+ *   thread_avatar?: string|null,
+ *   sender_phone?: string|null,
  *   direction?: string,
  *   type?: string,
  *   body?: string|null,
@@ -77,8 +77,8 @@ class IntakeService
                 $conversation,
                 (string) $memberUid,
                 $conversation->channel,
-                $normalized['sender_name'] ?? ($conversation->isGroup() ? null : $normalized['peer_name'] ?? null),
-                $normalized['sender_avatar'] ?? ($conversation->isGroup() ? null : $normalized['peer_avatar'] ?? null),
+                $normalized['sender_name'] ?? ($conversation->isGroup() ? null : $normalized['thread_name'] ?? null),
+                $normalized['sender_avatar'] ?? ($conversation->isGroup() ? null : $normalized['thread_avatar'] ?? null),
             );
         }
 
@@ -126,7 +126,7 @@ class IntakeService
         $existing = $this->findConversation($channelAccountId, $senderUid);
 
         if ($existing !== null) {
-            return $this->applyPeerUpdates($existing, $normalized);
+            return $this->applyThreadUpdates($existing, $normalized);
         }
 
         // Finding 16: chuẩn hóa 'conversation' (số ít) — khớp test/seed/codebase.
@@ -142,12 +142,9 @@ class IntakeService
                     'channel_account_id' => $channelAccountId,
                     'sender_uid' => $senderUid,
                     'thread_kind' => $threadKind,
-                    'peer_name' => $normalized['peer_name'] ?? null,
-                    'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
-                    'peer_phone' => $normalized['peer_phone'] ?? null,
                     // Nhóm: tên thật của nhóm. 1-1: bản cache tên người, làm mới mỗi tin đến.
-                    'thread_name' => $normalized['peer_name'] ?? null,
-                    'thread_avatar' => $normalized['peer_avatar'] ?? null,
+                    'thread_name' => $normalized['thread_name'] ?? null,
+                    'thread_avatar' => $normalized['thread_avatar'] ?? null,
                     'conversation_number' => WorkspaceSequence::next('conversation'),
                     'contact_id' => null, // F23: Liên hệ nháp
                 ]);
@@ -158,14 +155,14 @@ class IntakeService
             });
         } catch (QueryException $e) {
             // Race: 2 webhook cùng (channel_account_id, sender_uid) → cùng miss first() → cùng INSERT.
-            // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_account_peer_unique).
+            // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_account_sender_unique).
             // Re-fetch row do request kia tạo, áp peer-info update như existing-row path.
-            // Cùng pattern ContactService::firstOrCreateByPhone.
+            // Cùng khuôn với mọi chỗ dựng-hoặc-lấy khác trong repo.
             if ($e->getCode() === '23505') {
                 $conversation = $this->findConversation($channelAccountId, $senderUid);
 
                 if ($conversation !== null) {
-                    return $this->applyPeerUpdates($conversation, $normalized);
+                    return $this->applyThreadUpdates($conversation, $normalized);
                 }
             }
 
@@ -194,8 +191,8 @@ class IntakeService
             value: $conversation->sender_uid,
             source: $conversation->channel,
             channelAccountId: $conversation->channel_account_id,
-            displayName: $normalized['peer_name'] ?? null,
-            avatarUrl: $normalized['peer_avatar'] ?? null,
+            displayName: $normalized['thread_name'] ?? null,
+            avatarUrl: $normalized['thread_avatar'] ?? null,
             channels: [$conversation->channel],
         ));
 
@@ -220,14 +217,11 @@ class IntakeService
     }
 
     /** @param array<string, mixed> $normalized */
-    private function applyPeerUpdates(Conversation $conversation, array $normalized): Conversation
+    private function applyThreadUpdates(Conversation $conversation, array $normalized): Conversation
     {
         $updates = array_filter([
-            'peer_name' => $normalized['peer_name'] ?? null,
-            'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
-            'peer_phone' => $normalized['peer_phone'] ?? null,
-            'thread_name' => $normalized['peer_name'] ?? null,
-            'thread_avatar' => $normalized['peer_avatar'] ?? null,
+            'thread_name' => $normalized['thread_name'] ?? null,
+            'thread_avatar' => $normalized['thread_avatar'] ?? null,
         ], fn ($v) => $v !== null);
 
         if ($updates !== []) {

@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  * Guard bất biến:
  *   - Idempotency: conversation.lead_id đã set → trả Lead cũ (KHÔNG tạo mới).
  *   - Hội thoại nhóm → 422: một nhóm không phải một người.
- *   - Dedup SĐT: peer_phone → ContactService::resolveOrCreateFromPeer → set contact_id.
+ *   - Dedup SĐT: số lấy từ bí danh của hồ sơ → ContactService → set contact_id.
  *   - Tạo Lead qua LeadService::createFromContact — KHÔNG tự viết logic Lead.
  *   - Link 2 chiều: conversation.lead_id + leads.conversation_id + leads.contact_id.
  */
@@ -53,19 +53,21 @@ class ConversationLeadController extends Controller
         // Khi 23505 nổ TRONG transaction, Postgres abort → catch re-fetch ném 25P02.
         // Contact dedup không cần atomic chung với tạo Lead.
         $contactId = null;
-        if ($conversation->peer_phone !== null) {
+        $senderPhone = $conversation->senderPhone();
+
+        if ($senderPhone !== null) {
             $contact = app(ContactService::class)->resolveOrCreateFromPeer(
                 workspaceId: $conversation->workspace_id,
                 channel: $conversation->channel,
                 senderUid: $conversation->sender_uid,
-                phone: $conversation->peer_phone,
-                displayName: $conversation->peer_name,
+                phone: $senderPhone,
+                displayName: $conversation->thread_name,
             );
             $contactId = $contact?->id;
         }
 
         try {
-            $lead = DB::transaction(function () use ($conversation, $contactId, $channelLabel) {
+            $lead = DB::transaction(function () use ($conversation, $contactId, $channelLabel, $senderPhone) {
                 // Link contact_id vào conversation nếu resolve được (trong transaction để atomic với Lead)
                 if ($contactId !== null && $conversation->contact_id !== $contactId) {
                     $conversation->saveQuietly(); // avoid observer side-effects before mutation
@@ -88,8 +90,8 @@ class ConversationLeadController extends Controller
                     // Với trường hợp không có contact, tạo Lead từ stub đọc fields
                     contact: $this->resolveOrBuildDummyContact($conversation, $contactId),
                     attrs: array_filter([
-                        'name' => $conversation->peer_name ?? $conversation->peer_phone ?? 'Liên hệ '.$channelLabel,
-                        'phone' => $conversation->peer_phone,
+                        'name' => $conversation->thread_name ?? $senderPhone ?? 'Liên hệ '.$channelLabel,
+                        'phone' => $senderPhone,
                         'pipeline_id' => $pipeline?->id,
                         'stage_id' => $firstStage?->id,
                         'source' => $channelLabel,
@@ -148,8 +150,8 @@ class ConversationLeadController extends Controller
 
         // Stub contact (không save — chỉ để createFromContact đọc fields)
         $stub = new Contact;
-        $stub->first_name = $conversation->peer_name ?? 'Khách';
-        $stub->phone = $conversation->peer_phone;
+        $stub->first_name = $conversation->thread_name ?? 'Khách';
+        $stub->phone = $conversation->senderPhone();
 
         return $stub;
     }

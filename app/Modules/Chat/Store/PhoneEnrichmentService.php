@@ -2,9 +2,13 @@
 
 namespace App\Modules\Chat\Store;
 
+use App\Events\ConversationPhoneLearned;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Services\ContactService;
+use App\Models\ProfileIdentity;
+use App\Modules\Identity\Contracts\IdentityResolver;
+use App\Modules\Identity\Data\ObservedIdentity;
+use App\Modules\Identity\Resolve\PhoneNormalizer;
 use Illuminate\Support\Carbon;
 
 /**
@@ -16,7 +20,9 @@ use Illuminate\Support\Carbon;
  *
  * Thứ tự mạnh: manual_verified > business_card > friend_profile > unverified.
  * Cùng hạng = take-latest (cho sửa typo); KHÔNG ghi đè nguồn mạnh bằng yếu.
- * SĐT chảy vào ContactService dedup (rule #1) — KHÔNG auto-enroll tệp gửi chủ động/QC.
+ * Số chảy vào tầng ĐỊNH DANH, không vào CDP: chat nói chuyện với một cổng trung
+ * tính và không biết `Contact`/`Lead` tồn tại. Chính cổng đó gộp hai hồ sơ khi
+ * số này đã thuộc về người khác.
  */
 class PhoneEnrichmentService
 {
@@ -27,7 +33,10 @@ class PhoneEnrichmentService
         'manual_verified' => 3,
     ];
 
-    public function __construct(private readonly ContactService $contactService) {}
+    public function __construct(
+        private readonly IdentityResolver $identities,
+        private readonly PhoneNormalizer $phones,
+    ) {}
 
     /**
      * Lift SĐT từ danh thiếp khách gửi (chỉ 1-1, chỉ inbound = khách tự gửi).
@@ -57,61 +66,91 @@ class PhoneEnrichmentService
      */
     public function applyPhone(Conversation $conversation, string $phone, string $source, ?Carbon $verifiedAt = null): bool
     {
-        $normalized = $this->contactService->normalizePhone($phone);
+        $normalized = $this->phones->normalize($phone);
         if ($normalized === null) {
             return false;
         }
 
-        $newStrength = self::SOURCE_STRENGTH[$source] ?? 0;
-        // peer_phone có sẵn nhưng phone_source null (data cũ) = 'unverified'
-        $currentStrength = $conversation->peer_phone === null
-            ? -1
-            : (self::SOURCE_STRENGTH[$conversation->phone_source ?? 'unverified'] ?? 0);
-
-        // Cùng hạng = take-latest (sửa typo); chỉ chặn khi nguồn MỚI yếu hơn
-        if ($newStrength < $currentStrength) {
+        // Độ mạnh của số đang có đọc từ chính bí danh — không còn bản sao nào
+        // trên luồng để lệch với nó.
+        if ((self::SOURCE_STRENGTH[$source] ?? 0) < $this->currentStrength($conversation)) {
             return false;
         }
 
-        $conversation->forceFill([
-            'peer_phone' => $normalized,
-            'phone_source' => $source,
-            'phone_enriched_at' => now(),
-            'phone_verified_at' => $verifiedAt,
-        ])->save();
+        $this->linkIdentity($conversation, $normalized, $source, $verifiedAt !== null);
 
-        $this->linkContact($conversation, $normalized);
+        // Chat dừng ở đây. Dựng/gộp hồ sơ khách là chuyện của CRM, và nó nghe
+        // sự kiện này — chat không được biết `Contact` tồn tại.
+        ConversationPhoneLearned::dispatch($conversation->id, $normalized, $source);
 
         return true;
     }
 
     /**
-     * Quy tắc #1: gộp 1 người từ nhiều nguồn thành 1 hồ sơ — khóa chính = SĐT.
-     * Conversation chưa có contact → link; đã có contact KHÁC → flag merge review
-     * (KHÔNG auto-merge — Finding 18).
+     * Gắn luồng vào một hồ sơ, dựa trên khóa thô của chính luồng.
      */
-    private function linkContact(Conversation $conversation, string $normalizedPhone): void
+    private function attachThreadProfile(Conversation $conversation): void
     {
-        $contact = $this->contactService->resolveOrCreateFromPeer(
-            $conversation->workspace_id,
-            $conversation->channel,
-            $conversation->sender_uid,
-            $normalizedPhone,
-            $conversation->peer_name,
-        );
+        $resolved = $this->identities->observe(new ObservedIdentity(
+            workspaceId: $conversation->workspace_id,
+            key: $conversation->channel.'_uid',
+            value: $conversation->sender_uid,
+            source: $conversation->channel,
+            channelAccountId: $conversation->channel_account_id,
+            displayName: $conversation->thread_name,
+            channels: [$conversation->channel],
+        ));
 
-        if ($contact === null) {
+        $conversation->forceFill([
+            'identity_id' => $resolved->identityId,
+            'profile_id' => $resolved->profileId,
+        ])->save();
+    }
+
+    /**
+     * Nguồn của số đang gắn với hồ sơ này mạnh tới đâu.
+     *
+     * Chưa có số nào thì trả -1 để mọi nguồn, kể cả yếu nhất, đều ghi được.
+     */
+    private function currentStrength(Conversation $conversation): int
+    {
+        if ($conversation->profile_id === null) {
+            return -1;
+        }
+
+        $source = ProfileIdentity::query()
+            ->where('profile_id', $conversation->profile_id)
+            ->where('key', 'phone')
+            ->orderByRaw("array_position(ARRAY['unverified','friend_profile','business_card','manual_verified'], source) DESC NULLS LAST")
+            ->value('source');
+
+        return $source === null ? -1 : (self::SOURCE_STRENGTH[$source] ?? 0);
+    }
+
+    /**
+     * Gắn số vào hồ sơ của luồng — và nếu số đó đã thuộc hồ sơ khác thì hai hồ
+     * sơ được gộp. Đó chính là quy tắc "một số điện thoại là một người".
+     */
+    private function linkIdentity(Conversation $conversation, string $phone, string $source, bool $verified): void
+    {
+        // Luồng chưa gắn hồ sơ thì gắn trước rồi mới nối số vào. Bỏ qua ở đây là
+        // số điện thoại vừa học được biến mất không dấu vết — im lặng, không lỗi.
+        if ($conversation->profile_id === null) {
+            $this->attachThreadProfile($conversation);
+        }
+
+        if ($conversation->profile_id === null) {
             return;
         }
 
-        if ($conversation->contact_id === null) {
-            $conversation->forceFill(['contact_id' => $contact->id])->save();
-
-            return;
-        }
-
-        if ($conversation->contact_id !== $contact->id) {
-            $this->contactService->mergeIdentities($conversation->workspace_id, $conversation->contact_id, $contact->id);
-        }
+        $this->identities->link($conversation->profile_id, new ObservedIdentity(
+            workspaceId: $conversation->workspace_id,
+            key: 'phone',
+            value: $phone,
+            source: $source,
+            displayName: $conversation->thread_name,
+            channels: [$conversation->channel],
+            isVerified: $verified,
+        ));
     }
 }

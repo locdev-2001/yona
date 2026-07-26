@@ -118,9 +118,9 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
      *
      * Field mapping (bridge → normalized):
      *   thread_uid       = payload.peer_uid (định danh luồng bên Zalo)
-     *   peer_name      = payload.user.name
-     *   peer_avatar    = payload.user.avatar
-     *   peer_phone     = null (bridge không gửi phone ở inbound — enrich async sau)
+     *   thread_name      = payload.user.name
+     *   thread_avatar    = payload.user.avatar
+     *   sender_phone   = null (bridge không gửi số ở tin đến — làm giàu sau)
      *   direction      = payload.direction (in|out|echo; fail-safe 'in' nếu thiếu — F14)
      *   source_id      = payload.source_id
      *   type           = mapped từ inbound_kind
@@ -129,7 +129,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
      *   media_meta     = {sticker, business_card, call, media_filename, ...}
      *   sender_uid     = payload.sender_uid (group sender)
      *   sender_name    = payload.sender.name
-     *   sender_avatar  = payload.sender.avatar (nuôi conversations.participants)
+     *   sender_avatar  = payload.sender.avatar (avatar người gửi trong nhóm)
      *   platform_sent_at = payload.platform_sent_at (ms unix → Carbon)
      *   channel_account_id = payload.channel_account_id (resolved bởi webhook controller — P08)
      *   thread_kind    = dịch từ payload.thread_type (0=user → direct, 1=group)
@@ -198,9 +198,9 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
                 : null,
             // Bridge vẫn nói `peer_uid` — đó là ranh giới nền tảng, adapter dịch.
             'thread_uid' => (string) ($raw['peer_uid'] ?? ''),
-            'peer_name' => $user['name'] ?? null,
-            'peer_avatar' => $user['avatar'] ?? null,
-            'peer_phone' => null, // enrich async khi có business_card.phone
+            'thread_name' => $user['name'] ?? null,
+            'thread_avatar' => $user['avatar'] ?? null,
+            'sender_phone' => null, // enrich async khi có business_card.phone
             // Lớp dịch: `thread_type` là số của Zalo, lõi không được thấy nó.
             'thread_kind' => ((int) ($raw['thread_type'] ?? 0)) === 1
                 ? Conversation::KIND_GROUP
@@ -413,7 +413,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
             'msg_id' => $replyTo->source_id,
             'text' => $replyTo->body ?? ($replyTo->type !== 'text' ? '['.$replyTo->type.']' : null),
             'sender_name' => $replyTo->direction === 'in'
-                ? ($replyTo->sender_name ?? $conversation->peer_name)
+                ? ($replyTo->sender_name ?? $conversation->thread_name)
                 : ($conversation->channelAccount->display_name ?? 'Bạn'),
             'msg_type' => $replyTo->type,
             'thumb' => in_array($replyTo->type, ['image', 'gif', 'video'], true) ? $replyTo->media_url : null,

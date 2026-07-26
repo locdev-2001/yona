@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Contracts\EntityMergeFields;
+use App\Events\ConversationPhoneLearned;
 use App\Events\LeadAssigned;
+use App\Listeners\LinkContactFromConversationPhone;
 use App\Listeners\SendLeadAssignedNotification;
 use App\Models\Client;
 use App\Models\ClientGroup;
@@ -54,5 +56,8 @@ class CrmSalesServiceProvider extends ServiceProvider
 
         // Events
         Event::listen(LeadAssigned::class, SendLeadAssignedNotification::class);
+
+        // Chat chỉ báo "vừa biết số này"; dựng và gộp hồ sơ khách là việc của CRM.
+        Event::listen(ConversationPhoneLearned::class, LinkContactFromConversationPhone::class);
     }
 }
