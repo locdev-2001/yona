@@ -165,7 +165,7 @@ final class MessageRecalled extends InboundEvent { /* targetSourceId */ }
 final class ActionSubmitted extends InboundEvent { /* actionId, values */ }
 final class SenderJoined extends InboundEvent { /* vào nhóm */ }
 final class SenderLeft extends InboundEvent { /* rời nhóm */ }
-final class UnrecognizedEvent extends InboundEvent { /* cách ly, không đoán bừa */ }
+final class UnrecognizedInbound extends InboundEvent { /* cách ly, không đoán bừa */ }
 ```
 
 **Nội dung tin CŨNG là sự kiện đi ra**, không phải khái niệm thứ ba. Chữ, ảnh, thẻ, nút, ô nhập đều là `OutboundEvent` — một tin là **danh sách sự kiện ra**, không phải một chuỗi. Cấm đẻ thêm từ "block"/"khối": đã có `OutboundEvent` thì mọi thứ đi ra gọi đúng từ đó (§0.7 luật 1).
@@ -176,7 +176,6 @@ enum OutboundEventType: string
 {
     case Text    = 'text';
     case Media   = 'media';
-    case Sticker = 'sticker';
     case Card    = 'card';
     case Actions = 'actions';   // nút bấm / chip gợi ý
     case Input   = 'input';     // hỏi tên/SĐT ngay trong luồng chat
@@ -191,6 +190,7 @@ abstract class OutboundEvent
 }
 
 final class TextEvent    extends OutboundEvent { /* text */ }
+final class MediaEvent   extends OutboundEvent { /* url, mime, caption */ }
 final class CardEvent    extends OutboundEvent { /* title, subtitle, imageUrl, actions[] */ }
 final class ActionsEvent extends OutboundEvent { /* actions[] */ }
 final class InputEvent   extends OutboundEvent { /* fields[], submitLabel */ }
@@ -199,7 +199,7 @@ final class OpaqueEvent  extends OutboundEvent { /* raw — tương thích ngư�
 
 `ActionSubmitted` (chiều vào) là bạn song sinh của `ActionsEvent`/`InputEvent` (chiều ra): khách bấm nút thì quay về đúng `actionId` mình đã đặt, **không** giả lập thành tin chữ. Đây cũng là điểm nối cho harness tự động trả lời.
 
-> **Thả cảm xúc, báo đã xem, thu hồi KHÔNG nằm trong cây này.** Chúng là **thao tác lên một tin đã có**, không phải nội dung của một tin mới — chúng đi qua capability interface (`SupportsReactions`, `SupportsSeenReceipts`). Nhét chung sẽ phá luật ánh xạ 1-1 vì không phải kênh nào cũng có.
+> **Thả cảm xúc, báo đã xem, thu hồi, kho sticker KHÔNG nằm trong cây này.** Chúng là **thao tác lên một tin đã có** hoặc năng lực riêng của kênh, không phải nội dung của một tin mới — chúng đi qua capability interface (`SupportsReactions`, `SupportsSeenReceipts`, `SupportsStickers`). Nhét chung sẽ phá luật ánh xạ 1-1 vì không phải kênh nào cũng có.
 
 Hễ có một gốc trừu tượng cần lưu hoặc truyền ra ngoài, nó phải có enum định danh đi kèm.
 
@@ -214,7 +214,7 @@ Hai điều bắt buộc, có test enforce:
 
 Hệ quả: thêm một loại sự kiện = thêm một lớp con + adapter nào hỗ trợ thì dịch nó. Nhà cung cấp không có loại đó thì đơn giản là không bao giờ phát ra — **không cần sửa lõi, không cần cờ bật/tắt**.
 
-`UnrecognizedEvent` là bắt buộc: nhà cung cấp không chính thức có thể phát ra thứ ta chưa biết. Cách ly nó, đừng đoán bừa và cũng đừng nuốt im lặng.
+`UnrecognizedInbound` là bắt buộc: nhà cung cấp không chính thức có thể phát ra thứ ta chưa biết. Cách ly nó, đừng đoán bừa và cũng đừng nuốt im lặng.
 
 ## 0.7 Đặt tên nhất quán — một khái niệm, một từ
 
@@ -371,16 +371,20 @@ interface MeteringGate {
 **Rule:** Any route that restores a soft-deleted model MUST query with `->withTrashed()` to find the model in the first place.
 
 ```php
-// ✅ Correct (LeadRestoreController)
-public function restore(Lead $lead) {
-    // Implicit: $lead is resolved via model binding,
-    // but form must use withTrashed() in the query:
-    $lead = Lead::withTrashed()->findOrFail($id);
-    $lead->restore();
-    return redirect('/leads/' . $lead->id);
+// ✅ Correct — the route declares withTrashed() so model binding can resolve
+// a soft-deleted record (routes/web.php)
+Route::post('leads/{lead}/restore-status', [LeadStatusActionController::class, 'restore'])
+    ->name('leads.restore-status')->withTrashed();
+
+// app/Http/Controllers/Crm/Leads/LeadStatusActionController.php
+public function restore(Request $request, Lead $lead, LeadService $service): RedirectResponse {
+    $this->authorize('update', $lead);
+    $service->restore($lead);   // app/Services/LeadService.php
+
+    return back()->with('success', __('leads.flash.restored'));
 }
 
-// Or explicit (more readable):
+// Or explicit, when you resolve the model yourself:
 $lead = Lead::withTrashed()->find($id);
 if (! $lead || ! $lead->trashed()) {
     abort(404);
@@ -410,7 +414,8 @@ class Lead extends Model {
     protected $morphClass = 'lead';
 }
 
-// (In bootstrap/app.php or a compatibility shim file)
+// (In the module's alias table — e.g. app/Modules/Chat/compat-aliases.php,
+//  hooked into the autoloader by that module's ServiceProvider)
 // ✅ Correct
 if (! class_exists('App\Modules\CrmSales\Models\Lead', false)) {
     class_alias('App\Models\Lead', 'App\Modules\CrmSales\Models\Lead');
@@ -457,34 +462,39 @@ $this->authorize('create', Attachment::class);  // Too permissive; ignores paren
 
 ### 8. Queue Jobs Must Establish `app.current_workspace` Before Querying Tenant Tables
 
-**Rule:** When a queued job queries workspace-scoped models, it MUST call `TenantScope::set()` or bind `app('workspace')` before executing queries. Otherwise, RLS will default-deny all rows.
+**Rule:** When a queued job queries workspace-scoped models, it MUST run inside `TenantScope::runScoped()` (or call `TenantScope::bind()`) before executing queries. Otherwise, RLS will default-deny all rows.
 
 ```php
-// ✅ Correct (AnalyzeConversationJob)
-class AnalyzeConversationJob implements ShouldQueue {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
-    public function __construct(public Conversation $conversation) {}
-    
-    public function handle() {
-        // Establish workspace context for RLS
-        TenantScope::set($this->conversation->workspace_id);
-        
-        // Now query workspace tables safely
-        $contacts = Contact::where('workspace_id', ...)->get();
-        // ... analysis logic
+// ✅ Correct (app/Jobs/DebounceMessageReceivedTriggerJob.php)
+class DebounceMessageReceivedTriggerJob implements ShouldQueue {
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    // Scalar constructor args, not a hydrated model: the workspace id must be
+    // known before any workspace-scoped query can run.
+    public function __construct(
+        public readonly string $workspaceId,
+        public readonly string $conversationId,
+    ) {}
+
+    public function handle(WorkflowEngine $engine): void {
+        // runScoped() restores the previous context afterward instead of
+        // blindly clearing it, so a nested job cannot wipe an outer scope.
+        TenantScope::runScoped($this->workspaceId, function () use ($engine) {
+            $latest = Message::where('conversation_id', $this->conversationId)->max('created_at');
+            // ... enrollment logic
+        });
     }
 }
 
 // ❌ Wrong
-class AnalyzeConversationJob implements ShouldQueue {
+class DebounceMessageReceivedTriggerJob implements ShouldQueue {
     public function handle() {
-        $contacts = Contact::all();  // RLS denies everything; query returns empty
+        Message::where('conversation_id', $this->conversationId)->get();  // RLS denies everything; returns empty
     }
 }
 ```
 
-**Reason:** Queue jobs run in a separate process/transaction with no HTTP middleware context. RLS policy uses `current_user_id` (a Postgres role setting). Jobs must explicitly set workspace scope.
+**Reason:** Queue jobs run in a separate process/transaction with no HTTP middleware context. RLS policies read the `app.current_workspace` Postgres setting, which `TenantScope::bind()` sets. Jobs must explicitly establish workspace scope.
 
 ---
 
@@ -495,26 +505,27 @@ class AnalyzeConversationJob implements ShouldQueue {
 **Rule:** When receiving webhooks that create or update data with a unique constraint, use a `try/catch` block to handle race conditions (concurrent webhooks for same resource). Re-fetch on conflict (optimistic locking pattern).
 
 ```php
-// ✅ Correct (InboundMessageService::upsertConversation)
-public function upsertConversation($connectionId, $peerUid, ...) {
+// ✅ Correct (App\Modules\Chat\Intake\IntakeService::upsertConversation)
+protected function upsertConversation(array $normalized): Conversation {
     try {
         DB::beginTransaction();
-        
+
         // Attempt insert
         $conversation = Conversation::create([
-            'zalo_connection_id' => $connectionId,
-            'peer_uid' => $peerUid,
-            'workspace_id' => $workspace->id,
+            'channel' => $normalized['channel'],
+            'channel_account_id' => $normalized['channel_account_id'],
+            'peer_uid' => $normalized['peer_uid'],
         ]);
-        
+
         DB::commit();
         return $conversation;
     } catch (QueryException $e) {
-        if ($e->getCode() === '23505') {  // Unique violation
+        // Unique violation on conversations_channel_account_peer_unique
+        if ($e->getCode() === '23505') {
             DB::rollBack();
             // Conflict; fetch existing record
-            return Conversation::where('zalo_connection_id', $connectionId)
-                ->where('peer_uid', $peerUid)
+            return Conversation::where('channel_account_id', $normalized['channel_account_id'])
+                ->where('peer_uid', $normalized['peer_uid'])
                 ->firstOrFail();
         }
         throw;
@@ -561,23 +572,29 @@ public function ingest($payload) {
 
 ### 11. Conversation Unique Constraint = Per-Channel (NOT Cross-Channel Merge)
 
-**Rule:** The unique constraint on Conversation is `unique(channel, workspace_id, peer_uid)` (not just per peer). Same peer across Zalo + Messenger = 2 separate conversations until CDP dedup is implemented (Phase-08+).
+**Rule:** The unique key on Conversation is `(channel_account_id, peer_uid)` — per channel account, not per peer. Same peer across Zalo + Messenger = 2 separate conversations until CDP dedup is implemented (Phase-08+).
 
 ```php
-// Correct schema (database/migrations/..._create_conversations_table.php)
+// Columns (database/migrations/..._create_conversations_table.php)
 Schema::create('conversations', function (Blueprint $table) {
     $table->uuid('id')->primary();
-    $table->uuid('workspace_id')->index();
-    $table->string('channel');  // 'zalo_personal', 'messenger', etc.
+    $table->foreignUuid('workspace_id')->constrained('workspaces')->cascadeOnDelete();
+    $table->string('channel')->default('zalo_personal');  // 'zalo_personal', 'messenger', etc.
     $table->string('peer_uid');
     $table->string('peer_phone')->nullable();
     $table->string('peer_name')->nullable();
     // ... other fields
-    
-    // Composite unique (but per-channel for now; multi-channel redesign in Phase-08)
-    $table->unique(['workspace_id', 'channel', 'peer_uid']);
-    // NOT: $table->unique(['workspace_id', 'peer_uid']);  // Would wrongly merge channels
+    $table->softDeletes();
 });
+
+// channel_account_id — the channel-neutral key; it survives a reconnect, whereas a
+// per-session connection id does not. The unique index is PARTIAL so a soft-deleted
+// conversation does not block a new one for the same peer:
+DB::statement(
+    'CREATE UNIQUE INDEX conversations_channel_account_peer_unique
+     ON conversations (channel_account_id, peer_uid) WHERE deleted_at IS NULL'
+);
+// NOT: unique(workspace_id, peer_uid)  // Would wrongly merge channels
 
 // Why: Same person (e.g., alice@company.com) has:
 // - Zalo account: zalo_uid_123
@@ -599,7 +616,7 @@ Schema::create('conversations', function (Blueprint $table) {
 ```php
 // ✅ Correct
 $conversation->last_metered_period = '2026-06';
-$conversation->saveQuietly();  // Bypasses chatConversation::booted() auto-logging
+$conversation->saveQuietly();  // Bypasses model events → no audit observer entry
 
 // ❌ Wrong (will create unwanted audit entry)
 $conversation->last_metered_period = '2026-06';
@@ -617,10 +634,16 @@ $conversation->save();  // Triggers AuditLog creation
 **Rule:** Use `FormRequest::authorize()` (from spatie) to check permission before the controller method runs. Do NOT rely on inline `$this->authorize()` checks.
 
 ```php
-// ✅ Correct (app/Http/Requests/UpdateLeadRequest.php)
+// ✅ Correct (app/Http/Requests/Leads/UpdateLeadRequest.php)
 class UpdateLeadRequest extends FormRequest {
     public function authorize(): bool {
-        return $this->user()->can('update', $this->lead);
+        $lead = $this->route('lead');
+
+        if (! ($lead instanceof Lead)) {
+            return false;
+        }
+
+        return $this->user()?->can('update', $lead) ?? false;
     }
     
     public function rules(): array {
@@ -674,15 +697,19 @@ $temp = $payload;  // Temporary what?
 **Rule:** Every workspace-scoped table must have a test asserting that RLS policies correctly deny cross-workspace queries.
 
 ```php
-// ✅ Correct (tests/Feature/RlsPolicyCoverageTest.php)
-public function test_leads_table_has_rls_policy() {
+// ✅ Coverage net: tests/Feature/Rls/RlsPolicyCoverageTest.php asserts that every
+// workspace-scoped table has a ws_isolation policy in pg_policies — a table added
+// without an RLS migration fails immediately.
+
+// ✅ Per-table isolation assertion
+public function test_leads_table_denies_cross_workspace_reads() {
     $workspace1 = Workspace::factory()->create();
     $workspace2 = Workspace::factory()->create();
-    
+
     $lead = Lead::factory()->for($workspace1)->create();
-    
-    TenantScope::set($workspace2->id);
-    
+
+    TenantScope::bind($workspace2->id);
+
     $result = Lead::where('id', $lead->id)->first();
     $this->assertNull($result);  // RLS denied; correct
 }
@@ -719,14 +746,14 @@ class ConversationService {
 // ✅ Đúng — lõi gọi contract; driver tự resolve chi tiết kênh
 class ConversationService {
     public function reply(Conversation $c, array $payload) {
-        app('channels')->driver($c->channel)->sendMessage($c, $payload); // core mù kênh/mù session
+        app(ChannelRegistry::class)->driver($c->channel)->sendMessage($c, $payload); // core mù kênh/mù session
     }
 }
 // Driver (module Zalo) tự map channel_account → slot đang connected. Thêm Messenger = thêm driver, KHÔNG sửa lõi.
 ```
 
 **Ranh giới bắt buộc:**
-- **Lõi (Models core, InboundMessageService, ConversationService, controllers inbox)** KHÔNG được import class/khái niệm của một kênh cụ thể (không `ZaloConnection`, không `connection_id`, không cookie/token).
+- **Lõi (Models core, `Chat\Intake\IntakeService`, `Chat\Delivery\DeliveryPipeline`, controller trong `app/Http/Controllers/Chat/`)** KHÔNG được import class/khái niệm của một kênh cụ thể (không `ZaloConnection`, không `connection_id`, không cookie/token).
 - Cột đặc thù kênh KHÔNG nằm trong bảng core → dùng khoá trung tính (`channel_account_id`), chi tiết ở bảng module.
 - Thêm một kênh mới **chỉ** = thêm một driver (L1–L3) + đăng ký `Manager::extend()`; **không** chạm L4/L5.
 - Không `if ($channel === 'zalo') {...}` trong lõi. Rẽ nhánh theo kênh = mùi coupling → đẩy xuống driver.
@@ -771,4 +798,4 @@ class ConversationService {
 - [System Architecture](system-architecture.md) § Driver Pattern, RLS.
 - [CRM Authorization Model](crm-authorization-model.md) § Access control.
 - [Feature: Zalo Personal Connect](features/integration/zalo-personal-connect.md) § Driver example.
-- [Phase 4 Bug Sweep Report](plans/260628-traditional-laravel-refactor/reports/bug-sweep-findings.md) § Finding origins.
+- [Channel-Account Architecture](features/messaging/channel-account-architecture.md) § Layering reference.

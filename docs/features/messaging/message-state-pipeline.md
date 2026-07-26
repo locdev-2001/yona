@@ -21,7 +21,7 @@ flowchart TD
     WH -->|reaction/old_reactions · chatty| P3[parseReactions<br/>target = content.rMsg[].gMsgID]
     WH -->|typing| T[broadcast ConversationTyping<br/>KHÔNG DB]
     WH -->|lạ| L[log warning redacted + 200]
-    P --> S[MessageStateService]
+    P --> S[MessageStatusService]
     P2 --> S
     P3 --> S
     S -->|recalled_at set-once| M[(messages)]
@@ -29,7 +29,7 @@ flowchart TD
     S -->|upsert unique reactor, reacted_at monotonic| R[(message_reactions)]
     S -->|miss undo| PD[(pending_message_states<br/>bounded 48h + prune)]
     S -->|broadcast| E[MessageStateChanged → FE]
-    ING[InboundMessageService::createMessage] -->|"tin về sau: applyPendingFor(source_id)"| PD
+    ING[IntakeService::createMessage] -->|"tin về sau: applyPendingFor(source_id)"| PD
 ```
 
 ## Điểm dễ sai NHẤT (red-team BLK — đã vá, đừng regress)
@@ -38,7 +38,7 @@ flowchart TD
 | Target mỗi event nằm ở field LỒNG KHÁC NHAU — `data.msgId` của undo/reaction là id của HÀNH ĐỘNG, không phải tin đích | `ZaloStateEventParser` per-event: undo→`content.globalMsgId`, reaction→`content.rMsg[].gMsgID`, seen/delivered→`item.data.msgId` (đối chiếu `services/zca-js-2.1.2/src/models/{Undo,Reaction,SeenMessage,DeliveredMessage}.ts`) |
 | Event đến TRƯỚC tin | undo → `pending_message_states` (unique + TTL 48h + `inbox:prune-transient` daily) rồi 200; ingest quét `applyPendingFor` áp lại. Chatty (seen/delivered/reaction) → **drop-on-miss CÓ CHỦ ĐÍCH, có test chứng minh** — KHÔNG phải "idempotent tuyệt đối" |
 | Group receipt per-member (`seenUids`) — scalar seen_at SAI cho nhóm | Guard 2 tầng: parser loại item type=1/groupId; service bỏ qua `thread_type=1`. Receipt chỉ áp tin `direction != 'in'` |
-| Resolve tin không có conversation_id trong event | `MessageSourceResolver::findForAccount(channel_account_id, msgId)` — msgId duy nhất per-account, né hẳn semantics threadId mơ hồ; alias-aware (multi_send/legacy) |
+| Resolve tin không có conversation_id trong event | `DuplicateResolver::findForAccount(channel_account_id, msgId)` — msgId duy nhất per-account, né hẳn semantics threadId mơ hồ; alias-aware (multi_send/legacy) |
 | Race echo-về-trước-portal-persist (23505) | `ZaloSendService::persistMessage` catch 23505 → merge vào row echo, không bump stream_version lần 2, không ném lỗi ra user |
 
 ## Idempotency (không kho)
@@ -58,7 +58,7 @@ Chatty lane: **luôn 200**, lỗi swallow + report. Typing: 200, không DB. Lạ
 Shape parser lấy từ SOURCE zca-js (bridge forward nguyên class instance — không đoán wire format). Còn phải verify trên tài khoản thật: undo → recalled_at ≤5s; seen 1-1 bắn khi nào; reaction NONE thực tế.
 
 ## Files
-- Core: `app/Services/Inbox/{MessageStateService,MessageSourceResolver}.php`, `app/Events/{MessageStateChanged,ConversationTyping}.php`
-- Driver: `app/Modules/Integration/Chat/ZaloPersonal/ZaloStateEventParser.php`
-- Wiring: `ZaloPersonalWebhookController::handleRelayEvent`, `InboundMessageService` (resolver + applyPendingFor)
+- Core: `app/Modules/Chat/Status/MessageStatusService.php`, `app/Modules/Chat/Intake/DuplicateResolver.php`, `app/Events/{MessageStateChanged,ConversationTyping}.php`
+- Driver: `app/Modules/Chat/Adapter/ZaloPersonal/Intake/ZaloStateEventParser.php`
+- Wiring: `ZaloPersonalWebhookController::handleRelayEvent`, `IntakeService` (resolver + applyPendingFor)
 - Tests: `tests/Feature/Inbox/MessageStateTest.php` (16), `tests/Feature/ChannelZalo/RelayEventWebhookTest.php` (contract mới)

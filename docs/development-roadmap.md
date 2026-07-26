@@ -2,7 +2,7 @@
 
 > Living document — phases, milestones, progress. Maintained per `.claude/rules/documentation-management.md`. Pipeline defined in `crm-build-pipeline.md`.
 
-Last updated: 2026-07-22
+Last updated: 2026-07-26
 
 ## Status legend
 ✅ done · 🟡 in progress · ⬜ not started
@@ -37,10 +37,10 @@ Last updated: 2026-07-22
 | # | Phase | Status |
 |---|---|---|
 | **0–3** | **Custom modular framework (SUPERSEDED)** — [plans/260627-modular-standardization/](../../plans/260627-modular-standardization/plan.md) replaced by traditional Laravel refactor | ✅ (archived) |
-| **4** | **Traditional Laravel Refactor** (2026-06-28) — `app/Models`, `app/Http/Controllers/{Domain}`, `app/Services` (MeteringService concrete); **only module:** `app/Modules/Integration/` (driver pattern); xóa `module.json`/ModuleRegistry/topo-sort | ✅ |
+| **4** | **Traditional Laravel Refactor** (2026-06-28) — `app/Models`, `app/Http/Controllers/{Domain}`, `app/Services` (MeteringService concrete); module nghiệp vụ theo chức năng: `app/Modules/{Automation,Chat,Payment}` (driver pattern); xóa `module.json`/ModuleRegistry/topo-sort | ✅ |
 | **5** | **GĐ1 — Inbox + Channel-Zalo + CDP (contract) + Billing + Payment-manual** — inbox Zalo webhook + idempotent message, conv→Lead (dedup contract Phase-08), plan grant, metering per-channel, 18 audit findings fixed | ✅ |
 | **5-Verify** | **GĐ1 Audit + Docs** — feature flow docs + system-architecture update + changelog + backlog; code-standards.md + getting-started.md + feature-docs; quotas gỡ (founder decision 25/07 — gửi không giới hạn), Zalo test account pending | ✅ |
-| **5b** | **Inbox full messaging** (merge 2026-07-11) — taxonomy 4 loại event, media/sticker/bank-card/danh thiếp, mark-read + realtime đa tab, MessagePublisher + serializer, linkify | ✅ |
+| **5b** | **Inbox full messaging** (merge 2026-07-11) — taxonomy 4 loại event, media/sticker/bank-card/danh thiếp, mark-read + realtime đa tab, BroadcastService + serializer, linkify | ✅ |
 | **6** | **GĐ1.5 — Import + Payment drivers** — import Excel/CSV, advanced QR login, VNPay/MoMo drivers | ⬜ (Phase-08) |
 | (later) | Support (Ticket + SLA), Marketing, Webhooks, API, Client Portal | ⬜ |
 | **5c** | **Automation/Workflow engine v1** — WorkflowEngine graph + node handlers + canvas FE; còn: trigger tự động từ event, entitlement gate ([crm-automation-workflow.md](crm-automation-workflow.md)) | ✅ (v1) |
