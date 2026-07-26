@@ -516,3 +516,27 @@ it('gửi qua pipeline: ghi Message direction=out + đếm thống kê', functio
 
     Carbon::setTestNow();
 })->group('channel-zalo');
+
+it('sticker thiếu địa chỉ ảnh vẫn dựng được địa chỉ từ mã sticker', function () {
+    $parsed = app(ZaloChannelDriver::class)->parseInbound([
+        'peer_uid' => 'khach_sticker',
+        'inbound_kind' => 'sticker',
+        'direction' => 'in',
+        'sticker' => ['id' => 50626, 'type' => 3, 'catId' => 12658],
+    ]);
+
+    // Bridge tra địa chỉ qua API nhà cung cấp và lần tra đó hỏng được. Khi đó
+    // giao diện hiện chữ "[Sticker]" thay vì hình — đã xảy ra thật.
+    expect($parsed['media_meta']['sticker']['url'])->toContain('eid=50626');
+});
+
+it('sticker đã có địa chỉ thì KHÔNG bị ghi đè', function () {
+    $parsed = app(ZaloChannelDriver::class)->parseInbound([
+        'peer_uid' => 'khach_sticker_2',
+        'inbound_kind' => 'sticker',
+        'direction' => 'in',
+        'sticker' => ['id' => 1, 'url' => 'https://cdn/that.webp'],
+    ]);
+
+    expect($parsed['media_meta']['sticker']['url'])->toBe('https://cdn/that.webp');
+});

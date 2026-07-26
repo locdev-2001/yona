@@ -158,7 +158,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
 
         $mediaMeta = [];
         if (isset($raw['sticker'])) {
-            $mediaMeta['sticker'] = $raw['sticker'];
+            $mediaMeta['sticker'] = $this->withStickerUrl($raw['sticker']);
         }
         if (isset($raw['business_card'])) {
             $mediaMeta['business_card'] = $raw['business_card'];
@@ -422,4 +422,34 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
 
     // connect/disconnect kế thừa no-op từ AbstractChannelDriver: luồng QR và
     // logout sống ở ZaloConnectionController, không đi qua contract.
+
+    /**
+     * Bù địa chỉ ảnh cho sticker khi bridge không resolve được.
+     *
+     * Bridge tra địa chỉ qua API của nhà cung cấp, và lần tra đó hỏng được — hết
+     * phiên, đổi dạng payload, mạng rớt. Khi đó tin chỉ còn `{id, type, catId}`
+     * và giao diện hiện chữ "[Sticker]" thay vì hình.
+     *
+     * Địa chỉ dựng từ `id` theo đúng dạng mà chính bridge trả về khi nó tra
+     * thành công — kiểm bằng dữ liệu đang có trong bảng, không phải đoán.
+     *
+     * Đặt ở adapter vì đây là kiến thức riêng của một nhà cung cấp: lõi không
+     * được biết sticker của kênh nào dựng địa chỉ ra sao.
+     *
+     * @param  array<string, mixed>  $sticker
+     * @return array<string, mixed>
+     */
+    private function withStickerUrl(array $sticker): array
+    {
+        $hasUrl = ($sticker['url'] ?? null) !== null || ($sticker['thumbnail'] ?? null) !== null;
+        $id = $sticker['id'] ?? null;
+
+        if ($hasUrl || $id === null) {
+            return $sticker;
+        }
+
+        $sticker['url'] = 'https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid='.$id.'&size=130';
+
+        return $sticker;
+    }
 }
