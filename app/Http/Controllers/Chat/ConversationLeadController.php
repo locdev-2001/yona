@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Inbox;
+namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contact;

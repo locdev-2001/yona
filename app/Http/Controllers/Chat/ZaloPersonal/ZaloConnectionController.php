@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Integration;
+namespace App\Http\Controllers\Chat\ZaloPersonal;
 
 use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;

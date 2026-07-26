@@ -1,19 +1,19 @@
 <?php
 
+use App\Http\Controllers\Chat\ConversationAssignController;
+use App\Http\Controllers\Chat\ConversationAttachmentController;
+use App\Http\Controllers\Chat\ConversationLeadController;
+use App\Http\Controllers\Chat\ConversationPanelController;
+use App\Http\Controllers\Chat\ConversationPhoneController;
+use App\Http\Controllers\Chat\ConversationStreamController;
+use App\Http\Controllers\Chat\InboxController;
+use App\Http\Controllers\Chat\InboxSettingController;
+use App\Http\Controllers\Chat\MessageInteractionController;
+use App\Http\Controllers\Chat\QuickReplyController;
 use App\Http\Controllers\Chat\WidgetInboundController;
-use App\Http\Controllers\Inbox\ConversationAssignController;
-use App\Http\Controllers\Inbox\ConversationAttachmentController;
-use App\Http\Controllers\Inbox\ConversationLeadController;
-use App\Http\Controllers\Inbox\ConversationPanelController;
-use App\Http\Controllers\Inbox\ConversationPhoneController;
-use App\Http\Controllers\Inbox\ConversationStreamController;
-use App\Http\Controllers\Inbox\InboxController;
-use App\Http\Controllers\Inbox\InboxSettingController;
-use App\Http\Controllers\Inbox\MessageInteractionController;
-use App\Http\Controllers\Inbox\QuickReplyController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloConnectionController;
+use App\Http\Controllers\Chat\ZaloPersonal\ZaloPersonalWebhookController;
 use App\Http\Controllers\Integration\IntegrationController;
-use App\Http\Controllers\Integration\ZaloConnectionController;
-use App\Http\Controllers\Integration\ZaloPersonalWebhookController;
 use App\Listeners\LiftPhoneFromBusinessCard;
 use App\Models\Conversation;
 use App\Models\User;
