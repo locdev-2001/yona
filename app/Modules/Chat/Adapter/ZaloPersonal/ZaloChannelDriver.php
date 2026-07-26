@@ -1,11 +1,19 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal;
 
 use App\Contracts\SendException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloInteractionService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\SendOutsideWindowException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloCircuitOpenException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloNotConnectedException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloSplitBrainException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloBackfillService;
 use App\Modules\Chat\Delivery\Event\OutboundEventType;
 use App\Modules\Chat\Port\AbstractChannelDriver;
 use App\Modules\Chat\Port\Capability\SupportsHistoryResync;
@@ -15,12 +23,6 @@ use App\Modules\Chat\Port\Capability\SupportsSeenReceipts;
 use App\Modules\Chat\Port\Capability\SupportsStickers;
 use App\Modules\Chat\Port\ChannelCapabilities;
 use App\Modules\Chat\Port\ChannelDriver;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
-use App\Services\ZaloBackfillService;
 use Illuminate\Support\Collection;
 
 /**

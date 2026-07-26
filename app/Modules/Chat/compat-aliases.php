@@ -1,5 +1,19 @@
 <?php
 
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloInteractionService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\SendOutsideWindowException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloCircuitOpenException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloNotConnectedException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloSplitBrainException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloBackfillService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Intake\ZaloStateEventParser;
+use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
+use App\Modules\Chat\Adapter\ZaloPersonal\PromoteAccountBinder;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloPersonalServiceProvider;
 use App\Modules\Chat\Broadcast\BroadcastService;
 use App\Modules\Chat\Delivery\DeliveryPipeline;
 use App\Modules\Chat\Delivery\OutboundMessage;
@@ -12,6 +26,7 @@ use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Chat\Port\Exception\UnsupportedCapabilityException;
 use App\Modules\Chat\Status\MessageStatusService;
+use App\Modules\Chat\Store\DedupConversation;
 use App\Modules\Chat\Store\GapMarkerService;
 use App\Modules\Chat\Store\PhoneEnrichmentService;
 use App\Modules\Chat\Store\SystemLineService;
@@ -57,4 +72,21 @@ return [
     'App\Modules\Integration\Data\OutboundMessage' => OutboundMessage::class,
     'App\Services\Inbox\OutboundSendPipeline' => DeliveryPipeline::class,
     'App\Services\Inbox\SeenSyncService' => SeenSyncService::class,
+
+    // Cụm 4 — Adapter/ZaloPersonal/ + gộp hội thoại trùng về Store/
+    'App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException' => RateCapException::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException' => SendOutsideWindowException::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException' => ZaloCircuitOpenException::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException' => ZaloNotConnectedException::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException' => ZaloSplitBrainException::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\SendRateLimiter' => SendRateLimiter::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver' => ZaloChannelDriver::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloHealthMonitor' => ZaloHealthMonitor::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloInteractionService' => ZaloInteractionService::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloPersonalServiceProvider' => ZaloPersonalServiceProvider::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloSendService' => ZaloSendService::class,
+    'App\Modules\Integration\Chat\ZaloPersonal\ZaloStateEventParser' => ZaloStateEventParser::class,
+    'App\Services\Rekey\DuplicateConversationMerger' => DedupConversation::class,
+    'App\Services\Zalo\PromoteAccountBinder' => PromoteAccountBinder::class,
+    'App\Services\ZaloBackfillService' => ZaloBackfillService::class,
 ];

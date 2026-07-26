@@ -6,7 +6,7 @@ use App\Enums\TenantPermission;
 use App\Http\Controllers\Controller;
 use App\Models\ChannelAccount;
 use App\Models\ZaloConnection;
-use App\Services\Zalo\PromoteAccountBinder;
+use App\Modules\Chat\Adapter\ZaloPersonal\PromoteAccountBinder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

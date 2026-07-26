@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 /**
  * P02(f) (inbox-multichannel-relayer) — phát hiện + ghi nhận nhóm
  * both_have_lead: (channel_account_id, peer_uid) có ≥2 conversation active
- * MANG lead_id KHÁC NHAU. Nhóm này bị DuplicateConversationMerger bỏ qua
+ * MANG lead_id KHÁC NHAU. Nhóm này bị DedupConversation bỏ qua
  * (không tự merge) — chặn swap unique P02(g) cho tới khi resolve tay.
  */
 class LeadConflictPreflight

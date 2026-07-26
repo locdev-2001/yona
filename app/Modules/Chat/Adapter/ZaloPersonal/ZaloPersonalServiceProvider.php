@@ -1,7 +1,11 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal;
 
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloInteractionService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Delivery\ZaloSendService;
+use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
+use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
 use App\Modules\Chat\Port\ChannelRegistry;
 use App\Modules\Integration\IntegrationServiceProvider;
 use Illuminate\Support\ServiceProvider;

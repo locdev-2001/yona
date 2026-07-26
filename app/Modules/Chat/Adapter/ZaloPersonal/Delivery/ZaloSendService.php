@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal\Delivery;
 
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageSourceAlias;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloCircuitOpenException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloSplitBrainException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\SendOutsideWindowException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloCircuitOpenException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloNotConnectedException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloSplitBrainException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Health\ZaloHealthMonitor;
+use App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

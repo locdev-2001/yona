@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Chat\Adapter\ZaloPersonal\Intake;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;

@@ -6,10 +6,10 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSequence;
+use App\Modules\Chat\Adapter\ZaloPersonal\ZaloChannelDriver;
 use App\Modules\Chat\Port\ChannelCapabilities;
 use App\Modules\Chat\Port\ChannelDriver;
 use App\Modules\Chat\Port\ChannelRegistry;
-use App\Modules\Integration\Chat\ZaloPersonal\ZaloChannelDriver;
 use Illuminate\Database\QueryException;
 
 // ── CRUD: Conversation + Message ─────────────────────────────────────────────

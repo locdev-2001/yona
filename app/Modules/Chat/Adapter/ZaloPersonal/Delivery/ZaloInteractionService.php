@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal\Delivery;
 
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\ZaloConnection;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\ZaloNotConnectedException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\ZaloNotConnectedException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;

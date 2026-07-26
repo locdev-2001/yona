@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Rekey;
+namespace App\Modules\Chat\Store;
 
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  * request đã bind RLS) PHẢI gọi on(null) để cùng session — khác session không
  * thấy được thay đổi còn uncommitted trong transaction bao ngoài.
  */
-class DuplicateConversationMerger
+class DedupConversation
 {
     private ConnectionInterface $db;
 

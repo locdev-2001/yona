@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal\Health;
 
 use Illuminate\Support\Facades\Cache;
 

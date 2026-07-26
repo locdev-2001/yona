@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Integration\Chat\ZaloPersonal;
+namespace App\Modules\Chat\Adapter\ZaloPersonal\Policy;
 
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\RateCapException;
-use App\Modules\Integration\Chat\ZaloPersonal\Exceptions\SendOutsideWindowException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\RateCapException;
+use App\Modules\Chat\Adapter\ZaloPersonal\Exception\SendOutsideWindowException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
