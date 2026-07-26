@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * P07 — Conversation entity. Inbox hội thoại per-channel per-peer.
@@ -203,8 +204,12 @@ class Conversation extends Model
      */
     public function memberProfiles(): array
     {
-        $rows = ConversationMember::query()
-            ->where('conversation_id', $this->id)
+        // Truy vấn thẳng, không dựng model: đây là một PHÉP CHIẾU gồm cột của
+        // hai bảng. Dựng `ConversationMember` từ nó là gán cho model những thuộc
+        // tính nó không có, và không kiểu nào kiểm được.
+        $rows = DB::table('conversation_members')
+            ->where('conversation_members.conversation_id', $this->id)
+            ->where('conversation_members.workspace_id', $this->workspace_id)
             ->leftJoin('profile_identities', 'profile_identities.id', '=', 'conversation_members.identity_id')
             ->get([
                 'conversation_members.sender_uid',
