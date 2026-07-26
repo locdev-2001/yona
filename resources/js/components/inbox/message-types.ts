@@ -168,7 +168,7 @@ export interface ChatParticipant {
 
 /** The peer side of a thread — a Conversation is structurally compatible. */
 export interface ChatPeer {
-    peer_uid: string;
+    sender_uid: string;
     peer_name: string | null;
     peer_phone: string | null;
     peer_avatar_url?: string | null;

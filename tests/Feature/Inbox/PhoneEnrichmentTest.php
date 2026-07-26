@@ -30,15 +30,15 @@ function peSetup(): array
     return [$workspace, $user];
 }
 
-function peConversation(Workspace $workspace, string $peerUid, int $threadType = 0): Conversation
+function peConversation(Workspace $workspace, string $senderUid, int $threadType = 0): Conversation
 {
     return Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => (string) Str::uuid(),
-        'peer_uid' => $peerUid,
+        'sender_uid' => $senderUid,
         'thread_kind' => $threadType === 1 ? 'group' : 'direct',
-        'peer_name' => 'Khách '.$peerUid,
+        'peer_name' => 'Khách '.$senderUid,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
 }
@@ -196,7 +196,7 @@ it('nhập tay: phone sai format → 422 validation', function () {
 
 // ── Review LOW-3: 2 nhánh reject findUser tường minh ─────────────────────────
 
-function peConversationWithSlot(Workspace $workspace, string $peerUid): Conversation
+function peConversationWithSlot(Workspace $workspace, string $senderUid): Conversation
 {
     $account = ChannelAccount::create([
         'workspace_id' => $workspace->id,
@@ -211,7 +211,7 @@ function peConversationWithSlot(Workspace $workspace, string $peerUid): Conversa
         'state' => 'connected',
         'lock_version' => 0,
     ]);
-    $conversation = peConversation($workspace, $peerUid);
+    $conversation = peConversation($workspace, $senderUid);
     $conversation->update(['channel_account_id' => $account->id]);
 
     return $conversation->fresh();
@@ -230,7 +230,7 @@ it('verify: findUser KHÔNG resolve (bridge 500 / số không dùng Zalo) → 42
     expect($conversation->fresh()->peer_phone)->toBeNull();
 });
 
-it('verify: findUser resolve nhưng uid KHÔNG khớp peer_uid → 422, không lưu', function () {
+it('verify: findUser resolve nhưng uid KHÔNG khớp sender_uid → 422, không lưu', function () {
     [$workspace] = peSetup();
     $conversation = peConversationWithSlot($workspace, 'peer_v_mismatch');
 

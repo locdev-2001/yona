@@ -39,7 +39,7 @@ interface MessageReceivedPayload {
 interface Conversation {
     id: string;
     channel: string;
-    peer_uid: string;
+    sender_uid: string;
     peer_name: string | null;
     peer_avatar_url: string | null;
     peer_phone: string | null;
@@ -696,10 +696,10 @@ export default function InboxIndex({
                                 onClick={() => handleSelectConv(conv)}
                             >
                                 <div className="flex items-center gap-3">
-                                    <ChatAvatar name={conv.peer_name ?? conv.peer_uid} src={conv.peer_avatar_url} className="h-9 w-9 shrink-0" />
+                                    <ChatAvatar name={conv.peer_name ?? conv.sender_uid} src={conv.peer_avatar_url} className="h-9 w-9 shrink-0" />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-sm font-medium">{conv.peer_name ?? conv.peer_phone ?? conv.peer_uid}</span>
+                                            <span className="truncate text-sm font-medium">{conv.peer_name ?? conv.peer_phone ?? conv.sender_uid}</span>
                                             {conv.unread_count > 0 && (
                                                 <Badge variant="default" className="h-4 min-w-4 shrink-0 px-1 text-[10px]">
                                                     {conv.unread_count}
@@ -756,10 +756,10 @@ export default function InboxIndex({
                     ) : (
                         <>
                             <div className="flex items-center gap-2 border-b px-4 py-2">
-                                <ChatAvatar name={activeConv.peer_name ?? activeConv.peer_uid} src={activeConv.peer_avatar_url} />
+                                <ChatAvatar name={activeConv.peer_name ?? activeConv.sender_uid} src={activeConv.peer_avatar_url} />
                                 <div className="min-w-0">
                                     <div className="truncate text-sm font-medium">
-                                        {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.peer_uid}
+                                        {activeConv.peer_name ?? activeConv.peer_phone ?? activeConv.sender_uid}
                                     </div>
                                     {activeConv.peer_phone && <div className="text-muted-foreground text-xs">{activeConv.peer_phone}</div>}
                                 </div>
@@ -802,7 +802,7 @@ export default function InboxIndex({
                         <div className="space-y-4 p-4">
                             <div className="text-center">
                                 <ChatAvatar
-                                    name={activeConv.peer_name ?? activeConv.peer_uid}
+                                    name={activeConv.peer_name ?? activeConv.sender_uid}
                                     src={activeConv.peer_avatar_url}
                                     className="mx-auto mb-2 h-12 w-12"
                                 />

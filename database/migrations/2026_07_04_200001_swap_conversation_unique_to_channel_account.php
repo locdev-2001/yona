@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * P02(g) (inbox-multichannel-relayer) — swap unique conversations sang
- * (channel_account_id, peer_uid), drop zalo_connection_id.
+ * (channel_account_id, sender_uid), drop zalo_connection_id.
  *
  * *** HOÃN — KHÔNG chạy migration này cho tới khi ***:
  *   1. P03 (outbound) đã đổi ZaloSendService::resolveConnection sang
@@ -64,12 +64,12 @@ return new class extends Migration
         // conversations soft-delete (F17/F26) — PHẢI partial (WHERE deleted_at IS NULL), như
         // constraint cũ zalo_connections_ws_personal_uid_active_unique. Không có predicate này,
         // 1 conversation cũ đã soft-delete (vd merge trước đây) mãi mãi đụng constraint với
-        // conversation active cùng (channel_account_id, peer_uid) — build CONCURRENTLY fail,
+        // conversation active cùng (channel_account_id, sender_uid) — build CONCURRENTLY fail,
         // để lại 1 index INVALID (retry phải drop trước, IF NOT EXISTS không tự sửa index hỏng).
         $db->statement('DROP INDEX CONCURRENTLY IF EXISTS conversations_channel_account_peer_unique');
         $db->statement(
             'CREATE UNIQUE INDEX CONCURRENTLY conversations_channel_account_peer_unique
-             ON conversations (channel_account_id, peer_uid) WHERE deleted_at IS NULL'
+             ON conversations (channel_account_id, sender_uid) WHERE deleted_at IS NULL'
         );
 
         $db->statement('ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_channel_peer_unique');
@@ -82,7 +82,7 @@ return new class extends Migration
 
         $db->statement('ALTER TABLE conversations ADD COLUMN zalo_connection_id bigint NULL');
         $db->statement(
-            'ALTER TABLE conversations ADD CONSTRAINT conversations_channel_peer_unique UNIQUE (zalo_connection_id, peer_uid)'
+            'ALTER TABLE conversations ADD CONSTRAINT conversations_channel_peer_unique UNIQUE (zalo_connection_id, sender_uid)'
         );
         $db->statement('DROP INDEX CONCURRENTLY IF EXISTS conversations_channel_account_peer_unique');
         $db->statement('DROP INDEX CONCURRENTLY IF EXISTS zalo_connections_account_connected_unique');

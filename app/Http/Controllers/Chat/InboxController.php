@@ -56,7 +56,7 @@ class InboxController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('peer_name', 'ilike', '%'.$search.'%')
                     ->orWhere('peer_phone', 'ilike', '%'.$search.'%')
-                    ->orWhere('peer_uid', 'ilike', '%'.$search.'%');
+                    ->orWhere('sender_uid', 'ilike', '%'.$search.'%');
             });
         }
 

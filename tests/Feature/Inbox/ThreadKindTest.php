@@ -43,7 +43,7 @@ function tkConversation(Workspace $workspace, string $kind, ?ChannelAccount $acc
         'workspace_id' => $workspace->id,
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account?->id,
-        'peer_uid' => 'uid_'.Str::random(6),
+        'sender_uid' => 'uid_'.Str::random(6),
         'thread_type' => $kind === 'group' ? 1 : 0,
         'thread_kind' => $kind,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
@@ -56,7 +56,7 @@ it('tiếp nhận tin nhóm thì ghi thread_kind=group', function () {
     $message = app(IntakeService::class)->ingest([
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account->id,
-        'peer_uid' => 'nhom_001',
+        'thread_uid' => 'nhom_001',
         'thread_kind' => 'group',
         'direction' => 'in',
         'source_id' => 'g_'.Str::random(6),
@@ -75,7 +75,7 @@ it('tiếp nhận tin nhắn riêng thì ghi thread_kind=direct', function () {
     $message = app(IntakeService::class)->ingest([
         'channel' => WidgetChannelDriver::KEY,
         'channel_account_id' => $account->id,
-        'peer_uid' => 'khach_001',
+        'thread_uid' => 'khach_001',
         'thread_kind' => 'direct',
         'direction' => 'in',
         'source_id' => 'd_'.Str::random(6),

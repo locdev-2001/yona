@@ -68,7 +68,7 @@ function makeWorkspaceAndConversation(int $connId = 9991): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_test_'.uniqid(),
+        'sender_uid' => 'peer_test_'.uniqid(),
         'peer_phone' => '0901234567',
         'thread_type' => 0,
         'conversation_number' => 1,
@@ -201,7 +201,7 @@ it('P03: throws ZaloNotConnectedException with account display_name when 0 slot 
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_test_'.uniqid(),
+        'sender_uid' => 'peer_test_'.uniqid(),
         'thread_type' => 0,
         'conversation_number' => 1,
     ]);
@@ -334,7 +334,7 @@ it('send() bypasses the cap when peer has inbound within 24h, but enforces it fo
 
     // Nạp đầy cap 3/ngày cho số này.
     $limiter = new SendRateLimiter;
-    $targetNumber = $conversation->peer_phone ?? $conversation->peer_uid;
+    $targetNumber = $conversation->peer_phone ?? $conversation->sender_uid;
     foreach (range(1, 3) as $_) {
         $limiter->increment($workspace->id, $targetNumber);
     }

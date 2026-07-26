@@ -277,7 +277,7 @@ it('gắn tag + ghi note lên conversation vẫn chạy', function () {
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => 'widget',
-        'peer_uid' => 'khach_morph',
+        'sender_uid' => 'khach_morph',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

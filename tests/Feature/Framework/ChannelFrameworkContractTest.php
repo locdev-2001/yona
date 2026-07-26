@@ -40,14 +40,14 @@ function fwSetup(): array
     return [$workspace, $user];
 }
 
-function fwIngest(string $channel, string $accountId, string $peerUid, string $sourceId, string $direction = 'in'): Message
+function fwIngest(string $channel, string $accountId, string $senderUid, string $sourceId, string $direction = 'in'): Message
 {
     $driver = app(ChannelRegistry::class)->driver($channel);
     $normalized = $driver->parseInbound([
         'channel_account_id' => $accountId,
-        'peer_uid' => $peerUid,
+        'thread_uid' => $senderUid,
         'source_id' => $sourceId,
-        'body' => 'tin từ '.$peerUid,
+        'body' => 'tin từ '.$senderUid,
         'direction' => $direction,
         'platform_sent_at' => now()->toDateTimeString(),
     ]);

@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  *
  * DedupConversation (P02, tự chứa — không còn phụ thuộc
  * ZaloConversationMerger, class đó xoá ở P08) dọn nhóm (channel_account_id,
- * peer_uid) trùng nếu có: race hẹp khi inbound lỡ đến slot mới TRƯỚC khi bind
+ * sender_uid) trùng nếu có: race hẹp khi inbound lỡ đến slot mới TRƯỚC khi bind
  * transaction này commit (slot chưa có channel_account_id lúc đó, upsertConversation
  * tạo conversation riêng). on(null) = share connection MẶC ĐỊNH với transaction
  * này (không pgsql_privileged — khác session sẽ không thấy thay đổi uncommitted).
@@ -99,7 +99,7 @@ class PromoteAccountBinder
     }
 
     /**
-     * Dọn nhóm (channel_account_id, peer_uid) trùng do race inbound/bind (hiếm) —
+     * Dọn nhóm (channel_account_id, sender_uid) trùng do race inbound/bind (hiếm) —
      * quét toàn workspace (RLS-scoped) rồi lọc về đúng account vừa bind.
      */
     private function mergeDuplicateConversationsFor(string $channelAccountId): void
@@ -108,7 +108,7 @@ class PromoteAccountBinder
 
         foreach ($merger->duplicateGroups() as $group) {
             if ($group->channel_account_id === $channelAccountId) {
-                $merger->mergeGroup($group->channel_account_id, $group->peer_uid);
+                $merger->mergeGroup($group->channel_account_id, $group->sender_uid);
             }
         }
     }

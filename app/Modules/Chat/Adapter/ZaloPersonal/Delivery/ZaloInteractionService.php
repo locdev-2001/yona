@@ -52,7 +52,7 @@ class ZaloInteractionService
                     'msgId' => (string) $zca['msgId'],
                     'cliMsgId' => (string) $zca['cliMsgId'],
                 ],
-                'threadId' => $conversation->peer_uid,
+                'threadId' => $conversation->sender_uid,
                 'type' => $conversation->thread_type === 1 ? 1 : 0,
             ],
         ]);
@@ -137,7 +137,7 @@ class ZaloInteractionService
     }
 
     /**
-     * P05 — verify SĐT nhập tay: findUser(phone) chiều xuôi, uid phải khớp peer_uid.
+     * P05 — verify SĐT nhập tay: findUser(phone) chiều xuôi, uid phải khớp sender_uid.
      * false = không resolve được HOẶC uid không khớp (LOW-2: reject cả 2 nhánh).
      */
     public function verifyPeerPhone(Conversation $conversation, string $phone): bool
@@ -155,7 +155,7 @@ class ZaloInteractionService
         $result = $response->json('result');
         $uid = $result['uid'] ?? $result['userId'] ?? $result['globalId'] ?? null;
 
-        return $uid !== null && (string) $uid === $conversation->peer_uid;
+        return $uid !== null && (string) $uid === $conversation->sender_uid;
     }
 
     /** @throws ZaloNotConnectedException */

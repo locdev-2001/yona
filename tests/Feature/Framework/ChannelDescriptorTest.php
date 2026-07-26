@@ -137,7 +137,7 @@ it('thành viên không có quyền quản trị kênh thì bị chặn ở thao
     $conversation = Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => WidgetChannelDriver::KEY,
-        'peer_uid' => 'khach_quyen',
+        'sender_uid' => 'khach_quyen',
         'thread_type' => 0,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);

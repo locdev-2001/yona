@@ -24,7 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $workspace_id
  * @property string $channel
  * @property string|null $channel_account_id
- * @property string $peer_uid
+ * @property string $sender_uid
  * @property int $thread_type
  * @property string $thread_kind
  * @property string|null $peer_phone
@@ -54,7 +54,7 @@ class Conversation extends Model
     protected $fillable = [
         'channel',
         'channel_account_id',
-        'peer_uid',
+        'sender_uid',
         'thread_type',
         'thread_kind',
         'peer_phone',

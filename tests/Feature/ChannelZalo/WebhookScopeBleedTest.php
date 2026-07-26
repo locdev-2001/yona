@@ -131,7 +131,7 @@ it('webhook inbound for connection A creates message in workspace A only (F19 sc
 
     $convsA = Conversation::where('channel', 'zalo_personal')->get();
     expect($convsA)->toHaveCount(1);
-    expect($convsA->first()->peer_uid)->toBe('peer_from_a_001');
+    expect($convsA->first()->sender_uid)->toBe('peer_from_a_001');
 
     $msgsA = Message::whereIn('conversation_id', $convsA->pluck('id'))->get();
     expect($msgsA)->toHaveCount(1);
@@ -147,7 +147,7 @@ it('webhook inbound for connection A creates message in workspace A only (F19 sc
 
     $convsB = Conversation::where('channel', 'zalo_personal')->get();
     expect($convsB)->toHaveCount(1);
-    expect($convsB->first()->peer_uid)->toBe('peer_from_b_001');
+    expect($convsB->first()->sender_uid)->toBe('peer_from_b_001');
 
     $msgsB = Message::whereIn('conversation_id', $convsB->pluck('id'))->get();
     expect($msgsB)->toHaveCount(1);
@@ -181,7 +181,7 @@ it('unknown connection_id returns 202 and creates no orphan records (F19)', func
     // Assert: không có Conversation/Message orphan dù bỏ qua RLS check
     $orphanConv = DB::connection('pgsql_privileged')
         ->table('conversations')
-        ->where('peer_uid', 'orphan_peer')
+        ->where('sender_uid', 'orphan_peer')
         ->first();
     expect($orphanConv)->toBeNull();
 })->group('channel-zalo', 'scope-bleed');

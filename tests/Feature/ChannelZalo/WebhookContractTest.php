@@ -67,7 +67,7 @@ it('returns 202 and creates no orphan when connection_id not mapped', function (
     // Không có conversation/message orphan
     $orphan = DB::connection('pgsql_privileged')
         ->table('conversations')
-        ->where('peer_uid', 'ghost_peer')
+        ->where('sender_uid', 'ghost_peer')
         ->first();
     expect($orphan)->toBeNull();
 })->group('channel-zalo');
@@ -102,7 +102,7 @@ it('inbound webhook creates conversation and message', function () {
     // Verify: Conversation tồn tại trong ws
     TenantScope::bind($ws->id);
 
-    $conv = Conversation::where('peer_uid', 'peer_contract_001')->first();
+    $conv = Conversation::where('sender_uid', 'peer_contract_001')->first();
     expect($conv)->not->toBeNull();
     expect($conv->contact_id)->toBeNull(); // F23: Liên hệ nháp
     expect($conv->channel)->toBe('zalo_personal');
@@ -589,7 +589,7 @@ it('inbound nhóm với sender profile → persist participants trên conversati
 
     TenantScope::bind($ws->id);
 
-    $conv = Conversation::where('peer_uid', 'group_contract_001')->first();
+    $conv = Conversation::where('sender_uid', 'group_contract_001')->first();
     expect($conv)->not->toBeNull();
     expect($conv->participants)->toBe([
         'member_uid_1' => ['name' => 'Phước Lộc', 'avatar' => 'https://s120.avatar.zalo.me/member1.jpg'],

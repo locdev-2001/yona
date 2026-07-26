@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\DB;
  * @param array{
  *   channel_account_id?: string|null,
  *   channel?: string,
- *   peer_uid: string,
+ *   thread_uid: string,
  *   thread_kind?: string,
  *   peer_name?: string|null,
  *   peer_avatar?: string|null,
@@ -94,7 +94,7 @@ class IntakeService
     }
 
     /**
-     * P08 — 1 path duy nhất: key (channel_account_id, peer_uid). channel_account_id
+     * P08 — 1 path duy nhất: key (channel_account_id, sender_uid). channel_account_id
      * ổn định qua reconnect (không như zalo_connection_id cũ, đổi mỗi lần reconnect) —
      * không còn cần findConversationByAccount/dedupe riêng cho case reconnect.
      *
@@ -106,9 +106,11 @@ class IntakeService
         $threadKind = $normalized['thread_kind'] ?? Conversation::KIND_DIRECT;
         $channel = $normalized['channel'] ?? throw new \InvalidArgumentException('normalized payload thiếu key channel — driver phải set channelKey');
         $channelAccountId = $normalized['channel_account_id'] ?? null;
-        $peerUid = $normalized['peer_uid'];
+        // Khóa của LUỒNG, không phải của người gửi tin: với nhóm thì đây là
+        // định danh nhóm. Cột nhận nó tên `sender_uid` theo schema đích.
+        $senderUid = $normalized['thread_uid'];
 
-        $existing = $this->findConversation($channelAccountId, $peerUid);
+        $existing = $this->findConversation($channelAccountId, $senderUid);
 
         if ($existing !== null) {
             return $this->applyPeerUpdates($existing, $normalized);
@@ -121,11 +123,11 @@ class IntakeService
             // (25P02) khiến re-fetch trong catch fail. DB::transaction() rollback chỉ
             // savepoint → connection còn dùng được cho re-fetch (an toàn cả khi ingest
             // chạy trong một transaction ngoài).
-            return DB::transaction(function () use ($channel, $channelAccountId, $peerUid, $normalized, $threadKind) {
+            return DB::transaction(function () use ($channel, $channelAccountId, $senderUid, $normalized, $threadKind) {
                 $conversation = new Conversation([
                     'channel' => $channel,
                     'channel_account_id' => $channelAccountId,
-                    'peer_uid' => $peerUid,
+                    'sender_uid' => $senderUid,
                     'thread_kind' => $threadKind,
                     'peer_name' => $normalized['peer_name'] ?? null,
                     'peer_avatar_url' => $normalized['peer_avatar'] ?? null,
@@ -138,12 +140,12 @@ class IntakeService
                 return $conversation;
             });
         } catch (QueryException $e) {
-            // Race: 2 webhook cùng (channel_account_id, peer_uid) → cùng miss first() → cùng INSERT.
+            // Race: 2 webhook cùng (channel_account_id, sender_uid) → cùng miss first() → cùng INSERT.
             // PostgreSQL unique-violation = SQLSTATE 23505 (conversations_channel_account_peer_unique).
             // Re-fetch row do request kia tạo, áp peer-info update như existing-row path.
             // Cùng pattern ContactService::firstOrCreateByPhone.
             if ($e->getCode() === '23505') {
-                $conversation = $this->findConversation($channelAccountId, $peerUid);
+                $conversation = $this->findConversation($channelAccountId, $senderUid);
 
                 if ($conversation !== null) {
                     return $this->applyPeerUpdates($conversation, $normalized);
@@ -161,10 +163,10 @@ class IntakeService
      * ẩn, không "sống lại" chỉ vì peer nhắn tiếp — tin mới phải vào conversation active
      * (canonical sau merge), không phải bản đã ẩn.
      */
-    protected function findConversation(?string $channelAccountId, string $peerUid): ?Conversation
+    protected function findConversation(?string $channelAccountId, string $senderUid): ?Conversation
     {
         return Conversation::where('channel_account_id', $channelAccountId)
-            ->where('peer_uid', $peerUid)
+            ->where('sender_uid', $senderUid)
             ->first();
     }
 

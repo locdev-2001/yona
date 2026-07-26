@@ -49,7 +49,7 @@ function msSetup(): array
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'peer_state_'.uniqid(),
+        'sender_uid' => 'peer_state_'.uniqid(),
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -161,7 +161,7 @@ it('GROUP receipt guard cứng: hội thoại nhóm KHÔNG mutate scalar seen_at
         'workspace_id' => $workspace->id,
         'channel' => 'zalo_personal',
         'channel_account_id' => $account->id,
-        'peer_uid' => 'group_'.uniqid(),
+        'sender_uid' => 'group_'.uniqid(),
         'thread_kind' => 'group',
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),
     ]);
@@ -321,7 +321,7 @@ function msWebhookSetup(): array
         'workspace_id' => $wsId,
         'channel' => 'zalo_personal',
         'channel_account_id' => $accountId,
-        'peer_uid' => 'peer_wh_'.uniqid(),
+        'sender_uid' => 'peer_wh_'.uniqid(),
         'thread_kind' => 'direct',
         'conversation_number' => WorkspaceSequence::next('conversation', $wsId),
     ]);
@@ -359,7 +359,7 @@ it('webhook: undo end-to-end → recalled_at set, KHÔNG meter', function () {
 
     msPostRelay($workspace, $connectionId, 'undo', [[
         'data' => ['msgId' => 'UNDO_ACT', 'content' => ['globalMsgId' => 'zmsg_wh_1'], 'ts' => '1751600000000'],
-        'threadId' => $conversation->peer_uid,
+        'threadId' => $conversation->sender_uid,
     ]])->assertOk();
 
     expect($message->fresh()->recalled_at)->not->toBeNull()
@@ -375,8 +375,8 @@ it('webhook: typing → broadcast ConversationTyping, KHÔNG ghi DB', function (
 
     msPostRelay($workspace, $connectionId, 'typing', [[
         'type' => 0,
-        'data' => ['uid' => $conversation->peer_uid, 'ts' => '1751600000000', 'isPC' => 0],
-        'threadId' => $conversation->peer_uid,
+        'data' => ['uid' => $conversation->sender_uid, 'ts' => '1751600000000', 'isPC' => 0],
+        'threadId' => $conversation->sender_uid,
     ]])->assertOk();
 
     Event::assertDispatched(ConversationTyping::class, function (ConversationTyping $e) use ($conversation) {

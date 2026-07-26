@@ -56,7 +56,7 @@ class ZaloBackfillService
             ->where('channel_account_id', $channelAccountId)
             ->where('thread_type', 1)
             ->whereNull('deleted_at')
-            ->get(['peer_uid']);
+            ->get(['sender_uid']);
 
         $totalFetched = 0;
 
@@ -66,7 +66,7 @@ class ZaloBackfillService
                     'X-Bridge-UI-Secret' => $uiSecret,
                 ])->timeout(15)->post("{$bridgeUrl}/backfill/group", [
                     'connection_id' => $connectionId,
-                    'group_id' => $conv->peer_uid,
+                    'group_id' => $conv->sender_uid,
                     'count' => 100,
                 ]);
 
@@ -75,7 +75,7 @@ class ZaloBackfillService
                 } else {
                     Log::warning('zalo_group_backfill: bridge error', [
                         'connection_id' => $connectionId,
-                        'group_id' => $conv->peer_uid,
+                        'group_id' => $conv->sender_uid,
                         'status' => $response->status(),
                         'body' => $response->body(),
                     ]);
@@ -83,7 +83,7 @@ class ZaloBackfillService
             } catch (ConnectionException $e) {
                 Log::warning('zalo_group_backfill: bridge unreachable', [
                     'connection_id' => $connectionId,
-                    'group_id' => $conv->peer_uid,
+                    'group_id' => $conv->sender_uid,
                     'error' => $e->getMessage(),
                 ]);
             }

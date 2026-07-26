@@ -172,7 +172,7 @@ function smnConversation(Workspace $workspace, ?string $leadId = null): Conversa
     return Conversation::create([
         'workspace_id' => $workspace->id,
         'channel' => SMN_CHANNEL,
-        'peer_uid' => 'peer-'.Str::uuid(),
+        'sender_uid' => 'peer-'.Str::uuid(),
         'thread_type' => 0,
         'lead_id' => $leadId,
         'conversation_number' => WorkspaceSequence::next('conversation', $workspace->id),

@@ -117,7 +117,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
      * Parse raw webhook payload từ bridge thành normalized shape cho IntakeService.
      *
      * Field mapping (bridge → normalized):
-     *   peer_uid       = payload.peer_uid
+     *   thread_uid       = payload.peer_uid (định danh luồng bên Zalo)
      *   peer_name      = payload.user.name
      *   peer_avatar    = payload.user.avatar
      *   peer_phone     = null (bridge không gửi phone ở inbound — enrich async sau)
@@ -196,7 +196,8 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
             'channel_account_id' => isset($raw['channel_account_id']) && $raw['channel_account_id'] !== ''
                 ? (string) $raw['channel_account_id']
                 : null,
-            'peer_uid' => (string) ($raw['peer_uid'] ?? ''),
+            // Bridge vẫn nói `peer_uid` — đó là ranh giới nền tảng, adapter dịch.
+            'thread_uid' => (string) ($raw['peer_uid'] ?? ''),
             'peer_name' => $user['name'] ?? null,
             'peer_avatar' => $user['avatar'] ?? null,
             'peer_phone' => null, // enrich async khi có business_card.phone
@@ -296,7 +297,7 @@ class ZaloChannelDriver extends AbstractChannelDriver implements SupportsHistory
      * P05 — verify SĐT nhập tay qua ZaloInteractionService (client /zca duy nhất).
      * 1 API call/lần do NGƯỜI DÙNG chủ động (không harvest — BLK-5).
      *
-     * @return bool true = uid khớp peer_uid; false = không khớp / không resolve
+     * @return bool true = uid khớp sender_uid; false = không khớp / không resolve
      *
      * @throws ZaloNotConnectedException bridge/slot không sẵn sàng
      */
