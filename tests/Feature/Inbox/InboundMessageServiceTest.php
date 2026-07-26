@@ -527,3 +527,59 @@ it('trang hộp thư đẩy hồ sơ thành viên của hội thoại đang mở
         ->assertInertia(fn ($page) => expect($page->toArray()['props']['selectedConversation']['members']['uid_prop']['avatar'])
             ->toBe('https://s120.avatar.zalo.me/b.jpg'));
 });
+
+it('hai người gửi khác nhau trong nhóm là hai bí danh khác nhau', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $accountId = (string) Str::uuid();
+
+    foreach ([['uid_x', 'Phước Lộc'], ['uid_y', 'Beru']] as [$uid, $name]) {
+        $payload = basePayload('group_hai_nguoi', $accountId);
+        $payload['thread_kind'] = 'group';
+        $payload['sender_uid'] = $uid;
+        $payload['sender_name'] = $name;
+        $payload['sender_avatar'] = "https://avatar/{$uid}.jpg";
+        $message = makeService()->ingest($payload);
+    }
+
+    $conversation = Conversation::find($message->conversation_id);
+    $identityIds = ConversationMember::where('conversation_id', $conversation->id)->pluck('identity_id')->all();
+
+    // Model từng khai khóa chính tổ hợp bằng `$primaryKey = null`; Eloquent sinh
+    // UPDATE không có WHERE dùng được nên ghi một thành viên là ghi đè CẢ BẢNG,
+    // và mọi người trong mọi nhóm mang chung một bí danh. Test này canh đúng đó.
+    expect($identityIds)->toHaveCount(2)
+        ->and(array_unique($identityIds))->toHaveCount(2);
+
+    $profiles = $conversation->memberProfiles();
+    expect($profiles['uid_x']['name'])->toBe('Phước Lộc')
+        ->and($profiles['uid_y']['name'])->toBe('Beru')
+        ->and($profiles['uid_x']['avatar'])->not->toBe($profiles['uid_y']['avatar']);
+});
+
+it('ghi một thành viên KHÔNG đụng tới thành viên của hội thoại khác', function () {
+    Event::fake([MessageReceived::class]);
+
+    $ws = Workspace::factory()->create();
+    $user = User::factory()->create();
+    actingInWorkspace($ws, $user);
+
+    $first = basePayload('group_mot', (string) Str::uuid());
+    $first['thread_kind'] = 'group';
+    $first['sender_uid'] = 'uid_nhom_mot';
+    $first['sender_name'] = 'Người Một';
+    $convOne = Conversation::find(makeService()->ingest($first)->conversation_id);
+    $before = ConversationMember::where('conversation_id', $convOne->id)->first()->identity_id;
+
+    $second = basePayload('group_hai', (string) Str::uuid());
+    $second['thread_kind'] = 'group';
+    $second['sender_uid'] = 'uid_nhom_hai';
+    $second['sender_name'] = 'Người Hai';
+    makeService()->ingest($second);
+
+    expect(ConversationMember::where('conversation_id', $convOne->id)->first()->identity_id)->toBe($before);
+});
