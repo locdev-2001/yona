@@ -539,7 +539,9 @@ restart_application_processes() {
 
     if is_enabled "$ssr_enabled"; then
         log 'Yêu cầu Inertia SSR khởi động lại'
-        run "$PHP_BIN" artisan inertia:stop-ssr --no-interaction
+        if ! run "$PHP_BIN" artisan inertia:stop-ssr --no-interaction; then
+            warn 'Inertia SSR chưa chạy hoặc không phản hồi; tiếp tục để process manager khởi động lại.'
+        fi
     fi
 
     reload_php_fpm
