@@ -18,6 +18,7 @@ pnpm-debug.log*
 # Laravel / PHP
 /vendor/
 /public/build/
+/public/storage
 /bootstrap/ssr/
 /public/hot
 /.user.ini
