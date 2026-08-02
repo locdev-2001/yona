@@ -18,6 +18,7 @@
 #   DEPLOY_HEALTH_URL=https://...    Override the health-check URL.
 #   DEPLOY_DRY_RUN=1                 Print mutating commands without running them.
 #   DEPLOY_ALLOW_ROOT=1              Root is the chosen aaPanel deploy user.
+#   DEPLOY_RUNTIME_GROUP=www         PHP-FPM/Supervisor runtime group.
 #   DEPLOY_PHP_FPM_SERVICE=php8.4-fpm
 #                                      systemd service; set empty to skip it.
 #   DEPLOY_PHP_FPM_INIT_SCRIPT=      Auto-detects /etc/init.d/php-fpm-84;
@@ -50,6 +51,7 @@ readonly DEPLOY_ZALO_BRIDGE="${DEPLOY_ZALO_BRIDGE:-1}"
 readonly DEPLOY_HEALTHCHECK="${DEPLOY_HEALTHCHECK:-1}"
 readonly DEPLOY_DRY_RUN="${DEPLOY_DRY_RUN:-0}"
 readonly DEPLOY_ALLOW_ROOT="${DEPLOY_ALLOW_ROOT:-1}"
+readonly DEPLOY_RUNTIME_GROUP="${DEPLOY_RUNTIME_GROUP:-www}"
 readonly DEPLOY_PHP_FPM_SERVICE="${DEPLOY_PHP_FPM_SERVICE-php8.4-fpm}"
 readonly DEPLOY_PHP_FPM_INIT_SCRIPT="${DEPLOY_PHP_FPM_INIT_SCRIPT-$DEFAULT_PHP_FPM_INIT_SCRIPT}"
 readonly DEPLOY_USE_COREPACK="${DEPLOY_USE_COREPACK:-1}"
@@ -280,6 +282,7 @@ validate_prerequisites() {
     require_command "$PHP_BIN"
     require_command "$NODE_BIN"
     require_command "$COMPOSER_BIN"
+    require_command getent
     if is_enabled "$DEPLOY_USE_COREPACK"; then
         require_command corepack
     else
@@ -309,6 +312,9 @@ validate_prerequisites() {
     if [[ "$EUID" -eq 0 ]] && ! is_enabled "$DEPLOY_ALLOW_ROOT"; then
         fail 'Không deploy bằng root. Dùng deploy user hoặc đặt DEPLOY_ALLOW_ROOT=1 có chủ đích.'
     fi
+
+    getent group "$DEPLOY_RUNTIME_GROUP" >/dev/null \
+        || fail "Không tìm thấy runtime group: $DEPLOY_RUNTIME_GROUP"
 
     "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);' \
         || fail 'Yona yêu cầu PHP >= 8.4.'
@@ -426,6 +432,15 @@ prepare_laravel() {
     run "$PHP_BIN" artisan storage:link --no-interaction
     run "$PHP_BIN" artisan optimize:clear --no-interaction
     run "$PHP_BIN" artisan optimize --no-interaction
+}
+
+prepare_runtime_permissions() {
+    log "Chuẩn hóa quyền runtime cho group $DEPLOY_RUNTIME_GROUP"
+    run chgrp "$DEPLOY_RUNTIME_GROUP" "$ENV_FILE"
+    run chmod 0640 "$ENV_FILE"
+    run chgrp -R "$DEPLOY_RUNTIME_GROUP" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+    run chmod -R ug+rwX "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+    run find "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" -type d -exec chmod g+s {} +
 }
 
 deploy_zalo_bridge() {
@@ -625,6 +640,7 @@ main() {
     deploy_database
     prepare_laravel
     deploy_zalo_bridge
+    prepare_runtime_permissions
     restart_application_processes
     disable_maintenance_mode
     health_check
