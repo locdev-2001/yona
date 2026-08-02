@@ -44,7 +44,7 @@ class WidgetChannelDriver extends AbstractChannelDriver
             key: self::KEY,
             label: 'Kênh nội bộ',
             category: 'chat',
-            logo: '/assets/images/icon_widget.png',
+            logo: '/assets/images/icon_widget.svg',
             badge: 'W',
             // Kênh nội bộ không có trang kết nối: nó luôn sẵn sàng, không có
             // phiên nào để dựng. Giao diện phải ẩn nút thay vì gọi route().

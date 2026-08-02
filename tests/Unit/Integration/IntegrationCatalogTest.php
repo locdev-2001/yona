@@ -32,6 +32,12 @@ it('card lấy nhãn và nhóm từ descriptor của kênh', function () {
         ->and($card['category'])->toBe('chat');
 });
 
+it('logo của mỗi card tồn tại trong public assets', function () {
+    foreach (app(IntegrationCatalog::class)->cards() as $card) {
+        expect(public_path(ltrim($card['logo'], '/')))->toBeFile();
+    }
+});
+
 it('cổng config bật thì enabled=true', function () {
     config(['integrations.zalo_personal.enabled' => true]);
 
