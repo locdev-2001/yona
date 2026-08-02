@@ -18,12 +18,16 @@ pnpm-debug.log*
 # Laravel / PHP
 /vendor/
 /public/build/
+/bootstrap/ssr/
 /public/hot
+/.user.ini
+/.well-known/
 /storage/*.key
 # storage/ contents are ignored via per-directory .gitignore files (Laravel skeleton)
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.log
 
 # Editors
