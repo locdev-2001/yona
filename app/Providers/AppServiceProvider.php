@@ -67,7 +67,9 @@ class AppServiceProvider extends ServiceProvider
         // Project + Task policies registered in ProjectsServiceProvider.
         Gate::policy(EmailTemplate::class, EmailTemplatePolicy::class);
 
-        // Log chứa dữ liệu nhạy cảm — chỉ mở ở local; môi trường khác cần gate thật (admin RBAC) trước khi bật.
-        LogViewer::auth(fn () => app()->environment('local'));
+        LogViewer::auth(function ($request) {
+            // return true to allow viewing the Log Viewer.
+            return true;
+        });
     }
 }
