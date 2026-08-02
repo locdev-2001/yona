@@ -25,8 +25,22 @@ return new class extends Migration
     public function up(): void
     {
         $connection = DB::connection('pgsql_privileged');
+        $schema = $connection->getSchemaBuilder();
+        $hasPeerUid = $schema->hasColumn('conversations', 'peer_uid');
+        $hasSenderUid = $schema->hasColumn('conversations', 'sender_uid');
 
-        $connection->statement('ALTER TABLE conversations RENAME COLUMN peer_uid TO sender_uid');
+        if ($hasPeerUid === $hasSenderUid) {
+            throw new RuntimeException(
+                'Expected conversations to contain exactly one of peer_uid or sender_uid.'
+            );
+        }
+
+        // Existing installations still have peer_uid. Fresh installations use
+        // the canonical sender_uid name directly in the create-table migration.
+        if ($hasPeerUid) {
+            $connection->statement('ALTER TABLE conversations RENAME COLUMN peer_uid TO sender_uid');
+        }
+
         $connection->statement(
             'ALTER INDEX IF EXISTS conversations_channel_account_peer_unique
              RENAME TO conversations_channel_account_sender_unique'
