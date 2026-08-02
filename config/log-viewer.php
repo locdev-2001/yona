@@ -210,7 +210,9 @@ return [
     |
     */
 
-    'hide_unknown_files' => true,
+    // Service stdout/stderr có thể chưa có dòng đầu tiên để nhận diện type;
+    // vẫn phải hiện file để operator xem/download thay vì chỉ thấy Laravel log.
+    'hide_unknown_files' => false,
 
     /*
     |--------------------------------------------------------------------------

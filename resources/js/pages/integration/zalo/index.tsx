@@ -84,6 +84,9 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                     clearPoll();
                     // Promote bridge slot → Laravel connection
                     await promoteConnection(qrState.connectionId!, qrState.qrToken!, qrState.expectedAccountUid);
+                } else if (data.phase === 'error') {
+                    clearPoll();
+                    await cancelQrSession(qrState.qrToken!);
                 }
             } catch {
                 // ignore network errors during poll
@@ -91,7 +94,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
         }, 2000);
 
         return () => clearPoll();
-    }, [qrState.open, qrState.qrToken, qrState.phase]);
+    }, [qrState.open, qrState.qrToken, qrState.phase, qrState.connectionId, qrState.expectedAccountUid]);
 
     const clearPoll = () => {
         if (pollRef.current) {
@@ -142,7 +145,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
             });
             const data = await res.json();
             if (data.ok) {
-                setQrState((prev) => ({ ...prev, phase: 'done' }));
+                setQrState(INITIAL_QR);
                 router.reload({ only: ['connections'] });
             } else if (data.error_code === 'zalo_account_mismatch') {
                 setQrState((prev) => ({
@@ -156,6 +159,30 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
         } catch (e) {
             setQrState((prev) => ({ ...prev, phase: 'error', error: String(e) }));
         }
+    };
+
+    const cancelQrSession = async (qrToken: string) => {
+        try {
+            await fetch('/integrations/zalo/qr-cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                },
+                body: JSON.stringify({ qr_token: qrToken }),
+            });
+        } catch {
+            // Phiên QR bridge cũng tự hết hạn; đóng UI không được phụ thuộc network.
+        }
+    };
+
+    const closeQrPanel = () => {
+        const qrToken = qrState.qrToken;
+        clearPoll();
+        setQrState(INITIAL_QR);
+        if (qrToken) void cancelQrSession(qrToken);
     };
 
     const disconnectConnection = async (id: string) => {
@@ -212,14 +239,7 @@ export default function ZaloConnectionsIndex({ connections }: Props) {
                             {qrState.phase === 'ready' && <p className="text-sm text-green-600">Đăng nhập thành công! Đang kết nối...</p>}
                             {qrState.phase === 'done' && <p className="text-sm text-green-600">Kết nối hoàn tất.</p>}
                             {qrState.phase === 'error' && <p className="text-sm text-red-600">Lỗi: {qrState.error}</p>}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    clearPoll();
-                                    setQrState(INITIAL_QR);
-                                }}
-                            >
+                            <Button variant="outline" size="sm" onClick={closeQrPanel}>
                                 Đóng
                             </Button>
                         </div>

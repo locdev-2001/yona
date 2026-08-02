@@ -6,6 +6,7 @@ use App\Models\EmailTemplate;
 use App\Models\User;
 use App\Policies\EmailTemplatePolicy;
 use App\Support\DbRoleGuard;
+use App\Support\Logging\ServiceProcessLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -71,5 +72,10 @@ class AppServiceProvider extends ServiceProvider
             // return true to allow viewing the Log Viewer.
             return true;
         });
+
+        // PM2/Supervisor/stdout không dùng envelope Monolog. Parser tổng quát
+        // này giúp Log Viewer index cả các file lồng trong storage/logs như
+        // zalo-bridge/out.log, error.log, horizon.log, reverb.log và ssr.log.
+        LogViewer::extend('service_process', ServiceProcessLog::class);
     }
 }

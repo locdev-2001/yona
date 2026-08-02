@@ -73,20 +73,6 @@ class ZaloConnectionController extends Controller
         $qrToken = Str::uuid()->toString();
         $workspaceId = $this->currentWorkspaceId();
 
-        // P10 [d]: insert qua connection MẶC ĐỊNH — request đã bind tenant (RLS
-        // session var set), GRANT bảng + sequence đủ. 1 session cho cả flow.
-        DB::table('zalo_connections')->insert([
-            'workspace_id' => $workspaceId,
-            'connection_id' => $connectionId,
-            'state' => 'qr_waiting',
-            'lock_version' => 0,
-            'last_qr_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $connection = ZaloConnection::where('connection_id', $connectionId)->firstOrFail();
-
         // Gọi bridge để bắt đầu QR login
         try {
             $bridgeResponse = Http::asJson()
@@ -97,19 +83,24 @@ class ZaloConnectionController extends Controller
                     'bot_id' => $connectionId,
                 ]);
         } catch (ConnectionException) {
-            $connection->delete();
-
             return $this->bridgeDownResponse();
         }
 
         if (! $bridgeResponse->successful()) {
-            $connection->delete();
-
             return response()->json([
                 'ok' => false,
                 'message' => 'Bridge không khởi động được QR: '.($bridgeResponse->json('message') ?? 'unknown'),
             ], 502);
         }
+
+        // QR chỉ là một phiên tạm trong session + bridge. Không persist
+        // ZaloConnection trước khi quét thành công: người dùng đóng trang hoặc
+        // để QR hết hạn sẽ không tạo một connection "ảo" trong danh sách.
+        session()->put("zalo_qr_sessions.{$qrToken}", [
+            'connection_id' => $connectionId,
+            'workspace_id' => $workspaceId,
+            'started_at' => now()->timestamp,
+        ]);
 
         return response()->json([
             'ok' => true,
@@ -130,6 +121,12 @@ class ZaloConnectionController extends Controller
             return response()->json(['ok' => false, 'message' => 'qr_token required'], 400);
         }
 
+        $pending = session()->get("zalo_qr_sessions.{$qrToken}");
+        abort_unless(
+            is_array($pending) && ($pending['workspace_id'] ?? null) === $this->currentWorkspaceId(),
+            404
+        );
+
         try {
             $bridgeResponse = Http::asJson()
                 ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
@@ -142,6 +139,38 @@ class ZaloConnectionController extends Controller
         }
 
         return response()->json($bridgeResponse->json(), $bridgeResponse->status());
+    }
+
+    /**
+     * Hủy phiên QR tạm ở bridge. Phiên chưa promote không có DB row để xóa.
+     */
+    public function cancelQr(Request $request): JsonResponse
+    {
+        abort_unless(auth()->user()?->can(TenantPermission::ZaloManage->value), 403);
+
+        $validated = $request->validate([
+            'qr_token' => 'required|string',
+        ]);
+
+        $qrToken = $validated['qr_token'];
+        $pending = session()->get("zalo_qr_sessions.{$qrToken}");
+        abort_unless(is_array($pending), 404);
+        abort_unless(($pending['workspace_id'] ?? null) === $this->currentWorkspaceId(), 403);
+
+        try {
+            Http::asJson()
+                ->withHeader('X-Bridge-UI-Secret', config('services.zalo_bridge.ui_secret', ''))
+                ->timeout(8)
+                ->post(config('services.zalo_bridge.url', 'http://127.0.0.1:3710').'/auth/qr/cancel', [
+                    'qr_token' => $qrToken,
+                ]);
+        } catch (ConnectionException) {
+            // Session local vẫn phải được dọn dù bridge đang tạm ngưng.
+        }
+
+        session()->forget("zalo_qr_sessions.{$qrToken}");
+
+        return response()->json(['ok' => true]);
     }
 
     /**
@@ -160,9 +189,18 @@ class ZaloConnectionController extends Controller
             'expected_account_uid' => 'nullable|string',
         ]);
 
+        $workspaceId = $this->currentWorkspaceId();
+        $pending = session()->get("zalo_qr_sessions.{$validated['qr_token']}");
+        $pendingMatches = is_array($pending)
+            && (int) ($pending['connection_id'] ?? 0) === (int) $validated['connection_id']
+            && ($pending['workspace_id'] ?? null) === $workspaceId;
+
+        // Fallback cho QR đã mở bằng phiên bản cũ (khi store() còn tạo row).
         $connection = ZaloConnection::where('connection_id', $validated['connection_id'])
-            ->where('workspace_id', $this->currentWorkspaceId())
-            ->firstOrFail();
+            ->where('workspace_id', $workspaceId)
+            ->first();
+
+        abort_unless($pendingMatches || $connection !== null, 404);
 
         try {
             $bridgeResponse = Http::asJson()
@@ -174,7 +212,7 @@ class ZaloConnectionController extends Controller
                     // P11/B1: bind connection→workspace tại bridge (slot.workspaceId) —
                     // từ SESSION đã auth (currentWorkspace), KHÔNG từ connection row.
                     // Dispatcher /zca verify token-từ-session dựa trên binding này.
-                    'workspace_id' => $this->currentWorkspaceId(),
+                    'workspace_id' => $workspaceId,
                 ]);
         } catch (ConnectionException) {
             return $this->bridgeDownResponse();
@@ -193,6 +231,7 @@ class ZaloConnectionController extends Controller
 
         if ($expectedUid !== null && $accountUid !== null && $expectedUid !== $accountUid) {
             $this->logoutBridge($validated['connection_id']);
+            session()->forget("zalo_qr_sessions.{$validated['qr_token']}");
 
             return response()->json([
                 'ok' => false,
@@ -207,28 +246,38 @@ class ZaloConnectionController extends Controller
             'avatar_url' => $data['avatar'] ?? null,
         ], fn ($v) => $v !== null && $v !== '');
 
-        if ($accountUid !== null) {
-            try {
-                $this->accountBinder->bind($connection, $accountUid, $profile);
-            } catch (Throwable $e) {
-                // Bridge đã promote nhưng DB transaction throw — logout slot mới
-                // (idempotent) để KHÔNG mồ côi 1 slot 'connected' không thuộc account nào.
-                report($e);
-                $this->logoutBridge($validated['connection_id']);
+        try {
+            $connection ??= ZaloConnection::create([
+                'workspace_id' => $workspaceId,
+                'connection_id' => $validated['connection_id'],
+                'state' => 'qr_waiting',
+                'lock_version' => 0,
+                'last_qr_at' => now(),
+            ]);
 
-                return response()->json([
-                    'ok' => false,
-                    'message' => 'Không gắn được tài khoản Zalo — vui lòng thử lại.',
-                ], 500);
+            if ($accountUid !== null) {
+                $this->accountBinder->bind($connection, $accountUid, $profile);
+            } elseif ($profile !== []) {
+                // Bridge không trả personal_uid (hiếm) — fallback cập nhật state, KHÔNG bind account.
+                DB::table('zalo_connections')->where('id', $connection->id)->update($profile);
+                $connection->updateState('connected', privileged: false);
+            } else {
+                $connection->updateState('connected', privileged: false);
             }
-        } elseif ($profile !== []) {
-            // Bridge không trả personal_uid (hiếm) — fallback cập nhật state, KHÔNG bind account.
-            // P10 [d]: CẢ CỤM promote đi 1 session mặc định (binder đã default) — né treo chéo.
-            DB::table('zalo_connections')->where('id', $connection->id)->update($profile);
-            $connection->updateState('connected', privileged: false);
-        } else {
-            $connection->updateState('connected', privileged: false);
+        } catch (Throwable $e) {
+            // Bridge đã promote nhưng DB transaction throw — logout slot mới
+            // (idempotent) để KHÔNG mồ côi 1 slot 'connected' không thuộc account nào.
+            report($e);
+            $this->logoutBridge($validated['connection_id']);
+            session()->forget("zalo_qr_sessions.{$validated['qr_token']}");
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Không gắn được tài khoản Zalo — vui lòng thử lại.',
+            ], 500);
         }
+
+        session()->forget("zalo_qr_sessions.{$validated['qr_token']}");
 
         return response()->json(['ok' => true, 'connection_id' => $validated['connection_id']]);
     }
