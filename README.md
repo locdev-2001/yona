@@ -220,4 +220,5 @@ Nguyên tắc xuyên suốt: **YAGNI · KISS · DRY**.
 | [docs/crm-build-pipeline.md](docs/crm-build-pipeline.md) | Quy trình xây dựng 5 giai đoạn |
 | [docs/features/README.md](docs/features/README.md) | Index tài liệu flow từng tính năng |
 | [docs/local-development.md](docs/local-development.md) | Chạy local (PHP 8.4 + Postgres + Redis, tên DB/role chuẩn) |
+| [docs/production-deployment-aapanel.md](docs/production-deployment-aapanel.md) | Runbook production `yona.vn`: aaPanel, PostgreSQL, Nginx, Supervisor, SSR, Zalo Bridge và chuyển server |
 | [docs/development-roadmap.md](docs/development-roadmap.md) · [docs/project-changelog.md](docs/project-changelog.md) | Lộ trình & nhật ký thay đổi |

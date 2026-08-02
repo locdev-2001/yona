@@ -1,5 +1,8 @@
 # Deployment — Zalo Personal Bridge
 
+Runbook production đầy đủ (aaPanel, Nginx, Supervisor, DB, deploy và chuyển
+server): [Production Deployment — Ubuntu 24.04 + aaPanel](../production-deployment-aapanel.md).
+
 ## Cấu trúc
 
 Bridge Node.js chạy song song với Laravel app:

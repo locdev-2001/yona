@@ -34,11 +34,11 @@
 ### Runbook siết owner (prod — cần bảo trì ngắn, chạy bằng superuser THẬT, vd `postgres`)
 ```sql
 -- 1. Kiểm tra hiện trạng
-SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname LIKE 'crm_%';
+SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname IN ('yona_owner', 'yona_app');
 -- 2. Siết: owner mất superuser, GIỮ bypass RLS
 ALTER ROLE yona_owner NOSUPERUSER BYPASSRLS;
 -- 3. Xác nhận: cả 2 role rolsuper = f, owner rolbypassrls = t
-SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname LIKE 'crm_%';
+SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname IN ('yona_owner', 'yona_app');
 ```
 Rollback (chỉ khi migration cần quyền cluster): `ALTER ROLE yona_owner SUPERUSER;` → chạy việc cần → siết lại ngay.
 
