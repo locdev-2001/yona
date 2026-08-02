@@ -40,6 +40,7 @@ Route::middleware(['auth', 'workspace'])->group(function () {
                 ->group(function () {
                     Route::post('/', 'store')->name('store');
                     Route::get('/qr-status', 'qr')->name('qr');
+                    Route::post('/qr-cancel', 'cancelQr')->name('cancel-qr');
                     Route::post('/promote', 'promote')->name('promote');
                     Route::delete('/{zaloConnection}', 'destroy')->name('destroy');
                 });

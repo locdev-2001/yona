@@ -438,12 +438,55 @@ it('store returns connection_id and qr_token when bridge qr/start ok', function 
         '*auth/qr/start*' => Http::response(['ok' => true, 'phase' => 'logging_in'], 200),
     ]);
 
-    $this->actingAs($user)
+    $response = $this->actingAs($user)
         ->withSession(['current_workspace_id' => $workspace->id])
         ->postJson('/integrations/zalo')
         ->assertStatus(200)
         ->assertJsonFragment(['ok' => true])
         ->assertJsonStructure(['connection_id', 'qr_token']);
+
+    expect(DB::table('zalo_connections')
+        ->where('connection_id', $response->json('connection_id'))
+        ->exists())->toBeFalse('Chưa quét QR thì không được persist kết nối ảo.');
+})->group('channel-zalo');
+
+it('persists the connection only after its pending QR session is promoted', function () {
+    $workspace = Workspace::factory()->create();
+    $user = User::factory()->create();
+    seedMember($workspace, $user, 'admin');
+    actingInWorkspace($workspace, $user);
+
+    app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+    $permission = Permission::firstOrCreate([
+        'name' => 'tenant.zalo.manage',
+        'guard_name' => 'web',
+    ]);
+    $user->givePermissionTo($permission);
+
+    Http::fake([
+        '*auth/qr/start*' => Http::response(['ok' => true, 'phase' => 'logging_in']),
+        '*auth/qr/promote*' => Http::response(['ok' => true, 'personal_uid' => null]),
+    ]);
+
+    $start = $this->actingAs($user)
+        ->withSession(['current_workspace_id' => $workspace->id])
+        ->postJson('/integrations/zalo')
+        ->assertOk();
+
+    $connectionId = (int) $start->json('connection_id');
+    $qrToken = (string) $start->json('qr_token');
+
+    expect(DB::table('zalo_connections')->where('connection_id', $connectionId)->exists())->toBeFalse();
+
+    $this->postJson('/integrations/zalo/promote', [
+        'connection_id' => $connectionId,
+        'qr_token' => $qrToken,
+    ])->assertOk();
+
+    expect(DB::table('zalo_connections')
+        ->where('connection_id', $connectionId)
+        ->where('state', 'connected')
+        ->exists())->toBeTrue();
 })->group('channel-zalo');
 
 it('promote updates ZaloConnection state to connected when bridge promote ok', function () {
