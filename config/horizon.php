@@ -183,7 +183,7 @@ return [
     |
     */
 
-    'memory_limit' => 64,
+    'memory_limit' => (int) env('HORIZON_MEMORY_LIMIT', 64),
 
     /*
     |--------------------------------------------------------------------------
@@ -215,9 +215,9 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'maxProcesses' => max(1, (int) env('HORIZON_MAX_PROCESSES', 10)),
+                'balanceMaxShift' => max(1, (int) env('HORIZON_BALANCE_MAX_SHIFT', 1)),
+                'balanceCooldown' => max(1, (int) env('HORIZON_BALANCE_COOLDOWN', 3)),
             ],
         ],
 

@@ -43,6 +43,7 @@ dotenv.config({ path: path.join(PLUGIN_ROOT, '.env') });
 const SESSIONS_DIR = path.join(PLUGIN_ROOT, '.sessions');
 const OUTBOX_DIR = path.join(PLUGIN_ROOT, '.outbox');
 const OUTBOX_DEAD_DIR = path.join(PLUGIN_ROOT, '.outbox-dead');
+const BRIDGE_HTTP_HOST = process.env.BRIDGE_HTTP_HOST || '127.0.0.1';
 const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 3710);
 const BRIDGE_SEND_SECRET = process.env.BRIDGE_SEND_SECRET || '';
 const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
@@ -2533,9 +2534,9 @@ async function boot() {
         cleanupStaleQrSessionFiles().catch(() => {});
     }, 6 * 60 * 60 * 1000);
     const app = buildExpress();
-    app.listen(BRIDGE_HTTP_PORT, '0.0.0.0', () => {
+    app.listen(BRIDGE_HTTP_PORT, BRIDGE_HTTP_HOST, () => {
         console.info(
-            `Zalo personal bridge (multi-session) listening on 0.0.0.0:${BRIDGE_HTTP_PORT} — GET / or HEAD / returns 200 OK`
+            `Zalo personal bridge (multi-session) listening on ${BRIDGE_HTTP_HOST}:${BRIDGE_HTTP_PORT} — GET / or HEAD / returns 200 OK`
         );
     });
 }
