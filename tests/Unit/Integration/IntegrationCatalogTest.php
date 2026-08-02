@@ -54,7 +54,8 @@ it('cổng config tắt thì card VẪN còn, chỉ enabled=false', function () 
 });
 
 it('kênh nội bộ không có cổng config nên luôn bật', function () {
-    expect(catalogCard(WidgetChannelDriver::KEY)['enabled'])->toBeTrue();
+    expect(catalogCard(WidgetChannelDriver::KEY)['enabled'])->toBeTrue()
+        ->and(catalogCard(WidgetChannelDriver::KEY)['href'])->toBeNull();
 });
 
 it('chưa có tài khoản kênh nào đang kết nối thì connected=false', function () {
