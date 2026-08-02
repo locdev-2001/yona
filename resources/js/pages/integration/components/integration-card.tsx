@@ -27,7 +27,6 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 export function IntegrationCardItem({ card }: Props) {
     const t = useTranslator();
-    const href = card.href ?? `/integrations/${card.key}`;
 
     return (
         <Card className={!card.enabled ? 'opacity-60' : ''}>
@@ -54,9 +53,13 @@ export function IntegrationCardItem({ card }: Props) {
             </CardContent>
 
             <CardFooter>
-                {card.enabled ? (
+                {!card.href ? (
+                    <Button size="sm" variant="secondary" disabled>
+                        {t('platform.integrations.coming_soon')}
+                    </Button>
+                ) : card.enabled ? (
                     <Button asChild size="sm" variant={card.connected ? 'outline' : 'default'}>
-                        <Link href={href}>{card.connected ? t('platform.integrations.manage') : t('platform.integrations.connect')}</Link>
+                        <Link href={card.href}>{card.connected ? t('platform.integrations.manage') : t('platform.integrations.connect')}</Link>
                     </Button>
                 ) : (
                     <Button size="sm" disabled>

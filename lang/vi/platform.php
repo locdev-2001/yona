@@ -100,6 +100,7 @@ return [
         'title' => 'Tích hợp',
         'subtitle' => 'Kết nối các kênh và dịch vụ với workspace của bạn.',
         'connect' => 'Kết nối',
+        'coming_soon' => 'Sắp ra mắt',
         'manage' => 'Quản lý',
         'connected' => 'Đã kết nối',
         'not_connected' => 'Chưa kết nối',

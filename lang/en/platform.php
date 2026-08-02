@@ -99,6 +99,7 @@ return [
         'title' => 'Integrations',
         'subtitle' => 'Connect channels and services to your workspace.',
         'connect' => 'Connect',
+        'coming_soon' => 'Coming soon',
         'manage' => 'Manage',
         'connected' => 'Connected',
         'not_connected' => 'Not connected',
