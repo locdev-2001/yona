@@ -51,8 +51,8 @@ class AgentsController extends Controller
             account: $account,
             name: $data['name'] ?? null,
             role: $data['role'] ?? 'agent',
-            availability: $data['availability'] ?? 'offline',
-            autoOffline: $data['auto_offline'] ?? false,
+            availability: $data['availability'] ?? null,
+            autoOffline: $data['auto_offline'] ?? null,
         ))->perform();
 
         return response()->json($this->agentPayload($account, $agent->load('avatar')));
@@ -183,7 +183,7 @@ class AgentsController extends Controller
         return [
             'id' => $agent->id,
             'account_id' => $account->id,
-            'availability_status' => $membership?->availabilityName() ?? 'online',
+            'availability_status' => $membership?->availabilityStatus() ?? 'offline',
             'auto_offline' => $membership?->auto_offline ?? false,
             'confirmed' => $agent->isConfirmed(),
             'email' => $agent->email,

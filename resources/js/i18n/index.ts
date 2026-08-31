@@ -18,7 +18,7 @@ const messages: Record<string, unknown> = {
     ...agentMgmt,
     COMMON: {
         OR: 'Or',
-        CLICK_HERE: 'Click here',
+        CLICK_HERE: 'click here',
     },
 };
 
