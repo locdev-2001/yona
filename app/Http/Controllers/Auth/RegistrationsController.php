@@ -34,7 +34,7 @@ class RegistrationsController extends Controller
 
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'min:6', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/', 'regex:/[!@#$%^&*()_+\-=\[\]{}|\'"\/\\\\.,`<>:;?~]/'],
+            'password' => User::passwordRules(),
             'account_name' => ['nullable', 'string'],
             'user_full_name' => ['nullable', 'string'],
         ]);

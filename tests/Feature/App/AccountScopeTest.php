@@ -52,7 +52,7 @@ describe('web_api profile availability', function () {
             ->assertOk()
             ->assertJson(['availability' => 'busy']);
 
-        expect($accountUser->refresh()->availability)->toBe(1);
+        expect($accountUser->refresh()->availability)->toBe(AccountUser::AVAILABILITY_BUSY);
     });
 
     it('updates auto offline', function () {

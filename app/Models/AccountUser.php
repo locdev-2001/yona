@@ -16,6 +16,18 @@ class AccountUser extends Model
 
     public const ROLE_ADMINISTRATOR = 1;
 
+    public const AVAILABILITY_ONLINE = 0;
+
+    public const AVAILABILITY_OFFLINE = 1;
+
+    public const AVAILABILITY_BUSY = 2;
+
+    public const AVAILABILITY_NAMES = [
+        self::AVAILABILITY_ONLINE => 'online',
+        self::AVAILABILITY_OFFLINE => 'offline',
+        self::AVAILABILITY_BUSY => 'busy',
+    ];
+
     protected $fillable = [
         'account_id',
         'user_id',
@@ -57,6 +69,11 @@ class AccountUser extends Model
     public function roleName(): string
     {
         return $this->isAdministrator() ? 'administrator' : 'agent';
+    }
+
+    public function availabilityName(): string
+    {
+        return self::AVAILABILITY_NAMES[$this->availability] ?? 'online';
     }
 
     /** @return list<string> */

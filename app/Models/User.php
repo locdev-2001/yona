@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Notifications\ConfirmationInstructions;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -79,6 +82,16 @@ class User extends Authenticatable
         });
     }
 
+    /** @return list<string> Rule mật khẩu chung cho signup + đổi mật khẩu (độ phức tạp như Chatwoot). */
+    public static function passwordRules(): array
+    {
+        return [
+            'required', 'string', 'min:6',
+            'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/',
+            'regex:/[!@#$%^&*()_+\-=\[\]{}|\'"\/\\\\.,`<>:;?~]/',
+        ];
+    }
+
     public function accounts(): BelongsToMany
     {
         return $this->belongsToMany(Account::class, 'account_users')
@@ -89,6 +102,27 @@ class User extends Authenticatable
     public function accountUsers(): HasMany
     {
         return $this->hasMany(AccountUser::class);
+    }
+
+    public function avatar(): MorphOne
+    {
+        return $this->morphOne(Attachment::class, 'attachable');
+    }
+
+    // Tương đương Avatarable#avatar_url (Chatwoot trả '' khi chưa có avatar).
+    public function avatarUrl(): string
+    {
+        return $this->avatar?->url() ?? '';
+    }
+
+    // Devise reconfirmable gửi mail xác nhận tới địa chỉ MỚI (unconfirmed_email).
+    public function routeNotificationForMail(Notification $notification): string
+    {
+        if ($notification instanceof ConfirmationInstructions && $this->unconfirmed_email) {
+            return $this->unconfirmed_email;
+        }
+
+        return $this->email;
     }
 
     public function isConfirmed(): bool

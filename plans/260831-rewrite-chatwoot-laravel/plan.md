@@ -2,16 +2,16 @@
 
 **Lệnh founder 31/08/2026:** viết lại toàn bộ Chatwoot v4.17.1 (trừ `enterprise/`) sang Laravel, fresh start — không giữ hệ thống cũ. Zalo cá nhân + automation cũ trích từ `main` cắm lại SAU khi rewrite xong. UI = Inertia + React nhưng **giống 100% giao diện Chatwoot**.
 
-**Trạng thái — HANDOFF 31/08/2026 (phiên 1 kết thúc theo nhịp 2-tính-năng của founder):**
+**Trạng thái — 31/08/2026 (phiên 2):**
 
-**Đã xong: A1 + A2 + A3** (commit `3d00198` A1 → `5b7abaa` A2 → `31268d9` fix v3.scss → `6a0b3ed` A3 → `b7cb796` scaffold A4). Gate hiện tại: Pest **38/38** + tsc + `pnpm build` xanh; pint sạch.
-- A1 login / A2 signup+account+onboarding / A3 shell+sidebar — chi tiết từng bảng trace: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`.
+**Đã xong: A1 + A2 + A3 + A4** (commit `3d00198` A1 → `5b7abaa` A2 → `31268d9` fix v3.scss → `6a0b3ed` A3 → `b7cb796` scaffold A4 → A4 profile settings + fix sidebar). Gate hiện tại: Pest **56/56** + tsc + `pnpm build` xanh; pint sạch.
+- A1 login / A2 signup+account+onboarding / A3 shell+sidebar / A4 profile settings — bảng trace: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`, `trace-a4-profile-settings.md`.
+- **A4 gồm:** `/api/v1/profile` GET/PUT + DELETE avatar (bảng attachments polymorphic), đổi email kiểu Devise reconfirmable (unconfirmed_email + confirm swap), trang `/app/accounts/{id}/profile/settings` (picture/details/interface/signature-textarea-tạm/hotkey/password), avatar_url + message_signature vào shared props. **Fix finding A3 của founder:** sidebar không kéo/thu gọn — nguyên nhân thiếu `dir="ltr"` trên `<html>` làm mọi variant `ltr:`/`rtl:` chết; đã fix + chuyển sidebar_width sang ui_settings; sửa luôn mapping enum availability (busy/offline đảo so với gốc).
 - **Hạ tầng kiểm chứng (phiên yona-ee giữ, KHÔNG đụng):** oracle Chatwoot podman `http://localhost:3000` (`~/www/chatwoot-oracle/oracle.sh`), pixel-diff `~/www/pixel-diff` (`node compare.mjs <path>`). Kết quả: login + signup **0.000%** light+dark (DoD (c) A1+A2 ĐẠT, ngưỡng 0.5%). Bài học đã trả giá: trang auth v3 dùng stylesheet riêng `resources/scss/v3.scss` (không `_base.scss` — xem blade switch theo prefix component `v3/`).
 - DB: dev `yona_rw` (seed john@acme.inc / Password1! + account "Acme Inc" id=2; founder@yona.vn + account "Yona" id=1), test `yona_rw_test`. `ENABLE_ACCOUNT_SIGNUP=true` trong .env dev.
-- DoD (d) founder "Test ngay" A1–A3: CHƯA bấm — kịch bản trong từng trace.
+- DoD (c) pixel-diff A4 + sidebar collapsed: đã nhắn yona-ee, chờ kết quả. DoD (d) founder "Test ngay" A1–A4: CHƯA bấm — kịch bản trong từng trace.
 
-**Việc kế tiếp: A4 (Profile settings) — ĐANG DỞ, đã có scaffold:** bảng `attachments` polymorphic + model (commit `b7cb796`, đã migrate + storage:link). Còn phải làm: (1) web_api `POST /api/v1/profile` (name/display_name/email→unconfirmed_email+mail, message_signature textarea tạm chờ ProseMirror B3, ui_settings merge, password đổi kèm current_password) + `DELETE /api/v1/profile/avatar`; (2) avatar_url vào shared props (User morphOne Attachment) để sidebar thấy ngay; (3) trang `/app/accounts/{id}/profile/settings` (route đặt TRƯỚC catch-all placeholder trong group scoped của `routes/web.php`): port SectionLayout + BaseSettingsHeader + WootInput legacy + UserProfilePicture (Avatar allowUpload có sẵn) + UserBasicDetails + ChangePassword + FontSize/UserLanguageSelect/RadioCard hotkey (ui_settings; copy 4 svg hot-key-* từ `refs/chatwoot/public/assets/images/dashboard/profile/`); (4) Pest port từ `spec/controllers/api/v1/profiles_controller_spec.rb`; (5) xong thì nhắn yona-ee diff (harness đang được thêm auto-login) + cập nhật artifact https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c .
-Nguồn đọc: `dashboard/routes/dashboard/settings/profile/*` (Index.vue là khung; MFA/Sessions/Notifications/Audio/AccessToken để F8/D5/B3), `api/v1/profiles_controller.rb`.
+**Việc kế tiếp: A5 theo `feature-roadmap.md`** (đọc mục A5 trong roadmap để biết phạm vi). Nhớ nhịp: xong A5 compact; xong A5+A6 handoff.
 
 **Nhịp phiên (lệnh founder):** xong mỗi tính năng → compact; xong mỗi 2 tính năng → handoff như note này.
 

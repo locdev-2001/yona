@@ -4,21 +4,61 @@ function xsrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
-export async function postJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
+export class ApiError extends Error {
+    constructor(
+        public status: number,
+        public body: { message?: string; errors?: Record<string, string[]> } | null,
+    ) {
+        super(`Request failed: ${status}`);
+    }
+}
+
+// Tương đương parseAPIErrorResponse của Chatwoot (đọc message từ response lỗi).
+export function parseApiErrorMessage(error: unknown): string | null {
+    if (error instanceof ApiError && error.body) {
+        if (error.body.errors) {
+            const [first] = Object.values(error.body.errors).flat();
+            if (first) return first;
+        }
+        return error.body.message ?? null;
+    }
+    return null;
+}
+
+async function request<T>(url: string, method: string, body?: BodyInit, contentType?: string): Promise<T> {
     const response = await fetch(url, {
-        method: 'POST',
+        method,
         headers: {
-            'Content-Type': 'application/json',
+            ...(contentType ? { 'Content-Type': contentType } : {}),
+            Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
             'X-XSRF-TOKEN': xsrfToken(),
         },
         credentials: 'same-origin',
-        body: JSON.stringify(body),
+        body,
     });
 
     if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+        throw new ApiError(response.status, await response.json().catch(() => null));
     }
 
     return response.json() as Promise<T>;
+}
+
+export function postJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
+    return request<T>(url, 'POST', JSON.stringify(body), 'application/json');
+}
+
+export function putJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
+    return request<T>(url, 'PUT', JSON.stringify(body), 'application/json');
+}
+
+export function deleteJson<T = unknown>(url: string): Promise<T> {
+    return request<T>(url, 'DELETE');
+}
+
+// Multipart (upload file) — Laravel chỉ đọc _method từ POST nên spoof PUT.
+export function putForm<T = unknown>(url: string, form: FormData): Promise<T> {
+    form.set('_method', 'PUT');
+    return request<T>(url, 'POST', form);
 }
