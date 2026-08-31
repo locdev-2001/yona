@@ -6,7 +6,7 @@ import path from 'path';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/scss/app.scss', 'resources/js/app.tsx'],
+            input: ['resources/scss/app.scss', 'resources/scss/v3.scss', 'resources/js/app.tsx'],
             refresh: true,
         }),
         react(),

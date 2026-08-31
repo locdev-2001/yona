@@ -12,6 +12,8 @@ export interface GlobalConfig {
     logo: string;
     logoDark: string;
     signupEnabled: boolean;
+    termsURL: string;
+    privacyURL: string;
 }
 
 export interface SharedPageProps {

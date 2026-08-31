@@ -4,8 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title inertia>{{ config('app.name', 'Yona') }}</title>
+        @php($isAuthPage = str_starts_with($page['component'] ?? '', 'v3/'))
         @viteReactRefresh
-        @vite(['resources/scss/app.scss', 'resources/js/app.tsx'])
+        @vite([$isAuthPage ? 'resources/scss/v3.scss' : 'resources/scss/app.scss', 'resources/js/app.tsx'])
         @inertiaHead
     </head>
     <body class="h-full w-full">
