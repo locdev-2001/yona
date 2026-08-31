@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { MouseEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { MouseEvent, RefObject } from 'react';
 
 import { t } from '../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
@@ -24,24 +25,32 @@ import {
 import type { PickerEmoji } from 'shared/components/emoji/pickerHelper';
 
 // Port từ dashboard/components-next/emoji-icon-picker/EmojiIconPicker.vue.
-// Khác bản gốc: danh sách emoji render thẳng trong khung cuộn thay cho
-// virtua/Virtualizer (thư viện ảo hóa của Vue) — DOM trong popup khác, phần
-// còn lại giữ nguyên class + hành vi.
+// Khác bản gốc:
+// 1. Danh sách emoji render thẳng trong khung cuộn thay cho virtua/Virtualizer
+//    (thư viện ảo hóa của Vue) — DOM trong popup khác, class + hành vi giữ nguyên.
+// 2. Popup dựng qua portal ở <body> với position: fixed thay vì absolute trong
+//    luồng. Bản gốc đặt absolute nên bị khung cha `overflow-y-auto` xén mất phần
+//    dưới; portal thoát khỏi mọi khung cuộn và tự lật lên trên khi thiếu chỗ.
 export interface PickerSelection {
     type: 'icon' | 'emoji';
     value: string;
     color?: string;
 }
 
+// Chừa mép màn hình khi popup phải lật lên hoặc dịch ngang.
+const VIEWPORT_MARGIN = 8;
+
 interface EmojiIconPickerProps {
     mode?: (typeof PICKER_MODE)[keyof typeof PICKER_MODE];
     value?: string;
     color?: string;
     showRemoveButton?: boolean;
-    className?: string;
+    // Phần tử neo popup (nút mở). Popup bám mép dưới - mép trái của nó.
+    anchorRef: RefObject<HTMLElement | null>;
     onSelect: (selection: PickerSelection) => void;
     onColorChange?: (color: string) => void;
     onRemove?: () => void;
+    onClose: () => void;
 }
 
 export default function EmojiIconPicker({
@@ -49,10 +58,11 @@ export default function EmojiIconPicker({
     value = '',
     color = '',
     showRemoveButton = false,
-    className = '',
+    anchorRef,
     onSelect,
     onColorChange,
     onRemove,
+    onClose,
 }: EmojiIconPickerProps) {
     const showTabs = mode === PICKER_MODE.BOTH;
     const showHeader = showTabs || (showRemoveButton && Boolean(value));
@@ -67,10 +77,61 @@ export default function EmojiIconPicker({
     );
     const [emojiSearch, setEmojiSearch] = useState('');
     const [recentEmojis, setRecentEmojis] = useState<PickerEmoji[]>([]);
+    const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+    const panelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setRecentEmojis(getRecentEmojis());
     }, []);
+
+    // Đo trước khi trình duyệt vẽ để popup không nhấp nháy ở vị trí sai.
+    useLayoutEffect(() => {
+        const place = () => {
+            const anchor = anchorRef.current;
+            const panel = panelRef.current;
+            if (!anchor || !panel) return;
+
+            const bounds = anchor.getBoundingClientRect();
+            const { offsetWidth: panelWidth, offsetHeight: panelHeight } = panel;
+
+            const fitsBelow = bounds.bottom + panelHeight <= window.innerHeight - VIEWPORT_MARGIN;
+            const top = fitsBelow
+                ? bounds.bottom
+                : Math.max(VIEWPORT_MARGIN, bounds.top - panelHeight);
+            const left = Math.max(
+                VIEWPORT_MARGIN,
+                Math.min(bounds.left, window.innerWidth - panelWidth - VIEWPORT_MARGIN),
+            );
+
+            setPosition({ top, left });
+        };
+
+        place();
+        window.addEventListener('resize', place);
+        // capture: bắt cả khung cuộn bên trong, không chỉ cuộn trang.
+        window.addEventListener('scroll', place, true);
+
+        return () => {
+            window.removeEventListener('resize', place);
+            window.removeEventListener('scroll', place, true);
+        };
+        // Đổi tab làm popup cao khác nhau nên phải đặt lại chỗ.
+    }, [anchorRef, activeTab]);
+
+    // Popup nằm ngoài cây DOM của nút mở nên tự lo việc đóng khi bấm ra ngoài;
+    // bỏ qua chính nút neo để không đóng rồi mở lại ngay.
+    useEffect(() => {
+        const closeOnOutsideClick = (event: globalThis.MouseEvent) => {
+            const target = event.target as Node;
+            if (panelRef.current?.contains(target) || anchorRef.current?.contains(target)) return;
+            onClose();
+        };
+
+        document.addEventListener('mousedown', closeOnOutsideClick);
+
+        return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+    }, [anchorRef, onClose]);
 
     const tabs = [
         { id: PICKER_TAB.ICONS, label: t('EMOJI_ICON_PICKER.TABS.ICONS'), icon: 'i-lucide-shapes' },
@@ -107,10 +168,16 @@ export default function EmojiIconPicker({
         event.currentTarget.style.setProperty('--ep-tint', getEmojiTint(emoji));
     };
 
-    return (
+    return createPortal(
         <div
+            ref={panelRef}
             role="dialog"
-            className={`absolute z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak dark:outline-n-strong/50 ${className}`}
+            style={{
+                top: position?.top ?? 0,
+                left: position?.left ?? 0,
+                visibility: position ? 'visible' : 'hidden',
+            }}
+            className="fixed z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak dark:outline-n-strong/50"
         >
             {showHeader ? (
                 <div className="flex items-center justify-between gap-2 p-2">
@@ -264,6 +331,7 @@ export default function EmojiIconPicker({
                     )}
                 </div>
             ) : null}
-        </div>
+        </div>,
+        document.body,
     );
 }

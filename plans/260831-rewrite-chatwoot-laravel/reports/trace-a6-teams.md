@@ -60,6 +60,7 @@ Nguồn: `refs/chatwoot` v4.17.1. Không mở `enterprise/`.
 2. **Điều hướng giữa các bước wizard dùng `window.location`** thay `router.replace` — mỗi bước là một trang Inertia riêng (không có vue-router trong bản port).
 3. **`icon`/`icon_color` nullable**: middleware `ConvertEmptyStringsToNull` của Laravel biến `''` thành `null`; schema gốc chỉ đặt default nên cho phép null — giữ đúng vậy thay vì ép NOT NULL.
 4. **Không có cache invalidation / unread counts** khi đổi thành viên team (`FilteredCountInvalidator`) — đi cùng realtime ở B4.
+5. **Popup chọn icon/emoji dựng qua portal ở `<body>`, `position: fixed`** — *lệnh founder 31/08 sau khi thấy lỗi trên máy mình*. Bản gốc đặt `absolute` trong luồng nên khung `overflow-y-auto` của bước wizard xén mất phần dưới popup và bắt người dùng cuộn mới thấy hết icon; portal thoát mọi khung cuộn, thiếu chỗ bên dưới thì lật lên trên và kẹp trong mép màn hình. Vị trí khi đủ chỗ **trùng khít bản gốc** (đo: x=507.5 y=240 cả hai bên), nên chỉ lệch pixel ở màn hình thấp — lúc đó phần "lệch" chính là phần bản gốc bị cắt. Popup cũng tự quản việc đóng khi bấm ra ngoài (trước ở `TeamForm`) vì DOM của nó không còn nằm trong nút mở.
 
 ## Kiểm chứng
 
@@ -74,7 +75,7 @@ Nguồn: `refs/chatwoot` v4.17.1. Không mở `enterprise/`.
   6. Xóa: modal yêu cầu gõ đúng "sales crew" mới bật nút → xóa xong danh sách trống, `team_members` mất theo.
   7. Emoji/icon picker: mở được, tab Icons 163 icon + bảng màu, tab Emojis 9 nhóm.
 - **Lỗi thật bắt được khi chạy trình duyệt (test không thấy):** POST tạo team trả 500 vì `icon` gửi lên là `null` (do `ConvertEmptyStringsToNull`) mà cột đang NOT NULL. Đã sửa migration cho khớp schema gốc + thêm test gửi icon null.
-- Pixel-diff (đo tại chỗ với oracle :3000, viewport 1280x800, sau khi sửa 3 mục dưới): list 0.034% · wizard bước 1/2/3 0.034–0.037% · edit + edit/agents 0.034–0.037% · picker vừa mở 0.034%. Toàn bộ phần lệch còn lại là logo Yona + 2 icon sidebar (khác biệt thương hiệu). Phiên kiểm chứng chấm lại đủ light+dark.
+- Pixel-diff (phiên kiểm chứng chấm, ngưỡng 0.1%, light/dark): 9/9 màn ĐẠT — list 0.034/0.035% · new 0.034/0.035% · new/{id}/agents 0.037/0.037% · new/{id}/finish 0.034/0.035% · {id}/edit 0.034/0.035% · edit/agents 0.037/0.037% · edit/finish 0.034/0.035% · modal xóa 0.039/0.031% · picker 0.034/0.035%. A5 không hồi quy (agents/list 0.043/0.044%). **Số của picker đo TRƯỚC khi portal hóa** (mục 5 phần Khác biệt); sau đó picker lệch ~0.94% vì bản gốc bị cắt còn bản mình hiện đủ — đây là chênh có chủ đích, không phải hồi quy. Toàn bộ phần lệch còn lại là logo Yona + 2 icon sidebar (khác biệt thương hiệu). Phiên kiểm chứng chấm lại đủ light+dark.
 
 ## Sửa sau kiểm chứng (31/08, đối chiếu trực tiếp oracle)
 
@@ -82,6 +83,7 @@ Nguồn: `refs/chatwoot` v4.17.1. Không mở `enterprise/`.
 |---|---|---|---|
 | 1 | Bước 2 & 3 luồng TẠO sai URL | `teams.routes.js` lồng `:teamId/agents` và `:teamId/finish` **dưới `new`** → `/settings/teams/new/{teamId}/...`; bản port bỏ mất đoạn `new`. Luồng SỬA vốn đã đúng. Kiểm bằng cách mở URL trên oracle | `routes/web.php` tách 2 nhóm prefix; `CreateTeam.tsx` + `AddAgents.tsx` đổi đích chuyển trang; test trang cập nhật theo |
 | 2 | Khung wizard hẹp hơn oracle 32px, lệch phải 16px | `Wrapper.vue:31` đặt `px-4 overflow-hidden` trên `<router-view>` → Vue gộp class vào **phần tử gốc của trang con**, `!px-6` đè `px-4`. Bản port bọc thêm một `<div>` nên hai padding cộng dồn | `SettingsContent` dùng `cloneElement` truyền class xuống gốc con (`WizardLayout` nhận prop `className`) — ảnh hưởng mọi trang settings về sau |
+| 4 | Popup icon/emoji bị khung wizard xén, phải cuộn mới thấy hết | Bản gốc đặt popup `absolute` bên trong khung `overflow-y-auto` | Portal ra `<body>` + `fixed` + lật lên khi thiếu chỗ (xem Khác biệt #5) — **đi khác bản gốc theo lệnh founder** |
 | 3 | Ô tìm icon trong picker cao 40px thay vì 37px, đẩy lệch cả lưới icon | `Input.vue` là component Vue: `class` người gọi truyền vào rơi xuống thẻ gốc **đồng thời** được `v-bind="$attrs"` gắn lên cả `<input>`; `flex-1` nằm trên input mới cho ra 37px. Bản port chỉ gắn vào wrapper | `Input.tsx` đổi `wrapperClassName` → `className` và gắn cho cả hai chỗ; thêm mặc định `type="text"` như prop gốc |
 
 Cả 3 đều phát hiện bằng cách đọc DOM/CSS hai bên rồi mới sửa, không đoán. Mục 1 phiên kiểm chứng cũng báo độc lập, khớp kết luận.
