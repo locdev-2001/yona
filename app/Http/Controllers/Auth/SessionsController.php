@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SessionsController extends Controller
 {
@@ -20,7 +20,7 @@ class SessionsController extends Controller
         return Inertia::render('v3/views/login/Index');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): SymfonyResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -64,16 +64,19 @@ class SessionsController extends Controller
             'current_sign_in_ip' => $request->ip(),
         ])->save();
 
-        return redirect()->intended('/app');
+        // Vượt ranh giới bundle v3.scss → app.scss: phải full-page load,
+        // client-side visit sẽ giữ nguyên stylesheet auth (mất font + _base).
+        return Inertia::location(session()->pull('url.intended', '/app'));
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): SymfonyResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/app/login');
+        // Ranh giới bundle app.scss → v3.scss (như trên).
+        return Inertia::location('/app/login');
     }
 }

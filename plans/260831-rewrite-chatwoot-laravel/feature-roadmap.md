@@ -199,7 +199,7 @@ Thứ tự là thứ tự thi công. Tính năng sau chỉ phụ thuộc tính n
 | F5 | LINE / SMS Twilio / WhatsApp Cloud / TikTok / Twitter | các bảng channel_* còn lại | mỗi kênh 1 đợt riêng, thứ tự theo nhu cầu khách |
 | F6 | Integrations chọn lọc (slack, google_translate, dialogflow, dashboard_apps) | `integrations_hooks`, HookListener | theo từng app |
 | F7 | Platform API + Super Admin | platform_apps + permissibles, Administrate → Filament hoặc trang Inertia riêng | tạo account/user qua Platform API bằng token |
-| F8 | MFA/2FA + user sessions + security | cột otp_*, `user_sessions`, `/profile/mfa` | bật TOTP, login đòi mã; revoke session |
+| F8 | MFA/2FA + user sessions + security | cột otp_*, `user_sessions`, `/profile/mfa`; giới hạn `MAX_USER_SESSIONS=25`/user — vượt thì login trả **409 kèm session picker** (finding yona-ee 31/08, oracle phải nâng limit khi harness login dồn dập) | bật TOTP, login đòi mã; revoke session; login vượt limit thấy picker |
 
 ---
 
