@@ -5,6 +5,7 @@ use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Models\Account;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -35,11 +36,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');
 
     Route::get('/app', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/app/accounts/{account}', [DashboardController::class, 'show'])
-        ->whereNumber('account')->name('account_dashboard');
 
-    Route::get('/app/accounts/{account}/onboarding', [OnboardingsController::class, 'show'])
-        ->whereNumber('account')->name('onboarding');
-    Route::post('/app/accounts/{account}/onboarding', [OnboardingsController::class, 'update'])
-        ->whereNumber('account');
+    Route::middleware('account.scope')->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
+        Route::get('', fn (Account $account) => redirect("/app/accounts/{$account->id}/dashboard"));
+        Route::get('/dashboard', [DashboardController::class, 'show'])->name('account_dashboard');
+
+        Route::get('/onboarding', [OnboardingsController::class, 'show'])->name('onboarding');
+        Route::post('/onboarding', [OnboardingsController::class, 'update']);
+
+        // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
+        Route::get('/{view}', [DashboardController::class, 'placeholder'])
+            ->where('view', '.*')->name('account_view');
+    });
 });

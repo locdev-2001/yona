@@ -99,8 +99,8 @@ describe('GET /app/auth/confirmation', function () {
         expect($user->refresh()->isConfirmed())->toBeTrue();
         $this->assertAuthenticatedAs($user);
 
-        $this->get('/app')->assertRedirect("/app/accounts/{$account->id}");
-        $this->get("/app/accounts/{$account->id}")->assertRedirect("/app/accounts/{$account->id}/onboarding");
+        $this->get('/app')->assertRedirect("/app/accounts/{$account->id}/dashboard");
+        $this->get("/app/accounts/{$account->id}/dashboard")->assertRedirect("/app/accounts/{$account->id}/onboarding");
     });
 
     it('redirects to login with an invalid token', function () {
@@ -125,7 +125,7 @@ describe('onboarding account_details', function () {
             'company_size' => '1-10',
         ]);
 
-        $response->assertRedirect("/app/accounts/{$account->id}");
+        $response->assertRedirect("/app/accounts/{$account->id}/dashboard");
 
         $account->refresh();
         expect($account->name)->toBe('Wayne Enterprises')
@@ -134,7 +134,7 @@ describe('onboarding account_details', function () {
             ->and($account->custom_attributes['website'])->toBe('wayne.enterprises')
             ->and($account->custom_attributes['industry'])->toBe('Technology');
 
-        $this->get("/app/accounts/{$account->id}")
+        $this->get("/app/accounts/{$account->id}/dashboard")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
     });
@@ -158,7 +158,7 @@ describe('onboarding account_details', function () {
         $this->actingAs($user)->post("/app/accounts/{$account->id}/onboarding", [
             'name' => 'Changed',
             'website' => 'x.com',
-        ])->assertRedirect("/app/accounts/{$account->id}");
+        ])->assertRedirect("/app/accounts/{$account->id}/dashboard");
 
         expect($account->refresh()->name)->toBe('Original');
     });

@@ -19,7 +19,7 @@ class OnboardingsController extends Controller
         $this->authorizeAdministrator($request, $account);
 
         if ($account->onboardingStep() !== 'account_details') {
-            return redirect("/app/accounts/{$account->id}");
+            return redirect("/app/accounts/{$account->id}/dashboard");
         }
 
         return Inertia::render('dashboard/onboarding/Index', [
@@ -33,7 +33,7 @@ class OnboardingsController extends Controller
 
         // Chỉ xử lý khi con trỏ onboarding còn ở bước này — replay cũ thành no-op.
         if ($account->onboardingStep() !== 'account_details') {
-            return redirect("/app/accounts/{$account->id}");
+            return redirect("/app/accounts/{$account->id}/dashboard");
         }
 
         $accountParams = $request->validate([
@@ -67,14 +67,14 @@ class OnboardingsController extends Controller
 
         $account->finishOnboarding();
 
-        return redirect("/app/accounts/{$account->id}");
+        return redirect("/app/accounts/{$account->id}/dashboard");
     }
 
     private function authorizeAdministrator(Request $request, Account $account): void
     {
-        $accountUser = $request->user()->accountUsers()->where('account_id', $account->id)->first();
+        $accountUser = $request->attributes->get('currentAccountUser');
 
-        abort_unless($accountUser !== null, 404);
+        abort_unless($accountUser instanceof AccountUser, 404);
         abort_unless($accountUser->role === AccountUser::ROLE_ADMINISTRATOR, 403);
     }
 }

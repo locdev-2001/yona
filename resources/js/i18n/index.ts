@@ -2,12 +2,16 @@ import login from './locale/en/login.json';
 import signup from './locale/en/signup.json';
 import onboarding from './locale/en/onboarding.json';
 import setNewPassword from './locale/en/setNewPassword.json';
+import settings from './locale/en/settings.json';
+import components from './locale/en/components.json';
 
 const messages: Record<string, unknown> = {
     ...login,
     ...signup,
     ...onboarding,
     ...setNewPassword,
+    ...settings,
+    ...components,
     COMMON: {
         OR: 'Or',
     },

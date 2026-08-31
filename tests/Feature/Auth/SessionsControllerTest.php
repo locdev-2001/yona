@@ -122,9 +122,9 @@ describe('GET /app', function () {
         $account = Account::factory()->create();
         AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->get('/app')->assertRedirect("/app/accounts/{$account->id}");
+        $this->actingAs($user)->get('/app')->assertRedirect("/app/accounts/{$account->id}/dashboard");
 
-        $this->get("/app/accounts/{$account->id}")
+        $this->get("/app/accounts/{$account->id}/dashboard")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
     });
