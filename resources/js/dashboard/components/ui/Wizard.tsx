@@ -2,10 +2,13 @@ import Icon from 'dashboard/components-next/icon/Icon';
 
 // Port từ dashboard/components/ui/Wizard.vue — bước đang đứng lấy từ `activeRoute`
 // thay cho route.name của vue-router.
+// Khác bản gốc: bước nào có `href` thì bấm nhảy thẳng tới bước đó (bản gốc chỉ
+// để `cursor-pointer` mà không gắn điều hướng) — xem WizardLayout.
 export interface WizardItem {
     title: string;
     body: string;
     route: string;
+    href?: string;
 }
 
 interface WizardProps {
@@ -24,11 +27,12 @@ export default function Wizard({ items, activeRoute, className = '' }: WizardPro
                 const isActive = index === activeIndex;
                 const isOver = index < activeIndex;
 
+                const rowClass =
+                    "cursor-pointer flex items-start gap-6 relative after:content-[''] after:absolute after:w-0.5 after:h-full after:top-5 ltr:after:left-4 rtl:after:right-4 before:content-[''] before:absolute before:w-0.5 before:h-4 before:top-0 before:left-4 rtl:before:right-4 last:after:hidden last:before:hidden after:bg-n-slate-3 before:bg-n-slate-3";
+                const Row = item.href ? 'a' : 'div';
+
                 return (
-                    <div
-                        key={item.route}
-                        className="cursor-pointer flex items-start gap-6 relative after:content-[''] after:absolute after:w-0.5 after:h-full after:top-5 ltr:after:left-4 rtl:after:right-4 before:content-[''] before:absolute before:w-0.5 before:h-4 before:top-0 before:left-4 rtl:before:right-4 last:after:hidden last:before:hidden after:bg-n-slate-3 before:bg-n-slate-3"
-                    >
+                    <Row key={item.route} href={item.href} className={rowClass}>
                         <div
                             className={`rounded-2xl flex-shrink-0 size-8 border-2 border-n-slate-3 flex items-center justify-center left-2 leading-4 z-10 top-5 transition-all duration-300 ease-in-out ${
                                 isActive || isOver ? 'bg-n-slate-3' : 'bg-n-background'
@@ -59,7 +63,7 @@ export default function Wizard({ items, activeRoute, className = '' }: WizardPro
                             </div>
                             <p className="m-0 mt-1.5 text-sm text-n-slate-11">{item.body}</p>
                         </div>
-                    </div>
+                    </Row>
                 );
             })}
         </div>

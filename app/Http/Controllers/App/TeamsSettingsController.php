@@ -48,9 +48,12 @@ class TeamsSettingsController extends Controller
         ]);
     }
 
-    public function editFinish(): Response
+    public function editFinish(Account $account, int $teamId): Response
     {
-        return Inertia::render('dashboard/settings/teams/FinishSetup', ['flow' => 'edit']);
+        return Inertia::render('dashboard/settings/teams/FinishSetup', [
+            'flow' => 'edit',
+            'team' => $this->fetchTeam($account, $teamId),
+        ]);
     }
 
     private function fetchTeam(Account $account, int $teamId): Team

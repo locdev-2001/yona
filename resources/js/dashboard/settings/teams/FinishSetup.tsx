@@ -7,14 +7,17 @@ import SettingsContent from '../SettingsContent';
 import Button from 'dashboard/components-next/button/Button';
 import EmptyState from 'dashboard/components/widgets/EmptyState';
 import WizardLayout, { CREATE_ROUTES, EDIT_ROUTES } from './WizardLayout';
+import type { Team } from './types';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ teams/FinishSetup.vue (dùng chung cho bước cuối của cả 2 luồng).
 interface FinishSetupProps {
     flow: 'create' | 'edit';
+    // Chỉ luồng sửa gửi kèm — để wizard dựng liên kết nhảy bước.
+    team?: Team;
 }
 
-export default function FinishSetup({ flow }: FinishSetupProps) {
+export default function FinishSetup({ flow, team }: FinishSetupProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
@@ -26,6 +29,7 @@ export default function FinishSetup({ flow }: FinishSetupProps) {
                     activeRoute={
                         flow === 'create' ? CREATE_ROUTES.WIZARD_FINISH : EDIT_ROUTES.EDIT_WIZARD_FINISH
                     }
+                    teamId={team?.id}
                 >
                     <div className="h-full w-full p-6 col-span-6">
                         <EmptyState

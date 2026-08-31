@@ -40,7 +40,7 @@ export default function EditTeam({ team }: EditTeamProps) {
     return (
         <Dashboard>
             <SettingsContent headerTitle={t('TEAMS_SETTINGS.HEADER')} showBackButton>
-                <WizardLayout flow="edit" activeRoute={EDIT_ROUTES.EDIT_WIZARD_DETAILS}>
+                <WizardLayout flow="edit" activeRoute={EDIT_ROUTES.EDIT_WIZARD_DETAILS} teamId={team.id}>
                     <div className="h-full w-full p-8 col-span-6 overflow-y-auto">
                         <SettingsSubPageHeader
                             headerTitle={t('TEAMS_SETTINGS.EDIT_FLOW.CREATE.TITLE')}
