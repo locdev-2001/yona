@@ -5,9 +5,12 @@ PHP      := php
 ARTISAN  := $(PHP) artisan
 COMPOSER := composer
 PSQL     := psql -h 127.0.0.1 -U postgres
+ORACLE   := $(HOME)/www/chatwoot-oracle/oracle.sh
+PIXEL    := $(HOME)/www/pixel-diff
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev serve migrate seed test format stan check build tinker
+.PHONY: help setup dev serve migrate seed test format stan check build tinker \
+	up down status oracle oracle-down oracle-status diff
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -51,3 +54,36 @@ check: format test build ## Full gate: pint + pest + tsc + vite build
 
 tinker: ## artisan tinker
 	$(ARTISAN) tinker
+
+up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve (:8000, chạy nền)
+	$(ORACLE) up
+	@if curl -sf -o /dev/null http://localhost:8000; then \
+		echo "yona: đã chạy sẵn trên :8000"; \
+	else \
+		nohup $(PHP) artisan serve --port=8000 > storage/logs/serve.log 2>&1 & \
+		sleep 2 && curl -sf -o /dev/null http://localhost:8000 \
+			&& echo "yona: đã start trên :8000 (log: storage/logs/serve.log)" \
+			|| { echo "yona: START LỖI — xem storage/logs/serve.log"; exit 1; }; \
+	fi
+	@$(MAKE) --no-print-directory status
+
+down: ## Tắt yona serve + oracle
+	@pkill -f 'artisan serve --port=8000' && echo "yona: đã tắt" || echo "yona: không có process nào"
+	$(ORACLE) down
+
+status: ## Kiểm tra cổng 3000/8000 + container podman
+	@printf 'oracle  :3000  '; curl -sf -o /dev/null http://localhost:3000 && echo OK || echo TẮT
+	@printf 'yona    :8000  '; curl -sf -o /dev/null http://localhost:8000 && echo OK || echo TẮT
+	@podman ps --format '  podman: {{.Names}} ({{.Status}})' 2>/dev/null || true
+
+oracle: ## Bật oracle Chatwoot (podman)
+	$(ORACLE) up
+
+oracle-down: ## Tắt oracle
+	$(ORACLE) down
+
+oracle-status: ## Trạng thái oracle
+	$(ORACLE) status
+
+diff: ## Pixel-diff oracle vs yona: make diff PAGE='/app/login' (trang auth: PAGE='/app/accounts/{id}/dashboard')
+	cd $(PIXEL) && node compare.mjs '$(PAGE)'
