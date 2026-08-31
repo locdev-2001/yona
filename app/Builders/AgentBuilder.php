@@ -17,14 +17,17 @@ class AgentBuilder
 
     private bool $isNewUser = false;
 
+    // Chữ ký giữ đúng pattr_initialize gốc: default áp khi caller KHÔNG truyền
+    // (bulk_create), còn null truyền vào thì bị loại như `.compact` của Rails
+    // nên cột đó dùng default của bảng (đường create qua controller).
     public function __construct(
         private readonly string $email,
         private readonly User $inviter,
         private readonly Account $account,
         private ?string $name = null,
-        private readonly string $role = 'agent',
-        private readonly string $availability = 'offline',
-        private readonly bool $autoOffline = false,
+        private readonly ?string $role = 'agent',
+        private readonly ?string $availability = 'offline',
+        private readonly ?bool $autoOffline = false,
     ) {}
 
     public function perform(): User
@@ -76,13 +79,15 @@ class AgentBuilder
 
     private function createAccountUser(): AccountUser
     {
-        return AccountUser::create([
+        return AccountUser::create(array_filter([
             'account_id' => $this->account->id,
             'user_id' => $this->user->id,
             'inviter_id' => $this->inviter->id,
-            'role' => AccountUser::roleFromName($this->role),
-            'availability' => AccountUser::availabilityFromName($this->availability),
+            'role' => $this->role === null ? null : AccountUser::roleFromName($this->role),
+            'availability' => $this->availability === null
+                ? null
+                : AccountUser::availabilityFromName($this->availability),
             'auto_offline' => $this->autoOffline,
-        ]);
+        ], fn ($value) => $value !== null));
     }
 }

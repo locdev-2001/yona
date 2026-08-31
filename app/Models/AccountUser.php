@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AvailabilityStatusable;
 use Database\Factories\AccountUserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AccountUser extends Model
 {
     /** @use HasFactory<AccountUserFactory> */
-    use HasFactory;
+    use AvailabilityStatusable, HasFactory;
 
     public const ROLE_AGENT = 0;
 

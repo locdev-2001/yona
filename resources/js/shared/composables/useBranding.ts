@@ -10,5 +10,9 @@ export function useBranding() {
     const replaceInstallationName = (text: string): string =>
         text.replace(/Chatwoot/g, globalConfig.installationName);
 
-    return { replaceInstallationName };
+    // Getter globalConfig/isACustomBrandedInstance (shared/store/globalConfig.js):
+    // bản cài đặt đổi tên = custom branded → ẩn nội dung chỉ dành cho Chatwoot gốc.
+    const isCustomBrandedInstance = globalConfig.installationName !== 'Chatwoot';
+
+    return { replaceInstallationName, isCustomBrandedInstance };
 }

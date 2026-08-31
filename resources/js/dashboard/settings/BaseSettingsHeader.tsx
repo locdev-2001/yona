@@ -2,11 +2,11 @@ import type { ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
+import CustomBrandPolicyWrapper from 'dashboard/components/CustomBrandPolicyWrapper';
 import { getHelpUrlForFeature } from 'dashboard/helper/featureHelper';
 
 // Port từ dashboard/routes/dashboard/settings/components/BaseSettingsHeader.vue
-// (back button + tabs vào cùng các màn settings dùng chúng ở nhóm sau;
-// CustomBrandPolicyWrapper = branding EE nên link help hiện luôn).
+// (back button + tabs vào cùng các màn settings dùng chúng ở nhóm sau).
 interface BaseSettingsHeaderProps {
     title: string;
     description?: ReactNode;
@@ -47,20 +47,22 @@ export default function BaseSettingsHeader({
                                 {description}
                             </p>
                         ) : null}
-                        {helpURL && linkText ? (
-                            <a
-                                href={helpURL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="items-center hidden gap-1 text-sm font-medium sm:inline-flex w-fit text-n-blue-11 hover:underline mb-2"
-                            >
-                                {linkText}
-                                <Icon
-                                    icon="i-lucide-chevron-right"
-                                    className="flex-shrink-0 text-n-blue-11 size-4"
-                                />
-                            </a>
-                        ) : null}
+                        <CustomBrandPolicyWrapper showOnCustomBrandedInstance={false}>
+                            {helpURL && linkText ? (
+                                <a
+                                    href={helpURL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="items-center hidden gap-1 text-sm font-medium sm:inline-flex w-fit text-n-blue-11 hover:underline mb-2"
+                                >
+                                    {linkText}
+                                    <Icon
+                                        icon="i-lucide-chevron-right"
+                                        className="flex-shrink-0 text-n-blue-11 size-4"
+                                    />
+                                </a>
+                            ) : null}
+                        </CustomBrandPolicyWrapper>
                     </div>
                 ) : null}
             </div>

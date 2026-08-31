@@ -50,6 +50,7 @@ describe('AgentBuilder#perform', function () {
 
         expect($membership->role)->toBe(AccountUser::ROLE_AGENT)
             ->and($membership->availability)->toBe(AccountUser::AVAILABILITY_OFFLINE)
+            ->and($membership->auto_offline)->toBeFalse()
             ->and($membership->inviter_id)->toBe($this->inviter->id);
 
         Notification::assertSentTo($agent, ConfirmationInstructions::class);
@@ -67,6 +68,20 @@ describe('AgentBuilder#perform', function () {
             ->and($existing->accountUsers()->where('account_id', $this->account->id)->exists())->toBeTrue();
 
         Notification::assertNothingSent();
+    });
+
+    it('leaves availability and auto_offline at table defaults when passed null', function () {
+        Notification::fake();
+
+        $agent = builderFor($this->account, $this->inviter, [
+            'availability' => null,
+            'autoOffline' => null,
+        ])->perform();
+
+        $membership = $agent->accountUsers()->first();
+
+        expect($membership->availability)->toBe(AccountUser::AVAILABILITY_ONLINE)
+            ->and($membership->auto_offline)->toBeTrue();
     });
 
     it('creates a user with default values when only email is provided', function () {
