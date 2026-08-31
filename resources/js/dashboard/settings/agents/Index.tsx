@@ -4,7 +4,7 @@ import { picoSearch } from '@chatwoot/pico-search';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { deleteJson } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson } from 'dashboard/helper/apiClient';
 import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
 import SettingsLayout from '../SettingsLayout';
@@ -37,11 +37,7 @@ export default function AgentsIndex() {
     useEffect(() => {
         let active = true;
 
-        fetch(`/api/v1/accounts/${accountId}/agents`, {
-            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            credentials: 'same-origin',
-        })
-            .then(response => response.json() as Promise<Agent[]>)
+        getJson<Agent[]>(`/api/v1/accounts/${accountId}/agents`)
             .then(list => {
                 if (active) setAgents(list);
             })

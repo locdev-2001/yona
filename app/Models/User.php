@@ -128,6 +128,11 @@ class User extends Authenticatable
         return $this->hasMany(AccountUser::class);
     }
 
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_members')->withTimestamps();
+    }
+
     public function avatar(): MorphOne
     {
         return $this->morphOne(Attachment::class, 'attachable');

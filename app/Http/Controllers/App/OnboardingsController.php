@@ -16,7 +16,7 @@ class OnboardingsController extends Controller
 {
     public function show(Request $request, Account $account): RedirectResponse|Response
     {
-        $this->authorizeAdministrator($request, $account);
+        $this->abortUnlessAdministratorPage($request);
 
         if ($account->onboardingStep() !== 'account_details') {
             return redirect("/app/accounts/{$account->id}/dashboard");
@@ -29,7 +29,7 @@ class OnboardingsController extends Controller
 
     public function update(Request $request, Account $account): RedirectResponse
     {
-        $this->authorizeAdministrator($request, $account);
+        $this->abortUnlessAdministratorPage($request);
 
         // Chỉ xử lý khi con trỏ onboarding còn ở bước này — replay cũ thành no-op.
         if ($account->onboardingStep() !== 'account_details') {
@@ -70,7 +70,8 @@ class OnboardingsController extends Controller
         return redirect("/app/accounts/{$account->id}/dashboard");
     }
 
-    private function authorizeAdministrator(Request $request, Account $account): void
+    // Trang onboarding trả 404/403 (mặt tiền web), khác 401 JSON của web_api.
+    private function abortUnlessAdministratorPage(Request $request): void
     {
         $accountUser = $request->attributes->get('currentAccountUser');
 

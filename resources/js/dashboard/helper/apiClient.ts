@@ -45,6 +45,10 @@ async function request<T>(url: string, method: string, body?: BodyInit, contentT
     return response.json() as Promise<T>;
 }
 
+export function getJson<T = unknown>(url: string): Promise<T> {
+    return request<T>(url, 'GET');
+}
+
 export function postJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
     return request<T>(url, 'POST', JSON.stringify(body), 'application/json');
 }

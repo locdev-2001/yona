@@ -14,6 +14,7 @@ interface AvatarProps {
     status?: 'online' | 'busy' | 'offline' | null;
     iconName?: string | null;
     hideOfflineStatus?: boolean;
+    className?: string;
     onUpload?: (payload: { file: File; url: string | null }) => void;
     onDelete?: () => void;
 }
@@ -70,6 +71,7 @@ export default function Avatar({
     status = null,
     iconName = null,
     hideOfflineStatus = false,
+    className = '',
     onUpload,
     onDelete,
 }: AvatarProps) {
@@ -118,7 +120,7 @@ export default function Avatar({
 
     return (
         <span
-            className="relative inline-flex group/avatar z-0 flex-shrink-0 align-middle"
+            className={`relative inline-flex group/avatar z-0 flex-shrink-0 align-middle ${className}`.trim()}
             style={{ width: size, height: size }}
         >
             {status && statusClasses[status] ? (
