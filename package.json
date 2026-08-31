@@ -8,6 +8,7 @@
         "tsc": "tsc --noEmit"
     },
     "dependencies": {
+        "@chatwoot/pico-search": "^0.6.2",
         "@inertiajs/react": "^2.0.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0"

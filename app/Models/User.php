@@ -48,6 +48,7 @@ class User extends Authenticatable
         'remember_token',
         'otp_secret',
         'otp_backup_codes',
+        'reset_password_token',
     ];
 
     protected function casts(): array
@@ -58,6 +59,7 @@ class User extends Authenticatable
             'custom_attributes' => 'array',
             'confirmed_at' => 'datetime',
             'confirmation_sent_at' => 'datetime',
+            'reset_password_sent_at' => 'datetime',
             'current_sign_in_at' => 'datetime',
             'last_sign_in_at' => 'datetime',
             'otp_required_for_login' => 'boolean',
@@ -80,6 +82,28 @@ class User extends Authenticatable
                 $user->pubsub_token = Str::random(24);
             }
         });
+    }
+
+    // Tương đương User.from_email của Chatwoot (email đã chuẩn hóa lowercase khi lưu).
+    public static function fromEmail(?string $email): ?self
+    {
+        if ($email === null || $email === '') {
+            return null;
+        }
+
+        return self::query()->where('email', mb_strtolower($email))->first();
+    }
+
+    // Tương đương Devise set_reset_password_token — sinh token cho link đặt mật khẩu.
+    public function generateResetPasswordToken(): string
+    {
+        $token = Str::random(40);
+        $this->forceFill([
+            'reset_password_token' => $token,
+            'reset_password_sent_at' => now(),
+        ])->save();
+
+        return $token;
     }
 
     /** @return list<string> Rule mật khẩu chung cho signup + đổi mật khẩu (độ phức tạp như Chatwoot). */

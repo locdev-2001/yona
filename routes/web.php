@@ -3,6 +3,7 @@
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
+use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
 use App\Models\Account;
@@ -32,6 +33,14 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/app/auth/confirmation', [ConfirmationsController::class, 'show'])->name('confirmation');
 
+// Devise passwords: không chặn guest (admin đã đăng nhập vẫn gửi reset cho agent).
+Route::post('/app/auth/password', [PasswordsController::class, 'store'])
+    ->middleware('throttle:5,1')->name('password_reset');
+Route::get('/app/auth/reset/password', fn () => Inertia::render('v3/views/auth/reset/password/Index'))
+    ->name('password_reset_form');
+Route::get('/app/auth/password/edit', [PasswordsController::class, 'edit'])->name('password_edit');
+Route::put('/app/auth/password', [PasswordsController::class, 'update'])->name('password_update');
+
 Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');
 
@@ -46,6 +55,12 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/profile/settings', fn (Account $account) => Inertia::render('dashboard/settings/profile/Index'))
             ->name('profile_settings');
+
+        Route::middleware('account.role:administrator')->group(function () {
+            Route::get('/settings/agents', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/agents/list"));
+            Route::get('/settings/agents/list', fn (Account $account) => Inertia::render('dashboard/settings/agents/Index'))
+                ->name('settings_agents');
+        });
 
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])

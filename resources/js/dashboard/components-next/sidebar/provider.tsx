@@ -13,9 +13,13 @@ export const MIN_WIDTH = 56;
 export const COLLAPSED_THRESHOLD = 160;
 export const MAX_WIDTH = 320;
 
+export type AccountRole = 'agent' | 'administrator';
+
 export interface SidebarMenuChild {
     name: string;
     label: string;
+    // Tương đương meta.permissions của route Chatwoot: rỗng = mọi thành viên.
+    permissions?: AccountRole[];
     icon?: string | ReactNode;
     to?: string;
     activeOn?: string[];
