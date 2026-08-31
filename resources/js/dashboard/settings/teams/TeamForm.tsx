@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { t } from '../../../i18n';
@@ -33,21 +33,10 @@ export default function TeamForm({
     const [titleTouched, setTitleTouched] = useState(false);
     const [isIconPickerOpen, setIconPickerOpen] = useState(false);
 
-    const pickerWrapper = useRef<HTMLDivElement>(null);
+    // Bọc đúng nút mở nên vừa là mốc neo popup vừa là vùng loại trừ khi bấm ra ngoài.
+    const pickerAnchor = useRef<HTMLDivElement>(null);
 
     const titleInvalid = title.trim().length < 2;
-
-    useEffect(() => {
-        if (!isIconPickerOpen) return undefined;
-
-        const closeOnOutsideClick = (event: globalThis.MouseEvent) => {
-            if (!pickerWrapper.current?.contains(event.target as Node)) setIconPickerOpen(false);
-        };
-
-        document.addEventListener('mousedown', closeOnOutsideClick);
-
-        return () => document.removeEventListener('mousedown', closeOnOutsideClick);
-    }, [isIconPickerOpen]);
 
     const selectIcon = ({ type, value, color }: PickerSelection) => {
         setIcon(value);
@@ -91,7 +80,7 @@ export default function TeamForm({
                         onChange={event => setTitle(event.target.value)}
                         onBlur={() => setTitleTouched(true)}
                     />
-                    <div className="absolute top-[1.75rem] start-0" ref={pickerWrapper}>
+                    <div className="absolute top-[1.75rem] start-0" ref={pickerAnchor}>
                         <Button
                             type="button"
                             variant="ghost"
@@ -107,13 +96,14 @@ export default function TeamForm({
                         </Button>
                         {isIconPickerOpen ? (
                             <EmojiIconPicker
-                                className="start-0 top-10"
+                                anchorRef={pickerAnchor}
                                 value={icon}
                                 color={iconColor}
                                 showRemoveButton
                                 onSelect={selectIcon}
                                 onColorChange={setIconColor}
                                 onRemove={removeIcon}
+                                onClose={() => setIconPickerOpen(false)}
                             />
                         ) : null}
                     </div>
