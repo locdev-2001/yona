@@ -6,4 +6,10 @@ return [
     'unconfirmed' => 'You have to confirm your email address before continuing. Please confirm your email :email.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    'signup' => [
+        'invalid_email' => 'Please enter a valid email address.',
+        'user_exists' => 'A user with this email address already exists.',
+        'failed' => 'Could not create the account. Please try again.',
+    ],
+
 ];

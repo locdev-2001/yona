@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 const pages = import.meta.glob([
     './v3/views/**/*.tsx',
     './dashboard/*.tsx',
+    './dashboard/onboarding/*.tsx',
 ]);
 
 createInertiaApp({

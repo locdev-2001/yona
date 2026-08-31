@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Account;
+use App\Models\AccountUser;
 use App\Models\User;
 
 // Port từ refs/chatwoot/spec/controllers/devise/session_controller_spec.rb
@@ -115,11 +117,23 @@ describe('GET /app', function () {
         $this->get('/app')->assertRedirect('/app/login');
     });
 
-    it('renders the dashboard for authenticated users', function () {
+    it('redirects authenticated users to their account dashboard', function () {
+        $user = User::factory()->create();
+        $account = Account::factory()->create();
+        AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->get('/app')->assertRedirect("/app/accounts/{$account->id}");
+
+        $this->get("/app/accounts/{$account->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
+    });
+
+    it('renders the no-accounts page for users without an account', function () {
         $user = User::factory()->create();
 
         $this->actingAs($user)->get('/app')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
+            ->assertInertia(fn ($page) => $page->component('dashboard/NoAccounts'));
     });
 });

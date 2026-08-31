@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -75,6 +77,18 @@ class User extends Authenticatable
                 $user->pubsub_token = Str::random(24);
             }
         });
+    }
+
+    public function accounts(): BelongsToMany
+    {
+        return $this->belongsToMany(Account::class, 'account_users')
+            ->withPivot(['role', 'availability', 'auto_offline', 'active_at'])
+            ->withTimestamps();
+    }
+
+    public function accountUsers(): HasMany
+    {
+        return $this->hasMany(AccountUser::class);
     }
 
     public function isConfirmed(): bool
