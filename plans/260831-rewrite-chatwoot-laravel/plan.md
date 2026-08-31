@@ -2,16 +2,18 @@
 
 **Lệnh founder 31/08/2026:** viết lại toàn bộ Chatwoot v4.17.1 (trừ `enterprise/`) sang Laravel, fresh start — không giữ hệ thống cũ. Zalo cá nhân + automation cũ trích từ `main` cắm lại SAU khi rewrite xong. UI = Inertia + React nhưng **giống 100% giao diện Chatwoot**.
 
-**Trạng thái — 31/08/2026 (phiên 2):**
+**Trạng thái — HANDOFF 31/08/2026 (phiên 2 kết thúc: A3-nửa-sau + A4 = đủ 2 tính năng theo nhịp founder):**
 
-**Đã xong: A1 + A2 + A3 + A4** (commit `3d00198` A1 → `5b7abaa` A2 → `31268d9` fix v3.scss → `6a0b3ed` A3 → `b7cb796` scaffold A4 → A4 profile settings + fix sidebar). Gate hiện tại: Pest **56/56** + tsc + `pnpm build` xanh; pint sạch.
-- A1 login / A2 signup+account+onboarding / A3 shell+sidebar / A4 profile settings — bảng trace: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`, `trace-a4-profile-settings.md`.
-- **A4 gồm:** `/api/v1/profile` GET/PUT + DELETE avatar (bảng attachments polymorphic), đổi email kiểu Devise reconfirmable (unconfirmed_email + confirm swap), trang `/app/accounts/{id}/profile/settings` (picture/details/interface/signature-textarea-tạm/hotkey/password), avatar_url + message_signature vào shared props. **Fix finding A3 của founder:** sidebar không kéo/thu gọn — nguyên nhân thiếu `dir="ltr"` trên `<html>` làm mọi variant `ltr:`/`rtl:` chết; đã fix + chuyển sidebar_width sang ui_settings; sửa luôn mapping enum availability (busy/offline đảo so với gốc).
+**Đã xong: A1 + A2 + A3 + A4** (…`6a0b3ed` A3 → `b7cb796` scaffold → `2f71525` A4 → `01b51ee` fix 5 finding pixel → `6823979` fix ranh giới stylesheet → `7645fbd` docs). Gate: Pest **57/57** + tsc + `pnpm build` xanh; pint sạch.
+- Trace từng tính năng: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`, `trace-a4-profile-settings.md` (A4 có bảng 6 finding pixel-diff + cách fix).
+- **A4 gồm:** `/api/v1/profile` GET/PUT + DELETE avatar (bảng attachments polymorphic), đổi email kiểu Devise reconfirmable, trang profile settings đủ section (signature textarea tạm chờ ProseMirror B3; MFA/Sessions/Audio/AccessToken → F8/D5), avatar_url + message_signature vào shared props, sidebar_width → ui_settings.
+- **Pixel-diff (yona-ee xác nhận):** flyout collapsed **0.000%**, profile settings 0.114%/0.122% (toàn data noise), login/signup vẫn 0.000% sau các fix. DoD (a)(b)(c) A1–A4 ĐẠT; (d) founder "Test ngay" A3+A4: yona-ee đã báo founder bấm.
+- **Bài học phiên này (đã trả giá, đừng lặp):** (1) `<html>` phải có `dir="ltr"` — thiếu là mọi variant `ltr:`/`rtl:` Tailwind chết im lặng; (2) Chatwoot có style leak KHÔNG scoped `p:last-child{mb-0}` từ message bubble — đã port vào `_base.scss`, spacing các màn sau phụ thuộc nó; (3) ranh giới bundle v3.scss↔app.scss: mọi chuyển trang auth↔dashboard PHẢI `Inertia::location` (login/logout đã làm) — thêm flow mới vượt ranh giới thì nhớ; (4) enum availability = online:0/offline:1/busy:2 (từng bị port đảo).
 - **Hạ tầng kiểm chứng (phiên yona-ee giữ, KHÔNG đụng):** oracle Chatwoot podman `http://localhost:3000` (`~/www/chatwoot-oracle/oracle.sh`), pixel-diff `~/www/pixel-diff` (`node compare.mjs <path>`). Kết quả: login + signup **0.000%** light+dark (DoD (c) A1+A2 ĐẠT, ngưỡng 0.5%). Bài học đã trả giá: trang auth v3 dùng stylesheet riêng `resources/scss/v3.scss` (không `_base.scss` — xem blade switch theo prefix component `v3/`).
 - DB: dev `yona_rw` (seed john@acme.inc / Password1! + account "Acme Inc" id=2; founder@yona.vn + account "Yona" id=1), test `yona_rw_test`. `ENABLE_ACCOUNT_SIGNUP=true` trong .env dev.
-- DoD (c) pixel-diff A4 + sidebar collapsed: đã nhắn yona-ee, chờ kết quả. DoD (d) founder "Test ngay" A1–A4: CHƯA bấm — kịch bản trong từng trace.
+- Hạ tầng kiểm chứng (phiên yona-ee giữ, KHÔNG đụng): oracle podman :3000 (`~/www/chatwoot-oracle/oracle.sh`, đã ENABLE_RACK_ATTACK=false + nâng MAX_USER_SESSIONS), pixel-diff `~/www/pixel-diff` (compare.mjs auto-login, flyout.mjs, collapsed.mjs). Xong tính năng → nhắn yona-ee diff.
 
-**Việc kế tiếp: A5 theo `feature-roadmap.md`** (đọc mục A5 trong roadmap để biết phạm vi). Nhớ nhịp: xong A5 compact; xong A5+A6 handoff.
+**Việc kế tiếp: A5 Quản lý Agents** (roadmap dòng 33): nguồn `settings/agents` + `/api/v1/accounts/:id/agents` (5 endpoint) + `AgentBuilder`; port CRUD agent + mời qua email (mailer + template) + role agent/administrator + xác nhận tài khoản; Pest port từ spec agents. Test ngay: mời agent qua mail (log/mailpit) → agent đặt password → đăng nhập → thấy trong danh sách. Lưu ý có sẵn: khung mail xác nhận + `User::passwordRules()` + `ConfirmationInstructions` (A2/A4), routes agents đặt TRƯỚC catch-all placeholder, trang settings dùng lại `SettingsWrapper`/`SectionLayout`/`BaseSettingsHeader` vừa dựng ở A4. Nhịp: xong A5 compact; xong A5+A6 handoff phiên mới.
 
 **Nhịp phiên (lệnh founder):** xong mỗi tính năng → compact; xong mỗi 2 tính năng → handoff như note này.
 
