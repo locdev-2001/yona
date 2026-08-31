@@ -1,62 +1,31 @@
-# OS
-.DS_Store
-Thumbs.db
-
-# Python (used by .claude skills)
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Laravel / PHP
-/vendor/
-/public/build/
-/public/storage
-/bootstrap/ssr/
-/public/hot
-/.user.ini
-/.well-known/
-/storage/*.key
-# storage/ contents are ignored via per-directory .gitignore files (Laravel skeleton)
-.env
-.env.*
-!.env.example
-!.env.production.example
 *.log
-
-# Editors
-.idea/
-*.swp
-.vscode/*
-!.vscode/extensions.json
-
-# Build / cache
-dist/
-.cache/
-
-# Playwright
-/test-results
-/playwright-report
-/playwright/.cache
-.playwright-mcp
-
-# Plans (local planning artifacts — not tracked)
-/plans/
-
-# Claude local settings (skills/ stays tracked)
-.claude/settings*
-
-/refs
-# PHPUnit
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
 .phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+/refs
+/plans/**/reports/tool-results
+__pycache__/
 .claude/hooks/.logs/
-
-# Generated tool artifacts
-repomix-output.txt

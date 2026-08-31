@@ -1,0 +1,49 @@
+// Port từ shared/assets/fonts/inter.scss + InterDisplay/inter-display.scss
+// (đổi đường dẫn url sang cây resources/fonts).
+
+// Inter Variable Font - Supports any weight from 100-900
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/Inter/InterVariable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/Inter/InterVariable-Italic.woff2') format('woff2');
+}
+
+$inter-display-weights: (
+  100: 'Thin',
+  200: 'ExtraLight',
+  300: 'Light',
+  400: 'Regular',
+  500: 'Medium',
+  600: 'SemiBold',
+  700: 'Bold',
+  800: 'ExtraBold',
+  900: 'Black',
+);
+
+@each $weight, $file in $inter-display-weights {
+  @font-face {
+    font-family: 'InterDisplay';
+    font-style: normal;
+    font-weight: $weight;
+    font-display: swap;
+    src: url('../fonts/InterDisplay/InterDisplay-#{$file}.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'InterDisplay';
+    font-style: italic;
+    font-weight: $weight;
+    font-display: swap;
+    src: url('../fonts/InterDisplay/InterDisplay-#{if($weight == 400, 'Italic', '#{$file}Italic')}.woff2') format('woff2');
+  }
+}

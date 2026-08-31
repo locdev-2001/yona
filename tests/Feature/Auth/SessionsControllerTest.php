@@ -1,0 +1,125 @@
+<?php
+
+use App\Models\User;
+
+// Port từ refs/chatwoot/spec/controllers/devise/session_controller_spec.rb
+// (đổi devise_token_auth JSON API sang session auth Laravel/Inertia; phần
+// sso_auth_token + permissions/accounts chưa port — xem bảng trace A1).
+
+describe('POST /app/login', function () {
+    it('returns unauthorized with invalid credentials', function () {
+        $response = $this->from('/app/login')->post('/app/login', [
+            'email' => 'invalid@invalid.com',
+            'password' => 'invalid',
+        ]);
+
+        $response->assertSessionHasErrors(['email' => 'Invalid login credentials. Please try again.']);
+        $this->assertGuest();
+    });
+
+    it('returns an unconfirmed user error for unconfirmed users', function () {
+        $user = User::factory()->unconfirmed()->create();
+
+        $response = $this->from('/app/login')->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        expect(session('errors')->first('email'))->toContain($user->email);
+        $this->assertGuest();
+    });
+
+    it('authenticates with valid credentials', function () {
+        $user = User::factory()->create();
+
+        $response = $this->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ]);
+
+        $response->assertRedirect('/app');
+        $this->assertAuthenticatedAs($user);
+    });
+
+    it('authenticates with new password special characters', function () {
+        $user = User::factory()->create(['password' => 'Password1!.><?']);
+
+        $response = $this->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!.><?',
+        ]);
+
+        $response->assertRedirect('/app');
+        $this->assertAuthenticatedAs($user);
+    });
+
+    it('tracks sign in count and timestamps', function () {
+        $user = User::factory()->create();
+
+        $this->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ]);
+
+        $user->refresh();
+        expect($user->sign_in_count)->toBe(1)
+            ->and($user->current_sign_in_at)->not->toBeNull();
+    });
+
+    it('rate limits repeated failed attempts', function () {
+        $user = User::factory()->create();
+
+        foreach (range(1, 5) as $attempt) {
+            $this->post('/app/login', [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $response = $this->from('/app/login')->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    });
+});
+
+describe('GET /app/login', function () {
+    it('renders the login page', function () {
+        $this->get('/app/login')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('v3/views/login/Index'));
+    });
+
+    it('redirects authenticated users to the dashboard', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/app/login')->assertRedirect('/app');
+    });
+});
+
+describe('POST /app/logout', function () {
+    it('logs the user out', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/app/logout')->assertRedirect('/app/login');
+        $this->assertGuest();
+    });
+});
+
+describe('GET /app', function () {
+    it('redirects guests to the login page', function () {
+        $this->get('/app')->assertRedirect('/app/login');
+    });
+
+    it('renders the dashboard for authenticated users', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/app')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
+    });
+});

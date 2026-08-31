@@ -4,6 +4,7 @@
         "refs",
         "vendor",
         "node_modules",
-        ".git"
+        "storage",
+        "bootstrap/cache"
     ]
 }
