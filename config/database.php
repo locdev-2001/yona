@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Pdo\Mysql;
 
 return [
 
@@ -17,19 +18,6 @@ return [
     */
 
     'default' => env('DB_CONNECTION', 'sqlite'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allow Destructive Commands
-    |--------------------------------------------------------------------------
-    |
-    | Opt-in flag to permit destructive DB commands (migrate:fresh/refresh/reset,
-    | db:wipe). Defaults to false: AppServiceProvider prohibits them everywhere
-    | except the test suite. Set DB_ALLOW_DESTRUCTIVE=true to run one knowingly.
-    |
-    */
-
-    'allow_destructive' => env('DB_ALLOW_DESTRUCTIVE', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -53,6 +41,7 @@ return [
             'busy_timeout' => null,
             'journal_mode' => null,
             'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
         ],
 
         'mysql' => [
@@ -70,7 +59,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([]) : [],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
         'mariadb' => [
@@ -88,47 +79,24 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([]) : [],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
-        // Runtime connection — connects as the NON-superuser `yona_app`
-        // role so Postgres Row-Level Security policies actually enforce
-        // (superusers + table owners bypass RLS). All app/web/test queries
-        // flow through this; tenant context is set per-request via
-        // `set_config('app.current_workspace', ...)` (IdentifyWorkspace).
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'yona'),
-            'username' => env('DB_USERNAME', 'yona_app'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
-        ],
-
-        // Privileged connection — schema owner (`yona_owner`, NOSUPERUSER + BYPASSRLS).
-        // Used for: schema migrations (DDL), append-only audit writes the app
-        // role may not mutate, and cross-workspace platform-plane reads. NEVER
-        // bound to a customer-plane request path. Shares DB_DATABASE so test
-        // runs can target yona_test via a DB_DATABASE override.
-        'pgsql_privileged' => [
-            'driver' => 'pgsql',
-            'url' => env('DB_PRIVILEGED_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'yona'),
-            'username' => env('DB_PRIVILEGED_USERNAME', 'yona_owner'),
-            'password' => env('DB_PRIVILEGED_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
         'sqlsrv' => [
@@ -181,7 +149,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
@@ -192,6 +160,10 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
+            'max_retries' => env('REDIS_MAX_RETRIES', 3),
+            'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+            'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+            'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
 
         'cache' => [
@@ -201,6 +173,10 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
+            'max_retries' => env('REDIS_MAX_RETRIES', 3),
+            'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+            'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+            'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
 
     ],

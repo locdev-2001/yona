@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Admin;
 use App\Models\User;
 
 return [
@@ -43,12 +42,6 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
-        // Platform plane — internal staff. Separate identity table + RBAC.
-        'admin' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
     ],
 
     /*
@@ -74,10 +67,10 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        'admins' => [
-            'driver' => 'eloquent',
-            'model' => Admin::class,
-        ],
+        // 'users' => [
+        //     'driver' => 'database',
+        //     'table' => 'users',
+        // ],
     ],
 
     /*
@@ -106,13 +99,6 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-
-        'admins' => [
-            'provider' => 'admins',
-            'table' => 'admin_password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
     ],
 
     /*
@@ -120,7 +106,7 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
-    | Here you may define the amount of seconds before a password confirmation
+    | Here you may define the number of seconds before a password confirmation
     | window expires and users are asked to re-enter their password via the
     | confirmation screen. By default, the timeout lasts for three hours.
     |

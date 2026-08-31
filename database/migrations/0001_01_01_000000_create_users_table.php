@@ -6,19 +6,43 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('provider')->default('email');
+            $table->string('uid')->default('');
+            $table->string('password')->default('');
+            $table->unsignedInteger('sign_in_count')->default(0);
+            $table->timestamp('current_sign_in_at')->nullable();
+            $table->timestamp('last_sign_in_at')->nullable();
+            $table->string('current_sign_in_ip')->nullable();
+            $table->string('last_sign_in_ip')->nullable();
+            $table->string('confirmation_token')->nullable();
+            $table->timestamp('confirmed_at')->nullable();
+            $table->timestamp('confirmation_sent_at')->nullable();
+            $table->string('unconfirmed_email')->nullable();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('display_name')->nullable();
+            $table->string('email')->nullable();
+            $table->string('pubsub_token')->nullable();
+            $table->integer('availability')->default(0);
+            $table->jsonb('ui_settings')->default('{}');
+            $table->jsonb('custom_attributes')->default('{}');
+            $table->string('type')->nullable();
+            $table->text('message_signature')->nullable();
+            $table->string('otp_secret')->nullable();
+            $table->integer('consumed_timestep')->nullable();
+            $table->boolean('otp_required_for_login')->default(false);
+            $table->text('otp_backup_codes')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
+            $table->unique('email');
+            $table->unique('pubsub_token');
+            $table->unique('otp_secret');
+            $table->unique(['uid', 'provider']);
+            $table->index('otp_required_for_login');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -37,9 +61,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

@@ -1,6 +1,0 @@
-.sessions/
-.outbox/
-.outbox-dead/
-.env
-node_modules/
-logs/
