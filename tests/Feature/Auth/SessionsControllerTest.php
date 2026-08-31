@@ -44,6 +44,17 @@ describe('POST /app/login', function () {
         $this->assertAuthenticatedAs($user);
     });
 
+    it('forces a full page load for Inertia login requests (bundle boundary v3 -> app)', function () {
+        $user = User::factory()->create();
+
+        $this->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+        ], ['X-Inertia' => 'true'])
+            ->assertStatus(409)
+            ->assertHeader('X-Inertia-Location', '/app');
+    });
+
     it('authenticates with new password special characters', function () {
         $user = User::factory()->create(['password' => 'Password1!.><?']);
 
