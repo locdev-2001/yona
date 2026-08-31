@@ -1,5 +1,14 @@
 # Yona
 
+> ## ⚠️ NHÁNH `rewrite/chatwoot-laravel` — ĐỌC TRƯỚC MỌI THỨ KHÁC
+> **Lệnh founder 31/08/2026:** viết lại 100% Chatwoot v4.17.1 (`refs/chatwoot`, TRỪ `enterprise/` — cấm mở) sang Laravel + Inertia/React, UI giống 100% Chatwoot. Fresh start — mô tả sản phẩm/kiến trúc cũ bên dưới KHÔNG áp dụng trên nhánh này (chỉ còn đúng trên `main` tới khi swap). Zalo cá nhân + automation trích từ main cắm lại SAU (nhóm G).
+> - **Nguồn chuẩn duy nhất:** `plans/260831-rewrite-chatwoot-laravel/` — `plan.md` (13 quyết định kiến trúc + Giao thức kiểm chứng 6 điểm + Trạng thái hiện tại) và `feature-roadmap.md` (40 tính năng A→G, thứ tự thi công).
+> - **Cách giao hàng:** port TỪNG TÍNH NĂNG — đủ migration → backend → UI, xong là test được ngay trên UI. Không big-bang.
+> - **DoD mỗi tính năng:** Pest port từ RSpec xanh + bảng trace Ruby↔PHP + pixel-diff đạt + founder bấm kịch bản "Test ngay". Thiếu 1 = chưa done.
+> - **Artifact tiến độ (cập nhật khi xong mỗi tính năng):** https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c
+> - DB dev nhánh này = `yona_rw` (main vẫn dùng `yona`, không đụng). Chỉ 1 phiên code trên nhánh tại một thời điểm.
+> - Bắt đầu phiên: đọc mục **Trạng thái** trong `plan.md` để biết đang ở tính năng nào, làm tiếp đúng mục đó.
+
 **Codename / repo:** yona (github.com/locflamedia/yona)
 **Tên sản phẩm:** Yona — domain **yona.vn** (rebrand 22/07/2026; tên cũ "Chó rách CRM" / repo cho-rach-management)
 **Định vị:** **Conversational CRM & Automation** (chốt 22/07/2026) — CRM lấy hội thoại làm cửa vào: gom tin nhắn khách từ mọi kênh chat về một inbox (Zalo trước, thêm kênh = thêm driver), biến hội thoại thành khách hàng, tự động hóa chăm sóc. Nội dung định vị/marketing KHÔNG giới hạn theo kênh cụ thể — hướng đa kênh tương lai
