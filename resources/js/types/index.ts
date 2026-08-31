@@ -5,6 +5,7 @@ export interface AuthUser {
     email: string;
     availability: number;
     ui_settings: Record<string, unknown>;
+    type: string | null;
 }
 
 export interface GlobalConfig {

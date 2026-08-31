@@ -1,0 +1,247 @@
+import { t } from '../../../i18n';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import type { SidebarMenuItem } from './provider';
+
+// Port từ menuItems computed trong sidebar/Sidebar.vue.
+// Ẩn theo quyết định skip EE: Captain, Calls, Companies, Audit Logs,
+// Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
+// Nhóm động (Folders/Teams/Channels/Labels/Segments/Tagged) render khi dữ liệu
+// đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
+export function buildMenuItems(accountId: number): SidebarMenuItem[] {
+    const scoped = (path: string) => accountScopedUrl(accountId, path);
+
+    return [
+        {
+            name: 'Inbox',
+            label: t('SIDEBAR.INBOX'),
+            icon: 'i-lucide-inbox',
+            to: scoped('inbox-view'),
+        },
+        {
+            name: 'Conversation',
+            label: t('SIDEBAR.CONVERSATIONS'),
+            icon: 'i-lucide-message-circle',
+            children: [
+                {
+                    name: 'All',
+                    label: t('SIDEBAR.ALL_CONVERSATIONS'),
+                    icon: 'i-lucide-inbox',
+                    activeOn: [scoped('conversations')],
+                    to: scoped('dashboard'),
+                },
+                {
+                    name: 'Mentions',
+                    label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
+                    icon: 'i-lucide-at-sign',
+                    to: scoped('mentions/conversations'),
+                },
+                {
+                    name: 'Participating',
+                    label: t('SIDEBAR.PARTICIPATING_CONVERSATIONS'),
+                    icon: 'i-lucide-user-round-check',
+                    to: scoped('participating/conversations'),
+                },
+                {
+                    name: 'Unattended',
+                    label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
+                    icon: 'i-lucide-clock-alert',
+                    to: scoped('unattended/conversations'),
+                },
+                {
+                    name: 'Folders',
+                    label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
+                    icon: 'i-lucide-folder',
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+                {
+                    name: 'Teams',
+                    label: t('SIDEBAR.TEAMS'),
+                    icon: 'i-lucide-users',
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+                {
+                    name: 'Channels',
+                    label: t('SIDEBAR.CHANNELS'),
+                    icon: 'i-lucide-mailbox',
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+                {
+                    name: 'Labels',
+                    label: t('SIDEBAR.LABELS'),
+                    icon: 'i-lucide-tag',
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+            ],
+        },
+        {
+            name: 'Contacts',
+            label: t('SIDEBAR.CONTACTS'),
+            icon: 'i-lucide-contact',
+            children: [
+                {
+                    name: 'All Contacts',
+                    label: t('SIDEBAR.ALL_CONTACTS'),
+                    to: scoped('contacts'),
+                },
+                {
+                    name: 'Active',
+                    label: t('SIDEBAR.ACTIVE'),
+                    to: scoped('contacts/active'),
+                },
+                {
+                    name: 'Segments',
+                    icon: 'i-lucide-group',
+                    label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+                {
+                    name: 'Tagged With',
+                    icon: 'i-lucide-tag',
+                    label: t('SIDEBAR.TAGGED_WITH'),
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: [],
+                },
+            ],
+        },
+        {
+            name: 'Reports',
+            label: t('SIDEBAR.REPORTS'),
+            icon: 'i-lucide-chart-spline',
+            children: [
+                { name: 'Report Overview', label: t('SIDEBAR.REPORTS_OVERVIEW'), to: scoped('reports/overview') },
+                { name: 'Report Conversation', label: t('SIDEBAR.REPORTS_CONVERSATION'), to: scoped('reports/conversation') },
+                { name: 'Reports Agent', label: t('SIDEBAR.REPORTS_AGENT'), to: scoped('reports/agent') },
+                { name: 'Reports Label', label: t('SIDEBAR.REPORTS_LABEL'), to: scoped('reports/label') },
+                { name: 'Reports Inbox', label: t('SIDEBAR.REPORTS_INBOX'), to: scoped('reports/inboxes') },
+                { name: 'Reports Team', label: t('SIDEBAR.REPORTS_TEAM'), to: scoped('reports/teams') },
+                { name: 'Reports CSAT', label: t('SIDEBAR.CSAT'), to: scoped('reports/csat') },
+                { name: 'Reports Bot', label: t('SIDEBAR.REPORTS_BOT'), to: scoped('reports/bot') },
+            ],
+        },
+        {
+            name: 'Campaigns',
+            label: t('SIDEBAR.CAMPAIGNS'),
+            icon: 'i-lucide-megaphone',
+            children: [
+                { name: 'Live chat', label: t('SIDEBAR.LIVE_CHAT'), to: scoped('campaigns/live_chat') },
+                { name: 'SMS', label: t('SIDEBAR.SMS'), to: scoped('campaigns/sms') },
+                { name: 'WhatsApp', label: t('SIDEBAR.WHATSAPP'), to: scoped('campaigns/whatsapp') },
+            ],
+        },
+        {
+            name: 'Portals',
+            label: t('SIDEBAR.HELP_CENTER.TITLE'),
+            icon: 'i-lucide-library-big',
+            children: [
+                { name: 'Articles', label: t('SIDEBAR.HELP_CENTER.ARTICLES'), to: scoped('portals') },
+                { name: 'Categories', label: t('SIDEBAR.HELP_CENTER.CATEGORIES'), to: scoped('portals/categories') },
+                { name: 'Locales', label: t('SIDEBAR.HELP_CENTER.LOCALES'), to: scoped('portals/locales') },
+                { name: 'Settings', label: t('SIDEBAR.HELP_CENTER.SETTINGS'), to: scoped('portals/settings') },
+            ],
+        },
+        {
+            name: 'Settings',
+            label: t('SIDEBAR.SETTINGS'),
+            icon: 'i-lucide-bolt',
+            children: [
+                {
+                    name: 'Settings Account Settings',
+                    label: t('SIDEBAR.ACCOUNT_SETTINGS'),
+                    icon: 'i-lucide-briefcase',
+                    to: scoped('settings/general'),
+                },
+                {
+                    name: 'Settings Agents',
+                    label: t('SIDEBAR.AGENTS'),
+                    icon: 'i-lucide-square-user',
+                    to: scoped('settings/agents/list'),
+                },
+                {
+                    name: 'Settings Teams',
+                    label: t('SIDEBAR.TEAMS'),
+                    icon: 'i-lucide-users',
+                    activeOn: [scoped('settings/teams')],
+                    to: scoped('settings/teams/list'),
+                },
+                {
+                    name: 'Settings Inboxes',
+                    label: t('SIDEBAR.INBOXES'),
+                    icon: 'i-lucide-inbox',
+                    activeOn: [scoped('settings/inboxes')],
+                    to: scoped('settings/inboxes/list'),
+                },
+                {
+                    name: 'Settings Templates',
+                    label: t('SIDEBAR.WHATSAPP_TEMPLATES'),
+                    icon: 'i-lucide-layout-template',
+                    to: scoped('settings/templates'),
+                },
+                {
+                    name: 'Settings Labels',
+                    label: t('SIDEBAR.LABELS'),
+                    icon: 'i-lucide-tags',
+                    to: scoped('settings/labels/list'),
+                },
+                {
+                    name: 'Settings Custom Attributes',
+                    label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),
+                    icon: 'i-lucide-code',
+                    to: scoped('settings/custom-attributes/list'),
+                },
+                {
+                    name: 'Settings Automation',
+                    label: t('SIDEBAR.AUTOMATION'),
+                    icon: 'i-lucide-repeat',
+                    to: scoped('settings/automation/list'),
+                },
+                {
+                    name: 'Settings Agent Bots',
+                    label: t('SIDEBAR.AGENT_BOTS'),
+                    icon: 'i-lucide-bot',
+                    to: scoped('settings/agent-bots'),
+                },
+                {
+                    name: 'Settings Macros',
+                    label: t('SIDEBAR.MACROS'),
+                    icon: 'i-lucide-toy-brick',
+                    to: scoped('settings/macros'),
+                },
+                {
+                    name: 'Settings Canned Responses',
+                    label: t('SIDEBAR.CANNED_RESPONSES'),
+                    icon: 'i-lucide-message-square-quote',
+                    to: scoped('settings/canned-response/list'),
+                },
+                {
+                    name: 'Settings Integrations',
+                    label: t('SIDEBAR.INTEGRATIONS'),
+                    icon: 'i-lucide-blocks',
+                    to: scoped('settings/integrations'),
+                },
+                {
+                    name: 'Settings Data',
+                    label: t('SIDEBAR.DATA'),
+                    icon: 'i-lucide-database',
+                    to: scoped('settings/data/imports'),
+                },
+                {
+                    name: 'Settings Security',
+                    label: t('SIDEBAR.SECURITY'),
+                    icon: 'i-lucide-shield',
+                    to: scoped('settings/security'),
+                },
+            ],
+        },
+    ];
+}

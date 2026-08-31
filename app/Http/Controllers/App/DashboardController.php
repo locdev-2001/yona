@@ -19,21 +19,24 @@ class DashboardController extends Controller
             return Inertia::render('dashboard/NoAccounts');
         }
 
-        return redirect("/app/accounts/{$account->id}");
+        return redirect("/app/accounts/{$account->id}/dashboard");
     }
 
     public function show(Request $request, Account $account): RedirectResponse|Response
     {
-        $accountUser = $request->user()->accountUsers()->where('account_id', $account->id)->first();
-
-        abort_unless($accountUser !== null, 404);
+        $accountUser = $request->attributes->get('currentAccountUser');
 
         if ($account->onboardingStep() === 'account_details' && $accountUser->isAdministrator()) {
             return redirect("/app/accounts/{$account->id}/onboarding");
         }
 
-        return Inertia::render('dashboard/Index', [
-            'account' => $account->only(['id', 'name', 'locale']),
+        return Inertia::render('dashboard/Index');
+    }
+
+    public function placeholder(Request $request, Account $account, string $view): Response
+    {
+        return Inertia::render('dashboard/PlaceholderView', [
+            'view' => $view,
         ]);
     }
 }
