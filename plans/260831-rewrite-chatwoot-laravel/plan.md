@@ -2,7 +2,7 @@
 
 **Lệnh founder 31/08/2026:** viết lại toàn bộ Chatwoot v4.17.1 (trừ `enterprise/`) sang Laravel, fresh start — không giữ hệ thống cũ. Zalo cá nhân + automation cũ trích từ `main` cắm lại SAU khi rewrite xong. UI = Inertia + React nhưng **giống 100% giao diện Chatwoot**.
 
-**Trạng thái:** Sóng 0 — **A1 XONG** (31/08): skeleton Laravel 13 mới (app cũ đã xóa khỏi branch), DB `yona_rw`/`yona_rw_test`, 4 file token + fonts + `_base/_next-colors` port nguyên, Inertia+React+Tailwind 3, bảng `users` đủ cột Chatwoot, session auth, trang `/app/login` (light+dark, snackbar, wiggle) — Pest 15/15 + tsc + build xanh, trace: `reports/trace-a1-login.md`. ⚠️ Oracle Chatwoot (Giao thức #2) chưa dựng được — máy không có docker; pixel-diff treo lại chờ founder quyết. **Tiếp theo: A2 (Signup + Account + onboarding)** — chờ founder bấm "Test ngay" A1.
+**Trạng thái:** Sóng 0 — **A1 + A2 XONG** (31/08). A1: skeleton Laravel 13 (app cũ đã xóa khỏi branch), DB `yona_rw`/`yona_rw_test`, 4 file token + fonts port nguyên, trang `/app/login` (trace: `reports/trace-a1-login.md`). A2: bảng `accounts`+`account_users`+trigger sequence display_id, AccountBuilder, signup → mail confirm → onboarding account_details → dashboard, seed Acme Inc (trace: `reports/trace-a2-signup-account.md`). Gate: Pest 32/32 + tsc + build xanh; e2e trình duyệt signup→onboarding đã chạy trong phiên. ⚠️ Oracle Chatwoot (Giao thức #2) chưa dựng được — máy không có docker; pixel-diff treo chờ founder quyết. **Tiếp theo: A3 (Dashboard shell + Sidebar)** — chờ founder bấm "Test ngay" A1+A2.
 
 ## Quyết định kiến trúc (chốt khi lập plan)
 

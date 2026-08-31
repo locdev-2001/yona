@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make -n setup)",
+      "Bash(make -n setup-host)",
+      "Bash(git rm *)",
+      "Bash(file docker/php/entrypoint.sh)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8080)",
+      "Bash(curl -s http://localhost:8080)",
+      "Bash(grep -iEo \"<title>[^<]*</title>|Vite manifest[^<\\\\\"]*|exception[^<\\\\\"]{0,80}|message\\\\\":\\\\\"[^\\\\\"]{0,120}\")",
+      "Bash(rm -rf .pnpm-store node_modules/.pnpm)",
+      "Bash(rm -f public/hot)",
+      "Bash(curl -s -o /dev/null -w \"localhost:5173 @react-refresh -> %{http_code}\\\\n\" http://localhost:5173/@react-refresh)",
+      "Bash(curl -s -o /dev/null -w \"[::1]:5173 @react-refresh -> %{http_code}\\\\n\" \"http://[::1]:5173/@react-refresh\")",
+      "Bash(break)",
+      "Bash(git check-ignore *)",
+      "Bash(git merge-base *)",
+      "Bash(git show *)",
+      "Bash(make check *)",
+      "Edit(/.claude/skills/code-styles/**)",
+      "Bash(DB_DATABASE=cho_rach_test php artisan tinker --execute='echo \"ROLES=\".\\\\Spatie\\\\Permission\\\\Models\\\\Role::count\\(\\).\" PERMS=\".\\\\Spatie\\\\Permission\\\\Models\\\\Permission::count\\(\\);')",
+      "Bash(DB_DATABASE=cho_rach_test php artisan db:seed --class=PlatformPermissionSeeder --force)",
+      "Bash(make test *)",
+      "Bash(make pint-test *)",
+      "Bash(make stan *)",
+      "Bash(pnpm run *)"
+    ]
+  }
+}
