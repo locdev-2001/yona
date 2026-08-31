@@ -18,7 +18,7 @@ class ProfileAvailabilityController extends Controller
         ]);
 
         $request->attributes->get('currentAccountUser')->update([
-            'availability' => array_search($data['availability'], AccountUser::AVAILABILITY_NAMES, true),
+            'availability' => AccountUser::availabilityFromName($data['availability']),
         ]);
 
         return response()->json(['availability' => $data['availability']]);

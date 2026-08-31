@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@chatwoot/pico-search':
+        specifier: ^0.6.2
+        version: 0.6.2
       '@inertiajs/react':
         specifier: ^2.0.0
         version: 2.3.27(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -87,6 +90,9 @@ packages:
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
+
+  '@chatwoot/pico-search@0.6.2':
+    resolution: {integrity: sha512-uZnt/c06sN3epXv42uzweoqKLCY94s+h9vpbw/1SYCPTww4kCo18vUUD3QZ7tPPSBQB130Fjc79tLQMSWoGt4w==}
 
   '@egoist/tailwindcss-icons@1.9.2':
     resolution: {integrity: sha512-I6XsSykmhu2cASg5Hp/ICLsJ/K/1aXPaSKjgbWaNp2xYnb4We/arWMmkhhV+9CglOFCUbqx0A3mM2kWV32ZIhw==}
@@ -1185,6 +1191,8 @@ snapshots:
     dependencies:
       package-manager-detector: 1.8.0
       tinyexec: 1.3.0
+
+  '@chatwoot/pico-search@0.6.2': {}
 
   '@egoist/tailwindcss-icons@1.9.2(tailwindcss@3.4.19)':
     dependencies:

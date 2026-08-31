@@ -9,6 +9,7 @@ import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
+import { filterMenuByRole } from './permissions';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
@@ -22,8 +23,9 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount } = usePage<DashboardPageProps>().props;
+    const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
+    const role = currentAccountUser.role;
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -103,7 +105,7 @@ export default function Sidebar({
         Object.assign(document.body.style, { cursor: 'col-resize', userSelect: 'none' });
     };
 
-    const menuItems = useMemo(() => buildMenuItems(accountId), [accountId]);
+    const menuItems = useMemo(() => filterMenuByRole(buildMenuItems(accountId), role), [accountId, role]);
 
     const asideRef = useRef<HTMLElement>(null);
 

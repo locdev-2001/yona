@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
 use Illuminate\Support\Facades\Route;
@@ -20,4 +21,10 @@ Route::middleware(['auth', 'account.scope'])
     ->group(function () {
         Route::post('/profile/availability', [ProfileAvailabilityController::class, 'availability']);
         Route::post('/profile/auto_offline', [ProfileAvailabilityController::class, 'autoOffline']);
+
+        Route::get('/agents', [AgentsController::class, 'index']);
+        Route::post('/agents', [AgentsController::class, 'store']);
+        Route::post('/agents/bulk_create', [AgentsController::class, 'bulkCreate']);
+        Route::match(['put', 'patch'], '/agents/{agentId}', [AgentsController::class, 'update'])->whereNumber('agentId');
+        Route::delete('/agents/{agentId}', [AgentsController::class, 'destroy'])->whereNumber('agentId');
     });

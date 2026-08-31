@@ -28,6 +28,22 @@ class AccountUser extends Model
         self::AVAILABILITY_BUSY => 'busy',
     ];
 
+    public const ROLE_NAMES = [
+        self::ROLE_AGENT => 'agent',
+        self::ROLE_ADMINISTRATOR => 'administrator',
+    ];
+
+    // Enum Rails nhận cả tên lẫn số — API Chatwoot gửi tên ('agent'/'online').
+    public static function roleFromName(string $name): int
+    {
+        return array_flip(self::ROLE_NAMES)[$name] ?? self::ROLE_AGENT;
+    }
+
+    public static function availabilityFromName(string $name): int
+    {
+        return array_flip(self::AVAILABILITY_NAMES)[$name] ?? self::AVAILABILITY_ONLINE;
+    }
+
     protected $fillable = [
         'account_id',
         'user_id',

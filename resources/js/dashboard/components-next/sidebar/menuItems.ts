@@ -157,18 +157,21 @@ export function buildMenuItems(accountId: number): SidebarMenuItem[] {
             children: [
                 {
                     name: 'Settings Account Settings',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.ACCOUNT_SETTINGS'),
                     icon: 'i-lucide-briefcase',
                     to: scoped('settings/general'),
                 },
                 {
                     name: 'Settings Agents',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.AGENTS'),
                     icon: 'i-lucide-square-user',
                     to: scoped('settings/agents/list'),
                 },
                 {
                     name: 'Settings Teams',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.TEAMS'),
                     icon: 'i-lucide-users',
                     activeOn: [scoped('settings/teams')],
@@ -176,6 +179,7 @@ export function buildMenuItems(accountId: number): SidebarMenuItem[] {
                 },
                 {
                     name: 'Settings Inboxes',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.INBOXES'),
                     icon: 'i-lucide-inbox',
                     activeOn: [scoped('settings/inboxes')],
@@ -183,30 +187,35 @@ export function buildMenuItems(accountId: number): SidebarMenuItem[] {
                 },
                 {
                     name: 'Settings Templates',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.WHATSAPP_TEMPLATES'),
                     icon: 'i-lucide-layout-template',
                     to: scoped('settings/templates'),
                 },
                 {
                     name: 'Settings Labels',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.LABELS'),
                     icon: 'i-lucide-tags',
                     to: scoped('settings/labels/list'),
                 },
                 {
                     name: 'Settings Custom Attributes',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),
                     icon: 'i-lucide-code',
                     to: scoped('settings/custom-attributes/list'),
                 },
                 {
                     name: 'Settings Automation',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.AUTOMATION'),
                     icon: 'i-lucide-repeat',
                     to: scoped('settings/automation/list'),
                 },
                 {
                     name: 'Settings Agent Bots',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.AGENT_BOTS'),
                     icon: 'i-lucide-bot',
                     to: scoped('settings/agent-bots'),
@@ -225,18 +234,21 @@ export function buildMenuItems(accountId: number): SidebarMenuItem[] {
                 },
                 {
                     name: 'Settings Integrations',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.INTEGRATIONS'),
                     icon: 'i-lucide-blocks',
                     to: scoped('settings/integrations'),
                 },
                 {
                     name: 'Settings Data',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.DATA'),
                     icon: 'i-lucide-database',
                     to: scoped('settings/data/imports'),
                 },
                 {
                     name: 'Settings Security',
+                    permissions: ['administrator'],
                     label: t('SIDEBAR.SECURITY'),
                     icon: 'i-lucide-shield',
                     to: scoped('settings/security'),

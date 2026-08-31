@@ -125,6 +125,46 @@ body {
   }
 }
 
+// Port từ style non-scoped của dashboard/components/Modal.vue
+.modal-mask {
+  @apply flex items-center justify-center bg-n-alpha-black2 backdrop-blur-[4px] z-[9990] h-full left-0 fixed top-0 w-full;
+
+  .modal-container {
+    &.medium {
+      @apply max-w-[80%] w-[56.25rem];
+    }
+
+    .content {
+      @apply p-8;
+    }
+
+    form,
+    .modal-content {
+      @apply pt-4 pb-8 px-8 self-center;
+
+      a {
+        @apply p-4;
+      }
+
+      .ProseMirror a {
+        @apply p-0;
+      }
+    }
+  }
+}
+
+.modal-big {
+  @apply w-full;
+}
+
+.modal-mask.right-aligned {
+  @apply justify-end;
+
+  .modal-container {
+    @apply rounded-none h-full w-[30rem];
+  }
+}
+
 // Port từ shared/components/Spinner.vue (scoped style)
 @keyframes spinner {
   to {
