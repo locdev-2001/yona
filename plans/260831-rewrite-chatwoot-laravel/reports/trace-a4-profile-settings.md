@@ -55,7 +55,9 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`). Ngày: 31/08/2026.
 | 4 | Section Interface mỗi hàng cao hơn +8px | Chatwoot có style leak KHÔNG scoped `p:last-child { margin-bottom: 0 }` từ `message/bubbles/Text/Index.vue` — hiệu lực toàn app gốc; bản port thiếu | Thêm rule vào `_base.scss` (kèm comment nguồn gốc); chỉ ảnh hưởng app.scss dashboard, auth v3.scss không import base |
 | 5 | Select Preferred Language 171px thay vì 222px | Width của `<select>` = option dài nhất; mình mới có 2 option | Port đủ 42 ngôn ngữ enabled từ `config/initializers/languages.rb` (giữ nguyên tên, kể cả space thừa của 'nl'); đổi locale runtime vẫn ở nhóm G |
 
-Sau fix, đo DOM khớp oracle từng số: row Interface 47.09px = 47.09px, select ngôn ngữ 222px = 222px, `p` last-child margin 0.
+| 6 | Flyout render font hệ thống thay vì Inter | Blade chọn stylesheet theo trang đầu (`v3.scss` auth / `app.scss` dashboard); login → dashboard đi client-side Inertia nên `app.scss` (font + `_base`) không nạp tới khi F5 — bug thật với người dùng, không riêng harness | Login/logout trả `Inertia::location` → vượt ranh giới bundle là full-page load; test ghim 409 + X-Inertia-Location; probe Playwright fresh xác nhận dashboard nạp app.css + InterVariable sau login (commit `6823979`) |
+
+Sau fix, đo DOM khớp oracle từng số: row Interface 47.09px = 47.09px, select ngôn ngữ 222px = 222px, `p` last-child margin 0. Nợ ghi roadmap từ finding vận hành: `MAX_USER_SESSIONS=25` + 409 session picker → mục F8.
 
 ## Kiểm chứng
 
