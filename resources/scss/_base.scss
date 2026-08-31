@@ -20,6 +20,12 @@ p {
   }
 }
 
+// Chatwoot leak style KHÔNG scoped từ message/bubbles/Text/Index.vue —
+// hiệu lực toàn app ở bản gốc nên spacing mọi màn phụ thuộc vào nó.
+p:last-child {
+  margin-bottom: 0;
+}
+
 a {
   @apply text-sm;
 }

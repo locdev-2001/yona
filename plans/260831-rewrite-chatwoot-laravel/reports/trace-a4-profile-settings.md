@@ -45,6 +45,18 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`). Ngày: 31/08/2026.
 | Resize handle không kéo được, không có flyout | Thiếu `dir` trên `<html>` → toàn bộ variant `ltr:`/`rtl:` của Tailwind chết (gồm `ltr:right-0` của handle → handle vô hình nằm mép TRÁI, `ltr:border-r` của aside cũng không áp). Gốc: `App.vue` đặt `:dir="isRTL ? 'rtl' : 'ltr'"` trên `#app` | `dir="ltr"` trong `app.blade.php` (rtl_view động vào nhóm G). Code resize/snap/flyout đã có sẵn từ A3 và chạy đúng sau fix |
 | `sidebar_width` lưu localStorage tạm | Kế hoạch A4 ghi sẵn trong provider.tsx | Chuyển sang `ui_settings.sidebar_width` qua PUT `/api/v1/profile` (đúng gốc dùng updateUISettings) |
 
+## 5 finding pixel-diff của yona-ee (đã xác minh source + fix hết)
+
+| # | Finding | Nguyên nhân | Fix |
+|---|---|---|---|
+| 1 | Header flyout thiếu uppercase/tracking/kẻ dưới | Port thiếu class | Viết lại `SidebarCollapsedPopover.tsx` bám sát template gốc (thêm cả cấu trúc 2 lớp, sub-group collapsible + auto-expand theo active child, clamp đáy viewport) |
+| 2 | Flyout hiện sub-group rỗng (Folders/Teams/Channels) | Thiếu filter `accessibleChildren` | Filter trong popover: child có children chỉ giữ khi có subChild điều hướng được |
+| 3 | Popover lệch vị trí | Hard-code `left-14` + `top-8` | `left = sidebarWidth + 8`, `top = triggerRect.top` (clamp như onMounted gốc); thêm `sidebarWidth` vào SidebarContext |
+| 4 | Section Interface mỗi hàng cao hơn +8px | Chatwoot có style leak KHÔNG scoped `p:last-child { margin-bottom: 0 }` từ `message/bubbles/Text/Index.vue` — hiệu lực toàn app gốc; bản port thiếu | Thêm rule vào `_base.scss` (kèm comment nguồn gốc); chỉ ảnh hưởng app.scss dashboard, auth v3.scss không import base |
+| 5 | Select Preferred Language 171px thay vì 222px | Width của `<select>` = option dài nhất; mình mới có 2 option | Port đủ 42 ngôn ngữ enabled từ `config/initializers/languages.rb` (giữ nguyên tên, kể cả space thừa của 'nl'); đổi locale runtime vẫn ở nhóm G |
+
+Sau fix, đo DOM khớp oracle từng số: row Interface 47.09px = 47.09px, select ngôn ngữ 222px = 222px, `p` last-child margin 0.
+
 ## Kiểm chứng
 
 - Pest: **56/56** (18 test A4 mới; port từ profiles_controller_spec). `tsc` + `pnpm build` + pint xanh.

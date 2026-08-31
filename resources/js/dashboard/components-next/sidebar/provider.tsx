@@ -35,6 +35,7 @@ interface SidebarContextValue {
     setExpandedItem: (name: string) => void;
     isCollapsed: boolean;
     isResizing: boolean;
+    sidebarWidth: number;
     activePopover: string | null;
     setActivePopover: (name: string | null) => void;
     scheduleClose: (delay?: number) => void;

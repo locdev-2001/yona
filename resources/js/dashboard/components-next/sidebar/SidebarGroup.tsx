@@ -142,6 +142,7 @@ export default function SidebarGroup({
                             children={children!}
                             activeChild={activeChild}
                             triggerRect={triggerRect}
+                            onClose={() => setActivePopover(null)}
                             onMouseEnter={cancelClose}
                             onMouseLeave={() => scheduleClose(100)}
                         />

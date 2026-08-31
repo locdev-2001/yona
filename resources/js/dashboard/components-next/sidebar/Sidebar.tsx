@@ -126,6 +126,7 @@ export default function Sidebar({
                 setExpandedItem,
                 isCollapsed: isEffectivelyCollapsed,
                 isResizing,
+                sidebarWidth,
                 activePopover,
                 setActivePopover,
                 scheduleClose,
