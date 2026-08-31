@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
+
+import type { SharedPageProps } from '../../../../../../types';
 
 import { t } from '../../../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -31,6 +33,7 @@ const isValidPassword = (value: string) =>
     /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value) && SPECIAL_CHAR_REGEX.test(value);
 
 export default function SignupForm() {
+    const { globalConfig } = usePage<SharedPageProps>().props;
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [touched, setTouched] = useState({ email: false, password: false });
     const [isPasswordFocused, setPasswordFocused] = useState(false);
@@ -110,6 +113,14 @@ export default function SignupForm() {
                     isLoading={isSignupInProgress}
                 />
             </form>
+            <p
+                className="text-sm mt-5 mb-0 text-n-slate-11 [&>a]:text-n-blue-10 [&>a]:font-medium [&>a]:hover:text-n-blue-11"
+                dangerouslySetInnerHTML={{
+                    __html: t('REGISTER.TERMS_ACCEPT')
+                        .replace('https://www.chatwoot.com/terms', globalConfig.termsURL)
+                        .replace('https://www.chatwoot.com/privacy-policy', globalConfig.privacyURL),
+                }}
+            />
         </div>
     );
 }

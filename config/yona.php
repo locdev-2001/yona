@@ -26,4 +26,17 @@ return [
 
     'blocked_email_domains' => env('BLOCKED_EMAIL_DOMAINS', ''),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Legal links
+    |--------------------------------------------------------------------------
+    |
+    | Tương đương TERMS_URL / PRIVACY_URL trong installation config Chatwoot —
+    | hiện dưới nút đăng ký.
+    |
+    */
+
+    'terms_url' => env('TERMS_URL', 'https://yona.vn/terms'),
+    'privacy_url' => env('PRIVACY_URL', 'https://yona.vn/privacy-policy'),
+
 ];

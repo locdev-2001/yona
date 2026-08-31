@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Notification;
 // — đổi devise_token_auth JSON API sang flow session/Inertia.
 
 describe('signup disabled', function () {
-    it('returns 404 for the signup page and endpoint', function () {
+    it('redirects the signup page to login and returns 404 for the endpoint', function () {
         config(['yona.signup_enabled' => false]);
 
-        $this->get('/app/auth/signup')->assertNotFound();
+        $this->get('/app/auth/signup')->assertRedirect('/app/login');
         $this->post('/app/auth/signup', ['email' => 'a@b.com', 'password' => 'Password1!'])->assertNotFound();
     });
 });

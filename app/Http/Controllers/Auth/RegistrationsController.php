@@ -17,9 +17,13 @@ use Inertia\Response;
 
 class RegistrationsController extends Controller
 {
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
-        abort_unless(config('yona.signup_enabled'), 404);
+        // Chatwoot: route SPA luôn serve, guard FE redirect về login khi signup tắt
+        // (v3/helpers/RouteHelper.js) — API create mới trả 404.
+        if (! config('yona.signup_enabled')) {
+            return redirect('/app/login');
+        }
 
         return Inertia::render('v3/views/auth/signup/Index');
     }
