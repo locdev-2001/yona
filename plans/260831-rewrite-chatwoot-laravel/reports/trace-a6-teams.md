@@ -32,7 +32,7 @@ Nguồn: `refs/chatwoot` v4.17.1. Không mở `enterprise/`.
 | `Edit/EditAgents.vue` | `settings/teams/EditAgents.tsx` | Thành viên hiện tại được chọn sẵn |
 | `FinishSetup.vue` | `settings/teams/FinishSetup.tsx` | Dùng chung cho bước cuối của cả 2 luồng (`flow`) |
 | `components/ui/Wizard.vue` | `dashboard/components/ui/Wizard.tsx` | Bước đang đứng lấy từ prop `activeRoute` thay `route.name` |
-| `settings/Wrapper.vue` + `SettingsHeader.vue` | `settings/SettingsContent.tsx` + `settings/SettingsHeader.tsx` | `keep-alive` là chi tiết Vue router — bỏ |
+| `settings/Wrapper.vue` + `SettingsHeader.vue` | `settings/SettingsContent.tsx` + `settings/SettingsHeader.tsx` | `keep-alive` là chi tiết Vue router — bỏ. `<router-view class="px-4 overflow-hidden">` → `cloneElement` gắn class vào chính phần tử gốc của trang con (xem Sửa sau kiểm chứng #2) |
 | `settings/SettingsSubPageHeader.vue` | `settings/SettingsSubPageHeader.tsx` | |
 | `components/widgets/BackButton.vue` | `components/widgets/BackButton.tsx` | `router.go(-1)` → `history.back()` |
 | `components/widgets/EmptyState.vue` | `components/widgets/EmptyState.tsx` | |
@@ -74,4 +74,14 @@ Nguồn: `refs/chatwoot` v4.17.1. Không mở `enterprise/`.
   6. Xóa: modal yêu cầu gõ đúng "sales crew" mới bật nút → xóa xong danh sách trống, `team_members` mất theo.
   7. Emoji/icon picker: mở được, tab Icons 163 icon + bảng màu, tab Emojis 9 nhóm.
 - **Lỗi thật bắt được khi chạy trình duyệt (test không thấy):** POST tạo team trả 500 vì `icon` gửi lên là `null` (do `ConvertEmptyStringsToNull`) mà cột đang NOT NULL. Đã sửa migration cho khớp schema gốc + thêm test gửi icon null.
-- Pixel-diff: chờ phiên kiểm chứng chấm (list, wizard 3 bước create/edit, modal xóa, trang team members).
+- Pixel-diff (đo tại chỗ với oracle :3000, viewport 1280x800, sau khi sửa 3 mục dưới): list 0.034% · wizard bước 1/2/3 0.034–0.037% · edit + edit/agents 0.034–0.037% · picker vừa mở 0.034%. Toàn bộ phần lệch còn lại là logo Yona + 2 icon sidebar (khác biệt thương hiệu). Phiên kiểm chứng chấm lại đủ light+dark.
+
+## Sửa sau kiểm chứng (31/08, đối chiếu trực tiếp oracle)
+
+| # | Triệu chứng | Nguyên nhân | Sửa |
+|---|---|---|---|
+| 1 | Bước 2 & 3 luồng TẠO sai URL | `teams.routes.js` lồng `:teamId/agents` và `:teamId/finish` **dưới `new`** → `/settings/teams/new/{teamId}/...`; bản port bỏ mất đoạn `new`. Luồng SỬA vốn đã đúng. Kiểm bằng cách mở URL trên oracle | `routes/web.php` tách 2 nhóm prefix; `CreateTeam.tsx` + `AddAgents.tsx` đổi đích chuyển trang; test trang cập nhật theo |
+| 2 | Khung wizard hẹp hơn oracle 32px, lệch phải 16px | `Wrapper.vue:31` đặt `px-4 overflow-hidden` trên `<router-view>` → Vue gộp class vào **phần tử gốc của trang con**, `!px-6` đè `px-4`. Bản port bọc thêm một `<div>` nên hai padding cộng dồn | `SettingsContent` dùng `cloneElement` truyền class xuống gốc con (`WizardLayout` nhận prop `className`) — ảnh hưởng mọi trang settings về sau |
+| 3 | Ô tìm icon trong picker cao 40px thay vì 37px, đẩy lệch cả lưới icon | `Input.vue` là component Vue: `class` người gọi truyền vào rơi xuống thẻ gốc **đồng thời** được `v-bind="$attrs"` gắn lên cả `<input>`; `flex-1` nằm trên input mới cho ra 37px. Bản port chỉ gắn vào wrapper | `Input.tsx` đổi `wrapperClassName` → `className` và gắn cho cả hai chỗ; thêm mặc định `type="text"` như prop gốc |
+
+Cả 3 đều phát hiện bằng cách đọc DOM/CSS hai bên rồi mới sửa, không đoán. Mục 1 phiên kiểm chứng cũng báo độc lập, khớp kết luận.

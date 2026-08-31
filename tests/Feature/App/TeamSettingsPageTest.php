@@ -54,14 +54,14 @@ it('renders each step of the create wizard', function () {
         ->assertInertia(fn ($page) => $page->component('dashboard/settings/teams/CreateTeam'));
 
     $this->actingAs($admin)
-        ->get("/app/accounts/{$account->id}/settings/teams/{$team->id}/agents")
+        ->get("/app/accounts/{$account->id}/settings/teams/new/{$team->id}/agents")
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/settings/teams/AddAgents')
             ->where('team.id', $team->id));
 
     $this->actingAs($admin)
-        ->get("/app/accounts/{$account->id}/settings/teams/{$team->id}/finish")
+        ->get("/app/accounts/{$account->id}/settings/teams/new/{$team->id}/finish")
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/settings/teams/FinishSetup')

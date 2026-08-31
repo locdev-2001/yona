@@ -75,7 +75,7 @@ export default function BaseSettingsHeader({
                                 size="sm"
                                 value={searchQuery}
                                 placeholder={searchPlaceholder}
-                                wrapperClassName="group w-56 min-w-0 hidden sm:flex [&>input]:ltr:!pl-8 [&>input]:rtl:!pr-8 [&>input]:!rounded-[0.625rem]"
+                                className="group w-56 min-w-0 hidden sm:flex [&>input]:ltr:!pl-8 [&>input]:rtl:!pr-8 [&>input]:!rounded-[0.625rem]"
                                 onChange={event => onSearchQueryChange?.(event.target.value)}
                                 prefix={
                                     <Icon

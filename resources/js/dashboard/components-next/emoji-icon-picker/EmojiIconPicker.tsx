@@ -158,7 +158,7 @@ export default function EmojiIconPicker({
                         <Input
                             value={iconSearch}
                             size="md"
-                            wrapperClassName="flex-1"
+                            className="flex-1"
                             placeholder={t('EMOJI_ICON_PICKER.SEARCH_ICON')}
                             customInputClass="!ps-9 !bg-transparent"
                             autoFocus

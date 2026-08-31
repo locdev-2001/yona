@@ -54,7 +54,7 @@ export default function AddAgents({ team }: AddAgentsProps) {
             await postJson(`/api/v1/accounts/${accountId}/teams/${team.id}/team_members`, {
                 user_ids: selectedAgents,
             });
-            window.location.href = accountScopedUrl(accountId, `settings/teams/${team.id}/finish`);
+            window.location.href = accountScopedUrl(accountId, `settings/teams/new/${team.id}/finish`);
         } catch {
             setCreating(false);
             useAlert(t('TEAMS_SETTINGS.TEAM_FORM.ERROR_MESSAGE'));

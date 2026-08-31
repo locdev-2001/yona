@@ -12,7 +12,6 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' 
     message?: string;
     messageType?: MessageType;
     prefix?: ReactNode;
-    wrapperClassName?: string;
 }
 
 const MESSAGE_CLASSES: Record<MessageType, string> = {
@@ -40,7 +39,8 @@ export default function Input({
     message = '',
     messageType = 'info',
     prefix,
-    wrapperClassName = '',
+    className = '',
+    type = 'text',
     onFocus,
     onBlur,
     ...attrs
@@ -49,7 +49,11 @@ export default function Input({
     const inputId = id || generatedId;
     const [isFocused, setFocused] = useState(false);
 
+    // Bản gốc là component Vue: `class` người gọi truyền vào rơi xuống thẻ gốc
+    // (wrapper) ĐỒNG THỜI được v-bind="$attrs" gắn lên cả <input>. Giữ nguyên
+    // hành vi đó để class canh chỉnh (vd flex-1) tác động đúng như Chatwoot.
     const inputClasses = [
+        className,
         customInputClass,
         OUTLINE_CLASSES[messageType === 'error' ? 'error' : 'default'],
         SIZE_CLASSES[size],
@@ -61,7 +65,7 @@ export default function Input({
         .join(' ');
 
     return (
-        <div className={`relative flex flex-col min-w-0 gap-1 ${wrapperClassName}`.trim()}>
+        <div className={`relative flex flex-col min-w-0 gap-1 ${className}`.trim()}>
             {label ? (
                 <label htmlFor={inputId} className="mb-0.5 text-heading-3 text-n-slate-12">
                     {label}
@@ -70,6 +74,7 @@ export default function Input({
             {prefix}
             <input
                 id={inputId}
+                type={type}
                 className={inputClasses}
                 onFocus={event => {
                     setFocused(true);
