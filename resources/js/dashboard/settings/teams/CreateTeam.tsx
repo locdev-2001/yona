@@ -25,7 +25,7 @@ export default function CreateTeam() {
 
         try {
             const team = await postJson<Team>(`/api/v1/accounts/${accountId}/teams`, payload);
-            window.location.href = accountScopedUrl(accountId, `settings/teams/${team.id}/agents`);
+            window.location.href = accountScopedUrl(accountId, `settings/teams/new/${team.id}/agents`);
         } catch {
             setSubmitting(false);
             useAlert(t('TEAMS_SETTINGS.TEAM_FORM.ERROR_MESSAGE'));

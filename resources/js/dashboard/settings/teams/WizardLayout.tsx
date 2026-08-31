@@ -24,10 +24,12 @@ export const EDIT_ROUTES = {
 interface WizardLayoutProps {
     flow: 'create' | 'edit';
     activeRoute: string;
+    // Class SettingsContent truyền xuống (tương đương attr fallthrough của Vue).
+    className?: string;
     children: ReactNode;
 }
 
-export default function WizardLayout({ flow, activeRoute, children }: WizardLayoutProps) {
+export default function WizardLayout({ flow, activeRoute, className = '', children }: WizardLayoutProps) {
     const items: WizardItem[] =
         flow === 'create'
             ? CREATE_STEPS.map(step => ({
@@ -42,7 +44,7 @@ export default function WizardLayout({ flow, activeRoute, children }: WizardLayo
               }));
 
     return (
-        <div className="flex flex-col gap-6 mb-8 max-w-7xl mx-auto w-full !px-6">
+        <div className={`flex flex-col gap-6 mb-8 max-w-7xl mx-auto w-full !px-6 ${className}`}>
             <div className="grid grid-cols-1 lg:grid-cols-8 lg:divide-x lg:divide-n-weak rounded-xl border border-n-weak h-full min-h-[50dvh] w-full">
                 <Wizard
                     items={items}
