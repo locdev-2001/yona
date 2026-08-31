@@ -18,7 +18,20 @@
 - **3 finding kiểm chứng đã fix (đều xác minh source trước khi áp):** (1) `CustomBrandPolicyWrapper` là MIT (NGOÀI `enterprise/`) — bản cài đặt đổi tên = custom branded nên link help trong `BaseSettingsHeader` phải **ẩn**; áp cho mọi trang settings sau; (2) `availability_status` đi theo `auto_offline` + presence (trait `AvailabilityStatusable`), KHÔNG đọc thẳng cột `availability`; (3) `COMMON.CLICK_HERE` = "click here" chữ thường.
 - **Nợ sang B4:** `OnlineStatusTracker` (Redis presence) — `onlinePresence()` đang trả false nên agent luôn hiện offline (khớp oracle khi Redis trống).
 
-**Đang làm: A6 Teams.** Backend XONG (Pest **122/122**): migration `teams` + `team_members`, model `Team`/`TeamMember` (name hạ chữ thường + unique theo account), `TeamsController` (5) + `TeamMembersController` (4) = 9 endpoint, `AgentResource` dùng chung cho payload agent (partial `_agent` gốc), `authorizeAdministrator` gom về base `Controller`. FE đang dựng: xong `Checkbox`/`EmptyState`/`SettingsSubPageHeader`/`ConfirmDeleteModal`/`Wizard`/`EmojiIcon`+`EmojiIconPicker`(bỏ virtua, render thẳng)/`getJson`, trang `settings/teams/list` + `TeamForm`. Còn: `AgentSelector` + BaseTable, wizard create (3 bước) + edit (3 bước), routes web, i18n, test trang.
+**A6 Teams — XONG code + test (`d680cf0`), chờ pixel-diff.** Gate: Pest **140/140** + tsc + `npm run build` xanh, pint sạch. Trace: `reports/trace-a6-teams.md`.
+- **Backend:** migration `teams` + `team_members` (unique `(name,account_id)` và `(team_id,user_id)`; `icon`/`icon_color` **nullable** default `''` như schema gốc); `Team` có `normalizeName()` (bỏ ký tự điều khiển → trim → hạ chữ thường) dùng chung cho model + validate; `TeamsController` 5 + `TeamMembersController` 4 = 9 endpoint, giữ nguyên phép diff add/replace/remove của Rails, id ngoài account → 401 `Invalid User IDs`.
+- **Dọn về một nguồn:** `app/Http/Resources/AgentResource.php` (payload agent dùng chung cho agents + team_members, đúng như partial `_agent` gốc) và `Controller::authorizeAdministrator()` (tương đương `check_authorization` ở `BaseController`).
+- **Frontend:** trang list + wizard create 3 bước + wizard edit 3 bước + `AgentSelector`; hạ tầng mới dùng lại được cho các màn sau: `Wizard`, `SettingsContent`/`SettingsHeader`/`SettingsSubPageHeader`, `BackButton`, `EmptyState`, `ConfirmDeleteModal` (gõ đúng tên mới xóa), `Checkbox`, `BaseTable*`, `EmojiIcon` + `EmojiIconPicker` (163 icon + 9 nhóm emoji), `getJson`.
+- **Đã chạy thật trên trình duyệt** (7 bước trong trace): tạo team → gán 2 agent → finish → mở lại edit thấy chọn sẵn → xóa bằng modal gõ tên. **Lỗi thật chỉ browser mới lộ:** POST tạo team 500 vì `ConvertEmptyStringsToNull` gửi `icon = null` mà cột đang NOT NULL — đã sửa migration cho khớp schema gốc + thêm test.
+- **Khác biệt cố ý:** `EmojiIconPicker` render danh sách emoji thẳng trong khung cuộn thay `virtua/vue` (mới mở thì giống, cuộn sâu có thể lệch); điều hướng giữa các bước wizard dùng `window.location` vì mỗi bước là một trang Inertia.
+- **Nợ sang B4 (cùng OnlineStatusTracker):** `FilteredCountInvalidator` khi đổi thành viên team; `spec/models/team_member_spec.rb` toàn bộ là về nó nên chưa port.
+
+**HANDOFF phiên 3 → phiên 4 (A5 + A6 = đủ 2 tính năng theo nhịp founder).** Việc kế tiếp: **B1** (trục hội thoại — xem `feature-roadmap.md` nhóm B). Trước khi vào B1, nhớ:
+- Nhóm A còn A6 chờ founder bấm "Test ngay" + phiên kiểm chứng chấm pixel; nếu có finding thì sửa trước.
+- Phiên kiểm chứng tên **yona-5b** (chính là yona-ee cũ, đổi tên sau compact) giữ oracle podman :3000 + `~/www/pixel-diff`; bật lại cả 2 phía bằng `cd ~/www/yona && make up`. Xong màn nào nhắn commit + URL để nó chấm.
+- **Luật đã trả giá 2 lần:** test xanh KHÔNG đủ — mỗi tính năng phải bấm thật trên trình duyệt trước khi báo xong (A6 lộ lỗi 500 đúng theo cách này).
+- Dữ liệu test 2 bên khớp nhau: John (admin) + Samantha (agent, sam@acme.inc / Password1!) trên cả oracle lẫn `yona_rw`.
+- File `AGENTS.md` untracked ở gốc repo (bản sao CLAUDE.md, URL artifact bị đổi thành `Codex.ai`) — không phải do phiên này tạo, chưa commit, chờ founder quyết.
 
 **Nhịp phiên (lệnh founder):** xong mỗi tính năng → compact; xong mỗi 2 tính năng → handoff như note này.
 
