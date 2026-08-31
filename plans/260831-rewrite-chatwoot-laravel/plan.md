@@ -2,7 +2,7 @@
 
 **Lệnh founder 31/08/2026:** viết lại toàn bộ Chatwoot v4.17.1 (trừ `enterprise/`) sang Laravel, fresh start — không giữ hệ thống cũ. Zalo cá nhân + automation cũ trích từ `main` cắm lại SAU khi rewrite xong. UI = Inertia + React nhưng **giống 100% giao diện Chatwoot**.
 
-**Trạng thái — HANDOFF 31/08/2026 (phiên 2 kết thúc: A3-nửa-sau + A4 = đủ 2 tính năng theo nhịp founder):**
+**Trạng thái — HANDOFF 31/08/2026 (phiên 3 kết thúc: A5 + A6 = đủ 2 tính năng theo nhịp founder). NHÓM A XONG 6/6.**
 
 **Đã xong: A1 + A2 + A3 + A4** (…`6a0b3ed` A3 → `b7cb796` scaffold → `2f71525` A4 → `01b51ee` fix 5 finding pixel → `6823979` fix ranh giới stylesheet → `7645fbd` docs). Gate: Pest **57/57** + tsc + `pnpm build` xanh; pint sạch.
 - Trace từng tính năng: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`, `trace-a4-profile-settings.md` (A4 có bảng 6 finding pixel-diff + cách fix).
@@ -18,17 +18,21 @@
 - **3 finding kiểm chứng đã fix (đều xác minh source trước khi áp):** (1) `CustomBrandPolicyWrapper` là MIT (NGOÀI `enterprise/`) — bản cài đặt đổi tên = custom branded nên link help trong `BaseSettingsHeader` phải **ẩn**; áp cho mọi trang settings sau; (2) `availability_status` đi theo `auto_offline` + presence (trait `AvailabilityStatusable`), KHÔNG đọc thẳng cột `availability`; (3) `COMMON.CLICK_HERE` = "click here" chữ thường.
 - **Nợ sang B4:** `OnlineStatusTracker` (Redis presence) — `onlinePresence()` đang trả false nên agent luôn hiện offline (khớp oracle khi Redis trống).
 
-**A6 Teams — XONG code + test (`d680cf0`), chờ pixel-diff.** Gate: Pest **140/140** + tsc + `npm run build` xanh, pint sạch. Trace: `reports/trace-a6-teams.md`.
+**A6 Teams — NGHIỆM THU 31/08, đủ 4/4 DoD.** Commit `d680cf0` (A6) → `ae8df5b` (3 finding kiểm chứng) → `e9a5048` + `79bb725` (2 lệnh founder sau khi bấm thử). Gate: Pest **140/140** + tsc + `npm run build` xanh, pint sạch. Trace: `reports/trace-a6-teams.md`. Pixel-diff: 7 màn wizard 0.034–0.037%, modal xóa 0.039%/0.031%, vùng gác popup picker **0.000%** — ĐẠT. Founder đã bấm "Test ngay".
 - **Backend:** migration `teams` + `team_members` (unique `(name,account_id)` và `(team_id,user_id)`; `icon`/`icon_color` **nullable** default `''` như schema gốc); `Team` có `normalizeName()` (bỏ ký tự điều khiển → trim → hạ chữ thường) dùng chung cho model + validate; `TeamsController` 5 + `TeamMembersController` 4 = 9 endpoint, giữ nguyên phép diff add/replace/remove của Rails, id ngoài account → 401 `Invalid User IDs`.
 - **Dọn về một nguồn:** `app/Http/Resources/AgentResource.php` (payload agent dùng chung cho agents + team_members, đúng như partial `_agent` gốc) và `Controller::authorizeAdministrator()` (tương đương `check_authorization` ở `BaseController`).
 - **Frontend:** trang list + wizard create 3 bước + wizard edit 3 bước + `AgentSelector`; hạ tầng mới dùng lại được cho các màn sau: `Wizard`, `SettingsContent`/`SettingsHeader`/`SettingsSubPageHeader`, `BackButton`, `EmptyState`, `ConfirmDeleteModal` (gõ đúng tên mới xóa), `Checkbox`, `BaseTable*`, `EmojiIcon` + `EmojiIconPicker` (163 icon + 9 nhóm emoji), `getJson`.
 - **Đã chạy thật trên trình duyệt** (7 bước trong trace): tạo team → gán 2 agent → finish → mở lại edit thấy chọn sẵn → xóa bằng modal gõ tên. **Lỗi thật chỉ browser mới lộ:** POST tạo team 500 vì `ConvertEmptyStringsToNull` gửi `icon = null` mà cột đang NOT NULL — đã sửa migration cho khớp schema gốc + thêm test.
-- **Khác biệt cố ý:** `EmojiIconPicker` render danh sách emoji thẳng trong khung cuộn thay `virtua/vue` (mới mở thì giống, cuộn sâu có thể lệch); điều hướng giữa các bước wizard dùng `window.location` vì mỗi bước là một trang Inertia.
+- **3 finding sửa sau kiểm chứng (xác minh source trước khi áp):** (1) bước 2-3 luồng TẠO lồng dưới `new` → URL đúng là `/settings/teams/new/{teamId}/agents|finish`; (2) `Wrapper.vue` đặt `px-4 overflow-hidden` trên `<router-view>` → Vue gộp vào GỐC trang con, bọc thêm div là cộng dồn padding — `SettingsContent` dùng `cloneElement`, **ảnh hưởng mọi trang settings về sau**; (3) `Input.vue` không đặt `inheritAttrs:false` nên class người gọi truyền vào nằm ở CẢ wrapper lẫn `<input>` — `flex-1` trên input mới ra đúng chiều cao 37px.
+- **Khác biệt cố ý:** `EmojiIconPicker` render danh sách emoji thẳng trong khung cuộn thay `virtua/vue`; điều hướng giữa các bước wizard dùng `window.location` vì mỗi bước là một trang Inertia; **(lệnh founder)** popup icon/emoji dựng qua portal ở `<body>` + `fixed` + lật lên khi thiếu chỗ, vì bản gốc để `absolute` nên bị khung `overflow-y-auto` xén; **(lệnh founder)** cột bước của luồng SỬA bấm nhảy thẳng được, luồng TẠO giữ nguyên bất động; ô tìm kiếm trong picker focus mỗi lần mở tab (gốc chỉ focus lần đầu do cờ autofocus ở cấp document).
+- **Bẫy đã trả giá ở A6:** ẩn popup bằng `visibility:hidden` để đo kích thước làm `autoFocus` chết — phần tử `visibility:hidden` không nhận được focus; ẩn bằng `opacity:0` mới đúng.
 - **Nợ sang B4 (cùng OnlineStatusTracker):** `FilteredCountInvalidator` khi đổi thành viên team; `spec/models/team_member_spec.rb` toàn bộ là về nó nên chưa port.
 
-**HANDOFF phiên 3 → phiên 4 (A5 + A6 = đủ 2 tính năng theo nhịp founder).** Việc kế tiếp: **B1** (trục hội thoại — xem `feature-roadmap.md` nhóm B). Trước khi vào B1, nhớ:
-- Nhóm A còn A6 chờ founder bấm "Test ngay" + phiên kiểm chứng chấm pixel; nếu có finding thì sửa trước.
-- Phiên kiểm chứng tên **yona-5b** (chính là yona-ee cũ, đổi tên sau compact) giữ oracle podman :3000 + `~/www/pixel-diff`; bật lại cả 2 phía bằng `cd ~/www/yona && make up`. Xong màn nào nhắn commit + URL để nó chấm.
+**HANDOFF phiên 3 → phiên 4 (A5 + A6 = đủ 2 tính năng theo nhịp founder).** Việc kế tiếp: **B1** (Inbox + kênh API, mở nhóm B — xem `feature-roadmap.md`). Trước khi vào B1, nhớ:
+- **Nhóm A đã xong 6/6, nghiệm thu đủ** — không còn việc treo lại phía sau.
+- Phiên kiểm chứng giữ oracle podman :3000 + `~/www/pixel-diff`; bật lại cả 2 phía bằng `cd ~/www/yona && make up`. Xong màn nào nhắn commit + URL để nó chấm. **Tên địa chỉ phiên đổi sau mỗi compact** — gọi `ListAgents` để lấy tên hiện tại, đừng dùng tên cũ; title sidebar cố định: phiên code = `yona-code (branch rewrite)`, phiên kiểm chứng = `yona-kiemchung (oracle + pixel-diff)`.
+- **Cách chấm màn có chênh chủ đích:** crop đúng vùng cả hai bên đều vẽ được (`crop-diff.mjs <slug> <x> <y> <w> <h>`), đừng lấy số toàn trang.
+- **Số modal của A5 dao động theo chấm presence** của John (oracle online / bên mình luôn offline tới khi có B4) — đừng đọc thành hồi quy.
 - **Luật đã trả giá 2 lần:** test xanh KHÔNG đủ — mỗi tính năng phải bấm thật trên trình duyệt trước khi báo xong (A6 lộ lỗi 500 đúng theo cách này).
 - Dữ liệu test 2 bên khớp nhau: John (admin) + Samantha (agent, sam@acme.inc / Password1!) trên cả oracle lẫn `yona_rw`.
 - File `AGENTS.md` untracked ở gốc repo (bản sao CLAUDE.md, URL artifact bị đổi thành `Codex.ai`) — không phải do phiên này tạo, chưa commit, chờ founder quyết.
