@@ -40,7 +40,7 @@ class SetCurrentAccount
             ],
             'currentAccountUser' => fn () => [
                 'role' => $accountUser->roleName(),
-                'availability' => $accountUser->availability,
+                'availability' => $accountUser->availabilityName(),
                 'auto_offline' => $accountUser->auto_offline,
             ],
             'userAccounts' => fn () => $request->user()->accountUsers()

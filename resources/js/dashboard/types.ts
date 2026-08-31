@@ -10,7 +10,7 @@ export interface CurrentAccount {
 
 export interface CurrentAccountUser {
     role: 'agent' | 'administrator';
-    availability: number;
+    availability: AvailabilityStatus;
     auto_offline: boolean;
 }
 

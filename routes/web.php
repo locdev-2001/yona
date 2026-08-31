@@ -44,6 +44,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/onboarding', [OnboardingsController::class, 'show'])->name('onboarding');
         Route::post('/onboarding', [OnboardingsController::class, 'update']);
 
+        Route::get('/profile/settings', fn (Account $account) => Inertia::render('dashboard/settings/profile/Index'))
+            ->name('profile_settings');
+
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])
             ->where('view', '.*')->name('account_view');

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+{{-- dir bắt buộc cho variant ltr:/rtl: của Tailwind (App.vue gốc đặt trên #app; rtl_view động vào nhóm G) --}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

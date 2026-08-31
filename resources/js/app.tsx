@@ -10,6 +10,7 @@ const pages = import.meta.glob([
     './v3/views/**/*.tsx',
     './dashboard/*.tsx',
     './dashboard/onboarding/*.tsx',
+    './dashboard/settings/**/*.tsx',
 ]);
 
 createInertiaApp({

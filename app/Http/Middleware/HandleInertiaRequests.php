@@ -14,9 +14,13 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user()?->only([
-                    'id', 'name', 'display_name', 'email', 'availability', 'ui_settings', 'type',
-                ]),
+                'user' => $request->user() ? [
+                    ...$request->user()->only([
+                        'id', 'name', 'display_name', 'email', 'availability', 'ui_settings', 'type',
+                    ]),
+                    'avatar_url' => $request->user()->avatarUrl(),
+                    'message_signature' => $request->user()->message_signature,
+                ] : null,
             ],
             'globalConfig' => [
                 'installationName' => config('app.name'),

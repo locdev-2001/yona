@@ -1,16 +1,17 @@
 import { createContext, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { usePage } from '@inertiajs/react';
+
+import { putJson } from 'dashboard/helper/apiClient';
+import type { SharedPageProps } from '../../../types';
 
 // Port từ components-next/sidebar/provider.js — context + resize/collapse.
-// Chatwoot lưu sidebar_width vào ui_settings (server); tạm localStorage,
-// chuyển sang ui_settings ở A4 (profile settings).
+// sidebar_width lưu vào ui_settings qua /api/v1/profile như Chatwoot.
 
 export const DEFAULT_WIDTH = 200;
 export const MIN_WIDTH = 56;
 export const COLLAPSED_THRESHOLD = 160;
 export const MAX_WIDTH = 320;
-
-const WIDTH_STORAGE_KEY = 'sidebar_width';
 
 export interface SidebarMenuChild {
     name: string;
@@ -50,25 +51,17 @@ export function useSidebarContext(): SidebarContextValue {
 
 export const SidebarContextProvider = SidebarContext.Provider;
 
-export function readStoredSidebarWidth(): number {
-    try {
-        const stored = Number(localStorage.getItem(WIDTH_STORAGE_KEY));
-        return Number.isFinite(stored) && stored > 0 ? stored : DEFAULT_WIDTH;
-    } catch {
-        return DEFAULT_WIDTH;
-    }
-}
-
-export function persistSidebarWidth(width: number): void {
-    try {
-        localStorage.setItem(WIDTH_STORAGE_KEY, String(width));
-    } catch {
-        /* storage không khả dụng */
-    }
+function persistSidebarWidth(width: number): void {
+    void putJson('/api/v1/profile', { ui_settings: { sidebar_width: width } });
 }
 
 export function useSidebarResize() {
-    const [sidebarWidth, setWidthState] = useState(readStoredSidebarWidth);
+    const { auth } = usePage<SharedPageProps>().props;
+    const storedWidth = Number(auth.user?.ui_settings?.sidebar_width);
+
+    const [sidebarWidth, setWidthState] = useState(
+        Number.isFinite(storedWidth) && storedWidth > 0 ? storedWidth : DEFAULT_WIDTH,
+    );
     const isCollapsed = sidebarWidth < COLLAPSED_THRESHOLD;
 
     const setSidebarWidth = (width: number) => {

@@ -24,11 +24,17 @@ class ConfirmationsController extends Controller
         }
 
         if (! $user->isConfirmed()) {
-            $user->forceFill([
-                'confirmed_at' => now(),
-                'confirmation_token' => null,
-            ])->save();
+            $user->confirmed_at = now();
         }
+
+        // Devise reconfirmable: xác nhận đổi email → hoán đổi địa chỉ mới vào.
+        if ($user->unconfirmed_email) {
+            $user->email = $user->unconfirmed_email;
+            $user->uid = $user->unconfirmed_email;
+            $user->unconfirmed_email = null;
+        }
+
+        $user->forceFill(['confirmation_token' => null])->save();
 
         Auth::login($user);
         $request->session()->regenerate();

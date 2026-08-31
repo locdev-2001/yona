@@ -6,6 +6,8 @@ export interface AuthUser {
     availability: number;
     ui_settings: Record<string, unknown>;
     type: string | null;
+    avatar_url: string;
+    message_signature: string | null;
 }
 
 export interface GlobalConfig {

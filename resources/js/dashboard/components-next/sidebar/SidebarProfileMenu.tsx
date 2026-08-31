@@ -1,7 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
-import { AVAILABILITY_STATUS_KEYS } from 'dashboard/constants/globals';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
@@ -92,8 +91,9 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                 >
                     <Avatar
                         size={32}
+                        src={user.avatar_url}
                         name={availableName}
-                        status={AVAILABILITY_STATUS_KEYS[currentAccountUser.availability]}
+                        status={currentAccountUser.availability}
                     />
                     {!isCollapsed ? (
                         <div className="min-w-0">

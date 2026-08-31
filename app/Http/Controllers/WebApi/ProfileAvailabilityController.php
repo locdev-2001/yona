@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
+use App\Models\AccountUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,12 +14,12 @@ class ProfileAvailabilityController extends Controller
     public function availability(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'availability' => ['required', 'in:online,busy,offline'],
+            'availability' => ['required', 'in:online,offline,busy'],
         ]);
 
-        $availabilityIndex = array_search($data['availability'], ['online', 'busy', 'offline'], true);
-
-        $request->attributes->get('currentAccountUser')->update(['availability' => $availabilityIndex]);
+        $request->attributes->get('currentAccountUser')->update([
+            'availability' => array_search($data['availability'], AccountUser::AVAILABILITY_NAMES, true),
+        ]);
 
         return response()->json(['availability' => $data['availability']]);
     }

@@ -34,13 +34,13 @@ export default function SidebarProfileMenuStatus() {
         label: statusLabel,
         value: AVAILABILITY_STATUS_KEYS[index],
         color: STATUS_COLORS[index],
-        active: availability === index,
+        active: availability === AVAILABILITY_STATUS_KEYS[index],
     }));
 
     const activeStatus = availabilityStatuses.find(status => status.active) ?? availabilityStatuses[0];
 
-    const changeAvailabilityStatus = (statusValue: string, index: number) => {
-        setAvailability(index);
+    const changeAvailabilityStatus = (statusValue: (typeof AVAILABILITY_STATUS_KEYS)[number]) => {
+        setAvailability(statusValue);
         void postJson(`/api/v1/accounts/${currentAccount.id}/profile/availability`, {
             availability: statusValue,
         });
@@ -64,13 +64,13 @@ export default function SidebarProfileMenuStatus() {
                         className="shrink-0"
                         menu={
                             <DropdownBody className="min-w-32 z-20">
-                                {availabilityStatuses.map((status, index) => (
+                                {availabilityStatuses.map(status => (
                                     <DropdownItem
                                         key={status.value}
                                         label={status.label}
                                         icon={<span className={`${status.color} size-[12px] rounded`} />}
                                         className="cursor-pointer"
-                                        onClick={() => changeAvailabilityStatus(status.value, index)}
+                                        onClick={() => changeAvailabilityStatus(status.value)}
                                     />
                                 ))}
                             </DropdownBody>
