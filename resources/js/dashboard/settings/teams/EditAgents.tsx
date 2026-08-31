@@ -77,7 +77,7 @@ export default function EditAgents({ team }: EditAgentsProps) {
     return (
         <Dashboard>
             <SettingsContent headerTitle={t('TEAMS_SETTINGS.HEADER')} showBackButton>
-                <WizardLayout flow="edit" activeRoute={EDIT_ROUTES.EDIT_WIZARD_AGENTS}>
+                <WizardLayout flow="edit" activeRoute={EDIT_ROUTES.EDIT_WIZARD_AGENTS} teamId={team.id}>
                     <div className="h-full w-full px-8 pt-8 col-span-6 overflow-auto">
                         <form className="flex flex-col gap-4 mx-0" onSubmit={event => void saveAgents(event)}>
                             <SettingsSubPageHeader

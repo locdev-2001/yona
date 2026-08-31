@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import Wizard from 'dashboard/components/ui/Wizard';
 import type { WizardItem } from 'dashboard/components/ui/Wizard';
+import type { DashboardPageProps } from '../../types';
 
 // Port từ teams/Create/Index.vue + Edit/Index.vue (khung wizard giống hệt nhau,
 // chỉ khác bộ bước) — router-view thay bằng children.
@@ -21,15 +24,36 @@ export const EDIT_ROUTES = {
     EDIT_WIZARD_FINISH: 'settings_teams_edit_finish',
 } as const;
 
+// Khác bản gốc (lệnh founder 31/08): ở luồng SỬA, team đã tồn tại nên cả 3 bước
+// đều mở thẳng được — bấm vào bước bên trái là nhảy tới, không phải bấm "Update
+// team" ở bước 1 mới sang được bước 2. Luồng TẠO giữ nguyên không bấm được vì
+// bước 1 chưa sinh ra team, quay lại đó là bắt đầu lại từ đầu.
+const EDIT_PATHS = {
+    EDIT_WIZARD_DETAILS: 'edit',
+    EDIT_WIZARD_AGENTS: 'edit/agents',
+    EDIT_WIZARD_FINISH: 'edit/finish',
+} as const;
+
 interface WizardLayoutProps {
     flow: 'create' | 'edit';
     activeRoute: string;
+    // Chỉ luồng sửa cần: dùng để dựng liên kết nhảy bước.
+    teamId?: number;
     // Class SettingsContent truyền xuống (tương đương attr fallthrough của Vue).
     className?: string;
     children: ReactNode;
 }
 
-export default function WizardLayout({ flow, activeRoute, className = '', children }: WizardLayoutProps) {
+export default function WizardLayout({
+    flow,
+    activeRoute,
+    teamId,
+    className = '',
+    children,
+}: WizardLayoutProps) {
+    const { currentAccount } = usePage<DashboardPageProps>().props;
+    const accountId = currentAccount!.id;
+
     const items: WizardItem[] =
         flow === 'create'
             ? CREATE_STEPS.map(step => ({
@@ -41,6 +65,9 @@ export default function WizardLayout({ flow, activeRoute, className = '', childr
                   title: t(`TEAMS_SETTINGS.EDIT_FLOW.${step}.TITLE`),
                   body: t(`TEAMS_SETTINGS.EDIT_FLOW.${step}.BODY`),
                   route: EDIT_ROUTES[step],
+                  href: teamId
+                      ? accountScopedUrl(accountId, `settings/teams/${teamId}/${EDIT_PATHS[step]}`)
+                      : undefined,
               }));
 
     return (

@@ -175,7 +175,12 @@ export default function EmojiIconPicker({
             style={{
                 top: position?.top ?? 0,
                 left: position?.left ?? 0,
-                visibility: position ? 'visible' : 'hidden',
+                // Ẩn bằng opacity chứ không phải visibility: lần vẽ đầu chỉ dùng để
+                // đo kích thước, mà phần tử visibility:hidden thì KHÔNG nhận được
+                // focus — `autoFocus` của ô tìm kiếm sẽ rơi mất. opacity giữ nguyên
+                // khả năng focus và cũng không kịp lên màn (useLayoutEffect đặt chỗ
+                // xong trước khi trình duyệt vẽ).
+                opacity: position ? 1 : 0,
             }}
             className="fixed z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak dark:outline-n-strong/50"
         >
