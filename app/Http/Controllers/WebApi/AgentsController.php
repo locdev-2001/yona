@@ -4,6 +4,7 @@ namespace App\Http\Controllers\WebApi;
 
 use App\Builders\AgentBuilder;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AgentResource;
 use App\Jobs\DeleteObjectJob;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -22,11 +23,7 @@ class AgentsController extends Controller
 {
     public function index(Request $request, Account $account): JsonResponse
     {
-        return response()->json(
-            $this->agents($account)
-                ->map(fn (User $agent) => $this->agentPayload($account, $agent))
-                ->values()
-        );
+        return response()->json(AgentResource::forAccount($this->agents($account), $account));
     }
 
     public function store(Request $request, Account $account): JsonResponse
@@ -55,7 +52,7 @@ class AgentsController extends Controller
             autoOffline: $data['auto_offline'] ?? null,
         ))->perform();
 
-        return response()->json($this->agentPayload($account, $agent->load('avatar')));
+        return response()->json((new AgentResource($agent->load('avatar'), $account))->toArray($request));
     }
 
     public function update(Request $request, Account $account, int $agentId): JsonResponse
@@ -89,7 +86,7 @@ class AgentsController extends Controller
             $this->membershipOf($account, $agent)->update($membershipChanges);
         }
 
-        return response()->json($this->agentPayload($account, $agent->refresh()->load('avatar')));
+        return response()->json((new AgentResource($agent->refresh()->load('avatar'), $account))->toArray($request));
     }
 
     public function destroy(Request $request, Account $account, int $agentId): JsonResponse
@@ -142,17 +139,6 @@ class AgentsController extends Controller
         }
     }
 
-    private function authorizeAdministrator(Request $request): void
-    {
-        $accountUser = $request->attributes->get('currentAccountUser');
-
-        abort_unless(
-            $accountUser instanceof AccountUser && $accountUser->isAdministrator(),
-            401,
-            'You are not authorized to do this action'
-        );
-    }
-
     /** @return Collection<int, User> */
     private function agents(Account $account): Collection
     {
@@ -170,29 +156,5 @@ class AgentsController extends Controller
     private function membershipOf(Account $account, User $agent): AccountUser
     {
         return $agent->accountUsers()->where('account_id', $account->id)->firstOrFail();
-    }
-
-    // Tương đương api/v1/models/_agent.json.jbuilder (custom_role_id = EE, bỏ).
-    private function agentPayload(Account $account, User $agent): array
-    {
-        /** @var AccountUser|null $membership */
-        $membership = $agent->relationLoaded('accountUsers')
-            ? $agent->accountUsers->firstWhere('account_id', $account->id)
-            : $agent->accountUsers()->where('account_id', $account->id)->first();
-
-        return [
-            'id' => $agent->id,
-            'account_id' => $account->id,
-            'availability_status' => $membership?->availabilityStatus() ?? 'offline',
-            'auto_offline' => $membership?->auto_offline ?? false,
-            'confirmed' => $agent->isConfirmed(),
-            'email' => $agent->email,
-            'provider' => $agent->provider,
-            'available_name' => $agent->availableName(),
-            'custom_attributes' => $agent->custom_attributes ?? [],
-            'name' => $agent->name,
-            'role' => $membership?->roleName() ?? 'agent',
-            'thumbnail' => $agent->avatarUrl(),
-        ];
     }
 }

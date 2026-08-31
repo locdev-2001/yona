@@ -5,6 +5,8 @@ import setNewPassword from './locale/en/setNewPassword.json';
 import resetPassword from './locale/en/resetPassword.json';
 import settings from './locale/en/settings.json';
 import components from './locale/en/components.json';
+import teamsSettings from './locale/en/teamsSettings.json';
+import emojiIconPicker from './locale/en/emojiIconPicker.json';
 import agentMgmt from './locale/en/agentMgmt.json';
 
 const messages: Record<string, unknown> = {
@@ -16,6 +18,11 @@ const messages: Record<string, unknown> = {
     ...settings,
     ...components,
     ...agentMgmt,
+    ...teamsSettings,
+    ...emojiIconPicker,
+    GENERAL_SETTINGS: {
+        BACK: 'Back',
+    },
     COMMON: {
         OR: 'Or',
         CLICK_HERE: 'click here',

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\OnboardingsController;
+use App\Http\Controllers\App\TeamsSettingsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
@@ -60,6 +61,17 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/agents', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/agents/list"));
             Route::get('/settings/agents/list', fn (Account $account) => Inertia::render('dashboard/settings/agents/Index'))
                 ->name('settings_agents');
+
+            Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
+            Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
+            Route::get('/settings/teams/new', [TeamsSettingsController::class, 'create'])->name('settings_teams_new');
+            Route::prefix('/settings/teams/{teamId}')->whereNumber('teamId')->group(function () {
+                Route::get('/agents', [TeamsSettingsController::class, 'addAgents'])->name('settings_teams_add_agents');
+                Route::get('/finish', [TeamsSettingsController::class, 'finish'])->name('settings_teams_finish');
+                Route::get('/edit', [TeamsSettingsController::class, 'edit'])->name('settings_teams_edit');
+                Route::get('/edit/agents', [TeamsSettingsController::class, 'editAgents'])->name('settings_teams_edit_members');
+                Route::get('/edit/finish', [TeamsSettingsController::class, 'editFinish'])->name('settings_teams_edit_finish');
+            });
         });
 
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.

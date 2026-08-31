@@ -3,6 +3,8 @@
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
+use App\Http\Controllers\WebApi\TeamMembersController;
+use App\Http\Controllers\WebApi\TeamsController;
 use Illuminate\Support\Facades\Route;
 
 // Mặt tiền web_api: JSON cho chính FE (session auth) — map path /api/v1
@@ -27,4 +29,15 @@ Route::middleware(['auth', 'account.scope'])
         Route::post('/agents/bulk_create', [AgentsController::class, 'bulkCreate']);
         Route::match(['put', 'patch'], '/agents/{agentId}', [AgentsController::class, 'update'])->whereNumber('agentId');
         Route::delete('/agents/{agentId}', [AgentsController::class, 'destroy'])->whereNumber('agentId');
+
+        Route::get('/teams', [TeamsController::class, 'index']);
+        Route::post('/teams', [TeamsController::class, 'store']);
+        Route::get('/teams/{teamId}', [TeamsController::class, 'show'])->whereNumber('teamId');
+        Route::match(['put', 'patch'], '/teams/{teamId}', [TeamsController::class, 'update'])->whereNumber('teamId');
+        Route::delete('/teams/{teamId}', [TeamsController::class, 'destroy'])->whereNumber('teamId');
+
+        Route::get('/teams/{teamId}/team_members', [TeamMembersController::class, 'index'])->whereNumber('teamId');
+        Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');
+        Route::match(['put', 'patch'], '/teams/{teamId}/team_members', [TeamMembersController::class, 'update'])->whereNumber('teamId');
+        Route::delete('/teams/{teamId}/team_members', [TeamMembersController::class, 'destroy'])->whereNumber('teamId');
     });

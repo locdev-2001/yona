@@ -67,6 +67,11 @@ class Account extends Model
             ->withTimestamps();
     }
 
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
     public function onboardingStep(): ?string
     {
         return $this->custom_attributes[self::ONBOARDING_STEP_KEY] ?? null;
