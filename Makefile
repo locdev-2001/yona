@@ -9,7 +9,7 @@ ORACLE   := $(HOME)/www/chatwoot-oracle/oracle.sh
 PIXEL    := $(HOME)/www/pixel-diff
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev serve migrate seed test format stan check build tinker \
+.PHONY: help setup dev serve worker migrate seed test format stan check build tinker \
 	up down status oracle oracle-down oracle-status diff
 
 help: ## Show this help
@@ -55,7 +55,9 @@ check: format test build ## Full gate: pint + pest + tsc + vite build
 tinker: ## artisan tinker
 	$(ARTISAN) tinker
 
-up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve (:8000, chạy nền)
+QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled
+
+up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve (:8000) + queue worker (chạy nền)
 	$(ORACLE) up
 	@if curl -sf -o /dev/null http://localhost:8000; then \
 		echo "yona: đã chạy sẵn trên :8000"; \
@@ -65,15 +67,30 @@ up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona
 			&& echo "yona: đã start trên :8000 (log: storage/logs/serve.log)" \
 			|| { echo "yona: START LỖI — xem storage/logs/serve.log"; exit 1; }; \
 	fi
+	@if [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; then \
+		echo "worker: đã chạy sẵn (pid $$(cat storage/logs/worker.pid))"; \
+	else \
+		nohup $(PHP) artisan queue:listen --queue=$(QUEUE_TIERS) --tries=1 > storage/logs/worker.log 2>&1 & \
+		echo $$! > storage/logs/worker.pid; \
+		echo "worker: đã start (queue:listen $(QUEUE_TIERS) — log: storage/logs/worker.log)"; \
+	fi
 	@$(MAKE) --no-print-directory status
 
-down: ## Tắt yona serve + oracle
+worker: ## Queue worker foreground (dev): đủ tier theo phân tầng Chatwoot
+	$(ARTISAN) queue:listen --queue=$(QUEUE_TIERS) --tries=1
+
+down: ## Tắt yona serve + worker + oracle
 	@pkill -f 'artisan serve --port=8000' && echo "yona: đã tắt" || echo "yona: không có process nào"
+	@if [ -f storage/logs/worker.pid ]; then \
+		{ kill $$(cat storage/logs/worker.pid) 2>/dev/null && echo "worker: đã tắt"; } || echo "worker: không có process nào"; \
+		rm -f storage/logs/worker.pid; \
+	else echo "worker: không có process nào"; fi
 	$(ORACLE) down
 
-status: ## Kiểm tra cổng 3000/8000 + container podman
+status: ## Kiểm tra cổng 3000/8000 + worker + container podman
 	@printf 'oracle  :3000  '; curl -sf -o /dev/null http://localhost:3000 && echo OK || echo TẮT
 	@printf 'yona    :8000  '; curl -sf -o /dev/null http://localhost:8000 && echo OK || echo TẮT
+	@printf 'worker         '; { [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; } && echo OK || echo TẮT
 	@podman ps --format '  podman: {{.Names}} ({{.Status}})' 2>/dev/null || true
 
 oracle: ## Bật oracle Chatwoot (podman)
