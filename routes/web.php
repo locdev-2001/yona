@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\InboxesSettingsController;
 use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\App\TeamsSettingsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
@@ -75,6 +76,19 @@ Route::middleware('auth')->group(function () {
                 Route::get('/agents', [TeamsSettingsController::class, 'editAgents'])->name('settings_teams_edit_members');
                 Route::get('/finish', [TeamsSettingsController::class, 'editFinish'])->name('settings_teams_edit_finish');
             });
+
+            // Tương đương inbox.routes.js: list / wizard new 4 bước / trang settings có tab.
+            Route::get('/settings/inboxes', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/inboxes/list"));
+            Route::get('/settings/inboxes/list', [InboxesSettingsController::class, 'index'])->name('settings_inbox_list');
+            Route::get('/settings/inboxes/new', [InboxesSettingsController::class, 'newChannelList'])->name('settings_inbox_new');
+            Route::prefix('/settings/inboxes/new/{inboxId}')->whereNumber('inboxId')->group(function () {
+                Route::get('/agents', [InboxesSettingsController::class, 'addAgents'])->name('settings_inboxes_add_agents');
+                Route::get('/finish', [InboxesSettingsController::class, 'finish'])->name('settings_inbox_finish');
+            });
+            Route::get('/settings/inboxes/new/{subPage}', [InboxesSettingsController::class, 'newChannel'])
+                ->where('subPage', '[a-z_]+')->name('settings_inboxes_page_channel');
+            Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
+                ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
         });
 
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.

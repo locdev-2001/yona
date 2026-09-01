@@ -43,6 +43,17 @@ class SetCurrentAccount
                 'availability' => $accountUser->availabilityName(),
                 'auto_offline' => $accountUser->auto_offline,
             ],
+            // Nhóm Channels trên sidebar (Sidebar.vue lấy từ store inboxes/getInboxes;
+            // agent chỉ thấy inbox mình là member — InboxPolicy::Scope).
+            'inboxes' => fn () => $request->user()
+                ->assignedInboxes($account, $accountUser)
+                ->orderByRaw('lower(name) ASC')
+                ->get(['id', 'name', 'channel_type'])
+                ->map(fn ($inbox) => [
+                    'id' => $inbox->id,
+                    'name' => $inbox->name,
+                    'channel_type' => $inbox->channel_type,
+                ]),
             'userAccounts' => fn () => $request->user()->accountUsers()
                 ->with('account:id,name')
                 ->get()
