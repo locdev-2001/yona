@@ -9,6 +9,7 @@ import teamsSettings from './locale/en/teamsSettings.json';
 import emojiIconPicker from './locale/en/emojiIconPicker.json';
 import agentMgmt from './locale/en/agentMgmt.json';
 import inboxMgmt from './locale/en/inboxMgmt.json';
+import contact from './locale/en/contact.json';
 
 const messages: Record<string, unknown> = {
     ...login,
@@ -22,6 +23,7 @@ const messages: Record<string, unknown> = {
     ...teamsSettings,
     ...emojiIconPicker,
     ...inboxMgmt,
+    ...contact,
     GENERAL_SETTINGS: {
         BACK: 'Back',
     },

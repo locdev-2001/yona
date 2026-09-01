@@ -10,8 +10,13 @@
     "dependencies": {
         "@chatwoot/pico-search": "^0.6.2",
         "@inertiajs/react": "^2.0.0",
+        "countries-and-timezones": "^3.10.0",
+        "date-fns": "^4.4.0",
+        "flag-icons": "^7.5.0",
+        "libphonenumber-js": "^1.13.12",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "timezone-phone-codes": "^0.0.2"
     },
     "devDependencies": {
         "@egoist/tailwindcss-icons": "^1.9.2",

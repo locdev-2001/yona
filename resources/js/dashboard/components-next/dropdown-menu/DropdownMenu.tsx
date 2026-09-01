@@ -1,10 +1,12 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 
 // Port từ dashboard/components-next/dropdown-menu/DropdownMenu.vue — nhánh
-// menuItems phẳng (menuSections/search nội bộ vào khi màn nào cần).
+// menuItems phẳng + showSearch lọc theo label (menuSections vào khi màn nào cần).
 export interface DropdownMenuItem {
     label: string;
     value: number | string;
@@ -20,6 +22,8 @@ interface DropdownMenuProps {
     menuItems: DropdownMenuItem[];
     thumbnailSize?: number;
     isLoading?: boolean;
+    showSearch?: boolean;
+    searchPlaceholder?: string;
     className?: string;
     onAction: (item: DropdownMenuItem) => void;
 }
@@ -28,20 +32,46 @@ export default function DropdownMenu({
     menuItems,
     thumbnailSize = 20,
     isLoading = false,
+    showSearch = false,
+    searchPlaceholder = '',
     className = '',
     onAction,
 }: DropdownMenuProps) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (showSearch) searchInputRef.current?.focus();
+    }, [showSearch]);
+
+    const visibleItems = searchQuery
+        ? menuItems.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
+        : menuItems;
+
     return (
         <div
             className={`bg-n-alpha-3 backdrop-blur-[100px] border-0 outline outline-1 outline-n-container absolute rounded-xl z-50 flex flex-col min-w-[136px] shadow-lg pt-2 overflow-hidden ${className}`}
         >
+            {showSearch ? (
+                <div className="relative shrink-0 px-2 mb-2">
+                    <span className="absolute i-lucide-search size-3.5 top-2 ltr:left-5 rtl:right-5" />
+                    <input
+                        ref={searchInputRef}
+                        value={searchQuery}
+                        type="search"
+                        placeholder={searchPlaceholder || t('DROPDOWN_MENU.SEARCH_PLACEHOLDER')}
+                        className="reset-base w-full h-8 py-2 ltr:pl-10 ltr:pr-2 rtl:pl-2 rtl:pr-10 text-sm focus:outline-none border-none rounded-lg bg-n-alpha-black2 dark:bg-n-solid-1 text-n-slate-12"
+                        onChange={event => setSearchQuery(event.target.value)}
+                    />
+                </div>
+            ) : null}
             <div className="flex flex-col gap-2 overflow-y-auto min-h-0 px-2 pb-2">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-2">
                         <Spinner size={24} />
                     </div>
                 ) : null}
-                {menuItems.map((item, index) => (
+                {visibleItems.map((item, index) => (
                     <button
                         key={`${item.value}-${index}`}
                         type="button"
@@ -67,7 +97,7 @@ export default function DropdownMenu({
                         ) : null}
                     </button>
                 ))}
-                {!isLoading && !menuItems.length ? (
+                {!isLoading && !visibleItems.length ? (
                     <div className="text-sm text-n-slate-11 px-2 py-1.5">{t('DROPDOWN_MENU.EMPTY_STATE')}</div>
                 ) : null}
             </div>
