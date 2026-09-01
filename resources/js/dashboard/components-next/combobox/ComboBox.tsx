@@ -79,7 +79,12 @@ export default function ComboBox({
             ref={rootRef}
             className={`relative w-full min-w-0 ${disabled ? 'cursor-not-allowed' : 'group/combobox'} ${className}`.trim()}
         >
-            <Button
+            {/* Wrapper div bắt buộc: bản gốc bọc trong <OnClickOutside> (@vueuse) —
+                render ra một <div> thật, nên DOM là root > div > button và caller
+                nhắm selector [&>div>button]:... (vd ContactsForm ép h-8 + nền).
+                Bỏ lớp div này là selector của caller trượt (bẫy cùng họ TabBar). */}
+            <div>
+                <Button
                 variant="outline"
                 color={hasError && !open ? 'ruby' : open ? 'blue' : 'slate'}
                 label={selectedLabel}
@@ -153,6 +158,7 @@ export default function ComboBox({
                     {message}
                 </p>
             ) : null}
+            </div>
         </div>
     );
 }
