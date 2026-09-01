@@ -46,10 +46,8 @@ export default function Code({ script = '', className = '' }: CodeProps) {
                 />
             </div>
             {script ? (
-                <pre className="mb-0">
-                    <code className="hljs block overflow-x-auto whitespace-pre-wrap break-all text-start">
-                        {scrubbedScript}
-                    </code>
+                <pre className="[&_code]:text-start">
+                    <code className="hljs">{scrubbedScript}</code>
                 </pre>
             ) : null}
         </div>
