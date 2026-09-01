@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\App\ContactsController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\InboxesSettingsController;
 use App\Http\Controllers\App\OnboardingsController;
@@ -90,6 +91,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
         });
+
+        // Tương đương contacts routes.js (admin + agent đều vào được).
+        Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');
+        Route::get('/contacts/{contactId}', [ContactsController::class, 'show'])
+            ->whereNumber('contactId')->name('contact_profile_dashboard');
 
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])
