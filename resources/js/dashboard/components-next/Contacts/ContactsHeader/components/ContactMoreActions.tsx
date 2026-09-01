@@ -49,9 +49,11 @@ export default function ContactMoreActions({ onAdd }: ContactMoreActionsProps) {
                 <DropdownMenu
                     menuItems={contactMenuItems}
                     className="ltr:right-0 rtl:left-0 mt-1 w-52 top-full"
+                    // handleContactAction gốc KHÔNG đóng menu — chỉ clickaway đóng.
+                    // Dialog modal chặn pointer nên menu nằm nguyên sau backdrop
+                    // khi "Add contact" mở dialog (khớp oracle, finding pixel-diff).
                     onAction={item => {
                         if (item.action === 'add') onAdd();
-                        setShowActionsDropdown(false);
                     }}
                 />
             ) : null}

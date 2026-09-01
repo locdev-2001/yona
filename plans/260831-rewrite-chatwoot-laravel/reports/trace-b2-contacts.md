@@ -69,7 +69,7 @@ Chatwoot truyền class dạng `[&>...]`/`[&_...]` từ CALLER vào component co
 ## Khác biệt cố ý (tổng hợp — pixel-diff cần biết)
 
 1. Nút **filter** + nút **New message** (list) + nút **Send message** (chi tiết) render đúng vị trí/nhãn nhưng bấm chưa có hành vi (ContactsFilter nhóm C, ComposeConversation B3).
-2. Menu ⋮ chỉ có "New contact" (Import/Export nhóm C) — đừng chấm trạng thái menu mở.
+2. Menu ⋮ chỉ có "New contact" (Import/Export nhóm C) — nội dung menu lệch chủ đích 1 item vs 3 item khi chấm trạng thái menu mở (crop vùng menu). Hành vi GIỮ MỞ khi bấm "Add contact" đã khớp gốc: handleContactAction gốc không đóng menu, chỉ clickaway đóng — dialog modal chặn pointer nên menu nằm nguyên sau backdrop (finding pixel-diff đợt 4).
 3. Chọn contact (checkbox hover avatar) hoạt động nhưng **ContactsBulkActionBar chưa có** (bulk actions nhóm C) — chọn xong chưa có thanh hành động.
 4. Presence: `availability_status` luôn `offline` (chấm trạng thái ẩn vì `hideOfflineStatus`) — khớp oracle khi Redis presence trống; B4 mới có online.
 5. Sidebar chi tiết: TabBar đủ 5 tab chia đều bề ngang (truncate như gốc); tab Attributes có empty-state text như oracle khi account 0 custom attribute definition; tab History/Notes/Media/Merge trống chờ feature (oracle có nội dung — vùng nhiễu nếu chấm các tab đó).
