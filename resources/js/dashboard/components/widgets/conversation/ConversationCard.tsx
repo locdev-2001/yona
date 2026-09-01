@@ -1,0 +1,159 @@
+import type { MouseEvent } from 'react';
+
+import { t } from '../../../../i18n';
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import Icon from 'dashboard/components-next/icon/Icon';
+import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
+import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
+import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge';
+import { getLastMessage } from '../../../helper/conversationHelper';
+import type { AgentMeta, ContactMeta, Conversation } from '../../../conversation/types';
+import InboxName from '../InboxName';
+import TimeAgo from '../../ui/TimeAgo';
+import MessagePreview from './MessagePreview';
+
+// Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
+// Khác biệt cố ý B3: bỏ checkbox chọn khi hover avatar (bulk actions),
+// VoiceCallStatus + SLACardLabel (EE), CardLabels (labels B7 — chat.labels
+// luôn rỗng nên bản gốc cũng không render section này).
+interface ConversationCardProps {
+    chat: Conversation;
+    currentContact: ContactMeta;
+    assignee?: Partial<AgentMeta>;
+    inbox?: { name: string; channel_type: string };
+    selected?: boolean;
+    isActiveChat?: boolean;
+    showAssignee?: boolean;
+    showInboxName?: boolean;
+    hideThumbnail?: boolean;
+    compact?: boolean;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
+}
+
+export default function ConversationCard({
+    chat,
+    currentContact,
+    assignee = {},
+    inbox = { name: '', channel_type: '' },
+    selected = false,
+    isActiveChat = false,
+    showAssignee = false,
+    showInboxName = false,
+    hideThumbnail = false,
+    compact = false,
+    onClick,
+    onContextMenu,
+}: ConversationCardProps) {
+    const unreadCount = chat.unread_count;
+    const hasUnread = unreadCount > 0;
+    const lastMessageInChat = getLastMessage(chat);
+
+    const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority;
+    const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
+
+    const messagePreviewClass = [
+        hasUnread ? 'font-medium text-n-slate-12' : 'text-n-slate-11',
+        !compact && hasUnread ? 'ltr:pr-4 rtl:pl-4' : '',
+        compact && hasUnread ? 'ltr:pr-6 rtl:pl-6' : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
+
+    return (
+        <div
+            className={[
+                "relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-n-slate-3 hover:border-n-surface-1 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-n-surface-1 before:pointer-events-none hover:before:content-['']",
+                isActiveChat ? 'active animate-card-select bg-n-background !border-n-surface-1' : '',
+                selected ? 'selected bg-n-slate-2 !border-n-surface-1' : '',
+                compact ? 'px-0' : 'px-3',
+            ]
+                .filter(Boolean)
+                .join(' ')}
+            onClick={onClick}
+            onContextMenu={onContextMenu}
+        >
+            <div className="relative">
+                {!hideThumbnail ? (
+                    <Avatar
+                        name={currentContact.name ?? ''}
+                        src={currentContact.thumbnail}
+                        size={32}
+                        status={(currentContact.availability_status as 'online' | 'busy' | 'offline' | undefined) ?? null}
+                        className={!showInboxName ? 'mt-4' : 'mt-8'}
+                        hideOfflineStatus
+                    />
+                ) : null}
+            </div>
+            <div className="px-0 py-3 flex-1 min-w-0 border-line">
+                {showMetaSection ? (
+                    <div
+                        className={[
+                            'flex items-center min-w-0 gap-1',
+                            !compact ? 'ltr:ml-2 rtl:mr-2' : 'mx-2',
+                        ].join(' ')}
+                    >
+                        {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
+                        <div
+                            className={[
+                                'flex items-baseline gap-2 flex-shrink-0',
+                                !showInboxName ? 'flex-1 justify-between' : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' ')}
+                        >
+                            {showAssignee && assignee.name ? (
+                                <span className="text-n-slate-11 text-xs font-medium leading-3 py-0.5 px-0 inline-flex items-center gap-px truncate">
+                                    <Icon
+                                        icon={isAgentBotAssignee ? 'i-lucide-bot' : 'i-lucide-user-round'}
+                                        className="size-3 text-n-slate-11 flex-shrink-0"
+                                    />
+                                    <span className="truncate">{assignee.name}</span>
+                                </span>
+                            ) : null}
+                            <CardPriorityIcon priority={chat.priority} className="flex-shrink-0 !size-3.5" />
+                        </div>
+                    </div>
+                ) : null}
+                <h4
+                    className={[
+                        'conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12',
+                        hasUnread ? 'font-semibold' : 'font-medium',
+                    ].join(' ')}
+                >
+                    {currentContact.name}
+                </h4>
+                {lastMessageInChat ? (
+                    <MessagePreview
+                        key="message-preview"
+                        message={lastMessageInChat}
+                        className={`my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm ${messagePreviewClass}`.trim()}
+                    />
+                ) : (
+                    <p
+                        key="no-messages"
+                        className={`text-n-slate-11 text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${messagePreviewClass}`.trim()}
+                    >
+                        <FluentIcon size={16} className="-mt-0.5 align-middle inline-block text-n-slate-10" icon="info" />
+                        <span className="mx-0.5">{t('CHAT_LIST.NO_MESSAGES')}</span>
+                    </p>
+                )}
+                <div
+                    className={[
+                        'absolute flex flex-col ltr:right-3 rtl:left-3',
+                        showMetaSection ? 'top-8' : 'top-4',
+                    ].join(' ')}
+                >
+                    <span className="ml-auto font-normal leading-4 text-xxs">
+                        <TimeAgo
+                            lastActivityTimestamp={chat.timestamp}
+                            createdAtTimestamp={chat.created_at}
+                            conversationId={chat.id}
+                        />
+                    </span>
+                    {hasUnread ? <UnreadBadge count={unreadCount} className="ltr:ml-auto rtl:mr-auto mt-1" /> : null}
+                </div>
+            </div>
+        </div>
+    );
+}

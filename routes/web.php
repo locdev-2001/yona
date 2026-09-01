@@ -92,6 +92,14 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
         });
 
+        // Tương đương conversation.routes.js: home + inbox_conversation + inbox_dashboard.
+        Route::get('/conversations/{conversationId}', [DashboardController::class, 'conversation'])
+            ->whereNumber('conversationId')->name('inbox_conversation');
+        Route::get('/inbox/{inboxId}', [DashboardController::class, 'inbox'])
+            ->whereNumber('inboxId')->name('inbox_dashboard');
+        Route::get('/inbox/{inboxId}/conversations/{conversationId}', [DashboardController::class, 'inbox'])
+            ->whereNumber('inboxId')->whereNumber('conversationId')->name('conversation_through_inbox');
+
         // Tương đương contacts routes.js (admin + agent đều vào được).
         Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');
         Route::get('/contacts/{contactId}', [ContactsController::class, 'show'])

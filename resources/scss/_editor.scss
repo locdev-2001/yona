@@ -1,0 +1,163 @@
+// Port style ProseMirror của editor Chatwoot:
+// - base.scss của @chatwoot/prosemirror-schema (giữ nguyên — các biến --space-*/--w-*
+//   KHÔNG được định nghĩa ở bản gốc nên fallback về initial, đừng "sửa giùm").
+// - khối <style> global của WootWriter/Editor.vue (bỏ phần copilot EE).
+// - khối <style scoped> của ReplyBox.vue (scoped Vue → class thường, không đụng tên).
+@import '@chatwoot/prosemirror-schema/src/styles/base.scss';
+
+.ProseMirror-menubar-wrapper {
+  @apply flex flex-col gap-3;
+
+  .ProseMirror-menubar {
+    min-height: 1.25rem !important;
+    @apply items-center gap-4 flex pb-0 bg-transparent text-n-slate-11 relative ltr:-left-[3px] rtl:-right-[3px];
+
+    .ProseMirror-menu-active {
+      @apply bg-n-slate-5 dark:bg-n-solid-3 #{!important};
+    }
+
+    .ProseMirror-menuitem {
+      @apply mr-0 size-4 flex items-center justify-center;
+
+      .ProseMirror-icon {
+        @apply size-4 flex items-center justify-center flex-shrink-0;
+
+        svg {
+          @apply size-full;
+        }
+      }
+    }
+  }
+
+  .ProseMirror-menubar:not(:has(*)) {
+    max-height: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    display: none !important;
+  }
+
+  > .ProseMirror {
+    @apply p-0 break-words text-n-slate-12;
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p {
+      @apply text-n-slate-12;
+    }
+
+    blockquote {
+      @apply border-n-slate-7;
+
+      p {
+        @apply text-n-slate-11;
+      }
+    }
+  }
+}
+
+.ProseMirror-woot-style {
+  @apply overflow-auto;
+}
+
+.ProseMirror-woot-style:not(:where(.resizable-editor-wrapper .resizable-editor-body)) {
+  @apply min-h-[5rem] max-h-[7.5rem];
+}
+
+.ProseMirror-prompt-backdrop::backdrop {
+  @apply bg-n-alpha-black1 backdrop-blur-[4px];
+}
+
+.ProseMirror-prompt {
+  @apply bg-n-alpha-3 border border-n-strong p-6 shadow-xl rounded-xl w-96 #{!important};
+
+  h5 {
+    @apply text-n-slate-12 mb-3;
+  }
+
+  .ProseMirror-prompt-buttons {
+    button {
+      @apply h-8 px-3;
+
+      &[type='submit'] {
+        @apply bg-n-brand text-white hover:bg-n-brand/90;
+      }
+
+      &[type='button'] {
+        @apply bg-n-slate-9/10 text-n-slate-12 hover:bg-n-slate-9/20;
+      }
+    }
+  }
+}
+
+.is-private {
+  .prosemirror-mention-node {
+    @apply font-medium bg-n-amber-2/80 dark:bg-n-amber-2/80 text-n-slate-12 py-0 px-1;
+  }
+
+  .ProseMirror-menubar-wrapper {
+    > .ProseMirror {
+      @apply text-n-slate-12;
+
+      p {
+        @apply text-n-slate-12;
+      }
+    }
+  }
+}
+
+.editor-wrap {
+  @apply mb-4;
+}
+
+.message-editor {
+  @apply rounded-lg outline outline-1 outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6 bg-n-alpha-black2 py-0 px-1 mb-0;
+}
+
+.editor_warning {
+  @apply outline outline-1 outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9;
+}
+
+.editor-warning__message {
+  @apply text-n-ruby-9 dark:text-n-ruby-9 font-normal text-sm pt-1 pb-0 px-0;
+}
+
+// Float editor menu (menubar chỉ hiện khi bôi đen — ReplyBox truyền class này).
+.popover-prosemirror-menu {
+  position: relative;
+
+  .ProseMirror p:last-child {
+    margin-bottom: 10px !important;
+  }
+
+  .ProseMirror-menubar {
+    display: none;
+  }
+}
+
+// <style scoped> của ReplyBox.vue.
+.reply-box {
+  @apply relative mb-2 mx-2 border border-n-weak rounded-xl bg-n-solid-1;
+
+  &.is-private {
+    @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
+  }
+}
+
+.reply-box__top {
+  @apply relative py-0 px-3 -mt-px;
+}
+
+// <style> cuối Message.vue: tin gộp nhóm bo góc nhỏ ở cạnh nối.
+.group-with-next + .message-bubble-container {
+  .left-bubble {
+    @apply ltr:rounded-tl-sm rtl:rounded-tr-sm;
+  }
+
+  .right-bubble {
+    @apply ltr:rounded-tr-sm rtl:rounded-tl-sm;
+  }
+}
