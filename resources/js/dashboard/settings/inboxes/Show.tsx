@@ -11,7 +11,7 @@ import {
     postJson,
     putForm,
 } from 'dashboard/helper/apiClient';
-import { getInboxIconByType, getInboxIdentifier } from 'dashboard/helper/inbox';
+import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import Dashboard from '../../Dashboard';
 import SettingsContent from '../SettingsContent';
@@ -190,7 +190,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         <Dashboard>
             <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
                 <div className="grid grid-rows-[auto_1fr] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
-                    <SettingIntroBanner headerTitle={inbox.name} headerIdentifier={getInboxIdentifier(inbox)}>
+                    <SettingIntroBanner headerTitle={inbox.name}>
                         <Tabs
                             className="[&_ul]:p-0 top-px relative"
                             items={tabs}

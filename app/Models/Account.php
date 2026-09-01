@@ -77,6 +77,27 @@ class Account extends Model
         return $this->hasMany(Inbox::class);
     }
 
+    // Featurable#feature_enabled? — override trong feature_flags (jsonb) thắng
+    // default của config/features.php (quyết định #8: bỏ bitset FlagShihTzu).
+    public function featureEnabled(string $name): bool
+    {
+        return (bool) ($this->feature_flags[$name] ?? config("features.{$name}", false));
+    }
+
+    // Featurable#enabled_features — map {tên => true} chỉ gồm feature đang bật
+    // (shape của json.features trong _account.json.jbuilder).
+    /** @return array<string, bool> */
+    public function enabledFeatures(): array
+    {
+        $overrides = $this->feature_flags ?? [];
+
+        return collect(config('features'))
+            ->merge($overrides)
+            ->filter(fn ($enabled) => (bool) $enabled)
+            ->map(fn () => true)
+            ->all();
+    }
+
     public function onboardingStep(): ?string
     {
         return $this->custom_attributes[self::ONBOARDING_STEP_KEY] ?? null;
