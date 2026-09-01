@@ -3,6 +3,8 @@
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\ContactsController;
+use App\Http\Controllers\WebApi\Conversations\MessagesController;
+use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
@@ -21,7 +23,9 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::delete('/profile/avatar', [ProfilesController::class, 'destroyAvatar']);
 });
 
-Route::middleware(['auth', 'account.scope'])
+// auth.api_token đứng trước auth: header api_access_token (Application API,
+// curl/bot) thế chỗ session — cùng endpoint như Chatwoot.
+Route::middleware(['auth.api_token', 'auth', 'account.scope'])
     ->prefix('/api/v1/accounts/{account}')
     ->whereNumber('account')
     ->group(function () {
@@ -66,6 +70,14 @@ Route::middleware(['auth', 'account.scope'])
         Route::post('/contacts/{contactId}/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes'])->whereNumber('contactId');
         Route::delete('/contacts/{contactId}/avatar', [ContactsController::class, 'destroyAvatar'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/contact_inboxes', [ContactInboxesController::class, 'store'])->whereNumber('contactId');
+
+        Route::get('/conversations', [ConversationsController::class, 'index']);
+        Route::post('/conversations', [ConversationsController::class, 'store']);
+        Route::get('/conversations/meta', [ConversationsController::class, 'meta']);
+        // {conversationId} là display_id per-account, không phải khóa chính.
+        Route::get('/conversations/{conversationId}', [ConversationsController::class, 'show'])->whereNumber('conversationId');
+        Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/messages', [MessagesController::class, 'store'])->whereNumber('conversationId');
 
         Route::get('/teams/{teamId}/team_members', [TeamMembersController::class, 'index'])->whereNumber('teamId');
         Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');

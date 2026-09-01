@@ -137,7 +137,7 @@ describe('GET /app', function () {
 
         $this->get("/app/accounts/{$account->id}/dashboard")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
+            ->assertInertia(fn ($page) => $page->component('dashboard/conversation/ConversationView'));
     });
 
     it('renders the no-accounts page for users without an account', function () {

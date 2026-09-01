@@ -22,7 +22,7 @@ describe('account scoping', function () {
 
         $this->actingAs($user)->get("/app/accounts/{$account->id}/dashboard")
             ->assertInertia(fn ($page) => $page
-                ->component('dashboard/Index')
+                ->component('dashboard/conversation/ConversationView')
                 ->where('currentAccount.id', $account->id)
                 ->where('currentAccountUser.role', 'administrator')
                 ->has('userAccounts', 1));

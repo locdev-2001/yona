@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Channel\Api;
+use App\Models\Contact;
+use App\Models\Inbox;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,10 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // channel_type lưu đúng tên lớp Ruby của Chatwoot ('Channel::Api'…)
-        // để DB + payload API khớp bản gốc; thêm kênh mới = thêm dòng map.
+        // Polymorphic type lưu đúng tên lớp Ruby của Chatwoot ('Channel::Api',
+        // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
         Relation::morphMap([
             'Channel::Api' => Api::class,
+            'User' => User::class,
+            'Contact' => Contact::class,
+            'Inbox' => Inbox::class,
         ]);
     }
 }

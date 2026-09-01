@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\Conversation;
 use Illuminate\Http\Request;
 
 abstract class Controller
@@ -18,5 +20,31 @@ abstract class Controller
             401,
             'You are not authorized to do this action'
         );
+    }
+
+    // Conversations::BaseController#conversation: tra theo display_id +
+    // ConversationPolicy#show? (admin, inbox member hoặc team member).
+    protected function fetchConversationForUser(Request $request, Account $account, int $displayId): Conversation
+    {
+        $conversation = $account->conversations()->where('display_id', $displayId)->firstOrFail();
+
+        /** @var AccountUser $accountUser */
+        $accountUser = $request->attributes->get('currentAccountUser');
+        $user = $request->user();
+
+        $allowed = $accountUser->isAdministrator()
+            || $user->inboxes()
+                ->where('inboxes.account_id', $account->id)
+                ->where('inboxes.id', $conversation->inbox_id)
+                ->exists()
+            || ($conversation->team_id !== null
+                && $user->teams()
+                    ->where('teams.account_id', $account->id)
+                    ->where('teams.id', $conversation->team_id)
+                    ->exists());
+
+        abort_unless($allowed, 401, 'You are not authorized to do this action');
+
+        return $conversation;
     }
 }

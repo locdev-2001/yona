@@ -88,6 +88,11 @@ class Inbox extends Model
         return $this->hasMany(InboxMember::class);
     }
 
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
     public function contactInboxes(): HasMany
     {
         return $this->hasMany(ContactInbox::class);

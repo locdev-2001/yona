@@ -30,7 +30,24 @@ class DashboardController extends Controller
             return redirect("/app/accounts/{$account->id}/onboarding");
         }
 
-        return Inertia::render('dashboard/Index');
+        return Inertia::render('dashboard/conversation/ConversationView');
+    }
+
+    // Tương đương route inbox_conversation: /conversations/{display_id}.
+    public function conversation(Request $request, Account $account, int $conversationId): Response
+    {
+        return Inertia::render('dashboard/conversation/ConversationView', [
+            'conversationId' => $conversationId,
+        ]);
+    }
+
+    // Tương đương route inbox_dashboard: /inbox/{inbox_id} (+ chọn conversation).
+    public function inbox(Request $request, Account $account, int $inboxId, ?int $conversationId = null): Response
+    {
+        return Inertia::render('dashboard/conversation/ConversationView', [
+            'inboxId' => $inboxId,
+            'conversationId' => $conversationId,
+        ]);
     }
 
     public function placeholder(Request $request, Account $account, string $view): Response

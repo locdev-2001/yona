@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -83,6 +84,16 @@ class User extends Authenticatable
                 $user->pubsub_token = Str::random(24);
             }
         });
+
+        // AccessTokenable: mỗi user có token Application API ngay khi tạo.
+        static::created(function (User $user) {
+            $user->accessToken()->create([]);
+        });
+    }
+
+    public function accessToken(): MorphOne
+    {
+        return $this->morphOne(AccessToken::class, 'owner');
     }
 
     // Tương đương User.from_email của Chatwoot (email đã chuẩn hóa lowercase khi lưu).

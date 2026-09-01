@@ -94,6 +94,11 @@ class Contact extends Model
         return $this->hasMany(ContactInbox::class);
     }
 
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
     public function inboxes(): BelongsToMany
     {
         return $this->belongsToMany(Inbox::class, 'contact_inboxes');
