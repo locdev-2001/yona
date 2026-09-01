@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent, MouseEvent } from 'react';
+import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 
@@ -15,6 +15,9 @@ interface AvatarProps {
     iconName?: string | null;
     hideOfflineStatus?: boolean;
     className?: string;
+    // Slot overlay của bản gốc: thay thế lớp upload phủ trên avatar
+    // (ContactsCard dùng để hiện checkbox chọn khi hover).
+    overlay?: (args: { size: number }) => ReactNode;
     onUpload?: (payload: { file: File; url: string | null }) => void;
     onDelete?: () => void;
 }
@@ -72,6 +75,7 @@ export default function Avatar({
     iconName = null,
     hideOfflineStatus = false,
     className = '',
+    overlay,
     onUpload,
     onDelete,
 }: AvatarProps) {
@@ -176,7 +180,9 @@ export default function Avatar({
                     <Icon icon="i-lucide-user" className="" style={{ fontSize: size / 1.6 }} />
                 )}
 
-                {allowUpload ? (
+                {overlay ? (
+                    overlay({ size })
+                ) : allowUpload ? (
                     <div
                         className={`absolute inset-0 z-10 flex items-center justify-center invisible w-full h-full transition-all duration-300 ease-in-out opacity-0 bg-n-alpha-black1 group-hover/avatar:visible group-hover/avatar:opacity-100 ${borderRadiusClass}`}
                         onClick={() => fileInput.current?.click()}
