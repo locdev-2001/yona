@@ -53,6 +53,20 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`). Ngày port: 01/09/2026.
 | Component mới port: `ui/Tabs`, `Code` (woot-code), `TagInput`, `DropdownMenu` (nhánh items), `SettingsFieldSection/ToggleSection/Accordion`, `Select`, `Label`, `ConfirmButton`, `AccessToken`, `SettingIntroBanner`, `ChannelIcon`, `ChannelName`, `LockToSingleConversationPreview`, `GreetingsEditor` | | |
 | i18n `en/inboxMgmt.json` | copy nguyên văn + đăng ký; thêm GENERAL.BETA/BETA_DESCRIPTION | "Chatwoot" thay lúc render qua `useBranding` |
 
+## Pixel-diff (DoD (c) — ĐẠT, phiên kiểm chứng chấm 01/09 trên `32f491f`)
+
+| Màn | Light | Dark |
+|---|---|---|
+| list | 0.034% | 0.035% |
+| grid chọn kênh (crop cột trái wizard + card API) | 0.000% | 0.000% |
+| new/api (form tạo) | 0.034% | 0.035% |
+| show tab Settings | 0.042% | 0.042% |
+| show tab Collaborators (nhánh assignment_v2) | 0.039% | 0.039% |
+| show tab Configuration (5 crop né 2 chuỗi token) | 0.000% | 0.000% |
+
+Nhiễu còn lại toàn trang = token ngẫu nhiên hai bên + branding/presence quen thuộc (nợ B4).
+Finding vòng 3 đã fix (`32f491f`): woot-code thiếu lớp cấu trúc `pre code.hljs` của `highlight.js/styles/default.css` (padding 1em @ text-xs = 12px, thắng p-5 của `_base.scss` bằng specificity) → khối cao hơn gốc 16px, dồn cả tab Configuration trôi xuống.
+
 ## Khác biệt cố ý
 
 1. **GreetingsEditor** richtext (WootMessageEditor/ProseMirror) → textarea tạm, chờ B3 (cùng cách A4 làm message_signature).
@@ -62,6 +76,8 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`). Ngày port: 01/09/2026.
 5. **Help Center select** chỉ có option None (portals nhóm D).
 6. **Factory `:inbox`** mặc định kênh api (gốc mặc định web_widget — chưa có driver).
 7. **Sidebar Channels** lấy từ shared props Inertia thay vì store dispatch; unread badge chờ B8.
+8. **Grid chọn kênh:** card non-API disabled (mờ) tới khi kênh đó được port — oracle để active theo `enabledFeatures`; pixel-diff màn này chấm bằng crop cột wizard + card API (0.000%), phần card còn lại là chênh chủ đích.
+9. **Đọc nguồn theo tag v4.17.1** (xem blockquote đầu file): các mục hậu-tag (channel identifiers) đã gỡ khỏi bản port; mọi tính năng sau đọc `refs/chatwoot` ở tag.
 
 ## Test (Pest ⇄ RSpec)
 
