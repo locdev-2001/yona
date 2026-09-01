@@ -2,7 +2,18 @@
 
 **Lệnh founder 31/08/2026:** viết lại toàn bộ Chatwoot v4.17.1 (trừ `enterprise/`) sang Laravel, fresh start — không giữ hệ thống cũ. Zalo cá nhân + automation cũ trích từ `main` cắm lại SAU khi rewrite xong. UI = Inertia + React nhưng **giống 100% giao diện Chatwoot**.
 
-**Trạng thái — HANDOFF 31/08/2026 (phiên 3 kết thúc: A5 + A6 = đủ 2 tính năng theo nhịp founder). NHÓM A XONG 6/6.**
+**Trạng thái — 01/09/2026 (phiên 4): B1 CODE XONG, chờ DoD (c)+(d).**
+
+**B1 Inbox + kênh API — code + test + bấm thật XONG 01/09.** Commit `fd60685`. Gate: Pest **194/194** (47 test mới) + tsc + build xanh, pint sạch. Trace: `reports/trace-b1-inbox-api-channel.md` (có mục "Đã bấm thật trên trình duyệt" 8 bước + danh sách vùng ngẫu nhiên cần crop né khi pixel-diff). Đang chờ: (c) pixel-diff từ phiên kiểm chứng (đã nhắn commit + URL, dữ liệu khớp: inbox `api-test` id=1 hai bên, collaborator John), (d) founder bấm "Test ngay".
+- Backend: 3 bảng + Inbox/Channel\Api/InboxMember + 8 endpoint inboxes + 4 endpoint inbox_members + InboxResource; morph map `Channel::Api` ở AppServiceProvider (thêm kênh = thêm dòng map + entry CHANNEL_TYPES trong InboxesController).
+- FE: list + wizard 4 bước + trang Show 6 tab (3 tab Business Hours/CSAT/Bot trống chờ feature); sidebar Channels đổ từ shared props `inboxes` (SetCurrentAccount). Bộ primitive mới dùng lại được: Tabs, Code (woot-code), TagInput + DropdownMenu, SettingsFieldSection/ToggleSection/Accordion, Select, Label, ConfirmButton, AccessToken, ChannelSelector/ChannelItem, ChannelIcon, ChannelName, SettingIntroBanner, trait Avatarable (User+Inbox chung 1 nguồn).
+- Khác biệt cố ý ghi trong trace: GreetingsEditor textarea chờ B3; chặn user cross-account ở inbox_members (gốc không kiểm); factory :inbox mặc định kênh api.
+- Lưu ý dev: xóa inbox đi qua queue `low` (DeleteObjectJob) — không có worker chạy thì DB chưa xóa dù UI đã ẩn row; queue redis còn tồn job cũ của phiên trước.
+- **Test ngay:** login john@acme.inc → Settings → Inboxes → Add Inbox → API → đặt tên → gán agent → Voilà; mở settings inbox đủ 3 tab nội dung; sidebar Conversations→Channels thấy inbox; xóa bằng modal gõ tên.
+
+---
+
+**HANDOFF cũ 31/08/2026 (phiên 3 kết thúc: A5 + A6 = đủ 2 tính năng theo nhịp founder). NHÓM A XONG 6/6.**
 
 **Đã xong: A1 + A2 + A3 + A4** (…`6a0b3ed` A3 → `b7cb796` scaffold → `2f71525` A4 → `01b51ee` fix 5 finding pixel → `6823979` fix ranh giới stylesheet → `7645fbd` docs). Gate: Pest **57/57** + tsc + `pnpm build` xanh; pint sạch.
 - Trace từng tính năng: `reports/trace-a1-login.md`, `trace-a2-signup-account.md`, `trace-a3-shell-sidebar.md`, `trace-a4-profile-settings.md` (A4 có bảng 6 finding pixel-diff + cách fix).
