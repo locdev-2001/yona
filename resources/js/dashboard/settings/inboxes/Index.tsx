@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { picoSearch } from '@chatwoot/pico-search';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { deleteJson, getJson } from 'dashboard/helper/apiClient';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import { getInboxIdentifier, searchInboxes } from 'dashboard/helper/inbox';
 import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
 import SettingsLayout from '../SettingsLayout';
@@ -18,9 +18,7 @@ import ConfirmDeleteModal from 'dashboard/components/widgets/modal/ConfirmDelete
 import type { Inbox } from './types';
 import type { DashboardPageProps } from '../../types';
 
-const IDENTIFIER_SEPARATOR = '·';
-
-// Port từ dashboard/routes/dashboard/settings/inbox/Index.vue.
+// Port từ dashboard/routes/dashboard/settings/inbox/Index.vue @ v4.17.1.
 export default function InboxesIndex() {
     const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
@@ -48,17 +46,14 @@ export default function InboxesIndex() {
     }, [accountId]);
 
     const inboxesList = useMemo(
-        () =>
-            inboxes
-                .map(inbox => ({ ...inbox, channel_identifier: getInboxIdentifier(inbox) }))
-                .sort((a, b) => a.name.localeCompare(b.name)),
+        () => inboxes.slice().sort((a, b) => a.name.localeCompare(b.name)),
         [inboxes],
     );
 
     const filteredInboxesList = useMemo(() => {
         const query = searchQuery.trim();
         if (!query) return inboxesList;
-        return searchInboxes(inboxesList, query);
+        return picoSearch(inboxesList, query, ['name', 'channel_type']) as Inbox[];
     }, [inboxesList, searchQuery]);
 
     const confirmDeletion = async () => {
@@ -75,9 +70,9 @@ export default function InboxesIndex() {
         }
     };
 
-    const inboxRow = (inbox: Inbox & { channel_identifier: string }) => (
+    const inboxRow = (inbox: Inbox) => (
         <div key={inbox.id} className="flex justify-between flex-row items-start gap-4 py-4">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-4">
                 {inbox.avatar_url ? (
                     <div className="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">
                         <Avatar src={inbox.avatar_url} name={inbox.name} size={24} roundedFull />
@@ -87,32 +82,15 @@ export default function InboxesIndex() {
                         <ChannelIcon className="size-6 text-n-slate-10" inbox={inbox} />
                     </div>
                 )}
-                <div className="flex flex-col items-start gap-1 min-w-0">
-                    <span
-                        title={inbox.name}
-                        className="block text-heading-3 text-n-slate-12 capitalize truncate max-w-full"
-                    >
-                        {inbox.name}
-                    </span>
-                    <div className="flex items-center gap-1 min-w-0 max-w-full text-body-main text-n-slate-11">
-                        <ChannelName channelType={inbox.channel_type} className="shrink-0" />
-                        {inbox.channel_identifier ? (
-                            <>
-                                <span aria-hidden="true">{IDENTIFIER_SEPARATOR}</span>
-                                <bdi
-                                    dir="auto"
-                                    title={inbox.channel_identifier}
-                                    className="truncate"
-                                    data-test-id="channel-identifier"
-                                >
-                                    {inbox.channel_identifier}
-                                </bdi>
-                            </>
-                        ) : null}
-                    </div>
+                <div className="flex flex-col items-start gap-1">
+                    <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
+                    <ChannelName
+                        channelType={inbox.channel_type}
+                        className="text-body-main text-n-slate-11"
+                    />
                 </div>
             </div>
-            <div className="flex gap-3 justify-end shrink-0">
+            <div className="flex gap-3 justify-end">
                 {isAdmin ? (
                     <a href={accountScopedUrl(accountId, `settings/inboxes/${inbox.id}`)}>
                         <Button title={t('INBOX_MGMT.SETTINGS')} icon="i-woot-settings" slate sm />

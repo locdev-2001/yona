@@ -166,13 +166,14 @@ export default function Avatar({
                 {src && isImageValid ? (
                     <img src={src} alt={name} onError={() => setImageValid(false)} />
                 ) : iconName ? (
-                    <Icon icon={iconName} className="" />
+                    // iconStyles của bản gốc: glyph icon to theo size avatar.
+                    <Icon icon={iconName} className="" style={{ fontSize: size / 1.6 }} />
                 ) : !showDefaultAvatar ? (
                     <span className="select-none" style={{ fontSize: Math.min(size / 2.5, 24) }}>
                         {getInitials(name)}
                     </span>
                 ) : (
-                    <Icon icon="i-lucide-user" className="" />
+                    <Icon icon="i-lucide-user" className="" style={{ fontSize: size / 1.6 }} />
                 )}
 
                 {allowUpload ? (

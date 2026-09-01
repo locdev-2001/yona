@@ -4,7 +4,9 @@ import { usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson, patchJson } from 'dashboard/helper/apiClient';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import Button from 'dashboard/components-next/button/Button';
+import Icon from 'dashboard/components-next/icon/Icon';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
@@ -13,8 +15,11 @@ import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/D
 import type { DashboardPageProps } from '../../../types';
 import type { Agent, Inbox } from '../types';
 
-// Port từ settings/inbox/settingsPage/CollaboratorsPage.vue — nhánh CE:
-// assignment_v2/advanced_assignment (EE) + max_assignment_limit (enterprise) bỏ.
+// Port từ settings/inbox/settingsPage/CollaboratorsPage.vue @ v4.17.1.
+// Rẽ nhánh theo feature flag account như bản gốc: assignment_v2 (default BẬT)
+// hiện card "Default assignment rules" + banner Upgrade to Business khi chưa có
+// advanced_assignment; UI policy picker (advanced_assignment) + ô
+// max_assignment_limit (isEnterprise) port khi các feature đó vào.
 interface CollaboratorsPageProps {
     inbox: Inbox;
     onInboxUpdated: (inbox: Inbox) => void;
@@ -23,6 +28,9 @@ interface CollaboratorsPageProps {
 export default function CollaboratorsPage({ inbox, onInboxUpdated }: CollaboratorsPageProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
+    const features = currentAccount!.features ?? {};
+    const hasAssignmentV2 = Boolean(features.assignment_v2);
+    const hasAdvancedAssignment = Boolean(features.advanced_assignment);
 
     const [agentList, setAgentList] = useState<Agent[]>([]);
     const [selectedAgentIds, setSelectedAgentIds] = useState<number[]>([]);
@@ -118,10 +126,70 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
             <SettingsAccordion title={t('INBOX_MGMT.SETTINGS_POPUP.AGENT_ASSIGNMENT')} className="mt-6">
                 <SettingsToggleSection
                     compact
-                    header={t('INBOX_MGMT.SETTINGS_POPUP.AUTO_ASSIGNMENT')}
-                    description={t('INBOX_MGMT.SETTINGS_POPUP.AUTO_ASSIGNMENT_SUB_TEXT')}
+                    header={
+                        hasAssignmentV2
+                            ? t('INBOX_MGMT.ASSIGNMENT.ENABLE_AUTO_ASSIGNMENT')
+                            : t('INBOX_MGMT.SETTINGS_POPUP.AUTO_ASSIGNMENT')
+                    }
+                    description={
+                        hasAssignmentV2
+                            ? t('INBOX_MGMT.ASSIGNMENT.DESCRIPTION')
+                            : t('INBOX_MGMT.SETTINGS_POPUP.AUTO_ASSIGNMENT_SUB_TEXT')
+                    }
                     value={enableAutoAssignment}
                     onChange={value => void handleToggleAutoAssignment(value)}
+                    editor={
+                        enableAutoAssignment && hasAssignmentV2 ? (
+                            <div className="ltr:pr-0 rtl:pl-0 ltr:pl-4 rtl:pr-4 py-4">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0 size-10 rounded-xl bg-n-slate-3 dark:bg-n-slate-4 flex items-center justify-center">
+                                        <Icon icon="i-lucide-zap" className="text-xl text-n-slate-11" />
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="text-heading-3 text-n-slate-12 mb-0.5">
+                                            {t('INBOX_MGMT.ASSIGNMENT.DEFAULT_RULES_TITLE')}
+                                        </h4>
+                                        <p className="text-body-main text-n-slate-11 mb-4">
+                                            {t('INBOX_MGMT.ASSIGNMENT.DEFAULT_RULES_DESCRIPTION')}
+                                        </p>
+
+                                        <ul className="space-y-2 mb-6 list-none p-0">
+                                            <li className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-n-slate-11 flex-shrink-0" />
+                                                <span className="text-body-main text-n-slate-12">
+                                                    {t('INBOX_MGMT.ASSIGNMENT.DEFAULT_RULE_1')}
+                                                </span>
+                                            </li>
+                                            <li className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-n-slate-11 flex-shrink-0" />
+                                                <span className="text-body-main text-n-slate-12">
+                                                    {t('INBOX_MGMT.ASSIGNMENT.DEFAULT_RULE_2')}
+                                                </span>
+                                            </li>
+                                        </ul>
+
+                                        <div className="w-full h-px bg-n-weak my-4" />
+
+                                        {!hasAdvancedAssignment ? (
+                                            <div>
+                                                <p className="text-body-main text-n-slate-11 mb-1">
+                                                    {t('INBOX_MGMT.ASSIGNMENT.UPGRADE_PROMPT')}
+                                                </p>
+                                                <a href={accountScopedUrl(accountId, 'settings/billing')}>
+                                                    <Button
+                                                        label={t('INBOX_MGMT.ASSIGNMENT.UPGRADE_TO_BUSINESS')}
+                                                        icon="i-lucide-arrow-right"
+                                                        trailingIcon
+                                                        link
+                                                    />
+                                                </a>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : undefined
+                    }
                 />
             </SettingsAccordion>
         </div>

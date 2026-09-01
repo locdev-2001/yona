@@ -37,6 +37,8 @@ class SetCurrentAccount
                 'name' => $account->name,
                 'locale' => $account->locale,
                 'status' => $account->status,
+                // json.features của _account.json.jbuilder (enabled_features).
+                'features' => $account->enabledFeatures(),
             ],
             'currentAccountUser' => fn () => [
                 'role' => $accountUser->roleName(),

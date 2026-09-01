@@ -2,6 +2,12 @@
 
 Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`). Ngày port: 01/09/2026.
 
+> **Finding kiểm chứng 01/09 (đã xác minh source + fix):** `refs/chatwoot` trước đây đứng ở develop (v4.17.1 + 18 commit) — đã `git checkout v4.17.1` làm chuẩn đọc từ nay (oracle chạy image v4.17.1). 3 fix theo finding:
+> 1. Gỡ cụm "channel identifiers" hậu-tag (#15527/#15528/#15611) khỏi bản port: dòng identifier trong SettingIntroBanner trang Show, subtitle "· identifier" + search theo identifier + placeholder ở trang list, `getInboxIdentifier`/`searchInboxes` trong helper; re-copy `en/inboxMgmt.json` từ tag. (`inbox_identifier` trong payload API + tab Configuration VẪN thuộc tag — giữ.)
+> 2. Port nhánh **assignment_v2** của CollaboratorsPage (nằm trong tag, MIT): nền feature flags account (`config/features.php` từ `features.yml` + `Account::featureEnabled()/enabledFeatures()`, share `currentAccount.features`) — mặc định `assignment_v2` bật → card "Default assignment rules" + banner Upgrade to Business (`advanced_assignment` tắt, premium); UI policy picker port khi feature đó vào.
+> 3. Avatar iconName thiếu `fontSize: size/1.6` (iconStyles của Avatar.vue) → glyph kênh trong Channel Avatar nhỏ hơn oracle — đã sửa (ăn cả icon fallback).
+> Rà lan tỏa A1–A6 với `git diff v4.17.1..develop`: chỉ dính `_team.json.jbuilder` 1 dòng guard không ảnh hưởng UI — A-group không phải sửa.
+
 ## Backend Ruby ↔ PHP
 
 | Nguồn Chatwoot | Đích Laravel | Ghi chú |
@@ -78,4 +84,4 @@ Gate: Pest **194/194** + tsc + `npm run build` xanh, pint sạch.
 7. Sidebar → Conversations → Channels hiện `api-test` → link `inbox/1`.
 8. Tạo `temp-del` → xóa qua modal gõ tên → row biến mất; job `low` chạy → DB sạch cả channel (cascade).
 
-Dữ liệu để pixel-diff: inbox `api-test` id=1 (oracle id=1), collaborator John, webhook trống. Vùng ngẫu nhiên cần crop né: identifier + hmac token + webhook secret (banner trang Show, tab Configuration, ô Webhook Secret tab Settings, cột identifier ở list).
+Dữ liệu để pixel-diff: inbox `api-test` id=1 (oracle id=1), collaborator John, webhook trống. Vùng ngẫu nhiên cần crop né (sau khi gỡ identifier): ô Webhook Secret (tab Settings), Inbox Identifier + HMAC token (tab Configuration).

@@ -1,9 +1,5 @@
-import { picoSearch } from '@chatwoot/pico-search';
-
-import type { Inbox } from 'dashboard/settings/inboxes/types';
-
-// Port từ dashboard/helper/inbox.js (phần dùng cho B1 — voice/twilio helpers
-// port cùng kênh của chúng).
+// Port từ dashboard/helper/inbox.js @ v4.17.1 (phần dùng cho B1 — voice/twilio
+// helpers + getInboxSource/getReadableInboxByType port cùng kênh của chúng).
 export const INBOX_TYPES = {
     WEB: 'Channel::WebWidget',
     FB: 'Channel::FacebookPage',
@@ -34,31 +30,6 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
 
 const DEFAULT_ICON_LINE = 'i-ri-chat-1-line';
 
-type IdentifierResolver = (inbox: Inbox) => string | null | undefined;
-
-const INBOX_IDENTIFIER_RESOLVERS: Record<string, IdentifierResolver> = {
-    [INBOX_TYPES.WEB]: inbox => inbox.website_url,
-    [INBOX_TYPES.EMAIL]: inbox => inbox.email,
-    [INBOX_TYPES.WHATSAPP]: inbox => inbox.phone_number,
-    [INBOX_TYPES.SMS]: inbox => inbox.phone_number,
-    [INBOX_TYPES.API]: inbox => inbox.inbox_identifier,
-};
-
-export function getInboxIdentifier(inbox: Inbox | null | undefined): string {
-    if (!inbox) return '';
-    return INBOX_IDENTIFIER_RESOLVERS[inbox.channel_type]?.(inbox) || '';
-}
-
 export function getInboxIconByType(type: string): string {
     return INBOX_ICON_MAP_LINE[type] ?? DEFAULT_ICON_LINE;
-}
-
-type SearchableInbox = Inbox & { channel_identifier: string };
-
-export function searchInboxes(inboxes: SearchableInbox[], query: string): SearchableInbox[] {
-    const primaryMatches = picoSearch(inboxes, query, ['name', 'channel_type']) as SearchableInbox[];
-    const primaryMatchIds = new Set(primaryMatches.map(inbox => inbox.id));
-    const identifierMatches = picoSearch(inboxes, query, ['channel_identifier']) as SearchableInbox[];
-
-    return [...primaryMatches, ...identifierMatches.filter(inbox => !primaryMatchIds.has(inbox.id))];
 }
