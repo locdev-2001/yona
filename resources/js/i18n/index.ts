@@ -10,6 +10,8 @@ import emojiIconPicker from './locale/en/emojiIconPicker.json';
 import agentMgmt from './locale/en/agentMgmt.json';
 import inboxMgmt from './locale/en/inboxMgmt.json';
 import contact from './locale/en/contact.json';
+import conversation from './locale/en/conversation.json';
+import chatlist from './locale/en/chatlist.json';
 
 const messages: Record<string, unknown> = {
     ...login,
@@ -24,6 +26,8 @@ const messages: Record<string, unknown> = {
     ...emojiIconPicker,
     ...inboxMgmt,
     ...contact,
+    ...conversation,
+    ...chatlist,
     GENERAL_SETTINGS: {
         BACK: 'Back',
     },
@@ -34,6 +38,10 @@ const messages: Record<string, unknown> = {
     COMMON: {
         OR: 'Or',
         CLICK_HERE: 'click here',
+    },
+    // advancedFilters.json (chỉ key màn conversation cần tới ở B3).
+    FILTER: {
+        TOOLTIP_LABEL: 'Filter conversations',
     },
 };
 
