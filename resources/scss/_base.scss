@@ -220,3 +220,13 @@ code.hljs {
 table {
   @apply border-spacing-0 text-sm w-full;
 }
+
+// Dialog components-next (style scoped của Dialog.vue gốc).
+dialog.dialog-next::backdrop {
+  @apply bg-n-alpha-black1 backdrop-blur-[4px];
+}
+
+dialog.dialog-position-top {
+  margin-top: clamp(2rem, 5vh, 5rem);
+  margin-bottom: auto;
+}
