@@ -1,0 +1,84 @@
+import { usePage } from '@inertiajs/react';
+
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import { dateFormat } from 'shared/helpers/timeHelper';
+import { t } from '../../../i18n';
+import type { DashboardPageProps } from '../../types';
+import { STATUS_TYPE } from '../constants';
+import { useConversation } from '../ConversationContext';
+import MoreActions from './MoreActions';
+
+// Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: BackButton
+// (chỉ hiện ở expanded layout), SLACardLabel (EE), ConversationCallButton (voice
+// EE), cảnh báo HMAC unverified (chỉ áp dụng WebWidget — C3), snoozedReopenTime
+// helper (hiện giờ snooze bằng dateFormat — B5 mới có snooze thật).
+export default function ConversationHeader({ className = '' }: { className?: string }) {
+    const { selectedConversation } = useConversation();
+    const { inboxes = [] } = usePage<DashboardPageProps>().props;
+
+    if (!selectedConversation) return null;
+
+    const currentContact = selectedConversation.meta.sender;
+    const inbox = inboxes.find(item => item.id === selectedConversation.inbox_id);
+    const hasMultipleInboxes = inboxes.length > 1;
+    const isSnoozed = selectedConversation.status === STATUS_TYPE.SNOOZED;
+
+    const snoozedDisplayText = selectedConversation.snoozed_until
+        ? `${t('CONVERSATION.HEADER.SNOOZED_UNTIL')} ${dateFormat(
+              Math.floor(new Date(selectedConversation.snoozed_until).getTime() / 1000),
+              'MMM d, h:mm a',
+          )}`
+        : t('CONVERSATION.HEADER.SNOOZED_UNTIL_NEXT_REPLY');
+
+    const copyConversationId = async () => {
+        await copyTextToClipboard(String(selectedConversation.id));
+        useAlert(t('CONVERSATION.HEADER.COPY_ID_SUCCESS'));
+    };
+
+    return (
+        <div
+            className={`flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 ${className}`}
+        >
+            <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
+                <Avatar
+                    name={currentContact.name ?? ''}
+                    src={currentContact.thumbnail}
+                    size={32}
+                    status={(currentContact.availability_status as 'online' | 'busy' | 'offline') ?? null}
+                    hideOfflineStatus
+                />
+                <div className="flex flex-col items-start min-w-0 ms-2 overflow-hidden">
+                    <div className="flex flex-row items-center max-w-full gap-1 p-0 m-0">
+                        <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
+                            {currentContact.name}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-1 overflow-hidden text-xs conversation--header--actions text-n-slate-11 text-ellipsis whitespace-nowrap">
+                        <button
+                            type="button"
+                            className="truncate text-label-small text-n-slate-11 hover:text-n-slate-12 !p-0 cursor-pointer"
+                            onClick={copyConversationId}
+                        >
+                            {`#${selectedConversation.id}`}
+                        </button>
+                        {hasMultipleInboxes && inbox ? <span>•</span> : null}
+                        {hasMultipleInboxes && inbox ? (
+                            <div title={inbox.name} className="flex items-center gap-0.5 min-w-0 !mx-0">
+                                <ChannelIcon inbox={inbox} className="size-4 flex-shrink-0 text-n-slate-11" />
+                                <span className="truncate text-label-small text-n-slate-11">{inbox.name}</span>
+                            </div>
+                        ) : null}
+                        {isSnoozed ? <span>•</span> : null}
+                        {isSnoozed ? <span className="font-medium text-n-amber-10">{snoozedDisplayText}</span> : null}
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
+                <MoreActions />
+            </div>
+        </div>
+    );
+}
