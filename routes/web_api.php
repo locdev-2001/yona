@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\WebApi\AgentsController;
+use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
+use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
@@ -53,6 +55,17 @@ Route::middleware(['auth', 'account.scope'])
         Route::post('/inbox_members', [InboxMembersController::class, 'store']);
         Route::match(['put', 'patch'], '/inbox_members', [InboxMembersController::class, 'update']);
         Route::delete('/inbox_members', [InboxMembersController::class, 'destroy']);
+
+        Route::get('/contacts', [ContactsController::class, 'index']);
+        Route::post('/contacts', [ContactsController::class, 'store']);
+        Route::get('/contacts/search', [ContactsController::class, 'search']);
+        Route::get('/contacts/active', [ContactsController::class, 'active']);
+        Route::get('/contacts/{contactId}', [ContactsController::class, 'show'])->whereNumber('contactId');
+        Route::match(['put', 'patch'], '/contacts/{contactId}', [ContactsController::class, 'update'])->whereNumber('contactId');
+        Route::delete('/contacts/{contactId}', [ContactsController::class, 'destroy'])->whereNumber('contactId');
+        Route::post('/contacts/{contactId}/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes'])->whereNumber('contactId');
+        Route::delete('/contacts/{contactId}/avatar', [ContactsController::class, 'destroyAvatar'])->whereNumber('contactId');
+        Route::post('/contacts/{contactId}/contact_inboxes', [ContactInboxesController::class, 'store'])->whereNumber('contactId');
 
         Route::get('/teams/{teamId}/team_members', [TeamMembersController::class, 'index'])->whereNumber('teamId');
         Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');

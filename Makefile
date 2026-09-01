@@ -55,7 +55,7 @@ check: format test build ## Full gate: pint + pest + tsc + vite build
 tinker: ## artisan tinker
 	$(ARTISAN) tinker
 
-QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled
+QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled,purgable
 
 up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve (:8000) + queue worker (chạy nền)
 	$(ORACLE) up

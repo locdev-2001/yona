@@ -88,6 +88,11 @@ class Inbox extends Model
         return $this->hasMany(InboxMember::class);
     }
 
+    public function contactInboxes(): HasMany
+    {
+        return $this->hasMany(ContactInbox::class);
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'inbox_members')->withTimestamps();

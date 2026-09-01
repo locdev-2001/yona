@@ -77,6 +77,11 @@ class Account extends Model
         return $this->hasMany(Inbox::class);
     }
 
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
     // Featurable#feature_enabled? — override trong feature_flags (jsonb) thắng
     // default của config/features.php (quyết định #8: bỏ bitset FlagShihTzu).
     public function featureEnabled(string $name): bool
