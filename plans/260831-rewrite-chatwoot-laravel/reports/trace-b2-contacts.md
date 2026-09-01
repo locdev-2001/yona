@@ -48,9 +48,11 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`, đọc theo tag). Ngày port: backen
 | `Contacts/ContactsDetailsLayout.vue` | `.../ContactsDetailsLayout.tsx` | breadcrumb + block/send message + sidebar desktop/mobile. **Khác biệt cố ý:** VoiceCallButton không render (voice = EE, khớp oracle khi không có voice inbox); "Send message" giữ chỗ (B3) |
 | `Contacts/Pages/ContactDetails.vue` | `.../Pages/ContactDetails.tsx` | avatar 72 allowUpload (upload chỉ gửi file `avatar` qua `_method=PUT` — gốc gửi cả state, controller validate `sometimes` nên tương đương); identifier + created/last activity (dynamicTime); delete section admin. BỎ: ContactLabels (B7/C), fetchContactableInbox sau update (B3) |
 | `Contacts/VoiceCallButton.vue` | — | không port (EE voice) |
-| `Contacts/ContactsSidebar/*` (Notes/History/Media/Merge/CustomAttributes) | — | tab trống chờ feature (B3/B11/E1) |
+| `Contacts/ContactLabels/ContactLabels.vue` + `label/AddLabel.vue` | `.../ContactLabels/ContactLabels.tsx` + `label/AddLabel.tsx` | **Shell B2 (finding pixel-diff #1):** nút "+ tag" viền đứt render đúng vị trí dưới dòng Created; LabelItem + DropdownMenu chọn label mở ở nhóm C (bấm chưa mở gì — pattern giữ chỗ) |
+| `Contacts/ContactsSidebar/ContactCustomAttributes.vue` | `.../ContactsSidebar/ContactCustomAttributes.tsx` | **Tối thiểu B2 (finding pixel-diff #3):** account 0 definition → nhánh else của gốc = `<p>` `ATTRIBUTES.EMPTY_STATE` (xác minh source: nhánh 0-definition render EMPTY_STATE, không phải NO_ATTRIBUTES); used/unused + search + Item port ở E1 |
+| `Contacts/ContactsSidebar/*` (Notes/History/Media/Merge) | — | tab trống chờ feature (B3/B11) |
 | `components-next/breadcrumb/Breadcrumb.vue` | `components-next/breadcrumb/Breadcrumb.tsx` | mới, dùng lại được |
-| `components-next/tabbar/TabBar.vue` | `components-next/tabbar/TabBar.tsx` | indicator trượt đo offset qua ResizeObserver |
+| `components-next/tabbar/TabBar.vue` | `components-next/tabbar/TabBar.tsx` | indicator trượt đo offset qua ResizeObserver. **Bẫy đã trả giá (finding pixel-diff #2):** button phải là con TRỰC TIẾP của root (Fragment, không bọc div) — caller dùng selector `[&>button]:w-full` để chia đều 5 tab, bọc div là selector chết, tab về bề rộng nội dung |
 | `components-next/avatar/Avatar.vue` slot `overlay` | `Avatar.tsx` prop `overlay` (render-prop) | thay lớp upload phủ — ContactsCard dùng cho checkbox chọn khi hover |
 | `composables/useTransformKeys.js` (camelcase/snakecase-keys) | `dashboard/helper/transformKeys.ts` | camelize đọc (stopPaths custom_attributes như getter store), snakeize ghi (giữ nguyên custom_attributes như action update) |
 | store `contacts/*` (vuex) | `dashboard/contacts/api.ts` + state cục bộ trang | theo pattern các màn đã port (không vuex) |
@@ -61,7 +63,8 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`, đọc theo tag). Ngày port: backen
 2. Menu ⋮ chỉ có "New contact" (Import/Export nhóm C) — đừng chấm trạng thái menu mở.
 3. Chọn contact (checkbox hover avatar) hoạt động nhưng **ContactsBulkActionBar chưa có** (bulk actions nhóm C) — chọn xong chưa có thanh hành động.
 4. Presence: `availability_status` luôn `offline` (chấm trạng thái ẩn vì `hideOfflineStatus`) — khớp oracle khi Redis presence trống; B4 mới có online.
-5. Sidebar chi tiết: TabBar đủ 5 tab, nội dung tab trống (oracle có nội dung Attributes/Notes… — vùng nhiễu, crop khi chấm).
+5. Sidebar chi tiết: TabBar đủ 5 tab chia đều bề ngang (truncate như gốc); tab Attributes có empty-state text như oracle khi account 0 custom attribute definition; tab History/Notes/Media/Merge trống chờ feature (oracle có nội dung — vùng nhiễu nếu chấm các tab đó).
+5b. Nút "+ tag" (ContactLabels/AddLabel) render đúng, bấm chưa mở dropdown (labels nhóm C).
 6. `location`/`country_code` cột DB: vắng city/country → '' thay vì NULL (không lộ ra API).
 7. additional_attributes field rỗng lưu `null` thay `''` (ConvertEmptyStringsToNull của Laravel) — hai giá trị đều falsy phía client, không đổi render.
 8. Trang `/contacts/active` giữ URL qua placeholder (active view + presence B4); segments/labels URL giữ qua placeholder (C).
