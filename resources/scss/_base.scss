@@ -203,6 +203,19 @@ code {
   }
 }
 
+// Phần cấu trúc của highlight.js/styles/default.css (Code.vue gốc import) —
+// `pre code.hljs` specificity cao hơn nên THẮNG p-5 ở trên: padding 1em theo
+// text-xs = 12px, đúng khối woot-code oracle. Màu nền/chữ vẫn từ code.hljs.
+pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+}
+
+code.hljs {
+  padding: 3px 5px;
+}
+
 // Table
 table {
   @apply border-spacing-0 text-sm w-full;
