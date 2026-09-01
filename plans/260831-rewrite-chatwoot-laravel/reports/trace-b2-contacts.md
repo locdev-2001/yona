@@ -57,6 +57,15 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`, đọc theo tag). Ngày port: backen
 | `composables/useTransformKeys.js` (camelcase/snakecase-keys) | `dashboard/helper/transformKeys.ts` | camelize đọc (stopPaths custom_attributes như getter store), snakeize ghi (giữ nguyên custom_attributes như action update) |
 | store `contacts/*` (vuex) | `dashboard/contacts/api.ts` + state cục bộ trang | theo pattern các màn đã port (không vuex) |
 
+## Bẫy hệ thống đã trả giá 2 lần — arbitrary-variant selector xuyên component
+
+Chatwoot truyền class dạng `[&>...]`/`[&_...]` từ CALLER vào component con để nhắm phần tử bên trong theo **cấu trúc DOM thật** của bản Vue. Port sang React mà thêm/bớt MỘT lớp wrapper là selector của caller trượt im lặng (không lỗi build, chỉ lệch pixel):
+
+1. TabBar: caller `[&>button]:w-full` — button phải là con TRỰC TIẾP của root; bọc `div.contents` là selector chết → 5 tab về bề rộng nội dung thay vì chia đều (finding pixel-diff đợt 2).
+2. ComboBox: caller `[&>div>button]:h-8` + `!bg-n-alpha-black2` — bản gốc bọc Button trong `<OnClickOutside>` (@vueuse) render MỘT `<div>` thật → DOM `root > div > button`; port bỏ lớp div này → select country cao 40px, sai nền, cả form dưới trôi 8px (finding pixel-diff đợt 3).
+
+**Luật khi port component Vue → React từ nay:** trước khi chốt JSX, soi template gốc xem có wrapper vô hình không (`OnClickOutside`, `Transition`, component @vueuse render phần tử thật) và grep mọi call-site truyền `[&`-class vào component đó, đối chiếu selector với DOM render thực tế. Đã rà toàn cây Contacts + primitives mới sau fix: các `[&`-class còn lại trong phạm vi B2 đều là self-selector trên chính phần tử nhận class (`[&:not(.error,.focus)]` trên input) — khớp.
+
 ## Khác biệt cố ý (tổng hợp — pixel-diff cần biết)
 
 1. Nút **filter** + nút **New message** (list) + nút **Send message** (chi tiết) render đúng vị trí/nhãn nhưng bấm chưa có hành vi (ContactsFilter nhóm C, ComposeConversation B3).
