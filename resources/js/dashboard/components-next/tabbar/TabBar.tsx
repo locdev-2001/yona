@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 
 // Port từ dashboard/components-next/tabbar/TabBar.vue — thanh tab với
 // indicator trượt đo theo offset của nút đang active.
@@ -57,8 +57,10 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
                 style={indicatorStyle}
             />
 
+            {/* Button phải là con TRỰC TIẾP của root — caller gốc dùng selector
+                [&>button]:w-full (ContactManageView) nên không được bọc thêm div. */}
             {tabs.map((tab, index) => (
-                <div key={index} className="contents">
+                <Fragment key={index}>
                     <button
                         ref={el => {
                             tabRefs.current[index] = el;
@@ -78,7 +80,7 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
                             }`}
                         />
                     ) : null}
-                </div>
+                </Fragment>
             ))}
         </div>
     );

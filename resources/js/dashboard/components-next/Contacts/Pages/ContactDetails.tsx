@@ -9,6 +9,7 @@ import Button from 'dashboard/components-next/button/Button';
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm';
 import type { ContactsFormHandle } from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
+import ContactLabels from 'dashboard/components-next/Contacts/ContactLabels/ContactLabels';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import { deleteContactAvatar, updateContact, updateContactAvatar } from 'dashboard/contacts/api';
 import type { Contact, ContactFormState } from 'dashboard/contacts/types';
@@ -112,6 +113,7 @@ export default function ContactDetails({
                         </span>
                     </div>
                 </div>
+                <ContactLabels contactId={selectedContact.id} />
             </div>
             <div className="flex flex-col items-start gap-6">
                 <ContactsForm

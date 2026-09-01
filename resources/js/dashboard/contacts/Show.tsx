@@ -8,6 +8,7 @@ import ContactsDetailsLayout from 'dashboard/components-next/Contacts/ContactsDe
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import ContactDetails from 'dashboard/components-next/Contacts/Pages/ContactDetails';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
+import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes';
 import { fetchContact, updateContact } from 'dashboard/contacts/api';
 import type { Contact } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
@@ -112,8 +113,10 @@ export default function ContactShow() {
                             <div className="flex items-center justify-center py-10 text-n-slate-11">
                                 <Spinner />
                             </div>
+                        ) : activeTab === 'attributes' ? (
+                            <ContactCustomAttributes selectedContact={selectedContact} />
                         ) : (
-                            // Nội dung tab chờ feature tương ứng — giữ khung sidebar.
+                            // Tab History/Notes/Media/Merge chờ feature tương ứng (B3/B11).
                             <div />
                         )
                     }
