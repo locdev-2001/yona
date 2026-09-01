@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
-use App\Models\Attachment;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
 use Illuminate\Http\JsonResponse;
@@ -64,7 +63,7 @@ class ProfilesController extends Controller
         }
 
         if ($request->file('avatar') instanceof UploadedFile) {
-            $this->replaceAvatar($user, $request->file('avatar'));
+            $user->replaceAvatar($request->file('avatar'));
         }
 
         $user->save();
@@ -91,23 +90,6 @@ class ProfilesController extends Controller
         $user->unconfirmed_email = $newEmail;
         $user->confirmation_token = Str::random(40);
         $user->confirmation_sent_at = now();
-    }
-
-    private function replaceAvatar(User $user, UploadedFile $file): void
-    {
-        $user->avatar?->delete();
-
-        $user->avatar()->create([
-            'file_type' => Attachment::FILE_TYPE_IMAGE,
-            'extension' => $file->extension(),
-            'filename' => $file->getClientOriginalName(),
-            'content_type' => $file->getMimeType(),
-            'byte_size' => $file->getSize(),
-            'path' => $file->store('avatars/'.$user->id, 'public'),
-            'disk' => 'public',
-        ]);
-
-        $user->unsetRelation('avatar');
     }
 
     // Tương đương api/v1/models/_user.json.jbuilder (các trường đã port;

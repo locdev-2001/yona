@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Avatarable;
 use App\Notifications\ConfirmationInstructions;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Avatarable, HasFactory, Notifiable;
 
     public const AVAILABILITY_ONLINE = 0;
 
@@ -133,15 +134,22 @@ class User extends Authenticatable
         return $this->belongsToMany(Team::class, 'team_members')->withTimestamps();
     }
 
-    public function avatar(): MorphOne
+    public function inboxes(): BelongsToMany
     {
-        return $this->morphOne(Attachment::class, 'attachable');
+        return $this->belongsToMany(Inbox::class, 'inbox_members')->withTimestamps();
     }
 
-    // Tương đương Avatarable#avatar_url (Chatwoot trả '' khi chưa có avatar).
-    public function avatarUrl(): string
+    // User#assigned_inboxes: admin thấy mọi inbox của account, agent chỉ inbox mình là member.
+    /** @return Builder<Inbox> */
+    public function assignedInboxes(Account $account, AccountUser $accountUser): Builder
     {
-        return $this->avatar?->url() ?? '';
+        if ($accountUser->isAdministrator()) {
+            return $account->inboxes()->getQuery();
+        }
+
+        return Inbox::query()
+            ->where('account_id', $account->id)
+            ->whereIn('id', $this->inboxes()->select('inboxes.id'));
     }
 
     // Devise reconfirmable gửi mail xác nhận tới địa chỉ MỚI (unconfirmed_email).

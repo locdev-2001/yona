@@ -8,6 +8,7 @@ import components from './locale/en/components.json';
 import teamsSettings from './locale/en/teamsSettings.json';
 import emojiIconPicker from './locale/en/emojiIconPicker.json';
 import agentMgmt from './locale/en/agentMgmt.json';
+import inboxMgmt from './locale/en/inboxMgmt.json';
 
 const messages: Record<string, unknown> = {
     ...login,
@@ -20,8 +21,13 @@ const messages: Record<string, unknown> = {
     ...agentMgmt,
     ...teamsSettings,
     ...emojiIconPicker,
+    ...inboxMgmt,
     GENERAL_SETTINGS: {
         BACK: 'Back',
+    },
+    GENERAL: {
+        BETA: 'Beta',
+        BETA_DESCRIPTION: 'This feature is in beta and may change as we improve it.',
     },
     COMMON: {
         OR: 'Or',

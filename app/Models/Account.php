@@ -72,6 +72,11 @@ class Account extends Model
         return $this->hasMany(Team::class);
     }
 
+    public function inboxes(): HasMany
+    {
+        return $this->hasMany(Inbox::class);
+    }
+
     public function onboardingStep(): ?string
     {
         return $this->custom_attributes[self::ONBOARDING_STEP_KEY] ?? null;

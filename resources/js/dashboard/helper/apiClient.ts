@@ -57,6 +57,10 @@ export function putJson<T = unknown>(url: string, body: Record<string, unknown>)
     return request<T>(url, 'PUT', JSON.stringify(body), 'application/json');
 }
 
+export function patchJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
+    return request<T>(url, 'PATCH', JSON.stringify(body), 'application/json');
+}
+
 export function deleteJson<T = unknown>(url: string): Promise<T> {
     return request<T>(url, 'DELETE');
 }

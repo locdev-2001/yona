@@ -1,13 +1,23 @@
+import { createElement } from 'react';
+
 import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import type { SidebarMenuItem } from './provider';
+
+// Inbox rút gọn share từ SetCurrentAccount cho nhóm Channels.
+export interface SidebarInbox {
+    id: number;
+    name: string;
+    channel_type: string;
+}
 
 // Port từ menuItems computed trong sidebar/Sidebar.vue.
 // Ẩn theo quyết định skip EE: Captain, Calls, Companies, Audit Logs,
 // Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
-// Nhóm động (Folders/Teams/Channels/Labels/Segments/Tagged) render khi dữ liệu
+// Nhóm động (Folders/Teams/Labels/Segments/Tagged) render khi dữ liệu
 // đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
-export function buildMenuItems(accountId: number): SidebarMenuItem[] {
+export function buildMenuItems(accountId: number, inboxes: SidebarInbox[] = []): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
     return [
@@ -69,7 +79,12 @@ export function buildMenuItems(accountId: number): SidebarMenuItem[] {
                     icon: 'i-lucide-mailbox',
                     collapsible: true,
                     showTreeLine: true,
-                    children: [],
+                    children: inboxes.map(inbox => ({
+                        name: `${inbox.name}-${inbox.id}`,
+                        label: inbox.name,
+                        icon: createElement(ChannelIcon, { inbox, className: 'size-[16px]' }),
+                        to: scoped(`inbox/${inbox.id}`),
+                    })),
                 },
                 {
                     name: 'Labels',
