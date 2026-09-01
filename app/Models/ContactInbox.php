@@ -6,6 +6,7 @@ use Database\Factories\ContactInboxFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/contact_inbox.rb.
@@ -47,5 +48,10 @@ class ContactInbox extends Model
     public function inbox(): BelongsTo
     {
         return $this->belongsTo(Inbox::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
     }
 }

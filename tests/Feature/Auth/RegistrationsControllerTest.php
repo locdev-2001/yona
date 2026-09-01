@@ -136,7 +136,7 @@ describe('onboarding account_details', function () {
 
         $this->get("/app/accounts/{$account->id}/dashboard")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/Index'));
+            ->assertInertia(fn ($page) => $page->component('dashboard/conversation/ConversationView'));
     });
 
     it('is forbidden for agents', function () {
