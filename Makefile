@@ -9,7 +9,7 @@ ORACLE   := $(HOME)/www/chatwoot-oracle/oracle.sh
 PIXEL    := $(HOME)/www/pixel-diff
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev serve worker migrate seed test format stan check build tinker \
+.PHONY: help setup dev serve worker migrate seed test format stan check build i18n i18n-check tinker \
 	up down status oracle oracle-down oracle-status diff
 
 help: ## Show this help
@@ -27,6 +27,7 @@ setup: ## First-time: deps + env + key + DB + migrate + assets
 	$(PSQL) -d yona_rw_test -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
 	$(ARTISAN) migrate --force
 	$(ARTISAN) db:seed --force
+	$(ARTISAN) i18n:generate
 	pnpm build
 
 dev: ## Vite dev server
@@ -47,10 +48,16 @@ test: ## Pest suite (yona_rw_test)
 format: ## Pint
 	vendor/bin/pint
 
-build: ## tsc + vite build
+i18n: ## Sinh bundle i18n frontend từ lang/{locale}/*.php
+	$(ARTISAN) i18n:generate
+
+i18n-check: ## Bundle i18n đã commit phải khớp lang/ (gate CI)
+	$(ARTISAN) i18n:generate --check
+
+build: i18n ## i18n:generate + tsc + vite build
 	pnpm tsc && pnpm build
 
-check: format test build ## Full gate: pint + pest + tsc + vite build
+check: format i18n-check test build ## Full gate: pint + i18n-check + pest + tsc + vite build
 
 tinker: ## artisan tinker
 	$(ARTISAN) tinker

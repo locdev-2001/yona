@@ -3,3 +3,6 @@
 
 # Shell scripts must keep LF — they run inside Linux containers (CRLF breaks the shebang).
 *.sh text eol=lf
+
+# Bundle i18n frontend do `php artisan i18n:generate` sinh từ lang/ — không review diff.
+resources/js/i18n/generated/* linguist-generated=true

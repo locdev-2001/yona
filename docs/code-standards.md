@@ -762,6 +762,39 @@ class ConversationService {
 
 ---
 
+## Internationalization (i18n)
+
+### 17. Một nguồn chuỗi cho cả backend lẫn frontend: `lang/{locale}/*.php` → `php artisan i18n:generate`
+
+**Rule:** Mọi chuỗi giao diện (dashboard, email, thông báo lỗi hiển thị) sống DUY NHẤT trong `lang/{locale}/<namespace>.php` (thư mục `lang/` ở gốc = chuẩn Laravel 11+, là "resources/lang" theo cách gọi cũ). Frontend KHÔNG giữ JSON/TS chuỗi riêng — bundle `resources/js/i18n/generated/{locale}.ts` do lệnh `php artisan i18n:generate` sinh ra và **cấm sửa tay**.
+
+**Quy ước file/key (giữ nguyên Chatwoot để call-site `t()` không đổi):**
+- Mỗi top-level key trong JSON Chatwoot = một file, tên file = key hạ chữ thường: `CONVERSATION.*` → `lang/en/conversation.php`, `INBOX_MGMT.*` → `lang/en/inbox_mgmt.php`, `FILTER.*` → `lang/en/filter.php`. Lệnh generate suy namespace = `strtoupper(tên file)`.
+- Bên trong file: cấu trúc/tên key y hệt JSON gốc (`REPLYBOX => ['PRIVATE_NOTE' => 'Private Note']`). Không đổi tên, không "Laravel hóa" chữ thường.
+- **Placeholder giữ `{name}` như vue-i18n** (`'Hi {name}, {count} items'`). `App\Translation\Translator` dạy `__()` hiểu `{name}` (song song `:name` chuẩn Laravel cho các file như `auth.php`). KHÔNG chuyển sang `:name`: `:name` không phân định biên (`{size}MB` → `:sizeMB` mất thông tin).
+- Escape vue-i18n `{'@'}` → viết thẳng `@`. Plural kiểu `a | b` (hoặc `zero | one | other`) giữ nguyên; frontend chọn nhánh theo param `n`.
+- Key không được chứa dấu chấm (Laravel tra bằng dot-notation).
+
+**Cách gọi:**
+```php
+__('conversation.REPLYBOX.PRIVATE_NOTE');                 // backend — <file>.<đường key>
+__('profile_settings.FORM.MESSAGE_SIGNATURE_SECTION.IMAGE_UPLOAD_SIZE_ERROR', ['size' => 5]);
+```
+```ts
+t('CONVERSATION.REPLYBOX.PRIVATE_NOTE');                  // frontend — <NAMESPACE>.<đường key>
+t('AGENT_MGMT.COUNT', { n: agents.length });              // plural
+```
+
+**Quy trình thêm/sửa chuỗi:**
+1. Port key mới từ Chatwoot: copy khối JSON vào file `lang/en/<namespace>.php` tương ứng (tạo file nếu namespace mới), giữ nguyên key.
+2. `php artisan i18n:generate` (hoặc `make i18n`) → commit cả `lang/` lẫn `resources/js/i18n/generated/`.
+3. `make check` chạy `i18n:generate --check`: bundle lệch `lang/` = gate đỏ. `make build` tự generate trước `tsc`/`vite`.
+4. Thêm ngôn ngữ = thêm thư mục `lang/vi/` cùng bộ file; lệnh generate **fail rõ** khi locale thiếu key so với `app.fallback_locale`, cảnh báo khi có key lạ.
+
+**Reason:** Founder chốt 02/09: đa ngữ backend + frontend phải đồng nhất, một chuỗi đổi = sửa một chỗ. Giữ tên key Chatwoot để trace Ruby↔PHP và pixel-diff không phải map lại. Nguồn: `App\Console\Commands\GenerateI18nBundles`, test `tests/Feature/Console/GenerateI18nBundlesTest.php`, trace `plans/260831-rewrite-chatwoot-laravel/reports/trace-i18n.md`.
+
+---
+
 ## Summary Table
 
 | Pattern | Location | Reason |
@@ -789,6 +822,7 @@ class ConversationService {
 | Meaningful variable names | All code | Readability, prevent misuse |
 | RLS tested per table | Test suite | Verify isolation is configured |
 | **Chia lớp; lõi mù nhà cung cấp; lớp trên chỉ biết lớp dưới** | **Toàn codebase** | **Thêm nhà cung cấp = thêm adapter, không sửa lõi** |
+| Chuỗi giao diện một nguồn `lang/{locale}/*.php`, FE dùng bundle `i18n:generate` | `lang/`, `resources/js/i18n/generated/` (cấm sửa tay) | §17 — backend + frontend cùng key Chatwoot, placeholder `{name}` |
 
 ---
 

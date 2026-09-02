@@ -1,49 +1,7 @@
-import login from './locale/en/login.json';
-import signup from './locale/en/signup.json';
-import onboarding from './locale/en/onboarding.json';
-import setNewPassword from './locale/en/setNewPassword.json';
-import resetPassword from './locale/en/resetPassword.json';
-import settings from './locale/en/settings.json';
-import components from './locale/en/components.json';
-import teamsSettings from './locale/en/teamsSettings.json';
-import emojiIconPicker from './locale/en/emojiIconPicker.json';
-import agentMgmt from './locale/en/agentMgmt.json';
-import inboxMgmt from './locale/en/inboxMgmt.json';
-import contact from './locale/en/contact.json';
-import conversation from './locale/en/conversation.json';
-import chatlist from './locale/en/chatlist.json';
+import { locales, defaultLocale } from './generated';
 
-const messages: Record<string, unknown> = {
-    ...login,
-    ...signup,
-    ...onboarding,
-    ...setNewPassword,
-    ...resetPassword,
-    ...settings,
-    ...components,
-    ...agentMgmt,
-    ...teamsSettings,
-    ...emojiIconPicker,
-    ...inboxMgmt,
-    ...contact,
-    ...conversation,
-    ...chatlist,
-    GENERAL_SETTINGS: {
-        BACK: 'Back',
-    },
-    GENERAL: {
-        BETA: 'Beta',
-        BETA_DESCRIPTION: 'This feature is in beta and may change as we improve it.',
-    },
-    COMMON: {
-        OR: 'Or',
-        CLICK_HERE: 'click here',
-    },
-    // advancedFilters.json (chỉ key màn conversation cần tới ở B3).
-    FILTER: {
-        TOOLTIP_LABEL: 'Filter conversations',
-    },
-};
+// Nguồn chân lý = lang/{locale}/*.php; bundle trong ./generated do `php artisan i18n:generate` sinh.
+const messages = locales[defaultLocale];
 
 // vue-i18n implicit plural: message dạng "a | b" (hoặc 3 nhánh zero|one|other)
 // chọn nhánh theo named param `n`.
@@ -55,8 +13,7 @@ function pluralize(message: string, count: number): string {
     return count === 0 ? choices[0] : count === 1 ? choices[1] : choices[2];
 }
 
-// Tương đương $t của vue-i18n bên Chatwoot (chỉ phần tra key lồng nhau
-// mà các màn đã port cần; i18n đầy đủ + tiếng Việt vào ở nhóm G).
+// Tương đương $t của vue-i18n bên Chatwoot: tra key lồng nhau + nội suy {param}.
 export function t(key: string, params?: Record<string, string | number>): string {
     const value = key
         .split('.')
@@ -68,8 +25,7 @@ export function t(key: string, params?: Record<string, string | number>): string
 
     if (typeof value !== 'string') return key;
 
-    // vue-i18n escape dạng {'@'} → @, và nội suy {param}
-    let result = value.replace(/\{'([^']*)'\}/g, '$1');
+    let result = value;
     if (typeof params?.n === 'number') {
         result = pluralize(result, params.n);
     }
