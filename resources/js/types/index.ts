@@ -8,6 +8,7 @@ export interface AuthUser {
     type: string | null;
     avatar_url: string;
     message_signature: string | null;
+    pubsub_token: string;
 }
 
 export interface GlobalConfig {

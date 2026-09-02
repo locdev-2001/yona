@@ -32,6 +32,9 @@ importers:
       flag-icons:
         specifier: ^7.5.0
         version: 7.5.0
+      laravel-echo:
+        specifier: 2.4.0
+        version: 2.4.0(pusher-js@8.6.0)
       libphonenumber-js:
         specifier: ^1.13.12
         version: 1.13.12
@@ -50,6 +53,9 @@ importers:
       prosemirror-view:
         specifier: ^1.42.3
         version: 1.42.3
+      pusher-js:
+        specifier: 8.6.0
+        version: 8.6.0
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -1122,6 +1128,18 @@ packages:
       canvas:
         optional: true
 
+  laravel-echo@2.4.0:
+    resolution: {integrity: sha512-8w0fAGSNt6THfbNyqdKc29bhfeNpJg13CGx2fcLgoX0/f0mTJm/AIkYTTakmcr9pc42ZB68cSoE00j4/xNaFGQ==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      pusher-js: '*'
+      socket.io-client: '*'
+    peerDependenciesMeta:
+      pusher-js:
+        optional: true
+      socket.io-client:
+        optional: true
+
   laravel-precognition@1.0.2:
     resolution: {integrity: sha512-0H08JDdMWONrL/N314fvsO3FATJwGGlFKGkMF3nNmizVFJaWs17816iM+sX7Rp8d5hUjYCx6WLfsehSKfaTxjg==}
 
@@ -1464,6 +1482,9 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  pusher-js@8.6.0:
+    resolution: {integrity: sha512-wShJPfCS/kYkCBVzVW67wa9cnQIgHTszEK2XHNrFkOgGruuGw081aERAxfRjfdFU+WcIt8x6dvbwkTW4iZuQ8Q==}
+
   qs@6.16.0:
     resolution: {integrity: sha512-h6fhOIaRrID2CbEY2fqs+7t+UXZo+MLAnU5gRIq85uFtdiUPCdsApMlHhXogKVM4HM2DVbIjGNTTYH2OcmP1vA==}
     engines: {node: '>=0.6'}
@@ -1630,6 +1651,9 @@ packages:
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
+
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -2638,6 +2662,10 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
+  laravel-echo@2.4.0(pusher-js@8.6.0):
+    optionalDependencies:
+      pusher-js: 8.6.0
+
   laravel-precognition@1.0.2:
     dependencies:
       axios: 1.20.0
@@ -2951,6 +2979,10 @@ snapshots:
 
   punycode@2.3.1: {}
 
+  pusher-js@8.6.0:
+    dependencies:
+      tweetnacl: 1.0.3
+
   qs@6.16.0:
     dependencies:
       es-define-property: 1.0.1
@@ -3154,6 +3186,8 @@ snapshots:
       punycode: 2.3.1
 
   ts-interface-checker@0.1.13: {}
+
+  tweetnacl@1.0.3: {}
 
   typescript@5.9.3: {}
 
