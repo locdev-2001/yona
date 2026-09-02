@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 
-// Port từ dashboard/components/Accordion/AccordionItem.vue (EmojiOrIcon rỗng →
-// giữ ô w-5 để khoảng cách tiêu đề y gốc; kéo thả sắp xếp = vuedraggable, chưa port).
+// Port từ dashboard/components/Accordion/AccordionItem.vue (EmojiOrIcon với
+// icon/emoji rỗng KHÔNG render gì → không chèn ô giữ chỗ; kéo thả sắp xếp =
+// vuedraggable, chưa port).
 interface AccordionItemProps {
     title: string;
     compact?: boolean;
@@ -36,7 +37,7 @@ export default function AccordionItem({
                 }}
             >
                 <div className="flex justify-between">
-                    <span className="inline-block w-5">{emoji}</span>
+                    {emoji ? <i className="inline-block w-5 not-italic">{emoji}</i> : null}
                     <h5 className="text-n-slate-12 text-sm mb-0 py-0 pr-2 pl-0">{title}</h5>
                 </div>
                 <div className="flex flex-row">

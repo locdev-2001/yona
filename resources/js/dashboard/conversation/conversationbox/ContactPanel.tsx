@@ -94,7 +94,14 @@ export default function ContactPanel() {
     return (
         <div className="w-full">
             <SidebarActionsHeader title={t('CONVERSATION.SIDEBAR.CONTACT')} onClose={closeContactPanel} />
-            <ContactInfo contact={selectedConversation.meta.sender} onPanelClose={closeContactPanel} />
+            <ContactInfo
+                contact={selectedConversation.meta.sender}
+                uiSettings={uiSettings}
+                onToggleSignature={() =>
+                    updateUISettings({ channel_api_signature_enabled: !uiSettings.channel_api_signature_enabled })
+                }
+                onPanelClose={closeContactPanel}
+            />
             <div className="px-2 pb-8 list-group">
                 <div className="flex flex-col gap-3">
                     {orderedSections.map(section => (
