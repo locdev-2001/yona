@@ -40,6 +40,7 @@
             "@php artisan key:generate",
             "@php artisan migrate --force",
             "npm install --ignore-scripts",
+            "@php artisan i18n:generate",
             "npm run build"
         ],
         "dev": [

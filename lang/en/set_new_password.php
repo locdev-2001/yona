@@ -1,0 +1,25 @@
+<?php
+
+// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/setNewPassword.json — namespace SET_NEW_PASSWORD.
+
+return [
+    'TITLE' => 'Set new password',
+    'PASSWORD' => [
+        'LABEL' => 'Password',
+        'PLACEHOLDER' => 'Password',
+        'ERROR' => 'Password is too short.',
+    ],
+    'CONFIRM_PASSWORD' => [
+        'LABEL' => 'Confirm password',
+        'PLACEHOLDER' => 'Confirm Password',
+        'ERROR' => 'Passwords do not match.',
+    ],
+    'API' => [
+        'SUCCESS_MESSAGE' => 'Successfully changed the password.',
+        'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+    ],
+    'CAPTCHA' => [
+        'ERROR' => 'Verification expired. Please solve captcha again.',
+    ],
+    'SUBMIT' => 'Submit',
+];
