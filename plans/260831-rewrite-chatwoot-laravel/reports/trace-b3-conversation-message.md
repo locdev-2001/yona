@@ -32,6 +32,7 @@ Nguồn: Chatwoot v4.17.1 (`refs/chatwoot`, đọc theo tag). Ngày port: 01/09/
 |---|---|
 | `GET/POST /api/v1/accounts/:id/conversations`, `GET meta`, `GET :id` (display_id), `GET/POST :id/messages` | `routes/web_api.php` cùng path, middleware `auth.api_token` + `auth` + `account.scope` (token HOẶC session trên cùng endpoint như Chatwoot) |
 | dashboard routes `/app/accounts/:id/dashboard` (home), `/conversations/:id`, `/inbox/:inbox_id`(+`/conversations/:id`) | `routes/web.php` → `DashboardController@show/conversation/inbox` render `dashboard/conversation/ConversationView` |
+| `team_conversations` `/team/:teamId` + `conversations_through_team` `/team/:teamId/conversations/:id` | `DashboardController@team` → cùng ConversationView với prop `teamId`; finder lọc `team_id` (đã có từ backend B3) |
 
 ## Spec ↔ Pest (125 test mới, toàn suite 387)
 
@@ -72,7 +73,8 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 | Nguồn | Đích | Ghi chú |
 |---|---|---|
 | store vuex `conversations/*` + `conversationPage` (phần B3) | `dashboard/conversation/ConversationContext.tsx` + `api.ts` + `types.ts` + `constants.ts` | list + counts + selected chat + messages + gửi tin theo pattern createPendingMessageAndSend (pending status `progress` → server thay thế, lỗi → `failed` + toast); filter/tab đổi → reset trang 1; chọn conversation theo display_id trên URL (Inertia visit preserveState). Realtime B4 sẽ cắm Echo vào đây |
-| `routes/dashboard/conversation/ConversationView.vue` + `conversation.routes.js` | `dashboard/conversation/ConversationView.tsx` + `routes/web.php` | 3 route: dashboard (home) / conversations/{id} / inbox/{inboxId}(/conversations/{id}). Bỏ: expanded layout (conversation_display_type), ConversationSidebar/SidepanelSwitch (B11), CmdBar (B10), mentions/participating/unattended/label/team/custom_view routes (B7/B8/B11/E1 — URL con giữ qua placeholder) |
+| `routes/dashboard/conversation/ConversationView.vue` + `conversation.routes.js` | `dashboard/conversation/ConversationView.tsx` + `routes/web.php` | 5 route: dashboard (home) / conversations/{id} / inbox/{inboxId}(/conversations/{id}) / team/{teamId}(/conversations/{id}). Bỏ: expanded layout (conversation_display_type), ConversationSidebar/SidepanelSwitch (B11), CmdBar (B10), mentions/participating/unattended/label/custom_view routes (B7/B8/B11/E1 — URL con giữ qua placeholder) |
+| `sidebar/Sidebar.vue` `teams/getMyTeams` + `sortedTeams` + `helper/URLHelper.conversationUrl` | `SetCurrentAccount` share `teams` (member-only, `lower(name) ASC` = tiebreak alphabetical của sortSidebarItems khi unread 0) → `menuItems.ts` nhóm Teams leaf `to: team/{id}` (label = name, không icon như gốc) + `URLHelper.conversationUrl` (ưu tiên inbox → team) | Finding #1 pixel-diff 02/09: sót từ A6, lộ khi có menu Conversations. Unread badge theo team = B8 |
 | `WootWriter/Editor.vue` (ProseMirror) | `dashboard/components/widgets/WootWriter/Editor.tsx` | GIỮ NGUYÊN engine `@chatwoot/prosemirror-schema@1.4.1` (quyết định plan — không viết lại): MessageMarkdownTransformer/Serializer + buildEditor + schema theo FORMATTING (Channel::Api: strong/em; note: đủ bộ); Enter/Cmd+Enter gửi theo `ui_settings.editor_message_key`; style gốc port vào `resources/scss/_editor.scss` (kể cả base.scss của package — biến `--space-*`/`--w-*` KHÔNG định nghĩa y như oracle, đừng "sửa giùm"). Bỏ ở B3: mention @ (B11), canned `/` (B10), variables (D1), macros (D3), emoji `:` (B10), upload ảnh inline (B9), copilot (EE) |
 | `shared/helpers/MessageFormatter.js` + `markdownIt/link.js` | `shared/helpers/MessageFormatter.ts` | markdown-it 14.1.1 đúng version gốc + mention plugin + link attrs + image resize qua cw_image_width; render qua DOMPurify |
 | `shared/components/FluentIcon/DashboardIcon.vue` + dashboard-icons.json | `shared/components/FluentIcon/FluentIcon.tsx` + copy nguyên json | bộ icon fluent inline SVG đầy đủ |
@@ -83,7 +85,7 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 
 | Nguồn | Đích | Ghi chú |
 |---|---|---|
-| `components/ChatList.vue` | `conversation/chatlist/ChatList.tsx` | Bỏ B3: custom views/folders, advanced filter modal (E1), bulk actions + BulkActionBar, delete dialog, mentions/participating/unattended |
+| `components/ChatList.vue` | `conversation/chatlist/ChatList.tsx` | pageTitle: inbox.name → activeTeam.name → TAB_HEADING như gốc. Bỏ B3: custom views/folders, advanced filter modal (E1), bulk actions + BulkActionBar, delete dialog, mentions/participating/unattended |
 | `components/ChatListHeader.vue` | `chatlist/ChatListHeader.tsx` | nhánh applied-filters/folders cắt; nút filter render giữ chỗ (bấm chưa mở) |
 | `widgets/ChatTypeTabs.vue` | `chatlist/ChatTypeTabs.tsx` | tab Mine/Unassigned/All THẬT (counts từ finder meta); phím tắt Alt+N bỏ (B10) |
 | `widgets/conversation/ConversationBasicFilter.vue` | `chatlist/ConversationBasicFilter.tsx` | status + sort THẬT, lưu `ui_settings.conversations_filter_by` như useUISettings |
@@ -138,6 +140,7 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 - E2E trình duyệt (login john@acme.inc, làm thật trọn vòng): mở dashboard → tab Mine/Unassigned/All (counts đúng, đổi tab refetch) → mở conversation từ card (URL `/conversations/4`) → bubble inbound trái (bg-n-slate-4) → trả lời bằng nút Send VÀ hotkey Ctrl+Enter → bubble phải xanh (bg-n-solid-blue), 2 tin cùng phút GỘP NHÓM (group-with-next, avatar chỉ ở tin cuối) → Private Note (toggle trượt, editor amber `is-private`, nút signature ẩn, label "Add Note") → note lưu `private=true`, bubble amber (bg-n-solid-amber) + khóa lock-keyhole → curl inbound mới → **F5 + deep-link reload: đủ 5 tin persistence**, unread badge "2 Unread Messages" → inbox view `/inbox/1` (title api-test, lọc theo inbox) → DB kiểm: sender đúng morph (Contact/User), first_reply_created_at SET sau reply đầu, waiting_since NULL sau reply, last_activity_at = tin cuối. Console 0 lỗi.
 - Ghi chú e2e: click vật lý qua browser-pane có lúc không dispatch khi pane không hiển thị (screenshot cũng timeout vì không compositing) — xác minh lại bằng JS click; không phải bug app.
 
-## Gate
+## Gate (02/09/2026 — fix finding #1 pixel-diff: nhóm Teams sidebar)
 
-(Cập nhật cuối phiên.)
+- Pest toàn suite **389/389** (+2: `tests/Feature/App/TeamConversationsPageTest.php` — share teams member-only/sort/scope account, route team + team/conversations) + `npx tsc` + `npm run build` + pint xanh.
+- Trình duyệt: phiên code không tự nhập mật khẩu vào form login (ràng buộc an toàn) → xác nhận hình ảnh nhóm Teams > support do phiên kiểm chứng chấm trên phiên đã đăng nhập.

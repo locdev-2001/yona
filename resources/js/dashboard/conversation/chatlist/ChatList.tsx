@@ -27,13 +27,16 @@ export default function ChatList() {
         assigneeTab,
         status,
         inboxId,
+        teamId,
         setAssigneeTab,
         loadMoreConversations,
     } = useConversation();
-    const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
 
+    // pageTitle gốc: inbox.name → activeTeam.name → mặc định (label/mention/... vào B7/B8).
     const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
-    const pageTitle = activeInbox?.name || t('CHAT_LIST.TAB_HEADING');
+    const activeTeam = teamId ? teams.find(item => item.id === teamId) : undefined;
+    const pageTitle = activeInbox?.name || activeTeam?.name || t('CHAT_LIST.TAB_HEADING');
 
     const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
         key,

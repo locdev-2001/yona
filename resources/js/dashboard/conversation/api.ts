@@ -28,6 +28,7 @@ export interface FetchConversationsParams {
     page: number;
     sortBy: string;
     inboxId?: number;
+    teamId?: number;
 }
 
 export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
@@ -39,6 +40,9 @@ export function fetchConversations(params: FetchConversationsParams): Promise<Co
     });
     if (params.inboxId) {
         query.set('inbox_id', String(params.inboxId));
+    }
+    if (params.teamId) {
+        query.set('team_id', String(params.teamId));
     }
 
     return getJson(`/api/v1/accounts/${params.accountId}/conversations?${query.toString()}`);

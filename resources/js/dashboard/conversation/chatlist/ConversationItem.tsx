@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import ConversationCard from '../../components/widgets/conversation/ConversationCard';
+import { conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import type { Conversation } from '../types';
@@ -14,7 +15,7 @@ interface ConversationItemProps {
 }
 
 export default function ConversationItem({ source, showAssignee = false }: ConversationItemProps) {
-    const { accountId, inboxId, conversationId } = useConversation();
+    const { accountId, inboxId, teamId, conversationId } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const chatMetadata = source.meta || {};
@@ -29,9 +30,7 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
     };
     const showInboxName = !inboxId && inboxes.length > 1;
 
-    const conversationPath = inboxId
-        ? `/app/accounts/${accountId}/inbox/${inboxId}/conversations/${source.id}`
-        : `/app/accounts/${accountId}/conversations/${source.id}`;
+    const conversationPath = conversationUrl({ accountId, inboxId, teamId, id: source.id });
 
     const onCardClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.metaKey || event.ctrlKey) {

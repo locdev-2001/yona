@@ -12,12 +12,22 @@ export interface SidebarInbox {
     channel_type: string;
 }
 
+// Team của user (teams/getMyTeams) cho nhóm Teams.
+export interface SidebarTeam {
+    id: number;
+    name: string;
+}
+
 // Port từ menuItems computed trong sidebar/Sidebar.vue.
 // Ẩn theo quyết định skip EE: Captain, Calls, Companies, Audit Logs,
 // Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
-// Nhóm động (Folders/Teams/Labels/Segments/Tagged) render khi dữ liệu
+// Nhóm động (Folders/Labels/Segments/Tagged) render khi dữ liệu
 // đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
-export function buildMenuItems(accountId: number, inboxes: SidebarInbox[] = []): SidebarMenuItem[] {
+export function buildMenuItems(
+    accountId: number,
+    inboxes: SidebarInbox[] = [],
+    teams: SidebarTeam[] = [],
+): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
     return [
@@ -71,7 +81,11 @@ export function buildMenuItems(accountId: number, inboxes: SidebarInbox[] = []):
                     icon: 'i-lucide-users',
                     collapsible: true,
                     showTreeLine: true,
-                    children: [],
+                    children: teams.map(team => ({
+                        name: `${team.name}-${team.id}`,
+                        label: team.name,
+                        to: scoped(`team/${team.id}`),
+                    })),
                 },
                 {
                     name: 'Channels',

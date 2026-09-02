@@ -10,12 +10,13 @@ import ConversationBox from './conversationbox/ConversationBox';
 interface Props {
     conversationId?: number;
     inboxId?: number;
+    teamId?: number;
 }
 
-export default function ConversationView({ conversationId = 0, inboxId = 0 }: Props) {
+export default function ConversationView({ conversationId = 0, inboxId = 0, teamId = 0 }: Props) {
     return (
         <Dashboard>
-            <ConversationProvider conversationId={conversationId} inboxId={inboxId}>
+            <ConversationProvider conversationId={conversationId} inboxId={inboxId} teamId={teamId}>
                 <section className="flex w-full h-full min-w-0">
                     <ChatList />
                     <ConversationBox />

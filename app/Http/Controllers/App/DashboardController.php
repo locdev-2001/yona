@@ -50,6 +50,15 @@ class DashboardController extends Controller
         ]);
     }
 
+    // Tương đương route team_conversations: /team/{team_id} (+ chọn conversation).
+    public function team(Request $request, Account $account, int $teamId, ?int $conversationId = null): Response
+    {
+        return Inertia::render('dashboard/conversation/ConversationView', [
+            'teamId' => $teamId,
+            'conversationId' => $conversationId,
+        ]);
+    }
+
     public function placeholder(Request $request, Account $account, string $view): Response
     {
         return Inertia::render('dashboard/PlaceholderView', [
