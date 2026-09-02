@@ -20,3 +20,29 @@ export function updateUISettings(current: UISettings, patch: UISettings): UISett
     void putJson('/api/v1/profile', { ui_settings: next });
     return next;
 }
+
+// DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER + useConversationSidebarItemsOrder gốc:
+// thứ tự accordion của ContactPanel, mục mới thêm sau thứ tự người dùng đã lưu.
+export const DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER: readonly { name: string }[] = Object.freeze([
+    { name: 'conversation_actions' },
+    { name: 'macros' },
+    { name: 'conversation_info' },
+    { name: 'contact_attributes' },
+    { name: 'contact_notes' },
+    { name: 'shared_files' },
+    { name: 'previous_conversation' },
+    { name: 'conversation_participants' },
+    { name: 'linear_issues' },
+    { name: 'shopify_orders' },
+]);
+
+export function conversationSidebarItemsOrder(uiSettings: UISettings): { name: string }[] {
+    const itemsOrder = uiSettings.conversation_sidebar_items_order as { name: string }[] | undefined;
+    if (!itemsOrder) return [...DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER];
+
+    const itemsOrderCopy = [...itemsOrder];
+    DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER.forEach(item => {
+        if (!itemsOrderCopy.some(saved => saved.name === item.name)) itemsOrderCopy.push(item);
+    });
+    return itemsOrderCopy;
+}
