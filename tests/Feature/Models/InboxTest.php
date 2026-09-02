@@ -5,6 +5,7 @@ use App\Models\AccountUser;
 use App\Models\Channel\Api;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Support\OnlineStatusTracker;
 
 // Port từ spec/models/inbox_spec.rb (phần áp dụng cho B1 — cache invalidation
 // dispatcher + các kênh khác port sau).
@@ -81,4 +82,29 @@ it('destroys the channel when the inbox is destroyed', function () {
     $inbox->delete();
 
     expect(Api::query()->find($channelId))->toBeNull();
+});
+
+// InboxAgentAvailability#available_agents.
+describe('availableAgents', function () {
+    it('returns only inbox members whose status is online', function () {
+        $inbox = Inbox::factory()->create();
+        OnlineStatusTracker::clearAccount($inbox->account_id);
+        [$onlineAgent, $busyAgent, $offlineAgent] = User::factory()->count(3)->create();
+        $inbox->addMembers([$onlineAgent->id, $busyAgent->id, $offlineAgent->id]);
+        // Chỉ user có presence mới vào danh sách; offlineAgent không có presence.
+        OnlineStatusTracker::updatePresence($inbox->account_id, 'User', $onlineAgent->id);
+        OnlineStatusTracker::setStatus($inbox->account_id, $onlineAgent->id, 'online');
+        OnlineStatusTracker::updatePresence($inbox->account_id, 'User', $busyAgent->id);
+        OnlineStatusTracker::setStatus($inbox->account_id, $busyAgent->id, 'busy');
+
+        expect($inbox->availableAgents()->pluck('user_id')->all())->toBe([$onlineAgent->id]);
+    });
+
+    it('returns nothing when nobody is online', function () {
+        $inbox = Inbox::factory()->create();
+        OnlineStatusTracker::clearAccount($inbox->account_id);
+        $inbox->addMembers([User::factory()->create()->id]);
+
+        expect($inbox->availableAgents())->toBeEmpty();
+    });
 });

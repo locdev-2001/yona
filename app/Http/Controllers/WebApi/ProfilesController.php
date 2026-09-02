@@ -108,6 +108,7 @@ class ProfilesController extends Controller
             'ui_settings' => $user->ui_settings ?? [],
             'custom_attributes' => $user->custom_attributes ?? [],
             'confirmed' => $user->isConfirmed(),
+            'pubsub_token' => $user->pubsub_token,
         ];
     }
 }

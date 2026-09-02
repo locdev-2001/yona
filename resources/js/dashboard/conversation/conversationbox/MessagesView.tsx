@@ -4,6 +4,8 @@ import { usePage } from '@inertiajs/react';
 
 import MessageList from 'dashboard/components-next/message/MessageList';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
+import { useTypingUsers } from 'dashboard/realtime/hooks';
+import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
 
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -14,10 +16,12 @@ import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
-// kênh API. Bỏ ở B3: typing indicator (B4), label suggestions (EE), referral
-// bubble (WhatsApp), banner Instagram, markMessagesRead (B5), scroll-to-message
-// qua bus. ResizableEditorWrapper port thật (kéo thả + ⤢ + reset sau gửi);
-// containerHeight/topBannerHeight đo bằng ResizeObserver thay useElementSize.
+// kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
+// Instagram, markMessagesRead (B5). Typing bubble đọc useTypingUsers (store
+// conversationTypingStatus gốc). SCROLL_TO_MESSAGE khi có tin mới (ADD_MESSAGE
+// gốc emit bus) = effect theo id tin cuối. ResizableEditorWrapper port thật
+// (kéo thả + ⤢ + reset sau gửi); containerHeight/topBannerHeight đo bằng
+// ResizeObserver thay useElementSize.
 
 export default function MessagesView() {
     const {
@@ -41,6 +45,13 @@ export default function MessagesView() {
     const scrolledConversationRef = useRef<number | null>(null);
 
     const currentChat = selectedConversation!;
+    const typingUsersList = useTypingUsers(currentChat.id);
+    const isAnyoneTyping = typingUsersList.length !== 0;
+    const typingUserNames = (() => {
+        if (!isAnyoneTyping) return '';
+        const [i18nKey, params] = getTypingUsersText(typingUsersList);
+        return t(i18nKey, params);
+    })();
     const inbox = inboxes.find((item) => item.id === currentChat.inbox_id) as
         | {
               id: number;
@@ -108,6 +119,14 @@ export default function MessagesView() {
         }
     }, [messages, messagesLoading, currentChat.id]);
 
+    // Tin mới nối vào cuối (realtime hoặc vừa gửi) → cuộn xuống đáy như onScrollToMessage.
+    const lastMessageId = messages.length ? messages[messages.length - 1].id : null;
+    useLayoutEffect(() => {
+        const panel = conversationPanelRef.current;
+        if (!panel || lastMessageId === null || scrolledConversationRef.current !== currentChat.id) return;
+        panel.scrollTop = panel.scrollHeight;
+    }, [lastMessageId, currentChat.id]);
+
     const handleScroll = (event: UIEvent<HTMLUListElement>) => {
         const panel = event.currentTarget;
         if (panel.scrollTop >= 100 || isLoadingPrevious || messagesLoading || allMessagesLoaded) return;
@@ -154,6 +173,18 @@ export default function MessagesView() {
                 }
             />
             <div className="flex relative flex-col bg-n-surface-1">
+                {isAnyoneTyping && (
+                    <div className="absolute flex items-center w-full h-0 -top-7">
+                        <div className="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white dark:bg-n-solid-3 text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">
+                            {typingUserNames}
+                            <img
+                                className="w-6 ltr:ml-2 rtl:mr-2"
+                                src="/assets/images/dashboard/typing.gif"
+                                alt="Someone is typing"
+                            />
+                        </div>
+                    </div>
+                )}
                 <ResizableEditorWrapper
                     ref={resizableEditorWrapperRef}
                     containerHeight={Math.max(0, containerHeight - topBannerHeight)}

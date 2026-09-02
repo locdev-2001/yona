@@ -53,6 +53,24 @@ class ContactResource extends JsonResource
         ];
     }
 
+    // Contact#push_event_data (app/models/contact.rb).
+    public static function pushEventData(Contact $contact): array
+    {
+        return [
+            'additional_attributes' => $contact->additional_attributes ?? [],
+            'custom_attributes' => $contact->custom_attributes ?? [],
+            'email' => $contact->email,
+            'id' => $contact->id,
+            'identifier' => $contact->identifier,
+            'name' => $contact->name,
+            'phone_number' => $contact->phone_number,
+            'thumbnail' => $contact->avatarUrl(),
+            'blocked' => $contact->blocked,
+            'type' => 'contact',
+            ...($contact->account->featureEnabled('companies') ? ['company_id' => $contact->company_id] : []),
+        ];
+    }
+
     // _contact_inbox.json.jbuilder: source_id + inbox_slim.
     public static function contactInboxPayload(ContactInbox $contactInbox): array
     {

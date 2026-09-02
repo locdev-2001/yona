@@ -2,7 +2,12 @@
 
 namespace App\Models;
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
+use App\Events\PreviousChanges;
+use App\Http\Resources\ContactResource;
 use App\Models\Concerns\Avatarable;
+use App\Support\OnlineStatusTracker;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,8 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Port từ refs/chatwoot/app/models/contact.rb.
 // Bỏ ở B2: conversations/messages (B3), csat_survey_responses + notes (tính năng sau),
-// Labelable (nhóm C), ip_lookup job, dispatcher events (đi cùng webhooks/automation),
-// LlmFormattable (enterprise). availability_status chờ presence B4 — luôn 'offline'.
+// Labelable (nhóm C), ip_lookup job, CONTACT_MERGED (đi cùng merge B10),
+// LlmFormattable (enterprise).
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */
@@ -79,8 +84,25 @@ class Contact extends Model
             $contact->syncContactAttributes();
         });
 
+        static::created(function (Contact $contact) {
+            DomainEvent::dispatch(EventType::CONTACT_CREATED, ['contact' => $contact]);
+        });
+
+        static::updated(function (Contact $contact) {
+            DomainEvent::dispatch(EventType::CONTACT_UPDATED, [
+                'contact' => $contact,
+                'changed_attributes' => PreviousChanges::of($contact),
+            ]);
+        });
+
         static::deleted(function (Contact $contact) {
             $contact->avatar?->delete();
+
+            // Gửi dữ liệu đã serialize thay vì model: listener async chạy sau khi
+            // record đã bị xóa.
+            DomainEvent::dispatch(EventType::CONTACT_DELETED, [
+                'contact_data' => [...ContactResource::pushEventData($contact), 'account_id' => $contact->account_id],
+            ]);
         });
     }
 
@@ -114,9 +136,10 @@ class Contact extends Model
         return $this->contactInboxes()->where('inbox_id', $inboxId)->firstOrFail()->source_id;
     }
 
+    // AvailabilityStatusable#contact_availability_status: theo presence Redis.
     public function availabilityStatus(): string
     {
-        return 'offline';
+        return OnlineStatusTracker::getPresence($this->account_id, 'Contact', $this->id) ? 'online' : 'offline';
     }
 
     public static function fromEmail(?string $email): ?self

@@ -39,4 +39,18 @@ return [
     'terms_url' => env('TERMS_URL', 'https://yona.vn/terms'),
     'privacy_url' => env('PRIVACY_URL', 'https://yona.vn/privacy-policy'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Presence
+    |--------------------------------------------------------------------------
+    |
+    | Tương đương PRESENCE_DURATION / CONTACT_PRESENCE_DURATION của
+    | OnlineStatusTracker (giây). Widget ping mỗi 60s nên contact cần cửa sổ
+    | dài hơn agent.
+    |
+    */
+
+    'presence_duration' => (int) env('PRESENCE_DURATION', 20),
+    'contact_presence_duration' => (int) env('CONTACT_PRESENCE_DURATION', 90),
+
 ];

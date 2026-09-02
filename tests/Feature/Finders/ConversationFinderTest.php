@@ -276,3 +276,29 @@ describe('perform_meta_only', function () {
         expect($metaResult['count'])->toBe($fullResult['count']);
     });
 });
+
+describe('updated_within', function () {
+    it('returns every filtered conversation in the time range without pagination', function () {
+        $fixtures = conversationFinderFixtures();
+        $attributes = [
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+            'assignee_id' => null,
+            'created_at' => now()->subSeconds(30),
+            'updated_at' => now()->subSeconds(30),
+        ];
+        $conversations = Conversation::factory()->count(40)->create($attributes);
+        $conversations->take(28)->each(fn (Conversation $conversation) => $conversation->forceFill(['updated_at' => now()->subSeconds(10)])->save());
+
+        $result = conversationFinderFor(
+            $fixtures,
+            ['updated_within' => 20, 'assignee_type' => 'unassigned', 'sort_by' => 'created_at_asc'],
+            'admin',
+        )->perform();
+
+        // 28 vừa cập nhật + 1 conversation chưa gán tạo lúc dựng fixture — vượt trang 25.
+        expect($result['conversations'])->toHaveCount(29)
+            ->and($result['conversations']->pluck('created_at')->map->getTimestamp()->all())
+            ->toBe($result['conversations']->pluck('created_at')->map->getTimestamp()->sort()->values()->all());
+    });
+});

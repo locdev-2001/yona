@@ -63,6 +63,28 @@ class ConversationResource extends JsonResource
         ];
     }
 
+    // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder
+    // cộng thêm channel + contact_inbox (presenter serialize cả record).
+    public static function pushEventData(Conversation $conversation): array
+    {
+        $contactInbox = $conversation->contactInbox;
+
+        return [
+            ...(new self($conversation))->toArray(request()),
+            'channel' => $conversation->inbox->channel_type,
+            'contact_inbox' => $contactInbox === null ? null : [
+                'id' => $contactInbox->id,
+                'contact_id' => $contactInbox->contact_id,
+                'inbox_id' => $contactInbox->inbox_id,
+                'source_id' => $contactInbox->source_id,
+                'hmac_verified' => $contactInbox->hmac_verified,
+                'pubsub_token' => $contactInbox->pubsub_token,
+                'created_at' => $contactInbox->created_at?->toISOString(),
+                'updated_at' => $contactInbox->updated_at?->toISOString(),
+            ],
+        ];
+    }
+
     private function meta(Conversation $conversation): array
     {
         $meta = [

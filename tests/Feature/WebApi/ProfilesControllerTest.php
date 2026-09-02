@@ -1,14 +1,17 @@
 <?php
 
+use App\Models\Account;
+use App\Models\AccountUser;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use App\Support\OnlineStatusTracker;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 // Port từ spec/controllers/api/v1/profiles_controller_spec.rb —
-// access_token/reset_access_token (F8), availability/auto_offline
-// (AccountScopeTest), set_active_account (khi account switcher cần) chưa port.
+// access_token/reset_access_token (F8), auto_offline (AccountScopeTest),
+// set_active_account (khi account switcher cần) chưa port.
 
 describe('GET /api/v1/profile', function () {
     it('returns unauthorized for unauthenticated user', function () {
@@ -212,5 +215,26 @@ describe('email change confirmation', function () {
             ->and($user->uid)->toBe('new@example.com')
             ->and($user->unconfirmed_email)->toBeNull()
             ->and($user->confirmation_token)->toBeNull();
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/profile/availability', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $account = Account::factory()->create();
+
+        $this->postJson("/api/v1/accounts/{$account->id}/profile/availability")->assertUnauthorized();
+    });
+
+    it('updates the availability status in redis', function () {
+        $account = Account::factory()->create();
+        OnlineStatusTracker::clearAccount($account->id);
+        $agent = User::factory()->create();
+        AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $agent->id]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/profile/availability", ['availability' => 'busy'])
+            ->assertOk();
+
+        expect(OnlineStatusTracker::getStatus($account->id, $agent->id))->toBe('busy');
     });
 });

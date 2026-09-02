@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Account;
 use App\Models\Contact;
 use App\Models\Message;
 use App\Models\User;
@@ -39,7 +40,7 @@ class MessageResource extends JsonResource
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
-            ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender)] : []),
+            ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account)] : []),
         ];
     }
 
@@ -81,44 +82,17 @@ class MessageResource extends JsonResource
         }
 
         if ($message->sender !== null) {
-            $data['sender'] = self::senderPushEventData($message->sender);
+            $data['sender'] = self::senderPushEventData($message->sender, $message->account);
         }
 
         return $data;
     }
 
-    public static function senderPushEventData(User|Contact $sender): array
+    // Message#merge_sender_attributes: sender là User hoặc Contact.
+    public static function senderPushEventData(User|Contact $sender, ?Account $account = null): array
     {
-        if ($sender instanceof User) {
-            return [
-                'id' => $sender->id,
-                'name' => $sender->name,
-                'available_name' => $sender->availableName(),
-                'avatar_url' => $sender->avatarUrl(),
-                'type' => 'user',
-                // Presence B4 — chưa ai online, khớp oracle khi Redis trống.
-                'availability_status' => 'offline',
-                'thumbnail' => $sender->avatarUrl(),
-            ];
-        }
-
-        $data = [
-            'additional_attributes' => $sender->additional_attributes ?? [],
-            'custom_attributes' => $sender->custom_attributes ?? [],
-            'email' => $sender->email,
-            'id' => $sender->id,
-            'identifier' => $sender->identifier,
-            'name' => $sender->name,
-            'phone_number' => $sender->phone_number,
-            'thumbnail' => $sender->avatarUrl(),
-            'blocked' => $sender->blocked,
-            'type' => 'contact',
-        ];
-
-        if ($sender->account->featureEnabled('companies')) {
-            $data['company_id'] = $sender->company_id;
-        }
-
-        return $data;
+        return $sender instanceof User
+            ? UserResource::pushEventData($sender, $account)
+            : ContactResource::pushEventData($sender);
     }
 }

@@ -29,6 +29,7 @@ export interface FetchConversationsParams {
     sortBy: string;
     inboxId?: number;
     teamId?: number;
+    updatedWithin?: number;
 }
 
 export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
@@ -44,21 +45,63 @@ export function fetchConversations(params: FetchConversationsParams): Promise<Co
     if (params.teamId) {
         query.set('team_id', String(params.teamId));
     }
+    if (params.updatedWithin) {
+        query.set('updated_within', String(params.updatedWithin));
+    }
 
     return getJson(`/api/v1/accounts/${params.accountId}/conversations?${query.toString()}`);
+}
+
+export function fetchConversationMeta(
+    params: Omit<FetchConversationsParams, 'page'>,
+): Promise<{ meta: ConversationListMeta }> {
+    const query = new URLSearchParams({
+        assignee_type: params.assigneeType,
+        status: params.status,
+        sort_by: params.sortBy,
+    });
+    if (params.inboxId) {
+        query.set('inbox_id', String(params.inboxId));
+    }
+    if (params.teamId) {
+        query.set('team_id', String(params.teamId));
+    }
+
+    return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${query.toString()}`);
 }
 
 export function fetchConversation(accountId: number, conversationId: number): Promise<Conversation> {
     return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}`);
 }
 
+// getPreviousMessages gốc: `after` chỉ gửi khi khác `before`.
 export function fetchMessages(
     accountId: number,
     conversationId: number,
     before?: number,
+    after?: number,
 ): Promise<MessagesResponse> {
-    const query = before ? `?before=${before}` : '';
-    return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages${query}`);
+    const query = new URLSearchParams();
+    if (before) {
+        query.set('before', String(before));
+    }
+    if (after && Number(after) !== Number(before)) {
+        query.set('after', String(after));
+    }
+    const suffix = query.size ? `?${query.toString()}` : '';
+    return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages${suffix}`);
+}
+
+export function toggleTyping(
+    accountId: number,
+    conversationId: number,
+    status: 'on' | 'off',
+    isPrivate: boolean,
+): Promise<unknown> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_typing_status`, {
+        typing_status: status,
+        is_private: isPrivate,
+    });
 }
 
 export interface SendMessagePayload {

@@ -11,6 +11,8 @@ import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
+import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
+import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MoreActions from './MoreActions';
 
 // Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
@@ -30,6 +32,10 @@ export default function ConversationHeader({
     if (!selectedConversation) return null;
 
     const currentContact = selectedConversation.meta.sender;
+    const contactAvailabilityStatus = useContactAvailabilityStatus(
+        currentContact.id,
+        currentContact.availability_status as AvailabilityStatus | undefined,
+    );
     const inbox = inboxes.find(item => item.id === selectedConversation.inbox_id);
     const hasMultipleInboxes = inboxes.length > 1;
     const isSnoozed = selectedConversation.status === STATUS_TYPE.SNOOZED;
@@ -62,7 +68,7 @@ export default function ConversationHeader({
                     name={currentContact.name ?? ''}
                     src={currentContact.thumbnail}
                     size={32}
-                    status={(currentContact.availability_status as 'online' | 'busy' | 'offline') ?? null}
+                    status={contactAvailabilityStatus}
                     hideOfflineStatus
                 />
                 <div className="flex flex-col items-start min-w-0 ms-2 overflow-hidden">

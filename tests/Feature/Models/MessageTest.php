@@ -1,10 +1,13 @@
 <?php
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
 use App\Exceptions\MessageValidationException;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 // Port từ spec/models/message_spec.rb.
 // Bỏ ở B3: dispatcher events + HookExecutionService/SendReplyJob (B4/D4/D6),
@@ -290,5 +293,52 @@ describe('waiting since', function () {
         Message::factory()->create(messageAttributesFor($conversation));
 
         expect($conversation->fresh()->waiting_since->equalTo($oldWaitingSince))->toBeTrue();
+    });
+});
+
+describe('dispatch events', function () {
+    beforeEach(function () {
+        Event::fake([DomainEvent::class]);
+    });
+
+    it('dispatches message.created after create', function () {
+        $conversation = messageConversation();
+
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::MESSAGE_CREATED
+            && $event->data['message']->is($message)
+            && $event->data['performed_by'] === null);
+        Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::FIRST_REPLY_CREATED);
+    });
+
+    it('dispatches first.reply.created for the first human outgoing message', function () {
+        $conversation = messageConversation();
+        $agent = messageAgent();
+        $this->actingAs($agent);
+
+        $message = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'sender_type' => 'User',
+            'sender_id' => $agent->id,
+        ]);
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::FIRST_REPLY_CREATED
+            && $event->data['message']->is($message)
+            && $event->data['performed_by']->is($agent));
+        expect($conversation->fresh()->first_reply_created_at->equalTo($message->created_at))->toBeTrue();
+    });
+
+    it('dispatches message.updated with previous_changes only when something changed', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+
+        $message->update(['content' => 'Message content']);
+        Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::MESSAGE_UPDATED);
+
+        $message->update(['content' => 'edited']);
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::MESSAGE_UPDATED
+            && $event->data['message']->is($message)
+            && $event->data['previous_changes']['content'] === ['Message content', 'edited']);
     });
 });

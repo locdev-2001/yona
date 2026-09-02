@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
+use App\Support\OnlineStatusTracker;
 use Database\Factories\InboxFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 // Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: campaigns/contact_inboxes/conversations/messages (nhóm B2-B3),
 // working hours OutOfOffisable (tính năng sau), agent_bot/webhooks/portal (nhóm D-E),
-// round-robin + FilteredCountInvalidator (nợ B4/B6), Reportable, EE overlay.
+// round-robin + FilteredCountInvalidator (nợ B6), Reportable, EE overlay.
 class Inbox extends Model
 {
     /** @use HasFactory<InboxFactory> */
@@ -125,6 +126,28 @@ class Inbox extends Model
     public function isApi(): bool
     {
         return $this->channel_type === 'Channel::Api';
+    }
+
+    // InboxAgentAvailability#available_agents: member của inbox đang 'online'
+    // theo OnlineStatusTracker (dùng cho round-robin B6).
+    /** @return Collection<int, InboxMember> */
+    public function availableAgents(): Collection
+    {
+        $onlineAgentIds = collect(OnlineStatusTracker::getAvailableUsers($this->account_id))
+            ->filter(fn (string $status) => $status === 'online')
+            ->keys()
+            ->map(fn (int|string $userId) => (int) $userId)
+            ->all();
+
+        if ($onlineAgentIds === []) {
+            return new Collection;
+        }
+
+        return $this->inboxMembers()
+            ->whereIn('user_id', $onlineAgentIds)
+            ->whereHas('user')
+            ->with('user')
+            ->get();
     }
 
     // Inbox#assignable_agents: member của inbox + mọi administrator, không trùng.

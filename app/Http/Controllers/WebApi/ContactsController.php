@@ -9,6 +9,7 @@ use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
+use App\Support\OnlineStatusTracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\Validator;
 // Port từ Api::V1::Accounts::ContactsController của Chatwoot.
 // Bỏ ở B2: filter (đi cùng segments/custom views), import/export (data imports),
 // contactable_inboxes (dùng cho New conversation — B3), lọc theo labels (nhóm C).
-// active: chưa có presence tracker (B4) — không ai online, trả rỗng như bản gốc.
 class ContactsController extends Controller
 {
     public const RESULTS_PER_PAGE = 15;
@@ -42,17 +42,7 @@ class ContactsController extends Controller
             ->where('account_id', $account->id)
             ->resolvedContacts(useCrmV2: $account->featureEnabled('crm_v2'));
 
-        $paginated = $this->applySort($request, $query)
-            ->with($this->eagerLoads($request))
-            ->paginate(self::RESULTS_PER_PAGE, ['*'], 'page', $this->currentPage($request));
-
-        return response()->json([
-            'meta' => [
-                'count' => $paginated->total(),
-                'current_page' => $this->currentPage($request),
-            ],
-            'payload' => ContactResource::collectionFor($paginated->items(), $this->includeContactInboxes($request)),
-        ]);
+        return $this->paginatedContacts($request, $query);
     }
 
     public function search(Request $request, Account $account): JsonResponse
@@ -93,13 +83,14 @@ class ContactsController extends Controller
         ]);
     }
 
+    // Contact đang online theo presence tracker (không lọc resolved như index).
     public function active(Request $request, Account $account): JsonResponse
     {
-        // OnlineStatusTracker port ở B4 — hiện chưa ghi nhận ai online.
-        return response()->json([
-            'meta' => ['count' => 0, 'current_page' => $this->currentPage($request)],
-            'payload' => [],
-        ]);
+        $query = Contact::query()
+            ->where('account_id', $account->id)
+            ->whereIn('id', OnlineStatusTracker::getAvailableContactIds($account->id));
+
+        return $this->paginatedContacts($request, $query);
     }
 
     public function show(Request $request, Account $account, int $contactId): JsonResponse
@@ -169,8 +160,16 @@ class ContactsController extends Controller
     {
         $this->authorizeAdministrator($request);
 
-        // Chặn xóa contact đang online (OnlineStatusTracker) port cùng presence B4.
-        $this->fetchContact($account, $contactId)->delete();
+        $contact = $this->fetchContact($account, $contactId);
+
+        if (OnlineStatusTracker::getPresence($account->id, 'Contact', $contact->id)) {
+            // Ruby String#capitalize: ký tự đầu hoa, phần còn lại thường.
+            return response()->json([
+                'message' => __('contacts.online.delete', ['contact_name' => ucfirst(mb_strtolower((string) $contact->name))]),
+            ], 422);
+        }
+
+        $contact->delete();
 
         return response()->json(null, 200);
     }
@@ -196,6 +195,23 @@ class ContactsController extends Controller
         $this->fetchContact($account, $contactId)->avatar?->delete();
 
         return response()->json(null, 200);
+    }
+
+    // fetch_contacts: eager load + phân trang, meta {count, current_page}.
+    /** @param Builder<Contact> $query */
+    private function paginatedContacts(Request $request, Builder $query): JsonResponse
+    {
+        $paginated = $this->applySort($request, $query)
+            ->with($this->eagerLoads($request))
+            ->paginate(self::RESULTS_PER_PAGE, ['*'], 'page', $this->currentPage($request));
+
+        return response()->json([
+            'meta' => [
+                'count' => $paginated->total(),
+                'current_page' => $this->currentPage($request),
+            ],
+            'payload' => ContactResource::collectionFor($paginated->items(), $this->includeContactInboxes($request)),
+        ]);
     }
 
     private function fetchContact(Account $account, int $contactId): Contact

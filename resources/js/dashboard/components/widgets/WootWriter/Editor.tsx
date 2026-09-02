@@ -10,6 +10,7 @@ import {
     buildMessageSchema,
 } from '@chatwoot/prosemirror-schema';
 import type { Schema } from 'prosemirror-model';
+import { createTypingIndicator } from '@chatwoot/utils';
 
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
@@ -37,7 +38,11 @@ interface EditorProps {
     onFocus?: () => void;
     onBlur?: () => void;
     onSend?: () => void;
+    onTypingOn?: () => void;
+    onTypingOff?: () => void;
 }
+
+const TYPING_INDICATOR_IDLE_TIME = 4000;
 
 const PRIVATE_NOTE_FORMATTING = 'Context::PrivateNote';
 const DEFAULT_FORMATTING = 'Context::Default';
@@ -77,6 +82,8 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onFocus,
         onBlur,
         onSend,
+        onTypingOn,
+        onTypingOff,
     },
     ref,
 ) {
@@ -86,8 +93,17 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const schemaRef = useRef<Schema | null>(null);
 
     // Callback mới nhất — tránh phải dựng lại EditorView theo mỗi render.
-    const callbacksRef = useRef({ onChange, onFocus, onBlur, onSend, disabled, uiSettings });
-    callbacksRef.current = { onChange, onFocus, onBlur, onSend, disabled, uiSettings };
+    const callbacksRef = useRef({ onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings });
+    callbacksRef.current = { onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings };
+
+    // keyup → typingOn (một lần) rồi tự typingOff sau 4s không gõ; blur → typingOff ngay.
+    const typingIndicatorRef = useRef(
+        createTypingIndicator(
+            () => callbacksRef.current.onTypingOn?.(),
+            () => callbacksRef.current.onTypingOff?.(),
+            TYPING_INDICATOR_IDLE_TIME,
+        ),
+    );
 
     const contentFromEditor = (): string =>
         viewRef.current ? MessageMarkdownSerializer.serialize(viewRef.current.state.doc) : '';
@@ -146,12 +162,18 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                 }
             },
             handleDOMEvents: {
+                keyup: () => {
+                    if (!callbacksRef.current.disabled) typingIndicatorRef.current.start();
+                    return false;
+                },
                 focus: () => {
                     if (!callbacksRef.current.disabled) callbacksRef.current.onFocus?.();
                     return false;
                 },
                 blur: () => {
-                    if (!callbacksRef.current.disabled) callbacksRef.current.onBlur?.();
+                    if (callbacksRef.current.disabled) return false;
+                    typingIndicatorRef.current.stop();
+                    callbacksRef.current.onBlur?.();
                     return false;
                 },
                 keydown: (view_, event) => {
@@ -176,6 +198,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         viewRef.current = view;
 
         return () => {
+            typingIndicatorRef.current.stop();
             viewRef.current = null;
             view.destroy();
         };

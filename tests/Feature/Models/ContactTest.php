@@ -1,9 +1,13 @@
 <?php
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
+use App\Http\Resources\ContactResource;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
+use Illuminate\Support\Facades\Event;
 
 // Port từ spec/models/contact_spec.rb (phần validation format email/phone
 // nằm ở ContactsControllerTest — Laravel validate ở controller).
@@ -106,4 +110,25 @@ it('generates a pubsub token for new contact inboxes', function () {
     $contactInbox = ContactInbox::factory()->create();
 
     expect($contactInbox->pubsub_token)->toHaveLength(24);
+});
+
+describe('dispatch events', function () {
+    beforeEach(function () {
+        Event::fake([DomainEvent::class]);
+    });
+
+    it('dispatches contact.created, contact.updated and contact.deleted', function () {
+        $contact = Contact::factory()->create(['name' => 'Alice']);
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONTACT_CREATED
+            && $event->data['contact']->is($contact));
+
+        $contact->update(['name' => 'Bob']);
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONTACT_UPDATED
+            && $event->data['contact']->is($contact)
+            && $event->data['changed_attributes']['name'] === ['Alice', 'Bob']);
+
+        $contact->delete();
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONTACT_DELETED
+            && $event->data['contact_data'] === [...ContactResource::pushEventData($contact), 'account_id' => $contact->account_id]);
+    });
 });

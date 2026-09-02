@@ -5,12 +5,15 @@ import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { ApiError } from 'dashboard/helper/apiClient';
 import ContactsCard from 'dashboard/components-next/Contacts/ContactsCard/ContactsCard';
+import { overlayPresence, useContactPresenceOverlay } from 'dashboard/components-next/avatar/presence';
 import { updateContact } from 'dashboard/contacts/api';
 import type { Contact, ContactFormState } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../../../types';
 
 // Port từ dashboard/components-next/Contacts/Pages/ContactsList.vue —
-// store contacts/update thay bằng gọi API + báo parent cập nhật danh sách.
+// store contacts/update thay bằng gọi API + báo parent cập nhật danh sách;
+// presence.update phủ availabilityStatus như UPDATE_CONTACTS_PRESENCE
+// (contact vắng trong map → null).
 interface ContactsListProps {
     contacts: Contact[];
     selectedContactIds?: number[];
@@ -42,14 +45,31 @@ function alertUpdateError(error: unknown) {
     useAlert(t('CONTACTS_LAYOUT.CARD.EDIT_DETAILS_FORM.ERROR_MESSAGE'));
 }
 
+export function mergeContactPresence(
+    contacts: Contact[],
+    presenceMap: Record<number, 'online'>,
+    hasReceivedPresence: boolean,
+): Contact[] {
+    return overlayPresence<Contact, string | null>(
+        contacts,
+        presenceMap,
+        hasReceivedPresence,
+        null,
+        contact => contact.id,
+        (contact, availabilityStatus) => ({ ...contact, availabilityStatus }),
+    );
+}
+
 export default function ContactsList({
-    contacts,
+    contacts: fetchedContacts,
     selectedContactIds = [],
     onToggleContact,
     onContactUpdated,
     onContactDeleted,
 }: ContactsListProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
+    const { presenceMap, hasReceivedPresence } = useContactPresenceOverlay();
+    const contacts = mergeContactPresence(fetchedContacts, presenceMap, hasReceivedPresence);
     const [isUpdating, setUpdating] = useState(false);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
     const [hoveredAvatarId, setHoveredAvatarId] = useState<number | null>(null);

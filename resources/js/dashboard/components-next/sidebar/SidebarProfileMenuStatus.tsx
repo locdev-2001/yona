@@ -3,6 +3,8 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import { postJson } from 'dashboard/helper/apiClient';
+import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
+import { realtimeStore } from 'dashboard/realtime/store';
 import { AVAILABILITY_STATUS_KEYS } from 'dashboard/constants/globals';
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
@@ -15,13 +17,15 @@ import {
 } from 'dashboard/components-next/dropdown-menu/base';
 import type { DashboardPageProps } from '../../types';
 
-// Port từ sidebar/SidebarProfileMenuStatus.vue
+// Port từ sidebar/SidebarProfileMenuStatus.vue + auth.js#updateAvailability
+// (optimistic → POST → agents/updateSingleAgentPresence; lỗi → revert im lặng như action gốc).
 const STATUS_COLORS = ['bg-n-teal-9', 'bg-n-amber-9', 'bg-n-slate-9'];
 
 export default function SidebarProfileMenuStatus() {
-    const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
+    const currentUserId = auth.user!.id;
 
-    const [availability, setAvailability] = useState(currentAccountUser.availability);
+    const availability = useCurrentUserAvailability();
     const [autoOffline, setAutoOffline] = useState(currentAccountUser.auto_offline);
 
     const statusLabels = [
@@ -39,11 +43,17 @@ export default function SidebarProfileMenuStatus() {
 
     const activeStatus = availabilityStatuses.find(status => status.active) ?? availabilityStatuses[0];
 
-    const changeAvailabilityStatus = (statusValue: (typeof AVAILABILITY_STATUS_KEYS)[number]) => {
-        setAvailability(statusValue);
-        void postJson(`/api/v1/accounts/${currentAccount.id}/profile/availability`, {
-            availability: statusValue,
-        });
+    const changeAvailabilityStatus = async (statusValue: (typeof AVAILABILITY_STATUS_KEYS)[number]) => {
+        const previousStatus = availability;
+        realtimeStore.setCurrentUserAvailability(statusValue);
+        try {
+            await postJson(`/api/v1/accounts/${currentAccount.id}/profile/availability`, {
+                availability: statusValue,
+            });
+            realtimeStore.updateSingleAgentPresence(currentUserId, statusValue);
+        } catch {
+            realtimeStore.setCurrentUserAvailability(previousStatus);
+        }
     };
 
     const changeAutoOffline = (value: boolean) => {
@@ -70,7 +80,7 @@ export default function SidebarProfileMenuStatus() {
                                         label={status.label}
                                         icon={<span className={`${status.color} size-[12px] rounded`} />}
                                         className="cursor-pointer"
-                                        onClick={() => changeAvailabilityStatus(status.value)}
+                                        onClick={() => void changeAvailabilityStatus(status.value)}
                                     />
                                 ))}
                             </DropdownBody>

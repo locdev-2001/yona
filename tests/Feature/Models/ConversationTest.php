@@ -1,5 +1,7 @@
 <?php
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -7,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 // Port từ spec/models/conversation_spec.rb.
 // Bỏ ở B3: dispatcher/event dispatch + FilteredCountInvalidator (B4), activity
@@ -362,5 +365,58 @@ describe('last_activity_at', function () {
         $conversation = Conversation::factory()->create()->fresh();
 
         expect($conversation->last_activity_at->equalTo($conversation->created_at))->toBeTrue();
+    });
+});
+
+describe('dispatch events', function () {
+    beforeEach(function () {
+        Event::fake([DomainEvent::class]);
+    });
+
+    it('dispatches conversation.created after create', function () {
+        $conversation = conversationIn(conversationBase());
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_CREATED
+            && $event->data['conversation']->is($conversation)
+            && $event->data['notifiable_assignee_change'] === false
+            && $event->data['changed_attributes'] === null
+            && $event->data['performed_by'] === null);
+    });
+
+    it('dispatches conversation.updated with changed_attributes when status changes', function () {
+        $conversation = conversationIn(conversationBase());
+
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UPDATED
+            && $event->data['conversation']->is($conversation)
+            && $event->data['changed_attributes']['status'] === [Conversation::STATUS_OPEN, Conversation::STATUS_RESOLVED]);
+    });
+
+    it('does not dispatch conversation.updated when only last_activity_at changes', function () {
+        $conversation = conversationIn(conversationBase());
+
+        $conversation->update(['last_activity_at' => now()->addHour()]);
+
+        Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UPDATED);
+    });
+
+    it('flags notifiable_assignee_change when assigned to someone else', function () {
+        $base = conversationBase();
+        $conversation = conversationIn($base);
+        $assignee = User::factory()->create();
+        $actor = User::factory()->create();
+        $this->actingAs($actor);
+
+        $conversation->update(['assignee_id' => $assignee->id]);
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UPDATED
+            && $event->data['notifiable_assignee_change'] === true
+            && $event->data['performed_by']->is($actor));
+
+        $conversation->update(['assignee_id' => $actor->id]);
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UPDATED
+            && $event->data['changed_attributes']['assignee_id'] === [$assignee->id, $actor->id]
+            && $event->data['notifiable_assignee_change'] === false);
     });
 });
