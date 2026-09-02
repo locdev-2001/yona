@@ -68,3 +68,11 @@ export const MESSAGE_MAX_LENGTH = {
 } as const;
 
 export const CONVERSATIONS_PER_PAGE = 25;
+
+// wootConstants.LAYOUT_TYPES: bố cục ChatList (condensed = cột 340px, expanded = full).
+export const LAYOUT_TYPES = {
+    CONDENSED: 'condensed',
+    EXPANDED: 'expanded',
+} as const;
+
+export const LARGE_SCREEN_BREAKPOINT = 1024;

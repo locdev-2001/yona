@@ -124,6 +124,17 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 
 ## Khác biệt cố ý frontend (pixel-diff cần biết)
 
+00. **Đợt "mọi nút phải phản ứng" (lệnh founder 02/09) — trạng thái từng nút trên `/conversations/{id}`:**
+   - ⇥ SwitchLayout: THẬT — `toggleConversationLayout` lưu `ui_settings.conversation_display_type` (+ `previously_used_…`) qua `updateUISettings` (1 điểm, `composables/useUISettings.ts`), state trong ConversationContext; expanded = list `basis-full`, ẩn list khi đã chọn conversation, ConversationBox bỏ border-l + BackButton (`conversationListPageURL` port). Khác biệt: `ConversationCardExpanded` (card dạng hàng rộng ở lg) CHƯA port — list expanded vẫn dùng card condensed (nhóm sau nếu cần pixel).
+   - ⤢ maximize: THẬT (ResizableEditorWrapper, đợt trước).
+   - Chữ ký: THẬT — bật/tắt lưu `channel_api_signature_enabled`, gắn/gỡ chữ ký trong editor; agent chưa có chữ ký → `MessageSignatureMissingAlert` port (link `profile/settings`) như gốc.
+   - Đính kèm: input file ẩn (accept `ALLOWED_FILE_TYPES` port, multiple) → `checkFileSizeLimit` 40MB (`FileHelper.ts` port) + toast FILE_SIZE_LIMIT → `AttachmentsPreview` port (thumb dataURL, gỡ từng tệp, `is-focused` khi có tệp, nút Send bật dù chưa gõ như gốc). Khác biệt: gửi KHÔNG upload (B9) — toast `UPLOADING_ATTACHMENTS` rồi xóa danh sách; drag-drop/paste tệp chưa có.
+   - Bộ lọc: `components-next/filter/*` port (ConversationFilter, ConditionRow, FilterSelect/MultiSelect/SingleSelect, operators, filterHelper, filterAttributeIcons, validations, languages) — modal teleport vào `#conversationFilterTeleportTarget` (createPortal), click-outside bỏ qua nút toggle, thêm/xóa dòng, AND/OR, validate + wiggle lỗi. Nguồn attribute: status/priority/display_id/created_at/last_activity_at/browser_language/referer tĩnh; assignee GET /agents; inbox/team từ shared props; contact asyncSearch GET /contacts/search; labels/campaigns/custom attributes rỗng (B7/C/E1). Khác biệt: Apply chỉ validate + đóng, CHƯA gọi POST /conversations/filter (E1); MultiTextInput không port (không có trong bộ mặc định); EmojiIcon team/label không render (chưa share icon).
+   - ✨ copilot: `CopilotMenuBar` port (khối theo nội dung + khối chung, submenu hover Change tone, nút toggle đổi nền `bg-n-violet-3`, click-outside đóng). Khác biệt: chọn item chỉ đóng menu (tác vụ captain nhóm sau); submenu luôn `left-full` (gốc tính theo useWindowSize).
+   - `#id`: đã có copy + toast từ trước; thêm try/catch như gốc (clipboard headless không quyền → im lặng).
+   - Mic: placeholder theo cờ (đợt trước; headless chết cả hai bên).
+   - EditorModeToggle pill: sửa đo `contentBoxWidth` (offsetWidth − padding) = `useElementSize` contentRect gốc; `chipGeometry` thuần + vitest 2 mode.
+
 0. **Fix finding #2-#4 pixel-diff 02/09 (ReplyBox):** (a) `ResizableEditorWrapper.vue` → `conversationbox/ResizableEditorWrapper.tsx` port THẬT (DEFAULT 120 / MIN 80 / max = container − 200 − panel, kéo grip, dblclick reset, ⤢ toggleEditorExpand, reset 120ms sau gửi qua callback `onMessageSent` thay bus MESSAGE_SENT; bỏ `requestEditorHeight` — chỉ CopilotEditor dùng) + rule `.resizable-editor-wrapper .resizable-editor-body { height: clamp(...) }` port vào `_editor.scss` — trước đó thiếu rule này nên editor chỉ ~30px (rule `min-h-[5rem]` của `.ProseMirror-woot-style` bị `:not(...)` loại cả ở gốc vì EditorView gắn `resizable-editor-body`). (b) ReplyTopPanel khối phải theo cờ `captain_tasks` (`isCloudFeatureEnabled` = tra `account.features`, mặc định bật): ✨ giữ pixel (CopilotMenuBar nhóm captain sau), ⤢ nối thật. (c) ReplyBottomPanel nút mic `i-ph-microphone` giữ pixel theo `voice_recorder` + `showFileUpload` (API inbox true) + ẩn khi private note; AudioRecorder thật = B9.
 
 1. Nút **filter** (list-filter) + **SwitchLayout** + **paperclip** render đúng chỗ, bấm không có hành vi (advanced filter E1, expanded layout, attachments B9). MoreActions/Resolve: nút + dropdown đúng pixel, item không hành vi (B5).
@@ -144,6 +155,11 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 - Curl token API: tạo conversation + inbound (display 4), inbound bổ sung vào conversation có sẵn, token sai → 401, counts finder đúng.
 - E2E trình duyệt (login john@acme.inc, làm thật trọn vòng): mở dashboard → tab Mine/Unassigned/All (counts đúng, đổi tab refetch) → mở conversation từ card (URL `/conversations/4`) → bubble inbound trái (bg-n-slate-4) → trả lời bằng nút Send VÀ hotkey Ctrl+Enter → bubble phải xanh (bg-n-solid-blue), 2 tin cùng phút GỘP NHÓM (group-with-next, avatar chỉ ở tin cuối) → Private Note (toggle trượt, editor amber `is-private`, nút signature ẩn, label "Add Note") → note lưu `private=true`, bubble amber (bg-n-solid-amber) + khóa lock-keyhole → curl inbound mới → **F5 + deep-link reload: đủ 5 tin persistence**, unread badge "2 Unread Messages" → inbox view `/inbox/1` (title api-test, lọc theo inbox) → DB kiểm: sender đúng morph (Contact/User), first_reply_created_at SET sau reply đầu, waiting_since NULL sau reply, last_activity_at = tin cuối. Console 0 lỗi.
 - Ghi chú e2e: click vật lý qua browser-pane có lúc không dispatch khi pane không hiển thị (screenshot cũng timeout vì không compositing) — xác minh lại bằng JS click; không phải bug app.
+
+## Gate (02/09/2026 — đợt nút bấm + pill EditorModeToggle)
+
+- Pest 390/390 · vitest **5/5** (MessageList 2 + EditorModeToggle 3) · tsc · build · pint xanh.
+- i18n: key `FILTER.*` (advancedFilters.json) + `INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.*` do agent `yona-i18n` sở hữu/migrate vào `lang/en/*.php` (không commit `resources/js/i18n/` từ phiên này).
 
 ## Gate (02/09/2026 — precision 6 + test render note)
 

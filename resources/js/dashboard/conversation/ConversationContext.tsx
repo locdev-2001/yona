@@ -3,10 +3,20 @@ import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import { useAlert } from 'dashboard/composables/useAlert';
+import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
+import type { UISettings } from 'dashboard/composables/useUISettings';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
 import { fetchConversation, fetchConversations, fetchMessages, sendMessage } from './api';
-import { ASSIGNEE_TYPE, CONVERSATIONS_PER_PAGE, MESSAGE_STATUS, MESSAGE_TYPES, SORT_BY_TYPE, STATUS_TYPE } from './constants';
+import {
+    ASSIGNEE_TYPE,
+    CONVERSATIONS_PER_PAGE,
+    LAYOUT_TYPES,
+    MESSAGE_STATUS,
+    MESSAGE_TYPES,
+    SORT_BY_TYPE,
+    STATUS_TYPE,
+} from './constants';
 import type { AssigneeTab, Conversation, ConversationListMeta, ConversationMessage, ConversationStatusFilter } from './types';
 
 // Thay cụm store vuex conversations/conversationPage của Chatwoot cho phạm vi B3:
@@ -30,6 +40,10 @@ interface ConversationContextValue {
     messages: ConversationMessage[];
     allMessagesLoaded: boolean;
     messagesLoading: boolean;
+    uiSettings: UISettings;
+    updateUISettings: (patch: UISettings) => void;
+    isOnExpandedLayout: boolean;
+    toggleConversationLayout: () => void;
     setAssigneeTab: (tab: AssigneeTab) => void;
     setStatusFilter: (status: ConversationStatusFilter) => void;
     setSortFilter: (sortBy: string) => void;
@@ -69,6 +83,23 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
     const accountId = currentAccount.id;
     const user = auth.user!;
     const currentUserId = user.id;
+
+    // ui_settings dùng chung cả trang (store uiSettings gốc): layout, chữ ký, hotkey…
+    const [uiSettings, setUiSettings] = useState<UISettings>(user.ui_settings ?? {});
+    const updateUISettings = useCallback((patch: UISettings) => {
+        setUiSettings((current) => persistUISettings(current, patch));
+    }, []);
+
+    // isOnExpandedLayout + toggleConversationLayout của ConversationView.vue/ChatListHeader.vue.
+    const isOnExpandedLayout =
+        ((uiSettings.conversation_display_type as string | undefined) ?? LAYOUT_TYPES.CONDENSED) !== LAYOUT_TYPES.CONDENSED;
+    const toggleConversationLayout = useCallback(() => {
+        const newViewType = isOnExpandedLayout ? LAYOUT_TYPES.CONDENSED : LAYOUT_TYPES.EXPANDED;
+        updateUISettings({
+            conversation_display_type: newViewType,
+            previously_used_conversation_display_type: newViewType,
+        });
+    }, [isOnExpandedLayout, updateUISettings]);
 
     const filterSettings = (user.ui_settings?.conversations_filter_by ?? {}) as {
         status?: string;
@@ -307,6 +338,10 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             messages,
             allMessagesLoaded,
             messagesLoading,
+            uiSettings,
+            updateUISettings,
+            isOnExpandedLayout,
+            toggleConversationLayout,
             setAssigneeTab,
             setStatusFilter,
             setSortFilter,
@@ -331,6 +366,10 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             messages,
             allMessagesLoaded,
             messagesLoading,
+            uiSettings,
+            updateUISettings,
+            isOnExpandedLayout,
+            toggleConversationLayout,
             setAssigneeTab,
             setStatusFilter,
             setSortFilter,

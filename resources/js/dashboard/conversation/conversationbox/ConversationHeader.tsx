@@ -1,6 +1,8 @@
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import BackButton from 'dashboard/components/widgets/BackButton';
+import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
@@ -11,12 +13,18 @@ import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import MoreActions from './MoreActions';
 
-// Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: BackButton
-// (chỉ hiện ở expanded layout), SLACardLabel (EE), ConversationCallButton (voice
-// EE), cảnh báo HMAC unverified (chỉ áp dụng WebWidget — C3), snoozedReopenTime
-// helper (hiện giờ snooze bằng dateFormat — B5 mới có snooze thật).
-export default function ConversationHeader({ className = '' }: { className?: string }) {
-    const { selectedConversation } = useConversation();
+// Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
+// (EE), ConversationCallButton (voice EE), cảnh báo HMAC unverified (chỉ áp
+// dụng WebWidget — C3), snoozedReopenTime helper (hiện giờ snooze bằng
+// dateFormat — B5 mới có snooze thật). BackButton hiện ở expanded layout.
+export default function ConversationHeader({
+    className = '',
+    showBackButton = false,
+}: {
+    className?: string;
+    showBackButton?: boolean;
+}) {
+    const { selectedConversation, accountId, inboxId, teamId } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     if (!selectedConversation) return null;
@@ -34,8 +42,12 @@ export default function ConversationHeader({ className = '' }: { className?: str
         : t('CONVERSATION.HEADER.SNOOZED_UNTIL_NEXT_REPLY');
 
     const copyConversationId = async () => {
-        await copyTextToClipboard(String(selectedConversation.id));
-        useAlert(t('CONVERSATION.HEADER.COPY_ID_SUCCESS'));
+        try {
+            await copyTextToClipboard(String(selectedConversation.id));
+            useAlert(t('CONVERSATION.HEADER.COPY_ID_SUCCESS'));
+        } catch {
+            // Gốc nuốt lỗi clipboard (headless/không quyền) — không toast.
+        }
     };
 
     return (
@@ -43,6 +55,9 @@ export default function ConversationHeader({ className = '' }: { className?: str
             className={`flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 ${className}`}
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
+                {showBackButton ? (
+                    <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId })} className="me-2" />
+                ) : null}
                 <Avatar
                     name={currentContact.name ?? ''}
                     src={currentContact.thumbnail}

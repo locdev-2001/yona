@@ -1,7 +1,8 @@
+import { router } from '@inertiajs/react';
+
 import { t } from '../../../i18n';
 
-// Port từ dashboard/components/widgets/BackButton.vue — router.go(-1) của
-// vue-router thay bằng history.back(); backUrl là URL thật.
+// Port từ dashboard/components/widgets/BackButton.vue.
 interface BackButtonProps {
     backUrl?: string;
     buttonLabel?: string;
@@ -9,15 +10,10 @@ interface BackButtonProps {
     className?: string;
 }
 
-export default function BackButton({
-    backUrl = '',
-    buttonLabel = '',
-    compact = false,
-    className = '',
-}: BackButtonProps) {
+export default function BackButton({ backUrl = '', buttonLabel = '', compact = false, className = '' }: BackButtonProps) {
     const goBack = () => {
         if (backUrl !== '') {
-            window.location.href = backUrl;
+            router.visit(backUrl);
         } else {
             window.history.back();
         }
@@ -25,10 +21,9 @@ export default function BackButton({
 
     return (
         <button
-            className={`flex items-center p-0 font-normal cursor-pointer text-n-slate-11 ${
-                compact ? 'text-sm' : 'text-base'
-            } ${className}`}
-            onClick={goBack}
+            type="button"
+            className={`flex items-center p-0 font-normal cursor-pointer text-n-slate-11 ${compact ? 'text-sm' : 'text-base'} ${className}`}
+            onClickCapture={goBack}
         >
             <i className="i-lucide-chevron-left -ml-1 text-lg" />
             {buttonLabel || t('GENERAL_SETTINGS.BACK')}

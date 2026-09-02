@@ -26,3 +26,19 @@ export const conversationUrl = ({
     }
     return accountScopedUrl(accountId, `conversations/${id}`);
 };
+
+// Port từ URLHelper.conversationListPageURL (inbox → team → mặc định dashboard;
+// label/custom_view/conversationType vào B7/E1/B8/B11).
+export const conversationListPageURL = ({
+    accountId,
+    inboxId = 0,
+    teamId = 0,
+}: {
+    accountId: number;
+    inboxId?: number;
+    teamId?: number;
+}) => {
+    if (inboxId) return accountScopedUrl(accountId, `inbox/${inboxId}`);
+    if (teamId) return accountScopedUrl(accountId, `team/${teamId}`);
+    return accountScopedUrl(accountId, 'dashboard');
+};

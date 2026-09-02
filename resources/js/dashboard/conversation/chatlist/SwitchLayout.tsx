@@ -2,12 +2,12 @@ import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
 
 // Port từ routes/dashboard/conversation/search/SwitchLayout.vue.
-// Khác biệt cố ý B3: bấm không đổi layout (expanded layout cắt khỏi B3).
 interface SwitchLayoutProps {
     isOnExpandedLayout?: boolean;
+    onToggle: () => void;
 }
 
-export default function SwitchLayout({ isOnExpandedLayout = false }: SwitchLayoutProps) {
+export default function SwitchLayout({ isOnExpandedLayout = false, onToggle }: SwitchLayoutProps) {
     return (
         <NextButton
             title={t('CONVERSATION.SWITCH_VIEW_LAYOUT')}
@@ -16,6 +16,7 @@ export default function SwitchLayout({ isOnExpandedLayout = false }: SwitchLayou
             xs
             faded
             className="flex-shrink-0 rtl:rotate-180 ltr:rotate-0 md:inline-flex hidden"
+            onClick={onToggle}
         />
     );
 }

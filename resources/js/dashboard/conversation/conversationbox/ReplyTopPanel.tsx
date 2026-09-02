@@ -1,13 +1,16 @@
+import { useEffect, useRef, useState } from 'react';
+
 import NextButton from 'dashboard/components-next/button/Button';
 import { CHAR_LENGTH_WARNING, REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 
+import CopilotMenuBar from './CopilotMenuBar';
 import EditorModeToggle from './EditorModeToggle';
 
 // Port từ dashboard/components/widgets/WootWriter/ReplyTopPanel.vue.
 // Khối bên phải hiện theo cờ account `captain_tasks` (useCaptain →
-// isCloudFeatureEnabled, mặc định bật trong features.yml): nút ✨ copilot giữ
-// pixel (CopilotMenuBar thuộc nhóm captain sau), nút ⤢ nối toggleEditorSize thật.
-// Phím tắt Alt+P/Alt+L bỏ (B10).
+// isCloudFeatureEnabled, mặc định bật trong features.yml): nút ✨ mở
+// CopilotMenuBar (item bấm chỉ đóng menu — tác vụ captain thuộc nhóm sau), nút ⤢
+// nối toggleEditorSize thật. Phím tắt Alt+P/Alt+L bỏ (B10).
 
 interface ReplyTopPanelProps {
     mode: string;
@@ -15,10 +18,13 @@ interface ReplyTopPanelProps {
     disabled?: boolean;
     isEditorDisabled?: boolean;
     captainTasksEnabled?: boolean;
+    conversationId?: number | null;
+    hasContent?: boolean;
     isMessageLengthReachingThreshold: boolean;
     charactersRemaining: number;
     onSetReplyMode: (mode: string) => void;
     onToggleEditorSize?: () => void;
+    onExecuteCopilotAction?: (actionKey: string) => void;
 }
 
 export default function ReplyTopPanel({
@@ -27,14 +33,36 @@ export default function ReplyTopPanel({
     disabled = false,
     isEditorDisabled = false,
     captainTasksEnabled = false,
+    conversationId = null,
+    hasContent = false,
     isMessageLengthReachingThreshold,
     charactersRemaining,
     onSetReplyMode,
     onToggleEditorSize,
+    onExecuteCopilotAction,
 }: ReplyTopPanelProps) {
+    const [showCopilotMenu, setShowCopilotMenu] = useState(false);
+    const copilotWrapperRef = useRef<HTMLDivElement>(null);
+
+    // v-on-click-outside với ignore nút toggle: click ngoài khối (nút + menu) → đóng.
+    useEffect(() => {
+        if (!showCopilotMenu) return undefined;
+        const onMouseDown = (event: MouseEvent) => {
+            if (copilotWrapperRef.current?.contains(event.target as Node)) return;
+            setShowCopilotMenu(false);
+        };
+        document.addEventListener('mousedown', onMouseDown);
+        return () => document.removeEventListener('mousedown', onMouseDown);
+    }, [showCopilotMenu]);
+
     const handleModeToggle = () => {
         const newMode = mode === REPLY_EDITOR_MODES.REPLY ? REPLY_EDITOR_MODES.NOTE : REPLY_EDITOR_MODES.REPLY;
         onSetReplyMode(newMode);
+    };
+
+    const handleCopilotAction = (actionKey: string) => {
+        setShowCopilotMenu(false);
+        onExecuteCopilotAction?.(actionKey);
     };
 
     const charLengthClass = charactersRemaining < 0 ? 'text-n-ruby-9' : 'text-n-slate-11';
@@ -60,14 +88,28 @@ export default function ReplyTopPanel({
             </div>
             {captainTasksEnabled ? (
                 <div className="flex items-center gap-2">
-                    <div className="relative">
+                    <div ref={copilotWrapperRef} className="relative">
                         <NextButton
                             ghost
                             disabled={disabled || isEditorDisabled}
-                            className="text-n-violet-9 hover:enabled:!bg-n-violet-3"
+                            className={
+                                showCopilotMenu
+                                    ? 'text-n-violet-9 bg-n-violet-3'
+                                    : 'text-n-violet-9 hover:enabled:!bg-n-violet-3'
+                            }
                             sm
                             icon="i-ph-sparkle-fill"
+                            onClick={() => setShowCopilotMenu(open => !open)}
                         />
+                        {showCopilotMenu ? (
+                            <CopilotMenuBar
+                                hasContent={hasContent}
+                                conversationId={conversationId}
+                                replyMode={mode}
+                                className="ltr:right-0 rtl:left-0 bottom-full mb-2"
+                                onExecuteCopilotAction={handleCopilotAction}
+                            />
+                        ) : null}
                     </div>
                     <NextButton
                         ghost
