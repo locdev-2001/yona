@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('filename')->nullable();
             $table->string('content_type')->nullable();
             $table->unsignedBigInteger('byte_size')->nullable();
-            $table->timestamps();
+            $table->timestamps(6);
         });
     }
 

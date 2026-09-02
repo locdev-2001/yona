@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Database\PostgresConnection;
 use App\Models\Channel\Api;
 use App\Models\Contact;
 use App\Models\Inbox;
 use App\Models\User;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,7 +18,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Mọi model + query builder ghi datetime kèm micro-giây như Rails
+        // (một điểm duy nhất thay vì $dateFormat trên từng model).
+        Connection::resolverFor(
+            'pgsql',
+            fn ($pdo, string $database, string $prefix, array $config) => new PostgresConnection($pdo, $database, $prefix, $config),
+        );
     }
 
     /**

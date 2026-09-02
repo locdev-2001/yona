@@ -18,7 +18,7 @@ return new class extends Migration
             $table->jsonb('additional_attributes')->default('{}');
             $table->string('identifier')->nullable();
             $table->jsonb('custom_attributes')->default('{}');
-            $table->timestamp('last_activity_at')->nullable();
+            $table->timestamp('last_activity_at', 6)->nullable();
             $table->integer('contact_type')->nullable()->default(0);
             $table->string('middle_name')->nullable()->default('');
             $table->string('last_name')->nullable()->default('');
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('blocked')->default(false);
             // companies là tính năng enterprise — cột giữ chỗ theo schema gốc, không FK.
             $table->unsignedBigInteger('company_id')->nullable();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('account_id');
             $table->index(['account_id', 'contact_type']);
@@ -51,7 +51,7 @@ return new class extends Migration
             $table->text('source_id');
             $table->boolean('hmac_verified')->default(false);
             $table->string('pubsub_token')->nullable()->unique();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('contact_id');
             $table->index('inbox_id');

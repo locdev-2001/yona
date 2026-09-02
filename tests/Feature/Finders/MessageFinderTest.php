@@ -144,3 +144,34 @@ describe('perform', function () {
             ->and($result->pluck('id'))->not->toContain($maxIdMessage->id);
     });
 });
+
+// Chatwoot lưu created_at với micro-giây (timestamp(6)); nhiều tin cùng giây
+// (API burst, bot, import) phải giữ đúng thứ tự tạo — equivalence với
+// `default_scope { order(created_at: :asc) }` của Message gốc.
+describe('ordering within the same second', function () {
+    it('stores microseconds and orders messages created in the same second by creation time', function () {
+        $conversation = Conversation::factory()->create();
+        $attributes = [
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'conversation_id' => $conversation->id,
+        ];
+        $base = now()->startOfSecond();
+
+        // Chèn KHÔNG theo thứ tự thời gian để id không che được lỗi tie.
+        $offsets = [355000, 228000, 314000, 271000];
+        $idsByMicro = [];
+        foreach ($offsets as $micro) {
+            $message = Message::factory()->create([...$attributes, 'created_at' => $base->copy()->addMicroseconds($micro)]);
+            $idsByMicro[$micro] = $message->id;
+        }
+        ksort($idsByMicro);
+
+        $storedValue = DB::table('messages')->where('id', $idsByMicro[228000])->value('created_at');
+
+        expect($storedValue)->toEndWith('.228')
+            ->and(Message::query()->whereKey($idsByMicro[228000])->first()->created_at->micro)->toBe(228000)
+            ->and((new MessageFinder($conversation, []))->perform()->pluck('id')->all())->toBe(array_values($idsByMicro))
+            ->and($conversation->messages()->pluck('id')->all())->toBe(array_values($idsByMicro));
+    });
+});

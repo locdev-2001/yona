@@ -14,13 +14,13 @@ return new class extends Migration
             $table->string('uid')->default('');
             $table->string('password')->default('');
             $table->unsignedInteger('sign_in_count')->default(0);
-            $table->timestamp('current_sign_in_at')->nullable();
-            $table->timestamp('last_sign_in_at')->nullable();
+            $table->timestamp('current_sign_in_at', 6)->nullable();
+            $table->timestamp('last_sign_in_at', 6)->nullable();
             $table->string('current_sign_in_ip')->nullable();
             $table->string('last_sign_in_ip')->nullable();
             $table->string('confirmation_token')->nullable();
-            $table->timestamp('confirmed_at')->nullable();
-            $table->timestamp('confirmation_sent_at')->nullable();
+            $table->timestamp('confirmed_at', 6)->nullable();
+            $table->timestamp('confirmation_sent_at', 6)->nullable();
             $table->string('unconfirmed_email')->nullable();
             $table->string('name');
             $table->string('display_name')->nullable();
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->boolean('otp_required_for_login')->default(false);
             $table->text('otp_backup_codes')->nullable();
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->unique('email');
             $table->unique('pubsub_token');
@@ -48,7 +48,7 @@ return new class extends Migration
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
-            $table->timestamp('created_at')->nullable();
+            $table->timestamp('created_at', 6)->nullable();
         });
 
         Schema::create('sessions', function (Blueprint $table) {

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->integer('status')->default(0);
             $table->jsonb('internal_attributes')->default('{}');
             $table->jsonb('settings')->default('{}');
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('status');
         });
@@ -33,10 +33,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->integer('role')->default(0);
             $table->foreignId('inviter_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('active_at')->nullable();
+            $table->timestamp('active_at', 6)->nullable();
             $table->integer('availability')->default(0);
             $table->boolean('auto_offline')->default(true);
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->unique(['account_id', 'user_id'], 'uniq_user_id_per_account_id');
         });
