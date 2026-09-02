@@ -919,6 +919,11 @@ const messages: Record<string, unknown> = {
             "NO_RECORDS_FOUND": "No attributes found"
         }
     },
+    "CONTACTS": {
+        "online": {
+            "delete": "{contact_name} is Online, please try again later"
+        }
+    },
     "CONTACTS_BULK_ACTIONS": {
         "ASSIGN_LABELS": "Assign Labels",
         "REMOVE_LABELS": "Remove Labels",
@@ -3739,6 +3744,16 @@ const messages: Record<string, unknown> = {
         },
         "DROPDOWN_ITEM": {
             "ID": "(ID: {identifier})"
+        }
+    },
+    "NETWORK": {
+        "NOTIFICATION": {
+            "OFFLINE": "Offline",
+            "RECONNECTING": "Reconnecting...",
+            "RECONNECT_SUCCESS": "Reconnected"
+        },
+        "BUTTON": {
+            "REFRESH": "Refresh"
         }
     },
     "NEW_CONVERSATION": {

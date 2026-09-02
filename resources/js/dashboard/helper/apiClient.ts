@@ -1,5 +1,5 @@
 // Client JSON tối giản cho web_api (session + CSRF cookie của Laravel).
-function xsrfToken(): string {
+export function xsrfToken(): string {
     const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : '';
 }

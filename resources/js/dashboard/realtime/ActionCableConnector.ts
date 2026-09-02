@@ -1,0 +1,158 @@
+import { router } from '@inertiajs/react';
+
+import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
+import BaseActionCableConnector from './BaseActionCableConnector';
+import { realtimeStore } from './store';
+import type { PresenceUpdatePayload, RealtimeIdentity, TypingUser } from './types';
+
+// Port từ dashboard/helper/actionCable.js. Không có Vuex nên handler chỉ ghi vào
+// realtimeStore (presence/typing) rồi phát lại đúng tên event Chatwoot qua emitter —
+// page (ConversationContext, notifications…) tự useRealtimeEvent(<event>) xử lý.
+// Bỏ voice_call.* / copilot.* / account.enrichment_completed (EE).
+const TYPING_TIMEOUT = 30000;
+
+export const FETCH_CONVERSATION_STATS_EVENT = 'fetch_conversation_stats';
+
+export const REALTIME_EVENTS = [
+    'message.created',
+    'message.updated',
+    'conversation.created',
+    'conversation.status_changed',
+    'user:logout',
+    'page:reload',
+    'assignee.changed',
+    'conversation.typing_on',
+    'conversation.typing_off',
+    'conversation.contact_changed',
+    'presence.update',
+    'contact.deleted',
+    'contact.updated',
+    'conversation.mentioned',
+    'notification.created',
+    'notification.deleted',
+    'notification.updated',
+    'conversation.read',
+    'conversation.updated',
+    'conversation.unread_count_changed',
+    'account.cache_invalidated',
+] as const;
+
+export type RealtimeEventName = (typeof REALTIME_EVENTS)[number];
+
+interface TypingPayload {
+    account_id: number;
+    conversation: { id: number };
+    user: TypingUser;
+}
+
+interface AccountScopedPayload {
+    account_id?: number;
+}
+
+class ActionCableConnector extends BaseActionCableConnector {
+    private cancelTyping: Record<number, ReturnType<typeof setTimeout> | null> = {};
+
+    constructor(identity: RealtimeIdentity, presenceInterval?: number) {
+        super(identity, presenceInterval);
+        this.events = {
+            'message.created': this.forward('message.created'),
+            'message.updated': this.forward('message.updated'),
+            'conversation.created': this.forwardThenFetchStats('conversation.created'),
+            'conversation.status_changed': this.forwardThenFetchStats('conversation.status_changed'),
+            'user:logout': this.onLogout,
+            'page:reload': this.onReload,
+            'assignee.changed': this.forwardThenFetchStats('assignee.changed'),
+            'conversation.typing_on': this.onTypingOn,
+            'conversation.typing_off': this.onTypingOff,
+            'conversation.contact_changed': this.forward('conversation.contact_changed'),
+            'presence.update': this.onPresenceUpdate,
+            'contact.deleted': this.forwardThenFetchStats('contact.deleted'),
+            'contact.updated': this.forward('contact.updated'),
+            'conversation.mentioned': this.forward('conversation.mentioned'),
+            'notification.created': this.forward('notification.created'),
+            'notification.deleted': this.forward('notification.deleted'),
+            'notification.updated': this.forward('notification.updated'),
+            'conversation.read': this.forward('conversation.read'),
+            'conversation.updated': this.forwardThenFetchStats('conversation.updated'),
+            'conversation.unread_count_changed': this.forward('conversation.unread_count_changed'),
+            'account.cache_invalidated': this.forward('account.cache_invalidated'),
+        };
+    }
+
+    onReconnect = () => {
+        realtimeStore.setConnected(true);
+        emitter.emit(BUS_EVENTS.WEBSOCKET_RECONNECT);
+    };
+
+    onDisconnected = () => {
+        realtimeStore.setConnected(false);
+        emitter.emit(BUS_EVENTS.WEBSOCKET_DISCONNECT);
+    };
+
+    onConnected = () => {
+        realtimeStore.setConnected(true);
+    };
+
+    isAValidEvent = (data: unknown): boolean =>
+        (data as AccountScopedPayload | null)?.account_id === this.identity.accountId;
+
+    private forward = (eventName: RealtimeEventName) => (data: unknown) => {
+        emitter.emit(eventName, data);
+    };
+
+    private forwardThenFetchStats = (eventName: RealtimeEventName) => (data: unknown) => {
+        emitter.emit(eventName, data);
+        this.fetchConversationStats();
+    };
+
+    fetchConversationStats = () => {
+        emitter.emit(FETCH_CONVERSATION_STATS_EVENT);
+    };
+
+    // Cùng cách SidebarProfileMenu: route `logout` của yona (Inertia gửi kèm CSRF).
+    onLogout = () => router.post('/app/logout');
+
+    onReload = () => window.location.reload();
+
+    onPresenceUpdate = (data: PresenceUpdatePayload) => {
+        realtimeStore.updateContactsPresence(data.contacts);
+        realtimeStore.updateAgentsPresence(data.users);
+        realtimeStore.applyCurrentUserAvailability(data.users, this.identity.userId);
+        emitter.emit('presence.update', data);
+    };
+
+    onTypingOn = ({ conversation, user }: TypingPayload) => {
+        const conversationId = conversation.id;
+        this.clearTimer(conversationId);
+        realtimeStore.addTyping(conversationId, user);
+        this.initTimer({ conversation, user });
+    };
+
+    onTypingOff = ({ conversation, user }: Pick<TypingPayload, 'conversation' | 'user'>) => {
+        const conversationId = conversation.id;
+        this.clearTimer(conversationId);
+        realtimeStore.removeTyping(conversationId, user);
+    };
+
+    private clearTimer = (conversationId: number) => {
+        const timer = this.cancelTyping[conversationId];
+        if (timer) {
+            clearTimeout(timer);
+            this.cancelTyping[conversationId] = null;
+        }
+    };
+
+    // Tự tắt typing sau 30s nếu không nhận typing_off.
+    private initTimer = ({ conversation, user }: Pick<TypingPayload, 'conversation' | 'user'>) => {
+        this.cancelTyping[conversation.id] = setTimeout(() => {
+            this.onTypingOff({ conversation, user });
+        }, TYPING_TIMEOUT);
+    };
+
+    disconnect() {
+        Object.keys(this.cancelTyping).forEach(id => this.clearTimer(Number(id)));
+        super.disconnect();
+    }
+}
+
+export default ActionCableConnector;
