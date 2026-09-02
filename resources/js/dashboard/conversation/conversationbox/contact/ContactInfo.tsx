@@ -44,6 +44,13 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
     const isAdmin = currentAccountUser.role === 'administrator';
     const [contact, setContact] = useState<FullContact>(initialContact);
     const deleteDialogRef = useRef<ConfirmContactDeleteDialogHandle>(null);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editName, setEditName] = useState('');
+    const nameInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isEditingName) nameInputRef.current?.focus();
+    }, [isEditingName]);
 
     // getContactDetails gốc: watch contact.id → contacts/show.
     useEffect(() => {
@@ -63,6 +70,26 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
     const additionalAttributes = (contact.additional_attributes ?? {}) as Record<string, string | undefined>;
     const cityAndCountry = [additionalAttributes.city, additionalAttributes.country].filter(Boolean).join(', ');
     const contactProfileLink = accountScopedUrl(accountId, `contacts/${contact.id}`);
+
+    // startEditingName/saveNameEdit gốc: click tên hoặc ✎ → sửa inline, Enter/blur lưu, Esc hủy.
+    const startEditingName = () => {
+        setEditName(contact.name || '');
+        setIsEditingName(true);
+    };
+
+    const saveNameEdit = async () => {
+        if (!isEditingName) return;
+        setIsEditingName(false);
+        const trimmed = editName.trim();
+        if (!trimmed || trimmed === contact.name) return;
+        try {
+            await patchJson(`/api/v1/accounts/${accountId}/contacts/${contact.id}`, { name: trimmed });
+            setContact(current => ({ ...current, name: trimmed }));
+            useAlert(t('CONTACT_FORM.SUCCESS_MESSAGE'));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('CONTACT_FORM.ERROR_MESSAGE'));
+        }
+    };
 
     const updateContactField = async (field: EditableField, value: string) => {
         const payload =
@@ -98,9 +125,38 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
                 <div className="flex flex-col items-start gap-1.5 min-w-0 w-full">
                     <div className="flex items-center w-full min-w-0 gap-2">
                         <div className="group/name flex items-center min-w-0 gap-2">
-                            <h3 className="flex-shrink max-w-full min-w-0 my-0 text-base capitalize break-words text-n-slate-12">
-                                {contact.name}
-                            </h3>
+                            {isEditingName ? (
+                                <input
+                                    ref={nameInputRef}
+                                    value={editName}
+                                    className="!text-base !font-medium !w-auto max-w-full min-w-0 bg-transparent outline-none border-b border-n-weak text-n-slate-12 [field-sizing:content]"
+                                    onChange={event => setEditName(event.target.value)}
+                                    onKeyDown={event => {
+                                        if (event.key === 'Enter') void saveNameEdit();
+                                        if (event.key === 'Escape') setIsEditingName(false);
+                                    }}
+                                    onBlur={() => void saveNameEdit()}
+                                />
+                            ) : (
+                                <h3
+                                    className="flex-shrink max-w-full min-w-0 my-0 text-base capitalize break-words text-n-slate-12 cursor-pointer hover:text-n-slate-12/80"
+                                    title={t('CONTACT_PANEL.CLICK_TO_EDIT')}
+                                    onClick={startEditingName}
+                                >
+                                    {contact.name}
+                                </h3>
+                            )}
+                            <NextButton
+                                ghost
+                                xs
+                                slate
+                                icon="i-lucide-pencil"
+                                title={t('CONTACT_PANEL.CLICK_TO_EDIT')}
+                                className={`flex-shrink-0 -mx-1 opacity-0 transition-opacity ${
+                                    isEditingName ? 'invisible' : 'group-hover/name:opacity-100 focus-visible:opacity-100'
+                                }`}
+                                onClick={startEditingName}
+                            />
                         </div>
                         <div className="flex flex-row items-center gap-2">
                             {contact.created_at ? (
