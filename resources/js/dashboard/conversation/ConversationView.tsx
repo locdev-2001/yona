@@ -2,6 +2,7 @@ import Dashboard from '../Dashboard';
 import { ConversationProvider, useConversation } from './ConversationContext';
 import ChatList from './chatlist/ChatList';
 import ConversationBox from './conversationbox/ConversationBox';
+import ConversationSidebar from './conversationbox/ConversationSidebar';
 
 // Port từ routes/dashboard/conversation/ConversationView.vue — trang 3 cột
 // (Sidebar shell + ChatList + ConversationBox). Layout expanded (⇥) như gốc:
@@ -14,14 +15,17 @@ interface Props {
 }
 
 function ConversationLayout({ conversationId }: { conversationId: number }) {
-    const { isOnExpandedLayout } = useConversation();
+    const { isOnExpandedLayout, selectedConversation, uiSettings } = useConversation();
     const showConversationList = isOnExpandedLayout ? !conversationId : true;
     const showMessageView = conversationId ? true : !isOnExpandedLayout;
+    // shouldShowSidebar gốc: có currentChat + ui_settings.is_contact_sidebar_open.
+    const shouldShowSidebar = Boolean(selectedConversation && uiSettings.is_contact_sidebar_open);
 
     return (
         <section className="flex w-full h-full min-w-0">
             <ChatList showConversationList={showConversationList} />
             {showMessageView ? <ConversationBox /> : null}
+            {shouldShowSidebar ? <ConversationSidebar /> : null}
         </section>
     );
 }

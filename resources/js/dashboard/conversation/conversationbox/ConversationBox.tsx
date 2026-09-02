@@ -2,6 +2,7 @@ import { useConversation } from '../ConversationContext';
 import ConversationHeader from './ConversationHeader';
 import EmptyState from './EmptyState';
 import MessagesView from './MessagesView';
+import SidepanelSwitch from './SidepanelSwitch';
 
 // Port từ widgets/conversation/ConversationBox.vue — không có dashboardApps
 // (D-group) nên không render woot-tabs/DashboardAppFrame; header luôn kèm
@@ -23,6 +24,8 @@ export default function ConversationBox() {
             )}
             <div className="flex h-full min-h-0 m-0">
                 {currentChat ? <MessagesView /> : <EmptyState />}
+                {/* slot của ConversationBox.vue: ConversationView đặt SidepanelSwitch khi có currentChat */}
+                {currentChat ? <SidepanelSwitch /> : null}
             </div>
         </div>
     );
