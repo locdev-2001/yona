@@ -680,6 +680,10 @@ const messages: Record<string, unknown> = {
         "SENDING": "Sending",
         "UNREAD_COUNT_OVERFLOW": "9+"
     },
+    "CHOICE_TOGGLE": {
+        "YES": "Yes",
+        "NO": "No"
+    },
     "COMBOBOX": {
         "PLACEHOLDER": "Select an option...",
         "EMPTY_SEARCH_RESULTS": "No items found for the search term `{searchTerm}`",
@@ -2198,8 +2202,17 @@ const messages: Record<string, unknown> = {
         "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
     },
     "GENERAL": {
+        "SHOWING_RESULTS": "Showing {firstIndex}-{lastIndex} of {totalCount} items",
+        "PHONE_INPUT": {
+            "PLACEHOLDER": "Search",
+            "EMPTY_STATE": "No results found"
+        },
+        "CLOSE": "Close",
         "BETA": "Beta",
-        "BETA_DESCRIPTION": "This feature is in beta and may change as we improve it."
+        "BETA_DESCRIPTION": "This feature is in beta and may change as we improve it.",
+        "ACCEPT": "Accept",
+        "DISCARD": "Discard",
+        "PREFERRED": "Preferred"
     },
     "GENERAL_SETTINGS": {
         "BACK": "Back"
