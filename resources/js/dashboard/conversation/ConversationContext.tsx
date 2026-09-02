@@ -17,6 +17,7 @@ interface ConversationContextValue {
     accountId: number;
     currentUserId: number;
     inboxId: number;
+    teamId: number;
     conversationId: number;
     conversations: Conversation[];
     listMeta: ConversationListMeta;
@@ -57,12 +58,13 @@ const EMPTY_META: ConversationListMeta = {
 interface ProviderProps {
     conversationId?: number;
     inboxId?: number;
+    teamId?: number;
     children: ReactNode;
 }
 
 let pendingEchoCounter = 0;
 
-export function ConversationProvider({ conversationId = 0, inboxId = 0, children }: ProviderProps) {
+export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId = 0, children }: ProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const user = auth.user!;
@@ -105,6 +107,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, children
                     page,
                     sortBy,
                     inboxId: inboxId || undefined,
+                    teamId: teamId || undefined,
                 });
                 const payload = response.data.payload;
                 setListMeta(response.data.meta);
@@ -123,10 +126,10 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, children
                 setListLoading(false);
             }
         },
-        [accountId, assigneeTab, status, sortBy, inboxId],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId],
     );
 
-    // Đổi filter/tab/inbox → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
+    // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
     useEffect(() => {
         setConversations([]);
         setEndReached(false);
@@ -291,6 +294,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, children
             accountId,
             currentUserId,
             inboxId,
+            teamId,
             conversationId,
             conversations,
             listMeta,
@@ -314,6 +318,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, children
             accountId,
             currentUserId,
             inboxId,
+            teamId,
             conversationId,
             conversations,
             listMeta,

@@ -92,13 +92,18 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
         });
 
-        // Tương đương conversation.routes.js: home + inbox_conversation + inbox_dashboard.
+        // Tương đương conversation.routes.js: home + inbox_conversation + inbox_dashboard
+        // + team_conversations.
         Route::get('/conversations/{conversationId}', [DashboardController::class, 'conversation'])
             ->whereNumber('conversationId')->name('inbox_conversation');
         Route::get('/inbox/{inboxId}', [DashboardController::class, 'inbox'])
             ->whereNumber('inboxId')->name('inbox_dashboard');
         Route::get('/inbox/{inboxId}/conversations/{conversationId}', [DashboardController::class, 'inbox'])
             ->whereNumber('inboxId')->whereNumber('conversationId')->name('conversation_through_inbox');
+        Route::get('/team/{teamId}', [DashboardController::class, 'team'])
+            ->whereNumber('teamId')->name('team_conversations');
+        Route::get('/team/{teamId}/conversations/{conversationId}', [DashboardController::class, 'team'])
+            ->whereNumber('teamId')->whereNumber('conversationId')->name('conversations_through_team');
 
         // Tương đương contacts routes.js (admin + agent đều vào được).
         Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');

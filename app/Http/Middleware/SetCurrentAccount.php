@@ -56,6 +56,17 @@ class SetCurrentAccount
                     'name' => $inbox->name,
                     'channel_type' => $inbox->channel_type,
                 ]),
+            // Nhóm Teams trên sidebar (Sidebar.vue lấy từ getter teams/getMyTeams:
+            // chỉ team user là member).
+            'teams' => fn () => $request->user()
+                ->teams()
+                ->where('teams.account_id', $account->id)
+                ->orderByRaw('lower(teams.name) ASC')
+                ->get(['teams.id', 'teams.name'])
+                ->map(fn ($team) => [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                ]),
             'userAccounts' => fn () => $request->user()->accountUsers()
                 ->with('account:id,name')
                 ->get()

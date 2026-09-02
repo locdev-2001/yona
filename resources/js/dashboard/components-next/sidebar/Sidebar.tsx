@@ -23,7 +23,7 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount, currentAccountUser, inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
 
@@ -106,8 +106,8 @@ export default function Sidebar({
     };
 
     const menuItems = useMemo(
-        () => filterMenuByRole(buildMenuItems(accountId, inboxes), role),
-        [accountId, inboxes, role],
+        () => filterMenuByRole(buildMenuItems(accountId, inboxes, teams), role),
+        [accountId, inboxes, teams, role],
     );
 
     const asideRef = useRef<HTMLElement>(null);
