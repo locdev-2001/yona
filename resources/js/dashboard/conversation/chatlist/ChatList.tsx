@@ -1,5 +1,10 @@
+import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { usePage } from '@inertiajs/react';
 
+import ConversationFilter, { DEFAULT_FILTER } from 'dashboard/components-next/filter/ConversationFilter';
+import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
+import { useConversationFilterContext } from 'dashboard/components-next/filter/provider';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { ASSIGNEE_TYPE } from '../constants';
@@ -10,15 +15,16 @@ import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 
 // Port từ dashboard/components/ChatList.vue — cắt B3: custom views/folders,
-// advanced filters, bulk actions, delete dialog, mentions/participating/
-// unattended view, expanded layout. State list nằm ở ConversationContext.
+// bulk actions, delete dialog, mentions/participating/unattended view.
+// Advanced filter: modal mở/đóng + validate như gốc (teleport vào
+// #conversationFilterTeleportTarget); Apply chưa lọc list (E1) — xem trace.
 const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
     { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count' },
     { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
-export default function ChatList() {
+export default function ChatList({ showConversationList = true }: { showConversationList?: boolean }) {
     const {
         conversations,
         listMeta,
@@ -28,10 +34,32 @@ export default function ChatList() {
         status,
         inboxId,
         teamId,
+        isOnExpandedLayout,
         setAssigneeTab,
         loadMoreConversations,
     } = useConversation();
     const { inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
+
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [appliedFilter, setAppliedFilter] = useState<ConversationFilterCondition[]>([{ ...DEFAULT_FILTER }]);
+    const [teleportTarget, setTeleportTarget] = useState<HTMLElement | null>(null);
+    const attributeFilterTypes = useConversationFilterContext();
+
+    useEffect(() => {
+        setTeleportTarget(document.getElementById('conversationFilterTeleportTarget'));
+    }, [showAdvancedFilters]);
+
+    const closeAdvanceFiltersModal = useCallback(() => setShowAdvancedFilters(false), []);
+
+    // onToggleAdvanceFiltersModal: mở lần đầu khởi tạo 1 dòng mặc định (status = ...).
+    const onToggleAdvanceFiltersModal = () => {
+        if (showAdvancedFilters) {
+            closeAdvanceFiltersModal();
+            return;
+        }
+        setAppliedFilter([{ ...DEFAULT_FILTER }]);
+        setShowAdvancedFilters(true);
+    };
 
     // pageTitle gốc: inbox.name → activeTeam.name → mặc định (label/mention/... vào B7/B8).
     const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
@@ -48,8 +76,17 @@ export default function ChatList() {
     const showEndOfListMessage = conversations.length > 0 && endReached && !listLoading;
 
     return (
-        <div className="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 relative w-[340px] 2xl:w-[412px]">
-            <ChatListHeader pageTitle={pageTitle} activeStatus={status} />
+        <div
+            className={`flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 relative ${
+                showConversationList ? '' : 'hidden'
+            } ${isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]'}`}
+        >
+            <ChatListHeader
+                pageTitle={pageTitle}
+                activeStatus={status}
+                isOnExpandedLayout={isOnExpandedLayout}
+                onFiltersModal={onToggleAdvanceFiltersModal}
+            />
             <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
             {!listLoading && !conversations.length ? (
                 <p className="flex overflow-auto justify-center items-center p-4">{t('CHAT_LIST.LIST.404')}</p>
@@ -61,6 +98,18 @@ export default function ChatList() {
                 showAssignee={showAssigneeInConversationCard}
                 onLoadMore={loadMoreConversations}
             />
+            {showAdvancedFilters && teleportTarget
+                ? createPortal(
+                      <ConversationFilter
+                          filters={appliedFilter}
+                          attributeFilterTypes={attributeFilterTypes}
+                          onChange={setAppliedFilter}
+                          onApplyFilter={closeAdvanceFiltersModal}
+                          onClose={closeAdvanceFiltersModal}
+                      />,
+                      teleportTarget,
+                  )
+                : null}
         </div>
     );
 }

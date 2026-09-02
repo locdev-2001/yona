@@ -4,24 +4,28 @@ import { usePage } from '@inertiajs/react';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
+import AttachmentsPreview from 'dashboard/components/widgets/AttachmentsPreview';
+import type { PendingAttachment } from 'dashboard/components/widgets/AttachmentsPreview';
 import { appendSignature, removeSignature } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
-import type { UISettings } from 'dashboard/composables/useUISettings';
-import { putJson } from 'dashboard/helper/apiClient';
+import { useAlert } from 'dashboard/composables/useAlert';
 import { MESSAGE_MAX_LENGTH } from 'dashboard/conversation/constants';
+import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
 
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
 import ReplyTopPanel from './ReplyTopPanel';
 import ReplyBottomPanel from './ReplyBottomPanel';
 
 // Port từ dashboard/components/widgets/conversation/ReplyBox.vue — rút về kênh
 // Channel::Api (B3): isWithinMessagingWindow luôn true (can_reply || isAPIInbox),
-// editor khóa khi hết cửa sổ trả lời và không ở private note. Bỏ ở B3: draft
-// (B10), reply-to (B10/B11), attachments/audio (B9), email head/quoted reply,
-// WhatsApp templates, copilot (EE), canned '/' + mention @ + variables,
-// ReplyBoxBanner + MessageSignatureMissingAlert, typing on/off (B4).
+// editor khóa khi hết cửa sổ trả lời và không ở private note. Đính kèm: chọn
+// file + kiểm size + preview/gỡ như gốc (fileUploadMixin.onIndirectFileUpload),
+// upload thật khi gửi = B9 (xem onSendReply). Bỏ ở B3: draft (B10), reply-to
+// (B10/B11), audio (B9), email head/quoted reply, WhatsApp templates, copilot
+// editor (captain), canned '/' + mention @ + variables, ReplyBoxBanner, typing (B4).
 
 const CHANNEL_TYPE = 'Channel::Api';
 // slugifyChannel('Channel::Api') của useUISettings.js gốc → 'channel_api'.
@@ -42,18 +46,19 @@ interface ReplyBoxProps {
 }
 
 export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBoxProps) {
-    const { selectedConversation, conversationId, sendReply } = useConversation();
+    const { selectedConversation, conversationId, accountId, sendReply, uiSettings, updateUISettings } =
+        useConversation();
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
+    const messageSignature = user.message_signature ?? '';
     // isCloudFeatureEnabled/isFeatureEnabledonAccount gốc = tra cờ trong account.features.
     const captainTasksEnabled = Boolean(currentAccount.features.captain_tasks);
     const voiceRecorderEnabled = Boolean(currentAccount.features.voice_recorder);
-    const messageSignature = user.message_signature ?? '';
 
-    const [uiSettings, setUiSettings] = useState<UISettings>(user.ui_settings ?? {});
     const [replyType, setReplyType] = useState<string>(REPLY_EDITOR_MODES.REPLY);
     const [message, setMessage] = useState('');
     const [isFocused, setIsFocused] = useState(false);
+    const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
 
     const editorRef = useRef<EditorHandle>(null);
 
@@ -66,14 +71,20 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
 
     const sendWithSignature = Boolean(uiSettings[SIGNATURE_FLAG_KEY]);
-    const isSignatureActive = sendWithSignature && !isPrivate && Boolean(messageSignature);
+    const isSignatureEnabledForInbox = !isPrivate && sendWithSignature;
+    const isSignatureAvailable = Boolean(messageSignature);
+    const isSignatureActive = isSignatureEnabledForInbox && isSignatureAvailable;
 
     const maxLength = MESSAGE_MAX_LENGTH.GENERAL;
     const isMessageLengthReachingThreshold = message.length > maxLength - 50;
     const charactersRemaining = maxLength - message.length;
 
     const isMessageEmpty = !message.trim().replace(/\n/g, '').length;
-    const isReplyButtonDisabled = isEditorDisabled || isMessageEmpty || message.length > maxLength;
+    const hasAttachments = attachedFiles.length > 0;
+    // isReplyButtonDisabled gốc: có đính kèm thì gửi được dù chưa gõ chữ.
+    const isReplyButtonDisabled = isEditorDisabled || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
+    // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
+    const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, CHANNEL_TYPE).trim() !== '';
 
     const messagePlaceHolder = isEditorDisabled
         ? t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
@@ -87,12 +98,13 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         return `${sendMessageText} ${keyLabel}`;
     })();
 
-    // Đổi conversation: về chế độ REPLY, xóa nội dung (không có draft ở B3 —
-    // bản gốc khôi phục qua draftMessages store).
+    // Đổi conversation: về chế độ REPLY, xóa nội dung + đính kèm (không có draft
+    // ở B3 — bản gốc khôi phục qua draftMessages store).
     useEffect(() => {
         setReplyType(REPLY_EDITOR_MODES.REPLY);
+        setAttachedFiles([]);
         setMessage(
-            messageSignature && Boolean((user.ui_settings ?? {})[SIGNATURE_FLAG_KEY])
+            messageSignature && Boolean(uiSettings[SIGNATURE_FLAG_KEY])
                 ? appendSignature('', messageSignature, CHANNEL_TYPE)
                 : '',
         );
@@ -118,11 +130,18 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const clearMessage = () => {
         // clearMessage gốc: reset rồi gắn lại chữ ký nếu đang bật.
         setMessage(isSignatureActive ? appendSignature('', messageSignature, CHANNEL_TYPE) : '');
+        setAttachedFiles([]);
     };
 
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
-        sendReply({ content: message, isPrivate });
+        if (hasAttachments) {
+            // Upload đính kèm thuộc B9: giữ hành vi gửi văn bản, báo tệp chưa gửi.
+            useAlert(t('CONVERSATION.UPLOADING_ATTACHMENTS'));
+        }
+        if (!isMessageEmpty) {
+            sendReply({ content: message, isPrivate });
+        }
         clearMessage();
         editorRef.current?.focusEditorInputField();
         onMessageSent?.();
@@ -134,25 +153,48 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         window.requestAnimationFrame(() => editorRef.current?.focusEditorInputField());
     };
 
-    // setSignatureFlagForInbox: merge vào ui_settings rồi PUT /api/v1/profile
-    // (updateUISettings của store gốc).
+    // setSignatureFlagForInbox: merge vào ui_settings rồi PUT /api/v1/profile.
     const toggleMessageSignature = () => {
-        const nextSettings = { ...uiSettings, [SIGNATURE_FLAG_KEY]: !sendWithSignature };
-        setUiSettings(nextSettings);
-        void putJson('/api/v1/profile', { ui_settings: nextSettings });
+        updateUISettings({ [SIGNATURE_FLAG_KEY]: !sendWithSignature });
     };
 
     const insertEmoji = (emoji: string) => {
         editorRef.current?.insertText(emoji);
     };
 
+    // fileUploadMixin.onIndirectFileUpload + attachFile: kiểm size (API inbox =
+    // giới hạn cài đặt 40MB) rồi đọc dataURL làm thumb.
+    const onFileUpload = (file: File) => {
+        const maxSizeMB = DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE;
+        if (!checkFileSizeLimit(file, maxSizeMB)) {
+            useAlert(t('CONVERSATION.FILE_SIZE_LIMIT', { MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE: maxSizeMB }));
+            return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            setAttachedFiles((current) => [
+                ...current,
+                {
+                    currentChatId: conversationId,
+                    resource: file,
+                    isPrivate,
+                    thumb: String(reader.result ?? ''),
+                    isVoiceMessage: false,
+                },
+            ]);
+        };
+    };
+
     return (
-        <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused ? 'is-focused' : ''}`}>
+        <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}>
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={false}
                 isEditorDisabled={isEditorDisabled}
                 captainTasksEnabled={captainTasksEnabled}
+                conversationId={conversationId}
+                hasContent={hasContent}
                 isMessageLengthReachingThreshold={isMessageLengthReachingThreshold}
                 charactersRemaining={charactersRemaining}
                 onSetReplyMode={setReplyMode}
@@ -174,6 +216,14 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                     onBlur={() => setIsFocused(false)}
                     onSend={onSendReply}
                 />
+                {hasAttachments ? (
+                    <div className="bg-transparent py-0 mb-2">
+                        <AttachmentsPreview className="mt-2" attachments={attachedFiles} onRemoveAttachment={setAttachedFiles} />
+                    </div>
+                ) : null}
+                {isSignatureEnabledForInbox && !isSignatureAvailable ? (
+                    <MessageSignatureMissingAlert accountId={accountId} className="mb-2" />
+                ) : null}
             </div>
             <ReplyBottomPanel
                 isNote={isPrivate}
@@ -184,6 +234,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 sendButtonText={replyButtonLabel}
                 sendWithSignature={sendWithSignature}
                 onSend={onSendReply}
+                onFileUpload={onFileUpload}
                 onToggleSignature={toggleMessageSignature}
                 onSelectEmoji={insertEmoji}
             />

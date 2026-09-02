@@ -1,18 +1,23 @@
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
 import type { ConversationStatusFilter } from '../types';
+import { useConversation } from '../ConversationContext';
 import ConversationBasicFilter from './ConversationBasicFilter';
 import SwitchLayout from './SwitchLayout';
 
 // Port từ dashboard/components/ChatListHeader.vue — nhánh applied filters /
-// custom folders cắt khỏi B3 (advanced filter nhóm E1) nên chỉ còn nhánh mặc
-// định: chip status + nút filter (bấm chưa mở gì) + basic filter + switch layout.
+// custom folders cắt khỏi B3 (E1) nên chỉ còn nhánh mặc định: chip status +
+// nút filter (mở ConversationFilter) + basic filter + switch layout.
 interface ChatListHeaderProps {
     pageTitle: string;
     activeStatus: ConversationStatusFilter;
+    isOnExpandedLayout: boolean;
+    onFiltersModal: () => void;
 }
 
-export default function ChatListHeader({ pageTitle, activeStatus }: ChatListHeaderProps) {
+export default function ChatListHeader({ pageTitle, activeStatus, isOnExpandedLayout, onFiltersModal }: ChatListHeaderProps) {
+    const { toggleConversationLayout } = useConversation();
+
     return (
         <div className="flex items-center justify-between gap-2 px-3 h-[3.25rem]">
             <div className="flex items-center justify-center min-w-0">
@@ -32,11 +37,15 @@ export default function ChatListHeader({ pageTitle, activeStatus }: ChatListHead
                         slate
                         xs
                         faded
+                        onClick={onFiltersModal}
                     />
-                    <div id="conversationFilterTeleportTarget" className="absolute z-50 mt-2" />
+                    <div
+                        id="conversationFilterTeleportTarget"
+                        className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
+                    />
                 </div>
                 <ConversationBasicFilter />
-                <SwitchLayout />
+                <SwitchLayout isOnExpandedLayout={isOnExpandedLayout} onToggle={toggleConversationLayout} />
             </div>
         </div>
     );

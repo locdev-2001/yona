@@ -5,14 +5,30 @@ import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/cons
 import { t } from '../../../i18n';
 
 // Port từ dashboard/components/widgets/WootWriter/EditorModeToggle.vue —
-// đo bề rộng 2 nhãn bằng ref (useElementSize → ResizeObserver) để tính bề rộng
-// + translate của chip trượt.
+// đo bề rộng 2 nhãn như useElementSize (ResizeObserver contentRect = KHÔNG gồm
+// padding px-2), rồi +16 = 2 × 8px padding của nhãn cho chip trượt.
+
+const LABEL_HORIZONTAL_PADDING = 16;
 
 interface EditorModeToggleProps {
     mode: string;
     disabled?: boolean;
     isReplyRestricted?: boolean;
     onToggleMode: () => void;
+}
+
+// Bề rộng content-box của nhãn (offsetWidth trừ padding), khớp contentRect.
+export function contentBoxWidth(element: HTMLElement | null): number {
+    if (!element) return 0;
+    const style = window.getComputedStyle(element);
+    return Math.max(0, element.offsetWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0'));
+}
+
+export function chipGeometry(isPrivate: boolean, replyContentWidth: number, noteContentWidth: number) {
+    return {
+        width: `${(isPrivate ? noteContentWidth : replyContentWidth) + LABEL_HORIZONTAL_PADDING}px`,
+        translateX: `${isPrivate ? replyContentWidth + LABEL_HORIZONTAL_PADDING : 0}px`,
+    };
 }
 
 export default function EditorModeToggle({
@@ -28,12 +44,13 @@ export default function EditorModeToggle({
     useLayoutEffect(() => {
         const measure = () => {
             setLabelWidths({
-                reply: replyModeRef.current?.offsetWidth ?? 0,
-                note: privateModeRef.current?.offsetWidth ?? 0,
+                reply: contentBoxWidth(replyModeRef.current),
+                note: contentBoxWidth(privateModeRef.current),
             });
         };
         measure();
 
+        if (typeof ResizeObserver === 'undefined') return undefined;
         const observer = new ResizeObserver(measure);
         if (replyModeRef.current) observer.observe(replyModeRef.current);
         if (privateModeRef.current) observer.observe(privateModeRef.current);
@@ -42,9 +59,7 @@ export default function EditorModeToggle({
 
     // isReplyRestricted ép về private note bất kể mode.
     const isPrivate = isReplyRestricted || mode === REPLY_EDITOR_MODES.NOTE;
-
-    const chipWidth = `${(isPrivate ? labelWidths.note : labelWidths.reply) + 16}px`;
-    const translateValue = `${isPrivate ? labelWidths.reply + 16 : 0}px`;
+    const { width: chipWidth, translateX } = chipGeometry(isPrivate, labelWidths.reply, labelWidths.note);
 
     return (
         <button
@@ -61,13 +76,14 @@ export default function EditorModeToggle({
                 {t('CONVERSATION.REPLYBOX.PRIVATE_NOTE')}
             </div>
             <div
+                data-testid="editor-mode-chip"
                 className={`absolute shadow-sm rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-solid-1 ${
                     !disabled && !isReplyRestricted ? 'transition-all duration-300' : ''
                 }`}
                 style={
                     {
                         '--chip-width': chipWidth,
-                        '--translate-x': translateValue,
+                        '--translate-x': translateX,
                         '--rtl-translate-x': 'calc(-1 * var(--translate-x))',
                     } as CSSProperties
                 }

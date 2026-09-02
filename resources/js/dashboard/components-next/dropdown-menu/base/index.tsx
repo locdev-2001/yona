@@ -61,10 +61,27 @@ export function DropdownContainer({ className = '', onClose, children, menu }: D
     );
 }
 
-export function DropdownBody({ className = '', children }: { className?: string; children: ReactNode }) {
+// `strong`: dropdown lồng trong dropdown khác — viền đậm + lớp blur phụ
+// (hack cho giới hạn stacked backdrop-blur của Chrome, như DropdownBody.vue).
+export function DropdownBody({
+    className = '',
+    strong = false,
+    children,
+}: {
+    className?: string;
+    strong?: boolean;
+    children: ReactNode;
+}) {
+    const borderClass = strong ? 'border-n-strong' : 'border-n-weak';
+    const beforeClass = strong
+        ? "before:content-['\u00A0'] before:absolute before:bottom-0 before:left-0 before:w-full before:h-full before:rounded-xl before:backdrop-contrast-70 before:backdrop-blur-sm before:z-0 [&>*]:relative"
+        : '';
+
     return (
         <div className={`absolute ${className}`}>
-            <ul className="text-sm bg-n-alpha-3 backdrop-blur-[100px] border border-n-weak rounded-xl shadow-sm py-2 n-dropdown-body gap-2 grid list-none px-2 reset-base relative">
+            <ul
+                className={`text-sm bg-n-alpha-3 backdrop-blur-[100px] border rounded-xl shadow-sm py-2 n-dropdown-body gap-2 grid list-none px-2 reset-base relative ${borderClass} ${beforeClass}`}
+            >
                 {children}
             </ul>
         </div>
@@ -74,10 +91,12 @@ export function DropdownBody({ className = '', children }: { className?: string;
 export function DropdownSection({
     title = '',
     className = '',
+    height = 'max-h-96',
     children,
 }: {
     title?: string;
     className?: string;
+    height?: string;
     children: ReactNode;
 }) {
     return (
@@ -87,7 +106,7 @@ export function DropdownSection({
                     {title}
                 </div>
             ) : null}
-            <ul className="gap-2 grid reset-base list-none px-2 overflow-y-auto max-h-96">{children}</ul>
+            <ul className={`gap-2 grid reset-base list-none px-2 overflow-y-auto ${height}`}>{children}</ul>
         </div>
     );
 }
@@ -104,6 +123,7 @@ interface DropdownItemProps {
     target?: string;
     onClick?: (event: MouseEvent) => void;
     preserveOpen?: boolean;
+    disabled?: boolean;
     className?: string;
     children?: ReactNode;
 }
@@ -116,6 +136,7 @@ export function DropdownItem({
     target,
     onClick,
     preserveOpen = false,
+    disabled = false,
     className = '',
     children,
 }: DropdownItemProps) {
@@ -128,7 +149,7 @@ export function DropdownItem({
 
     const sharedClasses = `flex text-left rtl:text-right items-center p-2 reset-base text-sm text-n-slate-12 w-full border-0 ${
         !children ? 'hover:bg-n-alpha-2 rounded-lg w-full gap-3' : ''
-    } ${className}`;
+    } ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className}`;
 
     const content = children ?? (
         <>
