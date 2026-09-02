@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import type { CSSProperties, UIEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { UIEvent } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import MessageList from 'dashboard/components-next/message/MessageList';
@@ -10,12 +10,14 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import Banner from './Banner';
 import ReplyBox from './ReplyBox';
+import ResizableEditorWrapper from './ResizableEditorWrapper';
+import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ ở B3: typing indicator (B4), label suggestions (EE), referral
 // bubble (WhatsApp), banner Instagram, markMessagesRead (B5), scroll-to-message
-// qua bus. ResizableEditorWrapper chỉ giữ wrapper class + biến chiều cao mặc
-// định (120px như DEFAULT_HEIGHT gốc), không kéo thả.
+// qua bus. ResizableEditorWrapper port thật (kéo thả + ⤢ + reset sau gửi);
+// containerHeight/topBannerHeight đo bằng ResizeObserver thay useElementSize.
 
 export default function MessagesView() {
     const {
@@ -28,6 +30,11 @@ export default function MessagesView() {
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const conversationPanelRef = useRef<HTMLUListElement>(null);
+    const messagesViewRef = useRef<HTMLDivElement>(null);
+    const topBannerRef = useRef<HTMLDivElement>(null);
+    const resizableEditorWrapperRef = useRef<ResizableEditorWrapperHandle>(null);
+    const [containerHeight, setContainerHeight] = useState(0);
+    const [topBannerHeight, setTopBannerHeight] = useState(0);
     const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
     // Giữ vị trí scroll sau khi prepend tin cũ: đo scrollHeight trước/sau như bản gốc.
     const scrollRestoreRef = useRef<{ heightBeforeLoad: number; scrollTopBeforeLoad: number } | null>(null);
@@ -68,6 +75,20 @@ export default function MessagesView() {
 
     const shouldShowSpinner = messagesLoading || isLoadingPrevious;
 
+    useEffect(() => {
+        const messagesView = messagesViewRef.current;
+        const topBanner = topBannerRef.current;
+        if (!messagesView || !topBanner) return undefined;
+
+        const observer = new ResizeObserver(() => {
+            setContainerHeight(messagesView.offsetHeight);
+            setTopBannerHeight(topBanner.offsetHeight);
+        });
+        observer.observe(messagesView);
+        observer.observe(topBanner);
+        return () => observer.disconnect();
+    }, []);
+
     // Mở conversation → sau khi nạp xong tin thì cuộn xuống đáy;
     // prepend tin cũ → bù lại đúng khoảng scroll cũ.
     useLayoutEffect(() => {
@@ -102,8 +123,8 @@ export default function MessagesView() {
     };
 
     return (
-        <div className="flex flex-col justify-between flex-grow h-full min-w-0 m-0">
-            <div>
+        <div ref={messagesViewRef} className="flex flex-col justify-between flex-grow h-full min-w-0 m-0">
+            <div ref={topBannerRef}>
                 {!currentChat.can_reply && (
                     <Banner
                         colorScheme="alert"
@@ -133,16 +154,15 @@ export default function MessagesView() {
                 }
             />
             <div className="flex relative flex-col bg-n-surface-1">
-                <div
-                    className="relative resizable-editor-wrapper"
-                    style={{ '--editor-height': '7.5rem' } as CSSProperties}
+                <ResizableEditorWrapper
+                    ref={resizableEditorWrapperRef}
+                    containerHeight={Math.max(0, containerHeight - topBannerHeight)}
                 >
-                    {/* Thanh grip của ResizableEditorWrapper — giữ pixel, chưa kéo thả. */}
-                    <div className="group absolute inset-x-0 -top-4 z-10 flex h-4 select-none items-center justify-center bg-gradient-to-b from-transparent from-10% dark:to-n-surface-1/80 to-n-surface-1/90 backdrop-blur-[0.01875rem]">
-                        <div className="w-8 h-0.5 mt-1 rounded-full bg-n-slate-6 transition-all duration-200" />
-                    </div>
-                    <ReplyBox />
-                </div>
+                    <ReplyBox
+                        onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
+                        onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
+                    />
+                </ResizableEditorWrapper>
             </div>
         </div>
     );

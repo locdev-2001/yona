@@ -67,6 +67,23 @@
   @apply min-h-[5rem] max-h-[7.5rem];
 }
 
+// Port từ ResizableEditorWrapper.vue <style>: editor trong ReplyBox lấy chiều cao
+// từ biến của wrapper (mặc định 120px, kéo trong [80px, container - 200 - panel]).
+.resizable-editor-wrapper {
+  .resizable-editor-body {
+    @apply overflow-auto;
+
+    height: clamp(
+      var(--editor-min-allowed, 5rem),
+      var(--editor-height, 5rem),
+      var(--editor-max-allowed, 7.5rem)
+    );
+    transition:
+      height var(--editor-height-transition),
+      opacity var(--editor-height-transition);
+  }
+}
+
 .ProseMirror-prompt-backdrop::backdrop {
   @apply bg-n-alpha-black1 backdrop-blur-[4px];
 }
