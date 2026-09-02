@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('reset_password_token')->nullable()->unique();
-            $table->timestamp('reset_password_sent_at')->nullable();
+            $table->timestamp('reset_password_sent_at', 6)->nullable();
         });
     }
 

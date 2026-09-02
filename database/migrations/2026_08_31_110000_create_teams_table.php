@@ -18,7 +18,7 @@ return new class extends Migration
             // middleware ConvertEmptyStringsToNull gửi null khi form để trống.
             $table->string('icon')->nullable()->default('');
             $table->string('icon_color')->nullable()->default('');
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('account_id');
             $table->unique(['name', 'account_id']);
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->unique(['team_id', 'user_id']);
             $table->index('user_id');

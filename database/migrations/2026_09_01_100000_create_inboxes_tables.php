@@ -17,7 +17,7 @@ return new class extends Migration
             $table->boolean('hmac_mandatory')->default(false);
             $table->jsonb('additional_attributes')->default('{}');
             $table->string('secret')->nullable();
-            $table->timestamps();
+            $table->timestamps(6);
         });
 
         Schema::create('inboxes', function (Blueprint $table) {
@@ -43,7 +43,7 @@ return new class extends Migration
             $table->integer('sender_name_type')->default(0);
             $table->string('business_name')->nullable();
             $table->jsonb('csat_config')->default('{}');
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('account_id');
             $table->index(['channel_id', 'channel_type']);
@@ -54,7 +54,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('inbox_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index('inbox_id');
             $table->unique(['inbox_id', 'user_id']);

@@ -56,6 +56,9 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 3. **`blank()` của Laravel ≠ `present?` của Ruby với boolean:** `blank(false) === false` trong khi `false.present? == false` — filter_internal_messages=false bị lọc nhầm. Chỗ nào port điều kiện `present?/blank?` trên tham số có thể là boolean phải xử lý riêng `=== false`.
 4. **Enum/attribute default DB không tự có trên model Laravel mới tạo** — `status`/`private` phải khai báo `protected $attributes` không thì hook/serializer đọc null (Rails tự đọc default từ schema).
 
+3. **Timestamp precision 0 (finding hệ thống 02/09):** `$table->timestamps()` Laravel = `timestamp(0)`, gốc là 6 số lẻ → nhiều tin cùng giây thành tie khi `order by created_at` (display 4 hiện sai thứ tự, note "kẹp" vào cụm outgoing nên meta/khóa ẩn theo luật gộp nhóm). Fix 2 tầng: migration `2026_09_02_100000` ALTER mọi cột `timestamp` hiện có sang `timestamp(6)` (đọc information_schema, không hardcode bảng) + mọi migration cũ đổi `timestamps(6)` / `timestamp('x', 6)`; VÀ `App\Database\PostgresConnection` (grammar `getDateFormat` = `Y-m-d H:i:s.u`) đăng ký qua `Connection::resolverFor('pgsql')` — vì Laravel cắt phần lẻ NGAY LÚC GHI bằng format mặc định dù cột có precision. Đọc lại: `asDateTime` thử `createFromFormat('.u')`, PG trả chuỗi không phần lẻ thì fallback `Date::parse`. Equivalence test: `MessageFinderTest` "ordering within the same second" (4 tin cùng giây chèn không theo thứ tự, khẳng định DB lưu `.228` + finder + relation trả đúng thứ tự micro). Luật ghi ở plan.md quyết định #14.
+4. **vitest + testing-library không tự cleanup** khi `globals: false` → DOM test trước còn sót, id trùng làm nwsapi (`#id .class` tối ưu qua getElementById) bắt nhầm phần tử test cũ → assertion null giả. `resources/js/test-setup.ts` gọi `afterEach(cleanup)`.
+
 ## Khác biệt cố ý backend (pixel/contract cần biết)
 
 1. User ngoài account → 404 (SetCurrentAccount) thay 401 như Rails — hành vi đã có từ A-group, giữ thống nhất.
@@ -141,6 +144,12 @@ Case cắt ghi chú ở đầu từng file test (theo đúng nhóm B4–B11/C/D/
 - Curl token API: tạo conversation + inbound (display 4), inbound bổ sung vào conversation có sẵn, token sai → 401, counts finder đúng.
 - E2E trình duyệt (login john@acme.inc, làm thật trọn vòng): mở dashboard → tab Mine/Unassigned/All (counts đúng, đổi tab refetch) → mở conversation từ card (URL `/conversations/4`) → bubble inbound trái (bg-n-slate-4) → trả lời bằng nút Send VÀ hotkey Ctrl+Enter → bubble phải xanh (bg-n-solid-blue), 2 tin cùng phút GỘP NHÓM (group-with-next, avatar chỉ ở tin cuối) → Private Note (toggle trượt, editor amber `is-private`, nút signature ẩn, label "Add Note") → note lưu `private=true`, bubble amber (bg-n-solid-amber) + khóa lock-keyhole → curl inbound mới → **F5 + deep-link reload: đủ 5 tin persistence**, unread badge "2 Unread Messages" → inbox view `/inbox/1` (title api-test, lọc theo inbox) → DB kiểm: sender đúng morph (Contact/User), first_reply_created_at SET sau reply đầu, waiting_since NULL sau reply, last_activity_at = tin cuối. Console 0 lỗi.
 - Ghi chú e2e: click vật lý qua browser-pane có lúc không dispatch khi pane không hiển thị (screenshot cũng timeout vì không compositing) — xác minh lại bằng JS click; không phải bug app.
+
+## Gate (02/09/2026 — precision 6 + test render note)
+
+- Migration precision chạy trên `yona_rw` (45 cột → 6), 5 tin display 4 giữ nguyên (chờ phiên kiểm chứng đặt lại micro-giây y oracle).
+- Pest **390/390** (+1 equivalence micro-giây) · `npx tsc` · `npm run build` · pint xanh.
+- **vitest mới cắm** (`npm test` = `vitest run`, jsdom + @testing-library/react, alias như vite.config): `components-next/message/MessageList.test.tsx` 2 case — note giữa cụm outgoing cùng phút: amber chỉ trên note, meta/khóa ẩn vì còn gộp với tin kế (đúng `shouldShowMeta = !shouldGroupWithNext` của Base.vue gốc); note đóng cụm (tin kế là inbound): amber + khóa hiện. Kết luận: style lấy từ `private` của CHÍNH tin; "mất khóa" chỉ do thứ tự sai đẩy note vào giữa cụm.
 
 ## Gate (02/09/2026 — fix finding #1 pixel-diff: nhóm Teams sidebar)
 

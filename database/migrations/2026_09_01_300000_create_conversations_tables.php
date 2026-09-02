@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('owner_type')->nullable();
             $table->unsignedBigInteger('owner_id')->nullable();
             $table->string('token')->nullable()->unique();
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index(['owner_type', 'owner_id']);
         });
@@ -32,28 +32,28 @@ return new class extends Migration
             $table->foreignId('assignee_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('contact_id')->nullable()->constrained()->cascadeOnDelete();
             $table->integer('display_id')->nullable();
-            $table->timestamp('contact_last_seen_at')->nullable();
-            $table->timestamp('agent_last_seen_at')->nullable();
+            $table->timestamp('contact_last_seen_at', 6)->nullable();
+            $table->timestamp('agent_last_seen_at', 6)->nullable();
             $table->jsonb('additional_attributes')->default('{}');
             $table->foreignId('contact_inbox_id')->nullable()->constrained()->cascadeOnDelete();
             $table->uuid('uuid')->unique()->default(DB::raw('gen_random_uuid()'));
             $table->string('identifier')->nullable();
-            $table->timestamp('last_activity_at')->useCurrent();
+            $table->timestamp('last_activity_at', 6)->useCurrent();
             $table->foreignId('team_id')->nullable()->constrained()->nullOnDelete();
             // campaigns (C4) + SLA/agent-bot (EE/D4) chưa port — cột giữ chỗ, FK thêm khi có bảng.
             $table->unsignedBigInteger('campaign_id')->nullable();
-            $table->timestamp('snoozed_until')->nullable();
+            $table->timestamp('snoozed_until', 6)->nullable();
             $table->jsonb('custom_attributes')->default('{}');
-            $table->timestamp('assignee_last_seen_at')->nullable();
-            $table->timestamp('first_reply_created_at')->nullable();
+            $table->timestamp('assignee_last_seen_at', 6)->nullable();
+            $table->timestamp('first_reply_created_at', 6)->nullable();
             $table->integer('priority')->nullable();
             $table->unsignedBigInteger('sla_policy_id')->nullable();
-            $table->timestamp('waiting_since')->nullable();
+            $table->timestamp('waiting_since', 6)->nullable();
             $table->text('cached_label_list')->nullable();
             $table->unsignedBigInteger('assignee_agent_bot_id')->nullable();
             $table->string('ai_assignee_type')->nullable();
-            $table->timestamp('status_changed_at')->nullable();
-            $table->timestamps();
+            $table->timestamp('status_changed_at', 6)->nullable();
+            $table->timestamps(6);
 
             $table->unique(['account_id', 'display_id']);
             $table->index(['account_id', 'id']);
@@ -103,7 +103,7 @@ return new class extends Migration
             $table->jsonb('additional_attributes')->default('{}');
             $table->text('processed_message_content')->nullable();
             $table->jsonb('sentiment')->default('{}');
-            $table->timestamps();
+            $table->timestamps(6);
 
             $table->index(['account_id', 'content_type', 'created_at'], 'idx_messages_account_content_created');
             $table->index(['account_id', 'created_at', 'message_type'], 'index_messages_on_account_created_type');
