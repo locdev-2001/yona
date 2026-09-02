@@ -16,7 +16,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->only([
-                        'id', 'name', 'display_name', 'email', 'availability', 'ui_settings', 'type',
+                        'id', 'name', 'display_name', 'email', 'availability', 'ui_settings', 'type', 'pubsub_token',
                     ]),
                     'avatar_url' => $request->user()->avatarUrl(),
                     'message_signature' => $request->user()->message_signature,

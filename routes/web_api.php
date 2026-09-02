@@ -7,6 +7,7 @@ use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
+use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
 use App\Http\Controllers\WebApi\TeamMembersController;
@@ -31,6 +32,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
     ->group(function () {
         Route::post('/profile/availability', [ProfileAvailabilityController::class, 'availability']);
         Route::post('/profile/auto_offline', [ProfileAvailabilityController::class, 'autoOffline']);
+        Route::post('/presence', [PresenceController::class, 'update']);
 
         Route::get('/agents', [AgentsController::class, 'index']);
         Route::post('/agents', [AgentsController::class, 'store']);
@@ -78,6 +80,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations/{conversationId}', [ConversationsController::class, 'show'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/messages', [MessagesController::class, 'store'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
 
         Route::get('/teams/{teamId}/team_members', [TeamMembersController::class, 'index'])->whereNumber('teamId');
         Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
+use App\Events\PreviousChanges;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Port từ refs/chatwoot/app/models/conversation.rb.
-// Bỏ ở B3: dispatcher events + FilteredCountInvalidator (B4), activity messages +
-// toggle_status/snooze (B5), AssignmentHandler/AutoAssignmentHandler (B6),
+// Bỏ ở B3: FilteredCountInvalidator (B8), status_changed/assignee/team events +
+// activity messages + toggle_status/snooze (B5/B6), AssignmentHandler/AutoAssignmentHandler (B6),
 // Labelable (B7), mentions/participants (B11), csat (C5), agent bot + SLA (EE/D4),
 // mute (Redis — B4), campaigns (C4).
 class Conversation extends Model
@@ -33,6 +36,15 @@ class Conversation extends Model
         self::STATUS_PENDING => 'pending',
         self::STATUS_SNOOZED => 'snoozed',
     ];
+
+    // notify_conversation_updation chỉ bắn CONVERSATION_UPDATED khi đổi các cột
+    // này (list_of_keys) hoặc additional_attributes.conversation_language.
+    public const UPDATED_EVENT_KEYS = [
+        'team_id', 'assignee_id', 'assignee_agent_bot_id', 'status', 'snoozed_until', 'custom_attributes',
+        'label_list', 'waiting_since', 'first_reply_created_at', 'priority',
+    ];
+
+    public const UPDATED_EVENT_ADDITIONAL_ATTRIBUTE_KEYS = ['conversation_language'];
 
     public const PRIORITY_LOW = 0;
 
@@ -143,6 +155,11 @@ class Conversation extends Model
             $conversation->setAttribute('uuid', $fromDb->uuid);
             $conversation->syncOriginalAttribute('display_id');
             $conversation->syncOriginalAttribute('uuid');
+
+            // Eloquent không syncChanges khi insert; Rails saved_change_to_*?
+            // vẫn thấy assignee_id gán lúc tạo → đồng bộ để notifiable_assignee_change đúng.
+            $conversation->syncChanges();
+            $conversation->dispatcherDispatch(EventType::CONVERSATION_CREATED);
         });
 
         static::updated(function (Conversation $conversation) {
@@ -153,7 +170,19 @@ class Conversation extends Model
                 $conversation->setAttribute('waiting_since', null);
                 $conversation->syncOriginalAttribute('waiting_since');
             }
+
+            $conversation->notifyConversationUpdation();
         });
+    }
+
+    // notifiable_assignee_change?: giao cho người khác (không phải tự nhận).
+    public function notifiableAssigneeChange(): bool
+    {
+        if (! $this->wasChanged('assignee_id') || $this->assignee_id === null) {
+            return false;
+        }
+
+        return auth()->id() !== $this->assignee_id;
     }
 
     public function account(): BelongsTo
@@ -323,6 +352,46 @@ class Conversation extends Model
     private function sqlDirection(string $direction): string
     {
         return strtolower($direction) === 'asc' ? 'ASC' : 'DESC';
+    }
+
+    private function notifyConversationUpdation(): void
+    {
+        $previousChanges = PreviousChanges::of($this);
+
+        if ($previousChanges === [] || ! $this->allowedKeys($previousChanges)) {
+            return;
+        }
+
+        $this->dispatcherDispatch(EventType::CONVERSATION_UPDATED, $previousChanges);
+    }
+
+    /** @param array<string, array{0: mixed, 1: mixed}> $previousChanges */
+    private function allowedKeys(array $previousChanges): bool
+    {
+        if (array_intersect(array_keys($previousChanges), self::UPDATED_EVENT_KEYS) !== []) {
+            return true;
+        }
+
+        [$before, $after] = $previousChanges['additional_attributes'] ?? [[], []];
+
+        foreach (self::UPDATED_EVENT_ADDITIONAL_ATTRIBUTE_KEYS as $key) {
+            if (array_key_exists($key, (array) $before) || array_key_exists($key, (array) $after)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, array{0: mixed, 1: mixed}>|null $changedAttributes */
+    private function dispatcherDispatch(EventType $type, ?array $changedAttributes = null): void
+    {
+        DomainEvent::dispatch($type, [
+            'conversation' => $this,
+            'notifiable_assignee_change' => $this->notifiableAssigneeChange(),
+            'changed_attributes' => $changedAttributes,
+            'performed_by' => auth()->user(),
+        ]);
     }
 
     private function validateRefererUrl(): void

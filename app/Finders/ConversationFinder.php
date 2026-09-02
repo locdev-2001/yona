@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 // Port từ refs/chatwoot/app/finders/conversation_finder.rb.
 // Bỏ ở B3: labels (B7), custom view/PermissionFilterService (EE — CE cho qua),
 // conversation_type mention/participating (B11) + unattended (B8), q search (E2),
-// sort unread/last_user_message (B8), updated_within (realtime B4).
+// sort unread/last_user_message (B8).
 class ConversationFinder
 {
     public const RESULTS_PER_PAGE = 25;
@@ -176,11 +176,21 @@ class ConversationFinder
         [$sortScope, $sortDirection] = self::SORT_OPTIONS[$this->params['sort_by'] ?? null]
             ?? self::SORT_OPTIONS['last_activity_at_desc'];
 
+        $query = $this->conversations
+            ->with(['inbox', 'assignee.avatar', 'contact.avatar', 'team', 'contactInbox'])
+            ->{$sortScope}($sortDirection);
+
+        // updated_within (giây): FE realtime đồng bộ lại sau khi mất kết nối —
+        // trả hết trong khoảng thời gian, không phân trang (filter_by_updated_at).
+        if (filled($this->params['updated_within'] ?? null)) {
+            return $query
+                ->where('conversations.updated_at', '>', now()->subSeconds((int) $this->params['updated_within']))
+                ->get();
+        }
+
         $page = max(1, (int) ($this->params['page'] ?? 1));
 
-        return $this->conversations
-            ->with(['inbox', 'assignee.avatar', 'contact.avatar', 'team', 'contactInbox'])
-            ->{$sortScope}($sortDirection)
+        return $query
             ->offset(($page - 1) * self::RESULTS_PER_PAGE)
             ->limit(self::RESULTS_PER_PAGE)
             ->get();

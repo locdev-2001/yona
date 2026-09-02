@@ -15,6 +15,8 @@ import type { ContactMeta } from 'dashboard/conversation/types';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
+import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
+import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import ContactInfoRow from './ContactInfoRow';
 import ContactMergeModal from './ContactMergeModal';
 
@@ -43,6 +45,10 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
     const accountId = currentAccount.id;
     const isAdmin = currentAccountUser.role === 'administrator';
     const [contact, setContact] = useState<FullContact>(initialContact);
+    const contactAvailabilityStatus = useContactAvailabilityStatus(
+        contact.id,
+        contact.availability_status as AvailabilityStatus | undefined,
+    );
     const deleteDialogRef = useRef<ConfirmContactDeleteDialogHandle>(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState('');
@@ -116,7 +122,7 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
                     <Avatar
                         src={contact.thumbnail}
                         name={contact.name ?? ''}
-                        status={(contact.availability_status as 'online' | 'busy' | 'offline') ?? null}
+                        status={contactAvailabilityStatus}
                         size={48}
                         hideOfflineStatus
                     />

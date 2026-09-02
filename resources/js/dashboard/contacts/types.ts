@@ -41,7 +41,7 @@ export interface Contact {
     identifier: string | null;
     thumbnail: string;
     blocked?: boolean;
-    availabilityStatus: string;
+    availabilityStatus: string | null;
     additionalAttributes: ContactAdditionalAttributes;
     customAttributes: Record<string, unknown>;
     createdAt?: number;

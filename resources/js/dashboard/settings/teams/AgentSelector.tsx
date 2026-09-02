@@ -5,6 +5,7 @@ import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import BaseTable from 'dashboard/components-next/table/BaseTable';
 import BaseTableRow from 'dashboard/components-next/table/BaseTableRow';
 import BaseTableCell from 'dashboard/components-next/table/BaseTableCell';
+import { useAgentsWithPresence } from '../agents/presence';
 import type { Agent } from '../agents/types';
 
 // Port từ dashboard/routes/dashboard/settings/teams/AgentSelector.vue
@@ -17,12 +18,13 @@ interface AgentSelectorProps {
 }
 
 export default function AgentSelector({
-    agentList,
+    agentList: fetchedAgentList,
     selectedAgents,
     updateSelectedAgents,
     isWorking = false,
     submitButtonText,
 }: AgentSelectorProps) {
+    const agentList = useAgentsWithPresence(fetchedAgentList);
     const allAgentsSelected = selectedAgents.length === agentList.length && agentList.length > 0;
     const someAgentsSelected = selectedAgents.length > 0 && !allAgentsSelected;
 

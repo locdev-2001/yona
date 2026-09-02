@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
+use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,8 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 // Port từ refs/chatwoot/app/models/message.rb.
-// Bỏ ở B3: dispatcher events + echo qua websocket (B4), SendReplyJob (webhook
-// outbound D4), attachments (B9), email content/liquid (F1), template hooks (D6),
+// Bỏ ở B3: SendReplyJob (webhook outbound D4), attachments (B9), email content/liquid (F1), template hooks (D6),
 // agent bot/captain (EE), searchkick (EE), translations (F6), csat (C5).
 class Message extends Model
 {
@@ -126,11 +128,15 @@ class Message extends Model
 
         static::created(function (Message $message) {
             // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc;
-            // dispatch events/send_reply/template hooks cắt sang B4/D4/D6.
+            // send_reply/template hooks cắt sang D4/D6.
             $message->reopenConversation();
             $message->setConversationActivity();
-            $message->applyFirstReplyAndWaitingSince();
+            $message->dispatchCreateEvents();
             $message->updateContactActivity();
+        });
+
+        static::updated(function (Message $message) {
+            $message->sendUpdateEvent();
         });
     }
 
@@ -269,13 +275,15 @@ class Message extends Model
         $this->conversation->syncOriginalAttribute('last_activity_at');
     }
 
-    // Phần dữ liệu của dispatch_create_events + update_waiting_since
-    // (event FIRST_REPLY_CREATED/REPLY_CREATED bắn ở B4/D2).
-    private function applyFirstReplyAndWaitingSince(): void
+    // dispatch_create_events + update_waiting_since (REPLY_CREATED bắn ở D2).
+    private function dispatchCreateEvents(): void
     {
         $conversation = $this->conversation;
 
+        DomainEvent::dispatch(EventType::MESSAGE_CREATED, ['message' => $this, 'performed_by' => auth()->user()]);
+
         if ($this->isValidFirstReply()) {
+            DomainEvent::dispatch(EventType::FIRST_REPLY_CREATED, ['message' => $this, 'performed_by' => auth()->user()]);
             $conversation->update(['first_reply_created_at' => $this->created_at, 'waiting_since' => null]);
 
             return;
@@ -288,6 +296,17 @@ class Message extends Model
         if ($this->isIncoming() && $conversation->waiting_since === null) {
             $conversation->update(['waiting_since' => $this->created_at]);
         }
+    }
+
+    // Eloquent chỉ bắn `updated` khi có cột đổi — tương đương guard
+    // previous_changes.blank? của dispatch_update_event.
+    private function sendUpdateEvent(): void
+    {
+        DomainEvent::dispatch(EventType::MESSAGE_UPDATED, [
+            'message' => $this,
+            'performed_by' => auth()->user(),
+            'previous_changes' => PreviousChanges::of($this),
+        ]);
     }
 
     private function isValidFirstReply(): bool

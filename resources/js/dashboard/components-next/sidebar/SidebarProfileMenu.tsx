@@ -6,6 +6,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { updateColorScheme } from 'dashboard/helper/themeHelper';
+import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
 import type { ColorScheme } from 'dashboard/helper/themeHelper';
 import {
     DropdownBody,
@@ -32,8 +33,9 @@ const APPEARANCE_LABELS: Record<ColorScheme, string> = {
 };
 
 export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
-    const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
+    const availability = useCurrentUserAvailability();
     const availableName = user.display_name || user.name;
 
     const logout = () => router.post('/app/logout');
@@ -93,7 +95,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                         size={32}
                         src={user.avatar_url}
                         name={availableName}
-                        status={currentAccountUser.availability}
+                        status={availability}
                     />
                     {!isCollapsed ? (
                         <div className="min-w-0">

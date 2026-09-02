@@ -143,8 +143,11 @@ export function buildMenuItems(
                 },
             ],
         },
+        // reports.routes.js meta.permissions ['administrator', 'report_manage'] —
+        // report_manage là custom role (EE) nên chỉ administrator; agent ẩn cả nhóm.
         {
             name: 'Reports',
+            permissions: ['administrator'],
             label: t('SIDEBAR.REPORTS'),
             icon: 'i-lucide-chart-spline',
             children: [
@@ -158,8 +161,10 @@ export function buildMenuItems(
                 { name: 'Reports Bot', label: t('SIDEBAR.REPORTS_BOT'), to: scoped('reports/bot') },
             ],
         },
+        // campaigns.routes.js meta.permissions ['administrator'].
         {
             name: 'Campaigns',
+            permissions: ['administrator'],
             label: t('SIDEBAR.CAMPAIGNS'),
             icon: 'i-lucide-megaphone',
             children: [

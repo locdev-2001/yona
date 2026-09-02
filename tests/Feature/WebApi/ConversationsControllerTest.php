@@ -1,5 +1,7 @@
 <?php
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Contact;
@@ -9,9 +11,10 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 // Port từ spec/controllers/api/v1/accounts/conversations_controller_spec.rb.
-// Bỏ ở B3: unread_counts + update_last_seen/unread + typing (B4/B8), search/filter
+// Bỏ ở B3: unread_counts + update_last_seen/unread (B8), search/filter
 // (E2/E1), toggle_status/toggle_priority/mute/unmute/transcript (B5), destroy +
 // update priority (B5), attachments (B9), custom_attributes (E1), agent bot (D4),
 // conversation_type unattended (B8). Case "authenticated bot" chuyển thành token
@@ -386,5 +389,107 @@ describe('POST /api/v1/accounts/{id}/conversations', function () {
         )->assertOk();
 
         expect($account->conversations()->count())->toBe(1);
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/toggle_typing_status', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $conversation = conversationApiConversation(conversationApiFixtures());
+
+        $this->postJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}/toggle_typing_status")
+            ->assertUnauthorized();
+    });
+
+    it('dispatches the typing event for inbox member', function () {
+        Event::fake([DomainEvent::class]);
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", [
+                'typing_status' => 'on',
+                'is_private' => false,
+            ])
+            ->assertOk()
+            ->assertNoContent(200);
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON
+            && $event->data['conversation']->is($conversation)
+            && $event->data['user']->is($agent)
+            && $event->data['is_private'] === false);
+    });
+
+    it('dispatches the typing event for private notes', function () {
+        Event::fake([DomainEvent::class]);
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", [
+                'typing_status' => 'on',
+                'is_private' => true,
+            ])
+            ->assertOk();
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON
+            && $event->data['is_private'] === true);
+    });
+
+    it('dispatches typing off', function () {
+        Event::fake([DomainEvent::class]);
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", [
+                'typing_status' => 'off',
+            ])
+            ->assertOk();
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_OFF
+            && $event->data['is_private'] === false);
+    });
+
+    it('does nothing but responds ok when typing_status is unknown', function () {
+        Event::fake([DomainEvent::class]);
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", [
+                'typing_status' => 'paused',
+            ])
+            ->assertOk();
+
+        Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => in_array($event->type, [EventType::CONVERSATION_TYPING_ON, EventType::CONVERSATION_TYPING_OFF], true));
+    });
+
+    it('rejects agent who is not inbox member', function () {
+        Event::fake([DomainEvent::class]);
+        $fixtures = conversationApiFixtures();
+        [$account] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", [
+                'typing_status' => 'on',
+            ])
+            ->assertUnauthorized();
+
+        // Hook model vẫn bắn DomainEvent khác (conversation.created…) — chỉ khóa typing.
+        Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON);
     });
 });

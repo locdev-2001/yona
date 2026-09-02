@@ -7,13 +7,14 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Support\OnlineStatusTracker;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 // Port từ spec/controllers/api/v1/accounts/contacts_controller_spec.rb.
 // Bỏ ở B2: import/export/filter (tính năng chưa port), lọc labels (nhóm C),
-// case "last seen at" + "không xóa khi online" (conversations B3 / presence B4).
+// case "last seen at" (conversations B3).
 
 function contactUserOf(Account $account, int $role = AccountUser::ROLE_AGENT): User
 {
@@ -278,6 +279,23 @@ describe('GET /api/v1/accounts/{id}/contacts/active', function () {
 
         expect($response->json('payload'))->toBeEmpty();
     });
+
+    it('returns all contacts who are online', function () {
+        $account = Account::factory()->create();
+        OnlineStatusTracker::clearAccount($account->id);
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $onlineContact = Contact::factory()->create(['account_id' => $account->id, 'name' => 'Online Contact']);
+        $offlineContact = Contact::factory()->create(['account_id' => $account->id, 'name' => 'Offline Contact']);
+        OnlineStatusTracker::updatePresence($account->id, 'Contact', $onlineContact->id);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/contacts/active")
+            ->assertOk();
+
+        expect($response->json('meta.count'))->toBe(1)
+            ->and($response->json('payload.0.id'))->toBe($onlineContact->id)
+            ->and($response->json('payload.*.id'))->not->toContain($offlineContact->id);
+    });
 });
 
 describe('GET /api/v1/accounts/{id}/contacts/{contactId}', function () {
@@ -537,6 +555,23 @@ describe('DELETE /api/v1/accounts/{id}/contacts/{contactId}', function () {
             ->assertUnauthorized();
 
         expect(Contact::query()->whereKey($contact->id)->exists())->toBeTrue();
+    });
+});
+
+describe('DELETE /api/v1/accounts/{id}/contacts/{contactId} while online', function () {
+    it('does not delete the contact if online', function () {
+        $account = Account::factory()->create();
+        OnlineStatusTracker::clearAccount($account->id);
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'name' => 'john DOE']);
+        OnlineStatusTracker::updatePresence($account->id, 'Contact', $contact->id);
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/accounts/{$account->id}/contacts/{$contact->id}")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'John doe is Online, please try again later']);
+
+        expect($contact->fresh())->not->toBeNull();
     });
 });
 

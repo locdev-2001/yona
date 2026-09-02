@@ -46,8 +46,15 @@ interface ReplyBoxProps {
 }
 
 export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBoxProps) {
-    const { selectedConversation, conversationId, accountId, sendReply, uiSettings, updateUISettings } =
-        useConversation();
+    const {
+        selectedConversation,
+        conversationId,
+        accountId,
+        sendReply,
+        uiSettings,
+        updateUISettings,
+        toggleTypingStatus,
+    } = useConversation();
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
     const messageSignature = user.message_signature ?? '';
@@ -147,6 +154,12 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         onMessageSent?.();
     };
 
+    // toggleTyping gốc: gửi typing on/off kèm isPrivate của chế độ đang soạn.
+    const toggleTyping = (typingStatus: 'on' | 'off') => {
+        if (!conversationId) return;
+        toggleTypingStatus(typingStatus, isPrivate);
+    };
+
     // toggleEditorSize gốc: emit lên MessagesView rồi focus lại editor.
     const toggleEditorSize = () => {
         onToggleEditorSize?.();
@@ -215,6 +228,8 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     onSend={onSendReply}
+                    onTypingOn={() => toggleTyping('on')}
+                    onTypingOff={() => toggleTyping('off')}
                 />
                 {hasAttachments ? (
                     <div className="bg-transparent py-0 mb-2">

@@ -15,18 +15,21 @@ import Modal from 'dashboard/components/Modal';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
 import AddAgent from './AddAgent';
 import EditAgent from './EditAgent';
+import { useAgentsWithPresence } from './presence';
 import type { Agent } from './types';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/agents/Index.vue.
 // Custom role (tooltip quyền) = EE nên bỏ; danh sách agent lấy qua fetch
-// thay cho vuex store agents.
+// thay cho vuex store agents; presence.update phủ availability_status như
+// mutation UPDATE_AGENTS_PRESENCE.
 export default function AgentsIndex() {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
     const currentUserId = auth.user!.id;
 
-    const [agents, setAgents] = useState<Agent[]>([]);
+    const [fetchedAgents, setAgents] = useState<Agent[]>([]);
+    const agents = useAgentsWithPresence(fetchedAgents);
     const [isFetching, setFetching] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddPopup, setShowAddPopup] = useState(false);

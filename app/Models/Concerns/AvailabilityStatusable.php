@@ -2,24 +2,30 @@
 
 namespace App\Models\Concerns;
 
-// Port từ refs/chatwoot/app/models/concerns/availability_statusable.rb.
-// Trạng thái hiển thị KHÔNG phải cột `availability`: khi auto_offline bật
-// (mặc định), trạng thái đi theo presence realtime, không có presence = offline.
+use App\Support\OnlineStatusTracker;
+
+// Port từ refs/chatwoot/app/models/concerns/availability_statusable.rb (nhánh User;
+// Contact có availabilityStatus riêng). Trạng thái hiển thị KHÔNG phải cột
+// `availability`: khi auto_offline bật (mặc định), trạng thái đi theo presence
+// realtime, không có presence = offline.
 trait AvailabilityStatusable
 {
     public function availabilityStatus(): string
     {
-        // OnlineStatusTracker (Redis) vào cùng realtime ở B4 — tới đó
-        // onlinePresence() đọc presence thật thay cho false cứng.
         if (! $this->auto_offline) {
             return $this->availabilityName();
         }
 
-        return $this->onlinePresence() ? $this->availabilityName() : 'offline';
+        if (! $this->onlinePresence()) {
+            return 'offline';
+        }
+
+        // Cột availability là dự phòng khi Redis chưa có status.
+        return OnlineStatusTracker::getStatus($this->account_id, $this->user_id) ?? $this->availabilityName();
     }
 
-    protected function onlinePresence(): bool
+    public function onlinePresence(): bool
     {
-        return false;
+        return OnlineStatusTracker::getPresence($this->account_id, 'User', $this->user_id);
     }
 }

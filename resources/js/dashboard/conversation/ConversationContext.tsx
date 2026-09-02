@@ -5,9 +5,33 @@ import { usePage } from '@inertiajs/react';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import { useRealtimeEvent } from 'dashboard/realtime/hooks';
+import {
+    DISCONNECT_DELAY_THRESHOLD,
+    getSecondsSinceDisconnect,
+    registerReconnectHandlers,
+} from 'dashboard/realtime/ReconnectService';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
-import { fetchConversation, fetchConversations, fetchMessages, sendMessage } from './api';
+import {
+    fetchConversation,
+    fetchConversationMeta,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    toggleTyping,
+} from './api';
+import {
+    applyConversationAdded,
+    applyConversationContact,
+    applyConversationLastActivity,
+    applyConversationUpdate,
+    applyIncomingMessage,
+    applyMessageToConversation,
+    mergeFetchedConversations,
+    selectVisibleConversations,
+    shouldAddConversationToList,
+} from './realtimeReducers';
 import {
     ASSIGNEE_TYPE,
     CONVERSATIONS_PER_PAGE,
@@ -19,9 +43,11 @@ import {
 } from './constants';
 import type { AssigneeTab, Conversation, ConversationListMeta, ConversationMessage, ConversationStatusFilter } from './types';
 
-// Thay cụm store vuex conversations/conversationPage của Chatwoot cho phạm vi B3:
-// list + counts + selected chat + messages + gửi tin (pending → sent/failed).
-// Realtime (B4) sẽ cắm thêm vào đây qua Echo.
+// Thay cụm store vuex conversations/conversationPage của Chatwoot:
+// list + counts + selected chat + messages + gửi tin (pending → sent/failed)
+// + realtime (actionCable.js → useRealtimeEvent) + reconnect (ReconnectService).
+// `allConversations` = state.allConversations gốc; `conversations` = getter đã
+// lọc theo tab/status/inbox/team + sort — nên update realtime tự đưa vào/ra list.
 
 interface ConversationContextValue {
     accountId: number;
@@ -50,7 +76,13 @@ interface ConversationContextValue {
     loadMoreConversations: () => void;
     fetchPreviousMessages: () => Promise<number>;
     sendReply: (payload: { content: string; isPrivate: boolean }) => void;
+    toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
 }
+
+// Payload message.created/updated: message phẳng + conversation rút gọn (push_event_data).
+type MessageEventPayload = ConversationMessage & {
+    conversation?: { assignee_id?: number | null; unread_count?: number; last_activity_at?: number };
+};
 
 const ConversationContext = createContext<ConversationContextValue | null>(null);
 
@@ -116,36 +148,59 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             : SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC,
     );
 
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [allConversations, setAllConversations] = useState<Conversation[]>([]);
     const [listMeta, setListMeta] = useState<ConversationListMeta>(EMPTY_META);
     const [listLoading, setListLoading] = useState(true);
     const [endReached, setEndReached] = useState(false);
     const pageRef = useRef(0);
+    const conversationIdRef = useRef(conversationId);
+    conversationIdRef.current = conversationId;
 
-    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ConversationMessage[]>([]);
     const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
     const [messagesLoading, setMessagesLoading] = useState(false);
+    // SET_LAST_MESSAGE_ID_IN_SYNC_CONVERSATION: mốc tin cuối lúc mất kết nối.
+    const lastMessageIdBeforeDisconnectRef = useRef<number | null>(null);
+
+    const viewFilters = useMemo(
+        () => ({ assigneeTab, status, inboxId, teamId, currentUserId }),
+        [assigneeTab, status, inboxId, teamId, currentUserId],
+    );
+    const conversations = useMemo(
+        () => selectVisibleConversations(allConversations, viewFilters, sortBy),
+        [allConversations, viewFilters, sortBy],
+    );
+    const selectedConversation = useMemo(
+        () => allConversations.find((item) => item.id === conversationId) ?? null,
+        [allConversations, conversationId],
+    );
+
+    const listQuery = useMemo(
+        () => ({
+            accountId,
+            assigneeType: assigneeTab,
+            status,
+            sortBy,
+            inboxId: inboxId || undefined,
+            teamId: teamId || undefined,
+        }),
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId],
+    );
 
     const fetchPage = useCallback(
         async (page: number, append: boolean) => {
             setListLoading(true);
             try {
-                const response = await fetchConversations({
-                    accountId,
-                    assigneeType: assigneeTab,
-                    status,
-                    page,
-                    sortBy,
-                    inboxId: inboxId || undefined,
-                    teamId: teamId || undefined,
-                });
+                const response = await fetchConversations({ ...listQuery, page });
                 const payload = response.data.payload;
                 setListMeta(response.data.meta);
-                setConversations((previous) => {
-                    if (!append) return payload;
-                    const known = new Set(previous.map((c) => c.id));
-                    return [...previous, ...payload.filter((c) => !known.has(c.id))];
+                setAllConversations((previous) => {
+                    // Nạp lại trang 1 vẫn giữ conversation đang mở (getter gốc chỉ ẩn nó khỏi list).
+                    const kept = append
+                        ? previous
+                        : previous.filter((c) => c.id === conversationIdRef.current);
+                    const known = new Set(kept.map((c) => c.id));
+                    return [...kept, ...payload.filter((c) => !known.has(c.id))];
                 });
                 pageRef.current = page;
                 if (payload.length < CONVERSATIONS_PER_PAGE) {
@@ -157,12 +212,12 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
                 setListLoading(false);
             }
         },
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId],
+        [listQuery],
     );
 
     // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
     useEffect(() => {
-        setConversations([]);
+        setAllConversations((previous) => previous.filter((c) => c.id === conversationIdRef.current));
         setEndReached(false);
         pageRef.current = 0;
         void fetchPage(1, false);
@@ -185,28 +240,22 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
         setSortBy(value);
     }, []);
 
-    // Chọn conversation theo display_id trên URL: lấy từ list nếu có, không thì fetch.
+    // Chọn conversation theo display_id trên URL: chưa có trong allConversations
+    // thì fetch rồi đưa vào (getConversation gốc commit UPDATE_CONVERSATION).
     useEffect(() => {
         let cancelled = false;
 
         if (!conversationId) {
-            setSelectedConversation(null);
             setMessages([]);
             setAllMessagesLoaded(false);
             return undefined;
         }
 
-        const known = conversations.find((c) => c.id === conversationId);
-
-        const applyConversation = (conversation: Conversation) => {
-            if (cancelled) return;
-            setSelectedConversation(conversation);
-        };
-
-        if (known) {
-            applyConversation(known);
-        } else {
-            fetchConversation(accountId, conversationId).then(applyConversation, () => undefined);
+        if (!allConversations.some((c) => c.id === conversationId)) {
+            fetchConversation(accountId, conversationId).then((conversation) => {
+                if (cancelled) return;
+                setAllConversations((current) => applyConversationUpdate(current, conversation));
+            }, () => undefined);
         }
 
         setMessages([]);
@@ -229,7 +278,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
         return () => {
             cancelled = true;
         };
-        // conversations cố tình không nằm trong deps: chỉ nạp lại khi đổi conversation.
+        // allConversations cố tình không nằm trong deps: chỉ nạp lại khi đổi conversation.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountId, conversationId]);
 
@@ -249,23 +298,116 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
         return previous.length;
     }, [accountId, conversationId, allMessagesLoaded, messages]);
 
-    // Cập nhật card trong list sau khi có tin mới (updateConversationById của store gốc).
-    const touchConversationInList = useCallback((conversation: number, message: ConversationMessage) => {
-        setConversations((current) =>
+    // ADD_MESSAGE: thay tin pending/trùng id, không thì nối; card trong list nhận
+    // timestamp + unread_count (từ conversation nhúng, không có thì giữ nguyên).
+    const addMessage = useCallback((message: MessageEventPayload) => {
+        const { conversation: embedded, ...plainMessage } = message;
+        if (plainMessage.conversation_id === conversationIdRef.current) {
+            setMessages((current) => applyIncomingMessage(current, plainMessage).messages);
+        }
+        setAllConversations((current) =>
             current.map((item) =>
-                item.id === conversation
-                    ? {
-                          ...item,
-                          timestamp: message.created_at,
-                          last_activity_at: message.created_at,
-                          last_non_activity_message:
-                              message.message_type === MESSAGE_TYPES.ACTIVITY ? item.last_non_activity_message : message,
-                          messages: [message],
-                      }
+                item.id === plainMessage.conversation_id
+                    ? applyMessageToConversation(item, plainMessage, embedded?.unread_count ?? item.unread_count)
                     : item,
             ),
         );
     }, []);
+
+    const updateConversation = useCallback((conversation: Conversation) => {
+        if (!conversation?.id) return;
+        setAllConversations((current) => applyConversationUpdate(current, conversation));
+    }, []);
+
+    // conversationStats/get của ChatList.vue khi nhận 'fetch_conversation_stats'.
+    const refetchListMeta = useCallback(() => {
+        fetchConversationMeta(listQuery).then((response) => setListMeta(response.meta), () => undefined);
+    }, [listQuery]);
+
+    // actionCable.js → store: các event conversation/message của Chatwoot.
+    useRealtimeEvent<MessageEventPayload>('message.created', (message) => {
+        addMessage(message);
+        const lastActivityAt = message.conversation?.last_activity_at;
+        if (lastActivityAt) {
+            setAllConversations((current) =>
+                applyConversationLastActivity(current, message.conversation_id, lastActivityAt),
+            );
+        }
+    });
+    useRealtimeEvent<MessageEventPayload>('message.updated', addMessage);
+    // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event
+    // created/status_changed/assignee.changed/updated/contact.deleted như gốc.
+    useRealtimeEvent<Conversation>('conversation.created', (conversation) => {
+        if (shouldAddConversationToList(conversation, inboxId)) {
+            setAllConversations((current) => applyConversationAdded(current, conversation));
+        }
+    });
+    useRealtimeEvent<Conversation>('conversation.status_changed', updateConversation);
+    useRealtimeEvent<Conversation>('conversation.updated', updateConversation);
+    useRealtimeEvent<Conversation>('assignee.changed', updateConversation);
+    useRealtimeEvent<Conversation>('conversation.read', updateConversation);
+    useRealtimeEvent<Conversation>('conversation.contact_changed', (conversation) => {
+        const sender = conversation?.meta?.sender;
+        if (conversation?.id && sender) {
+            setAllConversations((current) => applyConversationContact(current, conversation.id, sender));
+        }
+    });
+    useRealtimeEvent('fetch_conversation_stats', refetchListMeta);
+
+    // ReconnectService gốc: lưu mốc tin cuối lúc rớt; khi nối lại kéo list
+    // updated_within + tin sau mốc rồi trộn (SET_ALL_CONVERSATION / SET_MISSING_MESSAGES).
+    const reconnectHandlersRef = useRef({
+        setConversationLastMessageId: () => undefined as void,
+        fetchConversationsOnReconnect: async () => undefined as void,
+        fetchConversationMessagesOnReconnect: async () => undefined as void,
+    });
+    reconnectHandlersRef.current = {
+        setConversationLastMessageId: () => {
+            const lastSynced = [...messages].reverse().find((item) => item.id > 0);
+            lastMessageIdBeforeDisconnectRef.current = conversationId && lastSynced ? lastSynced.id : null;
+        },
+        fetchConversationsOnReconnect: async () => {
+            const response = await fetchConversations({
+                ...listQuery,
+                page: 1,
+                updatedWithin: getSecondsSinceDisconnect() + DISCONNECT_DELAY_THRESHOLD,
+            });
+            setListMeta(response.data.meta);
+            setAllConversations((current) =>
+                mergeFetchedConversations(current, response.data.payload, conversationIdRef.current),
+            );
+        },
+        fetchConversationMessagesOnReconnect: async () => {
+            const after = lastMessageIdBeforeDisconnectRef.current;
+            if (!conversationId || !after) return;
+            const response = await fetchMessages(accountId, conversationId, undefined, after);
+            setMessages((current) => {
+                const known = new Set(current.map((item) => item.id));
+                const missing = response.payload.filter((item) => !known.has(item.id));
+                return [...current, ...missing].sort((a, b) => a.created_at - b.created_at);
+            });
+            lastMessageIdBeforeDisconnectRef.current = null;
+        },
+    };
+    useEffect(
+        () =>
+            registerReconnectHandlers({
+                setConversationLastMessageId: () => reconnectHandlersRef.current.setConversationLastMessageId(),
+                fetchConversationsOnReconnect: () => reconnectHandlersRef.current.fetchConversationsOnReconnect(),
+                fetchConversationMessagesOnReconnect: () =>
+                    reconnectHandlersRef.current.fetchConversationMessagesOnReconnect(),
+            }),
+        [],
+    );
+
+    // conversationTypingStatus/toggleTyping: nuốt lỗi như gốc.
+    const toggleTypingStatus = useCallback(
+        (typingStatus: 'on' | 'off', isPrivate: boolean) => {
+            if (!conversationId) return;
+            toggleTyping(accountId, conversationId, typingStatus, isPrivate).catch(() => undefined);
+        },
+        [accountId, conversationId],
+    );
 
     // createPendingMessageAndSend: chèn tin pending (status progress) rồi thay bằng
     // bản server trả về; lỗi → đánh dấu failed như bản gốc.
@@ -303,8 +445,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
                 echo_id: echoId,
             }).then(
                 (message) => {
-                    setMessages((current) => current.map((item) => (item.echo_id === echoId ? message : item)));
-                    touchConversationInList(conversationId, message);
+                    addMessage(message);
                 },
                 (error: unknown) => {
                     setMessages((current) =>
@@ -317,7 +458,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
                 },
             );
         },
-        [accountId, conversationId, selectedConversation, currentUserId, user, touchConversationInList],
+        [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
     );
 
     const value = useMemo<ConversationContextValue>(
@@ -348,6 +489,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            toggleTypingStatus,
         }),
         [
             accountId,
@@ -376,6 +518,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            toggleTypingStatus,
         ],
     );
 

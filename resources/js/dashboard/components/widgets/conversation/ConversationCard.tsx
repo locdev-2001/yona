@@ -11,6 +11,8 @@ import type { AgentMeta, ContactMeta, Conversation } from '../../../conversation
 import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
+import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
+import type { AvailabilityStatus } from 'dashboard/constants/globals';
 
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
 // Khác biệt cố ý B3: bỏ checkbox chọn khi hover avatar (bulk actions),
@@ -46,6 +48,10 @@ export default function ConversationCard({
     onContextMenu,
 }: ConversationCardProps) {
     const unreadCount = chat.unread_count;
+    const contactAvailabilityStatus = useContactAvailabilityStatus(
+        currentContact.id,
+        currentContact.availability_status as AvailabilityStatus | undefined,
+    );
     const hasUnread = unreadCount > 0;
     const lastMessageInChat = getLastMessage(chat);
 
@@ -79,7 +85,7 @@ export default function ConversationCard({
                         name={currentContact.name ?? ''}
                         src={currentContact.thumbnail}
                         size={32}
-                        status={(currentContact.availability_status as 'online' | 'busy' | 'offline' | undefined) ?? null}
+                        status={contactAvailabilityStatus}
                         className={!showInboxName ? 'mt-4' : 'mt-8'}
                         hideOfflineStatus
                     />

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\AvailabilityStatusable;
+use App\Support\OnlineStatusTracker;
 use Database\Factories\AccountUserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,6 +62,16 @@ class AccountUser extends Model
             'auto_offline' => 'boolean',
             'active_at' => 'datetime',
         ];
+    }
+
+    // after_save :update_presence_in_redis, if: :saved_change_to_availability?
+    protected static function booted(): void
+    {
+        static::saved(function (AccountUser $accountUser) {
+            if ($accountUser->wasChanged('availability')) {
+                OnlineStatusTracker::setStatus($accountUser->account_id, $accountUser->user_id, $accountUser->availabilityName());
+            }
+        });
     }
 
     public function account(): BelongsTo
