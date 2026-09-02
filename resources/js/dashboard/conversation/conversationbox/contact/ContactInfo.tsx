@@ -3,43 +3,65 @@ import { router, usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import NextButton from 'dashboard/components-next/button/Button';
+import Flag from 'dashboard/components-next/flag/Flag';
+import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { getJson, patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { dynamicTime } from 'shared/helpers/timeHelper';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { ContactMeta } from 'dashboard/conversation/types';
+import type { UISettings } from 'dashboard/composables/useUISettings';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
 import ContactInfoRow from './ContactInfoRow';
+import ContactMergeModal from './ContactMergeModal';
 
-// Port từ routes/dashboard/conversation/contact/ContactInfo.vue — avatar + tên
-// + các dòng email/phone/identifier/company/location (copy + sửa inline qua
-// PATCH /contacts/{id} của B2) + hàng nút. Bỏ: sửa tên inline (InlineInput — dùng
-// trang contact), SocialIcons, mô tả, tooltip created_at (meta.sender chưa mang
-// created_at), ComposeConversation (nhóm B) + ContactMergeModal (nhóm sau) +
-// VoiceCallButton (EE) → 3 nút này KHÔNG render (không để placeholder chết);
-// Edit → trang chi tiết contact (EditContact modal tái dùng ở nhóm sau).
+// Port từ routes/dashboard/conversation/contact/ContactInfo.vue — nạp contact
+// đầy đủ qua GET /contacts/{id} (contacts/show gốc) để có created_at (tooltip ⓘ)
+// + country_code (cờ); avatar + tên + dòng email/phone/identifier/company/
+// location (copy + sửa inline qua PATCH /contacts/{id} của B2) + 4 nút: New
+// message (ComposeConversation, gửi thật), Edit (→ trang contact; EditContact
+// modal nhóm sau), Merge (ContactMergeModal shell), Delete (dialog B2).
+// Bỏ: sửa tên inline, SocialIcons, mô tả, VoiceCallButton (EE).
 interface ContactInfoProps {
     contact: ContactMeta;
+    uiSettings: UISettings;
+    onToggleSignature: () => void;
     onPanelClose: () => void;
+}
+
+interface FullContact extends ContactMeta {
+    created_at?: number;
 }
 
 type EditableField = 'email' | 'phone_number' | 'company_name';
 
-export default function ContactInfo({ contact: initialContact, onPanelClose }: ContactInfoProps) {
+export default function ContactInfo({ contact: initialContact, uiSettings, onToggleSignature, onPanelClose }: ContactInfoProps) {
     const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const isAdmin = currentAccountUser.role === 'administrator';
-    const [contact, setContact] = useState<ContactMeta>(initialContact);
+    const [contact, setContact] = useState<FullContact>(initialContact);
     const deleteDialogRef = useRef<ConfirmContactDeleteDialogHandle>(null);
 
+    // getContactDetails gốc: watch contact.id → contacts/show.
     useEffect(() => {
+        let cancelled = false;
         setContact(initialContact);
-    }, [initialContact]);
+        getJson<{ payload: FullContact }>(`/api/v1/accounts/${accountId}/contacts/${initialContact.id}`).then(
+            response => {
+                if (!cancelled) setContact(response.payload);
+            },
+            () => undefined,
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [accountId, initialContact]);
 
     const additionalAttributes = (contact.additional_attributes ?? {}) as Record<string, string | undefined>;
-    const location = [additionalAttributes.city, additionalAttributes.country].filter(Boolean).join(', ');
+    const cityAndCountry = [additionalAttributes.city, additionalAttributes.country].filter(Boolean).join(', ');
     const contactProfileLink = accountScopedUrl(accountId, `contacts/${contact.id}`);
 
     const updateContactField = async (field: EditableField, value: string) => {
@@ -81,6 +103,12 @@ export default function ContactInfo({ contact: initialContact, onPanelClose }: C
                             </h3>
                         </div>
                         <div className="flex flex-row items-center gap-2">
+                            {contact.created_at ? (
+                                <span
+                                    title={`${t('CONTACT_PANEL.CREATED_AT_LABEL')} ${dynamicTime(contact.created_at)}`}
+                                    className="i-lucide-info text-sm text-n-slate-10"
+                                />
+                            ) : null}
                             <a href={contactProfileLink} target="_blank" rel="noopener nofollow noreferrer" className="leading-3">
                                 <span className="i-lucide-external-link text-sm text-n-slate-10" />
                             </a>
@@ -119,17 +147,34 @@ export default function ContactInfo({ contact: initialContact, onPanelClose }: C
                             editable
                             onUpdate={value => updateContactField('company_name', value)}
                         />
-                        {location || additionalAttributes.location ? (
+                        {cityAndCountry || additionalAttributes.location ? (
                             <ContactInfoRow
-                                value={location || additionalAttributes.location}
+                                value={cityAndCountry || additionalAttributes.location}
                                 icon="map"
                                 emoji="🌍"
                                 title={t('CONTACT_PANEL.LOCATION')}
+                                trailing={
+                                    cityAndCountry ? (
+                                        additionalAttributes.country_code ? (
+                                            <Flag country={additionalAttributes.country_code} className="size-3.5" />
+                                        ) : (
+                                            <span>🌎</span>
+                                        )
+                                    ) : null
+                                }
                             />
                         ) : null}
                     </div>
                 </div>
                 <div className="flex items-center w-full mt-0.5 gap-2">
+                    <ComposeConversation
+                        contact={contact}
+                        uiSettings={uiSettings}
+                        onToggleSignature={onToggleSignature}
+                        trigger={() => (
+                            <NextButton title={t('CONTACT_PANEL.NEW_MESSAGE')} icon="i-ph-chat-circle-dots" slate faded sm />
+                        )}
+                    />
                     <NextButton
                         title={t('EDIT_CONTACT.BUTTON_LABEL')}
                         icon="i-ph-pencil-simple"
@@ -137,6 +182,10 @@ export default function ContactInfo({ contact: initialContact, onPanelClose }: C
                         faded
                         sm
                         onClick={() => router.visit(contactProfileLink)}
+                    />
+                    <ContactMergeModal
+                        primaryContact={contact}
+                        trigger={() => <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon="i-ph-arrows-merge" slate faded sm />}
                     />
                     {isAdmin ? (
                         <NextButton

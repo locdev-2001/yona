@@ -21,6 +21,9 @@ interface ComboBoxProps {
     message?: string;
     hasError?: boolean;
     className?: string;
+    // useApiResults của gốc: options do caller nạp theo query (không lọc cục bộ).
+    useApiResults?: boolean;
+    onSearch?: (query: string) => void;
     onChange: (value: string) => void;
 }
 
@@ -34,6 +37,8 @@ export default function ComboBox({
     message = '',
     hasError = false,
     className = '',
+    useApiResults = false,
+    onSearch,
     onChange,
 }: ComboBoxProps) {
     const [open, setOpen] = useState(false);
@@ -55,7 +60,9 @@ export default function ComboBox({
     }, [open]);
 
     const searchTerm = search.toLowerCase();
-    const filteredOptions = options.filter(option => option.label.toLowerCase().includes(searchTerm));
+    const filteredOptions = useApiResults
+        ? options
+        : options.filter(option => option.label.toLowerCase().includes(searchTerm));
 
     const selectPlaceholder = placeholder || t('COMBOBOX.PLACEHOLDER');
     const selectedLabel = options.find(option => option.value === value)?.label ?? selectPlaceholder;
@@ -115,7 +122,10 @@ export default function ComboBox({
                             type="search"
                             placeholder={searchPlaceholder || t('COMBOBOX.SEARCH_PLACEHOLDER')}
                             className="reset-base w-full py-2 !ps-10 !pe-2 text-sm focus:outline-none border-none rounded-t-md bg-n-solid-1 text-n-slate-12"
-                            onChange={event => setSearch(event.target.value)}
+                            onChange={event => {
+                                setSearch(event.target.value);
+                                onSearch?.(event.target.value);
+                            }}
                         />
                     </div>
                     <ul className="py-1 mb-0 overflow-auto max-h-60" role="listbox">

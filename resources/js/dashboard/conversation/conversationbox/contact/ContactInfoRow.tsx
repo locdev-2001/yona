@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { MouseEvent } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -17,6 +17,8 @@ interface ContactInfoRowProps {
     showCopy?: boolean;
     editable?: boolean;
     title?: string;
+    // Nội dung nối sau value (gốc nhúng HTML cờ quốc gia qua v-dompurify-html).
+    trailing?: ReactNode;
     onUpdate?: (value: string) => void;
 }
 
@@ -36,6 +38,7 @@ export default function ContactInfoRow({
     showCopy = false,
     editable = false,
     title = '',
+    trailing = null,
     onUpdate,
 }: ContactInfoRowProps) {
     const [isEditing, setIsEditing] = useState(false);
@@ -82,8 +85,9 @@ export default function ContactInfoRow({
     ) : null;
 
     const valueNode = value ? (
-        <span className="overflow-hidden text-sm whitespace-nowrap text-ellipsis" title={value}>
+        <span className="overflow-hidden text-sm whitespace-nowrap text-ellipsis inline-flex items-center gap-1" title={value}>
             {value}
+            {trailing}
         </span>
     ) : (
         <span className="text-sm text-n-slate-11">{t('CONTACT_PANEL.NOT_AVAILABLE')}</span>
