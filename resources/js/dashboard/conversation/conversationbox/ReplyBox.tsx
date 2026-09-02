@@ -36,10 +36,18 @@ function cmdEnterShortcutLabel(): string {
     return [isMacOS() ? '⌘' : 'Ctrl', '+', '↵'].join(' ').toUpperCase();
 }
 
-export default function ReplyBox() {
+interface ReplyBoxProps {
+    onToggleEditorSize?: () => void;
+    onMessageSent?: () => void;
+}
+
+export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBoxProps) {
     const { selectedConversation, conversationId, sendReply } = useConversation();
-    const { auth } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
+    // isCloudFeatureEnabled/isFeatureEnabledonAccount gốc = tra cờ trong account.features.
+    const captainTasksEnabled = Boolean(currentAccount.features.captain_tasks);
+    const voiceRecorderEnabled = Boolean(currentAccount.features.voice_recorder);
     const messageSignature = user.message_signature ?? '';
 
     const [uiSettings, setUiSettings] = useState<UISettings>(user.ui_settings ?? {});
@@ -54,6 +62,8 @@ export default function ReplyBox() {
     const isPrivate = replyType === REPLY_EDITOR_MODES.NOTE;
     const isOnPrivateNote = isPrivate;
     const isEditorDisabled = !isOnPrivateNote && !canReply;
+    // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
+    const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
 
     const sendWithSignature = Boolean(uiSettings[SIGNATURE_FLAG_KEY]);
     const isSignatureActive = sendWithSignature && !isPrivate && Boolean(messageSignature);
@@ -115,6 +125,13 @@ export default function ReplyBox() {
         sendReply({ content: message, isPrivate });
         clearMessage();
         editorRef.current?.focusEditorInputField();
+        onMessageSent?.();
+    };
+
+    // toggleEditorSize gốc: emit lên MessagesView rồi focus lại editor.
+    const toggleEditorSize = () => {
+        onToggleEditorSize?.();
+        window.requestAnimationFrame(() => editorRef.current?.focusEditorInputField());
     };
 
     // setSignatureFlagForInbox: merge vào ui_settings rồi PUT /api/v1/profile
@@ -134,9 +151,12 @@ export default function ReplyBox() {
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={false}
+                isEditorDisabled={isEditorDisabled}
+                captainTasksEnabled={captainTasksEnabled}
                 isMessageLengthReachingThreshold={isMessageLengthReachingThreshold}
                 charactersRemaining={charactersRemaining}
                 onSetReplyMode={setReplyMode}
+                onToggleEditorSize={toggleEditorSize}
             />
             <div className="reply-box__top">
                 <Editor
@@ -159,6 +179,7 @@ export default function ReplyBox() {
                 isNote={isPrivate}
                 isOnPrivateNote={isOnPrivateNote}
                 isEditorDisabled={isEditorDisabled}
+                showAudioRecorder={showAudioRecorder}
                 isSendDisabled={isReplyButtonDisabled}
                 sendButtonText={replyButtonLabel}
                 sendWithSignature={sendWithSignature}

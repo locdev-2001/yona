@@ -6,14 +6,16 @@ import type { PickerSelection } from 'dashboard/components-next/emoji-icon-picke
 import { t } from '../../../i18n';
 
 // Port từ dashboard/components/widgets/WootWriter/ReplyBottomPanel.vue.
-// Bỏ ở B3: FileUpload thật (B9 — nút paperclip giữ chỗ), audio recorder (feature
-// flag voice_recorder tắt), VideoCallButton (integrations), WhatsApp/Content
+// Bỏ ở B3: FileUpload thật (B9 — nút paperclip giữ chỗ), AudioRecorder thật (B9 —
+// nút mic giữ chỗ, hiện theo cờ account voice_recorder + showFileUpload API inbox,
+// ẩn khi private note), VideoCallButton (integrations), WhatsApp/Content
 // templates (F5), quoted reply + insert article (email/help center), drag-drop.
 // EmojiIconPicker dùng bản portal của A6 thay .emoji-dialog absolute của gốc.
 interface ReplyBottomPanelProps {
     isNote: boolean;
     isOnPrivateNote: boolean;
     isEditorDisabled: boolean;
+    showAudioRecorder: boolean;
     isSendDisabled: boolean;
     sendButtonText: string;
     sendWithSignature: boolean;
@@ -26,6 +28,7 @@ export default function ReplyBottomPanel({
     isNote,
     isOnPrivateNote,
     isEditorDisabled,
+    showAudioRecorder,
     isSendDisabled,
     sendButtonText,
     sendWithSignature,
@@ -37,6 +40,7 @@ export default function ReplyBottomPanel({
     const emojiButtonRef = useRef<HTMLDivElement>(null);
 
     const showAttachButton = !isEditorDisabled;
+    const showAudioRecorderButton = !isEditorDisabled && showAudioRecorder;
     const showMessageSignatureButton = !isEditorDisabled && !isOnPrivateNote;
 
     const signatureToggleTooltip = sendWithSignature
@@ -69,6 +73,15 @@ export default function ReplyBottomPanel({
                     <NextButton
                         title={t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')}
                         icon="i-ph-paperclip"
+                        slate
+                        faded
+                        sm
+                    />
+                ) : null}
+                {showAudioRecorderButton ? (
+                    <NextButton
+                        title={t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')}
+                        icon="i-ph-microphone"
                         slate
                         faded
                         sm
