@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 // Port từ api/v1/conversations/partials/_conversation.json.jbuilder.
-// Bỏ ở B3: labels thật (B7 — cached_label_list luôn rỗng), muted qua Redis (B4 —
-// luôn false), SLA (EE — sla feature tắt nên emit null như gốc), agent bot assignee.
+// Bỏ ở B3: labels thật (B7 — cached_label_list luôn rỗng), SLA (EE — sla feature tắt nên emit null như gốc), agent bot assignee.
 class ConversationResource extends JsonResource
 {
     /** @param iterable<Conversation> $conversations */
@@ -45,7 +44,7 @@ class ConversationResource extends JsonResource
             'custom_attributes' => $conversation->custom_attributes ?? [],
             'inbox_id' => $conversation->inbox_id,
             'labels' => $conversation->cachedLabelListArray(),
-            'muted' => false,
+            'muted' => $conversation->isMuted(),
             'snoozed_until' => $conversation->snoozed_until?->toISOString(),
             'status' => $conversation->statusName(),
             'created_at' => $conversation->created_at->getTimestamp(),

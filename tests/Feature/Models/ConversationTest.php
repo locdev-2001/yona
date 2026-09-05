@@ -2,6 +2,7 @@
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -10,11 +11,12 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 
 // Port từ spec/models/conversation_spec.rb.
 // Bỏ ở B3: dispatcher/event dispatch + FilteredCountInvalidator (B4), activity
-// messages + toggle_status/snooze/bot_handoff (B5), assignment/auto-assignment (B6),
-// label update_labels (B7), mute/unmute qua Redis (B4), csat_survey_link (C5),
+// bot_handoff (AgentBot), assignment/auto-assignment (B6),
+// label update_labels (B7), csat_survey_link (C5),
 // agent bot/ai_assignee/campaign (D4/EE/C4), unread sort arel (B8), push_event_data
 // (shape JSON test ở ConversationsControllerTest), validate độ dài jsonb value
 // (validator chưa port — đi cùng custom attributes E1), delete conversation (B5+).
@@ -418,5 +420,275 @@ describe('dispatch events', function () {
         Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UPDATED
             && $event->data['changed_attributes']['assignee_id'] === [$assignee->id, $actor->id]
             && $event->data['notifiable_assignee_change'] === false);
+    });
+});
+
+describe('toggle_status', function () {
+    it('toggles conversation status to resolved when open', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_OPEN]);
+
+        expect($conversation->toggleStatus())->toBeTrue()
+            ->and($conversation->fresh()->statusName())->toBe('resolved');
+    });
+
+    it('toggles conversation status to open when resolved', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_RESOLVED]);
+
+        expect($conversation->toggleStatus())->toBeTrue()
+            ->and($conversation->fresh()->statusName())->toBe('open');
+    });
+
+    it('toggles conversation status to open when pending', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_PENDING]);
+
+        expect($conversation->toggleStatus())->toBeTrue()
+            ->and($conversation->fresh()->statusName())->toBe('open');
+    });
+
+    it('toggles conversation status to open when snoozed', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_SNOOZED]);
+
+        expect($conversation->toggleStatus())->toBeTrue()
+            ->and($conversation->fresh()->statusName())->toBe('open');
+    });
+
+    it('resets the snoozed_until when status is toggled', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_SNOOZED, 'snoozed_until' => now()->addDays(2)]);
+
+        expect($conversation->snoozed_until)->not->toBeNull()
+            ->and($conversation->toggleStatus())->toBeTrue()
+            ->and($conversation->fresh()->snoozed_until)->toBeNull();
+    });
+});
+
+describe('toggle_priority', function () {
+    it('defaults priority to null when created', function () {
+        expect(conversationIn(conversationBase())->priority)->toBeNull();
+    });
+
+    it('toggles the priority to null if nothing is passed', function () {
+        $conversation = conversationIn(conversationBase(), ['priority' => Conversation::PRIORITY_HIGH]);
+
+        expect($conversation->togglePriority())->toBeTrue()
+            ->and($conversation->fresh()->priority)->toBeNull();
+    });
+
+    it('sets the priority by name', function (string $name) {
+        $conversation = conversationIn(conversationBase());
+
+        expect($conversation->togglePriority($name))->toBeTrue()
+            ->and($conversation->fresh()->priorityName())->toBe($name);
+    })->with(['low', 'medium', 'high', 'urgent']);
+});
+
+describe('activity messages', function () {
+    function activityJobParams(Conversation $conversation, string $content, ?array $contentAttributes = null): array
+    {
+        $params = [
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'message_type' => Message::TYPE_ACTIVITY,
+            'content' => $content,
+        ];
+
+        if ($contentAttributes !== null) {
+            $params['content_attributes'] = $contentAttributes;
+        }
+
+        return $params;
+    }
+
+    function assertActivityJobPushed(Conversation $conversation, string $content, ?array $contentAttributes = null): void
+    {
+        Queue::assertPushed(ActivityMessageJob::class, fn (ActivityMessageJob $job) => $job->conversation->is($conversation)
+            && $job->messageParams === activityJobParams($conversation, $content, $contentAttributes)
+            && $job->queue === 'high');
+    }
+
+    it('creates status change activity with the current user name', function () {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase());
+        Queue::fake();
+
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        assertActivityJobPushed($conversation, "Conversation was marked resolved by {$user->name}", [
+            'activity' => ['type' => 'conversation_status_changed', 'status' => 'resolved'],
+        ]);
+    });
+
+    it('uses the right sentence for every status', function (int $status, string $sentence) {
+        $user = User::factory()->create(['name' => 'Agent Smith']);
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase(), ['status' => $status === Conversation::STATUS_OPEN ? Conversation::STATUS_RESOLVED : Conversation::STATUS_OPEN]);
+        Queue::fake();
+
+        $conversation->update(['status' => $status]);
+
+        assertActivityJobPushed($conversation, $sentence, [
+            'activity' => ['type' => 'conversation_status_changed', 'status' => Conversation::STATUS_NAMES[$status]],
+        ]);
+    })->with([
+        [Conversation::STATUS_OPEN, 'Conversation was reopened by Agent Smith'],
+        [Conversation::STATUS_PENDING, 'Conversation was marked as pending by Agent Smith'],
+        [Conversation::STATUS_SNOOZED, 'Conversation was snoozed by Agent Smith'],
+    ]);
+
+    it('adds a message for system auto resolution if marked resolved by system', function () {
+        $base = conversationBase();
+        $base[0]->update(['settings' => ['auto_resolve_after' => 40 * 24 * 60]]);
+        $conversation = conversationIn($base);
+        Queue::fake();
+
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        assertActivityJobPushed($conversation, 'Conversation was marked resolved by system due to 40 days of inactivity', [
+            'activity' => ['type' => 'conversation_status_changed', 'status' => 'resolved'],
+        ]);
+    });
+
+    it('does not create activity when reopened without a user', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_SNOOZED]);
+        Queue::fake();
+
+        $conversation->update(['status' => Conversation::STATUS_OPEN]);
+
+        Queue::assertNotPushed(ActivityMessageJob::class);
+    });
+
+    it('creates priority added, updated and removed activities', function () {
+        $user = User::factory()->create(['name' => 'Agent Smith']);
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase());
+        Queue::fake();
+
+        $conversation->update(['priority' => Conversation::PRIORITY_LOW]);
+        assertActivityJobPushed($conversation, 'Agent Smith set the priority to low');
+
+        $conversation->update(['priority' => Conversation::PRIORITY_HIGH]);
+        assertActivityJobPushed($conversation, 'Agent Smith changed the priority from low to high');
+
+        $conversation->update(['priority' => null]);
+        assertActivityJobPushed($conversation, 'Agent Smith removed the priority');
+    });
+
+    it('persists the activity message through the job', function () {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase());
+
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        $activity = $conversation->messages()->where('message_type', Message::TYPE_ACTIVITY)->first();
+        expect($activity)->not->toBeNull()
+            ->and($activity->content)->toBe("Conversation was marked resolved by {$user->name}")
+            ->and($activity->content_attributes)->toBe(['activity' => ['type' => 'conversation_status_changed', 'status' => 'resolved']]);
+    });
+});
+
+describe('status change events', function () {
+    beforeEach(function () {
+        Event::fake([DomainEvent::class]);
+    });
+
+    function dispatchedTypes(): array
+    {
+        $types = [];
+        Event::assertDispatched(DomainEvent::class, function (DomainEvent $event) use (&$types) {
+            $types[] = $event->type;
+
+            return true;
+        });
+
+        return $types;
+    }
+
+    it('dispatches opened + status_changed when reopened', function () {
+        $conversation = conversationIn(conversationBase(), ['status' => Conversation::STATUS_RESOLVED]);
+
+        $conversation->update(['status' => Conversation::STATUS_OPEN]);
+
+        $types = dispatchedTypes();
+        expect($types)->toContain(EventType::CONVERSATION_OPENED, EventType::CONVERSATION_STATUS_CHANGED, EventType::CONVERSATION_UPDATED)
+            ->and($types)->not->toContain(EventType::CONVERSATION_RESOLVED);
+    });
+
+    it('dispatches resolved + status_changed when resolved', function () {
+        $conversation = conversationIn(conversationBase());
+
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        $types = dispatchedTypes();
+        expect($types)->toContain(EventType::CONVERSATION_RESOLVED, EventType::CONVERSATION_STATUS_CHANGED)
+            ->and($types)->not->toContain(EventType::CONVERSATION_OPENED);
+    });
+
+    it('dispatches conversation.read when contact_last_seen_at changes', function () {
+        $conversation = conversationIn(conversationBase());
+
+        $conversation->update(['contact_last_seen_at' => now()]);
+
+        expect(dispatchedTypes())->toContain(EventType::CONVERSATION_READ)
+            ->not->toContain(EventType::CONVERSATION_STATUS_CHANGED);
+    });
+
+    it('dispatches conversation.contact_changed when contact_id changes', function () {
+        $base = conversationBase();
+        $conversation = conversationIn($base);
+        $otherContact = Contact::factory()->create(['account_id' => $base[0]->id]);
+
+        $conversation->update(['contact_id' => $otherContact->id]);
+
+        expect(dispatchedTypes())->toContain(EventType::CONVERSATION_CONTACT_CHANGED);
+    });
+});
+
+describe('mute', function () {
+    it('marks conversation as resolved, blocks the contact and creates mute message', function () {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase());
+        Queue::fake();
+
+        $conversation->mute();
+
+        expect($conversation->fresh()->isResolved())->toBeTrue()
+            ->and($conversation->fresh()->contact->blocked)->toBeTrue()
+            ->and($conversation->isMuted())->toBeTrue();
+        assertActivityJobPushed($conversation, "{$user->name} has muted the conversation");
+    });
+
+    it('does nothing when contact is missing', function () {
+        $this->actingAs(User::factory()->create());
+        $conversation = conversationIn(conversationBase());
+        $conversation->newModelQuery()->whereKey($conversation->id)->toBase()->update(['contact_id' => null, 'contact_inbox_id' => null]);
+        $conversation = $conversation->fresh();
+        Queue::fake();
+
+        $conversation->mute();
+
+        expect($conversation->fresh()->statusName())->toBe('open')
+            ->and($conversation->isMuted())->toBeFalse();
+        Queue::assertNotPushed(ActivityMessageJob::class);
+    });
+
+    it('unmute keeps status, unblocks the contact and creates unmute message', function () {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $conversation = conversationIn(conversationBase());
+        $conversation->mute();
+        Queue::fake();
+
+        $conversation->unmute();
+
+        expect($conversation->fresh()->statusName())->toBe('resolved')
+            ->and($conversation->fresh()->contact->blocked)->toBeFalse()
+            ->and($conversation->isMuted())->toBeFalse();
+        assertActivityJobPushed($conversation, "{$user->name} has unmuted the conversation");
+    });
+
+    it('returns false for muted? when not muted', function () {
+        expect(conversationIn(conversationBase())->isMuted())->toBeFalse();
     });
 });

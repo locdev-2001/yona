@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { usePage } from '@inertiajs/react';
 
 import AccordionItem from 'dashboard/components/Accordion/AccordionItem';
@@ -7,18 +9,20 @@ import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import ContactInfo from './contact/ContactInfo';
+import ConversationAction from './contact/ConversationAction';
 
 // Port từ routes/dashboard/conversation/ContactPanel.vue — shell panel: header
 // + ContactInfo + các accordion đúng tên/thứ tự gốc (ui_settings
 // conversation_sidebar_items_order + cờ is_*_open). Nội dung từng section thuộc
-// nhóm sau (ConversationAction B5/B6, Macros D3, ConversationInfo/CustomAttributes
-// E1, ContactNotes B2+, SharedFiles B9, ContactConversations, Participants B11)
-// → thân rỗng; linear/shopify (integrations) bỏ; kéo thả sắp xếp bỏ.
+// nhóm sau (Macros D3, ConversationInfo/CustomAttributes E1, ContactNotes B2+,
+// SharedFiles B9, ContactConversations, Participants B11) → thân rỗng;
+// linear/shopify (integrations) bỏ; kéo thả sắp xếp bỏ.
 interface SidebarSection {
     name: string;
     title: string;
     openKey: string;
     compact: boolean;
+    body?: ReactNode;
 }
 
 export default function ContactPanel() {
@@ -38,6 +42,7 @@ export default function ContactPanel() {
             title: t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_ACTIONS'),
             openKey: 'is_conv_actions_open',
             compact: false,
+            body: <ConversationAction />,
         },
         conversation_participants: {
             name: 'conversation_participants',
@@ -118,7 +123,9 @@ export default function ContactPanel() {
                                 compact={section.compact}
                                 isOpen={isContactSidebarItemOpen(section.openKey)}
                                 onToggle={() => toggleSidebarUIState(section.openKey)}
-                            />
+                            >
+                                {section.body}
+                            </AccordionItem>
                         </div>
                     ))}
                 </div>
