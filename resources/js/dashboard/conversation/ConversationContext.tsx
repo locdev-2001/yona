@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 import { debounce } from '@chatwoot/utils';
 
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
@@ -18,6 +19,7 @@ import {
     assignAgent as assignAgentRequest,
     assignTeam as assignTeamRequest,
     fetchConversation,
+    fetchConversationAttachments,
     fetchConversationMeta,
     fetchConversations,
     fetchMessages,
@@ -34,6 +36,7 @@ import { applyConversationMuted, applyConversationPriority, applyConversationSta
 import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
+    appendMessageAttachments,
     applyConversationAdded,
     applyConversationContact,
     applyConversationLastActivity,
@@ -47,6 +50,7 @@ import {
 } from './realtimeReducers';
 import {
     ASSIGNEE_TYPE,
+    CONVERSATION_TYPE,
     CONVERSATIONS_PER_PAGE,
     LAYOUT_TYPES,
     MESSAGE_STATUS,
@@ -54,6 +58,7 @@ import {
     SORT_BY_TYPE,
     STATUS_TYPE,
 } from './constants';
+import type { ConversationType } from './constants';
 import type {
     AgentMeta,
     AssigneeTab,
@@ -78,6 +83,7 @@ interface ConversationContextValue {
     inboxId: number;
     teamId: number;
     label: string;
+    conversationType: ConversationType;
     conversationId: number;
     conversations: Conversation[];
     listMeta: ConversationListMeta;
@@ -90,6 +96,9 @@ interface ConversationContextValue {
     messages: ConversationMessage[];
     allMessagesLoaded: boolean;
     messagesLoading: boolean;
+    // attachments/getSelectedChatAttachments của store gốc — accordion Attachments.
+    attachments: MessageAttachment[];
+    attachmentsLoaded: boolean;
     uiSettings: UISettings;
     updateUISettings: (patch: UISettings) => void;
     isOnExpandedLayout: boolean;
@@ -177,6 +186,7 @@ interface ProviderProps {
     inboxId?: number;
     teamId?: number;
     label?: string;
+    conversationType?: ConversationType;
     children: ReactNode;
 }
 
@@ -187,6 +197,7 @@ export function ConversationProvider({
     inboxId = 0,
     teamId = 0,
     label = '',
+    conversationType = '',
     children,
 }: ProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
@@ -245,6 +256,10 @@ export function ConversationProvider({
     messagesRef.current = messages;
     const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
     const [messagesLoading, setMessagesLoading] = useState(false);
+    // fetchAllAttachments của MessagesView.vue: nạp theo hội thoại đang mở, không
+    // theo accordion — mở panel là đã có sẵn dữ liệu như bản gốc.
+    const [attachments, setAttachments] = useState<MessageAttachment[]>([]);
+    const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
     // SET_LAST_MESSAGE_ID_IN_SYNC_CONVERSATION: mốc tin cuối lúc mất kết nối.
     const lastMessageIdBeforeDisconnectRef = useRef<number | null>(null);
 
@@ -272,8 +287,9 @@ export function ConversationProvider({
             inboxId: inboxId || undefined,
             teamId: teamId || undefined,
             labels: labelFilters.length ? labelFilters : undefined,
+            conversationType: conversationType || undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType],
     );
 
     const fetchPage = useCallback(
@@ -374,6 +390,26 @@ export function ConversationProvider({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountId, conversationId]);
 
+    // fetchAllAttachments: lỗi vẫn commit danh sách rỗng để accordion thoát spinner.
+    useEffect(() => {
+        let cancelled = false;
+        setAttachments([]);
+        setAttachmentsLoaded(false);
+        if (!conversationId) return undefined;
+
+        fetchConversationAttachments(accountId, conversationId)
+            .catch(() => [] as MessageAttachment[])
+            .then((payload) => {
+                if (cancelled) return;
+                setAttachments(payload);
+                setAttachmentsLoaded(true);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [accountId, conversationId]);
+
     const fetchPreviousMessages = useCallback(async (): Promise<number> => {
         if (!conversationId || allMessagesLoaded || messages.length === 0) return 0;
 
@@ -395,6 +431,10 @@ export function ConversationProvider({
     const addMessage = useCallback((message: MessageEventPayload) => {
         const { conversation: embedded, ...plainMessage } = message;
         if (plainMessage.conversation_id === conversationIdRef.current) {
+            // ADD_CONVERSATION_ATTACHMENTS: bản gốc góp tệp từ tin đến (realtime) và
+            // từ phản hồi của lần gửi; ở yona tin mình gửi cũng quay lại qua realtime
+            // nên chỉ cần một chỗ này.
+            setAttachments((current) => appendMessageAttachments(current, plainMessage));
             // ADD_MESSAGE gốc chỉ phát SCROLL_TO_MESSAGE (→ makeMessagesRead) khi tin
             // thật sự nối vào cuối hội thoại đang mở, không phải khi thay tin pending.
             const appended = findPendingMessageIndex(messagesRef.current, plainMessage) === -1;
@@ -410,9 +450,14 @@ export function ConversationProvider({
         );
     }, []);
 
+    const conversationTypeRef = useRef<ConversationType>(conversationType);
+    conversationTypeRef.current = conversationType;
+
     const updateConversation = useCallback((conversation: Conversation) => {
         if (!conversation?.id) return;
-        setAllConversations((current) => applyConversationUpdate(current, conversation));
+        setAllConversations((current) =>
+            applyConversationUpdate(current, conversation, conversationTypeRef.current),
+        );
         // UPDATE_CONVERSATION gốc phát SCROLL_TO_MESSAGE khi bản ghi đổi là hội thoại đang mở.
         if (conversation.id === conversationIdRef.current) {
             markMessagesReadRef.current(conversation.id);
@@ -521,9 +566,13 @@ export function ConversationProvider({
     // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event
     // created/status_changed/assignee.changed/updated/contact.deleted như gốc.
     useRealtimeEvent<Conversation>('conversation.created', (conversation) => {
-        if (shouldAddConversationToList(conversation, inboxId)) {
+        if (shouldAddConversationToList(conversation, inboxId, conversationType)) {
             setAllConversations((current) => applyConversationAdded(current, conversation));
         }
+    });
+    // action addMentions: chỉ màn Mentions mới nghe, và chỉ cập nhật thẻ đã có.
+    useRealtimeEvent<Conversation>('conversation.mentioned', (conversation) => {
+        if (conversationType === CONVERSATION_TYPE.MENTION) updateConversation(conversation);
     });
     useRealtimeEvent<Conversation>('conversation.status_changed', updateConversation);
     useRealtimeEvent<Conversation>('conversation.updated', updateConversation);
@@ -742,6 +791,7 @@ export function ConversationProvider({
             inboxId,
             teamId,
             label,
+            conversationType,
             conversationId,
             conversations,
             listMeta,
@@ -754,6 +804,8 @@ export function ConversationProvider({
             messages,
             allMessagesLoaded,
             messagesLoading,
+            attachments,
+            attachmentsLoaded,
             uiSettings,
             updateUISettings,
             isOnExpandedLayout,
@@ -780,6 +832,7 @@ export function ConversationProvider({
             inboxId,
             teamId,
             label,
+            conversationType,
             conversationId,
             conversations,
             listMeta,
@@ -792,6 +845,8 @@ export function ConversationProvider({
             messages,
             allMessagesLoaded,
             messagesLoading,
+            attachments,
+            attachmentsLoaded,
             uiSettings,
             updateUISettings,
             isOnExpandedLayout,

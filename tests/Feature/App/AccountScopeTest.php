@@ -28,6 +28,26 @@ describe('account scoping', function () {
                 ->has('userAccounts', 1));
     });
 
+    it('renders the conversation view with the mention type for the mentions routes', function () {
+        $user = User::factory()->create();
+        $account = Account::factory()->create();
+        AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->get("/app/accounts/{$account->id}/mentions/conversations")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('dashboard/conversation/ConversationView')
+                ->where('conversationType', 'mention')
+                ->missing('conversationId'));
+
+        $this->actingAs($user)->get("/app/accounts/{$account->id}/mentions/conversations/7")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('dashboard/conversation/ConversationView')
+                ->where('conversationType', 'mention')
+                ->where('conversationId', 7));
+    });
+
     it('renders placeholder pages for unported child routes', function () {
         $user = User::factory()->create();
         $account = Account::factory()->create();

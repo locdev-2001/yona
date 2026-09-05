@@ -8,17 +8,21 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import Popover from 'dashboard/components-next/popover/Popover';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson } from 'dashboard/helper/apiClient';
+import { mergeContacts } from 'dashboard/conversation/panelApi';
 import type { ContactMeta } from 'dashboard/conversation/types';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
 
 // Port từ modules/contact/ContactMergeModal.vue + MergeContact.vue +
 // ContactMergeForm.vue + MergeContactSummary.vue — popover chọn contact chính
-// (GET /contacts/search của B2), tóm tắt hợp nhất, validate. Khác biệt: nút
-// Merge chỉ validate + đóng — POST /contacts/{id}/merge chưa port (nhóm sau).
+// (GET /contacts/search của B2), tóm tắt hợp nhất, validate. Nút Merge gọi thật
+// POST /actions/contact_merge — base = contact được chọn (giữ lại), mergee =
+// contact đang mở (bị gộp rồi xóa). Khác biệt: danh sách hội thoại chỉ theo kịp
+// khi có handler realtime `contact.merged` (ghi nợ).
 interface ContactMergeModalProps {
     primaryContact: ContactMeta;
     onClose?: () => void;
+    onMerged?: (contact: ContactMeta) => void;
     trigger: (context: { isOpen: boolean }) => ReactNode;
 }
 
@@ -30,10 +34,16 @@ interface SearchedContact {
     thumbnail?: string;
 }
 
-export default function ContactMergeModal({ primaryContact, onClose, trigger }: ContactMergeModalProps) {
+export default function ContactMergeModal({
+    primaryContact,
+    onClose,
+    onMerged,
+    trigger,
+}: ContactMergeModalProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const [searchResults, setSearchResults] = useState<SearchedContact[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isMerging, setIsMerging] = useState(false);
     const [parentContactId, setParentContactId] = useState<string>('');
     const [showError, setShowError] = useState(false);
 
@@ -56,16 +66,32 @@ export default function ContactMergeModal({ primaryContact, onClose, trigger }: 
     const parentContact = searchResults.find(contact => String(contact.id) === parentContactId) ?? null;
     const parentContactName = parentContact?.name ?? '';
 
-    const onSubmit = (hide: () => void) => {
+    const onSubmit = async (hide: () => void) => {
         setShowError(true);
-        if (!parentContactId) return;
-        hide();
+        if (!parentContactId || isMerging) return;
+
+        setIsMerging(true);
+        try {
+            const mergedContact = await mergeContacts(
+                currentAccount.id,
+                Number(parentContactId),
+                primaryContact.id,
+            );
+            useAlert(t('MERGE_CONTACTS.FORM.SUCCESS_MESSAGE'));
+            onMerged?.(mergedContact);
+            hide();
+        } catch {
+            useAlert(t('MERGE_CONTACTS.FORM.ERROR_MESSAGE'));
+        } finally {
+            setIsMerging(false);
+        }
     };
 
     const reset = () => {
         setSearchResults([]);
         setParentContactId('');
         setShowError(false);
+        setIsMerging(false);
         onClose?.();
     };
 
@@ -82,7 +108,7 @@ export default function ContactMergeModal({ primaryContact, onClose, trigger }: 
                     <form
                         onSubmit={event => {
                             event.preventDefault();
-                            onSubmit(hide);
+                            void onSubmit(hide);
                         }}
                     >
                         <div className="flex flex-col">
@@ -168,7 +194,7 @@ export default function ContactMergeModal({ primaryContact, onClose, trigger }: 
                         ) : null}
                         <div className="flex justify-end gap-2 mt-6">
                             <NextButton faded slate type="reset" label={t('MERGE_CONTACTS.FORM.CANCEL')} onClick={() => hide()} />
-                            <NextButton type="submit" label={t('MERGE_CONTACTS.FORM.SUBMIT')} />
+                            <NextButton type="submit" isLoading={isMerging} label={t('MERGE_CONTACTS.FORM.SUBMIT')} />
                         </div>
                     </form>
                 </div>

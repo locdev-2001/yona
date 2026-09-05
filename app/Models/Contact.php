@@ -117,6 +117,11 @@ class Contact extends Model
         return $this->hasMany(ContactInbox::class);
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
     public function conversations(): HasMany
     {
         return $this->hasMany(Conversation::class);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { getTypingUsersText } from '../helper/conversationHelper';
 import {
+    appendMessageAttachments,
     applyConversationUpdate,
     applyIncomingMessage,
     matchesConversationView,
@@ -106,6 +107,28 @@ describe('applyConversationUpdate', () => {
     it('thêm conversation chưa có trong list', () => {
         expect(applyConversationUpdate([], buildConversation({ id: 9 }))).toHaveLength(1);
     });
+
+    it('không thêm conversation lạ khi danh sách do server lọc (mention/participating)', () => {
+        expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'mention')).toHaveLength(0);
+        expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'participating')).toHaveLength(0);
+        expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'unattended')).toHaveLength(1);
+    });
+});
+
+describe('appendMessageAttachments', () => {
+    const attachment = { id: 11, file_type: 'image', data_url: 'https://cdn.test/a.png' };
+
+    it('góp tệp của tin đã gửi và không thêm trùng', () => {
+        const message = buildMessage({ attachments: [attachment] });
+
+        expect(appendMessageAttachments([], message).map((item) => item.id)).toEqual([11]);
+        expect(appendMessageAttachments([attachment], message)).toHaveLength(1);
+    });
+
+    it('bỏ qua tin chưa gửi xong hoặc không có tệp', () => {
+        expect(appendMessageAttachments([], buildMessage({ status: 'progress', attachments: [attachment] }))).toHaveLength(0);
+        expect(appendMessageAttachments([], buildMessage())).toHaveLength(0);
+    });
 });
 
 describe('shouldAddConversationToList / matchesConversationView', () => {
@@ -113,6 +136,11 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
         expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 2)).toBe(false);
         expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 1)).toBe(true);
         expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0)).toBe(true);
+    });
+
+    it('màn lọc ở server không tự thêm hội thoại mới', () => {
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0, 'mention')).toBe(false);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0, 'unattended')).toBe(false);
     });
 
     it('conversation không khớp tab/status không hiện trong list', () => {

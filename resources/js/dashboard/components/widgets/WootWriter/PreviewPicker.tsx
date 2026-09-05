@@ -38,6 +38,8 @@ interface PreviewPickerProps<TItem extends PreviewPickerItem> {
     style?: React.CSSProperties;
     onSelect: (index: number) => void;
     renderPreview?: (item: TItem | undefined) => ReactNode;
+    renderLeading?: (item: TItem, isSelected: boolean) => ReactNode;
+    renderFilters?: () => ReactNode;
 }
 
 function PreviewPickerInner<TItem extends PreviewPickerItem>(
@@ -55,6 +57,8 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
         style,
         onSelect,
         renderPreview,
+        renderLeading,
+        renderFilters,
     }: PreviewPickerProps<TItem>,
     ref: React.ForwardedRef<PreviewPickerHandle>,
 ) {
@@ -131,6 +135,15 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
                         onChange={event => onSearchChange(event.target.value)}
                     />
                 </div>
+                {renderFilters ? (
+                    // mousedown.prevent của gốc: bấm tab lọc không cướp focus khỏi ô tìm kiếm.
+                    <div
+                        className="flex-shrink-0 min-w-0 px-1 pt-1 pb-1.5"
+                        onMouseDown={event => event.preventDefault()}
+                    >
+                        {renderFilters()}
+                    </div>
+                ) : null}
                 <div ref={listRef} className="flex-1 p-1 overflow-y-auto">
                     <ul id={listboxId} role="listbox" className="m-0 list-none">
                         {items.map((item, index) => (
@@ -154,6 +167,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
                                     onMouseMove={() => onSelectedIndexChange(index)}
                                     onClick={() => onSelect(index)}
                                 >
+                                    {renderLeading?.(item, index === selectedIndex)}
                                     <span className="flex flex-col min-w-0 gap-0.5">
                                         <span
                                             className="max-w-full min-w-0 text-sm font-medium truncate text-n-slate-12"

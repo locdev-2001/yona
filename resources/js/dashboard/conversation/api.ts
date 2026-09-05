@@ -1,4 +1,6 @@
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { getJson, postForm, postJson } from '../helper/apiClient';
+import type { ConversationType } from './constants';
 import type {
     AgentMeta,
     Conversation,
@@ -40,16 +42,22 @@ export interface FetchConversationsParams {
     teamId?: number;
     // conversationFilters.labels của ChatList.vue — trang lọc theo nhãn (B7).
     labels?: string[];
+    // conversationFilters.conversationType: tab Mentions/Participating/Unattended.
+    conversationType?: ConversationType;
     updatedWithin?: number;
 }
 
-export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
+// conversationFilters của ChatList.vue — cùng một bộ tham số cho danh sách và
+// bộ đếm, nên chỉ dựng ở một chỗ (`page`/`updated_within` chỉ danh sách mới có).
+function buildConversationQuery(params: Omit<FetchConversationsParams, 'page'> & { page?: number }): string {
     const query = new URLSearchParams({
         assignee_type: params.assigneeType,
         status: params.status,
-        page: String(params.page),
         sort_by: params.sortBy,
     });
+    if (params.page) {
+        query.set('page', String(params.page));
+    }
     if (params.inboxId) {
         query.set('inbox_id', String(params.inboxId));
     }
@@ -57,34 +65,39 @@ export function fetchConversations(params: FetchConversationsParams): Promise<Co
         query.set('team_id', String(params.teamId));
     }
     params.labels?.forEach(label => query.append('labels[]', label));
+    if (params.conversationType) {
+        query.set('conversation_type', params.conversationType);
+    }
     if (params.updatedWithin) {
         query.set('updated_within', String(params.updatedWithin));
     }
 
-    return getJson(`/api/v1/accounts/${params.accountId}/conversations?${query.toString()}`);
+    return query.toString();
+}
+
+export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
+    return getJson(`/api/v1/accounts/${params.accountId}/conversations?${buildConversationQuery(params)}`);
 }
 
 export function fetchConversationMeta(
     params: Omit<FetchConversationsParams, 'page'>,
 ): Promise<{ meta: ConversationListMeta }> {
-    const query = new URLSearchParams({
-        assignee_type: params.assigneeType,
-        status: params.status,
-        sort_by: params.sortBy,
-    });
-    if (params.inboxId) {
-        query.set('inbox_id', String(params.inboxId));
-    }
-    if (params.teamId) {
-        query.set('team_id', String(params.teamId));
-    }
-    params.labels?.forEach(label => query.append('labels[]', label));
-
-    return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${query.toString()}`);
+    return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${buildConversationQuery(params)}`);
 }
 
 export function fetchConversation(accountId: number, conversationId: number): Promise<Conversation> {
     return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}`);
+}
+
+// ConversationApi.getAllAttachments → action fetchAllAttachments: trang đầu (15
+// tệp mới nhất) của hội thoại, nguồn cho accordion Attachments.
+export function fetchConversationAttachments(
+    accountId: number,
+    conversationId: number,
+): Promise<MessageAttachment[]> {
+    return getJson<{ payload?: MessageAttachment[] }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/attachments`,
+    ).then(response => response.payload ?? []);
 }
 
 // getPreviousMessages gốc: `after` chỉ gửi khi khác `before`.

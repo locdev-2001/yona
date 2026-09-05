@@ -2,6 +2,7 @@ import CmdBarConversationSnooze from 'dashboard/commands/CmdBarConversationSnooz
 import { useConversationHotKeys } from 'dashboard/commands/useConversationHotKeys';
 import Dashboard from '../Dashboard';
 import { ConversationProvider, useConversation } from './ConversationContext';
+import type { ConversationType } from './constants';
 import ChatList from './chatlist/ChatList';
 import ConversationBox from './conversationbox/ConversationBox';
 import ConversationSidebar from './conversationbox/ConversationSidebar';
@@ -15,6 +16,8 @@ interface Props {
     inboxId?: number;
     teamId?: number;
     label?: string;
+    // prop route conversation_mentions / conversation_through_mentions.
+    conversationType?: ConversationType;
 }
 
 function ConversationLayout({ conversationId }: { conversationId: number }) {
@@ -35,7 +38,13 @@ function ConversationLayout({ conversationId }: { conversationId: number }) {
     );
 }
 
-export default function ConversationView({ conversationId = 0, inboxId = 0, teamId = 0, label = '' }: Props) {
+export default function ConversationView({
+    conversationId = 0,
+    inboxId = 0,
+    teamId = 0,
+    label = '',
+    conversationType = '',
+}: Props) {
     return (
         <Dashboard>
             <ConversationProvider
@@ -43,6 +52,7 @@ export default function ConversationView({ conversationId = 0, inboxId = 0, team
                 inboxId={inboxId}
                 teamId={teamId}
                 label={label}
+                conversationType={conversationType}
             >
                 <ConversationLayout conversationId={conversationId} />
             </ConversationProvider>

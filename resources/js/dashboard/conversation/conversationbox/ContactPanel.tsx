@@ -8,15 +8,24 @@ import { conversationSidebarItemsOrder } from 'dashboard/composables/useUISettin
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import type { ContactMeta } from '../types';
+import ContactConversations from './contact/ContactConversations';
 import ContactInfo from './contact/ContactInfo';
+import ContactNotes from './contact/ContactNotes';
 import ConversationAction from './contact/ConversationAction';
+import ConversationInfo from './contact/ConversationInfo';
+import ConversationParticipant from './contact/ConversationParticipant';
+import CustomAttributes from './contact/CustomAttributes';
+import SharedFiles from './contact/SharedFiles';
+import { useContactDetails } from './contact/useContactDetails';
 
-// Port từ routes/dashboard/conversation/ContactPanel.vue — shell panel: header
-// + ContactInfo + các accordion đúng tên/thứ tự gốc (ui_settings
-// conversation_sidebar_items_order + cờ is_*_open). Nội dung từng section thuộc
-// nhóm sau (Macros D3, ConversationInfo/CustomAttributes E1, ContactNotes B2+,
-// SharedFiles B9, ContactConversations, Participants B11) → thân rỗng;
-// linear/shopify (integrations) bỏ; kéo thả sắp xếp bỏ.
+// Port từ routes/dashboard/conversation/ContactPanel.vue — header + ContactInfo
+// + các accordion đúng tên/thứ tự gốc (ui_settings conversation_sidebar_items_order
+// + cờ is_*_open). Macros (D3) còn rỗng; linear/shopify (integrations) bỏ; kéo thả
+// sắp xếp bỏ.
+// Hằng module: nếu dựng object mới mỗi lần render thì useContactDetails sẽ nạp lại vô hạn.
+const NO_CONTACT: ContactMeta = { id: 0, name: null };
+
 interface SidebarSection {
     name: string;
     title: string;
@@ -29,6 +38,10 @@ export default function ContactPanel() {
     const { selectedConversation, uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const macrosEnabled = Boolean(currentAccount.features.macros);
+    const [contact, setContact] = useContactDetails(
+        currentAccount.id,
+        selectedConversation?.meta.sender ?? NO_CONTACT,
+    );
 
     if (!selectedConversation) return null;
 
@@ -49,25 +62,43 @@ export default function ContactPanel() {
             title: t('CONVERSATION_PARTICIPANTS.SIDEBAR_TITLE'),
             openKey: 'is_conv_participants_open',
             compact: false,
+            body: <ConversationParticipant />,
         },
         conversation_info: {
             name: 'conversation_info',
             title: t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_INFO'),
             openKey: 'is_conv_details_open',
             compact: true,
+            body: (
+                <ConversationInfo
+                    conversationAttributes={selectedConversation.additional_attributes ?? {}}
+                    contactAttributes={contact.additional_attributes ?? {}}
+                />
+            ),
         },
         contact_attributes: {
             name: 'contact_attributes',
             title: t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_ATTRIBUTES'),
             openKey: 'is_contact_attributes_open',
             compact: true,
+            body: (
+                <CustomAttributes
+                    attributeType="contact_attribute"
+                    attributeFrom="conversation_contact_panel"
+                    emptyStateMessage={t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')}
+                />
+            ),
         },
-        previous_conversation: {
-            name: 'previous_conversation',
-            title: t('CONVERSATION_SIDEBAR.ACCORDION.PREVIOUS_CONVERSATION'),
-            openKey: 'is_previous_conv_open',
-            compact: true,
-        },
+        // Bản gốc bọc accordion này trong `v-if="contact.id"`.
+        previous_conversation: contact.id
+            ? {
+                  name: 'previous_conversation',
+                  title: t('CONVERSATION_SIDEBAR.ACCORDION.PREVIOUS_CONVERSATION'),
+                  openKey: 'is_previous_conv_open',
+                  compact: true,
+                  body: <ContactConversations contactId={contact.id} />,
+              }
+            : null,
         macros: macrosEnabled
             ? {
                   name: 'macros',
@@ -81,12 +112,14 @@ export default function ContactPanel() {
             title: t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES'),
             openKey: 'is_contact_notes_open',
             compact: true,
+            body: contact.id ? <ContactNotes contactId={contact.id} /> : null,
         },
         shared_files: {
             name: 'shared_files',
             title: t('CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES'),
             openKey: 'is_shared_files_open',
             compact: true,
+            body: <SharedFiles />,
         },
         linear_issues: null,
         shopify_orders: null,
@@ -100,7 +133,8 @@ export default function ContactPanel() {
         <div className="w-full">
             <SidebarActionsHeader title={t('CONVERSATION.SIDEBAR.CONTACT')} onClose={closeContactPanel} />
             <ContactInfo
-                contact={selectedConversation.meta.sender}
+                contact={contact}
+                onContactChange={setContact}
                 uiSettings={uiSettings}
                 onToggleSignature={() =>
                     updateUISettings({ channel_api_signature_enabled: !uiSettings.channel_api_signature_enabled })

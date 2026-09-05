@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
@@ -35,6 +36,8 @@ use Illuminate\Validation\Rule;
 // bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
 {
+    private const ATTACHMENT_RESULTS_PER_PAGE = 15;
+
     private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
 
     public function index(Request $request, Account $account): JsonResponse
@@ -46,6 +49,27 @@ class ConversationsController extends Controller
                 'meta' => $result['count'],
                 'payload' => ConversationResource::collectionFor($result['conversations']),
             ],
+        ]);
+    }
+
+    // conversations#attachments: mọi tệp của hội thoại, mới nhất trước, phân trang.
+    public function attachments(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+
+        $attachments = Attachment::query()
+            ->whereMorphedTo('attachable', Message::class)
+            ->whereIn('attachable_id', $conversation->messages()->select('id'))
+            ->with('attachable')
+            ->orderByDesc('created_at')
+            ->paginate(self::ATTACHMENT_RESULTS_PER_PAGE, ['*'], 'page', (int) $request->query('page', '1'));
+
+        return response()->json([
+            'meta' => ['total_count' => $attachments->total()],
+            'payload' => collect($attachments->items())
+                ->map(fn (Attachment $attachment) => $attachment->pushEventData())
+                ->values()
+                ->all(),
         ]);
     }
 

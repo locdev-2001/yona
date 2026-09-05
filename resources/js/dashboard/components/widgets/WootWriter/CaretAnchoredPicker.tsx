@@ -97,6 +97,8 @@ interface CaretAnchoredPickerProps<TItem extends PreviewPickerItem> {
     onClose: () => void;
     onRemoveTrigger: () => void;
     renderPreview?: (item: TItem | undefined) => ReactNode;
+    renderLeading?: (item: TItem, isSelected: boolean) => ReactNode;
+    renderFilters?: () => ReactNode;
 }
 
 export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
@@ -111,6 +113,8 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
     onClose,
     onRemoveTrigger,
     renderPreview,
+    renderLeading,
+    renderFilters,
 }: CaretAnchoredPickerProps<TItem>) {
     const [caretAnchorElement, setCaretAnchorElement] = useState<HTMLDivElement | null>(null);
     const pickerRef = useRef<PreviewPickerHandle>(null);
@@ -235,6 +239,8 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
                         style={pickerStyle}
                         onSelect={selectAtIndex}
                         renderPreview={renderPreview}
+                        renderLeading={renderLeading}
+                        renderFilters={renderFilters}
                     />
                 </div>,
                 document.body,

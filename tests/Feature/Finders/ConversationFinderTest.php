@@ -6,14 +6,15 @@ use App\Models\AccountUser;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
+use App\Models\ConversationParticipant;
 use App\Models\Inbox;
+use App\Models\Mention;
 use App\Models\Message;
 use App\Models\Team;
 use App\Models\User;
 
 // Port từ spec/finders/conversation_finder_spec.rb.
-// Bỏ: q search (E2), custom view (E1). conversation_type mention/participating
-// mới là khung (bảng của B11). Case agent bot thay bằng ghi thẳng
+// Bỏ: q search (E2), custom view (E1). Case agent bot thay bằng ghi thẳng
 // assignee_agent_bot_id (bảng agent_bots chưa port).
 
 function conversationFinderFixtures(): array
@@ -357,20 +358,71 @@ describe('conversation_type', function () {
             ->and($result['count']['all_count'])->toBe(4);
     });
 
-    it('returns nothing for mention and participating until B11 ships the tables', function () {
+    it('returns nothing for mention when nobody was mentioned', function () {
         $fixtures = conversationFinderFixtures();
 
-        foreach (['mention', 'participating'] as $type) {
-            $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => $type])->perform();
+        $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => 'mention'])->perform();
 
-            expect($result['conversations'])->toHaveCount(0)
-                ->and($result['count'])->toBe([
-                    'mine_count' => 0,
-                    'assigned_count' => 0,
-                    'unassigned_count' => 0,
-                    'all_count' => 0,
-                ]);
-        }
+        expect($result['conversations'])->toHaveCount(0)
+            ->and($result['count'])->toBe([
+                'mine_count' => 0,
+                'assigned_count' => 0,
+                'unassigned_count' => 0,
+                'all_count' => 0,
+            ]);
+    });
+
+    // Giao hội thoại cho agent tự đưa họ vào participants (ParticipationListener)
+    // nên tab Participating luôn có sẵn các hội thoại đang gán cho mình.
+    it('returns conversations assigned to the current user under participating', function () {
+        $fixtures = conversationFinderFixtures();
+
+        $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => 'participating'])->perform();
+
+        expect($result['conversations'])->toHaveCount(3)
+            ->and($result['count']['all_count'])->toBe(3);
+    });
+
+    it('returns only conversations where the current user was mentioned', function () {
+        $fixtures = conversationFinderFixtures();
+        $mentioned = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+        ]);
+        $otherUserMention = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+        ]);
+        Mention::factory()->create(['conversation_id' => $mentioned->id, 'user_id' => $fixtures['userOne']->id]);
+        Mention::factory()->create(['conversation_id' => $otherUserMention->id, 'user_id' => $fixtures['userTwo']->id]);
+
+        $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => 'mention'])->perform();
+
+        expect($result['conversations']->pluck('id')->all())->toBe([$mentioned->id])
+            ->and($result['count']['all_count'])->toBe(1);
+    });
+
+    it('excludes participating conversations from inboxes the user no longer has access to', function () {
+        $fixtures = conversationFinderFixtures();
+        $accessible = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+        ]);
+        $revoked = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['restrictedInbox']->id,
+        ]);
+        $fixtures['restrictedInbox']->addMembers([$fixtures['userOne']->id]);
+        ConversationParticipant::factory()->create(['conversation_id' => $accessible->id, 'user_id' => $fixtures['userOne']->id]);
+        ConversationParticipant::factory()->create(['conversation_id' => $revoked->id, 'user_id' => $fixtures['userOne']->id]);
+        $fixtures['restrictedInbox']->inboxMembers()->where('user_id', $fixtures['userOne']->id)->delete();
+
+        $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => 'participating'])->perform();
+        $metaResult = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => 'participating'])->performMetaOnly();
+
+        expect($result['conversations']->pluck('id')->all())->toContain($accessible->id)
+            ->and($result['conversations']->pluck('id')->all())->not->toContain($revoked->id)
+            ->and($metaResult['count']['all_count'])->toBe($result['conversations']->count());
     });
 
     it('applies the conversation type to meta only counts as well', function () {

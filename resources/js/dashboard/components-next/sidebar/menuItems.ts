@@ -67,6 +67,9 @@ export function buildMenuItems(
                     name: 'Mentions',
                     label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
                     icon: 'i-lucide-at-sign',
+                    // badgeCount của gốc gắn với cờ `filtered_conversation_unread_counts`
+                    // (FilteredCounter) — cờ tắt ở cả hai bên nên không có badge.
+                    activeOn: [scoped('mentions/conversations')],
                     to: scoped('mentions/conversations'),
                 },
                 {

@@ -97,6 +97,11 @@ class Account extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    public function mentions(): HasMany
+    {
+        return $this->hasMany(Mention::class);
+    }
+
     // Featurable#feature_enabled? — override trong feature_flags (jsonb) thắng
     // default của config/features.php (quyết định #8: bỏ bitset FlagShihTzu).
     public function featureEnabled(string $name): bool

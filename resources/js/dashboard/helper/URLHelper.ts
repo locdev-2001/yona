@@ -5,19 +5,29 @@ export const frontendURL = (path: string) => `/app/${path}`;
 export const accountScopedUrl = (accountId: number, path: string) =>
     frontendURL(`accounts/${accountId}/${path}`);
 
-// Port từ URLHelper.conversationUrl — thứ tự ưu tiên inbox → label → team như gốc
-// (custom_view/mention/participating/unattended vào E1/B8/B11).
+// Đường dẫn con của từng tab hội thoại lọc sẵn (urlMap trong URLHelper.js gốc).
+// participating/unattended nằm ở nhóm sau, giữ nguyên bảng để thêm là chạy.
+const CONVERSATION_TYPE_PATHS: Record<string, string> = {
+    mention: 'mentions/conversations',
+    participating: 'participating/conversations',
+    unattended: 'unattended/conversations',
+};
+
+// Port từ URLHelper.conversationUrl — thứ tự ưu tiên inbox → label → team →
+// conversationType như gốc (custom_view vào E1).
 export const conversationUrl = ({
     accountId,
     inboxId = 0,
     teamId = 0,
     label = '',
+    conversationType = '',
     id,
 }: {
     accountId: number;
     inboxId?: number;
     teamId?: number;
     label?: string;
+    conversationType?: string;
     id: number;
 }) => {
     if (inboxId) {
@@ -29,24 +39,32 @@ export const conversationUrl = ({
     if (teamId) {
         return accountScopedUrl(accountId, `team/${teamId}/conversations/${id}`);
     }
+    if (CONVERSATION_TYPE_PATHS[conversationType]) {
+        return accountScopedUrl(accountId, `${CONVERSATION_TYPE_PATHS[conversationType]}/${id}`);
+    }
     return accountScopedUrl(accountId, `conversations/${id}`);
 };
 
-// Port từ URLHelper.conversationListPageURL (label → team → inbox → mặc định
-// dashboard; custom_view/conversationType vào E1/B8/B11).
+// Port từ URLHelper.conversationListPageURL (label → team → inbox →
+// conversationType → mặc định dashboard; custom_view vào E1).
 export const conversationListPageURL = ({
     accountId,
     inboxId = 0,
     teamId = 0,
     label = '',
+    conversationType = '',
 }: {
     accountId: number;
     inboxId?: number;
     teamId?: number;
     label?: string;
+    conversationType?: string;
 }) => {
     if (label) return accountScopedUrl(accountId, `label/${encodeURIComponent(label)}`);
     if (teamId) return accountScopedUrl(accountId, `team/${teamId}`);
     if (inboxId) return accountScopedUrl(accountId, `inbox/${inboxId}`);
+    if (CONVERSATION_TYPE_PATHS[conversationType]) {
+        return accountScopedUrl(accountId, CONVERSATION_TYPE_PATHS[conversationType]);
+    }
     return accountScopedUrl(accountId, 'dashboard');
 };
