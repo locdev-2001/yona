@@ -105,6 +105,32 @@ export function fetchMessages(
     return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages${suffix}`);
 }
 
+// ConversationApi.markMessageRead / markMessagesUnread. Khác gốc: backend trả
+// 204 rỗng (hợp đồng b8-be) thay vì partial conversation → mốc seen mới do
+// context tự suy ra, riêng lần đánh dấu chưa đọc thì đọc lại conversation.
+export function markMessagesRead(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/update_last_seen`);
+}
+
+export function markMessagesUnread(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unread`);
+}
+
+// Bộ đếm badge unread của sidebar (conversationUnreadCounts store). 403 khi
+// account chưa bật cờ `conversation_unread_counts` — gốc nuốt lỗi, không hiện badge.
+export interface ConversationUnreadCounts {
+    all_count: number;
+    inboxes: Record<string, number>;
+    labels: Record<string, number>;
+    teams: Record<string, number>;
+}
+
+export function fetchConversationUnreadCounts(
+    accountId: number,
+): Promise<{ payload: ConversationUnreadCounts }> {
+    return getJson(`/api/v1/accounts/${accountId}/conversations/unread_counts`);
+}
+
 export function toggleTyping(
     accountId: number,
     conversationId: number,

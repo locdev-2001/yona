@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
+import { debounce } from '@chatwoot/utils';
 
 import { useAlert } from 'dashboard/composables/useAlert';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
@@ -20,6 +21,8 @@ import {
     fetchConversationMeta,
     fetchConversations,
     fetchMessages,
+    markMessagesRead as markMessagesReadRequest,
+    markMessagesUnread as markMessagesUnreadRequest,
     muteConversation as muteConversationRequest,
     sendMessage,
     togglePriority as togglePriorityRequest,
@@ -28,6 +31,8 @@ import {
     unmuteConversation as unmuteConversationRequest,
 } from './api';
 import { applyConversationMuted, applyConversationPriority, applyConversationStatus } from './lifecycleReducers';
+import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
+import type { MetaDebounceKey } from './unreadHelpers';
 import {
     applyConversationAdded,
     applyConversationContact,
@@ -35,6 +40,7 @@ import {
     applyConversationUpdate,
     applyIncomingMessage,
     applyMessageToConversation,
+    findPendingMessageIndex,
     mergeFetchedConversations,
     selectVisibleConversations,
     shouldAddConversationToList,
@@ -101,6 +107,8 @@ interface ConversationContextValue {
     assignTeam: (team: TeamMeta | null) => Promise<void>;
     muteConversation: () => Promise<void>;
     unmuteConversation: () => Promise<void>;
+    markMessagesRead: (conversationId: number) => Promise<void>;
+    markMessagesUnread: (conversationId: number) => Promise<void>;
 }
 
 export interface ToggleStatusPayload {
@@ -226,7 +234,15 @@ export function ConversationProvider({
     const conversationIdRef = useRef(conversationId);
     conversationIdRef.current = conversationId;
 
+    // BUS_EVENTS.SCROLL_TO_MESSAGE của gốc kéo theo makeMessagesRead — phát khi mở
+    // hội thoại, khi có tin nối vào hội thoại đang mở và khi hội thoại đang mở được
+    // cập nhật. Ref để các handler khai báo phía trên gọi được hàm định nghĩa sau.
+    const markMessagesReadRef = useRef<(targetId: number) => void>(() => undefined);
+    // Bản mới nhất của `messages` cho các handler không nằm trong vòng render.
+    const messagesRef = useRef<ConversationMessage[]>([]);
+
     const [messages, setMessages] = useState<ConversationMessage[]>([]);
+    messagesRef.current = messages;
     const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
     const [messagesLoading, setMessagesLoading] = useState(false);
     // SET_LAST_MESSAGE_ID_IN_SYNC_CONVERSATION: mốc tin cuối lúc mất kết nối.
@@ -342,6 +358,9 @@ export function ConversationProvider({
                     setAllMessagesLoaded(true);
                 }
                 setMessagesLoading(false);
+                // setActiveChat gốc phát SCROLL_TO_MESSAGE sau khi nạp xong tin →
+                // onScrollToMessage cuộn + makeMessagesRead.
+                markMessagesReadRef.current(conversationId);
             },
             () => {
                 if (!cancelled) setMessagesLoading(false);
@@ -376,7 +395,11 @@ export function ConversationProvider({
     const addMessage = useCallback((message: MessageEventPayload) => {
         const { conversation: embedded, ...plainMessage } = message;
         if (plainMessage.conversation_id === conversationIdRef.current) {
+            // ADD_MESSAGE gốc chỉ phát SCROLL_TO_MESSAGE (→ makeMessagesRead) khi tin
+            // thật sự nối vào cuối hội thoại đang mở, không phải khi thay tin pending.
+            const appended = findPendingMessageIndex(messagesRef.current, plainMessage) === -1;
             setMessages((current) => applyIncomingMessage(current, plainMessage).messages);
+            if (appended) markMessagesReadRef.current(plainMessage.conversation_id);
         }
         setAllConversations((current) =>
             current.map((item) =>
@@ -390,12 +413,99 @@ export function ConversationProvider({
     const updateConversation = useCallback((conversation: Conversation) => {
         if (!conversation?.id) return;
         setAllConversations((current) => applyConversationUpdate(current, conversation));
+        // UPDATE_CONVERSATION gốc phát SCROLL_TO_MESSAGE khi bản ghi đổi là hội thoại đang mở.
+        if (conversation.id === conversationIdRef.current) {
+            markMessagesReadRef.current(conversation.id);
+        }
     }, []);
 
-    // conversationStats/get của ChatList.vue khi nhận 'fetch_conversation_stats'.
+    // conversationStats/get của ChatList.vue khi nhận 'fetch_conversation_stats':
+    // 3 nhịp debounce chọn theo all_count (account càng lớn hỏi càng thưa).
+    const listQueryRef = useRef(listQuery);
+    listQueryRef.current = listQuery;
+    const allCountRef = useRef(listMeta.all_count);
+    allCountRef.current = listMeta.all_count;
+
+    const fetchMetaData = useCallback(() => {
+        fetchConversationMeta(listQueryRef.current).then(
+            (response) => setListMeta(response.meta),
+            () => undefined,
+        );
+    }, []);
+
+    const metaDebouncersRef = useRef<Record<MetaDebounceKey, () => void> | null>(null);
+    if (!metaDebouncersRef.current) {
+        metaDebouncersRef.current = {
+            default: debounce(fetchMetaData, 1000, false, 5000),
+            long: debounce(fetchMetaData, 7500, false, 20000),
+            superLong: debounce(fetchMetaData, 15000, false, 30000),
+        };
+    }
+
     const refetchListMeta = useCallback(() => {
-        fetchConversationMeta(listQuery).then((response) => setListMeta(response.meta), () => undefined);
-    }, [listQuery]);
+        metaDebouncersRef.current![getMetaDebounceKey(allCountRef.current)]();
+    }, []);
+
+    // markMessagesRead / markMessagesUnread (messageReadActions.js): đọc thì 4s sau
+    // mới hạ unread_count, đánh dấu chưa đọc thì ghi ngay theo payload server.
+    const markReadTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+    const cancelPendingReadCommit = useCallback((targetId: number) => {
+        const timer = markReadTimersRef.current.get(targetId);
+        if (timer) {
+            clearTimeout(timer);
+            markReadTimersRef.current.delete(targetId);
+        }
+    }, []);
+    useEffect(() => {
+        const timers = markReadTimersRef.current;
+        return () => timers.forEach((timer) => clearTimeout(timer));
+    }, []);
+
+    const markMessagesRead = useCallback(
+        async (targetId: number) => {
+            if (!targetId) return;
+            try {
+                await markMessagesReadRequest(accountId, targetId);
+                // Backend trả 204 (khác gốc trả conversation) → mốc seen = lúc gọi,
+                // đúng bằng `DateTime.now.utc` mà server vừa ghi.
+                const lastSeen = Math.floor(Date.now() / 1000);
+                cancelPendingReadCommit(targetId);
+                markReadTimersRef.current.set(
+                    targetId,
+                    setTimeout(() => {
+                        markReadTimersRef.current.delete(targetId);
+                        setAllConversations((current) => applyUnreadCount(current, targetId, lastSeen));
+                    }, MARK_READ_COMMIT_DELAY),
+                );
+            } catch {
+                // Gốc nuốt lỗi (markMessagesRead không báo gì cho người dùng).
+            }
+        },
+        [accountId, cancelPendingReadCommit],
+    );
+
+    const markMessagesUnread = useCallback(
+        async (targetId: number) => {
+            if (!targetId) return;
+            await markMessagesUnreadRequest(accountId, targetId);
+            // Vừa mở hội thoại rồi đánh dấu chưa đọc: hủy lần hạ unread còn đang chờ.
+            cancelPendingReadCommit(targetId);
+            // 204 rỗng nên mốc seen + unread_count mới phải đọc lại từ server
+            // (gốc lấy thẳng trong body của `unread`).
+            const conversation = await fetchConversation(accountId, targetId);
+            setAllConversations((current) =>
+                applyUnreadCount(
+                    current,
+                    targetId,
+                    conversation.agent_last_seen_at,
+                    conversation.unread_count,
+                ),
+            );
+        },
+        [accountId, cancelPendingReadCommit],
+    );
+
+    markMessagesReadRef.current = markMessagesRead;
 
     // actionCable.js → store: các event conversation/message của Chatwoot.
     useRealtimeEvent<MessageEventPayload>('message.created', (message) => {
@@ -661,6 +771,8 @@ export function ConversationProvider({
             assignTeam,
             muteConversation,
             unmuteConversation,
+            markMessagesRead,
+            markMessagesUnread,
         }),
         [
             accountId,
@@ -697,6 +809,8 @@ export function ConversationProvider({
             assignTeam,
             muteConversation,
             unmuteConversation,
+            markMessagesRead,
+            markMessagesUnread,
         ],
     );
 

@@ -1,5 +1,7 @@
-// Port từ dashboard/components/ui/Banner.vue (nhánh MessagesView dùng:
-// bannerMessage + hrefLink; action/close button chưa màn nào cần).
+import NextButton from 'dashboard/components-next/button/Button';
+
+// Port từ dashboard/components/ui/Banner.vue: nhánh MessagesView dùng
+// bannerMessage + hrefLink, nhánh ReplyBoxBanner dùng thêm nút hành động.
 // Màu scheme + style link lấy đúng <style scoped> của Banner.vue.
 interface BannerProps {
     bannerMessage: string;
@@ -7,10 +9,26 @@ interface BannerProps {
     hrefLink?: string;
     hrefLinkText?: string;
     className?: string;
+    hasActionButton?: boolean;
+    actionButtonLabel?: string;
+    actionButtonIcon?: string;
+    actionButtonVariant?: 'ghost' | 'faded' | 'solid';
+    onPrimaryAction?: () => void;
 }
 
+// getButtonColor của bản gốc.
+const BUTTON_COLOR: Record<string, 'blue' | 'ruby' | 'amber'> = {
+    primary: 'blue',
+    secondary: 'blue',
+    alert: 'ruby',
+    warning: 'amber',
+};
+
+// Bản gốc để `text-white` ở lớp base rồi ghi đè bằng style scoped `.banner.secondary`
+// (hai class = độ đặc hiệu cao hơn). Utility Tailwind cùng độ đặc hiệu nên phải gom
+// màu chữ vào đúng scheme thay vì đặt mặc định ở base.
 const COLOR_SCHEME_CLASS: Record<string, string> = {
-    primary: 'bg-n-brand',
+    primary: 'bg-n-brand text-white dark:text-white',
     secondary: 'bg-n-slate-3 dark:bg-n-solid-3 text-n-slate-12',
     alert: 'bg-n-ruby-3 text-n-ruby-12',
     warning: 'bg-n-amber-5 text-n-amber-12',
@@ -29,10 +47,15 @@ export default function Banner({
     hrefLink,
     hrefLinkText,
     className = '',
+    hasActionButton = false,
+    actionButtonLabel = '',
+    actionButtonIcon = 'i-lucide-arrow-right',
+    actionButtonVariant = 'faded',
+    onPrimaryAction,
 }: BannerProps) {
     return (
         <div
-            className={`flex items-center justify-center h-12 gap-4 px-4 py-3 text-xs text-white banner dark:text-white ${
+            className={`flex items-center justify-center h-12 gap-4 px-4 py-3 text-xs banner ${
                 COLOR_SCHEME_CLASS[colorScheme] ?? ''
             } ${className}`}
         >
@@ -49,6 +72,18 @@ export default function Banner({
                     </a>
                 ) : null}
             </span>
+            <div className="actions">
+                {hasActionButton ? (
+                    <NextButton
+                        xs
+                        icon={actionButtonIcon}
+                        variant={actionButtonVariant}
+                        color={BUTTON_COLOR[colorScheme] ?? 'blue'}
+                        label={actionButtonLabel}
+                        onClick={onPrimaryAction}
+                    />
+                ) : null}
+            </div>
         </div>
     );
 }

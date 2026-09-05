@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\BulkActionsController;
+use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsController;
 use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
 use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
+use App\Http\Controllers\WebApi\Conversations\DraftMessagesController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\ConversationsController;
@@ -85,6 +87,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
         Route::get('/conversations/meta', [ConversationsController::class, 'meta']);
+        Route::get('/conversations/unread_counts', [ConversationsController::class, 'unreadCounts']);
         // {conversationId} là display_id per-account, không phải khóa chính.
         Route::get('/conversations/{conversationId}', [ConversationsController::class, 'show'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
@@ -94,17 +97,28 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_status', [ConversationsController::class, 'toggleStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_priority', [ConversationsController::class, 'togglePriority'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/update_last_seen', [ConversationsController::class, 'updateLastSeen'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/unread', [ConversationsController::class, 'unread'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
+        // resource :draft_messages (singular) — mot ban nhap moi conversation.
+        Route::get('/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'show'])->whereNumber('conversationId');
+        Route::match(['put', 'patch'], '/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'update'])->whereNumber('conversationId');
+        Route::delete('/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'destroy'])->whereNumber('conversationId');
 
         Route::get('/labels', [LabelsController::class, 'index']);
         Route::post('/labels', [LabelsController::class, 'store']);
         Route::get('/labels/{labelId}', [LabelsController::class, 'show'])->whereNumber('labelId');
         Route::match(['put', 'patch'], '/labels/{labelId}', [LabelsController::class, 'update'])->whereNumber('labelId');
         Route::delete('/labels/{labelId}', [LabelsController::class, 'destroy'])->whereNumber('labelId');
+
+        Route::get('/canned_responses', [CannedResponsesController::class, 'index']);
+        Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
+        Route::match(['put', 'patch'], '/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'update'])->whereNumber('cannedResponseId');
+        Route::delete('/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'destroy'])->whereNumber('cannedResponseId');
 
         Route::post('/bulk_actions', [BulkActionsController::class, 'create']);
 

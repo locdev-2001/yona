@@ -7,13 +7,14 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Models\Team;
 use App\Models\User;
 
 // Port từ spec/finders/conversation_finder_spec.rb.
-// Bỏ ở B3: labels (B7), unread sort + conversation_type unattended (B8),
-// participating/mention (B11), updated_within (realtime B4). Case agent bot
-// thay bằng ghi thẳng assignee_agent_bot_id (bảng agent_bots chưa port).
+// Bỏ: q search (E2), custom view (E1). conversation_type mention/participating
+// mới là khung (bảng của B11). Case agent bot thay bằng ghi thẳng
+// assignee_agent_bot_id (bảng agent_bots chưa port).
 
 function conversationFinderFixtures(): array
 {
@@ -300,5 +301,91 @@ describe('updated_within', function () {
         expect($result['conversations'])->toHaveCount(29)
             ->and($result['conversations']->pluck('created_at')->map->getTimestamp()->all())
             ->toBe($result['conversations']->pluck('created_at')->map->getTimestamp()->sort()->values()->all());
+    });
+});
+
+describe('sort_by unread', function () {
+    it('returns conversations with the highest unread count first', function () {
+        $fixtures = conversationFinderFixtures();
+        $attributes = ['account_id' => $fixtures['account']->id, 'inbox_id' => $fixtures['inbox']->id];
+        $mostUnread = Conversation::factory()->create([...$attributes, 'agent_last_seen_at' => now()->subHour()]);
+        $unread = Conversation::factory()->create([...$attributes, 'agent_last_seen_at' => now()->subHour()]);
+        $read = Conversation::factory()->create([...$attributes, 'agent_last_seen_at' => now()->addMinute()]);
+        $resolvedUnread = Conversation::factory()->create([...$attributes, 'agent_last_seen_at' => now()->subHour()]);
+
+        foreach ([$mostUnread, $unread, $read, $resolvedUnread] as $conversation) {
+            Message::factory()->create([
+                'account_id' => $fixtures['account']->id,
+                'conversation_id' => $conversation->id,
+                'created_at' => now()->subMinutes(5),
+            ]);
+        }
+        Message::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'conversation_id' => $mostUnread->id,
+            'created_at' => now()->subMinutes(4),
+        ]);
+        // Tin incoming mở lại hội thoại đã resolve nên phải resolve SAU khi có tin.
+        $resolvedUnread->update(['status' => Conversation::STATUS_RESOLVED]);
+        $read->forceFill(['last_activity_at' => now()->addMinute()])->save();
+        $unread->forceFill(['last_activity_at' => now()->addMinutes(2)])->save();
+
+        $result = conversationFinderFor($fixtures, ['status' => 'open', 'sort_by' => 'unread'])->perform();
+        $ids = $result['conversations']->pluck('id')->all();
+
+        expect($ids)->toContain($mostUnread->id, $unread->id, $read->id)
+            ->and($ids)->not->toContain($resolvedUnread->id)
+            ->and(array_search($mostUnread->id, $ids, true))->toBeLessThan(array_search($unread->id, $ids, true))
+            ->and(array_search($unread->id, $ids, true))->toBeLessThan(array_search($read->id, $ids, true));
+    });
+});
+
+describe('conversation_type', function () {
+    it('keeps only unattended conversations', function () {
+        $fixtures = conversationFinderFixtures();
+        $attended = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+            'first_reply_created_at' => now(),
+        ]);
+        $attended->forceFill(['waiting_since' => null])->save();
+
+        $result = conversationFinderFor($fixtures, ['status' => 'open', 'conversation_type' => 'unattended'])->perform();
+
+        expect($result['conversations']->pluck('id'))->not->toContain($attended->id)
+            ->and($result['conversations'])->toHaveCount(4)
+            ->and($result['count']['all_count'])->toBe(4);
+    });
+
+    it('returns nothing for mention and participating until B11 ships the tables', function () {
+        $fixtures = conversationFinderFixtures();
+
+        foreach (['mention', 'participating'] as $type) {
+            $result = conversationFinderFor($fixtures, ['status' => 'all', 'conversation_type' => $type])->perform();
+
+            expect($result['conversations'])->toHaveCount(0)
+                ->and($result['count'])->toBe([
+                    'mine_count' => 0,
+                    'assigned_count' => 0,
+                    'unassigned_count' => 0,
+                    'all_count' => 0,
+                ]);
+        }
+    });
+
+    it('applies the conversation type to meta only counts as well', function () {
+        $fixtures = conversationFinderFixtures();
+        $attended = Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+            'first_reply_created_at' => now(),
+        ]);
+        $attended->forceFill(['waiting_since' => null])->save();
+
+        $metaResult = conversationFinderFor($fixtures, ['status' => 'open', 'conversation_type' => 'unattended'])->performMetaOnly();
+        $fullResult = conversationFinderFor($fixtures, ['status' => 'open', 'conversation_type' => 'unattended'])->perform();
+
+        expect($metaResult['count'])->toBe($fullResult['count'])
+            ->and($metaResult['count']['all_count'])->toBe(4);
     });
 });

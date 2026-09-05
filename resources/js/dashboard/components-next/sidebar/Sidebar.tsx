@@ -12,12 +12,13 @@ import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
 import { filterMenuByRole } from './permissions';
+import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ components-next/sidebar/Sidebar.vue
 // (ComposeConversation vào B3; ChangelogCard cloud-only bỏ; sort menu +
-// keyboard shortcuts vào sau; unread counts đổ về từ B8)
+// keyboard shortcuts vào sau; SidebarSortMenu chưa port)
 export default function Sidebar({
     isMobileSidebarOpen = false,
     onCloseMobileSidebar,
@@ -30,6 +31,8 @@ export default function Sidebar({
     const role = currentAccountUser.role;
     // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
     const accountLabels = useLabelsList(accountId);
+    // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
+    const unreadCounts = useConversationUnreadCounts();
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -110,8 +113,12 @@ export default function Sidebar({
     };
 
     const menuItems = useMemo(
-        () => filterMenuByRole(buildMenuItems(accountId, inboxes, teams, labelsOnSidebar(accountLabels)), role),
-        [accountId, inboxes, teams, accountLabels, role],
+        () =>
+            filterMenuByRole(
+                buildMenuItems(accountId, inboxes, teams, labelsOnSidebar(accountLabels), unreadCounts),
+                role,
+            ),
+        [accountId, inboxes, teams, accountLabels, unreadCounts, role],
     );
 
     const asideRef = useRef<HTMLElement>(null);

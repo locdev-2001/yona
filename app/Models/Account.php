@@ -72,6 +72,11 @@ class Account extends Model
         return $this->hasMany(Label::class);
     }
 
+    public function cannedResponses(): HasMany
+    {
+        return $this->hasMany(CannedResponse::class);
+    }
+
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);

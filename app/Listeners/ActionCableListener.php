@@ -22,8 +22,7 @@ use Illuminate\Support\Str;
 // người nghe rồi đẩy ActionCableBroadcastJob (queue critical). Chạy đồng bộ
 // trong request như SyncDispatcher. Laravel tự đăng ký qua event discovery
 // (handle(DomainEvent)) — KHÔNG Event::listen thêm, kẻo mỗi event bắn 2 lần.
-// notification_created/updated/deleted và conversation_unread_count_changed
-// chờ model Notification + unread counts (D2/B8).
+// notification_created/updated/deleted chờ model Notification (D2).
 class ActionCableListener extends BaseListener
 {
     public function handle(DomainEvent $event): void
@@ -88,6 +87,24 @@ class ActionCableListener extends BaseListener
     public function conversationRead(DomainEvent $event): void
     {
         $this->broadcastConversationToMembers($event, EventType::CONVERSATION_READ);
+    }
+
+    // Payload rỗng như bản gốc: client nhận tín hiệu rồi tự gọi lại
+    // GET /conversations/unread_counts. Cùng cổng cờ tính năng với endpoint đó.
+    public function conversationUnreadCountChanged(DomainEvent $event): void
+    {
+        [$conversation, $account] = $this->extractConversationAndAccount($event);
+
+        if (! $account->featureEnabled('conversation_unread_counts')) {
+            return;
+        }
+
+        $this->broadcast(
+            $account,
+            $this->userTokens($account, $conversation->inbox->members()->get()),
+            EventType::CONVERSATION_UNREAD_COUNT_CHANGED,
+            []
+        );
     }
 
     public function conversationStatusChanged(DomainEvent $event): void

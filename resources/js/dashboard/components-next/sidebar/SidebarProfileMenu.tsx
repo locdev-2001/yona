@@ -1,9 +1,13 @@
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
+import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
+import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { updateColorScheme } from 'dashboard/helper/themeHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -37,6 +41,11 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
     const user = auth.user!;
     const availability = useCurrentUserAvailability();
     const availableName = user.display_name || user.name;
+    const [showShortcutModal, setShowShortcutModal] = useState(false);
+
+    // Sidebar.vue gốc gắn phím tắt $mod+Slash / Alt+C,V,R,S; ở đây gắn cùng chỗ
+    // với mục menu mở modal để không đụng Sidebar.tsx của tính năng khác.
+    useSidebarKeyboardShortcuts(currentAccount.id, setShowShortcutModal);
 
     const logout = () => router.post('/app/logout');
 
@@ -44,6 +53,11 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
         <DropdownBody className="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
             <SidebarProfileMenuStatus />
             <DropdownSeparator />
+            <DropdownItem
+                label={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')}
+                icon="i-lucide-keyboard"
+                onClick={() => setShowShortcutModal(true)}
+            />
             <DropdownItem
                 label={t('SIDEBAR_ITEMS.PROFILE_SETTINGS')}
                 icon="i-lucide-user-pen"
@@ -82,6 +96,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
     );
 
     return (
+        <>
         <DropdownContainer className={`relative min-w-0 ${isCollapsed ? 'w-auto' : 'w-full'}`} menu={menu}>
             {({ toggle, isOpen }) => (
                 <button
@@ -106,5 +121,12 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                 </button>
             )}
         </DropdownContainer>
+        {/* Gốc mount modal ở Dashboard.vue; sidebar của bản port có transform nên
+            `position: fixed` bị neo vào sidebar → đưa ra body để rộng đúng viewport. */}
+        {createPortal(
+            <KeyShortcutModal show={showShortcutModal} onClose={() => setShowShortcutModal(false)} />,
+            document.body,
+        )}
+        </>
     );
 }

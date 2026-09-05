@@ -19,7 +19,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
 // Port từ spec/listeners/action_cable_listener_spec.rb.
-// Bỏ: notification_* + conversation_unread_count_changed (D2/B8), agent bot typing (EE).
+// Bỏ: notification_* (D2), agent bot typing (EE).
 
 function listenerSetup(): array
 {
@@ -257,5 +257,27 @@ describe('dispatch wiring', function () {
         DomainEvent::dispatch(EventType::INBOX_CREATED, ['inbox' => null]);
 
         Queue::assertPushed(ActionCableBroadcastJob::class, 1);
+    });
+});
+
+describe('conversation_unread_count_changed', function () {
+    it('signals inbox members with an empty payload when the feature is enabled', function () {
+        [$account, $admin, $agent, , $conversation] = listenerSetup();
+        $account->forceFill(['feature_flags' => ['conversation_unread_counts' => true]])->save();
+
+        fire(EventType::CONVERSATION_UNREAD_COUNT_CHANGED, ['conversation' => $conversation->fresh()]);
+
+        $job = pushedBroadcast();
+        expect($job->members)->toEqualCanonicalizing([$agent->pubsub_token, $admin->pubsub_token])
+            ->and($job->eventName)->toBe('conversation.unread_count_changed')
+            ->and($job->data)->toBe(['account_id' => $account->id]);
+    });
+
+    it('stays silent when the account has the feature disabled', function () {
+        [, , , , $conversation] = listenerSetup();
+
+        fire(EventType::CONVERSATION_UNREAD_COUNT_CHANGED, ['conversation' => $conversation]);
+
+        Queue::assertNothingPushed();
     });
 });

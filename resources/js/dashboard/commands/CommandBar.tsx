@@ -3,6 +3,8 @@ import './commandbar.scss';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '../../i18n';
+import { useAppearanceHotKeys } from './useAppearanceHotKeys';
+import { useGoToCommandHotKeys } from './useGoToCommandHotKeys';
 import { useCommandBarActions } from './commandBarStore';
 import type { NinjaKeysElement } from './commandBarStore';
 
@@ -37,6 +39,10 @@ interface NinjaChangeDetail {
 // ConversationResolveAttributesModal (EE), setContextMenuChatId, tracking.
 export default function CommandBar() {
     const ninjaRef = useRef<NinjaKeysElement>(null);
+    // Các nguồn action không phụ thuộc hội thoại (gốc gọi thẳng trong commandbar.vue);
+    // nguồn `conversation` do ConversationView đăng ký.
+    useGoToCommandHotKeys();
+    useAppearanceHotKeys();
     const actions = useCommandBarActions();
     const [currentCommandRoot, setCurrentCommandRoot] = useState<string | null>(null);
 
