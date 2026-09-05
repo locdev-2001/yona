@@ -1,52 +1,66 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import EmailTranscriptModal from 'dashboard/components/EmailTranscriptModal';
+import { useAlert } from 'dashboard/composables/useAlert';
+import {
+    CMD_MUTE_CONVERSATION,
+    CMD_SEND_TRANSCRIPT,
+    CMD_UNMUTE_CONVERSATION,
+} from 'dashboard/helper/commandbar/events';
+import { emitter } from 'shared/helpers/emitter';
 import { t } from '../../../i18n';
-import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
+import ResolveAction from './ResolveAction';
 
-// Port từ widgets/conversation/MoreActions.vue + components/buttons/ResolveAction.vue.
-// Khác biệt cố ý B3: các nút render đúng cấu trúc/pixel nhưng CHƯA có hành vi —
-// toggle status/snooze/mark pending (B5), mute/unmute (B4 Redis), send transcript
-// (mailer B5); bấm item chỉ đóng menu.
+// Port từ widgets/conversation/MoreActions.vue: ResolveAction + menu ⋮ (mute/unmute
+// theo currentChat.muted, send transcript) + EmailTranscriptModal; cùng nhận lệnh
+// từ command bar qua emitter.
 export default function MoreActions() {
-    const { selectedConversation } = useConversation();
+    const { selectedConversation, accountId, muteConversation, unmuteConversation } = useConversation();
+    const [showEmailActionsModal, setShowEmailActionsModal] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
-    const [showResolveDropdown, setShowResolveDropdown] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
+    const actionsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!showActionsDropdown && !showResolveDropdown) return undefined;
-
+        if (!showActionsDropdown) return undefined;
         const handleClickAway = (event: globalThis.MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) {
-                setShowActionsDropdown(false);
-                setShowResolveDropdown(false);
-            }
+            if (!actionsRef.current?.contains(event.target as Node)) setShowActionsDropdown(false);
         };
         document.addEventListener('mousedown', handleClickAway);
-
         return () => document.removeEventListener('mousedown', handleClickAway);
-    }, [showActionsDropdown, showResolveDropdown]);
+    }, [showActionsDropdown]);
+
+    const mute = useCallback(() => {
+        void muteConversation();
+        useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
+    }, [muteConversation]);
+
+    const unmute = useCallback(() => {
+        void unmuteConversation();
+        useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
+    }, [unmuteConversation]);
+
+    const toggleEmailModal = useCallback(() => setShowEmailActionsModal(open => !open), []);
+
+    useEffect(() => {
+        emitter.on(CMD_MUTE_CONVERSATION, mute);
+        emitter.on(CMD_UNMUTE_CONVERSATION, unmute);
+        emitter.on(CMD_SEND_TRANSCRIPT, toggleEmailModal);
+        return () => {
+            emitter.off(CMD_MUTE_CONVERSATION, mute);
+            emitter.off(CMD_UNMUTE_CONVERSATION, unmute);
+            emitter.off(CMD_SEND_TRANSCRIPT, toggleEmailModal);
+        };
+    }, [mute, unmute, toggleEmailModal]);
 
     if (!selectedConversation) return null;
 
-    const status = selectedConversation.status;
-    const isOpen = status === STATUS_TYPE.OPEN;
-    const isPending = status === STATUS_TYPE.PENDING;
-    const isResolved = status === STATUS_TYPE.RESOLVED;
-    const isSnoozed = status === STATUS_TYPE.SNOOZED;
-    const showOpenButton = isPending || isSnoozed;
-    const showAdditionalActions = !isPending && !isSnoozed;
-
     const actionMenuItems = [
-        {
-            icon: 'i-lucide-volume-off',
-            label: t('CONTACT_PANEL.MUTE_CONTACT'),
-            action: 'mute',
-            value: 'mute',
-        },
+        !selectedConversation.muted
+            ? { icon: 'i-lucide-volume-off', label: t('CONTACT_PANEL.MUTE_CONTACT'), action: 'mute', value: 'mute' }
+            : { icon: 'i-lucide-volume-1', label: t('CONTACT_PANEL.UNMUTE_CONTACT'), action: 'unmute', value: 'unmute' },
         {
             icon: 'i-lucide-share',
             label: t('CONTACT_PANEL.SEND_TRANSCRIPT'),
@@ -55,77 +69,21 @@ export default function MoreActions() {
         },
     ];
 
+    const handleActionClick = ({ action }: { action: string }) => {
+        setShowActionsDropdown(false);
+        if (action === 'mute') {
+            mute();
+        } else if (action === 'unmute') {
+            unmute();
+        } else if (action === 'send_transcript') {
+            toggleEmailModal();
+        }
+    };
+
     return (
-        <div ref={rootRef} className="relative flex items-center gap-2 actions--container">
-            <div className="flex relative justify-end items-center resolve-actions">
-                <div
-                    className={`flex-shrink-0 rounded-lg shadow outline-1 outline ${
-                        !showOpenButton ? 'outline-n-container' : 'outline-transparent'
-                    }`}
-                >
-                    {isOpen ? (
-                        <NextButton
-                            label={t('CONVERSATION.HEADER.RESOLVE_ACTION')}
-                            sm
-                            slate
-                            noAnimation
-                            className="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-                        />
-                    ) : isResolved ? (
-                        <NextButton
-                            label={t('CONVERSATION.HEADER.REOPEN_ACTION')}
-                            sm
-                            slate
-                            noAnimation
-                            className="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-                        />
-                    ) : showOpenButton ? (
-                        <NextButton label={t('CONVERSATION.HEADER.OPEN_ACTION')} sm slate noAnimation />
-                    ) : null}
-                    {showAdditionalActions ? (
-                        <NextButton
-                            icon="i-lucide-chevron-down"
-                            sm
-                            slate
-                            noAnimation
-                            trailingIcon
-                            className="ltr:rounded-l-none rtl:rounded-r-none !outline-0"
-                            onClick={() => setShowResolveDropdown(open => !open)}
-                        />
-                    ) : null}
-                </div>
-                {showResolveDropdown ? (
-                    <div className="border rounded-lg shadow-lg border-n-strong dark:border-n-strong box-content p-2 w-fit z-10 bg-n-alpha-3 backdrop-blur-[100px] absolute block left-auto top-full mt-0.5 start-0 xl:start-auto xl:end-0 max-w-[12.5rem] min-w-[9.75rem]">
-                        <ul className="mb-0 list-none m-0 p-0 flex flex-col gap-0.5">
-                            <li>
-                                <NextButton
-                                    label={t('CONVERSATION.RESOLVE_DROPDOWN.SNOOZE_UNTIL')}
-                                    ghost
-                                    slate
-                                    sm
-                                    start
-                                    icon="i-lucide-alarm-clock-minus"
-                                    className="w-full"
-                                    onClick={() => setShowResolveDropdown(false)}
-                                />
-                            </li>
-                            <li>
-                                <NextButton
-                                    label={t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING')}
-                                    ghost
-                                    slate
-                                    sm
-                                    start
-                                    icon="i-lucide-circle-dot-dashed"
-                                    className="w-full"
-                                    onClick={() => setShowResolveDropdown(false)}
-                                />
-                            </li>
-                        </ul>
-                    </div>
-                ) : null}
-            </div>
-            <div className="relative flex items-center group">
+        <div className="relative flex items-center gap-2 actions--container">
+            <ResolveAction />
+            <div ref={actionsRef} className="relative flex items-center group">
                 <NextButton
                     title={t('CONVERSATION.HEADER.MORE_ACTIONS')}
                     sm
@@ -139,10 +97,18 @@ export default function MoreActions() {
                     <DropdownMenu
                         menuItems={actionMenuItems}
                         className="mt-1 ltr:right-0 rtl:left-0 top-full"
-                        onAction={() => setShowActionsDropdown(false)}
+                        onAction={handleActionClick}
                     />
                 ) : null}
             </div>
+            {showEmailActionsModal ? (
+                <EmailTranscriptModal
+                    show={showEmailActionsModal}
+                    currentChat={selectedConversation}
+                    accountId={accountId}
+                    onCancel={toggleEmailModal}
+                />
+            ) : null}
         </div>
     );
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
+use App\Jobs\Conversations\ActivityMessageJob;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,11 +13,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/conversation.rb.
-// Bỏ ở B3: FilteredCountInvalidator (B8), status_changed/assignee/team events +
-// activity messages + toggle_status/snooze (B5/B6), AssignmentHandler/AutoAssignmentHandler (B6),
-// Labelable (B7), mentions/participants (B11), csat (C5), agent bot + SLA (EE/D4),
-// mute (Redis — B4), campaigns (C4).
+// Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
+// PriorityActivityMessageHandler, ConversationMuteHelpers).
+// Bỏ: FilteredCountInvalidator (B8), assignee/team events + activity (B6),
+// AssignmentHandler/AutoAssignmentHandler (B6), Labelable + label activity (B7),
+// mentions/participants (B11), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
+// campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
@@ -171,8 +173,54 @@ class Conversation extends Model
                 $conversation->syncOriginalAttribute('waiting_since');
             }
 
+            $conversation->notifyStatusChange();
+            $conversation->createActivity();
             $conversation->notifyConversationUpdation();
         });
+    }
+
+    public function toggleStatus(): bool
+    {
+        $this->status = $this->isOpen() ? self::STATUS_RESOLVED : self::STATUS_OPEN;
+
+        if ($this->status === self::STATUS_PENDING || $this->status === self::STATUS_SNOOZED) {
+            $this->status = self::STATUS_OPEN;
+        }
+
+        return $this->save();
+    }
+
+    public function togglePriority(?string $priority = null): bool
+    {
+        $this->priority = self::priorityFromName(blank($priority) ? null : $priority);
+
+        return $this->save();
+    }
+
+    public function mute(): void
+    {
+        if ($this->contact === null) {
+            return;
+        }
+
+        $this->update(['status' => self::STATUS_RESOLVED]);
+        $this->contact->update(['blocked' => true]);
+        $this->createMuteChangeActivity('muted');
+    }
+
+    public function unmute(): void
+    {
+        if ($this->contact === null) {
+            return;
+        }
+
+        $this->contact->update(['blocked' => false]);
+        $this->createMuteChangeActivity('unmuted');
+    }
+
+    public function isMuted(): bool
+    {
+        return (bool) $this->contact?->blocked;
     }
 
     // notifiable_assignee_change?: giao cho người khác (không phải tự nhận).
@@ -392,6 +440,135 @@ class Conversation extends Model
             'changed_attributes' => $changedAttributes,
             'performed_by' => auth()->user(),
         ]);
+    }
+
+    // notify_status_change: mỗi event bắn khi điều kiện của nó đúng.
+    private function notifyStatusChange(): void
+    {
+        $statusChanged = $this->wasChanged('status');
+
+        $conditions = [
+            EventType::CONVERSATION_OPENED->value => $statusChanged && $this->isOpen(),
+            EventType::CONVERSATION_RESOLVED->value => $statusChanged && $this->isResolved(),
+            EventType::CONVERSATION_STATUS_CHANGED->value => $statusChanged,
+            EventType::CONVERSATION_READ->value => $this->wasChanged('contact_last_seen_at'),
+            EventType::CONVERSATION_CONTACT_CHANGED->value => $this->wasChanged('contact_id'),
+        ];
+
+        foreach ($conditions as $event => $condition) {
+            if ($condition) {
+                $this->dispatcherDispatch(EventType::from($event));
+            }
+        }
+    }
+
+    // ActivityMessageHandler#create_activity — nhánh status + priority.
+    private function createActivity(): void
+    {
+        $userName = auth()->user()?->name;
+
+        if ($this->wasChanged('status')) {
+            $this->statusChangeActivity($userName);
+        }
+
+        if ($this->wasChanged('priority')) {
+            $this->priorityChangeActivity($userName);
+        }
+    }
+
+    private function statusChangeActivity(?string $userName): void
+    {
+        $content = $this->userStatusChangeActivityContent($userName);
+
+        if (blank($content)) {
+            return;
+        }
+
+        ActivityMessageJob::dispatch($this, $this->activityMessageParams($content, [
+            'activity' => ['type' => 'conversation_status_changed', 'status' => $this->statusName()],
+        ]));
+    }
+
+    private function userStatusChangeActivityContent(?string $userName): ?string
+    {
+        if ($userName !== null) {
+            return __('conversations.activity.status.'.$this->statusName(), ['user_name' => $userName]);
+        }
+
+        if ($this->isResolved()) {
+            ['key' => $key, 'count' => $count] = $this->autoResolveMessageKey((int) ($this->account->settings['auto_resolve_after'] ?? 0));
+
+            return __('conversations.activity.status.'.$key, ['count' => $count]);
+        }
+
+        return null;
+    }
+
+    /** @return array{key: string, count: int} */
+    private function autoResolveMessageKey(int $minutes): array
+    {
+        if ($minutes >= 1440 && $minutes % 1440 === 0) {
+            return ['key' => 'auto_resolved_days', 'count' => intdiv($minutes, 1440)];
+        }
+
+        if ($minutes >= 60 && $minutes % 60 === 0) {
+            return ['key' => 'auto_resolved_hours', 'count' => intdiv($minutes, 60)];
+        }
+
+        return ['key' => 'auto_resolved_minutes', 'count' => $minutes];
+    }
+
+    private function priorityChangeActivity(?string $userName): void
+    {
+        $oldPriority = self::PRIORITY_NAMES[$this->getOriginal('priority')] ?? null;
+        $newPriority = $this->priorityName();
+
+        if ($oldPriority === null && $newPriority === null) {
+            return;
+        }
+
+        $changeType = match (true) {
+            $oldPriority !== null && $newPriority !== null => 'updated',
+            $newPriority !== null => 'added',
+            default => 'removed',
+        };
+
+        $content = __('conversations.activity.priority.'.$changeType, [
+            'user_name' => $userName,
+            'new_priority' => $newPriority,
+            'old_priority' => $oldPriority,
+        ]);
+
+        ActivityMessageJob::dispatch($this, $this->activityMessageParams($content));
+    }
+
+    private function createMuteChangeActivity(string $changeType): void
+    {
+        $user = auth()->user();
+
+        if ($user === null) {
+            return;
+        }
+
+        $content = __('conversations.activity.'.$changeType, ['user_name' => $user->name]);
+
+        ActivityMessageJob::dispatch($this, $this->activityMessageParams($content));
+    }
+
+    private function activityMessageParams(string $content, ?array $contentAttributes = null): array
+    {
+        $params = [
+            'account_id' => $this->account_id,
+            'inbox_id' => $this->inbox_id,
+            'message_type' => Message::TYPE_ACTIVITY,
+            'content' => $content,
+        ];
+
+        if (filled($contentAttributes)) {
+            $params['content_attributes'] = $contentAttributes;
+        }
+
+        return $params;
     }
 
     private function validateRefererUrl(): void

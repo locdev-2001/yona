@@ -17,6 +17,7 @@ export interface ContactMeta {
 export interface AgentMeta {
     id: number;
     name: string;
+    email?: string | null;
     available_name?: string;
     availability_status?: string;
     thumbnail?: string;
@@ -74,6 +75,9 @@ export interface ConversationMeta {
     hmac_verified?: boolean | null;
 }
 
+export type ConversationStatus = 'open' | 'resolved' | 'pending' | 'snoozed';
+export type ConversationPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export interface Conversation {
     id: number;
     uuid: string;
@@ -81,8 +85,8 @@ export interface Conversation {
     inbox_id: number;
     meta: ConversationMeta;
     messages: ConversationMessage[];
-    status: 'open' | 'resolved' | 'pending' | 'snoozed';
-    priority: string | null;
+    status: ConversationStatus;
+    priority: ConversationPriority | null;
     labels: string[];
     muted: boolean;
     can_reply: boolean;

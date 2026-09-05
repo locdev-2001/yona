@@ -18,9 +18,14 @@ import {
     fetchConversationMeta,
     fetchConversations,
     fetchMessages,
+    muteConversation as muteConversationRequest,
     sendMessage,
+    togglePriority as togglePriorityRequest,
+    toggleStatus as toggleStatusRequest,
     toggleTyping,
+    unmuteConversation as unmuteConversationRequest,
 } from './api';
+import { applyConversationMuted, applyConversationPriority, applyConversationStatus } from './lifecycleReducers';
 import {
     applyConversationAdded,
     applyConversationContact,
@@ -41,7 +46,15 @@ import {
     SORT_BY_TYPE,
     STATUS_TYPE,
 } from './constants';
-import type { AssigneeTab, Conversation, ConversationListMeta, ConversationMessage, ConversationStatusFilter } from './types';
+import type {
+    AssigneeTab,
+    Conversation,
+    ConversationListMeta,
+    ConversationMessage,
+    ConversationPriority,
+    ConversationStatus,
+    ConversationStatusFilter,
+} from './types';
 
 // Thay cụm store vuex conversations/conversationPage của Chatwoot:
 // list + counts + selected chat + messages + gửi tin (pending → sent/failed)
@@ -77,6 +90,17 @@ interface ConversationContextValue {
     fetchPreviousMessages: () => Promise<number>;
     sendReply: (payload: { content: string; isPrivate: boolean }) => void;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
+    toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
+    togglePriority: (priority: ConversationPriority | null) => Promise<void>;
+    muteConversation: () => Promise<void>;
+    unmuteConversation: () => Promise<void>;
+}
+
+export interface ToggleStatusPayload {
+    status: ConversationStatus;
+    snoozedUntil?: number | null;
+    // Gốc cho phép đổi status của conversation trong context menu (không phải conversation đang mở).
+    conversationId?: number;
 }
 
 // Payload message.created/updated: message phẳng + conversation rút gọn (push_event_data).
@@ -461,6 +485,55 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
         [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
     );
 
+    // toggleStatus gốc: gọi API rồi ghi current_status + snoozed_until từ payload lên
+    // conversation (CHANGE_CONVERSATION_STATUS); lỗi nuốt như store gốc.
+    const toggleStatus = useCallback(
+        async ({ status, snoozedUntil = null, conversationId: targetId }: ToggleStatusPayload) => {
+            const targetConversationId = targetId || conversationId;
+            if (!targetConversationId) return;
+            try {
+                const { payload } = await toggleStatusRequest(accountId, targetConversationId, status, snoozedUntil);
+                setAllConversations(current =>
+                    applyConversationStatus(current, targetConversationId, payload.current_status, payload.snoozed_until),
+                );
+            } catch {
+                // Gốc nuốt lỗi; realtime status_changed (nếu có) vẫn đồng bộ lại.
+            }
+        },
+        [accountId, conversationId],
+    );
+
+    // ConversationAction.vue: setCurrentChatPriority lạc quan rồi assignPriority; lỗi → trả lại giá trị cũ.
+    const togglePriority = useCallback(
+        async (priority: ConversationPriority | null) => {
+            if (!conversationId) return;
+            const previousPriority = selectedConversation?.priority ?? null;
+            setAllConversations(current => applyConversationPriority(current, conversationId, priority));
+            try {
+                await togglePriorityRequest(accountId, conversationId, priority);
+            } catch (error) {
+                setAllConversations(current => applyConversationPriority(current, conversationId, previousPriority));
+                throw error;
+            }
+        },
+        [accountId, conversationId, selectedConversation?.priority],
+    );
+
+    const setMuted = useCallback(
+        async (muted: boolean) => {
+            if (!conversationId) return;
+            try {
+                await (muted ? muteConversationRequest : unmuteConversationRequest)(accountId, conversationId);
+                setAllConversations(current => applyConversationMuted(current, conversationId, muted));
+            } catch {
+                // muteConversation/unmuteConversation gốc nuốt lỗi.
+            }
+        },
+        [accountId, conversationId],
+    );
+    const muteConversation = useCallback(() => setMuted(true), [setMuted]);
+    const unmuteConversation = useCallback(() => setMuted(false), [setMuted]);
+
     const value = useMemo<ConversationContextValue>(
         () => ({
             accountId,
@@ -490,6 +563,10 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             fetchPreviousMessages,
             sendReply,
             toggleTypingStatus,
+            toggleStatus,
+            togglePriority,
+            muteConversation,
+            unmuteConversation,
         }),
         [
             accountId,
@@ -519,6 +596,10 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             fetchPreviousMessages,
             sendReply,
             toggleTypingStatus,
+            toggleStatus,
+            togglePriority,
+            muteConversation,
+            unmuteConversation,
         ],
     );
 

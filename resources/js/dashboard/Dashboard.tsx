@@ -7,10 +7,11 @@ import Sidebar from 'dashboard/components-next/sidebar/Sidebar';
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
+import CommandBar from 'dashboard/commands/CommandBar';
 import type { DashboardPageProps } from './types';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
-// CommandBar/Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau.
+// Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const { auth } = usePage<DashboardPageProps>().props;
@@ -32,6 +33,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                     isMobileSidebarOpen={isMobileSidebarOpen}
                     onToggle={() => setMobileSidebarOpen(open => !open)}
                 />
+                <CommandBar />
             </main>
             <SnackbarContainer />
             <RealtimeProvider />

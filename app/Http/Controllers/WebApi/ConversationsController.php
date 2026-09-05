@@ -13,19 +13,21 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Contact;
 use App\Models\ContactInbox;
+use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Services\Conversations\TypingStatusManager;
+use App\Support\DateRangeHelper;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
-// Bỏ ở B3: filter/search (E1/E2), attachments (B9), toggle_status/toggle_priority/
-// mute/unmute/transcript (B5), update_last_seen/unread (B8),
-// custom_attributes (E1), destroy (đi cùng DeleteService các nhóm sau), update
-// (chỉ đổi priority — B5).
+// Bỏ: filter/search (E1/E2), attachments (B9), transcript (F1),
+// update_last_seen/unread (B8), custom_attributes (E1), destroy (đi cùng
+// DeleteService các nhóm sau), bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
 {
     public function index(Request $request, Account $account): JsonResponse
@@ -84,6 +86,78 @@ class ConversationsController extends Controller
         return response()->json((new ConversationResource($conversation))->toArray($request));
     }
 
+    public function update(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        // permitted_update_params: chỉ priority.
+        $validated = $request->validate(['priority' => ['nullable', Rule::in(Conversation::PRIORITY_NAMES)]]);
+
+        if (array_key_exists('priority', $validated)) {
+            $conversation->update(['priority' => Conversation::priorityFromName($validated['priority'])]);
+        }
+
+        return response()->json((new ConversationResource($conversation))->toArray($request));
+    }
+
+    public function toggleStatus(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in(Conversation::STATUS_NAMES)],
+            'snoozed_until' => ['nullable', 'integer'],
+        ]);
+
+        if (filled($validated['status'] ?? null)) {
+            $conversation->status = Conversation::statusFromName($validated['status']);
+
+            if ($request->has('snoozed_until')) {
+                $conversation->snoozed_until = DateRangeHelper::parseDateTime($request->input('snoozed_until'));
+            }
+
+            $success = $conversation->save();
+        } else {
+            $success = $conversation->toggleStatus();
+        }
+
+        if ($conversation->isOpen()) {
+            $this->handleHumanOpen($request, $conversation);
+        }
+
+        return response()->json([
+            'meta' => (object) [],
+            'payload' => [
+                'success' => $success,
+                'conversation_id' => $conversation->display_id,
+                'current_status' => $conversation->statusName(),
+                'snoozed_until' => $conversation->snoozed_until?->toISOString(),
+            ],
+        ]);
+    }
+
+    public function togglePriority(Request $request, Account $account, int $conversationId): Response
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $validated = $request->validate(['priority' => ['nullable', Rule::in(Conversation::PRIORITY_NAMES)]]);
+
+        $conversation->togglePriority($validated['priority'] ?? null);
+
+        return response()->noContent(200);
+    }
+
+    public function mute(Request $request, Account $account, int $conversationId): Response
+    {
+        $this->fetchConversationForUser($request, $account, $conversationId)->mute();
+
+        return response()->noContent(200);
+    }
+
+    public function unmute(Request $request, Account $account, int $conversationId): Response
+    {
+        $this->fetchConversationForUser($request, $account, $conversationId)->unmute();
+
+        return response()->noContent(200);
+    }
+
     public function toggleTypingStatus(Request $request, Account $account, int $conversationId): Response
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
@@ -95,6 +169,23 @@ class ConversationsController extends Controller
             ->toggleTypingStatus();
 
         return response()->noContent(200);
+    }
+
+    // handle_human_open: agent mở lại hội thoại thì tự nhận; administrator không.
+    private function handleHumanOpen(Request $request, Conversation $conversation): void
+    {
+        /** @var AccountUser $accountUser */
+        $accountUser = $request->attributes->get('currentAccountUser');
+
+        DB::transaction(function () use ($conversation, $accountUser, $request) {
+            $conversation->newModelQuery()->whereKey($conversation->id)->lockForUpdate()->get();
+
+            if (! $accountUser->isAdministrator()) {
+                $conversation->assignee_id = $request->user()->id;
+            }
+
+            $conversation->save();
+        });
     }
 
     private function finder(Request $request, Account $account): ConversationFinder

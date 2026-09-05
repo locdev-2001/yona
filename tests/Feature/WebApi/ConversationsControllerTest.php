@@ -11,12 +11,12 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 
 // Port từ spec/controllers/api/v1/accounts/conversations_controller_spec.rb.
 // Bỏ ở B3: unread_counts + update_last_seen/unread (B8), search/filter
-// (E2/E1), toggle_status/toggle_priority/mute/unmute/transcript (B5), destroy +
-// update priority (B5), attachments (B9), custom_attributes (E1), agent bot (D4),
+// (E2/E1), transcript (F1), destroy (DeleteService), attachments (B9), custom_attributes (E1), agent bot (D4),
 // conversation_type unattended (B8). Case "authenticated bot" chuyển thành token
 // của user (AgentBot chưa port — cùng đường AccessTokenAuthHelper).
 // Khác bản gốc: user ngoài account nhận 404 từ SetCurrentAccount (bản gốc 401) —
@@ -491,5 +491,246 @@ describe('POST /api/v1/accounts/{id}/conversations/{id}/toggle_typing_status', f
 
         // Hook model vẫn bắn DomainEvent khác (conversation.created…) — chỉ khóa typing.
         Event::assertNotDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON);
+    });
+});
+
+describe('PATCH /api/v1/accounts/{id}/conversations/{id}', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $conversation = conversationApiConversation(conversationApiFixtures());
+
+        $this->patchJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}", ['priority' => 'high'])
+            ->assertUnauthorized();
+    });
+
+    it('does not update the conversation if you do not have access to it', function () {
+        $fixtures = conversationApiFixtures();
+        $agent = conversationApiUserOf($fixtures[0]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->patchJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}", ['priority' => 'high'])
+            ->assertUnauthorized();
+    });
+
+    it('updates the conversation if you are an administrator', function () {
+        $fixtures = conversationApiFixtures();
+        $administrator = conversationApiUserOf($fixtures[0], AccountUser::ROLE_ADMINISTRATOR);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($administrator)
+            ->patchJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}", ['priority' => 'high'])
+            ->assertOk()
+            ->assertJsonPath('priority', 'high')
+            ->assertJsonPath('id', $conversation->display_id);
+
+        expect($conversation->fresh()->priorityName())->toBe('high');
+    });
+
+    it('updates the conversation if you are an agent with access to inbox', function () {
+        $fixtures = conversationApiFixtures();
+        $agent = conversationApiUserOf($fixtures[0]);
+        $fixtures[1]->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->putJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}", ['priority' => 'high'])
+            ->assertOk()
+            ->assertJsonPath('priority', 'high');
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/toggle_status', function () {
+    function toggleStatusSetup(int $role = AccountUser::ROLE_AGENT): array
+    {
+        $fixtures = conversationApiFixtures();
+        $user = conversationApiUserOf($fixtures[0], $role);
+        $fixtures[1]->addMembers([$user->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        return [$fixtures[0], $user, $conversation];
+    }
+
+    it('returns unauthorized for unauthenticated user', function () {
+        $conversation = conversationApiConversation(conversationApiFixtures());
+
+        $this->postJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}/toggle_status")
+            ->assertUnauthorized();
+    });
+
+    it('toggles the conversation status if status is empty', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+        expect($conversation->statusName())->toBe('open');
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", ['status' => ''])
+            ->assertOk()
+            ->assertExactJson([
+                'meta' => [],
+                'payload' => [
+                    'success' => true,
+                    'conversation_id' => $conversation->display_id,
+                    'current_status' => 'resolved',
+                    'snoozed_until' => null,
+                ],
+            ]);
+
+        expect($conversation->fresh()->statusName())->toBe('resolved');
+    });
+
+    it('toggles the conversation status to open from pending', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+        $conversation->update(['status' => Conversation::STATUS_PENDING]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", ['status' => 'open'])
+            ->assertOk()
+            ->assertJsonPath('payload.current_status', 'open');
+
+        expect($conversation->fresh()->statusName())->toBe('open');
+    });
+
+    it('self assigns if agent changes the conversation status to open', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+        $conversation->update(['status' => Conversation::STATUS_PENDING]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status")
+            ->assertOk();
+
+        expect($conversation->fresh()->statusName())->toBe('open')
+            ->and($conversation->fresh()->assignee_id)->toBe($agent->id);
+    });
+
+    it('does not self assign if admin changes the conversation status to open', function () {
+        [$account, $administrator, $conversation] = toggleStatusSetup(AccountUser::ROLE_ADMINISTRATOR);
+        $conversation->update(['status' => Conversation::STATUS_PENDING, 'assignee_id' => null]);
+
+        $this->actingAs($administrator)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status")
+            ->assertOk();
+
+        expect($conversation->fresh()->statusName())->toBe('open')
+            ->and($conversation->fresh()->assignee_id)->toBeNull();
+    });
+
+    it('toggles the conversation status to specific status when parameter is passed', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", ['status' => 'pending'])
+            ->assertOk();
+
+        expect($conversation->fresh()->statusName())->toBe('pending');
+    });
+
+    it('toggles the conversation status to snoozed when parameter is passed', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+        $snoozedUntil = now()->addDays(2)->getTimestamp();
+
+        $response = $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", [
+                'status' => 'snoozed',
+                'snoozed_until' => $snoozedUntil,
+            ])
+            ->assertOk()
+            ->assertJsonPath('payload.current_status', 'snoozed');
+
+        expect($conversation->fresh()->statusName())->toBe('snoozed')
+            ->and($conversation->fresh()->snoozed_until->getTimestamp())->toBe($snoozedUntil)
+            ->and(Carbon::parse($response->json('payload.snoozed_until'))->getTimestamp())->toBe($snoozedUntil);
+    });
+
+    it('rejects an unknown status', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", ['status' => 'closed'])
+            ->assertUnprocessable();
+    });
+
+    it('creates the activity message and dispatches status events', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+        Event::fake([DomainEvent::class]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", ['status' => 'resolved'])
+            ->assertOk();
+
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_STATUS_CHANGED
+            && $event->data['performed_by']->is($agent));
+        Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_RESOLVED);
+        expect($conversation->messages()->where('message_type', Message::TYPE_ACTIVITY)->value('content'))
+            ->toBe("Conversation was marked resolved by {$agent->name}");
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/toggle_priority', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $conversation = conversationApiConversation(conversationApiFixtures());
+
+        $this->postJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}/toggle_priority")
+            ->assertUnauthorized();
+    });
+
+    it('sets the conversation priority when a value is passed', function () {
+        $fixtures = conversationApiFixtures();
+        $agent = conversationApiUserOf($fixtures[0]);
+        $fixtures[1]->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+        expect($conversation->priority)->toBeNull();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}/toggle_priority", ['priority' => 'low'])
+            ->assertOk()
+            ->assertNoContent(200);
+
+        expect($conversation->fresh()->priorityName())->toBe('low');
+    });
+
+    it('toggles the conversation priority to null if no value is passed', function () {
+        $fixtures = conversationApiFixtures();
+        $agent = conversationApiUserOf($fixtures[0]);
+        $fixtures[1]->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['priority' => Conversation::PRIORITY_LOW]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}/toggle_priority")
+            ->assertOk();
+
+        expect($conversation->fresh()->priority)->toBeNull();
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/mute + unmute', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $conversation = conversationApiConversation(conversationApiFixtures());
+
+        $this->postJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}/mute")->assertUnauthorized();
+        $this->postJson("/api/v1/accounts/{$conversation->account_id}/conversations/{$conversation->display_id}/unmute")->assertUnauthorized();
+    });
+
+    it('mutes then unmutes the conversation', function () {
+        $fixtures = conversationApiFixtures();
+        $agent = conversationApiUserOf($fixtures[0]);
+        $fixtures[1]->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}/mute")
+            ->assertOk()
+            ->assertNoContent(200);
+
+        expect($conversation->fresh()->isResolved())->toBeTrue()
+            ->and($conversation->fresh()->isMuted())->toBeTrue();
+
+        $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}")
+            ->assertJsonPath('muted', true);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$fixtures[0]->id}/conversations/{$conversation->display_id}/unmute")
+            ->assertOk();
+
+        expect($conversation->fresh()->isMuted())->toBeFalse();
     });
 });

@@ -6,7 +6,7 @@ import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
-import { dateFormat } from 'shared/helpers/timeHelper';
+import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { STATUS_TYPE } from '../constants';
@@ -17,8 +17,7 @@ import MoreActions from './MoreActions';
 
 // Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
 // (EE), ConversationCallButton (voice EE), cảnh báo HMAC unverified (chỉ áp
-// dụng WebWidget — C3), snoozedReopenTime helper (hiện giờ snooze bằng
-// dateFormat — B5 mới có snooze thật). BackButton hiện ở expanded layout.
+// dụng WebWidget — C3). BackButton hiện ở expanded layout.
 export default function ConversationHeader({
     className = '',
     showBackButton = false,
@@ -41,10 +40,7 @@ export default function ConversationHeader({
     const isSnoozed = selectedConversation.status === STATUS_TYPE.SNOOZED;
 
     const snoozedDisplayText = selectedConversation.snoozed_until
-        ? `${t('CONVERSATION.HEADER.SNOOZED_UNTIL')} ${dateFormat(
-              Math.floor(new Date(selectedConversation.snoozed_until).getTime() / 1000),
-              'MMM d, h:mm a',
-          )}`
+        ? `${t('CONVERSATION.HEADER.SNOOZED_UNTIL')} ${snoozedReopenTime(selectedConversation.snoozed_until)}`
         : t('CONVERSATION.HEADER.SNOOZED_UNTIL_NEXT_REPLY');
 
     const copyConversationId = async () => {

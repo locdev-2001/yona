@@ -1,0 +1,37 @@
+import type { Conversation, ConversationPriority, ConversationStatus } from './types';
+
+// Mutation vòng đời conversation của store gốc (CHANGE_CONVERSATION_STATUS /
+// ASSIGN_PRIORITY / MUTE_CONVERSATION / UNMUTE_CONVERSATION) dưới dạng thuần.
+
+function patchConversation(
+    conversations: Conversation[],
+    conversationId: number,
+    patch: Partial<Conversation>,
+): Conversation[] {
+    return conversations.map(item => (item.id === conversationId ? { ...item, ...patch } : item));
+}
+
+export function applyConversationStatus(
+    conversations: Conversation[],
+    conversationId: number,
+    status: ConversationStatus,
+    snoozedUntil: string | null,
+): Conversation[] {
+    return patchConversation(conversations, conversationId, { status, snoozed_until: snoozedUntil });
+}
+
+export function applyConversationPriority(
+    conversations: Conversation[],
+    conversationId: number,
+    priority: ConversationPriority | null,
+): Conversation[] {
+    return patchConversation(conversations, conversationId, { priority });
+}
+
+export function applyConversationMuted(
+    conversations: Conversation[],
+    conversationId: number,
+    muted: boolean,
+): Conversation[] {
+    return patchConversation(conversations, conversationId, { muted });
+}

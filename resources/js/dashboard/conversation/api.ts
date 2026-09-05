@@ -1,5 +1,12 @@
 import { getJson, postJson } from '../helper/apiClient';
-import type { Conversation, ConversationListMeta, ConversationMessage, ContactMeta } from './types';
+import type {
+    Conversation,
+    ConversationListMeta,
+    ConversationMessage,
+    ConversationPriority,
+    ConversationStatus,
+    ContactMeta,
+} from './types';
 
 // Endpoint dashboard API của Chatwoot (web_api session) — xem ConversationsController.
 
@@ -119,4 +126,56 @@ export function sendMessage(
     return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages`, {
         ...payload,
     });
+}
+
+export interface ToggleStatusResponse {
+    meta: Record<string, never>;
+    payload: {
+        success: boolean;
+        conversation_id: number;
+        current_status: ConversationStatus;
+        snoozed_until: string | null;
+    };
+}
+
+export function toggleStatus(
+    accountId: number,
+    conversationId: number,
+    status: ConversationStatus,
+    snoozedUntil: number | null = null,
+): Promise<ToggleStatusResponse> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_status`, {
+        status,
+        snoozed_until: snoozedUntil,
+    });
+}
+
+// toggle_priority / mute / unmute trả 200 body rỗng (head :ok gốc) → nuốt lỗi parse JSON.
+function postWithoutBody(url: string, body: Record<string, unknown> = {}): Promise<void> {
+    return postJson(url, body).then(
+        () => undefined,
+        (error: unknown) => (error instanceof SyntaxError ? undefined : Promise.reject(error)),
+    );
+}
+
+export function togglePriority(
+    accountId: number,
+    conversationId: number,
+    priority: ConversationPriority | null,
+): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_priority`, {
+        priority,
+    });
+}
+
+export function muteConversation(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/mute`);
+}
+
+export function unmuteConversation(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unmute`);
+}
+
+export function sendEmailTranscript(accountId: number, conversationId: number, email: string): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/transcript`, { email });
 }
