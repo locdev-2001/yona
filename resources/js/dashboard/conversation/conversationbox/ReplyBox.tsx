@@ -13,6 +13,7 @@ import { MESSAGE_MAX_LENGTH } from 'dashboard/conversation/constants';
 import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
 
 import { t } from '../../../i18n';
+import { sendMessage } from '../api';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
@@ -22,10 +23,13 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // Port từ dashboard/components/widgets/conversation/ReplyBox.vue — rút về kênh
 // Channel::Api (B3): isWithinMessagingWindow luôn true (can_reply || isAPIInbox),
 // editor khóa khi hết cửa sổ trả lời và không ở private note. Đính kèm: chọn
-// file + kiểm size + preview/gỡ như gốc (fileUploadMixin.onIndirectFileUpload),
-// upload thật khi gửi = B9 (xem onSendReply). Bỏ ở B3: draft (B10), reply-to
-// (B10/B11), audio (B9), email head/quoted reply, WhatsApp templates, copilot
-// editor (captain), canned '/' + mention @ + variables, ReplyBoxBanner, typing (B4).
+// file + kiểm size + preview/gỡ như gốc (fileUploadMixin.onIndirectFileUpload).
+// B9: tin CÓ tệp đi thẳng multipart qua conversation/api.ts rồi chờ kết quả —
+// xóa soạn thảo khi thành công, giữ preview + báo lỗi khi backend từ chối; tin
+// chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Bỏ: draft
+// (B10), reply-to (B10/B11), ghi âm (voice recorder), email head/quoted reply,
+// WhatsApp templates, copilot editor, canned '/' + mention @ + variables,
+// ReplyBoxBanner, paste đính kèm (kênh API chưa cần).
 
 const CHANNEL_TYPE = 'Channel::Api';
 // slugifyChannel('Channel::Api') của useUISettings.js gốc → 'channel_api'.
@@ -66,6 +70,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const [message, setMessage] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const editorRef = useRef<EditorHandle>(null);
 
@@ -89,7 +94,8 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const isMessageEmpty = !message.trim().replace(/\n/g, '').length;
     const hasAttachments = attachedFiles.length > 0;
     // isReplyButtonDisabled gốc: có đính kèm thì gửi được dù chưa gõ chữ.
-    const isReplyButtonDisabled = isEditorDisabled || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
+    const isReplyButtonDisabled =
+        isEditorDisabled || isUploading || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
     const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, CHANNEL_TYPE).trim() !== '';
 
@@ -130,7 +136,10 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSignatureActive]);
 
+    // setReplyMode gốc: đổi giữa trả lời/ghi chú thì bỏ đính kèm đang chờ
+    // (luật upload của hai chế độ khác nhau).
     const setReplyMode = (mode: string) => {
+        if (attachedFiles.length > 0) setAttachedFiles([]);
         setReplyType(mode);
     };
 
@@ -140,18 +149,41 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         setAttachedFiles([]);
     };
 
+    const afterSent = () => {
+        clearMessage();
+        editorRef.current?.focusEditorInputField();
+        onMessageSent?.();
+    };
+
+    // getMessagePayload gốc gom `files` vào cùng một tin (kênh API không tách
+    // chữ và tệp như Instagram/TikTok/WhatsApp).
+    const sendReplyWithAttachments = async () => {
+        setIsUploading(true);
+        try {
+            await sendMessage(accountId, conversationId, {
+                content: message,
+                private: isPrivate,
+                files: attachedFiles.map((attachment) => attachment.resource),
+            });
+            afterSent();
+        } catch (error: unknown) {
+            const body = (error as { body?: { error?: string } }).body;
+            useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
         if (hasAttachments) {
-            // Upload đính kèm thuộc B9: giữ hành vi gửi văn bản, báo tệp chưa gửi.
-            useAlert(t('CONVERSATION.UPLOADING_ATTACHMENTS'));
+            void sendReplyWithAttachments();
+            return;
         }
         if (!isMessageEmpty) {
             sendReply({ content: message, isPrivate });
         }
-        clearMessage();
-        editorRef.current?.focusEditorInputField();
-        onMessageSent?.();
+        afterSent();
     };
 
     // toggleTyping gốc: gửi typing on/off kèm isPrivate của chế độ đang soạn.
@@ -246,7 +278,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 isEditorDisabled={isEditorDisabled}
                 showAudioRecorder={showAudioRecorder}
                 isSendDisabled={isReplyButtonDisabled}
-                sendButtonText={replyButtonLabel}
+                sendButtonText={isUploading ? t('CONVERSATION.UPLOADING_ATTACHMENTS') : replyButtonLabel}
                 sendWithSignature={sendWithSignature}
                 onSend={onSendReply}
                 onFileUpload={onFileUpload}

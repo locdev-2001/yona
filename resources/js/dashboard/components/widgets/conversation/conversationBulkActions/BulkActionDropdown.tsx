@@ -18,6 +18,8 @@ interface BulkActionDropdownProps {
     showSearch?: boolean;
     searchPlaceholder?: string;
     footer?: ReactNode;
+    renderThumbnail?: (item: DropdownMenuItem) => ReactNode;
+    renderTrailingIcon?: (item: DropdownMenuItem) => ReactNode;
     onToggle: () => void;
     onDismiss: () => void;
     onAction: (item: DropdownMenuItem) => void;
@@ -33,6 +35,8 @@ export default function BulkActionDropdown({
     showSearch = false,
     searchPlaceholder = '',
     footer,
+    renderThumbnail,
+    renderTrailingIcon,
     onToggle,
     onDismiss,
     onAction,
@@ -67,6 +71,8 @@ export default function BulkActionDropdown({
                     searchPlaceholder={searchPlaceholder}
                     className={menuClassName}
                     footer={footer}
+                    renderThumbnail={renderThumbnail}
+                    renderTrailingIcon={renderTrailingIcon}
                     onAction={onAction}
                 />
             ) : null}

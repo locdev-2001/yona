@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Account;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Message;
 use App\Models\User;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 // Port từ api/v1/models/_message.json.jbuilder + Message#push_event_data.
-// Bỏ ở B3: attachments (B9), voice call (EE).
+// Bỏ: voice call (EE).
 class MessageResource extends JsonResource
 {
     /** @param iterable<Message> $messages */
@@ -41,7 +42,18 @@ class MessageResource extends JsonResource
             'private' => $message->private,
             'source_id' => $message->source_id,
             ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account)] : []),
+            ...self::attachmentsPayload($message),
         ];
+    }
+
+    // json.attachments … if message.attachments.present? — vắng hẳn khóa khi không có tệp.
+    private static function attachmentsPayload(Message $message): array
+    {
+        $attachments = $message->attachments;
+
+        return $attachments->isEmpty()
+            ? []
+            : ['attachments' => $attachments->map(fn (Attachment $attachment) => $attachment->pushEventData())->values()->all()];
     }
 
     // Message#push_event_data: toàn bộ attributes + sender + tóm tắt conversation.
@@ -85,7 +97,7 @@ class MessageResource extends JsonResource
             $data['sender'] = self::senderPushEventData($message->sender, $message->account);
         }
 
-        return $data;
+        return [...$data, ...self::attachmentsPayload($message)];
     }
 
     // Message#merge_sender_attributes: sender là User hoặc Contact.

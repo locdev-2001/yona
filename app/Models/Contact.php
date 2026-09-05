@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Http\Resources\ContactResource;
 use App\Models\Concerns\Avatarable;
+use App\Models\Concerns\Labelable;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,12 +19,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Port từ refs/chatwoot/app/models/contact.rb.
 // Bỏ ở B2: conversations/messages (B3), csat_survey_responses + notes (tính năng sau),
-// Labelable (nhóm C), ip_lookup job, CONTACT_MERGED (đi cùng merge B10),
+// ip_lookup job, CONTACT_MERGED (đi cùng merge B10),
 // LlmFormattable (enterprise).
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */
-    use Avatarable, HasFactory;
+    use Avatarable, HasFactory, Labelable;
 
     public const TYPE_VISITOR = 'visitor';
 

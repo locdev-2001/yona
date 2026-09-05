@@ -67,6 +67,11 @@ class Account extends Model
             ->withTimestamps();
     }
 
+    public function labels(): HasMany
+    {
+        return $this->hasMany(Label::class);
+    }
+
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);

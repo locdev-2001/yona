@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import type { ReactNode } from 'react';
+import type { MouseEventHandler, ReactNode } from 'react';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { t } from '../../../../i18n';
@@ -39,6 +39,7 @@ interface BaseBubbleProps {
     className?: string;
     title?: string;
     dataBubbleName?: string;
+    onClick?: MouseEventHandler<HTMLDivElement>;
     children: ReactNode;
 }
 
@@ -47,6 +48,7 @@ export default function BaseBubble({
     className = '',
     title,
     dataBubbleName,
+    onClick,
     children,
 }: BaseBubbleProps) {
     const { variant, orientation, inReplyTo, shouldGroupWithNext } = useMessageContext();
@@ -82,6 +84,7 @@ export default function BaseBubble({
             className={`text-sm min-w-0 ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
             title={title}
             data-bubble-name={dataBubbleName}
+            onClick={onClick}
         >
             {inReplyTo && (
                 <div

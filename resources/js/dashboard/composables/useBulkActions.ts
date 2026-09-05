@@ -9,7 +9,8 @@ import { t } from '../../i18n';
 // Port từ composables/chatlist/useBulkActions.js + store/modules/bulkActions.js.
 // Store vuex `bulkActions` là toàn cục nhưng chỉ ChatList dùng → giữ state cục bộ
 // trong ChatList (context bên dưới thay cho provide/inject của gốc).
-// Bỏ: nhánh required attributes khi resolve (EE, đã bỏ ở B5); nhãn (B7).
+// Bỏ: nhánh required attributes khi resolve (EE, đã bỏ ở B5); nhánh context menu
+// của gốc (truyền conversationId) chưa có call-site.
 
 export interface BulkSelection {
     // `selectedConversationIds` gốc — không trùng.
@@ -75,6 +76,8 @@ export interface BulkActionsValue {
     isUpdating: boolean;
     onAssignAgent: (agent: BulkActionAgent) => Promise<void>;
     onAssignTeam: (team: BulkActionTeam) => Promise<void>;
+    onAssignLabels: (labels: string[]) => Promise<void>;
+    onRemoveLabels: (labels: string[]) => Promise<void>;
     onUpdateConversations: (status: ConversationStatus, snoozedUntil?: number | null) => Promise<void>;
 }
 
@@ -134,6 +137,32 @@ export function useBulkActions(accountId: number): BulkActionsValue {
         [process, resetBulkActions, selection.ids],
     );
 
+    const onAssignLabels = useCallback(
+        async (labels: string[]) => {
+            try {
+                await process({ labels: { add: labels } }, selection.ids);
+                resetBulkActions();
+                useAlert(t('BULK_ACTION.LABELS.ASSIGN_SUCCESFUL'));
+            } catch {
+                useAlert(t('BULK_ACTION.LABELS.ASSIGN_FAILED'));
+            }
+        },
+        [process, resetBulkActions, selection.ids],
+    );
+
+    const onRemoveLabels = useCallback(
+        async (labels: string[]) => {
+            try {
+                await process({ labels: { remove: labels } }, selection.ids);
+                resetBulkActions();
+                useAlert(t('BULK_ACTION.LABELS.REMOVE_SUCCESFUL'));
+            } catch {
+                useAlert(t('BULK_ACTION.LABELS.REMOVE_FAILED'));
+            }
+        },
+        [process, resetBulkActions, selection.ids],
+    );
+
     const onUpdateConversations = useCallback(
         async (status: ConversationStatus, snoozedUntil: number | null = null) => {
             if (!selection.ids.length) return;
@@ -165,6 +194,8 @@ export function useBulkActions(accountId: number): BulkActionsValue {
             isUpdating,
             onAssignAgent,
             onAssignTeam,
+            onAssignLabels,
+            onRemoveLabels,
             onUpdateConversations,
         }),
         [
@@ -177,6 +208,8 @@ export function useBulkActions(accountId: number): BulkActionsValue {
             isUpdating,
             onAssignAgent,
             onAssignTeam,
+            onAssignLabels,
+            onRemoveLabels,
             onUpdateConversations,
         ],
     );

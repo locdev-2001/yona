@@ -37,4 +37,28 @@ declare module '@chatwoot/utils' {
         onStop: () => void,
         idleTime: number,
     ): { start: () => void; stop: () => void };
+    export function downloadFile(options: { url: string; type: string; extension?: string | null }): Promise<void>;
+    export function getFileInfo(url: string): { name: string; type: string; base: string };
+    export function debounce<T extends (...args: never[]) => void>(
+        func: T,
+        wait: number,
+        immediate?: boolean,
+        maxWait?: number,
+    ): (...args: Parameters<T>) => void;
+    export function calculateCenterOffset(
+        mouseX: number,
+        mouseY: number,
+        rect: DOMRect,
+    ): { relativeX: number; relativeY: number };
+    export function applyRotationTransform(
+        relativeX: number,
+        relativeY: number,
+        angle: number,
+    ): { rotatedX: number; rotatedY: number };
+    export function normalizeToPercentage(
+        rotatedX: number,
+        rotatedY: number,
+        width: number,
+        height: number,
+    ): { x: number; y: number };
 }

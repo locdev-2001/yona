@@ -32,6 +32,10 @@ return [
             'assigned_with_assignee' => 'Assigned to {assignee_name} via {team_name} by {user_name}',
             'removed' => 'Unassigned from {team_name} by {user_name}',
         ],
+        'labels' => [
+            'added' => '{user_name} added {labels}',
+            'removed' => '{user_name} removed {labels}',
+        ],
         'muted' => '{user_name} has muted the conversation',
         'unmuted' => '{user_name} has unmuted the conversation',
     ],

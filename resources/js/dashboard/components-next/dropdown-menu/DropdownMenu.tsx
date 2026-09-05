@@ -28,6 +28,9 @@ interface DropdownMenuProps {
     className?: string;
     // Slot `footer` của bản gốc (BulkAgentActions/BulkTeamActions dùng làm khối xác nhận).
     footer?: ReactNode;
+    // Slot `thumbnail` / `trailing-icon` của bản gốc (BulkLabelActions: ô màu + dấu tích).
+    renderThumbnail?: (item: DropdownMenuItem) => ReactNode;
+    renderTrailingIcon?: (item: DropdownMenuItem) => ReactNode;
     onAction: (item: DropdownMenuItem) => void;
 }
 
@@ -39,6 +42,8 @@ export default function DropdownMenu({
     searchPlaceholder = '',
     className = '',
     footer,
+    renderThumbnail,
+    renderTrailingIcon,
     onAction,
 }: DropdownMenuProps) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -87,18 +92,21 @@ export default function DropdownMenu({
                         disabled={item.disabled}
                         onClick={() => onAction(item)}
                     >
-                        {item.thumbnail ? (
-                            <Avatar
-                                name={item.thumbnail.name}
-                                src={item.thumbnail.src}
-                                size={thumbnailSize}
-                                roundedFull
-                            />
-                        ) : null}
+                        {renderThumbnail
+                            ? renderThumbnail(item)
+                            : item.thumbnail ? (
+                                  <Avatar
+                                      name={item.thumbnail.name}
+                                      src={item.thumbnail.src}
+                                      size={thumbnailSize}
+                                      roundedFull
+                                  />
+                              ) : null}
                         {item.icon ? <Icon icon={item.icon} className="flex-shrink-0 size-3.5" /> : null}
                         {item.label ? (
                             <span className="min-w-0 text-sm font-420 truncate">{item.label}</span>
                         ) : null}
+                        {renderTrailingIcon ? renderTrailingIcon(item) : null}
                     </button>
                 ))}
                 {!isLoading && !visibleItems.length ? (

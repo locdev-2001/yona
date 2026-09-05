@@ -18,16 +18,18 @@ import { findSnoozeTime } from 'dashboard/helper/snoozeHelpers';
 import { emitter } from 'shared/helpers/emitter';
 import { t } from '../../../../../i18n';
 import BulkAgentActions from './BulkAgentActions';
+import BulkLabelActions from './BulkLabelActions';
 import BulkTeamActions from './BulkTeamActions';
 import BulkUpdateActions from './BulkUpdateActions';
 
-// Port từ conversationBulkActions/Index.vue. Nợ B7: BulkLabelActions (chưa có API
-// nhãn nên không dựng nút giả) — `labels.add/remove` đã có sẵn trong bulkApi.
+// Port từ conversationBulkActions/Index.vue.
 interface ConversationBulkActionsProps {
     accountId: number;
     conversations: number[];
     allConversationsSelected: boolean;
     selectedInboxes: number[];
+    // appliedLabelsForSelection gốc — hợp nhãn của mọi hội thoại đang chọn.
+    appliedLabels: string[];
     showOpenAction?: boolean;
     showResolvedAction?: boolean;
     showSnoozedAction?: boolean;
@@ -36,6 +38,8 @@ interface ConversationBulkActionsProps {
     onSelectAllConversations: (checked: boolean) => void;
     onAssignAgent: (agent: BulkActionAgent) => void;
     onAssignTeam: (team: BulkActionTeam) => void;
+    onAssignLabels: (labels: string[]) => void;
+    onRemoveLabels: (labels: string[]) => void;
     onUpdateConversations: (status: ConversationStatus, snoozedUntil?: number | null) => void;
 }
 
@@ -44,6 +48,7 @@ export default function ConversationBulkActions({
     conversations,
     allConversationsSelected,
     selectedInboxes,
+    appliedLabels,
     showOpenAction = false,
     showResolvedAction = false,
     showSnoozedAction = false,
@@ -52,6 +57,8 @@ export default function ConversationBulkActions({
     onSelectAllConversations,
     onAssignAgent,
     onAssignTeam,
+    onAssignLabels,
+    onRemoveLabels,
     onUpdateConversations,
 }: ConversationBulkActionsProps) {
     const [showCustomTimeSnoozeModal, setShowCustomTimeSnoozeModal] = useState(false);
@@ -125,6 +132,12 @@ export default function ConversationBulkActions({
                             />
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
+                            <BulkLabelActions onApply={onAssignLabels} />
+                            <BulkLabelActions
+                                action="remove"
+                                appliedLabels={appliedLabels}
+                                onApply={onRemoveLabels}
+                            />
                             <BulkUpdateActions
                                 showResolve={!showResolvedAction}
                                 showReopen={!showOpenAction}

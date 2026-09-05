@@ -8,6 +8,7 @@ use App\Events\PreviousChanges;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
+use App\Models\Concerns\Labelable;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,13 +18,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
-// Bỏ: FilteredCountInvalidator (B8), Labelable + label activity (B7),
+// Bỏ: FilteredCountInvalidator (B8),
 // mentions/participants (B11), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
 // campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, Labelable;
 
     public const STATUS_OPEN = 0;
 
@@ -63,6 +64,11 @@ class Conversation extends Model
         self::PRIORITY_HIGH => 'high',
         self::PRIORITY_URGENT => 'urgent',
     ];
+
+    // label_list không phải cột: giữ [trước, sau] của lượt gắn nhãn đang chạy để
+    // hook `updated` bắn event + activity giống previous_changes[:label_list] của gốc.
+    /** @var array{0: array<int, string>, 1: array<int, string>}|null */
+    private ?array $labelListChange = null;
 
     // Default DB chưa có trên model mới tạo — set sẵn cho hook/serializer.
     protected $attributes = [
@@ -355,6 +361,32 @@ class Conversation extends Model
             ->first();
     }
 
+    // Chatwoot để acts_as_taggable_on ghi cached_label_list ngay trong lượt save
+    // đổi nhãn; ở đây hook này là chỗ duy nhất đồng bộ cache + event + activity.
+    protected function labelListChanged(array $previous, array $current): void
+    {
+        $this->cached_label_list = implode(', ', $current);
+        $this->labelListChange = [$previous, $current];
+
+        try {
+            $this->save();
+        } finally {
+            $this->labelListChange = null;
+        }
+    }
+
+    // Đổi tên nhãn không đi qua updateLabels (liên kết không đổi) nên cache phải
+    // được dựng lại qua đúng seam labelListChanged để event/activity giống gốc.
+    public function refreshCachedLabelList(): void
+    {
+        $previous = $this->cachedLabelListArray();
+        $current = $this->labelList();
+
+        if ($current !== $previous) {
+            $this->labelListChanged($previous, $current);
+        }
+    }
+
     /** @return array<int, string> */
     public function cachedLabelListArray(): array
     {
@@ -411,6 +443,10 @@ class Conversation extends Model
     private function notifyConversationUpdation(): void
     {
         $previousChanges = PreviousChanges::of($this);
+
+        if ($this->labelListChange !== null) {
+            $previousChanges['label_list'] = $this->labelListChange;
+        }
 
         if ($previousChanges === [] || ! $this->allowedKeys($previousChanges)) {
             return;
@@ -480,6 +516,38 @@ class Conversation extends Model
         if ($this->wasChanged('priority')) {
             $this->priorityChangeActivity($userName);
         }
+
+        if ($this->labelListChange !== null) {
+            $this->labelChangeActivity($this->activityMessageOwner($userName));
+        }
+    }
+
+    // LabelActivityMessageHandler#create_label_added/#create_label_removed.
+    private function labelChangeActivity(?string $userName): void
+    {
+        if ($userName === null || $this->labelListChange === null) {
+            return;
+        }
+
+        [$previous, $current] = $this->labelListChange;
+
+        $this->labelChangeActivityMessage('added', $userName, array_values(array_diff($current, $previous)));
+        $this->labelChangeActivityMessage('removed', $userName, array_values(array_diff($previous, $current)));
+    }
+
+    /** @param array<int, string> $labels */
+    private function labelChangeActivityMessage(string $changeType, string $userName, array $labels): void
+    {
+        if ($labels === []) {
+            return;
+        }
+
+        $content = __('conversations.activity.labels.'.$changeType, [
+            'user_name' => $userName,
+            'labels' => implode(', ', $labels),
+        ]);
+
+        ActivityMessageJob::dispatch($this, $this->activityMessageParams($content));
     }
 
     private function statusChangeActivity(?string $userName): void

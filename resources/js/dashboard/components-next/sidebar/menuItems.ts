@@ -18,15 +18,23 @@ export interface SidebarTeam {
     name: string;
 }
 
+// Nhãn bật `show_on_sidebar` (labels/getLabelsOnSidebar) cho nhóm Labels.
+export interface SidebarLabel {
+    id: number;
+    title: string;
+    color: string;
+}
+
 // Port từ menuItems computed trong sidebar/Sidebar.vue.
 // Ẩn theo quyết định skip EE: Captain, Calls, Companies, Audit Logs,
 // Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
-// Nhóm động (Folders/Labels/Segments/Tagged) render khi dữ liệu
+// Nhóm động (Folders/Segments/Tagged) render khi dữ liệu
 // đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
 export function buildMenuItems(
     accountId: number,
     inboxes: SidebarInbox[] = [],
     teams: SidebarTeam[] = [],
+    labels: SidebarLabel[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
@@ -104,9 +112,18 @@ export function buildMenuItems(
                     name: 'Labels',
                     label: t('SIDEBAR.LABELS'),
                     icon: 'i-lucide-tag',
+                    activeOn: [scoped('label')],
                     collapsible: true,
                     showTreeLine: true,
-                    children: [],
+                    children: labels.map(label => ({
+                        name: `${label.title}-${label.id}`,
+                        label: label.title,
+                        icon: createElement('span', {
+                            className: 'size-[8px] rounded-sm',
+                            style: { backgroundColor: label.color },
+                        }),
+                        to: scoped(`label/${encodeURIComponent(label.title)}`),
+                    })),
                 },
             ],
         },

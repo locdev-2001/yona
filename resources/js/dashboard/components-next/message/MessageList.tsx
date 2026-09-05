@@ -5,6 +5,7 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 
 import Message from './Message';
 import { MESSAGE_TYPES } from './constants';
+import type { MessageAttachment } from './helpers/attachments';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; grouping tính trực tiếp
@@ -14,6 +15,8 @@ import { MESSAGE_TYPES } from './constants';
 interface MessageListProps {
     messages: ConversationMessage[];
     channelType: string | null;
+    // Danh sách media của cả hội thoại (gallery) — getter store bên gốc.
+    chatAttachments?: MessageAttachment[];
     firstUnreadId?: number | null;
     className?: string;
     beforeAll?: ReactNode;
@@ -46,7 +49,17 @@ function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): 
 }
 
 const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function MessageList(
-    { messages, channelType, firstUnreadId = null, className = '', beforeAll, unreadBadge, after, onScroll },
+    {
+        messages,
+        channelType,
+        chatAttachments = [],
+        firstUnreadId = null,
+        className = '',
+        beforeAll,
+        unreadBadge,
+        after,
+        onScroll,
+    },
     ref,
 ) {
     return (
@@ -60,6 +73,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                     <Message
                         message={message}
                         channelType={channelType}
+                        chatAttachments={chatAttachments}
                         groupWithNext={shouldGroupWithNext(index, messages)}
                     />
                 </Fragment>

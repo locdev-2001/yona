@@ -18,6 +18,7 @@ import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { ASSIGNEE_TYPE, STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
+import { appliedLabelsForSelection } from '../labelHelpers';
 import type { AssigneeTab } from '../types';
 import ChatListHeader from './ChatListHeader';
 import ChatTypeTabs from './ChatTypeTabs';
@@ -45,6 +46,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
         sortBy,
         inboxId,
         teamId,
+        label,
         isOnExpandedLayout,
         setAssigneeTab,
         loadMoreConversations,
@@ -67,7 +69,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
     // resetBulkActions của gốc: đổi tab, đổi bộ lọc cơ bản (status/sort), đổi inbox/team.
     useEffect(() => {
         resetBulkActions();
-    }, [assigneeTab, status, sortBy, inboxId, teamId, resetBulkActions]);
+    }, [assigneeTab, status, sortBy, inboxId, teamId, label, resetBulkActions]);
 
     const closeAdvanceFiltersModal = useCallback(() => setShowAdvancedFilters(false), []);
 
@@ -77,6 +79,10 @@ export default function ChatList({ showConversationList = true }: { showConversa
     }, [resetBulkActions, closeAdvanceFiltersModal]);
 
     const allConversationsSelected = isEveryConversationSelected(conversations, selection.ids);
+    const appliedLabels = useMemo(
+        () => appliedLabelsForSelection(conversations, selection.ids),
+        [conversations, selection.ids],
+    );
     const selectedInboxes = useMemo(() => uniqueInboxIds(selection.inboxIds), [selection.inboxIds]);
     const toggleSelectAll = useCallback(
         (checked: boolean) => selectAllConversations(checked, conversations),
@@ -102,10 +108,11 @@ export default function ChatList({ showConversationList = true }: { showConversa
         setShowAdvancedFilters(true);
     };
 
-    // pageTitle gốc: inbox.name → activeTeam.name → mặc định (label/mention/... vào B7/B8).
+    // pageTitle gốc: inbox.name → activeTeam.name → #label → mặc định (mention/... vào B8).
     const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
     const activeTeam = teamId ? teams.find(item => item.id === teamId) : undefined;
-    const pageTitle = activeInbox?.name || activeTeam?.name || t('CHAT_LIST.TAB_HEADING');
+    const pageTitle =
+        activeInbox?.name || activeTeam?.name || (label ? `#${label}` : '') || t('CHAT_LIST.TAB_HEADING');
 
     const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
         key,
@@ -141,11 +148,14 @@ export default function ChatList({ showConversationList = true }: { showConversa
                     showOpenAction={everySelectedHasStatus(conversations, selection.ids, STATUS_TYPE.OPEN)}
                     showResolvedAction={everySelectedHasStatus(conversations, selection.ids, STATUS_TYPE.RESOLVED)}
                     showSnoozedAction={everySelectedHasStatus(conversations, selection.ids, STATUS_TYPE.SNOOZED)}
+                    appliedLabels={appliedLabels}
                     isUpdating={bulkActions.isUpdating}
                     className={isOnExpandedLayout ? 'sm:!w-[24rem] !w-full' : ''}
                     onSelectAllConversations={toggleSelectAll}
                     onAssignAgent={bulkActions.onAssignAgent}
                     onAssignTeam={bulkActions.onAssignTeam}
+                    onAssignLabels={bulkActions.onAssignLabels}
+                    onRemoveLabels={bulkActions.onRemoveLabels}
                     onUpdateConversations={bulkActions.onUpdateConversations}
                 />
                 <ConversationList

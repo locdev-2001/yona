@@ -1,0 +1,291 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import { downloadFile } from '@chatwoot/utils';
+
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import NextButton from 'dashboard/components-next/button/Button';
+import Modal from 'dashboard/components/Modal';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import { messageTimestamp } from 'shared/helpers/timeHelper';
+
+import { t } from '../../../../../i18n';
+import type { DashboardPageProps } from '../../../../types';
+import { useImageZoom } from './useImageZoom';
+
+// Port từ dashboard/components/widgets/conversation/components/GalleryView.vue.
+// TeleportWithDirection bỏ (Modal của ta đã tự phủ toàn màn hình).
+const ALLOWED_FILE_TYPES = {
+    IMAGE: 'image',
+    VIDEO: 'video',
+    IG_REEL: 'ig_reel',
+    AUDIO: 'audio',
+} as const;
+
+const ALLOWED_FILE_TYPE_LIST: string[] = Object.values(ALLOWED_FILE_TYPES);
+
+interface GalleryViewProps {
+    attachment: MessageAttachment;
+    allAttachments: MessageAttachment[];
+    autoPlay?: boolean;
+    onClose: () => void;
+    onError?: () => void;
+}
+
+export default function GalleryView({
+    attachment,
+    allAttachments,
+    autoPlay = false,
+    onClose,
+    onError,
+}: GalleryViewProps) {
+    const { auth } = usePage<DashboardPageProps>().props;
+    const currentUserId = auth.user?.id;
+
+    const imageRef = useRef<HTMLImageElement>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(() => {
+        const index = allAttachments.findIndex((item) => item.message_id === attachment.message_id);
+        return index > 0 ? index : 0;
+    });
+    const [activeAttachment, setActiveAttachment] = useState<MessageAttachment>(attachment);
+
+    const {
+        activeImageRotation,
+        imageWrapperStyle,
+        imageStyle,
+        onRotate,
+        onZoom,
+        onDoubleClickZoomImage,
+        onWheelImageZoom,
+        onMouseMove,
+        onMouseLeave,
+        resetZoomAndRotation,
+    } = useImageZoom(imageRef);
+
+    const activeFileType = activeAttachment.file_type;
+    const isImage = activeFileType === ALLOWED_FILE_TYPES.IMAGE;
+    const isVideo = activeFileType === ALLOWED_FILE_TYPES.VIDEO || activeFileType === ALLOWED_FILE_TYPES.IG_REEL;
+    const isAudio = activeFileType === ALLOWED_FILE_TYPES.AUDIO;
+    const hasMoreThanOneAttachment = allAttachments.length > 1;
+
+    const readableTime = activeAttachment.created_at
+        ? messageTimestamp(activeAttachment.created_at, 'LLL d yyyy, h:mm a')
+        : '';
+
+    const senderDetails = useMemo(() => {
+        const sender = (activeAttachment.sender ?? attachment.sender ?? {}) as Record<string, unknown>;
+        const name = (sender.name as string) || (sender.available_name as string) || '';
+
+        return {
+            name: currentUserId === sender.id ? 'You' : name,
+            avatar: (sender.thumbnail as string) || (sender.avatar_url as string) || '',
+        };
+    }, [activeAttachment, attachment, currentUserId]);
+
+    const fileNameFromDataUrl = useMemo(() => {
+        const dataUrl = activeAttachment.data_url;
+        if (!dataUrl) return '';
+        const fileName = dataUrl.split('/').pop();
+        return fileName ? decodeURIComponent(fileName) : '';
+    }, [activeAttachment]);
+
+    const changeAttachment = useCallback(
+        (next: MessageAttachment | undefined, index: number) => {
+            if (!next || !ALLOWED_FILE_TYPE_LIST.includes(next.file_type)) return;
+            setActiveIndex(index);
+            setActiveAttachment(next);
+            resetZoomAndRotation();
+        },
+        [resetZoomAndRotation],
+    );
+
+    const onClickDownload = async () => {
+        const { file_type: type, data_url: url, extension } = activeAttachment;
+        if (!ALLOWED_FILE_TYPE_LIST.includes(type)) return;
+
+        try {
+            setIsDownloading(true);
+            await downloadFile({ url: url ?? '', type, extension: extension ?? null });
+        } catch {
+            useAlert(t('GALLERY_VIEW.ERROR_DOWNLOADING'));
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    useKeyboardEvents({
+        Escape: { action: onClose, allowOnFocusedInput: true },
+        ArrowLeft: { action: () => changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1) },
+        ArrowRight: { action: () => changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1) },
+    });
+
+    return (
+        <Modal show fullWidth showCloseButton={false} onClose={onClose}>
+            <div
+                className="bg-n-background flex flex-col h-[inherit] w-[inherit] overflow-hidden select-none"
+                onClick={onClose}
+            >
+                <header
+                    className="z-10 flex items-center justify-between w-full h-16 px-6 py-2 bg-n-background border-b border-n-weak"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <div className="flex items-center min-w-[15rem] shrink-0">
+                        {senderDetails.avatar ? (
+                            <Avatar
+                                name={senderDetails.name}
+                                src={senderDetails.avatar}
+                                size={40}
+                                roundedFull
+                                className="flex-shrink-0"
+                            />
+                        ) : null}
+                        <div className="flex flex-col ms-2 overflow-hidden">
+                            <h3 className="text-base leading-5 m-0 font-medium">
+                                <span className="overflow-hidden text-n-slate-12 whitespace-nowrap text-ellipsis">
+                                    {senderDetails.name}
+                                </span>
+                            </h3>
+                            <span className="text-xs text-n-slate-11 whitespace-nowrap text-ellipsis">
+                                {readableTime}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 mx-2 px-2 truncate text-sm font-medium text-center text-n-slate-12">
+                        <span className="truncate">{fileNameFromDataUrl}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 ms-2 shrink-0">
+                        {isImage ? (
+                            <>
+                                <NextButton icon="i-lucide-zoom-in" slate ghost onClick={() => onZoom(0.1)} />
+                                <NextButton icon="i-lucide-zoom-out" slate ghost onClick={() => onZoom(-0.1)} />
+                                <NextButton
+                                    icon="i-lucide-rotate-ccw"
+                                    slate
+                                    ghost
+                                    onClick={() => onRotate('counter-clockwise')}
+                                />
+                                <NextButton
+                                    icon="i-lucide-rotate-cw"
+                                    slate
+                                    ghost
+                                    onClick={() => onRotate('clockwise')}
+                                />
+                            </>
+                        ) : null}
+                        <NextButton
+                            icon="i-lucide-download"
+                            slate
+                            ghost
+                            isLoading={isDownloading}
+                            disabled={isDownloading}
+                            onClick={onClickDownload}
+                        />
+                        <NextButton icon="i-lucide-x" slate ghost onClick={onClose} />
+                    </div>
+                </header>
+
+                <main className="flex items-stretch flex-1 h-full overflow-hidden">
+                    <div className="flex items-center justify-center w-16 shrink-0">
+                        {hasMoreThanOneAttachment ? (
+                            <NextButton
+                                icon="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right"
+                                className="z-10"
+                                blue
+                                faded
+                                lg
+                                disabled={activeIndex === 0}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1);
+                                }}
+                            />
+                        ) : null}
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center overflow-hidden">
+                        {isImage ? (
+                            <div
+                                style={imageWrapperStyle}
+                                className={`flex items-center justify-center origin-center ${
+                                    activeImageRotation % 180 !== 0
+                                        ? 'w-[calc(100dvh-8rem)] h-[calc(100dvw-7rem)]'
+                                        : 'size-full'
+                                }`}
+                            >
+                                <img
+                                    ref={imageRef}
+                                    key={activeAttachment.message_id}
+                                    src={activeAttachment.data_url ?? ''}
+                                    style={imageStyle}
+                                    className="max-h-full max-w-full object-contain duration-100 ease-in-out transform select-none"
+                                    onClick={(event) => event.stopPropagation()}
+                                    onDoubleClick={(event) => {
+                                        event.stopPropagation();
+                                        onDoubleClickZoomImage(event);
+                                    }}
+                                    onWheel={onWheelImageZoom}
+                                    onMouseMove={(event) =>
+                                        onMouseMove({ clientX: event.clientX, clientY: event.clientY })
+                                    }
+                                    onMouseLeave={() => onMouseLeave()}
+                                    onError={onError}
+                                />
+                            </div>
+                        ) : null}
+
+                        {isVideo ? (
+                            <video
+                                key={activeAttachment.message_id}
+                                src={activeAttachment.data_url ?? ''}
+                                controls
+                                playsInline
+                                autoPlay={autoPlay}
+                                className="max-h-full max-w-full object-contain"
+                                onClick={(event) => event.stopPropagation()}
+                            />
+                        ) : null}
+
+                        {isAudio ? (
+                            <audio
+                                key={activeAttachment.message_id}
+                                controls
+                                autoPlay={autoPlay}
+                                className="w-full max-w-md"
+                                onClick={(event) => event.stopPropagation()}
+                            >
+                                <source src={`${activeAttachment.data_url}?t=${Date.now()}`} />
+                            </audio>
+                        ) : null}
+                    </div>
+
+                    <div className="flex items-center justify-center w-16 shrink-0">
+                        {hasMoreThanOneAttachment ? (
+                            <NextButton
+                                icon="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left"
+                                className="z-10"
+                                blue
+                                faded
+                                lg
+                                disabled={activeIndex === allAttachments.length - 1}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1);
+                                }}
+                            />
+                        ) : null}
+                    </div>
+                </main>
+
+                <footer className="z-10 flex items-center justify-center h-12 border-t border-n-weak">
+                    <div className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium">
+                        {`${activeIndex + 1} / ${allAttachments.length}`}
+                    </div>
+                </footer>
+            </div>
+        </Modal>
+    );
+}

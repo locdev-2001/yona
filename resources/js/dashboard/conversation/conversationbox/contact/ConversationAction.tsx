@@ -12,6 +12,7 @@ import type { DashboardPageProps } from '../../../types';
 import { useConversation } from '../../ConversationContext';
 import type { TeamMeta } from '../../types';
 import ContactDetailsItem from './ContactDetailsItem';
+import LabelBox from './LabelBox';
 import {
     buildTeamsList,
     resolveAgentSelection,
@@ -23,8 +24,8 @@ import { buildPriorityOptions, findPriorityOption, resolvePrioritySelection } fr
 import type { PriorityOption } from './priorityOptions';
 import { useTeamsList } from './useTeamsList';
 
-// Port từ routes/dashboard/conversation/ConversationAction.vue — khối Assignee / Team / Priority.
-// Khối "Conversation Labels" (LabelBox) là B7 — chưa dựng, giữ đúng thứ tự gốc khi thêm.
+// Port từ routes/dashboard/conversation/ConversationAction.vue — khối Assignee /
+// Team / Priority / Conversation Labels, đúng thứ tự bản gốc.
 // `useTrack` (analytics Chatwoot) không port.
 export default function ConversationAction() {
     const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
@@ -147,6 +148,8 @@ export default function ConversationAction() {
                     onSelect={onClickAssignPriority}
                 />
             </div>
+            <ContactDetailsItem compact title={t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_LABELS')} />
+            <LabelBox />
         </div>
     );
 }

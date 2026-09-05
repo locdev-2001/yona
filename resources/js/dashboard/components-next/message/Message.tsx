@@ -9,18 +9,27 @@ import type { MessageContextValue } from './provider';
 import { MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
 import ActivityBubble from './bubbles/Activity';
+import AudioBubble from './bubbles/Audio';
+import FallbackBubble from './bubbles/Fallback';
+import FileBubble from './bubbles/File';
+import ImageBubble from './bubbles/Image';
 import TextBubble from './bubbles/Text';
+import VideoBubble from './bubbles/Video';
+import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
+import type { MessageAttachment } from './helpers/attachments';
 
 // Port từ dashboard/components-next/message/Message.vue. Payload spine giữ
 // snake_case (message_type, content_attributes…) — map sang biến camelCase tại
 // đây thay cho useCamelCase của bản gốc. Bỏ ở B3: context menu (B5), các bubble
-// media/email/CSAT… (B9+), MessageError retry (chưa có external_error ở API),
-// highlight theo route messageId, WhatsappReferral.
+// email/CSAT/form/location/contact/embed… (C5/F), MessageError retry (chưa có
+// external_error ở API), highlight theo route messageId, WhatsappReferral.
 
 interface MessageProps {
     message: ConversationMessage;
     channelType: string | null;
     groupWithNext?: boolean;
+    // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
+    chatAttachments?: MessageAttachment[];
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -39,7 +48,21 @@ const GRID_TEMPLATE_MAP: Record<string, string> = {
     [ORIENTATION.RIGHT]: '"bubble avatar" "meta spacer"',
 };
 
-export default function Message({ message, channelType, groupWithNext = false }: MessageProps) {
+const BUBBLE_COMPONENTS = {
+    [BUBBLE_NAMES.TEXT]: TextBubble,
+    [BUBBLE_NAMES.IMAGE]: ImageBubble,
+    [BUBBLE_NAMES.VIDEO]: VideoBubble,
+    [BUBBLE_NAMES.AUDIO]: AudioBubble,
+    [BUBBLE_NAMES.FILE]: FileBubble,
+    [BUBBLE_NAMES.FALLBACK]: FallbackBubble,
+} as const;
+
+export default function Message({
+    message,
+    channelType,
+    groupWithNext = false,
+    chatAttachments = [],
+}: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
     const isPrivate = message.private;
@@ -86,8 +109,11 @@ export default function Message({ message, channelType, groupWithNext = false }:
 
     const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY && orientation !== ORIENTATION.LEFT;
 
+    const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
+    const BubbleComponent = BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)];
+
     const shouldRenderMessage = Boolean(
-        (message.attachments && message.attachments.length > 0) ||
+        attachments.length > 0 ||
             message.content ||
             status === MESSAGE_STATUS.FAILED ||
             contentAttributes.external_error,
@@ -113,7 +139,8 @@ export default function Message({ message, channelType, groupWithNext = false }:
         sender,
         senderType,
         contentAttributes,
-        attachments: message.attachments ?? [],
+        attachments,
+        filteredCurrentChatAttachments: chatAttachments,
         inReplyTo: null,
         variant,
         orientation,
@@ -153,7 +180,7 @@ export default function Message({ message, channelType, groupWithNext = false }:
                                     : 'ltr:mr-8 rtl:ml-8'
                             }`}
                         >
-                            <TextBubble />
+                            <BubbleComponent />
                         </div>
                     </div>
                 )}

@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 // Port từ refs/chatwoot/app/models/message.rb.
-// Bỏ ở B3: SendReplyJob (webhook outbound D4), attachments (B9), email content/liquid (F1), template hooks (D6),
+// Bỏ: SendReplyJob (webhook outbound D4), email content/liquid (F1), template hooks (D6),
 // agent bot/captain (EE), searchkick (EE), translations (F6), csat (C5).
 class Message extends Model
 {
@@ -61,8 +62,15 @@ class Message extends Model
 
     public const MAX_CONTENT_LENGTH = 150000;
 
+    public const NUMBER_OF_PERMITTED_ATTACHMENTS = 15;
+
     // Transient như attr_accessor :echo_id — FE gửi kèm để tự khớp bản nháp.
     public ?string $echoId = null;
+
+    // Tương đương has_many :attachments, autosave: true — builder gán tệp đã
+    // dựng, model lưu ngay trong lượt tạo để payload realtime đã có attachments.
+    /** @var list<Attachment> */
+    public array $pendingAttachments = [];
 
     // Default DB chưa có trên model mới tạo — set sẵn cho serializer.
     protected $attributes = [
@@ -126,7 +134,17 @@ class Message extends Model
             $message->ensureProcessedMessageContent();
         });
 
+        static::deleting(function (Message $message) {
+            // has_many :attachments, dependent: :destroy — xóa từng bản ghi để
+            // hook deleted của Attachment dọn luôn tệp trên đĩa.
+            $message->attachments->each->delete();
+        });
+
         static::created(function (Message $message) {
+            // autosave attachments chạy trong chính lượt save! của Rails —
+            // phải xong trước mọi after_create_commit bên dưới.
+            $message->persistPendingAttachments();
+
             // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc;
             // send_reply/template hooks cắt sang D4/D6.
             $message->reopenConversation();
@@ -158,6 +176,21 @@ class Message extends Model
     public function sender(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    // validate_attachments_limit (before_add) — chặn trước khi thêm tệp thứ 16.
+    public static function guardAttachmentsLimit(int $currentCount): void
+    {
+        $limit = (int) config('limits.number_of_permitted_attachments', self::NUMBER_OF_PERMITTED_ATTACHMENTS);
+
+        if ($currentCount >= $limit) {
+            throw new MessageValidationException('Attachments exceeded maximum allowed');
+        }
     }
 
     public function contentTypeName(): string
@@ -193,6 +226,20 @@ class Message extends Model
     public function scopeOutgoing(Builder $query): Builder
     {
         return $query->where('message_type', self::TYPE_OUTGOING);
+    }
+
+    private function persistPendingAttachments(): void
+    {
+        if ($this->pendingAttachments === []) {
+            return;
+        }
+
+        foreach ($this->pendingAttachments as $attachment) {
+            $this->attachments()->save($attachment);
+        }
+
+        $this->setRelation('attachments', collect($this->pendingAttachments));
+        $this->pendingAttachments = [];
     }
 
     private function preventMessageFlooding(): void

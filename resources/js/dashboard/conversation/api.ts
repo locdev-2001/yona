@@ -1,4 +1,4 @@
-import { getJson, postJson } from '../helper/apiClient';
+import { getJson, postForm, postJson } from '../helper/apiClient';
 import type {
     AgentMeta,
     Conversation,
@@ -38,6 +38,8 @@ export interface FetchConversationsParams {
     sortBy: string;
     inboxId?: number;
     teamId?: number;
+    // conversationFilters.labels của ChatList.vue — trang lọc theo nhãn (B7).
+    labels?: string[];
     updatedWithin?: number;
 }
 
@@ -54,6 +56,7 @@ export function fetchConversations(params: FetchConversationsParams): Promise<Co
     if (params.teamId) {
         query.set('team_id', String(params.teamId));
     }
+    params.labels?.forEach(label => query.append('labels[]', label));
     if (params.updatedWithin) {
         query.set('updated_within', String(params.updatedWithin));
     }
@@ -75,6 +78,7 @@ export function fetchConversationMeta(
     if (params.teamId) {
         query.set('team_id', String(params.teamId));
     }
+    params.labels?.forEach(label => query.append('labels[]', label));
 
     return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${query.toString()}`);
 }
@@ -118,6 +122,33 @@ export interface SendMessagePayload {
     private: boolean;
     echo_id?: string;
     content_attributes?: Record<string, unknown>;
+    files?: File[];
+}
+
+// buildCreatePayload của api/inbox/message.js: có tệp thì gửi multipart với
+// `attachments[]`, không thì giữ nguyên JSON như trước.
+function buildCreateForm({
+    content,
+    private: isPrivate,
+    echo_id: echoId,
+    content_attributes: contentAttributes,
+    files,
+}: SendMessagePayload): FormData {
+    const form = new FormData();
+    if (content) {
+        form.append('content', content);
+    }
+    (files ?? []).forEach((file) => form.append('attachments[]', file));
+    // '1'/'0' theo quy ước multipart của repo (Show.tsx inbox) — PHP ép chuỗi
+    // 'false' thành true nên KHÔNG dùng String(boolean) như bản gốc JS.
+    form.append('private', isPrivate ? '1' : '0');
+    if (echoId) {
+        form.append('echo_id', echoId);
+    }
+    if (contentAttributes) {
+        form.append('content_attributes', JSON.stringify(contentAttributes));
+    }
+    return form;
 }
 
 export function sendMessage(
@@ -125,9 +156,14 @@ export function sendMessage(
     conversationId: number,
     payload: SendMessagePayload,
 ): Promise<ConversationMessage> {
-    return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages`, {
-        ...payload,
-    });
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages`;
+    const { files, ...jsonPayload } = payload;
+
+    if (files && files.length) {
+        return postForm(url, buildCreateForm(payload));
+    }
+
+    return postJson(url, { ...jsonPayload });
 }
 
 export interface ToggleStatusResponse {
