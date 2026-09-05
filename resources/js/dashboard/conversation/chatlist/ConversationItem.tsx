@@ -17,9 +17,15 @@ import type { Conversation } from '../types';
 interface ConversationItemProps {
     source: Conversation;
     showAssignee?: boolean;
+    // Tab hội thoại lọc sẵn đang mở (mention…) — quyết định URL của thẻ như gốc.
+    conversationType?: string;
 }
 
-export default function ConversationItem({ source, showAssignee = false }: ConversationItemProps) {
+export default function ConversationItem({
+    source,
+    showAssignee = false,
+    conversationType = '',
+}: ConversationItemProps) {
     const { accountId, inboxId, teamId, label, conversationId, markMessagesRead, markMessagesUnread } =
         useConversation();
     const bulkSelection = useBulkSelection();
@@ -37,7 +43,7 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
     };
     const showInboxName = !inboxId && inboxes.length > 1;
 
-    const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, id: source.id });
+    const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: source.id });
 
     // watch(() => props.source.id) gốc: hàng bị tái dùng cho hội thoại khác thì đóng menu.
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -57,7 +63,7 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
     // markAsUnread gốc quay về danh sách — ở lại hội thoại thì nó bị đánh dấu đã đọc ngay.
     const onMarkAsUnread = () => {
         markMessagesUnread(source.id).then(
-            () => router.visit(conversationListPageURL({ accountId, inboxId, teamId, label })),
+            () => router.visit(conversationListPageURL({ accountId, inboxId, teamId, label, conversationType })),
             () => undefined,
         );
         closeContextMenu();

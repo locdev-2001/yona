@@ -76,3 +76,13 @@ export const LAYOUT_TYPES = {
 } as const;
 
 export const LARGE_SCREEN_BREAKPOINT = 1024;
+
+// wootConstants.CONVERSATION_TYPE — tab Mentions/Participating/Unattended dùng
+// chung màn ChatList, chỉ khác tham số `conversation_type` gửi lên server.
+export const CONVERSATION_TYPE = {
+    MENTION: 'mention',
+    PARTICIPATING: 'participating',
+    UNATTENDED: 'unattended',
+} as const;
+
+export type ConversationType = (typeof CONVERSATION_TYPE)[keyof typeof CONVERSATION_TYPE] | '';

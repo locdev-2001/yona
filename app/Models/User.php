@@ -150,6 +150,21 @@ class User extends Authenticatable
         return $this->belongsToMany(Inbox::class, 'inbox_members')->withTimestamps();
     }
 
+    public function conversationParticipants(): HasMany
+    {
+        return $this->hasMany(ConversationParticipant::class);
+    }
+
+    public function participatingConversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')->withTimestamps();
+    }
+
+    public function mentions(): HasMany
+    {
+        return $this->hasMany(Mention::class);
+    }
+
     // User#assigned_inboxes: admin thấy mọi inbox của account, agent chỉ inbox mình là member.
     /** @return Builder<Inbox> */
     public function assignedInboxes(Account $account, AccountUser $accountUser): Builder

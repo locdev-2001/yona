@@ -42,3 +42,10 @@ export const MEDIA_TYPES: string[] = [
 ];
 
 export type AttachmentType = (typeof ATTACHMENT_TYPES)[keyof typeof ATTACHMENT_TYPES];
+
+// Loại đính kèm không phải "tệp tải về" — accordion Attachments bỏ qua chúng.
+export const NON_FILE_TYPES: string[] = [
+    ATTACHMENT_TYPES.LOCATION,
+    ATTACHMENT_TYPES.FALLBACK,
+    ATTACHMENT_TYPES.CONTACT,
+];

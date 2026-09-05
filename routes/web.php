@@ -126,6 +126,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/label/{label}/conversations/{conversationId}', [DashboardController::class, 'label'])
             ->whereNumber('conversationId')->name('conversations_through_label');
 
+        // Tương đương conversation.routes.js: conversation_mentions +
+        // conversation_through_mentions — cùng màn ConversationView, khác mỗi
+        // prop `conversationType` để ChatList lọc conversation_type=mention.
+        Route::get('/mentions/conversations', fn () => Inertia::render('dashboard/conversation/ConversationView', [
+            'conversationType' => 'mention',
+        ]))->name('conversation_mentions');
+        Route::get('/mentions/conversations/{conversationId}', fn (Account $account, int $conversationId) => Inertia::render(
+            'dashboard/conversation/ConversationView',
+            ['conversationId' => $conversationId, 'conversationType' => 'mention'],
+        ))->whereNumber('conversationId')->name('conversation_through_mentions');
+
         // Tương đương contacts routes.js (admin + agent đều vào được).
         Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');
         Route::get('/contacts/{contactId}', [ContactsController::class, 'show'])

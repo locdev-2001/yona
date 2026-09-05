@@ -49,3 +49,21 @@ export function shortTimestamp(time: string, withAgo = false): string {
         .replace(' year ago', `y${suffix}`)
         .replace(' years ago', `y${suffix}`);
 }
+
+// formatDuration: mm:ss, thêm hh khi đủ giờ; giá trị rỗng/âm trả chuỗi rỗng.
+export function formatDuration(durationInSeconds: number | string | null | undefined): string {
+    if (durationInSeconds === null || durationInSeconds === undefined) return '';
+
+    const totalSeconds = Number(durationInSeconds);
+    if (Number.isNaN(totalSeconds) || totalSeconds < 0) return '';
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    const paddedSeconds = String(seconds).padStart(2, '0');
+
+    if (hours > 0) return `${String(hours).padStart(2, '0')}:${paddedMinutes}:${paddedSeconds}`;
+
+    return `${paddedMinutes}:${paddedSeconds}`;
+}

@@ -15,6 +15,8 @@ interface ModalProps {
     fullWidth?: boolean;
     modalType?: 'centered' | 'right-aligned';
     size?: string;
+    // class truyền từ nơi gọi (fallthrough attribute của Vue) — dán lên lớp nền.
+    className?: string;
     children: ReactNode;
 }
 
@@ -26,6 +28,7 @@ export default function Modal({
     fullWidth = false,
     modalType = 'centered',
     size = '',
+    className = '',
     children,
 }: ModalProps) {
     const mousedDownOnBackdrop = useRef(false);
@@ -68,7 +71,7 @@ export default function Modal({
 
     return (
         <div
-            className={`modal-mask skip-context-menu ${modalType === 'right-aligned' ? 'right-aligned' : ''}`}
+            className={`modal-mask skip-context-menu ${modalType === 'right-aligned' ? 'right-aligned' : ''} ${className}`}
             onMouseDown={() => {
                 mousedDownOnBackdrop.current = true;
             }}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -8,10 +9,9 @@ import ComposeConversation from 'dashboard/components-next/NewConversation/Compo
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { getJson, patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import type { ContactMeta } from 'dashboard/conversation/types';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
@@ -19,6 +19,7 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import ContactInfoRow from './ContactInfoRow';
 import ContactMergeModal from './ContactMergeModal';
+import type { FullContact } from './useContactDetails';
 
 // Port từ routes/dashboard/conversation/contact/ContactInfo.vue — nạp contact
 // đầy đủ qua GET /contacts/{id} (contacts/show gốc) để có created_at (tooltip ⓘ)
@@ -28,23 +29,25 @@ import ContactMergeModal from './ContactMergeModal';
 // modal nhóm sau), Merge (ContactMergeModal shell), Delete (dialog B2).
 // Bỏ: sửa tên inline, SocialIcons, mô tả, VoiceCallButton (EE).
 interface ContactInfoProps {
-    contact: ContactMeta;
+    contact: FullContact;
     uiSettings: UISettings;
+    onContactChange: Dispatch<SetStateAction<FullContact>>;
     onToggleSignature: () => void;
     onPanelClose: () => void;
 }
 
-interface FullContact extends ContactMeta {
-    created_at?: number;
-}
-
 type EditableField = 'email' | 'phone_number' | 'company_name';
 
-export default function ContactInfo({ contact: initialContact, uiSettings, onToggleSignature, onPanelClose }: ContactInfoProps) {
+export default function ContactInfo({
+    contact,
+    uiSettings,
+    onContactChange: setContact,
+    onToggleSignature,
+    onPanelClose,
+}: ContactInfoProps) {
     const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const isAdmin = currentAccountUser.role === 'administrator';
-    const [contact, setContact] = useState<FullContact>(initialContact);
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         contact.id,
         contact.availability_status as AvailabilityStatus | undefined,
@@ -57,21 +60,6 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
     useEffect(() => {
         if (isEditingName) nameInputRef.current?.focus();
     }, [isEditingName]);
-
-    // getContactDetails gốc: watch contact.id → contacts/show.
-    useEffect(() => {
-        let cancelled = false;
-        setContact(initialContact);
-        getJson<{ payload: FullContact }>(`/api/v1/accounts/${accountId}/contacts/${initialContact.id}`).then(
-            response => {
-                if (!cancelled) setContact(response.payload);
-            },
-            () => undefined,
-        );
-        return () => {
-            cancelled = true;
-        };
-    }, [accountId, initialContact]);
 
     const additionalAttributes = (contact.additional_attributes ?? {}) as Record<string, string | undefined>;
     const cityAndCountry = [additionalAttributes.city, additionalAttributes.country].filter(Boolean).join(', ');
@@ -247,6 +235,7 @@ export default function ContactInfo({ contact: initialContact, uiSettings, onTog
                     />
                     <ContactMergeModal
                         primaryContact={contact}
+                        onMerged={mergedContact => setContact(mergedContact as FullContact)}
                         trigger={() => <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon="i-ph-arrows-merge" slate faded sm />}
                     />
                     {isAdmin ? (

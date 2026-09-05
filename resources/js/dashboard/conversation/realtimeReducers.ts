@@ -1,4 +1,6 @@
-import { MESSAGE_TYPES } from './constants';
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import { CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
+import type { ConversationType } from './constants';
 import { matchesLabels } from './labelHelpers';
 import type { AssigneeTab, Conversation, ConversationMessage } from './types';
 
@@ -64,12 +66,21 @@ export function applyConversationLastActivity(
     );
 }
 
+// Danh sách lọc theo mention/participating chỉ chứa hội thoại server đã lọc, nên
+// mọi đường "tự thêm hội thoại lạ" đều bị chặn (mutation UPDATE_CONVERSATION +
+// action addConversation của gốc).
+const SERVER_FILTERED_TYPES: string[] = [CONVERSATION_TYPE.MENTION, CONVERSATION_TYPE.PARTICIPATING];
+
 // UPDATE_CONVERSATION: bỏ event cũ hơn (updated_at), giữ messages đang có;
-// chưa có trong list thì thêm (gốc chỉ chặn ở view mention/participating).
-export function applyConversationUpdate(conversations: Conversation[], incoming: Conversation): Conversation[] {
+// chưa có trong list thì thêm, trừ khi đang ở tab mention/participating.
+export function applyConversationUpdate(
+    conversations: Conversation[],
+    incoming: Conversation,
+    conversationType: ConversationType = '',
+): Conversation[] {
     const index = conversations.findIndex((item) => item.id === incoming.id);
     if (index === -1) {
-        return [...conversations, incoming];
+        return SERVER_FILTERED_TYPES.includes(conversationType) ? conversations : [...conversations, incoming];
     }
 
     const existing = conversations[index];
@@ -84,9 +95,16 @@ export function applyConversationUpdate(conversations: Conversation[], incoming:
     return next;
 }
 
-// ADD_CONVERSATION (idempotent) sau điều kiện của action addConversation:
-// đang xem một inbox thì chỉ nhận conversation thuộc inbox đó.
-export function shouldAddConversationToList(conversation: Conversation, currentInboxId: number): boolean {
+// ADD_CONVERSATION (idempotent) sau điều kiện của action addConversation: đang
+// xem một inbox thì chỉ nhận conversation thuộc inbox đó; các màn lọc ở server
+// (mention/participating/unattended) không tự thêm hội thoại mới.
+export function shouldAddConversationToList(
+    conversation: Conversation,
+    currentInboxId: number,
+    conversationType: ConversationType = '',
+): boolean {
+    if (conversationType) return false;
+
     return !currentInboxId || Number(currentInboxId) === conversation.inbox_id;
 }
 
@@ -216,4 +234,19 @@ export function selectVisibleConversations(
     return conversations
         .filter((conversation) => matchesConversationView(conversation, filters))
         .sort((a, b) => sortComparator(a, b, sortKey));
+}
+
+// ADD_CONVERSATION_ATTACHMENTS: tin đã gửi xong mới góp tệp vào accordion
+// Attachments, và không thêm trùng tệp đã có.
+export function appendMessageAttachments(
+    attachments: MessageAttachment[],
+    message: ConversationMessage,
+): MessageAttachment[] {
+    const incoming = (message.attachments ?? []) as unknown as MessageAttachment[];
+    if (message.status !== MESSAGE_STATUS.SENT || !incoming.length) return attachments;
+
+    const known = new Set(attachments.map((item) => item.id));
+    const added = incoming.filter((item) => !known.has(item.id));
+
+    return added.length ? [...attachments, ...added] : attachments;
 }

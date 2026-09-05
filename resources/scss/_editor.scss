@@ -184,3 +184,29 @@
 .prose-bubble p:last-child {
   margin-bottom: 0;
 }
+
+// <style scoped> của components-next/Editor/Editor.vue.
+.editor-wrapper {
+  .ProseMirror-menubar-wrapper {
+    .ProseMirror.ProseMirror-woot-style {
+      p {
+        @apply first:mt-0 #{!important};
+      }
+
+      .empty-node {
+        @apply m-0 #{!important};
+
+        &::before {
+          @apply text-n-slate-11 dark:text-n-slate-11;
+        }
+      }
+    }
+
+    .ProseMirror-menubar {
+      width: fit-content !important;
+      position: relative !important;
+      top: unset !important;
+      @apply ltr:left-[-0.188rem] rtl:right-[-0.188rem] #{!important};
+    }
+  }
+}

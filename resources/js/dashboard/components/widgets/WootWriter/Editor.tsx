@@ -16,13 +16,16 @@ import { createTypingIndicator } from '@chatwoot/utils';
 
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
 import type { CaretPosition } from './CaretAnchoredPicker';
+import TagAgents from './TagAgents';
+import type { MentionRecord } from './mentionHelpers';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
 
 // Port từ dashboard/components/widgets/WootWriter/Editor.vue — giữ nguyên
 // engine @chatwoot/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
-// B10 thêm nhánh gợi ý `/` (canned response). Vẫn bỏ: mention @ (B11),
-// variables {{ }} (D1), macros # (D3), emoji gõ ':' , upload ảnh inline (B9), copilot (EE).
+// B10 thêm nhánh gợi ý `/` (canned response), B11 thêm nhánh `@` (nhắc tên).
+// Vẫn bỏ: variables {{ }} (D1), macros # (D3), emoji gõ ':' , upload ảnh inline
+// (B9), copilot + công cụ Captain (EE).
 
 export interface EditorHandle {
     focusEditorInputField: (position?: 'start' | 'end') => void;
@@ -47,6 +50,7 @@ interface EditorProps {
     onTypingOn?: () => void;
     onTypingOff?: () => void;
     onToggleCannedMenu?: (isOpen: boolean) => void;
+    onToggleUserMention?: (isOpen: boolean) => void;
 }
 
 interface SuggestionRange {
@@ -120,6 +124,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onTypingOn,
         onTypingOff,
         onToggleCannedMenu,
+        onToggleUserMention,
     },
     ref,
 ) {
@@ -130,6 +135,8 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
     const [showCannedMenu, setShowCannedMenu] = useState(false);
     const [cannedSearchKey, setCannedSearchKey] = useState('');
+    const [showUserMentions, setShowUserMentions] = useState(false);
+    const [mentionSearchKey, setMentionSearchKey] = useState('');
     const [suggestionRange, setSuggestionRange] = useState<SuggestionRange | null>(null);
 
     // Callback mới nhất — tránh phải dựng lại EditorView theo mỗi render.
@@ -152,36 +159,64 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const contentFromEditor = (): string =>
         viewRef.current ? MessageMarkdownSerializer.serialize(viewRef.current.state.doc) : '';
 
-    // createSuggestionPlugin của Editor.vue — trigger `/` cho canned response.
+    // createSuggestionPlugin của Editor.vue — một khuôn cho mọi ký tự kích hoạt.
+    const createSuggestionPlugin = ({
+        trigger,
+        setShowMenu,
+        setSearchTerm,
+        isAllowed,
+    }: {
+        trigger: string;
+        setShowMenu: (isOpen: boolean) => void;
+        setSearchTerm: (term: string) => void;
+        isAllowed: () => boolean;
+    }): Plugin =>
+        suggestionsPlugin({
+            matcher: triggerCharacters(trigger, 0),
+            suggestionClass: '',
+            onEnter: (args: SuggestionArgs) => {
+                if (!isAllowed()) return false;
+                viewRef.current = args.view;
+                setSuggestionRange(args.range);
+                setSearchTerm(args.text || '');
+                setShowMenu(true);
+                return false;
+            },
+            onChange: (args: SuggestionArgs) => {
+                viewRef.current = args.view;
+                setSuggestionRange(args.range);
+                setSearchTerm(args.text || '');
+                return false;
+            },
+            onExit: () => {
+                setSearchTerm('');
+                setShowMenu(false);
+                return false;
+            },
+            onKeyDown: () => false,
+        }) as Plugin;
+
     const buildSuggestionPlugins = (): Plugin[] => {
         if (!enableSuggestions) return [];
 
         return [
-            suggestionsPlugin({
-                matcher: triggerCharacters('/', 0),
-                suggestionClass: '',
-                onEnter: (args: SuggestionArgs) => {
+            // Gốc còn một plugin `@` nữa cho công cụ Captain (EE, không port); nhánh
+            // nhắc tên của nó luôn được phép vì `enableCaptainTools` bằng false.
+            createSuggestionPlugin({
+                trigger: '@',
+                setShowMenu: setShowUserMentions,
+                setSearchTerm: setMentionSearchKey,
+                isAllowed: () => true,
+            }),
+            createSuggestionPlugin({
+                trigger: '/',
+                setShowMenu: setShowCannedMenu,
+                setSearchTerm: setCannedSearchKey,
+                isAllowed: () => {
                     const flags = suggestionFlagsRef.current;
-                    if (flags.isPrivate || !flags.enableCannedResponses) return false;
-                    viewRef.current = args.view;
-                    setSuggestionRange(args.range);
-                    setCannedSearchKey(args.text || '');
-                    setShowCannedMenu(true);
-                    return false;
+                    return !flags.isPrivate && flags.enableCannedResponses;
                 },
-                onChange: (args: SuggestionArgs) => {
-                    viewRef.current = args.view;
-                    setSuggestionRange(args.range);
-                    setCannedSearchKey(args.text || '');
-                    return false;
-                },
-                onExit: () => {
-                    setCannedSearchKey('');
-                    setShowCannedMenu(false);
-                    return false;
-                },
-                onKeyDown: () => false,
-            }) as Plugin,
+            }),
         ];
     };
 
@@ -298,11 +333,18 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     }, [disabled]);
 
     const shouldShowCannedResponses = enableCannedResponses && showCannedMenu && !isPrivate;
+    // shouldShowUserMentions gốc: chỉ hiện khi đang soạn ghi chú riêng.
+    const shouldShowUserMentions = showUserMentions && isPrivate;
 
     useEffect(() => {
         onToggleCannedMenu?.(shouldShowCannedResponses);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [shouldShowCannedResponses]);
+
+    useEffect(() => {
+        onToggleUserMention?.(shouldShowUserMentions);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shouldShowUserMentions]);
 
     // Neo popup vào ký tự kích hoạt: ô soạn thảo có thể cao hơn dòng đang gõ nhiều.
     const caretPosition = useMemo<CaretPosition | null>(() => {
@@ -317,10 +359,13 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
     // Popup tự giữ focus; đóng lại thì trả focus về editor. Gợi ý vẫn còn hiệu lực
     // trong tài liệu nên chỉ mở lại khi gõ ký tự kích hoạt lần nữa.
-    const dismissCannedResponses = () => {
-        setShowCannedMenu(false);
+    const dismissPicker = (setShowMenu: (isOpen: boolean) => void) => () => {
+        setShowMenu(false);
         viewRef.current?.focus();
     };
+
+    const dismissCannedResponses = dismissPicker(setShowCannedMenu);
+    const dismissUserMentions = dismissPicker(setShowUserMentions);
 
     // Xóa ký tự kích hoạt → plugin tự đóng popup qua onExit.
     const removeSuggestionTrigger = () => {
@@ -344,12 +389,38 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         callbacksRef.current.onChange(contentFromEditor());
     };
 
+    // insertSpecialContent('mention', …) + nodeCreators.mention — node `mention` do
+    // MessageMarkdownSerializer đổi thành `[@Tên](mention://user/{id}/{Tên})`, đúng
+    // cú pháp messages/mention_service.rb bóc ra.
+    const insertMention = (record: MentionRecord) => {
+        const view = viewRef.current;
+        if (!view || !suggestionRange) return;
+
+        const node = view.state.schema.nodes.mention.create({
+            userId: record.id,
+            userFullName: record.displayName,
+            mentionType: record.type,
+        });
+
+        insertAtCursor(view, node, suggestionRange.from, suggestionRange.to);
+        callbacksRef.current.onChange(contentFromEditor());
+    };
+
     return (
         <div
             ref={editorRootRef}
             className={`relative w-full ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''} ${className}`}
         >
             <div ref={editorHostRef} />
+            {shouldShowUserMentions ? (
+                <TagAgents
+                    caretPosition={caretPosition}
+                    searchKey={mentionSearchKey}
+                    onSelectAgent={insertMention}
+                    onClose={dismissUserMentions}
+                    onRemoveTrigger={removeSuggestionTrigger}
+                />
+            ) : null}
             {shouldShowCannedResponses ? (
                 <CannedResponse
                     caretPosition={caretPosition}

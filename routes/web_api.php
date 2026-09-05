@@ -1,16 +1,20 @@
 <?php
 
+use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\BulkActionsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
+use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
 use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsController;
+use App\Http\Controllers\WebApi\Contacts\NotesController as ContactNotesController;
 use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
 use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
 use App\Http\Controllers\WebApi\Conversations\DraftMessagesController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
+use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
@@ -81,6 +85,14 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/contacts/{contactId}/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes'])->whereNumber('contactId');
         Route::delete('/contacts/{contactId}/avatar', [ContactsController::class, 'destroyAvatar'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/contact_inboxes', [ContactInboxesController::class, 'store'])->whereNumber('contactId');
+        Route::get('/contacts/{contactId}/notes', [ContactNotesController::class, 'index'])->whereNumber('contactId');
+        Route::post('/contacts/{contactId}/notes', [ContactNotesController::class, 'store'])->whereNumber('contactId');
+        Route::match(['put', 'patch'], '/contacts/{contactId}/notes/{noteId}', [ContactNotesController::class, 'update'])
+            ->whereNumber(['contactId', 'noteId']);
+        Route::delete('/contacts/{contactId}/notes/{noteId}', [ContactNotesController::class, 'destroy'])
+            ->whereNumber(['contactId', 'noteId']);
+        Route::get('/contacts/{contactId}/conversations', [ContactConversationsController::class, 'index'])->whereNumber('contactId');
+        Route::get('/conversations/{conversationId}/attachments', [ConversationsController::class, 'attachments'])->whereNumber('conversationId');
         Route::get('/contacts/{contactId}/labels', [ContactLabelsController::class, 'index'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/labels', [ContactLabelsController::class, 'create'])->whereNumber('contactId');
 
@@ -102,6 +114,11 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
+        // resource :participants (singular) — user_ids nằm trong body.
+        Route::get('/conversations/{conversationId}/participants', [ParticipantsController::class, 'show'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/participants', [ParticipantsController::class, 'store'])->whereNumber('conversationId');
+        Route::match(['put', 'patch'], '/conversations/{conversationId}/participants', [ParticipantsController::class, 'update'])->whereNumber('conversationId');
+        Route::delete('/conversations/{conversationId}/participants', [ParticipantsController::class, 'destroy'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
         // resource :draft_messages (singular) — mot ban nhap moi conversation.
@@ -119,6 +136,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
         Route::match(['put', 'patch'], '/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'update'])->whereNumber('cannedResponseId');
         Route::delete('/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'destroy'])->whereNumber('cannedResponseId');
+
+        Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 
         Route::post('/bulk_actions', [BulkActionsController::class, 'create']);
 

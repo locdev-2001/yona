@@ -5,13 +5,14 @@ namespace App\Finders;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\ConversationParticipant;
+use App\Models\Mention;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 // Port từ refs/chatwoot/app/finders/conversation_finder.rb.
-// Bỏ: custom view (E1), q search (E2). conversation_type mention/participating
-// port khung — bảng mentions/conversation_participants chờ B11.
+// Bỏ: custom view (E1), q search (E2).
 class ConversationFinder
 {
     public const RESULTS_PER_PAGE = 25;
@@ -173,9 +174,20 @@ class ConversationFinder
 
         match ($type) {
             'unattended' => $this->conversations->unattended(),
-            // mentions + conversation_participants là bảng của B11; chưa có bảng thì
-            // tập kết quả rỗng — trùng đúng kết quả bản gốc khi chưa có bản ghi nào.
-            'mention', 'participating' => $this->conversations->whereRaw('1 = 0'),
+            'mention' => $this->conversations->whereIn(
+                'conversations.id',
+                Mention::query()
+                    ->where('account_id', $this->currentAccount->id)
+                    ->where('user_id', $this->currentUser->id)
+                    ->select('conversation_id')
+            ),
+            'participating' => $this->conversations->whereIn(
+                'conversations.id',
+                ConversationParticipant::query()
+                    ->where('account_id', $this->currentAccount->id)
+                    ->where('user_id', $this->currentUser->id)
+                    ->select('conversation_id')
+            ),
             default => $this->conversations,
         };
     }

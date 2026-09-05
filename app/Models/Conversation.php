@@ -20,8 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
-// Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1),
-// mentions/participants (B11), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
+// Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
 // campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
@@ -284,6 +283,35 @@ class Conversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class)->orderBy('created_at');
+    }
+
+    public function conversationParticipants(): HasMany
+    {
+        return $this->hasMany(ConversationParticipant::class);
+    }
+
+    public function mentions(): HasMany
+    {
+        return $this->hasMany(Mention::class);
+    }
+
+    // Cổng DUY NHẤT tạo participant: thay validation ensure_inbox_access của
+    // conversation_participant.rb. Trả null khi user không nằm trong
+    // assignable_agents (inbox member + administrator) — đúng cách
+    // `find_or_create_by` của bản gốc im lặng bỏ qua bản ghi không hợp lệ.
+    public function addParticipant(int $userId): ?ConversationParticipant
+    {
+        $existing = $this->conversationParticipants()->where('user_id', $userId)->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        if (! $this->inbox->assignableAgents()->contains('id', $userId)) {
+            return null;
+        }
+
+        return $this->conversationParticipants()->create(['user_id' => $userId]);
     }
 
     public function statusName(): string

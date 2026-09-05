@@ -15,6 +15,7 @@ interface ConversationListProps {
     isLoading?: boolean;
     showEndOfListMessage?: boolean;
     showAssignee?: boolean;
+    conversationType?: string;
     onLoadMore: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function ConversationList({
     isLoading = false,
     showEndOfListMessage = false,
     showAssignee = false,
+    conversationType = '',
     onLoadMore,
 }: ConversationListProps) {
     const conversationListRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,12 @@ export default function ConversationList({
         <div ref={conversationListRef} className="flex-1 min-h-0 overflow-y-auto conversations-list">
             <div className="[&>div:has(+div.active)]:!border-n-surface-1 [&>div:has(+div.selected)]:!border-n-surface-1">
                 {conversationList.map(chat => (
-                    <ConversationItem key={chat.id} source={chat} showAssignee={showAssignee} />
+                    <ConversationItem
+                        key={chat.id}
+                        source={chat}
+                        showAssignee={showAssignee}
+                        conversationType={conversationType}
+                    />
                 ))}
             </div>
             {isLoading ? (

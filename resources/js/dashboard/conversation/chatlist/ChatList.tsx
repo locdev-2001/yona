@@ -16,7 +16,7 @@ import type { ConversationFilterCondition } from 'dashboard/components-next/filt
 import { useConversationFilterContext } from 'dashboard/components-next/filter/provider';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
-import { ASSIGNEE_TYPE, STATUS_TYPE } from '../constants';
+import { ASSIGNEE_TYPE, CONVERSATION_TYPE, STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { appliedLabelsForSelection } from '../labelHelpers';
 import type { AssigneeTab } from '../types';
@@ -25,7 +25,9 @@ import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 
 // Port từ dashboard/components/ChatList.vue — cắt: custom views/folders,
-// delete dialog, mentions/participating/unattended view.
+// delete dialog, participating/unattended view. Tab Mentions dùng chung màn này
+// và chung một nguồn danh sách: `conversationType` chỉ đổi tham số lọc gửi lên
+// server (ConversationContext) và tiêu đề trang.
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
 // #conversationFilterTeleportTarget); Apply chưa lọc list (E1) — xem trace.
 const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
@@ -47,6 +49,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
         inboxId,
         teamId,
         label,
+        conversationType,
         isOnExpandedLayout,
         setAssigneeTab,
         loadMoreConversations,
@@ -108,11 +111,15 @@ export default function ChatList({ showConversationList = true }: { showConversa
         setShowAdvancedFilters(true);
     };
 
-    // pageTitle gốc: inbox.name → activeTeam.name → #label → mặc định (mention/... vào B8).
+    // pageTitle gốc: inbox.name → activeTeam.name → #label → conversationType → mặc định.
     const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
     const activeTeam = teamId ? teams.find(item => item.id === teamId) : undefined;
     const pageTitle =
-        activeInbox?.name || activeTeam?.name || (label ? `#${label}` : '') || t('CHAT_LIST.TAB_HEADING');
+        activeInbox?.name ||
+        activeTeam?.name ||
+        (label ? `#${label}` : '') ||
+        (conversationType === CONVERSATION_TYPE.MENTION ? t('CHAT_LIST.MENTION_HEADING') : '') ||
+        t('CHAT_LIST.TAB_HEADING');
 
     const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
         key,
@@ -163,6 +170,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
                     isLoading={listLoading}
                     showEndOfListMessage={showEndOfListMessage}
                     showAssignee={showAssigneeInConversationCard}
+                    conversationType={conversationType}
                     onLoadMore={loadMoreConversations}
                 />
                 {showAdvancedFilters && teleportTarget
