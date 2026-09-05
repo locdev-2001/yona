@@ -102,6 +102,27 @@ const messages: Record<string, unknown> = {
         "NO_RESULTS": "No agents found matching your search",
         "SEARCH": {
             "NO_RESULTS": "No results found."
+        },
+        "MULTI_SELECTOR": {
+            "PLACEHOLDER": "None",
+            "TITLE": {
+                "AGENT": "Select agent",
+                "TEAM": "Select team"
+            },
+            "LIST": {
+                "NONE": "None"
+            },
+            "SEARCH": {
+                "NO_RESULTS": {
+                    "AGENT": "No agents found",
+                    "TEAM": "No teams found"
+                },
+                "PLACEHOLDER": {
+                    "AGENT": "Search agents",
+                    "TEAM": "Search teams",
+                    "INPUT": "Search for agents"
+                }
+            }
         }
     },
     "APP_GLOBAL": {
@@ -410,6 +431,10 @@ const messages: Record<string, unknown> = {
             "failed": "Could not create the account. Please try again."
         }
     },
+    "AUTO_ASSIGNMENT": {
+        "default_policy_name": "Default Policy",
+        "policy_actor": "Automation System via {policy_name}"
+    },
     "BILLING_SETTINGS": {
         "TITLE": "Billing",
         "DESCRIPTION": "Manage your subscription here, upgrade your plan and get more for your team.",
@@ -478,6 +503,50 @@ const messages: Record<string, unknown> = {
     },
     "BREADCRUMB": {
         "ARIA_LABEL": "Breadcrumb"
+    },
+    "BULK_ACTION": {
+        "CONVERSATIONS_SELECTED": "{conversationCount} selected",
+        "NONE": "None",
+        "CLEAR_SELECTION": "Clear",
+        "ASSIGN_AGENT_CONFIRMATION_LABEL": "Are you sure you want to assign {n} conversation to {agentName}? | Are you sure you want to assign {n} conversations to {agentName}?",
+        "UNASSIGN_AGENT_CONFIRMATION_LABEL": "Are you sure you want to unassign {n} conversation? | Are you sure you want to unassign {n} conversations?",
+        "YES": "Yes",
+        "CANCEL": "Cancel",
+        "SEARCH_INPUT_PLACEHOLDER": "Search",
+        "ASSIGN_AGENT_TOOLTIP": "Assign agent",
+        "ASSIGN_TEAM_TOOLTIP": "Assign team",
+        "ASSIGN_SUCCESFUL": "Conversations assigned successfully.",
+        "ASSIGN_FAILED": "Failed to assign conversations. Please try again.",
+        "RESOLVE_SUCCESFUL": "Conversations resolved successfully.",
+        "RESOLVE_FAILED": "Failed to resolve conversations. Please try again.",
+        "ALL_CONVERSATIONS_SELECTED_ALERT": "Conversations visible on this page are only selected.",
+        "UPDATE": {
+            "CHANGE_STATUS": "Change status",
+            "SNOOZE_UNTIL": "Snooze",
+            "UPDATE_SUCCESFUL": "Conversation status updated successfully.",
+            "UPDATE_FAILED": "Failed to update conversations. Please try again."
+        },
+        "RESOLVE": {
+            "ALL_MISSING_ATTRIBUTES": "Cannot resolve conversations due to missing required attributes",
+            "PARTIAL_SUCCESS": "Some conversations need required attributes before resolving and were skipped"
+        },
+        "LABELS": {
+            "ASSIGN_LABELS": "Assign labels",
+            "REMOVE_LABELS": "Remove labels",
+            "ASSIGN_SELECTED_LABELS": "Assign selected labels",
+            "REMOVE_SELECTED_LABELS": "Remove selected labels",
+            "ASSIGN_SUCCESFUL": "Labels assigned successfully.",
+            "ASSIGN_FAILED": "Failed to assign labels. Please try again.",
+            "REMOVE_SUCCESFUL": "Labels removed successfully.",
+            "REMOVE_FAILED": "Failed to remove labels. Please try again."
+        },
+        "TEAMS": {
+            "NONE": "None",
+            "ASSIGN_TEAM_CONFIRMATION_LABEL": "Are you sure you want to assign {n} conversation to {teamName}? | Are you sure you want to assign {n} conversations to {teamName}?",
+            "UNASSIGN_TEAM_CONFIRMATION_LABEL": "Are you sure you want to unassign {n} conversation? | Are you sure you want to unassign {n} conversations?",
+            "ASSIGN_SUCCESFUL": "Teams assigned successfully.",
+            "ASSIGN_FAILED": "Failed to assign team. Please try again."
+        }
     },
     "CAPTAIN_SETTINGS": {
         "TITLE": "Captain Settings",
@@ -1892,6 +1961,16 @@ const messages: Record<string, unknown> = {
                 "added": "{user_name} set the priority to {new_priority}",
                 "updated": "{user_name} changed the priority from {old_priority} to {new_priority}",
                 "removed": "{user_name} removed the priority"
+            },
+            "assignee": {
+                "self_assigned": "{user_name} self-assigned this conversation",
+                "assigned": "Assigned to {assignee_name} by {user_name}",
+                "removed": "Conversation unassigned by {user_name}"
+            },
+            "team": {
+                "assigned": "Assigned to {team_name} by {user_name}",
+                "assigned_with_assignee": "Assigned to {assignee_name} via {team_name} by {user_name}",
+                "removed": "Unassigned from {team_name} by {user_name}"
             },
             "muted": "{user_name} has muted the conversation",
             "unmuted": "{user_name} has unmuted the conversation"

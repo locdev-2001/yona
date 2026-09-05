@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -25,6 +26,8 @@ interface DropdownMenuProps {
     showSearch?: boolean;
     searchPlaceholder?: string;
     className?: string;
+    // Slot `footer` của bản gốc (BulkAgentActions/BulkTeamActions dùng làm khối xác nhận).
+    footer?: ReactNode;
     onAction: (item: DropdownMenuItem) => void;
 }
 
@@ -35,6 +38,7 @@ export default function DropdownMenu({
     showSearch = false,
     searchPlaceholder = '',
     className = '',
+    footer,
     onAction,
 }: DropdownMenuProps) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +105,7 @@ export default function DropdownMenu({
                     <div className="text-sm text-n-slate-11 px-2 py-1.5">{t('DROPDOWN_MENU.EMPTY_STATE')}</div>
                 ) : null}
             </div>
+            {footer ? <div className="shrink-0">{footer}</div> : null}
         </div>
     );
 }

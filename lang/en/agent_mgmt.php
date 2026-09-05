@@ -105,4 +105,25 @@ return [
     'SEARCH' => [
         'NO_RESULTS' => 'No results found.',
     ],
+    'MULTI_SELECTOR' => [
+        'PLACEHOLDER' => 'None',
+        'TITLE' => [
+            'AGENT' => 'Select agent',
+            'TEAM' => 'Select team',
+        ],
+        'LIST' => [
+            'NONE' => 'None',
+        ],
+        'SEARCH' => [
+            'NO_RESULTS' => [
+                'AGENT' => 'No agents found',
+                'TEAM' => 'No teams found',
+            ],
+            'PLACEHOLDER' => [
+                'AGENT' => 'Search agents',
+                'TEAM' => 'Search teams',
+                'INPUT' => 'Search for agents',
+            ],
+        ],
+    ],
 ];

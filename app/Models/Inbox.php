@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
+use App\Services\AutoAssignment\InboxRoundRobinService;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\InboxFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,12 +13,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Collection as SupportCollection;
 
 // Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: campaigns/contact_inboxes/conversations/messages (nhóm B2-B3),
 // working hours OutOfOffisable (tính năng sau), agent_bot/webhooks/portal (nhóm D-E),
-// round-robin + FilteredCountInvalidator (nợ B6), Reportable, EE overlay.
+// FilteredCountInvalidator (nợ B8), Reportable, EE overlay.
 class Inbox extends Model
 {
     /** @use HasFactory<InboxFactory> */
@@ -71,6 +75,7 @@ class Inbox extends Model
         static::deleted(function (Inbox $inbox) {
             $inbox->channel?->delete();
             $inbox->avatar?->delete();
+            (new InboxRoundRobinService($inbox))->clearQueue();
         });
     }
 
@@ -92,6 +97,23 @@ class Inbox extends Model
     public function conversations(): HasMany
     {
         return $this->hasMany(Conversation::class);
+    }
+
+    public function inboxAssignmentPolicy(): HasOne
+    {
+        return $this->hasOne(InboxAssignmentPolicy::class);
+    }
+
+    public function assignmentPolicy(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            AssignmentPolicy::class,
+            InboxAssignmentPolicy::class,
+            'inbox_id',
+            'id',
+            'id',
+            'assignment_policy_id',
+        );
     }
 
     public function contactInboxes(): HasMany
@@ -120,7 +142,22 @@ class Inbox extends Model
     /** @param list<int> $userIds */
     public function removeMembers(array $userIds): void
     {
-        $this->inboxMembers()->whereIn('user_id', $userIds)->delete();
+        // destroy_all của bản gốc — xóa từng bản ghi để hook cập nhật hàng đợi
+        // round-robin chạy.
+        $this->inboxMembers()->whereIn('user_id', $userIds)->get()->each->delete();
+    }
+
+    // InboxAgentAvailability#member_ids_with_assignment_capacity — CE không giới
+    // hạn sức chứa nên là toàn bộ member.
+    /** @return list<int> */
+    public function memberIdsWithAssignmentCapacity(): array
+    {
+        return $this->inboxMembers()->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    public function autoAssignmentV2Enabled(): bool
+    {
+        return $this->account->featureEnabled('assignment_v2');
     }
 
     public function isApi(): bool
@@ -154,12 +191,39 @@ class Inbox extends Model
     /** @return Collection<int, User> */
     public function assignableAgents(): Collection
     {
-        $administratorIds = $this->account->accountUsers()
+        return self::assignableAgentsForInboxes(new Collection([$this]), $this->account);
+    }
+
+    /**
+     * assignable_agents_controller.rb: giao member của MỌI inbox được chọn, hợp
+     * với toàn bộ administrator. Một inbox là trường hợp riêng của phép giao này
+     * nên hai đường đọc dùng chung một chỗ.
+     *
+     * @param  SupportCollection<int, Inbox>|Collection<int, Inbox>  $inboxes
+     * @return Collection<int, User>
+     */
+    public static function assignableAgentsForInboxes(SupportCollection|Collection $inboxes, Account $account): Collection
+    {
+        $administratorIds = $account->accountUsers()
             ->where('role', AccountUser::ROLE_ADMINISTRATOR)
+            ->orderBy('user_id')
             ->pluck('user_id');
 
+        $memberIds = collect($inboxes)
+            ->map(fn (Inbox $inbox) => $inbox->inboxMembers()->orderBy('user_id')->pluck('user_id'))
+            ->reduce(
+                fn (?SupportCollection $shared, SupportCollection $ids) => $shared === null ? $ids : $shared->intersect($ids)->values(),
+            ) ?? collect();
+
+        // Gốc nối hai truy vấn (member trước, administrator sau) rồi uniq — giữ
+        // đúng thứ tự đó thay vì để PostgreSQL tự quyết, không thì danh sách gán
+        // đổi chỗ giữa các lần đọc.
+        $orderedIds = $memberIds->merge($administratorIds)->unique()->values();
+
         return User::query()
-            ->whereIn('id', $this->inboxMembers()->pluck('user_id')->merge($administratorIds)->unique())
-            ->get();
+            ->whereIn('id', $orderedIds)
+            ->get()
+            ->sortBy(fn (User $user) => $orderedIds->search($user->id))
+            ->values();
     }
 }

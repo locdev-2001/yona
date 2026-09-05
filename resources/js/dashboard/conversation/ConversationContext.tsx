@@ -14,6 +14,8 @@ import {
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
 import {
+    assignAgent as assignAgentRequest,
+    assignTeam as assignTeamRequest,
     fetchConversation,
     fetchConversationMeta,
     fetchConversations,
@@ -47,6 +49,7 @@ import {
     STATUS_TYPE,
 } from './constants';
 import type {
+    AgentMeta,
     AssigneeTab,
     Conversation,
     ConversationListMeta,
@@ -54,6 +57,7 @@ import type {
     ConversationPriority,
     ConversationStatus,
     ConversationStatusFilter,
+    TeamMeta,
 } from './types';
 
 // Thay cụm store vuex conversations/conversationPage của Chatwoot:
@@ -92,6 +96,8 @@ interface ConversationContextValue {
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
     toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
     togglePriority: (priority: ConversationPriority | null) => Promise<void>;
+    assignAgent: (agent: AgentMeta | null, assigneeType?: string | null) => Promise<void>;
+    assignTeam: (team: TeamMeta | null) => Promise<void>;
     muteConversation: () => Promise<void>;
     unmuteConversation: () => Promise<void>;
 }
@@ -107,6 +113,38 @@ export interface ToggleStatusPayload {
 type MessageEventPayload = ConversationMessage & {
     conversation?: { assignee_id?: number | null; unread_count?: number; last_activity_at?: number };
 };
+
+// Mutation ASSIGN_AGENT/ASSIGN_TEAM của store/modules/conversations/index.js.
+function applyConversationAssignee(
+    conversations: Conversation[],
+    conversationId: number,
+    assignee: AgentMeta | null,
+    assigneeType?: string | null,
+): Conversation[] {
+    const inferredAssigneeType = assignee ? 'User' : null;
+    return conversations.map((item) =>
+        item.id === conversationId
+            ? {
+                  ...item,
+                  meta: {
+                      ...item.meta,
+                      assignee: assignee ?? undefined,
+                      assignee_type: (assigneeType === undefined ? inferredAssigneeType : assigneeType) ?? undefined,
+                  },
+              }
+            : item,
+    );
+}
+
+function applyConversationTeam(
+    conversations: Conversation[],
+    conversationId: number,
+    team: TeamMeta | null,
+): Conversation[] {
+    return conversations.map((item) =>
+        item.id === conversationId ? { ...item, meta: { ...item.meta, team: team ?? undefined } } : item,
+    );
+}
 
 const ConversationContext = createContext<ConversationContextValue | null>(null);
 
@@ -519,6 +557,48 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
         [accountId, conversationId, selectedConversation?.priority],
     );
 
+    // assignAgent gốc: setCurrentChatAssignee lạc quan (ConversationAction.vue) rồi POST,
+    // xong ghi đè bằng payload server. Lỗi → trả lại assignee cũ rồi throw (panel toast).
+    const assignAgent = useCallback(
+        async (agent: AgentMeta | null, assigneeType: string | null = null) => {
+            if (!conversationId) return;
+            const previousAssignee = selectedConversation?.meta?.assignee ?? null;
+            const previousAssigneeType = selectedConversation?.meta?.assignee_type ?? null;
+            setAllConversations(current =>
+                applyConversationAssignee(current, conversationId, agent, assigneeType),
+            );
+            try {
+                const assignee = await assignAgentRequest(accountId, conversationId, agent?.id ?? null, assigneeType);
+                setAllConversations(current =>
+                    applyConversationAssignee(current, conversationId, assignee, assigneeType),
+                );
+            } catch (error) {
+                setAllConversations(current =>
+                    applyConversationAssignee(current, conversationId, previousAssignee, previousAssigneeType),
+                );
+                throw error;
+            }
+        },
+        [accountId, conversationId, selectedConversation?.meta?.assignee, selectedConversation?.meta?.assignee_type],
+    );
+
+    // assignTeam gốc: gỡ team = gửi team_id 0.
+    const assignTeam = useCallback(
+        async (team: TeamMeta | null) => {
+            if (!conversationId) return;
+            const previousTeam = selectedConversation?.meta?.team ?? null;
+            setAllConversations(current => applyConversationTeam(current, conversationId, team));
+            try {
+                const assignedTeam = await assignTeamRequest(accountId, conversationId, team?.id ?? 0);
+                setAllConversations(current => applyConversationTeam(current, conversationId, assignedTeam));
+            } catch (error) {
+                setAllConversations(current => applyConversationTeam(current, conversationId, previousTeam));
+                throw error;
+            }
+        },
+        [accountId, conversationId, selectedConversation?.meta?.team],
+    );
+
     const setMuted = useCallback(
         async (muted: boolean) => {
             if (!conversationId) return;
@@ -565,6 +645,8 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
+            assignAgent,
+            assignTeam,
             muteConversation,
             unmuteConversation,
         }),
@@ -598,6 +680,8 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
+            assignAgent,
+            assignTeam,
             muteConversation,
             unmuteConversation,
         ],
