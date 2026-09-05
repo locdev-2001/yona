@@ -157,6 +157,20 @@ class InboxesController extends Controller
         ]);
     }
 
+    // assignable_agents_controller.rb: nhận inbox_ids[] rồi trả agent gán được
+    // cho TẤT CẢ inbox đó (thanh bulk action gọi khi chọn nhiều hội thoại).
+    public function assignableAgentsForInboxes(Request $request, Account $account): JsonResponse
+    {
+        $inboxIds = (array) $request->query('inbox_ids', []);
+        $inboxes = collect($inboxIds)->map(
+            fn ($inboxId) => $this->fetchInbox($request, $account, (int) $inboxId)
+        );
+
+        return response()->json([
+            'payload' => AgentResource::forAccount(Inbox::assignableAgentsForInboxes($inboxes, $account), $account),
+        ]);
+    }
+
     private function createChannel(Account $account, array $channelParams): Api
     {
         $channelClass = self::CHANNEL_TYPES[$channelParams['type']];

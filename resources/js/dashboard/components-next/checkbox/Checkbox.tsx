@@ -4,6 +4,7 @@ interface CheckboxProps {
     indeterminate?: boolean;
     disabled?: boolean;
     title?: string;
+    className?: string;
     onChange?: () => void;
 }
 
@@ -12,10 +13,11 @@ export default function Checkbox({
     indeterminate = false,
     disabled = false,
     title,
+    className = '',
     onChange,
 }: CheckboxProps) {
     return (
-        <div className="relative w-4 h-4">
+        <div className={`relative w-4 h-4 ${className}`.trim()}>
             <input
                 checked={checked}
                 ref={input => {

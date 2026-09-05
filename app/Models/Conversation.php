@@ -6,6 +6,8 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Jobs\Conversations\ActivityMessageJob;
+use App\Models\Concerns\AssignmentHandler;
+use App\Models\Concerns\AutoAssignmentHandler;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,14 +17,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
-// Bỏ: FilteredCountInvalidator (B8), assignee/team events + activity (B6),
-// AssignmentHandler/AutoAssignmentHandler (B6), Labelable + label activity (B7),
+// Bỏ: FilteredCountInvalidator (B8), Labelable + label activity (B7),
 // mentions/participants (B11), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
 // campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use HasFactory;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory;
 
     public const STATUS_OPEN = 0;
 
@@ -161,6 +162,11 @@ class Conversation extends Model
             // Eloquent không syncChanges khi insert; Rails saved_change_to_*?
             // vẫn thấy assignee_id gán lúc tạo → đồng bộ để notifiable_assignee_change đúng.
             $conversation->syncChanges();
+
+            // after_commit của AssignmentHandler đứng trước notify_conversation_creation
+            // trong bản gốc; ở đây phải sau khi nạp display_id thì payload realtime
+            // mới đủ dữ liệu.
+            $conversation->runAssignmentCommitCallbacks();
             $conversation->dispatcherDispatch(EventType::CONVERSATION_CREATED);
         });
 

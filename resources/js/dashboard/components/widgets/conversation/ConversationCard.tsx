@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
@@ -15,9 +17,10 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
-// Khác biệt cố ý B3: bỏ checkbox chọn khi hover avatar (bulk actions),
-// VoiceCallStatus + SLACardLabel (EE), CardLabels (labels B7 — chat.labels
-// luôn rỗng nên bản gốc cũng không render section này).
+// Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE), CardLabels (labels B7 —
+// chat.labels luôn rỗng nên bản gốc cũng không render section này).
+// B6: checkbox chọn hàng loạt phủ lên avatar khi hover/đang chọn; gốc emit
+// `props.inbox.id`, ở đây dùng `chat.inbox_id` (cùng giá trị, khỏi nới type inbox).
 interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
@@ -31,6 +34,8 @@ interface ConversationCardProps {
     compact?: boolean;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
+    onSelectConversation?: (conversationId: number, inboxId: number) => void;
+    onDeSelectConversation?: (conversationId: number, inboxId: number) => void;
 }
 
 export default function ConversationCard({
@@ -46,7 +51,10 @@ export default function ConversationCard({
     compact = false,
     onClick,
     onContextMenu,
+    onSelectConversation,
+    onDeSelectConversation,
 }: ConversationCardProps) {
+    const [hovered, setHovered] = useState(false);
     const unreadCount = chat.unread_count;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,
@@ -57,6 +65,17 @@ export default function ConversationCard({
 
     const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority;
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
+
+    // watch(() => props.chat.id) của gốc: đổi conversation thì bỏ trạng thái hover.
+    useEffect(() => setHovered(false), [chat.id]);
+
+    const onSelectChange = (checked: boolean) => {
+        if (checked) {
+            onSelectConversation?.(chat.id, chat.inbox_id);
+        } else {
+            onDeSelectConversation?.(chat.id, chat.inbox_id);
+        }
+    };
 
     const messagePreviewClass = [
         hasUnread ? 'font-medium text-n-slate-12' : 'text-n-slate-11',
@@ -79,7 +98,11 @@ export default function ConversationCard({
             onClick={onClick}
             onContextMenu={onContextMenu}
         >
-            <div className="relative">
+            <div
+                className="relative"
+                onMouseEnter={() => setHovered(!hideThumbnail)}
+                onMouseLeave={() => setHovered(false)}
+            >
                 {!hideThumbnail ? (
                     <Avatar
                         name={currentContact.name ?? ''}
@@ -88,6 +111,17 @@ export default function ConversationCard({
                         status={contactAvailabilityStatus}
                         className={!showInboxName ? 'mt-4' : 'mt-8'}
                         hideOfflineStatus
+                        overlay={({ size }) =>
+                            hovered || selected ? (
+                                <label
+                                    className="flex items-center justify-center rounded-full cursor-pointer absolute inset-0 z-10 backdrop-blur-[2px]"
+                                    style={{ width: size, height: size }}
+                                    onClick={event => event.stopPropagation()}
+                                >
+                                    <Checkbox checked={selected} onChange={() => onSelectChange(!selected)} />
+                                </label>
+                            ) : null
+                        }
                     />
                 ) : null}
             </div>

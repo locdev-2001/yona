@@ -2,13 +2,15 @@ import type { MouseEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import ConversationCard from '../../components/widgets/conversation/ConversationCard';
+import { useBulkSelection } from 'dashboard/composables/useBulkActions';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import type { Conversation } from '../types';
 
-// Port từ dashboard/components/ConversationItem.vue — cắt B3: expanded layout,
-// context menu chuột phải (B5/B6/B7), bulk select.
+// Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout,
+// context menu chuột phải (B7). Bulk select đọc qua BulkSelectionContext
+// (thay inject 'isConversationSelected'/'selectConversation' của ChatList.vue).
 interface ConversationItemProps {
     source: Conversation;
     showAssignee?: boolean;
@@ -16,6 +18,7 @@ interface ConversationItemProps {
 
 export default function ConversationItem({ source, showAssignee = false }: ConversationItemProps) {
     const { accountId, inboxId, teamId, conversationId } = useConversation();
+    const bulkSelection = useBulkSelection();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const chatMetadata = source.meta || {};
@@ -49,10 +52,13 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
             currentContact={currentContact}
             assignee={assignee}
             inbox={inbox}
+            selected={bulkSelection?.isConversationSelected(source.id) ?? false}
             isActiveChat={isActiveChat}
             showAssignee={showAssignee}
             showInboxName={showInboxName}
             onClick={onCardClick}
+            onSelectConversation={bulkSelection?.selectConversation}
+            onDeSelectConversation={bulkSelection?.deSelectConversation}
         />
     );
 }

@@ -87,6 +87,8 @@ it('maps the conversation params', function () {
     [$account, , $contactInbox] = conversationBuilderFixtures();
     $assignee = User::factory()->create();
     $team = Team::factory()->create(['account_id' => $account->id]);
+    // ensure_assignee_is_from_team (B6) gỡ assignee không thuộc team đang gán.
+    $team->addMembers([$assignee->id]);
     $snoozedUntil = now()->addDay();
 
     $conversation = (new ConversationBuilder([

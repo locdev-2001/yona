@@ -1,11 +1,13 @@
 import { getJson, postJson } from '../helper/apiClient';
 import type {
+    AgentMeta,
     Conversation,
     ConversationListMeta,
     ConversationMessage,
     ConversationPriority,
     ConversationStatus,
     ContactMeta,
+    TeamMeta,
 } from './types';
 
 // Endpoint dashboard API của Chatwoot (web_api session) — xem ConversationsController.
@@ -174,6 +176,36 @@ export function muteConversation(accountId: number, conversationId: number): Pro
 
 export function unmuteConversation(accountId: number, conversationId: number): Promise<void> {
     return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unmute`);
+}
+
+// AssignmentsController#create: agent trả partial _agent (null khi gỡ), team trả `json: @team`.
+// Thân "null" là JSON hợp lệ; 200 rỗng (nếu backend đổi) rơi vào SyntaxError → coi như null.
+function postAssignment<T>(url: string, body: Record<string, unknown>): Promise<T | null> {
+    return postJson<T | null>(url, body).catch((error: unknown) =>
+        error instanceof SyntaxError ? null : Promise.reject(error),
+    );
+}
+
+export function assignAgent(
+    accountId: number,
+    conversationId: number,
+    agentId: number | null,
+    assigneeType: string | null = null,
+): Promise<AgentMeta | null> {
+    return postAssignment<AgentMeta>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/assignments`, {
+        assignee_id: agentId,
+        assignee_type: assigneeType,
+    });
+}
+
+export function assignTeam(
+    accountId: number,
+    conversationId: number,
+    teamId: number,
+): Promise<TeamMeta | null> {
+    return postAssignment<TeamMeta>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/assignments`, {
+        team_id: teamId,
+    });
 }
 
 export function sendEmailTranscript(accountId: number, conversationId: number, email: string): Promise<void> {

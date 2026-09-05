@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\WebApi\AgentsController;
+use App\Http\Controllers\WebApi\BulkActionsController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\ContactsController;
+use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
@@ -51,6 +53,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/inboxes/{inboxId}', [InboxesController::class, 'show'])->whereNumber('inboxId');
         Route::match(['put', 'patch'], '/inboxes/{inboxId}', [InboxesController::class, 'update'])->whereNumber('inboxId');
         Route::delete('/inboxes/{inboxId}', [InboxesController::class, 'destroy'])->whereNumber('inboxId');
+        Route::get('/assignable_agents', [InboxesController::class, 'assignableAgentsForInboxes']);
         Route::get('/inboxes/{inboxId}/assignable_agents', [InboxesController::class, 'assignableAgents'])->whereNumber('inboxId');
         Route::post('/inboxes/{inboxId}/reset_secret', [InboxesController::class, 'resetSecret'])->whereNumber('inboxId');
         Route::delete('/inboxes/{inboxId}/avatar', [InboxesController::class, 'destroyAvatar'])->whereNumber('inboxId');
@@ -84,8 +87,11 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_status', [ConversationsController::class, 'toggleStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_priority', [ConversationsController::class, 'togglePriority'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
+
+        Route::post('/bulk_actions', [BulkActionsController::class, 'create']);
 
         Route::get('/teams/{teamId}/team_members', [TeamMembersController::class, 'index'])->whereNumber('teamId');
         Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');
