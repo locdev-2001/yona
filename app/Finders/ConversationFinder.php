@@ -10,9 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 // Port từ refs/chatwoot/app/finders/conversation_finder.rb.
-// Bỏ ở B3: custom view/PermissionFilterService (EE — CE cho qua),
-// conversation_type mention/participating (B11) + unattended (B8), q search (E2),
-// sort unread/last_user_message (B8).
+// Bỏ: custom view (E1), q search (E2). conversation_type mention/participating
+// port khung — bảng mentions/conversation_participants chờ B11.
 class ConversationFinder
 {
     public const RESULTS_PER_PAGE = 25;
@@ -30,6 +29,7 @@ class ConversationFinder
         'waiting_since_asc' => ['sortOnWaitingSince', 'asc'],
         'waiting_since_desc' => ['sortOnWaitingSince', 'desc'],
         'priority_desc_created_at_asc' => ['sortOnPriorityCreatedAt', 'desc'],
+        'unread' => ['sortOnUnread', 'desc'],
         // Alias cũ (to be removed in v3.5.0 — giữ để tương thích).
         'latest' => ['sortOnLastActivityAt', 'desc'],
         'sort_on_created_at' => ['sortOnCreatedAt', 'asc'],
@@ -88,6 +88,7 @@ class ConversationFinder
     private function setUp(): void
     {
         $this->findAllConversations();
+        $this->filterByConversationType();
         $this->filterByStatus();
         $this->filterByTeam();
         $this->filterByLabels();
@@ -162,6 +163,21 @@ class ConversationFinder
             'contactInbox',
             fn (Builder $query) => $query->where('source_id', $this->params['source_id'])
         );
+    }
+
+    // conversation_finder.rb#filter_by_conversation_type — chạy trước khi đếm nên
+    // meta.all_count bám theo tab đang chọn.
+    private function filterByConversationType(): void
+    {
+        $type = $this->params['conversation_type'] ?? null;
+
+        match ($type) {
+            'unattended' => $this->conversations->unattended(),
+            // mentions + conversation_participants là bảng của B11; chưa có bảng thì
+            // tập kết quả rỗng — trùng đúng kết quả bản gốc khi chưa có bản ghi nào.
+            'mention', 'participating' => $this->conversations->whereRaw('1 = 0'),
+            default => $this->conversations,
+        };
     }
 
     private function filterByAssigneeType(): void

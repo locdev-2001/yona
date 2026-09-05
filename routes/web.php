@@ -103,6 +103,12 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
         });
 
+        // Tương đương canned.routes.js: mọi vai trò có quyền hội thoại (không riêng
+        // administrator), redirect về /list.
+        Route::get('/settings/canned-response', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/canned-response/list"));
+        Route::get('/settings/canned-response/list', fn (Account $account) => Inertia::render('dashboard/settings/canned/Index'))
+            ->name('settings_canned_list');
+
         // Tương đương conversation.routes.js: home + inbox_conversation + inbox_dashboard
         // + team_conversations.
         Route::get('/conversations/{conversationId}', [DashboardController::class, 'conversation'])

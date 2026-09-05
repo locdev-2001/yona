@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Label;
 use App\Models\Message;
 use App\Models\Team;
 use App\Models\User;
@@ -15,9 +16,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 
 // Port từ spec/controllers/api/v1/accounts/conversations_controller_spec.rb.
-// Bỏ ở B3: unread_counts + update_last_seen/unread (B8), search/filter
-// (E2/E1), transcript (F1), destroy (DeleteService), attachments (B9), custom_attributes (E1), agent bot (D4),
-// conversation_type unattended (B8). Case "authenticated bot" chuyển thành token
+// Bỏ: search/filter (E2/E1), transcript (F1), destroy (DeleteService),
+// attachments (B9), custom_attributes (E1), agent bot (D4).
+// Case "authenticated bot" chuyển thành token
 // của user (AgentBot chưa port — cùng đường AccessTokenAuthHelper).
 // Khác bản gốc: user ngoài account nhận 404 từ SetCurrentAccount (bản gốc 401) —
 // giữ nguyên theo hành vi các test WebApi hiện có.
@@ -732,5 +733,386 @@ describe('POST /api/v1/accounts/{id}/conversations/{id}/mute + unmute', function
             ->assertOk();
 
         expect($conversation->fresh()->isMuted())->toBeFalse();
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/update_last_seen', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $fixtures = conversationApiFixtures();
+        [$account] = $fixtures;
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertUnauthorized();
+    });
+
+    it('updates agent last seen', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        expect($conversation->fresh()->agent_last_seen_at)->not->toBeNull();
+    });
+
+    it('updates assignee last seen when the caller is the assignee', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null, 'assignee_id' => $agent->id]);
+
+        expect($conversation->fresh()->assignee_last_seen_at)->toBeNull();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        expect($conversation->fresh()->assignee_last_seen_at)->not->toBeNull();
+    });
+
+    it('leaves assignee last seen alone when the caller is not the assignee', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $assignee = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id, $assignee->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null, 'assignee_id' => $assignee->id]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        expect($conversation->fresh()->agent_last_seen_at)->not->toBeNull()
+            ->and($conversation->fresh()->assignee_last_seen_at)->toBeNull();
+    });
+
+    it('throttles updates within an hour when there are no unread messages', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => now()->subMinutes(30)]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subHour(),
+        ]);
+        $lastSeenBefore = $conversation->fresh()->agent_last_seen_at;
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        expect($conversation->fresh()->agent_last_seen_at->equalTo($lastSeenBefore))->toBeTrue();
+    });
+
+    it('updates within an hour when there are unread messages', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => now()->subMinutes(30)]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subMinutes(5),
+        ]);
+        $lastSeenBefore = $conversation->fresh()->agent_last_seen_at;
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        expect($conversation->fresh()->agent_last_seen_at->greaterThan($lastSeenBefore))->toBeTrue();
+    });
+
+    it('updates both timestamps when only one of them is stale', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, [
+            'assignee_id' => $agent->id,
+            'agent_last_seen_at' => now()->subHours(2),
+            'assignee_last_seen_at' => now()->subMinutes(30),
+        ]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subHours(3),
+        ]);
+        $agentSeenBefore = $conversation->fresh()->agent_last_seen_at;
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        $refreshed = $conversation->fresh();
+        expect($refreshed->agent_last_seen_at->greaterThan($agentSeenBefore))->toBeTrue()
+            ->and($refreshed->assignee_last_seen_at->greaterThan($agentSeenBefore))->toBeTrue();
+    });
+
+    it('throttles when both timestamps are recent and nothing is unread', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, [
+            'assignee_id' => $agent->id,
+            'agent_last_seen_at' => now()->subMinutes(30),
+            'assignee_last_seen_at' => now()->subMinutes(30),
+        ]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subHour(),
+        ]);
+        $before = $conversation->fresh();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        $refreshed = $conversation->fresh();
+        expect($refreshed->agent_last_seen_at->equalTo($before->agent_last_seen_at))->toBeTrue()
+            ->and($refreshed->assignee_last_seen_at->equalTo($before->assignee_last_seen_at))->toBeTrue();
+    });
+
+    it('clears the unread badge of the conversation payload', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+        Message::factory()->count(2)->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+        ]);
+
+        $before = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}")
+            ->assertOk();
+        expect($before->json('unread_count'))->toBe(2);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        $after = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}")
+            ->assertOk();
+        expect($after->json('unread_count'))->toBe(0);
+    });
+
+    it('stays silent about unread counts when the feature is disabled', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+        Event::fake([DomainEvent::class]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        Event::assertNotDispatched(
+            DomainEvent::class,
+            fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UNREAD_COUNT_CHANGED
+        );
+    });
+
+    it('notifies clients about the unread count when the feature is enabled', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $account->forceFill(['feature_flags' => ['conversation_unread_counts' => true]])->save();
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+        Event::fake([DomainEvent::class]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/update_last_seen")
+            ->assertNoContent();
+
+        Event::assertDispatched(
+            DomainEvent::class,
+            fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_UNREAD_COUNT_CHANGED
+                && $event->data['conversation']->id === $conversation->id
+        );
+    });
+});
+
+describe('POST /api/v1/accounts/{id}/conversations/{id}/unread', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $fixtures = conversationApiFixtures();
+        [$account] = $fixtures;
+        $conversation = conversationApiConversation($fixtures);
+
+        $this->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/unread")
+            ->assertUnauthorized();
+    });
+
+    it('rewinds both last seen marks to one second before the last incoming message', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, [
+            'agent_last_seen_at' => now()->addMinute(),
+            'assignee_last_seen_at' => now()->addMinute(),
+        ]);
+        $incoming = Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'content' => 'Hello',
+        ]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/unread")
+            ->assertNoContent();
+
+        $expected = $incoming->fresh()->created_at->copy()->subSecond();
+        $refreshed = $conversation->fresh();
+        expect($refreshed->agent_last_seen_at->equalTo($expected))->toBeTrue()
+            ->and($refreshed->assignee_last_seen_at->equalTo($expected))->toBeTrue()
+            ->and($refreshed->unreadIncomingMessagesCount())->toBe(1);
+    });
+
+    it('clears both marks when there is no incoming message at all', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $conversation = conversationApiConversation($fixtures, [
+            'agent_last_seen_at' => now(),
+            'assignee_last_seen_at' => now(),
+        ]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/unread")
+            ->assertNoContent();
+
+        $refreshed = $conversation->fresh();
+        expect($refreshed->agent_last_seen_at)->toBeNull()
+            ->and($refreshed->assignee_last_seen_at)->toBeNull();
+    });
+});
+
+describe('GET /api/v1/accounts/{id}/conversations/unread_counts', function () {
+    it('returns unauthorized for unauthenticated user', function () {
+        $account = Account::factory()->create();
+
+        $this->getJson("/api/v1/accounts/{$account->id}/conversations/unread_counts")->assertUnauthorized();
+    });
+
+    it('returns forbidden when the account has the feature disabled', function () {
+        $fixtures = conversationApiFixtures();
+        [$account] = $fixtures;
+        $agent = conversationApiUserOf($account);
+
+        $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/unread_counts")
+            ->assertForbidden()
+            ->assertJson(['error' => 'Conversation unread counts feature not enabled for this account']);
+    });
+
+    it('counts unread conversations per inbox, sidebar label and team of the caller', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $visibleInbox] = $fixtures;
+        $account->forceFill(['feature_flags' => ['conversation_unread_counts' => true]])->save();
+        $hiddenInbox = Inbox::factory()->create(['account_id' => $account->id]);
+        $agent = conversationApiUserOf($account);
+        $visibleInbox->addMembers([$agent->id]);
+        $team = Team::factory()->create(['account_id' => $account->id]);
+        $team->addMembers([$agent->id]);
+        $label = Label::factory()->create(['account_id' => $account->id, 'title' => 'billing']);
+
+        $visible = conversationApiConversation($fixtures, ['agent_last_seen_at' => null, 'team_id' => $team->id]);
+        $visible->updateLabels([$label->title]);
+        Message::factory()->create(['account_id' => $account->id, 'conversation_id' => $visible->id]);
+
+        $hidden = Conversation::factory()->create(['account_id' => $account->id, 'inbox_id' => $hiddenInbox->id]);
+        Message::factory()->create(['account_id' => $account->id, 'conversation_id' => $hidden->id]);
+
+        $response = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/unread_counts")
+            ->assertOk();
+
+        expect($response->json('payload'))->toBe([
+            'all_count' => 1,
+            'inboxes' => [(string) $visibleInbox->id => 1],
+            'labels' => [(string) $label->id => 1],
+            'teams' => [(string) $team->id => 1],
+        ]);
+    });
+
+    it('ignores read, resolved and label-off-sidebar conversations', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $account->forceFill(['feature_flags' => ['conversation_unread_counts' => true]])->save();
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+        $hiddenLabel = Label::factory()->create([
+            'account_id' => $account->id,
+            'title' => 'internal',
+            'show_on_sidebar' => false,
+        ]);
+
+        $read = conversationApiConversation($fixtures, ['agent_last_seen_at' => now()->addMinute()]);
+        Message::factory()->create(['account_id' => $account->id, 'conversation_id' => $read->id]);
+
+        $labelled = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+        $labelled->updateLabels([$hiddenLabel->title]);
+        Message::factory()->create(['account_id' => $account->id, 'conversation_id' => $labelled->id]);
+
+        $resolved = conversationApiConversation($fixtures, ['agent_last_seen_at' => null]);
+        Message::factory()->create(['account_id' => $account->id, 'conversation_id' => $resolved->id]);
+        $resolved->update(['status' => Conversation::STATUS_RESOLVED]);
+
+        $response = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/unread_counts")
+            ->assertOk();
+
+        expect($response->json('payload'))->toBe([
+            'all_count' => 1,
+            'inboxes' => [(string) $inbox->id => 1],
+            'labels' => [],
+            'teams' => [],
+        ]);
+    });
+});
+
+describe('GET /api/v1/accounts/{id}/conversations with conversation_type', function () {
+    it('returns unattended conversations only', function () {
+        $fixtures = conversationApiFixtures();
+        [$account, $inbox] = $fixtures;
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+
+        $attended = conversationApiConversation($fixtures, ['first_reply_created_at' => now()]);
+        // Trả lời của agent xoá waiting_since — đó là thứ làm hội thoại "đã xử lý".
+        Message::factory()->outgoing()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $attended->id,
+            'sender_type' => 'User',
+            'sender_id' => $agent->id,
+        ]);
+        conversationApiConversation($fixtures, ['first_reply_created_at' => null]);
+        conversationApiConversation($fixtures, ['first_reply_created_at' => now()]);
+
+        $response = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations?conversation_type=unattended")
+            ->assertOk();
+
+        expect($response->json('data.meta.all_count'))->toBe(2)
+            ->and($response->json('data.payload'))->toHaveCount(2)
+            ->and(collect($response->json('data.payload'))->pluck('id'))->not->toContain($attended->display_id);
     });
 });

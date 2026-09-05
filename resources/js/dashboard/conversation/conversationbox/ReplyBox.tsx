@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { debounce, trimContent } from '@chatwoot/utils';
 
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
@@ -12,11 +13,16 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { MESSAGE_MAX_LENGTH } from 'dashboard/conversation/constants';
 import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
 
+import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import { openCommandBar } from 'dashboard/commands/commandBarStore';
+
 import { t } from '../../../i18n';
+import { draftKey, getDraft, removeDraft, setDraft } from '../draftApi';
 import { sendMessage } from '../api';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
+import ReplyBoxBanner from './ReplyBoxBanner';
 import ReplyTopPanel from './ReplyTopPanel';
 import ReplyBottomPanel from './ReplyBottomPanel';
 
@@ -29,7 +35,7 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Bỏ: draft
 // (B10), reply-to (B10/B11), ghi âm (voice recorder), email head/quoted reply,
 // WhatsApp templates, copilot editor, canned '/' + mention @ + variables,
-// ReplyBoxBanner, paste đính kèm (kênh API chưa cần).
+// Paste đính kèm (kênh API chưa cần).
 
 const CHANNEL_TYPE = 'Channel::Api';
 // slugifyChannel('Channel::Api') của useUISettings.js gốc → 'channel_api'.
@@ -111,18 +117,75 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         return `${sendMessageText} ${keyLabel}`;
     })();
 
-    // Đổi conversation: về chế độ REPLY, xóa nội dung + đính kèm (không có draft
-    // ở B3 — bản gốc khôi phục qua draftMessages store).
+    // ---- Bản nháp (draftMessages) ----
+    // messageRef để hàm debounce và switchDraftContext đọc giá trị mới nhất mà
+    // không phải dựng lại; effect đổi ngữ cảnh cập nhật ref ngay trước setMessage.
+    const messageRef = useRef(message);
+    messageRef.current = message;
+    const draftContextRef = useRef<{ conversationId: number; replyMode: string } | null>(null);
+    const draftStateRef = useRef({ isPrivate, isEditorDisabled, sendWithSignature, messageSignature });
+    draftStateRef.current = { isPrivate, isEditorDisabled, sendWithSignature, messageSignature };
+
+    // toggleSignatureForDraft gốc: nháp lưu kèm/không kèm chữ ký theo ui_settings.
+    const toggleSignatureForDraft = (draft: string): string => {
+        const state = draftStateRef.current;
+        if (state.isPrivate) return draft;
+        if (state.isEditorDisabled && state.sendWithSignature) return draft;
+
+        return state.sendWithSignature
+            ? appendSignature(draft, state.messageSignature, CHANNEL_TYPE)
+            : removeSignature(draft, state.messageSignature, CHANNEL_TYPE);
+    };
+
+    const saveDraftFor = (context: { conversationId: number; replyMode: string } | null) => {
+        if (!context?.conversationId) return;
+        setDraft(draftKey(context.conversationId, context.replyMode), trimContent(messageRef.current || '', maxLength));
+    };
+
+    const switchDraftContext = (nextConversationId: number, nextReplyMode: string) => {
+        const current = draftContextRef.current;
+        if (current?.conversationId === nextConversationId && current?.replyMode === nextReplyMode) return;
+
+        if (current?.conversationId) saveDraftFor(current);
+
+        draftContextRef.current = { conversationId: nextConversationId, replyMode: nextReplyMode };
+        const restored = nextConversationId
+            ? toggleSignatureForDraft(getDraft(draftKey(nextConversationId, nextReplyMode)))
+            : '';
+        messageRef.current = restored;
+        setMessage(restored);
+    };
+
+    const removeFromDraft = () => {
+        const current = draftContextRef.current;
+        if (current?.conversationId) removeDraft(draftKey(current.conversationId, current.replyMode));
+    };
+
+    // doAutoSaveDraft gốc: debounce 500ms, immediate.
+    const autoSaveDraft = useMemo(
+        () => debounce(() => saveDraftFor(draftContextRef.current), 500, true),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
+    // Đổi conversation: về chế độ REPLY, bỏ đính kèm, chuyển ngữ cảnh nháp.
     useEffect(() => {
         setReplyType(REPLY_EDITOR_MODES.REPLY);
         setAttachedFiles([]);
-        setMessage(
-            messageSignature && Boolean(uiSettings[SIGNATURE_FLAG_KEY])
-                ? appendSignature('', messageSignature, CHANNEL_TYPE)
-                : '',
-        );
+        switchDraftContext(conversationId, REPLY_EDITOR_MODES.REPLY);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId]);
+
+    // Đổi chế độ soạn (trả lời ↔ ghi chú) — mỗi chế độ một bản nháp riêng.
+    useEffect(() => {
+        switchDraftContext(conversationId, replyType);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [replyType]);
+
+    useEffect(() => {
+        autoSaveDraft();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [message]);
 
     // toggleSignatureInEditor của bản gốc: watch [sendWithSignature, isPrivate]
     // → gắn/gỡ chữ ký trong editor (append idempotent, remove no-op nếu không có).
@@ -150,10 +213,22 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     };
 
     const afterSent = () => {
+        removeFromDraft();
         clearMessage();
         editorRef.current?.focusEditorInputField();
         onMessageSent?.();
     };
+
+    // getKeyboardEvents gốc: Cmd/Ctrl+K mở command bar ngay cả khi đang focus editor.
+    useKeyboardEvents({
+        '$mod+KeyK': {
+            action: event => {
+                event.preventDefault();
+                openCommandBar();
+            },
+            allowOnFocusedInput: true,
+        },
+    });
 
     // getMessagePayload gốc gom `files` vào cùng một tin (kênh API không tách
     // chữ và tệp như Instagram/TikTok/WhatsApp).
@@ -232,7 +307,9 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     };
 
     return (
-        <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}>
+        <>
+            <ReplyBoxBanner message={message} isOnPrivateNote={isOnPrivateNote} />
+            <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}>
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={false}
@@ -286,5 +363,6 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 onSelectEmoji={insertEmoji}
             />
         </div>
+    </>
     );
 }

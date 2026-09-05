@@ -4,6 +4,8 @@ import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import type { SidebarMenuItem } from './provider';
+import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
+import type { SidebarUnreadCounts } from './useConversationUnreadCounts';
 
 // Inbox rút gọn share từ SetCurrentAccount cho nhóm Channels.
 export interface SidebarInbox {
@@ -30,11 +32,14 @@ export interface SidebarLabel {
 // Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
 // Nhóm động (Folders/Segments/Tagged) render khi dữ liệu
 // đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
+// badgeCount lấy từ store conversationUnreadCounts (B8) — rỗng khi account chưa
+// bật cờ `conversation_unread_counts`, đúng như oracle.
 export function buildMenuItems(
     accountId: number,
     inboxes: SidebarInbox[] = [],
     teams: SidebarTeam[] = [],
     labels: SidebarLabel[] = [],
+    unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
@@ -54,6 +59,7 @@ export function buildMenuItems(
                     name: 'All',
                     label: t('SIDEBAR.ALL_CONVERSATIONS'),
                     icon: 'i-lucide-inbox',
+                    badgeCount: unreadCounts.allCount,
                     activeOn: [scoped('conversations')],
                     to: scoped('dashboard'),
                 },
@@ -92,6 +98,7 @@ export function buildMenuItems(
                     children: teams.map(team => ({
                         name: `${team.name}-${team.id}`,
                         label: team.name,
+                        badgeCount: unreadCounts.teams[String(team.id)] ?? 0,
                         to: scoped(`team/${team.id}`),
                     })),
                 },
@@ -105,6 +112,7 @@ export function buildMenuItems(
                         name: `${inbox.name}-${inbox.id}`,
                         label: inbox.name,
                         icon: createElement(ChannelIcon, { inbox, className: 'size-[16px]' }),
+                        badgeCount: unreadCounts.inboxes[String(inbox.id)] ?? 0,
                         to: scoped(`inbox/${inbox.id}`),
                     })),
                 },
@@ -122,6 +130,7 @@ export function buildMenuItems(
                             className: 'size-[8px] rounded-sm',
                             style: { backgroundColor: label.color },
                         }),
+                        badgeCount: unreadCounts.labels[String(label.id)] ?? 0,
                         to: scoped(`label/${encodeURIComponent(label.title)}`),
                     })),
                 },

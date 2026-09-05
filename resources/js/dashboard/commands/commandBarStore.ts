@@ -30,6 +30,10 @@ function subscribe(listener: Listener): () => void {
     return () => listeners.delete(listener);
 }
 
+export function getCommandBarActions(): CommandBarAction[] {
+    return snapshot;
+}
+
 export function useCommandBarActions(): CommandBarAction[] {
     return useSyncExternalStore(subscribe, () => snapshot, () => snapshot);
 }

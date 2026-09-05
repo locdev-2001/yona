@@ -5,6 +5,8 @@ namespace App\Http\Controllers\WebApi;
 use App\Builders\ContactInboxBuilder;
 use App\Builders\ConversationBuilder;
 use App\Builders\Messages\MessageBuilder;
+use App\Events\DomainEvent;
+use App\Events\EventType;
 use App\Exceptions\MessageValidationException;
 use App\Finders\ConversationFinder;
 use App\Http\Controllers\Controller;
@@ -15,8 +17,11 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Services\Conversations\TypingStatusManager;
+use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
 use App\Support\DateRangeHelper;
+use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,10 +31,12 @@ use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
 // Bỏ: filter/search (E1/E2), attachments (B9), transcript (F1),
-// update_last_seen/unread (B8), custom_attributes (E1), destroy (đi cùng
-// DeleteService các nhóm sau), bot_handoff (AgentBot chưa port).
+// custom_attributes (E1), destroy (đi cùng DeleteService các nhóm sau),
+// bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
 {
+    private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
+
     public function index(Request $request, Account $account): JsonResponse
     {
         $result = $this->finder($request, $account)->perform();
@@ -47,6 +54,23 @@ class ConversationsController extends Controller
         $result = $this->finder($request, $account)->performMetaOnly();
 
         return response()->json(['meta' => $result['count']]);
+    }
+
+    // conversations/unread_counts#index — badge sidebar. Cùng cổng cờ tính năng như
+    // bản gốc: account chưa bật 'conversation_unread_counts' thì 403.
+    public function unreadCounts(Request $request, Account $account): JsonResponse
+    {
+        if (! $account->featureEnabled(self::UNREAD_COUNTS_FEATURE)) {
+            // errors.conversations.unread_counts.feature_not_enabled (en.yml).
+            return response()->json(['error' => 'Conversation unread counts feature not enabled for this account'], 403);
+        }
+
+        /** @var AccountUser $accountUser */
+        $accountUser = $request->attributes->get('currentAccountUser');
+
+        return response()->json([
+            'payload' => (new UnreadCountsCounter($account, $request->user(), $accountUser))->perform(),
+        ]);
     }
 
     public function show(Request $request, Account $account, int $conversationId): JsonResponse
@@ -169,6 +193,92 @@ class ConversationsController extends Controller
             ->toggleTypingStatus();
 
         return response()->noContent(200);
+    }
+
+    // update_last_seen: mở hội thoại là đánh dấu đã đọc. Ghi thẳng bằng update
+    // không hook (update_columns) nên KHÔNG bắn conversation.updated — FE tự hạ badge.
+    public function updateLastSeen(Request $request, Account $account, int $conversationId): Response
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $isAssignee = $this->isAssignee($request, $conversation);
+
+        if ($isAssignee && $conversation->assigneeUnreadMessages()->exists()) {
+            $this->markSeenAt($conversation, now(), true);
+        } elseif (! $isAssignee && $conversation->unreadMessages()->exists()) {
+            $this->markSeenAt($conversation, now(), false);
+        } elseif ($this->shouldUpdateLastSeen($conversation, $isAssignee)) {
+            // Không còn tin chưa đọc: chỉ ghi lại khi mốc cũ quá 1 giờ (giảm ghi DB
+            // khi agent nhảy qua lại giữa các hội thoại).
+            $this->markSeenAt($conversation, now(), $isAssignee);
+        }
+
+        return response()->noContent();
+    }
+
+    // unread: lùi mốc đã xem về TRƯỚC tin incoming cuối 1 giây để badge hiện lại.
+    public function unread(Request $request, Account $account, int $conversationId): Response
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $lastIncoming = $conversation->messages()
+            ->where('message_type', Message::TYPE_INCOMING)
+            ->reorder('id', 'desc')
+            ->first();
+
+        $this->markSeenAt($conversation, $lastIncoming?->created_at->copy()->subSecond(), true);
+
+        return response()->noContent();
+    }
+
+    // update_last_seen_on_conversation: ghi cột trần (không hook, không đụng
+    // updated_at) rồi báo cho các client khác vẽ lại badge.
+    private function markSeenAt(Conversation $conversation, ?CarbonInterface $seenAt, bool $updateAssignee): void
+    {
+        $columns = ['agent_last_seen_at' => $seenAt];
+
+        if ($updateAssignee) {
+            $columns['assignee_last_seen_at'] = $seenAt;
+        }
+
+        $conversation->newModelQuery()->whereKey($conversation->id)->toBase()->update($columns);
+
+        foreach ($columns as $column => $value) {
+            $conversation->setAttribute($column, $value);
+            $conversation->syncOriginalAttribute($column);
+        }
+
+        $this->notifyUnreadCountChanged($conversation);
+    }
+
+    // Conversations::UnreadCounts::Notifier — cùng cổng cờ tính năng, nhưng không
+    // có tầng cache Redis nên bắn thẳng khi mốc đã xem vừa đổi.
+    private function notifyUnreadCountChanged(Conversation $conversation): void
+    {
+        if (! $conversation->account->featureEnabled(self::UNREAD_COUNTS_FEATURE)) {
+            return;
+        }
+
+        DomainEvent::dispatch(EventType::CONVERSATION_UNREAD_COUNT_CHANGED, ['conversation' => $conversation]);
+    }
+
+    // should_update_last_seen?: mốc nào cũ hơn 1 giờ (hoặc chưa có) thì mới ghi.
+    private function shouldUpdateLastSeen(Conversation $conversation, bool $isAssignee): bool
+    {
+        $threshold = now()->subHour();
+        $agentNeedsUpdate = $conversation->agent_last_seen_at === null
+            || $conversation->agent_last_seen_at->lt($threshold);
+
+        if (! $isAssignee) {
+            return $agentNeedsUpdate;
+        }
+
+        return $agentNeedsUpdate
+            || $conversation->assignee_last_seen_at === null
+            || $conversation->assignee_last_seen_at->lt($threshold);
+    }
+
+    private function isAssignee(Request $request, Conversation $conversation): bool
+    {
+        return $conversation->assignee_id !== null && $conversation->assignee_id === $request->user()->id;
     }
 
     // handle_human_open: agent mở lại hội thoại thì tự nhận; administrator không.

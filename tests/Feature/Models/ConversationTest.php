@@ -692,3 +692,169 @@ describe('mute', function () {
         expect(conversationIn(conversationBase())->isMuted())->toBeFalse();
     });
 });
+
+describe('unread messages', function () {
+    it('returns messages created after agent_last_seen_at', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $conversation = conversationIn($base, ['agent_last_seen_at' => now()->subHour()]);
+        $seen = Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subMonth(),
+        ]);
+        $unseen = Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subMinute(),
+        ]);
+
+        expect($conversation->unreadMessages()->pluck('id')->all())->toBe([$unseen->id])
+            ->and($conversation->unreadMessages()->pluck('id')->all())->not->toContain($seen->id);
+    });
+
+    it('returns only unread incoming messages, even when the agent has never seen the conversation', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $conversation = conversationIn($base, ['agent_last_seen_at' => null]);
+        $incoming = Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+        ]);
+        Message::factory()->outgoing()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+        ]);
+
+        expect($conversation->unreadIncomingMessages()->pluck('id')->all())->toBe([$incoming->id])
+            ->and($conversation->unreadIncomingMessagesCount())->toBe(1);
+    });
+
+    it('caps the unread count at ten like the source array based counter', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $conversation = conversationIn($base, ['agent_last_seen_at' => null]);
+        Message::factory()->count(13)->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+        ]);
+
+        expect($conversation->unreadIncomingMessagesCount())->toBe(10)
+            ->and($conversation->unreadIncomingMessages())->toHaveCount(10);
+    });
+
+    it('counts assignee unread messages from assignee_last_seen_at', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $conversation = conversationIn($base, ['assignee_last_seen_at' => now()->subMinutes(10)]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subHour(),
+        ]);
+
+        expect($conversation->assigneeUnreadMessages()->exists())->toBeFalse();
+
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $conversation->id,
+            'created_at' => now()->subMinute(),
+        ]);
+
+        expect($conversation->assigneeUnreadMessages()->exists())->toBeTrue();
+    });
+});
+
+describe('B8 scopes', function () {
+    it('unattended keeps conversations without a first reply or still waiting', function () {
+        $base = conversationBase();
+        $attended = conversationIn($base, ['first_reply_created_at' => now()]);
+        $attended->forceFill(['waiting_since' => null])->save();
+        $noFirstReply = conversationIn($base, ['first_reply_created_at' => null]);
+        $stillWaiting = conversationIn($base, ['first_reply_created_at' => now()]);
+
+        $ids = Conversation::query()->unattended()->pluck('id')->all();
+
+        expect($ids)->toContain($noFirstReply->id, $stillWaiting->id)
+            ->and($ids)->not->toContain($attended->id);
+    });
+
+    it('sortOnUnread puts the highest unread count first and falls back to last activity', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $mostUnread = conversationIn($base, ['agent_last_seen_at' => now()->subHour()]);
+        $unread = conversationIn($base, ['agent_last_seen_at' => now()->subHour()]);
+        $read = conversationIn($base, ['agent_last_seen_at' => now()->addMinute()]);
+
+        foreach ([$mostUnread, $unread, $read] as $conversation) {
+            Message::factory()->create([
+                'account_id' => $account->id,
+                'conversation_id' => $conversation->id,
+                'created_at' => now()->subMinutes(5),
+            ]);
+        }
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $mostUnread->id,
+            'created_at' => now()->subMinutes(4),
+        ]);
+        $read->forceFill(['last_activity_at' => now()->addMinute()])->save();
+        $unread->forceFill(['last_activity_at' => now()->addMinutes(2)])->save();
+
+        $ids = Conversation::query()->sortOnUnread()->pluck('id')->all();
+
+        expect($ids)->toBe([$mostUnread->id, $unread->id, $read->id]);
+    });
+
+    it('sortOnUnread counts private incoming messages too', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $privateUnread = conversationIn($base, ['agent_last_seen_at' => now()->subHour()]);
+        $unread = conversationIn($base, ['agent_last_seen_at' => now()->subHour()]);
+
+        Message::factory()->count(2)->create([
+            'account_id' => $account->id,
+            'conversation_id' => $privateUnread->id,
+            'private' => true,
+            'created_at' => now()->subMinutes(5),
+        ]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $unread->id,
+            'created_at' => now()->subMinutes(5),
+        ]);
+        $privateUnread->forceFill(['last_activity_at' => now()->subMinutes(10)])->save();
+        $unread->forceFill(['last_activity_at' => now()->addMinutes(2)])->save();
+
+        $ids = Conversation::query()->sortOnUnread()->pluck('id')->all();
+
+        expect(array_search($privateUnread->id, $ids, true))->toBeLessThan(array_search($unread->id, $ids, true));
+    });
+
+    it('lastUserMessageAt orders incoming conversations before answered ones', function () {
+        $base = conversationBase();
+        [$account] = $base;
+        $waitingForReply = conversationIn($base);
+        $answered = conversationIn($base);
+
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $answered->id,
+            'created_at' => now()->subMinutes(5),
+        ]);
+        Message::factory()->outgoing()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $answered->id,
+            'created_at' => now()->subMinutes(4),
+        ]);
+        Message::factory()->create([
+            'account_id' => $account->id,
+            'conversation_id' => $waitingForReply->id,
+            'created_at' => now()->subMinute(),
+        ]);
+
+        $ids = Conversation::query()->lastUserMessageAt()->pluck('id')->all();
+
+        expect($ids)->toBe([$waitingForReply->id, $answered->id]);
+    });
+});

@@ -1,23 +1,27 @@
+import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import ConversationCard from '../../components/widgets/conversation/ConversationCard';
+import ConversationContextMenu from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
 import { useBulkSelection } from 'dashboard/composables/useBulkActions';
-import { conversationUrl } from 'dashboard/helper/URLHelper';
+import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import type { Conversation } from '../types';
 
-// Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout,
-// context menu chuột phải (B7). Bulk select đọc qua BulkSelectionContext
-// (thay inject 'isConversationSelected'/'selectConversation' của ChatList.vue).
+// Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout.
+// Bulk select đọc qua BulkSelectionContext (thay inject
+// 'isConversationSelected'/'selectConversation' của ChatList.vue). Context menu
+// chuột phải mới có phần đọc/chưa đọc (B8); các mục còn lại nợ B10.
 interface ConversationItemProps {
     source: Conversation;
     showAssignee?: boolean;
 }
 
 export default function ConversationItem({ source, showAssignee = false }: ConversationItemProps) {
-    const { accountId, inboxId, teamId, label, conversationId } = useConversation();
+    const { accountId, inboxId, teamId, label, conversationId, markMessagesRead, markMessagesUnread } =
+        useConversation();
     const bulkSelection = useBulkSelection();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
@@ -35,6 +39,30 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
 
     const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, id: source.id });
 
+    // watch(() => props.source.id) gốc: hàng bị tái dùng cho hội thoại khác thì đóng menu.
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+    useEffect(() => setContextMenu(null), [source.id]);
+
+    const openContextMenu = (event: MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setContextMenu({ x: event.pageX || event.clientX, y: event.pageY || event.clientY });
+    };
+    const closeContextMenu = () => setContextMenu(null);
+
+    const onMarkAsRead = () => {
+        void markMessagesRead(source.id);
+        closeContextMenu();
+    };
+
+    // markAsUnread gốc quay về danh sách — ở lại hội thoại thì nó bị đánh dấu đã đọc ngay.
+    const onMarkAsUnread = () => {
+        markMessagesUnread(source.id).then(
+            () => router.visit(conversationListPageURL({ accountId, inboxId, teamId, label })),
+            () => undefined,
+        );
+        closeContextMenu();
+    };
+
     const onCardClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.metaKey || event.ctrlKey) {
             event.preventDefault();
@@ -47,18 +75,31 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
     };
 
     return (
-        <ConversationCard
-            chat={source}
-            currentContact={currentContact}
-            assignee={assignee}
-            inbox={inbox}
-            selected={bulkSelection?.isConversationSelected(source.id) ?? false}
-            isActiveChat={isActiveChat}
-            showAssignee={showAssignee}
-            showInboxName={showInboxName}
-            onClick={onCardClick}
-            onSelectConversation={bulkSelection?.selectConversation}
-            onDeSelectConversation={bulkSelection?.deSelectConversation}
-        />
+        <>
+            <ConversationCard
+                chat={source}
+                currentContact={currentContact}
+                assignee={assignee}
+                inbox={inbox}
+                selected={bulkSelection?.isConversationSelected(source.id) ?? false}
+                isActiveChat={isActiveChat}
+                showAssignee={showAssignee}
+                showInboxName={showInboxName}
+                onClick={onCardClick}
+                onContextMenu={openContextMenu}
+                onSelectConversation={bulkSelection?.selectConversation}
+                onDeSelectConversation={bulkSelection?.deSelectConversation}
+            />
+            {contextMenu ? (
+                <ConversationContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    hasUnreadMessages={source.unread_count > 0}
+                    onMarkAsRead={onMarkAsRead}
+                    onMarkAsUnread={onMarkAsUnread}
+                    onClose={closeContextMenu}
+                />
+            ) : null}
+        </>
     );
 }

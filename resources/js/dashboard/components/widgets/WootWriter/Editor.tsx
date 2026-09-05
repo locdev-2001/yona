@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef } from 'react';
+import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { forwardRef } from 'react';
 import {
     EditorState,
@@ -9,16 +9,20 @@ import {
     buildEditor,
     buildMessageSchema,
 } from '@chatwoot/prosemirror-schema';
-import type { Schema } from 'prosemirror-model';
+import { suggestionsPlugin, triggerCharacters } from '@chatwoot/prosemirror-schema/src/mentions/plugin';
+import type { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
+import type { Plugin } from 'prosemirror-state';
 import { createTypingIndicator } from '@chatwoot/utils';
 
+import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
+import type { CaretPosition } from './CaretAnchoredPicker';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
 
 // Port từ dashboard/components/widgets/WootWriter/Editor.vue — giữ nguyên
 // engine @chatwoot/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
-// Bỏ ở B3: mention @ (B11), canned response / (B10), variables (D1),
-// macros (D3), emoji gõ ':' (B10), upload ảnh inline (B9), copilot (EE).
+// B10 thêm nhánh gợi ý `/` (canned response). Vẫn bỏ: mention @ (B11),
+// variables {{ }} (D1), macros # (D3), emoji gõ ':' , upload ảnh inline (B9), copilot (EE).
 
 export interface EditorHandle {
     focusEditorInputField: (position?: 'start' | 'end') => void;
@@ -34,12 +38,41 @@ interface EditorProps {
     channelType?: string;
     uiSettings: UISettings;
     className?: string;
+    enableSuggestions?: boolean;
+    enableCannedResponses?: boolean;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
     onSend?: () => void;
     onTypingOn?: () => void;
     onTypingOff?: () => void;
+    onToggleCannedMenu?: (isOpen: boolean) => void;
+}
+
+interface SuggestionRange {
+    from: number;
+    to: number;
+}
+
+interface SuggestionArgs {
+    view: EditorView;
+    range: SuggestionRange;
+    text?: string;
+}
+
+// insertAtCursor của helper/editorHelper.js — giữ nguyên mẹo bóc paragraph để
+// nội dung chèn nằm cùng dòng thay vì xuống dòng mới.
+function insertAtCursor(view: EditorView, node: ProseMirrorNode, from: number, to?: number): void {
+    const isWrappedInParagraph =
+        node.type.name === 'doc' && node.childCount === 1 && node.firstChild?.type.name === 'paragraph';
+    const content = isWrappedInParagraph ? node.firstChild!.content : node;
+
+    const tr = to
+        ? view.state.tr.replaceWith(from, to, content).insertText(' ')
+        : view.state.tr.insert(from, content);
+
+    view.updateState(view.state.apply(tr));
+    view.focus();
 }
 
 const TYPING_INDICATOR_IDLE_TIME = 4000;
@@ -78,12 +111,15 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         channelType,
         uiSettings,
         className = '',
+        enableSuggestions = true,
+        enableCannedResponses = true,
         onChange,
         onFocus,
         onBlur,
         onSend,
         onTypingOn,
         onTypingOff,
+        onToggleCannedMenu,
     },
     ref,
 ) {
@@ -92,9 +128,17 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const viewRef = useRef<EditorView | null>(null);
     const schemaRef = useRef<Schema | null>(null);
 
+    const [showCannedMenu, setShowCannedMenu] = useState(false);
+    const [cannedSearchKey, setCannedSearchKey] = useState('');
+    const [suggestionRange, setSuggestionRange] = useState<SuggestionRange | null>(null);
+
     // Callback mới nhất — tránh phải dựng lại EditorView theo mỗi render.
     const callbacksRef = useRef({ onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings });
     callbacksRef.current = { onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings };
+
+    // Plugin gợi ý được dựng lại mỗi lần createState chạy nên phải đọc cờ qua ref.
+    const suggestionFlagsRef = useRef({ isPrivate, enableCannedResponses });
+    suggestionFlagsRef.current = { isPrivate, enableCannedResponses };
 
     // keyup → typingOn (một lần) rồi tự typingOff sau 4s không gõ; blur → typingOff ngay.
     const typingIndicatorRef = useRef(
@@ -108,6 +152,39 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const contentFromEditor = (): string =>
         viewRef.current ? MessageMarkdownSerializer.serialize(viewRef.current.state.doc) : '';
 
+    // createSuggestionPlugin của Editor.vue — trigger `/` cho canned response.
+    const buildSuggestionPlugins = (): Plugin[] => {
+        if (!enableSuggestions) return [];
+
+        return [
+            suggestionsPlugin({
+                matcher: triggerCharacters('/', 0),
+                suggestionClass: '',
+                onEnter: (args: SuggestionArgs) => {
+                    const flags = suggestionFlagsRef.current;
+                    if (flags.isPrivate || !flags.enableCannedResponses) return false;
+                    viewRef.current = args.view;
+                    setSuggestionRange(args.range);
+                    setCannedSearchKey(args.text || '');
+                    setShowCannedMenu(true);
+                    return false;
+                },
+                onChange: (args: SuggestionArgs) => {
+                    viewRef.current = args.view;
+                    setSuggestionRange(args.range);
+                    setCannedSearchKey(args.text || '');
+                    return false;
+                },
+                onExit: () => {
+                    setCannedSearchKey('');
+                    setShowCannedMenu(false);
+                    return false;
+                },
+                onKeyDown: () => false,
+            }) as Plugin,
+        ];
+    };
+
     const createState = (content: string): EditorState => {
         const config = schemaConfigFor(isPrivate, channelType);
         const schema = buildMessageSchema(config.marks, config.nodes);
@@ -120,7 +197,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                 schema,
                 placeholder,
                 methods: {},
-                plugins: [],
+                plugins: buildSuggestionPlugins(),
                 enabledMenuOptions: MENU_BY_KEY[config.key] ?? MENU_BY_KEY[DEFAULT_FORMATTING],
             }),
         });
@@ -220,12 +297,69 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         viewRef.current?.setProps({});
     }, [disabled]);
 
+    const shouldShowCannedResponses = enableCannedResponses && showCannedMenu && !isPrivate;
+
+    useEffect(() => {
+        onToggleCannedMenu?.(shouldShowCannedResponses);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shouldShowCannedResponses]);
+
+    // Neo popup vào ký tự kích hoạt: ô soạn thảo có thể cao hơn dòng đang gõ nhiều.
+    const caretPosition = useMemo<CaretPosition | null>(() => {
+        const view = viewRef.current;
+        const root = editorRootRef.current;
+        if (!view || !suggestionRange || !root) return null;
+
+        const from = Math.min(suggestionRange.from, view.state.doc.content.size);
+        const { top, bottom } = view.coordsAtPos(from);
+        return { top: top - root.getBoundingClientRect().top, height: bottom - top };
+    }, [suggestionRange]);
+
+    // Popup tự giữ focus; đóng lại thì trả focus về editor. Gợi ý vẫn còn hiệu lực
+    // trong tài liệu nên chỉ mở lại khi gõ ký tự kích hoạt lần nữa.
+    const dismissCannedResponses = () => {
+        setShowCannedMenu(false);
+        viewRef.current?.focus();
+    };
+
+    // Xóa ký tự kích hoạt → plugin tự đóng popup qua onExit.
+    const removeSuggestionTrigger = () => {
+        const view = viewRef.current;
+        if (!view || !suggestionRange) return;
+        const end = Math.min(suggestionRange.to, view.state.doc.content.size);
+        view.dispatch(view.state.tr.delete(suggestionRange.from, end));
+        view.focus();
+    };
+
+    // insertSpecialContent('cannedResponse', …) + nodeCreators.cannedResponse.
+    const insertCannedResponse = (content: string) => {
+        const view = viewRef.current;
+        if (!view || !suggestionRange) return;
+
+        const schema = view.state.schema;
+        const node = new MessageMarkdownTransformer(schema).parse(stripUnsupportedFormatting(content, schema));
+        const from = node.textContent === content ? suggestionRange.from : suggestionRange.from - 1;
+
+        insertAtCursor(view, node, from, suggestionRange.to);
+        callbacksRef.current.onChange(contentFromEditor());
+    };
+
     return (
         <div
             ref={editorRootRef}
             className={`relative w-full ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''} ${className}`}
         >
             <div ref={editorHostRef} />
+            {shouldShowCannedResponses ? (
+                <CannedResponse
+                    caretPosition={caretPosition}
+                    searchKey={cannedSearchKey}
+                    schema={schemaRef.current}
+                    onReplace={insertCannedResponse}
+                    onClose={dismissCannedResponses}
+                    onRemoveTrigger={removeSuggestionTrigger}
+                />
+            ) : null}
         </div>
     );
 });

@@ -11,6 +11,7 @@ import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
 import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
@@ -18,7 +19,7 @@ import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
-// Instagram, markMessagesRead (B5). Typing bubble đọc useTypingUsers (store
+// Instagram. markMessagesRead do ConversationContext gọi (B8). Typing bubble đọc useTypingUsers (store
 // conversationTypingStatus gốc). SCROLL_TO_MESSAGE khi có tin mới (ADD_MESSAGE
 // gốc emit bus) = effect theo id tin cuối. ResizableEditorWrapper port thật
 // (kéo thả + ⤢ + reset sau gửi); containerHeight/topBannerHeight đo bằng
@@ -78,16 +79,9 @@ export default function MessagesView() {
     })();
 
     const unreadMessageCount = currentChat.unread_count || 0;
-    const unReadMessages = messages.filter(
-        (message) => message.created_at * 1000 > currentChat.agent_last_seen_at * 1000,
-    );
-    const firstUnreadId = unreadMessageCount !== 0 ? (unReadMessages[0]?.id ?? null) : null;
-
-    const unreadMessageLabel = (() => {
-        const count = unreadMessageCount > 9 ? '9+' : unreadMessageCount;
-        const label = unreadMessageCount > 1 ? 'CONVERSATION.UNREAD_MESSAGES' : 'CONVERSATION.UNREAD_MESSAGE';
-        return `${count} ${t(label)}`;
-    })();
+    const firstUnreadId = firstUnreadMessageId(messages, currentChat.agent_last_seen_at, unreadMessageCount);
+    const unreadLabelParts = unreadMessageLabelParts(unreadMessageCount);
+    const unreadMessageLabel = `${unreadLabelParts.count} ${t(unreadLabelParts.i18nKey)}`;
 
     const shouldShowSpinner = messagesLoading || isLoadingPrevious;
 

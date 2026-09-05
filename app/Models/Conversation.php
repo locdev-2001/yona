@@ -11,14 +11,16 @@ use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\Labelable;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
-// Bỏ: FilteredCountInvalidator (B8),
+// Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1),
 // mentions/participants (B11), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
 // campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
@@ -49,6 +51,10 @@ class Conversation extends Model
     ];
 
     public const UPDATED_EVENT_ADDITIONAL_ATTRIBUTE_KEYS = ['conversation_language'];
+
+    // unread_incoming_messages của bản gốc là `...last(10)` → mảng tối đa 10 phần tử,
+    // và jbuilder đếm chính mảng đó nên unread_count trần ở 10 (badge FE hiện "9+").
+    public const UNREAD_INCOMING_MESSAGES_LIMIT = 10;
 
     public const PRIORITY_LOW = 0;
 
@@ -344,12 +350,28 @@ class Conversation extends Model
             : $this->messages();
     }
 
+    /** @return Collection<int, Message> */
+    public function unreadIncomingMessages(): Collection
+    {
+        return $this->unreadIncomingMessagesQuery()
+            ->reorder('id', 'desc')
+            ->limit(self::UNREAD_INCOMING_MESSAGES_LIMIT)
+            ->get()
+            ->reverse()
+            ->values();
+    }
+
     public function unreadIncomingMessagesCount(): int
+    {
+        return min(self::UNREAD_INCOMING_MESSAGES_LIMIT, $this->unreadIncomingMessagesQuery()->count());
+    }
+
+    /** @return HasMany<Message, $this> */
+    private function unreadIncomingMessagesQuery(): HasMany
     {
         return $this->unreadMessages()
             ->where('account_id', $this->account_id)
-            ->where('message_type', Message::TYPE_INCOMING)
-            ->count();
+            ->where('message_type', Message::TYPE_INCOMING);
     }
 
     public function lastNonActivityMessage(): ?Message
@@ -408,6 +430,56 @@ class Conversation extends Model
     public function scopeAssignedTo(Builder $query, User $agent): Builder
     {
         return $query->where('assignee_id', $agent->id);
+    }
+
+    // conversation.rb scope :unattended — chưa có trả lời đầu HOẶC đang chờ khách.
+    public function scopeUnattended(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $inner) => $inner
+            ->whereNull('first_reply_created_at')
+            ->orWhereNotNull('waiting_since'));
+    }
+
+    // scope :sort_on_unread bỏ qua hướng truyền vào (`|_direction|`) — luôn nhiều
+    // tin chưa đọc nhất trước, tiebreak last_activity_at DESC.
+    public function scopeSortOnUnread(Builder $query, string $direction = 'desc'): Builder
+    {
+        return $query
+            ->orderByRaw(self::unreadMessagesCountSql().' DESC')
+            ->sortOnLastActivityAt('desc');
+    }
+
+    // scope :last_user_message_at — DISTINCT ON lấy tin mới nhất mỗi hội thoại rồi
+    // xếp theo message_type (incoming trước) và thời điểm tin đó. Bản gốc chỉ dùng
+    // cho danh sách Mentions; chưa nối vào SORT_OPTIONS (B11).
+    public function scopeLastUserMessageAt(Builder $query): Builder
+    {
+        $lastMessagePerConversation = 'SELECT DISTINCT ON (conversation_id) conversation_id, id, created_at, message_type'
+            .' FROM messages ORDER BY conversation_id, created_at DESC';
+
+        return $query
+            ->select('conversations.*')
+            ->join(
+                DB::raw("($lastMessagePerConversation) AS grouped_conversations"),
+                'grouped_conversations.conversation_id',
+                '=',
+                'conversations.id'
+            )
+            ->orderBy('grouped_conversations.message_type')
+            ->orderBy('grouped_conversations.created_at');
+    }
+
+    // conversation.rb#unread_messages_count_arel — subquery tương quan đếm tin
+    // incoming chưa đọc theo mốc agent_last_seen_at. Nguồn duy nhất của điều kiện
+    // "chưa đọc" phía SQL (sort unread + bộ đếm sidebar dùng chung).
+    public static function unreadMessagesCountSql(string $conversationsTable = 'conversations'): string
+    {
+        return '(SELECT COUNT(messages.id) FROM messages'
+            ." WHERE messages.conversation_id = $conversationsTable.id"
+            ." AND messages.account_id = $conversationsTable.account_id"
+            .' AND messages.message_type = '.Message::TYPE_INCOMING
+            ." AND ($conversationsTable.agent_last_seen_at IS NULL"
+            ." OR messages.created_at > $conversationsTable.agent_last_seen_at))";
     }
 
     public function scopeSortOnLastActivityAt(Builder $query, string $direction = 'desc'): Builder
