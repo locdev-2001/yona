@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Controllers\Widget;
+
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+// Port từ refs/chatwoot/app/controllers/api/v1/widget/inbox_members_controller.rb
+// (skip_before_action :set_contact — khách chưa có phiên vẫn xem được đội ngũ).
+class InboxMembersController extends WidgetController
+{
+    public function index(Request $request): JsonResponse
+    {
+        $account = $this->account($request);
+        $agents = $this->inbox($request)->members()->with('accountUsers')->get();
+
+        return response()->json([
+            'payload' => $agents->map(fn (User $agent) => [
+                'id' => $agent->id,
+                'name' => $agent->availableName(),
+                'avatar_url' => $agent->avatarUrl(),
+                'availability_status' => $agent->accountUsers
+                    ->firstWhere('account_id', $account->id)
+                    ?->availabilityStatus(),
+            ])->values()->all(),
+        ]);
+    }
+}

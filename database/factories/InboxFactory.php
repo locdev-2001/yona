@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Account;
 use App\Models\Channel\Api;
+use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,6 +19,16 @@ class InboxFactory extends Factory
             'account_id' => Account::factory(),
             'name' => fake()->company(),
         ];
+    }
+
+    // Factory :channel_widget của Chatwoot: kênh Website + inbox cùng account.
+    public function webWidget(): static
+    {
+        return $this->state([
+            'channel_type' => 'Channel::WebWidget',
+            'channel_id' => fn (array $attributes) => WebWidget::factory()
+                ->create(['account_id' => $attributes['account_id']])->id,
+        ]);
     }
 
     // Factory :inbox của Chatwoot mặc định gắn kênh api cùng account.

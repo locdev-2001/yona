@@ -25,6 +25,18 @@ export interface Inbox {
     email?: string | null;
     phone_number?: string | null;
     hmac_mandatory?: boolean | null;
+    // Kênh Web Widget (_inbox.json.jbuilder mục WebWidget Attributes).
+    allowed_domains?: string | null;
+    widget_color?: string | null;
+    welcome_title?: string | null;
+    welcome_tagline?: string | null;
+    web_widget_script?: string | null;
+    website_token?: string | null;
+    selected_feature_flags?: string[] | null;
+    reply_time?: string | null;
+    continuity_via_email?: boolean | null;
+    pre_chat_form_enabled?: boolean | null;
+    pre_chat_form_options?: Record<string, unknown> | null;
     // Kênh API (hmac_token/secret chỉ có với administrator).
     hmac_token?: string;
     secret?: string;

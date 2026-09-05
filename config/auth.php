@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ContactInbox;
 use App\Models\User;
 
 return [
@@ -42,6 +43,17 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Khách của widget website: RoomChannel của Chatwoot chấp nhận đúng một
+        // bằng chứng — biết pubsub_token của contact_inbox. Guard này chỉ dùng
+        // cho auth kênh broadcast (routes/channels.php), không cho route HTTP.
+        'widget' => [
+            'driver' => 'token',
+            'provider' => 'contact_inboxes',
+            'input_key' => 'pubsub_token',
+            'storage_key' => 'pubsub_token',
+            'hash' => false,
+        ],
     ],
 
     /*
@@ -67,10 +79,10 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'contact_inboxes' => [
+            'driver' => 'eloquent',
+            'model' => ContactInbox::class,
+        ],
     ],
 
     /*

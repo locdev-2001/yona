@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ContactInbox;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -12,6 +13,10 @@ Broadcast::channel('account_{accountId}', function (User $user, string $accountI
     return $user->accountUsers()->where('account_id', (int) $accountId)->exists();
 });
 
-Broadcast::channel('{pubsubToken}', function (User $user, string $pubsubToken) {
-    return $user->pubsub_token === $pubsubToken;
-});
+// Khách của widget cũng nghe pubsub_token của chính mình (RoomChannel
+// #current_user nhánh `params[:user_id].blank?` → ContactInbox.find_by!).
+// Guard `web` thử trước để agent giữ nguyên hành vi cũ; guard `widget` tra
+// contact_inbox theo pubsub_token gửi kèm trong body auth.
+Broadcast::channel('{pubsubToken}', function (User|ContactInbox $listener, string $pubsubToken) {
+    return $listener->pubsub_token === $pubsubToken;
+}, ['guards' => ['web', 'widget']]);

@@ -5,12 +5,19 @@ interface GreetingsEditorProps {
     value: string;
     label?: string;
     placeholder?: string;
+    className?: string;
     onChange: (value: string) => void;
 }
 
-export default function GreetingsEditor({ value, label = '', placeholder = '', onChange }: GreetingsEditorProps) {
+export default function GreetingsEditor({
+    value,
+    label = '',
+    placeholder = '',
+    className = '',
+    onChange,
+}: GreetingsEditorProps) {
     return (
-        <section>
+        <section className={className}>
             {label ? <label className="text-sm font-medium text-n-slate-12">{label}</label> : null}
             <textarea
                 rows={4}

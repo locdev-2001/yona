@@ -19,11 +19,18 @@ class MessageBuilder
 {
     private ?Message $message = null;
 
-    /** @param array<string, mixed> $params */
+    /**
+     * $incomingAllowed: người gửi CHÍNH LÀ khách (widget website). Bản gốc bỏ
+     * qua builder cho luồng đó và tạo message trực tiếp; ở đây giữ một đường
+     * tạo tin duy nhất nên cửa vào phải tự khai quyền tạo tin `incoming`.
+     *
+     * @param  array<string, mixed>  $params
+     */
     public function __construct(
         private readonly ?User $user,
         private readonly Conversation $conversation,
         private readonly array $params,
+        private readonly bool $incomingAllowed = false,
     ) {}
 
     public function perform(): Message
@@ -135,7 +142,7 @@ class MessageBuilder
     {
         $requested = $this->params['message_type'] ?? 'outgoing';
 
-        if ($this->conversation->inbox->channel_type !== 'Channel::Api' && $requested === 'incoming') {
+        if (! $this->incomingAllowed && $this->conversation->inbox->channel_type !== 'Channel::Api' && $requested === 'incoming') {
             throw new MessageValidationException('Incoming messages are only allowed in Api inboxes');
         }
 

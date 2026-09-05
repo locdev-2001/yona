@@ -301,6 +301,12 @@ class Message extends Model
 
         $conversation = $this->conversation;
 
+        // `return if conversation.muted?` — khách bị chặn nhắn tiếp không kéo
+        // hội thoại đã đóng quay lại hàng đợi của agent.
+        if ($conversation->isMuted()) {
+            return;
+        }
+
         if ($conversation->isSnoozed()) {
             $conversation->update(['status' => Conversation::STATUS_OPEN]);
         }
