@@ -13,12 +13,13 @@ import type { AgentMeta, ContactMeta, Conversation } from '../../../conversation
 import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
+import CardLabels from './conversationCardComponents/CardLabels';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
-// Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE), CardLabels (labels B7 —
-// chat.labels luôn rỗng nên bản gốc cũng không render section này).
+// Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE) — `showLabelsSection` vì thế
+// chỉ còn nhánh `chat.labels`.
 // B6: checkbox chọn hàng loạt phủ lên avatar khi hover/đang chọn; gốc emit
 // `props.inbox.id`, ở đây dùng `chat.inbox_id` (cùng giá trị, khỏi nới type inbox).
 interface ConversationCardProps {
@@ -64,6 +65,7 @@ export default function ConversationCard({
     const lastMessageInChat = getLastMessage(chat);
 
     const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority;
+    const showLabelsSection = (chat.labels?.length ?? 0) > 0;
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
 
     // watch(() => props.chat.id) của gốc: đổi conversation thì bỏ trạng thái hover.
@@ -193,6 +195,9 @@ export default function ConversationCard({
                     </span>
                     {hasUnread ? <UnreadBadge count={unreadCount} className="ltr:ml-auto rtl:mr-auto mt-1" /> : null}
                 </div>
+                {showLabelsSection ? (
+                    <CardLabels conversationLabels={chat.labels ?? []} className="mt-0.5 mx-2 mb-0" />
+                ) : null}
             </div>
         </div>
     );

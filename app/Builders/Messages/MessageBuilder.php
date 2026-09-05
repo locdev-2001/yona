@@ -3,14 +3,18 @@
 namespace App\Builders\Messages;
 
 use App\Exceptions\MessageValidationException;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Support\BooleanParam;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/app/builders/messages/message_builder.rb.
-// Bỏ ở B3: attachments (B9), xử lý email cc/bcc + html/liquid (F1),
-// sender AgentBot (D4), campaign_id (C4), template_params (kênh WhatsApp F5).
+// Bỏ: xử lý email cc/bcc + html/liquid (F1), sender AgentBot (D4),
+// campaign_id (C4), template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
     private ?Message $message = null;
@@ -27,9 +31,79 @@ class MessageBuilder
         $this->message = new Message($this->messageParams());
         $this->message->echoId = isset($this->params['echo_id']) ? (string) $this->params['echo_id'] : null;
         $this->message->sender()->associate($this->sender());
+
+        // Rails validate cả attachments rồi mới save! — dựng + kiểm trước khi
+        // tin tồn tại để tệp hỏng không đẻ ra tin rỗng.
+        $this->message->pendingAttachments = $this->buildAttachments();
+
         $this->message->save();
 
         return $this->message;
+    }
+
+    /**
+     * process_attachments — mỗi phần tử là UploadedFile (multipart) hoặc chuỗi
+     * signed_id của endpoint upload trực tiếp.
+     *
+     * @return list<Attachment>
+     */
+    private function buildAttachments(): array
+    {
+        $uploads = $this->params['attachments'] ?? null;
+
+        if (blank($uploads)) {
+            return [];
+        }
+
+        $attachments = [];
+
+        try {
+            foreach (is_array($uploads) ? $uploads : [$uploads] as $upload) {
+                Message::guardAttachmentsLimit(count($attachments));
+                $attachments[] = $attachment = $this->buildAttachment($upload);
+                $attachment->validateFile();
+            }
+        } catch (MessageValidationException $exception) {
+            $this->discardStoredFiles($attachments);
+
+            throw $exception;
+        }
+
+        return $attachments;
+    }
+
+    private function buildAttachment(mixed $upload): Attachment
+    {
+        $attributes = $upload instanceof UploadedFile
+            ? Attachment::storeUpload($upload, $this->conversation->account_id)
+            : Attachment::resolveSignedUpload((string) $upload, $this->conversation->account_id);
+
+        $attachment = new Attachment($attributes);
+        $attachment->setRelation('attachable', $this->message);
+        $this->tagVoiceMessage($attachment);
+
+        return $attachment;
+    }
+
+    private function tagVoiceMessage(Attachment $attachment): void
+    {
+        $isVoiceMessage = filter_var($this->params['is_voice_message'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (! $isVoiceMessage || $attachment->file_type !== Attachment::FILE_TYPE_AUDIO) {
+            return;
+        }
+
+        $attachment->meta = [...($attachment->meta ?? []), 'is_voice_message' => true];
+    }
+
+    /** @param list<Attachment> $attachments */
+    private function discardStoredFiles(array $attachments): void
+    {
+        foreach ($attachments as $attachment) {
+            if ($attachment->path) {
+                Storage::disk($attachment->disk)->delete($attachment->path);
+            }
+        }
     }
 
     /** @return array<string, mixed> */
@@ -40,7 +114,7 @@ class MessageBuilder
             'inbox_id' => $this->conversation->inbox_id,
             'message_type' => $this->messageType(),
             'content' => $this->params['content'] ?? null,
-            'private' => (bool) ($this->params['private'] ?? false),
+            'private' => BooleanParam::from($this->params['private'] ?? null),
             'content_type' => Message::contentTypeFromName($this->params['content_type'] ?? null),
             'source_id' => $this->params['source_id'] ?? null,
         ];

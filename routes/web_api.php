@@ -3,12 +3,16 @@
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\BulkActionsController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
+use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsController;
 use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
+use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
+use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
+use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
@@ -75,6 +79,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/contacts/{contactId}/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes'])->whereNumber('contactId');
         Route::delete('/contacts/{contactId}/avatar', [ContactsController::class, 'destroyAvatar'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/contact_inboxes', [ContactInboxesController::class, 'store'])->whereNumber('contactId');
+        Route::get('/contacts/{contactId}/labels', [ContactLabelsController::class, 'index'])->whereNumber('contactId');
+        Route::post('/contacts/{contactId}/labels', [ContactLabelsController::class, 'create'])->whereNumber('contactId');
 
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
@@ -83,6 +89,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations/{conversationId}', [ConversationsController::class, 'show'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/messages', [MessagesController::class, 'store'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}', [ConversationsController::class, 'update'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_status', [ConversationsController::class, 'toggleStatus'])->whereNumber('conversationId');
@@ -90,6 +97,14 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
+        Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
+
+        Route::get('/labels', [LabelsController::class, 'index']);
+        Route::post('/labels', [LabelsController::class, 'store']);
+        Route::get('/labels/{labelId}', [LabelsController::class, 'show'])->whereNumber('labelId');
+        Route::match(['put', 'patch'], '/labels/{labelId}', [LabelsController::class, 'update'])->whereNumber('labelId');
+        Route::delete('/labels/{labelId}', [LabelsController::class, 'destroy'])->whereNumber('labelId');
 
         Route::post('/bulk_actions', [BulkActionsController::class, 'create']);
 

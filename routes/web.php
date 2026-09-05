@@ -5,6 +5,7 @@ use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\InboxesSettingsController;
 use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\App\TeamsSettingsController;
+use App\Http\Controllers\AttachmentsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
@@ -12,6 +13,11 @@ use App\Http\Controllers\Auth\SessionsController;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Chuyển hướng tệp đính kèm: URL kết thúc bằng tên tệp gốc rồi 301 sang tệp
+// thật, đúng hành vi ActiveStorage của bản gốc.
+Route::get('/attachments/{attachment}/{filename}', [AttachmentsController::class, 'show'])
+    ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show');
 
 Route::redirect('/', '/app');
 
@@ -64,6 +70,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/agents/list', fn (Account $account) => Inertia::render('dashboard/settings/agents/Index'))
                 ->name('settings_agents');
 
+            // Tương đương labels.routes.js (administrator, redirect về /list).
+            Route::get('/settings/labels', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/labels/list"));
+            Route::get('/settings/labels/list', fn (Account $account) => Inertia::render('dashboard/settings/labels/Index'))
+                ->name('settings_labels_list');
+
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
             Route::get('/settings/teams/new', [TeamsSettingsController::class, 'create'])->name('settings_teams_new');
@@ -104,6 +115,10 @@ Route::middleware('auth')->group(function () {
             ->whereNumber('teamId')->name('team_conversations');
         Route::get('/team/{teamId}/conversations/{conversationId}', [DashboardController::class, 'team'])
             ->whereNumber('teamId')->whereNumber('conversationId')->name('conversations_through_team');
+        Route::get('/label/{label}', [DashboardController::class, 'label'])
+            ->name('label_conversations');
+        Route::get('/label/{label}/conversations/{conversationId}', [DashboardController::class, 'label'])
+            ->whereNumber('conversationId')->name('conversations_through_label');
 
         // Tương đương contacts routes.js (admin + agent đều vào được).
         Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');

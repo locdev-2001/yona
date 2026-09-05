@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/jobs/bulk_actions_job.rb (nhánh Conversation).
-// Nhãn (add/remove) để chỗ cắm cho B7.
 class BulkActionsJob extends ApplicationJob
 {
     public const SUPPORTED_MODEL = 'Conversation';
@@ -47,10 +46,18 @@ class BulkActionsJob extends ApplicationJob
     /** @param Collection<int, Conversation> $records */
     private function bulkUpdate(Collection $records): void
     {
+        // Bản gốc gỡ nhãn cho TOÀN BỘ hội thoại trước, rồi mới sang vòng thêm nhãn
+        // + đổi trường của từng hội thoại.
+        foreach ($records as $conversation) {
+            $conversation->removeLabels($this->params['labels']['remove'] ?? null);
+        }
+
         $fields = $this->availableFields();
         $snoozedUntil = $this->params['snoozed_until'] ?? null;
 
         foreach ($records as $conversation) {
+            $conversation->addLabels($this->params['labels']['add'] ?? null);
+
             if (filled($snoozedUntil)) {
                 $conversation->snoozed_until = DateRangeHelper::parseDateTime((string) $snoozedUntil);
             }

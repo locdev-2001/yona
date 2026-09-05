@@ -8,6 +8,8 @@ import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
+import { useLabelsList } from 'dashboard/composables/useLabelsList';
+import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
 import { filterMenuByRole } from './permissions';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
@@ -26,6 +28,8 @@ export default function Sidebar({
     const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
+    // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
+    const accountLabels = useLabelsList(accountId);
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -106,8 +110,8 @@ export default function Sidebar({
     };
 
     const menuItems = useMemo(
-        () => filterMenuByRole(buildMenuItems(accountId, inboxes, teams), role),
-        [accountId, inboxes, teams, role],
+        () => filterMenuByRole(buildMenuItems(accountId, inboxes, teams, labelsOnSidebar(accountLabels)), role),
+        [accountId, inboxes, teams, accountLabels, role],
     );
 
     const asideRef = useRef<HTMLElement>(null);

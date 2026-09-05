@@ -14,6 +14,7 @@ interface Props {
     conversationId?: number;
     inboxId?: number;
     teamId?: number;
+    label?: string;
 }
 
 function ConversationLayout({ conversationId }: { conversationId: number }) {
@@ -34,10 +35,15 @@ function ConversationLayout({ conversationId }: { conversationId: number }) {
     );
 }
 
-export default function ConversationView({ conversationId = 0, inboxId = 0, teamId = 0 }: Props) {
+export default function ConversationView({ conversationId = 0, inboxId = 0, teamId = 0, label = '' }: Props) {
     return (
         <Dashboard>
-            <ConversationProvider conversationId={conversationId} inboxId={inboxId} teamId={teamId}>
+            <ConversationProvider
+                conversationId={conversationId}
+                inboxId={inboxId}
+                teamId={teamId}
+                label={label}
+            >
                 <ConversationLayout conversationId={conversationId} />
             </ConversationProvider>
         </Dashboard>

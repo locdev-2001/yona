@@ -1,8 +1,14 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
-// Port từ dashboard/components-next/label/Label.vue (nhánh label dạng object
-// có màu dùng cho labels thật — vào B7; B1 chỉ cần chip chữ).
+// Port từ dashboard/components-next/label/Label.vue — `label` nhận chuỗi (chip
+// chữ) hoặc nhãn thật (có màu + mô tả làm tooltip).
 type LabelColor = 'slate' | 'amber' | 'teal' | 'ruby' | 'blue' | 'iris';
+
+export interface LabelObject {
+    title: string;
+    description?: string | null;
+    color?: string | null;
+}
 
 const COLOR_CLASSES: Record<LabelColor, string> = {
     slate: 'bg-n-label-color outline-n-label-border text-n-slate-12',
@@ -13,28 +19,56 @@ const COLOR_CLASSES: Record<LabelColor, string> = {
     iris: 'bg-n-iris-2 outline-n-iris-4 text-n-iris-11',
 };
 
-interface LabelProps {
-    label: string;
+interface LabelProps extends Omit<HTMLAttributes<HTMLDivElement>, 'color' | 'title'> {
+    label: string | LabelObject;
     compact?: boolean;
     color?: LabelColor;
+    // Bản gốc lấy tooltip từ label.description; call-site chip chữ truyền thẳng.
     title?: string;
     icon?: ReactNode;
+    action?: ReactNode;
 }
 
-export default function Label({ label, compact = false, color = 'slate', title = '', icon }: LabelProps) {
+export default function Label({
+    label,
+    compact = false,
+    color = 'slate',
+    title,
+    icon,
+    action,
+    className = '',
+    ...rest
+}: LabelProps) {
+    const isStringLabel = typeof label === 'string';
+    const labelTitle = isStringLabel ? label : label.title;
+    const labelDescription = title ?? (isStringLabel ? '' : (label.description ?? ''));
+    const labelColor = isStringLabel ? null : label.color;
+
     return (
         <div
-            title={title}
+            {...rest}
+            title={labelDescription}
             className={[
                 'rounded-lg -outline-offset-1 outline outline-1 inline-flex items-center flex-shrink-0',
                 COLOR_CLASSES[color],
                 compact ? 'px-1.5 h-6 gap-1 rounded-md' : 'px-2.5 h-8 gap-1.5 rounded-lg',
-            ].join(' ')}
+                className,
+            ]
+                .filter(Boolean)
+                .join(' ')}
         >
-            {icon}
+            {labelColor ? (
+                <span
+                    className={`rounded-sm flex-shrink-0 ${compact ? 'size-1.5' : 'size-2'}`}
+                    style={{ background: labelColor }}
+                />
+            ) : (
+                icon
+            )}
             <span className={`whitespace-nowrap ${compact ? 'text-label-small' : 'text-label !font-420'}`}>
-                {label}
+                {labelTitle}
             </span>
+            {action}
         </div>
     );
 }

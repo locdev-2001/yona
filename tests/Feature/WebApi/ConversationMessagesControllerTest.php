@@ -8,9 +8,11 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 // Port từ spec/controllers/api/v1/accounts/conversations/messages_controller_spec.rb.
-// Bỏ ở B3: attachments (B9), sender AgentBot + agent bot auth (D4), input_select/
+// Bỏ: sender AgentBot + agent bot auth (D4), input_select/
 // cards của bot (D4), activity message khi reopen (B5), update status/destroy/
 // retry/translate (đi cùng driver kênh + B5/F6), lỗi query canceled (hạ tầng DB
 // timeout chưa port).
@@ -204,5 +206,136 @@ describe('POST /api/v1/accounts/{id}/conversations/{conversationId}/messages', f
             ])
             ->assertStatus(422)
             ->assertJson(['error' => 'Too many messages']);
+    });
+});
+
+describe('POST messages with attachments', function () {
+    beforeEach(function () {
+        Storage::fake('public');
+    });
+
+    it('creates a new outgoing message with an attachment', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+
+        $response = $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => [UploadedFile::fake()->image('avatar.png', 120, 80)],
+            ], ['Accept' => 'application/json'])
+            ->assertOk();
+
+        $attachment = $conversation->messages()->firstOrFail()->attachments->first();
+
+        expect($attachment)->not->toBeNull()
+            ->and($attachment->fileTypeName())->toBe('image')
+            ->and($response->json('attachments.0.file_type'))->toBe('image')
+            ->and($response->json('attachments.0.extension'))->toBe('png')
+            ->and($response->json('attachments.0.width'))->toBe(120)
+            ->and($response->json('attachments.0.data_url'))->not->toBe('');
+        Storage::disk('public')->assertExists($attachment->path);
+    });
+
+    it('creates a message carrying several attachments of mixed types', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+
+        $response = $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => [
+                    UploadedFile::fake()->image('avatar.png'),
+                    UploadedFile::fake()->create('doc.pdf', 2, 'application/pdf'),
+                ],
+            ], ['Accept' => 'application/json'])
+            ->assertOk();
+
+        expect($response->json('attachments'))->toHaveCount(2)
+            ->and(array_column($response->json('attachments'), 'file_type'))->toBe(['image', 'file'])
+            ->and($response->json('attachments.1.thumb_url'))->toBe('');
+    });
+
+    it('returns the attachments when listing messages', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+
+        $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => [UploadedFile::fake()->image('avatar.png')],
+            ], ['Accept' => 'application/json'])
+            ->assertOk();
+
+        $response = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages")
+            ->assertOk();
+
+        expect($response->json('payload.0.attachments'))->toHaveCount(1);
+    });
+
+    it('omits the attachments key for a message without files', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+
+        $response = $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+            ])
+            ->assertOk();
+
+        expect($response->json())->not->toHaveKey('attachments');
+    });
+
+    it('returns 422 when more attachments than allowed are sent', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        $files = array_map(
+            fn (int $index) => UploadedFile::fake()->image("avatar-{$index}.png"),
+            range(1, Message::NUMBER_OF_PERMITTED_ATTACHMENTS + 1),
+        );
+
+        $response = $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => $files,
+            ], ['Accept' => 'application/json'])
+            ->assertStatus(422);
+
+        expect($response->json('error'))->toBe('Attachments exceeded maximum allowed')
+            ->and($conversation->messages()->count())->toBe(0);
+    });
+
+    it('returns 422 for a file type the website widget does not accept', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        Inbox::query()->whereKey($inbox->id)->update(['channel_type' => 'Channel::WebWidget']);
+
+        $response = $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => [UploadedFile::fake()->create('script.sh', 1, 'application/x-sh')],
+            ], ['Accept' => 'application/json'])
+            ->assertStatus(422);
+
+        expect($response->json('error'))->toBe('File type not supported')
+            ->and($conversation->messages()->count())->toBe(0)
+            ->and(Storage::disk('public')->allFiles())->toBe([]);
+    });
+
+    it('returns 422 for a file bigger than the limit on the website widget', function () {
+        config(['limits.maximum_file_upload_size' => 1]);
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        Inbox::query()->whereKey($inbox->id)->update(['channel_type' => 'Channel::WebWidget']);
+
+        $response = $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'test-message',
+                'attachments' => [UploadedFile::fake()->create('big.pdf', 2048, 'application/pdf')],
+            ], ['Accept' => 'application/json'])
+            ->assertStatus(422);
+
+        expect($response->json('error'))->toBe('File size is too big')
+            ->and($conversation->messages()->count())->toBe(0);
     });
 });

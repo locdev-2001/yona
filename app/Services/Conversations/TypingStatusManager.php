@@ -6,6 +6,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Models\Conversation;
 use App\Models\User;
+use App\Support\BooleanParam;
 
 // Port từ refs/chatwoot/app/services/conversations/typing_status_manager.rb.
 class TypingStatusManager
@@ -38,6 +39,6 @@ class TypingStatusManager
     // Ruby nhận params[:is_private] thô (nil/true/"true"); JSON FE gửi boolean.
     private function isPrivate(): bool
     {
-        return filter_var($this->params['is_private'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        return BooleanParam::from($this->params['is_private'] ?? null);
     }
 }

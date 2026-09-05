@@ -1,4 +1,5 @@
 import { MESSAGE_TYPES } from './constants';
+import { matchesLabels } from './labelHelpers';
 import type { AssigneeTab, Conversation, ConversationMessage } from './types';
 
 // Hàm thuần port từ store conversations của Chatwoot (mutations ADD_MESSAGE /
@@ -133,11 +134,13 @@ export interface ConversationViewFilters {
     inboxId: number;
     teamId: number;
     currentUserId: number;
+    // filters.labels của applyPageFilters — trang /label/{title}.
+    labels?: string[];
 }
 
 // applyPageFilters + nhánh tab của getMineChats/getUnAssignedChats/getAllStatusChats.
 export function matchesConversationView(conversation: Conversation, filters: ConversationViewFilters): boolean {
-    const { assigneeTab, status, inboxId, teamId, currentUserId } = filters;
+    const { assigneeTab, status, inboxId, teamId, currentUserId, labels = [] } = filters;
     const assignee = conversation.meta?.assignee;
 
     if (assigneeTab === 'me' && !(assignee && assignee.id === currentUserId)) return false;
@@ -146,6 +149,7 @@ export function matchesConversationView(conversation: Conversation, filters: Con
     if (status !== 'all' && conversation.status !== status) return false;
     if (inboxId && Number(inboxId) !== conversation.inbox_id) return false;
     if (teamId && Number(teamId) !== conversation.meta?.team?.id) return false;
+    if (labels.length && !matchesLabels(conversation.labels, labels)) return false;
 
     return true;
 }

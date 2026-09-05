@@ -59,6 +59,15 @@ class DashboardController extends Controller
         ]);
     }
 
+    // Tương đương route label_conversations: /label/{label} (+ chọn conversation).
+    public function label(Request $request, Account $account, string $label, ?int $conversationId = null): Response
+    {
+        return Inertia::render('dashboard/conversation/ConversationView', [
+            'label' => $label,
+            'conversationId' => $conversationId,
+        ]);
+    }
+
     public function placeholder(Request $request, Account $account, string $view): Response
     {
         return Inertia::render('dashboard/PlaceholderView', [

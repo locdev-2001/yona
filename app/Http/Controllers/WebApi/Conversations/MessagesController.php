@@ -12,14 +12,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 // Port từ Api::V1::Accounts::Conversations::MessagesController.
-// Bỏ ở B3: update status (đi cùng driver kênh gửi thật), destroy (context menu
+// Bỏ: update status (đi cùng driver kênh gửi thật), destroy (context menu
 // tin nhắn — port cùng cụm tiện ích), retry (SendReplyJob D4), translate (F6).
 class MessagesController extends Controller
 {
     public function index(Request $request, Account $account, int $conversationId): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $messages = (new MessageFinder($conversation, $request->all()))->perform();
+        $messages = (new MessageFinder($conversation, $request->all()))->perform()->load('attachments');
 
         return response()->json([
             'meta' => [

@@ -17,7 +17,7 @@ interface ConversationItemProps {
 }
 
 export default function ConversationItem({ source, showAssignee = false }: ConversationItemProps) {
-    const { accountId, inboxId, teamId, conversationId } = useConversation();
+    const { accountId, inboxId, teamId, label, conversationId } = useConversation();
     const bulkSelection = useBulkSelection();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
@@ -33,7 +33,7 @@ export default function ConversationItem({ source, showAssignee = false }: Conve
     };
     const showInboxName = !inboxId && inboxes.length > 1;
 
-    const conversationPath = conversationUrl({ accountId, inboxId, teamId, id: source.id });
+    const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, id: source.id });
 
     const onCardClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.metaKey || event.ctrlKey) {

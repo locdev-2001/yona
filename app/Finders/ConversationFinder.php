@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 // Port từ refs/chatwoot/app/finders/conversation_finder.rb.
-// Bỏ ở B3: labels (B7), custom view/PermissionFilterService (EE — CE cho qua),
+// Bỏ ở B3: custom view/PermissionFilterService (EE — CE cho qua),
 // conversation_type mention/participating (B11) + unattended (B8), q search (E2),
 // sort unread/last_user_message (B8).
 class ConversationFinder
@@ -90,6 +90,7 @@ class ConversationFinder
         $this->findAllConversations();
         $this->filterByStatus();
         $this->filterByTeam();
+        $this->filterByLabels();
         $this->filterBySourceId();
     }
 
@@ -133,6 +134,22 @@ class ConversationFinder
 
         $team = $this->currentAccount->teams()->findOrFail($this->params['team_id']);
         $this->conversations->where('team_id', $team->id);
+    }
+
+    // conversation_finder.rb#filter_by_labels: tagged_with(any: true) — khớp BẤT KỲ
+    // nhãn nào trong danh sách, không phải tất cả.
+    private function filterByLabels(): void
+    {
+        $titles = array_filter((array) ($this->params['labels'] ?? []));
+
+        if ($titles === []) {
+            return;
+        }
+
+        $this->conversations->whereHas(
+            'labels',
+            fn (Builder $query) => $query->whereIn('title', $titles)
+        );
     }
 
     private function filterBySourceId(): void

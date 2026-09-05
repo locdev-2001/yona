@@ -14,3 +14,31 @@ export const SENDER_TYPES = {
 
 export type MessageVariant = (typeof MESSAGE_VARIANTS)[keyof typeof MESSAGE_VARIANTS];
 export type MessageOrientation = (typeof ORIENTATION)[keyof typeof ORIENTATION];
+
+// ATTACHMENT_TYPES/MEDIA_TYPES của constants.js gốc — nguồn duy nhất cho việc
+// rẽ nhánh bubble và lọc danh sách gallery.
+export const ATTACHMENT_TYPES = {
+    IMAGE: 'image',
+    AUDIO: 'audio',
+    VIDEO: 'video',
+    FILE: 'file',
+    LOCATION: 'location',
+    FALLBACK: 'fallback',
+    SHARE: 'share',
+    STORY_MENTION: 'story_mention',
+    CONTACT: 'contact',
+    IG_REEL: 'ig_reel',
+    EMBED: 'embed',
+    IG_POST: 'ig_post',
+    IG_STORY: 'ig_story',
+    IG_STORY_REPLY: 'ig_story_reply',
+} as const;
+
+export const MEDIA_TYPES: string[] = [
+    ATTACHMENT_TYPES.IMAGE,
+    ATTACHMENT_TYPES.VIDEO,
+    ATTACHMENT_TYPES.AUDIO,
+    ATTACHMENT_TYPES.IG_REEL,
+];
+
+export type AttachmentType = (typeof ATTACHMENT_TYPES)[keyof typeof ATTACHMENT_TYPES];

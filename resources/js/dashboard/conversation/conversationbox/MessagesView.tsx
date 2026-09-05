@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { UIEvent } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import MessageList from 'dashboard/components-next/message/MessageList';
+import { collectMediaAttachments } from 'dashboard/components-next/message/helpers/attachments';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import { useTypingUsers } from 'dashboard/realtime/hooks';
 import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
@@ -21,7 +22,10 @@ import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 // conversationTypingStatus gốc). SCROLL_TO_MESSAGE khi có tin mới (ADD_MESSAGE
 // gốc emit bus) = effect theo id tin cuối. ResizableEditorWrapper port thật
 // (kéo thả + ⤢ + reset sau gửi); containerHeight/topBannerHeight đo bằng
-// ResizeObserver thay useElementSize.
+// ResizeObserver thay useElementSize. Danh sách media cho gallery gom từ các tin
+// đang nạp (mutation ADD_CONVERSATION_ATTACHMENTS gốc); `fetchAllAttachments`
+// chưa port vì backend B9 chưa mở endpoint `conversations/:id/attachments` —
+// hệ quả: gallery chỉ duyệt media của các tin đã tải, không phải cả hội thoại.
 
 export default function MessagesView() {
     const {
@@ -45,6 +49,7 @@ export default function MessagesView() {
     const scrolledConversationRef = useRef<number | null>(null);
 
     const currentChat = selectedConversation!;
+    const galleryAttachments = useMemo(() => collectMediaAttachments(messages), [messages]);
     const typingUsersList = useTypingUsers(currentChat.id);
     const isAnyoneTyping = typingUsersList.length !== 0;
     const typingUserNames = (() => {
@@ -157,6 +162,7 @@ export default function MessagesView() {
                 className="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
                 messages={messages}
                 channelType={inbox?.channel_type ?? null}
+                chatAttachments={galleryAttachments}
                 firstUnreadId={firstUnreadId}
                 onScroll={handleScroll}
                 beforeAll={

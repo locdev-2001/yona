@@ -1,27 +1,11 @@
-import DOMPurify from 'dompurify';
-
-import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { t } from '../../../../i18n';
 import BaseBubble from './Base';
+import FormattedContent from './FormattedContent';
+import AttachmentChips from '../chips/AttachmentChips';
 import { useMessageContext } from '../provider';
-import { MESSAGE_VARIANTS } from '../constants';
 
-// Port từ bubbles/Text/Index.vue + Text/FormattedContent.vue — bỏ ở B3:
-// TranslationToggle (EE), AttachmentChips (B9), submittedEmail (template email).
-
-function FormattedContent({ content }: { content: string }) {
-    const { variant } = useMessageContext();
-
-    const formattedContent =
-        variant === MESSAGE_VARIANTS.ACTIVITY ? content : new MessageFormatter(content).formattedMessage;
-
-    return (
-        <span
-            className="prose prose-bubble"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formattedContent) }}
-        />
-    );
-}
+// Port từ bubbles/Text/Index.vue — bỏ TranslationToggle (EE) và
+// submittedEmail (template email, F1).
 
 export default function TextBubble() {
     const { content, attachments } = useMessageContext();
@@ -33,6 +17,7 @@ export default function TextBubble() {
             <div className="gap-3 flex flex-col">
                 {isEmpty && <span className="text-n-slate-11">{t('CONVERSATION.NO_CONTENT')}</span>}
                 {content && <FormattedContent content={content} />}
+                <AttachmentChips attachments={attachments} className="gap-2" />
             </div>
         </BaseBubble>
     );

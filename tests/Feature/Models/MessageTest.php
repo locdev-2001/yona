@@ -3,15 +3,19 @@
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Exceptions\MessageValidationException;
+use App\Http\Resources\MessageResource;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 
 // Port từ spec/models/message_spec.rb.
-// Bỏ ở B3: dispatcher events + HookExecutionService/SendReplyJob (B4/D4/D6),
-// attachments + webhook_data (B9/D4), email notifiable + conversation continuity
+// Bỏ: dispatcher events + HookExecutionService/SendReplyJob (B4/D4/D6),
+// webhook_data (D4), email notifiable + conversation continuity
 // (F1), source_id length + in_reply_to (đi cùng driver kênh email/social),
 // mute chặn reopen (Redis — B4), agent bot pending/captain (D4/EE), csat survey
 // content (C5), searchkick/should_index (EE), outgoing_content presenter (F1).
@@ -340,5 +344,44 @@ describe('dispatch events', function () {
         Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::MESSAGE_UPDATED
             && $event->data['message']->is($message)
             && $event->data['previous_changes']['content'] === ['Message content', 'edited']);
+    });
+});
+
+describe('attachments', function () {
+    beforeEach(function () {
+        Storage::fake('public');
+    });
+
+    it('carries the attachments in push_event_data', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+        $message->attachments()->create(
+            Attachment::storeUpload(UploadedFile::fake()->image('avatar.png'), $message->account_id)
+        );
+
+        $data = MessageResource::pushEventData($message->fresh());
+
+        expect($data['attachments'])->toHaveCount(1)
+            ->and($data['attachments'][0]['message_id'])->toBe($message->id);
+    });
+
+    it('omits the attachments key when the message has none', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+
+        expect(MessageResource::pushEventData($message))->not->toHaveKey('attachments');
+    });
+
+    it('destroys the attachments and their files with the message', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+        $attachment = $message->attachments()->create(
+            Attachment::storeUpload(UploadedFile::fake()->image('avatar.png'), $message->account_id)
+        );
+
+        $message->delete();
+
+        expect(Attachment::query()->whereKey($attachment->id)->exists())->toBeFalse();
+        Storage::disk('public')->assertMissing($attachment->path);
     });
 });

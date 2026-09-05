@@ -71,6 +71,7 @@ interface ConversationContextValue {
     currentUserId: number;
     inboxId: number;
     teamId: number;
+    label: string;
     conversationId: number;
     conversations: Conversation[];
     listMeta: ConversationListMeta;
@@ -167,12 +168,19 @@ interface ProviderProps {
     conversationId?: number;
     inboxId?: number;
     teamId?: number;
+    label?: string;
     children: ReactNode;
 }
 
 let pendingEchoCounter = 0;
 
-export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId = 0, children }: ProviderProps) {
+export function ConversationProvider({
+    conversationId = 0,
+    inboxId = 0,
+    teamId = 0,
+    label = '',
+    children,
+}: ProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const user = auth.user!;
@@ -224,9 +232,11 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
     // SET_LAST_MESSAGE_ID_IN_SYNC_CONVERSATION: mốc tin cuối lúc mất kết nối.
     const lastMessageIdBeforeDisconnectRef = useRef<number | null>(null);
 
+    // conversationFilters.labels của ChatList.vue: URL /label/{title} = một nhãn.
+    const labelFilters = useMemo(() => (label ? [label] : []), [label]);
     const viewFilters = useMemo(
-        () => ({ assigneeTab, status, inboxId, teamId, currentUserId }),
-        [assigneeTab, status, inboxId, teamId, currentUserId],
+        () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters }),
+        [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
     );
     const conversations = useMemo(
         () => selectVisibleConversations(allConversations, viewFilters, sortBy),
@@ -245,8 +255,9 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             sortBy,
             inboxId: inboxId || undefined,
             teamId: teamId || undefined,
+            labels: labelFilters.length ? labelFilters : undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters],
     );
 
     const fetchPage = useCallback(
@@ -620,6 +631,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             currentUserId,
             inboxId,
             teamId,
+            label,
             conversationId,
             conversations,
             listMeta,
@@ -655,6 +667,7 @@ export function ConversationProvider({ conversationId = 0, inboxId = 0, teamId =
             currentUserId,
             inboxId,
             teamId,
+            label,
             conversationId,
             conversations,
             listMeta,

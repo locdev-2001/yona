@@ -25,7 +25,7 @@ export default function ConversationHeader({
     className?: string;
     showBackButton?: boolean;
 }) {
-    const { selectedConversation, accountId, inboxId, teamId } = useConversation();
+    const { selectedConversation, accountId, inboxId, teamId, label } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     if (!selectedConversation) return null;
@@ -58,7 +58,7 @@ export default function ConversationHeader({
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
                 {showBackButton ? (
-                    <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId })} className="me-2" />
+                    <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId, label })} className="me-2" />
                 ) : null}
                 <Avatar
                     name={currentContact.name ?? ''}

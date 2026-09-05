@@ -42,7 +42,10 @@ async function request<T>(url: string, method: string, body?: BodyInit, contentT
         throw new ApiError(response.status, await response.json().catch(() => null));
     }
 
-    return response.json() as Promise<T>;
+    // `head :ok` của Rails (vd DELETE /labels/{id}) trả 200 body rỗng — json() sẽ ném.
+    const rawBody = await response.text();
+
+    return (rawBody ? JSON.parse(rawBody) : null) as T;
 }
 
 export function getJson<T = unknown>(url: string): Promise<T> {
@@ -63,6 +66,10 @@ export function patchJson<T = unknown>(url: string, body: Record<string, unknown
 
 export function deleteJson<T = unknown>(url: string): Promise<T> {
     return request<T>(url, 'DELETE');
+}
+
+export function postForm<T = unknown>(url: string, form: FormData): Promise<T> {
+    return request<T>(url, 'POST', form);
 }
 
 // Multipart (upload file) — Laravel chỉ đọc _method từ POST nên spoof PUT.

@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Database\PostgresConnection;
 use App\Models\Channel\Api;
 use App\Models\Contact;
+use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -38,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,
+            'Message' => Message::class,
+            'Conversation' => Conversation::class,
         ]);
     }
 }
