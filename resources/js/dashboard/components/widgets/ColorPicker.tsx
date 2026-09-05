@@ -209,12 +209,16 @@ function EditableInput({ label, value, arrowOffset = 1, onChange }: EditableInpu
     );
 }
 
-interface ChromeProps {
+export interface ChromeProps {
     colors: PickerColor;
+    // Lớp scoped của wrapper (`colorpicker--chrome` cho bản widgets,
+    // `colorpicker-next--chrome` cho bản components-next) — hai bản gốc là
+    // <style scoped> nên không đè nhau, bản React phân biệt bằng lớp này.
+    wrapperClass?: string;
     onColorChange: (data: ColorInput) => void;
 }
 
-function Chrome({ colors, onColorChange }: ChromeProps) {
+export function Chrome({ colors, wrapperClass = 'colorpicker--chrome', onColorChange }: ChromeProps) {
     const [fieldsIndex, setFieldsIndex] = useState(0);
     const [highlight, setHighlight] = useState(false);
 
@@ -267,7 +271,7 @@ function Chrome({ colors, onColorChange }: ChromeProps) {
         <div
             role="application"
             aria-label="Chrome color picker"
-            className="vc-chrome vc-chrome__disable-alpha colorpicker--chrome"
+            className={`vc-chrome vc-chrome__disable-alpha ${wrapperClass}`}
         >
             <div className="vc-chrome-saturation-wrap">
                 <Saturation colors={colors} onChange={onColorChange} />

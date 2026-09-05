@@ -2339,6 +2339,11 @@ const messages: Record<string, unknown> = {
             "PINK": "Pink"
         }
     },
+    "ERRORS": {
+        "conversations": {
+            "resolved": "Conversation is resolved and does not accept new messages"
+        }
+    },
     "FEATURE_SPOTLIGHT": {
         "LEARN_MORE": "Learn more",
         "WATCH_VIDEO": "Watch video"

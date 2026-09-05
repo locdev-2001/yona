@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Database\Factories\ContactInboxFactory;
+use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,10 +14,15 @@ use Illuminate\Support\Str;
 // Port từ refs/chatwoot/app/models/contact_inbox.rb.
 // Bỏ ở B2: conversations (B3), validate source_id theo kênh Twilio/Whatsapp
 // (đi cùng driver kênh đó), webhook_data.
-class ContactInbox extends Model
+//
+// Authenticatable: RoomChannel#current_user của Chatwoot coi CHÍNH pubsub_token
+// là bằng chứng để khách nghe kênh realtime. Guard `widget` (config/auth.php)
+// tra token đó qua model này, nên nó phải là một "principal" hợp lệ với
+// broadcasting của Laravel — không dùng cho đăng nhập HTTP.
+class ContactInbox extends Model implements Authenticatable
 {
     /** @use HasFactory<ContactInboxFactory> */
-    use HasFactory;
+    use AuthenticatableTrait, HasFactory;
 
     protected $fillable = [
         'contact_id',

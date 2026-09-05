@@ -10,12 +10,13 @@ import Dashboard from '../../Dashboard';
 import SettingsContent from '../SettingsContent';
 import SettingsSubPageHeader from '../SettingsSubPageHeader';
 import WizardLayout, { INBOX_WIZARD_ROUTES } from './WizardLayout';
+import WebsiteChannelForm from './channels/Website';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
 
-// Port từ settings/inbox/ChannelFactory.vue + channels/Api.vue — bước 2.
-// B1 chỉ có form kênh API; kênh khác vào map này khi port (như ChannelFactory).
+// Port từ settings/inbox/ChannelFactory.vue + channels/Api.vue + channels/Website.vue
+// — bước 2. Kênh khác vào map CHANNEL_VIEWS khi port (như ChannelFactory).
 interface NewChannelProps {
     channelName: string;
 }
@@ -103,6 +104,7 @@ function ApiChannelForm() {
 
 const CHANNEL_VIEWS: Record<string, () => ReactElement> = {
     api: ApiChannelForm,
+    website: WebsiteChannelForm,
 };
 
 export default function NewChannel({ channelName }: NewChannelProps) {

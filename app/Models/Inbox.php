@@ -53,6 +53,22 @@ class Inbox extends Model
         'csat_config',
     ];
 
+    // Mặc định của cột trong DB, nhắc lại ở model vì Eloquent không đọc default
+    // của Postgres: bản ghi vừa create phải trả về đúng giá trị như ActiveRecord.
+    protected $attributes = [
+        'enable_auto_assignment' => true,
+        'greeting_enabled' => false,
+        'working_hours_enabled' => false,
+        'timezone' => 'UTC',
+        'enable_email_collect' => true,
+        'csat_survey_enabled' => false,
+        'allow_messages_after_resolved' => true,
+        'auto_assignment_config' => '{}',
+        'lock_to_single_conversation' => false,
+        'sender_name_type' => self::SENDER_NAME_TYPE_FRIENDLY,
+        'csat_config' => '{}',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -163,6 +179,11 @@ class Inbox extends Model
     public function isApi(): bool
     {
         return $this->channel_type === 'Channel::Api';
+    }
+
+    public function isWebWidget(): bool
+    {
+        return $this->channel_type === 'Channel::WebWidget';
     }
 
     // InboxAgentAvailability#available_agents: member của inbox đang 'online'

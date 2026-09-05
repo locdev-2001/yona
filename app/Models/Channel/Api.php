@@ -2,21 +2,16 @@
 
 namespace App\Models\Channel;
 
-use App\Models\Account;
-use App\Models\Inbox;
+use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/channel/api.rb (+ Channelable, WebhookSecretable).
-// has_secure_token của Rails sinh chuỗi base58 24 ký tự cho identifier/hmac_token/secret.
 class Api extends Model
 {
     /** @use HasFactory<ApiFactory> */
-    use HasFactory;
+    use Channelable, HasFactory;
 
     protected $table = 'channel_api';
 
@@ -47,24 +42,14 @@ class Api extends Model
         });
     }
 
-    public static function generateToken(): string
-    {
-        return Str::random(24);
-    }
-
-    public function account(): BelongsTo
-    {
-        return $this->belongsTo(Account::class);
-    }
-
-    public function inbox(): MorphOne
-    {
-        return $this->morphOne(Inbox::class, 'channel');
-    }
-
     public function name(): string
     {
         return 'API';
+    }
+
+    public static function channelRules(): array
+    {
+        return ['webhook_url' => ['sometimes', 'nullable', 'string', 'max:2048']];
     }
 
     // WebhookSecretable#reset_secret!

@@ -4,6 +4,7 @@ use App\Jobs\DeleteObjectJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Api;
+use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -28,6 +29,11 @@ function inboxMemberOf(Account $account, int $role = AccountUser::ROLE_AGENT): U
 function apiInboxFor(Account $account): Inbox
 {
     return Inbox::factory()->create(['account_id' => $account->id]);
+}
+
+function webWidgetInboxFor(Account $account): Inbox
+{
+    return Inbox::factory()->webWidget()->create(['account_id' => $account->id]);
 }
 
 describe('GET /api/v1/accounts/{id}/inboxes', function () {
@@ -114,6 +120,52 @@ describe('GET /api/v1/accounts/{id}/inboxes/{inboxId}', function () {
             ->and($response->json('secret'))->not->toBeNull();
     });
 
+    it('returns the widget keys and the embed script for a website inbox', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}")
+            ->assertOk();
+
+        expect($response->json('channel_type'))->toBe('Channel::WebWidget')
+            ->and($response->json('website_token'))->toBe($inbox->channel->website_token)
+            ->and($response->json('hmac_token'))->toBe($inbox->channel->hmac_token)
+            ->and($response->json('web_widget_script'))->toBe($inbox->channel->web_widget_script)
+            ->and($response->json())->not->toHaveKey('secret');
+    });
+
+    it('hides the widget hmac token from agents', function () {
+        $account = Account::factory()->create();
+        $agent = inboxMemberOf($account);
+        $inbox = webWidgetInboxFor($account);
+        $inbox->addMembers([$agent->id]);
+
+        $response = $this->actingAs($agent)
+            ->getJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}")
+            ->assertOk();
+
+        expect($response->json())->not->toHaveKey('hmac_token')
+            ->and($response->json('website_token'))->not->toBeNull();
+    });
+
+    it('keeps the widget keys null for an api inbox', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}")
+            ->assertOk();
+
+        expect($response->json('website_token'))->toBeNull()
+            ->and($response->json('web_widget_script'))->toBeNull()
+            ->and($response->json('selected_feature_flags'))->toBeNull()
+            ->and($response->json('reply_time'))->toBeNull()
+            ->and($response->json())->not->toHaveKey('pre_chat_form_options');
+    });
+
     it('fetches API inbox without hmac token when agent', function () {
         $account = Account::factory()->create();
         $agent = inboxMemberOf($account);
@@ -196,6 +248,87 @@ describe('POST /api/v1/accounts/{id}/inboxes', function () {
         expect($channel->account_id)->toBe($account->id);
     });
 
+    it('creates a webwidget inbox when administrator', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'test.com'],
+            ])
+            ->assertOk();
+
+        expect($response->json('name'))->toBe('test')
+            ->and($response->json('channel_type'))->toBe('Channel::WebWidget')
+            ->and($response->json('website_url'))->toBe('test.com')
+            ->and($response->json('widget_color'))->toBe('#1f93ff')
+            ->and($response->json('reply_time'))->toBe('in_a_few_minutes')
+            ->and($response->json('continuity_via_email'))->toBeTrue()
+            ->and($response->json('allowed_domains'))->toBe('')
+            ->and($response->json('pre_chat_form_enabled'))->toBeFalse()
+            ->and($response->json('pre_chat_form_options.pre_chat_fields'))->toHaveCount(3)
+            ->and($response->json('selected_feature_flags'))
+            ->toBe(['attachments', 'emoji_picker', 'end_conversation'])
+            ->and($response->json('website_token'))->not->toBeNull()
+            ->and($response->json('hmac_token'))->not->toBeNull()
+            ->and($response->json('web_widget_script'))->toContain($response->json('website_token'));
+
+        $channel = WebWidget::query()->find($response->json('channel_id'));
+        expect($channel->account_id)->toBe($account->id);
+    });
+
+    it('creates the webwidget inbox that allows messages after conversation is resolved', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'test.com'],
+            ])
+            ->assertOk();
+
+        expect($response->json('allow_messages_after_resolved'))->toBeTrue();
+    });
+
+    it('stores the widget appearance sent by the wizard', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'greeting_enabled' => true,
+                'greeting_message' => 'Hello there',
+                'channel' => [
+                    'type' => 'web_widget',
+                    'website_url' => 'test.com',
+                    'widget_color' => '#009CE0',
+                    'welcome_title' => 'Hi there',
+                    'welcome_tagline' => 'We are here to help',
+                ],
+            ])
+            ->assertOk();
+
+        expect($response->json('widget_color'))->toBe('#009CE0')
+            ->and($response->json('welcome_title'))->toBe('Hi there')
+            ->and($response->json('welcome_tagline'))->toBe('We are here to help')
+            ->and($response->json('greeting_enabled'))->toBeTrue();
+    });
+
+    it('rejects a webwidget inbox without a website url', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget'],
+            ])
+            ->assertUnprocessable();
+    });
+
     it('rejects an unsupported channel type', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
@@ -260,6 +393,80 @@ describe('PATCH /api/v1/accounts/{id}/inboxes/{inboxId}', function () {
 
         expect($inbox->refresh()->enable_auto_assignment)->toBeFalse()
             ->and($inbox->channel->webhook_url)->toBe('webhook.test');
+    });
+
+    it('updates webwidget channel attributes when administrator', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'channel' => [
+                    'widget_color' => '#ff0000',
+                    'welcome_title' => 'Welcome',
+                    'welcome_tagline' => 'Ask us anything',
+                    'reply_time' => 'in_a_day',
+                    'continuity_via_email' => false,
+                    'allowed_domains' => 'example.com',
+                ],
+            ])
+            ->assertOk();
+
+        $channel = $inbox->refresh()->channel;
+
+        expect($channel->widget_color)->toBe('#ff0000')
+            ->and($channel->welcome_title)->toBe('Welcome')
+            ->and($channel->welcome_tagline)->toBe('Ask us anything')
+            ->and($channel->reply_time)->toBe('in_a_day')
+            ->and($channel->continuity_via_email)->toBeFalse()
+            ->and($channel->allowed_domains)->toBe('example.com')
+            ->and($response->json('reply_time'))->toBe('in_a_day');
+    });
+
+    it('updates the widget feature flags when administrator', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'channel' => ['selected_feature_flags' => ['attachments', 'allow_mobile_webview']],
+            ])
+            ->assertOk();
+
+        expect($response->json('selected_feature_flags'))->toBe(['attachments', 'allow_mobile_webview'])
+            ->and($inbox->refresh()->channel->feature_flags)->toBe(17);
+    });
+
+    it('clears the widget feature flags when the form sends a blank entry', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'channel' => ['selected_feature_flags' => ['']],
+            ])
+            ->assertOk();
+
+        expect($response->json('selected_feature_flags'))->toBe([])
+            ->and($inbox->refresh()->channel->feature_flags)->toBe(0);
+    });
+
+    it('toggles hmac mandatory on the widget channel', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'channel' => ['hmac_mandatory' => true],
+            ])
+            ->assertOk();
+
+        expect($response->json('hmac_mandatory'))->toBeTrue()
+            ->and($inbox->refresh()->channel->hmac_mandatory)->toBeTrue();
     });
 
     it('updates the inbox avatar', function () {

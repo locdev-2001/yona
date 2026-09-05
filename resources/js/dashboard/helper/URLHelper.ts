@@ -68,3 +68,20 @@ export const conversationListPageURL = ({
     }
     return accountScopedUrl(accountId, 'dashboard');
 };
+
+// Port từ URLHelper.sanitizeAllowedDomains — gộp xuống dòng thành dấu phẩy,
+// bỏ khoảng trắng, hạ chữ thường và loại trùng nhưng GIỮ thứ tự nhập.
+export const sanitizeAllowedDomains = (domains: string): string => {
+    if (!domains) return '';
+
+    const tokens = domains
+        .replace(/\r\n/g, '\n')
+        .replace(/\s*\n\s*/g, ',')
+        .split(',')
+        .map(domain => domain.trim().toLowerCase())
+        .filter(domain => domain.length > 0);
+
+    const seen = new Set<string>();
+
+    return tokens.filter(domain => (seen.has(domain) ? false : (seen.add(domain), true))).join(',');
+};

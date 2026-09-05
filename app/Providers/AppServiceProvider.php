@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Models\Channel\Api;
+use App\Models\Channel\WebWidget;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
         Relation::morphMap([
             'Channel::Api' => Api::class,
+            'Channel::WebWidget' => WebWidget::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,

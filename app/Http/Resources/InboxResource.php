@@ -3,15 +3,31 @@
 namespace App\Http\Resources;
 
 use App\Models\Inbox;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 // Port từ api/v1/models/_inbox.json.jbuilder.
-// Partial gốc emit nhiều key kênh khác qua `try` (null khi kênh không có) —
-// giữ nguyên các key đó để FE dùng chung một shape như Chatwoot.
 // working_hours: [] tới khi port Business Hours; help_center: bỏ tới khi có portals (nhóm D).
 class InboxResource extends JsonResource
 {
+    // Khối `resource.channel.try(:x)` của partial gốc: kênh nào không có thuộc
+    // tính đó thì key vẫn hiện với giá trị null, để FE dùng chung một shape.
+    private const SHARED_CHANNEL_KEYS = [
+        'allowed_domains',
+        'widget_color',
+        'website_url',
+        'hmac_mandatory',
+        'welcome_title',
+        'welcome_tagline',
+        'web_widget_script',
+        'website_token',
+        'selected_feature_flags',
+        'reply_time',
+        'messaging_service_sid',
+        'phone_number',
+    ];
+
     public function __construct(Inbox $resource, private readonly bool $administrator)
     {
         parent::__construct($resource);
@@ -30,6 +46,7 @@ class InboxResource extends JsonResource
     {
         /** @var Inbox $inbox */
         $inbox = $this->resource;
+        $channel = $inbox->channel;
 
         return [
             'id' => $inbox->id,
@@ -55,21 +72,33 @@ class InboxResource extends JsonResource
                 ? 'professional'
                 : 'friendly',
             'business_name' => $inbox->business_name,
-            // Key kênh WebWidget/Twilio — jbuilder emit qua `try`, null với kênh khác.
-            'allowed_domains' => null,
-            'widget_color' => null,
-            'website_url' => null,
-            'hmac_mandatory' => $inbox->channel->hmac_mandatory ?? null,
-            'welcome_title' => null,
-            'welcome_tagline' => null,
-            'web_widget_script' => null,
-            'website_token' => null,
-            'selected_feature_flags' => null,
-            'reply_time' => null,
-            'messaging_service_sid' => null,
-            'phone_number' => null,
+            ...$this->sharedChannelAttributes($channel),
+            ...$this->webWidgetAttributes($inbox),
             ...$this->apiChannelAttributes($inbox),
-            'provider' => null,
+            'provider' => $channel?->getAttribute('provider'),
+        ];
+    }
+
+    private function sharedChannelAttributes(?Model $channel): array
+    {
+        return collect(self::SHARED_CHANNEL_KEYS)
+            ->mapWithKeys(fn (string $key) => [$key => $channel?->getAttribute($key)])
+            ->all();
+    }
+
+    private function webWidgetAttributes(Inbox $inbox): array
+    {
+        if (! $inbox->isWebWidget()) {
+            return [];
+        }
+
+        $channel = $inbox->channel;
+
+        return [
+            ...($this->administrator ? ['hmac_token' => $channel->hmac_token] : []),
+            'pre_chat_form_enabled' => $channel->pre_chat_form_enabled,
+            'pre_chat_form_options' => $channel->pre_chat_form_options,
+            'continuity_via_email' => $channel->continuity_via_email,
         ];
     }
 

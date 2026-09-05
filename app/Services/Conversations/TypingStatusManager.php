@@ -4,6 +4,7 @@ namespace App\Services\Conversations;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Support\BooleanParam;
@@ -14,7 +15,8 @@ class TypingStatusManager
     /** @param array<string, mixed> $params */
     public function __construct(
         private readonly Conversation $conversation,
-        private readonly User $user,
+        // Widget bắn sự kiện gõ với sender là Contact (khách), dashboard là User.
+        private readonly User|Contact $user,
         private readonly array $params,
     ) {}
 

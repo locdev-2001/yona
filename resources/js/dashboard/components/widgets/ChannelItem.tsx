@@ -1,7 +1,7 @@
 import ChannelSelector from '../ChannelSelector';
 
 // Port từ dashboard/components/widgets/ChannelItem.vue.
-// B1 mới có driver API nên chỉ 'api' active; kênh khác giữ nguyên card
+// Đã có driver API (B1) và Website (C1); kênh khác giữ nguyên card
 // (mờ/disabled) — port kênh nào thì mở kênh đó (channel_website… theo features).
 export interface ChannelOption {
     key: string;
@@ -10,7 +10,7 @@ export interface ChannelOption {
     icon: string;
 }
 
-const ACTIVE_CHANNELS = ['api'];
+const ACTIVE_CHANNELS = ['api', 'website'];
 const COMING_SOON_CHANNELS = ['voice'];
 const BETA_CHANNELS = ['tiktok', 'voice', 'whatsapp_call'];
 

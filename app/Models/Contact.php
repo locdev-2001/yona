@@ -153,6 +153,20 @@ class Contact extends Model
         return $email === null ? null : self::query()->where('email', mb_strtolower($email))->first();
     }
 
+    // Contact#discard_invalid_attrs (phone_number_format + email_format): định
+    // danh khách tự nhập ở widget có thể sai định dạng — trả về giá trị cũ thay
+    // vì làm hỏng cả lần ghi.
+    public function discardInvalidAttrs(): void
+    {
+        if (filled($this->phone_number) && ! preg_match(self::PHONE_NUMBER_REGEX, (string) $this->phone_number)) {
+            $this->phone_number = $this->getOriginal('phone_number');
+        }
+
+        if (filled($this->email) && ! preg_match(self::EMAIL_REGEX, (string) $this->email)) {
+            $this->email = $this->getOriginal('email');
+        }
+    }
+
     // Contact.resolved_contacts — crm_v2 lọc theo lead, còn lại lọc theo
     // "có ít nhất một định danh".
     public function scopeResolvedContacts(Builder $query, bool $useCrmV2 = false): Builder

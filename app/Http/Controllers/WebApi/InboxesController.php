@@ -9,8 +9,10 @@ use App\Jobs\DeleteObjectJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Api;
+use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -24,6 +26,25 @@ class InboxesController extends Controller
     // Mỗi kênh port xong tự thêm vào map này (allowed_channel_types + channel_type_from_params).
     private const CHANNEL_TYPES = [
         'api' => Api::class,
+        'web_widget' => WebWidget::class,
+    ];
+
+    // inbox_attributes của bản gốc — cùng bộ cho POST lẫn PATCH (trừ name/avatar
+    // khác bắt buộc giữa hai action).
+    private const INBOX_ATTRIBUTE_RULES = [
+        'greeting_enabled' => ['sometimes', 'boolean'],
+        'greeting_message' => ['sometimes', 'nullable', 'string', 'max:255'],
+        'enable_email_collect' => ['sometimes', 'boolean'],
+        'csat_survey_enabled' => ['sometimes', 'boolean'],
+        'enable_auto_assignment' => ['sometimes', 'boolean'],
+        'auto_assignment_config' => ['sometimes', 'array'],
+        'working_hours_enabled' => ['sometimes', 'boolean'],
+        'out_of_office_message' => ['sometimes', 'nullable', 'string', 'max:10000'],
+        'timezone' => ['sometimes', 'string', 'timezone:all'],
+        'allow_messages_after_resolved' => ['sometimes', 'boolean'],
+        'lock_to_single_conversation' => ['sometimes', 'boolean'],
+        'sender_name_type' => ['sometimes', 'in:friendly,professional'],
+        'business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
     ];
 
     public function index(Request $request, Account $account): JsonResponse
@@ -47,18 +68,13 @@ class InboxesController extends Controller
     {
         $this->authorizeAdministrator($request);
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'channel' => ['required', 'array'],
-            'channel.type' => ['required', 'string', 'in:'.implode(',', array_keys(self::CHANNEL_TYPES))],
-            'channel.webhook_url' => ['sometimes', 'nullable', 'string', 'max:2048'],
-        ]);
+        $data = $request->validate($this->storeRules($request->input('channel.type')));
 
         $inbox = DB::transaction(function () use ($account, $data) {
             $channel = $this->createChannel($account, $data['channel']);
 
             return $account->inboxes()->create([
-                'name' => $data['name'],
+                ...$this->inboxAttributesFrom($data),
                 'channel_id' => $channel->id,
                 'channel_type' => $channel->getMorphClass(),
             ]);
@@ -75,33 +91,13 @@ class InboxesController extends Controller
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'greeting_enabled' => ['sometimes', 'boolean'],
-            'greeting_message' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'enable_email_collect' => ['sometimes', 'boolean'],
-            'csat_survey_enabled' => ['sometimes', 'boolean'],
-            'enable_auto_assignment' => ['sometimes', 'boolean'],
-            'auto_assignment_config' => ['sometimes', 'array'],
-            'working_hours_enabled' => ['sometimes', 'boolean'],
-            'out_of_office_message' => ['sometimes', 'nullable', 'string', 'max:10000'],
-            'timezone' => ['sometimes', 'string', 'timezone:all'],
-            'allow_messages_after_resolved' => ['sometimes', 'boolean'],
-            'lock_to_single_conversation' => ['sometimes', 'boolean'],
-            'sender_name_type' => ['sometimes', 'in:friendly,professional'],
-            'business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            ...self::INBOX_ATTRIBUTE_RULES,
             'avatar' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp', 'max:15360'],
             'channel' => ['sometimes', 'array'],
         ]);
 
         DB::transaction(function () use ($request, $inbox, $data) {
-            $inboxAttributes = collect($data)->except(['avatar', 'channel', 'sender_name_type'])->all();
-
-            if (array_key_exists('sender_name_type', $data)) {
-                $inboxAttributes['sender_name_type'] = $data['sender_name_type'] === 'professional'
-                    ? Inbox::SENDER_NAME_TYPE_PROFESSIONAL
-                    : Inbox::SENDER_NAME_TYPE_FRIENDLY;
-            }
-
-            $inbox->update($inboxAttributes);
+            $inbox->update($this->inboxAttributesFrom($data));
 
             if ($request->file('avatar') instanceof UploadedFile) {
                 $inbox->replaceAvatar($request->file('avatar'));
@@ -171,7 +167,46 @@ class InboxesController extends Controller
         ]);
     }
 
-    private function createChannel(Account $account, array $channelParams): Api
+    /**
+     * Quy tắc validate cho POST: phần chung + phần kênh do chính kênh khai
+     * (channelRules) — thêm kênh mới không phải sửa chỗ này.
+     *
+     * @return array<string, list<string>>
+     */
+    private function storeRules(mixed $channelType): array
+    {
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            ...self::INBOX_ATTRIBUTE_RULES,
+            'channel' => ['required', 'array'],
+            'channel.type' => ['required', 'string', 'in:'.implode(',', array_keys(self::CHANNEL_TYPES))],
+        ];
+
+        $channelClass = is_string($channelType) ? (self::CHANNEL_TYPES[$channelType] ?? null) : null;
+
+        foreach ($channelClass ? $channelClass::channelRules() : [] as $attribute => $rule) {
+            $rules["channel.{$attribute}"] = $rule;
+        }
+
+        return $rules;
+    }
+
+    // Cột của inbox lấy từ params đã validate; sender_name_type là enum số của
+    // Rails nên đổi khóa 'friendly'/'professional' thành giá trị cột.
+    private function inboxAttributesFrom(array $data): array
+    {
+        $attributes = collect($data)->except(['avatar', 'channel', 'sender_name_type'])->all();
+
+        if (array_key_exists('sender_name_type', $data)) {
+            $attributes['sender_name_type'] = $data['sender_name_type'] === 'professional'
+                ? Inbox::SENDER_NAME_TYPE_PROFESSIONAL
+                : Inbox::SENDER_NAME_TYPE_FRIENDLY;
+        }
+
+        return $attributes;
+    }
+
+    private function createChannel(Account $account, array $channelParams): Model
     {
         $channelClass = self::CHANNEL_TYPES[$channelParams['type']];
 

@@ -9,6 +9,7 @@ use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\Labelable;
+use App\Support\CurrentContact;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
@@ -667,6 +669,16 @@ class Conversation extends Model
     {
         if ($userName !== null) {
             return __('conversations.activity.status.'.$this->statusName(), ['user_name' => $userName]);
+        }
+
+        // Khách tự bấm "End conversation" trong widget: không có agent nào đứng
+        // sau thay đổi này, chủ thể là chính khách.
+        $contact = CurrentContact::get();
+
+        if ($contact !== null && $this->isResolved()) {
+            return __('conversations.activity.status.contact_resolved', [
+                'contact_name' => Str::ucfirst((string) $contact->name),
+            ]);
         }
 
         if ($this->isResolved()) {
