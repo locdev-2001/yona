@@ -2,11 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import {
     assertUrlAllowed,
     buildAllowedHosts,
+    cleanupTempDownload,
     collectSourceIdsFromSendResult,
     downloadUrlToTemp,
+    safeAttachmentFilename,
 } from './media-fetch.mjs';
 
 // ── allowlist ────────────────────────────────────────────────────────────────
@@ -19,6 +22,23 @@ test('buildAllowedHosts: host Laravel + CSV mở rộng, lowercase', () => {
     assert.ok(hosts.has('app.local'));
     assert.ok(hosts.has('storage.example.com'));
     assert.ok(hosts.has('cdn.other.vn'));
+});
+
+test('buildAllowedHosts: nhận cả host của LARAVEL_BASE_URL khi khác host webhook', () => {
+    // Bug thật: APP_URL=http://localhost:8000 nên signed URL đính kèm mang host
+    // localhost, còn webhook khai 127.0.0.1 → mọi lần gửi ảnh fail_host_not_allowed.
+    const hosts = buildAllowedHosts({
+        laravelWebhookUrl: 'http://127.0.0.1:8000/webhooks/zalo',
+        laravelBaseUrl: 'http://LOCALHOST:8000',
+    });
+    assert.ok(hosts.has('127.0.0.1'));
+    assert.ok(hosts.has('localhost'));
+    assert.doesNotThrow(() => assertUrlAllowed('http://localhost:8000/storage/x.jpg', hosts));
+});
+
+test('buildAllowedHosts: bỏ qua LARAVEL_BASE_URL hỏng, không nới allowlist', () => {
+    const hosts = buildAllowedHosts({ laravelWebhookUrl: 'http://app.local', laravelBaseUrl: 'khong-phai-url' });
+    assert.deepEqual([...hosts], ['app.local']);
 });
 
 test('assertUrlAllowed: chặn host lạ + scheme lạ, fail-closed khi allowlist rỗng', () => {
@@ -140,4 +160,79 @@ test('collectSourceIdsFromSendResult: sendSticker trả msgId phẳng (không wr
     assert.deepEqual(collectSourceIdsFromSendResult({ msgID: '888' }), ['888']);
     // phẳng + wrapper cùng lúc: primary = phẳng, không dup
     assert.deepEqual(collectSourceIdsFromSendResult({ msgId: '1', message: { msgId: '1' } }), ['1']);
+});
+
+// ── Tên tệp gửi ra Zalo (lô 3: Laravel gửi filename + content_type) ──────────
+
+test('safeAttachmentFilename: giữ TÊN THẬT (kể cả tiếng Việt), bỏ đường dẫn, thêm đuôi khi thiếu', () => {
+    assert.equal(safeAttachmentFilename('Báo giá Q4.pdf', 'bin'), 'Báo giá Q4.pdf');
+    assert.equal(safeAttachmentFilename('/tmp/../../etc/passwd', 'bin'), 'passwd.bin');
+    assert.equal(safeAttachmentFilename('hop-dong', 'pdf'), 'hop-dong.pdf');
+    assert.equal(safeAttachmentFilename('', 'pdf'), 'zbr-file.pdf');
+    assert.equal(safeAttachmentFilename(null, ''), 'zbr-file.bin');
+    assert.equal(safeAttachmentFilename('..', 'pdf'), 'zbr-file.pdf');
+});
+
+test('downloadUrlToTemp: file tạm mang tên thật — zca gửi đi bằng path.basename', async () => {
+    // Bug: tên file tạm `zbr-<uuid>.bin` chính là tên NGƯỜI NHẬN thấy trên Zalo.
+    const { server, url } = await serveOnce((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+        res.end(Buffer.from('PDFDATA'));
+    });
+    let p = null;
+    try {
+        p = await downloadUrlToTemp(url, {
+            maxBytes: 1000,
+            allowedHosts: new Set(['127.0.0.1']),
+            mediaKind: 'file',
+            filenameHint: 'Báo giá Q4.pdf',
+            contentTypeHint: 'application/pdf',
+        });
+        assert.equal(path.basename(p), 'Báo giá Q4.pdf');
+        assert.equal((await fs.readFile(p)).toString(), 'PDFDATA');
+    } finally {
+        await cleanupTempDownload(p);
+        server.close();
+    }
+});
+
+test('downloadUrlToTemp: content_type của Laravel quyết định đuôi khi tên tệp không có đuôi', async () => {
+    // Signed URL storage hay trả application/octet-stream → không suy ra được đuôi.
+    const { server, url } = await serveOnce((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+        res.end(Buffer.from('X'));
+    });
+    let p = null;
+    try {
+        p = await downloadUrlToTemp(url, {
+            maxBytes: 1000,
+            allowedHosts: new Set(['127.0.0.1']),
+            mediaKind: 'file',
+            filenameHint: 'hop-dong',
+            contentTypeHint: 'application/pdf',
+        });
+        assert.equal(path.basename(p), 'hop-dong.pdf');
+    } finally {
+        await cleanupTempDownload(p);
+        server.close();
+    }
+});
+
+test('cleanupTempDownload: xoá cả thư mục tạm bọc ngoài, không để rác', async () => {
+    const { server, url } = await serveOnce((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'image/png' });
+        res.end(Buffer.from('PNG'));
+    });
+    try {
+        const p = await downloadUrlToTemp(url, {
+            maxBytes: 1000,
+            allowedHosts: new Set(['127.0.0.1']),
+            filenameHint: 'anh.png',
+        });
+        const dir = path.dirname(p);
+        await cleanupTempDownload(p);
+        await assert.rejects(() => fs.stat(dir));
+    } finally {
+        server.close();
+    }
 });

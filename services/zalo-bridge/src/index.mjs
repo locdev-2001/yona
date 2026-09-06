@@ -4,32 +4,55 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs/promises';
 import { existsSync, readdirSync } from 'node:fs';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
+import { zcaReactionCode } from './reaction-icons.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
 import {
+    applyGroupContextToPayload,
+    applyInboundDescriptorToPayload,
+    coerceContentObject,
     contentLabelFromObject,
     enrichInboundBody,
+    isLocationMsgType,
+    mediaCaptionFromContent,
+    normalizeMentions,
+    parseInboundLinkPreview,
+    parseInboundLocation,
+    captionBesideLink,
     parseZinstantBankCardSource,
     stickerUrlFromId,
     withStickerUrl,
 } from './inbound-content.mjs';
+import {
+    attachSessionLifecycle,
+    createBridgeResilience,
+    createReconnectSupervisor,
+} from './session-resilience.mjs';
+import { maskUid, rawPayloadLogEnabled, rawPayloadLogWarning, shortToken } from './redact.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
+    buildFriendRequestPayload,
+    friendRequestFromEvent,
+    zaloPersonalSocialSourceId,
+} from './social-events.mjs';
+import {
     buildAllowedHosts,
+    cleanupTempDownload,
     collectSourceIdsFromSendResult,
     downloadUrlToTemp,
     extFromFilename,
     mimeToExt,
+    safeAttachmentFilename,
     MEDIA_KIND_DEFAULT_EXT,
 } from './media-fetch.mjs';
 
@@ -88,6 +111,14 @@ const ZALO_OPTIONS = {
 
 const slots = new Map();
 
+// Lô 1: chống sập (1.2) + tự nối lại WS (1.1). Một instance cho cả process,
+// counter lộ ra /health để đo tần suất rớt trên tài khoản thật.
+const resilience = createBridgeResilience();
+const reconnectSupervisor = createReconnectSupervisor({
+    relogin: (slotKey) => reloginSlotFromSavedSession(slotKey),
+    onEvent: (event) => resilience.noteReconnectEvent(event),
+});
+
 const OUTBOUND_ECHO_TTL_MS = 120000;
 const OUTBOUND_ECHO_MAX_IDS = 500;
 
@@ -109,6 +140,11 @@ function createSlotState() {
         allowlist: null,
         // P12: forwarder generic attach đúng 1 lần/api instance (review MED-2)
         forwarderAttached: false,
+        // Lô 1: đang chủ động gỡ listener (logout/promote/relogin) → handler
+        // `closed` KHÔNG được hiểu là mất phiên và hẹn nối lại.
+        listenerDetaching: false,
+        // Lô 1/1.3: frame giải mã hỏng — đếm, không đổi phase.
+        frameErrors: 0,
     };
 }
 
@@ -268,33 +304,6 @@ function extractInboundPlainText(message) {
     return null;
 }
 
-function normalizeUrlForCompare(u) {
-    if (typeof u !== 'string' || !u.trim()) {
-        return '';
-    }
-    try {
-        const a = new URL(u);
-        return a.href.replace(/\/+$/, '');
-    } catch {
-        return u.trim().replace(/\/+$/, '');
-    }
-}
-
-function extractMediaCaption(message, primaryHref) {
-    const plain = extractInboundPlainText(message);
-    if (plain == null || plain === '') {
-        return null;
-    }
-    if (primaryHref && typeof primaryHref === 'string') {
-        const p = normalizeUrlForCompare(primaryHref);
-        const pl = plain.trim();
-        if (p && (normalizeUrlForCompare(pl) === p || pl.includes(p)) && (pl.startsWith('[Link]') || pl === p)) {
-            return null;
-        }
-    }
-    return plain;
-}
-
 function isSupportedThread(message) {
     const t = message?.type;
     return (
@@ -319,35 +328,29 @@ function mapUserName(message) {
     return 'Zalo User';
 }
 
-function stableJsonForDedup(value) {
-    if (value === null || typeof value !== 'object') {
-        return JSON.stringify(value);
-    }
-    if (Array.isArray(value)) {
-        return `[${value.map(stableJsonForDedup).join(',')}]`;
-    }
-    const keys = Object.keys(value).sort();
-    return `{${keys.map((k) => JSON.stringify(k) + ':' + stableJsonForDedup(value[k])).join(',')}}`;
-}
-
 /**
- * P06: khoá theo accountUid (ổn định qua reconnect) — KHÔNG connectionId (đổi mỗi
- * lần reconnect, sẽ tách cùng 1 event thành 2 source_id khác nhau).
+ * Q7 — lời mời kết bạn đi đường webhook riêng `friend_request` (durable qua
+ * outbox như tin nhắn), song song với `social_event` thô đã có. Lõi cần tên/ảnh
+ * để dựng Liên hệ nháp nên tra hồ sơ; tra hỏng thì vẫn gửi với uid làm tên —
+ * mất lời mời kết bạn tệ hơn hiển thị một cái tên xấu.
  */
-function zaloPersonalSocialSourceId(accountUid, socialKind, act, threadId, eventPayload) {
-    const h = createHash('sha256')
-        .update(String(accountUid))
-        .update('\n')
-        .update(String(socialKind))
-        .update('\n')
-        .update(String(act ?? ''))
-        .update('\n')
-        .update(String(threadId ?? ''))
-        .update('\n')
-        .update(stableJsonForDedup(eventPayload))
-        .digest('hex')
-        .slice(0, 48);
-    return `zps:${accountUid}:${h}`;
+async function forwardFriendRequest(slot, connectionId, botId, event, eventPlain) {
+    const request = friendRequestFromEvent(eventPlain ?? event);
+    if (!request) {
+        return false;
+    }
+    const profile = await resolvePeerProfile(slot.api, request.uid);
+    await postZaloPersonalSocialEvent(
+        buildFriendRequestPayload({
+            connectionId,
+            botId,
+            personalUid: slot.personalUid,
+            request,
+            profile,
+        })
+    );
+    console.info('zalo-bridge: loi moi ket ban connection_id=', connectionId, 'uid=', maskUid(request.uid));
+    return true;
 }
 
 async function postZaloPersonalSocialEvent(body) {
@@ -400,23 +403,6 @@ function pickMediaUrl(c) {
         return null;
     }
     return c.href || c.url || c.thumb || c.thumbnail || null;
-}
-
-function coerceContentObject(c) {
-    if (c && typeof c === 'string') {
-        const t = c.trim();
-        if (t.startsWith('{')) {
-            try {
-                const o = JSON.parse(t);
-                if (o && typeof o === 'object') {
-                    return o;
-                }
-            } catch {
-                return c;
-            }
-        }
-    }
-    return c;
 }
 
 function parseMsgInfoObject(raw) {
@@ -1026,7 +1012,9 @@ function extractQuoteFromListenerMessage(message) {
 }
 
 function logZaloQuoteInspect(message, quoteInfo) {
-    if (process.env.ZALO_BRIDGE_LOG_QUOTE === '0') {
+    // 1.7: opt-IN. Dump này in nguyên nội dung tin của khách (tới 16KB/tin) —
+    // mặc định bật là biến file log pm2 (không xoay) thành bản sao inbox.
+    if (!rawPayloadLogEnabled()) {
         return;
     }
     const d = message?.data;
@@ -1094,7 +1082,7 @@ function parseInboundDescriptor(message) {
             return {
                 inbound_kind: msgType === 'chat.gif' ? 'gif' : 'image',
                 media_url: href,
-                caption: extractMediaCaption(message, href),
+                caption: mediaCaptionFromContent(c, msgType),
                 peerUid,
                 msgType,
             };
@@ -1107,7 +1095,7 @@ function parseInboundDescriptor(message) {
             return {
                 inbound_kind: 'video',
                 media_url: href,
-                caption: extractMediaCaption(message, href),
+                caption: mediaCaptionFromContent(c, msgType),
                 peerUid,
                 msgType,
             };
@@ -1135,10 +1123,17 @@ function parseInboundDescriptor(message) {
                 inbound_kind: 'file',
                 media_url: href,
                 media_filename: filename,
-                caption: extractMediaCaption(message, href),
+                caption: mediaCaptionFromContent(c, msgType),
                 peerUid,
                 msgType,
             };
+        }
+    }
+
+    if (isLocationMsgType(msgType)) {
+        const place = parseInboundLocation(c);
+        if (place) {
+            return { inbound_kind: 'location', location: place, caption: null, peerUid, msgType };
         }
     }
 
@@ -1204,6 +1199,16 @@ function parseInboundDescriptor(message) {
             inbound_kind: 'business_card',
             business_card: cardFromPlain,
             caption: null,
+            peerUid,
+            msgType,
+        };
+    }
+    const linkPreview = parseInboundLinkPreview(c, msgType);
+    if (linkPreview) {
+        return {
+            inbound_kind: 'link',
+            link: linkPreview,
+            caption: captionBesideLink(plain, linkPreview),
             peerUid,
             msgType,
         };
@@ -1414,6 +1419,33 @@ function slotGroupNameCache(slot) {
     return slot.groupNameById;
 }
 
+/**
+ * Tên/ảnh nhóm đổi rất hiếm nhưng `getGroupInfo` trước đây gọi MỖI tin nhóm —
+ * nhóm đông là một lời gọi API cho từng câu chat, đúng kiểu bị Zalo khoá tài
+ * khoản. Cache theo group id, tối đa một lời gọi mỗi phút mỗi nhóm; lần gọi hỏng
+ * vẫn đóng dấu thời gian (không nện lại) và giữ profile cũ.
+ */
+const GROUP_PROFILE_TTL_MS = 60000;
+
+function cachedGroupProfile(slot, groupId) {
+    const entry = slotGroupNameCache(slot)[String(groupId)];
+    return entry && typeof entry === 'object' ? (entry.profile ?? null) : null;
+}
+
+async function resolveGroupProfileCached(slot, groupId) {
+    const cache = slotGroupNameCache(slot);
+    const key = String(groupId);
+    const entry = cache[key];
+    const now = Date.now();
+    if (entry && typeof entry === 'object' && Number(entry.at) + GROUP_PROFILE_TTL_MS > now) {
+        return entry.profile ?? null;
+    }
+    const fresh = await resolveGroupProfile(slot.api, key);
+    const profile = fresh ?? entry?.profile ?? null;
+    cache[key] = { profile, at: now };
+    return profile;
+}
+
 function extractGroupSenderUid(rawD) {
     if (!rawD || typeof rawD !== 'object') {
         return '';
@@ -1469,7 +1501,7 @@ async function dedupeRestoredSessionsByPersonalUid(restored) {
         const keepId = byUid.get(uid);
         if (keepId && id !== keepId) {
             console.warn('zalo-bridge: removing stale duplicate session on boot', {
-                personalUid: uid,
+                personalUid: maskUid(uid),
                 staleConnectionId: id,
                 keepConnectionId: keepId,
             });
@@ -1525,8 +1557,12 @@ async function resolveGroupProfile(api, groupId) {
  * is_self theo uid thật (C-1).
  * P12: threadType=0 cho old_messages 1-1 (relay-forwarder) — mặc định 1 giữ
  * nguyên hành vi group backfill/resync cũ.
+ *
+ * Export DUY NHẤT của module này, chỉ để test khoá lane backfill: bẫy 1.10 là
+ * hai lane lệch nhau âm thầm, mà lane backfill thì không có cửa HTTP nào để thử.
+ * Import module này KHÔNG boot phiên nào (chốt chặn entrypoint ở cuối file).
  */
-function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) {
+export function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) {
     const cid = slot._connectionId; // gắn khi startListenerForSlot
     const bid = slot.botId;
     if (!cid || !bid) return null;
@@ -1558,30 +1594,18 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
         backfill: true,          // marker để Laravel biết đây là tin hồi phục (không gửi notification)
     };
 
-    if (!desc || desc.inbound_kind === 'text') {
+    if (!desc) {
         // desc null (webcontent/banner không ra text) → nhãn thân thiện, KHÔNG raw JSON.
         const c = rawD?.content;
-        payload.content = desc?.text ?? (typeof c === 'string' ? c : contentLabelFromObject(c, rawD?.msgType));
-    } else if (desc.inbound_kind === 'bank_card') {
-        payload.bank_card_source = desc.bank_card_source;
-        payload.content = desc.bank_card_source.label;
-    } else if (desc.inbound_kind === 'sticker') {
-        // KHÔNG gọi API tra chi tiết ở đây — xem ghi chú trên. Nhưng raw thì
-        // thiếu địa chỉ ảnh, và giao diện hiện chữ "[Sticker]" thay vì hình.
-        // Dựng địa chỉ từ mã: không tốn lời gọi nào.
-        payload.sticker = withStickerUrl(desc.sticker);
-    } else if (desc.inbound_kind === 'business_card') {
-        payload.business_card = desc.business_card;
-        payload.content = desc.caption != null ? String(desc.caption) : '';
-    } else if (desc.inbound_kind === 'call') {
-        payload.call = desc.call;
-        payload.content = '';
+        payload.content = typeof c === 'string' ? c : contentLabelFromObject(c, rawD?.msgType);
     } else {
-        payload.media_url = desc.media_url;
-        if (desc.media_filename) {
-            payload.media_filename = desc.media_filename;
-        }
-        payload.content = desc.caption != null ? String(desc.caption) : '';
+        applyInboundDescriptorToPayload(payload, desc, {
+            // KHÔNG gọi API tra chi tiết ở lane này — xem ghi chú trên. Nhưng raw thì
+            // thiếu địa chỉ ảnh, và giao diện hiện chữ "[Sticker]" thay vì hình.
+            // Dựng địa chỉ từ mã: không tốn lời gọi nào.
+            sticker: desc.inbound_kind === 'sticker' ? withStickerUrl(desc.sticker) : null,
+            businessCard: desc.business_card ?? null,
+        });
     }
 
     // Raw đầy đủ như live lane (cùng key) → platform_meta.zca_message: tin backfill
@@ -1591,9 +1615,105 @@ function buildGroupBackfillPayload(slot, groupId, rawD, isSelf, threadType = 1) 
     } catch {
         payload.listener_data = null;
     }
-    if (!isSelf && rawD?.uidFrom) payload.sender_uid = String(rawD.uidFrom);
+    // Q3: cùng hàm gắn ngữ cảnh nhóm với lane live. Lane này KHÔNG gọi API (xem
+    // ghi chú trên) nên tên/ảnh nhóm chỉ lấy từ cache do lane live đã nạp; chưa
+    // có thì rơi về id nhóm — vẫn đủ để lõi dựng hội thoại đúng.
+    if (Number(threadType) === 1) {
+        const senderUid = extractGroupSenderUid(rawD);
+        applyGroupContextToPayload(payload, {
+            threadId: groupId,
+            groupProfile: cachedGroupProfile(slot, groupId),
+            senderUid: senderUid && senderUid !== String(groupId) ? senderUid : '',
+            senderName: extractGroupSenderDisplayName(rawD),
+            senderAvatar: null,
+            mentions: normalizeMentions(rawD),
+        });
+    } else if (!isSelf && rawD?.uidFrom) {
+        payload.sender_uid = String(rawD.uidFrom);
+    }
 
     return payload;
+}
+
+/**
+ * Chỗ DUY NHẤT đánh dấu slot mất phiên + báo Laravel (1.1/1.3) — trước đây logic
+ * này chép ở 3 nơi và mỗi nơi lệch một chút. Idempotent: đã `session_lost` rồi
+ * thì không bắn webhook lần nữa.
+ */
+function markSlotSessionLost(slot, connectionId, botId, reason) {
+    const alreadyLost = slot.loginPhase === 'session_lost';
+    slot.loginPhase = 'session_lost';
+    slot.sessionLostReason = reason;
+    if (!alreadyLost) {
+        slot.sessionLostAt = Date.now(); // cho computeGapMs khi reconnect
+    }
+    if (alreadyLost) {
+        return false;
+    }
+    console.warn('zalo-bridge: mat phien connection_id=', connectionId, reason);
+    if (botId) {
+        postBridgeSession({
+            connection_id: connectionId,
+            bot_id: botId,
+            state: 'session_lost',
+            detail: reason,
+        }).catch(() => {});
+    }
+    return true;
+}
+
+/**
+ * Tự hồi (1.3): vẫn còn frame chạy vào trong khi slot đang bị đánh dấu mất phiên
+ * ⇒ WS sống, báo lại `session_ok` và huỷ lịch đăng nhập lại.
+ */
+function noteSlotAlive(slot, connectionId, botId) {
+    if (slot.loginPhase !== 'session_lost' || !slot.api) {
+        return false;
+    }
+    slot.loginPhase = 'ready';
+    slot.sessionLostReason = null;
+    reconnectSupervisor.cancel(String(connectionId));
+    console.info('zalo-bridge: phien song lai (van nhan duoc frame) connection_id=', connectionId);
+    if (botId) {
+        postBridgeSession({ connection_id: connectionId, bot_id: botId, state: 'session_ok' }).catch(() => {});
+    }
+    return true;
+}
+
+/** Gỡ listener CHỦ ĐỘNG (logout/promote/relogin) — `closed` sau đó không được coi là rớt mạng. */
+function detachListenerForSlot(slot) {
+    slot.listenerDetaching = true;
+    try {
+        if (slot.listenerStarted && slot.api?.listener) {
+            slot.api.listener.stop();
+        }
+    } catch (e) {
+        console.warn('zalo-bridge: listener.stop', e?.message || e);
+    }
+    slot.listenerStarted = false;
+    slot.forwarderAttached = false;
+}
+
+/**
+ * 1.1: đăng nhập lại từ cookie đã lưu sau khi WS đóng hẳn. Supervisor gọi hàm
+ * này theo backoff 5s→5m; trả 'abandon' khi không còn gì để khôi phục.
+ */
+async function reloginSlotFromSavedSession(slotKey) {
+    const key = String(slotKey);
+    if (isQrSlotKey(key) || !slots.has(key)) {
+        return 'abandon';
+    }
+    if (!existsSync(slotCookiePathForKey(key))) {
+        return 'abandon'; // đã logout / cookie bị xoá → không dựng lại phiên
+    }
+    const slot = getSlot(key);
+    if (slot.api && slot.loginPhase === 'ready') {
+        return 'ok'; // đã hồi bằng đường khác (re-QR, promote)
+    }
+    detachListenerForSlot(slot);
+    slot.api = null;
+    const ok = await tryLoginWithSavedSession(Number(key));
+    return ok ? 'ok' : 'retry';
 }
 
 function startListenerForSlot(slotKey) {
@@ -1606,64 +1726,49 @@ function startListenerForSlot(slotKey) {
         return;
     }
     slot.listenerStarted = true;
+    slot.listenerDetaching = false;
     slot._connectionId = Number(slotKey); // cho buildGroupBackfillPayload
     const cid = Number(slotKey);
     const bid = slot.botId;
+    const listenerRef = slot.api.listener;
+    // Listener của lần login TRƯỚC vẫn có thể phát event muộn — chỉ nghe cái đang sở hữu slot.
+    const ownsListener = () => !slot.listenerDetaching && slot.api?.listener === listenerRef;
 
     if (typeof slot.api.listener?.on === 'function') {
-        try {
-            slot.api.listener.on('error', (err) => {
-                slot.loginPhase = 'session_lost';
-                slot.sessionLostReason = err?.message || String(err || 'listener_error');
-                slot.sessionLostAt = Date.now(); // cho computeGapMs khi reconnect
-                console.warn('zalo-bridge: listener error connection_id=', cid, slot.sessionLostReason);
-                postBridgeSession({
-                    connection_id: cid,
-                    bot_id: bid,
-                    state: 'session_lost',
-                    detail: slot.sessionLostReason,
-                }).catch(() => {});
-            });
-        } catch (e) {
-            console.warn('zalo-bridge: listener.on(error) not available', e?.message || e);
-        }
-        try {
-            slot.api.listener.on('closed', (code, reason) => {
-                if (code === CloseReason.KickConnection || code === CloseReason.DuplicateConnection) {
-                    slot.loginPhase = 'session_lost';
-                    slot.sessionLostReason = `ws_closed_${code}_${reason || ''}`;
-                    slot.sessionLostAt = Date.now(); // cho computeGapMs khi reconnect
-                    console.warn('zalo-bridge: listener closed (other session?)', cid, slot.sessionLostReason);
-                    postBridgeSession({
-                        connection_id: cid,
-                        bot_id: bid,
-                        state: 'session_lost',
-                        detail: slot.sessionLostReason,
-                    }).catch(() => {});
-                }
-            });
-        } catch (e) {
-            console.warn('zalo-bridge: listener.on(closed) not available', e?.message || e);
-        }
+        attachSessionLifecycle(slot.api.listener, {
+            slotKey: String(cid),
+            supervisor: reconnectSupervisor,
+            resilience,
+            isCurrent: ownsListener,
+            isKickCode: (code) => code === CloseReason.KickConnection || code === CloseReason.DuplicateConnection,
+            markSessionLost: (reason) => markSlotSessionLost(slot, cid, bid, reason),
+            onFrameError: () => {
+                slot.frameErrors += 1;
+            },
+        });
         try {
             // P08 — mọi lần WS auth xong (login mới/reconnect/restore) tự kéo gap
             // 1-1 + nhóm qua cmd 510/511. Hook 'cipher_key' (cmd 1 = handshake xong),
             // KHÔNG phải 'connected' (emit tại ws.onopen — gửi 510 lúc đó server đóng
             // 3000 NOT_AUTHENTICATED, đo thật 05/07). sendWs no-op khi ws chưa mở nên
             // cũng không gọi được từ promote/restore. Dedup source_id nên trùng vô hại.
-            slot.api.listener.on('cipher_key', () => {
+            slot.api.listener.on('cipher_key', resilience.safeAsync('listener.cipher_key', () => {
+                if (!ownsListener()) {
+                    return;
+                }
+                noteSlotAlive(slot, cid, bid);
                 // Chờ 5s sau auth (spike 1b chờ 6s sau connected mới được server trả) —
                 // request ngay tại cipher_key server im lặng, đo thật 05/07.
                 setTimeout(() => {
                     const lanes = requestThreadBackfill(slot);
                     console.info('zalo-bridge: thread backfill requested (post-auth)', cid, lanes.join(','));
                 }, 5000);
-            });
+            }));
         } catch (e) {
             console.warn('zalo-bridge: listener.on(cipher_key) not available', e?.message || e);
         }
         try {
-            slot.api.listener.on('group_event', (ev) => {
+            slot.api.listener.on('group_event', resilience.safeAsync('listener.group_event', (ev) => {
                 try {
                     if (!bid || !slot.personalUid) {
                         return;
@@ -1693,12 +1798,12 @@ function startListenerForSlot(slotKey) {
                 } catch (e2) {
                     console.error('zalo-bridge: group_event forward failed', e2?.message || e2);
                 }
-            });
+            }));
         } catch (e) {
             console.warn('zalo-bridge: listener.on(group_event) not available', e?.message || e);
         }
         try {
-            slot.api.listener.on('friend_event', (ev) => {
+            slot.api.listener.on('friend_event', resilience.safeAsync('listener.friend_event', async (ev) => {
                 try {
                     if (!bid || !slot.personalUid) {
                         return;
@@ -1723,71 +1828,74 @@ function startListenerForSlot(slotKey) {
                         event: evPlain,
                         source_id: zaloPersonalSocialSourceId(slot.personalUid, 'friend_event', '', threadId, evPlain),
                     });
+                    await forwardFriendRequest(slot, cid, bid, ev, evPlain);
                 } catch (e2) {
                     console.error('zalo-bridge: friend_event forward failed', e2?.message || e2);
                 }
-            });
+            }));
         } catch (e) {
             console.warn('zalo-bridge: listener.on(friend_event) not available', e?.message || e);
         }
     }
 
-    slot.api.listener.on('message', (message) => {
-        if (!isSupportedThread(message)) {
+    // safeAsync (1.2): trước đây IIFE `void (async …)()` không bắt lỗi — một
+    // exception lạc (profile Zalo trả shape lạ, enrich ném) thành unhandledRejection
+    // và giết process của MỌI tenant.
+    slot.api.listener.on('message', resilience.safeAsync('listener.message', async (message) => {
+        if (!ownsListener() || !isSupportedThread(message)) {
             return;
         }
-        void (async () => {
-            const desc = parseInboundDescriptor(message);
-            if (!desc) {
-                return;
+        noteSlotAlive(slot, cid, bid);
+        const desc = parseInboundDescriptor(message);
+        if (!desc) {
+            return;
+        }
+        const threadId = String(message.threadId ?? '');
+        const ttNum = Number(message?.type) === 1 ? 1 : 0;
+        const peerUid = ttNum === 1 ? threadId : desc.peerUid || threadId;
+        const rawD = message?.data;
+        const tsMs0 =
+            rawD && typeof rawD === 'object'
+                ? Number(rawD.ts ?? rawD.msgTs ?? rawD.sendTime ?? rawD.clientTime)
+                : NaN;
+        const platformSentAt =
+            Number.isFinite(tsMs0) && tsMs0 > 0 ? Math.round(tsMs0) : Date.now();
+        // C-2/P06: dùng deriveInboundSourceId — không bao giờ Date.now() fallback, không connectionId
+        const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, threadId, message?.data);
+        if (!bid) {
+            console.error('bridge: bot_id missing for slot', cid);
+            return;
+        }
+
+        // C-1: ưu tiên so sánh uid thật; fallback message.isSelf nếu personalUid chưa có
+        const isSelf = slot.personalUid
+            ? String(rawD?.uidFrom ?? '') === String(slot.personalUid)
+            : Boolean(message.isSelf);
+
+        let name = mapUserName(message);
+        let avatar = null;
+        let groupProfile = null;
+        let groupSender = null;
+        if (ttNum === 1) {
+            groupProfile = await resolveGroupProfileCached(slot, threadId);
+            if (groupProfile?.name) {
+                name = groupProfile.name;
             }
-            const threadId = String(message.threadId ?? '');
-            const ttNum = Number(message?.type) === 1 ? 1 : 0;
-            const peerUid = ttNum === 1 ? threadId : desc.peerUid || threadId;
-            const rawD = message?.data;
-            const tsMs0 =
-                rawD && typeof rawD === 'object'
-                    ? Number(rawD.ts ?? rawD.msgTs ?? rawD.sendTime ?? rawD.clientTime)
-                    : NaN;
-            const platformSentAt =
-                Number.isFinite(tsMs0) && tsMs0 > 0 ? Math.round(tsMs0) : Date.now();
-            // C-2/P06: dùng deriveInboundSourceId — không bao giờ Date.now() fallback, không connectionId
-            const sourceId = deriveInboundSourceId('zalo_personal', slot.personalUid, threadId, message?.data);
-            if (!bid) {
-                console.error('bridge: bot_id missing for slot', cid);
-                return;
+            if (groupProfile?.avatar) {
+                avatar = groupProfile.avatar;
             }
 
-            let name = mapUserName(message);
-            let avatar = null;
-            let sender = null;
-            let senderUidForPayload = '';
-            if (ttNum === 1) {
-                const cache = slotGroupNameCache(slot);
-                const cached = cache[threadId];
-                if (cached && typeof cached === 'object') {
-                    if (cached.name) {
-                        name = cached.name;
-                    }
-                    if (cached.avatar) {
-                        avatar = cached.avatar;
-                    }
-                }
-
-                const prof = await resolveGroupProfile(slot.api, threadId);
-                if (prof?.name) {
-                    name = prof.name;
-                }
-                if (prof?.avatar) {
-                    avatar = prof.avatar;
-                }
-                if (prof && (cache[threadId]?.name !== prof.name || cache[threadId]?.avatar !== prof.avatar)) {
-                    cache[threadId] = prof;
-                }
-
-                const senderUid = extractGroupSenderUid(rawD);
-                if (senderUid && senderUid !== threadId) {
-                    senderUidForPayload = senderUid;
+            const senderUid = extractGroupSenderUid(rawD);
+            if (senderUid && senderUid !== threadId) {
+                // Q3: tin của chính tài khoản bridge cũng phải mang người gửi —
+                // lấy từ hồ sơ phiên, không tốn thêm lời gọi API nào.
+                if (isSelf && senderUid === String(slot.personalUid ?? '')) {
+                    groupSender = {
+                        uid: senderUid,
+                        name: slot.integratedDisplayName || extractGroupSenderDisplayName(rawD) || senderUid,
+                        avatar: slot.integratedAvatar || null,
+                    };
+                } else {
                     const fromListener = extractGroupSenderDisplayName(rawD);
                     const sp = await resolvePeerProfile(slot.api, senderUid);
                     let senderName = sp?.name || '';
@@ -1797,119 +1905,102 @@ function startListenerForSlot(slotKey) {
                     if (isPlaceholderSenderName(senderName, senderUid, name)) {
                         senderName = senderUid;
                     }
-                    sender = {
-                        id: senderUid,
-                        name: senderName,
-                        avatar: sp?.avatar || null,
-                    };
+                    groupSender = { uid: senderUid, name: senderName, avatar: sp?.avatar || null };
                 }
-            } else {
-                const prof = await resolvePeerProfile(slot.api, peerUid);
-                name = prof?.name ?? name;
-                avatar = prof?.avatar ?? null;
             }
+        } else {
+            const prof = await resolvePeerProfile(slot.api, peerUid);
+            name = prof?.name ?? name;
+            avatar = prof?.avatar ?? null;
+        }
+        const payload = {
+            connection_id: cid,
+            bot_id: bid,
+            personal_uid: slot.personalUid,
+            peer_uid: peerUid,
+            thread_id: threadId,
+            thread_type: ttNum,
+            source_id: sourceId,
+            is_self: isSelf,
+            user: {
+                name,
+                avatar,
+            },
+            platform_sent_at: platformSentAt,
+            inbound_kind: desc.inbound_kind,
+            msg_type: desc.msgType || null,
+        };
+        if (ttNum === 1) {
+            applyGroupContextToPayload(payload, {
+                threadId,
+                groupProfile,
+                senderUid: groupSender?.uid ?? '',
+                senderName: groupSender?.name ?? '',
+                senderAvatar: groupSender?.avatar ?? null,
+                mentions: normalizeMentions(rawD),
+            });
+        }
+        if (isSelf) {
+            payload.bridge_outbound_echo = consumeBridgeOutboundEcho(slot, sourceId);
+        }
 
-            // C-1: ưu tiên so sánh uid thật; fallback message.isSelf nếu personalUid chưa có
-            const isSelf = slot.personalUid
-                ? String(rawD?.uidFrom ?? '') === String(slot.personalUid)
-                : Boolean(message.isSelf);
-            const payload = {
-                connection_id: cid,
-                bot_id: bid,
-                personal_uid: slot.personalUid,
-                peer_uid: peerUid,
-                thread_id: threadId,
-                thread_type: ttNum,
-                source_id: sourceId,
-                is_self: isSelf,
-                user: {
-                    name,
-                    avatar,
-                },
-                platform_sent_at: platformSentAt,
-                inbound_kind: desc.inbound_kind,
-                msg_type: desc.msgType || null,
+        // F14 — direction signal cho metering:
+        //   'in'   = contact gửi đến (không meter)
+        //   'echo' = bridge dội lại tin CRM vừa gửi (không meter — tránh double-count)
+        //   'out'  = tenant gửi từ phone cá nhân (meter)
+        // Fail-safe: thiếu tín hiệu → 'in' (under-count an toàn hơn over-count billing)
+        if (!isSelf) {
+            payload.direction = 'in';
+        } else if (payload.bridge_outbound_echo === true) {
+            payload.direction = 'echo';
+        } else {
+            payload.direction = 'out';
+        }
+
+        if (rawD && typeof rawD === 'object') {
+            try {
+                payload.listener_data = JSON.parse(JSON.stringify(rawD));
+            } catch {
+                payload.listener_data = null;
+            }
+        }
+
+        const quoteInfo = extractQuoteFromListenerMessage(message);
+        logZaloQuoteInspect(message, quoteInfo);
+        if (quoteInfo) {
+            if (quoteInfo.quote_msg_id) {
+                payload.quote_msg_id = quoteInfo.quote_msg_id;
+            }
+            if (quoteInfo.quote && Object.keys(quoteInfo.quote).length) {
+                payload.quote = quoteInfo.quote;
+            }
+        }
+
+        const quoteRelated =
+            !!quoteInfo ||
+            (rawD &&
+                typeof rawD === 'object' &&
+                (rawD.quote || rawD.quoteMsg || rawD.propertyExt || rawD.quoteMsgId || rawD.quote_msg_id));
+        if (quoteRelated) {
+            payload.listener_message = {
+                threadId: message.threadId,
+                type: message.type,
+                isSelf: message.isSelf,
+                quote: message.quote ?? null,
             };
-            if (!isSelf && senderUidForPayload) {
-                payload.sender_uid = senderUidForPayload;
-                if (sender && sender.id) {
-                    payload.sender = sender;
-                }
-            }
-            if (isSelf) {
-                payload.bridge_outbound_echo = consumeBridgeOutboundEcho(slot, sourceId);
-            }
+        }
 
-            // F14 — direction signal cho metering:
-            //   'in'   = contact gửi đến (không meter)
-            //   'echo' = bridge dội lại tin CRM vừa gửi (không meter — tránh double-count)
-            //   'out'  = tenant gửi từ phone cá nhân (meter)
-            // Fail-safe: thiếu tín hiệu → 'in' (under-count an toàn hơn over-count billing)
-            if (!isSelf) {
-                payload.direction = 'in';
-            } else if (payload.bridge_outbound_echo === true) {
-                payload.direction = 'echo';
-            } else {
-                payload.direction = 'out';
-            }
+        applyInboundDescriptorToPayload(payload, desc, {
+            sticker: desc.inbound_kind === 'sticker'
+                ? await resolveStickerForWebhook(slot.api, desc.sticker)
+                : null,
+            businessCard: desc.inbound_kind === 'business_card'
+                ? await resolveBusinessCardForWebhook(slot.api, desc.business_card, message)
+                : null,
+        });
 
-            if (rawD && typeof rawD === 'object') {
-                try {
-                    payload.listener_data = JSON.parse(JSON.stringify(rawD));
-                } catch {
-                    payload.listener_data = null;
-                }
-            }
-
-            const quoteInfo = extractQuoteFromListenerMessage(message);
-            logZaloQuoteInspect(message, quoteInfo);
-            if (quoteInfo) {
-                if (quoteInfo.quote_msg_id) {
-                    payload.quote_msg_id = quoteInfo.quote_msg_id;
-                }
-                if (quoteInfo.quote && Object.keys(quoteInfo.quote).length) {
-                    payload.quote = quoteInfo.quote;
-                }
-            }
-
-            const quoteRelated =
-                !!quoteInfo ||
-                (rawD &&
-                    typeof rawD === 'object' &&
-                    (rawD.quote || rawD.quoteMsg || rawD.propertyExt || rawD.quoteMsgId || rawD.quote_msg_id));
-            if (quoteRelated) {
-                payload.listener_message = {
-                    threadId: message.threadId,
-                    type: message.type,
-                    isSelf: message.isSelf,
-                    quote: message.quote ?? null,
-                };
-            }
-
-            if (desc.inbound_kind === 'text') {
-                payload.content = desc.text;
-            } else if (desc.inbound_kind === 'bank_card') {
-                payload.bank_card_source = desc.bank_card_source;
-                payload.content = desc.bank_card_source.label;
-            } else if (desc.inbound_kind === 'sticker') {
-                payload.sticker = await resolveStickerForWebhook(slot.api, desc.sticker);
-            } else if (desc.inbound_kind === 'business_card') {
-                payload.business_card = await resolveBusinessCardForWebhook(slot.api, desc.business_card, message);
-                payload.content = desc.caption != null ? String(desc.caption) : '';
-            } else if (desc.inbound_kind === 'call') {
-                payload.call = desc.call;
-                payload.content = '';
-            } else {
-                payload.media_url = desc.media_url;
-                if (desc.media_filename) {
-                    payload.media_filename = desc.media_filename;
-                }
-                payload.content = desc.caption != null ? String(desc.caption) : '';
-            }
-
-            postInbound(payload).catch((e) => console.error('postInbound', e));
-        })();
-    });
+        postInbound(payload).catch((e) => console.error('postInbound', e));
+    }));
 
     // P12: forwarder generic — subscribe 10 event chưa wired (né 5 bespoke +
     // cipher_key, B3/B6); guard slot.forwarderAttached bên trong (MED-2).
@@ -1922,19 +2013,19 @@ function startListenerForSlot(slotKey) {
         console.info('zalo-bridge: relay forwarder attached connection_id=', cid, 'events=', relayEvents.join(','));
     }
 
-    slot.api.listener.start();
+    // 1.1: mặc định của zca-js là retryOnClose=false (listen.js:98) — WS rớt là
+    // chết hẳn. Bật để nó tự thử lại các mã server cho phép; hết hạn mức nó phát
+    // `closed` và supervisor ở trên tiếp quản (đăng nhập lại từ cookie đã lưu).
+    slot.api.listener.start({ retryOnClose: true });
     console.info('zalo-bridge: listener started connection_id=', cid, 'bot_id=', bid);
 }
 
 async function clearSlot(slotKey) {
     const slot = getSlot(slotKey);
-    try {
-        if (slot.api?.listener) {
-            slot.api.listener.stop();
-        }
-    } catch (e) {
-        console.warn('bridge: listener.stop', e?.message || e);
-    }
+    // Huỷ lịch đăng nhập lại TRƯỚC khi xoá cookie — nếu không, timer còn treo sẽ
+    // đánh thức lại slot vừa bị gỡ kết nối.
+    reconnectSupervisor.cancel(String(slotKey));
+    detachListenerForSlot(slot);
     Object.assign(slot, createSlotState());
     const cp = slotCookiePathForKey(slotKey);
     if (existsSync(cp)) {
@@ -1961,14 +2052,8 @@ async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
         }
         await clearSlot(newKey);
     }
-    try {
-        if (slot.listenerStarted && slot.api?.listener) {
-            slot.api.listener.stop();
-        }
-    } catch (e) {
-        console.warn('promote listener stop', e?.message || e);
-    }
-    slot.listenerStarted = false;
+    reconnectSupervisor.cancel(newKey);
+    detachListenerForSlot(slot);
     const oldCp = slotCookiePathForKey(qrKey);
     const newCp = slotCookiePathForKey(newKey);
     const oldMp = slotMetaPathForKey(qrKey);
@@ -2034,7 +2119,7 @@ async function tryLoginWithSavedSession(connectionId) {
         slot.personalUid = String(slot.api.getOwnId());
         slot.loginPhase = 'ready';
         slot.sessionLostReason = null;
-        console.info('Zalo bridge: restored session connection_id=', connectionId, 'uid=', slot.personalUid);
+        console.info('Zalo bridge: restored session connection_id=', connectionId, 'uid=', maskUid(slot.personalUid));
         startListenerForSlot(key);
         void refreshIntegratedProfile(slot);
         if (slot.botId) {
@@ -2052,17 +2137,9 @@ async function tryLoginWithSavedSession(connectionId) {
         // Cookie chết (Zalo thu hồi) mà im lặng → DB còn 'connected' → UI không hiện
         // banner "Cần quét lại QR", user tưởng vẫn chạy (sự cố 06/07). Báo Laravel
         // session_lost để banner hiện + hadGap trigger backfill sau khi re-QR.
-        slot.loginPhase = 'session_lost';
-        slot.sessionLostReason = `restore_failed: ${e?.message || e}`;
-        slot.sessionLostAt = Date.now();
-        if (slot.botId) {
-            postBridgeSession({
-                connection_id: Number(connectionId),
-                bot_id: slot.botId,
-                state: 'session_lost',
-                detail: slot.sessionLostReason,
-            }).catch(() => {});
-        }
+        // markSlotSessionLost idempotent → vòng đăng nhập lại (1.1) không spam webhook.
+        slot.api = null;
+        markSlotSessionLost(slot, Number(connectionId), slot.botId, `restore_failed: ${e?.message || e}`);
         return false;
     }
 }
@@ -2074,8 +2151,11 @@ const bridgeAttachmentUpload = multer({
 
 // P04: fetch media qua media-fetch.mjs (byte-cap + host allowlist — Codex MED).
 // Allowlist mặc định = host Laravel (signed URL private disk) + env mở rộng.
+// Lấy CẢ hai biến vì URL đính kèm dựng từ APP_URL (= LARAVEL_BASE_URL) trong khi
+// webhook có thể khai host khác (localhost vs 127.0.0.1) → fetch_host_not_allowed.
 const FETCH_ALLOWED_HOSTS = buildAllowedHosts({
     laravelWebhookUrl: LARAVEL_WEBHOOK_URL,
+    laravelBaseUrl: process.env.LARAVEL_BASE_URL,
     extraCsv: process.env.BRIDGE_FETCH_HOST_ALLOWLIST,
 });
 
@@ -2106,7 +2186,7 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename, quote, sticker } = body || {};
+    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker } = body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
@@ -2147,6 +2227,7 @@ async function bridgeSendTextOrMedia(slot, body) {
                 userAgent: ZCA_USER_AGENT,
                 mediaKind: mk,
                 filenameHint: typeof filename === 'string' ? filename : null,
+                contentTypeHint: typeof content_type === 'string' ? content_type : null,
             });
             const cap = text != null && String(text).trim() !== '' ? String(text) : '';
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
@@ -2161,9 +2242,7 @@ async function bridgeSendTextOrMedia(slot, body) {
         const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
-        if (tmpPath) {
-            await fs.unlink(tmpPath).catch(() => {});
-        }
+        await cleanupTempDownload(tmpPath);
     }
 }
 
@@ -2177,17 +2256,21 @@ function buildExpress() {
     app.get('/', rootOk);
     app.head('/', rootOk);
 
+    // 1.6: `/health` mang uid/tên/avatar của mọi slot → PHẢI xác thực như các route
+    // UI khác. Liveness không định danh vẫn nằm ở `GET /` phía trên (không auth,
+    // không tham số) cho pm2/uptime check.
     app.get('/health', (req, res) => {
+        if (!checkUiSecret(req)) {
+            return res.status(403).json({ ok: false, message: 'Forbidden' });
+        }
         const slotKey = slotKeyFromRequest(req);
         if (!slotKey) {
             return res.status(400).json({ ok: false, message: 'connection_id or qr_token required' });
         }
         const qBot = req.query.bot_id != null && req.query.bot_id !== '' ? Number(req.query.bot_id) : null;
-        const slot = getSlot(slotKey);
-        if (qBot !== null && qBot > 0) {
-            slot.botId = qBot;
-            void writeSlotMetaForKey(slotKey, { bot_id: qBot });
-        }
+        // Resolve-only: get-or-create + ghi meta ở đây từng ĐÈ MẤT workspace_id
+        // (meta ghi lại chỉ với bot_id) → dispatcher /zca fail-closed 403 sau đó.
+        const slot = slots.get(String(slotKey)) ?? createSlotState();
         const sessionBotMatch = qBot === null || qBot === 0 || qBot === slot.botId;
         const sessionActive = Boolean(slot.api) && slot.loginPhase === 'ready' && Boolean(slot.personalUid);
         const connected = sessionActive && sessionBotMatch;
@@ -2209,6 +2292,13 @@ function buildExpress() {
             outbox: outbox.stats(),
             // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
             relay_counters: relayEventCounters,
+            // Lô 1: đo sức khoẻ process — rớt/nối lại, handler ném lỗi, frame hỏng.
+            resilience: {
+                ...resilience.stats(),
+                slot_frame_errors: slot.frameErrors ?? 0,
+                relogin_pending: reconnectSupervisor.isPending(String(slotKey)),
+                relogin_attempt: reconnectSupervisor.attemptOf(String(slotKey)),
+            },
         };
         if (isQrSlotKey(slotKey)) {
             out.qr_token = slotKey.slice(3);
@@ -2273,12 +2363,12 @@ function buildExpress() {
                 slot.sessionLostReason = null;
                 await writeSlotMetaForKey(key, { bot_id: botId });
                 void refreshIntegratedProfile(slot);
-                console.info('Zalo bridge: QR login qr_token=', token, 'uid=', slot.personalUid);
+                console.info('Zalo bridge: QR login qr_token=', shortToken(token), 'uid=', maskUid(slot.personalUid));
             } catch (e) {
                 slot.loginPhase = 'error';
                 slot.lastError = e?.message || String(e);
                 slot.api = null;
-                console.error('QR login failed qr_token=', token, e);
+                console.error('QR login failed qr_token=', shortToken(token), e?.message || e);
             }
         })();
 
@@ -2396,8 +2486,11 @@ function buildExpress() {
                 const ct = (req.file.mimetype || '').split(';')[0].trim();
                 ext = mimeToExt(ct) || MEDIA_KIND_DEFAULT_EXT[mk] || 'bin';
             }
-            const safe = String(ext).replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
-            tmpPath = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
+            // Cùng lý do với downloadUrlToTemp: người nhận thấy `path.basename`
+            // của file tạm, nên tên thật phải là tên file.
+            const tmpDir = path.join(tmpdir(), `zbr-${randomUUID()}`);
+            await fs.mkdir(tmpDir, { recursive: true });
+            tmpPath = path.join(tmpDir, safeAttachmentFilename(req.file.originalname, ext));
             await fs.writeFile(tmpPath, req.file.buffer);
             const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
             const out = registerAllOutboundSourceIds(slot, sendResult);
@@ -2406,9 +2499,7 @@ function buildExpress() {
             console.error('sendAttachment', e);
             return res.status(500).json({ ok: false, message: e?.message || String(e) });
         } finally {
-            if (tmpPath) {
-                await fs.unlink(tmpPath).catch(() => {});
-            }
+            await cleanupTempDownload(tmpPath);
         }
     });
 
@@ -2440,7 +2531,14 @@ function buildExpress() {
             return res.status(500).json({ ok: false, message: msg });
         }
     });
-    registerPersonalMessageRoutes(app, { checkSendSecret, getSlot, bridgeSendTextOrMedia });
+    registerPersonalMessageRoutes(app, {
+        checkSendSecret,
+        getSlot,
+        resolveSlot: (connectionId) => slots.get(String(connectionId)),
+        bridgeSendTextOrMedia,
+        ThreadType,
+        zcaReactionCode,
+    });
     registerUiActionsRoutes(app, {
         checkUiSecret,
         getSlot,
@@ -2516,6 +2614,13 @@ async function cleanupStaleQrSessionFiles() {
 }
 
 async function boot() {
+    // 1.2: chốt chặn cuối — một exception lạc không được giết process đang giữ
+    // phiên Zalo của MỌI tenant. Cài TRƯỚC mọi thứ khác.
+    resilience.installProcessGuards();
+    const rawLogWarning = rawPayloadLogWarning();
+    if (rawLogWarning) {
+        console.warn(rawLogWarning);
+    }
     // F10-audit: startup guard — thiếu secret trong production → từ chối boot.
     if (process.env.NODE_ENV === 'production') {
         const missing = [];
@@ -2541,7 +2646,19 @@ async function boot() {
     });
 }
 
-boot().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+// CHỈ boot khi được gọi thẳng làm entrypoint (`node src/index.mjs`, pm2). Import
+// module này để đọc/kiểm tra thì KHÔNG được chạy: boot() khôi phục MỌI phiên Zalo
+// THẬT trong .sessions/ và mở WebSocket thứ hai bằng cookie của tenant — Zalo đá
+// phiên đang chạy (DuplicateConnection 3000) và founder mất inbox.
+const isEntrypoint =
+    typeof process.argv[1] === 'string' &&
+    path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isEntrypoint) {
+    boot().catch((e) => {
+        console.error(e);
+        process.exit(1);
+    });
+} else {
+    console.warn('zalo-bridge: index.mjs duoc IMPORT chu khong chay truc tiep — KHONG boot phien nao.');
+}

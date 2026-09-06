@@ -26,6 +26,9 @@ export function createOutbox({
     baseBackoffMs = 2000,
     maxQueueMs = 3600000,    // H-2: trần wall-clock 1h → dead-letter dù chưa đủ attempts
     maxPayloadBytes = 900000, // H-4: dưới nginx 1MB mặc định
+    // Kick drain ngay sau enqueue. Chỉ test tắt (cùng lý do đã tắt setInterval):
+    // drain nền chạy xen kẽ làm thứ tự phản hồi giả không còn xác định.
+    kickOnEnqueue = true,
 }) {
     let _counter = 1;
     let _draining = false;
@@ -270,7 +273,9 @@ export function createOutbox({
             if (!ok) throw new Error('outbox: failed to allocate seq after 5 attempts');
 
             // Kick drain ngay, không chờ interval
-            void this.drain();
+            if (kickOnEnqueue) {
+                void this.drain();
+            }
         },
 
         drain,

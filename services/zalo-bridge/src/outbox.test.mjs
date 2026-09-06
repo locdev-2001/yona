@@ -34,6 +34,7 @@ async function makeOutbox(fetchImpl, opts = {}) {
         baseBackoffMs: 1,    // backoff rất ngắn để test không chờ lâu
         maxQueueMs: 60000,
         maxPayloadBytes: 900000,
+        ...opts,
     });
 
     return { outbox, dir, deadDir, base };
@@ -53,10 +54,12 @@ function countFiles(d) {
 test('enqueue 3, mock 503 503 200 → FIFO giữ tới khi 200 rồi xóa', async () => {
     let callCount = 0;
     const responses = [503, 503, 200];
+    // kickOnEnqueue: false — drain nền do enqueue kích sẽ ăn mất phản hồi trong
+    // `responses` theo thứ tự ngẫu nhiên, test tự gọi drain() để kiểm soát.
     const { outbox, dir, base } = await makeOutbox(() => {
         const status = responses[callCount++ % responses.length] ?? 200;
         return Promise.resolve({ ok: status < 400, status, text: async () => '' });
-    });
+    }, { kickOnEnqueue: false });
 
     await outbox.enqueue({ type: 'msg', n: 1 });
     await outbox.enqueue({ type: 'msg', n: 2 });

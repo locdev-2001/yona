@@ -6,7 +6,8 @@ import path from 'node:path';
 /**
  * P04 — fetch media outbound an toàn (Codex MED): byte-cap (Content-Length pre-check
  * + streaming cap, KHÔNG arrayBuffer toàn bộ) + host/scheme allowlist. Laravel gửi
- * signed URL private disk (A3) — allowlist mặc định = host của LARAVEL_WEBHOOK_URL.
+ * signed URL private disk (A3) — allowlist mặc định = host của LARAVEL_WEBHOOK_URL
+ * VÀ host của LARAVEL_BASE_URL (hai biến có thể khác host: localhost vs 127.0.0.1).
  */
 
 export const DEFAULT_MAX_FETCH_BYTES = 25 * 1024 * 1024; // headroom trên cap portal 20MB
@@ -25,6 +26,29 @@ export function extFromFilename(name) {
     }
     const m = name.match(/\.([a-zA-Z0-9]{1,8})$/);
     return m ? m[1].toLowerCase() : null;
+}
+
+/**
+ * Tên tệp gửi ra Zalo: giữ TÊN THẬT do Laravel gửi kèm (`filename`), chỉ bỏ phần
+ * đường dẫn và ký tự điều khiển. Không có tên thì mới dựng tên trung tính.
+ *
+ * @param {unknown} filenameHint tên tệp thật từ bản ghi đính kèm
+ * @param {string} ext phần mở rộng đã suy ra (dùng khi tên thật không có đuôi)
+ */
+export function safeAttachmentFilename(filenameHint, ext) {
+    const fallbackExt = String(ext || 'bin').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase() || 'bin';
+    const base = String(filenameHint ?? '').split(/[\\/]/).pop() ?? '';
+    const cleaned = base
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\u0000-\u001f\u007f]/g, '')
+        .replace(/^\.+/, '')
+        .trim();
+    if (!cleaned) {
+        return `zbr-file.${fallbackExt}`;
+    }
+    const own = extFromFilename(cleaned);
+    const stem = (own ? cleaned.slice(0, -(own.length + 1)) : cleaned).slice(0, 100).trim() || 'zbr-file';
+    return `${stem}.${own || fallbackExt}`;
 }
 
 export function mimeToExt(ct) {
@@ -48,7 +72,7 @@ export function mimeToExt(ct) {
 
 /**
  * allowedHosts: Set/array hostname lowercase. Rỗng/null = từ chối hết — FAIL-CLOSED,
- * không có đường bypass: dev chưa set LARAVEL_WEBHOOK_URL thì gửi media sẽ fail
+ * không có đường bypass: dev chưa set LARAVEL_WEBHOOK_URL/LARAVEL_BASE_URL thì gửi media sẽ fail
  * (ghi rõ ở docs/features/messaging/composer-media.md).
  */
 export function assertUrlAllowed(url, allowedHosts) {
@@ -68,11 +92,18 @@ export function assertUrlAllowed(url, allowedHosts) {
     return parsed;
 }
 
-export function buildAllowedHosts({ laravelWebhookUrl, extraCsv }) {
+export function buildAllowedHosts({ laravelWebhookUrl, laravelBaseUrl, extraCsv }) {
     const hosts = new Set();
-    if (laravelWebhookUrl) {
+    // Đính kèm chiều ra là signed URL do Laravel dựng từ APP_URL, còn allowlist
+    // trước đây chỉ lấy host của webhook — hai biến này khác host (localhost vs
+    // 127.0.0.1) là mọi lần gửi ảnh đều fail `fetch_host_not_allowed`. Host của
+    // LARAVEL_BASE_URL chính là host Laravel tự xưng nên phải nằm trong allowlist.
+    for (const url of [laravelWebhookUrl, laravelBaseUrl]) {
+        if (!url) {
+            continue;
+        }
         try {
-            hosts.add(new URL(laravelWebhookUrl).hostname.toLowerCase());
+            hosts.add(new URL(url).hostname.toLowerCase());
         } catch {
             /* ignore malformed */
         }
@@ -91,7 +122,10 @@ export function buildAllowedHosts({ laravelWebhookUrl, extraCsv }) {
  * Throw: fetch_host_not_allowed | fetch_scheme_not_allowed | download_failed_<status>
  *      | download_too_large.
  */
-export async function downloadUrlToTemp(url, { maxBytes = DEFAULT_MAX_FETCH_BYTES, allowedHosts, userAgent, mediaKind, filenameHint } = {}) {
+export async function downloadUrlToTemp(
+    url,
+    { maxBytes = DEFAULT_MAX_FETCH_BYTES, allowedHosts, userAgent, mediaKind, filenameHint, contentTypeHint } = {}
+) {
     assertUrlAllowed(url, allowedHosts);
 
     const res = await fetch(url, {
@@ -126,12 +160,32 @@ export async function downloadUrlToTemp(url, { maxBytes = DEFAULT_MAX_FETCH_BYTE
     let ext = extFromFilename(filenameHint);
     if (!ext) {
         const ct = (res.headers.get('content-type') || '').split(';')[0].trim();
-        ext = mimeToExt(ct) || MEDIA_KIND_DEFAULT_EXT[mediaKind] || 'bin';
+        // content-type do Laravel khai (đúng theo bản ghi đính kèm) đứng TRƯỚC
+        // header của storage — signed URL hay trả application/octet-stream.
+        ext = mimeToExt(contentTypeHint) || mimeToExt(ct) || MEDIA_KIND_DEFAULT_EXT[mediaKind] || 'bin';
     }
-    const safe = String(ext).replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
-    const p = path.join(tmpdir(), `zbr-${randomUUID()}.${safe}`);
+    // zca lấy tên tệp gửi đi bằng `path.basename(filePath)` (zca-js utils.js:329,
+    // sendMessage.js:297) — đặt tên file tạm là `zbr-<uuid>.bin` nghĩa là NGƯỜI
+    // NHẬN thấy đúng cái tên đó. Nên tên thật nằm ở tên file, còn phần ngẫu nhiên
+    // chống đụng độ lùi xuống tên THƯ MỤC tạm.
+    const dir = path.join(tmpdir(), `zbr-${randomUUID()}`);
+    await fs.mkdir(dir, { recursive: true });
+    const p = path.join(dir, safeAttachmentFilename(filenameHint, ext));
     await fs.writeFile(p, buf);
     return p;
+}
+
+/** Dọn thứ `downloadUrlToTemp` tạo ra (file + thư mục tạm bọc ngoài). */
+export async function cleanupTempDownload(tmpPath) {
+    if (!tmpPath) {
+        return;
+    }
+    const dir = path.dirname(String(tmpPath));
+    if (path.basename(dir).startsWith('zbr-')) {
+        await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+        return;
+    }
+    await fs.unlink(tmpPath).catch(() => {});
 }
 
 /**
