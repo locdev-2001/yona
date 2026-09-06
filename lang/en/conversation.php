@@ -97,6 +97,25 @@ return [
             'CANCELED' => 'canceled',
         ],
     ],
+    'MESSAGE_ACTIONS' => [
+        'REACT' => 'React',
+        'RECALL' => 'Unsend for everyone',
+        'DELETE' => 'Delete',
+    ],
+    'MESSAGE_FAILURE' => [
+        'RETRY' => 'Retry sending',
+        'RETRY_FAILED' => 'Could not resend the message. Please try again.',
+        'HINT' => [
+            'session_lost' => 'The channel connection was lost. Reconnect the inbox, then retry.',
+            'circuit_open' => 'Sending is paused after repeated failures. Retry in a few minutes.',
+            'bridge_unreachable' => 'The channel service could not be reached. Retry in a moment.',
+            'secret_mismatch' => 'The channel is misconfigured. Ask an administrator to check it — retrying will not help.',
+            'media_fetch_failed' => 'The attachment could not be read. Send the file again.',
+        ],
+    ],
+    'MESSAGE_SENDER' => [
+        'IN_GROUP' => 'Sent in the group by {name}',
+    ],
     'UPLOADING_ATTACHMENTS' => 'Uploading attachments...',
     'REPLIED_TO_STORY' => 'Replied to your story',
     'UNSUPPORTED_MESSAGE' => 'This message is unsupported. To view it, please open it on the original platform.',

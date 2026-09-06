@@ -21,6 +21,7 @@ describe('previousConversations', () => {
     it('chỉ hiện tên inbox khi đang ở màn tổng và account có nhiều inbox', () => {
         expect(shouldShowInboxName(0, 2)).toBe(true);
         expect(shouldShowInboxName(0, 1)).toBe(false);
-        expect(shouldShowInboxName(1, 3)).toBe(false);
+        expect(shouldShowInboxName(1, 3)).toBe(true);
+        expect(shouldShowInboxName(1, 1)).toBe(false);
     });
 });

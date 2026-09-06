@@ -72,4 +72,21 @@ class ReactionIcons
     {
         return self::EMOJI[$code] ?? $code;
     }
+
+    /**
+     * Chiều ngược lại cho tin đi: agent chọn emoji, Zalo chỉ hiểu mã của nó.
+     * Nhiều mã cùng trỏ một emoji (🙏 có `/-thanks` và `_()_`, 👎 có `/-weak` và
+     * `/-bad`) — lấy mã ĐẦU TIÊN trong bảng để một emoji luôn ra một mã.
+     * Emoji Zalo không có → null, tầng gọi trả `capability_not_supported`-style lỗi.
+     */
+    public static function code(string $emoji): ?string
+    {
+        foreach (self::EMOJI as $code => $known) {
+            if ($known === $emoji) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
 }

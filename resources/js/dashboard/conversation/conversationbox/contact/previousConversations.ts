@@ -9,8 +9,10 @@ export function filterPreviousConversations(
     return conversations.filter(conversation => conversation.id !== Number(currentConversationId));
 }
 
-// showInboxName của ContactConversations.vue: chỉ hiện tên inbox khi đang ở màn
-// tổng (không lọc theo inbox) và account có nhiều hơn một inbox.
-export function shouldShowInboxName(activeInboxId: number, inboxCount: number): boolean {
-    return !activeInboxId && inboxCount > 1;
+// showInboxName của ContactConversations.vue chỉ hiện tên inbox khi đang ở màn
+// tổng. Lệch có chủ đích (ux-deviations.md): hội thoại trước của khách trải trên
+// MỌI inbox (docs/channel-capabilities.md §2.5 threading_history), nên khi đang
+// lọc theo một inbox vẫn phải thấy hội thoại cũ đó thuộc kênh nào.
+export function shouldShowInboxName(_activeInboxId: number, inboxCount: number): boolean {
+    return inboxCount > 1;
 }

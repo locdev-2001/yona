@@ -1,4 +1,12 @@
 export const icons = {
+  // Nhãn kênh Zalo — Chatwoot không có, Iconify (logos/ri/lucide/ph) cũng không.
+  // Vẽ tay đơn sắc theo hình khối của Zalo (bong bóng vuông bo góc + chữ Z khoét
+  // rỗng) để đọc được ở 16px; dùng `currentColor` như mọi icon kênh khác.
+  zalo: {
+    body: `<path fill-rule="evenodd" clip-rule="evenodd" d="M5 2H19A4 4 0 0 1 23 6V14A4 4 0 0 1 19 18H8L3.2 22.2A0.8 0.8 0 0 1 2 21.3L3.4 18A4 4 0 0 1 1 14V6A4 4 0 0 1 5 2ZM7.6 6.6H16.4V8L10.4 12.4H16.4V13.8H7.6V12.4L13.6 8H7.6V6.6Z" fill="currentColor"/>`,
+    width: 24,
+    height: 24,
+  },
   'logic-or': {
     body: `<rect x="14" y="5" width="2" height="13" rx="1" fill="currentColor"/><rect x="8" y="5" width="2" height="13" rx="1" fill="currentColor"/>`,
     width: 24,

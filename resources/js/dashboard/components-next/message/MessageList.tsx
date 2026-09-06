@@ -16,6 +16,7 @@ import type { MessageAttachment } from './helpers/attachments';
 interface MessageListProps {
     messages: ConversationMessage[];
     channelType: string | null;
+    inboxCapabilities?: readonly string[];
     // Danh sách media của cả hội thoại (gallery) — getter store bên gốc.
     chatAttachments?: MessageAttachment[];
     firstUnreadId?: number | null;
@@ -24,6 +25,9 @@ interface MessageListProps {
     unreadBadge?: ReactNode;
     after?: ReactNode;
     onScroll?: UIEventHandler<HTMLUListElement>;
+    onRetry?: (message: ConversationMessage) => Promise<void> | void;
+    onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
+    onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
 }
 
 function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): boolean {
@@ -66,6 +70,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     {
         messages,
         channelType,
+        inboxCapabilities = [],
         chatAttachments = [],
         firstUnreadId = null,
         className = '',
@@ -73,6 +78,9 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         unreadBadge,
         after,
         onScroll,
+        onRetry,
+        onToggleReaction,
+        onDeleteMessage,
     },
     ref,
 ) {
@@ -87,9 +95,13 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                     <Message
                         message={message}
                         channelType={channelType}
+                        inboxCapabilities={inboxCapabilities}
                         chatAttachments={chatAttachments}
                         groupWithNext={shouldGroupWithNext(index, messages)}
                         inReplyTo={findInReplyTo(message, messages)}
+                        onRetry={onRetry}
+                        onToggleReaction={onToggleReaction}
+                        onDeleteMessage={onDeleteMessage}
                     />
                 </Fragment>
             ))}

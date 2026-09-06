@@ -68,11 +68,16 @@ class SetCurrentAccount
             'inboxes' => fn () => $request->user()
                 ->assignedInboxes($account, $accountUser)
                 ->orderByRaw('lower(name) ASC')
-                ->get(['id', 'name', 'channel_type'])
+                // `channel` nạp kèm (morphTo gom theo loại kênh, không N+1) để lộ
+                // `capabilities` — FE gate tính năng theo năng lực, không theo
+                // channel_type (docs/channel-capabilities.md §3).
+                ->with('channel')
+                ->get(['id', 'name', 'channel_type', 'channel_id'])
                 ->map(fn ($inbox) => [
                     'id' => $inbox->id,
                     'name' => $inbox->name,
                     'channel_type' => $inbox->channel_type,
+                    'capabilities' => $inbox->capabilities()->values(),
                 ]),
             // Nhóm Teams trên sidebar (Sidebar.vue lấy từ getter teams/getMyTeams:
             // chỉ team user là member).

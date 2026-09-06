@@ -2,10 +2,13 @@ import DOMPurify from 'dompurify';
 import type { MouseEventHandler, ReactNode } from 'react';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
+import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { t } from '../../../../i18n';
 import MessageMeta from '../MessageMeta';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import { readGroupSender } from '../helpers/groupSender';
+import { groupReactions, readReactions } from '../helpers/reactions';
 
 // Port từ dashboard/components-next/message/bubbles/Base.vue — bỏ nhánh
 // CaptainGenerationDetails (EE). inReplyTo hiếm ở B3 nhưng giữ điều kiện.
@@ -51,15 +54,18 @@ export default function BaseBubble({
     onClick,
     children,
 }: BaseBubbleProps) {
-    const { variant, orientation, inReplyTo, shouldGroupWithNext, contentAttributes } = useMessageContext();
+    const { variant, orientation, inReplyTo, shouldGroupWithNext, contentAttributes, onToggleReaction } =
+        useMessageContext();
 
     // MỞ RỘNG NGOÀI GỐC (Chatwoot v4.17.1 không có UI biểu cảm — `grep -rn
     // "reactions" refs/chatwoot/app/javascript/` = 0). Zalo là kênh chính của
     // Yona nên hàng emoji được vẽ dưới bong bóng; pixel-diff phải loại trừ
     // `[data-yona-reactions]`.
-    const reactions = Array.isArray(contentAttributes.reactions)
-        ? (contentAttributes.reactions as string[])
-        : [];
+    const reactions = groupReactions(readReactions(contentAttributes));
+
+    // Tin nhóm: người gửi thật đứng trên nội dung như app gốc của kênh — không có
+    // dòng này thì mọi tin trong nhóm nhìn như của cùng một người.
+    const groupSender = orientation === ORIENTATION.LEFT ? readGroupSender(contentAttributes) : null;
 
     const metaColorClass = variant === MESSAGE_VARIANTS.PRIVATE ? 'text-n-amber-12/50' : 'text-n-slate-11';
     const emailMetaClass = variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '';
@@ -105,19 +111,35 @@ export default function BaseBubble({
                     />
                 </div>
             )}
+            {groupSender ? (
+                <div
+                    className="flex items-center gap-1.5 mb-1 min-w-0"
+                    title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
+                >
+                    <Avatar name={groupSender.name} src={groupSender.avatar} size={16} />
+                    <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
+                </div>
+            ) : null}
             {children}
             {reactions.length > 0 && (
                 <div
                     data-yona-reactions
                     className={`flex gap-1 mt-1 text-sm leading-none ${FLEX_ORIENTATION_MAP[orientation]}`}
                 >
-                    {reactions.map((emoji, index) => (
-                        <span
-                            key={`${emoji}-${index}`}
-                            className="rounded-full bg-n-alpha-black1 px-1.5 py-0.5"
+                    {reactions.map(({ emoji, count, reactedBySelf }) => (
+                        <button
+                            key={emoji}
+                            type="button"
+                            disabled={!onToggleReaction}
+                            aria-pressed={reactedBySelf}
+                            className={`rounded-full px-1.5 py-0.5 inline-flex items-center gap-1 transition-colors duration-150 ${
+                                reactedBySelf ? 'bg-n-brand/20 ring-1 ring-n-brand/40' : 'bg-n-alpha-black1'
+                            } ${onToggleReaction ? 'cursor-pointer hover:bg-n-alpha-black2' : 'cursor-default'}`}
+                            onClick={() => onToggleReaction?.(emoji)}
                         >
-                            {emoji}
-                        </span>
+                            <span>{emoji}</span>
+                            {count > 1 ? <span className="text-xs text-n-slate-11">{count}</span> : null}
+                        </button>
                     ))}
                 </div>
             )}

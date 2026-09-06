@@ -9,6 +9,8 @@ import { MessageProvider } from './provider';
 import type { MessageContextValue } from './provider';
 import { CONTENT_TYPES, MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
+import MessageActions from './MessageActions';
+import MessageError from './MessageError';
 import ActivityBubble from './bubbles/Activity';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
@@ -33,11 +35,16 @@ import type { MessageAttachment } from './helpers/attachments';
 interface MessageProps {
     message: ConversationMessage;
     channelType: string | null;
+    inboxCapabilities?: readonly string[];
     groupWithNext?: boolean;
     // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
     chatAttachments?: MessageAttachment[];
     // Tin được trả lời — MessageList tra sẵn như getInReplyToMessage bên gốc.
     inReplyTo?: ConversationMessage | null;
+    // Gửi lại tin thất bại (POST …/messages/{id}/retry) — emit `retry` của gốc.
+    onRetry?: (message: ConversationMessage) => Promise<void> | void;
+    onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
+    onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -89,9 +96,13 @@ function resolveChannelCardBubble(contentAttributes: Record<string, unknown>) {
 export default function Message({
     message,
     channelType,
+    inboxCapabilities = [],
     groupWithNext = false,
     chatAttachments = [],
     inReplyTo = null,
+    onRetry,
+    onToggleReaction,
+    onDeleteMessage,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -202,6 +213,9 @@ export default function Message({
         orientation,
         shouldGroupWithNext,
         channelType,
+        inboxCapabilities,
+        onToggleReaction: onToggleReaction ? (emoji: string) => void onToggleReaction(message, emoji) : undefined,
+        onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
     };
 
     if (!shouldRenderMessage) return null;
@@ -211,7 +225,7 @@ export default function Message({
             <div
                 id={`message${message.id}`}
                 data-message-id={message.id}
-                className={`flex w-full mb-2 message-bubble-container ${FLEX_ORIENTATION_MAP[orientation]} ${
+                className={`flex w-full mb-2 group/message message-bubble-container ${FLEX_ORIENTATION_MAP[orientation]} ${
                     shouldGroupWithNext ? 'group-with-next' : ''
                 }`}
             >
@@ -232,14 +246,22 @@ export default function Message({
                             </div>
                         )}
                         <div
-                            className={`[grid-area:bubble] flex min-w-0 ${
+                            className={`[grid-area:bubble] flex min-w-0 items-end ${
                                 orientation === ORIENTATION.RIGHT
                                     ? 'ltr:ml-8 rtl:mr-8 justify-end'
                                     : 'ltr:mr-8 rtl:ml-8'
                             }`}
                         >
+                            {orientation === ORIENTATION.RIGHT ? <MessageActions className="self-end me-1" /> : null}
                             <BubbleComponent />
+                            {orientation === ORIENTATION.LEFT ? <MessageActions className="self-end ms-1" /> : null}
                         </div>
+                        {contentAttributes.external_error ? (
+                            <MessageError
+                                className={`[grid-area:meta] ${FLEX_ORIENTATION_MAP[orientation]}`}
+                                onRetry={onRetry ? () => onRetry(message) : undefined}
+                            />
+                        ) : null}
                     </div>
                 )}
             </div>

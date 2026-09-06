@@ -38,21 +38,30 @@ vi.mock('../ConversationContext', () => ({
 import ContactPanel from './ContactPanel';
 
 describe('ContactPanel accordions', () => {
-    it('renders every section closed when ui_settings has no is_*_open key', () => {
-        const { container, getAllByRole } = render(<ContactPanel />);
+    // Lệch có chủ đích (ux-deviations.md): "Previous Conversations" đứng thứ hai
+    // thay vì áp chót, và là mục DUY NHẤT mở sẵn khi người dùng chưa từng chọn.
+    it('renders sections in the Yona order with previous conversations second', () => {
+        const { getAllByRole } = render(<ContactPanel />);
 
         const headers = getAllByRole('button').filter(button => button.classList.contains('drag-handle'));
         expect(headers.map(header => header.textContent)).toEqual([
             'Conversation Actions',
+            'Previous Conversations',
             'Macros',
             'Conversation Information',
             'Contact Attributes',
             'Contact Notes',
             'Attachments',
-            'Previous Conversations',
             'Conversation participants',
         ]);
-        headers.forEach(header => expect(header).not.toHaveClass('rounded-bl-none'));
-        expect(container.querySelectorAll('.list-group .outline.border-t-0').length).toBe(0);
+    });
+
+    it('opens only previous conversations when ui_settings has no is_*_open key', () => {
+        const { getAllByRole } = render(<ContactPanel />);
+
+        const headers = getAllByRole('button').filter(button => button.classList.contains('drag-handle'));
+        const openHeaders = headers.filter(header => header.classList.contains('rounded-bl-none'));
+
+        expect(openHeaders.map(header => header.textContent)).toEqual(['Previous Conversations']);
     });
 });

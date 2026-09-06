@@ -1718,6 +1718,9 @@ const messages: Record<string, unknown> = {
         "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
     },
     "CONTACT_PANEL": {
+        "ADD_EMAIL_ADDRESS": "Thêm email",
+        "ADD_PHONE_NUMBER": "Thêm số điện thoại",
+        "ADD_COMPANY": "Thêm công ty",
         "NOT_AVAILABLE": "Không có sẵn",
         "EMAIL_ADDRESS": "Địa chỉ email",
         "PHONE_NUMBER": "Số điện thoại",
@@ -2360,6 +2363,25 @@ const messages: Record<string, unknown> = {
                 "CANCELED": "đã huỷ"
             }
         },
+        "MESSAGE_ACTIONS": {
+            "REACT": "Thả cảm xúc",
+            "RECALL": "Thu hồi với mọi người",
+            "DELETE": "Xoá"
+        },
+        "MESSAGE_FAILURE": {
+            "RETRY": "Thử lại",
+            "RETRY_FAILED": "Chưa gửi lại được. Bạn thử lại giúp nhé.",
+            "HINT": {
+                "session_lost": "Kênh đã mất kết nối. Bạn kết nối lại hộp thư rồi thử lại nhé.",
+                "circuit_open": "Đang tạm dừng gửi vì lỗi liên tiếp. Bạn thử lại sau ít phút.",
+                "bridge_unreachable": "Không gọi được dịch vụ của kênh. Bạn thử lại sau giây lát.",
+                "secret_mismatch": "Kênh đang sai cấu hình. Bạn báo quản trị viên kiểm tra — thử lại cũng không gửi được.",
+                "media_fetch_failed": "Không đọc được tệp đính kèm. Bạn gửi lại tệp nhé."
+            }
+        },
+        "MESSAGE_SENDER": {
+            "IN_GROUP": "Do {name} gửi trong nhóm"
+        },
         "UPLOADING_ATTACHMENTS": "Đang tải file đính kèm...",
         "REPLIED_TO_STORY": "Đã trả lời story của bạn",
         "UNSUPPORTED_MESSAGE": "This message is unsupported. You can view this message on the Facebook / Instagram app.",
@@ -2560,7 +2582,7 @@ const messages: Record<string, unknown> = {
             "MESSAGE_SIGN_TOOLTIP": "Chữ ký tin nhắn",
             "ENABLE_SIGN_TOOLTIP": "Bật chữ ký",
             "DISABLE_SIGN_TOOLTIP": "Tắt chữ ký",
-            "MSG_INPUT": "Shift + enter cho dòng mới. Bắt đầu với '/' để chọn Câu trả lời soạn trước.",
+            "MSG_INPUT": "Nhập tin nhắn… (/ để chọn câu trả lời mẫu)",
             "PRIVATE_MSG_INPUT": "Shift + enter cho dòng mới. Điều này sẽ chỉ hiển thị cho Nhân viên",
             "MESSAGING_RESTRICTED": "Bạn không trả lời được hội thoại này",
             "MESSAGING_RESTRICTED_WHATSAPP": "Do giới hạn cửa sổ 24 giờ, bạn chỉ trả lời được bằng tin mẫu",
@@ -3353,6 +3375,16 @@ const messages: Record<string, unknown> = {
                 "media_fetch_failed": "Không đọc được tệp đính kèm để gửi (:detail).",
                 "unknown": "Chưa gửi được tin này ra Zalo (:detail).",
                 "attachment_failed": "Không gửi được tệp \":filename\": :reason"
+            },
+            "action": {
+                "session_lost": "Phiên Zalo đã hết, bạn quét lại mã QR giúp mình nhé.",
+                "bridge_unreachable": "Chưa gọi được dịch vụ Zalo, bạn thử lại sau ít phút.",
+                "secret_mismatch": "Dịch vụ Zalo đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.",
+                "zalo_rejected": "Zalo từ chối thao tác này (:detail).",
+                "bad_request": "Zalo không còn nhận ra tin này (:detail).",
+                "missing_source_id": "Tin này chưa sang tới Zalo nên chưa đổi được ở đó.",
+                "emoji_not_supported": "Zalo không có biểu cảm này.",
+                "unknown": "Thao tác này chưa sang được Zalo (:detail)."
             }
         },
         "custom_attribute_definition": {

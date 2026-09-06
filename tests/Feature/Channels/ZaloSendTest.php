@@ -280,7 +280,7 @@ it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', fun
 
     $message->refresh();
 
-    expect($message->content_attributes['zalo_source_ids'])->toBe(['msg-a', 'msg-a-caption', 'msg-b', 'msg-c'])
+    expect($message->content_attributes['external_source_ids'])->toBe(['msg-a', 'msg-a-caption', 'msg-b', 'msg-c'])
         ->and($message->source_id)->toBe('msg-a')
         ->and($message->status)->not->toBe(Message::STATUSES['failed']);
 });
@@ -314,7 +314,7 @@ it('giữ source_id của tệp đã gửi được và nêu tên tệp hỏng k
     $message->refresh();
 
     expect($message->status)->toBe(Message::STATUSES['failed'])
-        ->and($message->content_attributes['zalo_source_ids'])->toBe(['msg-a'])
+        ->and($message->content_attributes['external_source_ids'])->toBe(['msg-a'])
         ->and($message->content_attributes['external_error']['code'])->toBe(SendOnZaloService::ERROR_MEDIA_FETCH_FAILED)
         ->and($message->content_attributes['external_error']['message'])->toContain('hop-dong.pdf');
 });
@@ -417,7 +417,7 @@ describe('POST …/messages/{message}/retry', function () {
         $message->update(['content_attributes' => [
             ...$message->refresh()->content_attributes,
             'in_reply_to' => $quoted->id,
-            'zalo_source_ids' => ['msg-a'],
+            'external_source_ids' => ['msg-a'],
         ]]);
 
         Queue::fake();
@@ -430,7 +430,7 @@ describe('POST …/messages/{message}/retry', function () {
 
         expect($message->refresh()->content_attributes)->toMatchArray([
             'in_reply_to' => $quoted->id,
-            'zalo_source_ids' => ['msg-a'],
+            'external_source_ids' => ['msg-a'],
         ]);
     });
 

@@ -103,6 +103,46 @@ export default function ContactInfo({
         }
     };
 
+    // Một khai báo cho cả dòng có giá trị lẫn nút "Thêm …" — đổi trường chỉ sửa
+    // một chỗ (thêm/bớt trường không phải sửa hai nhánh JSX).
+    const contactRows = [
+        {
+            key: 'email',
+            href: contact.email ? `mailto:${contact.email}` : '',
+            value: contact.email,
+            icon: 'mail',
+            emoji: '✉️',
+            title: t('CONTACT_PANEL.EMAIL_ADDRESS'),
+            addLabel: t('CONTACT_PANEL.ADD_EMAIL_ADDRESS'),
+            showCopy: true,
+            editable: true,
+            onUpdate: (value: string) => updateContactField('email', value),
+        },
+        {
+            key: 'phone_number',
+            href: contact.phone_number ? `tel:${contact.phone_number}` : '',
+            value: contact.phone_number,
+            icon: 'call',
+            emoji: '📞',
+            title: t('CONTACT_PANEL.PHONE_NUMBER'),
+            addLabel: t('CONTACT_PANEL.ADD_PHONE_NUMBER'),
+            showCopy: true,
+            editable: true,
+            onUpdate: (value: string) => updateContactField('phone_number', value),
+        },
+        {
+            key: 'company_name',
+            value: additionalAttributes.company_name,
+            icon: 'building-bank',
+            emoji: '🏢',
+            title: t('CONTACT_PANEL.COMPANY'),
+            addLabel: t('CONTACT_PANEL.ADD_COMPANY'),
+            editable: true,
+            onUpdate: (value: string) => updateContactField('company_name', value),
+        },
+    ];
+    const emptyRows = contactRows.filter(row => !row.value);
+
     return (
         <div className="relative items-center w-full p-4">
             <div className="flex flex-col w-full gap-2 text-left rtl:text-right">
@@ -133,7 +173,7 @@ export default function ContactInfo({
                                 />
                             ) : (
                                 <h3
-                                    className="flex-shrink max-w-full min-w-0 my-0 text-base capitalize break-words text-n-slate-12 cursor-pointer hover:text-n-slate-12/80"
+                                    className="flex-shrink max-w-full min-w-0 my-0 text-base break-words text-n-slate-12 cursor-pointer hover:text-n-slate-12/80"
                                     title={t('CONTACT_PANEL.CLICK_TO_EDIT')}
                                     onClick={startEditingName}
                                 >
@@ -166,37 +206,12 @@ export default function ContactInfo({
                     </div>
 
                     <div className="flex flex-col items-start w-full gap-2">
-                        <ContactInfoRow
-                            href={contact.email ? `mailto:${contact.email}` : ''}
-                            value={contact.email}
-                            icon="mail"
-                            emoji="✉️"
-                            title={t('CONTACT_PANEL.EMAIL_ADDRESS')}
-                            showCopy
-                            editable
-                            onUpdate={value => updateContactField('email', value)}
-                        />
-                        <ContactInfoRow
-                            href={contact.phone_number ? `tel:${contact.phone_number}` : ''}
-                            value={contact.phone_number}
-                            icon="call"
-                            emoji="📞"
-                            title={t('CONTACT_PANEL.PHONE_NUMBER')}
-                            showCopy
-                            editable
-                            onUpdate={value => updateContactField('phone_number', value)}
-                        />
+                        {contactRows
+                            .filter(row => row.value)
+                            .map(({ key, ...row }) => <ContactInfoRow key={key} {...row} />)}
                         {contact.identifier ? (
                             <ContactInfoRow value={contact.identifier} icon="contact-identify" emoji="🪪" title={t('CONTACT_PANEL.IDENTIFIER')} />
                         ) : null}
-                        <ContactInfoRow
-                            value={additionalAttributes.company_name}
-                            icon="building-bank"
-                            emoji="🏢"
-                            title={t('CONTACT_PANEL.COMPANY')}
-                            editable
-                            onUpdate={value => updateContactField('company_name', value)}
-                        />
                         {cityAndCountry || additionalAttributes.location ? (
                             <ContactInfoRow
                                 value={cityAndCountry || additionalAttributes.location}
@@ -213,6 +228,13 @@ export default function ContactInfo({
                                     ) : null
                                 }
                             />
+                        ) : null}
+                        {emptyRows.length ? (
+                            <div className="flex flex-wrap items-center w-full gap-x-4 gap-y-1">
+                                {emptyRows.map(({ key, ...row }) => (
+                                    <ContactInfoRow key={key} {...row} />
+                                ))}
+                            </div>
                         ) : null}
                     </div>
                 </div>

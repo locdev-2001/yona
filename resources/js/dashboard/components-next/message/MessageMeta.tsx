@@ -1,14 +1,22 @@
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon';
+import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import { MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import MessageStatus from './MessageStatus';
 import { useMessageContext } from './provider';
 
-// Port từ dashboard/components-next/message/MessageMeta.vue — B3 chỉ có kênh
-// API nên các nhánh WhatsApp/Twilio/FB/Line/Email... chưa port (đi cùng driver F).
+// Port từ dashboard/components-next/message/MessageMeta.vue. Bản gốc liệt kê từng
+// kênh (isAPIInbox / isAWhatsAppChannel / …); ở đây hỏi NĂNG LỰC thay vì loại kênh
+// (docs/channel-capabilities.md §3): kênh nào khai `event_delivered`/`event_seen`
+// thì dùng status thật, kênh không khai vẫn là đồng hồ xoay như trước.
+const LEFT_YONA_STATUSES: string[] = [MESSAGE_STATUS.SENT, MESSAGE_STATUS.DELIVERED, MESSAGE_STATUS.READ];
+
 export default function MessageMeta({ className = '' }: { className?: string }) {
-    const { createdAt, status, isPrivate, messageType, contentAttributes, channelType } = useMessageContext();
-    const isApiInbox = channelType === 'Channel::Api';
+    const { createdAt, status, isPrivate, messageType, contentAttributes, inboxCapabilities } =
+        useMessageContext();
+    const inbox = { capabilities: inboxCapabilities };
+    const hasDeliveryReceipts = inboxSupports(inbox, 'event_delivered');
+    const hasReadReceipts = inboxSupports(inbox, 'event_seen');
 
     const readableTime = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
@@ -19,12 +27,17 @@ export default function MessageMeta({ className = '' }: { className?: string }) 
         return messageType === MESSAGE_TYPES.OUTGOING || messageType === MESSAGE_TYPES.TEMPLATE;
     })();
 
-    // API inbox dùng status thật sent/delivered/read từ hệ ngoài.
     const statusToShow = (() => {
-        if (!isApiInbox) return MESSAGE_STATUS.PROGRESS;
-        if (status === MESSAGE_STATUS.READ) return MESSAGE_STATUS.READ;
-        if (status === MESSAGE_STATUS.DELIVERED) return MESSAGE_STATUS.DELIVERED;
-        if (status === MESSAGE_STATUS.SENT) return MESSAGE_STATUS.SENT;
+        if (hasReadReceipts && status === MESSAGE_STATUS.READ) return MESSAGE_STATUS.READ;
+        if (hasDeliveryReceipts && status === MESSAGE_STATUS.DELIVERED) return MESSAGE_STATUS.DELIVERED;
+        // Không bao giờ hiện dấu mà kênh không chứng thực được: trạng thái cao hơn
+        // mức kênh khai (ví dụ `read` trên kênh chỉ có biên nhận giao) lùi về một
+        // tick "đã rời khỏi Yona" — điều duy nhất tự mình biết chắc. Kênh không có
+        // biên nhận nào thì vẫn là đồng hồ xoay như trước khi gate theo năng lực.
+        const hasLeftYona = status !== null && LEFT_YONA_STATUSES.includes(status);
+
+        if ((hasDeliveryReceipts || hasReadReceipts) && hasLeftYona) return MESSAGE_STATUS.SENT;
+
         return MESSAGE_STATUS.PROGRESS;
     })();
 

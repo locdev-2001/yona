@@ -65,6 +65,16 @@ return [
             'unknown' => 'Chưa gửi được tin này ra Zalo (:detail).',
             'attachment_failed' => 'Không gửi được tệp ":filename": :reason',
         ],
+        'action' => [
+            'session_lost' => 'Phiên Zalo đã hết, bạn quét lại mã QR giúp mình nhé.',
+            'bridge_unreachable' => 'Chưa gọi được dịch vụ Zalo, bạn thử lại sau ít phút.',
+            'secret_mismatch' => 'Dịch vụ Zalo đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.',
+            'zalo_rejected' => 'Zalo từ chối thao tác này (:detail).',
+            'bad_request' => 'Zalo không còn nhận ra tin này (:detail).',
+            'missing_source_id' => 'Tin này chưa sang tới Zalo nên chưa đổi được ở đó.',
+            'emoji_not_supported' => 'Zalo không có biểu cảm này.',
+            'unknown' => 'Thao tác này chưa sang được Zalo (:detail).',
+        ],
     ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'chỉ được chứa chữ cái, chữ số, dấu gạch dưới, dấu gạch nối và dấu chấm',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\WebApi\Conversations;
 
 use App\Builders\Messages\MessageBuilder;
+use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Controllers\Controller;
@@ -11,6 +12,8 @@ use App\Jobs\SendReplyJob;
 use App\Models\Account;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\Channels\ChannelActionRegistry;
+use App\Services\Channels\ChannelOutboundActions;
 use App\Services\Integrations\GoogleTranslate\ProcessorService as GoogleTranslateProcessorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,8 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 // Port từ Api::V1::Accounts::Conversations::MessagesController.
-// Bỏ: update status (đi cùng driver kênh gửi thật), destroy (context menu
-// tin nhắn — port cùng cụm tiện ích).
+// Bỏ: update status (đi cùng driver kênh gửi thật).
 class MessagesController extends Controller
 {
     public function index(Request $request, Account $account, int $conversationId): JsonResponse
@@ -102,6 +104,95 @@ class MessagesController extends Controller
         return response()->json((new MessageResource($message))->toArray($request));
     }
 
+    /**
+     * messages#destroy — port nguyên hành vi gốc (đánh dấu tin bị xoá + xoá đính
+     * kèm, Message::markDeleted). Kênh khai `outbound_recall` thì thu hồi Ở KÊNH
+     * TRƯỚC (quyết định founder Q4 07/09: thu hồi hai chiều): kênh từ chối thì tin
+     * được GIỮ NGUYÊN và lý do hiện ra, vì xoá một chiều nghĩa là khách vẫn đọc
+     * được tin mà agent tưởng đã rút.
+     */
+    public function destroy(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $message = $conversation->messages()->findOrFail($messageId);
+
+        if ($message->isDeleted()) {
+            return response()->json((new MessageResource($message))->toArray($request));
+        }
+
+        $failure = $this->recallOnChannel($conversation, $message);
+
+        if ($failure !== null) {
+            return response()->json(['error' => $failure['message'] ?? '', 'code' => $failure['code'] ?? ''], 422);
+        }
+
+        $message->markDeleted($account->locale);
+
+        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+    }
+
+    /**
+     * messages#reactions — ngoài bản gốc (Chatwoot v4.17.1 không có UI biểu cảm);
+     * dựng theo docs/channel-capabilities.md §2.2 `outbound_reaction`. Lõi trung
+     * tính: emoji vào, driver kênh tự dịch sang mã của nền tảng.
+     */
+    public function storeReaction(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
+    {
+        $emoji = trim((string) $request->input('emoji'));
+
+        if ($emoji === '') {
+            return response()->json(['error' => 'emoji_required'], 422);
+        }
+
+        return $this->applyReaction($request, $account, $conversationId, $messageId, $emoji);
+    }
+
+    public function destroyReaction(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
+    {
+        return $this->applyReaction($request, $account, $conversationId, $messageId, null);
+    }
+
+    private function applyReaction(Request $request, Account $account, int $conversationId, int $messageId, ?string $emoji): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $message = $conversation->messages()->findOrFail($messageId);
+        $driver = $this->channelDriver($conversation, Capability::OutboundReaction);
+
+        $outcome = $driver->reaction($message, $emoji);
+
+        if (! ($outcome['ok'] ?? false)) {
+            return response()->json(['error' => $outcome['message'] ?? '', 'code' => $outcome['code'] ?? ''], 422);
+        }
+
+        $message->setReaction(Message::REACTION_BY_AGENT_PREFIX.$request->user()->id, $emoji);
+
+        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+    }
+
+    /** @return array{ok: bool, code?: string, message?: string}|null */
+    private function recallOnChannel(Conversation $conversation, Message $message): ?array
+    {
+        if (! $conversation->inbox->supports(Capability::OutboundRecall)) {
+            return null;
+        }
+
+        $outcome = ChannelActionRegistry::for($conversation->inbox)?->recall($message) ?? ['ok' => true];
+
+        return ($outcome['ok'] ?? false) ? null : $outcome;
+    }
+
+    /** Kênh không khai năng lực ⇒ 422 `capability_not_supported` (§1.4), không 500. */
+    private function channelDriver(Conversation $conversation, Capability $capability): ChannelOutboundActions
+    {
+        abort_unless($conversation->inbox->supports($capability), 422, 'capability_not_supported');
+
+        $driver = ChannelActionRegistry::for($conversation->inbox);
+
+        abort_if($driver === null, 422, 'capability_not_supported');
+
+        return $driver;
+    }
+
     private function claimMessageRetry(Conversation $conversation, Message $message): bool
     {
         return DB::transaction(function () use ($conversation, $message) {
@@ -127,7 +218,7 @@ class MessagesController extends Controller
 
     /**
      * Bản gốc đặt `content_attributes: {}` (xoá sạch). Ở đây chỉ bỏ lý do lỗi:
-     * xoá sạch sẽ mất `in_reply_to`, `sticker`, `zalo_source_ids` — tức tin gửi
+     * xoá sạch sẽ mất `in_reply_to`, `sticker`, `external_source_ids` — tức tin gửi
      * lại rụng trích dẫn và echo của phần đã gửi được sẽ thành bong bóng ma.
      *
      * @return array<string, mixed>

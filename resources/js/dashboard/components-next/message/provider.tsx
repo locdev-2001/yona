@@ -28,6 +28,15 @@ export interface MessageContextValue {
     orientation: MessageOrientation;
     shouldGroupWithNext: boolean;
     channelType: string | null;
+    // Năng lực của inbox đang mở (docs/channel-capabilities.md §3): bong bóng và
+    // meta gate theo cái này, KHÔNG theo channelType.
+    inboxCapabilities: readonly string[];
+    // Thả/gỡ biểu cảm — bấm lại chính emoji mình đã thả là gỡ. Không có hàm này
+    // (kênh không khai `outbound_reaction`) thì hàng emoji chỉ để đọc.
+    onToggleReaction?: (emoji: string) => void;
+    // Thu hồi (kênh khai `outbound_recall`) hoặc xoá một chiều ở Yona — lõi tự
+    // quyết theo năng lực, FE chỉ đổi nhãn.
+    onDeleteMessage?: () => void;
 }
 
 const MessageControl = createContext<MessageContextValue | null>(null);

@@ -1,6 +1,6 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
-import { getJson, postForm, postJson } from '../helper/apiClient';
+import { deleteJson, getJson, postForm, postJson } from '../helper/apiClient';
 import type { ConversationType } from './constants';
 import type {
     AgentMeta,
@@ -222,6 +222,55 @@ export function sendMessage(
     }
 
     return postJson(url, { ...jsonPayload });
+}
+
+/**
+ * Gửi lại một tin thất bại. Hợp đồng ở reports/zalo-lo3-notes.md: 200 trả về
+ * chính tin (MessageResource); bấm lại khi tin không còn `failed` là no-op.
+ */
+export function retryMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/retry`,
+        {},
+    );
+}
+
+/**
+ * Thả / gỡ biểu cảm và thu hồi tin (reports/zalo-lo4-notes.md §2.1). Kênh không
+ * khai năng lực tương ứng trả 422 `capability_not_supported` — FE gate trước.
+ */
+export function addMessageReaction(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+    emoji: string,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/reactions`,
+        { emoji },
+    );
+}
+
+export function removeMessageReaction(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return deleteJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/reactions`,
+    );
+}
+
+export function deleteMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return deleteJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`);
 }
 
 export interface ToggleStatusResponse {

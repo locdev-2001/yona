@@ -5,6 +5,9 @@
 // khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
+    'ADD_EMAIL_ADDRESS' => 'Thêm email',
+    'ADD_PHONE_NUMBER' => 'Thêm số điện thoại',
+    'ADD_COMPANY' => 'Thêm công ty',
     'NOT_AVAILABLE' => 'Không có sẵn',
     'EMAIL_ADDRESS' => 'Địa chỉ email',
     'PHONE_NUMBER' => 'Số điện thoại',

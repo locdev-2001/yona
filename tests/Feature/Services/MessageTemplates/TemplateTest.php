@@ -22,6 +22,21 @@ it('creates the two email collect messages', function () {
     expect($messages->last()->content_type)->toBe(Message::CONTENT_TYPES['input_email']);
 });
 
+it('writes template messages in the account locale, not the request locale', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->account->update(['locale' => 'vi']);
+    app()->setLocale('en');
+
+    (new EmailCollect($conversation->fresh()))->perform();
+
+    $messages = $conversation->messages()->reorder('id')->get();
+
+    expect($messages->first()->content)->toBe(__('conversations.templates.ways_to_reach_you_message_body', [], 'vi'));
+    expect($messages->last()->content)->toBe(__('conversations.templates.email_input_box_message_body', [], 'vi'));
+    // Locale của request được trả lại nguyên trạng sau khi sinh tin.
+    expect(app()->getLocale())->toBe('en');
+});
+
 it('creates the greeting message', function () {
     $conversation = Conversation::factory()->create();
     $conversation->inbox->update(['greeting_message' => 'Hello welcome to our board.']);
