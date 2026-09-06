@@ -19,9 +19,10 @@ class Label extends Model
     /** @use HasFactory<LabelFactory> */
     use HasFactory;
 
-    // RegexHelper::UNICODE_CHARACTER_NUMBER_HYPHEN_UNDERSCORE — ít nhất 2 ký tự,
-    // không mở đầu bằng `_`/`-`, không khoảng trắng.
-    public const TITLE_REGEX = '/\A[\p{L}\p{N}]+[\p{L}\p{N}_-]+\z/u';
+    // Tên nhãn là tên hiển thị tự do. Chỉ chặn xuống dòng để một label vẫn là
+    // một dòng trong chip, sidebar và URL filter; khoảng trắng/ký hiệu/chữ hoa
+    // đều được giữ nguyên.
+    public const TITLE_REGEX = '/\A[^\r\n]+\z/u';
 
     public const DEFAULT_COLOR = '#1f93ff';
 
@@ -67,11 +68,11 @@ class Label extends Model
         });
     }
 
-    // before_validation { self.title = title.downcase } — validate chạy TRÊN tên
-    // đã chuẩn hóa nên nơi nhận input phải gọi hàm này trước khi kiểm tra.
+    // Chuẩn hóa duy nhất là trim hai đầu; không biến tên hiển thị thành slug và
+    // không hạ chữ thường.
     public static function normalizeTitle(string $title): string
     {
-        return mb_strtolower($title);
+        return trim($title);
     }
 
     public function account(): BelongsTo

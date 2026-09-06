@@ -5,17 +5,27 @@ import { useConversation } from '../ConversationContext';
 import ConversationBasicFilter from './ConversationBasicFilter';
 import SwitchLayout from './SwitchLayout';
 
-// Port từ dashboard/components/ChatListHeader.vue — nhánh applied filters /
-// custom folders cắt khỏi B3 (E1) nên chỉ còn nhánh mặc định: chip status +
-// nút filter (mở ConversationFilter) + basic filter + switch layout.
+// Port từ dashboard/components/ChatListHeader.vue: khi advanced filter đang áp
+// dụng thì chip hiển thị tổng kết quả, có nút xóa và ẩn basic filter.
 interface ChatListHeaderProps {
     pageTitle: string;
     activeStatus: ConversationStatusFilter;
     isOnExpandedLayout: boolean;
     onFiltersModal: () => void;
+    hasAppliedFilters: boolean;
+    filteredCount: number;
+    onResetFilters: () => void;
 }
 
-export default function ChatListHeader({ pageTitle, activeStatus, isOnExpandedLayout, onFiltersModal }: ChatListHeaderProps) {
+export default function ChatListHeader({
+    pageTitle,
+    activeStatus,
+    isOnExpandedLayout,
+    onFiltersModal,
+    hasAppliedFilters,
+    filteredCount,
+    onResetFilters,
+}: ChatListHeaderProps) {
     const { toggleConversationLayout } = useConversation();
 
     return (
@@ -25,7 +35,9 @@ export default function ChatListHeader({ pageTitle, activeStatus, isOnExpandedLa
                     {pageTitle}
                 </h1>
                 <span className="px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 text-xxs text-n-slate-12 shrink-0">
-                    {t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`)}
+                    {hasAppliedFilters
+                        ? filteredCount
+                        : t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`)}
                 </span>
             </div>
             <div className="flex items-center gap-1">
@@ -44,7 +56,18 @@ export default function ChatListHeader({ pageTitle, activeStatus, isOnExpandedLa
                         className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
                     />
                 </div>
-                <ConversationBasicFilter />
+                {hasAppliedFilters ? (
+                    <NextButton
+                        title={t('FILTER.CLEAR_BUTTON_LABEL')}
+                        icon="i-lucide-circle-x"
+                        slate
+                        xs
+                        faded
+                        onClick={onResetFilters}
+                    />
+                ) : (
+                    <ConversationBasicFilter />
+                )}
                 <SwitchLayout isOnExpandedLayout={isOnExpandedLayout} onToggle={toggleConversationLayout} />
             </div>
         </div>

@@ -20,6 +20,12 @@ export function applyConversationStatus(
     return patchConversation(conversations, conversationId, { status, snoozed_until: snoozedUntil });
 }
 
+export function snoozedUntilForStatus(status: ConversationStatus, snoozedUntil: number | null): string | null {
+    if (status !== 'snoozed' || snoozedUntil === null) return null;
+
+    return new Date(snoozedUntil * 1000).toISOString();
+}
+
 export function applyConversationPriority(
     conversations: Conversation[],
     conversationId: number,

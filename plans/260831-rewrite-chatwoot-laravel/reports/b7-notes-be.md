@@ -26,10 +26,10 @@ middleware `auth.api_token` + `auth` + `account.scope` (giống các tính năng
 - Body gửi **phẳng** (đúng như `LabelsAPI` của Chatwoot). Backend cũng chấp nhận
   dạng bọc `{"label": {...}}` — Rails ParamsWrapper của bản gốc bọc giúp, ở đây
   controller nhận cả hai.
-- `title` bị **hạ chữ thường** trước khi lưu và phải khớp regex
-  `UNICODE_CHARACTER_NUMBER_HYPHEN_UNDERSCORE` (`\A[\p{L}\p{N}]+[\p{L}\p{N}_-]+\z`)
-  — ít nhất 2 ký tự, không khoảng trắng, không bắt đầu bằng `_`/`-`. Trùng title
-  trong cùng account → **422** (`{"message": …, "errors": {…}}` chuẩn Laravel).
+- `title` là **tên hiển thị tự do**: giữ nguyên chữ hoa/chữ thường, dấu tiếng Việt,
+  khoảng trắng và ký hiệu; chỉ trim hai đầu và chặn xuống dòng để chip/sidebar
+  vẫn hiển thị một dòng. Trùng title trong cùng account không phân biệt hoa thường
+  → **422** (`{"message": …, "errors": {…}}` chuẩn Laravel).
 - `color` mặc định `#1f93ff` khi không gửi.
 - Không có quyền → **401** `{"message": "You are not authorized to do this action"}`.
 - Đổi `title` → job nền cập nhật mọi hội thoại/liên hệ đang gắn nhãn (FE chỉ cần
@@ -82,7 +82,8 @@ thật tới `labels` (quyết định thiết kế của plan: bỏ gem `acts_a
 nên title lạ bị **bỏ qua im lặng** — response trả về danh sách thật sau khi lưu,
 FE lấy đó làm nguồn sự thật. Bản gốc tạo tag tự do; UI Chatwoot chỉ cho chọn từ
 danh sách nhãn của account nên đường đi của người dùng không đổi.
-So khớp không phân biệt hoa/thường (title nhãn luôn là chữ thường).
+So khớp khi gắn nhãn không phân biệt hoa/thường, nhưng title lưu và hiển thị giữ
+nguyên casing người dùng nhập.
 
 ## Bảng trace Ruby ↔ PHP
 
@@ -90,7 +91,7 @@ So khớp không phân biệt hoa/thường (title nhãn luôn là chữ thườ
 |---|---|---|
 | `db/schema.rb` bảng `labels` | `database/migrations/2026_09_06_200000_create_labels_tables.php` | cột y gốc (`color` default `#1f93ff`, `show_on_sidebar` nullable), unique `(title, account_id)`, `timestamps(6)` |
 | gem `acts_as_taggable_on` (`tags` + `taggings` đa ngữ cảnh) | bảng `taggings` trong cùng migration | `account_id` + `label_id` khóa ngoại cascade + morph `taggable`, unique `(label_id, taggable_type, taggable_id)`, index `(taggable_type, taggable_id)` và `(account_id, label_id)`; bỏ `tags`, `tagger`, `context`, `taggings_count` |
-| `Label` (`before_validation` downcase, `default_scope order(:title)`, `after_update_commit`) | `App\Models\Label` | `normalizeTitle()` + hook `saving` (giống `Team::normalizeName`); global scope `Label::ORDER_SCOPE`; hook `updated` → `Labels\UpdateJob` khi `wasChanged('title')`; hằng `TITLE_REGEX` = `RegexHelper::UNICODE_CHARACTER_NUMBER_HYPHEN_UNDERSCORE` |
+| `Label` (`default_scope order(:title)`, `after_update_commit`) | `App\Models\Label` | `normalizeTitle()` chỉ trim; hook `saving`; global scope `Label::ORDER_SCOPE`; hook `updated` → `Labels\UpdateJob` khi `wasChanged('title')`; `TITLE_REGEX` chỉ chặn xuống dòng |
 | `Label#conversations` / `#messages` / `#reporting_events` | `Label::conversations()` + `Label::contacts()` (`morphedByMany`) | `messages`/`reporting_events` là đường của báo cáo nhãn (nhóm E) — chưa port |
 | `ActsAsTaggableOn::Tagging` | `App\Models\Tagging` | không khai báo `taggable()` morphTo (không nơi nào cần đọc ngược); alias morph đăng ký trong `Labelable::bootLabelable()` |
 | `Labelable` (`update_labels`, `add_labels`) | `App\Models\Concerns\Labelable` | thêm `labelList()`, `removeLabels()` (bản gốc để phép trừ trong `BulkActionsJob`); `parseLabelList` = `ActsAsTaggableOn.default_parser` (mảng hoặc chuỗi ngăn cách dấu phẩy); `syncLabels()` là chỗ DUY NHẤT ghi taggings, gọi hook `labelListChanged()` khi danh sách thật sự đổi |
@@ -111,7 +112,7 @@ So khớp không phân biệt hoa/thường (title nhãn luôn là chữ thườ
 
 | RSpec | Pest |
 |---|---|
-| `spec/models/label_spec.rb` | `tests/Feature/Models/LabelTest.php` (hạ chữ thường, ký tự nước ngoài, thứ tự title, job đổi tên) + phần validate title chuyển sang `LabelsControllerTest` |
+| `spec/models/label_spec.rb` | `tests/Feature/Models/LabelTest.php` (giữ casing, trim, ký tự nước ngoài, thứ tự title, job đổi tên) + phần validate title chuyển sang `LabelsControllerTest` |
 | phần `#update_labels` + `cached_label_list_array` của `spec/models/conversation_spec.rb`, `labelable` | `tests/Feature/Models/ConversationLabelsTest.php` (10 case: activity added/removed, đồng bộ cache, event `conversation.updated`, không đổi gì thì không chạm bản ghi, bỏ title lạ, chuỗi ngăn cách dấu phẩy, add/remove, contact không bị chạm, xóa nhãn gỡ liên kết) |
 | `spec/services/labels/update_service_spec.rb` | `tests/Feature/Services/Labels/UpdateServiceTest.php` |
 | `spec/services/labels/destroy_service_spec.rb` | `tests/Feature/Services/Labels/DestroyServiceTest.php` |
@@ -123,18 +124,19 @@ So khớp không phân biệt hoa/thường (title nhãn luôn là chữ thườ
 ## Khác biệt cố ý
 
 1. **Chỉ gắn được nhãn đã tồn tại trong account** (xem mục 5 phần contract). Bản gốc tạo tag tự do vì tag là bảng riêng; ở đây `taggings.label_id` là khóa ngoại thật nên `labels` là nguồn sự thật duy nhất, title lạ bị bỏ qua và response trả danh sách thật.
-2. **`Labels::UpdateService` bỏ `old_label_title`, `Labels::DestroyService` bỏ `label_deleted_at`.** Bản gốc cần cả hai vì tag sống độc lập với nhãn (đổi tên phải viết lại từng tag; xóa nhãn có thể bỏ sót liên kết tạo sau). Với khóa ngoại cascade, đổi tên là đổi một dòng và không thể có liên kết mồ côi.
-3. **Gắn/gỡ nhãn cho contact KHÔNG bắn `contact.updated`.** Bản gốc save contact nên `after_update_commit` chạy, nhưng payload contact (`push_event_data`) không chứa nhãn nên FE không mất thông tin; contact cũng không có cột cache để đồng bộ.
-4. **`title` kết thúc bằng khoảng trắng/xuống dòng được nhận** (lưu bản đã cắt) vì middleware `TrimStrings` của Laravel chạy trước validate; bản gốc trả 422 nhờ neo `\z`. Xuống dòng NẰM GIỮA title vẫn bị chặn — case regression của Chatwoot vẫn còn ý nghĩa. Đã ghi thành test riêng.
-5. **Thứ tự nhãn** lấy theo thứ tự dòng `taggings` (thứ tự gắn) và `cached_label_list` luôn dựng lại từ đó, nên cache và danh sách thật luôn khớp. Bản gốc ghi cache theo thứ tự client gửi lên, có thể lệch với thứ tự association khi gửi lại cùng tập nhãn theo thứ tự khác.
-6. **`Account::labels()` chưa có** (file `app/Models/Account.php` ngoài phạm vi tính năng này) — `LabelsController::accountLabels()` truy vấn `Label::query()->where('account_id', …)`. Nên thêm quan hệ vào Account ở phiên sở hữu file đó.
-7. **`Relation::morphMap` alias `'Conversation'`** đăng ký trong `Labelable::bootLabelable()` thay vì `AppServiceProvider` (cùng lý do phạm vi file). `Tagging` vì thế không khai báo `taggable()` morphTo.
-8. Chưa port: `Label#messages` / `#reporting_events` (báo cáo nhãn — nhóm E), `FilteredCountInvalidator` (B8), `AccountCacheRevalidator` (cache key theo account), endpoint `cache_keys` mà `CacheEnabledApiClient` của FE gọi khi bật cache (FE nên dùng `LabelsAPI.get(false)` / gọi thẳng `GET /labels`).
+2. **Tên label tự do theo yêu cầu sản phẩm Việt**: khác validation slug của Chatwoot, Yona giữ casing và cho phép khoảng trắng/ký hiệu, nhưng vẫn trim đầu/cuối và chặn newline.
+3. **`Labels::UpdateService` bỏ `old_label_title`, `Labels::DestroyService` bỏ `label_deleted_at`.** Bản gốc cần cả hai vì tag sống độc lập với nhãn (đổi tên phải viết lại từng tag; xóa nhãn có thể bỏ sót liên kết tạo sau). Với khóa ngoại cascade, đổi tên là đổi một dòng và không thể có liên kết mồ côi.
+4. **Gắn/gỡ nhãn cho contact KHÔNG bắn `contact.updated`.** Bản gốc save contact nên `after_update_commit` chạy, nhưng payload contact (`push_event_data`) không chứa nhãn nên FE không mất thông tin; contact cũng không có cột cache để đồng bộ.
+5. **`title` kết thúc bằng khoảng trắng được nhận** và lưu dạng đã cắt; newline ở giữa/bất kỳ vị trí nào bị chặn để giữ label một dòng.
+6. **Thứ tự nhãn** lấy theo thứ tự dòng `taggings` (thứ tự gắn) và `cached_label_list` luôn dựng lại từ đó, nên cache và danh sách thật luôn khớp. Bản gốc ghi cache theo thứ tự client gửi lên, có thể lệch với thứ tự association khi gửi lại cùng tập nhãn theo thứ tự khác.
+7. **`Account::labels()` chưa có** (file `app/Models/Account.php` ngoài phạm vi tính năng này) — `LabelsController::accountLabels()` truy vấn `Label::query()->where('account_id', …)`. Nên thêm quan hệ vào Account ở phiên sở hữu file đó.
+8. **`Relation::morphMap` alias `'Conversation'`** đăng ký trong `Labelable::bootLabelable()` thay vì `AppServiceProvider` (cùng lý do phạm vi file). `Tagging` vì thế không khai báo `taggable()` morphTo.
+9. Chưa port: `Label#messages` / `#reporting_events` (báo cáo nhãn — nhóm E), `FilteredCountInvalidator` (B8), `AccountCacheRevalidator` (cache key theo account), endpoint `cache_keys` mà `CacheEnabledApiClient` của FE gọi khi bật cache (FE nên dùng `LabelsAPI.get(false)` / gọi thẳng `GET /labels`).
 
 ## Kiểm chứng đã chạy
 
 - `vendor/bin/pest` toàn suite: **696/696 xanh** (lần chạy trước đó fail do agent song song `b9-be` chạy test cùng lúc trên `yona_rw_test` — drop bảng giữa chừng; chạy lại xanh).
 - `vendor/bin/pint --dirty`: sạch.
 - `php artisan route:list | grep label`: đủ 9 route (5 CRUD + 2 conversation + 2 contact).
-- curl thật (token John, account 2, conversation 4): tạo nhãn `B7-Test` → hạ chữ thường `b7-test` → gán vào hội thoại 4 → `GET` trả `["b7-test"]` → payload hội thoại có `labels: ["b7-test"]` → đổi tên `B7-Renamed` → job nền cập nhật `cached_label_list` = `b7-renamed` → title sai định dạng trả 422 → xóa nhãn → hội thoại còn `[]`. Activity sinh đúng một dòng `John added b7-test` (đổi tên/xóa chạy trong job không có user nên không sinh activity — đúng bản gốc).
+- Browser/API recheck: tạo nhãn `VIP Khách Hàng #1` giữ nguyên casing → gắn vào hội thoại 4 → click sidebar filter và tab All trả đúng 1 conversation → gỡ/xóa sạch. Nhãn trùng hoa thường vẫn trả 422; newline trả 422.
 - **Dọn sạch:** đã xóa nhãn test + activity message 94, `conversations.display_id=4` trở về `cached_label_list = NULL`, đúng 5 tin (id 3–7), `last_activity_at` và `updated_at` = `2026-09-01 06:11:52`; `labels` và `taggings` rỗng.

@@ -116,11 +116,13 @@ trait Labelable
 
         $labels = Label::query()
             ->where('account_id', $this->account_id)
-            ->whereIn('title', $normalized->all())
             ->get()
-            ->keyBy('title');
+            ->keyBy(fn (Label $label) => mb_strtolower($label->title));
 
-        return $normalized->map(fn (string $title) => $labels->get($title))->filter()->values();
+        return $normalized
+            ->map(fn (string $title) => $labels->get(mb_strtolower($title)))
+            ->filter()
+            ->values();
     }
 
     // ActsAsTaggableOn.default_parser: nhận mảng, hoặc chuỗi ngăn cách bằng dấu phẩy.

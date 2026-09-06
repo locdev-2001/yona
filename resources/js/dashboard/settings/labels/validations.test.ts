@@ -7,8 +7,12 @@ import {
 } from './validations';
 
 describe('normalizeLabelTitle', () => {
-    it('hạ toàn bộ chữ thường như Label#before_validation', () => {
-        expect(normalizeLabelTitle('Khách VIP')).toBe('khách vip');
+    it('giữ nguyên chữ hoa và dấu tiếng Việt', () => {
+        expect(normalizeLabelTitle('Khách VIP')).toBe('Khách VIP');
+    });
+
+    it('cắt khoảng trắng hai đầu trước khi lưu', () => {
+        expect(normalizeLabelTitle('  Khách VIP  ')).toBe('Khách VIP');
     });
 
     it('giữ nguyên chuỗi đã là chữ thường', () => {
@@ -17,12 +21,16 @@ describe('normalizeLabelTitle', () => {
 });
 
 describe('validLabelCharacters', () => {
-    it.each(['vip', 'khach-quen', 'nhom_1', 'ưutiên', 'a1'])('nhận %s', title => {
+    it.each(['vip', 'VIP #1', 'khách vip', 'nhóm/ưu tiên', 'a1'])('nhận %s', title => {
         expect(validLabelCharacters(title)).toBe(true);
     });
 
-    it.each(['', 'a', 'co dau cach', '-vip', '_vip', 'vip!', 'vip label'])('từ chối %s', title => {
+    it.each(['', 'vip\nlabel'])('từ chối %s', title => {
         expect(validLabelCharacters(title)).toBe(false);
+    });
+
+    it('cho phép khoảng trắng hai đầu vì sẽ được cắt trước khi lưu', () => {
+        expect(validLabelCharacters(' vip ')).toBe(true);
     });
 });
 
@@ -35,8 +43,8 @@ describe('getLabelTitleErrorMessageKey', () => {
         expect(getLabelTitleErrorMessageKey('a')).toBe('LABEL_MGMT.FORM.NAME.MINIMUM_LENGTH_ERROR');
     });
 
-    it('có dấu cách → lỗi ký tự', () => {
-        expect(getLabelTitleErrorMessageKey('vip label')).toBe('LABEL_MGMT.FORM.NAME.VALID_ERROR');
+    it('label tên tự do có chữ hoa, dấu cách và ký hiệu → không lỗi', () => {
+        expect(getLabelTitleErrorMessageKey('Khách VIP #1')).toBe('');
     });
 
     it('hợp lệ → không lỗi', () => {

@@ -30,7 +30,7 @@ return [
             'PLACEHOLDER' => 'Label name',
             'REQUIRED_ERROR' => 'Label name is required',
             'MINIMUM_LENGTH_ERROR' => 'Minimum length 2 is required',
-            'VALID_ERROR' => 'Only Alphabets, Numbers, Hyphen and Underscore are allowed',
+            'VALID_ERROR' => 'Label name must be a single line',
         ],
         'DESCRIPTION' => [
             'LABEL' => 'Description',

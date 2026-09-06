@@ -61,7 +61,7 @@ export default function LabelForm({
             <form className="flex flex-wrap mx-0" onSubmit={submit}>
                 <WootInput
                     value={title}
-                    className={`w-full [&_input]:lowercase ${titleError ? 'error' : ''}`}
+                    className={`w-full ${titleError ? 'error' : ''}`}
                     label={t('LABEL_MGMT.FORM.NAME.LABEL')}
                     placeholder={t('LABEL_MGMT.FORM.NAME.PLACEHOLDER')}
                     error={titleError}

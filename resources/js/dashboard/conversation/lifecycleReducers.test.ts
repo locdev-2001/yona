@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyConversationMuted, applyConversationPriority, applyConversationStatus } from './lifecycleReducers';
+import {
+    applyConversationMuted,
+    applyConversationPriority,
+    applyConversationStatus,
+    snoozedUntilForStatus,
+} from './lifecycleReducers';
 import type { Conversation } from './types';
 
 function buildConversation(overrides: Partial<Conversation> = {}): Conversation {
@@ -52,6 +57,17 @@ describe('applyConversationStatus (CHANGE_CONVERSATION_STATUS)', () => {
     it('không đụng conversation khác id', () => {
         const list = [buildConversation({ id: 9 })];
         expect(applyConversationStatus(list, 4, 'resolved', null)).toEqual(list);
+    });
+});
+
+describe('snoozedUntilForStatus', () => {
+    it('đổi epoch giây thành ISO để optimistic state vẽ header ngay', () => {
+        expect(snoozedUntilForStatus('snoozed', 1788746400)).toBe('2026-09-07T02:00:00.000Z');
+    });
+
+    it('xóa mốc khi trạng thái không còn snoozed', () => {
+        expect(snoozedUntilForStatus('open', 1788746400)).toBeNull();
+        expect(snoozedUntilForStatus('snoozed', null)).toBeNull();
     });
 });
 

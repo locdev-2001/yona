@@ -40,6 +40,18 @@ Ngày: 05–06/09/2026. Phiên đơn `yona-6d` (QA + e2e) + 3 agent song song. B
 - `lang/en/conversations.php` là chuỗi backend nhưng vẫn vào bundle FE vì `i18n:generate` không có cơ chế loại trừ — chấp nhận (một nguồn), bundle chỉ tăng ~30 chuỗi.
 - Nhánh AgentBot trong dropdown assignee (badge avatar) chưa port — B6.
 
+## QA recheck 06/09/2026
+
+- Browser E2E sau khi sửa status: Resolve/Reopen/Pending/Open/Snooze/Open, reload,
+  transcript modal và hotkey đều chạy; status đổi optimistic trước response chậm
+  1.5s, `Alt+M` mở ngay, lỗi API chậm rollback về trạng thái cũ.
+- Filter status thật: sau Snooze, `Status = Snoozed` ở tab `Mine` cho 0 vì hội thoại
+  chưa assign; chuyển `All` cho đúng 1 conversation. Đây là semantics của bộ lọc,
+  không phải mất dữ liệu.
+- Pixel full-frame cũ không còn là bằng chứng hợp lệ: Yona đang có thêm inbox
+  WebWidget `Yona` trong account 2 còn oracle chỉ có `api-test`, làm header/sidebar
+  lệch. Cần chuẩn hóa fixture hoặc chỉ crop vùng tương tác trước khi chấm lại.
+
 ## Bẫy đã trả giá
 
 1. **State ui_settings làm pixel-diff lệch giả:** e2e của agent để lại `is_contact_sidebar_open` + `is_conv_actions_open` = true ở CẢ HAI bên → màn conversation nhảy từ 0.39% lên 1.11% vì oracle hiện thêm Assignee/Team/Labels trong accordion. Trước khi chấm gate 3 phải reset ui_settings hai bên về mặc định.
