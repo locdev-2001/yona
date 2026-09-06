@@ -6,13 +6,13 @@ import Input from 'dashboard/components-next/input/Input';
 import { t } from '../../../i18n';
 import FilterSelect from './inputs/FilterSelect';
 import MultiSelect from './inputs/MultiSelect';
+import MultiTextInput from './inputs/MultiTextInput';
 import SingleSelect from './inputs/SingleSelect';
 import type { FilterOperator } from './operators';
 import type { ConversationFilterCondition, FilterOption, FilterSelectOption, FilterType, FilterValue } from './helper/filterHelper';
 import { validateSingleFilter } from './helper/validations';
 
-// Port từ components-next/filter/ConditionRow.vue. Bỏ: MultiTextInput (không
-// có trong bộ attribute mặc định — rơi về Input như nhánh v-else của gốc).
+// Port từ components-next/filter/ConditionRow.vue.
 interface ConditionRowProps {
     condition: ConversationFilterCondition;
     previousQueryOperator?: 'and' | 'or';
@@ -172,6 +172,17 @@ export default function ConditionRow({
                     disableSearch
                     options={booleanOptions}
                     onChange={value => setValues(value ?? {})}
+                />
+            );
+        }
+        if (inputType === 'multiText') {
+            const textValues = Array.isArray(condition.values) ? condition.values.map(String) : [];
+            return (
+                <MultiTextInput
+                    value={textValues}
+                    placeholder={t(textValues.length ? 'FILTER.MULTI_VALUE_INPUT_PLACEHOLDER_SHORT' : 'FILTER.MULTI_VALUE_INPUT_PLACEHOLDER')}
+                    // FilterValue của bộ lọc hội thoại chưa có string[]; multi_text chỉ automation dùng.
+                    onChange={values => setValues(values as unknown as FilterValue)}
                 />
             );
         }

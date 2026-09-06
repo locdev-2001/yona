@@ -1,8 +1,10 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from '@inertiajs/react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import { useDropdownPosition } from 'dashboard/composables/useDropdownPosition';
 
 // Port từ dashboard/components-next/dropdown-menu/base/* (Container/Body/Section/Item/Separator)
 
@@ -13,6 +15,29 @@ interface DropdownContextValue {
 }
 
 const DropdownContext = createContext<DropdownContextValue | null>(null);
+
+// provideDropdownTeleport của gốc: mọi dropdown bên dưới render menu ra <body>,
+// dành cho cây nằm trong vùng cuộn/cắt (side panel) sẽ che mất menu.
+const DropdownTeleportContext = createContext(false);
+
+export function DropdownTeleportProvider({ children }: { children: ReactNode }) {
+    return <DropdownTeleportContext.Provider value>{children}</DropdownTeleportContext.Provider>;
+}
+
+// Port từ base/DropdownFloating.vue — menu fixed cạnh trigger, teleport ra body.
+function DropdownFloating({ getTrigger, children }: { getTrigger: () => Element | null; children: ReactNode }) {
+    const menuRef = useRef<HTMLDivElement>(null);
+    const fixedPosition = useDropdownPosition(getTrigger, menuRef, true, { align: 'start' });
+
+    return createPortal(
+        <div data-dropdown-menu className={`overflow-y-auto ${fixedPosition.className}`} style={fixedPosition.style}>
+            <div ref={menuRef} className="[&>*]:!static">
+                {children}
+            </div>
+        </div>,
+        document.body,
+    );
+}
 
 export function useDropdownContext(): DropdownContextValue {
     const context = useContext(DropdownContext);
@@ -30,6 +55,10 @@ interface DropdownContainerProps {
 export function DropdownContainer({ className = '', onClose, children, menu }: DropdownContainerProps) {
     const [isOpen, setOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const teleport = useContext(DropdownTeleportContext);
+    // Getter thay vì memo: trigger đổi phần tử theo state (multi select đổi
+    // placeholder thành nút chips khi đã chọn).
+    const getTrigger = useCallback(() => containerRef.current?.firstElementChild ?? null, []);
 
     const toggle = () => setOpen(open => !open);
     const closeMenu = () => {
@@ -41,8 +70,11 @@ export function DropdownContainer({ className = '', onClose, children, menu }: D
 
     useEffect(() => {
         if (!isOpen) return;
+        // Menu teleport nằm ngoài container nên click trong menu đọc như click ngoài.
         const onClickOutside = (event: globalThis.MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            const target = event.target as Element;
+            if (target.closest?.('[data-dropdown-menu]')) return;
+            if (containerRef.current && !containerRef.current.contains(target)) {
                 closeMenu();
             }
         };
@@ -55,7 +87,7 @@ export function DropdownContainer({ className = '', onClose, children, menu }: D
         <DropdownContext.Provider value={{ isOpen, toggle, closeMenu }}>
             <div ref={containerRef} className={`relative space-y-2 ${className}`}>
                 {children({ isOpen, toggle })}
-                {isOpen ? <div className="absolute">{menu}</div> : null}
+                {isOpen ? teleport ? <DropdownFloating getTrigger={getTrigger}>{menu}</DropdownFloating> : <div className="absolute">{menu}</div> : null}
             </div>
         </DropdownContext.Provider>
     );

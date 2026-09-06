@@ -131,6 +131,16 @@ class Account extends Model
         return $this->hasMany(Notification::class);
     }
 
+    public function automationRules(): HasMany
+    {
+        return $this->hasMany(AutomationRule::class);
+    }
+
+    public function automationRulePendingExecutions(): HasMany
+    {
+        return $this->hasMany(AutomationRulePendingExecution::class);
+    }
+
     public function notificationSettings(): HasMany
     {
         return $this->hasMany(NotificationSetting::class);

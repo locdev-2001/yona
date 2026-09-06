@@ -3,6 +3,7 @@
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentsController;
+use App\Http\Controllers\WebApi\AutomationRulesController;
 use App\Http\Controllers\WebApi\BulkActionsController;
 use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
@@ -105,6 +106,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
 
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
+        Route::post('/conversations/filter', [ConversationsController::class, 'filter']);
         Route::get('/conversations/meta', [ConversationsController::class, 'meta']);
         Route::get('/conversations/unread_counts', [ConversationsController::class, 'unreadCounts']);
         // {conversationId} là display_id per-account, không phải khóa chính.
@@ -156,6 +158,13 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
         Route::match(['put', 'patch'], '/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'update'])->whereNumber('cannedResponseId');
         Route::delete('/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'destroy'])->whereNumber('cannedResponseId');
+
+        Route::get('/automation_rules', [AutomationRulesController::class, 'index']);
+        Route::post('/automation_rules', [AutomationRulesController::class, 'store']);
+        Route::get('/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'show'])->whereNumber('automationRuleId');
+        Route::match(['put', 'patch'], '/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'update'])->whereNumber('automationRuleId');
+        Route::delete('/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'destroy'])->whereNumber('automationRuleId');
+        Route::post('/automation_rules/{automationRuleId}/clone', [AutomationRulesController::class, 'clone'])->whereNumber('automationRuleId');
 
         // {campaignId} là display_id per-account, không phải khoá chính.
         Route::get('/campaigns', [CampaignsController::class, 'index']);

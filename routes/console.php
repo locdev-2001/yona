@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\Account\ConversationsResolutionSchedulerJob;
+use App\Jobs\AutomationRules\TriggerPendingExecutionsJob;
 use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
@@ -19,3 +20,4 @@ Schedule::job(new ReopenSnoozedNotificationsJob)->cron('*/5 * * * *');
 // config/schedule.yml gốc: remove_old_notification_job cron '30 22 * * *'.
 Schedule::job(new RemoveOldNotificationJob)->cron('30 22 * * *');
 Schedule::job(new ConversationsResolutionSchedulerJob)->cron('*/5 * * * *');
+Schedule::job(new TriggerPendingExecutionsJob)->cron('*/5 * * * *');

@@ -10,6 +10,7 @@ use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\Labelable;
 use App\Support\CurrentContact;
+use App\Support\CurrentExecutedBy;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -309,6 +310,11 @@ class Conversation extends Model
     public function notifications(): MorphMany
     {
         return $this->morphMany(Notification::class, 'primary_actor');
+    }
+
+    public function automationRulePendingExecutions(): HasMany
+    {
+        return $this->hasMany(AutomationRulePendingExecution::class);
     }
 
     // ConversationPolicy#show?: administrator, thành viên hộp thư hoặc thành viên
@@ -638,7 +644,7 @@ class Conversation extends Model
             'conversation' => $this,
             'notifiable_assignee_change' => $this->notifiableAssigneeChange(),
             'changed_attributes' => $changedAttributes,
-            'performed_by' => auth()->user(),
+            'performed_by' => CurrentExecutedBy::get() ?? auth()->user(),
         ]);
     }
 
@@ -666,13 +672,16 @@ class Conversation extends Model
     private function createActivity(): void
     {
         $userName = auth()->user()?->name;
+        $activityUserName = CurrentExecutedBy::get() instanceof AutomationRule
+            ? __('automation.system_name')
+            : $userName;
 
         if ($this->wasChanged('status')) {
             $this->statusChangeActivity($userName);
         }
 
         if ($this->wasChanged('priority')) {
-            $this->priorityChangeActivity($userName);
+            $this->priorityChangeActivity($activityUserName);
         }
 
         if ($this->labelListChange !== null) {
@@ -710,7 +719,11 @@ class Conversation extends Model
 
     private function statusChangeActivity(?string $userName): void
     {
-        $content = $this->userStatusChangeActivityContent($userName);
+        $content = CurrentExecutedBy::get() instanceof AutomationRule
+            ? __('conversations.activity.status.'.$this->statusName(), [
+                'user_name' => __('automation.system_name'),
+            ])
+            : $this->userStatusChangeActivityContent($userName);
 
         if (blank($content)) {
             return;

@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Services\MessageTemplates\HookExecutionService;
+use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
 use App\Support\MessageDrops;
 use Database\Factories\MessageFactory;
@@ -386,10 +387,10 @@ class Message extends Model
     {
         $conversation = $this->conversation;
 
-        DomainEvent::dispatch(EventType::MESSAGE_CREATED, ['message' => $this, 'performed_by' => auth()->user()]);
+        DomainEvent::dispatch(EventType::MESSAGE_CREATED, ['message' => $this, 'performed_by' => CurrentExecutedBy::get() ?? auth()->user()]);
 
         if ($this->isValidFirstReply()) {
-            DomainEvent::dispatch(EventType::FIRST_REPLY_CREATED, ['message' => $this, 'performed_by' => auth()->user()]);
+            DomainEvent::dispatch(EventType::FIRST_REPLY_CREATED, ['message' => $this, 'performed_by' => CurrentExecutedBy::get() ?? auth()->user()]);
             $conversation->update(['first_reply_created_at' => $this->created_at, 'waiting_since' => null]);
 
             return;
@@ -410,7 +411,7 @@ class Message extends Model
     {
         DomainEvent::dispatch(EventType::MESSAGE_UPDATED, [
             'message' => $this,
-            'performed_by' => auth()->user(),
+            'performed_by' => CurrentExecutedBy::get() ?? auth()->user(),
             'previous_changes' => PreviousChanges::of($this),
         ]);
     }
