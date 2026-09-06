@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\DB;
 
 // Port từ refs/chatwoot/app/models/message.rb.
 // Bỏ: agent bot/captain (EE), searchkick (EE), translations (F6).
@@ -67,6 +68,12 @@ class Message extends Model
     ];
 
     public const MAX_CONTENT_LENGTH = 150000;
+
+    /** `by` của biểu cảm lưu theo hình dạng cũ (mảng emoji phẳng, không biết ai thả). */
+    public const REACTION_BY_UNKNOWN = 'unknown';
+
+    /** Tiền tố `by` khi chính agent thả biểu cảm (§2.3 `content_attributes.reactions[].by`). */
+    public const REACTION_BY_AGENT_PREFIX = 'agent:';
 
     public const NUMBER_OF_PERMITTED_ATTACHMENTS = 15;
 
@@ -195,6 +202,118 @@ class Message extends Model
     public function csatSurveyResponse(): HasOne
     {
         return $this->hasOne(CsatSurveyResponse::class);
+    }
+
+    /**
+     * Tin bị xoá/thu hồi — MỘT chỗ duy nhất cho cả hai chiều: agent bấm xoá trong
+     * dashboard và kênh báo khách đã thu hồi (docs/channel-capabilities.md §2.3
+     * `event_recall`). Port từ messages_controller.rb#destroy của bản gốc:
+     * nội dung thay bằng chuỗi dịch, content_type về text, content_attributes chỉ
+     * còn `deleted`, và `attachments.destroy_all` — hook `deleted` của Attachment
+     * xoá luôn tệp trên đĩa nên ảnh đã thu hồi biến khỏi cả tab Media/Files.
+     */
+    public function markDeleted(?string $locale = null): void
+    {
+        DB::transaction(function () use ($locale) {
+            $this->update([
+                'content' => __('conversations.messages.deleted', [], $locale),
+                'content_type' => self::CONTENT_TYPES['text'],
+                'content_attributes' => ['deleted' => true],
+            ]);
+
+            $this->attachments()->get()->each->delete();
+            $this->setRelation('attachments', $this->attachments()->getRelated()->newCollection());
+        });
+    }
+
+    public function isDeleted(): bool
+    {
+        return ($this->content_attributes['deleted'] ?? false) === true;
+    }
+
+    /**
+     * Biểu cảm theo chuẩn §2.3: `[{emoji, by, at}]` — `by` là định danh người thả
+     * (`external_id` của khách, `agent:<id>` khi chính agent thả). Bản ghi cũ lưu
+     * mảng emoji phẳng (không biết ai thả); nâng cấp ngay tại chỗ đọc để không cần
+     * migration dữ liệu và để mọi nơi chỉ thấy một hình dạng.
+     *
+     * @return list<array{emoji: string, by: string, at: int}>
+     */
+    public function reactionList(): array
+    {
+        $stored = $this->content_attributes['reactions'] ?? [];
+
+        if (! is_array($stored)) {
+            return [];
+        }
+
+        $reactions = [];
+
+        foreach ($stored as $entry) {
+            if (is_string($entry) && $entry !== '') {
+                $reactions[] = ['emoji' => $entry, 'by' => self::REACTION_BY_UNKNOWN, 'at' => 0];
+
+                continue;
+            }
+
+            if (is_array($entry) && filled($entry['emoji'] ?? null)) {
+                $reactions[] = [
+                    'emoji' => (string) $entry['emoji'],
+                    'by' => (string) ($entry['by'] ?? self::REACTION_BY_UNKNOWN),
+                    'at' => (int) ($entry['at'] ?? 0),
+                ];
+            }
+        }
+
+        return $reactions;
+    }
+
+    /**
+     * Một người chỉ giữ MỘT biểu cảm trên một tin (đúng cách Zalo/Messenger làm):
+     * thả cái mới thay cái cũ của chính người đó, không cộng dồn; người này gỡ
+     * không đụng biểu cảm của người kia. `$emoji = null` là gỡ. Trả về true khi
+     * danh sách thực sự đổi.
+     */
+    public function setReaction(string $by, ?string $emoji): bool
+    {
+        $current = $this->reactionList();
+        $slot = self::reactionActorSlot($by);
+        $held = null;
+
+        foreach ($current as $entry) {
+            if (self::reactionActorSlot($entry['by']) === $slot) {
+                $held = $entry['emoji'];
+            }
+        }
+
+        // Thả lại đúng biểu cảm đang giữ (hoặc gỡ khi chưa có gì) = không đổi gì:
+        // giữ nguyên bản ghi để tin dội lại từ kênh không sinh sự kiện realtime thừa.
+        if ($held === $emoji || ($emoji === '' && $held === null)) {
+            return false;
+        }
+
+        $next = array_values(array_filter(
+            $current,
+            fn (array $entry) => self::reactionActorSlot($entry['by']) !== $slot,
+        ));
+
+        if ($emoji !== null && $emoji !== '') {
+            $next[] = ['emoji' => $emoji, 'by' => $by, 'at' => now()->getTimestamp()];
+        }
+
+        $this->update(['content_attributes' => [...$this->content_attributes ?? [], 'reactions' => $next]]);
+
+        return true;
+    }
+
+    /**
+     * Mọi biểu cảm phát ra từ phía tenant (agent bấm trong Yona, hoặc chủ shop thả
+     * trên chính ứng dụng của kênh rồi dội về) chiếm CÙNG một ô — nếu không thì
+     * một lần thả sẽ hiện thành hai.
+     */
+    private static function reactionActorSlot(string $by): string
+    {
+        return str_starts_with($by, self::REACTION_BY_AGENT_PREFIX) ? 'agent' : $by;
     }
 
     // validate_attachments_limit (before_add) — chặn trước khi thêm tệp thứ 16.

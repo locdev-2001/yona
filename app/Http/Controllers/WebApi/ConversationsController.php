@@ -5,6 +5,7 @@ namespace App\Http\Controllers\WebApi;
 use App\Builders\ContactInboxBuilder;
 use App\Builders\ConversationBuilder;
 use App\Builders\Messages\MessageBuilder;
+use App\Channels\Capability;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Exceptions\CustomFilterException;
@@ -22,10 +23,12 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Channels\ChannelActionRegistry;
 use App\Services\Conversations\FilterService;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
 use App\Services\Notification\MarkConversationReadService;
+use App\Support\BooleanParam;
 use App\Support\DateRangeHelper;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -256,7 +259,26 @@ class ConversationsController extends Controller
         (new TypingStatusManager($conversation, $request->user(), $request->only(['typing_status', 'is_private'])))
             ->toggleTypingStatus();
 
+        $this->relayTypingToChannel($request, $conversation);
+
         return response()->noContent(200);
+    }
+
+    /**
+     * Ngoài dashboard, kênh nào khai `outbound_typing` (docs/channel-capabilities.md
+     * §2.2) thì khách cũng thấy "đang soạn tin". Ghi chú riêng tư không đẩy ra kênh.
+     * Driver tự giới hạn nhịp — lõi không biết kênh nào chịu được bao nhiêu.
+     */
+    private function relayTypingToChannel(Request $request, Conversation $conversation): void
+    {
+        $isTypingOn = $request->input('typing_status') === 'on';
+        $isPrivate = BooleanParam::from($request->input('is_private'));
+
+        if (! $isTypingOn || $isPrivate || ! $conversation->inbox->supports(Capability::OutboundTyping)) {
+            return;
+        }
+
+        ChannelActionRegistry::for($conversation->inbox)?->typing($conversation);
     }
 
     // ConversationCustomAttributesConcern#custom_attributes — ghi đè toàn bộ

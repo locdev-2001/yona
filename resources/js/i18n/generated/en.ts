@@ -1718,6 +1718,9 @@ const messages: Record<string, unknown> = {
         "ERROR_MESSAGE": "There was an error, please try again"
     },
     "CONTACT_PANEL": {
+        "ADD_EMAIL_ADDRESS": "Add email",
+        "ADD_PHONE_NUMBER": "Add phone number",
+        "ADD_COMPANY": "Add company",
         "NOT_AVAILABLE": "Not Available",
         "EMAIL_ADDRESS": "Email Address",
         "PHONE_NUMBER": "Phone number",
@@ -2359,6 +2362,25 @@ const messages: Record<string, unknown> = {
                 "BUSY": "busy",
                 "CANCELED": "canceled"
             }
+        },
+        "MESSAGE_ACTIONS": {
+            "REACT": "React",
+            "RECALL": "Unsend for everyone",
+            "DELETE": "Delete"
+        },
+        "MESSAGE_FAILURE": {
+            "RETRY": "Retry sending",
+            "RETRY_FAILED": "Could not resend the message. Please try again.",
+            "HINT": {
+                "session_lost": "The channel connection was lost. Reconnect the inbox, then retry.",
+                "circuit_open": "Sending is paused after repeated failures. Retry in a few minutes.",
+                "bridge_unreachable": "The channel service could not be reached. Retry in a moment.",
+                "secret_mismatch": "The channel is misconfigured. Ask an administrator to check it — retrying will not help.",
+                "media_fetch_failed": "The attachment could not be read. Send the file again."
+            }
+        },
+        "MESSAGE_SENDER": {
+            "IN_GROUP": "Sent in the group by {name}"
         },
         "UPLOADING_ATTACHMENTS": "Uploading attachments...",
         "REPLIED_TO_STORY": "Replied to your story",
@@ -3353,6 +3375,16 @@ const messages: Record<string, unknown> = {
                 "media_fetch_failed": "The attachment could not be read to send (:detail).",
                 "unknown": "This message could not be sent to Zalo (:detail).",
                 "attachment_failed": "Could not send the file \":filename\": :reason"
+            },
+            "action": {
+                "session_lost": "The Zalo session has ended, please scan the QR code again.",
+                "bridge_unreachable": "Could not reach the Zalo service, please try again in a moment.",
+                "secret_mismatch": "The Zalo service is misconfigured (send secret), please contact the administrator.",
+                "zalo_rejected": "Zalo refused this action (:detail).",
+                "bad_request": "Zalo could not identify this message any more (:detail).",
+                "missing_source_id": "This message has not reached Zalo yet, so it cannot be changed there.",
+                "emoji_not_supported": "Zalo does not have this reaction.",
+                "unknown": "This action did not go through to Zalo (:detail)."
             }
         },
         "custom_attribute_definition": {

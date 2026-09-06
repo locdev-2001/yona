@@ -35,6 +35,9 @@ export default function MessagesView() {
         messagesLoading,
         allMessagesLoaded,
         fetchPreviousMessages,
+        retryFailedMessage,
+        toggleMessageReaction,
+        deleteConversationMessage,
     } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
@@ -63,6 +66,7 @@ export default function MessagesView() {
               id: number;
               name: string;
               channel_type: string;
+              capabilities?: readonly string[];
               additional_attributes?: {
                   agent_reply_time_window?: string | number;
                   agent_reply_time_window_message?: string;
@@ -156,9 +160,13 @@ export default function MessagesView() {
                 className="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
                 messages={messages}
                 channelType={inbox?.channel_type ?? null}
+                inboxCapabilities={inbox?.capabilities ?? []}
                 chatAttachments={galleryAttachments}
                 firstUnreadId={firstUnreadId}
                 onScroll={handleScroll}
+                onRetry={retryFailedMessage}
+                onToggleReaction={toggleMessageReaction}
+                onDeleteMessage={deleteConversationMessage}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
                         {shouldShowSpinner && <Spinner className="text-n-brand" />}

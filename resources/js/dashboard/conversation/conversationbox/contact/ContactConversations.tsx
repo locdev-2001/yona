@@ -91,6 +91,7 @@ export default function ContactConversations({ contactId }: ContactConversations
                         }
                         isActiveChat={conversationId === conversation.id}
                         showInboxName={shouldShowInboxName(inboxId, inboxes.length)}
+                        showStatus
                         hideThumbnail
                         compact
                         onClick={event => onCardClick(conversation, event)}

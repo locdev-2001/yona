@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/react';
 import { debounce } from '@chatwoot/utils';
 
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import { readReactions } from 'dashboard/components-next/message/helpers/reactions';
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
 import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -30,6 +31,10 @@ import {
     markMessagesUnread as markMessagesUnreadRequest,
     muteConversation as muteConversationRequest,
     sendMessage,
+    retryMessage,
+    addMessageReaction,
+    removeMessageReaction,
+    deleteMessage,
     updateConversationCustomAttributes as updateCustomAttributesRequest,
     togglePriority as togglePriorityRequest,
     toggleStatus as toggleStatusRequest,
@@ -128,6 +133,9 @@ interface ConversationContextValue {
         bcc_emails?: string;
         to_emails?: string;
     }) => void;
+    retryFailedMessage: (message: ConversationMessage) => Promise<void>;
+    toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
+    deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
     toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
     togglePriority: (priority: ConversationPriority | null) => Promise<void>;
@@ -865,6 +873,58 @@ export function ConversationProvider({
         [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
     );
 
+    // Gửi lại tin thất bại. Tin quay về qua chính đường ADD_MESSAGE nên trạng
+    // thái/lý do lỗi cập nhật một chỗ như tin gửi mới.
+    const retryFailedMessage = useCallback(
+        async (message: ConversationMessage) => {
+            if (!conversationId || !message.id) return;
+            try {
+                addMessage(await retryMessage(accountId, conversationId, message.id));
+            } catch (error: unknown) {
+                const body = (error as { body?: { error?: string } }).body;
+                useAlert(body?.error || t('CONVERSATION.MESSAGE_FAILURE.RETRY_FAILED'));
+            }
+        },
+        [accountId, conversationId, addMessage],
+    );
+
+    // Thả/gỡ biểu cảm: bấm lại chính emoji phía tenant đã thả là gỡ (lô 4: một
+    // người giữ đúng một emoji). Tin trả về đã mang `content_attributes.reactions` mới.
+    const toggleMessageReaction = useCallback(
+        async (message: ConversationMessage, emoji: string) => {
+            if (!conversationId || !message.id) return;
+            const alreadyReacted = readReactions(message.content_attributes ?? {}).some(
+                reaction => reaction.emoji === emoji && reaction.by.startsWith('agent'),
+            );
+            try {
+                addMessage(
+                    alreadyReacted
+                        ? await removeMessageReaction(accountId, conversationId, message.id)
+                        : await addMessageReaction(accountId, conversationId, message.id, emoji),
+                );
+            } catch (error: unknown) {
+                const body = (error as { body?: { error?: string } }).body;
+                useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [accountId, conversationId, addMessage],
+    );
+
+    // Thu hồi ở kênh (khi kênh khai `outbound_recall`) hoặc xoá một chiều ở Yona
+    // — cùng MỘT endpoint, lõi quyết theo năng lực kênh.
+    const deleteConversationMessage = useCallback(
+        async (message: ConversationMessage) => {
+            if (!conversationId || !message.id) return;
+            try {
+                addMessage(await deleteMessage(accountId, conversationId, message.id));
+            } catch (error: unknown) {
+                const body = (error as { body?: { error?: string } }).body;
+                useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [accountId, conversationId, addMessage],
+    );
+
     // Đổi status ngay trên UI để thao tác Resolve/Snooze không bị chặn bởi round-trip
     // API/worker. Request chạy nền sau khi hàm trả về; response server vẫn ghi đè
     // optimistic state, lỗi thì rollback snapshot.
@@ -1089,6 +1149,9 @@ export function ConversationProvider({
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            retryFailedMessage,
+            toggleMessageReaction,
+            deleteConversationMessage,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
@@ -1134,6 +1197,9 @@ export function ConversationProvider({
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            retryFailedMessage,
+            toggleMessageReaction,
+            deleteConversationMessage,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,

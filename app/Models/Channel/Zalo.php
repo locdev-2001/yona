@@ -6,6 +6,7 @@ use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Conversation;
 use App\Models\Message;
 use Database\Factories\Channel\ZaloFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -88,14 +89,27 @@ class Zalo extends Model implements DeclaresCapabilities
      */
     public function threadId(Message $message): ?string
     {
-        $threadId = $message->conversation->additional_attributes['thread_id'] ?? null;
+        return $this->threadIdOf($message->conversation);
+    }
 
-        return $threadId === null ? $message->conversation->contactInbox?->source_id : (string) $threadId;
+    /** Hành động không đi kèm tin (biểu cảm, thu hồi, đang gõ) chỉ có hội thoại trong tay. */
+    public function threadIdOf(Conversation $conversation): ?string
+    {
+        $threadId = $conversation->additional_attributes['thread_id'] ?? null;
+
+        return $threadId === null ? $conversation->contactInbox?->source_id : (string) $threadId;
     }
 
     public function threadType(Message $message): int
     {
-        return (int) ($message->conversation->additional_attributes['thread_type'] ?? 0);
+        return $this->threadTypeOf($message->conversation);
+    }
+
+    /** 0 = chat 1-1, 1 = nhóm. Zalo dùng ENDPOINT KHÁC HẲN cho nhóm (group/reaction,
+     * group/undomsg, group/typing) nên mọi lời gọi bridge đều phải mang giá trị này. */
+    public function threadTypeOf(Conversation $conversation): int
+    {
+        return (int) ($conversation->additional_attributes['thread_type'] ?? 0);
     }
 
     /** Trạng thái phiên do webhook `bridge_session` của bridge đẩy về. */
@@ -118,8 +132,10 @@ class Zalo extends Model implements DeclaresCapabilities
 
     /**
      * Zalo cá nhân — khai theo trạng thái driver hôm nay (App\Services\Zalo\*).
-     * Chưa khai: outbound media (SendOnZaloService mới gửi đính kèm ĐẦU TIÊN, nợ lô 3),
-     * outbound_reaction/recall (nợ lô 4), group_threads (nợ Q3), friend_request (nợ Q7).
+     * Chưa khai: outbound_location/contact_card/mention/edit/read_receipt (chưa có
+     * đường thực thi), group_threads (nợ Q3), friend_request (nợ Q7),
+     * session_disconnect (chưa có hành động), event_edit/event_presence (Zalo không
+     * phát), profile_phone (chỉ có khi khách gửi danh thiếp của chính mình).
      */
     public function capabilities(): CapabilitySet
     {
@@ -139,12 +155,21 @@ class Zalo extends Model implements DeclaresCapabilities
             Capability::InboundLinkPreview,
             Capability::InboundCaption,
             Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
             Capability::OutboundSticker,
             Capability::OutboundReplyTo,
+            Capability::OutboundReaction,
+            Capability::OutboundRecall,
+            Capability::OutboundTyping,
+            Capability::OutboundRetry,
             Capability::EventDelivered,
             Capability::EventSeen,
             Capability::EventReaction,
             Capability::EventRecall,
+            Capability::EventTyping,
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::ProfileRefresh,

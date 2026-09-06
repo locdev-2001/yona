@@ -14,7 +14,7 @@ use App\Services\Channels\ChannelMessageStatus;
  *
  * Một tin của lõi có thể thành NHIỀU lượt gọi bridge (mỗi đính kèm một lượt, vì
  * zca chỉ nhận một tệp mỗi lần gửi). Mọi msgId bridge trả về được gom vào
- * `content_attributes.zalo_source_ids`; phần đầu tiên là `source_id` chính.
+ * `content_attributes.external_source_ids`; phần đầu tiên là `source_id` chính.
  * Hợp đồng này là thứ IncomingMessageService dùng để dedupe tin dội lại.
  *
  * Lỗi ghi vào `content_attributes.external_error = {code, message}` qua
@@ -307,8 +307,8 @@ class SendOnZaloService extends BaseSendOnChannelService
         }
 
         $attributes = $this->message->content_attributes ?? [];
-        $known = is_array($attributes['zalo_source_ids'] ?? null) ? $attributes['zalo_source_ids'] : [];
-        $attributes['zalo_source_ids'] = array_values(array_unique([...$known, ...$sourceIds]));
+        $known = is_array($attributes['external_source_ids'] ?? null) ? $attributes['external_source_ids'] : [];
+        $attributes['external_source_ids'] = array_values(array_unique([...$known, ...$sourceIds]));
 
         $this->message->update([
             'source_id' => filled($this->message->source_id) ? $this->message->source_id : $sourceIds[0],

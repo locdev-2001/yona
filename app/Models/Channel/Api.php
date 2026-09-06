@@ -78,6 +78,11 @@ class Api extends Model implements DeclaresCapabilities
             Capability::OutboundAudio,
             Capability::OutboundFile,
             Capability::OutboundReplyTo,
+            // Inbox API dùng status thô sent/delivered/read của hệ ngoài làm dấu tick
+            // (bản gốc: `isAPIInbox` trong MessageMeta.vue). Đường ghi status
+            // (messages#update) chưa port — nợ có tên ở docs/channel-capabilities.md §4.1.
+            Capability::EventDelivered,
+            Capability::EventSeen,
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::ProfilePhone,

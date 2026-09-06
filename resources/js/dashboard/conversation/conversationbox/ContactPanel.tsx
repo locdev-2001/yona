@@ -27,6 +27,11 @@ import MacroList from '../macros/MacroList';
 // Hằng module: nếu dựng object mới mỗi lần render thì useContactDetails sẽ nạp lại vô hạn.
 const NO_CONTACT: ContactMeta = { id: 0, name: null };
 
+// Lệch có chủ đích (ux-deviations.md): Chatwoot mở mọi accordion ở trạng thái
+// đóng cho tới khi người dùng bấm. Hội thoại trước của khách là thứ cần thấy
+// ngay khi mở panel, nên mặc định mở — người dùng đóng thì ui_settings nhớ lại.
+const SECTIONS_OPEN_BY_DEFAULT: readonly string[] = ['is_previous_conv_open'];
+
 interface SidebarSection {
     name: string;
     title: string;
@@ -46,8 +51,9 @@ export default function ContactPanel() {
 
     if (!selectedConversation) return null;
 
-    const isContactSidebarItemOpen = (key: string) => Boolean(uiSettings[key]);
-    const toggleSidebarUIState = (key: string) => updateUISettings({ [key]: !uiSettings[key] });
+    const isContactSidebarItemOpen = (key: string) =>
+        typeof uiSettings[key] === 'boolean' ? Boolean(uiSettings[key]) : SECTIONS_OPEN_BY_DEFAULT.includes(key);
+    const toggleSidebarUIState = (key: string) => updateUISettings({ [key]: !isContactSidebarItemOpen(key) });
     const closeContactPanel = () => updateUISettings({ is_contact_sidebar_open: false, is_copilot_panel_open: false });
 
     const sections: Record<string, SidebarSection | null> = {

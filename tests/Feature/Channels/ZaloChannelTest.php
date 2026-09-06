@@ -4,6 +4,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Http\Resources\MessageResource;
 use App\Jobs\Webhooks\ZaloEventsJob;
+use App\Jobs\Zalo\StopTypingJob;
 use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Contact;
@@ -11,9 +12,13 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Zalo\BridgeEventService;
+use App\Services\Zalo\TypingRelayService;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Channels\ChannelFixture;
 
@@ -305,12 +310,13 @@ function zaloOutgoingWithSourceId(Conversation $conversation, string $sourceId):
 }
 
 it('ghi biểu cảm lên đúng tin bị thả cảm xúc (rMsg.gMsgID), đổi mã zca thành emoji', function () {
+    $this->freezeTime();
     zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
     $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
 
     zaloWebhook(zaloPayload('zalo_relay_reaction', $this->channel))->assertOk();
 
-    expect($outgoing->refresh()->content_attributes['reactions'])->toBe(['👍'])
+    expect($outgoing->refresh()->reactionList())->toBe([['emoji' => '👍', 'by' => '9876543210', 'at' => now()->getTimestamp()]])
         // Tin đến KHÔNG được dính biểu cảm — msgId tầng ngoài là của chính sự kiện.
         ->and(Message::query()->where('source_id', 'msg-zalo-1')->first()->content_attributes)
         ->not->toHaveKey('reactions');
@@ -321,7 +327,7 @@ it('gỡ biểu cảm khi rIcon rỗng', function () {
     $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
 
     zaloWebhook(zaloPayload('zalo_relay_reaction', $this->channel))->assertOk();
-    expect($outgoing->refresh()->content_attributes['reactions'])->toBe(['👍']);
+    expect($outgoing->refresh()->reactionList())->toHaveCount(1);
 
     $removal = ChannelFixture::load('zalo_relay_reaction');
     $removal['payload'][0]['data']['content']['rIcon'] = '';
@@ -598,12 +604,12 @@ it('coi tin chủ shop gửi từ điện thoại là đã trả lời: external
         ->and($conversation->first_reply_created_at)->not->toBeNull();
 });
 
-it('dedupe theo mọi msgId chiều ra đã ghi trong zalo_source_ids', function () {
+it('dedupe theo mọi msgId chiều ra đã ghi trong external_source_ids', function () {
     zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
     $conversation = Conversation::query()->latest('id')->first();
     $sent = zaloOutgoingWithSourceId($conversation, 'msg-zalo-out-1');
     // Ảnh + chú thích: zca trả 2 msgId, chiều ra ghi cả hai.
-    $sent->updateQuietly(['content_attributes' => ['zalo_source_ids' => ['msg-zalo-out-1', 'msg-zalo-out-2']]]);
+    $sent->updateQuietly(['content_attributes' => ['external_source_ids' => ['msg-zalo-out-1', 'msg-zalo-out-2']]]);
 
     zaloWebhook(zaloPayload('zalo_inbound_image', $this->channel, [
         'source_id' => 'msg-zalo-out-2',
@@ -654,4 +660,166 @@ it('giữ dấu vết tệp khi URL CDN đã hết hạn thay vì lưu tin rỗn
     expect($attachment)->not->toBeNull()
         ->and($attachment->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
         ->and($attachment->external_url)->toBe('https://cdn.het-han.test/bang-gia.txt');
+});
+
+// ─── Lô 4: sự kiện & trạng thái tin ────────────────────────────────────────────
+
+it('thu hồi xoá luôn đính kèm và tệp trên đĩa, không để lại trong tab Media', function () {
+    Storage::fake('public');
+
+    zaloWebhook(zaloPayload('zalo_inbound_image', $this->channel, ['source_id' => '8233984128820']))->assertOk();
+    $message = Message::query()->latest('id')->first();
+    $path = $message->attachments()->first()->path;
+
+    expect($message->attachments()->count())->toBe(1)
+        ->and(Storage::disk('public')->exists($path))->toBeTrue();
+
+    zaloWebhook(zaloPayload('zalo_relay_undo', $this->channel))->assertOk();
+
+    expect($message->refresh()->attachments()->count())->toBe(0)
+        ->and(Storage::disk('public')->exists($path))->toBeFalse()
+        ->and($message->content_attributes)->toBe(['deleted' => true]);
+});
+
+it('áp thu hồi cho tin đến SAU khi sự kiện undo đã tới trước', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+
+    // Sự kiện undo tới trước tin của nó (hai đường HTTP, hai lượt hàng đợi).
+    zaloWebhook(zaloPayload('zalo_relay_undo', $this->channel))->assertOk();
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel, [
+        'source_id' => '8233984128820',
+        'content' => 'Tin gửi nhầm',
+    ]))->assertOk();
+
+    $message = Message::query()->where('source_id', '8233984128820')->first();
+
+    expect($message->content)->toBe(__('conversations.messages.deleted'))
+        ->and($message->content_attributes['deleted'])->toBeTrue();
+});
+
+it('đổi biểu cảm của cùng một người thành MỘT mục, không cộng dồn', function () {
+    $this->freezeTime();
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
+
+    zaloWebhook(zaloPayload('zalo_relay_reaction', $this->channel))->assertOk();
+
+    $changed = ChannelFixture::load('zalo_relay_reaction');
+    $changed['payload'][0]['data']['content']['rIcon'] = '/-heart';
+    zaloWebhook([...$changed, 'connection_id' => $this->channel->connectionId()])->assertOk();
+
+    expect($outgoing->refresh()->reactionList())->toBe([
+        ['emoji' => '❤️', 'by' => '9876543210', 'at' => now()->getTimestamp()],
+    ]);
+});
+
+it('người này gỡ biểu cảm không xoá biểu cảm của người kia', function () {
+    $this->freezeTime();
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
+
+    zaloWebhook(zaloPayload('zalo_relay_reaction', $this->channel))->assertOk();
+
+    $other = ChannelFixture::load('zalo_relay_reaction');
+    $other['payload'][0]['data']['uidFrom'] = '1112223330';
+    $other['payload'][0]['data']['content']['rIcon'] = '/-heart';
+    zaloWebhook([...$other, 'connection_id' => $this->channel->connectionId()])->assertOk();
+    expect($outgoing->refresh()->reactionList())->toHaveCount(2);
+
+    // Người thứ hai gỡ — người đầu vẫn giữ 👍.
+    $other['payload'][0]['data']['content']['rIcon'] = '';
+    zaloWebhook([...$other, 'connection_id' => $this->channel->connectionId()])->assertOk();
+
+    expect($outgoing->refresh()->reactionList())->toBe([
+        ['emoji' => '👍', 'by' => '9876543210', 'at' => now()->getTimestamp()],
+    ]);
+});
+
+it('nâng cấp mảng emoji phẳng cũ sang cấu trúc {emoji, by, at} ngay lúc đọc', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
+    $outgoing->updateQuietly(['content_attributes' => ['reactions' => ['👍']]]);
+
+    expect($outgoing->refresh()->reactionList())
+        ->toBe([['emoji' => '👍', 'by' => Message::REACTION_BY_UNKNOWN, 'at' => 0]]);
+});
+
+it('bỏ biên nhận do chính tài khoản của tenant sinh ra (isSelf) và biên nhận cho tin đến', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $incoming = Message::query()->where('source_id', 'msg-zalo-1')->first();
+    $outgoing = zaloOutgoingWithSourceId(Conversation::query()->latest('id')->first(), 'msg-zalo-out-1');
+
+    $selfSeen = ChannelFixture::load('zalo_relay_seen');
+    $selfSeen['payload'][0][0]['isSelf'] = true;
+    zaloWebhook([...$selfSeen, 'connection_id' => $this->channel->connectionId()])->assertOk();
+    expect($outgoing->refresh()->status)->toBe(Message::STATUSES['sent']);
+
+    // Biên nhận trỏ vào một tin ĐẾN cũng không được đổi gì (tin đến không có tick).
+    $onIncoming = ChannelFixture::load('zalo_relay_seen');
+    $onIncoming['payload'][0][0]['data']['msgId'] = 'msg-zalo-1';
+    zaloWebhook([...$onIncoming, 'connection_id' => $this->channel->connectionId()])->assertOk();
+
+    expect($incoming->refresh()->status)->toBe(Message::STATUSES['sent']);
+});
+
+it('khách đang gõ thì phát conversation.typing_on rồi tự tắt sau vài giây', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $conversation = Conversation::query()->latest('id')->first();
+
+    // Chỉ giả job tắt: ZaloEventsJob vẫn phải chạy thật để sự kiện typing được xử lý.
+    Queue::fake([StopTypingJob::class]);
+    Event::fake([DomainEvent::class]);
+
+    zaloWebhook([
+        'type' => 'relay_event',
+        'event_type' => 'typing',
+        'connection_id' => $this->channel->connectionId(),
+        'payload' => [['type' => 0, 'data' => ['uid' => '9876543210', 'ts' => '1788715049561', 'isPC' => 0], 'threadId' => '9876543210', 'isSelf' => false]],
+    ])->assertOk();
+
+    Event::assertDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON
+            && $event->data['conversation']->id === $conversation->id
+            && $event->data['user']->id === $conversation->contact_id,
+    );
+    Queue::assertPushed(StopTypingJob::class);
+});
+
+it('không bật đang-nhập cho luồng chưa có hội thoại nào', function () {
+    Event::fake([DomainEvent::class]);
+
+    zaloWebhook([
+        'type' => 'relay_event',
+        'event_type' => 'typing',
+        'connection_id' => $this->channel->connectionId(),
+        'payload' => [['data' => ['uid' => 'nguoi-la'], 'threadId' => 'nguoi-la', 'isSelf' => false]],
+    ])->assertOk();
+
+    Event::assertNotDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON,
+    );
+});
+
+it('job tắt đang-nhập bỏ qua khi khách vừa gõ tiếp', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $conversation = Conversation::query()->latest('id')->first();
+
+    Cache::put(TypingRelayService::stampKey($conversation), 'moi-hon', now()->addMinute());
+    Event::fake([DomainEvent::class]);
+
+    (new StopTypingJob($conversation, 'cu-hon'))->handle(app(TypingRelayService::class));
+
+    Event::assertNotDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_OFF,
+    );
+
+    (new StopTypingJob($conversation, 'moi-hon'))->handle(app(TypingRelayService::class));
+
+    Event::assertDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_OFF,
+    );
 });

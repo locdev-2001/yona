@@ -27,7 +27,9 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
     [INBOX_TYPES.LINE]: 'i-woot-line',
     [INBOX_TYPES.INSTAGRAM]: 'i-woot-instagram',
     [INBOX_TYPES.TIKTOK]: 'i-woot-tiktok',
-    [INBOX_TYPES.ZALO]: 'i-ri-chat-3-line',
+    [INBOX_TYPES.ZALO]: 'i-woot-zalo',
+    [INBOX_TYPES.SMS]: 'i-woot-sms',
+    [INBOX_TYPES.TWILIO]: 'i-woot-sms',
 };
 
 const DEFAULT_ICON_LINE = 'i-ri-chat-1-line';
@@ -44,13 +46,24 @@ const INBOX_ICON_MAP_FILL: Record<string, string> = {
     [INBOX_TYPES.LINE]: 'i-ri-line-fill',
     [INBOX_TYPES.INSTAGRAM]: 'i-ri-instagram-fill',
     [INBOX_TYPES.TIKTOK]: 'i-ri-tiktok-fill',
-    [INBOX_TYPES.ZALO]: 'i-ri-chat-3-fill',
+    [INBOX_TYPES.ZALO]: 'i-woot-zalo',
+    [INBOX_TYPES.SMS]: 'i-woot-sms',
+    [INBOX_TYPES.TWILIO]: 'i-woot-sms',
 };
 
 const DEFAULT_ICON_FILL = 'i-ri-chat-1-fill';
 
-export function getInboxIconByType(type: string, variant: 'line' | 'fill' = 'line'): string {
+/**
+ * NGUỒN DUY NHẤT của icon kênh (card hội thoại, header hội thoại, sidebar Kênh,
+ * thẻ campaign, kết quả tìm kiếm). `channel_type` chỉ được dùng để chọn
+ * icon/nhãn — cấm gate tính năng theo nó (docs/channel-capabilities.md §3 FE).
+ */
+export function getInboxIconByType(
+    type: string,
+    variant: 'line' | 'fill' = 'line',
+    fallback?: string,
+): string {
     return variant === 'fill'
-        ? (INBOX_ICON_MAP_FILL[type] ?? DEFAULT_ICON_FILL)
-        : (INBOX_ICON_MAP_LINE[type] ?? DEFAULT_ICON_LINE);
+        ? (INBOX_ICON_MAP_FILL[type] ?? fallback ?? DEFAULT_ICON_FILL)
+        : (INBOX_ICON_MAP_LINE[type] ?? fallback ?? DEFAULT_ICON_LINE);
 }

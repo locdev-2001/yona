@@ -23,7 +23,7 @@ export default function CsatContactCell({
         <div className="flex items-center gap-2">
             <Avatar src={contact?.thumbnail || ''} name={contact?.name || ''} size={32} roundedFull />
             <div className="flex flex-col gap-0.5">
-                <span className="text-sm text-n-slate-12 font-medium capitalize">{contact?.name || '—'}</span>
+                <span className="text-sm text-n-slate-12 font-medium">{contact?.name || '—'}</span>
                 <div className="flex items-center gap-1 text-xs text-n-slate-10 whitespace-nowrap">
                     <a
                         href={`/app/accounts/${currentAccount.id}/conversations/${conversationId}`}

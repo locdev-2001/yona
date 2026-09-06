@@ -3,7 +3,12 @@
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\DeclaresCapabilities;
+use App\Http\Resources\InboxResource;
+use App\Models\Account;
+use App\Models\AccountUser;
 use App\Models\Channel\TwilioSms;
+use App\Models\Inbox;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 // Khung khai báo năng lực kênh — docs/channel-capabilities.md §3.
@@ -82,4 +87,25 @@ it('danh sách năng lực phía FE khớp enum PHP', function () {
     preg_match_all("/'([a-z_]+)'/", $matches[1] ?? '', $values);
 
     expect($values[1])->toBe(Capability::allValues());
+});
+
+// §1.2 "một nguồn khai báo duy nhất": FE đọc năng lực ở HAI mặt tiền — InboxResource
+// (danh sách inbox của web_api) và prop Inertia `inboxes` chia sẻ cho sidebar. Hai
+// mặt tiền lệch nhau thì UI gate theo cái nào cũng sai một nửa.
+it('prop Inertia `inboxes` lộ đúng bộ năng lực mà InboxResource lộ', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create();
+    AccountUser::factory()->administrator()->create([
+        'account_id' => $account->id,
+        'user_id' => $user->id,
+    ]);
+    $inbox = Inbox::factory()->zalo()->create(['account_id' => $account->id]);
+
+    $this->actingAs($user)->get("/app/accounts/{$account->id}/dashboard")
+        ->assertInertia(fn ($page) => $page
+            ->where('inboxes.0.id', $inbox->id)
+            ->where(
+                'inboxes.0.capabilities',
+                (new InboxResource($inbox, true))->toArray(request())['capabilities'],
+            ));
 });

@@ -54,9 +54,33 @@ class ZaloBridgeClient
         return $this->post(
             '/personal-messages/send',
             $payload,
-            ['X-Bridge-Send-Secret' => (string) config('zalo.bridge.send_secret')],
+            $this->sendSecretHeader(),
             $hasMedia ? (int) config('zalo.bridge.media_timeout') : (int) config('zalo.bridge.timeout'),
         );
+    }
+
+    /**
+     * Ba tuyến "hành động trên tin" của bridge, cùng bảo mật bằng send secret như
+     * /personal-messages/send. Trả `{ok, source_id?}` hoặc `{ok:false, code, message}`
+     * với code ổn định (`session_lost`, `zalo_rejected`, `bad_request`, `unknown`).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function sendReaction(array $payload): ?Response
+    {
+        return $this->post('/personal-messages/reaction', $payload, $this->sendSecretHeader());
+    }
+
+    /** @param array<string, mixed> $payload */
+    public function undoMessage(array $payload): ?Response
+    {
+        return $this->post('/personal-messages/undo', $payload, $this->sendSecretHeader());
+    }
+
+    /** @param array<string, mixed> $payload */
+    public function sendTyping(array $payload): ?Response
+    {
+        return $this->post('/personal-messages/typing', $payload, $this->sendSecretHeader());
     }
 
     /**
@@ -89,6 +113,12 @@ class ZaloBridgeClient
         } catch (ConnectionException) {
             return null;
         }
+    }
+
+    /** @return array<string, string> */
+    private function sendSecretHeader(): array
+    {
+        return ['X-Bridge-Send-Secret' => (string) config('zalo.bridge.send_secret')];
     }
 
     /** @return array<string, string> */

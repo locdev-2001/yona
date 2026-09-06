@@ -3,6 +3,9 @@
 // Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace CONTACT_PANEL.
 
 return [
+    'ADD_EMAIL_ADDRESS' => 'Add email',
+    'ADD_PHONE_NUMBER' => 'Add phone number',
+    'ADD_COMPANY' => 'Add company',
     'NOT_AVAILABLE' => 'Not Available',
     'EMAIL_ADDRESS' => 'Email Address',
     'PHONE_NUMBER' => 'Phone number',

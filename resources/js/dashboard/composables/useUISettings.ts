@@ -36,14 +36,17 @@ export function updateUISettings(current: UISettings, patch: UISettings): UISett
 
 // DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER + useConversationSidebarItemsOrder gốc:
 // thứ tự accordion của ContactPanel, mục mới thêm sau thứ tự người dùng đã lưu.
+// Lệch có chủ đích so với Chatwoot (ux-deviations.md): "Hội thoại trước" đứng
+// ngay sau khối hành động thay vì áp chót — lịch sử của khách là thứ người trực
+// cần trước khi trả lời, không phải thứ phải cuộn hết panel mới thấy.
 export const DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER: readonly { name: string }[] = Object.freeze([
     { name: 'conversation_actions' },
+    { name: 'previous_conversation' },
     { name: 'macros' },
     { name: 'conversation_info' },
     { name: 'contact_attributes' },
     { name: 'contact_notes' },
     { name: 'shared_files' },
-    { name: 'previous_conversation' },
     { name: 'conversation_participants' },
     { name: 'linear_issues' },
     { name: 'shopify_orders' },

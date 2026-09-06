@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 import { useConversation } from '../ConversationContext';
+import { useContactPanelOpen } from '../contactPanelVisibility';
 import ContactPanel from './ContactPanel';
 
 // Port từ widgets/conversation/ConversationSidebar.vue — cột phải 320/360px
@@ -9,7 +10,7 @@ import ContactPanel from './ContactPanel';
 export default function ConversationSidebar() {
     const { uiSettings, updateUISettings } = useConversation();
     const rootRef = useRef<HTMLDivElement>(null);
-    const isContactSidebarOpen = Boolean(uiSettings.is_contact_sidebar_open);
+    const isContactSidebarOpen = useContactPanelOpen(uiSettings);
     const activeTab = isContactSidebarOpen ? 0 : null;
 
     useEffect(() => {

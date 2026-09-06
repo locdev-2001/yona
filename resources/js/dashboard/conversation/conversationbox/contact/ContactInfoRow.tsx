@@ -9,6 +9,10 @@ import { t } from '../../../../i18n';
 
 // Port từ routes/dashboard/conversation/contact/ContactInfoRow.vue —
 // dòng thông tin (email/phone/…): link, copy, sửa inline (Enter lưu, Esc hủy).
+//
+// Lệch có chủ đích (ux-deviations.md): trường rỗng KHÔNG in "Không có sẵn" nữa.
+// Sửa được thì thành nút hành động "Thêm …" (bấm là vào ô nhập), không sửa được
+// thì không chiếm dòng. Chỗ đắt nhất của panel phải nói được điều gì đó có ích.
 interface ContactInfoRowProps {
     href?: string;
     icon: string;
@@ -19,6 +23,8 @@ interface ContactInfoRowProps {
     title?: string;
     // Nội dung nối sau value (gốc nhúng HTML cờ quốc gia qua v-dompurify-html).
     trailing?: ReactNode;
+    // Nhãn nút "Thêm …" khi trường rỗng và sửa được.
+    addLabel?: string;
     onUpdate?: (value: string) => void;
 }
 
@@ -39,6 +45,7 @@ export default function ContactInfoRow({
     editable = false,
     title = '',
     trailing = null,
+    addLabel = '',
     onUpdate,
 }: ContactInfoRowProps) {
     const [isEditing, setIsEditing] = useState(false);
@@ -84,14 +91,31 @@ export default function ContactInfoRow({
         />
     ) : null;
 
-    const valueNode = value ? (
-        <span className="overflow-hidden text-sm whitespace-nowrap text-ellipsis inline-flex items-center gap-1" title={value}>
+    const valueNode = (
+        <span className="overflow-hidden text-sm whitespace-nowrap text-ellipsis inline-flex items-center gap-1" title={value ?? ''}>
             {value}
             {trailing}
         </span>
-    ) : (
-        <span className="text-sm text-n-slate-11">{t('CONTACT_PANEL.NOT_AVAILABLE')}</span>
     );
+
+    // Rỗng: sửa được → nút "Thêm …"; không sửa được → không render dòng nào.
+    if (!value && !isEditing) {
+        if (!editable) return null;
+
+        return (
+            <button
+                type="button"
+                className="group/row flex items-center gap-2 h-5 ltr:-ml-1 rtl:-mr-1 text-n-slate-11 hover:text-n-slate-12 cursor-pointer"
+                onClick={() => startEditing()}
+            >
+                <RowIcon icon={icon} emoji={emoji} />
+                <span className="text-sm inline-flex items-center gap-1">
+                    <span className="i-lucide-plus size-3" aria-hidden="true" />
+                    {addLabel || title}
+                </span>
+            </button>
+        );
+    }
 
     return (
         <div className="group/row w-full h-5 ltr:-ml-1 rtl:-mr-1">

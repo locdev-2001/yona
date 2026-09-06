@@ -15,6 +15,7 @@ class BridgeEventService
 {
     public function __construct(
         private readonly MessageStateService $messageState,
+        private readonly TypingRelayService $typing,
     ) {}
 
     /** @param array<string, mixed> $payload */
@@ -46,6 +47,9 @@ class BridgeEventService
     private function handleInbound(Inbox $inbox, array $payload): void
     {
         (new IncomingMessageService($inbox, $payload))->perform();
+
+        // Khách gửi rồi thu hồi ngay: sự kiện `undo` có thể tới TRƯỚC tin của nó.
+        $this->messageState->applyPendingRecall($inbox, isset($payload['source_id']) ? (string) $payload['source_id'] : null);
     }
 
     /** @param array<string, mixed> $payload */
@@ -75,8 +79,11 @@ class BridgeEventService
             'reaction', 'old_reactions' => $this->messageState->applyReactions($inbox, RelayEventParser::reactions($args)),
             'seen_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'seen'),
             'delivered_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'delivered'),
-            // typing/connected/upload_attachment là phù du — không có đích lưu.
-            'typing', 'connected', 'disconnected', 'upload_attachment' => null,
+            // Gõ phím KHÔNG ghi vào tin nào, nhưng vẫn phải hiện: đẩy thẳng vào ống
+            // "đang nhập…" của lõi (docs/channel-capabilities.md §2.3 `event_typing`).
+            'typing' => $this->typing->handle($inbox, $args),
+            // connected/upload_attachment là phù du — không có đích lưu.
+            'connected', 'disconnected', 'upload_attachment' => null,
             default => Log::info('[ZALO] relay_event chưa có xử lý', ['event_type' => $eventType]),
         };
     }

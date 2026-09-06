@@ -17,6 +17,24 @@ import CardLabels from './conversationCardComponents/CardLabels';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 
+const STATUS_DOT_COLOR: Record<string, string> = {
+    open: 'bg-n-teal-10',
+    pending: 'bg-n-amber-10',
+    snoozed: 'bg-n-slate-9',
+    resolved: 'bg-n-slate-9',
+};
+
+function ConversationStatusChip({ status }: { status: string }) {
+    if (!status) return null;
+
+    return (
+        <span className="inline-flex items-center gap-1 flex-shrink-0 text-xs font-medium leading-3 text-n-slate-11">
+            <span className={`size-1.5 rounded-full ${STATUS_DOT_COLOR[status] ?? 'bg-n-slate-9'}`} aria-hidden="true" />
+            <span className="truncate">{t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${status}.TEXT`)}</span>
+        </span>
+    );
+}
+
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
 // Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE) — `showLabelsSection` vì thế
 // chỉ còn nhánh `chat.labels`.
@@ -31,6 +49,9 @@ interface ConversationCardProps {
     isActiveChat?: boolean;
     showAssignee?: boolean;
     showInboxName?: boolean;
+    // Dùng ở "Hội thoại trước" của panel phải: người trực cần biết hội thoại cũ
+    // đã đóng hay còn mở trước khi bấm sang.
+    showStatus?: boolean;
     hideThumbnail?: boolean;
     compact?: boolean;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
@@ -48,6 +69,7 @@ export default function ConversationCard({
     isActiveChat = false,
     showAssignee = false,
     showInboxName = false,
+    showStatus = false,
     hideThumbnail = false,
     compact = false,
     onClick,
@@ -64,7 +86,7 @@ export default function ConversationCard({
     const hasUnread = unreadCount > 0;
     const lastMessageInChat = getLastMessage(chat);
 
-    const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority;
+    const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority || showStatus;
     const showLabelsSection = (chat.labels?.length ?? 0) > 0;
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
 
@@ -136,6 +158,7 @@ export default function ConversationCard({
                         ].join(' ')}
                     >
                         {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
+                        {showStatus ? <ConversationStatusChip status={chat.status} /> : null}
                         <div
                             className={[
                                 'flex items-baseline gap-2 flex-shrink-0',
@@ -159,7 +182,7 @@ export default function ConversationCard({
                 ) : null}
                 <h4
                     className={[
-                        'conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12',
+                        'conversation--user text-sm my-0 mx-2 pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12',
                         hasUnread ? 'font-semibold' : 'font-medium',
                     ].join(' ')}
                 >

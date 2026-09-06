@@ -4,6 +4,7 @@ namespace App\Services\MessageTemplates\Template;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -30,7 +31,7 @@ abstract class BaseTemplate
     {
         try {
             DB::transaction(function (): void {
-                foreach ($this->messages() as $attributes) {
+                foreach ($this->localizedMessages() as $attributes) {
                     $this->createTemplateMessage($attributes);
                 }
             });
@@ -38,6 +39,31 @@ abstract class BaseTemplate
             // rescue StandardError + ChatwootExceptionTracker: mẫu tin hỏng không
             // được làm hỏng lượt tạo tin của khách.
             report($exception);
+        }
+    }
+
+    /**
+     * Tin mẫu được sinh ngoài request của người trực (khách nhắn vào widget, job
+     * hàng đợi) nên locale của request KHÔNG nói lên ngôn ngữ người nhận. Chốt
+     * theo ngôn ngữ của tài khoản, tại đúng một chỗ cho mọi mẫu tin.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function localizedMessages(): array
+    {
+        $accountLocale = $this->conversation->account?->locale;
+
+        if (! is_string($accountLocale) || $accountLocale === '' || $accountLocale === App::getLocale()) {
+            return $this->messages();
+        }
+
+        $previousLocale = App::getLocale();
+        App::setLocale($accountLocale);
+
+        try {
+            return $this->messages();
+        } finally {
+            App::setLocale($previousLocale);
         }
     }
 

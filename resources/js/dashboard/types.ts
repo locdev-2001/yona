@@ -27,7 +27,7 @@ export interface DashboardPageProps extends SharedPageProps {
     currentAccountUser: CurrentAccountUser;
     userAccounts: UserAccount[];
     // Nhóm Channels trên sidebar (share từ SetCurrentAccount).
-    inboxes?: { id: number; name: string; channel_type: string }[];
+    inboxes?: { id: number; name: string; channel_type: string; capabilities?: readonly string[] }[];
     // Nhóm Teams trên sidebar — chỉ team user là member (teams/getMyTeams).
     teams?: { id: number; name: string }[];
 }

@@ -213,7 +213,7 @@ class IncomingMessageService
     /**
      * Một tin Zalo có thể mang NHIỀU msgId (ảnh + chú thích, tệp + chú thích,
      * ảnh + trích dẫn): chiều ra ghi mọi msgId vào
-     * `content_attributes.zalo_source_ids`, chiều vào phải tra cả danh sách đó —
+     * `content_attributes.external_source_ids`, chiều vào phải tra cả danh sách đó —
      * thiếu thì echo của msgId thứ hai lọt lưới dedupe và hiện thành bong bóng ma.
      *
      * Chỉ tra với tin dội lại (`direction` ≠ `in`): bí danh chỉ có trên tin do
@@ -228,7 +228,7 @@ class IncomingMessageService
 
         return Message::query()
             ->where('inbox_id', $this->inbox->id)
-            ->whereRaw("jsonb_exists((content_attributes)::jsonb -> 'zalo_source_ids', ?)", [$sourceId])
+            ->whereRaw("jsonb_exists((content_attributes)::jsonb -> 'external_source_ids', ?)", [$sourceId])
             ->first();
     }
 

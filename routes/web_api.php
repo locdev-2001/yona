@@ -155,6 +155,15 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         // messages#retry — gửi lại tin thất bại (docs/channel-capabilities.md §2.2 `outbound_retry`).
         Route::post('/conversations/{conversationId}/messages/{messageId}/retry', [MessagesController::class, 'retry'])
             ->whereNumber(['conversationId', 'messageId']);
+        // messages#destroy — xoá tin ở Yona; kênh khai `outbound_recall` thì thu hồi
+        // luôn ở kênh (docs/channel-capabilities.md §2.2, quyết định Q4 07/09).
+        Route::delete('/conversations/{conversationId}/messages/{messageId}', [MessagesController::class, 'destroy'])
+            ->whereNumber(['conversationId', 'messageId']);
+        // messages#reactions — agent thả/gỡ biểu cảm ra kênh (§2.2 `outbound_reaction`).
+        Route::post('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'storeReaction'])
+            ->whereNumber(['conversationId', 'messageId']);
+        Route::delete('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'destroyReaction'])
+            ->whereNumber(['conversationId', 'messageId']);
         Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}', [ConversationsController::class, 'update'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');

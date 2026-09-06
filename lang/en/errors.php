@@ -65,6 +65,16 @@ return [
             'unknown' => 'This message could not be sent to Zalo (:detail).',
             'attachment_failed' => 'Could not send the file ":filename": :reason',
         ],
+        'action' => [
+            'session_lost' => 'The Zalo session has ended, please scan the QR code again.',
+            'bridge_unreachable' => 'Could not reach the Zalo service, please try again in a moment.',
+            'secret_mismatch' => 'The Zalo service is misconfigured (send secret), please contact the administrator.',
+            'zalo_rejected' => 'Zalo refused this action (:detail).',
+            'bad_request' => 'Zalo could not identify this message any more (:detail).',
+            'missing_source_id' => 'This message has not reached Zalo yet, so it cannot be changed there.',
+            'emoji_not_supported' => 'Zalo does not have this reaction.',
+            'unknown' => 'This action did not go through to Zalo (:detail).',
+        ],
     ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'must only contain letters, numbers, underscores, hyphens, and dots',

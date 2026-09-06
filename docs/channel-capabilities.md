@@ -145,9 +145,11 @@ KHÔNG được khai, vì đọc code thấy chưa có đường thực thi — 
 
 | Năng lực | Ô ✓ ở §4 | Sự thật trong code | Đóng ở lô nào |
 |---|---|---|---|
-| `outbound_retry` | mọi kênh | không có endpoint retry lẫn nút retry (FE ghi rõ "chưa có") | lô đính kèm/lỗi gửi |
-| `outbound_reaction` / `outbound_recall` / `outbound_edit` | Zalo (Q4/Q5), Telegram, WhatsApp, FB, IG | không có route ghi nào cho reaction/recall/edit | Zalo lô 4, rồi từng kênh |
-| `outbound_typing` | Zalo, WhatsApp, FB, IG | chỉ WebWidget có đường đẩy typing tới khách (`toggle_typing_status` → widget) | theo kênh |
+| `outbound_retry` | mọi kênh trừ Zalo | Zalo ĐÃ đóng (lô 3: `POST …/messages/{id}/retry`); các kênh khác chưa có endpoint retry | theo kênh |
+| `outbound_reaction` / `outbound_recall` | Telegram, WhatsApp, FB, IG | Zalo ĐÃ đóng (lô 4: `POST`/`DELETE …/messages/{id}/reactions`, `DELETE …/messages/{id}` thu hồi hai chiều) | theo kênh |
+| `outbound_edit` | Zalo (Q4/Q5), Telegram, WhatsApp, FB, IG | không có route sửa tin ở kênh nào | theo kênh |
+| `outbound_typing` | WhatsApp, FB, IG | Zalo ĐÃ đóng (lô 4: `toggle_typing_status` → `ChannelActionRegistry` → bridge `/personal-messages/typing`); WebWidget đẩy thẳng tới widget | theo kênh |
+| `event_typing` | — | Zalo ĐÃ đóng (lô 4: relay `typing` → `TypingRelayService` → `TypingStatusManager`) | — |
 | `outbound_image/video/audio/file` (Zalo) | Zalo | `SendOnZaloService` mới gửi đính kèm ĐẦU TIÊN của tin | Zalo lô 3 |
 | `messaging_window` | WhatsApp, FB, IG, TikTok | lõi chưa có cảnh báo cửa sổ 24h/template trong hộp trả lời | khi port template WhatsApp |
 | `event_delivered` / `event_seen` (FB, IG) | FB, IG | webhook delivery/read của Meta chưa được xử lý | lô kênh Meta |
