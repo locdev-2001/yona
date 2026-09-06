@@ -325,6 +325,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/inboxes/{inboxId}/zalo/qr', [ZaloConnectionsController::class, 'startQr'])->whereNumber('inboxId');
         Route::get('/inboxes/{inboxId}/zalo/qr_status', [ZaloConnectionsController::class, 'qrStatus'])->whereNumber('inboxId');
         Route::post('/inboxes/{inboxId}/zalo/promote', [ZaloConnectionsController::class, 'promote'])->whereNumber('inboxId');
+        Route::post('/inboxes/{inboxId}/zalo/disconnect', [ZaloConnectionsController::class, 'disconnect'])->whereNumber('inboxId');
         Route::get('/inboxes/{inboxId}/zalo/health', [ZaloConnectionsController::class, 'health'])->whereNumber('inboxId');
         // G1 Zalo — END
 

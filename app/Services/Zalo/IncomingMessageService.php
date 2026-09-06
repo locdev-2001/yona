@@ -67,6 +67,24 @@ class IncomingMessageService
     // Thứ tự tra URL ảnh sticker trong payload bridge (zca-js đặt nhiều tên).
     private const STICKER_URL_KEYS = ['stickerUrl', 'url', 'thumbnail', 'stickerSpriteUrl'];
 
+    /** `thread_type` của Zalo: 0 = chat 1-1, 1 = nhóm. */
+    private const THREAD_TYPE_GROUP = 1;
+
+    /**
+     * Khoá chuẩn hoá của năng lực `group_threads` (docs/channel-capabilities.md
+     * §2.4) — lõi và bong bóng đọc đúng chừng này, không mang tên riêng của Zalo.
+     */
+    private const GROUP_SENDER_KEYS = ['external_id', 'name', 'avatar'];
+
+    private const GROUP_MENTION_KEYS = ['external_id', 'name', 'offset', 'length'];
+
+    private const GROUP_THREAD_KEYS = ['id', 'name', 'avatar'];
+
+    /** Nhóm là một "người" trên kênh: hồ sơ mang tên + ảnh nhóm, đánh dấu bằng khoá này. */
+    private const THREAD_KIND_ATTRIBUTE = 'zalo_thread_type';
+
+    private const THREAD_KIND_GROUP = 'group';
+
     /** @var array{kind: string, data: array<string, mixed>}|null */
     private ?array $card = null;
 
@@ -318,6 +336,11 @@ class IncomingMessageService
             ...$attributes,
             'social_zalo_user_id' => $attributes['social_zalo_user_id'] ?? $threadUid,
             'social_zalo_user_name' => $name ?? ($attributes['social_zalo_user_name'] ?? null),
+            // Hồ sơ của một NHÓM mang tên + ảnh nhóm (bridge gửi sẵn ở `user`);
+            // đánh dấu để panel liên hệ / báo cáo phân biệt được với người thật.
+            self::THREAD_KIND_ATTRIBUTE => $this->isGroupThread()
+                ? self::THREAD_KIND_GROUP
+                : ($attributes[self::THREAD_KIND_ATTRIBUTE] ?? null),
         ]);
 
         if ($contact->isDirty()) {
@@ -496,6 +519,10 @@ class IncomingMessageService
             $attributes['zca_message'] = $zcaMessage;
         }
 
+        // Tin nhóm: ai gửi, nhắc tên ai, thuộc nhóm nào — bong bóng lõi đọc khoá
+        // chuẩn hoá này (docs/channel-capabilities.md §2.4 `group_threads`).
+        $attributes = [...$attributes, ...$this->groupContext()];
+
         $quote = $this->params['quote'] ?? null;
 
         if (filled($quote)) {
@@ -515,6 +542,70 @@ class IncomingMessageService
         }
 
         return $attributes;
+    }
+
+    /**
+     * Nhóm gom nhiều người vào MỘT hội thoại, nên người gửi thật đi theo từng tin
+     * thay vì theo hồ sơ liên hệ. Chỉ giữ đúng khoá của chuẩn năng lực — payload
+     * bridge còn `sender_uid`, `thread.type`… nhưng lõi không cần và không được
+     * học tên riêng của nền tảng.
+     *
+     * @return array<string, mixed>
+     */
+    private function groupContext(): array
+    {
+        if (! $this->isGroupThread()) {
+            return [];
+        }
+
+        $context = [];
+
+        $sender = self::pick($this->params['sender'] ?? null, self::GROUP_SENDER_KEYS);
+
+        if (filled($sender['name'] ?? null) || filled($sender['external_id'] ?? null)) {
+            $context['sender'] = $sender;
+        }
+
+        $thread = self::pick($this->params['thread'] ?? null, self::GROUP_THREAD_KEYS);
+
+        if (filled($thread['id'] ?? null)) {
+            $context['thread'] = $thread;
+        }
+
+        $mentions = array_values(array_filter(
+            array_map(
+                fn ($mention) => self::pick($mention, self::GROUP_MENTION_KEYS),
+                is_array($this->params['mentions'] ?? null) ? $this->params['mentions'] : [],
+            ),
+            fn (array $mention) => filled($mention['name'] ?? null),
+        ));
+
+        if ($mentions !== []) {
+            $context['mentions'] = $mentions;
+        }
+
+        return $context;
+    }
+
+    private function isGroupThread(): bool
+    {
+        return (int) ($this->params['thread_type'] ?? 0) === self::THREAD_TYPE_GROUP;
+    }
+
+    /**
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    private static function pick(mixed $source, array $keys): array
+    {
+        if (! is_array($source)) {
+            return [];
+        }
+
+        return array_filter(
+            array_intersect_key($source, array_flip($keys)),
+            fn ($value) => $value !== null && $value !== '',
+        );
     }
 
     /**

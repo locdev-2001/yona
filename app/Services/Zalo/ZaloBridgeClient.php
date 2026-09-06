@@ -35,12 +35,22 @@ class ZaloBridgeClient
             'qr_token' => $qrToken,
             'connection_id' => $channel->connectionId(),
             'workspace_id' => (string) $channel->account_id,
-        ], $this->uiSecretHeader());
+        ], $this->uiSecretHeader(), (int) config('zalo.bridge.promote_timeout'));
     }
 
     public function cancelQrLogin(string $qrToken): ?Response
     {
         return $this->post('/auth/qr/cancel', ['qr_token' => $qrToken], $this->uiSecretHeader());
+    }
+
+    /**
+     * Sức khoẻ slot ở bridge. Trả `phase`, `connected`, `session_lost`,
+     * `integrated_display_name`, `integrated_avatar` — dùng cho ZaloHealthSweepJob
+     * và thẻ "Tài khoản Zalo đang kết nối".
+     */
+    public function health(Zalo $channel): ?Response
+    {
+        return $this->get('/health', ['connection_id' => $channel->connectionId()], $this->uiSecretHeader());
     }
 
     public function logout(Zalo $channel): ?Response

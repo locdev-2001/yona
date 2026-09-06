@@ -1,5 +1,6 @@
 <?php
 
+use App\Channels\Capability;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Http\Resources\MessageResource;
@@ -822,4 +823,157 @@ it('job tắt đang-nhập bỏ qua khi khách vừa gõ tiếp', function () {
         DomainEvent::class,
         fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_OFF,
     );
+});
+
+// ── Lô 2b: tin nhóm (Q3) · lời mời kết bạn (Q7) · nhắc hẹn tới giờ ────────────
+
+it('gom mọi tin của một nhóm vào MỘT hội thoại mang tên và ảnh nhóm', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel, [
+        'source_id' => 'msg-zalo-group-2',
+        'content' => 'Ok em xem ngay',
+        'sender_uid' => '555000222',
+        'sender' => ['external_id' => '555000222', 'name' => 'Bình', 'avatar' => null],
+        'mentions' => [],
+    ]))->assertOk();
+
+    $conversations = Conversation::query()->get();
+    $contact = $conversations->first()->contact;
+
+    expect($conversations)->toHaveCount(1)
+        ->and($conversations->first()->messages()->count())->toBe(2)
+        ->and($contact->name)->toBe('Nhóm Bán Hàng')
+        ->and($contact->additional_attributes['zalo_thread_type'])->toBe('group')
+        ->and($contact->additional_attributes['social_zalo_user_id'])->toBe('7788')
+        ->and($conversations->first()->additional_attributes['thread_type'])->toBe(1);
+});
+
+it('giữ người gửi, nhắc tên và nhóm theo khoá chuẩn của năng lực group_threads', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
+
+    $attributes = Message::query()->latest('id')->first()->content_attributes;
+
+    expect($attributes['sender'])->toBe([
+        'external_id' => '555000111',
+        'name' => 'Minh Anh',
+        'avatar' => 'https://cdn.zalo.test/minh-anh.jpg',
+    ])
+        ->and($attributes['thread'])->toBe([
+            'id' => '7788',
+            'name' => 'Nhóm Bán Hàng',
+            'avatar' => 'https://cdn.zalo.test/group-7788.jpg',
+        ])
+        ->and($attributes['mentions'])->toBe([[
+            'external_id' => '555000222',
+            'name' => 'Bình',
+            'offset' => 0,
+            'length' => 5,
+        ]]);
+});
+
+it('bỏ khoá lạ của nền tảng trong ngữ cảnh nhóm thay vì bê nguyên vào lõi', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel, [
+        'thread' => ['type' => 'group', 'id' => '7788', 'name' => 'Nhóm Bán Hàng', 'groupType' => 2],
+        'sender' => ['external_id' => '555000111', 'name' => 'Minh Anh', 'zaloGlobalId' => 'x'],
+        'mentions' => [['external_id' => '555000222', 'name' => 'Bình', 'offset' => 0, 'length' => 5, 'type' => 0]],
+    ]))->assertOk();
+
+    $attributes = Message::query()->latest('id')->first()->content_attributes;
+
+    expect(array_keys($attributes['thread']))->toBe(['id', 'name'])
+        ->and(array_keys($attributes['sender']))->toBe(['external_id', 'name'])
+        ->and(array_keys($attributes['mentions'][0]))->toBe(['external_id', 'name', 'offset', 'length']);
+});
+
+it('không gắn ngữ cảnh nhóm vào chat 1-1', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel, [
+        'thread' => ['type' => 'group', 'id' => '7788', 'name' => 'Nhóm Bán Hàng'],
+        'sender' => ['external_id' => '555000111', 'name' => 'Minh Anh'],
+    ]))->assertOk();
+
+    $attributes = Message::query()->latest('id')->first()->content_attributes;
+
+    expect($attributes)->not->toHaveKey('thread')
+        ->and($attributes)->not->toHaveKey('sender');
+});
+
+it('coi tin của chính tài khoản shop trong nhóm là tin đi đã dội lại', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel, [
+        'source_id' => 'msg-zalo-group-self',
+        'is_self' => true,
+        'direction' => 'out',
+        'sender_uid' => '1234567890',
+        'sender' => ['external_id' => '1234567890', 'name' => 'Shop Yona', 'avatar' => null],
+        'mentions' => [],
+        'content' => 'Đơn này giao chiều nay nhé cả nhà',
+    ]))->assertOk();
+
+    $message = Message::query()->where('source_id', 'msg-zalo-group-self')->first();
+
+    expect($message->message_type)->toBe(Message::TYPE_OUTGOING)
+        ->and($message->content_attributes['external_echo'])->toBeTrue()
+        ->and($message->content_attributes['sender']['name'])->toBe('Shop Yona')
+        ->and($message->sender_id)->toBeNull();
+});
+
+it('khai báo năng lực nhóm và lời mời kết bạn', function () {
+    expect($this->inbox->supports(Capability::GroupThreads))->toBeTrue()
+        ->and($this->inbox->supports(Capability::FriendRequest))->toBeTrue();
+});
+
+it('lời mời kết bạn dựng Liên hệ nháp + hội thoại, không phải Lead', function () {
+    zaloWebhook(zaloPayload('zalo_friend_request', $this->channel))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+    $contact = $message->conversation->contact;
+
+    expect($message->message_type)->toBe(Message::TYPE_INCOMING)
+        ->and($message->source_id)->toBe('zalo-personal-friend-request-1')
+        ->and($message->content)->toBe('Chào shop, mình muốn hỏi giá gói Team')
+        ->and($message->content_attributes['friend_request'])->toBe([
+            'external_id' => '5550001234',
+            'message' => 'Chào shop, mình muốn hỏi giá gói Team',
+        ])
+        ->and($contact->name)->toBe('Trần Thị B')
+        ->and($contact->contactTypeName())->toBe('visitor')
+        ->and($contact->contactInboxes()->first()->source_id)->toBe('5550001234');
+});
+
+it('lời mời kết bạn không có lời nhắn vẫn hiện nhãn ở card hội thoại', function () {
+    zaloWebhook(zaloPayload('zalo_friend_request', $this->channel, ['message' => null]))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->content)->toBe(__('conversations.messages.friend_request'))
+        ->and($message->content_attributes['friend_request'])->toBe(['external_id' => '5550001234']);
+});
+
+it('bỏ qua lời mời kết bạn gửi lại cùng source_id', function () {
+    zaloWebhook(zaloPayload('zalo_friend_request', $this->channel))->assertOk();
+    zaloWebhook(zaloPayload('zalo_friend_request', $this->channel))->assertOk();
+
+    expect(Message::query()->count())->toBe(1)
+        ->and(Contact::query()->count())->toBe(1);
+});
+
+it('bỏ qua lời mời kết bạn thiếu uid người mời', function () {
+    zaloWebhook(zaloPayload('zalo_friend_request', $this->channel, ['user' => ['name' => 'Ẩn danh']]))->assertOk();
+
+    expect(Message::query()->count())->toBe(0);
+});
+
+it('tin nhắc hẹn tới giờ về cùng thẻ nhắc hẹn với tin lúc tạo', function () {
+    $payload = zaloPayload('zalo_inbound_reminder', $this->channel, ['source_id' => 'msg-zalo-reminder-due']);
+    $payload['listener_data']['content']['params'] = str_replace(
+        'create_reminder11',
+        'remind_reminder11',
+        $payload['listener_data']['content']['params'],
+    );
+
+    zaloWebhook($payload)->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->content_attributes['reminder']['title'])->toBe('Hẹn gọi tư vấn gói Team')
+        ->and($message->content)->toBe('Hẹn gọi tư vấn gói Team');
 });

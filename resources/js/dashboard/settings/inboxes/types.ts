@@ -39,6 +39,7 @@ export interface Inbox {
     zalo_display_name?: string | null;
     zalo_uid?: string | null;
     zalo_phone?: string | null;
+    zalo_last_connected_at?: string | null;
     website_token?: string | null;
     selected_feature_flags?: string[] | null;
     reply_time?: string | null;

@@ -2,7 +2,7 @@ import { createElement } from 'react';
 
 import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
 import type { SidebarUnreadCounts } from './useConversationUnreadCounts';
@@ -12,6 +12,9 @@ export interface SidebarInbox {
     id: number;
     name: string;
     channel_type: string;
+    // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
+    // quyền, …) — cảnh báo icon cạnh mục Channels như bản gốc ChannelLeaf.vue.
+    reauthorization_required?: boolean;
 }
 
 // Team của user (teams/getMyTeams) cho nhóm Teams.
@@ -137,9 +140,10 @@ export function buildMenuItems(
                     children: inboxes.map(inbox => ({
                         name: `${inbox.name}-${inbox.id}`,
                         label: inbox.name,
-                        icon: createElement(ChannelIcon, { inbox, className: 'size-[16px]' }),
                         badgeCount: unreadCounts.inboxes[String(inbox.id)] ?? 0,
                         to: scoped(`inbox/${inbox.id}`),
+                        component: ({ label, badgeCount }: { label: string; active: boolean; badgeCount?: number }) =>
+                            createElement(SidebarChannelLeafContent, { label, badgeCount, inbox }),
                     })),
                 },
                 {

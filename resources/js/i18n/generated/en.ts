@@ -1455,6 +1455,7 @@ const messages: Record<string, unknown> = {
         "DELIVERED": "Delivered successfully",
         "NO_MESSAGES": "No Messages",
         "NO_CONTENT": "No content available",
+        "FRIEND_REQUEST": "[Friend request]",
         "HIDE_QUOTED_TEXT": "Hide Quoted Text",
         "SHOW_QUOTED_TEXT": "Show Quoted Text",
         "MESSAGE_READ": "Read",
@@ -2340,7 +2341,8 @@ const messages: Record<string, unknown> = {
             "MEETING": "{sender} has started a meeting",
             "BUSINESS_CARD": "{sender} has shared a contact card",
             "BANK_CARD": "{sender} has shared a bank account",
-            "REMINDER": "{sender} has created a reminder"
+            "REMINDER": "{sender} has created a reminder",
+            "FRIEND_REQUEST": "{sender} has sent a friend request"
         },
         "ZALO": {
             "BUSINESS_CARD": {
@@ -2363,6 +2365,10 @@ const messages: Record<string, unknown> = {
                 "CANCELED": "canceled"
             }
         },
+        "FRIEND_REQUEST": {
+            "TITLE": "Friend request"
+        },
+        "SENT_FROM_NATIVE_APP": "from phone",
         "MESSAGE_ACTIONS": {
             "REACT": "React",
             "RECALL": "Unsend for everyone",
@@ -2929,7 +2935,8 @@ const messages: Record<string, unknown> = {
             "business_card": "[Contact card]",
             "bank_card": "[Bank account]",
             "reminder": "[Reminder]",
-            "call": "[Call]"
+            "call": "[Call]",
+            "friend_request": "[Friend request]"
         }
     },
     "COPILOT": {
@@ -5218,6 +5225,10 @@ const messages: Record<string, unknown> = {
                     "STARTING": "Starting the sign-in session…",
                     "WAITING": "Generating the QR code…",
                     "SCANNED": "QR code scanned. Finishing the connection…",
+                    "CONFIRMING": "Finishing the connection…",
+                    "REFRESHING": "The QR code expired. Generating a new one…",
+                    "EXPIRES_IN": "This code expires in {seconds}s",
+                    "BOUND_ACCOUNT": "This inbox is connected to: {name}",
                     "CONNECTED": "Connected. Redirecting…",
                     "RETRY": "Show a new QR code",
                     "BRIDGE_DOWN": "The Zalo connector service is not running. Start services/zalo-bridge and try again.",
@@ -5361,7 +5372,36 @@ const messages: Record<string, unknown> = {
             "RECONNECT": "Scan QR code again",
             "WAITING": "This inbox is waiting for a Zalo QR code scan.",
             "CONNECT": "Scan QR code",
-            "CONNECTED_AS": "Connected as {name}"
+            "CONNECTED_AS": "Connected as {name}",
+            "DISCONNECTED": "This inbox is disconnected from Zalo. Scan a QR code to connect an account again.",
+            "ACCOUNT_TITLE": "Connected Zalo account",
+            "ACCOUNT_UNKNOWN": "No Zalo account connected yet",
+            "CONNECTED_SINCE": "Connected since {time}",
+            "DISCONNECT": "Disconnect Zalo",
+            "DISCONNECT_CONFIRM": "Disconnect this Zalo account? The inbox stops receiving messages until you scan a QR code again.",
+            "DISCONNECT_DONE": "Zalo account disconnected.",
+            "DISCONNECT_BRIDGE_DOWN": "Disconnected in Yona, but the Zalo connector did not answer — the session may stay alive there until it restarts.",
+            "SWITCH_ACCOUNT": "Connect another account",
+            "STATE": {
+                "CONNECTED": "Connected",
+                "SESSION_LOST": "Session lost",
+                "QR_WAITING": "Waiting for QR scan",
+                "DISCONNECTED": "Disconnected"
+            },
+            "BRIDGE": {
+                "LABEL": "Zalo connector",
+                "OK": "Working",
+                "DEGRADED": "Errors reported ({count})",
+                "HALF_OPEN": "Retrying",
+                "OPEN": "Paused after {count} errors, retrying at {time}"
+            },
+            "ERRORS": {
+                "BRIDGE_UNREACHABLE": "Could not reach the Zalo connector. Start services/zalo-bridge and try again.",
+                "BRIDGE_REJECTED": "The Zalo connector refused the request. Check its logs, then try again.",
+                "NO_QR_SESSION": "No QR sign-in session is open. Start a new one.",
+                "ACCOUNT_MISMATCH": "That QR code belongs to a different Zalo account. This inbox is connected to {name}.",
+                "ACCOUNT_IN_USE": "That Zalo account is already connected to inbox \"{inbox}\". One account can only serve one inbox."
+            }
         },
         "REAUTH": "Reauthorize",
         "VIEW": "View",

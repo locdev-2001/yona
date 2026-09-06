@@ -44,7 +44,7 @@ interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
     assignee?: Partial<AgentMeta>;
-    inbox?: { name: string; channel_type: string };
+    inbox?: { name: string; channel_type: string; reauthorization_required?: boolean };
     selected?: boolean;
     isActiveChat?: boolean;
     showAssignee?: boolean;
@@ -158,6 +158,14 @@ export default function ConversationCard({
                         ].join(' ')}
                     >
                         {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
+                        {showInboxName && inbox.reauthorization_required ? (
+                            <span
+                                title={t('SIDEBAR.REAUTHORIZE')}
+                                className="grid place-content-center size-4 rounded-full bg-n-ruby-5/60 flex-shrink-0"
+                            >
+                                <Icon icon="i-lucide-triangle-alert" className="size-2.5 text-n-ruby-9" />
+                            </span>
+                        ) : null}
                         {showStatus ? <ConversationStatusChip status={chat.status} /> : null}
                         <div
                             className={[

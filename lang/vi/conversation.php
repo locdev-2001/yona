@@ -74,6 +74,7 @@ return [
         'BUSINESS_CARD' => '{sender} đã gửi một danh thiếp',
         'BANK_CARD' => '{sender} đã gửi một tài khoản ngân hàng',
         'REMINDER' => '{sender} đã tạo một nhắc hẹn',
+        'FRIEND_REQUEST' => '{sender} đã gửi lời mời kết bạn',
     ],
     // Mở rộng của Yona: Zalo có loại tin lõi Chatwoot không có (danh thiếp, thẻ
     // ngân hàng, nhắc hẹn, cuộc gọi).
@@ -98,6 +99,13 @@ return [
             'CANCELED' => 'đã huỷ',
         ],
     ],
+    // Mở rộng của Yona: năng lực `friend_request` (docs/channel-capabilities.md
+    // §2.4) — trung tính theo kênh, không nằm trong khối ZALO.
+    'FRIEND_REQUEST' => [
+        'TITLE' => 'Lời mời kết bạn',
+    ],
+    // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
+    'SENT_FROM_NATIVE_APP' => 'từ điện thoại',
     'MESSAGE_ACTIONS' => [
         'REACT' => 'Thả cảm xúc',
         'RECALL' => 'Thu hồi với mọi người',

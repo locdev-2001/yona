@@ -25,8 +25,11 @@ it('khai đúng những năng lực lô 3 và lô 4 vừa làm chạy được',
         ->and($inbox->supports(Capability::OutboundRecall))->toBeTrue()
         ->and($inbox->supports(Capability::OutboundTyping))->toBeTrue()
         ->and($inbox->supports(Capability::EventTyping))->toBeTrue()
+        // Lô 2b: tin nhóm (Q3) + lời mời kết bạn (Q7) đã có đường thực thi ở driver.
+        ->and($inbox->supports(Capability::GroupThreads))->toBeTrue()
+        ->and($inbox->supports(Capability::FriendRequest))->toBeTrue()
         // Nợ có tên, chưa có đường thực thi: không được khai bừa.
-        ->and($inbox->supports(Capability::GroupThreads))->toBeFalse()
         ->and($inbox->supports(Capability::OutboundEdit))->toBeFalse()
-        ->and($inbox->supports(Capability::SessionDisconnect))->toBeFalse();
+        // Lô 6 làm xong hành động ngắt kết nối/đổi tài khoản + đăng xuất bridge khi xoá hộp thư.
+        ->and($inbox->supports(Capability::SessionDisconnect))->toBeTrue();
 });

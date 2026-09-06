@@ -29,6 +29,7 @@ class BridgeEventService
 
         match ($payload['type'] ?? 'inbound') {
             'inbound' => $this->handleInbound($channel->inbox, $payload),
+            'friend_request' => $this->handleFriendRequest($channel->inbox, $payload),
             'bridge_session' => $this->handleSession($channel, $payload),
             'relay_event' => $this->handleRelayEvent($channel->inbox, $payload),
             default => null,
@@ -52,20 +53,76 @@ class BridgeEventService
         $this->messageState->applyPendingRecall($inbox, isset($payload['source_id']) ? (string) $payload['source_id'] : null);
     }
 
+    /**
+     * Lời mời kết bạn (docs/channel-capabilities.md §2.4 `friend_request`): người
+     * lạ chưa nhắn được vào hộp thư, nhưng đây đã là một lượt tiếp xúc thật —
+     * dựng LIÊN HỆ NHÁP + hội thoại để agent thấy và trả lời, không phải Lead
+     * (luật §2.4: chỉ thăng Lead khi có SĐT/email).
+     *
+     * Quy về đúng hình dạng payload `inbound` rồi đi qua IncomingMessageService:
+     * dedupe theo `source_id`, dựng liên hệ theo uid, nhãn thẻ và bong bóng dùng
+     * chung đường với mọi loại tin khác — không có đường ghi tin thứ hai.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function handleFriendRequest(Inbox $inbox, array $payload): void
+    {
+        $user = is_array($payload['user'] ?? null) ? $payload['user'] : [];
+        $uid = (string) ($user['uid'] ?? '');
+
+        if ($uid === '') {
+            return;
+        }
+
+        $message = filled($payload['message'] ?? null) ? (string) $payload['message'] : null;
+
+        (new IncomingMessageService($inbox, [
+            'peer_uid' => $uid,
+            'thread_id' => $uid,
+            'thread_type' => 0,
+            'source_id' => $payload['source_id'] ?? null,
+            'direction' => 'in',
+            'user' => ['name' => $user['name'] ?? null, 'avatar' => $user['avatar'] ?? null],
+            'content' => $message,
+            'friend_request' => array_filter([
+                'external_id' => $uid,
+                'message' => $message,
+            ]),
+        ]))->perform();
+    }
+
     /** @param array<string, mixed> $payload */
     private function handleSession(Zalo $channel, array $payload): void
     {
-        $state = match ($payload['state'] ?? '') {
-            'session_ok' => Zalo::STATE_CONNECTED,
-            'session_lost' => Zalo::STATE_SESSION_LOST,
+        $reported = (string) ($payload['state'] ?? '');
+
+        // Bridge hôm nay chỉ phát session_ok/session_lost (webhook-contract §2b),
+        // nhưng trạng thái lạ KHÔNG được rơi vào im lặng như trước: hoặc ánh xạ
+        // được, hoặc phải để lại dấu vết mà tìm (zalo-deep-audit 6.2).
+        $state = match ($reported) {
+            'session_ok', 'connected', 'ready' => Zalo::STATE_CONNECTED,
+            'session_lost', 'disconnected', 'closed' => Zalo::STATE_SESSION_LOST,
+            'qr_waiting', 'logging_in' => Zalo::STATE_QR_WAITING,
             default => null,
         };
 
         if ($state === null) {
+            Log::warning('[ZALO] bridge_session mang trạng thái chưa biết', [
+                'connection_id' => $channel->connectionId(),
+                'state' => $reported,
+            ]);
+
             return;
         }
 
-        $channel->markState($state, $payload['detail'] ?? null);
+        $detail = isset($payload['detail']) && is_string($payload['detail']) ? $payload['detail'] : null;
+
+        // Phiên sống lại thì mạch ngắt phải mở ra, nếu không tin vẫn bị chặn êm.
+        if ($state === Zalo::STATE_CONNECTED) {
+            app(ZaloHealthMonitor::class)->reset($channel->connectionId());
+        }
+
+        $channel->markState($state, $detail ?? ($state === Zalo::STATE_SESSION_LOST ? $reported : null));
     }
 
     /** @param array<string, mixed> $payload */

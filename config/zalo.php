@@ -11,6 +11,10 @@ return [
         'send_secret' => env('ZALO_BRIDGE_SEND_SECRET', ''),
         'ui_secret' => env('ZALO_BRIDGE_UI_SECRET', ''),
         'timeout' => 10,
+        // Promote phải chờ bridge gọi REST Zalo lấy tên/avatar tài khoản: 10s là
+        // quá ngắn, người dùng nhận "cầu nối chưa chạy" trong khi đã kết nối xong
+        // (zalo-deep-audit 6.9).
+        'promote_timeout' => 30,
         'media_timeout' => 120,
     ],
 
@@ -28,5 +32,8 @@ return [
     'circuit_breaker' => [
         'threshold' => 5,
         'window_seconds' => 3600,
+        // Mạch mở không được khoá vĩnh viễn: sau ngần này giây cho MỘT lượt thử
+        // (half-open). Hỏng tiếp thì đóng lại, ngon thì mở hẳn.
+        'half_open_seconds' => 300,
     ],
 ];

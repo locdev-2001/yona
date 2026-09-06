@@ -1455,6 +1455,7 @@ const messages: Record<string, unknown> = {
         "DELIVERED": "Đã gửi thành công",
         "NO_MESSAGES": "Không có tin nhắn",
         "NO_CONTENT": "Không có nội dung",
+        "FRIEND_REQUEST": "[Lời mời kết bạn]",
         "HIDE_QUOTED_TEXT": "Ẩn văn bản được trích dẫn",
         "SHOW_QUOTED_TEXT": "Hiện Văn bản được trích dẫn",
         "MESSAGE_READ": "\bĐọc",
@@ -2340,7 +2341,8 @@ const messages: Record<string, unknown> = {
             "MEETING": "{sender} đã bắt đầu một cuộc họp",
             "BUSINESS_CARD": "{sender} đã gửi một danh thiếp",
             "BANK_CARD": "{sender} đã gửi một tài khoản ngân hàng",
-            "REMINDER": "{sender} đã tạo một nhắc hẹn"
+            "REMINDER": "{sender} đã tạo một nhắc hẹn",
+            "FRIEND_REQUEST": "{sender} đã gửi lời mời kết bạn"
         },
         "ZALO": {
             "BUSINESS_CARD": {
@@ -2363,6 +2365,10 @@ const messages: Record<string, unknown> = {
                 "CANCELED": "đã huỷ"
             }
         },
+        "FRIEND_REQUEST": {
+            "TITLE": "Lời mời kết bạn"
+        },
+        "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
             "REACT": "Thả cảm xúc",
             "RECALL": "Thu hồi với mọi người",
@@ -2929,7 +2935,8 @@ const messages: Record<string, unknown> = {
             "business_card": "[Danh thiếp]",
             "bank_card": "[Tài khoản ngân hàng]",
             "reminder": "[Nhắc hẹn]",
-            "call": "[Cuộc gọi]"
+            "call": "[Cuộc gọi]",
+            "friend_request": "[Lời mời kết bạn]"
         }
     },
     "COPILOT": {
@@ -5218,6 +5225,10 @@ const messages: Record<string, unknown> = {
                     "STARTING": "Đang mở phiên đăng nhập…",
                     "WAITING": "Đang tạo mã QR…",
                     "SCANNED": "Đã quét mã QR. Đang hoàn tất kết nối…",
+                    "CONFIRMING": "Đang hoàn tất kết nối…",
+                    "REFRESHING": "Mã QR đã hết hạn. Đang tạo mã mới…",
+                    "EXPIRES_IN": "Mã còn hiệu lực {seconds} giây",
+                    "BOUND_ACCOUNT": "Hộp thư này đang gắn tài khoản: {name}",
                     "CONNECTED": "Đã kết nối. Đang chuyển trang…",
                     "RETRY": "Hiện mã QR mới",
                     "BRIDGE_DOWN": "Dịch vụ kết nối Zalo chưa chạy. Hãy khởi động services/zalo-bridge rồi thử lại.",
@@ -5361,7 +5372,36 @@ const messages: Record<string, unknown> = {
             "RECONNECT": "Quét lại mã QR",
             "WAITING": "Hộp thư này đang chờ quét mã QR Zalo.",
             "CONNECT": "Quét mã QR",
-            "CONNECTED_AS": "Đang kết nối với {name}"
+            "CONNECTED_AS": "Đang kết nối với {name}",
+            "DISCONNECTED": "Hộp thư này đã ngắt kết nối Zalo. Quét mã QR để gắn lại một tài khoản.",
+            "ACCOUNT_TITLE": "Tài khoản Zalo đang kết nối",
+            "ACCOUNT_UNKNOWN": "Chưa gắn tài khoản Zalo nào",
+            "CONNECTED_SINCE": "Kết nối từ {time}",
+            "DISCONNECT": "Ngắt kết nối Zalo",
+            "DISCONNECT_CONFIRM": "Ngắt kết nối tài khoản Zalo này? Hộp thư sẽ ngừng nhận tin cho tới khi bạn quét lại mã QR.",
+            "DISCONNECT_DONE": "Đã ngắt kết nối tài khoản Zalo.",
+            "DISCONNECT_BRIDGE_DOWN": "Đã ngắt trong Yona, nhưng cầu nối Zalo không trả lời — phiên bên đó có thể còn sống tới khi cầu nối khởi động lại.",
+            "SWITCH_ACCOUNT": "Gắn tài khoản khác",
+            "STATE": {
+                "CONNECTED": "Đang kết nối",
+                "SESSION_LOST": "Mất phiên",
+                "QR_WAITING": "Đang chờ quét mã QR",
+                "DISCONNECTED": "Đã ngắt kết nối"
+            },
+            "BRIDGE": {
+                "LABEL": "Cầu nối Zalo",
+                "OK": "Bình thường",
+                "DEGRADED": "Có lỗi ({count} lượt)",
+                "HALF_OPEN": "Đang thử lại",
+                "OPEN": "Tạm dừng sau {count} lỗi, thử lại lúc {time}"
+            },
+            "ERRORS": {
+                "BRIDGE_UNREACHABLE": "Không kết nối được cầu nối Zalo. Hãy khởi động services/zalo-bridge rồi thử lại.",
+                "BRIDGE_REJECTED": "Cầu nối Zalo từ chối yêu cầu. Hãy xem log của cầu nối rồi thử lại.",
+                "NO_QR_SESSION": "Chưa có phiên quét mã QR nào đang mở. Hãy mở phiên mới.",
+                "ACCOUNT_MISMATCH": "Mã QR vừa quét thuộc tài khoản Zalo khác. Hộp thư này đang gắn tài khoản {name}.",
+                "ACCOUNT_IN_USE": "Tài khoản Zalo đó đã gắn vào hộp thư \"{inbox}\". Một tài khoản chỉ phục vụ được một hộp thư."
+            }
         },
         "REAUTH": "Ủy quyền lại",
         "VIEW": "Xem",

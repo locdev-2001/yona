@@ -32,7 +32,13 @@ export default function MessagePreview({
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
     const isMessagePrivate = Boolean(message.private);
-    const subject = (message.content_attributes as { email?: { subject?: string } } | undefined)?.email?.subject;
+    const contentAttributes = message.content_attributes as
+        | { email?: { subject?: string }; friend_request?: unknown }
+        | undefined;
+    const subject = contentAttributes?.email?.subject;
+    // Năng lực `friend_request`: thẻ hội thoại nói rõ đây là lời mời, không phải
+    // tin thường — lời nhắn kèm theo (nếu có) đã nằm trong bong bóng.
+    const isFriendRequest = Boolean(contentAttributes?.friend_request);
     const parsedLastMessage = getPlainText(subject || message.content);
     const fileType = String(message.attachments?.[0]?.file_type ?? '');
     const attachmentIcon = ATTACHMENT_ICONS[fileType];
@@ -57,7 +63,12 @@ export default function MessagePreview({
                 {showMessageType && multiLine
                     ? typeIcon('inline-block align-middle size-3.5 ltr:mr-1 rtl:ml-1')
                     : null}
-                {message.content && isMessageSticker ? (
+                {isFriendRequest ? (
+                    <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
+                        <Icon icon="i-lucide-user-plus" className="size-3.5" />
+                        {t('CHAT_LIST.FRIEND_REQUEST')}
+                    </span>
+                ) : message.content && isMessageSticker ? (
                     <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
                         <Icon icon="i-lucide-image" className="size-3.5" />
                         {t('CHAT_LIST.ATTACHMENTS.image.CONTENT')}

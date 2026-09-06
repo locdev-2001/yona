@@ -270,6 +270,24 @@ class Inbox extends Model
         return $this->channel_type === 'Channel::WebWidget';
     }
 
+    /**
+     * Contract lõi cho sidebar/thẻ hội thoại: hộp thư có đang cần người dùng đăng
+     * nhập lại không. Lõi KHÔNG biết tên kênh nào — chỉ hỏi kênh nào khai năng lực
+     * `session_reauth` (docs/channel-capabilities.md §2.5).
+     */
+    public function reauthorizationRequired(): bool
+    {
+        if (! $this->supports(Capability::SessionReauth)) {
+            return false;
+        }
+
+        $channel = $this->channel;
+
+        return $channel !== null
+            && method_exists($channel, 'reauthorizationRequired')
+            && $channel->reauthorizationRequired();
+    }
+
     public function isZalo(): bool
     {
         return $this->channel_type === 'Channel::Zalo';

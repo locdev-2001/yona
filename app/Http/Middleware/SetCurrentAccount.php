@@ -78,6 +78,9 @@ class SetCurrentAccount
                     'name' => $inbox->name,
                     'channel_type' => $inbox->channel_type,
                     'capabilities' => $inbox->capabilities()->values(),
+                    // Icon cảnh báo mất phiên trên sidebar Kênh + thẻ hội thoại
+                    // (ChannelLeaf.vue của gốc đọc `inbox.reauthorization_required`).
+                    'reauthorization_required' => $inbox->reauthorizationRequired(),
                 ]),
             // Nhóm Teams trên sidebar (Sidebar.vue lấy từ getter teams/getMyTeams:
             // chỉ team user là member).

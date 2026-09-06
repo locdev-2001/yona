@@ -8,6 +8,7 @@ export interface SidebarInbox {
     id: number;
     name: string;
     channel_type: string;
+    reauthorization_required?: boolean;
 }
 
 export function useInboxLookup(): (inboxId?: number | null) => SidebarInbox | undefined {

@@ -345,6 +345,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                 inboxId={inbox.id}
                                                 state={inbox.zalo_state}
                                                 displayName={inbox.zalo_display_name}
+                                                avatarUrl={inbox.avatar_url}
+                                                phone={inbox.zalo_phone}
+                                                lastConnectedAt={inbox.zalo_last_connected_at}
                                             />
                                         ) : null}
                                         <div className="flex flex-col gap-1 items-start mb-4">

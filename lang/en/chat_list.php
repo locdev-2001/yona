@@ -144,6 +144,8 @@ return [
     'DELIVERED' => 'Delivered successfully',
     'NO_MESSAGES' => 'No Messages',
     'NO_CONTENT' => 'No content available',
+    // Mở rộng của Yona: nhãn thẻ hội thoại cho năng lực `friend_request`.
+    'FRIEND_REQUEST' => '[Friend request]',
     'HIDE_QUOTED_TEXT' => 'Hide Quoted Text',
     'SHOW_QUOTED_TEXT' => 'Show Quoted Text',
     'MESSAGE_READ' => 'Read',
