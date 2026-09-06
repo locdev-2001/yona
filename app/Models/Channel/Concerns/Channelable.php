@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/concerns/channelable.rb — phần chung của mọi
@@ -26,6 +27,39 @@ trait Channelable
     public static function generateToken(): string
     {
         return Str::random(24);
+    }
+
+    /**
+     * ActiveRecord giữ nguyên chuỗi rỗng client gửi lên; middleware
+     * `ConvertEmptyStringsToNull` của Laravel đổi '' thành null trước khi tới
+     * model, làm vỡ mọi cột chuỗi NOT NULL (imap_address, smtp_login,
+     * allowed_domains…). Trả null về '' đúng những cột đó để hành vi khớp bản gốc.
+     */
+    public function setAttribute($key, $value)
+    {
+        if ($value === null && in_array($key, static::blankableStringColumns(), true)) {
+            $value = '';
+        }
+
+        return parent::setAttribute($key, $value);
+    }
+
+    /**
+     * Cột chuỗi NOT NULL có giá trị mặc định — danh sách đọc thẳng từ schema nên
+     * thêm cột mới cho một kênh không phải khai lại ở đây.
+     *
+     * @return list<string>
+     */
+    protected static function blankableStringColumns(): array
+    {
+        static $columnsByModel = [];
+
+        return $columnsByModel[static::class] ??= collect(Schema::getColumns((new static)->getTable()))
+            ->filter(fn (array $column) => ! $column['nullable']
+                && $column['default'] !== null
+                && in_array($column['type_name'], ['varchar', 'text', 'bpchar', 'char'], true))
+            ->pluck('name')
+            ->all();
     }
 
     /**

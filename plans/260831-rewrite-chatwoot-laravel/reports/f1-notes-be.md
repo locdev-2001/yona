@@ -311,3 +311,73 @@ Sửa (file dùng chung — thay đổi tối thiểu):
 Không có hộp thư thật thì dùng Mailpit (`mailpit` mặc định SMTP 1025 / IMAP không có) —
 Mailpit KHÔNG có IMAP nên chỉ kiểm được chiều gửi; chiều nhận cần server IMAP thật
 (hoặc `docker run greenmail/standalone`).
+
+---
+
+## Sửa sau QA (agent `f1-fix`, 06/09/2026)
+
+Hai lỗi `f1-fe` báo ở [f1-notes-fe.md](f1-notes-fe.md) "Finding gửi phiên chính".
+
+### Finding 1 — hàng `channel_*` mồ côi sau khi xóa inbox
+
+**Đo lại trước khi sửa:** hook `Inbox::deleted` (có từ B1) *đã* xóa kênh đúng ở cả ba đường:
+`$inbox->delete()`, `DeleteObjectJob` sau serialize/unserialize, và `DELETE /inboxes/{id}` —
+Pest xanh trước khi đụng code. Nên triệu chứng `f1-fe` gặp là do môi trường (worker `low`
+chết lúc đó — đúng bẫy đã ghi ở `plan.md`), cộng thêm `resetFixture` của
+`~/www/pixel-diff/f1-email-e2e.mjs` tra `channel_type` bằng FQCN `App\Models\Channel\Email`
+trong khi DB lưu `'Channel::Email'` (morph map) nên nhánh dọn inbox không bao giờ chạy.
+
+**Nhưng có một lỗ thật, và đó mới là gốc:** `inboxes.account_id` có
+`ON DELETE CASCADE` ở tầng DB → xóa account thì hàng `inboxes` biến mất **không qua model**,
+hook không chạy, mọi hàng `channel_*` của account thành mồ côi và giữ luôn ràng buộc unique
+(`email`, `phone_number`, `bot_token`…).
+
+Sửa (2 chỗ, mỗi chỗ 1 hook, không có nhánh theo loại kênh):
+
+| File | Thay đổi |
+|---|---|
+| `app/Models/Inbox.php` | chuyển `channel?->delete()` + `avatar?->delete()` từ `deleted` sang **`deleting`** — kênh đi trước hàng inbox, nếu bước này hỏng thì cả lệnh xóa dừng, không để lại mồ côi. `clearQueue()` vẫn ở `deleted`. |
+| `app/Models/Account.php` | thêm hook `deleting` xóa `inboxes` **qua model** (port `has_many :inboxes, dependent: :destroy_async`), để cascade DB không qua mặt hook của Inbox. |
+
+Xóa đa hình nằm trên `Inbox`, nên kênh mới (Zalo của G1, 9 kênh F2–F5) tự động được xóa theo —
+**không phải sửa gì thêm khi thêm kênh**.
+
+### Finding 2 — `PATCH /inboxes/{id}` với chuỗi rỗng trả 500
+
+Gốc: `ConvertEmptyStringsToNull` đổi `''` → `null`, mọi cột chuỗi NOT NULL của `channel_*` vỡ.
+ActiveRecord giữ nguyên `''`, nên phải trả `null` về `''` — nhưng chỉ ở tầng kênh.
+
+Sửa **một chỗ**: `app/Models/Channel/Concerns/Channelable.php` (trait dùng chung của cả 13 kênh)
+override `setAttribute()`, đổi `null` → `''` cho những cột **chuỗi NOT NULL có default**.
+Danh sách cột **đọc thẳng từ schema** (`Schema::getColumns`, cache theo lớp) — thêm cột mới cho
+một kênh không phải khai lại ở đâu cả. Rà toàn bộ `channel_*`, mẫu này còn dính:
+`channel_email.{imap_address,imap_login,imap_authentication,smtp_address,smtp_login,smtp_domain,
+smtp_authentication,smtp_openssl_verify_mode}`, `channel_web_widgets.{widget_color,allowed_domains}`,
+`channel_sms.provider`, `channel_whatsapp.provider`, `channel_zalo.state`.
+
+Cố ý **không** đụng cột số (`imap_port` NOT NULL default 0): ActiveRecord cũng cast `''` → nil
+cho integer nên bản gốc cũng 500; và FE luôn gửi `String(inbox.imap_port ?? '')` = `'0'`.
+Cũng **không** đụng cột chuỗi NOT NULL *không có* default (`email`, `phone_number`, `bot_token`…)
+— đó là trường bắt buộc, để nó vỡ đúng chỗ validate.
+
+### Pest bổ sung
+
+| Tệp | Test |
+|---|---|
+| `tests/Feature/Models/InboxChannelCascadeTest.php` | 13 loại kênh (mọi factory đang có) × "xóa inbox → hàng kênh biến mất **và** tạo lại kênh cùng định danh unique được"; xóa account cũng dọn kênh; kênh bị xóa **trước** hàng inbox; danh sách cột blankable đúng |
+| `tests/Feature/WebApi/InboxesEmailChannelTest.php` | PATCH với `imap_address/imap_login/imap_authentication/smtp_*` = `''` → 200 và lưu `''`; luồng tắt IMAP/SMTP với ô địa chỉ trống; `POST → DELETE → POST lại cùng email` qua HTTP |
+
+### Kết quả gate
+
+- `node ~/www/pixel-diff/audit-buttons.mjs http://localhost:8000 /settings/inboxes/45/configuration`
+  → **`Update IMAP settings` OK (Δel=2)** (trước là DEAD). Đường `/imap` không phải route riêng —
+  tab IMAP nằm trong `/configuration`.
+- E2E tay trên `yona_rw`: tạo inbox email `f1fix-temp@acme.test` → xóa → `channel_email` còn **0**
+  hàng → tạo lại **cùng địa chỉ** thành công → xóa sạch. Chứng minh trực tiếp Finding 1.
+- Pest toàn suite trên DB riêng `yona_rw_test_f1fix`; `vendor/bin/pint` các file đã sửa — passed.
+
+### Việc còn nợ (ngoài phạm vi sửa này)
+
+`resetFixture` trong `~/www/pixel-diff/f1-email-e2e.mjs` còn tra `channel_type` bằng FQCN —
+phải đổi sang `'Channel::Email'` thì nhánh dọn inbox mới chạy (hiện chỉ nhánh `$channel->delete()`
+làm việc). Vùng của `f1-fe`.
