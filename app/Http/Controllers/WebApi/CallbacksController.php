@@ -8,6 +8,7 @@ use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
 use App\Models\Channel\FacebookPage;
 use App\Models\Inbox;
+use App\Services\Channels\ChannelSetupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +71,10 @@ class CallbacksController extends Controller
 
             return $inbox;
         });
+
+        // Channel::FacebookPage `after_create_commit :subscribe` — cùng service
+        // với luồng tạo inbox thường (ChannelSetupService).
+        app(ChannelSetupService::class)->register($inbox);
 
         AvatarFromUrlJob::dispatch($inbox, "https://graph.facebook.com/{$data['page_id']}/picture?type=large");
 

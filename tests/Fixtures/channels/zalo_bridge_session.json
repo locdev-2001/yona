@@ -1,0 +1,6 @@
+{
+  "type": "bridge_session",
+  "connection_id": 1,
+  "state": "session_lost",
+  "detail": "cookie expired"
+}

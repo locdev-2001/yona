@@ -39,6 +39,7 @@ import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
 import BotConfigurationPage from './settingsPage/BotConfigurationPage';
+import ZaloSessionBanner from './channels/ZaloSessionBanner';
 import {
     DEFAULT_WIDGET_BUBBLE_SETTINGS,
     WEB_WIDGET_FEATURE_FLAGS,
@@ -156,6 +157,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const isWebWidget = inbox?.channel_type === INBOX_TYPES.WEB;
     const isApiInbox = inbox?.channel_type === INBOX_TYPES.API;
     const isEmailChannel = inbox?.channel_type === INBOX_TYPES.EMAIL;
+    const isZaloChannel = inbox?.channel_type === INBOX_TYPES.ZALO;
     // inboxName của Settings.vue: kênh email hiện kèm địa chỉ thư.
     const inboxHeaderTitle = isEmailChannel ? `${inbox?.name} (${inbox?.email})` : (inbox?.name ?? '');
     const tabKeys = useMemo(() => tabKeysFor(Boolean(isWebWidget)), [isWebWidget]);
@@ -300,6 +302,14 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                     <div
                                         className={`flex-1 flex flex-col min-w-0 ${isWebWidget ? 'max-w-2xl' : 'max-w-4xl'}`}
                                     >
+                                        {isZaloChannel ? (
+                                            <ZaloSessionBanner
+                                                accountId={accountId}
+                                                inboxId={inbox.id}
+                                                state={inbox.zalo_state}
+                                                displayName={inbox.zalo_display_name}
+                                            />
+                                        ) : null}
                                         <div className="flex flex-col gap-1 items-start mb-4">
                                             <label className="text-heading-3 text-n-slate-12">
                                                 {t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_AVATAR.LABEL')}

@@ -245,6 +245,11 @@ class Inbox extends Model
         return $this->channel_type === 'Channel::WebWidget';
     }
 
+    public function isZalo(): bool
+    {
+        return $this->channel_type === 'Channel::Zalo';
+    }
+
     public function isEmail(): bool
     {
         return $this->channel_type === 'Channel::Email';

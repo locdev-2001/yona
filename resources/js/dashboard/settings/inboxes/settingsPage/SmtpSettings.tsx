@@ -123,7 +123,7 @@ export default function SmtpSettings({ inbox, onInboxUpdated }: SmtpSettingsProp
                         className="ltr:mr-1 rtl:ml-1"
                         checked={isSmtpEnabled}
                         onChange={event => setSmtpEnabled(event.target.checked)}
-                    />
+                    />{' '}
                     {t('INBOX_MGMT.SMTP.TOGGLE_AVAILABILITY')}
                 </label>
                 <p>{t('INBOX_MGMT.SMTP.TOGGLE_HELP')}</p>

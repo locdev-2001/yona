@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Webhooks\TiktokController as TiktokWebhooksControll
 use App\Http\Controllers\Api\Webhooks\TwilioController as TwilioWebhooksController;
 use App\Http\Controllers\Api\Webhooks\TwitterController as TwitterWebhooksController;
 use App\Http\Controllers\Api\Webhooks\WhatsappController as WhatsappWebhooksController;
+use App\Http\Controllers\Api\Webhooks\ZaloController as ZaloWebhooksController;
 use App\Http\Controllers\Platform\Api\V1\AccountsController as PlatformAccountsController;
 use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccountUsersController;
 use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Widget\PresenceController;
 use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
+use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Support\Facades\Route;
 
 // Mặt tiền api: API cho BÊN NGOÀI gọi vào, xác thực bằng token, hợp đồng công
@@ -126,3 +128,10 @@ Route::post('/webhooks/tiktok', [TiktokWebhooksController::class, 'events']);
 Route::post('/twilio/callback', [TwilioWebhooksController::class, 'processPayload']);
 Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'deliveryStatus'])->name('twilio.delivery_status');
 // F2-F5 webhooks — END
+
+// G1 Zalo cá nhân webhook từ zalo-bridge — BEGIN (agent g1 sở hữu khối này)
+// Bridge Node (services/zalo-bridge) đẩy tin đến, trạng thái phiên và sự kiện
+// trạng-thái-tin về đây; xác thực bằng secret dùng chung trên header.
+Route::post('/webhooks/zalo', ZaloWebhooksController::class)
+    ->middleware(VerifyZaloBridgeSecret::class);
+// G1 Zalo webhook — END

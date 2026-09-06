@@ -13,6 +13,7 @@ use App\Services\Telegram\SendOnTelegramService;
 use App\Services\Tiktok\SendOnTiktokService;
 use App\Services\Twilio\SendOnTwilioService;
 use App\Services\Whatsapp\SendOnWhatsappService;
+use App\Services\Zalo\SendOnZaloService;
 
 /**
  * Port từ refs/chatwoot/app/jobs/send_reply_job.rb — mọi tin vừa tạo đi qua đây,
@@ -34,6 +35,7 @@ class SendReplyJob extends ApplicationJob
         'Channel::TwilioSms' => SendOnTwilioService::class,
         'Channel::Whatsapp' => SendOnWhatsappService::class,
         'Channel::Tiktok' => SendOnTiktokService::class,
+        'Channel::Zalo' => SendOnZaloService::class,
     ];
 
     public function __construct(public readonly Message $message) {}

@@ -64,6 +64,15 @@ class TwilioSms extends Model
         ];
     }
 
+    // Form tạo inbox gửi medium dạng chuỗi ('sms'/'whatsapp') như bản gốc (enum
+    // của Rails); cột ở đây là số nên phải quy đổi ở đúng một chỗ.
+    public function setMediumAttribute(mixed $value): void
+    {
+        $this->attributes['medium'] = is_string($value)
+            ? (self::MEDIUMS[$value] ?? self::MEDIUM_SMS)
+            : $value;
+    }
+
     public function isSms(): bool
     {
         return $this->medium === self::MEDIUM_SMS;

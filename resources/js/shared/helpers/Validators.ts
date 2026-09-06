@@ -7,6 +7,13 @@ export const isPhoneNumberValidWithDialCode = (value: string): boolean =>
 
 export const startsWithPlus = (value: string): boolean => value.startsWith('+');
 
+// Số E.164 đầy đủ (dùng cho form kênh Twilio/WhatsApp) — rỗng cũng hợp lệ.
+export const isPhoneE164 = (value: string): boolean => !!value.match(/^\+[1-9]\d{1,14}$/);
+
+export const isPhoneE164OrEmpty = (value: string): boolean => isPhoneE164(value) || value === '';
+
+export const isNumber = (value: string): boolean => /^\d+$/.test(value);
+
 // Chuỗi '/pattern/flags' do người dùng nhập ở màn thuộc tính tuỳ biến → RegExp.
 export const getRegexp = (regexPatternValue: string): RegExp => {
     const lastSlash = regexPatternValue.lastIndexOf('/');

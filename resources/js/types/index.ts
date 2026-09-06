@@ -19,6 +19,10 @@ export interface GlobalConfig {
     isMfaEnabled: boolean;
     termsURL: string;
     privacyURL: string;
+    // App id của Meta — kênh Facebook/Instagram chỉ bật khi cấu hình (như
+    // window.chatwootConfig.fbAppId của bản gốc).
+    fbAppId?: string;
+    fbApiVersion?: string;
 }
 
 export interface SharedPageProps {

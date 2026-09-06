@@ -22,7 +22,9 @@ use App\Models\Channel\TwilioSms;
 use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
+use App\Models\Channel\Zalo;
 use App\Models\Inbox;
+use App\Services\Channels\ChannelSetupService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +52,7 @@ class InboxesController extends Controller
         'whatsapp' => Whatsapp::class,
         'tiktok' => Tiktok::class,
         'twitter_profile' => TwitterProfile::class,
+        'zalo' => Zalo::class,
     ];
 
     // inbox_attributes của bản gốc — cùng bộ cho POST lẫn PATCH (trừ name/avatar
@@ -117,7 +120,11 @@ class InboxesController extends Controller
             ]);
         });
 
-        return response()->json($this->inboxPayload($request, $inbox));
+        // Đăng ký webhook với nhà cung cấp (setWebhook/subscribe/…) — một lời gọi
+        // cho mọi kênh, bảng tra nằm trong service.
+        app(ChannelSetupService::class)->register($inbox);
+
+        return response()->json($this->inboxPayload($request, $inbox->refresh()));
     }
 
     public function update(Request $request, Account $account, int $inboxId): JsonResponse
@@ -292,8 +299,23 @@ class InboxesController extends Controller
 
         return $channelClass::create([
             'account_id' => $account->id,
-            ...collect($channelParams)->only($channelClass::EDITABLE_ATTRS)->all(),
+            ...collect($channelParams)->only($this->creatableAttributes($channelClass))->all(),
         ]);
+    }
+
+    /**
+     * Thuộc tính kênh nhận được lúc tạo: hợp của những gì kênh khai trong
+     * channelRules() (nguồn duy nhất cho form tạo) và EDITABLE_ATTRS (nếu có).
+     * Kênh không khai EDITABLE_ATTRS (Facebook/Instagram/Tiktok) vẫn tạo được.
+     *
+     * @param  class-string  $channelClass
+     * @return list<string>
+     */
+    private function creatableAttributes(string $channelClass): array
+    {
+        $editable = defined($channelClass.'::EDITABLE_ATTRS') ? $channelClass::EDITABLE_ATTRS : [];
+
+        return array_values(array_unique([...array_keys($channelClass::channelRules()), ...$editable]));
     }
 
     private function updateChannel(Inbox $inbox, array $channelParams): void

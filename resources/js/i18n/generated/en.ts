@@ -5029,6 +5029,31 @@ const messages: Record<string, unknown> = {
                     "SUBTITLE": "You have to configure the webhook URL in LINE application with the URL mentioned here."
                 }
             },
+            "ZALO_CHANNEL": {
+                "TITLE": "Zalo personal account",
+                "DESC": "Connect a personal Zalo account. Sign in once with a QR code and every conversation lands in this inbox.",
+                "CHANNEL_NAME": {
+                    "LABEL": "Inbox Name",
+                    "PLACEHOLDER": "Enter your inbox name (eg: Zalo store)",
+                    "ERROR": "Please enter a valid inbox name"
+                },
+                "SUBMIT_BUTTON": "Create Zalo Channel",
+                "API": {
+                    "ERROR_MESSAGE": "We were not able to create a Zalo channel, please try again"
+                },
+                "QR": {
+                    "TITLE": "Sign in with QR code",
+                    "DESC": "Open Zalo on your phone, go to the QR scanner and scan the code below.",
+                    "STARTING": "Starting the sign-in session…",
+                    "WAITING": "Generating the QR code…",
+                    "SCANNED": "QR code scanned. Finishing the connection…",
+                    "CONNECTED": "Connected. Redirecting…",
+                    "RETRY": "Show a new QR code",
+                    "BRIDGE_DOWN": "The Zalo connector service is not running. Start services/zalo-bridge and try again.",
+                    "EXPIRED": "The QR code expired before it was scanned.",
+                    "MISMATCH": "That QR code belongs to a different Zalo account. Scan the account already connected to this inbox."
+                }
+            },
             "TELEGRAM_CHANNEL": {
                 "TITLE": "Telegram Channel",
                 "DESC": "Integrate with Telegram channel and start supporting your customers.",
@@ -5095,6 +5120,10 @@ const messages: Record<string, unknown> = {
                     "VOICE": {
                         "TITLE": "Voice",
                         "DESCRIPTION": "Integrate with Twilio Voice"
+                    },
+                    "ZALO": {
+                        "TITLE": "Zalo",
+                        "DESCRIPTION": "Connect a personal Zalo account by QR code"
                     }
                 }
             },
@@ -5155,6 +5184,13 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_QR_INSTRUCTION": "Scan the QR code above to quickly test your WhatsApp inbox",
             "MESSENGER_QR_INSTRUCTION": "Scan the QR code above to quickly test your Facebook Messenger inbox",
             "TELEGRAM_QR_INSTRUCTION": "Scan the QR code above to quickly test your Telegram inbox"
+        },
+        "ZALO_SESSION": {
+            "LOST": "The Zalo session for this inbox has ended. You will not receive or send messages until you sign in again.",
+            "RECONNECT": "Scan QR code again",
+            "WAITING": "This inbox is waiting for a Zalo QR code scan.",
+            "CONNECT": "Scan QR code",
+            "CONNECTED_AS": "Connected as {name}"
         },
         "REAUTH": "Reauthorize",
         "VIEW": "View",

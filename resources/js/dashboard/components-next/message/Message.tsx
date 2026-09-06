@@ -194,7 +194,9 @@ export default function Message({
                     </div>
                 ) : (
                     <div
-                        className={`${GRID_CLASS_MAP[orientation] ?? ''} gap-x-2`}
+                        className={`${GRID_CLASS_MAP[orientation] ?? ''} gap-x-2 ${
+                            variant === MESSAGE_VARIANTS.EMAIL ? 'w-full' : ''
+                        }`}
                         style={{ gridTemplateAreas: GRID_TEMPLATE_MAP[orientation] } as CSSProperties}
                     >
                         {!shouldGroupWithNext && shouldShowAvatar && (

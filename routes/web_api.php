@@ -54,6 +54,7 @@ use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
 use App\Http\Controllers\WebApi\WebhooksController;
+use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -307,6 +308,13 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/callbacks/facebook_pages', [CallbacksController::class, 'facebookPages']);
         Route::post('/callbacks/reauthorize_page/{inboxId}', [CallbacksController::class, 'reauthorizePage'])->whereNumber('inboxId');
         // F2-F5 kênh ngoài — END
+
+        // G1 Zalo cá nhân (QR lifecycle, health) — BEGIN (agent g1 sở hữu khối này)
+        Route::post('/inboxes/{inboxId}/zalo/qr', [ZaloConnectionsController::class, 'startQr'])->whereNumber('inboxId');
+        Route::get('/inboxes/{inboxId}/zalo/qr_status', [ZaloConnectionsController::class, 'qrStatus'])->whereNumber('inboxId');
+        Route::post('/inboxes/{inboxId}/zalo/promote', [ZaloConnectionsController::class, 'promote'])->whereNumber('inboxId');
+        Route::get('/inboxes/{inboxId}/zalo/health', [ZaloConnectionsController::class, 'health'])->whereNumber('inboxId');
+        // G1 Zalo — END
 
         // E2 search_controller.rb.
         Route::get('/search', [SearchController::class, 'index']);

@@ -1,0 +1,18 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-2",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500001000,
+  "inbound_kind": "image",
+  "content": "Ảnh sản phẩm",
+  "media_url": "https://cdn.zalo.test/photo.jpg",
+  "media_filename": "photo.jpg",
+  "quote": { "msgId": "msg-zalo-1", "msg": "Xin chào" },
+  "msg_type": "chat.photo"
+}
