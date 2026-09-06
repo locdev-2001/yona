@@ -784,7 +784,31 @@ it('khách đang gõ thì phát conversation.typing_on rồi tự tắt sau vài
             && $event->data['conversation']->id === $conversation->id
             && $event->data['user']->id === $conversation->contact_id,
     );
-    Queue::assertPushed(StopTypingJob::class);
+    // Zalo chỉ phát MỘT sự kiện typing cho cả lượt gõ nên cửa sổ chờ phải đủ dài,
+    // và phải lấy từ cấu hình (config/zalo.php → typing_off_delay).
+    Queue::assertPushed(
+        StopTypingJob::class,
+        fn (StopTypingJob $job) => $job->delay instanceof DateTimeInterface
+            && (int) round(now()->diffInSeconds($job->delay, absolute: true)) === 10,
+    );
+});
+
+it('cửa sổ chờ tắt đang-nhập lấy từ cấu hình, không phải số cứng', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    config(['zalo.typing_off_delay' => 17]);
+    Queue::fake([StopTypingJob::class]);
+
+    zaloWebhook([
+        'type' => 'relay_event',
+        'event_type' => 'typing',
+        'connection_id' => $this->channel->connectionId(),
+        'payload' => [['type' => 0, 'data' => ['uid' => '9876543210'], 'threadId' => '9876543210', 'isSelf' => false]],
+    ])->assertOk();
+
+    Queue::assertPushed(
+        StopTypingJob::class,
+        fn (StopTypingJob $job) => (int) round(now()->diffInSeconds($job->delay, absolute: true)) === 17,
+    );
 });
 
 it('không bật đang-nhập cho luồng chưa có hội thoại nào', function () {
