@@ -8,14 +8,26 @@ import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListL
 import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList';
+import ContactsBulkActionBar from './components/ContactsBulkActionBar';
+import Dialog from 'dashboard/components-next/dialog/Dialog';
+import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { processContactBulkAction } from 'dashboard/contacts/bulkApi';
 import type { SortState } from 'dashboard/components-next/Contacts/ContactsHeader/components/ContactSortMenu';
-import { fetchContacts, searchContacts } from 'dashboard/contacts/api';
+import {
+    fetchActiveContacts,
+    fetchContacts,
+    fetchContactsByLabel,
+    filterContacts,
+    searchContacts,
+} from 'dashboard/contacts/api';
+import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
+import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
+import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import type { Contact, ContactsMeta } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
 
 // Port từ dashboard/routes/dashboard/contacts/pages/ContactsIndex.vue.
-// Bỏ ở B2 (ghi trong trace): segments/labels/filter/active view (nhóm C hoặc
-// tính năng riêng), ContactsBulkActionBar + bulk delete (nhóm C).
 const DEFAULT_SORT_FIELD = 'last_activity_at';
 const DEBOUNCE_DELAY = 300;
 
@@ -43,9 +55,17 @@ const updatePageParam = (page: number, search = '') => {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
 };
 
-export default function ContactsIndex() {
+interface ContactsIndexProps {
+    segmentId?: number;
+    label?: string;
+    isActiveView?: boolean;
+}
+
+export default function ContactsIndex({ segmentId = 0, label = '', isActiveView = false }: ContactsIndexProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
+    const segments = useCustomViews(accountId, 'contact');
+    const activeSegment = segmentId ? (segments.find(view => view.id === segmentId) ?? null) : null;
 
     const initialSort = useMemo(
         () => parseSortSettings(String(auth.user?.ui_settings?.contacts_sort_by ?? '')),
@@ -60,6 +80,11 @@ export default function ContactsIndex() {
     const [sortState, setSortState] = useState<SortState>(initialSort);
     const [selectedContactIds, setSelectedContactIds] = useState<number[]>([]);
     const [isLoadingMore, setLoadingMore] = useState(false);
+    const [isBulkActionLoading, setBulkActionLoading] = useState(false);
+    const bulkDeleteDialogRef = useRef<DialogHandle>(null);
+    const [appliedFilters, setAppliedFilters] = useState<ConversationFilterCondition[]>([]);
+    const appliedFiltersRef = useRef<ConversationFilterCondition[]>([]);
+    appliedFiltersRef.current = appliedFilters;
     const searchPageNumber = useRef(1);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const requestSeq = useRef(0);
@@ -71,15 +96,33 @@ export default function ContactsIndex() {
 
     const buildSortAttr = () => `${sortStateRef.current.order}${sortStateRef.current.sort}`;
 
+    // fetchContactsBasedOnContext của gốc: segment đang mở hoặc bộ lọc vừa áp
+    // dùng POST /contacts/filter, còn lại dùng GET /contacts.
+    const segmentQueryRef = useRef<string>('');
+    segmentQueryRef.current = activeSegment ? JSON.stringify(activeSegment.query?.payload ?? []) : '';
+
     const fetchList = useCallback(
         async (page = 1, options: { clearSelection?: boolean } = {}) => {
             const { clearSelection = true } = options;
             if (clearSelection) setSelectedContactIds([]);
 
+            const filterPayload = segmentQueryRef.current
+                ? JSON.parse(segmentQueryRef.current)
+                : appliedFiltersRef.current.length
+                  ? buildConversationFilterPayload(appliedFiltersRef.current)
+                  : null;
+
             const seq = ++requestSeq.current;
             setFetching(true);
             try {
-                const result = await fetchContacts(accountId, page, buildSortAttr());
+                // fetchContactsBasedOnContext của gốc: active > filter/segment > label > mặc định.
+                const result = isActiveView
+                    ? await fetchActiveContacts(accountId, page, buildSortAttr())
+                    : filterPayload && !label
+                      ? await filterContacts(accountId, filterPayload, page, buildSortAttr())
+                      : label
+                        ? await fetchContactsByLabel(accountId, label, page, buildSortAttr())
+                        : await fetchContacts(accountId, page, buildSortAttr());
                 if (seq !== requestSeq.current) return;
                 setContacts(result.contacts);
                 setMeta(result.meta);
@@ -88,7 +131,7 @@ export default function ContactsIndex() {
                 if (seq === requestSeq.current) setFetching(false);
             }
         },
-        [accountId],
+        [accountId, label, isActiveView],
     );
 
     const runSearch = useCallback(
@@ -160,6 +203,66 @@ export default function ContactsIndex() {
         });
     };
 
+    const clearSelection = () => setSelectedContactIds([]);
+
+    const toggleSelectAll = (shouldSelect: boolean) => {
+        setSelectedContactIds(current => {
+            const selection = new Set(current);
+            contacts.forEach(contact => (shouldSelect ? selection.add(contact.id) : selection.delete(contact.id)));
+
+            return Array.from(selection);
+        });
+    };
+
+    const runBulkAction = async (
+        action: () => Promise<void>,
+        successKey: string,
+        failureKey: string,
+        onDone?: () => void,
+    ) => {
+        if (!selectedContactIds.length) return;
+
+        setBulkActionLoading(true);
+        try {
+            await action();
+            useAlert(t(successKey));
+            clearSelection();
+            await fetchList(meta.currentPage || 1, { clearSelection: false });
+            onDone?.();
+        } catch {
+            useAlert(t(failureKey));
+        } finally {
+            setBulkActionLoading(false);
+        }
+    };
+
+    const assignLabels = (labels: string[]) => {
+        if (!labels.length) return;
+        void runBulkAction(
+            () => processContactBulkAction(accountId, { ids: selectedContactIds, labels: { add: labels } }),
+            'CONTACTS_BULK_ACTIONS.ASSIGN_LABELS_SUCCESS',
+            'CONTACTS_BULK_ACTIONS.ASSIGN_LABELS_FAILED',
+        );
+    };
+
+    const removeLabels = (labels: string[]) => {
+        if (!labels.length) return;
+        void runBulkAction(
+            () => processContactBulkAction(accountId, { ids: selectedContactIds, labels: { remove: labels } }),
+            'CONTACTS_BULK_ACTIONS.REMOVE_LABELS_SUCCESS',
+            'CONTACTS_BULK_ACTIONS.REMOVE_LABELS_FAILED',
+        );
+    };
+
+    const deleteContacts = () => {
+        void runBulkAction(
+            () => processContactBulkAction(accountId, { ids: selectedContactIds, action_name: 'delete' }),
+            'CONTACTS_BULK_ACTIONS.DELETE_SUCCESS',
+            'CONTACTS_BULK_ACTIONS.DELETE_FAILED',
+            () => bulkDeleteDialogRef.current?.close(),
+        );
+    };
+
     const refreshCurrentView = () => {
         if (searchValueRef.current) {
             void runSearch(searchValueRef.current, 1);
@@ -177,13 +280,47 @@ export default function ContactsIndex() {
         }
 
         return () => clearTimeout(debounceTimer.current);
-    }, [fetchList, runSearch]);
+        // segmentQueryRef đổi khi store custom view nạp xong → nạp lại đúng segment.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fetchList, runSearch, segmentQueryRef.current]);
+
+    const onApplyContactFilters = (filters: ConversationFilterCondition[]) => {
+        setAppliedFilters(filters);
+        appliedFiltersRef.current = filters;
+        void fetchList(1);
+    };
+
+    const onClearContactFilters = () => {
+        setAppliedFilters([]);
+        appliedFiltersRef.current = [];
+        void fetchList(1);
+    };
 
     const isSearchView = Boolean(searchValue);
     const hasContacts = contacts.length > 0;
-    const headerTitle = isSearchView ? t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE') : t('CONTACTS_LAYOUT.HEADER.TITLE');
-    const showEmptyStateLayout = !isSearchView && !hasContacts && (meta.currentPage || 1) === 1 && !isFetching;
-    const showEmptyText = isSearchView && !hasContacts && !isFetching;
+    const headerTitle = isSearchView
+        ? t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE')
+        : isActiveView
+          ? t('CONTACTS_LAYOUT.HEADER.ACTIVE_TITLE')
+          : label
+            ? `#${label}`
+            : (activeSegment?.name ?? t('CONTACTS_LAYOUT.HEADER.TITLE'));
+    const hasAppliedFilters = appliedFilters.length > 0 || Boolean(activeSegment);
+    const isContactIndexView = !label && !isActiveView && !segmentId;
+    const showEmptyStateLayout =
+        !isSearchView &&
+        !hasContacts &&
+        isContactIndexView &&
+        (meta.currentPage || 1) === 1 &&
+        !isFetching &&
+        !hasAppliedFilters;
+    const showEmptyText =
+        (isSearchView || hasAppliedFilters || !isContactIndexView) && !hasContacts && !isFetching;
+    const emptyStateMessage = isActiveView
+        ? t('CONTACTS_LAYOUT.EMPTY_STATE.ACTIVE_EMPTY_STATE_TITLE')
+        : !isSearchView || hasAppliedFilters
+          ? t('CONTACTS_LAYOUT.EMPTY_STATE.LIST_EMPTY_STATE_TITLE')
+          : t('CONTACTS_LAYOUT.EMPTY_STATE.SEARCH_EMPTY_STATE_TITLE');
 
     const handleContactUpdated = (updated: Contact) => {
         setContacts(current => current.map(contact => (contact.id === updated.id ? updated : contact)));
@@ -208,7 +345,33 @@ export default function ContactsIndex() {
                     onUpdateSort={handleSort}
                     onLoadMore={loadMoreSearchResults}
                     onContactCreated={refreshCurrentView}
+                    segmentsId={segmentId}
+                    activeSegment={activeSegment}
+                    appliedFilters={appliedFilters}
+                    onApplyFilter={onApplyContactFilters}
+                    onClearFilters={onClearContactFilters}
+                    isFetchingList={isFetching}
+                    hasAppliedFilters={hasAppliedFilters}
+                    isLabelView={Boolean(label)}
+                    isActiveView={isActiveView}
+                    showSearch={!segmentId && !isActiveView}
+                    activeLabel={label}
                 >
+                    {selectedContactIds.length > 0 && !(isFetching && !(isSearchView && hasContacts)) ? (
+                        <ContactsBulkActionBar
+                            visibleContactIds={contacts.map(contact => contact.id)}
+                            selectedContactIds={selectedContactIds}
+                            isLoading={isBulkActionLoading}
+                            onToggleAll={toggleSelectAll}
+                            onClearSelection={clearSelection}
+                            onAssignLabels={assignLabels}
+                            onRemoveLabels={removeLabels}
+                            onDeleteSelected={() => {
+                                if (!selectedContactIds.length || isBulkActionLoading) return;
+                                bulkDeleteDialogRef.current?.open();
+                            }}
+                        />
+                    ) : null}
                     {isFetching && !(isSearchView && hasContacts) ? (
                         <div className="flex items-center justify-center py-10 text-n-slate-11">
                             <Spinner />
@@ -224,7 +387,7 @@ export default function ContactsIndex() {
                     ) : showEmptyText ? (
                         <div className="flex items-center justify-center py-10">
                             <span className="text-base text-n-slate-11">
-                                {t('CONTACTS_LAYOUT.EMPTY_STATE.SEARCH_EMPTY_STATE_TITLE')}
+                                {emptyStateMessage}
                             </span>
                         </div>
                     ) : (
@@ -236,6 +399,31 @@ export default function ContactsIndex() {
                                 onContactUpdated={handleContactUpdated}
                                 onContactDeleted={refreshCurrentView}
                             />
+                            {selectedContactIds.length > 0 ? (
+                                <Dialog
+                                    ref={bulkDeleteDialogRef}
+                                    type="alert"
+                                    title={
+                                        selectedContactIds.length > 1
+                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.TITLE')
+                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.SINGULAR_TITLE')
+                                    }
+                                    description={
+                                        selectedContactIds.length > 1
+                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.DESCRIPTION', {
+                                                  count: selectedContactIds.length,
+                                              })
+                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.SINGULAR_DESCRIPTION')
+                                    }
+                                    confirmButtonLabel={
+                                        selectedContactIds.length > 1
+                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.CONFIRM_MULTIPLE')
+                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.CONFIRM_SINGLE')
+                                    }
+                                    isLoading={isBulkActionLoading}
+                                    onConfirm={deleteContacts}
+                                />
+                            ) : null}
                         </div>
                     )}
                 </ContactsListLayout>

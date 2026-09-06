@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import EmojiIcon from 'dashboard/components-next/emoji-icon-picker/EmojiIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 
@@ -104,6 +105,13 @@ export default function DropdownMenu({
                       <Avatar name={item.thumbnail.name} src={item.thumbnail.src} size={thumbnailSize} roundedFull />
                   ) : null}
             {item.icon ? <Icon icon={item.icon} className="flex-shrink-0 size-3.5" /> : null}
+            {item.emoji ? (
+                <EmojiIcon
+                    value={item.emoji as string}
+                    color={item.iconColor as string}
+                    className="flex-shrink-0 size-4"
+                />
+            ) : null}
             {item.label ? <span className="min-w-0 text-sm font-420 truncate">{item.label}</span> : null}
             {renderTrailingIcon ? renderTrailingIcon(item) : null}
         </button>

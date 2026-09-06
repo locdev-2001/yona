@@ -41,6 +41,14 @@ return [
                 'IMPORT' => 'Import',
                 'SUCCESS_MESSAGE' => 'You will be notified via email when the import is complete.',
                 'ERROR_MESSAGE' => 'There was an error, please try again',
+                // Thêm so bản gốc: hộp thoại theo dõi trạng thái lần nhập ngay tại chỗ.
+                'STATUS' => [
+                    'PENDING' => 'Import queued...',
+                    'PROCESSING' => 'Importing contacts...',
+                    'COMPLETED' => 'Imported {processed} of {total} rows.',
+                    'FAILED' => 'The import failed.',
+                ],
+                'DOWNLOAD_FAILED_RECORDS' => 'Download the rows that could not be imported',
             ],
             'EXPORT_CONTACT' => [
                 'TITLE' => 'Export contacts',

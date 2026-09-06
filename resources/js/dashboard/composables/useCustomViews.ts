@@ -72,7 +72,8 @@ export async function createCustomView(
     accountId: number,
     payload: { name: string; filter_type: 0 | 1; query: CustomViewQuery },
 ): Promise<CustomView> {
-    const created = await postJson<CustomView>(endpoint(accountId), payload);
+    // Controller đọc `custom_filter` (strong params của Rails).
+    const created = await postJson<CustomView>(endpoint(accountId), { custom_filter: payload });
     const type = customViewTypeOf(payload.filter_type);
     records[type] = [...records[type], created];
     notify();
@@ -85,7 +86,7 @@ export async function updateCustomView(
     id: number,
     payload: { name: string; filter_type: 0 | 1; query: CustomViewQuery },
 ): Promise<CustomView> {
-    const updated = await patchJson<CustomView>(endpoint(accountId, id), payload);
+    const updated = await patchJson<CustomView>(endpoint(accountId, id), { custom_filter: payload });
     const type = customViewTypeOf(payload.filter_type);
     records[type] = records[type].map(view => (view.id === id ? updated : view));
     notify();

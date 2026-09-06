@@ -6,7 +6,7 @@ interface UserAvatarWithNameProps {
     user?: {
         name?: string;
         thumbnail?: string;
-        availability_status?: AvailabilityStatus;
+        availability_status?: string;
     };
     size?: number;
     textClass?: string;
@@ -23,7 +23,7 @@ export default function UserAvatarWithName({
                 src={user.thumbnail}
                 size={size}
                 name={user.name ?? ''}
-                status={user.availability_status ?? null}
+                status={(user.availability_status as AvailabilityStatus) ?? null}
                 hideOfflineStatus
                 roundedFull
             />

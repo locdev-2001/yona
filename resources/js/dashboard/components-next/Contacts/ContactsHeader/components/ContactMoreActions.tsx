@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import type { DashboardPageProps } from '../../../../types';
 
 // Port từ dashboard/components-next/Contacts/ContactsHeader/components/ContactMoreActions.vue.
-// Import/Export CSV thuộc nhóm C — menu B2 chỉ còn mục "New contact"
-// (khác biệt cố ý, ghi trong trace).
 interface ContactMoreActionsProps {
     onAdd: () => void;
+    onImport: () => void;
+    onExport: () => void;
 }
 
-export default function ContactMoreActions({ onAdd }: ContactMoreActionsProps) {
+export default function ContactMoreActions({ onAdd, onImport, onExport }: ContactMoreActionsProps) {
+    const { currentAccountUser } = usePage<DashboardPageProps>().props;
+    // checkPermissions(['administrator', 'contact_manage']) — contact_manage là
+    // custom role (EE) nên chỉ còn administrator.
+    const canManageContacts = currentAccountUser?.role === 'administrator';
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -33,6 +39,22 @@ export default function ContactMoreActions({ onAdd }: ContactMoreActionsProps) {
             value: 'add',
             icon: 'i-lucide-plus',
         },
+        ...(canManageContacts
+            ? [
+                  {
+                      label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.EXPORT_CONTACT'),
+                      action: 'export',
+                      value: 'export',
+                      icon: 'i-lucide-upload',
+                  },
+                  {
+                      label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.IMPORT_CONTACT'),
+                      action: 'import',
+                      value: 'import',
+                      icon: 'i-lucide-download',
+                  },
+              ]
+            : []),
     ];
 
     return (
@@ -54,6 +76,8 @@ export default function ContactMoreActions({ onAdd }: ContactMoreActionsProps) {
                     // khi "Add contact" mở dialog (khớp oracle, finding pixel-diff).
                     onAction={item => {
                         if (item.action === 'add') onAdd();
+                        else if (item.action === 'import') onImport();
+                        else if (item.action === 'export') onExport();
                     }}
                 />
             ) : null}

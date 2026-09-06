@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -11,6 +12,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // help_center: bỏ tới khi có portals (nhóm D).
 class InboxResource extends JsonResource
 {
+    use SerializesAttributeMaps;
+
     // Khối `resource.channel.try(:x)` của partial gốc: kênh nào không có thuộc
     // tính đó thì key vẫn hiện với giá trị null, để FE dùng chung một shape.
     private const SHARED_CHANNEL_KEYS = [
@@ -117,7 +120,7 @@ class InboxResource extends JsonResource
             ] : []),
             'webhook_url' => $channel->webhook_url,
             'inbox_identifier' => $channel->identifier,
-            'additional_attributes' => $channel->additional_attributes ?? [],
+            'additional_attributes' => self::attributeMap($channel->additional_attributes),
         ];
     }
 

@@ -8,6 +8,7 @@ use App\Events\PreviousChanges;
 use App\Http\Resources\ContactResource;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\Labelable;
+use App\Models\Concerns\SelfValidating;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */
-    use Avatarable, HasFactory, Labelable;
+    use Avatarable, HasFactory, Labelable, SelfValidating;
 
     public const TYPE_VISITOR = 'visitor';
 
@@ -146,6 +147,61 @@ class Contact extends Model
     public function availabilityStatus(): string
     {
         return OnlineStatusTracker::getPresence($this->account_id, 'Contact', $this->id) ? 'online' : 'offline';
+    }
+
+    /**
+     * Validation của model Contact (email/identifier/phone_number + độ dài tên):
+     * nguồn DUY NHẤT cho cả controller (422) lẫn đường nhập CSV (dòng lỗi).
+     *
+     * @return array<string, list<string>>
+     */
+    public function validationErrors(): array
+    {
+        $errors = [];
+        $name = $this->name;
+
+        if (is_string($name) && mb_strlen($name) > 255) {
+            $errors['name'][] = 'Name is too long (maximum is 255 characters)';
+        }
+
+        $email = filled($this->email) ? mb_strtolower((string) $this->email) : null;
+
+        if ($email !== null && ! preg_match(self::EMAIL_REGEX, $email)) {
+            $errors['email'][] = 'Email Invalid email';
+        }
+
+        if ($email !== null && $this->attributeTaken('email', $email)) {
+            $errors['email'][] = 'Email has already been taken';
+        }
+
+        if (filled($this->phone_number) && ! preg_match(self::PHONE_NUMBER_REGEX, (string) $this->phone_number)) {
+            $errors['phone_number'][] = 'Phone number should be in e164 format';
+        }
+
+        if (filled($this->phone_number) && $this->attributeTaken('phone_number', $this->phone_number)) {
+            $errors['phone_number'][] = 'Phone number has already been taken';
+        }
+
+        if (filled($this->identifier) && $this->attributeTaken('identifier', $this->identifier)) {
+            $errors['identifier'][] = 'Identifier has already been taken';
+        }
+
+        return $errors;
+    }
+
+    /** @return list<string> */
+    public function validationMessages(): array
+    {
+        return collect($this->validationErrors())->flatten()->values()->all();
+    }
+
+    private function attributeTaken(string $column, mixed $value): bool
+    {
+        return self::query()
+            ->where('account_id', $this->account_id)
+            ->where($column, $value)
+            ->when($this->exists, fn (Builder $query) => $query->whereKeyNot($this->getKey()))
+            ->exists();
     }
 
     public static function fromEmail(?string $email): ?self

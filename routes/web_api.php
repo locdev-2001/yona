@@ -4,10 +4,13 @@ use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentBotsController;
 use App\Http\Controllers\WebApi\AgentsController;
+use App\Http\Controllers\WebApi\Articles\BulkActionsController as ArticleBulkActionsController;
+use App\Http\Controllers\WebApi\ArticlesController;
 use App\Http\Controllers\WebApi\AutomationRulesController;
 use App\Http\Controllers\WebApi\BulkActionsController;
 use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
+use App\Http\Controllers\WebApi\CategoriesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
 use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsController;
@@ -21,6 +24,9 @@ use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\CsatSurveyResponsesController;
+use App\Http\Controllers\WebApi\CustomAttributeDefinitionsController;
+use App\Http\Controllers\WebApi\CustomFiltersController;
+use App\Http\Controllers\WebApi\DataImportsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
@@ -28,12 +34,14 @@ use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
+use App\Http\Controllers\WebApi\PortalsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
 use App\Http\Controllers\WebApi\Reports\LiveReportsController;
 use App\Http\Controllers\WebApi\Reports\ReportsController;
 use App\Http\Controllers\WebApi\Reports\SummaryReportsController;
+use App\Http\Controllers\WebApi\SearchController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
@@ -117,6 +125,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
         Route::post('/conversations/filter', [ConversationsController::class, 'filter']);
+        Route::post('/contacts/filter', [ContactsController::class, 'filter']);
         Route::get('/conversations/meta', [ConversationsController::class, 'meta']);
         Route::get('/conversations/unread_counts', [ConversationsController::class, 'unreadCounts']);
         // {conversationId} là display_id per-account, không phải khóa chính.
@@ -128,6 +137,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_status', [ConversationsController::class, 'toggleStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_priority', [ConversationsController::class, 'togglePriority'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/custom_attributes', [ConversationsController::class, 'customAttributes'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/update_last_seen', [ConversationsController::class, 'updateLastSeen'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unread', [ConversationsController::class, 'unread'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
@@ -175,6 +186,69 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::match(['put', 'patch'], '/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'update'])->whereNumber('automationRuleId');
         Route::delete('/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'destroy'])->whereNumber('automationRuleId');
         Route::post('/automation_rules/{automationRuleId}/clone', [AutomationRulesController::class, 'clone'])->whereNumber('automationRuleId');
+
+        // E4 Help Center (portals/categories/articles controller gốc).
+        Route::get('/portals', [PortalsController::class, 'index']);
+        Route::post('/portals', [PortalsController::class, 'store']);
+        Route::get('/portals/{slug}', [PortalsController::class, 'show']);
+        Route::match(['put', 'patch'], '/portals/{slug}', [PortalsController::class, 'update']);
+        Route::delete('/portals/{slug}', [PortalsController::class, 'destroy']);
+        Route::patch('/portals/{slug}/archive', [PortalsController::class, 'archive']);
+        Route::delete('/portals/{slug}/logo', [PortalsController::class, 'destroyLogo']);
+        Route::post('/portals/{slug}/send_instructions', [PortalsController::class, 'sendInstructions']);
+
+        Route::get('/portals/{portalSlug}/categories', [CategoriesController::class, 'index']);
+        Route::post('/portals/{portalSlug}/categories', [CategoriesController::class, 'store']);
+        Route::post('/portals/{portalSlug}/categories/reorder', [CategoriesController::class, 'reorder']);
+        Route::get('/portals/{portalSlug}/categories/{categoryId}', [CategoriesController::class, 'show'])->whereNumber('categoryId');
+        Route::match(['put', 'patch'], '/portals/{portalSlug}/categories/{categoryId}', [CategoriesController::class, 'update'])
+            ->whereNumber('categoryId');
+        Route::delete('/portals/{portalSlug}/categories/{categoryId}', [CategoriesController::class, 'destroy'])->whereNumber('categoryId');
+
+        Route::post('/portals/{portalSlug}/articles/bulk_actions/translate', [ArticleBulkActionsController::class, 'translate']);
+        Route::patch('/portals/{portalSlug}/articles/bulk_actions/update_status', [ArticleBulkActionsController::class, 'updateStatus']);
+        Route::patch('/portals/{portalSlug}/articles/bulk_actions/update_category', [ArticleBulkActionsController::class, 'updateCategory']);
+        Route::delete('/portals/{portalSlug}/articles/bulk_actions/delete_articles', [ArticleBulkActionsController::class, 'deleteArticles']);
+
+        Route::get('/portals/{portalSlug}/articles', [ArticlesController::class, 'index']);
+        Route::post('/portals/{portalSlug}/articles', [ArticlesController::class, 'store']);
+        Route::post('/portals/{portalSlug}/articles/reorder', [ArticlesController::class, 'reorder']);
+        Route::get('/portals/{portalSlug}/articles/{articleId}', [ArticlesController::class, 'show'])->whereNumber('articleId');
+        Route::get('/portals/{portalSlug}/articles/{articleId}/edit', [ArticlesController::class, 'edit'])->whereNumber('articleId');
+        Route::match(['put', 'patch'], '/portals/{portalSlug}/articles/{articleId}', [ArticlesController::class, 'update'])
+            ->whereNumber('articleId');
+        Route::delete('/portals/{portalSlug}/articles/{articleId}', [ArticlesController::class, 'destroy'])->whereNumber('articleId');
+
+        // E1 custom_attribute_definitions + custom_filters (segments/folders).
+        Route::get('/custom_attribute_definitions', [CustomAttributeDefinitionsController::class, 'index']);
+        Route::post('/custom_attribute_definitions', [CustomAttributeDefinitionsController::class, 'store']);
+        Route::get('/custom_attribute_definitions/{definitionId}', [CustomAttributeDefinitionsController::class, 'show'])->whereNumber('definitionId');
+        Route::match(['put', 'patch'], '/custom_attribute_definitions/{definitionId}', [CustomAttributeDefinitionsController::class, 'update'])->whereNumber('definitionId');
+        Route::delete('/custom_attribute_definitions/{definitionId}', [CustomAttributeDefinitionsController::class, 'destroy'])->whereNumber('definitionId');
+
+        Route::get('/custom_filters', [CustomFiltersController::class, 'index']);
+        Route::post('/custom_filters', [CustomFiltersController::class, 'store']);
+        Route::get('/custom_filters/{customFilterId}', [CustomFiltersController::class, 'show'])->whereNumber('customFilterId');
+        Route::match(['put', 'patch'], '/custom_filters/{customFilterId}', [CustomFiltersController::class, 'update'])->whereNumber('customFilterId');
+        Route::delete('/custom_filters/{customFilterId}', [CustomFiltersController::class, 'destroy'])->whereNumber('customFilterId');
+
+        // E3 data_imports + contacts export — BEGIN (agent e3-be sở hữu khối này)
+        // data_imports_controller.rb — chỉ index/show (nhánh nhập CSV liên hệ).
+        Route::get('/data_imports', [DataImportsController::class, 'index']);
+        Route::get('/data_imports/{dataImportId}', [DataImportsController::class, 'show'])->whereNumber('dataImportId');
+        // contacts_controller.rb#import / #export
+        Route::post('/contacts/import', [ContactsController::class, 'import']);
+        Route::post('/contacts/export', [ContactsController::class, 'export']);
+        // contacts/attachments#index — tab Media của sidebar liên hệ (thêm bởi e3-fe).
+        Route::get('/contacts/{contactId}/attachments', [ContactsController::class, 'attachments'])->whereNumber('contactId');
+        // E3 data_imports + contacts export — END
+
+        // E2 search_controller.rb.
+        Route::get('/search', [SearchController::class, 'index']);
+        Route::get('/search/conversations', [SearchController::class, 'conversations']);
+        Route::get('/search/messages', [SearchController::class, 'messages']);
+        Route::get('/search/contacts', [SearchController::class, 'contacts']);
+        Route::get('/search/articles', [SearchController::class, 'articles']);
 
         // D2 báo cáo CSAT (csat_survey_responses_controller.rb).
         Route::get('/csat_survey_responses', [CsatSurveyResponsesController::class, 'index']);

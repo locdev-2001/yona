@@ -30,6 +30,7 @@ import {
     markMessagesUnread as markMessagesUnreadRequest,
     muteConversation as muteConversationRequest,
     sendMessage,
+    updateConversationCustomAttributes as updateCustomAttributesRequest,
     togglePriority as togglePriorityRequest,
     toggleStatus as toggleStatusRequest,
     toggleTyping,
@@ -130,6 +131,8 @@ interface ConversationContextValue {
     unmuteConversation: () => Promise<void>;
     markMessagesRead: (conversationId: number) => Promise<void>;
     markMessagesUnread: (conversationId: number) => Promise<void>;
+    // updateCustomAttributes của store gốc — accordion Conversation Information.
+    updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
 }
 
 export interface ToggleStatusPayload {
@@ -957,6 +960,14 @@ export function ConversationProvider({
         [accountId, conversationId, refreshAppliedFilters, selectedConversation?.priority],
     );
 
+    const updateConversationCustomAttributes = useCallback(
+        async (customAttributes: Record<string, unknown>) => {
+            if (!conversationId) return;
+            updateConversation(await updateCustomAttributesRequest(accountId, conversationId, customAttributes));
+        },
+        [accountId, conversationId, updateConversation],
+    );
+
     // assignAgent gốc: setCurrentChatAssignee lạc quan (ConversationAction.vue) rồi POST,
     // xong ghi đè bằng payload server. Lỗi → trả lại assignee cũ rồi throw (panel toast).
     const assignAgent = useCallback(
@@ -1066,6 +1077,7 @@ export function ConversationProvider({
             unmuteConversation,
             markMessagesRead,
             markMessagesUnread,
+            updateConversationCustomAttributes,
         }),
         [
             accountId,
@@ -1110,6 +1122,7 @@ export function ConversationProvider({
             unmuteConversation,
             markMessagesRead,
             markMessagesUnread,
+            updateConversationCustomAttributes,
         ],
     );
 

@@ -13,3 +13,12 @@ export const getRegexp = (regexPatternValue: string): RegExp => {
 
     return new RegExp(regexPatternValue.slice(1, lastSlash), regexPatternValue.slice(lastSlash + 1));
 };
+
+// Chuẩn hoá regex người dùng nhập về dạng chính tắc `/source/flags`; bỏ lớp
+// `/.../flags` nếu đã có để `new RegExp` không escape lặp dấu gạch chéo.
+export const normalizeRegexPattern = (pattern: string | null): string | null => {
+    if (!pattern) return null;
+    const match = pattern.match(/^\/(.+)\/([gimsuy]*)$/);
+
+    return new RegExp(match ? match[1] : pattern, match ? match[2] : '').toString();
+};

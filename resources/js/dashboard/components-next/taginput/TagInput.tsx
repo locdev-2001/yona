@@ -5,27 +5,39 @@ import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 
 // Port từ dashboard/components-next/taginput/TagInput.vue — nhánh dùng ở inbox
-// (mode multiple, type text, chọn từ dropdown, skipLabelDedup). Các nhánh
-// email/tel/allowCreate vào cùng màn cần chúng (new conversation…).
+// (mode multiple, type text, chọn từ dropdown, skipLabelDedup) và nhánh
+// allowCreate (không dropdown, gõ chữ rồi Enter/dấu phẩy để tạo tag) mà form
+// custom attribute dùng. Các nhánh email/tel vào cùng màn cần chúng.
 interface TagInputProps {
     value: string[];
     placeholder?: string;
-    menuItems: DropdownMenuItem[];
+    menuItems?: DropdownMenuItem[];
     isLoading?: boolean;
     // Khi false dropdown không tự mở lúc mount, chỉ mở khi click/focus.
     autoOpenDropdown?: boolean;
-    onAdd: (item: DropdownMenuItem) => void;
+    // showDropdown của bản gốc: allowCreate dùng chung ô nhập nhưng không có menu.
+    showDropdown?: boolean;
+    allowCreate?: boolean;
+    className?: string;
+    onAdd?: (item: DropdownMenuItem) => void;
+    onCreate?: (tag: string) => void;
     onRemove: (index: number) => void;
+    onBlur?: () => void;
 }
 
 export default function TagInput({
     value,
     placeholder = '',
-    menuItems,
+    menuItems = [],
     isLoading = false,
     autoOpenDropdown = true,
+    showDropdown = true,
+    allowCreate = false,
+    className = '',
     onAdd,
+    onCreate,
     onRemove,
+    onBlur,
 }: TagInputProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -54,8 +66,16 @@ export default function TagInput({
         setFocused(true);
     };
 
+    const addTag = () => {
+        const trimmed = newTag.trim();
+        if (!trimmed || !allowCreate) return;
+        onCreate?.(trimmed);
+        setNewTag('');
+        inputRef.current?.focus();
+    };
+
     const handleAction = (item: DropdownMenuItem) => {
-        onAdd(item);
+        onAdd?.(item);
         setNewTag('');
         inputRef.current?.focus();
     };
@@ -65,7 +85,7 @@ export default function TagInput({
     return (
         <div
             ref={containerRef}
-            className="flex flex-wrap w-full gap-2 border border-transparent focus:outline-none"
+            className={`flex flex-wrap w-full gap-2 border border-transparent focus:outline-none ${className}`.trim()}
             tabIndex={0}
             onFocus={handleFocus}
             onClick={handleFocus}
@@ -95,8 +115,10 @@ export default function TagInput({
                         customInputClass="w-full"
                         onChange={event => setNewTag(event.target.value)}
                         onFocus={() => setFocused(true)}
+                        onBlur={onBlur}
+                        onEnterPress={addTag}
                     />
-                    {isFocused ? (
+                    {showDropdown && isFocused ? (
                         <DropdownMenu
                             menuItems={filteredMenuItems}
                             isLoading={isLoading}

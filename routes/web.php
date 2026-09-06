@@ -10,6 +10,10 @@ use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
+use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
+use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
+use App\Http\Controllers\Public\Portals\SearchController as PublicSearchController;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -144,6 +148,11 @@ Route::middleware('auth')->group(function () {
                     ->whereNumber('id')->name("{$singular}_reports_show");
             }
 
+            // E1 attributes.routes.js.
+            Route::get('/settings/custom-attributes', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/custom-attributes/list"));
+            Route::get('/settings/custom-attributes/list', fn () => Inertia::render('dashboard/settings/attributes/Index'))
+                ->name('attributes_list');
+
             // D4: settings/agent-bots + settings/integrations (integrations.routes.js).
             Route::get('/settings/agent-bots', fn () => Inertia::render('dashboard/settings/agentBots/Index'))
                 ->name('agent_bots');
@@ -221,8 +230,134 @@ Route::middleware('auth')->group(function () {
         Route::get('/contacts/{contactId}', [ContactsController::class, 'show'])
             ->whereNumber('contactId')->name('contact_profile_dashboard');
 
+        // E1 folder (custom view hội thoại) + segment (custom view liên hệ).
+        Route::get('/custom_view/{foldersId}', fn (Account $account, int $foldersId) => Inertia::render('dashboard/conversation/ConversationView', [
+            'foldersId' => $foldersId,
+        ]))->whereNumber('foldersId')->name('folder_conversations');
+        Route::get('/custom_view/{foldersId}/conversations/{conversationId}', fn (Account $account, int $foldersId, int $conversationId) => Inertia::render(
+            'dashboard/conversation/ConversationView',
+            ['foldersId' => $foldersId, 'conversationId' => $conversationId],
+        ))->whereNumber('foldersId')->whereNumber('conversationId')->name('conversations_through_folders');
+        Route::get('/contacts/segments/{segmentId}', fn (Account $account, int $segmentId) => Inertia::render('dashboard/contacts/Index', [
+            'segmentId' => $segmentId,
+        ]))->whereNumber('segmentId')->name('contacts_dashboard_segments_index');
+        Route::get('/contacts/{contactId}/segments/{segmentId}', [ContactsController::class, 'show'])
+            ->whereNumber('contactId')->whereNumber('segmentId')->name('contacts_edit_segment');
+
+        // E4 helpcenter.routes.js — BEGIN (agent e4-fe sở hữu khối này)
+        // Giữ nguyên URL của vue-router gốc. Tham số `:categorySlug?` nằm giữa
+        // đường dẫn nên phải đăng ký cả hai biến thể (có/không có danh mục), và
+        // route cụ thể phải đứng trước route bắt chung.
+        Route::prefix('/portals')->group(function () {
+            Route::get('/new', fn (Account $account) => Inertia::render('dashboard/helpcenter/pages/PortalsNew'))
+                ->name('portals_new');
+
+            Route::get('/{portalSlug}/locales', fn (Account $account, string $portalSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsLocalesIndex',
+                ['portalSlug' => $portalSlug],
+            ))->name('portals_locales_index');
+
+            Route::get('/{portalSlug}/settings', fn (Account $account, string $portalSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsSettingsIndex',
+                ['portalSlug' => $portalSlug],
+            ))->name('portals_settings_index');
+
+            Route::get('/{portalSlug}/{locale}/categories', fn (Account $account, string $portalSlug, string $locale) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsCategoriesIndex',
+                ['portalSlug' => $portalSlug, 'locale' => $locale],
+            ))->name('portals_categories_index');
+
+            Route::get('/{portalSlug}/{locale}/categories/{categorySlug}/articles/new', fn (Account $account, string $portalSlug, string $locale, string $categorySlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesNew',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug, 'isCategoryArticles' => true],
+            ))->name('portals_categories_articles_new');
+
+            Route::get('/{portalSlug}/{locale}/categories/{categorySlug}/articles', fn (Account $account, string $portalSlug, string $locale, string $categorySlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesIndex',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug, 'isCategoryArticles' => true],
+            ))->name('portals_categories_articles_index');
+
+            Route::get('/{portalSlug}/{locale}/categories/{categorySlug}/articles/{articleSlug}', fn (Account $account, string $portalSlug, string $locale, string $categorySlug, string $articleSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesEdit',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug, 'articleSlug' => $articleSlug, 'isCategoryArticles' => true],
+            ))->name('portals_categories_articles_edit');
+
+            Route::get('/{portalSlug}/{locale}/articles/new', fn (Account $account, string $portalSlug, string $locale) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesNew',
+                ['portalSlug' => $portalSlug, 'locale' => $locale],
+            ))->name('portals_articles_new');
+
+            Route::get('/{portalSlug}/{locale}/{categorySlug}/articles/new', fn (Account $account, string $portalSlug, string $locale, string $categorySlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesNew',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug],
+            ))->name('portals_articles_new_in_category');
+
+            Route::get('/{portalSlug}/{locale}/articles/edit/{articleSlug}', fn (Account $account, string $portalSlug, string $locale, string $articleSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesEdit',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'articleSlug' => $articleSlug],
+            ))->name('portals_articles_edit');
+
+            Route::get('/{portalSlug}/{locale}/articles/{tab}/edit/{articleSlug}', fn (Account $account, string $portalSlug, string $locale, string $tab, string $articleSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesEdit',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'tab' => $tab, 'articleSlug' => $articleSlug],
+            ))->where('tab', 'all|mine|draft|archived')->name('portals_articles_edit_tab');
+
+            Route::get('/{portalSlug}/{locale}/{categorySlug}/articles/{tab}/edit/{articleSlug}', fn (Account $account, string $portalSlug, string $locale, string $categorySlug, string $tab, string $articleSlug) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesEdit',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug, 'tab' => $tab, 'articleSlug' => $articleSlug],
+            ))->where('tab', 'all|mine|draft|archived')->name('portals_articles_edit_category_tab');
+
+            Route::get('/{portalSlug}/{locale}/articles/{tab?}', fn (Account $account, string $portalSlug, string $locale, ?string $tab = null) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesIndex',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'tab' => $tab],
+            ))->where('tab', 'all|mine|draft|archived')->name('portals_articles_index');
+
+            Route::get('/{portalSlug}/{locale}/{categorySlug}/articles/{tab?}', fn (Account $account, string $portalSlug, string $locale, string $categorySlug, ?string $tab = null) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsArticlesIndex',
+                ['portalSlug' => $portalSlug, 'locale' => $locale, 'categorySlug' => $categorySlug, 'tab' => $tab],
+            ))->where('tab', 'all|mine|draft|archived')->name('portals_articles_index_in_category');
+
+            Route::get('/{navigationPath?}', fn (Account $account, ?string $navigationPath = null) => Inertia::render(
+                'dashboard/helpcenter/pages/PortalsIndex',
+                ['navigationPath' => $navigationPath],
+            ))->name('portals_index');
+        });
+        // E4 helpcenter.routes.js — END
+
+        // E3 contacts/data routes — BEGIN (agent e3-fe sở hữu khối này)
+        // contacts routes.js: nhánh lọc theo nhãn + tab Active. Đặt sau
+        // `/contacts/{contactId}` được vì tham số đó bị ràng buộc whereNumber.
+        Route::get('/contacts/active', [ContactsController::class, 'active'])->name('contacts_dashboard_active');
+        Route::get('/contacts/labels/{label}', [ContactsController::class, 'label'])
+            ->name('contacts_dashboard_labels_index');
+        Route::get('/contacts/{contactId}/labels/{label}', [ContactsController::class, 'show'])
+            ->whereNumber('contactId')->name('contacts_edit_label');
+        // E3 contacts/data routes — END
+
+        // E2 search.routes.js.
+        Route::get('/search/{tab?}', fn (Account $account, ?string $tab = null) => Inertia::render('dashboard/search/SearchView', [
+            'tab' => $tab,
+        ]))->where('tab', 'conversations|messages|contacts|articles')->name('search');
+
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])
             ->where('view', '.*')->name('account_view');
     });
+});
+
+// E4 Help Center công khai (public/api/v1/portals*): không auth; thứ tự route articles/.md/.png
+// phải đứng trước {locale}.
+Route::prefix('/hc')->group(function () {
+    Route::get('/{slug}/sitemap.xml', [PublicPortalsController::class, 'sitemap']);
+    Route::get('/{slug}/articles/{articleSlug}.md', [PublicArticlesController::class, 'showMarkdown']);
+    Route::get('/{slug}/articles/{articleSlug}.png', [PublicArticlesController::class, 'trackingPixel']);
+    Route::get('/{slug}/articles', [PublicArticlesController::class, 'index']);
+    Route::get('/{slug}/articles/{articleSlug}', [PublicArticlesController::class, 'show']);
+    Route::get('/{slug}/{locale}/search', [PublicSearchController::class, 'index']);
+    Route::get('/{slug}/{locale}/articles', [PublicArticlesController::class, 'index']);
+    Route::get('/{slug}/{locale}/categories', [PublicCategoriesController::class, 'index']);
+    Route::get('/{slug}/{locale}/categories/{categorySlug}', [PublicCategoriesController::class, 'show']);
+    Route::get('/{slug}/{locale}/categories/{categorySlug}/articles', [PublicArticlesController::class, 'index']);
+    Route::get('/{slug}/{locale}', [PublicPortalsController::class, 'show']);
+    Route::get('/{slug}', [PublicPortalsController::class, 'show']);
 });

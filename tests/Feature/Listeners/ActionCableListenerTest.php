@@ -212,9 +212,10 @@ describe('contact events', function () {
         fire(EventType::CONTACT_UPDATED, ['contact' => $contact, 'changed_attributes' => []]);
 
         Queue::assertPushed(ActionCableBroadcastJob::class, 2);
+        // `==`: custom_attributes/additional_attributes là stdClass, mỗi lần dựng một instance khác.
         Queue::assertPushed(ActionCableBroadcastJob::class, fn (ActionCableBroadcastJob $job) => $job->eventName === 'contact.created'
             && $job->members === ["account_{$account->id}"]
-            && $job->data === [...ContactResource::pushEventData($contact), 'account_id' => $account->id]);
+            && $job->data == [...ContactResource::pushEventData($contact), 'account_id' => $account->id]);
         Queue::assertPushed(ActionCableBroadcastJob::class, fn (ActionCableBroadcastJob $job) => $job->eventName === 'contact.updated');
     });
 });

@@ -1,0 +1,61 @@
+// Style của trình soạn bài viết help center:
+// - article.scss của @chatwoot/prosemirror-schema (FullEditor.vue import trong <style>).
+// - khối <style> của FullEditor.vue và <style scoped> của ArticleEditor.vue
+//   (scoped Vue → selector thường; thanh công cụ chỉ hiện khi có vùng chọn).
+@import '@chatwoot/prosemirror-schema/src/styles/article.scss';
+
+.editor--article {
+  .ProseMirror-menubar-wrapper {
+    display: flex;
+    flex-direction: column;
+
+    > .ProseMirror {
+      padding: 0;
+      word-break: break-word;
+    }
+  }
+
+  .ProseMirror-woot-style {
+    @apply min-h-[15rem] max-h-full overflow-auto;
+  }
+
+  .ProseMirror .empty-node::before {
+    @apply text-n-slate-10 text-base;
+  }
+
+  .ProseMirror-menubar {
+    display: none;
+  }
+
+  .ProseMirror .cw-embed-preview {
+    max-width: 36rem;
+    margin: 0.5rem 0 1rem;
+  }
+
+  &.has-selection {
+    .ProseMirror-menubar:not(:has(*)) {
+      display: none !important;
+    }
+
+    .ProseMirror-menubar {
+      @apply rounded-lg px-3 py-1.5 z-50 bg-n-background items-center gap-4 ml-0 mb-0 shadow-md outline outline-1 outline-n-weak;
+      display: flex;
+      top: var(--selection-top, auto) !important;
+      left: var(--selection-left, 0) !important;
+      width: fit-content !important;
+      position: absolute !important;
+
+      .ProseMirror-menuitem {
+        @apply ltr:mr-0 rtl:ml-0 size-4 flex items-center;
+
+        .ProseMirror-icon {
+          @apply p-0.5 flex-shrink-0 ltr:mr-2 rtl:ml-2;
+        }
+      }
+
+      .ProseMirror-menu-active {
+        @apply bg-n-slate-3;
+      }
+    }
+  }
+}

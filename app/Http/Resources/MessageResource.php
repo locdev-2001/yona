@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Attachment;
@@ -17,6 +18,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // Bỏ: voice call (EE).
 class MessageResource extends JsonResource
 {
+    use SerializesAttributeMaps;
+
     /** @param iterable<Message> $messages */
     public static function collectionFor(iterable $messages): array
     {
@@ -79,7 +82,7 @@ class MessageResource extends JsonResource
             'sender_type' => $message->sender_type,
             'sender_id' => $message->sender_id,
             'external_source_ids' => $message->external_source_ids ?? [],
-            'additional_attributes' => $message->additional_attributes ?? [],
+            'additional_attributes' => self::attributeMap($message->additional_attributes),
             'processed_message_content' => $message->processed_message_content,
             'sentiment' => $message->sentiment ?? [],
             'conversation' => [
@@ -128,7 +131,7 @@ class MessageResource extends JsonResource
     {
         $data = [
             'account' => $message->account->webhookData(),
-            'additional_attributes' => $message->additional_attributes ?? [],
+            'additional_attributes' => self::attributeMap($message->additional_attributes),
             'content_attributes' => $message->content_attributes ?? [],
             'content_type' => $message->contentTypeName(),
             'content' => WebhookContentNormalizer::normalize($message->content),

@@ -16,7 +16,7 @@ import type { Contact, ContactFormState } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../../../types';
 
 // Port từ dashboard/components-next/Contacts/Pages/ContactDetails.vue.
-// ContactLabels (nhóm C) chưa render; fetchContactableInbox sau update (B3) bỏ.
+// fetchContactableInbox sau update (B3) bỏ.
 interface ContactDetailsProps {
     selectedContact: Contact;
     onContactUpdated: (contact: Contact) => void;

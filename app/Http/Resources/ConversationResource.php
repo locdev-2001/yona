@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -10,6 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // Bỏ: SLA (EE — sla feature tắt nên emit null như gốc).
 class ConversationResource extends JsonResource
 {
+    use SerializesAttributeMaps;
+
     /** @param iterable<Conversation> $conversations */
     public static function collectionFor(iterable $conversations): array
     {
@@ -36,12 +39,12 @@ class ConversationResource extends JsonResource
             'messages' => $lastMessage === null ? [] : [MessageResource::pushEventData($lastMessage)],
             'account_id' => $conversation->account_id,
             'uuid' => $conversation->uuid,
-            'additional_attributes' => $conversation->additional_attributes ?? [],
+            'additional_attributes' => self::attributeMap($conversation->additional_attributes),
             'agent_last_seen_at' => $conversation->agent_last_seen_at?->getTimestamp() ?? 0,
             'assignee_last_seen_at' => $conversation->assignee_last_seen_at?->getTimestamp() ?? 0,
             'can_reply' => $conversation->canReply(),
             'contact_last_seen_at' => $conversation->contact_last_seen_at?->getTimestamp() ?? 0,
-            'custom_attributes' => $conversation->custom_attributes ?? [],
+            'custom_attributes' => self::attributeMap($conversation->custom_attributes),
             'inbox_id' => $conversation->inbox_id,
             'labels' => $conversation->cachedLabelListArray(),
             'muted' => $conversation->isMuted(),

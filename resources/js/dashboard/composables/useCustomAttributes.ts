@@ -115,7 +115,10 @@ export async function createCustomAttribute(
 ): Promise<CustomAttributeDefinition> {
     setUiFlags({ isCreating: true });
     try {
-        const created = await postJson<CustomAttributeDefinition>(endpoint(accountId), payload);
+        // Controller đọc `custom_attribute_definition` (strong params của Rails).
+        const created = await postJson<CustomAttributeDefinition>(endpoint(accountId), {
+            custom_attribute_definition: payload,
+        });
         records = [...records, created];
         return created;
     } finally {
@@ -130,7 +133,9 @@ export async function updateCustomAttribute(
 ): Promise<CustomAttributeDefinition> {
     setUiFlags({ isUpdating: true });
     try {
-        const updated = await patchJson<CustomAttributeDefinition>(endpoint(accountId, id), payload);
+        const updated = await patchJson<CustomAttributeDefinition>(endpoint(accountId, id), {
+            custom_attribute_definition: payload,
+        });
         records = records.map(record => (record.id === id ? updated : record));
         return updated;
     } finally {

@@ -2,20 +2,22 @@ import { createElement, useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import { useCamelCustomAttributes } from 'dashboard/composables/useCustomAttributes';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { getJson } from 'dashboard/helper/apiClient';
 import type { DashboardPageProps } from 'dashboard/types';
 import { t } from '../../../i18n';
 import { groupFilterTypes } from './helper/filterAttributeIcons';
-import { CONVERSATION_ATTRIBUTES } from './helper/filterHelper';
+import { buildAttributesFilterTypes, CONVERSATION_ATTRIBUTES } from './helper/filterHelper';
 import type { FilterOption, FilterSelectOption, FilterType } from './helper/filterHelper';
 import languages from './helper/languages';
-import { containmentOperators, dateOperators, equalityOperators, presenceOperators } from './operators';
+import { containmentOperators, dateOperators, equalityOperators, getOperatorTypes, presenceOperators } from './operators';
 
 // Port từ components-next/filter/provider.js (useConversationFilterContext).
 // Nguồn dữ liệu: inboxes/teams từ shared props, agents qua GET /api/v1/agents,
 // contact qua GET /api/v1/contacts/search; labels dùng store B7 dùng chung.
-// Campaign/custom attributes chưa có store dùng chung.
+// custom attributes lấy từ composables/useCustomAttributes (store E1); campaign
+// chưa có store dùng chung.
 interface AgentSummary {
     id: number;
     name: string;
@@ -45,6 +47,7 @@ export function useConversationFilterContext(): (FilterType | FilterSelectOption
     const accountId = currentAccount.id;
     const [agents, setAgents] = useState<AgentSummary[]>([]);
     const labels = useLabelsList(accountId);
+    const conversationAttributes = useCamelCustomAttributes(accountId, 'conversation_attribute');
 
     useEffect(() => {
         let cancelled = false;
@@ -213,6 +216,12 @@ export function useConversationFilterContext(): (FilterType | FilterSelectOption
             },
         ];
 
-        return groupFilterTypes(filterTypes);
-    }, [accountId, agents, inboxes, labels, teams]);
+        return groupFilterTypes([
+            ...filterTypes,
+            ...buildAttributesFilterTypes(conversationAttributes, getOperatorTypes, 'conversation'),
+        ]);
+        // conversationAttributes đổi tham chiếu mỗi lần render (map từ store) —
+        // so bằng khoá + giá trị để memo không vỡ.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accountId, agents, inboxes, labels, teams, JSON.stringify(conversationAttributes)]);
 }

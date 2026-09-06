@@ -12,8 +12,15 @@ import {
 } from 'dashboard/composables/useBulkActions';
 import { useBulkActionsHotKeys } from 'dashboard/composables/useBulkActionsHotKeys';
 import ConversationFilter, { DEFAULT_FILTER } from 'dashboard/components-next/filter/ConversationFilter';
+import SaveCustomView from 'dashboard/components-next/filter/SaveCustomView';
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
+import { buildConversationFilterPayload, conditionsFromPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { useConversationFilterContext } from 'dashboard/components-next/filter/provider';
+import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { deleteCustomView, useCustomViews } from 'dashboard/composables/useCustomViews';
+import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { ASSIGNEE_TYPE, CONVERSATION_TYPE, STATUS_TYPE } from '../constants';
@@ -24,8 +31,7 @@ import ChatListHeader from './ChatListHeader';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 
-// Port từ dashboard/components/ChatList.vue — cắt: custom views/folders,
-// delete dialog, participating/unattended view. Tab Mentions dùng chung màn này
+// Port từ dashboard/components/ChatList.vue — cắt: participating/unattended view. Tab Mentions dùng chung màn này
 // và chung một nguồn danh sách: `conversationType` chỉ đổi tham số lọc gửi lên
 // server (ConversationContext) và tiêu đề trang.
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
@@ -36,7 +42,13 @@ const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigne
     { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
-export default function ChatList({ showConversationList = true }: { showConversationList?: boolean }) {
+export default function ChatList({
+    showConversationList = true,
+    foldersId = 0,
+}: {
+    showConversationList?: boolean;
+    foldersId?: number;
+}) {
     const {
         accountId,
         conversations,
@@ -66,11 +78,31 @@ export default function ChatList({ showConversationList = true }: { showConversa
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [draftFilters, setDraftFilters] = useState<ConversationFilterCondition[]>([{ ...DEFAULT_FILTER }]);
     const [teleportTarget, setTeleportTarget] = useState<HTMLElement | null>(null);
+    const [showSaveFilterModal, setShowSaveFilterModal] = useState(false);
+    const [saveTeleportTarget, setSaveTeleportTarget] = useState<HTMLElement | null>(null);
+    const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
     const attributeFilterTypes = useConversationFilterContext();
+
+    const folders = useCustomViews(accountId, 'conversation');
+    const activeFolder = foldersId ? folders.find(view => view.id === foldersId) : undefined;
+    const hasActiveFolders = Boolean(activeFolder);
+    const activeFolderQuery = activeFolder ? JSON.stringify(activeFolder.query?.payload ?? []) : '';
 
     useEffect(() => {
         setTeleportTarget(document.getElementById('conversationFilterTeleportTarget'));
     }, [showAdvancedFilters]);
+
+    useEffect(() => {
+        setSaveTeleportTarget(document.getElementById('saveFilterTeleportTarget'));
+    }, [showSaveFilterModal]);
+
+    // fetchSavedFilteredConversations của gốc: mở folder = áp query đã lưu.
+    // Một nguồn duy nhất cho "danh sách đang lọc" — không có đường nạp riêng cho folder.
+    useEffect(() => {
+        if (!activeFolderQuery) return;
+        applyConversationFilters(conditionsFromPayload(JSON.parse(activeFolderQuery), attributeFilterTypes));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeFolderQuery]);
 
     // resetBulkActions của gốc: đổi tab, đổi bộ lọc cơ bản (status/sort), đổi inbox/team.
     useEffect(() => {
@@ -115,10 +147,28 @@ export default function ChatList({ showConversationList = true }: { showConversa
         setShowAdvancedFilters(true);
     };
 
+    // openLastItemAfterDeleteInFolder của gốc: xoá xong về folder cuối, hết folder thì về home.
+    const deleteActiveFolder = async () => {
+        if (!activeFolder) return;
+        try {
+            await deleteCustomView(accountId, activeFolder.id, 'conversation');
+            setShowDeleteFolderModal(false);
+            useAlert(t('FILTER.CUSTOM_VIEWS.DELETE.API_FOLDERS.SUCCESS_MESSAGE'));
+            const remaining = folders.filter(view => view.id !== activeFolder.id);
+            const last = remaining[remaining.length - 1];
+            window.location.assign(
+                accountScopedUrl(accountId, last ? `custom_view/${last.id}` : 'dashboard'),
+            );
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('FILTER.CUSTOM_VIEWS.DELETE.API_FOLDERS.ERROR_MESSAGE'));
+        }
+    };
+
     // pageTitle gốc: inbox.name → activeTeam.name → #label → conversationType → mặc định.
     const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
     const activeTeam = teamId ? teams.find(item => item.id === teamId) : undefined;
     const pageTitle =
+        activeFolder?.name ||
         activeInbox?.name ||
         activeTeam?.name ||
         (label ? `#${label}` : '') ||
@@ -147,8 +197,12 @@ export default function ChatList({ showConversationList = true }: { showConversa
                     isOnExpandedLayout={isOnExpandedLayout}
                     onFiltersModal={onToggleAdvanceFiltersModal}
                     hasAppliedFilters={appliedFilters !== null}
-                    filteredCount={listMeta.all_count || 0}
+                    hasActiveFolders={hasActiveFolders}
+                    allCount={listMeta.all_count || 0}
+                    isListLoading={listLoading}
                     onResetFilters={clearConversationFilters}
+                    onAddFolders={() => setShowSaveFilterModal(true)}
+                    onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
                 {appliedFilters === null ? (
                     <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
@@ -194,6 +248,32 @@ export default function ChatList({ showConversationList = true }: { showConversa
                           teleportTarget,
                       )
                     : null}
+                {showSaveFilterModal && saveTeleportTarget && appliedFilters
+                    ? createPortal(
+                          <SaveCustomView
+                              accountId={accountId}
+                              filterType={0}
+                              customViewsQuery={buildConversationFilterPayload(appliedFilters)}
+                              onClose={() => setShowSaveFilterModal(false)}
+                              onSaved={view =>
+                                  window.location.assign(accountScopedUrl(accountId, `custom_view/${view.id}`))
+                              }
+                          />,
+                          saveTeleportTarget,
+                      )
+                    : null}
+                {showDeleteFolderModal && activeFolder ? (
+                    <DeleteModal
+                        show
+                        title={t('FILTER.CUSTOM_VIEWS.DELETE.MODAL.CONFIRM.TITLE')}
+                        message={t('FILTER.CUSTOM_VIEWS.DELETE.MODAL.CONFIRM.MESSAGE')}
+                        messageValue={` ${activeFolder.name}?`}
+                        confirmText={t('FILTER.CUSTOM_VIEWS.DELETE.MODAL.CONFIRM.YES')}
+                        rejectText={t('FILTER.CUSTOM_VIEWS.DELETE.MODAL.CONFIRM.NO')}
+                        onConfirm={deleteActiveFolder}
+                        onClose={() => setShowDeleteFolderModal(false)}
+                    />
+                ) : null}
             </div>
         </BulkSelectionContext.Provider>
     );
