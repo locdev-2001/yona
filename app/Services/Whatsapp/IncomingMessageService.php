@@ -124,11 +124,14 @@ class IncomingMessageService
             $message->sender()->associate($contactInbox->contact);
         }
 
-        $message->save();
-
+        // Gốc: `attach_files` / `attach_location` / `attach_contact` đều gọi
+        // `@message.attachments.new(...)` TRƯỚC `@message.save!`
+        // (incoming_message_base_service.rb:95-104).
         $this->attachFiles($message, $payload, $type);
         $this->attachLocation($message, $payload, $type);
         $this->attachContacts($message, $payload, $type);
+
+        $message->save();
 
         return $message;
     }
@@ -171,8 +174,9 @@ class IncomingMessageService
 
         $attachmentPayload = (array) ($payload[$type] ?? []);
 
+        // `@message.content ||= attachment_payload[:caption]` — gán trước khi lưu.
         if (blank($message->content) && filled($attachmentPayload['caption'] ?? null)) {
-            $message->update(['content' => $attachmentPayload['caption']]);
+            $message->content = $attachmentPayload['caption'];
         }
 
         if (blank($attachmentPayload['id'] ?? null)) {
@@ -184,6 +188,10 @@ class IncomingMessageService
             ->get($channel->mediaUrl((string) $attachmentPayload['id']));
 
         if (! $mediaUrlResponse->successful()) {
+            $message->pendingAttachments[] = new Attachment(
+                RemoteAttachmentDownloader::fallbackAttributes($message->account_id, $attachmentPayload['filename'] ?? null),
+            );
+
             return;
         }
 
@@ -195,11 +203,17 @@ class IncomingMessageService
         );
 
         if ($attributes === null) {
+            // URL media của Graph chỉ mở được kèm bearer token của kênh — không
+            // đưa ra trình duyệt; fallback giữ tên tệp để agent biết đã có tệp.
+            $message->pendingAttachments[] = new Attachment(
+                RemoteAttachmentDownloader::fallbackAttributes($message->account_id, $attachmentPayload['filename'] ?? null),
+            );
+
             return;
         }
 
         $attributes['file_type'] = self::FILE_TYPES[$type] ?? Attachment::FILE_TYPE_FILE;
-        $message->attachments()->create($attributes);
+        $message->pendingAttachments[] = new Attachment($attributes);
     }
 
     /** @var array<string, int> Whatsapp::IncomingMessageServiceHelpers#file_content_type */
@@ -223,7 +237,7 @@ class IncomingMessageService
         $location = (array) $payload['location'];
         $name = filled($location['name'] ?? null) ? "{$location['name']}, ".($location['address'] ?? '') : '';
 
-        $message->attachments()->create([
+        $message->pendingAttachments[] = new Attachment([
             'account_id' => $message->account_id,
             'file_type' => Attachment::FILE_TYPE_LOCATION,
             'coordinates_lat' => $location['latitude'],
@@ -246,7 +260,7 @@ class IncomingMessageService
                 : [['phone' => 'Phone number is not available']];
 
             foreach ($phones as $phone) {
-                $message->attachments()->create([
+                $message->pendingAttachments[] = new Attachment([
                     'account_id' => $message->account_id,
                     'file_type' => Attachment::FILE_TYPE_CONTACT,
                     'fallback_title' => (string) $phone['phone'],

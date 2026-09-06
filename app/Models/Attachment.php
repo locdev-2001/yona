@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\MessageValidationException;
+use App\Support\FileUploadLimit;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -191,11 +192,70 @@ class Attachment extends Model
      */
     public static function storeContents(string $contents, string $filename, ?string $contentType, ?int $accountId): array
     {
-        $path = self::uploadDirectory($accountId).'/'.Str::random(40).'.'.pathinfo($filename, PATHINFO_EXTENSION);
+        $path = self::storagePathFor($filename, $accountId);
         Storage::disk('public')->put($path, $contents);
 
-        $dimensions = @getimagesizefromstring($contents);
+        return self::storedAttributes(
+            $path,
+            $filename,
+            $contentType,
+            $accountId,
+            strlen($contents),
+            @getimagesizefromstring($contents),
+        );
+    }
 
+    /**
+     * Cùng đường lưu với storeContents nhưng nguồn là một tệp có sẵn trên đĩa và
+     * dữ liệu chảy thẳng từ tệp sang kho — đường tải đính kèm của kênh dùng cái
+     * này để một tệp 40MB không bao giờ nằm nguyên trong RAM của worker.
+     *
+     * @return array<string, mixed>
+     */
+    public static function storeLocalFile(string $localPath, string $filename, ?string $contentType, ?int $accountId): array
+    {
+        $path = self::storagePathFor($filename, $accountId);
+        $handle = fopen($localPath, 'rb');
+
+        if ($handle === false) {
+            throw new MessageValidationException("Không đọc được tệp {$localPath}");
+        }
+
+        try {
+            Storage::disk('public')->writeStream($path, $handle);
+        } finally {
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
+        }
+
+        return self::storedAttributes(
+            $path,
+            $filename,
+            $contentType,
+            $accountId,
+            (int) filesize($localPath),
+            @getimagesize($localPath),
+        );
+    }
+
+    private static function storagePathFor(string $filename, ?int $accountId): string
+    {
+        return self::uploadDirectory($accountId).'/'.Str::random(40).'.'.pathinfo($filename, PATHINFO_EXTENSION);
+    }
+
+    /**
+     * @param  array<int, mixed>|false  $dimensions  kết quả getimagesize*
+     * @return array<string, mixed>
+     */
+    private static function storedAttributes(
+        string $path,
+        string $filename,
+        ?string $contentType,
+        ?int $accountId,
+        int $byteSize,
+        array|false $dimensions,
+    ): array {
         return [
             'account_id' => $accountId,
             'file_type' => self::fileTypeFor($contentType),
@@ -203,7 +263,7 @@ class Attachment extends Model
             'path' => $path,
             'filename' => $filename,
             'content_type' => $contentType,
-            'byte_size' => strlen($contents),
+            'byte_size' => $byteSize,
             'meta' => $dimensions === false ? [] : ['width' => $dimensions[0], 'height' => $dimensions[1]],
         ];
     }
@@ -552,10 +612,7 @@ class Attachment extends Model
 
     private function validateFileSize(int $byteSize): void
     {
-        $limitMb = (int) config('limits.maximum_file_upload_size');
-        $limitMb = $limitMb <= 0 ? 40 : $limitMb;
-
-        if ($byteSize > $limitMb * 1024 * 1024) {
+        if ($byteSize > FileUploadLimit::maxBytes()) {
             throw new MessageValidationException('File size is too big');
         }
     }

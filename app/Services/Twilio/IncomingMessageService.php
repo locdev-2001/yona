@@ -53,10 +53,13 @@ class IncomingMessageService
             'source_id' => $this->params['SmsSid'] ?? null,
         ]);
         $message->sender()->associate($contactInbox->contact);
-        $message->save();
 
+        // Gốc: `attach_files` + `attach_location` rồi mới `@message.save!`
+        // (twilio/incoming_message_service.rb:22-24).
         $this->attachFiles($message, $channel);
         $this->attachLocation($message);
+
+        $message->save();
 
         return $message;
     }
@@ -150,9 +153,14 @@ class IncomingMessageService
                 basicAuth: [$channel->account_sid, $channel->auth_token],
             );
 
-            if ($attributes !== null) {
-                $message->attachments()->create($attributes);
-            }
+            // MediaUrl của Twilio cần basic auth account_sid/auth_token nên
+            // không đưa ra trình duyệt được.
+            $message->pendingAttachments[] = new Attachment(
+                $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
+                    $message->account_id,
+                    basename((string) parse_url((string) $mediaUrl, PHP_URL_PATH)) ?: null,
+                ),
+            );
         }
     }
 
@@ -166,7 +174,7 @@ class IncomingMessageService
             return;
         }
 
-        $message->attachments()->create([
+        $message->pendingAttachments[] = new Attachment([
             'account_id' => $message->account_id,
             'file_type' => Attachment::FILE_TYPE_LOCATION,
             'coordinates_lat' => (float) $this->params['Latitude'],

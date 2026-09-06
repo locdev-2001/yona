@@ -75,10 +75,12 @@ class MessageService
             $message->status = Message::STATUSES['delivered'];
         }
 
-        $message->save();
-
+        // Gốc: `create_message_attachments(message)` rồi mới `message.save!`
+        // (tiktok/message_service.rb:49-50).
         $this->attachImage($message);
         $this->attachSharePost($message);
+
+        $message->save();
 
         return $message;
     }
@@ -160,10 +162,17 @@ class MessageService
 
         $attributes = RemoteAttachmentDownloader::download($downloadUrl, $message->account_id);
 
-        if ($attributes !== null) {
-            $attributes['file_type'] = Attachment::FILE_TYPE_IMAGE;
-            $message->attachments()->create($attributes);
+        if ($attributes === null) {
+            // URL tải của TikTok cần header `x-user` mang access token của kênh.
+            $message->pendingAttachments[] = new Attachment(
+                RemoteAttachmentDownloader::fallbackAttributes($message->account_id),
+            );
+
+            return;
         }
+
+        $attributes['file_type'] = Attachment::FILE_TYPE_IMAGE;
+        $message->pendingAttachments[] = new Attachment($attributes);
     }
 
     private function attachSharePost(Message $message): void
@@ -172,7 +181,7 @@ class MessageService
             return;
         }
 
-        $message->attachments()->create([
+        $message->pendingAttachments[] = new Attachment([
             'account_id' => $message->account_id,
             'file_type' => Attachment::FILE_TYPE_EMBED,
             'external_url' => data_get($this->content, 'share_post.embed_url'),

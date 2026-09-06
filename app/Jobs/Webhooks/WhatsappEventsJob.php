@@ -9,6 +9,15 @@ use App\Services\Whatsapp\IncomingMessageService;
 // Port từ refs/chatwoot/app/jobs/webhooks/whatsapp_events_job.rb.
 class WhatsappEventsJob extends ApplicationJob
 {
+    /**
+     * `retry_on LockAcquisitionError, wait: 2.seconds, attempts: 20` của bản gốc.
+     * Chạy lại an toàn vì service bỏ qua tin đã có `source_id` ngay đầu vào,
+     * nên một lượt hỏng giữa chừng không sinh tin trùng.
+     */
+    public int $tries = 20;
+
+    public int $backoff = 2;
+
     /** @param array<string, mixed> $params */
     public function __construct(public readonly array $params) {}
 

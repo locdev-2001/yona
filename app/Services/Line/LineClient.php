@@ -21,9 +21,20 @@ class LineClient
         return $this->request()->get(self::API_BASE."/profile/{$userId}");
     }
 
-    public function messageContent(string $messageId): Response
+    public function messageContentUrl(string $messageId): string
     {
-        return $this->request()->get(self::DATA_API_BASE."/message/{$messageId}/content");
+        return self::DATA_API_BASE."/message/{$messageId}/content";
+    }
+
+    /**
+     * Header xác thực để đường tải đính kèm dùng chung gọi thẳng URL nội dung —
+     * LINE không có URL công khai, mọi tệp đều phải kèm channel token.
+     *
+     * @return array<string, string>
+     */
+    public function authHeaders(): array
+    {
+        return ['Authorization' => 'Bearer '.$this->channel->line_channel_token];
     }
 
     /** @param array<int|string, mixed> $messages */
