@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/attachment.rb.
 // ActiveStorage thay bằng cột disk/path/filename/content_type/byte_size (quyết định #9)
@@ -176,6 +177,31 @@ class Attachment extends Model
             'content_type' => $contentType,
             'byte_size' => (int) $file->getSize(),
             'meta' => $dimensions,
+        ];
+    }
+
+    /**
+     * Lưu tệp đã ở dạng chuỗi bytes (tệp đính kèm bóc từ thư đến) — cùng đường
+     * lưu với storeUpload, chỉ khác nguồn dữ liệu.
+     *
+     * @return array<string, mixed>
+     */
+    public static function storeContents(string $contents, string $filename, ?string $contentType, ?int $accountId): array
+    {
+        $path = self::uploadDirectory($accountId).'/'.Str::random(40).'.'.pathinfo($filename, PATHINFO_EXTENSION);
+        Storage::disk('public')->put($path, $contents);
+
+        $dimensions = @getimagesizefromstring($contents);
+
+        return [
+            'account_id' => $accountId,
+            'file_type' => self::fileTypeFor($contentType),
+            'disk' => 'public',
+            'path' => $path,
+            'filename' => $filename,
+            'content_type' => $contentType,
+            'byte_size' => strlen($contents),
+            'meta' => $dimensions === false ? [] : ['width' => $dimensions[0], 'height' => $dimensions[1]],
         ];
     }
 

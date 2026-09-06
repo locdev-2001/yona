@@ -10,6 +10,8 @@ import type { DataImport } from 'dashboard/contacts/api';
 // Port từ components-next/Contacts/ContactsForm/ContactImportDialog.vue.
 // Thêm so bản gốc (bản gốc chỉ báo "sẽ gửi email"): sau khi tải lên, hộp thoại
 // theo dõi trạng thái lần nhập qua GET /data_imports và cho tải tệp dòng lỗi.
+// GET /data_imports đòi feature `data_import` (đúng bản gốc); tài khoản chưa bật
+// thì bỏ hẳn khối trạng thái — hộp thoại quay về đúng hành vi gốc.
 const SAMPLE_CSV_URL = '/downloads/import-contacts-sample.csv';
 const POLL_INTERVAL = 5000;
 const RUNNING_STATUSES = ['pending', 'processing'];
@@ -38,6 +40,7 @@ const ContactImportDialog = forwardRef<DialogHandle, ContactImportDialogProps>(f
     const [selectedFileName, setSelectedFileName] = useState('');
     const [trackedImport, setTrackedImport] = useState<DataImport | null>(null);
     const [isTracking, setTracking] = useState(false);
+    const [isStatusUnavailable, setStatusUnavailable] = useState(false);
 
     useImperativeHandle(ref, () => ({
         open: () => dialogRef.current?.open(),
@@ -51,8 +54,14 @@ const ContactImportDialog = forwardRef<DialogHandle, ContactImportDialogProps>(f
 
         let active = true;
         const poll = async () => {
-            const imports = await fetchDataImports(accountId).catch(() => []);
+            const imports = await fetchDataImports(accountId).catch(() => null);
             if (!active) return;
+
+            if (imports === null) {
+                setTracking(false);
+                setStatusUnavailable(true);
+                return;
+            }
 
             const latest = imports.find(item => item.dataType === 'contacts') ?? null;
             setTrackedImport(latest);
@@ -86,6 +95,7 @@ const ContactImportDialog = forwardRef<DialogHandle, ContactImportDialogProps>(f
     const uploadFile = () => {
         if (!selectedFile) return;
         setTrackedImport(null);
+        setStatusUnavailable(false);
         setTracking(true);
         onImport(selectedFile);
     };
@@ -106,7 +116,7 @@ const ContactImportDialog = forwardRef<DialogHandle, ContactImportDialogProps>(f
         });
     };
 
-    const showProgress = isTracking || trackedImport !== null;
+    const showProgress = !isStatusUnavailable && (isTracking || trackedImport !== null);
 
     return (
         <Dialog
