@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\OutOfOffisable;
+use App\Models\Concerns\Reportable;
 use App\Services\AutoAssignment\InboxRoundRobinService;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\InboxFactory;
@@ -22,11 +23,11 @@ use Illuminate\Support\Collection as SupportCollection;
 // Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: contact_inboxes/conversations/messages (nhóm B2-B3),
 // agent_bot/webhooks/portal (nhóm D-E),
-// FilteredCountInvalidator (nợ B8), Reportable, EE overlay.
+// FilteredCountInvalidator (nợ B8), EE overlay.
 class Inbox extends Model
 {
     /** @use HasFactory<InboxFactory> */
-    use Avatarable, HasFactory, OutOfOffisable;
+    use Avatarable, HasFactory, OutOfOffisable, Reportable;
 
     public const SENDER_NAME_TYPE_FRIENDLY = 0;
 
@@ -133,6 +134,34 @@ class Inbox extends Model
         );
     }
 
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
+    }
+
+    public function agentBotInbox(): HasOne
+    {
+        return $this->hasOne(AgentBotInbox::class);
+    }
+
+    // InboxBotStatus#active_bot? — CE chỉ còn nhánh agent bot (dialogflow là EE).
+    public function activeBot(): bool
+    {
+        return $this->agentBotInbox?->isActive() === true;
+    }
+
+    public function agentBot(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            AgentBot::class,
+            AgentBotInbox::class,
+            'inbox_id',
+            'id',
+            'id',
+            'agent_bot_id',
+        );
+    }
+
     public function contactInboxes(): HasMany
     {
         return $this->hasMany(ContactInbox::class);
@@ -184,6 +213,12 @@ class Inbox extends Model
 
     // Inbox#inbox_type — tên người-đọc-được của kênh ('Website', 'API'…);
     // campaign dùng nó để quyết định loại chiến dịch được phép.
+    // Inbox#webhook_data — khối `inbox` rút gọn trong payload webhook.
+    public function webhookData(): array
+    {
+        return ['id' => $this->id, 'name' => $this->name];
+    }
+
     public function inboxType(): string
     {
         return $this->channel?->name() ?? '';

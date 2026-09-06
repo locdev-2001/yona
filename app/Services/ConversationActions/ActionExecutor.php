@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\DB;
 // Lõi hành động conversation dùng chung cho Automation rules và D3 Macros.
 // Không nhận Request, không biết event nào đã gọi nó và không gửi webhook/email
 // chưa có driver trong rewrite.
+// $actor = người bấm nút (macro); rỗng nghĩa là hệ thống tự chạy (automation).
 final class ActionExecutor
 {
-    public function __construct(private readonly Conversation $conversation) {}
+    public function __construct(
+        private readonly Conversation $conversation,
+        private readonly ?User $actor = null,
+    ) {}
 
     public function execute(string $actionName, mixed $params, ?int $automationRuleId = null): void
     {
@@ -28,6 +32,10 @@ final class ActionExecutor
             'remove_label' => $this->conversation->removeLabels($values),
             'send_message' => $this->sendMessage($values[0] ?? null, false, $automationRuleId),
             'add_private_note' => $this->sendMessage($values[0] ?? null, true, $automationRuleId),
+            'send_attachment' => $this->sendAttachments($values, $automationRuleId),
+            'change_status' => $this->update([
+                'status' => Conversation::statusFromName((string) ($values[0] ?? 'open')),
+            ]),
             'mute_conversation' => $this->conversation->mute(),
             'snooze_conversation' => $this->update(['status' => Conversation::STATUS_SNOOZED]),
             'open_conversation' => $this->update(['status' => Conversation::STATUS_OPEN]),
@@ -44,6 +52,10 @@ final class ActionExecutor
     private function assignAgent(array $values): void
     {
         $requested = (string) ($values[0] ?? '');
+        if ($requested === 'self') {
+            $requested = (string) ($this->actor?->id ?? '');
+        }
+
         if ($requested === 'nil' || $requested === '') {
             $this->update(['assignee_id' => null]);
 
@@ -98,17 +110,51 @@ final class ActionExecutor
 
     private function sendMessage(mixed $content, bool $private, ?int $automationRuleId): void
     {
-        if ($content === null || $content === '' || data_get($this->conversation->additional_attributes, 'type') === 'tweet') {
+        if ($content === null || $content === '' || $this->conversationIsTweet()) {
             return;
         }
 
-        (new MessageBuilder(null, $this->conversation->fresh(), [
+        $this->buildMessage([
             'content' => (string) $content,
             'private' => $private,
+        ], $automationRuleId);
+    }
+
+    /**
+     * Tin nhắn mang tệp: mỗi phần tử là tham chiếu tệp đã ký (signed upload),
+     * lõi không biết tệp đó thuộc macro hay nguồn nào.
+     *
+     * @param  list<mixed>  $values
+     */
+    private function sendAttachments(array $values, ?int $automationRuleId): void
+    {
+        $attachments = array_values(array_filter($values, fn (mixed $value) => filled($value)));
+
+        if ($attachments === [] || $this->conversationIsTweet()) {
+            return;
+        }
+
+        $this->buildMessage([
+            'content' => null,
+            'private' => false,
+            'attachments' => $attachments,
+        ], $automationRuleId);
+    }
+
+    /** @param array<string, mixed> $params */
+    private function buildMessage(array $params, ?int $automationRuleId): void
+    {
+        (new MessageBuilder($this->actor, $this->conversation->fresh(), [
+            ...$params,
             'content_attributes' => $automationRuleId === null ? [] : [
                 'automation_rule_id' => $automationRuleId,
             ],
         ]))->perform();
+    }
+
+    private function conversationIsTweet(): bool
+    {
+        return data_get($this->conversation->additional_attributes, 'type') === 'tweet';
     }
 
     /** @param array<string, mixed> $attributes */

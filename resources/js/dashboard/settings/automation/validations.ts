@@ -41,6 +41,18 @@ const validateSingleAction = (action: AutomationAction): string | null => {
     return isEmptyValue(action.action_params) ? ACTION_PARAMETERS_REQUIRED : null;
 };
 
+// validateActions của gốc — dùng chung với editor Macros (D3).
+export const validateActions = (actions: AutomationAction[] | undefined): AutomationErrors => {
+    if (!actions?.length) return { actions: ATLEAST_ONE_ACTION_REQUIRED };
+
+    const errors: AutomationErrors = {};
+    actions.forEach((action, index) => {
+        const error = validateSingleAction(action);
+        if (error) errors[`action_${index}`] = error;
+    });
+    return errors;
+};
+
 export const validateAutomation = (automation: Pick<AutomationRule, 'name' | 'description' | 'event_name' | 'conditions' | 'actions'>): AutomationErrors => {
     const errors: AutomationErrors = {};
     if (!automation.name?.trim()) errors.name = true;
@@ -56,14 +68,7 @@ export const validateAutomation = (automation: Pick<AutomationRule, 'name' | 'de
         });
     }
 
-    if (!automation.actions?.length) {
-        errors.actions = ATLEAST_ONE_ACTION_REQUIRED;
-    } else {
-        automation.actions.forEach((action, index) => {
-            const error = validateSingleAction(action);
-            if (error) errors[`action_${index}`] = error;
-        });
-    }
+    Object.assign(errors, validateActions(automation.actions));
 
     return errors;
 };

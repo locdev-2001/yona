@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
+use App\Http\Controllers\WebApi\AgentBotsController;
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\AutomationRulesController;
 use App\Http\Controllers\WebApi\BulkActionsController;
@@ -19,17 +20,26 @@ use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLa
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
 use App\Http\Controllers\WebApi\ConversationsController;
+use App\Http\Controllers\WebApi\CsatSurveyResponsesController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
+use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
 use App\Http\Controllers\WebApi\LabelsController;
+use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
+use App\Http\Controllers\WebApi\Reports\LiveReportsController;
+use App\Http\Controllers\WebApi\Reports\ReportsController;
+use App\Http\Controllers\WebApi\Reports\SummaryReportsController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
+use App\Http\Controllers\WebApi\UploadController;
+use App\Http\Controllers\WebApi\WebhooksController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 // Mặt tiền web_api: JSON cho chính FE (session auth) — map path /api/v1
 // như dashboard API của Chatwoot (quyết định #3).
@@ -166,6 +176,43 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/automation_rules/{automationRuleId}', [AutomationRulesController::class, 'destroy'])->whereNumber('automationRuleId');
         Route::post('/automation_rules/{automationRuleId}/clone', [AutomationRulesController::class, 'clone'])->whereNumber('automationRuleId');
 
+        // D2 báo cáo CSAT (csat_survey_responses_controller.rb).
+        Route::get('/csat_survey_responses', [CsatSurveyResponsesController::class, 'index']);
+        Route::get('/csat_survey_responses/metrics', [CsatSurveyResponsesController::class, 'metrics']);
+        Route::get('/csat_survey_responses/download', [CsatSurveyResponsesController::class, 'download']);
+
+        // D3 Macros (mọi vai trò; visibility personal/global quyết định phạm vi).
+        Route::get('/macros', [MacrosController::class, 'index']);
+        Route::post('/macros', [MacrosController::class, 'store']);
+        Route::get('/macros/{macroId}', [MacrosController::class, 'show'])->whereNumber('macroId');
+        Route::match(['put', 'patch'], '/macros/{macroId}', [MacrosController::class, 'update'])->whereNumber('macroId');
+        Route::delete('/macros/{macroId}', [MacrosController::class, 'destroy'])->whereNumber('macroId');
+        Route::post('/macros/{macroId}/execute', [MacrosController::class, 'execute'])->whereNumber('macroId');
+
+        // upload_controller.rb: tệp đính kèm cho macro builder (blob_id ký).
+        Route::post('/upload', [UploadController::class, 'store']);
+
+        // D4 Webhooks + Agent Bots + danh mục ứng dụng tích hợp.
+        Route::get('/webhooks', [WebhooksController::class, 'index']);
+        Route::post('/webhooks', [WebhooksController::class, 'store']);
+        Route::match(['put', 'patch'], '/webhooks/{webhookId}', [WebhooksController::class, 'update'])->whereNumber('webhookId');
+        Route::delete('/webhooks/{webhookId}', [WebhooksController::class, 'destroy'])->whereNumber('webhookId');
+
+        Route::get('/agent_bots', [AgentBotsController::class, 'index']);
+        Route::post('/agent_bots', [AgentBotsController::class, 'store']);
+        Route::get('/agent_bots/{agentBotId}', [AgentBotsController::class, 'show'])->whereNumber('agentBotId');
+        Route::match(['put', 'patch'], '/agent_bots/{agentBotId}', [AgentBotsController::class, 'update'])->whereNumber('agentBotId');
+        Route::delete('/agent_bots/{agentBotId}', [AgentBotsController::class, 'destroy'])->whereNumber('agentBotId');
+        Route::delete('/agent_bots/{agentBotId}/avatar', [AgentBotsController::class, 'destroyAvatar'])->whereNumber('agentBotId');
+        Route::post('/agent_bots/{agentBotId}/reset_access_token', [AgentBotsController::class, 'resetAccessToken'])->whereNumber('agentBotId');
+        Route::post('/agent_bots/{agentBotId}/reset_secret', [AgentBotsController::class, 'resetSecret'])->whereNumber('agentBotId');
+
+        Route::get('/inboxes/{inboxId}/agent_bot', [InboxesController::class, 'agentBot'])->whereNumber('inboxId');
+        Route::post('/inboxes/{inboxId}/set_agent_bot', [InboxesController::class, 'setAgentBot'])->whereNumber('inboxId');
+
+        Route::get('/integrations/apps', [IntegrationAppsController::class, 'index']);
+        Route::get('/integrations/apps/{appId}', [IntegrationAppsController::class, 'show'])->where('appId', '[a-z_]+');
+
         // {campaignId} là display_id per-account, không phải khoá chính.
         Route::get('/campaigns', [CampaignsController::class, 'index']);
         Route::post('/campaigns', [CampaignsController::class, 'store']);
@@ -181,4 +228,24 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/teams/{teamId}/team_members', [TeamMembersController::class, 'store'])->whereNumber('teamId');
         Route::match(['put', 'patch'], '/teams/{teamId}/team_members', [TeamMembersController::class, 'update'])->whereNumber('teamId');
         Route::delete('/teams/{teamId}/team_members', [TeamMembersController::class, 'destroy'])->whereNumber('teamId');
+    });
+
+// D2 Reports — mặt tiền /api/v2 của Chatwoot (reports, summary_reports, live_reports).
+Route::middleware(['auth.api_token', 'auth', 'account.scope'])
+    ->prefix('/api/v2/accounts/{account}')
+    ->whereNumber('account')
+    ->group(function () {
+        Route::get('/reports', [ReportsController::class, 'index']);
+        foreach ([
+            'summary', 'bot_summary', 'agents', 'inboxes', 'labels', 'teams', 'conversations', 'conversations_summary',
+            'conversation_traffic', 'drilldown', 'bot_metrics', 'inbox_label_matrix', 'first_response_time_distribution',
+            'outgoing_messages_count',
+        ] as $action) {
+            Route::get("/reports/{$action}", [ReportsController::class, Str::camel($action)]);
+        }
+        foreach (['agent', 'team', 'inbox', 'label', 'channel'] as $action) {
+            Route::get("/summary_reports/{$action}", [SummaryReportsController::class, $action]);
+        }
+        Route::get('/live_reports/conversation_metrics', [LiveReportsController::class, 'conversationMetrics']);
+        Route::get('/live_reports/grouped_conversation_metrics', [LiveReportsController::class, 'groupedConversationMetrics']);
     });

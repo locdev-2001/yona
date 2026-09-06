@@ -18,10 +18,11 @@ import ConversationParticipant from './contact/ConversationParticipant';
 import CustomAttributes from './contact/CustomAttributes';
 import SharedFiles from './contact/SharedFiles';
 import { useContactDetails } from './contact/useContactDetails';
+import MacroList from '../macros/MacroList';
 
 // Port từ routes/dashboard/conversation/ContactPanel.vue — header + ContactInfo
 // + các accordion đúng tên/thứ tự gốc (ui_settings conversation_sidebar_items_order
-// + cờ is_*_open). Macros (D3) còn rỗng; linear/shopify (integrations) bỏ; kéo thả
+// + cờ is_*_open). linear/shopify (integrations) bỏ; kéo thả
 // sắp xếp bỏ.
 // Hằng module: nếu dựng object mới mỗi lần render thì useContactDetails sẽ nạp lại vô hạn.
 const NO_CONTACT: ContactMeta = { id: 0, name: null };
@@ -105,6 +106,7 @@ export default function ContactPanel() {
                   title: t('CONVERSATION_SIDEBAR.ACCORDION.MACROS'),
                   openKey: 'is_macro_open',
                   compact: true,
+                  body: <MacroList conversationId={selectedConversation.id} />,
               }
             : null,
         contact_notes: {

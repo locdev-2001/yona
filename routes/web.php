@@ -127,10 +127,51 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/conversation-workflow', fn (Account $account) => Inertia::render('dashboard/settings/conversationWorkflow/Index'))
                 ->name('conversation_workflow_index');
 
+            // D2 Reports (reports.routes.js): cả bộ route cũ lẫn bộ drilldown mới đều đăng ký.
+            Route::get('/reports', fn (Account $account) => redirect("/app/accounts/{$account->id}/reports/overview"));
+            Route::get('/reports/overview', fn () => Inertia::render('dashboard/reports/LiveReports'))->name('account_overview_reports');
+            Route::get('/reports/conversation', fn () => Inertia::render('dashboard/reports/Index'))->name('conversation_reports');
+            Route::get('/reports/csat', fn () => Inertia::render('dashboard/reports/CsatResponses'))->name('csat_reports');
+            Route::get('/reports/bot', fn () => Inertia::render('dashboard/reports/BotReports'))->name('bot_reports');
+            Route::get('/reports/agent', fn () => Inertia::render('dashboard/reports/AgentReports'))->name('agent_reports');
+            Route::get('/reports/inboxes', fn () => Inertia::render('dashboard/reports/InboxReports'))->name('inbox_reports');
+            Route::get('/reports/label', fn () => Inertia::render('dashboard/reports/LabelReports'))->name('label_reports');
+            Route::get('/reports/teams', fn () => Inertia::render('dashboard/reports/TeamReports'))->name('team_reports');
+            foreach (['agent' => 'agents', 'inbox' => 'inboxes', 'team' => 'teams', 'label' => 'labels'] as $singular => $plural) {
+                $page = ucfirst($singular).'Reports';
+                Route::get("/reports/{$plural}_overview", fn () => Inertia::render("dashboard/reports/{$page}Index"))->name("{$singular}_reports_index");
+                Route::get("/reports/{$plural}/{id}", fn (Account $account, int $id) => Inertia::render("dashboard/reports/{$page}Show", ['id' => $id]))
+                    ->whereNumber('id')->name("{$singular}_reports_show");
+            }
+
+            // D4: settings/agent-bots + settings/integrations (integrations.routes.js).
+            Route::get('/settings/agent-bots', fn () => Inertia::render('dashboard/settings/agentBots/Index'))
+                ->name('agent_bots');
+            Route::get('/settings/integrations', fn () => Inertia::render('dashboard/settings/integrations/Index'))
+                ->name('settings_applications');
+            Route::get('/settings/integrations/webhook', fn () => Inertia::render('dashboard/settings/integrations/Webhooks/Index'))
+                ->name('settings_integrations_webhook');
+            Route::get('/settings/integrations/dashboard_apps', fn () => Inertia::render('dashboard/settings/integrations/DashboardApps/Index'))
+                ->name('settings_integrations_dashboard_apps');
+            Route::get('/settings/integrations/{integrationId}', fn (Account $account, string $integrationId) => Inertia::render(
+                'dashboard/settings/integrations/ShowIntegration',
+                ['integrationId' => $integrationId],
+            ))->where('integrationId', '[a-z_]+')->name('settings_integrations_integration');
+
             Route::get('/settings/automation', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/automation/list"));
             Route::get('/settings/automation/list', fn () => Inertia::render('dashboard/settings/automation/Index'))
                 ->name('settings_automation_list');
         });
+
+        // D3 Macros (macros.routes.js): mọi vai trò; list + editor new/edit.
+        Route::get('/settings/macros', fn () => Inertia::render('dashboard/settings/macros/Index'))
+            ->name('macros_wrapper');
+        Route::get('/settings/macros/new', fn () => Inertia::render('dashboard/settings/macros/MacroEditor'))
+            ->name('macros_new');
+        Route::get('/settings/macros/{macroId}/edit', fn (Account $account, int $macroId) => Inertia::render(
+            'dashboard/settings/macros/MacroEditor',
+            ['macroId' => $macroId],
+        ))->whereNumber('macroId')->name('macros_edit');
 
         // Tương đương canned.routes.js: mọi vai trò có quyền hội thoại (không riêng
         // administrator), redirect về /list.

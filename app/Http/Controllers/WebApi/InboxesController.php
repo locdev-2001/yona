@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AgentBotResource;
 use App\Http\Resources\AgentResource;
 use App\Http\Resources\InboxResource;
 use App\Jobs\DeleteObjectJob;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\AgentBot;
 use App\Models\Channel\Api;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -162,6 +165,43 @@ class InboxesController extends Controller
         $this->fetchInbox($request, $account, $inboxId)->avatar?->delete();
 
         return response()->json(null, 200);
+    }
+
+    // Api::V1::Accounts::InboxesController#agent_bot — inbox chưa gắn bot thì
+    // jbuilder gốc trả `{"agent_bot": {}}`.
+    public function agentBot(Request $request, Account $account, int $inboxId): JsonResponse
+    {
+        $agentBot = $this->fetchInbox($request, $account, $inboxId)->agentBot;
+        $accountUser = $request->attributes->get('currentAccountUser');
+
+        return response()->json([
+            'agent_bot' => $agentBot === null ? (object) [] : (new AgentBotResource(
+                $agentBot,
+                $account,
+                $accountUser instanceof AccountUser && $accountUser->isAdministrator(),
+            ))->toArray($request),
+        ]);
+    }
+
+    // #set_agent_bot — không truyền `agent_bot` (hoặc null) là gỡ bot khỏi inbox.
+    public function setAgentBot(Request $request, Account $account, int $inboxId): Response
+    {
+        $this->authorizeAdministrator($request);
+
+        $inbox = $this->fetchInbox($request, $account, $inboxId);
+        $agentBotId = $request->input('agent_bot');
+
+        if (filled($agentBotId)) {
+            $agentBot = AgentBot::query()->accessibleTo($account)->whereKey($agentBotId)->firstOrFail();
+
+            $inbox->agentBotInbox()->updateOrCreate([], ['agent_bot_id' => $agentBot->id]);
+        } else {
+            $inbox->agentBotInbox?->delete();
+        }
+
+        $inbox->unsetRelation('agentBotInbox')->unsetRelation('agentBot');
+
+        return response()->noContent(200);
     }
 
     public function assignableAgents(Request $request, Account $account, int $inboxId): JsonResponse

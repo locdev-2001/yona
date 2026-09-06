@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Database\PostgresConnection;
+use App\Models\AgentBot;
 use App\Models\Channel\Api;
 use App\Models\Channel\WebWidget;
 use App\Models\Contact;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
             'Inbox' => Inbox::class,
             'Message' => Message::class,
             'Conversation' => Conversation::class,
+            'AgentBot' => AgentBot::class,
         ]);
     }
 }

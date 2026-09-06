@@ -84,6 +84,9 @@ interface LiveChatCampaignFormProps {
     selectedCampaign?: Campaign | null;
     showActionButtons?: boolean;
     isCreating?: boolean;
+    // Khi nhúng trong Dialog, Dialog mới là <form> — chỗ này render <div> để
+    // tránh form lồng nhau (React bỏ qua onSubmit của form bên trong).
+    embedded?: boolean;
     ref?: Ref<LiveChatCampaignFormHandle>;
     onSubmit: (payload: LiveChatCampaignPayload) => void;
     onCancel?: () => void;
@@ -97,6 +100,7 @@ export default function LiveChatCampaignForm({
     selectedCampaign = null,
     showActionButtons = true,
     isCreating = false,
+    embedded = false,
     ref,
     onSubmit,
     onCancel,
@@ -204,8 +208,10 @@ export default function LiveChatCampaignForm({
     const comboBoxClass =
         '[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6';
 
+    const Container = embedded ? 'div' : 'form';
+
     return (
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <Container className="flex flex-col gap-4" onSubmit={embedded ? undefined : handleSubmit}>
             <Input
                 value={state.title}
                 onChange={event => patch({ title: event.target.value })}
@@ -324,6 +330,6 @@ export default function LiveChatCampaignForm({
                     />
                 </div>
             ) : null}
-        </form>
+        </Container>
     );
 }

@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import { t } from '../../../i18n';
@@ -6,6 +6,11 @@ import Button from 'dashboard/components-next/button/Button';
 
 // Port từ dashboard/components-next/dialog/Dialog.vue — <dialog> native,
 // mở/đóng qua ref (tương đương defineExpose({open, close}) của bản gốc).
+//
+// Dialog là chủ sở hữu <form> DUY NHẤT của nội dung modal: nút `type="submit"`
+// bên trong children sẽ chạy qua `onSubmit` của form này rồi gọi `onConfirm`.
+// Children TUYỆT ĐỐI không được render <form> riêng — React không gọi `onSubmit`
+// của form lồng nhau, submit sẽ rơi về hành vi mặc định (điều hướng GET).
 export interface DialogHandle {
     open: () => void;
     close: () => void;
@@ -78,6 +83,17 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
         },
         close,
     }));
+
+    // Chặn tái phạm bẫy form lồng — một querySelector mỗi lần mở modal.
+    useEffect(() => {
+        if (isOpen && dialogRef.current?.querySelector('form form')) {
+            // eslint-disable-next-line no-console
+            console.error(
+                'Dialog: nội dung modal đang render <form> lồng trong form của Dialog. ' +
+                    'Bỏ thẻ <form> đó và dùng prop onConfirm của Dialog.',
+            );
+        }
+    }, [isOpen]);
 
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();

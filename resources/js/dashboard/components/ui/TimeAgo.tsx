@@ -13,6 +13,7 @@ interface TimeAgoProps {
     lastActivityTimestamp: number;
     createdAtTimestamp: number;
     conversationId?: number | string;
+    className?: string;
 }
 
 function refreshDelay(lastActivityTimestamp: number): number {
@@ -31,6 +32,7 @@ export default function TimeAgo({
     lastActivityTimestamp,
     createdAtTimestamp,
     conversationId = '',
+    className = '',
 }: TimeAgoProps) {
     const [lastActivityAtTimeAgo, setLastActivityAtTimeAgo] = useState(() => dynamicTime(lastActivityTimestamp));
     const [createdAtTimeAgo, setCreatedAtTimeAgo] = useState(() => dynamicTime(createdAtTimestamp));
@@ -74,7 +76,7 @@ export default function TimeAgo({
     return (
         <div
             title={`${createdAt}\n${lastActivity}`}
-            className="ml-auto leading-4 text-xxs text-n-slate-10 hover:text-n-slate-11"
+            className={`ml-auto leading-4 text-xxs text-n-slate-10 hover:text-n-slate-11 ${className}`.trimEnd()}
         >
             <span>{`${createdAtTime} • ${lastActivityTime}`}</span>
         </div>

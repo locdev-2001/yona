@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Http\Resources\ContactResource;
+use App\Http\Resources\ConversationResource;
 use Database\Factories\ContactInboxFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -55,6 +57,23 @@ class ContactInbox extends Model implements Authenticatable
     public function inbox(): BelongsTo
     {
         return $this->belongsTo(Inbox::class);
+    }
+
+    // ContactInbox#webhook_data — payload của sự kiện webwidget_triggered.
+    public function webhookData(): array
+    {
+        $conversation = $this->conversations()->orderBy('id')->get()->last();
+
+        return [
+            'id' => $this->id,
+            'contact' => $this->contact === null ? null : ContactResource::webhookData($this->contact),
+            'inbox' => $this->inbox->webhookData(),
+            'account' => $this->inbox->account->webhookData(),
+            'current_conversation' => $conversation === null
+                ? null
+                : ConversationResource::webhookData($conversation),
+            'source_id' => $this->source_id,
+        ];
     }
 
     public function conversations(): HasMany

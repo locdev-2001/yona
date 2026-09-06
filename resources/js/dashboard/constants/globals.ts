@@ -15,3 +15,5 @@ export const SNOOZE_OPTIONS = {
 } as const;
 
 export type SnoozeOption = (typeof SNOOZE_OPTIONS)[keyof typeof SNOOZE_OPTIONS];
+
+export const EXAMPLE_WEBHOOK_URL = 'https://example/api/webhook';

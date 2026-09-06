@@ -13,12 +13,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\AgentBot;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\User;
 use App\Services\Conversations\FilterService;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
@@ -182,7 +184,10 @@ class ConversationsController extends Controller
             'snoozed_until' => ['nullable', 'integer'],
         ]);
 
-        if (filled($validated['status'] ?? null)) {
+        if ($this->isBotHandoff($request, $conversation, $validated['status'] ?? null)) {
+            $conversation->botHandoff();
+            $success = true;
+        } elseif (filled($validated['status'] ?? null)) {
             $conversation->status = Conversation::statusFromName($validated['status']);
 
             // Chatwoot chỉ parse khi có giá trị truthy. `null` là "Until next
@@ -196,7 +201,8 @@ class ConversationsController extends Controller
             $success = $conversation->toggleStatus();
         }
 
-        if ($conversation->isOpen()) {
+        // handle_human_open chỉ chạy khi người thật đứng sau yêu cầu.
+        if ($conversation->isOpen() && $request->user() instanceof User) {
             $this->handleHumanOpen($request, $conversation);
         }
 
@@ -337,7 +343,17 @@ class ConversationsController extends Controller
         return $conversation->assignee_id !== null && $conversation->assignee_id === $request->user()->id;
     }
 
-    // handle_human_open: agent mở lại hội thoại thì tự nhận; administrator không.
+    // bot_handoff?: chỉ agent bot mới bàn giao được, và chỉ khi hội thoại đang
+    // pending mà bot yêu cầu chuyển sang open.
+    private function isBotHandoff(Request $request, Conversation $conversation, ?string $status): bool
+    {
+        return $request->user() instanceof AgentBot
+            && $conversation->status === Conversation::STATUS_PENDING
+            && $status === 'open';
+    }
+
+    // handle_human_open: agent mở lại hội thoại thì tự nhận, administrator không;
+    // cả hai đều gỡ bot khỏi hội thoại.
     private function handleHumanOpen(Request $request, Conversation $conversation): void
     {
         /** @var AccountUser $accountUser */
@@ -345,6 +361,8 @@ class ConversationsController extends Controller
 
         DB::transaction(function () use ($conversation, $accountUser, $request) {
             $conversation->newModelQuery()->whereKey($conversation->id)->lockForUpdate()->get();
+
+            $conversation->assignee_agent_bot_id = null;
 
             if (! $accountUser->isAdministrator()) {
                 $conversation->assignee_id = $request->user()->id;
@@ -408,6 +426,11 @@ class ConversationsController extends Controller
 
     private function authorizeInbox(Request $request, Inbox $inbox): void
     {
+        // InboxPolicy#show?: agent bot xem được mọi inbox của account.
+        if ($request->user() instanceof AgentBot) {
+            return;
+        }
+
         /** @var AccountUser $accountUser */
         $accountUser = $request->attributes->get('currentAccountUser');
 

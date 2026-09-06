@@ -13,6 +13,9 @@ export const STATUS_TYPE = {
     ALL: 'all',
 } as const;
 
+// meta.assignee_type của jbuilder khi hội thoại do agent bot giữ.
+export const AGENT_BOT_ASSIGNEE_TYPE = 'AgentBot';
+
 export const SORT_BY_TYPE = {
     LAST_ACTIVITY_AT_DESC: 'last_activity_at_desc',
     LAST_ACTIVITY_AT_ASC: 'last_activity_at_asc',

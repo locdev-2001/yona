@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 // Port từ api/v1/conversations/partials/_conversation.json.jbuilder.
-// Bỏ: SLA (EE — sla feature tắt nên emit null như gốc), agent bot assignee.
+// Bỏ: SLA (EE — sla feature tắt nên emit null như gốc).
 class ConversationResource extends JsonResource
 {
     /** @param iterable<Conversation> $conversations */
@@ -91,7 +91,11 @@ class ConversationResource extends JsonResource
             'channel' => $conversation->inbox->channel_type,
         ];
 
-        if ($conversation->assignee !== null) {
+        // assigned_entity = assignee_agent_bot || assignee — bot đứng trước người.
+        if ($conversation->assigneeAgentBot !== null) {
+            $meta['assignee'] = AgentBotResource::slim($conversation->assigneeAgentBot);
+            $meta['assignee_type'] = 'AgentBot';
+        } elseif ($conversation->assignee !== null) {
             $meta['assignee'] = (new AgentResource($conversation->assignee, $conversation->account))->toArray(request());
             $meta['assignee_type'] = 'User';
         }
@@ -113,5 +117,24 @@ class ConversationResource extends JsonResource
         $meta['hmac_verified'] = $conversation->contactInbox?->hmac_verified;
 
         return $meta;
+    }
+
+    // Conversations::EventDataPresenter#webhook_data — push_data cộng account
+    // và tin cuối đã chuẩn hoá nội dung cho bên ngoài.
+    public static function webhookData(Conversation $conversation): array
+    {
+        $lastChatMessage = $conversation->messages()
+            ->where('account_id', $conversation->account_id)
+            ->chat()
+            ->get()
+            ->last();
+
+        return [
+            ...self::pushEventData($conversation),
+            'account' => $conversation->account->webhookData(),
+            'messages' => $lastChatMessage === null
+                ? []
+                : [MessageResource::webhookPushEventData($lastChatMessage)],
+        ];
     }
 }

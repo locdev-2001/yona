@@ -4,10 +4,10 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { AGENT_BOT_ASSIGNEE_TYPE, STATUS_TYPE } from '../constants';
 import Banner from './Banner';
 
-// Port từ widgets/conversation/ReplyBoxBanner.vue. Nhánh bot handoff chưa port
-// (AgentBot thuộc nhóm D) — chỉ dựng nhánh tự nhận hội thoại như bản gốc.
+// Port từ widgets/conversation/ReplyBoxBanner.vue.
 export default function ReplyBoxBanner({
     message,
     isOnPrivateNote,
@@ -15,7 +15,7 @@ export default function ReplyBoxBanner({
     message: string;
     isOnPrivateNote: boolean;
 }) {
-    const { selectedConversation, assignAgent } = useConversation();
+    const { selectedConversation, assignAgent, toggleStatus } = useConversation();
     const { auth } = usePage<DashboardPageProps>().props;
     const currentUser = auth.user!;
 
@@ -24,20 +24,49 @@ export default function ReplyBoxBanner({
     const assignee = selectedConversation.meta.assignee;
     const isUserTyping = message !== '' && !isOnPrivateNote;
     const needsAssignment = !assignee || assignee.id !== currentUser.id;
+    const isBotHandoff =
+        selectedConversation.status === STATUS_TYPE.PENDING &&
+        selectedConversation.meta.assignee_type === AGENT_BOT_ASSIGNEE_TYPE;
 
-    if (!isUserTyping || !needsAssignment) return null;
+    const selfAssign = () =>
+        assignAgent({ id: currentUser.id, name: currentUser.name, thumbnail: currentUser.avatar_url ?? '' }, 'User');
 
     const onClickSelfAssign = async () => {
         try {
-            await assignAgent(
-                { id: currentUser.id, name: currentUser.name, thumbnail: currentUser.avatar_url ?? '' },
-                'User',
-            );
+            await selfAssign();
             useAlert(t('CONVERSATION.CHANGE_AGENT'));
         } catch {
             useAlert(t('CONVERSATION.CHANGE_AGENT_FAILED'));
         }
     };
+
+    const onClickBotHandoff = async () => {
+        try {
+            await toggleStatus({ status: 'open' });
+            await selfAssign();
+            useAlert(t('CONVERSATION.BOT_HANDOFF_SUCCESS'));
+        } catch {
+            useAlert(t('CONVERSATION.BOT_HANDOFF_ERROR'));
+        }
+    };
+
+    if (isBotHandoff) {
+        return (
+            <Banner
+                colorScheme="secondary"
+                className="mx-2 mb-2 rounded-lg !py-2"
+                bannerMessage={t('CONVERSATION.BOT_HANDOFF_MESSAGE', {
+                    assigneeName: assignee?.name || t('CONVERSATION.BOT_HANDOFF_FALLBACK_ASSIGNEE'),
+                })}
+                hasActionButton
+                actionButtonVariant="ghost"
+                actionButtonLabel={t('CONVERSATION.BOT_HANDOFF_ACTION')}
+                onPrimaryAction={onClickBotHandoff}
+            />
+        );
+    }
+
+    if (!isUserTyping || !needsAssignment) return null;
 
     return (
         <Banner

@@ -140,7 +140,7 @@ const generateConditionValues = (values: unknown): unknown[] => {
 };
 
 // actionQueryGenerator.js
-const generateActionParams = (params: unknown): unknown[] => {
+export const generateActionParams = (params: unknown): unknown[] => {
     if (Array.isArray(params)) {
         if (params.length === 0) return [];
         const allPrimitive = params.every(item => typeof item === 'string') || params.every(item => typeof item === 'number');

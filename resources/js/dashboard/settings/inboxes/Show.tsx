@@ -38,6 +38,7 @@ import PreChatFormSettings from './PreChatForm/Settings';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
+import BotConfigurationPage from './settingsPage/BotConfigurationPage';
 import {
     DEFAULT_WIDGET_BUBBLE_SETTINGS,
     WEB_WIDGET_FEATURE_FLAGS,
@@ -796,6 +797,10 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                 <div className={`mx-6 ${isWebWidget ? 'max-w-7xl' : 'max-w-4xl'}`}>
                                     <ConfigurationPage inbox={inbox} onInboxUpdated={syncInboxData} />
                                 </div>
+                            ) : null}
+
+                            {selectedTabKey === 'bot-configuration' ? (
+                                <BotConfigurationPage inbox={inbox} />
                             ) : null}
                         </div>
                     </section>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Reportable;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
-    use HasFactory;
+    use HasFactory, Reportable;
 
     public const STATUS_ACTIVE = 0;
 
@@ -66,7 +67,18 @@ class Account extends Model
         'auto_resolve_ignore_waiting',
         'auto_resolve_label',
         'audio_transcriptions',
+        'keep_pending_on_bot_failure',
+        'reporting_timezone',
     ];
+
+    // store_accessor :settings, :reporting_timezone — múi giờ dùng để gộp
+    // reporting_events thành dòng rollup theo ngày.
+    public function reportingTimezone(): ?string
+    {
+        $timezone = $this->setting('reporting_timezone');
+
+        return blank($timezone) ? null : (string) $timezone;
+    }
 
     public function setting(string $key): mixed
     {
@@ -136,9 +148,29 @@ class Account extends Model
         return $this->hasMany(AutomationRule::class);
     }
 
+    public function macros(): HasMany
+    {
+        return $this->hasMany(Macro::class);
+    }
+
     public function automationRulePendingExecutions(): HasMany
     {
         return $this->hasMany(AutomationRulePendingExecution::class);
+    }
+
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
+    }
+
+    public function agentBots(): HasMany
+    {
+        return $this->hasMany(AgentBot::class);
+    }
+
+    public function agentBotInboxes(): HasMany
+    {
+        return $this->hasMany(AgentBotInbox::class);
     }
 
     public function notificationSettings(): HasMany
@@ -170,6 +202,18 @@ class Account extends Model
             ->filter(fn ($enabled) => (bool) $enabled)
             ->map(fn () => true)
             ->all();
+    }
+
+    // Account#webhook_data — khối `account` nhúng trong mọi payload webhook.
+    public function webhookData(): array
+    {
+        return ['id' => $this->id, 'name' => $this->name];
+    }
+
+    // Account#api_and_webhooks_enabled? — CE luôn true; ở đây theo cờ tính năng.
+    public function apiAndWebhooksEnabled(): bool
+    {
+        return $this->featureEnabled('api_and_webhooks');
     }
 
     public function onboardingStep(): ?string

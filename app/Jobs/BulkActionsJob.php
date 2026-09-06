@@ -5,9 +5,9 @@ namespace App\Jobs;
 use App\Models\Account;
 use App\Models\Conversation;
 use App\Models\User;
+use App\Support\CurrentUser;
 use App\Support\DateRangeHelper;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/jobs/bulk_actions_job.rb (nhánh Conversation).
@@ -33,14 +33,7 @@ class BulkActionsJob extends ApplicationJob
         }
 
         // Current.user của bản gốc — quyết định tên chủ thể trong activity message.
-        $previousUser = Auth::user();
-        Auth::setUser($this->user);
-
-        try {
-            $this->bulkUpdate($records);
-        } finally {
-            $previousUser === null ? Auth::guard()->forgetUser() : Auth::setUser($previousUser);
-        }
+        CurrentUser::runAs($this->user, fn () => $this->bulkUpdate($records));
     }
 
     /** @param Collection<int, Conversation> $records */

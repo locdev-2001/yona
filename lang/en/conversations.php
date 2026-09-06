@@ -42,6 +42,9 @@ return [
         'auto_resolve' => [
             'not_sent_due_to_messaging_window' => 'Auto-resolve message not sent due to outgoing message restrictions',
         ],
+        'agent_bot' => [
+            'error_moved_to_open' => 'Conversation was marked open by system due to an error with the agent bot.',
+        ],
         'muted' => '{user_name} has muted the conversation',
         'unmuted' => '{user_name} has unmuted the conversation',
     ],

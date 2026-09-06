@@ -225,6 +225,12 @@ class Message extends Model
         return $this->message_type === self::TYPE_OUTGOING;
     }
 
+    // MessageFilterHelpers#webhook_sendable? — activity/private không gửi ra ngoài.
+    public function isWebhookSendable(): bool
+    {
+        return in_array($this->message_type, [self::TYPE_INCOMING, self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true);
+    }
+
     public function isInputCsat(): bool
     {
         return $this->content_type === self::CONTENT_TYPES['input_csat'];
@@ -382,7 +388,7 @@ class Message extends Model
         $this->conversation->syncOriginalAttribute('last_activity_at');
     }
 
-    // dispatch_create_events + update_waiting_since (REPLY_CREATED bắn ở D2).
+    // dispatch_create_events + update_waiting_since.
     private function dispatchCreateEvents(): void
     {
         $conversation = $this->conversation;
@@ -397,6 +403,8 @@ class Message extends Model
         }
 
         if ($conversation->waiting_since !== null && ! $this->private && $this->isHumanResponse()) {
+            // Bắn TRƯỚC khi xóa mốc chờ — reply_time đo từ chính mốc đó (D2).
+            DomainEvent::dispatch(EventType::REPLY_CREATED, ['message' => $this, 'waiting_since' => $conversation->waiting_since]);
             $conversation->update(['waiting_since' => null]);
         }
 

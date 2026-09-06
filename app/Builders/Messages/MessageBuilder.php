@@ -3,6 +3,7 @@
 namespace App\Builders\Messages;
 
 use App\Exceptions\MessageValidationException;
+use App\Models\AgentBot;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
@@ -13,7 +14,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/app/builders/messages/message_builder.rb.
-// Bỏ: xử lý email cc/bcc + html/liquid (F1), sender AgentBot (D4),
+// Bỏ: xử lý email cc/bcc + html/liquid (F1),
 // template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
@@ -27,7 +28,7 @@ class MessageBuilder
      * @param  array<string, mixed>  $params
      */
     public function __construct(
-        private readonly ?User $user,
+        private readonly User|AgentBot|null $user,
         private readonly Conversation $conversation,
         private readonly array $params,
         private readonly bool $incomingAllowed = false,
@@ -160,7 +161,7 @@ class MessageBuilder
         return $messageType;
     }
 
-    private function sender(): User|Contact|null
+    private function sender(): User|Contact|AgentBot|null
     {
         return $this->messageType() === Message::TYPE_OUTGOING
             ? $this->user

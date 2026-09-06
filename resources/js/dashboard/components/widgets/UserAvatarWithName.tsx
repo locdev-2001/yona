@@ -1,0 +1,33 @@
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import type { AvailabilityStatus } from 'dashboard/types';
+
+// Port từ dashboard/components/widgets/UserAvatarWithName.vue
+interface UserAvatarWithNameProps {
+    user?: {
+        name?: string;
+        thumbnail?: string;
+        availability_status?: AvailabilityStatus;
+    };
+    size?: number;
+    textClass?: string;
+}
+
+export default function UserAvatarWithName({
+    user = {},
+    size = 20,
+    textClass = 'text-sm text-n-slate-12',
+}: UserAvatarWithNameProps) {
+    return (
+        <div className="flex items-center gap-1.5 text-left">
+            <Avatar
+                src={user.thumbnail}
+                size={size}
+                name={user.name ?? ''}
+                status={user.availability_status ?? null}
+                hideOfflineStatus
+                roundedFull
+            />
+            <span className={`my-0 truncate text-capitalize ${textClass}`}>{user.name}</span>
+        </div>
+    );
+}

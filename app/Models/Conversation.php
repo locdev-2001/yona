@@ -9,6 +9,7 @@ use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\Labelable;
+use App\Models\Concerns\Reportable;
 use App\Support\CurrentContact;
 use App\Support\CurrentExecutedBy;
 use Database\Factories\ConversationFactory;
@@ -24,12 +25,12 @@ use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
-// Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
+// Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), SLA (EE),
 // activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, Labelable;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, Labelable, Reportable;
 
     public const STATUS_OPEN = 0;
 
@@ -136,16 +137,13 @@ class Conversation extends Model
     {
         static::creating(function (Conversation $conversation) {
             // validate_additional_attributes + determine_conversation_status +
-            // ensure_waiting_since. determine_conversation_status: nhánh campaign
-            // (handle_campaign_status) chỉ bật bot khi inbox có agent_bot — chưa port (D4).
+            // ensure_waiting_since.
             if (! is_array($conversation->additional_attributes)) {
                 $conversation->additional_attributes = [];
             }
             $conversation->validateRefererUrl();
 
-            if ($conversation->contact?->blocked) {
-                $conversation->status = self::STATUS_RESOLVED;
-            }
+            $conversation->determineConversationStatus();
 
             // waiting_since = created_at đúng như before_create của bản gốc —
             // chốt created_at tại đây để hai giá trị trùng nhau tuyệt đối.
@@ -157,6 +155,12 @@ class Conversation extends Model
         });
 
         static::saving(function (Conversation $conversation) {
+            // reset_agent_bot_when_assignee_present: có agent nhận việc thì bot
+            // thôi giữ hội thoại.
+            if ($conversation->assignee_id !== null) {
+                $conversation->assignee_agent_bot_id = null;
+            }
+
             // ensure_snooze_until_reset + set_status_changed_at.
             if ($conversation->status !== self::STATUS_SNOOZED) {
                 $conversation->snoozed_until = null;
@@ -200,6 +204,58 @@ class Conversation extends Model
             $conversation->createActivity();
             $conversation->notifyConversationUpdation();
         });
+    }
+
+    // determine_conversation_status: khách bị chặn → resolved; hội thoại từ chiến
+    // dịch chỉ bật bot khi chiến dịch không có người gửi; còn lại theo bot của inbox.
+    private function determineConversationStatus(): void
+    {
+        if ($this->contact?->blocked) {
+            $this->status = self::STATUS_RESOLVED;
+
+            return;
+        }
+
+        if ($this->campaign_id !== null) {
+            if ($this->campaign?->sender_id === null && $this->inbox->activeBot()) {
+                $this->setActiveBotConversation();
+            }
+
+            return;
+        }
+
+        if ($this->inbox->activeBot()) {
+            $this->setActiveBotConversation();
+        }
+    }
+
+    // set_active_bot_conversation: hội thoại có bot bắt đầu ở pending; bot chỉ
+    // được ghi làm người nhận việc khi chưa có agent nào được gán sẵn.
+    private function setActiveBotConversation(): void
+    {
+        $this->status = self::STATUS_PENDING;
+
+        if ($this->inbox->agentBotInbox?->isActive() !== true || $this->assignee_id !== null) {
+            return;
+        }
+
+        $this->assignee_agent_bot_id = $this->inbox->agentBot?->id;
+    }
+
+    // bot_handoff!: bot trả hội thoại về cho người — mở lại, gỡ bot, giữ mốc chờ.
+    public function botHandoff(bool $dispatchEvent = true): void
+    {
+        if ($this->waiting_since === null) {
+            $this->update(['waiting_since' => now()]);
+        }
+
+        $this->assignee_agent_bot_id = null;
+        $this->status = self::STATUS_OPEN;
+        $this->save();
+
+        if ($dispatchEvent) {
+            $this->dispatcherDispatch(EventType::CONVERSATION_BOT_HANDOFF);
+        }
     }
 
     public function toggleStatus(): bool
@@ -286,6 +342,11 @@ class Conversation extends Model
         return $this->belongsTo(User::class, 'assignee_id');
     }
 
+    public function assigneeAgentBot(): BelongsTo
+    {
+        return $this->belongsTo(AgentBot::class, 'assignee_agent_bot_id');
+    }
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -320,9 +381,14 @@ class Conversation extends Model
     // ConversationPolicy#show?: administrator, thành viên hộp thư hoặc thành viên
     // team đang giữ hội thoại. Nguồn DUY NHẤT — controller lẫn NotificationBuilder
     // đều hỏi qua đây.
-    public function isVisibleTo(User $user, AccountUser $accountUser): bool
+    public function isVisibleTo(User|AgentBot $user, ?AccountUser $accountUser): bool
     {
-        if ($accountUser->isAdministrator()) {
+        // ConversationPolicy#show? — agent bot xem được mọi hội thoại của account.
+        if ($user instanceof AgentBot) {
+            return true;
+        }
+
+        if ($accountUser?->isAdministrator()) {
             return true;
         }
 

@@ -3,10 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Models\Account;
+use App\Models\AgentBot;
 use App\Models\Attachment;
 use App\Models\Contact;
+use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Messages\WebhookContentNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -41,7 +44,7 @@ class MessageResource extends JsonResource
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
-            ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account)] : []),
+            ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account, $message->inbox)] : []),
             ...self::attachmentsPayload($message),
         ];
     }
@@ -94,17 +97,61 @@ class MessageResource extends JsonResource
         }
 
         if ($message->sender !== null) {
-            $data['sender'] = self::senderPushEventData($message->sender, $message->account);
+            $data['sender'] = self::senderPushEventData($message->sender, $message->account, $message->inbox);
         }
 
         return [...$data, ...self::attachmentsPayload($message)];
     }
 
     // Message#merge_sender_attributes: sender là User hoặc Contact.
-    public static function senderPushEventData(User|Contact $sender, ?Account $account = null): array
+    public static function senderPushEventData(User|Contact|AgentBot $sender, ?Account $account = null, ?Inbox $inbox = null): array
     {
-        return $sender instanceof User
-            ? UserResource::pushEventData($sender, $account)
-            : ContactResource::pushEventData($sender);
+        return match (true) {
+            $sender instanceof User => UserResource::pushEventData($sender, $account),
+            $sender instanceof AgentBot => $sender->pushEventData($inbox),
+            default => ContactResource::pushEventData($sender),
+        };
+    }
+
+    // Message#webhook_push_event_data — push_event_data với nội dung đã chuẩn hoá.
+    public static function webhookPushEventData(Message $message): array
+    {
+        return [
+            ...self::pushEventData($message),
+            'content' => WebhookContentNormalizer::normalize($message->content),
+            'processed_message_content' => WebhookContentNormalizer::normalize($message->processed_message_content),
+        ];
+    }
+
+    // Message#webhook_data.
+    public static function webhookData(Message $message): array
+    {
+        $data = [
+            'account' => $message->account->webhookData(),
+            'additional_attributes' => $message->additional_attributes ?? [],
+            'content_attributes' => $message->content_attributes ?? [],
+            'content_type' => $message->contentTypeName(),
+            'content' => WebhookContentNormalizer::normalize($message->content),
+            'conversation' => ConversationResource::webhookData($message->conversation),
+            'created_at' => $message->created_at?->toISOString(),
+            'id' => $message->id,
+            'inbox' => $message->inbox->webhookData(),
+            'message_type' => Message::typeName($message->message_type),
+            'private' => $message->private,
+            'sender' => self::senderWebhookData($message->sender),
+            'source_id' => $message->source_id,
+        ];
+
+        return [...$data, ...self::attachmentsPayload($message)];
+    }
+
+    private static function senderWebhookData(User|Contact|AgentBot|null $sender): ?array
+    {
+        return match (true) {
+            $sender instanceof User => UserResource::webhookData($sender),
+            $sender instanceof Contact => ContactResource::webhookData($sender),
+            $sender instanceof AgentBot => $sender->webhookData(),
+            default => null,
+        };
     }
 }

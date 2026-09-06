@@ -77,3 +77,22 @@ export function putForm<T = unknown>(url: string, form: FormData): Promise<T> {
     form.set('_method', 'PUT');
     return request<T>(url, 'POST', form);
 }
+
+// Endpoint trả CSV (báo cáo tải về) — giữ nguyên văn bản, không parse JSON.
+export async function getText(url: string): Promise<string> {
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            Accept: 'text/csv, text/plain, */*',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-XSRF-TOKEN': xsrfToken(),
+        },
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+        throw new ApiError(response.status, null);
+    }
+
+    return response.text();
+}
