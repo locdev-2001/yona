@@ -1,0 +1,281 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yona Rewrite</title>
+</head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --bg:#F6F8FB; --surface:#FFFFFF; --ink:#17212B; --muted:#61707F; --line:#E3E9F0;
+    --accent:#2781F6; --accent-soft:#E8F1FE; --accent-ink:#1663C7;
+    --done:#189A5A; --done-soft:#E4F5EC;
+    --wip:#B87A00; --wip-soft:#FCF1DC;
+    --wait:#8A97A5; --wait-soft:#EEF2F6;
+    --code-bg:#EDF2F8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E141B; --surface:#161E27; --ink:#E8EDF3; --muted:#8A97A5; --line:#26303B;
+      --accent:#4D9BFF; --accent-soft:#14263D; --accent-ink:#7FB8FF;
+      --done:#3FCB82; --done-soft:#12301F;
+      --wip:#E3A83A; --wip-soft:#33270F;
+      --wait:#7C8896; --wait-soft:#1C242E;
+      --code-bg:#1D2732;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E141B; --surface:#161E27; --ink:#E8EDF3; --muted:#8A97A5; --line:#26303B;
+    --accent:#4D9BFF; --accent-soft:#14263D; --accent-ink:#7FB8FF;
+    --done:#3FCB82; --done-soft:#12301F;
+    --wip:#E3A83A; --wip-soft:#33270F;
+    --wait:#7C8896; --wait-soft:#1C242E;
+    --code-bg:#1D2732;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-size:15px; line-height:1.55; margin:0; padding:48px 20px 80px;
+  }
+  .wrap{max-width:960px; margin:0 auto}
+  h1,h2,h3{font-family:'Manrope','Inter',sans-serif; text-wrap:balance; margin:0}
+  h1{font-size:34px; font-weight:800; letter-spacing:-.02em}
+  .sub{color:var(--muted); margin:10px 0 0; max-width:64ch}
+  .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:4px 12px; font-size:12.5px; color:var(--muted); font-weight:500;
+  }
+  .chip b{color:var(--ink); font-weight:600}
+  .chip .mono{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--accent-ink)}
+
+  .board{
+    margin-top:34px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:22px 24px;
+  }
+  .board h2{font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:18px; margin-top:16px}
+  .stat .n{font-family:'Manrope',sans-serif; font-size:30px; font-weight:800; font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12.5px; color:var(--muted); margin-top:2px}
+  .bar{height:8px; background:var(--wait-soft); border-radius:99px; margin-top:20px; overflow:hidden}
+  .bar i{display:block; height:100%; width:0%; background:var(--accent); border-radius:99px}
+
+  section.group{margin-top:38px}
+  .ghead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; border-bottom:2px solid var(--ink); padding-bottom:10px}
+  .ghead .gid{
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:500;
+    color:var(--accent-ink); background:var(--accent-soft); border-radius:6px; padding:2px 8px;
+  }
+  .ghead h3{font-size:19px; font-weight:800}
+  .ghead .gcount{margin-left:auto; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .gnote{font-size:13px; color:var(--muted); margin:10px 0 0}
+
+  .feat{
+    display:grid; grid-template-columns:56px 1fr auto; gap:4px 14px; align-items:start;
+    padding:14px 4px; border-bottom:1px solid var(--line);
+  }
+  .feat:last-child{border-bottom:none}
+  .fid{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); padding-top:2px}
+  .fname{font-weight:600}
+  .fdesc{grid-column:2; font-size:13.5px; color:var(--muted)}
+  .ftest{grid-column:2; font-size:13px; color:var(--muted); margin-top:2px}
+  .ftest b{color:var(--done); font-weight:600}
+  .pill{
+    justify-self:end; align-self:start;
+    font-size:11.5px; font-weight:600; letter-spacing:.03em;
+    border-radius:999px; padding:3px 10px; white-space:nowrap;
+  }
+  .pill.wait{background:var(--wait-soft); color:var(--wait)}
+  .pill.wip{background:var(--wip-soft); color:var(--wip)}
+  .pill.done{background:var(--done-soft); color:var(--done)}
+
+  .decisions{margin-top:44px}
+  .decisions h2{font-size:19px; font-weight:800; border-bottom:2px solid var(--ink); padding-bottom:10px}
+  .dlist{margin:6px 0 0; padding:0; list-style:none}
+  .dlist li{padding:10px 4px; border-bottom:1px solid var(--line); font-size:13.5px; display:flex; gap:10px}
+  .dlist li:last-child{border-bottom:none}
+  .dlist .k{color:var(--accent-ink); font-weight:600; white-space:nowrap}
+  code{font-family:'JetBrains Mono',monospace; font-size:.86em; background:var(--code-bg); border-radius:5px; padding:1px 5px}
+  .foot{margin-top:44px; font-size:12.5px; color:var(--muted)}
+  .foot code{font-size:11.5px}
+  @media (max-width:560px){ .feat{grid-template-columns:44px 1fr} .pill{grid-column:2; justify-self:start; margin-top:4px} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Yona Rewrite</h1>
+    <p class="sub">Viết lại 100% Chatwoot v4.17.1 (bỏ enterprise) sang Laravel + Inertia/React, giao diện giống 100% bản gốc. Port <b>từng tính năng</b> — mỗi mục xong là dùng được trên UI và test được ngay.</p>
+    <div class="meta">
+      <span class="chip">Branch <span class="mono">rewrite/chatwoot-laravel</span></span>
+      <span class="chip">DB dev <span class="mono">yona_rw</span></span>
+      <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
+      <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
+      <span class="chip">Cập nhật <b>06/09/2026 — 24/40: nhóm C xong 5/5, nhóm D xong D5+D6; kế tiếp D1 Automation</b></span>
+    </div>
+  </header>
+
+  <div class="board">
+    <h2>Tổng quan tiến độ</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">24<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">1.186</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">404</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
+      <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
+    </div>
+    <div class="bar"><i style="width:60%"></i></div>
+  </div>
+
+  <div class="board">
+    <h2>Cách làm hiện hành</h2>
+    <p class="gnote" style="margin:8px 0 0"><b>Một phiên cho mỗi tính năng, tự kiểm 5 cửa:</b> (1) test backend + kiểu + build + định dạng; (2) bảng đối chiếu Ruby↔PHP và Vue↔React; (3) chấm ảnh từng điểm ảnh với bản gốc ≤0,1% ở mọi màn và mọi trạng thái bật/tắt, sáng lẫn tối; (4) rà tự động từng nút hai bên — nút hiển thị mà không bấm được là chưa xong; (5) tự mở trình duyệt bấm trọn vòng và tải lại trang kiểm dữ liệu còn nguyên.</p>
+    <p class="gnote" style="margin:8px 0 0"><b>Phiên chính chỉ quản lý chất lượng</b>, phần code giao cho nhiều tác nhân chạy song song theo đầu việc với ranh giới tệp rõ ràng. Đợt 06/09 chạy tới 5 đầu việc cùng lúc và ghép hai tính năng vào một lượt (nhãn + tệp đính kèm; chưa đọc + tiện ích soạn thảo).</p>
+    <p class="gnote" style="margin:8px 0 0"><b>Đối chiếu với bản gốc thật:</b> một bản Chatwoot v4.17.1 chạy song song trên máy để so từng màn, từng nút, từng hành vi. Mọi khác biệt đều phải cố ý và ghi lại lý do.</p>
+  </div>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">A</span><h3>Nền móng</h3><span class="gcount">6/6 ✓</span></div>
+    <p class="gnote">Founder đã nghiệm thu đủ 6/6 ngày 31/08. Chi tiết từng mục nằm trong <code>plan.md</code> và các trace tương ứng.</p>
+    <div class="feat"><span class="fid">A1</span><span class="fname">Skeleton + design system + Login</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Bộ mã màu/biểu tượng/phông chép nguyên bản, bảng người dùng đủ cột, đăng nhập bằng phiên. Chấm ảnh <b>0,000%</b> cả sáng lẫn tối.</span></div>
+    <div class="feat"><span class="fid">A2</span><span class="fname">Signup + Account + onboarding</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Đăng ký → thư xác nhận → màn giới thiệu → vào bảng điều khiển. Chấm ảnh <b>0,000%</b>.</span></div>
+    <div class="feat"><span class="fid">A3</span><span class="fname">Bảng điều khiển + Sidebar</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Khung ứng dụng và thanh bên (thu gọn, bay ra khi rê chuột, đổi tài khoản, menu hồ sơ). Cấu trúc khớp 100%.</span></div>
+    <div class="feat"><span class="fid">A4</span><span class="fname">Cài đặt hồ sơ</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Đổi tên/ảnh đại diện/mật khẩu/email kiểu xác nhận hai bước, cỡ chữ, phím gửi. Kèm sửa lỗi thanh bên do thiếu thuộc tính hướng văn bản.</span></div>
+    <div class="feat"><span class="fid">A5</span><span class="fname">Quản lý nhân viên</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Mời qua email, phân quyền quản trị/nhân viên, đặt lại mật khẩu, lọc menu theo quyền.</span></div>
+    <div class="feat"><span class="fid">A6</span><span class="fname">Nhóm (Teams)</span><span class="pill done">Xong 31/08</span>
+      <span class="fdesc">Tạo/sửa nhóm qua trợ lý 3 bước, chọn biểu tượng, xóa phải gõ đúng tên.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">B</span><h3>Trục hội thoại</h3><span class="gcount">11/11 ✓</span></div>
+    <p class="gnote">Chat được thật qua kênh API — lõi của toàn hệ thống.</p>
+
+    <div class="feat"><span class="fid">B1</span><span class="fname">Inbox + kênh API</span><span class="pill done">Xong 01/09</span>
+      <span class="fdesc">Hộp thư và kênh API (bảng inbox + kênh đa hình + thành viên), trợ lý tạo 4 bước, trang cài đặt 6 tab, thanh bên đổ theo hộp thư. Founder đã nghiệm thu. Trace: <code>reports/trace-b1-inbox-api-channel.md</code>.</span></div>
+
+    <div class="feat"><span class="fid">B2</span><span class="fname">Liên hệ</span><span class="pill done">Xong 01/09</span>
+      <span class="fdesc">Liên hệ + liên kết theo hộp thư, gộp trùng theo định danh/email/điện thoại, trọn bộ màn danh sách, thẻ mở rộng, trang chi tiết, hộp thoại tạo/xóa. Chấm ảnh 6/6 màn đạt. Trace: <code>reports/trace-b2-contacts.md</code>.</span></div>
+
+    <div class="feat"><span class="fid">B3</span><span class="fname">Hội thoại + Tin nhắn (lõi)</span><span class="pill done">Xong 02/09</span>
+      <span class="fdesc">Ba cột danh sách / khung chat / ô soạn thảo, ghi chú riêng tư, mã truy cập API. <b>Bắt được lỗi hệ thống:</b> mốc thời gian thiếu 6 chữ số lẻ làm tin cùng giây sai thứ tự — sửa cả lược đồ lẫn tầng ghi. Trace: <code>reports/trace-b3-conversation-message.md</code>.</span></div>
+
+    <div class="feat"><span class="fid">B4</span><span class="fname">Realtime</span><span class="pill done">Xong 02/09</span>
+      <span class="fdesc">Thay tầng thời gian thực của bản gốc bằng Laravel Reverb, giữ nguyên tên toàn bộ sự kiện và tên kênh. Tin mới, "đang gõ…", chấm trực tuyến, tự đồng bộ tin bị lỡ khi mất kết nối. Đo trên cả hai bản với cùng kịch bản. Trace: <code>reports/trace-b4-realtime.md</code>.</span></div>
+
+    <div class="feat"><span class="fid">B5</span><span class="fname">Vòng đời hội thoại</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Đóng/mở lại/chờ xử lý/tạm ẩn + mức ưu tiên + tắt thông báo. Mỗi lần đổi trạng thái sinh dòng hoạt động đúng câu chữ bản gốc; hội thoại tạm ẩn tự mở lại theo lịch chạy nền; nhân viên mở lại hội thoại thì tự nhận về mình. Giao diện: nhóm nút Đóng/Mở lại kèm menu Tạm ẩn và Chờ xử lý, thanh lệnh chọn mốc tạm ẩn (kể cả mốc tùy chọn), tắt thông báo, gửi bản ghi hội thoại, phím tắt, dòng "Snoozed until…" trên tiêu đề, chọn mức ưu tiên trong bảng bên phải. <b>Chấm ảnh:</b> khối ưu tiên và thanh lệnh <b>0,000%</b>, các trạng thái còn lại 0,003–0,021%.</span>
+      <span class="ftest"><b>Test ngay:</b> mở hội thoại → Resolve (thấy dòng hoạt động, tải lại vẫn đóng) → Reopen → menu ▾ → Mark as pending → menu ▾ → Snooze → "Until tomorrow" → bảng bên phải đổi Priority thành Urgent → tải lại trang, mọi thứ còn nguyên. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B6</span><span class="fname">Phân công + chia việc vòng tròn</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Gán tay nhân viên/nhóm và tự chia việc: hàng đợi vòng tròn trên Redis, giới hạn nhịp gán, khóa hàng khi gán để không bắn trùng sự kiện, job gán hàng loạt gộp theo hộp thư, bảng chính sách phân công. Giao diện: ô chọn người phụ trách (kèm "Assign to me") và nhóm trong bảng bên phải, chọn nhiều hội thoại trong danh sách với thanh thao tác hàng loạt. <b>Đo thật:</b> 8 hội thoại mới mỗi bên khi hai nhân viên cùng trực tuyến — <b>cả hai bản đều chia xen kẽ hoàn hảo</b>. Chấm ảnh khối phân công <b>0,000%</b> cả 8 lượt.</span>
+      <span class="ftest"><b>Test ngay:</b> bảng bên phải → Assignee chọn Samantha (dòng hoạt động hiện ngay) → "Assign to me" → Team chọn support; ở danh sách rê chuột lên ảnh đại diện để tích chọn 2 hội thoại → thanh dưới hiện "2 selected" → gán hàng loạt. Bật tự chia việc ở hộp thư rồi bắn vài hội thoại qua API → chia vòng tròn cho người đang trực tuyến. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B7</span><span class="fname">Nhãn</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Nhãn theo tài khoản với bảng liên kết tự thiết kế (khóa ngoại thật thay cho thư viện gắn thẻ của bản gốc) — hệ quả cố ý: chỉ gắn được nhãn đã tồn tại. Một nơi duy nhất giữ logic gắn nhãn cho cả hội thoại lẫn liên hệ; đổi tên hoặc xóa nhãn chạy nền. Giao diện: màn Cài đặt › Nhãn (bảng, hộp thoại, bộ chọn màu chép nguyên cấu trúc thư viện gốc), khối nhãn trong bảng bên phải, nhãn trên thẻ danh sách, nhóm Nhãn trên thanh bên lọc đúng, hai nút nhãn trong thao tác hàng loạt. <b>Chấm ảnh:</b> Cài đặt 10/10 màn đạt; khối nhãn, nhóm thanh bên và hai menu hàng loạt đều <b>0,000%</b>; thanh thao tác hàng loạt của B6 nhờ đó về <b>0,000%</b>.</span>
+      <span class="ftest"><b>Test ngay:</b> Cài đặt → Labels → tạo nhãn có màu, bật hiện trên thanh bên → mở hội thoại → bảng bên phải → "Add Labels" → chip hiện trên bảng, trên thẻ và trên thanh bên → bấm nhãn ở thanh bên để lọc → gỡ nhãn. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B8</span><span class="fname">Bộ lọc + chưa đọc + tabs</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Đánh dấu đã xem (có hãm ghi 1 giờ khi không có tin mới) và đánh dấu chưa đọc; một nguồn truy vấn duy nhất cho số chưa đọc dùng cho cả sắp xếp lẫn huy hiệu thanh bên, bật theo đúng cờ tính năng của bản gốc. Giao diện: huy hiệu trên thẻ, dải "N Unread Messages" trong khung chat, tự đánh dấu đã đọc sau vài giây đúng như bản gốc, menu chuột phải đánh dấu đã đọc/chưa đọc, bộ đếm tab cập nhật tức thời. <b>Kết quả kèm theo:</b> bỏ được vùng che khi chấm ảnh mà màn hội thoại vẫn đạt 0,006%.</span>
+      <span class="ftest"><b>Test ngay:</b> gửi tin vào qua API → thẻ hiện huy hiệu → mở hội thoại → dải "N Unread Messages" hiện rồi huy hiệu về 0 → chuột phải lên thẻ → "Mark as unread" → huy hiệu trở lại, tải lại trang vẫn còn. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B9</span><span class="fname">Tệp đính kèm</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Gửi và hiển thị tệp trên nền bảng đính kèm dùng chung sẵn có; giới hạn số lượng, dung lượng và loại tệp theo bản gốc; dữ liệu thời gian thực mang theo tệp nên tin mới hiện đủ ảnh ngay. <b>Đường dẫn tệp kết thúc bằng tên gốc rồi chuyển hướng</b> đúng như bản gốc — giao diện lấy tên hiển thị từ chính đường dẫn, thiếu điều này bong bóng tệp hiện chuỗi băm và sai kích thước. Giao diện: gửi thật từ ô soạn thảo, bong bóng ảnh/video/âm thanh/tệp, xem ảnh phóng to. <b>Chấm ảnh bong bóng ảnh, bong bóng tệp và chip đều 0,000%.</b></span>
+      <span class="ftest"><b>Test ngay:</b> mở hội thoại → kẹp giấy → chọn ảnh → Send → bong bóng ảnh hiện ngay, bấm xem lớn → gửi tiếp một PDF → thẻ tệp tải xuống được → tải lại trang vẫn còn. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B10</span><span class="fname">Tiện ích soạn thảo</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Mẫu trả lời (tìm kiếm xếp hạng theo mã tắt, màn cài đặt đầy đủ, gõ <code>/</code> để chèn — <b>hộp gợi ý đo trùng tuyệt đối bản gốc</b>), bản nháp giữ trong trình duyệt đúng như bản gốc, thanh lệnh bổ sung nhóm điều hướng và đổi giao diện, mục "Keyboard shortcuts" cùng bảng phím tắt. Kèm theo: bổ sung dải nhắc "Assign to me" khi đang gõ mà hội thoại chưa thuộc về mình, và sửa lỗi màu chữ của dải này → <b>khung soạn thảo lúc đang gõ khớp 0,000% cả sáng lẫn tối</b>.</span>
+      <span class="ftest"><b>Test ngay:</b> Cài đặt → Canned Responses → tạo mẫu → mở hội thoại gõ <code>/</code> → chọn mẫu, nội dung chèn vào ô soạn; gõ dở rồi sang hội thoại khác, quay lại thấy nháp còn nguyên; <code>Ctrl+K</code> mở thanh lệnh; menu ảnh đại diện → Keyboard shortcuts. ⏳ Chờ founder nghiệm thu.</span></div>
+
+    <div class="feat"><span class="fid">B11</span><span class="fname">Người tham gia + Nhắc tên + Bảng liên hệ</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Nhắc tên trong ghi chú riêng tư (gõ <code>@</code> chọn nhân viên hoặc nhóm, nội dung sinh đúng cú pháp bản gốc), mục Mentions với trang danh sách riêng, người tham gia hội thoại, và gộp liên hệ. <b>Bảng bên phải nay đầy đủ:</b> thông tin hội thoại, thuộc tính liên hệ, ghi chú (thêm/xóa thật), tệp đã gửi, hội thoại trước đó, người tham gia — sáu mục vốn để trống từ B3. Phiên chính port bổ sung ba endpoint mà bảng này cần (ghi chú liên hệ, hội thoại của liên hệ, tệp của hội thoại) rồi gộp danh sách Mentions về chung một nguồn dữ liệu thay vì kho thứ hai. <b>Chấm ảnh: cả sáu mục 0,000%</b> ở sáng lẫn tối; hộp gợi ý <code>@</code> 0,000%.</span>
+      <span class="ftest"><b>Test ngay:</b> mở hội thoại → chuyển sang Private Note → gõ <code>@</code> → chọn Samantha → gửi → bong bóng hiện tên được nhắc; đăng nhập Samantha → mục Mentions thấy hội thoại đó. Bảng bên phải: mở từng mục, thêm một ghi chú rồi tải lại trang xem còn không, xem tệp đã gửi và các hội thoại trước của liên hệ. ⏳ Chờ founder nghiệm thu.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">C</span><h3>Widget website</h3><span class="gcount">5/5 ✓</span></div>
+    <p class="gnote">Kênh thật đầu tiên — website ngoài nhúng script chat với bảng điều khiển.</p>
+    <div class="feat"><span class="fid">C1</span><span class="fname">Kênh Web Widget + trợ lý tạo</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Kênh website cắm vào khung hộp thư đa hình sẵn có — thêm một kênh chỉ là thêm một dòng ánh xạ, không đụng lõi. Cờ tính năng gói trong một lớp bitmask, thời gian phản hồi gói trong một enum. Giao diện: nhánh Website trong trợ lý tạo hộp thư, màn cấu hình widget có khung xem trước cập nhật tức thì, tab cấu hình với đoạn mã nhúng sao chép được. <b>Chấm ảnh:</b> thẻ kênh 0,000%, màn hoàn tất 0,006%, tab cấu hình 0,006%.</span>
+      <span class="ftest"><b>Test ngay:</b> Cài đặt → Inboxes → Add Inbox → chọn Website → điền tên và địa chỉ → gán nhân viên → màn cuối cho đoạn mã nhúng; vào lại inbox đổi màu và lời chào, xem khung xem trước đổi theo. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">C2</span><span class="fname">Ứng dụng widget + SDK nhúng</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">SDK nhúng dựng thành gói độc lập, <b>giữ nguyên 100% giao diện lập trình công khai</b>, tên sự kiện, cookie và bảng kiểu của bản gốc — trang khách đang dùng không phải sửa gì. Đối chiếu trực tiếp với SDK gốc trên cùng một trang: <b>khác biệt ảnh bằng 0</b> ở 6 biến thể, 17/17 thông điệp trao đổi giữa trang và khung nhúng trùng từng ký tự. Ứng dụng chat cho khách chạy trong khung nhúng: dựng phiên, lời chào, trạng thái đội ngũ, gửi và nhận tin kèm tệp, đang gõ, đã đọc, và nhận tin tức thời. <b>Chấm ảnh 0,000% cả ba màn.</b></span>
+      <span class="ftest"><b>Test ngay:</b> mở trang thử nhúng, bấm bong bóng chat, gửi một tin; mở bảng điều khiển thấy hội thoại mới, trả lời → khách nhận ngay không tải lại trang. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">C3</span><span class="fname">Biểu mẫu trước chat + xác thực danh tính</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Tab cấu hình biểu mẫu trước chat trong bảng điều khiển, biểu mẫu phía khách với đúng bộ luật kiểm tra của bản gốc, và bong bóng bot xin email. Xác thực danh tính ký chuỗi định danh khách bằng khóa của kênh, so sánh an toàn theo thời gian. Tin mẫu (lời chào, xin email) chạy từ <b>một điểm móc duy nhất</b> khi có tin mới, kèm bộ thay biến trong nội dung. <b>Chấm ảnh phía khách 0,000%.</b></span>
+      <span class="ftest"><b>Test ngay:</b> bật biểu mẫu trước chat cho hộp thư → mở widget → điền tên và email → gửi → hội thoại tạo kèm thông tin khách; bật thu thập email → bot hỏi email ngay sau tin đầu. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">C4</span><span class="fname">Chiến dịch trực tiếp</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Chiến dịch nhả tin chủ động theo địa chỉ trang và thời gian khách ở lại. Toàn bộ luật hợp lệ nằm trong một chỗ của mô hình; số hiển thị sinh bằng trigger cơ sở dữ liệu như bản gốc. Màn quản lý chiến dịch trong bảng điều khiển và bộ đếm thời gian phía khách. Khi có chiến dịch đang chạy, biểu mẫu trước chat bỏ ô soạn tin và đổi tiêu đề đúng bản gốc. <b>Bong bóng chiến dịch phía khách 0,000%.</b></span>
+      <span class="ftest"><b>Test ngay:</b> tạo chiến dịch "chào sau 5 giây ở trang /pricing" → mở trang thử đúng địa chỉ → sau 5 giây widget tự nhả tin; bấm vào tin để bắt đầu hội thoại; tải lại trang thì không nhả lại. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">C5</span><span class="fname">Khảo sát hài lòng</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Khảo sát gửi khi hội thoại đóng, do <b>một dịch vụ duy nhất</b> quyết định có gửi hay không; mẫu khảo sát dùng lại khung tin mẫu của C3. Khách chấm điểm ngay trong widget hoặc qua <b>trang khảo sát công khai riêng</b> — trang này mở ra một gốc địa chỉ công khai mới mà Trung tâm trợ giúp và API nền tảng sẽ dùng tiếp. Kèm theo: dữ liệu khách gửi lên nay được lọc trước khi vào vùng nhân viên đọc. <b>Chấm ảnh 0,000% mọi màn khảo sát.</b></span>
+      <span class="ftest"><b>Test ngay:</b> bật khảo sát cho hộp thư → khách chat → nhân viên đóng hội thoại → widget hiện khảo sát → chấm điểm và gửi phản hồi → xem kết quả trong dữ liệu; mở trang khảo sát công khai bằng đường dẫn riêng cũng chấm được. ⏳ Chờ founder nghiệm thu.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">2/6</span></div>
+    <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Điều kiện + 18 hành động + hẹn giờ, trình dựng luật giống bản gốc.</span></div>
+    <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Sự kiện báo cáo + tổng hợp + các màn tổng quan/hội thoại/nhân viên/hài lòng.</span></div>
+    <div class="feat"><span class="fid">D3</span><span class="fname">Macro</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Chuỗi hành động dựng sẵn + nút chạy trong hội thoại.</span></div>
+    <div class="feat"><span class="fid">D4</span><span class="fname">Webhook ra + bot</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Ký chữ ký, chính sách thử lại, endpoint cho bot.</span></div>
+    <div class="feat"><span class="fid">D5</span><span class="fname">Thông báo</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Trung tâm thông báo đầy đủ: hai bảng dữ liệu, <b>một cổng tạo thông báo duy nhất</b>, một nơi quyết định sự kiện nào sinh thông báo gì, tuỳ chọn theo từng người dùng sinh thẳng từ danh sách loại thông báo. Có chuông và huy hiệu trên thanh bên, trang hộp thư cá nhân, cài đặt thông báo trong hồ sơ, và đẩy tức thời qua kênh đã dành sẵn từ nhóm B. Đánh dấu hội thoại đã đọc nay xoá luôn thông báo của nó — trả một món nợ từ B8.</span>
+      <span class="ftest"><b>Test ngay:</b> gán một hội thoại cho đồng nghiệp → họ thấy chuông sáng và thẻ thông báo ngay không tải lại → bấm vào mở đúng hội thoại → huy hiệu giảm; lọc "Read", chuột phải đánh dấu chưa đọc thì huy hiệu quay lại. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">D6</span><span class="fname">Giờ làm việc + trả lời tự động</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Lịch làm việc theo từng hộp thư (mỗi hộp thư tự sinh đủ bảy ngày, so giờ theo múi giờ của chính nó), tin trả lời ngoài giờ chạy qua đúng điểm móc tin mẫu đã có, và tự đóng hội thoại nguội theo ngưỡng của tài khoản kèm dòng hoạt động sẵn có. Giao diện: tab giờ làm việc và trang quy trình hội thoại. <b>Hai lỗi hạ tầng phát hiện nhân tiện:</b> tên hàng đợi trong lệnh chạy môi trường bị sai khiến <b>mọi việc theo lịch nằm im</b> từ trước tới nay, và một mục thanh bên bị ẩn nhầm vì tưởng thuộc bản thương mại.</span>
+      <span class="ftest"><b>Test ngay:</b> đặt giờ làm việc không bao gồm hiện tại → khách nhắn qua widget → nhận tin ngoài giờ; đặt ngưỡng tự đóng ngắn rồi chạy việc theo lịch → hội thoại nguội tự đóng kèm dòng ghi chú lý do. ⏳ Chờ founder nghiệm thu.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">E</span><h3>Dữ liệu &amp; khám phá</h3><span class="gcount">0/4</span></div>
+    <div class="feat"><span class="fid">E1</span><span class="fname">Thuộc tính tùy chỉnh + bộ lọc + phân khúc</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">8 kiểu hiển thị, trình dựng bộ lọc, lưu thư mục lọc.</span></div>
+    <div class="feat"><span class="fid">E2</span><span class="fname">Tìm kiếm toàn cục</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Tìm hội thoại / liên hệ / tin nhắn.</span></div>
+    <div class="feat"><span class="fid">E3</span><span class="fname">Liên hệ nâng cao + nhập/xuất</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Bảng sắp xếp được + thao tác hàng loạt + nhập CSV có ánh xạ cột.</span></div>
+    <div class="feat"><span class="fid">E4</span><span class="fname">Chiến dịch một lần + Trung tâm trợ giúp</span><span class="pill wait">Chờ</span>
+      <span class="fdesc">Cổng bài viết + trang công khai + trình soạn.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">F</span><h3>Kênh ngoài &amp; nền tảng</h3><span class="gcount">0/8</span></div>
+    <p class="gnote">Mỗi kênh một đợt độc lập, ưu tiên theo nhu cầu Việt Nam: Email → Facebook → Instagram → Telegram → còn lại.</p>
+    <div class="feat"><span class="fid">F1</span><span class="fname">Kênh Email</span><span class="pill wait">Chờ</span><span class="fdesc">Gửi qua SMTP + nhận qua IMAP + bóc tách nội dung trả lời — phần khó nhất nhóm F.</span></div>
+    <div class="feat"><span class="fid">F2</span><span class="fname">Facebook Messenger</span><span class="pill wait">Chờ</span><span class="fdesc">Trang Facebook + webhook + bộ dựng tin riêng.</span></div>
+    <div class="feat"><span class="fid">F3</span><span class="fname">Instagram DM</span><span class="pill wait">Chờ</span><span class="fdesc">Đăng nhập Instagram.</span></div>
+    <div class="feat"><span class="fid">F4</span><span class="fname">Telegram</span><span class="pill wait">Chờ</span><span class="fdesc">Webhook bot.</span></div>
+    <div class="feat"><span class="fid">F5</span><span class="fname">LINE / SMS / WhatsApp / TikTok / Twitter</span><span class="pill wait">Chờ</span><span class="fdesc">Mỗi kênh một đợt riêng theo nhu cầu khách.</span></div>
+    <div class="feat"><span class="fid">F6</span><span class="fname">Tích hợp chọn lọc</span><span class="pill wait">Chờ</span><span class="fdesc">Slack, dịch tự động, chatbot, ứng dụng nhúng.</span></div>
+    <div class="feat"><span class="fid">F7</span><span class="fname">API nền tảng + quản trị hệ thống</span><span class="pill wait">Chờ</span><span class="fdesc">Ứng dụng nền tảng + trang quản trị.</span></div>
+    <div class="feat"><span class="fid">F8</span><span class="fname">Xác thực hai lớp + quản lý phiên</span><span class="pill wait">Chờ</span><span class="fdesc">Mã một lần + mã dự phòng + thu hồi phiên.</span></div>
+  </section>
+
+  <section class="group">
+    <div class="ghead"><span class="gid">G</span><h3>Zalo cá nhân + hợp nhất</h3><span class="gcount">0/3</span></div>
+    <p class="gnote">Chỉ bắt đầu sau khi lõi xong — trích từ nhánh chính, cắm vào khung kênh mới.</p>
+    <div class="feat"><span class="fid">G1</span><span class="fname">Driver Zalo</span><span class="pill wait">Chờ</span><span class="fdesc">Bảng kênh Zalo + vòng đời đăng nhập QR, dùng lại cầu nối sẵn có.</span></div>
+    <div class="feat"><span class="fid">G2</span><span class="fname">Đối chiếu tự động hóa cũ</span><span class="pill wait">Chờ</span><span class="fdesc">Bổ sung phần automation cũ chưa được D1 phủ.</span></div>
+    <div class="feat"><span class="fid">G3</span><span class="fname">Tiếng Việt + kiểm thử toàn hệ + hợp nhất</span><span class="pill wait">Chờ</span><span class="fdesc">Dịch toàn bộ, kiểm thử đầu-cuối, gia cố, thay nhánh chính.</span></div>
+  </section>
+
+  <section class="decisions">
+    <h2>Quyết định đã chốt</h2>
+    <ul class="dlist">
+      <li><span class="k">Phạm vi</span><span>Viết lại toàn bộ phần lõi; <b>bỏ hẳn phần thương mại</b> của bản gốc (khoảng 30 bảng và 150 endpoint) để tránh vướng giấy phép.</span></li>
+      <li><span class="k">Mã cũ</span><span>Làm trên nhánh riêng, nhánh chính vẫn chạy tới khi thay thế. Zalo và automation cũ trích lại sau.</span></li>
+      <li><span class="k">Giao diện</span><span>Inertia + React nhưng giống 100% bản gốc: chép nguyên bộ mã màu và biểu tượng, giữ nguyên trình soạn thảo.</span></li>
+      <li><span class="k">Hạ tầng</span><span>Reverb thay tầng thời gian thực cũ, giữ nguyên tên mọi sự kiện; hàng đợi phân tầng; số hiển thị hội thoại sinh bằng trigger cơ sở dữ liệu.</span></li>
+      <li><span class="k">Ngôn ngữ</span><span>Một nguồn chuỗi duy nhất ở phía máy chủ, sinh ra gói cho giao diện trước khi build — không có tệp dịch riêng cho frontend.</span></li>
+      <li><span class="k">Dữ liệu</span><span>Cơ sở dữ liệu phát triển riêng cho nhánh này; không chạy lệnh xóa sạch; mốc thời gian giữ đủ 6 chữ số lẻ như bản gốc.</span></li>
+    </ul>
+  </section>
+
+  <p class="foot">Chi tiết từng tính năng + tiêu chí test: <code>plans/260831-rewrite-chatwoot-laravel/feature-roadmap.md</code> · Bảng đối chiếu từng tính năng: <code>plans/260831-rewrite-chatwoot-laravel/reports/trace-*.md</code></p>
+</div>
+</body></html>
