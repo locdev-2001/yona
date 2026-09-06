@@ -3,13 +3,16 @@
 namespace App\Providers;
 
 use App\Database\PostgresConnection;
+use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
+use App\Models\Channel\Email;
 use App\Models\Channel\WebWidget;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\PlatformApp;
 use App\Models\User;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -40,12 +43,15 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'Channel::Api' => Api::class,
             'Channel::WebWidget' => WebWidget::class,
+            'Channel::Email' => Email::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,
             'Message' => Message::class,
             'Conversation' => Conversation::class,
             'AgentBot' => AgentBot::class,
+            'Account' => Account::class,
+            'PlatformApp' => PlatformApp::class,
         ]);
     }
 }

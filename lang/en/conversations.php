@@ -50,6 +50,22 @@ return [
     ],
 
     // Nội dung tin mẫu do MessageTemplates sinh ra (email collect + CSAT).
+    // F1: config/locales/en.yml khối conversations.reply — tiêu đề/tên người gửi
+    // của thư trả lời gửi qua kênh Email.
+    'reply' => [
+        'email' => [
+            'header' => [
+                'notifications' => 'Notifications',
+                'from_with_name' => '{assignee_name} from {inbox_name} <{from_email}>',
+                'reply_with_name' => '{assignee_name} from {inbox_name} <reply+{reply_email}>',
+                'friendly_name' => '{sender_name} from {business_name} <{from_email}>',
+                'professional_name' => '{business_name} <{from_email}>',
+            ],
+        ],
+        'email_subject' => 'New messages on this conversation',
+        'transcript_subject' => 'Conversation Transcript',
+    ],
+
     'templates' => [
         'ways_to_reach_you_message_body' => 'Give the team a way to reach you.',
         'email_input_box_message_body' => 'Get notified by email',

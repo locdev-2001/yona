@@ -27,6 +27,7 @@ class HandleInertiaRequests extends Middleware
                 'logo' => '/brand-assets/logo.svg',
                 'logoDark' => '/brand-assets/logo-dark.svg',
                 'signupEnabled' => config('yona.signup_enabled'),
+                'isMfaEnabled' => (bool) config('yona.mfa_enabled'),
                 'termsURL' => config('yona.terms_url'),
                 'privacyURL' => config('yona.privacy_url'),
             ],

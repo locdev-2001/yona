@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ContactInbox;
+use App\Models\SuperAdmin;
 use App\Models\User;
 
 return [
@@ -44,6 +45,13 @@ return [
             'provider' => 'users',
         ],
 
+        // Console quản trị cài đặt: guard riêng nên phiên super admin không
+        // dính vào phiên agent (bản gốc dùng devise scope `super_admin`).
+        'super_admin' => [
+            'driver' => 'session',
+            'provider' => 'super_admins',
+        ],
+
         // Khách của widget website: RoomChannel của Chatwoot chấp nhận đúng một
         // bằng chứng — biết pubsub_token của contact_inbox. Guard này chỉ dùng
         // cho auth kênh broadcast (routes/channels.php), không cho route HTTP.
@@ -77,6 +85,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'super_admins' => [
+            'driver' => 'eloquent',
+            'model' => SuperAdmin::class,
         ],
 
         'contact_inboxes' => [

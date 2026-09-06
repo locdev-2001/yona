@@ -10,10 +10,24 @@ use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Http\Controllers\Auth\SsoSessionsController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
 use App\Http\Controllers\Public\Portals\SearchController as PublicSearchController;
+use App\Http\Controllers\SuperAdmin\AccessTokensController as SuperAdminAccessTokensController;
+use App\Http\Controllers\SuperAdmin\AccountsController as SuperAdminAccountsController;
+use App\Http\Controllers\SuperAdmin\AccountUsersController as SuperAdminAccountUsersController;
+use App\Http\Controllers\SuperAdmin\AgentBotsController as SuperAdminAgentBotsController;
+use App\Http\Controllers\SuperAdmin\AppConfigsController as SuperAdminAppConfigsController;
+use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\InstallationConfigsController as SuperAdminInstallationConfigsController;
+use App\Http\Controllers\SuperAdmin\InstanceStatusesController as SuperAdminInstanceStatusesController;
+use App\Http\Controllers\SuperAdmin\PlatformAppsController as SuperAdminPlatformAppsController;
+use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsController;
+use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
+use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
+use App\Http\Middleware\SuperAdminInertia;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -162,6 +176,12 @@ Route::middleware('auth')->group(function () {
                 ->name('settings_integrations_webhook');
             Route::get('/settings/integrations/dashboard_apps', fn () => Inertia::render('dashboard/settings/integrations/DashboardApps/Index'))
                 ->name('settings_integrations_dashboard_apps');
+            // F6: trang Slack riêng (integrations.routes.js) — PHẢI đứng trước route
+            // `{integrationId}` vì regex [a-z_]+ khớp cả 'slack'.
+            Route::get('/settings/integrations/slack', fn (Account $account) => Inertia::render(
+                'dashboard/settings/integrations/Slack',
+                ['code' => request()->query('code')],
+            ))->name('settings_integrations_slack');
             Route::get('/settings/integrations/{integrationId}', fn (Account $account, string $integrationId) => Inertia::render(
                 'dashboard/settings/integrations/ShowIntegration',
                 ['integrationId' => $integrationId],
@@ -340,6 +360,9 @@ Route::middleware('auth')->group(function () {
             ->name('profile_settings_mfa');
         // F8 MFA/sessions pages — END
 
+        // F6 dashboard apps pages — BEGIN (agent f6 sở hữu khối này)
+        // F6 dashboard apps pages — END
+
         // E2 search.routes.js.
         Route::get('/search/{tab?}', fn (Account $account, ?string $tab = null) => Inertia::render('dashboard/search/SearchView', [
             'tab' => $tab,
@@ -367,3 +390,59 @@ Route::prefix('/hc')->group(function () {
     Route::get('/{slug}/{locale}', [PublicPortalsController::class, 'show']);
     Route::get('/{slug}', [PublicPortalsController::class, 'show']);
 });
+
+// F7 Super Admin (/super_admin/*) — BEGIN (agent f7 sở hữu khối này)
+// Port từ `devise_for :super_admins` + `namespace :super_admin` trong
+// refs/chatwoot/config/routes.rb. Guard riêng `super_admin`, layout riêng.
+Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(function () {
+    Route::middleware('guest:super_admin')->group(function () {
+        Route::get('/sign_in', [SuperAdminSessionsController::class, 'create'])->name('super_admin.login');
+        Route::post('/sign_in', [SuperAdminSessionsController::class, 'store']);
+    });
+
+    Route::middleware('auth:super_admin')->group(function () {
+        Route::match(['get', 'delete'], '/logout', [SuperAdminSessionsController::class, 'destroy']);
+
+        Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('super_admin.root');
+
+        Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
+        Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
+        Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
+        Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
+
+        Route::post('/accounts/{id}/seed', [SuperAdminAccountsController::class, 'seed'])->whereNumber('id');
+        Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
+
+        Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
+        Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
+        Route::get('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
+
+        Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
+
+        Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
+        Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
+        Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+
+        // Thứ tự resource quyết định thứ tự mục trong thanh điều hướng của bản gốc.
+        foreach ([
+            'accounts' => SuperAdminAccountsController::class,
+            'users' => SuperAdminUsersController::class,
+            'access_tokens' => SuperAdminAccessTokensController::class,
+            'installation_configs' => SuperAdminInstallationConfigsController::class,
+            'agent_bots' => SuperAdminAgentBotsController::class,
+            'platform_apps' => SuperAdminPlatformAppsController::class,
+        ] as $resource => $controller) {
+            Route::get("/{$resource}", [$controller, 'index']);
+            Route::get("/{$resource}/new", [$controller, 'create']);
+            Route::post("/{$resource}", [$controller, 'store']);
+            Route::get("/{$resource}/{id}", [$controller, 'show'])->whereNumber('id');
+            Route::get("/{$resource}/{id}/edit", [$controller, 'edit'])->whereNumber('id');
+            Route::match(['put', 'patch'], "/{$resource}/{id}", [$controller, 'update'])->whereNumber('id');
+            Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
+        }
+    });
+});
+
+// Đăng nhập bằng link một lần (Platform API users#login, impersonate của console).
+Route::get('/app/sso_login', [SsoSessionsController::class, 'store'])->name('sso_login');
+// F7 Super Admin — END

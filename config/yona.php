@@ -16,6 +16,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Phiên bản + console quản trị
+    |--------------------------------------------------------------------------
+    |
+    | `version` hiện ở thanh điều hướng /super_admin và trang Instance Health
+    | (Chatwoot.config[:version] của bản gốc). `account_seeding_enabled` tương
+    | ứng ENABLE_ACCOUNT_SEEDING — mặc định tắt vì job sinh dữ liệu mẫu chưa port.
+    |
+    */
+
+    'version' => env('YONA_VERSION', '4.17.1'),
+
+    'account_seeding_enabled' => (bool) env('ENABLE_ACCOUNT_SEEDING', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xác thực hai lớp (MFA/2FA)
+    |--------------------------------------------------------------------------
+    |
+    | Chatwoot bật MFA khi cấu hình đủ khoá mã hoá ActiveRecord; Laravel luôn có
+    | APP_KEY nên tính năng sẵn sàng mặc định, cờ này chỉ để tắt khi cần.
+    | MAX_USER_SESSIONS: số phiên đăng nhập song song tối đa của một user —
+    | chạm trần thì màn đăng nhập bắt chọn phiên để thu hồi.
+    |
+    */
+
+    'mfa_enabled' => (bool) env('MFA_ENABLED', true),
+
+    'max_user_sessions' => (int) env('MAX_USER_SESSIONS', 25),
+
+    /*
+    |--------------------------------------------------------------------------
     | Blocked email domains
     |--------------------------------------------------------------------------
     |

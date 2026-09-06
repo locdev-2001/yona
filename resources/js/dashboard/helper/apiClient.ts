@@ -7,7 +7,7 @@ export function xsrfToken(): string {
 export class ApiError extends Error {
     constructor(
         public status: number,
-        public body: { message?: string; errors?: Record<string, string[]> } | null,
+        public body: { message?: string; error?: string; errors?: Record<string, string[]> } | null,
     ) {
         super(`Request failed: ${status}`);
     }
@@ -20,7 +20,8 @@ export function parseApiErrorMessage(error: unknown): string | null {
             const [first] = Object.values(error.body.errors).flat();
             if (first) return first;
         }
-        return error.body.message ?? null;
+        // Chatwoot trả lỗi API dạng {error: "..."} (render_could_not_create_error).
+        return error.body.error ?? error.body.message ?? null;
     }
     return null;
 }
@@ -64,8 +65,10 @@ export function patchJson<T = unknown>(url: string, body: Record<string, unknown
     return request<T>(url, 'PATCH', JSON.stringify(body), 'application/json');
 }
 
-export function deleteJson<T = unknown>(url: string): Promise<T> {
-    return request<T>(url, 'DELETE');
+export function deleteJson<T = unknown>(url: string, body?: Record<string, unknown>): Promise<T> {
+    return body
+        ? request<T>(url, 'DELETE', JSON.stringify(body), 'application/json')
+        : request<T>(url, 'DELETE');
 }
 
 export function postForm<T = unknown>(url: string, form: FormData): Promise<T> {

@@ -17,14 +17,16 @@ import UserBasicDetails from './UserBasicDetails';
 import MessageSignature from './MessageSignature';
 import ChangePassword from './ChangePassword';
 import NotificationPreferences from './NotificationPreferences';
+import MfaSettingsCard from './MfaSettingsCard';
+import ActiveSessions from './ActiveSessions';
 import FontSize from './FontSize';
 import UserLanguageSelect from './UserLanguageSelect';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/profile/Index.vue —
-// MFA (F8) / Active sessions (F8) / Audio alerts (chờ tệp âm thanh) /
-// Access token (F8) vào theo roadmap; các section còn lại đủ.
+// Audio alerts (chờ tệp âm thanh) / Access token vào theo roadmap;
+// các section còn lại đủ.
 const HOT_KEYS = [
     {
         key: 'enter' as const,
@@ -48,7 +50,7 @@ interface ProfilePayload {
 }
 
 export default function ProfileSettingsIndex() {
-    const { auth } = usePage<DashboardPageProps>().props;
+    const { auth, globalConfig } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
     const { replaceInstallationName } = useBranding();
 
@@ -245,6 +247,22 @@ export default function ProfileSettingsIndex() {
                     </SectionLayout>
                     <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')}>
                         <ChangePassword />
+                    </SectionLayout>
+                    {globalConfig.isMfaEnabled ? (
+                        <SectionLayout
+                            withBorder
+                            title={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')}
+                            description={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')}
+                        >
+                            <MfaSettingsCard />
+                        </SectionLayout>
+                    ) : null}
+                    <SectionLayout
+                        withBorder
+                        title={t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.TITLE')}
+                        description={t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.NOTE')}
+                    >
+                        <ActiveSessions />
                     </SectionLayout>
                     <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')}>
                         <NotificationPreferences />

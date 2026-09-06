@@ -19,6 +19,20 @@ return [
         'invalid_query_operator' => 'Query operator must be either "AND" or "OR".',
         'invalid_value' => 'Invalid value. The values provided for :attribute_name are invalid',
     ],
+    'mfa' => [
+        'already_enabled' => 'MFA is already enabled',
+        'not_enabled' => 'MFA is not enabled',
+        'invalid_code' => 'Invalid verification code',
+        'invalid_backup_code' => 'Invalid backup code',
+        'invalid_token' => 'Invalid or expired MFA token',
+        'invalid_credentials' => 'Invalid credentials or verification code',
+        'feature_unavailable' => 'MFA feature is not available. Please configure encryption keys.',
+    ],
+    // Chatwoot đặt ở `profile_settings.sessions` — chuyển vào đây để không đụng
+    // namespace PROFILE_SETTINGS của bundle FE (lang/en/profile_settings.php).
+    'sessions' => [
+        'cannot_revoke_current' => 'You cannot revoke the current session.',
+    ],
     'contacts' => [
         'import' => [
             'failed' => 'File is blank',

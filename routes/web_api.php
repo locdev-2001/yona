@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Integrations\WebhooksController as SlackEventsWebhooksController;
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentBotsController;
@@ -26,16 +27,22 @@ use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\CsatSurveyResponsesController;
 use App\Http\Controllers\WebApi\CustomAttributeDefinitionsController;
 use App\Http\Controllers\WebApi\CustomFiltersController;
+use App\Http\Controllers\WebApi\DashboardAppsController;
 use App\Http\Controllers\WebApi\DataImportsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
+use App\Http\Controllers\WebApi\Integrations\DyteController as IntegrationDyteController;
+use App\Http\Controllers\WebApi\Integrations\HooksController as IntegrationHooksController;
+use App\Http\Controllers\WebApi\Integrations\SlackController as IntegrationSlackController;
 use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
 use App\Http\Controllers\WebApi\PortalsController;
 use App\Http\Controllers\WebApi\PresenceController;
+use App\Http\Controllers\WebApi\Profile\MfaController;
+use App\Http\Controllers\WebApi\Profile\SessionsController as ProfileSessionsController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
 use App\Http\Controllers\WebApi\Reports\LiveReportsController;
@@ -57,6 +64,17 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile', [ProfilesController::class, 'show']);
     Route::match(['put', 'patch'], '/profile', [ProfilesController::class, 'update']);
     Route::delete('/profile/avatar', [ProfilesController::class, 'destroyAvatar']);
+
+    // F8 MFA + user sessions — BEGIN (agent f8 sở hữu khối này)
+    // profile/mfa_controller.rb + profile/sessions_controller.rb: không gắn account.
+    Route::get('/profile/mfa', [MfaController::class, 'show']);
+    Route::post('/profile/mfa', [MfaController::class, 'store']);
+    Route::delete('/profile/mfa', [MfaController::class, 'destroy']);
+    Route::post('/profile/mfa/verify', [MfaController::class, 'verify']);
+    Route::post('/profile/mfa/backup_codes', [MfaController::class, 'backupCodes']);
+    Route::get('/profile/sessions', [ProfileSessionsController::class, 'index']);
+    Route::delete('/profile/sessions/{id}', [ProfileSessionsController::class, 'destroy'])->whereNumber('id');
+    // F8 MFA + user sessions — END
 });
 
 // auth.api_token đứng trước auth: header api_access_token (Application API,
@@ -243,6 +261,48 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/contacts/{contactId}/attachments', [ContactsController::class, 'attachments'])->whereNumber('contactId');
         // E3 data_imports + contacts export — END
 
+        // F1 email channel — BEGIN (agent f1-be sở hữu khối này)
+        // Kênh Email không có endpoint riêng ở bản gốc: tạo/sửa inbox email đi
+        // qua chính `/inboxes` (channel[type] = 'email'), IMAP/SMTP nằm trong
+        // khối `channel` của PATCH. Cửa nhận thư đến là ActionMailbox — nằm
+        // NGOÀI nhóm route theo account, xem `reports/f1-notes-be.md` mục
+        // "Cửa nhận thư đến".
+        // F1 email channel — END
+
+        // F8 MFA + user sessions — BEGIN (agent f8 sở hữu khối này)
+        // Trống có chủ đích: MFA/phiên đăng nhập là của người dùng, không gắn
+        // account — route thật nằm trong nhóm /api/v1 ở đầu file.
+        // F8 MFA + user sessions — END
+
+        // F6 integrations hooks + dashboard_apps — BEGIN (agent f6 sở hữu khối này)
+        Route::get('/dashboard_apps', [DashboardAppsController::class, 'index']);
+        Route::post('/dashboard_apps', [DashboardAppsController::class, 'store']);
+        Route::get('/dashboard_apps/{dashboardAppId}', [DashboardAppsController::class, 'show'])->whereNumber('dashboardAppId');
+        Route::match(['put', 'patch'], '/dashboard_apps/{dashboardAppId}', [DashboardAppsController::class, 'update'])->whereNumber('dashboardAppId');
+        Route::delete('/dashboard_apps/{dashboardAppId}', [DashboardAppsController::class, 'destroy'])->whereNumber('dashboardAppId');
+
+        Route::post('/integrations/hooks', [IntegrationHooksController::class, 'store']);
+        Route::match(['put', 'patch'], '/integrations/hooks/{hookId}', [IntegrationHooksController::class, 'update'])->whereNumber('hookId');
+        Route::delete('/integrations/hooks/{hookId}', [IntegrationHooksController::class, 'destroy'])->whereNumber('hookId');
+        Route::post('/integrations/hooks/{hookId}/process_event', [IntegrationHooksController::class, 'processEvent'])->whereNumber('hookId');
+
+        // resource :slack (số ít) — một hook Slack cho mỗi account.
+        Route::post('/integrations/slack', [IntegrationSlackController::class, 'store']);
+        Route::match(['put', 'patch'], '/integrations/slack', [IntegrationSlackController::class, 'update']);
+        Route::delete('/integrations/slack', [IntegrationSlackController::class, 'destroy']);
+        Route::get('/integrations/slack/list_all_channels', [IntegrationSlackController::class, 'listAllChannels']);
+
+        Route::post('/integrations/dyte/create_a_meeting', [IntegrationDyteController::class, 'createAMeeting']);
+        Route::post('/integrations/dyte/add_participant_to_meeting', [IntegrationDyteController::class, 'addParticipantToMeeting']);
+
+        // messages#translate — Google Translate.
+        Route::post('/conversations/{conversationId}/messages/{messageId}/translate', [MessagesController::class, 'translate'])
+            ->whereNumber(['conversationId', 'messageId']);
+        // F6 integrations hooks + dashboard_apps — END
+
+        // F2-F5 kênh ngoài (callbacks, register page…) — BEGIN (agent f2f5-be sở hữu khối này)
+        // F2-F5 kênh ngoài — END
+
         // E2 search_controller.rb.
         Route::get('/search', [SearchController::class, 'index']);
         Route::get('/search/conversations', [SearchController::class, 'conversations']);
@@ -323,3 +383,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/live_reports/conversation_metrics', [LiveReportsController::class, 'conversationMetrics']);
         Route::get('/live_reports/grouped_conversation_metrics', [LiveReportsController::class, 'groupedConversationMetrics']);
     });
+
+// F6 Slack events (api/v1/integrations/webhooks#create — Slack gọi vào, KHÔNG auth) — BEGIN (agent f6 sở hữu khối này)
+Route::post('/api/v1/integrations/webhooks', [SlackEventsWebhooksController::class, 'store']);
+// F6 Slack events — END

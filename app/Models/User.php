@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\Reportable;
+use App\Models\Concerns\SsoAuthenticatable;
 use App\Notifications\ConfirmationInstructions;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,13 +20,17 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use Avatarable, HasFactory, Notifiable, Reportable;
+    use Avatarable, HasFactory, Notifiable, Reportable, SsoAuthenticatable;
 
     public const AVAILABILITY_ONLINE = 0;
 
     public const AVAILABILITY_OFFLINE = 1;
 
     public const AVAILABILITY_BUSY = 2;
+
+    // Cửa sổ chấp nhận lệch đồng hồ khi kiểm mã TOTP. devise-two-factor cho phép
+    // 30 giây trước/sau; otphp bắt buộc leeway < chu kỳ 30s nên lấy 29.
+    public const OTP_LEEWAY_SECONDS = 29;
 
     protected $attributes = [
         'provider' => 'email',
@@ -66,6 +71,10 @@ class User extends Authenticatable
             'current_sign_in_at' => 'datetime',
             'last_sign_in_at' => 'datetime',
             'otp_required_for_login' => 'boolean',
+            // Chatwoot mã hoá hai cột này ở tầng ứng dụng (ActiveRecord encrypts);
+            // ở đây dùng cast encrypted của Laravel (khoá APP_KEY).
+            'otp_secret' => 'encrypted',
+            'otp_backup_codes' => 'encrypted:array',
         ];
     }
 
@@ -96,6 +105,28 @@ class User extends Authenticatable
         static::deleting(function (User $user) {
             Macro::query()->where('created_by_id', $user->id)->personal()->delete();
         });
+    }
+
+    public function userSessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    // devise `send_confirmation_instructions` — dùng chung cho đăng ký và cho
+    // nút gửi lại ở console quản trị.
+    public function sendConfirmationInstructions(): void
+    {
+        $this->forceFill([
+            'confirmation_token' => $this->confirmation_token ?? Str::random(40),
+            'confirmation_sent_at' => now(),
+        ])->save();
+
+        $this->notify(new ConfirmationInstructions);
+    }
+
+    public function mfaEnabled(): bool
+    {
+        return (bool) $this->otp_required_for_login;
     }
 
     public function accessToken(): MorphOne

@@ -9,13 +9,14 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Email\MarkdownRenderer;
 use App\Support\BooleanParam;
+use App\Support\EmailAddress;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/app/builders/messages/message_builder.rb.
-// Bỏ: xử lý email cc/bcc + html/liquid (F1),
-// template_params (kênh WhatsApp F5).
+// Bỏ: template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
     private ?Message $message = null;
@@ -44,9 +45,82 @@ class MessageBuilder
         // tin tồn tại để tệp hỏng không đẻ ra tin rỗng.
         $this->message->pendingAttachments = $this->buildAttachments();
 
+        $this->processEmails();
+        $this->processEmailContent();
+
         $this->message->save();
 
         return $this->message;
+    }
+
+    /**
+     * process_emails — inbox email mang thêm danh sách người nhận; địa chỉ sai
+     * định dạng dừng ngay tại đây thay vì làm hỏng thư lúc gửi.
+     */
+    private function processEmails(): void
+    {
+        if (! $this->conversation->inbox->isEmail()) {
+            return;
+        }
+
+        $contentAttributes = $this->message->content_attributes ?? [];
+
+        foreach (['cc_emails', 'bcc_emails', 'to_emails'] as $key) {
+            $emails = $this->splitEmailString($this->params[$key] ?? null);
+
+            foreach ($emails as $email) {
+                if (! EmailAddress::isValid($email)) {
+                    throw new MessageValidationException('Invalid email address');
+                }
+            }
+
+            $contentAttributes[$key] = $emails;
+        }
+
+        $this->message->content_attributes = $contentAttributes;
+    }
+
+    /**
+     * process_email_content — thân thư HTML/text của tin đi, dựng sẵn lúc tạo tin
+     * để mọi đường đọc (gửi thư, transcript, webhook) dùng chung một bản.
+     */
+    private function processEmailContent(): void
+    {
+        if (! $this->conversation->inbox->isEmail() || $this->message->private || blank($this->message->content)) {
+            return;
+        }
+
+        $contentAttributes = $this->message->content_attributes ?? [];
+        $email = $contentAttributes['email'] ?? [];
+        $normalizedContent = str_replace("\r\n", "\n", (string) $this->message->content);
+
+        $html = filled($this->params['email_html_content'] ?? null)
+            ? (string) $this->params['email_html_content']
+            : MarkdownRenderer::render($normalizedContent, true);
+
+        $email['html_content'] = [...($email['html_content'] ?? []), 'full' => $html, 'reply' => $html];
+        $email['text_content'] = [
+            ...($email['text_content'] ?? []),
+            'full' => $normalizedContent,
+            'reply' => $normalizedContent,
+        ];
+
+        $contentAttributes['email'] = $email;
+        $this->message->content_attributes = $contentAttributes;
+    }
+
+    /** @return list<string> */
+    private function splitEmailString(mixed $emailString): array
+    {
+        if (blank($emailString)) {
+            return [];
+        }
+
+        if (is_array($emailString)) {
+            return array_values(array_filter(array_map('trim', $emailString)));
+        }
+
+        return array_values(array_filter(explode(',', (string) preg_replace('/\s+/', '', (string) $emailString))));
     }
 
     /**

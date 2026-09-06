@@ -11,6 +11,7 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
+use App\Models\Channel\Email;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,7 @@ class InboxesController extends Controller
     private const CHANNEL_TYPES = [
         'api' => Api::class,
         'web_widget' => WebWidget::class,
+        'email' => Email::class,
     ];
 
     // inbox_attributes của bản gốc — cùng bộ cho POST lẫn PATCH (trừ name/avatar
