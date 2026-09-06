@@ -12,7 +12,16 @@ use App\Models\AccountUser;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
 use App\Models\Channel\Email;
+use App\Models\Channel\FacebookPage;
+use App\Models\Channel\Instagram;
+use App\Models\Channel\Line;
+use App\Models\Channel\Sms;
+use App\Models\Channel\Telegram;
+use App\Models\Channel\Tiktok;
+use App\Models\Channel\TwilioSms;
+use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
+use App\Models\Channel\Whatsapp;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +41,15 @@ class InboxesController extends Controller
         'api' => Api::class,
         'web_widget' => WebWidget::class,
         'email' => Email::class,
+        'facebook' => FacebookPage::class,
+        'instagram' => Instagram::class,
+        'telegram' => Telegram::class,
+        'line' => Line::class,
+        'sms' => Sms::class,
+        'twilio' => TwilioSms::class,
+        'whatsapp' => Whatsapp::class,
+        'tiktok' => Tiktok::class,
+        'twitter_profile' => TwitterProfile::class,
     ];
 
     // inbox_attributes của bản gốc — cùng bộ cho POST lẫn PATCH (trừ name/avatar

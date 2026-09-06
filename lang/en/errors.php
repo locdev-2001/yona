@@ -6,6 +6,16 @@ return [
     'webhook' => [
         'invalid' => 'Invalid events',
     ],
+    'openai' => [
+        'invalid_api_key' => 'OpenAI API key is invalid or revoked. Please check your key in your OpenAI dashboard.',
+    ],
+    'dyte' => [
+        'invalid_message_type' => 'Invalid message type. Action not permitted',
+        'realtimekit_credentials_required' => 'Cloudflare RealtimeKit credentials are required. Delete the existing Dyte integration and create it again with Cloudflare RealtimeKit credentials.',
+    ],
+    'slack' => [
+        'invalid_channel_id' => 'Invalid slack channel. Please try again',
+    ],
     'reports' => [
         'date_range_too_long' => 'Date range cannot exceed 6 months',
     ],

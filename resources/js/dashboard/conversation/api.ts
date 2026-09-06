@@ -171,6 +171,10 @@ export interface SendMessagePayload {
     echo_id?: string;
     content_attributes?: Record<string, unknown>;
     files?: File[];
+    // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).
+    cc_emails?: string;
+    bcc_emails?: string;
+    to_emails?: string;
 }
 
 // buildCreatePayload của api/inbox/message.js: có tệp thì gửi multipart với
@@ -181,6 +185,9 @@ function buildCreateForm({
     echo_id: echoId,
     content_attributes: contentAttributes,
     files,
+    cc_emails: ccEmails,
+    bcc_emails: bccEmails,
+    to_emails: toEmails,
 }: SendMessagePayload): FormData {
     const form = new FormData();
     if (content) {
@@ -196,6 +203,9 @@ function buildCreateForm({
     if (contentAttributes) {
         form.append('content_attributes', JSON.stringify(contentAttributes));
     }
+    if (ccEmails !== undefined) form.append('cc_emails', ccEmails);
+    if (bccEmails !== undefined) form.append('bcc_emails', bccEmails);
+    if (toEmails) form.append('to_emails', toEmails);
     return form;
 }
 

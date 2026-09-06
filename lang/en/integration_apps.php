@@ -77,6 +77,7 @@ return [
         'name' => 'Cloudflare RealtimeKit',
         'short_description' => 'Start video/voice calls with customers directly from Chatwoot.',
         'description' => 'Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot.',
+        'meeting_name' => ':agent_name has started a meeting',
     ],
     'slack' => [
         'name' => 'Slack',

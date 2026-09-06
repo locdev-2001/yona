@@ -49,3 +49,8 @@ export const NON_FILE_TYPES: string[] = [
     ATTACHMENT_TYPES.FALLBACK,
     ATTACHMENT_TYPES.CONTACT,
 ];
+
+// CONTENT_TYPES của constants.js gốc — hiện chỉ dùng nhánh incoming_email (F1).
+export const CONTENT_TYPES = {
+    INCOMING_EMAIL: 'incoming_email',
+} as const;

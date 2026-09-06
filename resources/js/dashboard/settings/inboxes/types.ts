@@ -40,6 +40,29 @@ export interface Inbox {
     continuity_via_email?: boolean | null;
     pre_chat_form_enabled?: boolean | null;
     pre_chat_form_options?: Record<string, unknown> | null;
+    // Kênh Email (_inbox.json.jbuilder mục Email Channel Attributes) — nhóm
+    // imap_*/smtp_* chỉ trả về cho administrator.
+    forwarding_enabled?: boolean;
+    forward_to_email?: string | null;
+    imap_enabled?: boolean;
+    imap_address?: string;
+    imap_port?: number | string;
+    imap_login?: string;
+    imap_password?: string | null;
+    imap_enable_ssl?: boolean;
+    imap_authentication?: string | null;
+    smtp_enabled?: boolean;
+    smtp_address?: string;
+    smtp_port?: number | string;
+    smtp_login?: string;
+    smtp_password?: string | null;
+    smtp_domain?: string;
+    smtp_enable_ssl_tls?: boolean;
+    smtp_enable_starttls_auto?: boolean;
+    smtp_openssl_verify_mode?: string;
+    smtp_authentication?: string;
+    provider?: string | null;
+    reauthorization_required?: boolean;
     // Kênh API (hmac_token/secret chỉ có với administrator).
     hmac_token?: string;
     secret?: string;

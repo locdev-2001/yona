@@ -12,6 +12,8 @@ import TextArea from 'dashboard/components-next/textarea/TextArea';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
+import ImapSettings from './ImapSettings';
+import SmtpSettings from './SmtpSettings';
 import { ALLOW_MOBILE_WEBVIEW_FLAG } from '../webWidgetHelpers';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -30,6 +32,8 @@ export default function ConfigurationPage({ inbox, onInboxUpdated }: Configurati
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
     const isWebWidget = inbox.channel_type === INBOX_TYPES.WEB;
+    const isEmailChannel = inbox.channel_type === INBOX_TYPES.EMAIL;
+    const isForwardingEnabled = Boolean(inbox.forwarding_enabled);
 
     const [hmacMandatory, setHmacMandatory] = useState(Boolean(inbox.hmac_mandatory));
     const [allowedDomains, setAllowedDomains] = useState(inbox.allowed_domains ?? '');
@@ -79,6 +83,31 @@ export default function ConfigurationPage({ inbox, onInboxUpdated }: Configurati
         if (updated) setAllowedDomains(sanitized);
         setUpdatingAllowedDomains(false);
     };
+
+    if (isEmailChannel) {
+        return (
+            <div>
+                <div>
+                    <SettingsFieldSection
+                        label={t('INBOX_MGMT.SETTINGS_POPUP.FORWARD_EMAIL_TITLE')}
+                        helpText={isForwardingEnabled ? t('INBOX_MGMT.SETTINGS_POPUP.FORWARD_EMAIL_SUB_TEXT') : ''}
+                    >
+                        {isForwardingEnabled ? (
+                            <Code script={inbox.forward_to_email ?? ''} />
+                        ) : (
+                            <div className="py-2 px-3 bg-n-amber-3 outline-n-amber-4 text-n-amber-11 outline outline-1 -outline-offset-1 rounded-xl">
+                                <p className="text-body-para mb-0">
+                                    {t('INBOX_MGMT.SETTINGS_POPUP.FORWARD_EMAIL_NOT_CONFIGURED')}
+                                </p>
+                            </div>
+                        )}
+                    </SettingsFieldSection>
+                </div>
+                <ImapSettings inbox={inbox} onInboxUpdated={onInboxUpdated} />
+                {inbox.imap_enabled ? <SmtpSettings inbox={inbox} onInboxUpdated={onInboxUpdated} /> : null}
+            </div>
+        );
+    }
 
     if (isWebWidget) {
         return (

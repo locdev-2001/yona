@@ -68,6 +68,7 @@ export const REPLY_EDITOR_MODES = {
 
 export const MESSAGE_MAX_LENGTH = {
     GENERAL: 10000,
+    EMAIL: 25000,
 } as const;
 
 export const CONVERSATIONS_PER_PAGE = 25;

@@ -11,6 +11,7 @@ import SettingsContent from '../SettingsContent';
 import SettingsSubPageHeader from '../SettingsSubPageHeader';
 import WizardLayout, { INBOX_WIZARD_ROUTES } from './WizardLayout';
 import WebsiteChannelForm from './channels/Website';
+import EmailChannelForm from './channels/Email';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
@@ -105,6 +106,7 @@ function ApiChannelForm() {
 const CHANNEL_VIEWS: Record<string, () => ReactElement> = {
     api: ApiChannelForm,
     website: WebsiteChannelForm,
+    email: EmailChannelForm,
 };
 
 export default function NewChannel({ channelName }: NewChannelProps) {

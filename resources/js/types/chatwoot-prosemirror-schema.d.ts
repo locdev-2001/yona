@@ -42,6 +42,13 @@ declare module '@chatwoot/prosemirror-schema' {
 
 declare module '@chatwoot/utils' {
     export function formatNumber(value: number): string;
+    export function sanitizeTextForRender(text: string | null | undefined): string;
+    export function getRecipients(
+        lastEmail: Record<string, unknown> | null | undefined,
+        conversationContact: string,
+        inboxEmail: string,
+        forwardToEmail: string,
+    ): { to: string[]; cc: string[]; bcc: string[] };
     export function formatTime(timeInSeconds: number): string;
     export function trimContent(content: string, maxLength?: number, ellipsis?: boolean): string;
     export function createTypingIndicator(

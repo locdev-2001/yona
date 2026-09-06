@@ -80,11 +80,14 @@ class App
         return true;
     }
 
-    // Integrations::App#enabled? — webhook đo bằng số webhook đã tạo; các app còn
-    // lại đo bằng bảng hooks (chưa port, thuộc nhóm F) nên tạm luôn là chưa bật.
+    // Integrations::App#enabled? — mỗi app đo bằng bảng lưu kết nối của nó.
     public function isEnabled(Account $account): bool
     {
-        return $this->id() === 'webhook' && $account->webhooks()->exists();
+        return match ($this->id()) {
+            'webhook' => $account->webhooks()->exists(),
+            'dashboard_apps' => $account->dashboardApps()->exists(),
+            default => $account->hooks()->where('app_id', $this->id())->exists(),
+        };
     }
 
     /** @return array<string, mixed> Các khoá cấu hình thô, chỉ trả cho administrator. */

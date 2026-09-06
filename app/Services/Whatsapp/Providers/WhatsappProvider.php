@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Services\Whatsapp\Providers;
+
+use App\Models\Message;
+
+/**
+ * Port từ refs/chatwoot/app/services/whatsapp/providers/base_service.rb — hợp đồng
+ * trung tính giữa kênh WhatsApp và nhà cung cấp. Thêm nhà cung cấp = thêm lớp
+ * hiện thực hợp đồng này, không sửa Channel\Whatsapp ngoài một dòng bảng tra.
+ */
+interface WhatsappProvider
+{
+    public function sendMessage(string $phoneNumber, Message $message): ?string;
+
+    public function mediaUrl(string $mediaId): string;
+
+    /** @return array<string, string> */
+    public function apiHeaders(): array;
+}

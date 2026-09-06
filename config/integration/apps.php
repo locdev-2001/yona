@@ -1,5 +1,9 @@
 <?php
 
+use App\Services\Integrations\Dialogflow\EventProcessor;
+use App\Services\Integrations\OpenAi\KeyValidator;
+use App\Services\Integrations\Slack\SlackEventProcessor;
+
 // Port từ refs/chatwoot/config/integration/apps.yml (bỏ nhánh enterprise).
 // Thuộc tính:
 //   id/logo/i18n_key/action/hook_type/allow_multiple_hooks/visible_properties/
@@ -45,6 +49,7 @@ return [
             ['label' => 'Show label suggestions', 'type' => 'checkbox', 'name' => 'label_suggestion', 'validation' => ''],
         ],
         'visible_properties' => ['label_suggestion'],
+        'credential_validator' => KeyValidator::class,
     ],
     'linear' => [
         'id' => 'linear',
@@ -76,6 +81,7 @@ return [
         'allow_multiple_hooks' => false,
         'visible_properties' => ['channel_name'],
         'requires_config' => ['SLACK_CLIENT_SECRET'],
+        'event_processor' => SlackEventProcessor::class,
     ],
     'dialogflow' => [
         'id' => 'dialogflow',
@@ -158,6 +164,7 @@ return [
             ],
         ],
         'visible_properties' => ['project_id', 'region', 'language_code'],
+        'event_processor' => EventProcessor::class,
     ],
     'google_translate' => [
         'id' => 'google_translate',
@@ -193,6 +200,7 @@ return [
             ],
         ],
         'visible_properties' => ['project_id'],
+        'event_processor' => App\Services\Integrations\GoogleTranslate\EventProcessor::class,
     ],
     'dyte' => [
         'id' => 'dyte',

@@ -2,8 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Integrations\HookResource;
 use App\Models\Account;
+use App\Models\Integrations\Hook;
 use App\Support\Integrations\App;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,6 +18,7 @@ class IntegrationAppResource extends JsonResource
         App $resource,
         private readonly Account $account,
         private readonly bool $administrator,
+        private readonly ?Collection $accountHooks = null,
     ) {
         parent::__construct($resource);
     }
@@ -35,17 +39,27 @@ class IntegrationAppResource extends JsonResource
                 'action' => $app->action(),
                 'button' => $app->action(),
             ] : []),
-            // Bảng hooks thuộc nhóm F — chưa có hook nào để trả.
-            'hooks' => [],
+            'hooks' => HookResource::collectionFor($this->hooksOf($app), $this->administrator),
         ];
     }
 
     /** @param iterable<App> $apps */
     public static function collectionFor(iterable $apps, Account $account, bool $administrator): array
     {
+        // Một lượt truy vấn cho cả danh mục thay vì mỗi app một lượt.
+        $accountHooks = $account->hooks()->with('inbox')->get();
+
         return collect($apps)
-            ->map(fn (App $app) => (new self($app, $account, $administrator))->toArray(request()))
+            ->map(fn (App $app) => (new self($app, $account, $administrator, $accountHooks))->toArray(request()))
             ->values()
             ->all();
+    }
+
+    /** @return Collection<int, Hook> */
+    private function hooksOf(App $app): Collection
+    {
+        return ($this->accountHooks ?? $this->account->hooks()->with('inbox')->get())
+            ->where('app_id', $app->id())
+            ->values();
     }
 }

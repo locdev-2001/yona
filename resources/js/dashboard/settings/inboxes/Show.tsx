@@ -155,6 +155,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
 
     const isWebWidget = inbox?.channel_type === INBOX_TYPES.WEB;
     const isApiInbox = inbox?.channel_type === INBOX_TYPES.API;
+    const isEmailChannel = inbox?.channel_type === INBOX_TYPES.EMAIL;
+    // inboxName của Settings.vue: kênh email hiện kèm địa chỉ thư.
+    const inboxHeaderTitle = isEmailChannel ? `${inbox?.name} (${inbox?.email})` : (inbox?.name ?? '');
     const tabKeys = useMemo(() => tabKeysFor(Boolean(isWebWidget)), [isWebWidget]);
     const selectedTabIndex = Math.max(tabKeys.indexOf(selectedTabKey), 0);
 
@@ -280,7 +283,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         <Dashboard>
             <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
                 <div className="grid grid-rows-[auto_1fr] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
-                    <SettingIntroBanner headerTitle={inbox.name}>
+                    <SettingIntroBanner headerTitle={inboxHeaderTitle}>
                         <Tabs
                             className="[&_ul]:p-0 top-px relative"
                             items={tabs}
@@ -411,7 +414,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                             />
                                         ) : null}
 
-                                        {isWebWidget ? (
+                                        {isWebWidget || isEmailChannel ? (
                                             <SettingsFieldSection
                                                 label={t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.TITLE')}
                                                 className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"
@@ -419,7 +422,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                     <SenderNameExamplePreview
                                                         senderNameType={senderNameType}
                                                         businessName={businessName}
-                                                        isWebsiteChannel
+                                                        isWebsiteChannel={isWebWidget}
                                                         onUpdate={setSenderNameType}
                                                     />
                                                 }
