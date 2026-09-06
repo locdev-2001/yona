@@ -46,11 +46,22 @@ function useChannelQrCode(platform: string, identifier: string | null | undefine
     return dataUrl;
 }
 
-function QrCodeBlock({ instruction, dataUrl, alt }: { instruction: string; dataUrl: string; alt: string }) {
+// Khối QR của WhatsApp/Messenger dùng gap-3, của Telegram dùng gap-4 (đúng bản gốc).
+function QrCodeBlock({
+    instruction,
+    dataUrl,
+    alt,
+    gapClass = 'gap-3',
+}: {
+    instruction: string;
+    dataUrl: string;
+    alt: string;
+    gapClass?: string;
+}) {
     if (!dataUrl) return null;
 
     return (
-        <div className="flex flex-col gap-3 items-center mt-8">
+        <div className={`flex flex-col ${gapClass} items-center mt-8`}>
             <p className="mt-2 text-sm text-n-slate-9">{instruction}</p>
             <div className="rounded-lg shadow outline-1 outline-n-strong outline">
                 <img src={dataUrl} alt={alt} className="rounded-lg size-48 dark:invert" />
@@ -165,6 +176,7 @@ export default function FinishSetup({ inboxId }: FinishSetupProps) {
                                         instruction={t('INBOX_MGMT.FINISH.TELEGRAM_QR_INSTRUCTION')}
                                         dataUrl={telegramQr}
                                         alt="Telegram QR Code"
+                                        gapClass="gap-4"
                                     />
                                 ) : null}
                                 <div className="flex gap-2 justify-center mt-4">

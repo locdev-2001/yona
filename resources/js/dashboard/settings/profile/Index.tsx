@@ -158,6 +158,8 @@ export default function ProfileSettingsIndex() {
         try {
             await updateUISettings({ locale: locale || null });
             useAlert(t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.UPDATE_SUCCESS'));
+            // Bundle ngôn ngữ nạp lúc khởi động: nạp lại trang để toàn bộ giao diện đổi ngữ.
+            window.location.reload();
         } catch {
             useAlert(t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.UPDATE_ERROR'));
         }

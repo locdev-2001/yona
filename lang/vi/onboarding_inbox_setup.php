@@ -1,0 +1,64 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/onboarding_inbox_setup.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'GREETING' => 'Cùng thiết lập vài thứ nào',
+    'SUBTITLE' => 'Việc này giúp bạn bắt nhịp nhanh hơn trong không gian làm việc',
+    'CONTINUE' => 'Tiếp tục',
+    'SKIP' => 'Bỏ qua',
+    'ERROR' => 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    'WHATSAPP_CONNECTED' => 'Đã kết nối WhatsApp',
+    'FACEBOOK_CONNECTED' => 'Đã kết nối Facebook',
+    'META_RESTRICTION' => [
+        'MESSAGE' => 'Tạm thời chưa thiết lập được hộp thư Facebook, Instagram và WhatsApp do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+        'STATUS_LINK' => 'Xem cập nhật tình trạng',
+    ],
+    'CREATED_FOR_YOU' => [
+        'TITLE' => 'Chúng tôi đã tạo sẵn cho bạn',
+        'LIVE_CHAT' => 'Widget chat trực tuyến',
+        'LIVE_CHAT_DESCRIPTION' => 'Khung nhắn tin ngay trên website của bạn',
+        'LIVE_CHAT_STATUS' => 'Sắp xong…',
+        'LIVE_CHAT_READY' => 'Sẵn sàng',
+        'HELP_CENTER' => 'Trung tâm trợ giúp',
+        'HELP_CENTER_DESCRIPTION' => 'Bách khoa toàn thư của riêng bạn',
+        'HELP_CENTER_GENERATING' => 'Đang tạo trung tâm trợ giúp…',
+        'HELP_CENTER_ANALYZING_WEBSITE' => 'Đang phân tích website của bạn…',
+        'HELP_CENTER_SETTING_UP_CATEGORIES' => 'Đang dựng danh mục…',
+        'HELP_CENTER_CURATING_ARTICLES' => 'Đang chọn lọc bài viết…',
+        'HELP_CENTER_ARTICLES' => 'Đã tạo {count} bài viết | Đã tạo {count} bài viết',
+        'HELP_CENTER_CATEGORIES' => '{count} danh mục | {count} danh mục',
+        'HELP_CENTER_SUMMARY' => 'Đã tạo {count} bài viết trong {categories} | Đã tạo {count} bài viết trong {categories}',
+    ],
+    'CHANNELS' => [
+        'TITLE' => 'Kết nối mọi kênh hội thoại của bạn',
+        'HEADER' => 'Chúng tôi tìm thấy vài kênh bạn có thể kết nối',
+        'CONNECT' => 'Kết nối',
+        'CONNECTED' => 'Đã kết nối',
+        'MORE_CHANNELS_NOTE' => 'Bạn có thể thiết lập kênh {email} và {voice} sau, ngay trong ứng dụng',
+        'MORE_CHANNELS_EMAIL' => 'Email',
+        'MORE_CHANNELS_VOICE' => 'Thoại',
+        'VIEW_ALL' => 'Xem tất cả',
+        'GMAIL' => 'Gmail',
+        'OUTLOOK' => 'Outlook',
+        'OTHER_EMAIL' => 'Nhà cung cấp email khác',
+    ],
+    'CHANNELS_DIALOG' => [
+        'TITLE' => 'Kết nối mọi kênh chỉ trong nháy mắt',
+        'SUBTITLE' => 'Quản lý tất cả từ một bảng điều khiển. Bạn cũng có thể tạo và sửa hộp thư sau, ngay trong ứng dụng.',
+        'NOTE' => 'SMS, API, Thoại và các nhà cung cấp email khác có thể thiết lập sau từ bảng điều khiển.',
+        'CONNECT_TITLE' => 'Kết nối tài khoản {name} của bạn',
+        'CONNECT_SUBTITLE' => 'Điền nhanh vài thông tin này',
+        'CONNECT' => 'Kết nối',
+        'BACK' => 'Trờ về',
+        'SETUP_LATER' => 'Thiết lập sau trong ứng dụng',
+        'FACEBOOK_SUBTITLE' => 'Cấp quyền truy cập và chọn một Trang để kết nối.',
+        'FACEBOOK_LAUNCH' => 'Tiếp tục với Facebook',
+        'FACEBOOK_SELECT_PAGE' => 'Chọn một Trang để kết nối',
+        'FACEBOOK_LOADING' => 'Đang tải các Trang Facebook của bạn…',
+        'FACEBOOK_NO_PAGES' => 'Không có Trang nào để kết nối. Mọi Trang của bạn đã được kết nối rồi.',
+        'FACEBOOK_ERROR' => 'Không kết nối được Facebook. Bạn hãy thử lại.',
+    ],
+];

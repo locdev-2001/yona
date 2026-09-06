@@ -1,0 +1,64 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/contacts_filter.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'TITLE' => 'Lọc liên hệ',
+    'SUBTITLE' => 'Thêm bộ lọc bên dưới và ấn \'áp dụng bộ lọc\' để lọc liên hệ.',
+    'EDIT_CUSTOM_SEGMENT' => 'Sửa nhóm khách',
+    'CUSTOM_VIEWS_SUBTITLE' => 'Thêm hoặc bớt bộ lọc rồi cập nhật nhóm khách của bạn.',
+    'ADD_NEW_FILTER' => 'Thêm Bộ lọc',
+    'CLEAR_ALL_FILTERS' => 'Xoá tất cả bộ lọc',
+    'FILTER_DELETE_ERROR' => 'Bạn nên có ít nhất 1 bộ lọc để lưu',
+    'SUBMIT_BUTTON_LABEL' => 'Gửi',
+    'UPDATE_BUTTON_LABEL' => 'Cập nhật nhóm khách',
+    'CANCEL_BUTTON_LABEL' => 'Huỷ',
+    'CLEAR_BUTTON_LABEL' => 'Xoá bộ lọc',
+    'EMPTY_VALUE_ERROR' => 'Giá trị bắt buộc có',
+    'SEGMENT_LABEL' => 'Tên nhóm khách',
+    'SEGMENT_QUERY_LABEL' => 'Điều kiện nhóm khách',
+    'TOOLTIP_LABEL' => 'Lọc liên hệ',
+    'QUERY_DROPDOWN_LABELS' => [
+        'AND' => 'VÀ',
+        'OR' => 'HOẶC',
+    ],
+    'OPERATOR_LABELS' => [
+        'equal_to' => 'Bằng',
+        'not_equal_to' => 'Không bằng',
+        'contains' => 'Bao gồm',
+        'does_not_contain' => 'Không bao gồm',
+        'is_present' => 'Có',
+        'is_not_present' => 'Không có',
+        'is_greater_than' => 'Lớn hơn',
+        'is_lesser_than' => 'Nhỏ hơn',
+        'days_before' => 'Khoảng x ngày trước',
+    ],
+    'ERRORS' => [
+        'VALUE_REQUIRED' => 'Giá trị bắt buộc có',
+    ],
+    'ATTRIBUTES' => [
+        'NAME' => 'Tên',
+        'EMAIL' => 'Thư điện tử',
+        'PHONE_NUMBER' => 'Số Điện Thoại',
+        'IDENTIFIER' => 'Định danh',
+        'CITY' => 'Tỉnh / Thành phố',
+        'COUNTRY' => 'Quốc gia',
+        'CUSTOM_ATTRIBUTE_LIST' => 'Danh sách',
+        'CUSTOM_ATTRIBUTE_TEXT' => 'Văn bản',
+        'CUSTOM_ATTRIBUTE_NUMBER' => 'Số',
+        'CUSTOM_ATTRIBUTE_LINK' => 'Liên kết',
+        'CUSTOM_ATTRIBUTE_CHECKBOX' => 'Ô đánh dấu',
+        'CREATED_AT' => 'Tạo vào lúc',
+        'LAST_ACTIVITY' => 'Hành động cuối cùng',
+        'REFERER_LINK' => 'Liên kết người gới thiệu',
+        'BLOCKED' => 'Đã chặn',
+        'LABELS' => 'Nhãn',
+    ],
+    'GROUPS' => [
+        'STANDARD_FILTERS' => 'Bộ lọc tiêu chuẩn',
+        'ADDITIONAL_FILTERS' => 'Bộ lọc bổ sung',
+        'CUSTOM_ATTRIBUTES' => 'Thuộc tính tùy chỉnh',
+    ],
+];

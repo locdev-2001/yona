@@ -89,9 +89,22 @@ class ChannelSetupService
         $profile = $client->getMe();
 
         if ($profile->successful() && filled($profile->json('result.username'))) {
-            $channel->forceFill(['bot_name' => $profile->json('result.username')])->save();
+            $botName = (string) $profile->json('result.username');
+            $channel->forceFill(['bot_name' => $botName])->save();
+
+            // Api::V1::InboxesHelper#inbox_name — inbox Telegram mang tên bot khi
+            // người dùng không tự đặt.
+            if (blank($inbox->name)) {
+                $inbox->forceFill(['name' => $botName])->save();
+            }
         } else {
             Log::error('[CHANNEL SETUP] Telegram getMe thất bại cho inbox '.$inbox->id);
+
+            // Bản gốc chặn hẳn việc tạo kênh khi token sai; ở đây lỗi nhà cung cấp
+            // không chặn tạo inbox nên phải có tên dự phòng.
+            if (blank($inbox->name)) {
+                $inbox->forceFill(['name' => $channel->name()])->save();
+            }
         }
 
         $response = $client->setWebhook((string) self::callbackUrlFor($inbox));

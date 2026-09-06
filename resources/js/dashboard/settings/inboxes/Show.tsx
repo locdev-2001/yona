@@ -77,14 +77,45 @@ const FEATURE_FLAG_LABELS: Record<string, string> = {
     use_inbox_avatar_for_bot: 'INBOX_MGMT.FEATURES.USE_INBOX_AVATAR_FOR_BOT',
 };
 
-function tabKeysFor(isWebWidget: boolean): string[] {
+// tabs() của Settings.vue: tab Configuration chỉ có ở các kênh khai báo webhook
+// (Twilio/Line/API/Email tự cấu hình/WhatsApp Cloud/Web widget). Zalo là kênh
+// riêng của Yona, giữ tab như trước.
+const CONFIGURATION_TAB_CHANNELS: string[] = [
+    INBOX_TYPES.TWILIO,
+    INBOX_TYPES.LINE,
+    INBOX_TYPES.API,
+    INBOX_TYPES.WEB,
+    INBOX_TYPES.ZALO,
+];
+
+// canLocktoSingleConversation của Settings.vue.
+const LOCK_TO_SINGLE_CONVERSATION_CHANNELS: string[] = [
+    INBOX_TYPES.SMS,
+    INBOX_TYPES.TWILIO,
+    INBOX_TYPES.WHATSAPP,
+    INBOX_TYPES.FB,
+    INBOX_TYPES.API,
+    INBOX_TYPES.INSTAGRAM,
+    INBOX_TYPES.LINE,
+    INBOX_TYPES.TIKTOK,
+    INBOX_TYPES.TELEGRAM,
+];
+
+function hasConfigurationTab(channelType: string, provider: string | null | undefined): boolean {
+    if (channelType === INBOX_TYPES.EMAIL) return !provider;
+    if (channelType === INBOX_TYPES.WHATSAPP) return provider === 'whatsapp_cloud';
+
+    return CONFIGURATION_TAB_CHANNELS.includes(channelType);
+}
+
+function tabKeysFor(channelType: string, provider: string | null | undefined): string[] {
     return [
         'inbox-settings',
         'collaborators',
         'business-hours',
         'csat',
-        ...(isWebWidget ? ['pre-chat-form'] : []),
-        'configuration',
+        ...(channelType === INBOX_TYPES.WEB ? ['pre-chat-form'] : []),
+        ...(hasConfigurationTab(channelType, provider) ? ['configuration'] : []),
         'bot-configuration',
     ];
 }
@@ -149,7 +180,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     useEffect(() => {
         void getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`).then(nextInbox => {
             syncInboxData(nextInbox);
-            const tabKeys = tabKeysFor(nextInbox.channel_type === INBOX_TYPES.WEB);
+            const tabKeys = tabKeysFor(nextInbox.channel_type, nextInbox.provider);
             setSelectedTabKey(tabKeys.includes(requestedTab) ? requestedTab : 'inbox-settings');
         });
     }, [accountId, inboxId, requestedTab]);
@@ -160,7 +191,13 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const isZaloChannel = inbox?.channel_type === INBOX_TYPES.ZALO;
     // inboxName của Settings.vue: kênh email hiện kèm địa chỉ thư.
     const inboxHeaderTitle = isEmailChannel ? `${inbox?.name} (${inbox?.email})` : (inbox?.name ?? '');
-    const tabKeys = useMemo(() => tabKeysFor(Boolean(isWebWidget)), [isWebWidget]);
+    const tabKeys = useMemo(
+        () => tabKeysFor(inbox?.channel_type ?? '', inbox?.provider),
+        [inbox?.channel_type, inbox?.provider],
+    );
+    const canLockToSingleConversation = LOCK_TO_SINGLE_CONVERSATION_CHANNELS.includes(
+        inbox?.channel_type ?? '',
+    );
     const selectedTabIndex = Math.max(tabKeys.indexOf(selectedTabKey), 0);
 
     const tabs: TabItem[] = useMemo(
@@ -411,7 +448,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                             />
                                         </SettingsFieldSection>
 
-                                        {isApiInbox ? (
+                                        {canLockToSingleConversation ? (
                                             <SettingsFieldSection
                                                 label={t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION')}
                                                 className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"

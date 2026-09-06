@@ -909,6 +909,7 @@ const messages: Record<string, unknown> = {
             "REMOVE_ASSIGNED_TEAM": "Remove Assigned Team",
             "ADD_LABEL": "Add a Label",
             "REMOVE_LABEL": "Remove a Label",
+            "SEND_EMAIL_TO_TEAM": "Send an Email to Team",
             "SEND_MESSAGE": "Send a Message",
             "ADD_PRIVATE_NOTE": "Add a Private Note",
             "MUTE_CONVERSATION": "Mute Conversation",

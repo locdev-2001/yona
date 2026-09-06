@@ -1,0 +1,151 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/attributes_mgmt.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'HEADER' => 'Thuộc tính tùy chỉnh',
+    'HEADER_BTN_TXT' => 'Thêm thuộc tính Tùy chỉnh',
+    'LOADING' => 'Đang lấy thuộc tính tuỳ chỉnh',
+    'DESCRIPTION' => 'A custom attribute tracks additional details about your contacts or conversations—such as the subscription plan or the date of their first purchase. You can add different types of custom attributes, such as text, lists, or numbers, to capture the specific information you need.',
+    'LEARN_MORE' => 'Tìm hiểu thêm về thuộc tính tùy chỉnh',
+    'COUNT' => '{n} thuộc tính | {n} thuộc tính',
+    'SEARCH_PLACEHOLDER' => 'Tìm kiếm nhiều thuộc tính...',
+    'NO_RESULTS' => 'Không tìm thấy thuộc tính nào khớp',
+    'ATTRIBUTE_MODELS' => [
+        'CONVERSATION' => 'Hội thoại',
+        'CONTACT' => 'Liên hệ',
+        'COMPANY' => 'Công ty',
+    ],
+    'ATTRIBUTE_TYPES' => [
+        'TEXT' => 'Văn bản',
+        'NUMBER' => 'Số',
+        'LINK' => 'Liên kết',
+        'DATE' => 'Ngày',
+        'LIST' => 'Danh sách',
+        'CHECKBOX' => 'Hộp kiểm',
+    ],
+    'ADD' => [
+        'TITLE' => 'Thêm thuộc tính Tùy chỉnh',
+        'SUBMIT' => 'Tạo',
+        'CANCEL_BUTTON_TEXT' => 'Huỷ',
+        'FORM' => [
+            'NAME' => [
+                'LABEL' => 'Tên hiển thị',
+                'PLACEHOLDER' => 'Nhập tên hiển thị của thuộc tính tuỳ chỉnh',
+                'ERROR' => 'Tên bắt buộc có',
+            ],
+            'DESC' => [
+                'LABEL' => 'Mô tả',
+                'PLACEHOLDER' => 'Điền mô tả của thuộc tính tuỳ chỉnh',
+                'ERROR' => 'Mô tả bắt buộc có',
+            ],
+            'MODEL' => [
+                'LABEL' => 'Áp dụng cho',
+                'PLACEHOLDER' => 'Vui lòng chọn một',
+                'ERROR' => 'Mô hình bắt buộc có',
+            ],
+            'TYPE' => [
+                'LABEL' => 'Kiểu',
+                'PLACEHOLDER' => 'Vui lòng chọn một kiểu',
+                'ERROR' => 'Kiểu bắt buộc có',
+                'LIST' => [
+                    'LABEL' => 'Giá trị của danh sách',
+                    'PLACEHOLDER' => 'Vui lòng nhập giá trị và ấn phím enter',
+                    'ERROR' => 'Phải có ít nhất 1 giá trị',
+                ],
+            ],
+            'KEY' => [
+                'LABEL' => 'Khóa',
+                'PLACEHOLDER' => 'Nhập khóa của thuộc tính tuỳ chỉnh',
+                'ERROR' => 'Cần có khóa',
+                'IN_VALID' => 'Khóa không hợp lệ',
+            ],
+            'REGEX_PATTERN' => [
+                'LABEL' => 'Mẫu regex',
+                'PLACEHOLDER' => 'Bạn hãy nhập mẫu regex cho thuộc tính tùy chỉnh. (Không bắt buộc)',
+            ],
+            'REGEX_CUE' => [
+                'LABEL' => 'Gợi ý regex',
+                'PLACEHOLDER' => 'Bạn hãy nhập gợi ý cho mẫu regex. (Không bắt buộc)',
+            ],
+            'ENABLE_REGEX' => [
+                'LABEL' => 'Bật kiểm tra bằng regex',
+            ],
+            'BADGES' => [
+                'PRE_CHAT' => 'Trước chat',
+                'RESOLUTION' => 'Khi xử lý xong',
+            ],
+        ],
+        'API' => [
+            'SUCCESS_MESSAGE' => 'Thuộc tính tuỳ chỉnh được thêm thành công!',
+            'ERROR_MESSAGE' => 'Không tạo được thuộc tính tùy chỉnh. Bạn hãy thử lại sau.',
+        ],
+    ],
+    'DELETE' => [
+        'BUTTON_TEXT' => 'Xoá',
+        'API' => [
+            'SUCCESS_MESSAGE' => 'Thuộc tính tuỳ chỉnh bị xoá thành công.',
+            'ERROR_MESSAGE' => 'Không thể xoá thuộc tính tuỳ chỉnh. Thử lại.',
+        ],
+        'CONFIRM' => [
+            'TITLE' => 'Bạn có chắc muốn xoá - {attributeName}',
+            'PLACE_HOLDER' => 'Vui lòng điền {attributeName} để xác nhận',
+            'MESSAGE' => 'Xoá sẽ loại bỏ thuộc tính tuỳ chỉnh',
+            'YES' => 'Xoá ',
+            'NO' => 'Huỷ',
+        ],
+    ],
+    'EDIT' => [
+        'TITLE' => 'Sửa Thuộc tính Tùy chỉnh',
+        'UPDATE_BUTTON_TEXT' => 'Cập nhật',
+        'TYPE' => [
+            'LIST' => [
+                'LABEL' => 'Giá trị của danh sách',
+                'PLACEHOLDER' => 'Vui lòng nhập giá trị và ấn phím enter',
+            ],
+        ],
+        'API' => [
+            'SUCCESS_MESSAGE' => 'Thuộc tính tuỳ chỉnh được sửa thành công',
+            'ERROR_MESSAGE' => 'Đã xảy ra lỗi khi cập nhật thuộc tính tuỳ chỉnh, vui lòng thử lại',
+        ],
+    ],
+    'TABS' => [
+        'HEADER' => 'Thuộc tính tùy chỉnh',
+        'CONVERSATION' => 'Hội thoại',
+        'CONTACT' => 'Liên lạc',
+        'COMPANY' => 'Công ty',
+    ],
+    'LIST' => [
+        'TABLE_HEADER' => [
+            'NAME' => 'Tên',
+            'DESCRIPTION' => 'Mô tả',
+            'TYPE' => 'Kiểu',
+            'KEY' => 'Khóa',
+        ],
+        'BUTTONS' => [
+            'EDIT' => 'Chỉnh sửa',
+            'DELETE' => 'Xoá',
+        ],
+        'EMPTY_RESULT' => [
+            '404' => 'Không có thuộc tính tuỳ chỉnh nào được tạo',
+            'NOT_FOUND' => 'Không có thuộc tính tuỳ chỉnh nào được cấu hình',
+        ],
+        'REGEX_PATTERN' => [
+            'LABEL' => 'Mẫu regex',
+            'PLACEHOLDER' => 'Bạn hãy nhập mẫu regex cho thuộc tính tùy chỉnh. (Không bắt buộc)',
+        ],
+        'REGEX_CUE' => [
+            'LABEL' => 'Gợi ý regex',
+            'PLACEHOLDER' => 'Bạn hãy nhập gợi ý cho mẫu regex. (Không bắt buộc)',
+        ],
+        'ENABLE_REGEX' => [
+            'LABEL' => 'Bật kiểm tra bằng regex',
+        ],
+    ],
+    'BADGES' => [
+        'PRE_CHAT' => 'Trước chat',
+        'RESOLUTION' => 'Khi xử lý xong',
+    ],
+];

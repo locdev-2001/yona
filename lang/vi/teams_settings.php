@@ -1,0 +1,129 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/teams_settings.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'NEW_TEAM' => 'Tạo nhóm mới',
+    'HEADER' => 'Nhóm',
+    'LOADING' => 'Đang tải danh sách nhóm',
+    'DESCRIPTION' => 'Nhóm giúp bạn sắp xếp nhân viên theo trách nhiệm công việc. Một nhân viên có thể thuộc nhiều nhóm. Khi làm việc cùng nhau, bạn có thể giao hội thoại cho một nhóm cụ thể.',
+    'LEARN_MORE' => 'Tìm hiểu thêm về nhóm',
+    'COUNT' => '{n} nhóm | {n} nhóm',
+    'SEARCH_PLACEHOLDER' => 'Tìm kiếm nhóm...',
+    'NO_RESULTS' => 'Không tìm thấy nhóm nào khớp',
+    'LIST' => [
+        '404' => 'Không có nhóm nào được tạo đối với tài khoản này.',
+        'EDIT_TEAM' => 'Sửa nhóm',
+        'NONE' => 'Không có',
+    ],
+    'CREATE_FLOW' => [
+        'CREATE' => [
+            'TITLE' => 'Tạo nhóm mới',
+            'DESC' => 'Thêm tiêu đề và mô tả cho nhóm mới.',
+        ],
+        'AGENTS' => [
+            'BUTTON_TEXT' => 'Thêm nhân viên vào nhóm',
+            'TITLE' => 'Thêm nhân viên vào nhóm - {teamName}',
+            'DESC' => 'Thêm Nhân viên vào nhóm mới tạo của bạn. Điều này cho phép bạn cộng tác như một nhóm trong các hội thoại, nhận thông báo về các sự kiện mới trong cùng một hội thoại.',
+        ],
+        'WIZARD_CREATE' => [
+            'TITLE' => 'Tạo',
+            'BODY' => 'Tạo ra một nhóm nhân viên mới.',
+        ],
+        'WIZARD_ADD_AGENTS' => [
+            'TITLE' => 'Thêm nhân viên',
+            'BODY' => 'Thêm nhân viên vào nhóm.',
+        ],
+        'WIZARD_FINISH' => [
+            'TITLE' => 'Hoàn tất',
+            'BODY' => 'Bạn đã sẵn sàng để đi!',
+        ],
+    ],
+    'EDIT_FLOW' => [
+        'CREATE' => [
+            'TITLE' => 'Sửa chi tiết nhóm',
+            'DESC' => 'Sửa tiêu đề và mô tả cho nhóm.',
+            'BUTTON_TEXT' => 'Cập nhật nhóm',
+        ],
+        'AGENTS' => [
+            'BUTTON_TEXT' => 'Cập nhật nhân viên trong nhóm',
+            'TITLE' => 'Thêm nhân viên vào nhóm - {teamName}',
+            'DESC' => 'Thêm Nhân viên vào nhóm mới tạo của bạn. Tất cả các nhân viên được thêm vào sẽ nhận được thông báo khi có hội thoại được phân công cho nhóm này.',
+        ],
+        'EDIT_WIZARD_DETAILS' => [
+            'TITLE' => 'Chi tiết nhóm',
+            'ROUTE' => 'settings_teams_edit',
+            'BODY' => 'Đổi tên, mô tả và các chi tiết khác.',
+        ],
+        'EDIT_WIZARD_AGENTS' => [
+            'TITLE' => 'Sửa nhân viên',
+            'ROUTE' => 'settings_teams_edit_members',
+            'BODY' => 'Sửa nhân viên trong nhóm của bạn.',
+        ],
+        'EDIT_WIZARD_FINISH' => [
+            'TITLE' => 'Hoàn tất',
+            'ROUTE' => 'settings_teams_edit_finish',
+            'BODY' => 'Bạn đã sẵn sàng để đi!',
+        ],
+    ],
+    'TEAM_FORM' => [
+        'ERROR_MESSAGE' => 'Không thể lưu chi tiết nhóm. Thử lại.',
+    ],
+    'AGENTS' => [
+        'AGENT' => 'Nhân viên',
+        'EMAIL' => 'Email',
+        'BUTTON_TEXT' => 'Thêm các nhà cung cấp',
+        'ADD_AGENTS' => 'Thêm nhân viên vào nhóm của bạn...',
+        'SELECT' => 'chọn',
+        'SELECT_ALL' => 'chọn tất cả nhân viên',
+        'SELECTED_COUNT' => '{selected} trên {total} nhân viên được chọn.',
+    ],
+    'ADD' => [
+        'TITLE' => 'Thêm nhân viên vào nhóm - {teamName}',
+        'DESC' => 'Thêm Nhân viên vào nhóm mới tạo của bạn. Điều này cho phép bạn cộng tác như một nhóm trong các hội thoại, nhận thông báo về các sự kiện mới trong cùng một hội thoại.',
+        'SELECT' => 'chọn',
+        'SELECT_ALL' => 'chọn tất cả nhân viên',
+        'SELECTED_COUNT' => '{selected} trên {total} nhân viên được chọn.',
+        'BUTTON_TEXT' => 'Thêm các nhà cung cấp',
+        'AGENT_VALIDATION_ERROR' => 'Chọn ít nhật một nhân viên.',
+    ],
+    'FINISH' => [
+        'TITLE' => 'Nhóm của bạn đã sẵn sàng!',
+        'MESSAGE' => 'Giờ đây, bạn có thể cộng tác với tư cách là một nhóm trong các hội thoại. Chúc ủng hộ vui vẻ ',
+        'BUTTON_TEXT' => 'Hoàn tất',
+    ],
+    'DELETE' => [
+        'BUTTON_TEXT' => 'Xoá',
+        'API' => [
+            'SUCCESS_MESSAGE' => 'Nhóm được xoá thành công.',
+            'ERROR_MESSAGE' => 'Không thể xoá nhóm. Thử lại.',
+        ],
+        'CONFIRM' => [
+            'TITLE' => 'Bạn chắc chắn muốn xóa nhóm này?',
+            'PLACE_HOLDER' => 'Vui lòng điền {teamName} để xác nhận',
+            'MESSAGE' => 'Xóa nhóm sẽ xóa phân công nhóm khỏi các hội thoại được phân công cho nhóm này.',
+            'YES' => 'Xoá ',
+            'NO' => 'Huỷ',
+        ],
+    ],
+    'SETTINGS' => 'Cài đặt',
+    'FORM' => [
+        'UPDATE' => 'Cập nhật nhóm',
+        'CREATE' => 'Tạo nhóm',
+        'NAME' => [
+            'LABEL' => 'Tên nhóm',
+            'PLACEHOLDER' => 'Ví dụ: Bán hàng, Hỗ trợ khách hàng',
+            'ERROR' => 'Tên nhóm là bắt buộc và phải dài ít nhất 2 ký tự',
+        ],
+        'DESCRIPTION' => [
+            'LABEL' => 'Mô tả nhóm',
+            'PLACEHOLDER' => 'Mô tả ngắn về nhóm này.',
+        ],
+        'AUTO_ASSIGN' => [
+            'LABEL' => 'Cho phép tự động phân công đối với nhóm này.',
+        ],
+        'SUBMIT_CREATE' => 'Tạo nhóm',
+    ],
+];
