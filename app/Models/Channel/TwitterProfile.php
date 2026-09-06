@@ -2,6 +2,8 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwitterProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/twitter_profile.rb — CHỈ khung (đăng ký
 // kênh + CRC webhook). Gem Twitty và luồng gửi/nhận DM chưa port, xem note F2-F5.
-class TwitterProfile extends Model
+class TwitterProfile extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<TwitterProfileFactory> */
     use Channelable, HasFactory;
@@ -46,5 +48,14 @@ class TwitterProfile extends Model
             'twitter_access_token' => ['required', 'string'],
             'twitter_access_token_secret' => ['required', 'string'],
         ];
+    }
+
+    /**
+     * Kênh Twitter của Chatwoot đã ngừng: không có driver tin đến lẫn tin đi trong
+     * bản port. Khai rỗng để UI không hiện gì thay vì hiện nút chết.
+     */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::none();
     }
 }

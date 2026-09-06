@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Message;
 use Database\Factories\Channel\TelegramFactory;
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/telegram.rb. Phần gọi Bot API nằm ở
 // App\Services\Telegram\TelegramClient (lõi model không nói chuyện HTTP).
-class Telegram extends Model
+class Telegram extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<TelegramFactory> */
     use Channelable, HasFactory;
@@ -85,5 +88,37 @@ class Telegram extends Model
     public function businessConnectionId(Message $message): mixed
     {
         return $message->conversation->additional_attributes['business_connection_id'] ?? null;
+    }
+
+    /**
+     * Bot API: ảnh/sticker/vị trí/danh thiếp vào lõi, gửi đi qua sendMediaGroup nên
+     * mọi đính kèm của một tin đều đi. Nhóm bị bỏ qua ở IncomingMessageService nên
+     * KHÔNG khai group_threads.
+     */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundSticker,
+            Capability::InboundLocation,
+            Capability::InboundContactCard,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::OutboundReplyTo,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionToken,
+        );
     }
 }

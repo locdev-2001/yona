@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -173,7 +173,7 @@ const ContactListHeaderWrapper = forwardRef<ContactListHeaderWrapperHandle, Cont
                 });
                 createSegmentDialogRef.current?.close();
                 useAlert(t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.CREATE_SEGMENT.SUCCESS_MESSAGE'));
-                window.location.assign(accountScopedUrl(accountId, `contacts/segments/${created.id}`));
+                router.visit(accountScopedUrl(accountId, `contacts/segments/${created.id}`));
             } catch {
                 useAlert(t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.CREATE_SEGMENT.ERROR_MESSAGE'));
             }
@@ -184,7 +184,7 @@ const ContactListHeaderWrapper = forwardRef<ContactListHeaderWrapperHandle, Cont
                 await deleteCustomView(accountId, segmentsId, 'contact');
                 deleteSegmentDialogRef.current?.close();
                 useAlert(t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.DELETE_SEGMENT.SUCCESS_MESSAGE'));
-                window.location.assign(accountScopedUrl(accountId, 'contacts'));
+                router.visit(accountScopedUrl(accountId, 'contacts'));
             } catch {
                 useAlert(t('CONTACTS_LAYOUT.HEADER.ACTIONS.FILTERS.DELETE_SEGMENT.ERROR_MESSAGE'));
             }

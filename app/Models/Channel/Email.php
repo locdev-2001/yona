@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\EmailFactory;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/email.rb (+ Channelable, Reauthorizable).
-class Email extends Model
+class Email extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -107,5 +110,32 @@ class Email extends Model
     public function isLegacyGoogle(): bool
     {
         return $this->imap_enabled && $this->imap_address === 'imap.gmail.com';
+    }
+
+    /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundRichText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::OutboundReplyTo,
+            Capability::ProfileName,
+            Capability::ProfileEmail,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionToken,
+            Capability::SessionReauth,
+        );
     }
 }

@@ -1782,6 +1782,101 @@ const messages: Record<string, unknown> = {
     "CONTACTS": {
         "online": {
             "delete": "{contact_name} is Online, please try again later"
+        },
+        "anonymous": {
+            "name": "Anonymous :animal",
+            "name_numbered": "Anonymous :animal :number",
+            "animals": [
+                "Raccoon",
+                "Panda",
+                "Red Panda",
+                "Koala",
+                "Polar Bear",
+                "Brown Bear",
+                "Squirrel",
+                "Flying Squirrel",
+                "Chipmunk",
+                "Rabbit",
+                "Hedgehog",
+                "Otter",
+                "Beaver",
+                "Ferret",
+                "Meerkat",
+                "Sloth",
+                "Platypus",
+                "Pangolin",
+                "Guinea Pig",
+                "Kangaroo",
+                "Red Fox",
+                "Arctic Fox",
+                "Tabby Cat",
+                "Kitten",
+                "Lynx",
+                "Puppy",
+                "Tiger Cub",
+                "Lion Cub",
+                "Snow Leopard",
+                "Jaguar",
+                "Golden Deer",
+                "Sika Deer",
+                "Giraffe",
+                "Reindeer",
+                "Antelope",
+                "Zebra",
+                "Lamb",
+                "Camel",
+                "Alpaca",
+                "Elephant",
+                "Hippo",
+                "Rhino",
+                "Dolphin",
+                "Blue Whale",
+                "Seal",
+                "Sea Lion",
+                "Sea Turtle",
+                "Starfish",
+                "Jellyfish",
+                "Octopus",
+                "Clownfish",
+                "Goldfish",
+                "Koi Fish",
+                "Pufferfish",
+                "Manta Ray",
+                "Coral",
+                "Sea Anemone",
+                "Sea Urchin",
+                "Owl",
+                "Penguin",
+                "Hummingbird",
+                "Dove",
+                "Pelican",
+                "Seagull",
+                "Flamingo",
+                "Swan",
+                "Mandarin Duck",
+                "Peacock",
+                "Skylark",
+                "Nightingale",
+                "Bulbul",
+                "White-eye",
+                "Magpie Robin",
+                "Red-crowned Crane",
+                "White Crane",
+                "Little Swallow",
+                "Eagle",
+                "Firefly",
+                "Ladybug",
+                "Dragonfly",
+                "Honeybee",
+                "Cricket",
+                "Praying Mantis",
+                "Weaver Ant",
+                "Grasshopper",
+                "Snail",
+                "Axolotl",
+                "Unicorn",
+                "Phoenix"
+            ]
         }
     },
     "CONTACTS_BULK_ACTIONS": {
@@ -2239,7 +2334,31 @@ const messages: Record<string, unknown> = {
             "CONTACT": "{sender} has shared a contact",
             "LOCATION": "{sender} has shared a location",
             "FILE": "{sender} has shared a file",
-            "MEETING": "{sender} has started a meeting"
+            "MEETING": "{sender} has started a meeting",
+            "BUSINESS_CARD": "{sender} has shared a contact card",
+            "BANK_CARD": "{sender} has shared a bank account",
+            "REMINDER": "{sender} has created a reminder"
+        },
+        "ZALO": {
+            "BUSINESS_CARD": {
+                "FALLBACK_NAME": "Contact card",
+                "VIEW_PROFILE": "View profile"
+            },
+            "BANK_CARD": {
+                "FALLBACK_NAME": "Bank account",
+                "COPY_ACCOUNT_NUMBER": "Copy account number",
+                "COPIED": "Copied"
+            },
+            "REMINDER": {
+                "FALLBACK_TITLE": "Reminder"
+            },
+            "CALL": {
+                "VOICE": "Voice call",
+                "VIDEO": "Video call",
+                "MISSED": "missed",
+                "BUSY": "busy",
+                "CANCELED": "canceled"
+            }
         },
         "UPLOADING_ATTACHMENTS": "Uploading attachments...",
         "REPLIED_TO_STORY": "Replied to your story",
@@ -2782,6 +2901,13 @@ const messages: Record<string, unknown> = {
             "ways_to_reach_you_message_body": "Give the team a way to reach you.",
             "email_input_box_message_body": "Get notified by email",
             "csat_input_message_body": "Please rate the conversation"
+        },
+        "messages": {
+            "deleted": "This message was deleted",
+            "business_card": "[Contact card]",
+            "bank_card": "[Bank account]",
+            "reminder": "[Reminder]",
+            "call": "[Call]"
         }
     },
     "COPILOT": {
@@ -3215,6 +3341,18 @@ const messages: Record<string, unknown> = {
             },
             "export": {
                 "success": "We will notify you once contacts export file is ready to view."
+            }
+        },
+        "zalo": {
+            "send": {
+                "circuit_open": "The Zalo connection keeps failing, sending is paused for a moment.",
+                "session_lost": "The Zalo session has ended, please scan the QR code again.",
+                "bridge_unreachable": "Could not reach the Zalo service, please try again in a moment.",
+                "secret_mismatch": "The Zalo service is misconfigured (send secret), please contact the administrator.",
+                "zalo_rejected": "Zalo refused this message (:detail).",
+                "media_fetch_failed": "The attachment could not be read to send (:detail).",
+                "unknown": "This message could not be sent to Zalo (:detail).",
+                "attachment_failed": "Could not send the file \":filename\": :reason"
             }
         },
         "custom_attribute_definition": {

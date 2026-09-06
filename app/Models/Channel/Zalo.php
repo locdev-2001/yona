@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Message;
 use Database\Factories\Channel\ZaloFactory;
@@ -15,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * `id` của bản ghi này chính là `connection_id` mà bridge dùng làm khóa slot.
  */
-class Zalo extends Model
+class Zalo extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<ZaloFactory> */
     use Channelable, HasFactory;
@@ -111,5 +114,45 @@ class Zalo extends Model
         }
 
         $this->update($attributes);
+    }
+
+    /**
+     * Zalo cá nhân — khai theo trạng thái driver hôm nay (App\Services\Zalo\*).
+     * Chưa khai: outbound media (SendOnZaloService mới gửi đính kèm ĐẦU TIÊN, nợ lô 3),
+     * outbound_reaction/recall (nợ lô 4), group_threads (nợ Q3), friend_request (nợ Q7).
+     */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundSticker,
+            Capability::InboundLocation,
+            Capability::InboundContactCard,
+            Capability::InboundBankCard,
+            Capability::InboundReminder,
+            Capability::InboundCallLog,
+            Capability::InboundLinkPreview,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundSticker,
+            Capability::OutboundReplyTo,
+            Capability::EventDelivered,
+            Capability::EventSeen,
+            Capability::EventReaction,
+            Capability::EventRecall,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::ProfileRefresh,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionQr,
+            Capability::SessionReauth,
+            Capability::Health,
+        );
     }
 }

@@ -51,6 +51,21 @@ return [
             'success' => 'We will notify you once contacts export file is ready to view.',
         ],
     ],
+    // Kênh Zalo cá nhân — lý do gửi hỏng, khớp `content_attributes.external_error.code`
+    // (App\Services\Zalo\SendOnZaloService). FE dùng `code` để chọn hành động,
+    // `message` để hiện cho agent.
+    'zalo' => [
+        'send' => [
+            'circuit_open' => 'The Zalo connection keeps failing, sending is paused for a moment.',
+            'session_lost' => 'The Zalo session has ended, please scan the QR code again.',
+            'bridge_unreachable' => 'Could not reach the Zalo service, please try again in a moment.',
+            'secret_mismatch' => 'The Zalo service is misconfigured (send secret), please contact the administrator.',
+            'zalo_rejected' => 'Zalo refused this message (:detail).',
+            'media_fetch_failed' => 'The attachment could not be read to send (:detail).',
+            'unknown' => 'This message could not be sent to Zalo (:detail).',
+            'attachment_failed' => 'Could not send the file ":filename": :reason',
+        ],
+    ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'must only contain letters, numbers, underscores, hyphens, and dots',
         'key_conflict' => 'The provided key is not allowed as it might conflict with default attributes.',

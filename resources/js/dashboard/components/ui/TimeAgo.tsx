@@ -58,8 +58,8 @@ export default function TimeAgo({
         return () => window.clearTimeout(timer);
     }, [lastActivityTimestamp, createdAtTimestamp, conversationId, isAutoRefreshEnabled]);
 
-    const lastActivityTime = shortTimestamp(lastActivityAtTimeAgo);
-    const createdAtTime = shortTimestamp(createdAtTimeAgo);
+    const lastActivityTime = shortTimestamp(lastActivityTimestamp);
+    const createdAtTime = shortTimestamp(createdAtTimestamp);
 
     const createdTimeDiff = Date.now() - createdAtTimestamp * 1000;
     const isBeforeAMonth = createdTimeDiff > DAY_IN_MILLI_SECONDS * 30;

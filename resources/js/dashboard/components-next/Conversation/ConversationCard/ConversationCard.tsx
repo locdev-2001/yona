@@ -10,7 +10,7 @@ import CardPriorityIcon from './CardPriorityIcon';
 import type { AccountLabel } from './CardLabels';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
-import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
+import { shortTimestamp } from 'shared/helpers/timeHelper';
 import type { Conversation, ContactMeta } from 'dashboard/conversation/types';
 
 // Port từ components-next/Conversation/ConversationCard/ConversationCard.vue.
@@ -34,7 +34,7 @@ export default function ConversationCard({
     className = '',
 }: ConversationCardProps) {
     const inboxIcon = getInboxIconByType(stateInbox?.channel_type ?? '', 'fill');
-    const lastActivityAt = conversation.timestamp ? shortTimestamp(dynamicTime(conversation.timestamp)) : '';
+    const lastActivityAt = conversation.timestamp ? shortTimestamp(conversation.timestamp) : '';
     const labelSet = new Set(conversation.labels ?? []);
     const hasVisibleLabels = (accountLabels ?? []).some(({ title }) => labelSet.has(title));
 

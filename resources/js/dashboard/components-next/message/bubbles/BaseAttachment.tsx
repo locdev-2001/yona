@@ -13,7 +13,8 @@ interface BaseAttachmentBubbleProps {
     senderTranslationKey: string;
     content: string;
     title?: string;
-    action: { label: string; href?: string; onClick?: () => void };
+    // `v-if="action"` bên gốc — bubble không có hành động nào thì bỏ hẳn nút.
+    action?: { label: string; href?: string; onClick?: () => void } | null;
     iconSlot?: ReactNode;
     children?: ReactNode;
 }
@@ -52,6 +53,7 @@ export default function BaseAttachmentBubble({
                         )}
                     </div>
                 </div>
+                {action ? (
                 <div className="mb-2">
                     {action.href ? (
                         <a
@@ -71,6 +73,7 @@ export default function BaseAttachmentBubble({
                         </button>
                     )}
                 </div>
+                ) : null}
             </div>
         </BaseBubble>
     );

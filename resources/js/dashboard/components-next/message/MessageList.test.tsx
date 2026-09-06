@@ -78,3 +78,24 @@ describe('MessageList private note inside a grouped outgoing run', () => {
         expect(lockIcon(container, 8)).toBeNull();
     });
 });
+
+// getInReplyToMessage của MessageList.vue gốc — khối trích dẫn lấy nội dung tin
+// được trả lời từ chính danh sách đang hiển thị.
+describe('MessageList in_reply_to', () => {
+    it('renders the quoted message preview above the bubble', () => {
+        const container = renderList([
+            message(10, { content: 'Gói Team 299k/tháng' }),
+            message(11, { content: 'Cho anh xin link nhé', content_attributes: { in_reply_to: 10 } }),
+        ]);
+
+        const quote = container.querySelector('#message11 .line-clamp-2');
+
+        expect(quote?.textContent).toContain('Gói Team 299k/tháng');
+    });
+
+    it('renders no quote block when in_reply_to points outside the list', () => {
+        const container = renderList([message(12, { content_attributes: { in_reply_to: 999 } })]);
+
+        expect(container.querySelector('#message12 .line-clamp-2')).toBeNull();
+    });
+});

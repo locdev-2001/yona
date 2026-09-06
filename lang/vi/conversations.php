@@ -66,4 +66,15 @@ return [
         'email_input_box_message_body' => 'Nhận thông báo qua email',
         'csat_input_message_body' => 'Bạn hãy vui lòng đánh giá hội thoại',
     ],
+
+    // config/locales/vi.yml — conversations.messages.deleted.
+    // Bốn nhãn dưới là phần mở rộng của Yona cho các loại tin riêng của Zalo,
+    // dùng lại đúng chữ Zalo hiện trong danh sách hội thoại.
+    'messages' => [
+        'deleted' => 'Tin nhắn đã bị xoá',
+        'business_card' => '[Danh thiếp]',
+        'bank_card' => '[Tài khoản ngân hàng]',
+        'reminder' => '[Nhắc hẹn]',
+        'call' => '[Cuộc gọi]',
+    ],
 ];

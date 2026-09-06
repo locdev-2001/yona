@@ -273,6 +273,15 @@ Cấm `Manager`, `Helper`, `Util`, `Handler` — chúng không nói vai trò gì
 3. **Lõi không rẽ nhánh theo tên nhà cung cấp.** Không `if ($channel === 'zalo')`, không `match($provider)`. Khác biệt sống trong adapter, hoặc là dữ liệu (capability flags), không phải mã rẽ nhánh.
 4. **Lõi không đọc vào ruột dữ liệu của nhà cung cấp.** Lưu/chuyển tiếp nguyên khối thì được; đọc key bên trong là vi phạm.
 
+## 0.9 Năng lực kênh — cách luật 3 được thi hành
+
+Rẽ nhánh theo kênh đi qua **dữ liệu**, không qua tên kênh. Bộ năng lực chung và ma trận khai báo của từng kênh nằm ở **`docs/channel-capabilities.md`** (chuẩn 07/09/2026); tóm tắt phần bắt buộc nhớ:
+
+- Kênh khai năng lực trong model của nó (`app/Models/Channel/*` implements `App\Channels\DeclaresCapabilities`), trả về `CapabilitySet` bất biến.
+- Lõi và UI chỉ hỏi qua `Inbox::supports(Capability::X)` / `InboxResource.capabilities`; FE dùng `useInboxCapabilities` + `<IfSupports>`. Cấm `channel_type === '…'` để bật/tắt tính năng — `channel_type` chỉ còn dùng chọn icon/nhãn.
+- Khai = phải chạy được: contract test dùng chung ở `tests/Contracts/Channels/` chỉ chạy đúng những năng lực kênh đã khai; ma trận có snapshot, đổi khai báo phải đổi tài liệu.
+- Không hỗ trợ = UI không hiện, API ghi trả 422 `capability_not_supported`.
+
 ---
 
 ## Model Organization

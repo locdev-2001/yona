@@ -1,0 +1,36 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-quote-1",
+  "is_self": false,
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1788714970591,
+  "inbound_kind": "text",
+  "content": "Cảm ơn em, cho anh xin link đăng ký nhé",
+  "msg_type": "chat.text",
+  "quote": {
+    "msg_id": "1788714913519",
+    "cli_msg_id": "1788714913519",
+    "quote_ts": 1788714913596,
+    "text": "Dạ có ạ. Gói Team 299k/tháng",
+    "sender_name": "Nguyễn Phước Lộc",
+    "cli_msg_type": 1
+  },
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "msg-zalo-quote-1",
+    "cliMsgId": "1788714970591",
+    "msgType": "webchat",
+    "uidFrom": "9876543210",
+    "idTo": "1234567890",
+    "content": "Cảm ơn em, cho anh xin link đăng ký nhé",
+    "propertyExt": "{}",
+    "ts": "1788714970800",
+    "ttl": 0
+  }
+}

@@ -1782,6 +1782,101 @@ const messages: Record<string, unknown> = {
     "CONTACTS": {
         "online": {
             "delete": "{contact_name} đang trực tiếng, vui lòng thử lại sau"
+        },
+        "anonymous": {
+            "name": ":animal ẩn danh",
+            "name_numbered": ":animal ẩn danh :number",
+            "animals": [
+                "Gấu mèo",
+                "Gấu trúc",
+                "Gấu trúc đỏ",
+                "Gấu túi",
+                "Gấu Bắc Cực",
+                "Gấu nâu",
+                "Sóc",
+                "Sóc bay",
+                "Sóc chuột",
+                "Thỏ",
+                "Nhím",
+                "Rái cá",
+                "Hải ly",
+                "Chồn sương",
+                "Chồn đất",
+                "Thú lười",
+                "Thú mỏ vịt",
+                "Tê tê",
+                "Chuột lang",
+                "Chuột túi",
+                "Cáo đỏ",
+                "Cáo tuyết",
+                "Mèo mướp",
+                "Mèo con",
+                "Mèo rừng",
+                "Cún con",
+                "Hổ con",
+                "Sư tử con",
+                "Báo tuyết",
+                "Báo đốm",
+                "Nai vàng",
+                "Hươu sao",
+                "Hươu cao cổ",
+                "Tuần lộc",
+                "Linh dương",
+                "Ngựa vằn",
+                "Cừu non",
+                "Lạc đà",
+                "Lạc đà không bướu",
+                "Voi",
+                "Hà mã",
+                "Tê giác",
+                "Cá heo",
+                "Cá voi xanh",
+                "Hải cẩu",
+                "Sư tử biển",
+                "Rùa biển",
+                "Sao biển",
+                "Sứa biển",
+                "Bạch tuộc",
+                "Cá hề",
+                "Cá vàng",
+                "Cá koi",
+                "Cá nóc",
+                "Cá đuối",
+                "San hô",
+                "Hải quỳ",
+                "Nhím biển",
+                "Cú",
+                "Chim cánh cụt",
+                "Chim ruồi",
+                "Bồ câu",
+                "Bồ nông",
+                "Hải âu",
+                "Hồng hạc",
+                "Thiên nga",
+                "Uyên ương",
+                "Công",
+                "Sơn ca",
+                "Họa mi",
+                "Chào mào",
+                "Vành khuyên",
+                "Chích chòe",
+                "Sếu đầu đỏ",
+                "Hạc trắng",
+                "Én nhỏ",
+                "Đại bàng",
+                "Đom đóm",
+                "Bọ rùa",
+                "Chuồn chuồn",
+                "Ong mật",
+                "Dế mèn",
+                "Bọ ngựa",
+                "Kiến vàng",
+                "Châu chấu",
+                "Ốc sên",
+                "Kỳ giông",
+                "Kỳ lân",
+                "Phượng hoàng"
+            ]
         }
     },
     "CONTACTS_BULK_ACTIONS": {
@@ -2239,7 +2334,31 @@ const messages: Record<string, unknown> = {
             "CONTACT": "{sender} đã chia sẻ một liên hệ",
             "LOCATION": "{sender} đã chia sẻ một vị trí",
             "FILE": "{sender} đã chia sẻ một tệp",
-            "MEETING": "{sender} đã bắt đầu một cuộc họp"
+            "MEETING": "{sender} đã bắt đầu một cuộc họp",
+            "BUSINESS_CARD": "{sender} đã gửi một danh thiếp",
+            "BANK_CARD": "{sender} đã gửi một tài khoản ngân hàng",
+            "REMINDER": "{sender} đã tạo một nhắc hẹn"
+        },
+        "ZALO": {
+            "BUSINESS_CARD": {
+                "FALLBACK_NAME": "Danh thiếp",
+                "VIEW_PROFILE": "Xem hồ sơ"
+            },
+            "BANK_CARD": {
+                "FALLBACK_NAME": "Tài khoản ngân hàng",
+                "COPY_ACCOUNT_NUMBER": "Sao chép số tài khoản",
+                "COPIED": "Đã sao chép"
+            },
+            "REMINDER": {
+                "FALLBACK_TITLE": "Nhắc hẹn"
+            },
+            "CALL": {
+                "VOICE": "Cuộc gọi thoại",
+                "VIDEO": "Cuộc gọi video",
+                "MISSED": "nhỡ",
+                "BUSY": "máy bận",
+                "CANCELED": "đã huỷ"
+            }
         },
         "UPLOADING_ATTACHMENTS": "Đang tải file đính kèm...",
         "REPLIED_TO_STORY": "Đã trả lời story của bạn",
@@ -2782,6 +2901,13 @@ const messages: Record<string, unknown> = {
             "ways_to_reach_you_message_body": "Trong lúc chờ đội ngũ hỗ trợ phản hồi, bạn hãy để lại email để nhận được thông báo nhanh nhất nhé.",
             "email_input_box_message_body": "Nhận thông báo qua email",
             "csat_input_message_body": "Bạn hãy vui lòng đánh giá hội thoại"
+        },
+        "messages": {
+            "deleted": "Tin nhắn đã bị xoá",
+            "business_card": "[Danh thiếp]",
+            "bank_card": "[Tài khoản ngân hàng]",
+            "reminder": "[Nhắc hẹn]",
+            "call": "[Cuộc gọi]"
         }
     },
     "COPILOT": {
@@ -3215,6 +3341,18 @@ const messages: Record<string, unknown> = {
             },
             "export": {
                 "success": "Chúng tôi sẽ thông báo khi tệp xuất danh sách liên hệ đã sẵn sàng."
+            }
+        },
+        "zalo": {
+            "send": {
+                "circuit_open": "Kết nối Zalo đang lỗi liên tục, tạm dừng gửi một lát.",
+                "session_lost": "Phiên Zalo đã hết, bạn quét lại mã QR giúp mình nhé.",
+                "bridge_unreachable": "Chưa gọi được dịch vụ Zalo, bạn thử lại sau ít phút.",
+                "secret_mismatch": "Dịch vụ Zalo đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.",
+                "zalo_rejected": "Zalo từ chối tin này (:detail).",
+                "media_fetch_failed": "Không đọc được tệp đính kèm để gửi (:detail).",
+                "unknown": "Chưa gửi được tin này ra Zalo (:detail).",
+                "attachment_failed": "Không gửi được tệp \":filename\": :reason"
             }
         },
         "custom_attribute_definition": {

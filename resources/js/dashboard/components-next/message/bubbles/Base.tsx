@@ -51,7 +51,15 @@ export default function BaseBubble({
     onClick,
     children,
 }: BaseBubbleProps) {
-    const { variant, orientation, inReplyTo, shouldGroupWithNext } = useMessageContext();
+    const { variant, orientation, inReplyTo, shouldGroupWithNext, contentAttributes } = useMessageContext();
+
+    // MỞ RỘNG NGOÀI GỐC (Chatwoot v4.17.1 không có UI biểu cảm — `grep -rn
+    // "reactions" refs/chatwoot/app/javascript/` = 0). Zalo là kênh chính của
+    // Yona nên hàng emoji được vẽ dưới bong bóng; pixel-diff phải loại trừ
+    // `[data-yona-reactions]`.
+    const reactions = Array.isArray(contentAttributes.reactions)
+        ? (contentAttributes.reactions as string[])
+        : [];
 
     const metaColorClass = variant === MESSAGE_VARIANTS.PRIVATE ? 'text-n-amber-12/50' : 'text-n-slate-11';
     const emailMetaClass = variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '';
@@ -98,6 +106,21 @@ export default function BaseBubble({
                 </div>
             )}
             {children}
+            {reactions.length > 0 && (
+                <div
+                    data-yona-reactions
+                    className={`flex gap-1 mt-1 text-sm leading-none ${FLEX_ORIENTATION_MAP[orientation]}`}
+                >
+                    {reactions.map((emoji, index) => (
+                        <span
+                            key={`${emoji}-${index}`}
+                            className="rounded-full bg-n-alpha-black1 px-1.5 py-0.5"
+                        >
+                            {emoji}
+                        </span>
+                    ))}
+                </div>
+            )}
             {shouldShowMeta && (
                 <MessageMeta className={`${FLEX_ORIENTATION_MAP[orientation]} ${emailMetaClass} ${metaColorClass} mt-2`} />
             )}

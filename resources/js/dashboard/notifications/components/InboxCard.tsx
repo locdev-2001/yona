@@ -5,7 +5,7 @@ import CardPriorityIcon from 'dashboard/components-next/Conversation/Conversatio
 import Icon from 'dashboard/components-next/icon/Icon';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { shortenSnoozeTime, snoozedReopenTimeToTimestamp } from 'dashboard/helper/snoozeHelpers';
-import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
+import { shortTimestamp } from 'shared/helpers/timeHelper';
 import { t } from '../../../i18n';
 import { NOTIFICATION_TYPES_MAPPING } from '../helpers';
 import type { NotificationRecord } from '../types';
@@ -69,7 +69,7 @@ export default function InboxCard({
     };
 
     const lastActivityAt = inboxItem.last_activity_at
-        ? shortTimestamp(dynamicTime(inboxItem.last_activity_at))
+        ? shortTimestamp(inboxItem.last_activity_at)
         : '';
 
     const menuItems: InboxMenuItem[] = [
@@ -94,7 +94,7 @@ export default function InboxCard({
     const typeText = notificationType ? t(`INBOX.TYPES_NEXT.${notificationType}`) : '';
 
     const snoozedUntilTime = inboxItem.snoozed_until
-        ? shortenSnoozeTime(dynamicTime(snoozedReopenTimeToTimestamp(inboxItem.snoozed_until) ?? 0))
+        ? shortenSnoozeTime(snoozedReopenTimeToTimestamp(inboxItem.snoozed_until) ?? 0)
         : null;
     const hasLastSnoozed = Boolean(inboxItem.meta?.last_snoozed_at);
     const snoozedText = !hasLastSnoozed

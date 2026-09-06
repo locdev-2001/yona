@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\SmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/sms.rb (nhà cung cấp Bandwidth).
 // Phần gọi API nằm ở App\Services\Sms\BandwidthClient.
-class Sms extends Model
+class Sms extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<SmsFactory> */
     use Channelable, HasFactory;
@@ -44,5 +47,19 @@ class Sms extends Model
     public function apiBasePath(): string
     {
         return 'https://messaging.bandwidth.com/api/v2';
+    }
+
+    /** SMS qua Bandwidth: chỉ chữ, MMS chưa làm (nợ có tên). */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::OutboundText,
+            Capability::EventDelivered,
+            Capability::ProfilePhone,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionToken,
+        );
     }
 }

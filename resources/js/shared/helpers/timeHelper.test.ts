@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { formatDuration } from './timeHelper';
+import { dynamicTime, formatDuration, shortTimestamp } from './timeHelper';
 
 describe('formatDuration', () => {
     it('định dạng mm:ss và hh:mm:ss', () => {
@@ -13,5 +13,51 @@ describe('formatDuration', () => {
         expect(formatDuration(null)).toBe('');
         expect(formatDuration(undefined)).toBe('');
         expect(formatDuration('abc')).toBe('');
+    });
+});
+
+describe('dynamicTime', () => {
+    afterEach(() => {
+        document.documentElement.lang = 'en';
+    });
+
+    const oneHourAgo = () => Math.floor(Date.now() / 1000) - 3600;
+
+    it('dịch chuỗi thời gian tương đối theo locale đang dùng', () => {
+        document.documentElement.lang = 'vi';
+        expect(dynamicTime(oneHourAgo())).toBe('khoảng 1 giờ trước');
+    });
+
+    it('nhận cả locale dạng vi-VN', () => {
+        document.documentElement.lang = 'vi-VN';
+        expect(dynamicTime(oneHourAgo())).toBe('khoảng 1 giờ trước');
+    });
+
+    it('mặc định tiếng Anh khi locale lạ hoặc không khai báo', () => {
+        document.documentElement.lang = 'fr';
+        expect(dynamicTime(oneHourAgo())).toBe('about 1 hour ago');
+
+        document.documentElement.lang = '';
+        expect(dynamicTime(oneHourAgo())).toBe('about 1 hour ago');
+    });
+});
+
+describe('shortTimestamp', () => {
+    afterEach(() => {
+        document.documentElement.lang = 'en';
+    });
+
+    it('rút gọn chuỗi tiếng Anh như bản gốc', () => {
+        expect(shortTimestamp('an hour ago')).toBe('1h');
+        expect(shortTimestamp('an hour ago', true)).toBe('1h ago');
+        expect(shortTimestamp('less than a minute ago')).toBe('now');
+        // Gốc bỏ chữ "about" nhưng để lại khoảng trắng — giữ nguyên quirk đó.
+        expect(shortTimestamp('about 3 hours ago')).toBe(' 3h');
+    });
+
+    it('giữ dạng rút gọn kể cả khi giao diện đang chạy tiếng Việt', () => {
+        document.documentElement.lang = 'vi';
+        expect(shortTimestamp(Math.floor(Date.now() / 1000) - 3600)).toBe(' 1h');
+        expect(shortTimestamp(Math.floor(Date.now() / 1000) - 86400, true)).toBe('1d ago');
     });
 });

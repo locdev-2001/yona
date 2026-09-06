@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
@@ -13,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/whatsapp.rb. Mỗi nhà cung cấp là một
 // driver riêng (providerService), lõi kênh không biết chi tiết Cloud/360Dialog.
-class Whatsapp extends Model
+class Whatsapp extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<WhatsappFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -98,5 +101,35 @@ class Whatsapp extends Model
     public function apiHeaders(): array
     {
         return $this->providerService()->apiHeaders();
+    }
+
+    /** WhatsApp Cloud/360dialog: reaction đến bị bỏ qua ở IncomingMessageService (nợ có tên). */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundSticker,
+            Capability::InboundLocation,
+            Capability::InboundContactCard,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::EventDelivered,
+            Capability::EventSeen,
+            Capability::ProfileName,
+            Capability::ProfilePhone,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionToken,
+            Capability::SessionReauth,
+        );
     }
 }

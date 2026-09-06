@@ -1,0 +1,23 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-undone",
+  "direction": "in",
+  "user": { "name": null, "avatar": null },
+  "platform_sent_at": 1719500030000,
+  "inbound_kind": "text",
+  "content": "[Tin nhắn]",
+  "backfill": true,
+  "listener_data": {
+    "msgType": "chat.undo",
+    "uidFrom": "9876543210",
+    "msgId": "msg-zalo-undone",
+    "cliMsgId": "1788714913520",
+    "ts": "1719500030000",
+    "content": { "globalMsgId": "8233983384565", "cliMsgId": "1788714913519" }
+  }
+}

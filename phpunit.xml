@@ -8,6 +8,10 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <!-- Contract test dùng chung cho mọi kênh (docs/channel-capabilities.md §3). -->
+        <testsuite name="Contracts">
+            <directory>tests/Contracts</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

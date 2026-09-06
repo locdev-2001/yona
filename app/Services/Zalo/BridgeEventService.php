@@ -68,27 +68,16 @@ class BridgeEventService
     private function handleRelayEvent(Inbox $inbox, array $payload): void
     {
         $eventType = (string) ($payload['event_type'] ?? '');
-        $eventPayload = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
+        $args = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
 
         match ($eventType) {
-            'undo' => $this->messageState->applyRecall($inbox, $eventPayload),
-            'reaction', 'old_reactions' => $this->messageState->applyReaction($inbox, $eventPayload),
-            'seen_messages' => $this->messageState->applyReceipts($inbox, $this->receiptIds($eventPayload), 'seen'),
-            'delivered_messages' => $this->messageState->applyReceipts($inbox, $this->receiptIds($eventPayload), 'delivered'),
+            'undo' => $this->messageState->applyRecall($inbox, RelayEventParser::recallSourceId($args)),
+            'reaction', 'old_reactions' => $this->messageState->applyReactions($inbox, RelayEventParser::reactions($args)),
+            'seen_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'seen'),
+            'delivered_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'delivered'),
             // typing/connected/upload_attachment là phù du — không có đích lưu.
             'typing', 'connected', 'disconnected', 'upload_attachment' => null,
             default => Log::info('[ZALO] relay_event chưa có xử lý', ['event_type' => $eventType]),
         };
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     * @return list<string>
-     */
-    private function receiptIds(array $payload): array
-    {
-        $ids = $payload['msgIds'] ?? $payload['source_ids'] ?? ($payload['msgId'] ?? null);
-
-        return array_values(array_map('strval', array_filter((array) $ids)));
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwilioSmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/twilio_sms.rb — một model phục vụ hai
 // medium (SMS và WhatsApp qua Twilio). Gem twilio-ruby thay bằng App\Services\Twilio\TwilioClient.
-class TwilioSms extends Model
+class TwilioSms extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<TwilioSmsFactory> */
     use Channelable, HasFactory;
@@ -89,5 +92,39 @@ class TwilioSms extends Model
         return filled($this->messaging_service_sid)
             ? ['MessagingServiceSid' => $this->messaging_service_sid]
             : ['From' => $this->phone_number];
+    }
+
+    /**
+     * Một model, hai kênh thật: `medium` quyết năng lực và phải quyết lúc ĐỌC model
+     * chứ không phải lúc gửi (docs/channel-capabilities.md §3).
+     */
+    public function capabilities(): CapabilitySet
+    {
+        $shared = CapabilitySet::of(
+            Capability::InboundText,
+            Capability::OutboundText,
+            Capability::EventDelivered,
+            Capability::EventSeen,
+            Capability::ProfilePhone,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionToken,
+        );
+
+        if ($this->isSms()) {
+            return $shared;
+        }
+
+        return $shared->merge(CapabilitySet::of(
+            Capability::InboundImage,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+        ));
     }
 }

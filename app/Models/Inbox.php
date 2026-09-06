@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\OutOfOffisable;
 use App\Models\Concerns\Reportable;
@@ -238,6 +241,23 @@ class Inbox extends Model
     public function inboxType(): string
     {
         return $this->channel?->name() ?? '';
+    }
+
+    /**
+     * Cửa DUY NHẤT để lõi và UI hỏi kênh làm được gì
+     * (docs/channel-capabilities.md §1.2). Kênh chưa khai = coi như không hỗ trợ,
+     * lõi ẩn tính năng chứ không nổ.
+     */
+    public function capabilities(): CapabilitySet
+    {
+        $channel = $this->channel;
+
+        return $channel instanceof DeclaresCapabilities ? $channel->capabilities() : CapabilitySet::none();
+    }
+
+    public function supports(Capability $capability): bool
+    {
+        return $this->capabilities()->has($capability);
     }
 
     public function isApi(): bool

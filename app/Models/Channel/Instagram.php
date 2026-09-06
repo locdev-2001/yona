@@ -3,6 +3,9 @@
 namespace App\Models\Channel;
 
 use App\Builders\ContactInboxWithContactBuilder;
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
@@ -11,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/instagram.rb (Instagram login trực tiếp).
-class Instagram extends Model
+class Instagram extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<InstagramFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -61,5 +64,31 @@ class Instagram extends Model
             contactAttributes: ['name' => $name],
             sourceId: $sourceId,
         ))->perform();
+    }
+
+    /** Instagram DM: có xử lý khách thu hồi tin (message_unsend) nên khai event_recall. */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::EventRecall,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionOauth,
+            Capability::SessionReauth,
+        );
     }
 }

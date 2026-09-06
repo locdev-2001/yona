@@ -1,0 +1,23 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-bank",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500011000,
+  "inbound_kind": "bank_card",
+  "content": "[Tài khoản ngân hàng]",
+  "bank_card": {
+    "bank_name": "Vietcombank",
+    "bank_bin": "970436",
+    "account_number": "1027123456",
+    "account_holder": "NGUYEN PHUOC LOC",
+    "logo_url": "https://cdn.zalo.test/bank/vcb.png",
+    "qr_url": "https://cdn.zalo.test/bank/qr.png"
+  },
+  "msg_type": "chat.webcontent"
+}

@@ -9,8 +9,9 @@ import type { MessageAttachment } from './helpers/attachments';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; grouping tính trực tiếp
-// trên payload snake_case. Bỏ ở B3: fetch tin in_reply_to qua API (B9),
-// retry (chưa có sendMessageWithData ở spine), inboxSupportsReplyTo.
+// trên payload snake_case. Bỏ ở B3: retry (chưa có sendMessageWithData ở spine),
+// inboxSupportsReplyTo. `in_reply_to` tra trong danh sách đang hiển thị như gốc;
+// nhánh fetch qua API cho tin nằm ngoài trang hiện tại vẫn chưa port.
 
 interface MessageListProps {
     messages: ConversationMessage[];
@@ -48,6 +49,19 @@ function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): 
     return Math.floor(next.created_at / 60) === Math.floor(current.created_at / 60);
 }
 
+/**
+ * getInReplyToMessage của MessageList.vue — tin được trả lời tra trong chính danh
+ * sách đang hiển thị. `content_attributes.in_reply_to` do lõi đặt
+ * (Message#ensureInReplyTo), nên mọi kênh dùng chung một đường.
+ */
+function findInReplyTo(message: ConversationMessage, messages: ConversationMessage[]): ConversationMessage | null {
+    const inReplyToId = message.content_attributes?.in_reply_to;
+
+    if (!inReplyToId) return null;
+
+    return messages.find(candidate => candidate.id === inReplyToId) ?? null;
+}
+
 const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function MessageList(
     {
         messages,
@@ -75,6 +89,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                         channelType={channelType}
                         chatAttachments={chatAttachments}
                         groupWithNext={shouldGroupWithNext(index, messages)}
+                        inReplyTo={findInReplyTo(message, messages)}
                     />
                 </Fragment>
             ))}

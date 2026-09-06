@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
 use Database\Factories\Channel\WebWidgetFactory;
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/web_widget.rb (+ Channelable, FlagShihTzu).
-class WebWidget extends Model
+class WebWidget extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<WebWidgetFactory> */
     use Channelable, HasFactory;
@@ -161,5 +164,33 @@ class WebWidget extends Model
                 '    ',
             ]);
         });
+    }
+
+    /** Widget web: danh tính là token khách, hồ sơ đến từ form trước chat. */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::OutboundReplyTo,
+            Capability::OutboundTyping,
+            Capability::EventDelivered,
+            Capability::EventSeen,
+            Capability::EventTyping,
+            Capability::ProfilePhone,
+            Capability::ProfileEmail,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+        );
     }
 }

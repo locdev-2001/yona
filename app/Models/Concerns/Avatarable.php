@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Attachment;
+use App\Support\AvatarContentType;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,7 @@ use Illuminate\Support\Str;
 // (User, Inbox…) dùng chung một chỗ gắn/thay/đọc URL.
 trait Avatarable
 {
-    public const ALLOWED_AVATAR_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    public const ALLOWED_AVATAR_CONTENT_TYPES = AvatarContentType::ALLOWED;
 
     public function avatar(): MorphOne
     {

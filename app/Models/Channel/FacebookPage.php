@@ -3,6 +3,9 @@
 namespace App\Models\Channel;
 
 use App\Builders\ContactInboxWithContactBuilder;
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
@@ -12,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/facebook_page.rb. Subscribe/unsubscribe
 // (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
-class FacebookPage extends Model
+class FacebookPage extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<FacebookPageFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -54,5 +57,30 @@ class FacebookPage extends Model
             contactAttributes: ['name' => $name],
             sourceId: $sourceId,
         ))->perform();
+    }
+
+    /** Messenger: biên nhận delivered/seen của Meta chưa được xử lý (nợ có tên). */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionOauth,
+            Capability::SessionReauth,
+        );
     }
 }

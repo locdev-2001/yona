@@ -14,17 +14,17 @@ return [
         'media_timeout' => 120,
     ],
 
-    // Nghị định 91/2020 + ToS Zalo: chỉ áp cho tin CHỦ ĐỘNG, không áp tin trả lời
-    // trong cửa sổ hội thoại (xem SendRateLimiter).
-    'send_window' => [
-        'timezone' => 'Asia/Ho_Chi_Minh',
-        'open_hour' => 7,
-        'close_hour' => 22,
-    ],
-    'daily_promotional_cap' => 3,
+    // Quyết định founder 07/09/2026: KHÔNG chặn tin chủ động nữa — cửa sổ giờ
+    // 7h–22h và trần 3 tin/số/ngày đã gỡ khỏi đường gửi. Còn lại là bộ ĐẾM
+    // (SendRateLimiter) để dựng chính sách gói cước sau; múi giờ chỉ quyết định
+    // mốc cắt ngày của bộ đếm.
+    'counter_timezone' => 'Asia/Ho_Chi_Minh',
+    // Ranh giới coi một tin đi là "trả lời" (có tin khách trong bao lâu) — dùng
+    // để phân loại thống kê tin chủ động, không dùng để chặn.
     'reply_window_hours' => 24,
 
-    // Ngắt mạch khi bridge liên tục trả 429/403/session_lost.
+    // Ngắt mạch khi Zalo thật sự từ chối (429/500 từ zca) hoặc mất phiên.
+    // Lỗi cấu hình secret (403/503 của bridge) KHÔNG tính vào đây.
     'circuit_breaker' => [
         'threshold' => 5,
         'window_seconds' => 3600,

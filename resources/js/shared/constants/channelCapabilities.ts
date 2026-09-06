@@ -1,0 +1,67 @@
+// Bản sao FE của App\Channels\Capability (docs/channel-capabilities.md §2).
+// Danh sách này KHÔNG được sửa tay lệch với enum PHP: test
+// tests/Contracts/Channels/CapabilityDeclarationTest.php so hai bên từng giá trị.
+export const CHANNEL_CAPABILITIES = [
+    'inbound_text',
+    'inbound_rich_text',
+    'inbound_image',
+    'inbound_gif',
+    'inbound_video',
+    'inbound_audio',
+    'inbound_file',
+    'inbound_sticker',
+    'inbound_location',
+    'inbound_contact_card',
+    'inbound_bank_card',
+    'inbound_reminder',
+    'inbound_call_log',
+    'inbound_link_preview',
+    'inbound_caption',
+    'inbound_forward',
+    'outbound_text',
+    'outbound_image',
+    'outbound_video',
+    'outbound_audio',
+    'outbound_file',
+    'outbound_sticker',
+    'outbound_location',
+    'outbound_contact_card',
+    'outbound_reply_to',
+    'outbound_mention',
+    'outbound_reaction',
+    'outbound_recall',
+    'outbound_edit',
+    'outbound_typing',
+    'outbound_read_receipt',
+    'outbound_retry',
+    'event_delivered',
+    'event_seen',
+    'event_reaction',
+    'event_recall',
+    'event_edit',
+    'event_typing',
+    'event_presence',
+    'profile_name',
+    'profile_avatar',
+    'profile_phone',
+    'profile_email',
+    'profile_refresh',
+    'identity_stable_id',
+    'group_threads',
+    'friend_request',
+    'threading_continuous',
+    'messaging_window',
+    'session_qr',
+    'session_token',
+    'session_oauth',
+    'session_reauth',
+    'session_disconnect',
+    'health',
+] as const;
+
+export type ChannelCapability = (typeof CHANNEL_CAPABILITIES)[number];
+
+/** Hình dạng tối thiểu mà mọi nơi hỏi năng lực cần: chỉ đúng mảng khai báo từ backend. */
+export interface InboxWithCapabilities {
+    capabilities?: readonly string[] | null;
+}

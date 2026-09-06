@@ -42,26 +42,40 @@ describe('perform', function () {
 });
 
 describe('content_attributes', function () {
+    // Message#ensure_in_reply_to quy `in_reply_to` về tin thật trong hội thoại và
+    // suy ra `in_reply_to_external_id`, nên tin được trả lời phải tồn tại.
     it('parses content_attributes from JSON string', function () {
         [, $user, $conversation] = messageBuilderFixtures();
+        $quoted = $conversation->messages()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'message_type' => Message::TYPE_INCOMING,
+            'content' => 'tin gốc',
+        ]);
 
         $message = (new MessageBuilder($user, $conversation, [
             'content' => 'test',
-            'content_attributes' => '{"in_reply_to":42}',
+            'content_attributes' => '{"in_reply_to":'.$quoted->id.'}',
         ]))->perform();
 
-        expect($message->content_attributes)->toBe(['in_reply_to' => 42]);
+        expect($message->content_attributes)->toBe(['in_reply_to' => $quoted->id, 'in_reply_to_external_id' => null]);
     });
 
     it('uses content_attributes as provided when it is an array', function () {
         [, $user, $conversation] = messageBuilderFixtures();
+        $quoted = $conversation->messages()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'message_type' => Message::TYPE_INCOMING,
+            'content' => 'tin gốc',
+        ]);
 
         $message = (new MessageBuilder($user, $conversation, [
             'content' => 'test',
-            'content_attributes' => ['in_reply_to' => 42],
+            'content_attributes' => ['in_reply_to' => $quoted->id],
         ]))->perform();
 
-        expect($message->content_attributes)->toBe(['in_reply_to' => 42]);
+        expect($message->content_attributes)->toBe(['in_reply_to' => $quoted->id, 'in_reply_to_external_id' => null]);
     });
 
     it('defaults to an empty hash when absent', function () {

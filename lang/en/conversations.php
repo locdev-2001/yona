@@ -71,4 +71,16 @@ return [
         'email_input_box_message_body' => 'Get notified by email',
         'csat_input_message_body' => 'Please rate the conversation',
     ],
+
+    // config/locales/en.yml — conversations.messages.deleted (Message#deleted).
+    // Bốn nhãn dưới là phần mở rộng của Yona: loại tin riêng của Zalo không có
+    // content_type trong lõi nên `content` giữ nhãn đọc được để card hội thoại,
+    // tìm kiếm và webhook không rỗng (chi tiết ở content_attributes).
+    'messages' => [
+        'deleted' => 'This message was deleted',
+        'business_card' => '[Contact card]',
+        'bank_card' => '[Bank account]',
+        'reminder' => '[Reminder]',
+        'call' => '[Call]',
+    ],
 ];
