@@ -93,6 +93,7 @@ function schemaConfigFor(isPrivate: boolean, channelType?: string): { key: strin
 // Menu theo FORMATTING của constants/editor.js (đã lọc copilot).
 const MENU_BY_KEY: Record<string, string[]> = {
     'Channel::Api': ['strong', 'em', 'undo', 'redo'],
+    'Context::NoToolbar': [],
     'Context::PrivateNote': ['strong', 'em', 'code', 'link', 'strike', 'bulletList', 'orderedList', 'undo', 'redo'],
     'Context::Default': ['strong', 'em', 'code', 'link', 'strike', 'bulletList', 'orderedList', 'undo', 'redo'],
 };

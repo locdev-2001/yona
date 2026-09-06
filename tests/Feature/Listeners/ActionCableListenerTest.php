@@ -19,7 +19,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
 // Port từ spec/listeners/action_cable_listener_spec.rb.
-// Bỏ: notification_* (D2), agent bot typing (EE).
+// Bỏ: agent bot typing (EE). Nhánh notification_* nằm ở ActionCableNotificationTest.
 
 function listenerSetup(): array
 {

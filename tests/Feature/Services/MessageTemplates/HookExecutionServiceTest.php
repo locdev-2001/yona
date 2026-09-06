@@ -10,7 +10,19 @@ use App\Models\Message;
 use App\Services\MessageTemplates\HookExecutionService;
 
 // Port từ spec/services/message_templates/hook_execution_service_spec.rb.
-// Bỏ các ca OutOfOffice (Business Hours chưa port) và tweet (kênh Twitter chưa port).
+// Bỏ các ca tweet (kênh Twitter chưa port).
+
+function closeInboxToday(Conversation $conversation, string $message = 'We are out of office'): void
+{
+    $conversation->inbox->update(['working_hours_enabled' => true, 'out_of_office_message' => $message]);
+    $conversation->inbox->todayWorkingHour()->update([
+        'closed_all_day' => true,
+        'open_hour' => null,
+        'open_minutes' => null,
+        'close_hour' => null,
+        'close_minutes' => null,
+    ]);
+}
 
 function templateConversation(array $inboxAttributes = [], array $contactAttributes = []): Conversation
 {
@@ -157,6 +169,93 @@ it('runs no hook for an auto reply email', function () {
     ]);
 
     (new HookExecutionService($message))->perform();
+
+    expect(templateMessages($conversation))->toHaveCount(0);
+});
+
+it('sends the out of office message outside working hours', function () {
+    $conversation = templateConversation();
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation)->pluck('content')->all())->toContain('We are out of office');
+});
+
+it('sends the out of office message only once a day', function () {
+    $conversation = templateConversation();
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation);
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation)->where('content', 'We are out of office'))->toHaveCount(1);
+});
+
+it('skips the out of office message on campaign conversations', function () {
+    $conversation = templateConversation();
+    $conversation->update(['campaign_id' => Campaign::factory()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+    ])->id]);
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation))->toHaveCount(0);
+});
+
+it('skips the out of office message when the inbox has no message set', function () {
+    // Khách đã có email → cụm email-collect không chèn, mọi tin mẫu thấy được
+    // đều là của out-of-office.
+    $conversation = templateConversation([], ['email' => 'visitor@example.com']);
+    closeInboxToday($conversation, '');
+
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation))->toHaveCount(0);
+});
+
+it('skips the out of office message when an agent replied in the last five minutes', function () {
+    $conversation = templateConversation([], ['email' => 'visitor@example.com']);
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation, ['message_type' => Message::TYPE_OUTGOING, 'created_at' => now()->subMinutes(2)]);
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation))->toHaveCount(0);
+});
+
+it('ignores a private note when looking for a recent agent reply', function () {
+    $conversation = templateConversation([], ['email' => 'visitor@example.com']);
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation, ['message_type' => Message::TYPE_OUTGOING, 'private' => true, 'created_at' => now()->subMinutes(2)]);
+    incomingMessage($conversation);
+
+    expect(templateMessages($conversation)->pluck('content')->all())->toContain('We are out of office');
+});
+
+it('skips the out of office message for an outgoing message', function () {
+    $conversation = templateConversation([], ['email' => 'visitor@example.com']);
+    // Tin đến TRƯỚC khi đóng cửa: cổng "đã có tin incoming" mở, cổng tin mẫu
+    // trong ngày còn trống, chỉ còn hướng tin quyết định.
+    incomingMessage($conversation);
+    closeInboxToday($conversation);
+
+    incomingMessage($conversation, ['message_type' => Message::TYPE_OUTGOING, 'created_at' => now()->subMinutes(10)]);
+
+    expect(templateMessages($conversation))->toHaveCount(0);
+});
+
+it('does not send the out of office message during working hours', function () {
+    $conversation = templateConversation(
+        ['working_hours_enabled' => true, 'out_of_office_message' => 'We are out of office'],
+        ['email' => 'visitor@example.com'],
+    );
+    $conversation->inbox->todayWorkingHour()->update(['closed_all_day' => false, 'open_all_day' => true]);
+
+    incomingMessage($conversation);
 
     expect(templateMessages($conversation))->toHaveCount(0);
 });

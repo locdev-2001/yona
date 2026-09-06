@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Finders\NotificationFinder;
 use App\Http\Resources\ContactResource;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
@@ -22,7 +23,6 @@ use Illuminate\Support\Str;
 // người nghe rồi đẩy ActionCableBroadcastJob (queue critical). Chạy đồng bộ
 // trong request như SyncDispatcher. Laravel tự đăng ký qua event discovery
 // (handle(DomainEvent)) — KHÔNG Event::listen thêm, kẻo mỗi event bắn 2 lần.
-// notification_created/updated/deleted chờ model Notification (D2).
 class ActionCableListener extends BaseListener
 {
     public function handle(DomainEvent $event): void
@@ -167,6 +167,47 @@ class ActionCableListener extends BaseListener
         }
 
         $this->broadcast($account, [$this->accountToken($account)], EventType::CONTACT_DELETED, $contactData);
+    }
+
+    public function notificationCreated(DomainEvent $event): void
+    {
+        $this->broadcastNotification($event, EventType::NOTIFICATION_CREATED);
+    }
+
+    public function notificationUpdated(DomainEvent $event): void
+    {
+        $this->broadcastNotification($event, EventType::NOTIFICATION_UPDATED);
+    }
+
+    // Bản ghi đã bị xóa nên payload chỉ còn id + bộ đếm tính lại từ finder.
+    public function notificationDeleted(DomainEvent $event): void
+    {
+        $notificationData = $event->data['notification_data'];
+        $user = User::query()->find($notificationData['user_id'] ?? null);
+        $account = Account::query()->find($notificationData['account_id'] ?? null);
+
+        if ($user === null || $account === null) {
+            return;
+        }
+
+        $finder = new NotificationFinder($user, $account);
+
+        $this->broadcast($account, [$user->pubsub_token], EventType::NOTIFICATION_DELETED, [
+            'notification' => ['id' => $notificationData['id']],
+            'unread_count' => $finder->unreadCount(),
+            'count' => $finder->count(),
+        ]);
+    }
+
+    private function broadcastNotification(DomainEvent $event, EventType $type): void
+    {
+        [$notification, $account, $unreadCount, $count] = $this->extractNotificationAndAccount($event);
+
+        $this->broadcast($account, [$notification->user?->pubsub_token], $type, [
+            'notification' => $notification->pushEventData(),
+            'unread_count' => $unreadCount,
+            'count' => $count,
+        ]);
     }
 
     public function conversationMentioned(DomainEvent $event): void

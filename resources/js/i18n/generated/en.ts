@@ -2147,6 +2147,9 @@ const messages: Record<string, unknown> = {
             "csat": {
                 "not_sent_due_to_messaging_window": "CSAT survey not sent due to outgoing message restrictions"
             },
+            "auto_resolve": {
+                "not_sent_due_to_messaging_window": "Auto-resolve message not sent due to outgoing message restrictions"
+            },
             "muted": "{user_name} has muted the conversation",
             "unmuted": "{user_name} has unmuted the conversation"
         },
@@ -2585,7 +2588,112 @@ const messages: Record<string, unknown> = {
         "PREFERRED": "Preferred"
     },
     "GENERAL_SETTINGS": {
-        "BACK": "Back"
+        "BACK": "Back",
+        "FORM": {
+            "AUTO_RESOLVE": {
+                "TITLE": "Auto-resolve conversations",
+                "NOTE": "This configuration would allow you to automatically resolve the conversation after a certain period of inactivity.",
+                "DURATION": {
+                    "LABEL": "Inactivity duration",
+                    "HELP": "Time period of inactivity after which conversation is auto-resolved",
+                    "PLACEHOLDER": "30",
+                    "ERROR": "Auto resolve duration should be between 10 minutes and 999 days",
+                    "API": {
+                        "SUCCESS": "Auto resolve settings updated successfully",
+                        "ERROR": "Failed to update auto resolve settings"
+                    }
+                },
+                "MESSAGE": {
+                    "LABEL": "Custom auto-resolution message",
+                    "PLACEHOLDER": "Conversation was marked resolved by system due to 15 days of inactivity",
+                    "HELP": "Message sent to the customer after conversation is auto-resolved"
+                },
+                "PREFERENCES": "Preferences",
+                "LABEL": {
+                    "LABEL": "Add label after auto-resolution",
+                    "PLACEHOLDER": "Select a label"
+                },
+                "IGNORE_WAITING": {
+                    "LABEL": "Skip conversations waiting for agent’s reply"
+                },
+                "UPDATE_BUTTON": "Save Changes"
+            }
+        }
+    },
+    "INBOX": {
+        "LIST": {
+            "TITLE": "My Inbox",
+            "DISPLAY_DROPDOWN": "Display",
+            "LOADING": "Fetching notifications",
+            "404": "There are no active notifications in this group.",
+            "NO_NOTIFICATIONS": "No notifications",
+            "NOTE": "Notifications from all subscribed inboxes",
+            "NO_MESSAGES_AVAILABLE": "Oops! Not able to fetch messages",
+            "SNOOZED_UNTIL": "Snoozed until",
+            "SNOOZED_UNTIL_TOMORROW": "Snoozed until tomorrow",
+            "SNOOZED_UNTIL_NEXT_WEEK": "Snoozed until next week"
+        },
+        "ACTION_HEADER": {
+            "SNOOZE": "Snooze notification",
+            "DELETE": "Delete notification",
+            "BACK": "Back"
+        },
+        "TYPES": {
+            "CONVERSATION_MENTION": "You have been mentioned in a conversation",
+            "CONVERSATION_CREATION": "New conversation created",
+            "CONVERSATION_ASSIGNMENT": "A conversation has been assigned to you",
+            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message in an assigned conversation",
+            "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "New message in a conversation you are participating in",
+            "SLA_MISSED_FIRST_RESPONSE": "SLA target first response missed for conversation",
+            "SLA_MISSED_NEXT_RESPONSE": "SLA target next response missed for conversation",
+            "SLA_MISSED_RESOLUTION": "SLA target resolution missed for conversation"
+        },
+        "TYPES_NEXT": {
+            "CONVERSATION_MENTION": "Mentioned",
+            "CONVERSATION_ASSIGNMENT": "Assigned to you",
+            "CONVERSATION_CREATION": "New Conversation",
+            "SLA_MISSED_FIRST_RESPONSE": "SLA breach",
+            "SLA_MISSED_NEXT_RESPONSE": "SLA breach",
+            "SLA_MISSED_RESOLUTION": "SLA breach",
+            "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "New message",
+            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message",
+            "SNOOZED_UNTIL": "Snoozed for {time}",
+            "SNOOZED_ENDS": "Snooze ended"
+        },
+        "NO_CONTENT": "No content available",
+        "MENU_ITEM": {
+            "MARK_AS_READ": "Mark as read",
+            "MARK_AS_UNREAD": "Mark as unread",
+            "SNOOZE": "Snooze",
+            "DELETE": "Delete",
+            "MARK_ALL_READ": "Mark all as read",
+            "DELETE_ALL": "Delete all",
+            "DELETE_ALL_READ": "Delete all read"
+        },
+        "DISPLAY_MENU": {
+            "SORT": "Sort",
+            "DISPLAY": "Display :",
+            "SORT_OPTIONS": {
+                "NEWEST": "Newest",
+                "OLDEST": "Oldest",
+                "PRIORITY": "Priority"
+            },
+            "DISPLAY_OPTIONS": {
+                "SNOOZED": "Snoozed",
+                "READ": "Read",
+                "LABELS": "Labels",
+                "CONVERSATION_ID": "Conversation ID"
+            }
+        },
+        "ALERTS": {
+            "MARK_AS_READ": "Notification marked as read",
+            "MARK_AS_UNREAD": "Notification marked as unread",
+            "SNOOZE": "Notification snoozed",
+            "DELETE": "Notification deleted",
+            "MARK_ALL_READ": "All notifications marked as read",
+            "DELETE_ALL": "All notifications deleted",
+            "DELETE_ALL_READ": "All read notifications deleted"
+        }
     },
     "INBOX_MGMT": {
         "HEADER": "Inboxes",
@@ -4227,6 +4335,26 @@ const messages: Record<string, unknown> = {
             "SUCCESS_MESSAGE": "Message sent!",
             "GO_TO_CONVERSATION": "View",
             "ERROR_MESSAGE": "Couldn't send! try again"
+        }
+    },
+    "NOTIFICATIONS": {
+        "notification_title": {
+            "conversation_creation": "A conversation (#{display_id}) has been created in {inbox_name}",
+            "conversation_assignment": "A conversation (#{display_id}) has been assigned to you",
+            "assigned_conversation_new_message": "A new message is created in conversation (#{display_id})",
+            "conversation_mention": "You have been mentioned in conversation (#{display_id})",
+            "sla_missed_first_response": "SLA target first response missed for conversation (#{display_id})",
+            "sla_missed_next_response": "SLA target next response missed for conversation (#{display_id})",
+            "sla_missed_resolution": "SLA target resolution missed for conversation (#{display_id})"
+        },
+        "attachment": "Attachment",
+        "no_content": "No content",
+        "email": {
+            "conversation_creation": "{agent_name}, A new conversation [ID - {display_id}] has been created in {inbox_name}.",
+            "conversation_assignment": "{agent_name}, A new conversation [ID - {display_id}] has been assigned to you.",
+            "conversation_mention": "{agent_name}, You have been mentioned in conversation [ID - {display_id}]",
+            "assigned_conversation_new_message": "{agent_name}, New message in your assigned conversation [ID - {display_id}].",
+            "participating_conversation_new_message": "{agent_name}, New message in your participating conversation [ID - {display_id}]."
         }
     },
     "ONBOARDING": {

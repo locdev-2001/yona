@@ -254,6 +254,17 @@ class Message extends Model
         return $query->where('message_type', self::TYPE_OUTGOING);
     }
 
+    public function scopeTemplate(Builder $query): Builder
+    {
+        return $query->where('message_type', self::TYPE_TEMPLATE);
+    }
+
+    // scope :today — so theo NGÀY của lịch, không phải 24 giờ gần nhất.
+    public function scopeToday(Builder $query): Builder
+    {
+        return $query->whereRaw("date_trunc('day', created_at) = ?", [now()->startOfDay()]);
+    }
+
     private function persistPendingAttachments(): void
     {
         if ($this->pendingAttachments === []) {

@@ -2,11 +2,13 @@
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\MessageTemplates\Template\AutoResolve;
 use App\Services\MessageTemplates\Template\CsatSurvey;
 use App\Services\MessageTemplates\Template\EmailCollect;
 use App\Services\MessageTemplates\Template\Greeting;
+use App\Services\MessageTemplates\Template\OutOfOffice;
 
-// Port từ spec/services/message_templates/template/{email_collect,greeting,csat_survey}_spec.rb.
+// Port từ spec/services/message_templates/template/{email_collect,greeting,csat_survey,out_of_office,auto_resolve}_spec.rb.
 
 it('creates the two email collect messages', function () {
     $conversation = Conversation::factory()->create();
@@ -73,4 +75,62 @@ it('creates a csat survey message from the inbox configuration', function () {
 
     expect($message->content)->toBe('Please rate your experience');
     expect($message->content_attributes['display_type'])->toBe('star');
+});
+
+it('creates the out of office message', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->inbox->update(['out_of_office_message' => 'We are away right now.']);
+
+    (new OutOfOffice($conversation))->perform();
+
+    $message = $conversation->messages()->sole();
+
+    expect($message->message_type)->toBe(Message::TYPE_TEMPLATE)
+        ->and($message->content)->toBe('We are away right now.');
+});
+
+it('renders template variables in the out of office message', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->contact->update(['name' => 'Trang Nguyen']);
+    $conversation->inbox->update([
+        'out_of_office_message' => 'Hey, {{contact.name}} we are unavailable at the moment. - from {{account.name}}',
+    ]);
+
+    (new OutOfOffice($conversation))->perform();
+
+    expect($conversation->messages()->sole()->content)
+        ->toBe("Hey, Trang Nguyen we are unavailable at the moment. - from {$conversation->account->name}");
+});
+
+it('creates the auto resolve message from the account settings', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->account->update(['settings' => ['auto_resolve_message' => 'Closing this for now.']]);
+
+    (new AutoResolve($conversation->fresh()))->perform();
+
+    $message = $conversation->messages()->sole();
+
+    expect($message->message_type)->toBe(Message::TYPE_TEMPLATE)
+        ->and($message->content)->toBe('Closing this for now.');
+});
+
+it('logs an activity instead of a message outside the reply window', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->account->update(['settings' => ['auto_resolve_message' => 'Closing this for now.']]);
+    $conversation->inbox->channel->update(['additional_attributes' => ['agent_reply_time_window' => '12']]);
+
+    (new AutoResolve($conversation->fresh()))->perform();
+
+    $message = $conversation->messages()->sole();
+
+    expect($message->message_type)->toBe(Message::TYPE_ACTIVITY)
+        ->and($message->content)->toBe('Auto-resolve message not sent due to outgoing message restrictions');
+});
+
+it('creates no auto resolve message when the account has none', function () {
+    $conversation = Conversation::factory()->create();
+
+    (new AutoResolve($conversation))->perform();
+
+    expect($conversation->messages()->count())->toBe(0);
 });

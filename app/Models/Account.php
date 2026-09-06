@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\AccountFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -55,6 +56,29 @@ class Account extends Model
         });
     }
 
+    /**
+     * `store_accessor :settings, :auto_resolve_after, …` của bản gốc — cột
+     * `settings` (jsonb) là nơi duy nhất giữ cấu hình mềm của account.
+     */
+    public const SETTINGS_ATTRS = [
+        'auto_resolve_after',
+        'auto_resolve_message',
+        'auto_resolve_ignore_waiting',
+        'auto_resolve_label',
+        'audio_transcriptions',
+    ];
+
+    public function setting(string $key): mixed
+    {
+        return $this->settings[$key] ?? null;
+    }
+
+    // scope :with_auto_resolve — account đã đặt thời hạn tự đóng hội thoại.
+    public function scopeWithAutoResolve(Builder $query): Builder
+    {
+        return $query->whereRaw("(settings ->> 'auto_resolve_after')::int IS NOT NULL");
+    }
+
     public function accountUsers(): HasMany
     {
         return $this->hasMany(AccountUser::class);
@@ -100,6 +124,16 @@ class Account extends Model
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationSettings(): HasMany
+    {
+        return $this->hasMany(NotificationSetting::class);
     }
 
     public function mentions(): HasMany

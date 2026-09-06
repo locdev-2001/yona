@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 // Port từ api/v1/models/_inbox.json.jbuilder.
-// working_hours: [] tới khi port Business Hours; help_center: bỏ tới khi có portals (nhóm D).
+// help_center: bỏ tới khi có portals (nhóm D).
 class InboxResource extends JsonResource
 {
     // Khối `resource.channel.try(:x)` của partial gốc: kênh nào không có thuộc
@@ -63,7 +63,7 @@ class InboxResource extends JsonResource
             'enable_auto_assignment' => $inbox->enable_auto_assignment,
             'auto_assignment_config' => $inbox->auto_assignment_config ?? [],
             'out_of_office_message' => $inbox->out_of_office_message,
-            'working_hours' => [],
+            'working_hours' => $inbox->weeklySchedule(),
             'timezone' => $inbox->timezone,
             'callback_webhook_url' => null,
             'allow_messages_after_resolved' => $inbox->allow_messages_after_resolved,

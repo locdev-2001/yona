@@ -16,13 +16,14 @@ import UserProfilePicture from './UserProfilePicture';
 import UserBasicDetails from './UserBasicDetails';
 import MessageSignature from './MessageSignature';
 import ChangePassword from './ChangePassword';
+import NotificationPreferences from './NotificationPreferences';
 import FontSize from './FontSize';
 import UserLanguageSelect from './UserLanguageSelect';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/profile/Index.vue —
-// MFA (F8) / Active sessions (F8) / Audio + Notification preferences (D5) /
+// MFA (F8) / Active sessions (F8) / Audio alerts (chờ tệp âm thanh) /
 // Access token (F8) vào theo roadmap; các section còn lại đủ.
 const HOT_KEYS = [
     {
@@ -244,6 +245,9 @@ export default function ProfileSettingsIndex() {
                     </SectionLayout>
                     <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')}>
                         <ChangePassword />
+                    </SectionLayout>
+                    <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')}>
+                        <NotificationPreferences />
                     </SectionLayout>
                 </div>
             </SettingsWrapper>

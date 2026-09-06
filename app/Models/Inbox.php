@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
+use App\Models\Concerns\OutOfOffisable;
 use App\Services\AutoAssignment\InboxRoundRobinService;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\InboxFactory;
@@ -20,12 +21,12 @@ use Illuminate\Support\Collection as SupportCollection;
 
 // Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: contact_inboxes/conversations/messages (nhóm B2-B3),
-// working hours OutOfOffisable (tính năng sau), agent_bot/webhooks/portal (nhóm D-E),
+// agent_bot/webhooks/portal (nhóm D-E),
 // FilteredCountInvalidator (nợ B8), Reportable, EE overlay.
 class Inbox extends Model
 {
     /** @use HasFactory<InboxFactory> */
-    use Avatarable, HasFactory;
+    use Avatarable, HasFactory, OutOfOffisable;
 
     public const SENDER_NAME_TYPE_FRIENDLY = 0;
 

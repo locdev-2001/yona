@@ -165,6 +165,19 @@ class User extends Authenticatable
         return $this->hasMany(Mention::class);
     }
 
+    // Ghi đè quan hệ notifications() của trait Notifiable (kênh database không
+    // dùng ở đây) — `use Illuminate\Notifications\Notification` ở đầu file nên
+    // phải chỉ đích danh model của repo.
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(\App\Models\Notification::class);
+    }
+
+    public function notificationSettings(): HasMany
+    {
+        return $this->hasMany(NotificationSetting::class);
+    }
+
     // User#assigned_inboxes: admin thấy mọi inbox của account, agent chỉ inbox mình là member.
     /** @return Builder<Inbox> */
     public function assignedInboxes(Account $account, AccountUser $accountUser): Builder

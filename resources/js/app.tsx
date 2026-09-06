@@ -14,6 +14,7 @@ const pages = import.meta.glob([
     './dashboard/campaigns/*.tsx',
     './dashboard/contacts/*.tsx',
     './dashboard/conversation/*.tsx',
+    './dashboard/notifications/*.tsx',
 ]);
 
 createInertiaApp({

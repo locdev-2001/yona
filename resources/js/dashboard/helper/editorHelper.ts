@@ -49,9 +49,11 @@ export const MARKDOWN_PATTERNS: MarkdownPattern[] = [
     { type: 'link', patterns: [{ pattern: /\[([^\]]+)\]\([^)]+\)/g, replacement: '$1' }] },
 ];
 
-// FORMATTING theo kênh (constants/editor.js) — phạm vi B3 chỉ cần API + note + default.
+// FORMATTING theo kênh (constants/editor.js).
 export const FORMATTING: Record<string, { marks: string[]; nodes: string[] }> = {
     'Channel::Api': { marks: ['strong', 'em'], nodes: [] },
+    // Cho phép định dạng nhưng KHÔNG hiện thanh công cụ (menu rỗng).
+    'Context::NoToolbar': { marks: ['strong', 'em', 'link'], nodes: ['bulletList', 'orderedList'] },
     'Context::PrivateNote': {
         marks: ['strong', 'em', 'code', 'link', 'strike'],
         nodes: ['bulletList', 'orderedList', 'codeBlock', 'blockquote'],

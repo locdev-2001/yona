@@ -13,6 +13,7 @@ import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
+import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
@@ -34,6 +35,8 @@ export default function Sidebar({
     const accountLabels = useLabelsList(accountId);
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
     const unreadCounts = useConversationUnreadCounts();
+    // Sidebar.vue dispatch `notifications/unReadCount` khi mount — huy hiệu "My Inbox".
+    const notificationsUnreadCount = useNotificationsUnreadCount();
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -116,11 +119,18 @@ export default function Sidebar({
     const menuItems = useMemo(
         () =>
             filterMenuByRole(
-                buildMenuItems(accountId, inboxes, teams, labelsOnSidebar(accountLabels), unreadCounts),
+                buildMenuItems(
+                    accountId,
+                    inboxes,
+                    teams,
+                    labelsOnSidebar(accountLabels),
+                    unreadCounts,
+                    notificationsUnreadCount,
+                ),
                 role,
                 features,
             ),
-        [accountId, inboxes, teams, accountLabels, unreadCounts, role, features],
+        [accountId, inboxes, teams, accountLabels, unreadCounts, notificationsUnreadCount, role, features],
     );
 
     const asideRef = useRef<HTMLElement>(null);

@@ -65,6 +65,7 @@ class AccountUser extends Model
     }
 
     // after_save :update_presence_in_redis, if: :saved_change_to_availability?
+    // + after_create_commit :create_notification_setting.
     protected static function booted(): void
     {
         static::saved(function (AccountUser $accountUser) {
@@ -72,6 +73,26 @@ class AccountUser extends Model
                 OnlineStatusTracker::setStatus($accountUser->account_id, $accountUser->user_id, $accountUser->availabilityName());
             }
         });
+
+        static::created(function (AccountUser $accountUser) {
+            $accountUser->createNotificationSetting();
+        });
+    }
+
+    // Mặc định của bản gốc: chỉ bật báo khi được giao hội thoại (email + push).
+    public function createNotificationSetting(): NotificationSetting
+    {
+        $setting = NotificationSetting::query()->firstOrNew([
+            'account_id' => $this->account_id,
+            'user_id' => $this->user_id,
+        ]);
+
+        foreach (NotificationSetting::DELIVERY_TYPES as $deliveryType) {
+            $setting->setSelectedFlags($deliveryType, ["{$deliveryType}_conversation_assignment"]);
+        }
+        $setting->save();
+
+        return $setting;
     }
 
     public function account(): BelongsTo

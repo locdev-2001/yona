@@ -187,6 +187,9 @@ interface ProviderProps {
     teamId?: number;
     label?: string;
     conversationType?: ConversationType;
+    // Trung tâm thông báo dùng lại toàn bộ phần hội thoại nhưng không có cột
+    // ChatList — tắt hẳn truy vấn danh sách như InboxView.vue của bản gốc.
+    withConversationList?: boolean;
     children: ReactNode;
 }
 
@@ -198,6 +201,7 @@ export function ConversationProvider({
     teamId = 0,
     label = '',
     conversationType = '',
+    withConversationList = true,
     children,
 }: ProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
@@ -294,6 +298,10 @@ export function ConversationProvider({
 
     const fetchPage = useCallback(
         async (page: number, append: boolean) => {
+            if (!withConversationList) {
+                setListLoading(false);
+                return;
+            }
             setListLoading(true);
             try {
                 const response = await fetchConversations({ ...listQuery, page });
@@ -317,7 +325,7 @@ export function ConversationProvider({
                 setListLoading(false);
             }
         },
-        [listQuery],
+        [listQuery, withConversationList],
     );
 
     // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).

@@ -32,6 +32,7 @@ import GreetingsEditor from 'shared/components/GreetingsEditor';
 import AccessToken from 'dashboard/settings/profile/AccessToken';
 import Widget from 'dashboard/modules/widget-preview/components/Widget';
 import LockToSingleConversationPreview from './components/LockToSingleConversationPreview';
+import WeeklyAvailability from './components/WeeklyAvailability';
 import SenderNameExamplePreview from './components/SenderNameExamplePreview';
 import PreChatFormSettings from './PreChatForm/Settings';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
@@ -49,9 +50,9 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
 
-// Port từ settings/inbox/Settings.vue — nhánh kênh API + Web Widget. Tab
-// Business Hours / Bot hiện trên thanh tab như oracle (feature tương ứng chưa
-// port — nội dung trống, vào cùng tính năng của chúng).
+// Port từ settings/inbox/Settings.vue — nhánh kênh API + Web Widget. Tab Bot
+// hiện trên thanh tab như oracle (feature tương ứng chưa port — nội dung trống,
+// vào cùng tính năng của nó).
 interface ShowProps {
     inboxId: number;
     tab?: string | null;
@@ -763,6 +764,14 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                 <div className="mx-6 max-w-4xl">
                                     <CollaboratorsPage inbox={inbox} onInboxUpdated={syncInboxData} />
                                 </div>
+                            ) : null}
+
+                            {selectedTabKey === 'business-hours' ? (
+                                <WeeklyAvailability
+                                    inbox={inbox}
+                                    uiSettings={uiSettings}
+                                    onInboxUpdated={syncInboxData}
+                                />
                             ) : null}
 
                             {selectedTabKey === 'csat' ? (
