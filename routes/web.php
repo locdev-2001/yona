@@ -10,7 +10,6 @@ use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
-use App\Http\Controllers\Auth\SsoSessionsController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -444,5 +443,4 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
 });
 
 // Đăng nhập bằng link một lần (Platform API users#login, impersonate của console).
-Route::get('/app/sso_login', [SsoSessionsController::class, 'store'])->name('sso_login');
 // F7 Super Admin — END

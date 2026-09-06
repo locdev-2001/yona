@@ -77,7 +77,7 @@ describe('Telegram', function () {
             'channel' => ['type' => 'telegram', 'bot_token' => 'token-sai'],
         ])->assertOk();
 
-        expect(Telegram::query()->where('bot_token', 'token-sai')->exists())->toBeTrue()
+        expect(Telegram::findByBotToken('token-sai'))->not->toBeNull()
             ->and($response->json('bot_name'))->toBeNull()
             ->and($response->json('name'))->toBe('Bot hỏng');
     });

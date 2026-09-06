@@ -22,6 +22,33 @@ class Telegram extends Model
 
     protected $fillable = ['account_id', 'bot_name', 'bot_token'];
 
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return ['bot_token' => 'encrypted'];
+    }
+
+    // Cột băm là thứ duy nhất tra được bot_token (bản mã có IV ngẫu nhiên);
+    // giữ đồng bộ ngay trong model để không nơi nào phải nhớ tự ghi.
+    protected static function booted(): void
+    {
+        static::saving(function (self $channel) {
+            if ($channel->isDirty('bot_token')) {
+                $channel->bot_token_hash = self::hashBotToken((string) $channel->bot_token);
+            }
+        });
+    }
+
+    public static function hashBotToken(string $botToken): string
+    {
+        return hash('sha256', $botToken);
+    }
+
+    public static function findByBotToken(string $botToken): ?self
+    {
+        return self::query()->where('bot_token_hash', self::hashBotToken($botToken))->first();
+    }
+
     public function name(): string
     {
         return 'Telegram';

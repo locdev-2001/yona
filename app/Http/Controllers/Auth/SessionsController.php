@@ -24,15 +24,24 @@ class SessionsController extends Controller
 {
     private const LOGIN_PAGE = 'v3/views/login/Index';
 
-    public function create(): Response
+    // Link SSO của Platform API / "Impersonate user" trỏ vào chính trang đăng
+    // nhập kèm ?email=&sso_auth_token= (như bản gốc); trang tự POST lại đây.
+    public function create(Request $request): Response
     {
-        return Inertia::render(self::LOGIN_PAGE);
+        return Inertia::render(self::LOGIN_PAGE, [
+            'email' => $request->query('email'),
+            'ssoAuthToken' => $request->query('sso_auth_token'),
+        ]);
     }
 
     public function store(Request $request): SymfonyResponse|Response
     {
         if ($request->filled('mfa_token')) {
             return $this->verifyMfa($request);
+        }
+
+        if ($request->filled('sso_auth_token')) {
+            return $this->authenticateWithSsoToken($request);
         }
 
         $user = $this->authenticateCredentials($request);
@@ -65,6 +74,30 @@ class SessionsController extends Controller
 
         // Ranh giới bundle app.scss → v3.scss (như trên).
         return Inertia::location('/app/login');
+    }
+
+    // devise_overrides/sessions_controller#handle_sso_authentication: token dùng
+    // một lần, phiên impersonation bỏ qua giới hạn số phiên.
+    private function authenticateWithSsoToken(Request $request): SymfonyResponse|Response
+    {
+        $token = (string) $request->input('sso_auth_token');
+        $user = User::fromEmail($request->input('email'));
+
+        if ($user === null || ! $user->validSsoAuthToken($token)) {
+            throw ValidationException::withMessages(['email' => __('auth.failed')]);
+        }
+
+        $impersonation = $user->ssoAuthTokenIsImpersonation($token);
+        $user->invalidateSsoAuthToken($token);
+
+        if (! $impersonation) {
+            $limitResponse = $this->enforceSessionLimit($request, $user);
+            if ($limitResponse) {
+                return $limitResponse;
+            }
+        }
+
+        return $this->completeLogin($request, $user);
     }
 
     private function authenticateCredentials(Request $request): User

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { picoSearch } from '@chatwoot/pico-search';
 
 import Button from 'dashboard/components-next/button/Button';
@@ -9,6 +9,7 @@ import {
     DropdownItem,
     DropdownSection,
 } from 'dashboard/components-next/dropdown-menu/base';
+import { focusOnMount } from 'shared/helpers/focusOnMount';
 import { t } from '../../../../i18n';
 import type { FilterOption } from '../helper/filterHelper';
 
@@ -45,11 +46,7 @@ export default function SingleSelect({
     onSearch,
 }: SingleSelectProps) {
     const [searchTerm, setSearchTerm] = useState('');
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        searchInputRef.current?.focus();
-    });
 
     const searchResults = asyncSearch ? options : picoSearch(options ?? [], searchTerm, ['name']);
 
@@ -80,7 +77,7 @@ export default function SingleSelect({
                         <div className="relative">
                             <Icon className="absolute size-4 left-2 top-2" icon="i-lucide-search" />
                             <input
-                                ref={searchInputRef}
+                                ref={focusOnMount}
                                 value={searchTerm}
                                 onChange={event => {
                                     setSearchTerm(event.target.value);
@@ -96,15 +93,19 @@ export default function SingleSelect({
                             <DropdownItem disabled>{t('DROPDOWN_MENU.SEARCHING')}</DropdownItem>
                         ) : searchResults.length ? (
                             searchResults.map(option => (
-                                <DropdownItem key={String(option.id)} onClick={() => toggleSelected(option)}>
-                                    {option.icon ? <Icon icon={option.icon} className="size-4 text-n-slate-11" /> : null}
-                                    <span className="flex items-center justify-between w-full gap-2 min-w-0">
-                                        <span className="truncate">{option.name}</span>
-                                        {selectedItem && selectedItem.id === option.id ? (
-                                            <Icon icon="i-lucide-check" className="bg-n-blue-text pointer-events-none" />
-                                        ) : null}
-                                    </span>
-                                </DropdownItem>
+                                <DropdownItem
+                                    key={String(option.id)}
+                                    icon={option.icon}
+                                    labelSlot={
+                                        <>
+                                            {option.name}
+                                            {selectedItem && selectedItem.id === option.id ? (
+                                                <Icon icon="i-lucide-check" className="bg-n-blue-text pointer-events-none" />
+                                            ) : null}
+                                        </>
+                                    }
+                                    onClick={() => toggleSelected(option)}
+                                />
                             ))
                         ) : (
                             <DropdownItem disabled>

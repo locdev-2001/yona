@@ -4,7 +4,7 @@ namespace App\Models\Channel;
 
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Models\Channel\Concerns\Channelable;
-use App\Models\Channel\Concerns\Reauthorizable;
+use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
 use Database\Factories\Channel\InstagramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

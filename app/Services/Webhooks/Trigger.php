@@ -6,6 +6,7 @@ use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\Messages\StatusUpdateService;
+use App\Support\SafeHttp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -63,6 +64,8 @@ class Trigger
 
     private function performRequest(): void
     {
+        SafeHttp::assertPublicUrl($this->url);
+
         $body = (string) json_encode($this->payload);
         $timeout = $this->webhookTimeout();
 

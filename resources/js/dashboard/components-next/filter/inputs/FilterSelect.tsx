@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { picoSearch } from '@chatwoot/pico-search';
 
@@ -10,6 +10,7 @@ import {
     DropdownItem,
     DropdownSection,
 } from 'dashboard/components-next/dropdown-menu/base';
+import { focusOnMount } from 'shared/helpers/focusOnMount';
 import { t } from '../../../../i18n';
 import { DROPDOWN_SEARCH_THRESHOLD } from '../helper/filterHelper';
 
@@ -34,15 +35,11 @@ interface FilterSelectProps {
 }
 
 function SearchInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-    const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        inputRef.current?.focus();
-    }, []);
     return (
         <div className="relative">
             <Icon className="absolute size-4 left-2 top-2" icon="i-lucide-search" />
             <input
-                ref={inputRef}
+                ref={focusOnMount}
                 value={value}
                 onChange={event => onChange(event.target.value)}
                 className="w-full p-1.5 pl-8 rounded-lg text-n-slate-11 bg-n-alpha-1"

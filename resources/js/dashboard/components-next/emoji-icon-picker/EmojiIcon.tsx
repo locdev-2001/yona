@@ -1,4 +1,5 @@
 import Icon from 'dashboard/components-next/icon/Icon';
+import SanitizedHtml from 'shared/components/SanitizedHtml';
 import { iconClassFor, isIconValue } from './constants';
 
 // Port từ dashboard/components-next/emoji-icon-picker/EmojiIcon.vue —
@@ -19,7 +20,7 @@ export default function EmojiIcon({ value = '', color = '', className = '' }: Em
                     style={color ? { color } : undefined}
                 />
             ) : (
-                <span>{value}</span>
+                <SanitizedHtml html={value} />
             )}
         </span>
     );

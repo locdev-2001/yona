@@ -46,7 +46,7 @@ trait SsoAuthenticatable
             $query['impersonation'] = 'true';
         }
 
-        return rtrim((string) config('app.url'), '/').'/app/sso_login?'.http_build_query($query);
+        return rtrim((string) config('app.url'), '/').'/app/login?'.http_build_query($query);
     }
 
     private function ssoTokenKey(string $token): string

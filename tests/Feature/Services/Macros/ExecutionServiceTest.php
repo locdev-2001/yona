@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\WebhookJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Attachment;
@@ -11,6 +12,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\Macros\ExecutionService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -182,4 +184,33 @@ it('names the acting user in every activity an action can create', function () {
         ->and($activities)->toContain("Conversation was snoozed by {$name}")
         ->and($activities)->toContain("Conversation was marked resolved by {$name}")
         ->and($activities)->toContain("{$name} has muted the conversation");
+});
+
+it('dispatches the webhook job with the conversation payload for send_webhook_event', function () {
+    Queue::fake();
+
+    Message::factory()->create([
+        'account_id' => $this->account->id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'conversation_id' => $this->conversation->id,
+        'content' => 'Latest chat message.',
+    ]);
+
+    d3Execute([['action_name' => 'send_webhook_event', 'action_params' => ['https://hooks.example.com/macro']]]);
+
+    Queue::assertPushed(WebhookJob::class, function (WebhookJob $job) {
+        return $job->url === 'https://hooks.example.com/macro'
+            && $job->payload['event'] === 'macro.executed'
+            && $job->payload['id'] === $this->conversation->display_id
+            && $job->payload['account']['id'] === $this->account->id
+            && $job->payload['messages'][0]['content'] === 'Latest chat message.';
+    });
+});
+
+it('skips send_webhook_event without a url', function () {
+    Queue::fake();
+
+    d3Execute([['action_name' => 'send_webhook_event', 'action_params' => []]]);
+
+    Queue::assertNotPushed(WebhookJob::class);
 });

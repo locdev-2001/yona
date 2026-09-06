@@ -2,6 +2,7 @@
 
 namespace App\Services\Macros;
 
+use App\Jobs\WebhookJob;
 use App\Models\Attachment;
 use App\Models\Conversation;
 use App\Models\Macro;
@@ -74,13 +75,12 @@ final class ExecutionService
     private function sendWebhookEvent(array $params): void
     {
         $url = $params[0] ?? null;
-        $webhookJob = 'App\Jobs\WebhookJob';
 
-        if (blank($url) || ! class_exists($webhookJob) || ! method_exists($this->conversation, 'webhookData')) {
+        if (blank($url)) {
             return;
         }
 
-        $webhookJob::dispatch((string) $url, [
+        WebhookJob::dispatch((string) $url, [
             ...$this->conversation->webhookData(),
             'event' => 'macro.executed',
         ]);

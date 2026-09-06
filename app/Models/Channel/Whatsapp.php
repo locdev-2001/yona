@@ -3,7 +3,7 @@
 namespace App\Models\Channel;
 
 use App\Models\Channel\Concerns\Channelable;
-use App\Models\Channel\Concerns\Reauthorizable;
+use App\Models\Concerns\Reauthorizable;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
 use App\Services\Whatsapp\Providers\WhatsappCloudService;
 use App\Services\Whatsapp\Providers\WhatsappProvider;

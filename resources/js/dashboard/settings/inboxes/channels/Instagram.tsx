@@ -6,6 +6,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../../types';
+import SanitizedHtml from 'shared/components/SanitizedHtml';
 
 // Port từ settings/inbox/channels/Instagram.vue — nút đăng nhập Instagram rồi
 // nhảy sang URL uỷ quyền do server trả về. Banner giới hạn của Meta chỉ hiện
@@ -57,7 +58,7 @@ export default function InstagramChannelForm() {
                 {hasError ? (
                     <div className="max-w-lg mx-auto text-center">
                         <h5>{errorStateMessage}</h5>
-                        {errorStateDescription ? <p>{errorStateDescription}</p> : null}
+                        {errorStateDescription ? <SanitizedHtml as="p" html={errorStateDescription} /> : null}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center w-full px-8 py-10 text-center rounded-2xl outline outline-1 outline-n-weak">

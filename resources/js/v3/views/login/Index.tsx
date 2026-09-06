@@ -24,11 +24,23 @@ interface LoginPageProps extends SharedPageProps {
     mfaError?: string | null;
     sessionsLimitReached?: boolean;
     sessions?: UserSessionRow[];
+    // Link SSO (Platform API / impersonate) mở đúng trang này kèm hai giá trị đó.
+    email?: string | null;
+    ssoAuthToken?: string | null;
 }
 
 export default function LoginIndex() {
-    const { globalConfig, errors, mfaRequired, mfaToken, mfaError, sessionsLimitReached, sessions } =
-        usePage<LoginPageProps>().props;
+    const {
+        globalConfig,
+        errors,
+        mfaRequired,
+        mfaToken,
+        mfaError,
+        sessionsLimitReached,
+        sessions,
+        email: ssoEmail,
+        ssoAuthToken,
+    } = usePage<LoginPageProps>().props;
     const { replaceInstallationName } = useBranding();
 
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -73,6 +85,13 @@ export default function LoginIndex() {
 
     const submitLogin = (extraParams: Record<string, string | number | boolean> = {}) =>
         postLogin({ email: credentials.email, password: credentials.password, ...extraParams });
+
+    // created() của bản gốc: có sso_auth_token thì đăng nhập ngay, không chờ form.
+    useEffect(() => {
+        if (!ssoAuthToken || !ssoEmail) return;
+        postLogin({ email: decodeURIComponent(ssoEmail), password: '', sso_auth_token: ssoAuthToken });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ssoAuthToken, ssoEmail]);
 
     const submitFormLogin = (event: FormEvent) => {
         event.preventDefault();

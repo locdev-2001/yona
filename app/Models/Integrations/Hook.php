@@ -3,7 +3,7 @@
 namespace App\Models\Integrations;
 
 use App\Models\Account;
-use App\Models\Channel\Concerns\Reauthorizable;
+use App\Models\Concerns\Reauthorizable;
 use App\Models\Inbox;
 use App\Support\Integrations\App;
 use Database\Factories\Integrations\HookFactory;

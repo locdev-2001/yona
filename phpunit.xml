@@ -18,6 +18,8 @@
         <ini name="memory_limit" value="1G"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <!-- Test không được đụng DNS: guard SSRF tắt mặc định, test của nó tự bật lại. -->
+        <env name="ALLOW_PRIVATE_WEBHOOK_URLS" value="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>

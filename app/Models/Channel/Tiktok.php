@@ -3,7 +3,7 @@
 namespace App\Models\Channel;
 
 use App\Models\Channel\Concerns\Channelable;
-use App\Models\Channel\Concerns\Reauthorizable;
+use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\TiktokFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
