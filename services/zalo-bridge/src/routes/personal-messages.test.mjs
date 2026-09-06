@@ -1,0 +1,303 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import { ThreadType } from 'zca-js';
+import { classifyZcaError, firstSourceId, registerPersonalMessageRoutes } from './personal-messages.mjs';
+import { zcaReactionCode } from '../reaction-icons.mjs';
+
+const SEND_SECRET = 'secret-cho-test';
+
+/** Dựng bridge tối thiểu: chỉ các route cửa ra, slot giả — KHÔNG đụng phiên Zalo thật. */
+function startBridge({ slot = null, calls = [] } = {}) {
+    const app = express();
+    app.use(express.json());
+    registerPersonalMessageRoutes(app, {
+        checkSendSecret(req, res) {
+            if ((req.header('X-Bridge-Send-Secret') || '') !== SEND_SECRET) {
+                res.status(403).json({ ok: false, message: 'Forbidden' });
+                return false;
+            }
+            return true;
+        },
+        getSlot: () => slot,
+        resolveSlot: () => slot,
+        bridgeSendTextOrMedia: async () => ({ source_id: 'x', source_ids: ['x'] }),
+        ThreadType,
+        zcaReactionCode,
+    });
+    return new Promise((resolve) => {
+        const server = app.listen(0, '127.0.0.1', () => {
+            const { port } = server.address();
+            resolve({
+                server,
+                calls,
+                async post(routePath, body, secret = SEND_SECRET) {
+                    const res = await fetch(`http://127.0.0.1:${port}${routePath}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Bridge-Send-Secret': secret },
+                        body: JSON.stringify(body),
+                    });
+                    return { status: res.status, body: await res.json() };
+                },
+            });
+        });
+    });
+}
+
+function readySlot(calls, overrides = {}) {
+    return {
+        loginPhase: 'ready',
+        personalUid: '614700000000000000',
+        api: {
+            async addReaction(icon, dest) {
+                calls.push(['addReaction', icon, dest]);
+                return { msgIds: [98765] };
+            },
+            async undo(payload, threadId, type) {
+                calls.push(['undo', payload, threadId, type]);
+                return { status: 0 };
+            },
+            async sendTypingEvent(threadId, type) {
+                calls.push(['sendTypingEvent', threadId, type]);
+                return { status: 0 };
+            },
+            ...overrides,
+        },
+    };
+}
+
+async function withBridge(slotFactory, run) {
+    const calls = [];
+    const bridge = await startBridge({ slot: slotFactory ? slotFactory(calls) : null, calls });
+    try {
+        await run(bridge, calls);
+    } finally {
+        bridge.server.close();
+    }
+}
+
+test('cửa ra mới: thiếu send secret → 403 cho cả ba route', async () => {
+    await withBridge(readySlot, async (bridge) => {
+        for (const routePath of ['/personal-messages/reaction', '/personal-messages/undo', '/personal-messages/typing']) {
+            const res = await bridge.post(routePath, { connection_id: 6, thread_id: '1' }, 'sai-secret');
+            assert.equal(res.status, 403, routePath);
+        }
+    });
+});
+
+test('reaction: gọi zca addReaction đúng mã + đích, trả source_id', async () => {
+    await withBridge(readySlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/reaction', {
+            connection_id: 6,
+            thread_id: '9876543210',
+            msg_id: '8233978780092',
+            cli_msg_id: '1725600000000',
+            icon: '👍',
+        });
+        assert.equal(res.status, 200);
+        assert.deepEqual(res.body, { ok: true, source_id: '98765' });
+        assert.deepEqual(calls[0], [
+            'addReaction',
+            '/-strong',
+            {
+                data: { msgId: '8233978780092', cliMsgId: '1725600000000' },
+                threadId: '9876543210',
+                type: ThreadType.User,
+            },
+        ]);
+    });
+});
+
+test('reaction: thread_type=1 → ThreadType.Group; icon rỗng = gỡ cảm xúc', async () => {
+    await withBridge(readySlot, async (bridge, calls) => {
+        await bridge.post('/personal-messages/reaction', {
+            connection_id: 6,
+            thread_id: '7788',
+            thread_type: 1,
+            msg_id: '1',
+            cli_msg_id: '2',
+            icon: '',
+        });
+        assert.equal(calls[0][1], '');
+        assert.equal(calls[0][2].type, ThreadType.Group);
+    });
+});
+
+test('reaction: emoji Zalo không có → bad_request (KHÔNG được lọt xuống thành gỡ cảm xúc)', async () => {
+    await withBridge(readySlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/reaction', {
+            connection_id: 6,
+            thread_id: '1',
+            msg_id: '1',
+            cli_msg_id: '2',
+            icon: '🦄',
+        });
+        assert.equal(res.status, 400);
+        assert.equal(res.body.code, 'bad_request');
+        assert.equal(res.body.message, 'reaction_icon_unknown');
+        assert.equal(calls.length, 0);
+    });
+});
+
+test('undo: gọi zca undo (KHÔNG deleteMessage) với msgId/cliMsgId + thread', async () => {
+    await withBridge(readySlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/undo', {
+            connection_id: 6,
+            thread_id: '9876543210',
+            msg_id: '8233978780092',
+            cli_msg_id: '1725600000000',
+        });
+        assert.equal(res.status, 200);
+        assert.deepEqual(res.body, { ok: true });
+        assert.deepEqual(calls[0], [
+            'undo',
+            { msgId: '8233978780092', cliMsgId: '1725600000000' },
+            '9876543210',
+            ThreadType.User,
+        ]);
+    });
+});
+
+test('typing: chỉ cần thread_id', async () => {
+    await withBridge(readySlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/typing', { connection_id: 6, thread_id: '9876543210' });
+        assert.equal(res.status, 200);
+        assert.deepEqual(res.body, { ok: true });
+        assert.deepEqual(calls[0], ['sendTypingEvent', '9876543210', ThreadType.User]);
+    });
+});
+
+test('thiếu tham số → bad_request có cấu trúc', async () => {
+    await withBridge(readySlot, async (bridge) => {
+        const noConnection = await bridge.post('/personal-messages/typing', { thread_id: '1' });
+        assert.equal(noConnection.status, 400);
+        assert.deepEqual(noConnection.body, { ok: false, code: 'bad_request', message: 'connection_id required' });
+
+        const noThread = await bridge.post('/personal-messages/typing', { connection_id: 6 });
+        assert.equal(noThread.body.message, 'recipient_id_or_thread_id_required');
+
+        const noMsgId = await bridge.post('/personal-messages/undo', { connection_id: 6, thread_id: '1' });
+        assert.equal(noMsgId.status, 400);
+        assert.equal(noMsgId.body.message, 'msg_id and cli_msg_id required');
+    });
+});
+
+test('slot chưa login / mất phiên → session_lost kèm lý do, KHÔNG gọi Zalo', async () => {
+    await withBridge(null, async (bridge) => {
+        const res = await bridge.post('/personal-messages/typing', { connection_id: 6, thread_id: '1' });
+        assert.equal(res.status, 503);
+        assert.deepEqual(res.body, { ok: false, code: 'session_lost', message: 'not_logged_in' });
+    });
+
+    const lost = { loginPhase: 'session_lost', sessionLostReason: 'ws_closed_1006_', api: {} };
+    const bridge = await startBridge({ slot: lost });
+    try {
+        const res = await bridge.post('/personal-messages/undo', {
+            connection_id: 6,
+            thread_id: '1',
+            msg_id: '1',
+            cli_msg_id: '2',
+        });
+        assert.equal(res.status, 503);
+        assert.equal(res.body.code, 'session_lost');
+        assert.equal(res.body.message, 'ws_closed_1006_');
+    } finally {
+        bridge.server.close();
+    }
+});
+
+test('Zalo từ chối → zalo_rejected (502); lỗi lạ → unknown (500)', async () => {
+    const zaloError = Object.assign(new Error('Message not found'), { name: 'ZcaApiError', code: 216 });
+    await withBridge(
+        (calls) =>
+            readySlot(calls, {
+                async undo() {
+                    throw zaloError;
+                },
+                async sendTypingEvent() {
+                    throw new TypeError('api.sendTypingEvent is not a function');
+                },
+            }),
+        async (bridge) => {
+            const rejected = await bridge.post('/personal-messages/undo', {
+                connection_id: 6,
+                thread_id: '1',
+                msg_id: '1',
+                cli_msg_id: '2',
+            });
+            assert.equal(rejected.status, 502);
+            assert.deepEqual(rejected.body, { ok: false, code: 'zalo_rejected', message: 'Message not found' });
+
+            const unknown = await bridge.post('/personal-messages/typing', { connection_id: 6, thread_id: '1' });
+            assert.equal(unknown.status, 500);
+            assert.equal(unknown.body.code, 'unknown');
+        }
+    );
+});
+
+test('classifyZcaError / firstSourceId', () => {
+    assert.equal(classifyZcaError(Object.assign(new Error('x'), { name: 'ZcaApiError' })), 'zalo_rejected');
+    assert.equal(classifyZcaError(Object.assign(new Error('x'), { name: 'ZaloApiError' })), 'zalo_rejected');
+    assert.equal(classifyZcaError(new TypeError('x')), 'unknown');
+    assert.equal(firstSourceId({ msgIds: [1, 2] }), '1');
+    assert.equal(firstSourceId({ msgId: 7 }), '7');
+    assert.equal(firstSourceId({ status: 0 }), null);
+    assert.equal(firstSourceId(null), null);
+});
+
+test('/personal-messages/send: chuyển tiếp filename + content_type xuống lớp gửi (lô 3)', async () => {
+    const sent = [];
+    const app = express();
+    app.use(express.json());
+    registerPersonalMessageRoutes(app, {
+        checkSendSecret: () => true,
+        getSlot: () => ({ api: {} }),
+        resolveSlot: () => ({ api: {} }),
+        bridgeSendTextOrMedia: async (_slot, body) => {
+            sent.push(body);
+            return { source_id: 'm1', source_ids: ['m1'] };
+        },
+        ThreadType,
+        zcaReactionCode,
+    });
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise((r) => server.once('listening', r));
+    try {
+        const { port } = server.address();
+        const res = await fetch(`http://127.0.0.1:${port}/personal-messages/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                connection_id: 6,
+                thread_id: '9876543210',
+                file_url: 'http://127.0.0.1:8000/storage/x',
+                media_kind: 'file',
+                filename: 'Báo giá Q4.pdf',
+                content_type: 'application/pdf',
+            }),
+        });
+        assert.equal(res.status, 200);
+        assert.equal(sent[0].filename, 'Báo giá Q4.pdf');
+        assert.equal(sent[0].content_type, 'application/pdf');
+    } finally {
+        server.close();
+    }
+});
+
+test('tham số sai được báo TRƯỚC trạng thái phiên (không che lỗi caller thành session_lost)', async () => {
+    await withBridge(null, async (bridge) => {
+        const badIcon = await bridge.post('/personal-messages/reaction', {
+            connection_id: 6,
+            thread_id: '1',
+            msg_id: '1',
+            cli_msg_id: '2',
+            icon: '🦄',
+        });
+        assert.equal(badIcon.status, 400);
+        assert.equal(badIcon.body.code, 'bad_request');
+
+        const noRef = await bridge.post('/personal-messages/undo', { connection_id: 6, thread_id: '1' });
+        assert.equal(noRef.status, 400);
+        assert.equal(noRef.body.message, 'msg_id and cli_msg_id required');
+    });
+});

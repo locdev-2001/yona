@@ -1,9 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+    applyGroupContextToPayload,
+    applyInboundDescriptorToPayload,
+    captionBesideLink,
     contentLabelFromObject,
     enrichInboundBody,
+    mediaCaptionFromContent,
     parseBankCardHtml,
+    isLocationMsgType,
+    normalizeMentions,
+    parseInboundLinkPreview,
+    parseInboundLocation,
     parseVietQrEmv,
     parseZinstantBankCardSource,
 } from './inbound-content.mjs';
@@ -179,4 +187,245 @@ test('enrichInboundBody: cùng data_url → cache, chỉ fetch 1 lần', async (
     await enrichInboundBody(second, fetchMock);
     assert.equal(calls, 1);
     assert.equal(second.bank_card.account_number, '012345678916');
+});
+
+// ── 1.5: chú thích ảnh/video/tệp ────────────────────────────────────────────
+
+test('1.5: chú thích ảnh nằm ở content.title → ra content (trước đây bị lọc mất)', () => {
+    assert.equal(
+        mediaCaptionFromContent(
+            { title: 'Ảnh sản phẩm', href: 'https://cdn.zalo.test/photo.jpg', thumb: 'https://cdn.zalo.test/t.jpg' },
+            'chat.photo'
+        ),
+        'Ảnh sản phẩm'
+    );
+});
+
+test('1.5: video có chú thích nhiều dòng → giữ nguyên, cắt khoảng trắng thừa', () => {
+    assert.equal(
+        mediaCaptionFromContent({ title: '  Xem giúp em video này  ', href: 'https://cdn.zalo.test/v.mp4' }, 'chat.video.msg'),
+        'Xem giúp em video này'
+    );
+});
+
+test('1.5: ảnh không chú thích → null (content rỗng, không phải chuỗi "[Link] …")', () => {
+    assert.equal(mediaCaptionFromContent({ href: 'https://cdn.zalo.test/photo.jpg' }, 'chat.photo'), null);
+    assert.equal(mediaCaptionFromContent({ title: '', href: 'https://cdn.zalo.test/photo.jpg' }, 'chat.photo'), null);
+});
+
+test('1.5: title chỉ là chính đường dẫn hoặc tên tệp → không phải chú thích', () => {
+    assert.equal(mediaCaptionFromContent({ title: 'https://cdn.zalo.test/photo.jpg' }, 'chat.photo'), null);
+    assert.equal(mediaCaptionFromContent({ title: 'IMG_2048.jpg' }, 'chat.photo'), null);
+});
+
+test('1.5: share.file — title là TÊN TỆP, chú thích chỉ lấy từ description', () => {
+    assert.equal(
+        mediaCaptionFromContent({ title: 'bang-gia.xlsx', href: 'https://cdn.zalo.test/f' }, 'share.file'),
+        null
+    );
+    assert.equal(
+        mediaCaptionFromContent(
+            { title: 'bang-gia.xlsx', description: 'Bảng giá tháng 9', href: 'https://cdn.zalo.test/f' },
+            'share.file'
+        ),
+        'Bảng giá tháng 9'
+    );
+});
+
+test('1.5: content là chuỗi JSON (lane backfill) vẫn bóc được chú thích', () => {
+    assert.equal(
+        mediaCaptionFromContent('{"title":"Ảnh hoá đơn","href":"https://cdn.zalo.test/p.jpg"}', 'chat.photo'),
+        'Ảnh hoá đơn'
+    );
+    assert.equal(mediaCaptionFromContent('chuoi thuong', 'chat.photo'), null);
+    assert.equal(mediaCaptionFromContent(null, 'chat.photo'), null);
+});
+
+// ── 1.11 vị trí · 1.12 link · 1.10 ánh xạ chung ─────────────────────────────
+
+test('1.11: chat.location ra toạ độ + nhãn (trước đây gửi vị trí KHÔNG tạo tin)', () => {
+    assert.deepEqual(
+        parseInboundLocation({ latitude: 10.762622, longitude: 106.660172, title: 'Chợ Bến Thành', address: 'Lê Lợi, Quận 1' }),
+        {
+            latitude: 10.762622,
+            longitude: 106.660172,
+            title: 'Chợ Bến Thành',
+            address: 'Lê Lợi, Quận 1',
+            url: 'https://maps.google.com/?q=10.762622,106.660172',
+        }
+    );
+});
+
+test('1.11: đọc được mọi cách viết toạ độ Zalo đã gặp (lat/long/lng/lon, chuỗi số)', () => {
+    assert.deepEqual(parseInboundLocation({ lat: '10.5', lng: '106.5' }), {
+        latitude: 10.5,
+        longitude: 106.5,
+        url: 'https://maps.google.com/?q=10.5,106.5',
+    });
+    assert.equal(parseInboundLocation({ lat: 10.5, lon: 106.5 })?.longitude, 106.5);
+    assert.equal(parseInboundLocation({ latitude: 10.5, long: 106.5 })?.longitude, 106.5);
+});
+
+test('1.11: thiếu toạ độ → null, rơi về đường cũ (không hồi quy)', () => {
+    assert.equal(parseInboundLocation({ title: 'Quán cà phê' }), null);
+    assert.equal(parseInboundLocation({ lat: 'x', lng: 'y' }), null);
+    assert.equal(parseInboundLocation(null), null);
+});
+
+test('1.12: chat.link ra contract fallback thay chuỗi "[Link] … https://…" thô', () => {
+    assert.deepEqual(
+        parseInboundLinkPreview(
+            { href: 'https://yona.vn/bang-gia', title: 'Bảng giá Yona', description: 'Gói Team', thumb: 'https://cdn/t.jpg' },
+            'chat.link'
+        ),
+        { url: 'https://yona.vn/bang-gia', title: 'Bảng giá Yona', description: 'Gói Team', thumb: 'https://cdn/t.jpg' }
+    );
+});
+
+test('1.12: chỉ nhận link/webcontent/recommended và chỉ khi URL là http(s)', () => {
+    assert.equal(parseInboundLinkPreview({ href: 'https://a.vn' }, 'chat.text'), null);
+    assert.equal(parseInboundLinkPreview({ href: 'zalo://mo-app' }, 'chat.link'), null);
+    assert.equal(parseInboundLinkPreview({ url: 'https://a.vn' }, 'chat.webcontent')?.url, 'https://a.vn');
+});
+
+test('1.12: chữ khách gõ kèm link giữ lại, chuỗi bridge tự dựng thì bỏ', () => {
+    const link = { url: 'https://yona.vn' };
+    assert.equal(captionBesideLink('Anh xem giúp em', link), 'Anh xem giúp em');
+    assert.equal(captionBesideLink('[Link] Bảng giá https://yona.vn', link), null);
+    assert.equal(captionBesideLink('https://yona.vn', link), null);
+    assert.equal(captionBesideLink('', link), null);
+});
+
+test('1.10: một ánh xạ chung cho MỌI loại tin — hai lane không thể lệch nhau', () => {
+    const map = (desc, extras) => applyInboundDescriptorToPayload({}, desc, extras);
+
+    assert.deepEqual(map({ inbound_kind: 'text', text: 'Xin chào' }), { content: 'Xin chào' });
+    assert.deepEqual(map({ inbound_kind: 'image', media_url: 'https://cdn/p.jpg', caption: 'Ảnh sản phẩm' }), {
+        media_url: 'https://cdn/p.jpg',
+        content: 'Ảnh sản phẩm',
+    });
+    assert.deepEqual(map({ inbound_kind: 'file', media_url: 'https://cdn/f', media_filename: 'bang-gia.xlsx', caption: null }), {
+        media_url: 'https://cdn/f',
+        media_filename: 'bang-gia.xlsx',
+        content: '',
+    });
+    assert.deepEqual(map({ inbound_kind: 'location', location: { latitude: 1, longitude: 2 } }), {
+        location: { latitude: 1, longitude: 2 },
+        content: '',
+    });
+    assert.deepEqual(map({ inbound_kind: 'link', link: { url: 'https://a.vn' }, caption: 'xem nhé' }), {
+        link: { url: 'https://a.vn' },
+        content: 'xem nhé',
+    });
+    assert.deepEqual(map({ inbound_kind: 'call', call: { media: 'voice' } }), { call: { media: 'voice' }, content: '' });
+    assert.deepEqual(
+        map({ inbound_kind: 'bank_card', bank_card_source: { label: '[Tài khoản ngân hàng]', data_url: 'https://x' } }),
+        {
+            bank_card_source: { label: '[Tài khoản ngân hàng]', data_url: 'https://x' },
+            content: '[Tài khoản ngân hàng]',
+        }
+    );
+});
+
+test('1.10: sticker/danh thiếp nhận giá trị lane tự resolve (live gọi API, backfill dựng từ mã)', () => {
+    assert.deepEqual(
+        applyInboundDescriptorToPayload({}, { inbound_kind: 'sticker', sticker: { id: 1 } }, { sticker: { id: 1, url: 'https://cdn/s.png' } }),
+        { sticker: { id: 1, url: 'https://cdn/s.png' } }
+    );
+    assert.deepEqual(
+        applyInboundDescriptorToPayload({}, { inbound_kind: 'business_card', caption: null }, { businessCard: { name: 'A' } }),
+        { business_card: { name: 'A' }, content: '' }
+    );
+});
+
+// ── Vị trí: hình dạng THẬT (g1-inbound-evidence §6, toạ độ giả) ──────────────
+
+test('vị trí: toạ độ nằm trong CHUỖI JSON content.params, địa chỉ ở description', () => {
+    // message 878 (07/09/2026): msgType chat.location.new, params là chuỗi JSON.
+    const content = {
+        title: null,
+        description: 'Số 1 Đường Giả Định, Phường Ảo, Quận 1, TP.HCM',
+        href: null,
+        thumb: null,
+        action: null,
+        params: '{"isUserLocation":1,"srcId":"0","latitude":10.111111,"longitude":106.222222}',
+        type: null,
+    };
+    assert.deepEqual(parseInboundLocation(content), {
+        latitude: 10.111111,
+        longitude: 106.222222,
+        address: 'Số 1 Đường Giả Định, Phường Ảo, Quận 1, TP.HCM',
+        url: 'https://maps.google.com/?q=10.111111,106.222222',
+    });
+});
+
+test('vị trí: nhận cả chat.location (cũ) và chat.location.new (Zalo hiện tại)', () => {
+    assert.equal(isLocationMsgType('chat.location'), true);
+    assert.equal(isLocationMsgType('chat.location.new'), true);
+    assert.equal(isLocationMsgType('chat.text'), false);
+});
+
+test('vị trí: params là object (không phải chuỗi) vẫn đọc được; params hỏng → rơi về tầng ngoài', () => {
+    assert.equal(parseInboundLocation({ params: { latitude: 1.5, longitude: 2.5 } })?.latitude, 1.5);
+    assert.equal(parseInboundLocation({ params: 'khong-phai-json', lat: 3.5, lng: 4.5 })?.longitude, 4.5);
+    assert.equal(parseInboundLocation({ params: '{"isUserLocation":1}' }), null);
+});
+
+// ── Mention trong nhóm ───────────────────────────────────────────────────────
+
+test('mention: uid/pos/len của zca → external_id/offset/length, tên lấy từ đoạn @… trong text', () => {
+    assert.deepEqual(
+        normalizeMentions({
+            content: '@Minh Anh xem giúp đơn này nhé',
+            mentions: [{ uid: '555000111', pos: 0, len: 9, type: 0 }],
+        }),
+        [{ external_id: '555000111', name: 'Minh Anh', offset: 0, length: 9 }]
+    );
+});
+
+test('mention: đọc cả content.mentions; mục thiếu uid/độ dài bị bỏ; không có mention → null', () => {
+    assert.deepEqual(
+        normalizeMentions({ content: { title: 'chào @An', mentions: [{ uid: '9', pos: 6, len: 3 }] } }),
+        [{ external_id: '9', name: 'An', offset: 6, length: 3 }]
+    );
+    assert.equal(normalizeMentions({ content: 'x', mentions: [{ pos: 0, len: 2 }] }), null);
+    assert.equal(normalizeMentions({ content: 'x' }), null);
+    assert.equal(normalizeMentions(null), null);
+});
+
+// ── Ngữ cảnh nhóm (Q3) ───────────────────────────────────────────────────────
+
+test('nhóm: thread {type,id,name,avatar} + sender {external_id,name,avatar} + mentions', () => {
+    const payload = applyGroupContextToPayload(
+        {},
+        {
+            threadId: '7788',
+            groupProfile: { name: 'Nhóm Bán Hàng', avatar: 'https://cdn.test/g.jpg' },
+            senderUid: '555000111',
+            senderName: 'Minh Anh',
+            senderAvatar: 'https://cdn.test/u.jpg',
+            mentions: [{ external_id: '1', name: 'An', offset: 0, length: 3 }],
+        }
+    );
+    assert.deepEqual(payload.thread, {
+        type: 'group',
+        id: '7788',
+        name: 'Nhóm Bán Hàng',
+        avatar: 'https://cdn.test/g.jpg',
+    });
+    assert.deepEqual(payload.sender, {
+        external_id: '555000111',
+        name: 'Minh Anh',
+        avatar: 'https://cdn.test/u.jpg',
+    });
+    assert.equal(payload.sender_uid, '555000111');
+    assert.equal(payload.mentions.length, 1);
+});
+
+test('nhóm: chưa biết tên nhóm/tên người gửi → rơi về id, KHÔNG bỏ trống thread', () => {
+    const payload = applyGroupContextToPayload({}, { threadId: '7788', senderUid: '999' });
+    assert.deepEqual(payload.thread, { type: 'group', id: '7788', name: '7788' });
+    assert.deepEqual(payload.sender, { external_id: '999', name: '999' });
+    assert.equal('mentions' in payload, false);
+    assert.equal('avatar' in payload.thread, false);
 });
