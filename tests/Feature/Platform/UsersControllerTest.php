@@ -57,7 +57,7 @@ it('trả link đăng nhập một lần và token ứng dụng', function () {
     $loginUrl = $this->getJson("/platform/api/v1/users/{$user->id}/login", $this->headers)
         ->assertOk()->json('url');
 
-    expect($loginUrl)->toContain('/app/sso_login')
+    expect($loginUrl)->toContain('/app/login?')
         ->and($loginUrl)->toContain('sso_auth_token=');
 
     $this->postJson("/platform/api/v1/users/{$user->id}/token", [], $this->headers)
@@ -71,13 +71,21 @@ it('link sso đăng nhập được đúng một lần', function () {
     $this->platformApp->permit($user);
 
     $url = $this->getJson("/platform/api/v1/users/{$user->id}/login", $this->headers)->json('url');
-    $path = parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY);
+    parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
 
-    $this->get($path)->assertRedirect('/app');
+    // Trang /app/login nhận token qua prop rồi tự POST lại (created() của bản gốc).
+    $this->get(parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('ssoAuthToken', $query['sso_auth_token'])->where('email', $user->email));
+
+    $this->post('/app/login', ['email' => $user->email, 'sso_auth_token' => $query['sso_auth_token']])
+        ->assertRedirect('/app');
     expect(auth()->guard('web')->id())->toBe($user->id);
 
     auth()->guard('web')->logout();
-    $this->get($path)->assertRedirect('/app/login');
+    $this->post('/app/login', ['email' => $user->email, 'sso_auth_token' => $query['sso_auth_token']])
+        ->assertSessionHasErrors('email');
+    expect(auth()->guard('web')->id())->toBeNull();
 });
 
 it('liệt kê account của user trong payload', function () {

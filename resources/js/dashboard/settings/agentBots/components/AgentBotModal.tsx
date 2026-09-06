@@ -18,6 +18,7 @@ import Input from 'dashboard/components-next/input/Input';
 import TextArea from 'dashboard/components-next/textarea/TextArea';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import AccessToken from '../../profile/AccessToken';
+import { isUrlInvalid } from 'shared/helpers/Validators';
 
 // Port từ dashboard/routes/dashboard/settings/agentBots/components/AgentBotModal.vue.
 export type AgentBotModalType = 'create' | 'edit';
@@ -26,14 +27,6 @@ interface AgentBotModalProps {
     accountId: number;
     type: AgentBotModalType;
     selectedBot: AgentBot | null;
-}
-
-function isUrlInvalid(url: string): boolean {
-    try {
-        return !['http:', 'https:'].includes(new URL(url).protocol);
-    } catch {
-        return true;
-    }
 }
 
 const AgentBotModal = forwardRef<DialogHandle, AgentBotModalProps>(function AgentBotModal(

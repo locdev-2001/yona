@@ -157,6 +157,11 @@ interface DropdownItemProps {
     preserveOpen?: boolean;
     disabled?: boolean;
     className?: string;
+    // Slot có tên #icon / #label của bản gốc: KHÔNG phải default slot nên item
+    // vẫn giữ nguyên `gap-3 hover rounded-lg`.
+    iconSlot?: ReactNode;
+    labelSlot?: ReactNode;
+    // Default slot: thay toàn bộ nội dung VÀ bỏ lớp gap/hover như bản gốc.
     children?: ReactNode;
 }
 
@@ -170,6 +175,8 @@ export function DropdownItem({
     preserveOpen = false,
     disabled = false,
     className = '',
+    iconSlot,
+    labelSlot,
     children,
 }: DropdownItemProps) {
     const { closeMenu } = useDropdownContext();
@@ -185,8 +192,8 @@ export function DropdownItem({
 
     const content = children ?? (
         <>
-            {icon ? <Icon icon={icon} className="size-4 text-n-slate-11" /> : null}
-            {label}
+            {iconSlot ?? (icon ? <Icon icon={icon} className="size-4 text-n-slate-11" /> : null)}
+            {labelSlot ?? label}
         </>
     );
 

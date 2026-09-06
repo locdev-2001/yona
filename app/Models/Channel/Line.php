@@ -21,6 +21,15 @@ class Line extends Model
 
     protected $fillable = ['account_id', ...self::EDITABLE_ATTRS];
 
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'line_channel_secret' => 'encrypted',
+            'line_channel_token' => 'encrypted',
+        ];
+    }
+
     public function name(): string
     {
         return 'LINE';

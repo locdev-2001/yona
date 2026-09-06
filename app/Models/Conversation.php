@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
+use App\Http\Resources\ConversationResource;
+use App\Http\Resources\MessageResource;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
@@ -896,6 +898,25 @@ class Conversation extends Model
         }
 
         return $params;
+    }
+
+    // Conversations::EventDataPresenter#webhook_data — push_data cộng account
+    // và tin cuối đã chuẩn hoá nội dung cho bên ngoài.
+    public function webhookData(): array
+    {
+        $lastChatMessage = $this->messages()
+            ->where('account_id', $this->account_id)
+            ->chat()
+            ->get()
+            ->last();
+
+        return [
+            ...ConversationResource::pushEventData($this),
+            'account' => $this->account->webhookData(),
+            'messages' => $lastChatMessage === null
+                ? []
+                : [MessageResource::webhookPushEventData($lastChatMessage)],
+        ];
     }
 
     private function validateRefererUrl(): void

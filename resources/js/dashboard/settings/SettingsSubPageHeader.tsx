@@ -1,3 +1,5 @@
+import SanitizedHtml from 'shared/components/SanitizedHtml';
+
 // Port từ dashboard/routes/dashboard/settings/SettingsSubPageHeader.vue
 interface SettingsSubPageHeaderProps {
     headerTitle?: string;
@@ -13,7 +15,7 @@ export default function SettingsSubPageHeader({
     return (
         <div className={`flex flex-col gap-1.5 w-full items-start mb-4 ${className}`}>
             <h2 className="text-heading-1 text-n-slate-12 break-words">{headerTitle}</h2>
-            <p className="text-body-main w-full text-n-slate-11">{headerContent}</p>
+            <SanitizedHtml as="p" className="text-body-main w-full text-n-slate-11" html={headerContent} />
         </div>
     );
 }

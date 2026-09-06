@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Channel\Concerns;
+namespace App\Models\Concerns;
 
 use Illuminate\Support\Facades\Redis;
 

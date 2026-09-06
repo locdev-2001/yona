@@ -4,6 +4,7 @@ namespace App\Jobs\Avatar;
 
 use App\Jobs\ApplicationJob;
 use App\Models\Contact;
+use App\Support\SafeHttp;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Facades\Http;
@@ -76,6 +77,8 @@ class AvatarFromUrlJob extends ApplicationJob
 
     private function fetchAndAttachAvatar(): void
     {
+        SafeHttp::assertPublicUrl((string) $this->avatarUrl);
+
         $response = Http::timeout(15)->withOptions(['allow_redirects' => ['max' => 3]])->get($this->avatarUrl);
 
         if (! $response->successful()) {

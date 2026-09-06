@@ -21,7 +21,7 @@ class TelegramEventsJob extends ApplicationJob
             return;
         }
 
-        $channel = Telegram::query()->where('bot_token', $botToken)->first();
+        $channel = Telegram::findByBotToken((string) $botToken);
 
         if ($channel === null || ! $channel->account->isActive()) {
             Log::warning('Telegram event discarded: channel not found or account inactive');

@@ -122,22 +122,10 @@ class ConversationResource extends JsonResource
         return $meta;
     }
 
-    // Conversations::EventDataPresenter#webhook_data — push_data cộng account
-    // và tin cuối đã chuẩn hoá nội dung cho bên ngoài.
+    // Nguồn duy nhất nằm ở Conversation::webhookData(); resource chỉ chuyển tiếp
+    // để chỗ gọi cũ (listener, MessageResource) không phải đổi.
     public static function webhookData(Conversation $conversation): array
     {
-        $lastChatMessage = $conversation->messages()
-            ->where('account_id', $conversation->account_id)
-            ->chat()
-            ->get()
-            ->last();
-
-        return [
-            ...self::pushEventData($conversation),
-            'account' => $conversation->account->webhookData(),
-            'messages' => $lastChatMessage === null
-                ? []
-                : [MessageResource::webhookPushEventData($lastChatMessage)],
-        ];
+        return $conversation->webhookData();
     }
 }

@@ -7,6 +7,8 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Telegram\SendOnTelegramService;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\Channels\ChannelFixture;
 
@@ -148,4 +150,21 @@ it('kênh telegram khai đúng tên và morph type', function () {
     expect($this->channel)->toBeInstanceOf(Telegram::class)
         ->and($this->channel->name())->toBe('Telegram')
         ->and($this->inbox->channel_type)->toBe('Channel::Telegram');
+});
+
+it('lưu bot_token dạng mã hóa + cột băm để webhook vẫn tra được', function () {
+    fakeTelegramApi();
+
+    $stored = DB::table('channel_telegram')->where('id', $this->channel->id)->first();
+
+    expect($stored->bot_token)->not->toBe($this->channel->bot_token)
+        ->and($stored->bot_token_hash)->toBe(hash('sha256', $this->channel->bot_token))
+        ->and(Crypt::decryptString($stored->bot_token))->toBe($this->channel->bot_token)
+        ->and(Telegram::findByBotToken($this->channel->bot_token)?->id)->toBe($this->channel->id)
+        ->and(Telegram::findByBotToken('token-khac'))->toBeNull();
+
+    $this->postJson("/webhooks/telegram/{$this->channel->bot_token}", ['message' => ChannelFixture::load('telegram_text')['message']])
+        ->assertOk();
+
+    expect(Message::query()->latest('id')->first())->not->toBeNull();
 });

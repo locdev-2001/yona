@@ -9,6 +9,7 @@ import ModalHeader from 'dashboard/components/ModalHeader';
 import WootInput from 'dashboard/components/widgets/forms/Input';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardApp } from './types';
+import { isUrlInvalid } from 'shared/helpers/Validators';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/DashboardApps/DashboardAppModal.vue.
 interface DashboardAppModalProps {
@@ -18,14 +19,6 @@ interface DashboardAppModalProps {
     selectedApp: DashboardApp | null;
     onClose: () => void;
     onSaved: () => void;
-}
-
-function isUrlInvalid(url: string): boolean {
-    try {
-        return !['http:', 'https:'].includes(new URL(url).protocol);
-    } catch {
-        return true;
-    }
 }
 
 export default function DashboardAppModal({

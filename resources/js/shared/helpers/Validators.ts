@@ -29,3 +29,16 @@ export const normalizeRegexPattern = (pattern: string | null): string | null => 
 
     return new RegExp(match ? match[1] : pattern, match ? match[2] : '').toString();
 };
+
+// Regex `url` nguyên văn của @vuelidate/validators 2.x (raw.cjs) — ba form
+// webhook / agent bot / dashboard app của bản gốc đều dùng validator này, nên
+// chỉ có MỘT bản ở đây. Chú ý: chuỗi rỗng hợp lệ (vuelidate để `required` lo),
+// và regex từ chối `localhost` cùng dải IP nội bộ.
+export const URL_REGEX =
+    /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9¡-￿][a-z0-9¡-￿_-]{0,62})?[a-z0-9¡-￿]\.)+(?:[a-z¡-￿]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+
+export const isUrl = (value: string): boolean => !value || URL_REGEX.test(value);
+
+// `required` + (tuỳ form) `minLength` + `url` của vuelidate gộp lại.
+export const isUrlInvalid = (value: string, minLength = 0): boolean =>
+    !value || value.length < minLength || !URL_REGEX.test(value);

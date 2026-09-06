@@ -8,6 +8,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import Button from 'dashboard/components-next/button/Button';
 import type { Webhook } from 'dashboard/composables/useWebhooks';
+import { isUrlInvalid } from 'shared/helpers/Validators';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/Webhooks/WebhookForm.vue.
 // `inbox_updated` chỉ hiện khi cấu hình bật inbox events (useConfig) — Yona chưa
@@ -32,15 +33,6 @@ export interface WebhookFormValues {
 }
 
 // vuelidate: url required + minLength(7) + url, subscriptions required.
-function isUrlInvalid(url: string): boolean {
-    if (url.length < 7) return true;
-    try {
-        return !['http:', 'https:'].includes(new URL(url).protocol);
-    } catch {
-        return true;
-    }
-}
-
 interface WebhookFormProps {
     value?: Partial<Webhook>;
     isSubmitting?: boolean;
@@ -63,8 +55,8 @@ export default function WebhookForm({
     const [isSecretVisible, setSecretVisible] = useState(false);
 
     const hasSecret = Boolean(value.secret);
-    const urlError = isUrlTouched && isUrlInvalid(url);
-    const isInvalid = isUrlInvalid(url) || !subscriptions.length;
+    const urlError = isUrlTouched && isUrlInvalid(url, 7);
+    const isInvalid = isUrlInvalid(url, 7) || !subscriptions.length;
 
     const toggleSubscription = (event: string, checked: boolean) =>
         setSubscriptions(current =>
