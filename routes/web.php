@@ -126,6 +126,10 @@ Route::middleware('auth')->group(function () {
             // Tương đương conversationWorkflow.routes.js.
             Route::get('/settings/conversation-workflow', fn (Account $account) => Inertia::render('dashboard/settings/conversationWorkflow/Index'))
                 ->name('conversation_workflow_index');
+
+            Route::get('/settings/automation', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/automation/list"));
+            Route::get('/settings/automation/list', fn () => Inertia::render('dashboard/settings/automation/Index'))
+                ->name('settings_automation_list');
         });
 
         // Tương đương canned.routes.js: mọi vai trò có quyền hội thoại (không riêng

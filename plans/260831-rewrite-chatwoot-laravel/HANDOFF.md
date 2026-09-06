@@ -13,17 +13,24 @@ Viết lại **100% Chatwoot v4.17.1** (mã nguồn tham chiếu nằm sẵn tro
 - Cách giao hàng: **port từng tính năng trọn vẹn** (migration → backend → giao diện), xong là dùng được ngay trên trình duyệt. Không làm kiểu dựng khung trước rồi nối sau.
 - Lộ trình 40 tính năng chia nhóm A→G nằm ở `plans/260831-rewrite-chatwoot-laravel/feature-roadmap.md`.
 
-**Vị trí hiện tại: 24/40.** Commit cuối `e61761b`. Cây làm việc sạch (chỉ còn `AGENTS.md` chưa theo dõi, không thuộc dự án này).
+**Vị trí hiện tại: 25/40 (D1 xong, chờ founder nghiệm thu cuối).** Commit nền `eb5847e`; D1 đã commit riêng (chỉ file D1); phiên codex đang sửa nhóm B (labels tên tự do) trên cùng cây, phần đó chưa commit. Trace: `reports/trace-d1-automation-rules.md`.
 
 | Nhóm | Xong | Ghi chú |
 |---|---|---|
 | A — Nền móng | 6/6 | founder đã nghiệm thu |
 | B — Trục hội thoại | 11/11 | |
 | C — Widget website | 5/5 | |
-| D — Vận hành đội ngũ | 2/6 | mới D5 thông báo, D6 giờ làm việc |
+| D — Vận hành đội ngũ | 3/6 | D5 thông báo, D6 giờ làm việc, D1 automation |
 | E, F, G | 0/15 | chưa bắt đầu |
 
-Số liệu kiểm thử hiện tại: **backend 1186 test**, **giao diện 404 test**, đều xanh.
+**D1 Automation rules (xong 06/09, vòng 2):** đủ 5 cửa — pixel 9 trạng thái
+sáng/tối ≤ 0,030% (kể cả bật `delayed_automations` qua `d1-delayed.sh`), e2e
+`d1-e2e.mjs` 13/13, rà nút hai bên. Primitive mới dùng lại được: `SidePanel`,
+`DropdownTeleportProvider`/`useDropdownPosition`, `MultiTextInput`, prop `tabs`
+của `BaseSettingsHeader`, `components/widgets/AutomationActionInput` (D3 dùng
+lại). Kế tiếp: D3 Macros.
+
+Số liệu kiểm thử hiện tại: **giao diện 416 test** xanh; backend D1 10/10 — Pest toàn bộ chưa chạy lại vì working tree có thay đổi nhóm B đang dở của phiên khác (đếm lại khi cây sạch).
 
 ---
 

@@ -6,6 +6,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\AssignmentPolicy;
+use App\Models\AutomationRule;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Team;
@@ -146,15 +147,20 @@ trait AssignmentHandler
     // công đang chạy (Current.executed_by của bản gốc).
     private function activityMessageOwner(?string $userName): ?string
     {
+        $executedBy = CurrentExecutedBy::get();
+
+        if ($executedBy instanceof AutomationRule) {
+            return __('automation.system_name');
+        }
+
         if ($userName !== null) {
             return $userName;
         }
 
-        $executedBy = CurrentExecutedBy::get();
-
         return match (true) {
             $executedBy instanceof AssignmentPolicy => __('auto_assignment.policy_actor', ['policy_name' => $executedBy->name]),
             $executedBy instanceof Inbox => __('auto_assignment.default_policy_name'),
+            $executedBy instanceof AutomationRule => __('automation.system_name'),
             default => null,
         };
     }

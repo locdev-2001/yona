@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AssignmentPolicy;
+use App\Models\AutomationRule;
 use App\Models\Inbox;
 
 // Port từ thuộc tính `Current.executed_by` của refs/chatwoot (CurrentAttributes):
@@ -10,9 +11,9 @@ use App\Models\Inbox;
 // thể trong activity message. CE chỉ set giá trị này ở AutoAssignment.
 final class CurrentExecutedBy
 {
-    private static AssignmentPolicy|Inbox|null $actor = null;
+    private static AssignmentPolicy|AutomationRule|Inbox|null $actor = null;
 
-    public static function get(): AssignmentPolicy|Inbox|null
+    public static function get(): AssignmentPolicy|AutomationRule|Inbox|null
     {
         return self::$actor;
     }
@@ -23,7 +24,7 @@ final class CurrentExecutedBy
     }
 
     /** @template T @param callable(): T $callback @return T */
-    public static function run(AssignmentPolicy|Inbox|null $actor, callable $callback): mixed
+    public static function run(AssignmentPolicy|AutomationRule|Inbox|null $actor, callable $callback): mixed
     {
         self::$actor = $actor;
 

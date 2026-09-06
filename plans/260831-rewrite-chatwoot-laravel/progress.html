@@ -108,7 +108,7 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 — 24/40: nhóm C xong 5/5, nhóm D xong D5+D6; kế tiếp D1 Automation</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 — 25/40: D1 Automation xong (pixel ≤ 0,03% 9 trạng thái, e2e 13/13), chờ founder nghiệm thu; kế tiếp D3 Macros</b></span>
     </div>
   </header>
 
@@ -126,7 +126,7 @@
 
   <div class="board">
     <h2>Cách làm hiện hành</h2>
-    <p class="gnote" style="margin:8px 0 0"><b>Một phiên cho mỗi tính năng, tự kiểm 5 cửa:</b> (1) test backend + kiểu + build + định dạng; (2) bảng đối chiếu Ruby↔PHP và Vue↔React; (3) chấm ảnh từng điểm ảnh với bản gốc ≤0,1% ở mọi màn và mọi trạng thái bật/tắt, sáng lẫn tối; (4) rà tự động từng nút hai bên — nút hiển thị mà không bấm được là chưa xong; (5) tự mở trình duyệt bấm trọn vòng và tải lại trang kiểm dữ liệu còn nguyên.</p>
+    <p class="gnote" style="margin:8px 0 0"><b>Một phiên cho mỗi tính năng, tự kiểm 5 cửa:</b> (1) test backend + kiểu + build + định dạng; (2) bảng đối chiếu Ruby↔PHP và Vue↔React; (3) chấm ảnh từng điểm ảnh với bản gốc ≤0,1% ở mọi màn và mọi trạng thái bật/tắt, sáng lẫn tối; (4) rà tự động từng nút hai bên — nút hiển thị mà không bấm được là chưa xong; (5) <b>bắt buộc tự mở trình duyệt và thao tác như người dùng thật</b>, bấm trọn vòng rồi tải lại trang kiểm dữ liệu còn nguyên. Test code không thay thế cửa (5).</p>
     <p class="gnote" style="margin:8px 0 0"><b>Phiên chính chỉ quản lý chất lượng</b>, phần code giao cho nhiều tác nhân chạy song song theo đầu việc với ranh giới tệp rõ ràng. Đợt 06/09 chạy tới 5 đầu việc cùng lúc và ghép hai tính năng vào một lượt (nhãn + tệp đính kèm; chưa đọc + tiện ích soạn thảo).</p>
     <p class="gnote" style="margin:8px 0 0"><b>Đối chiếu với bản gốc thật:</b> một bản Chatwoot v4.17.1 chạy song song trên máy để so từng màn, từng nút, từng hành vi. Mọi khác biệt đều phải cố ý và ghi lại lý do.</p>
   </div>
@@ -214,9 +214,10 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">2/6</span></div>
-    <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill wait">Chờ</span>
-      <span class="fdesc">Điều kiện + 18 hành động + hẹn giờ, trình dựng luật giống bản gốc.</span></div>
+    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">3/6 · D1 chờ nghiệm thu</span></div>
+    <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill done">Xong · chờ nghiệm thu</span>
+      <span class="fdesc">Đã có bảng rule + pending execution, CRUD/clone/toggle, matcher điều kiện, event listener, queue delay và bộ thực thi hành động chung cho D3 Macros. Builder Settings tạo/sửa rule, chọn điều kiện/hành động; các action cần mail/webhook/tệp/SLA để đúng feature sau, không dựng nút giả.</span>
+      <span class="ftest"><b>Test ngay:</b> Create Automation → Event <i>Message Created</i> → điều kiện <i>Message Content contains</i> “giá” → action <i>Assign a Team</i> + <i>Add a Label</i> → Create → tải lại trang → mở sửa thấy đủ giá trị → nhắn tin có chữ “giá” vào hội thoại → team + nhãn được gán, có dòng activity. Pixel 9 trạng thái sáng/tối ≤ 0,030% (kể cả chế độ chạy sau chờ), e2e 13/13. Trace: <code>reports/trace-d1-automation-rules.md</code>. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill wait">Chờ</span>
       <span class="fdesc">Sự kiện báo cáo + tổng hợp + các màn tổng quan/hội thoại/nhân viên/hài lòng.</span></div>
     <div class="feat"><span class="fid">D3</span><span class="fname">Macro</span><span class="pill wait">Chờ</span>

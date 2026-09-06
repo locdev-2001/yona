@@ -6,7 +6,7 @@ import CustomBrandPolicyWrapper from 'dashboard/components/CustomBrandPolicyWrap
 import { getHelpUrlForFeature } from 'dashboard/helper/featureHelper';
 
 // Port từ dashboard/routes/dashboard/settings/components/BaseSettingsHeader.vue
-// (back button + tabs vào cùng các màn settings dùng chúng ở nhóm sau).
+// (back button vào cùng các màn settings dùng nó ở nhóm sau).
 interface BaseSettingsHeaderProps {
     title: string;
     description?: ReactNode;
@@ -15,6 +15,7 @@ interface BaseSettingsHeaderProps {
     searchPlaceholder?: string;
     searchQuery?: string;
     onSearchQueryChange?: (query: string) => void;
+    tabs?: ReactNode;
     count?: ReactNode;
     actions?: ReactNode;
 }
@@ -27,6 +28,7 @@ export default function BaseSettingsHeader({
     searchPlaceholder = '',
     searchQuery = '',
     onSearchQueryChange,
+    tabs,
     count,
     actions,
 }: BaseSettingsHeaderProps) {
@@ -66,10 +68,12 @@ export default function BaseSettingsHeader({
                     </div>
                 ) : null}
             </div>
-            {searchPlaceholder || actions ? (
+            {searchPlaceholder || actions || tabs ? (
                 <div className="gap-3 flex flex-wrap sm:flex-nowrap justify-between sm:mt-4 min-w-0">
-                    {searchPlaceholder ? (
-                        <div className="hidden sm:flex items-center gap-3 min-w-0">
+                    {tabs || searchPlaceholder ? (
+                        <div className={`flex items-center gap-3 min-w-0 ${tabs ? '' : 'hidden sm:flex'}`}>
+                            {tabs}
+                            {searchPlaceholder ? (
                             <Input
                                 type="search"
                                 size="sm"
@@ -84,9 +88,10 @@ export default function BaseSettingsHeader({
                                     />
                                 }
                             />
+                            ) : null}
                         </div>
                     ) : null}
-                    <div className="flex items-center gap-3 shrink-0 flex-row-reverse sm:flex-row">
+                    <div className={`flex items-center gap-3 shrink-0 ${tabs ? '' : 'flex-row-reverse sm:flex-row'}`}>
                         {count}
                         {count && actions ? (
                             <div className="w-px h-3 rounded-lg bg-n-weak ltr:ml-1 ltr:mr-2 rtl:ml-2 rtl:mr-1 flex-shrink-0" />
