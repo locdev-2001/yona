@@ -7,6 +7,7 @@ export const WIDGET_ROUTES = {
     MESSAGES: 'messages',
     PRECHAT_FORM: 'prechat-form',
     UNREAD_MESSAGES: 'unread-messages',
+    CAMPAIGNS: 'campaigns',
 } as const;
 
 export type WidgetRouteName = (typeof WIDGET_ROUTES)[keyof typeof WIDGET_ROUTES];
@@ -16,6 +17,7 @@ const PATH_BY_ROUTE: Record<WidgetRouteName, string> = {
     messages: '/messages',
     'prechat-form': '/prechat-form',
     'unread-messages': '/unread-messages',
+    campaigns: '/campaigns',
 };
 
 const ROUTE_BY_PATH: Record<string, WidgetRouteName> = {
@@ -23,6 +25,7 @@ const ROUTE_BY_PATH: Record<string, WidgetRouteName> = {
     '/messages': WIDGET_ROUTES.MESSAGES,
     '/prechat-form': WIDGET_ROUTES.PRECHAT_FORM,
     '/unread-messages': WIDGET_ROUTES.UNREAD_MESSAGES,
+    '/campaigns': WIDGET_ROUTES.CAMPAIGNS,
 };
 
 export const currentRoute = (): WidgetRouteName => {

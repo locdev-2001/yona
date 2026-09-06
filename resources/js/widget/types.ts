@@ -163,6 +163,23 @@ export interface WidgetMessage {
     showAvatar?: boolean;
 }
 
+// Bản ghi campaign của `GET /api/v1/widget/campaigns` (`id` = display_id).
+export interface WidgetCampaign {
+    id: number;
+    message: string;
+    trigger_only_during_business_hours: boolean;
+    trigger_rules?: { url?: string; time_on_page?: number };
+    sender?: MessageSender | null;
+}
+
+// Dạng đã rút gọn cho luật kích hoạt (campaignHelper.formatCampaigns).
+export interface FormattedCampaign {
+    id: number;
+    triggerOnlyDuringBusinessHours: boolean;
+    timeOnPage?: number;
+    url?: string;
+}
+
 export interface ConversationAttributes {
     id: number | string;
     status: string;

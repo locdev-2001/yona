@@ -36,6 +36,7 @@ class InboxesController extends Controller
         'greeting_message' => ['sometimes', 'nullable', 'string', 'max:255'],
         'enable_email_collect' => ['sometimes', 'boolean'],
         'csat_survey_enabled' => ['sometimes', 'boolean'],
+        'csat_config' => ['sometimes', 'array'],
         'enable_auto_assignment' => ['sometimes', 'boolean'],
         'auto_assignment_config' => ['sometimes', 'array'],
         'working_hours_enabled' => ['sometimes', 'boolean'],

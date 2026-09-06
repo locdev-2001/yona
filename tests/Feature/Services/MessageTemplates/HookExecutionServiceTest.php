@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Account;
+use App\Models\Campaign;
 use App\Models\Channel\WebWidget;
 use App\Models\Contact;
 use App\Models\Conversation;
@@ -82,8 +83,11 @@ it('sends the greeting and the email collect messages on the first visitor messa
 
 it('skips both templates on campaign conversations', function () {
     $conversation = templateConversation(['greeting_enabled' => true, 'greeting_message' => 'Hi', 'enable_email_collect' => true]);
-    // campaign_id là cột giữ chỗ (C4 chưa port) nên không nằm trong $fillable.
-    Conversation::query()->whereKey($conversation->id)->update(['campaign_id' => 1]);
+    $campaign = Campaign::factory()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+    ]);
+    $conversation->update(['campaign_id' => $campaign->id]);
 
     incomingMessage($conversation);
 

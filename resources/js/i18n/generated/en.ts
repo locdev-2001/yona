@@ -548,6 +548,96 @@ const messages: Record<string, unknown> = {
             "ASSIGN_FAILED": "Failed to assign team. Please try again."
         }
     },
+    "CAMPAIGN": {
+        "LIVE_CHAT": {
+            "HEADER_TITLE": "Live chat campaigns",
+            "NEW_CAMPAIGN": "Create campaign",
+            "CARD": {
+                "STATUS": {
+                    "ENABLED": "Enabled",
+                    "DISABLED": "Disabled"
+                },
+                "CAMPAIGN_DETAILS": {
+                    "SENT_BY": "Sent by",
+                    "BOT": "Bot",
+                    "FROM": "from",
+                    "URL": "URL:"
+                }
+            },
+            "EMPTY_STATE": {
+                "TITLE": "No live chat campaigns are available",
+                "SUBTITLE": "Connect with your customers using proactive messages.  Click 'Create campaign' to get started."
+            },
+            "CREATE": {
+                "TITLE": "Create a live chat campaign",
+                "CANCEL_BUTTON_TEXT": "Cancel",
+                "CREATE_BUTTON_TEXT": "Create",
+                "FORM": {
+                    "TITLE": {
+                        "LABEL": "Title",
+                        "PLACEHOLDER": "Please enter the title of campaign",
+                        "ERROR": "Title is required"
+                    },
+                    "MESSAGE": {
+                        "LABEL": "Message",
+                        "PLACEHOLDER": "Please enter the message of campaign",
+                        "ERROR": "Message is required"
+                    },
+                    "INBOX": {
+                        "LABEL": "Select Inbox",
+                        "PLACEHOLDER": "Select Inbox",
+                        "ERROR": "Inbox is required"
+                    },
+                    "SENT_BY": {
+                        "LABEL": "Sent by",
+                        "PLACEHOLDER": "Please select sender",
+                        "ERROR": "Sender is required"
+                    },
+                    "END_POINT": {
+                        "LABEL": "URL",
+                        "PLACEHOLDER": "Please enter the URL",
+                        "ERROR": "Please enter a valid URL"
+                    },
+                    "TIME_ON_PAGE": {
+                        "LABEL": "Time on page(Seconds)",
+                        "PLACEHOLDER": "Please enter the time",
+                        "ERROR": "Time on page is required"
+                    },
+                    "OTHER_PREFERENCES": {
+                        "TITLE": "Other preferences",
+                        "ENABLED": "Enable campaign",
+                        "TRIGGER_ONLY_BUSINESS_HOURS": "Trigger only during business hours"
+                    },
+                    "BUTTONS": {
+                        "CREATE": "Create",
+                        "CANCEL": "Cancel"
+                    },
+                    "API": {
+                        "SUCCESS_MESSAGE": "Live chat campaign created successfully",
+                        "ERROR_MESSAGE": "There was an error. Please try again."
+                    }
+                }
+            },
+            "EDIT": {
+                "TITLE": "Edit live chat campaign",
+                "FORM": {
+                    "API": {
+                        "SUCCESS_MESSAGE": "Live chat campaign updated successfully",
+                        "ERROR_MESSAGE": "There was an error. Please try again."
+                    }
+                }
+            }
+        },
+        "CONFIRM_DELETE": {
+            "TITLE": "Are you sure to delete?",
+            "DESCRIPTION": "The delete action is permanent and cannot be reversed.",
+            "CONFIRM": "Delete",
+            "API": {
+                "SUCCESS_MESSAGE": "Campaign deleted successfully",
+                "ERROR_MESSAGE": "There was an error. Please try again."
+            }
+        }
+    },
     "CANNED_MGMT": {
         "HEADER": "Canned Responses",
         "LEARN_MORE": "Learn more about canned responses",
@@ -2053,6 +2143,9 @@ const messages: Record<string, unknown> = {
             "labels": {
                 "added": "{user_name} added {labels}",
                 "removed": "{user_name} removed {labels}"
+            },
+            "csat": {
+                "not_sent_due_to_messaging_window": "CSAT survey not sent due to outgoing message restrictions"
             },
             "muted": "{user_name} has muted the conversation",
             "unmuted": "{user_name} has unmuted the conversation"
@@ -4810,6 +4903,23 @@ const messages: Record<string, unknown> = {
         "IMAGE": "Image",
         "VIDEO": "Video",
         "DIVIDER": "Divider"
+    },
+    "SURVEY": {
+        "DESCRIPTION": "Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.",
+        "RATING": {
+            "LABEL": "Rate your conversation",
+            "SUCCESS_MESSAGE": "Thank you for submitting the rating"
+        },
+        "FEEDBACK": {
+            "LABEL": "Do you have any thoughts you'd like to share?",
+            "PLACEHOLDER": "Your feedback (optional)",
+            "BUTTON_TEXT": "Submit feedback"
+        },
+        "API": {
+            "SUCCESS_MESSAGE": "Survey updated successfully",
+            "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+        },
+        "POWERED_BY": "Powered by Chatwoot"
     },
     "SWITCH": {
         "TOGGLE": "Toggle switch"

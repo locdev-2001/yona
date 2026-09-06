@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Widget\BroadcastingAuthController;
+use App\Http\Controllers\Widget\CampaignsController;
 use App\Http\Controllers\Widget\ConfigsController;
 use App\Http\Controllers\Widget\ContactsController;
 use App\Http\Controllers\Widget\ConversationsController;
@@ -22,10 +23,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(ResolveWidgetChannel::class)
     ->prefix('/v1/widget')
     ->group(function () {
-        // configs tự dựng hồ sơ khách khi chưa có; inbox_members không cần khách
-        // (skip_before_action :set_contact của bản gốc).
+        // configs tự dựng hồ sơ khách khi chưa có; inbox_members + campaigns không
+        // cần khách (skip_before_action :set_contact của bản gốc).
         Route::post('/config', [ConfigsController::class, 'store']);
         Route::get('/inbox_members', [InboxMembersController::class, 'index']);
+        Route::get('/campaigns', [CampaignsController::class, 'index']);
 
         Route::middleware(EnsureWidgetContact::class)->group(function () {
             Route::post('/direct_uploads', [DirectUploadsController::class, 'store']);

@@ -25,6 +25,16 @@ Route::redirect('/', '/app');
 // dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.
 Route::get('/widget', fn () => view('widget'))->name('widget');
 
+// Trang khảo sát CSAT công khai (`/survey/responses/{uuid}`) — khách chấm điểm
+// ngoài widget; dữ liệu đi qua mặt tiền public API, trang chỉ nhúng cấu hình
+// cài đặt như bản gốc.
+Route::get('/survey/responses/{uuid}', fn () => view('survey', ['globalConfig' => [
+    'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),
+    'BRAND_NAME' => config('yona.branding.brand_name'),
+    'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
+    'INSTALLATION_NAME' => config('yona.branding.installation_name'),
+]]))->name('survey_response');
+
 Route::middleware('guest')->group(function () {
     Route::get('/app/login', [SessionsController::class, 'create'])->name('login');
     Route::post('/app/login', [SessionsController::class, 'store']);
@@ -92,6 +102,13 @@ Route::middleware('auth')->group(function () {
                 Route::get('/agents', [TeamsSettingsController::class, 'editAgents'])->name('settings_teams_edit_members');
                 Route::get('/finish', [TeamsSettingsController::class, 'editFinish'])->name('settings_teams_edit_finish');
             });
+
+            // Tương đương campaigns.routes.js: `/campaigns` và `/campaigns/ongoing`
+            // chuyển tiếp về tab Live chat; SMS/WhatsApp thuộc nhóm E/F.
+            Route::get('/campaigns', fn (Account $account) => redirect("/app/accounts/{$account->id}/campaigns/live_chat"));
+            Route::get('/campaigns/ongoing', fn (Account $account) => redirect("/app/accounts/{$account->id}/campaigns/live_chat"));
+            Route::get('/campaigns/live_chat', fn (Account $account) => Inertia::render('dashboard/campaigns/LiveChat'))
+                ->name('campaigns_livechat_index');
 
             // Tương đương inbox.routes.js: list / wizard new 4 bước / trang settings có tab.
             Route::get('/settings/inboxes', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/inboxes/list"));

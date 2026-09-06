@@ -8,6 +8,8 @@ interface EmptyStateLayoutProps {
     showBackdrop?: boolean;
     emptyStateItem?: ReactNode;
     actions?: ReactNode;
+    // Component Vue nhận `class` của người gọi ngay trên thẻ <section> gốc.
+    className?: string;
 }
 
 export default function EmptyStateLayout({
@@ -16,9 +18,12 @@ export default function EmptyStateLayout({
     showBackdrop = true,
     emptyStateItem,
     actions,
+    className = '',
 }: EmptyStateLayoutProps) {
     return (
-        <section className="relative flex flex-col items-center justify-center w-full h-full overflow-hidden">
+        <section
+            className={`relative flex flex-col items-center justify-center w-full h-full overflow-hidden ${className}`.trim()}
+        >
             <div className="relative w-full max-w-5xl mx-auto overflow-hidden h-full max-h-[28rem]">
                 {showBackdrop ? (
                     <div className="w-full h-full space-y-4 overflow-y-hidden opacity-50 pointer-events-none">
@@ -41,7 +46,9 @@ export default function EmptyStateLayout({
                                 </p>
                             ) : null}
                         </div>
-                        {actions}
+                        {/* <Policy> của bản gốc luôn dựng một thẻ div bọc slot actions —
+                            thiếu nó thì `gap-6` mất một khoảng 24px và khối chữ tụt xuống. */}
+                        <div>{actions}</div>
                     </div>
                 </div>
             </div>

@@ -97,6 +97,11 @@ class Account extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
     public function mentions(): HasMany
     {
         return $this->hasMany(Mention::class);

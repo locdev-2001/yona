@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::middleware('web')->group(base_path('routes/web_api.php'));
+            Route::middleware('api')->prefix('public/api/v1')->group(base_path('routes/api_public.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -49,13 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('api/*', 'public/api/*') || $request->expectsJson(),
         );
 
         // request_exception_handler.rb: bản ghi không tồn tại trả đúng một câu
         // cho mọi endpoint, không phải body exception mặc định của framework.
         $exceptions->render(function (ModelNotFoundException|NotFoundHttpException $exception, Request $request) {
-            if (! $request->is('api/*') && ! $request->expectsJson()) {
+            if (! $request->is('api/*', 'public/api/*') && ! $request->expectsJson()) {
                 return null;
             }
 

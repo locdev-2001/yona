@@ -23,6 +23,9 @@ export const CONVERSATION_STATUS = {
 // Bus nội bộ widget (thay emitter của mitt bên Vue).
 export const WIDGET_BUS_EVENTS = {
     ON_AGENT_MESSAGE_RECEIVED: 'ON_AGENT_MESSAGE_RECEIVED',
+    ON_CAMPAIGN_MESSAGE_CLICK: 'ON_CAMPAIGN_MESSAGE_CLICK',
+    EXECUTE_CAMPAIGN: 'EXECUTE_CAMPAIGN',
+    SNOOZE_CAMPAIGNS: 'SNOOZE_CAMPAIGNS',
     ON_UNREAD_MESSAGE_CLICK: 'ON_UNREAD_MESSAGE_CLICK',
     ON_CONVERSATION_CREATED: 'ON_CONVERSATION_CREATED',
     SHOW_ALERT: 'SHOW_ALERT',
@@ -32,3 +35,9 @@ export const WIDGET_BUS_EVENTS = {
 // Bộ đếm typing của bản gốc (ResizableTextArea + ActionCableConnector).
 export const TYPING_INDICATOR_IDLE_TIME = 4000;
 export const AGENT_TYPING_TIMEOUT = 30000;
+
+// store/modules/campaign.js — danh sách campaign nhớ đệm 1 giờ theo website token;
+// bấm "đóng" ở bong bóng campaign thì tạm ngưng 1 giờ (SDK giữ mốc trong cookie).
+export const CAMPAIGN_CACHE_KEY_PREFIX = 'chatwoot_campaigns_';
+export const CAMPAIGN_CACHE_EXPIRY = 60 * 60 * 1000;
+export const CAMPAIGN_SNOOZE_DURATION = 60 * 60 * 1000;

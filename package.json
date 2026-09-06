@@ -31,7 +31,8 @@
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "timezone-phone-codes": "^0.0.2",
-        "tinykeys": "4.0.0"
+        "tinykeys": "4.0.0",
+        "urlpattern-polyfill": "10.1.0"
     },
     "devDependencies": {
         "@egoist/tailwindcss-icons": "^1.9.2",

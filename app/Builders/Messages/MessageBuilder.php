@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/app/builders/messages/message_builder.rb.
 // Bỏ: xử lý email cc/bcc + html/liquid (F1), sender AgentBot (D4),
-// campaign_id (C4), template_params (kênh WhatsApp F5).
+// template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
     private ?Message $message = null;
@@ -130,6 +130,11 @@ class MessageBuilder
 
         if ($contentAttributes !== []) {
             $attributes['content_attributes'] = $contentAttributes;
+        }
+
+        // campaign_id: tin do campaign nhả ra không phải "human response".
+        if (filled($this->params['campaign_id'] ?? null)) {
+            $attributes['additional_attributes'] = ['campaign_id' => $this->params['campaign_id']];
         }
 
         // conversation.messages.build — gán quan hệ trước khi save.

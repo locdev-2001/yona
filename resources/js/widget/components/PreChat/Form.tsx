@@ -77,6 +77,7 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
     const isCreating = useWidgetState(state => state.uiFlags.isCreating);
     const contact = useWidgetState(state => state.contact);
     const preChatFormEnabled = useWidgetState(state => Boolean(state.channelConfig?.preChatFormEnabled));
+    const hasActiveCampaign = useWidgetState(state => state.activeCampaign !== null);
 
     const [values, setValues] = useState<PreChatFormValues>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -87,10 +88,18 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
         () => enabledPreChatFields(preChatFormEnabled ? preChatFields : [], contact),
         [preChatFormEnabled, preChatFields, contact],
     );
-    const allFields = useMemo(() => [...fields, MESSAGE_FIELD], [fields]);
+    // Chiến dịch đã mang sẵn nội dung nên bản gốc bỏ ô soạn tin trong form.
+    const allFields = useMemo(
+        () => (hasActiveCampaign ? fields : [...fields, MESSAGE_FIELD]),
+        [fields, hasActiveCampaign],
+    );
 
-    const headerMessage = preChatFormEnabled ? (preChatMessage ?? '') : '';
-    const shouldShowHeaderMessage = preChatFormEnabled && Boolean(headerMessage);
+    const headerMessage = preChatFormEnabled
+        ? (preChatMessage ?? '')
+        : hasActiveCampaign
+          ? t('PRE_CHAT_FORM.CAMPAIGN_HEADER')
+          : '';
+    const shouldShowHeaderMessage = hasActiveCampaign || (preChatFormEnabled && Boolean(headerMessage));
     const textColor = getContrastingTextColor(widgetColor);
 
     const failingRuleFor = (field: PreChatField): ValidationRule | null =>
@@ -228,7 +237,7 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
                 />
             ) : null}
             {fields.map(renderField)}
-            {renderField(MESSAGE_FIELD, fields.length)}
+            {hasActiveCampaign ? null : renderField(MESSAGE_FIELD, fields.length)}
 
             <button
                 className="text-white py-3 px-4 rounded-lg shadow-sm leading-4 cursor-pointer disabled:opacity-50 w-full mt-3 mb-5 font-medium flex items-center justify-center gap-2"

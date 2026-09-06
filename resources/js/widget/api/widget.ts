@@ -3,6 +3,7 @@ import { buildSendAttachmentFormData, buildSendMessagePayload } from '../helpers
 import type {
     AvailableAgent,
     ConversationAttributes,
+    WidgetCampaign,
     WidgetConfigResponse,
     WidgetContact,
     WidgetMessage,
@@ -13,6 +14,12 @@ import type {
 const BASE = '/api/v1/widget';
 
 const referrerUrl = () => (window as { referrerURL?: string }).referrerURL || '';
+
+// api/events.js#generateEventParams — cùng bộ tham số cho mọi sự kiện widget.
+const eventParams = () => ({
+    initiated_at: { timestamp: new Date().toString() },
+    referer: referrerUrl(),
+});
 
 export const fetchConfig = (): Promise<WidgetConfigResponse> =>
     apiPost<WidgetConfigResponse>(`${BASE}/config${buildSearch()}`);
@@ -126,9 +133,23 @@ export const fetchAvailableAgents = (): Promise<{ payload: AvailableAgent[] }> =
     apiGet(`${BASE}/inbox_members${buildSearch()}`);
 
 export const createEvent = (name: string): Promise<void> =>
+    apiPost(`${BASE}/events${buildSearch()}`, { name, event_info: eventParams() });
+
+export const fetchCampaigns = (): Promise<WidgetCampaign[]> => apiGet(`${BASE}/campaigns${buildSearch()}`);
+
+// endPoints.js#triggerCampaign — campaign chạy qua CÙNG endpoint sự kiện với
+// webwidget.triggered, chỉ khác tên sự kiện + event_info.
+export const triggerCampaign = (
+    campaignId: number,
+    customAttributes?: Record<string, unknown>,
+): Promise<void> =>
     apiPost(`${BASE}/events${buildSearch()}`, {
-        name,
-        event_info: { initiated_at: { timestamp: new Date().toString() }, referer: referrerUrl() },
+        name: 'campaign.triggered',
+        event_info: {
+            campaign_id: campaignId,
+            custom_attributes: customAttributes,
+            ...eventParams(),
+        },
     });
 
 export const createLabel = (label: string): Promise<void> => apiPost(`${BASE}/labels${buildSearch()}`, { label });

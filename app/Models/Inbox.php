@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection as SupportCollection;
 
 // Port từ refs/chatwoot/app/models/inbox.rb.
-// Bỏ ở B1: campaigns/contact_inboxes/conversations/messages (nhóm B2-B3),
+// Bỏ ở B1: contact_inboxes/conversations/messages (nhóm B2-B3),
 // working hours OutOfOffisable (tính năng sau), agent_bot/webhooks/portal (nhóm D-E),
 // FilteredCountInvalidator (nợ B8), Reportable, EE overlay.
 class Inbox extends Model
@@ -174,6 +174,18 @@ class Inbox extends Model
     public function autoAssignmentV2Enabled(): bool
     {
         return $this->account->featureEnabled('assignment_v2');
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
+    // Inbox#inbox_type — tên người-đọc-được của kênh ('Website', 'API'…);
+    // campaign dùng nó để quyết định loại chiến dịch được phép.
+    public function inboxType(): string
+    {
+        return $this->channel?->name() ?? '';
     }
 
     public function isApi(): bool

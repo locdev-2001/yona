@@ -1,0 +1,71 @@
+// Port từ survey/assets/scss/woot.scss.
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'widget-fonts';
+@import 'next-colors';
+
+// Bundle survey của bản gốc nạp thêm reset Meyer (`widget/assets/scss/reset`).
+// Yona không port cả bộ reset đó (preflight của Tailwind đã lo phần lớn); dòng
+// duy nhất còn ảnh hưởng tới trang này là line-height của body — thiếu nó ô nhập
+// phản hồi cao thêm 4px so với oracle.
+body {
+  line-height: 1;
+}
+
+html,
+body {
+  font-family: 'Inter', -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Tahoma, Arial, sans-serif;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  margin: 0;
+}
+
+.woot-survey-wrap {
+  height: 100%;
+}
+
+// Port từ <style scoped> của survey/components/Rating.vue.
+.emoji-button {
+  filter: grayscale(100%);
+
+  &.selected,
+  &:hover,
+  &:focus,
+  &:active {
+    filter: grayscale(0%);
+    transform: scale(1.32);
+    transition: transform 300ms;
+  }
+
+  &.disabled {
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// Spinner của shared/components/Spinner (định nghĩa giống app.scss / widget.scss).
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  @apply relative inline-block w-6 h-6 align-middle;
+
+  &:before {
+    @apply border-n-slate-10 border-2 border-solid content-[''] box-border absolute top-[50%] left-[50%] rounded-full border-t-n-strong -ml-2.5 -mt-2.5 w-6 h-6 animate-[spinner_0.9s_linear_infinite];
+  }
+
+  &.small {
+    @apply w-4 h-4;
+
+    &:before {
+      @apply w-4 h-4 -mt-2;
+    }
+  }
+}

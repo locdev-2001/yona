@@ -29,6 +29,7 @@ export default function Sidebar({
     const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
+    const features = currentAccount.features ?? {};
     // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
     const accountLabels = useLabelsList(accountId);
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
@@ -117,8 +118,9 @@ export default function Sidebar({
             filterMenuByRole(
                 buildMenuItems(accountId, inboxes, teams, labelsOnSidebar(accountLabels), unreadCounts),
                 role,
+                features,
             ),
-        [accountId, inboxes, teams, accountLabels, unreadCounts, role],
+        [accountId, inboxes, teams, accountLabels, unreadCounts, role, features],
     );
 
     const asideRef = useRef<HTMLElement>(null);
