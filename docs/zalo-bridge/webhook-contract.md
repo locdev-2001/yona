@@ -3,7 +3,7 @@
 ## Endpoint
 
 ```
-POST /api/integrations/zalo-personal/webhook
+POST /webhooks/zalo
 Header: X-Zalo-Personal-Bridge-Secret: <ZALO_BRIDGE_WEBHOOK_SECRET>
 Content-Type: application/json
 ```
@@ -71,22 +71,23 @@ Content-Type: application/json
 }
 ```
 
-## RLS Bind Flow (CATASTROPHIC — phải đúng thứ tự)
+## Định tuyến sự kiện (nhánh `rewrite/chatwoot-laravel`)
+
+Bản rewrite phân tách dữ liệu theo `account_id` như Chatwoot, KHÔNG dùng RLS nên
+không còn bước bind TenantScope:
 
 ```
-1. TenantScope::forget()                              // reset pooled conn
-2. SELECT workspace_id FROM zalo_connections          // pgsql_privileged bypass RLS
-   WHERE connection_id = ?
-3. workspace_id NULL → return 202 (no orphan)
-4. TenantScope::bind($workspaceId)                    // RLS active
-5. try { handle event } finally { TenantScope::forget() }
+1. Kiểm secret trên header (VerifyZaloBridgeSecret)
+2. connection_id > 0? không thì 400
+3. Đẩy payload vào hàng đợi (ZaloEventsJob) và trả 200 ngay
+4. Job: Channel\Zalo::find(connection_id) → inbox → xử lý theo `type`
+   (kênh không tồn tại hoặc account ngưng hoạt động → bỏ qua êm)
 ```
 
 ## Response Codes
 
 | Code | Meaning |
 |------|---------|
-| 200  | OK (processed hoặc no-op) |
-| 202  | connection_id chưa map / chưa login (accepted, no orphan) |
+| 200  | Đã nhận (xử lý bất đồng bộ trong hàng đợi) |
 | 400  | missing connection_id |
-| 401  | HMAC secret không khớp |
+| 401  | secret không khớp / chưa cấu hình |
