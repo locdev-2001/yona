@@ -260,9 +260,12 @@
         "profile_avatar",
         "profile_refresh",
         "identity_stable_id",
+        "group_threads",
+        "friend_request",
         "threading_continuous",
         "session_qr",
         "session_reauth",
+        "session_disconnect",
         "health"
     ]
 }

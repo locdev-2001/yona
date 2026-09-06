@@ -156,6 +156,9 @@ class InboxResource extends JsonResource
             'zalo_state' => $channel->state,
             'zalo_session_lost_reason' => $channel->session_lost_reason,
             'zalo_last_connected_at' => $channel->last_connected_at?->toIso8601String(),
+            // Cùng khoá với Facebook/Instagram/Tiktok — FE dựng cảnh báo bằng một
+            // đường duy nhất, không rẽ nhánh theo channel_type.
+            'reauthorization_required' => $inbox->reauthorizationRequired(),
         ];
     }
 

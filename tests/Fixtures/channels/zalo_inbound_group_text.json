@@ -1,0 +1,31 @@
+{
+    "type": "inbound",
+    "connection_id": 1,
+    "personal_uid": "1234567890",
+    "peer_uid": "7788",
+    "thread_id": "7788",
+    "thread_type": 1,
+    "source_id": "msg-zalo-group-1",
+    "is_self": false,
+    "direction": "in",
+    "user": { "name": "Nhóm Bán Hàng", "avatar": "https://cdn.zalo.test/group-7788.jpg" },
+    "platform_sent_at": 1719500000000,
+    "inbound_kind": "text",
+    "content": "@Bình xem giúp đơn này nhé",
+    "msg_type": "chat.text",
+    "sender_uid": "555000111",
+    "thread": {
+        "type": "group",
+        "id": "7788",
+        "name": "Nhóm Bán Hàng",
+        "avatar": "https://cdn.zalo.test/group-7788.jpg"
+    },
+    "sender": {
+        "external_id": "555000111",
+        "name": "Minh Anh",
+        "avatar": "https://cdn.zalo.test/minh-anh.jpg"
+    },
+    "mentions": [
+        { "external_id": "555000222", "name": "Bình", "offset": 0, "length": 5 }
+    ]
+}

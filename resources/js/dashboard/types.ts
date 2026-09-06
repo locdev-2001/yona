@@ -27,7 +27,15 @@ export interface DashboardPageProps extends SharedPageProps {
     currentAccountUser: CurrentAccountUser;
     userAccounts: UserAccount[];
     // Nhóm Channels trên sidebar (share từ SetCurrentAccount).
-    inboxes?: { id: number; name: string; channel_type: string; capabilities?: readonly string[] }[];
+    inboxes?: {
+        id: number;
+        name: string;
+        channel_type: string;
+        capabilities?: readonly string[];
+        // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
+        // quyền, …) — điều khiển icon cảnh báo sidebar + banner khung chat.
+        reauthorization_required?: boolean;
+    }[];
     // Nhóm Teams trên sidebar — chỉ team user là member (teams/getMyTeams).
     teams?: { id: number; name: string }[];
 }

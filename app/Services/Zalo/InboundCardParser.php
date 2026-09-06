@@ -4,7 +4,8 @@ namespace App\Services\Zalo;
 
 /**
  * Nơi DUY NHẤT biết hình dạng các "thẻ" riêng của Zalo (danh thiếp, thẻ ngân
- * hàng, nhắc hẹn, cuộc gọi) — cùng vai trò với RelayEventParser ở nhánh sự kiện.
+ * hàng, nhắc hẹn, cuộc gọi, lời mời kết bạn) — cùng vai trò với RelayEventParser
+ * ở nhánh sự kiện.
  *
  * Lõi Chatwoot không có content_type cho những loại này, và bảng
  * `Message::CONTENT_TYPES` là enum dùng chung với API/webhook nên không tự ý nới.
@@ -22,14 +23,22 @@ class InboundCardParser
         'bank_card' => 'conversations.messages.bank_card',
         'reminder' => 'conversations.messages.reminder',
         'call' => 'conversations.messages.call',
+        'friend_request' => 'conversations.messages.friend_request',
     ];
 
-    /** Bridge gửi sẵn 3 kind này thành object cùng tên trong payload. */
-    private const PASSTHROUGH_KINDS = ['business_card', 'bank_card', 'call'];
+    /** Bridge gửi sẵn các kind này thành object cùng tên trong payload. */
+    private const PASSTHROUGH_KINDS = ['business_card', 'bank_card', 'call', 'friend_request'];
 
     private const REMINDER_MSG_TYPE = 'chat.ecard';
 
-    private const REMINDER_ACT_PREFIX = 'create_reminder';
+    /**
+     * Zalo gửi HAI tin `chat.ecard` cho một nhắc hẹn: lúc tạo (`create_reminder…`)
+     * và lúc tới giờ (`remind_reminder…`, bằng chứng: tin 804 trong
+     * reports/g1-inbound-evidence.md §5). Cả hai về cùng một thẻ.
+     *
+     * @var list<string>
+     */
+    private const REMINDER_ACT_PREFIXES = ['create_reminder', 'remind_reminder'];
 
     /**
      * @param  array<string, mixed>  $params  payload `inbound` của bridge
@@ -110,7 +119,7 @@ class InboundCardParser
         foreach ($params['actions'] ?? [] as $action) {
             $envelope = self::decodeJson(is_array($action) ? ($action['data'] ?? null) : null);
 
-            if ($envelope === null || ! str_starts_with((string) ($envelope['act'] ?? ''), self::REMINDER_ACT_PREFIX)) {
+            if ($envelope === null || ! self::isReminderAct((string) ($envelope['act'] ?? ''))) {
                 continue;
             }
 
@@ -122,6 +131,17 @@ class InboundCardParser
         }
 
         return null;
+    }
+
+    private static function isReminderAct(string $act): bool
+    {
+        foreach (self::REMINDER_ACT_PREFIXES as $prefix) {
+            if (str_starts_with($act, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return array<string, mixed>|null */

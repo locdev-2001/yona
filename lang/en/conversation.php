@@ -72,6 +72,7 @@ return [
         'BUSINESS_CARD' => '{sender} has shared a contact card',
         'BANK_CARD' => '{sender} has shared a bank account',
         'REMINDER' => '{sender} has created a reminder',
+        'FRIEND_REQUEST' => '{sender} has sent a friend request',
     ],
     // Mở rộng của Yona: Zalo có loại tin lõi Chatwoot không có (danh thiếp, thẻ
     // ngân hàng, nhắc hẹn, cuộc gọi). Chuỗi gom vào một chỗ để đổi kênh không phải
@@ -97,6 +98,13 @@ return [
             'CANCELED' => 'canceled',
         ],
     ],
+    // Mở rộng của Yona: năng lực `friend_request` (docs/channel-capabilities.md
+    // §2.4) — trung tính theo kênh, không nằm trong khối ZALO.
+    'FRIEND_REQUEST' => [
+        'TITLE' => 'Friend request',
+    ],
+    // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
+    'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [
         'REACT' => 'React',
         'RECALL' => 'Unsend for everyone',

@@ -284,8 +284,19 @@ class Contact extends Model
         $this->custom_attributes = $this->custom_attributes ?: [];
     }
 
-    // Contacts::SyncAttributes — đồng bộ location/country_code từ
-    // additional_attributes và thăng hạng visitor → lead khi có định danh.
+    /**
+     * Contacts::SyncAttributes — đồng bộ location/country_code từ
+     * additional_attributes và thăng hạng visitor → lead.
+     *
+     * LỆCH CÓ CHỦ ĐÍCH so với Chatwoot gốc (`contact.rb#set_contact_type`, thăng
+     * lead khi `additional_attributes` có bất kỳ khoá `social_*`): ở Yona người
+     * lạ vừa nhắn vào từ một kênh mạng xã hội là **Liên hệ nháp**, chỉ thành
+     * **Lead** khi đã có SỐ ĐIỆN THOẠI hoặc EMAIL — từ hồ sơ kênh hay do agent
+     * nhập (docs/channel-capabilities.md §2.4, docs/glossary.md). Uid kênh không
+     * gọi/gửi thư được nên không phải "đã xác nhận nhu cầu".
+     * Agent vẫn chuyển tay được: `contact_type` nằm trong `$fillable`, và hàm này
+     * chỉ NÂNG hạng, không bao giờ hạ.
+     */
     private function syncContactAttributes(): void
     {
         $this->location = $this->additional_attributes['city'] ?? '';
@@ -295,19 +306,8 @@ class Contact extends Model
             return;
         }
 
-        if (filled($this->email) || filled($this->phone_number) || $this->socialDetailsPresent()) {
+        if (filled($this->email) || filled($this->phone_number)) {
             $this->contact_type = self::CONTACT_TYPES[self::TYPE_LEAD];
         }
-    }
-
-    private function socialDetailsPresent(): bool
-    {
-        foreach ($this->additional_attributes ?? [] as $key => $value) {
-            if (str_starts_with((string) $key, 'social_') && filled($value)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

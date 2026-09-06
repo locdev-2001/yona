@@ -19,6 +19,7 @@ import ImageBubble from './bubbles/Image';
 import EmailBubble from './bubbles/Email/Index';
 import TextBubble from './bubbles/Text';
 import VideoBubble from './bubbles/Video';
+import FriendRequestBubble from './bubbles/FriendRequest';
 import ZaloBankCardBubble from './bubbles/ZaloBankCard';
 import ZaloBusinessCardBubble from './bubbles/ZaloBusinessCard';
 import ZaloCallBubble from './bubbles/ZaloCall';
@@ -76,15 +77,17 @@ const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.FALLBACK]: FallbackBubble,
 } as const;
 
-// Loại tin riêng của Zalo: lõi Chatwoot không có content_type cho chúng, nên
-// driver chuẩn hoá vào content_attributes và chỗ này rẽ nhánh — đúng cách bản
-// gốc làm với whatsappFlowResponse / contentAttributes.type === 'dyte' /
-// imageType (story Instagram) trong componentToRender.
+// Loại tin lõi Chatwoot không có content_type: driver chuẩn hoá vào
+// content_attributes theo khoá của docs/channel-capabilities.md §2.1/§2.4 và chỗ
+// này rẽ nhánh THEO KHOÁ, không theo kênh — đúng cách bản gốc làm với
+// whatsappFlowResponse / contentAttributes.type === 'dyte' / imageType (story
+// Instagram) trong componentToRender.
 const CHANNEL_CARD_BUBBLES = {
     business_card: ZaloBusinessCardBubble,
     bank_card: ZaloBankCardBubble,
     reminder: ZaloReminderBubble,
     call: ZaloCallBubble,
+    friend_request: FriendRequestBubble,
 } as const;
 
 function resolveChannelCardBubble(contentAttributes: Record<string, unknown>) {
@@ -118,11 +121,17 @@ export default function Message({
     const isEmailMessageType =
         messageType === MESSAGE_TYPES.INCOMING || messageType === MESSAGE_TYPES.OUTGOING;
 
+    // `externalEcho` của Message.vue: tin do chính chủ hộp thư gửi thẳng từ ứng
+    // dụng của kênh (điện thoại) rồi kênh dội lại. Không có sender nội bộ nên nếu
+    // để rơi vào nhánh isBot thì nó hiện thành bong bóng "Bot" tím — sai người gửi.
+    const isExternalEcho = Boolean(contentAttributes.external_echo);
+
     const variant: MessageVariant = (() => {
         if (isPrivate) return MESSAGE_VARIANTS.PRIVATE;
         if (isEmailInbox && isEmailMessageType) return MESSAGE_VARIANTS.EMAIL;
         if (contentType === CONTENT_TYPES.INCOMING_EMAIL) return MESSAGE_VARIANTS.EMAIL;
         if (status === MESSAGE_STATUS.FAILED) return MESSAGE_VARIANTS.ERROR;
+        if (isExternalEcho) return MESSAGE_VARIANTS.AGENT;
 
         const isBot =
             sender?.type === SENDER_TYPES.AGENT_BOT ||
@@ -181,6 +190,9 @@ export default function Message({
     );
 
     const avatarInfo = (() => {
+        // Gốc lấy tên + avatar của inbox ở đây; bản port chưa truyền inbox vào
+        // Message nên dùng nhãn chung của kênh, chữ "từ điện thoại" nói phần còn lại.
+        if (isExternalEcho) return { name: t('CONVERSATION.NATIVE_APP'), src: '' };
         if (!sender) {
             const { senderName, senderAvatarUrl } = additionalAttributes;
             if (senderName) return { name: senderName, src: senderAvatarUrl ?? '' };
@@ -193,7 +205,10 @@ export default function Message({
         return { name: sender.name ?? '', src: sender.thumbnail ?? '' };
     })();
 
-    const avatarTooltip = avatarInfo.name === '' ? '' : `${t('CONVERSATION.SENT_BY')} ${avatarInfo.name}`;
+    const avatarTooltip = (() => {
+        if (isExternalEcho) return t('CONVERSATION.NATIVE_APP_ADVISORY');
+        return avatarInfo.name === '' ? '' : `${t('CONVERSATION.SENT_BY')} ${avatarInfo.name}`;
+    })();
 
     const contextValue: MessageContextValue = {
         id: message.id,
@@ -261,6 +276,14 @@ export default function Message({
                                 className={`[grid-area:meta] ${FLEX_ORIENTATION_MAP[orientation]}`}
                                 onRetry={onRetry ? () => onRetry(message) : undefined}
                             />
+                        ) : isExternalEcho ? (
+                            <div
+                                data-testid="external-echo-label"
+                                title={t('CONVERSATION.NATIVE_APP_ADVISORY')}
+                                className={`[grid-area:meta] flex mt-1 text-xs text-n-slate-11 ${FLEX_ORIENTATION_MAP[orientation]}`}
+                            >
+                                {t('CONVERSATION.SENT_FROM_NATIVE_APP')}
+                            </div>
                         ) : null}
                     </div>
                 )}

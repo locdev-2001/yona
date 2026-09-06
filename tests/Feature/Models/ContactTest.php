@@ -52,10 +52,30 @@ describe('sync contact attributes', function () {
         expect(Contact::factory()->create()->contactTypeName())->toBe('visitor');
     });
 
-    it('has contact type lead when contacted through a social channel', function () {
+    // LỆCH CÓ CHỦ ĐÍCH so với gốc (`spec/models/contact_spec.rb` mong đợi 'lead'):
+    // luật Yona — người lạ từ kênh mạng xã hội là Liên hệ nháp cho tới khi có
+    // SĐT hoặc email (docs/channel-capabilities.md §2.4, docs/glossary.md).
+    it('stays visitor when the channel only knows a social id', function () {
         $contact = Contact::factory()->create(['additional_attributes' => ['social_facebook_user_id' => '123']]);
 
-        expect($contact->contactTypeName())->toBe('lead');
+        expect($contact->contactTypeName())->toBe('visitor');
+    });
+
+    it('promotes to lead once a phone number arrives', function () {
+        $contact = Contact::factory()->create(['additional_attributes' => ['social_zalo_user_id' => '123']]);
+        expect($contact->contactTypeName())->toBe('visitor');
+
+        $contact->update(['phone_number' => '+84901234567']);
+
+        expect($contact->refresh()->contactTypeName())->toBe('lead');
+    });
+
+    it('keeps the contact type an agent set by hand', function () {
+        $contact = Contact::factory()->create(['additional_attributes' => ['social_zalo_user_id' => '123']]);
+
+        $contact->update(['contact_type' => Contact::CONTACT_TYPES[Contact::TYPE_LEAD]]);
+
+        expect($contact->refresh()->contactTypeName())->toBe('lead');
     });
 
     it('does not demote an existing customer', function () {

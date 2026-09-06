@@ -68,7 +68,7 @@ return [
     ],
 
     // config/locales/vi.yml — conversations.messages.deleted.
-    // Bốn nhãn dưới là phần mở rộng của Yona cho các loại tin riêng của Zalo,
+    // Năm nhãn dưới là phần mở rộng của Yona cho các loại tin riêng của Zalo,
     // dùng lại đúng chữ Zalo hiện trong danh sách hội thoại.
     'messages' => [
         'deleted' => 'Tin nhắn đã bị xoá',
@@ -76,5 +76,6 @@ return [
         'bank_card' => '[Tài khoản ngân hàng]',
         'reminder' => '[Nhắc hẹn]',
         'call' => '[Cuộc gọi]',
+        'friend_request' => '[Lời mời kết bạn]',
     ],
 ];

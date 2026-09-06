@@ -24,8 +24,8 @@ Decoder ring cho dự án Yona — thuật ngữ, viết tắt, codename, tên g
 ## Internal Terms (tiếng Việt)
 | Term | Meaning |
 |------|---------|
-| Liên hệ nháp | Người lạ nhắn lần đầu, chưa vào pipeline (kỹ thuật GĐ1: Conversation chưa gắn Contact) |
-| Lead | Liên hệ đã xác nhận nhu cầu, đã vào Pipeline |
+| Liên hệ nháp | Người lạ vừa tiếp xúc lần đầu (nhắn tin, gửi lời mời kết bạn), chưa có SĐT/email. Kỹ thuật: `contacts.contact_type = visitor` |
+| Lead | Liên hệ đã có **SĐT hoặc email** (kênh cung cấp hoặc agent nhập), hoặc agent chuyển tay — mới vào Pipeline. Kỹ thuật: `contacts.contact_type = lead`. Uid kênh (`social_*`) KHÔNG đủ để thăng hạng: lệch có chủ đích so với Chatwoot gốc (docs/channel-capabilities.md §2.4) |
 | Pipeline | Phễu bán hàng kéo-thả |
 | Inbox đa kênh | Màn hình chat gộp Zalo + Messenger + TikTok (mỗi kênh = 1 ChannelDriver) |
 | Cửa sổ cho phép | Khung thời gian nền tảng cho phép chủ động nhắn khách |

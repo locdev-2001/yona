@@ -71,6 +71,8 @@ Giá trị là chuỗi snake_case ổn định, dùng chung backend/FE/webhook.
 
 Luật lõi (không phụ thuộc kênh): người lạ = **Liên hệ nháp**; chỉ thăng **Lead** khi có SĐT hoặc email (từ hồ sơ kênh hoặc agent nhập); chống trùng theo SĐT chuẩn E.164 qua `ContactMergeAction`.
 
+> Cài đặt: `App\Models\Contact::syncContactAttributes()`. **Lệch có chủ đích với Chatwoot gốc** (`app/models/contact.rb#set_contact_type` thăng lead khi `additional_attributes` có bất kỳ khoá `social_*`): uid kênh không gọi/gửi thư được nên chưa phải "đã xác nhận nhu cầu". Hàm chỉ NÂNG hạng — agent vẫn chuyển tay được qua `contact_type`.
+
 ### 2.5 Hội thoại & phiên
 | Capability | Ý nghĩa |
 |---|---|
@@ -160,8 +162,8 @@ KHÔNG được khai, vì đọc code thấy chưa có đường thực thi — 
 | `inbound_sticker` (FB, IG) | FB, IG | đính kèm về theo kiểu ảnh, không đặt `content_type=sticker` | lô kênh Meta |
 | `inbound_image/file`, `inbound_caption`, `outbound_reply_to` (TikTok) | TikTok | `Tiktok\MessageService` mới dựng tin chữ | lô TikTok |
 | `outbound_reply_to` (WhatsApp, LINE→–) | WhatsApp | driver gửi chưa đính `context` trích dẫn | lô WhatsApp |
-| `group_threads` (Telegram, LINE, WhatsApp) | các kênh đó | Telegram **bỏ qua** chat nhóm ngay ở IncomingMessageService | lô nhóm |
-| `friend_request` (LINE) | LINE | chưa có xử lý sự kiện follow | lô LINE |
+| `group_threads` (Telegram, LINE, WhatsApp) | các kênh đó | Zalo ĐÃ đóng (lô 2b: `content_attributes.sender/mentions/thread`, hồ sơ nhóm `zalo_thread_type=group`); Telegram **bỏ qua** chat nhóm ngay ở IncomingMessageService | lô nhóm |
+| `friend_request` (LINE) | LINE | Zalo ĐÃ đóng (lô 2b: webhook `friend_request` → Liên hệ nháp + hội thoại + `content_attributes.friend_request`); LINE chưa có xử lý sự kiện follow | lô LINE |
 
 Thêm vào (code có, bảng thiếu): `inbound_rich_text` cho Email (HTML → markdown), `event_typing` cho Website
 (widget đã có `toggle_typing`), `profile_refresh` cho Zalo. Hàng `event_presence` chưa có trong bảng §4 nên

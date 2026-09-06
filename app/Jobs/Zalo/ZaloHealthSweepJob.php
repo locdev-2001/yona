@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Jobs\Zalo;
+
+use App\Jobs\ApplicationJob;
+use App\Models\Channel\Zalo;
+use App\Services\Zalo\ZaloBridgeClient;
+use App\Services\Zalo\ZaloHealthMonitor;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Nhịp tim Laravel ↔ bridge (zalo-deep-audit 6.5). Không có nó, bridge chết là DB
+ * vẫn báo "connected": biểu ngữ không hiện, sidebar không có icon, mỗi tin gửi
+ * hỏng riêng lẻ và chủ shop không hiểu vì sao.
+ *
+ * Ngưỡng ba lượt liên tiếp là cố ý: bridge đã tự đăng nhập lại theo backoff
+ * (services/zalo-bridge session-resilience) nên một nhịp lỡ KHÔNG được làm hộp
+ * thư nhấp nháy đỏ. Hồi lại thì tự đưa về `connected`.
+ */
+class ZaloHealthSweepJob extends ApplicationJob
+{
+    public const FAILURE_THRESHOLD = 3;
+
+    public function __construct(private readonly ?int $connectionId = null)
+    {
+        $this->onQueue('scheduled_jobs');
+    }
+
+    public function handle(ZaloBridgeClient $bridge, ZaloHealthMonitor $monitor): void
+    {
+        $this->channels()->each(function (Zalo $channel) use ($bridge, $monitor) {
+            $response = $bridge->health($channel);
+            $payload = $response !== null && $response->successful() ? (array) $response->json() : null;
+
+            if ($payload !== null && ($payload['connected'] ?? false) === true) {
+                $this->markHealthy($channel, $monitor);
+
+                return;
+            }
+
+            $this->markFailing($channel, $monitor, $this->reasonOf($response, $payload));
+        });
+    }
+
+    /** @return Collection<int, Zalo> */
+    private function channels()
+    {
+        return Zalo::query()
+            ->when($this->connectionId !== null, fn ($query) => $query->whereKey($this->connectionId))
+            ->whereIn('state', [Zalo::STATE_CONNECTED, Zalo::STATE_SESSION_LOST])
+            ->get();
+    }
+
+    private function markHealthy(Zalo $channel, ZaloHealthMonitor $monitor): void
+    {
+        $monitor->clearBridgeFailures($channel->connectionId());
+
+        if (! $channel->isConnected()) {
+            $monitor->reset($channel->connectionId());
+            $channel->markState(Zalo::STATE_CONNECTED);
+        }
+    }
+
+    private function markFailing(Zalo $channel, ZaloHealthMonitor $monitor, string $reason): void
+    {
+        $failures = $monitor->recordBridgeFailure($channel->connectionId());
+
+        if ($failures < self::FAILURE_THRESHOLD || ! $channel->isConnected()) {
+            return;
+        }
+
+        Log::warning('[ZALO] bridge không phản hồi, hạ trạng thái kênh', [
+            'connection_id' => $channel->connectionId(),
+            'failures' => $failures,
+            'reason' => $reason,
+        ]);
+
+        $monitor->recordError($channel->connectionId(), 'session_lost');
+        $channel->markState(Zalo::STATE_SESSION_LOST, $reason);
+    }
+
+    /** @param array<string, mixed>|null $payload */
+    private function reasonOf(mixed $response, ?array $payload): string
+    {
+        if ($response === null) {
+            return 'bridge_down';
+        }
+
+        if ($payload === null) {
+            return 'bridge_error_'.$response->status();
+        }
+
+        return is_string($payload['session_lost_reason'] ?? null)
+            ? (string) $payload['session_lost_reason']
+            : 'bridge_slot_'.(string) ($payload['phase'] ?? 'unknown');
+    }
+}

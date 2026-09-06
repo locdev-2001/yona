@@ -67,6 +67,7 @@ export default function MessagesView() {
               name: string;
               channel_type: string;
               capabilities?: readonly string[];
+              reauthorization_required?: boolean;
               additional_attributes?: {
                   agent_reply_time_window?: string | number;
                   agent_reply_time_window_message?: string;
@@ -147,6 +148,13 @@ export default function MessagesView() {
     return (
         <div ref={messagesViewRef} className="flex flex-col justify-between flex-grow h-full min-w-0 m-0">
             <div ref={topBannerRef}>
+                {inbox?.reauthorization_required && (
+                    <Banner
+                        colorScheme="alert"
+                        className="mx-2 mt-2 overflow-hidden rounded-lg"
+                        bannerMessage={t('SIDEBAR.REAUTHORIZE')}
+                    />
+                )}
                 {!currentChat.can_reply && (
                     <Banner
                         colorScheme="alert"

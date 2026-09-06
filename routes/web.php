@@ -132,6 +132,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/inboxes/list', [InboxesSettingsController::class, 'index'])->name('settings_inbox_list');
             Route::get('/settings/inboxes/new', [InboxesSettingsController::class, 'newChannelList'])->name('settings_inbox_new');
             Route::prefix('/settings/inboxes/new/{inboxId}')->whereNumber('inboxId')->group(function () {
+                // G1: bước quét QR có URL riêng như mọi bước khác của wizard — F5
+                // hay bấm quay lại KHÔNG được tạo thêm hộp thư mồ côi.
+                Route::get('/zalo', [InboxesSettingsController::class, 'connectZalo'])->name('settings_inboxes_connect_zalo');
                 Route::get('/agents', [InboxesSettingsController::class, 'addAgents'])->name('settings_inboxes_add_agents');
                 Route::get('/finish', [InboxesSettingsController::class, 'finish'])->name('settings_inbox_finish');
             });

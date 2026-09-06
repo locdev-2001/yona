@@ -28,6 +28,14 @@ class InboxesSettingsController extends Controller
         ]);
     }
 
+    // Bước quét QR của kênh Zalo — một bước, một URL (xem routes/web.php khối G1).
+    public function connectZalo(Account $account, int $inboxId): Response
+    {
+        return Inertia::render('dashboard/settings/inboxes/channels/ZaloConnect', [
+            'inboxId' => $this->fetchInboxId($account, $inboxId),
+        ]);
+    }
+
     public function addAgents(Account $account, int $inboxId): Response
     {
         return Inertia::render('dashboard/settings/inboxes/AddAgents', [
