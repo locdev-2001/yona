@@ -39,6 +39,8 @@ import {
 } from './session-resilience.mjs';
 import { maskUid, rawPayloadLogEnabled, rawPayloadLogWarning, shortToken } from './redact.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
+import { safeEqual } from './secret-compare.mjs';
+import { copySessionFile, ensureSessionDir, hardenSessionStore, writeSessionFile } from './session-store-fs.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
     buildFriendRequestPayload,
@@ -248,8 +250,7 @@ async function readSlotMetaForKey(key) {
 }
 
 async function writeSlotMetaForKey(key, meta) {
-    await fs.mkdir(SESSIONS_DIR, { recursive: true });
-    await fs.writeFile(slotMetaPathForKey(key), JSON.stringify(meta, null, 0), 'utf8');
+    await writeSessionFile(slotMetaPathForKey(key), JSON.stringify(meta, null, 0));
 }
 
 function slotKeyFromRequest(req) {
@@ -267,11 +268,10 @@ function slotKeyFromRequest(req) {
 
 function checkUiSecret(req) {
     // F10-audit: fail-CLOSED — secret rỗng → từ chối (không phải bypass).
-    if (!BRIDGE_UI_SECRET) {
-        return false;
-    }
-    const h = req.header('X-Bridge-UI-Secret') || req.query.ui_secret || '';
-    return h === BRIDGE_UI_SECRET;
+    // 8.10: CHỈ nhận qua header. Query string `?ui_secret=` đi vào access log của
+    // reverse proxy, lịch sử shell và Referer — không client nào dùng đường đó
+    // (Laravel: ZaloBridgeClient; vận hành: deploy.sh đều gửi header).
+    return safeEqual(req.header('X-Bridge-UI-Secret') || '', BRIDGE_UI_SECRET);
 }
 
 function extractInboundPlainText(message) {
@@ -2057,9 +2057,9 @@ async function promoteQrToConnection(qrKey, connectionId, workspaceId = '') {
     const oldCp = slotCookiePathForKey(qrKey);
     const newCp = slotCookiePathForKey(newKey);
     const oldMp = slotMetaPathForKey(qrKey);
-    await fs.mkdir(SESSIONS_DIR, { recursive: true });
+    await ensureSessionDir(SESSIONS_DIR);
     if (existsSync(oldCp)) {
-        await fs.copyFile(oldCp, newCp);
+        await copySessionFile(oldCp, newCp);
         await fs.unlink(oldCp).catch(() => {});
     }
     if (existsSync(oldMp)) {
@@ -2177,8 +2177,7 @@ function checkSendSecret(req, res) {
         res.status(503).json({ ok: false, error: 'bridge secret not configured' });
         return false;
     }
-    const h = req.header('X-Bridge-Send-Secret') || '';
-    if (h !== BRIDGE_SEND_SECRET) {
+    if (!safeEqual(req.header('X-Bridge-Send-Secret') || '', BRIDGE_SEND_SECRET)) {
         res.status(403).json({ ok: false, message: 'Forbidden' });
         return false;
     }
@@ -2355,7 +2354,7 @@ function buildExpress() {
                         slot.loginPhase = 'qr_waiting';
                     }
                     if (evt.type === LoginQRCallbackEventType.GotLoginInfo && evt.data) {
-                        fs.writeFile(cp, JSON.stringify(evt.data), 'utf8').catch(() => {});
+                        writeSessionFile(cp, JSON.stringify(evt.data)).catch(() => {});
                     }
                 });
                 slot.personalUid = String(slot.api.getOwnId());
@@ -2558,7 +2557,7 @@ function buildExpress() {
 }
 
 async function bootRestoreAllSessions() {
-    await fs.mkdir(SESSIONS_DIR, { recursive: true });
+    await ensureSessionDir(SESSIONS_DIR);
     let files = [];
     try {
         files = readdirSync(SESSIONS_DIR);
@@ -2588,7 +2587,7 @@ async function bootRestoreAllSessions() {
 
 /** Xóa file tạm quét QR (qt_*) quá hạn — tránh thư mục .sessions phình khi bỏ dở QR. File c{connectionId}.json chỉ xóa qua POST /auth/logout khi Laravel gỡ kết nối. */
 async function cleanupStaleQrSessionFiles() {
-    await fs.mkdir(SESSIONS_DIR, { recursive: true });
+    await ensureSessionDir(SESSIONS_DIR);
     let files = [];
     try {
         files = readdirSync(SESSIONS_DIR);
@@ -2630,6 +2629,12 @@ async function boot() {
             console.error(`[bridge] FATAL: missing required env vars in production: ${missing.join(', ')}. Refusing to start.`);
             process.exit(1);
         }
+    }
+
+    // 8.1: tệp phiên do bản bridge cũ ghi ra vẫn 664 — siết về 600 trước khi dùng.
+    const hardened = await hardenSessionStore(SESSIONS_DIR);
+    if (hardened > 0) {
+        console.warn(`[bridge] siết quyền ${hardened} tệp phiên trong .sessions về 0600`);
     }
 
     await cleanupStaleQrSessionFiles();

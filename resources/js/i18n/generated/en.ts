@@ -2372,7 +2372,11 @@ const messages: Record<string, unknown> = {
         "MESSAGE_ACTIONS": {
             "REACT": "React",
             "RECALL": "Unsend for everyone",
-            "DELETE": "Delete"
+            "DELETE": "Delete",
+            "RECALL_CONFIRMATION": {
+                "TITLE": "Unsend this message for everyone?",
+                "MESSAGE": "The message disappears on the customer's side too. This cannot be undone."
+            }
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Retry sending",

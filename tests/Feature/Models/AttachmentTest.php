@@ -90,6 +90,54 @@ describe('file urls', function () {
         expect($attachment->thumbUrl())->not->toBe('')
             ->and($attachment->thumbUrl())->toBe($attachment->fileUrl());
     });
+
+    // ActiveStorage nhét signed_id vào URL; ở đây là token HMAC ở đoạn giữa. Biết
+    // id và tên tệp gốc mà không có chữ ký thì không mở được tệp.
+    it('serves the file only with a valid signature', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('signed.png'));
+
+        $this->get($attachment->fileUrl())->assertRedirect();
+
+        $this->get("/attachments/{$attachment->id}/not-a-signature/{$attachment->filename}")->assertForbidden();
+        $this->get("/attachments/{$attachment->id}/{$attachment->filename}")->assertNotFound();
+    });
+
+    it('rejects a signature minted for another attachment', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('mine.png'));
+        $other = attachmentWithFile($message, UploadedFile::fake()->image('yours.png'));
+
+        $token = Attachment::fileToken($other->id, null);
+
+        $this->get("/attachments/{$attachment->id}/{$token}/{$attachment->filename}")->assertForbidden();
+    });
+
+    it('rejects an expired download signature', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('expired.png'));
+
+        $token = Attachment::fileToken($attachment->id, time() - 1);
+
+        $this->get("/attachments/{$attachment->id}/{$token}/{$attachment->filename}")->assertForbidden();
+    });
+
+    // URL gửi ra ngoài phải hết hạn (blob.url của gốc = 5 phút); URL trong app thì không.
+    it('signs external download urls with an expiry and app urls without one', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('ttl.png'));
+
+        $claims = fn (string $url) => json_decode(
+            (string) base64_decode(strtr(explode('.', explode('/', $url)[5])[0], '-_', '+/'), true),
+            true,
+        );
+
+        expect($claims($attachment->fileUrl())['exp'])->toBeNull()
+            ->and($claims($attachment->downloadUrl())['exp'])->toBeGreaterThan(time())
+            ->and($claims($attachment->downloadUrl())['exp'])->toBeLessThanOrEqual(time() + 600)
+            // Hai lần dựng trong cùng cửa sổ ra cùng một chuỗi.
+            ->and($attachment->downloadUrl())->toBe($attachment->downloadUrl());
+    });
 });
 
 describe('with attached file', function () {

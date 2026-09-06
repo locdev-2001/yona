@@ -66,7 +66,7 @@ class Trigger
     {
         SafeHttp::assertPublicUrl($this->url);
 
-        $body = (string) json_encode($this->payload);
+        $body = (string) json_encode(PayloadRedactor::redact($this->payload));
         $timeout = $this->webhookTimeout();
 
         $response = Http::withHeaders($this->requestHeaders($body))

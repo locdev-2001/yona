@@ -13,7 +13,9 @@
  * M3: timingSafeEqual mọi secret/token + rate-limit per-connection.
  */
 
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
+
+import { safeEqual } from '../secret-compare.mjs';
 import { buildAllowlist, invokeMethod } from '../zca-adapter.mjs';
 
 const STATUS_BY_CODE = {
@@ -29,17 +31,6 @@ const STATUS_BY_CODE = {
 
 const RATE_LIMIT_MAX = 120;
 const RATE_LIMIT_WINDOW_MS = 60000;
-
-function safeEqual(a, b) {
-    const ab = Buffer.from(String(a ?? ''));
-    const bb = Buffer.from(String(b ?? ''));
-    // length khác → so với chính mình để giữ thời gian gần-hằng, rồi từ chối
-    if (ab.length !== bb.length) {
-        timingSafeEqual(bb, bb);
-        return false;
-    }
-    return timingSafeEqual(ab, bb);
-}
 
 /** Token B1: caller (Laravel) tính từ workspace của SESSION đã auth, bridge tính từ slot.workspaceId (bind lúc promote). */
 export function workspaceToken(connectionId, workspaceId, secret) {

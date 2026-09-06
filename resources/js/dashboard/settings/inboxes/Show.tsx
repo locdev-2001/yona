@@ -13,6 +13,7 @@ import {
 } from 'dashboard/helper/apiClient';
 import { INBOX_TYPES, getInboxIconByType } from 'dashboard/helper/inbox';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import Dashboard from '../../Dashboard';
 import SettingsContent from '../SettingsContent';
 import SettingIntroBanner from 'dashboard/components/widgets/SettingIntroBanner';
@@ -77,15 +78,19 @@ const FEATURE_FLAG_LABELS: Record<string, string> = {
     use_inbox_avatar_for_bot: 'INBOX_MGMT.FEATURES.USE_INBOX_AVATAR_FOR_BOT',
 };
 
-// tabs() của Settings.vue: tab Configuration chỉ có ở các kênh khai báo webhook
-// (Twilio/Line/API/Email tự cấu hình/WhatsApp Cloud/Web widget). Zalo là kênh
-// riêng của Yona, giữ tab như trước.
+// tabs() của Settings.vue: tab Configuration CHỈ có ở kênh thật sự có gì để cấu
+// hình (Twilio/Line/API/Email tự cấu hình/WhatsApp Cloud/Web widget). Kênh ngoài
+// danh sách này không có tab — ConfigurationPage rơi về nhánh API và hiện token
+// định danh + HMAC của kênh khác (bằng chứng: inbox Zalo 59).
+//
+// Zalo cố ý KHÔNG có tab: phần "cấu hình" của nó là tài khoản đang gắn + panel
+// QR, và thứ đó phải nằm ngay tab đầu — mất phiên là việc khẩn, không được giấu
+// sau một cú bấm. Thẻ tài khoản gate theo NĂNG LỰC `session_qr` (xem dưới).
 const CONFIGURATION_TAB_CHANNELS: string[] = [
     INBOX_TYPES.TWILIO,
     INBOX_TYPES.LINE,
     INBOX_TYPES.API,
     INBOX_TYPES.WEB,
-    INBOX_TYPES.ZALO,
 ];
 
 // canLocktoSingleConversation của Settings.vue.
@@ -188,7 +193,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const isWebWidget = inbox?.channel_type === INBOX_TYPES.WEB;
     const isApiInbox = inbox?.channel_type === INBOX_TYPES.API;
     const isEmailChannel = inbox?.channel_type === INBOX_TYPES.EMAIL;
-    const isZaloChannel = inbox?.channel_type === INBOX_TYPES.ZALO;
+    // Kênh đăng nhập bằng QR (Zalo hôm nay, kênh sau tự khai `session_qr`) hiện
+    // thẻ tài khoản + đường quét lại ngay đầu tab Cài đặt.
+    const hasQrSession = inboxSupports(inbox, 'session_qr');
     // inboxName của Settings.vue: kênh email hiện kèm địa chỉ thư.
     const inboxHeaderTitle = isEmailChannel ? `${inbox?.name} (${inbox?.email})` : (inbox?.name ?? '');
     const tabKeys = useMemo(
@@ -339,7 +346,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                     <div
                                         className={`flex-1 flex flex-col min-w-0 ${isWebWidget ? 'max-w-2xl' : 'max-w-4xl'}`}
                                     >
-                                        {isZaloChannel ? (
+                                        {hasQrSession ? (
                                             <ZaloSessionBanner
                                                 accountId={accountId}
                                                 inboxId={inbox.id}

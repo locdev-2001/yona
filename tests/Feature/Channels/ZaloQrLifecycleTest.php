@@ -9,9 +9,11 @@ use App\Models\Inbox;
 use App\Models\User;
 use App\Services\Zalo\ZaloBridgeClient;
 use App\Services\Zalo\ZaloHealthMonitor;
+use App\Services\Zalo\ZaloProfileSync;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 
 // Vòng đời đăng nhập QR — bridge giả bằng Http::fake() vì không có tài khoản Zalo thật.
@@ -38,6 +40,15 @@ function fakeZaloBridge(array $overrides = []): void
         '127.0.0.1:3710/*' => Http::response(['ok' => true]),
         ...$overrides,
     ]);
+}
+
+function runZaloHealthSweep(int $connectionId): void
+{
+    app(ZaloHealthSweepJob::class, ['connectionId' => $connectionId])->handle(
+        app(ZaloBridgeClient::class),
+        app(ZaloHealthMonitor::class),
+        app(ZaloProfileSync::class),
+    );
 }
 
 function zaloSessionWebhook(int $connectionId, string $state, ?string $detail = null): TestResponse
@@ -357,17 +368,11 @@ it('bridge hỏng ba nhịp liên tiếp mới hạ trạng thái kênh', functi
     $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890']);
     $connectionId = $this->channel->connectionId();
 
-    app(ZaloHealthSweepJob::class, ['connectionId' => $connectionId])->handle(
-        app(ZaloBridgeClient::class),
-        app(ZaloHealthMonitor::class),
-    );
+    runZaloHealthSweep($connectionId);
     expect($this->channel->refresh()->state)->toBe(Zalo::STATE_CONNECTED);
 
     foreach ([2, 3] as $ignored) {
-        app(ZaloHealthSweepJob::class, ['connectionId' => $connectionId])->handle(
-            app(ZaloBridgeClient::class),
-            app(ZaloHealthMonitor::class),
-        );
+        runZaloHealthSweep($connectionId);
     }
 
     expect($this->channel->refresh()->state)->toBe(Zalo::STATE_SESSION_LOST)
@@ -379,12 +384,89 @@ it('bridge sống lại thì nhịp tim tự đưa kênh về connected', functi
     Http::fake(['127.0.0.1:3710/health*' => Http::response(['ok' => true, 'connected' => true, 'phase' => 'ready'])]);
     $this->channel->update(['state' => Zalo::STATE_SESSION_LOST, 'zalo_uid' => '1234567890']);
 
-    app(ZaloHealthSweepJob::class, ['connectionId' => $this->channel->connectionId()])->handle(
-        app(ZaloBridgeClient::class),
-        app(ZaloHealthMonitor::class),
-    );
+    runZaloHealthSweep($this->channel->connectionId());
 
     expect($this->channel->refresh()->state)->toBe(Zalo::STATE_CONNECTED);
+});
+
+// Hộp thư nối trước khi có bước lưu hồ sơ (inbox 59 trên dev) chỉ hiện chữ cái đầu
+// thay cho avatar — nhịp tim và trang cấu hình phải tự lấp.
+it('nhịp tim lấp tên và ảnh tài khoản Zalo cho hộp thư nối từ trước', function () {
+    Queue::fake();
+    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+        'ok' => true,
+        'connected' => true,
+        'phase' => 'ready',
+        'integrated_display_name' => 'Nguyễn Phước Lộc',
+        'integrated_avatar' => 'https://zalo.example/avatar-cu.jpg',
+    ])]);
+    $this->channel->update([
+        'state' => Zalo::STATE_CONNECTED,
+        'zalo_uid' => '1234567890',
+        'display_name' => null,
+    ]);
+
+    runZaloHealthSweep($this->channel->connectionId());
+
+    expect($this->channel->refresh()->display_name)->toBe('Nguyễn Phước Lộc');
+    Queue::assertPushed(AvatarFromUrlJob::class);
+});
+
+it('nhịp tim không đè tên đã có và chỉ thử đắp ảnh đúng một lần', function () {
+    Queue::fake();
+    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+        'ok' => true,
+        'connected' => true,
+        'phase' => 'ready',
+        'integrated_display_name' => 'Tên khác',
+        'integrated_avatar' => 'https://zalo.example/avatar-khac.jpg',
+    ])]);
+    $this->channel->update([
+        'state' => Zalo::STATE_CONNECTED,
+        'zalo_uid' => '1234567890',
+        'display_name' => 'Chủ shop',
+    ]);
+
+    runZaloHealthSweep($this->channel->connectionId());
+    runZaloHealthSweep($this->channel->connectionId());
+
+    expect($this->channel->refresh()->display_name)->toBe('Chủ shop');
+    // Nhịp tim chạy mỗi phút: đắp ảnh lại mỗi vòng là spam job và đè cả ảnh mà
+    // chủ hộp thư cố ý xoá.
+    Queue::assertPushed(AvatarFromUrlJob::class, 1);
+});
+
+it('mở trang cấu hình khi kênh chưa có tên thì hỏi bridge lấp ngay trong lần trả về đầu', function () {
+    // Chỉ giả job avatar: nhịp tim chạy thật (dispatchSync) mới lấp được tên.
+    Queue::fake([AvatarFromUrlJob::class]);
+    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+        'ok' => true,
+        'connected' => true,
+        'phase' => 'ready',
+        'integrated_display_name' => 'Nguyễn Phước Lộc',
+        'integrated_avatar' => 'https://zalo.example/avatar-cu.jpg',
+    ])]);
+    $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890', 'display_name' => null]);
+
+    $this->actingAs($this->admin)
+        ->getJson("/api/v1/accounts/{$this->account->id}/inboxes/{$this->inbox->id}/zalo/health")
+        ->assertOk()
+        ->assertJsonPath('display_name', 'Nguyễn Phước Lộc');
+
+    Queue::assertPushed(AvatarFromUrlJob::class);
+});
+
+it('kênh đã đủ tên và ảnh thì trang cấu hình không gọi bridge nữa', function () {
+    Storage::fake('public');
+    fakeZaloBridge();
+    $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890', 'display_name' => 'Chủ shop']);
+    $this->inbox->replaceAvatarFromContents('anh', 'avatar.png', 'image/png');
+
+    $this->actingAs($this->admin)
+        ->getJson("/api/v1/accounts/{$this->account->id}/inboxes/{$this->inbox->id}/zalo/health")
+        ->assertOk();
+
+    Http::assertNothingSent();
 });
 
 it('ngắt mạch có half-open: hết cửa sổ chờ thì cho thử lại', function () {

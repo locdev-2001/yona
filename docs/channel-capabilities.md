@@ -78,7 +78,7 @@ Luật lõi (không phụ thuộc kênh): người lạ = **Liên hệ nháp**; 
 |---|---|
 | `threading_history` | hội thoại mới sau resolve (như Chatwoot); panel phải hiện chuỗi hội thoại trước của khách (mọi inbox), bấm là chuyển; không nối luồng chat (founder chốt 07/09) |
 | `messaging_window` | nền tảng tự áp cửa sổ trả lời (WhatsApp/Facebook 24h) → lõi hiện cảnh báo + template; **Yona không tự đặt giới hạn tin chủ động** (quyết định 07/09: bỏ cửa sổ giờ/trần ngày) |
-| `session_qr` / `session_token` / `session_oauth` | cách kết nối |
+| `session_qr` / `session_token` / `session_oauth` | cách kết nối; `session_qr` còn là cửa hiện thẻ "Tài khoản đang kết nối" + panel quét lại ở đầu tab Cài đặt hộp thư (kênh không khai thì không có thẻ) |
 | `session_reauth` | kênh có thể mất phiên → banner "kết nối lại" ở inbox **và** icon ở sidebar kênh (như Chatwoot `reauthorization_required`) |
 | `session_disconnect` | có hành động ngắt kết nối/đổi tài khoản, xoá inbox phải đăng xuất ở adapter |
 | `health` | trạng thái sống của adapter hiện trên inbox |
@@ -99,6 +99,18 @@ interface DeclaresCapabilities { public function capabilities(): CapabilitySet; 
 - `useInboxCapabilities(inbox)` → `supports('outbound_reply_to')`; component gate: `<IfSupports cap="outbound_reaction">`.
 - Thay toàn bộ `INBOX_FEATURE_MAP`/`inboxHasFeature` theo `channel_type` bằng hook này. Cấm `inbox.channel_type === …` cho mục đích bật/tắt tính năng (chỉ được dùng để chọn icon/nhãn kênh).
 - Bubble đặc thù (`bubbles/*Card.tsx`) chọn theo khoá `content_attributes` chuẩn (§2.1), không theo kênh.
+
+**Dữ liệu thô của nền tảng không đi qua mặt tiền công khai** (quy tắc chung, chốt 07/09/2026)
+- Driver được phép lưu ảnh chụp payload thô của nền tảng trong `content_attributes` khi **chiều gửi cần nó** — ví dụ Zalo cần đủ 8 trường `SendMessageQuote` (`content`, `msgType`, `propertyExt`, `uidFrom`, `msgId`, `cliMsgId`, `ts`, `ttl`) để dựng lại lời trích dẫn, và gói `sticker` để gửi lại đúng nhãn dán.
+- Ảnh chụp đó là **dữ liệu vận hành nội bộ**: mang uid nền tảng, link CDN và chuỗi nội bộ của người thật, bên nhận webhook không đọc tới. Nó **không** được đi ra ngoài qua webhook tài khoản / inbox API / agent bot.
+- Chỗ cắt: `App\Services\Webhooks\PayloadRedactor` — một cửa ra HTTP duy nhất cho cả ba loại webhook. Danh sách khoá khai ở `config/webhooks.php` (`redacted_content_attributes`) để lõi không mang tên riêng của kênh nào trong mã.
+- Driver nào thêm ảnh chụp thô mới thì thêm khoá vào danh sách đó, KHÔNG thêm `if` theo kênh ở lớp serialize.
+- Ngược lại, dữ liệu **người dùng nhìn thấy** (nội dung tin, tên người gửi trong lời trích dẫn) vẫn đi ra bình thường — đây là nội dung, không phải payload nền tảng.
+
+**Tệp đính kèm đi ra ngoài phải là URL đã ký, có hạn**
+- URL hiển thị trong app (`data_url`/`thumb_url`) và URL gửi cho dịch vụ bên thứ ba (`downloadUrl()`) đều mang chữ ký HMAC ở **đoạn đường dẫn** (không phải query) — tên tệp vẫn là đoạn cuối URL vì giao diện lấy tên hiển thị từ đó.
+- URL gửi ra ngoài có hạn (`yona.attachments.download_url_ttl`, mặc định 300s, tương đương `ActiveStorage::Service.url_expires_in` của bản gốc); URL trong app không hết hạn (tương đương `blobs/redirect`).
+- Không kênh nào được tự dựng URL đính kèm từ `id` + tên tệp.
 
 **Test (contract test chung)**
 - `tests/Contracts/Channels/` có một trait/case cho mỗi capability (ví dụ `InboundImageContract`, `OutboundAttachmentsContract`, `EventSeenContract`, `GroupThreadsContract`). Mỗi kênh có `tests/Feature/Channels/<Kênh>CapabilitiesTest.php` tự động chạy đúng các contract mà driver khai báo, với fixture đặt tại `tests/Fixtures/channels/<kênh>/<capability>.json` **trích từ payload thật (ẩn PII)**.

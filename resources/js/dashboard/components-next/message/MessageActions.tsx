@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import Dialog from 'dashboard/components-next/dialog/Dialog';
+import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
@@ -12,10 +14,46 @@ import { QUICK_REACTIONS } from './helpers/reactions';
 // gate theo NĂNG LỰC KÊNH (docs/channel-capabilities.md §3 FE) — không theo
 // `channel_type`. Kênh không khai gì thì không render gì.
 
+// Hộp xác nhận chỉ dựng khi cần: thanh hành động có ở MỌI tin, gắn sẵn một
+// <dialog> cho mỗi bong bóng là phình DOM vô ích.
+function ConfirmDialog({
+    title,
+    description,
+    confirmLabel,
+    onConfirm,
+    onClose,
+}: {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+    onClose: () => void;
+}) {
+    const dialogRef = useRef<DialogHandle>(null);
+
+    useEffect(() => {
+        dialogRef.current?.open();
+    }, []);
+
+    return (
+        <Dialog
+            ref={dialogRef}
+            type="alert"
+            title={title}
+            description={description}
+            confirmButtonLabel={confirmLabel}
+            cancelButtonLabel={t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.CANCEL')}
+            onConfirm={onConfirm}
+            onClose={onClose}
+        />
+    );
+}
+
 export default function MessageActions({ className = '' }: { className?: string }) {
     const { messageType, contentAttributes, inboxCapabilities, orientation, onToggleReaction, onDeleteMessage } =
         useMessageContext();
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [isConfirmingDelete, setConfirmingDelete] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -34,9 +72,18 @@ export default function MessageActions({ className = '' }: { className?: string 
     // không khai thì chỉ xoá ở Yona — nhãn phải nói đúng việc sẽ xảy ra.
     const canDelete =
         Boolean(onDeleteMessage) && !isDeleted && messageType === MESSAGE_TYPES.OUTGOING;
-    const deleteLabel = inboxSupports(inbox, 'outbound_recall')
+    const canRecall = inboxSupports(inbox, 'outbound_recall');
+    const deleteLabel = canRecall
         ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL')
         : t('CONVERSATION.MESSAGE_ACTIONS.DELETE');
+    // Thu hồi xoá tin ở CẢ hai đầu và không hoàn tác được; nút lại nằm trên thanh
+    // hiện khi rê chuột nên rất dễ bấm nhầm — phải hỏi lại trước khi làm.
+    const confirmTitle = canRecall
+        ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL_CONFIRMATION.TITLE')
+        : t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.TITLE');
+    const confirmDescription = canRecall
+        ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL_CONFIRMATION.MESSAGE')
+        : t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.MESSAGE');
 
     if (!canReact && !canDelete) return null;
 
@@ -66,7 +113,7 @@ export default function MessageActions({ className = '' }: { className?: string 
                     className={buttonClass}
                     title={deleteLabel}
                     aria-label={deleteLabel}
-                    onClick={() => onDeleteMessage?.()}
+                    onClick={() => setConfirmingDelete(true)}
                 >
                     <Icon icon="i-lucide-undo-2" className="size-[14px]" />
                 </button>
@@ -94,6 +141,18 @@ export default function MessageActions({ className = '' }: { className?: string 
                         </button>
                     ))}
                 </div>
+            ) : null}
+            {isConfirmingDelete ? (
+                <ConfirmDialog
+                    title={confirmTitle}
+                    description={confirmDescription}
+                    confirmLabel={deleteLabel}
+                    onConfirm={() => {
+                        setConfirmingDelete(false);
+                        onDeleteMessage?.();
+                    }}
+                    onClose={() => setConfirmingDelete(false)}
+                />
             ) : null}
         </div>
     );

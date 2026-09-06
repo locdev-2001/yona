@@ -29,6 +29,37 @@ it('gửi POST kèm chữ ký HMAC và các header giao hàng', function () {
     });
 });
 
+// Payload thô của nền tảng (uid, link CDN, chuỗi nội bộ) giữ trong DB cho chiều
+// gửi nhưng KHÔNG đi ra bên thứ ba.
+it('cắt payload thô của nền tảng khỏi content_attributes trước khi gửi ra ngoài', function () {
+    Http::fake();
+
+    $payload = [
+        'event' => 'message_created',
+        'content_attributes' => [
+            'in_reply_to_external_id' => 'msg-1',
+            'zca_message' => ['uidFrom' => '9876543210', 'msgId' => 'msg-1'],
+            'sticker' => ['id' => 1, 'url' => 'https://cdn.example/s.png'],
+        ],
+        'conversation' => [
+            'messages' => [
+                ['id' => 5, 'content_attributes' => ['zca_message' => ['uidFrom' => '9876543210']]],
+            ],
+        ],
+    ];
+
+    (new WebhookJob('https://example.com/hook', $payload))->handle();
+
+    Http::assertSent(function ($request) {
+        $sent = json_decode($request->body(), true);
+
+        return ! isset($sent['content_attributes']['zca_message'])
+            && ! isset($sent['content_attributes']['sticker'])
+            && $sent['content_attributes']['in_reply_to_external_id'] === 'msg-1'
+            && ! isset($sent['conversation']['messages'][0]['content_attributes']['zca_message']);
+    });
+});
+
 it('không gắn header chữ ký khi webhook không có secret', function () {
     Http::fake();
 
