@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        <title>Yona widget SDK — trang thử nhúng</title>
+        <style>
+            body {
+                margin: 0;
+                background: #fff;
+                font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+                color: #37546d;
+            }
+            #panel {
+                position: fixed;
+                top: 0;
+                left: 0;
+                max-width: 460px;
+                padding: 12px 16px;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            #panel h1 {
+                font-size: 14px;
+                margin: 0 0 6px;
+            }
+            #log {
+                margin: 8px 0 0;
+                max-height: 60vh;
+                overflow: auto;
+                white-space: pre-wrap;
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 11px;
+            }
+            body.no-panel #panel {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="panel">
+            <h1>Yona widget SDK — trang thử nhúng</h1>
+            <div id="params"></div>
+            <pre id="log"></pre>
+        </div>
+
+        <script>
+            // Trang thử SDK nhúng. Tham số truy vấn:
+            //   sdkBase   nguồn sdk.js         (mặc định: origin của trang; đặt http://localhost:3000 để chạy SDK gốc)
+            //   base      baseUrl truyền vào run() (mặc định: sdkBase)
+            //   token     websiteToken         (mặc định: widget-test-token)
+            //   stub=1    tự bắn postMessage 'loaded' thay cho app trong iframe (khi app chưa sẵn sàng)
+            //   color     widgetColor dùng cho bong bóng ở chế độ stub (mặc định #1f93ff)
+            //   label     nhãn bong bóng expanded (chỉ có tác dụng khi stub=1)
+            //   position | type | widgetStyle | darkMode | launcherTitle | hideMessageBubble | locale
+            //   panel=0   ẩn khung log để chụp ảnh so sánh
+            (function () {
+                var query = new URLSearchParams(window.location.search);
+                var origin = window.location.origin;
+                var sdkBase = query.get('sdkBase') || origin;
+                var baseUrl = query.get('base') || sdkBase;
+                var websiteToken = query.get('token') || 'widget-test-token';
+                var widgetColor = query.get('color') || '#1f93ff';
+                var isStub = query.get('stub') === '1';
+
+                if (query.get('panel') === '0') document.body.classList.add('no-panel');
+
+                window.chatwootSettings = {
+                    position: query.get('position') === 'left' ? 'left' : 'right',
+                    type: query.get('type') || 'standard',
+                    widgetStyle: query.get('widgetStyle') || 'standard',
+                    darkMode: query.get('darkMode') || 'light',
+                    launcherTitle: query.get('launcherTitle') || '',
+                    hideMessageBubble: query.get('hideMessageBubble') === '1',
+                    locale: query.get('locale') || 'en',
+                };
+
+                var logNode = document.getElementById('log');
+                var log = function (line) {
+                    logNode.textContent += line + '\n';
+                };
+                document.getElementById('params').textContent =
+                    'sdkBase=' + sdkBase + '  base=' + baseUrl + '  token=' + websiteToken + (isStub ? '  stub' : '');
+
+                // Đo đạc cho playwright: kích thước/toạ độ/màu bong bóng và khung iframe.
+                window.__sdkTest = {
+                    settings: window.chatwootSettings,
+                    stubLoaded: function () {
+                        window.postMessage(
+                            'chatwoot-widget:' +
+                                JSON.stringify({
+                                    event: 'loaded',
+                                    config: {
+                                        authToken: 'widget-test-auth-token',
+                                        channelConfig: { widgetColor: widgetColor },
+                                    },
+                                }),
+                            '*'
+                        );
+                    },
+                    stubBubbleLabel: function (label) {
+                        window.postMessage(
+                            'chatwoot-widget:' + JSON.stringify({ event: 'setBubbleLabel', label: label }),
+                            '*'
+                        );
+                    },
+                    measure: function () {
+                        var describe = function (selector) {
+                            var el = document.querySelector(selector);
+                            if (!el) return null;
+                            var rect = el.getBoundingClientRect();
+                            var style = window.getComputedStyle(el);
+                            return {
+                                className: el.className,
+                                x: Math.round(rect.x),
+                                y: Math.round(rect.y),
+                                width: Math.round(rect.width),
+                                height: Math.round(rect.height),
+                                background: style.backgroundColor,
+                                borderRadius: style.borderRadius,
+                                visibility: style.visibility,
+                                zIndex: style.zIndex,
+                            };
+                        };
+                        return {
+                            isOpen: window.$chatwoot ? window.$chatwoot.isOpen : null,
+                            hasLoaded: window.$chatwoot ? window.$chatwoot.hasLoaded : null,
+                            bubbleHolder: describe('.woot--bubble-holder'),
+                            chatBubble: describe('.woot-widget-bubble:not(.woot--close)'),
+                            closeBubble: describe('.woot-widget-bubble.woot--close'),
+                            widgetHolder: describe('.woot-widget-holder'),
+                            iframe: describe('#chatwoot_live_chat_widget'),
+                            iframeSrc: (document.getElementById('chatwoot_live_chat_widget') || {}).src || null,
+                            styleTag: !!document.getElementById('cw-widget-styles'),
+                        };
+                    },
+                };
+
+                [
+                    'chatwoot:ready',
+                    'chatwoot:error',
+                    'chatwoot:opened',
+                    'chatwoot:closed',
+                    'chatwoot:on-message',
+                    'chatwoot:on-start-conversation',
+                    'chatwoot:postback',
+                ].forEach(function (eventName) {
+                    window.addEventListener(eventName, function (event) {
+                        log(eventName + ' ' + JSON.stringify(event.detail || null));
+                    });
+                });
+
+                (function (d, t) {
+                    var g = d.createElement(t),
+                        s = d.getElementsByTagName(t)[0];
+                    g.src = sdkBase + '/packs/js/sdk.js';
+                    g.async = true;
+                    s.parentNode.insertBefore(g, s);
+                    g.onload = function () {
+                        window.chatwootSDK.run({ websiteToken: websiteToken, baseUrl: baseUrl });
+                        log('sdk loaded from ' + g.src);
+                        if (isStub) {
+                            window.__sdkTest.stubLoaded();
+                            var label = query.get('label');
+                            if (label) setTimeout(function () { window.__sdkTest.stubBubbleLabel(label); }, 0);
+                        }
+                    };
+                    g.onerror = function () {
+                        log('KHÔNG tải được ' + g.src);
+                    };
+                })(document, 'script');
+            })();
+        </script>
+    </body>
+</html>

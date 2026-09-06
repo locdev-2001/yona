@@ -1,0 +1,29 @@
+// Port từ shared/assets/fonts/widget_fonts.scss — widget dùng bộ Inter TĨNH
+// (dashboard dùng InterVariable ở _fonts.scss). Giữ đúng bản gốc để chữ trong
+// khung chat khớp pixel với oracle.
+$widget-inter-weights: (
+  100: 'Thin',
+  300: 'Light',
+  400: 'Regular',
+  500: 'Medium',
+  600: 'SemiBold',
+  700: 'Bold',
+);
+
+@each $weight, $name in $widget-inter-weights {
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: $weight;
+    font-display: swap;
+    src: url('../fonts/Inter/Inter-#{$name}.woff2') format('woff2');
+  }
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Inter/Inter-Italic.woff2') format('woff2');
+}
