@@ -2,6 +2,7 @@ import { createElement, useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { getJson } from 'dashboard/helper/apiClient';
 import type { DashboardPageProps } from 'dashboard/types';
 import { t } from '../../../i18n';
@@ -13,8 +14,8 @@ import { containmentOperators, dateOperators, equalityOperators, presenceOperato
 
 // Port từ components-next/filter/provider.js (useConversationFilterContext).
 // Nguồn dữ liệu: inboxes/teams từ shared props, agents qua GET /api/v1/agents,
-// contact qua GET /api/v1/contacts/search; labels (B7) / campaigns (C) /
-// custom attributes (E1) rỗng cho tới khi port.
+// contact qua GET /api/v1/contacts/search; labels dùng store B7 dùng chung.
+// Campaign/custom attributes chưa có store dùng chung.
 interface AgentSummary {
     id: number;
     name: string;
@@ -43,6 +44,7 @@ export function useConversationFilterContext(): (FilterType | FilterSelectOption
     const { currentAccount, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const [agents, setAgents] = useState<AgentSummary[]>([]);
+    const labels = useLabelsList(accountId);
 
     useEffect(() => {
         let cancelled = false;
@@ -163,7 +165,7 @@ export function useConversationFilterContext(): (FilterType | FilterSelectOption
                 attributeName: t('FILTER.ATTRIBUTES.LABELS'),
                 label: t('FILTER.ATTRIBUTES.LABELS'),
                 inputType: 'multiSelect',
-                options: [],
+                options: labels.map(label => ({ id: label.title, name: label.title, color: label.color })),
                 dataType: 'text',
                 filterOperators: presenceOperators,
                 attributeModel: 'standard',
@@ -212,5 +214,5 @@ export function useConversationFilterContext(): (FilterType | FilterSelectOption
         ];
 
         return groupFilterTypes(filterTypes);
-    }, [accountId, agents, inboxes, teams]);
+    }, [accountId, agents, inboxes, labels, teams]);
 }

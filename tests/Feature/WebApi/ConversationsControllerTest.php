@@ -641,6 +641,22 @@ describe('POST /api/v1/accounts/{id}/conversations/{id}/toggle_status', function
             ->and(Carbon::parse($response->json('payload.snoozed_until'))->getTimestamp())->toBe($snoozedUntil);
     });
 
+    it('snoozes until the next reply without storing the Unix epoch', function () {
+        [$account, $agent, $conversation] = toggleStatusSetup();
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_status", [
+                'status' => 'snoozed',
+                'snoozed_until' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('payload.current_status', 'snoozed')
+            ->assertJsonPath('payload.snoozed_until', null);
+
+        expect($conversation->fresh()->statusName())->toBe('snoozed')
+            ->and($conversation->fresh()->snoozed_until)->toBeNull();
+    });
+
     it('rejects an unknown status', function () {
         [$account, $agent, $conversation] = toggleStatusSetup();
 

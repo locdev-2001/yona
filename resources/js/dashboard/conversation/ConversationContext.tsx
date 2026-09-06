@@ -4,6 +4,8 @@ import { usePage } from '@inertiajs/react';
 import { debounce } from '@chatwoot/utils';
 
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
+import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
@@ -22,6 +24,7 @@ import {
     fetchConversationAttachments,
     fetchConversationMeta,
     fetchConversations,
+    fetchFilteredConversations,
     fetchMessages,
     markMessagesRead as markMessagesReadRequest,
     markMessagesUnread as markMessagesUnreadRequest,
@@ -32,7 +35,12 @@ import {
     toggleTyping,
     unmuteConversation as unmuteConversationRequest,
 } from './api';
-import { applyConversationMuted, applyConversationPriority, applyConversationStatus } from './lifecycleReducers';
+import {
+    applyConversationMuted,
+    applyConversationPriority,
+    applyConversationStatus,
+    snoozedUntilForStatus,
+} from './lifecycleReducers';
 import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
@@ -47,6 +55,7 @@ import {
     mergeFetchedConversations,
     selectVisibleConversations,
     shouldAddConversationToList,
+    sortComparator,
 } from './realtimeReducers';
 import {
     ASSIGNEE_TYPE,
@@ -92,6 +101,7 @@ interface ConversationContextValue {
     assigneeTab: AssigneeTab;
     status: ConversationStatusFilter;
     sortBy: string;
+    appliedFilters: ConversationFilterCondition[] | null;
     selectedConversation: Conversation | null;
     messages: ConversationMessage[];
     allMessagesLoaded: boolean;
@@ -106,6 +116,8 @@ interface ConversationContextValue {
     setAssigneeTab: (tab: AssigneeTab) => void;
     setStatusFilter: (status: ConversationStatusFilter) => void;
     setSortFilter: (sortBy: string) => void;
+    applyConversationFilters: (filters: ConversationFilterCondition[]) => void;
+    clearConversationFilters: () => void;
     loadMoreConversations: () => void;
     fetchPreviousMessages: () => Promise<number>;
     sendReply: (payload: { content: string; isPrivate: boolean }) => void;
@@ -162,6 +174,53 @@ function applyConversationTeam(
     return conversations.map((item) =>
         item.id === conversationId ? { ...item, meta: { ...item.meta, team: team ?? undefined } } : item,
     );
+}
+
+function matchesSingleStatusFilter(
+    filters: ConversationFilterCondition[] | null,
+    status: ConversationStatus,
+): boolean | null {
+    if (filters?.length !== 1 || filters[0].attributeKey !== 'status') return null;
+    if (!['equal_to', 'not_equal_to'].includes(filters[0].filterOperator)) return null;
+
+    const values = filterPrimitiveValues(filters[0]);
+    const included = values.includes('all') || values.includes(status);
+
+    return filters[0].filterOperator === 'equal_to' ? included : !included;
+}
+
+function filterPrimitiveValues(filter: ConversationFilterCondition): string[] {
+    const rawValues = Array.isArray(filter.values) ? filter.values : [filter.values];
+
+    return rawValues.map(value =>
+        value && typeof value === 'object' && !Array.isArray(value) && 'id' in value
+            ? String(value.id)
+            : String(value),
+    );
+}
+
+function matchesLoadedConversation(
+    conversation: Conversation,
+    filters: ConversationFilterCondition[],
+): boolean | null {
+    if (filters.length !== 1) return null;
+    const [filter] = filters;
+    const values = filterPrimitiveValues(filter);
+
+    if (filter.attributeKey === 'status' && ['equal_to', 'not_equal_to'].includes(filter.filterOperator)) {
+        const included = values.includes('all') || values.includes(conversation.status);
+        return filter.filterOperator === 'equal_to' ? included : !included;
+    }
+
+    if (filter.attributeKey === 'labels') {
+        const hasAnyLabel = conversation.labels.some(label => values.includes(label));
+        if (filter.filterOperator === 'equal_to') return hasAnyLabel;
+        if (filter.filterOperator === 'not_equal_to') return !hasAnyLabel;
+        if (filter.filterOperator === 'is_present') return conversation.labels.length > 0;
+        if (filter.filterOperator === 'is_not_present') return conversation.labels.length === 0;
+    }
+
+    return null;
 }
 
 const ConversationContext = createContext<ConversationContextValue | null>(null);
@@ -240,12 +299,22 @@ export function ConversationProvider({
             ? (filterSettings.order_by as string)
             : SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC,
     );
+    const [appliedFilters, setAppliedFilters] = useState<ConversationFilterCondition[] | null>(null);
+    const appliedFiltersRef = useRef<ConversationFilterCondition[] | null>(null);
+    appliedFiltersRef.current = appliedFilters;
+    const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
 
     const [allConversations, setAllConversations] = useState<Conversation[]>([]);
+    const allConversationsRef = useRef<Conversation[]>([]);
+    allConversationsRef.current = allConversations;
+    const statusRequestVersionsRef = useRef(new Map<number, number>());
+    const statusRequestQueuesRef = useRef(new Map<number, Promise<void>>());
     const [listMeta, setListMeta] = useState<ConversationListMeta>(EMPTY_META);
     const [listLoading, setListLoading] = useState(true);
     const [endReached, setEndReached] = useState(false);
     const pageRef = useRef(0);
+    const listRequestVersionRef = useRef(0);
+    const fetchPageRef = useRef<(page: number, append: boolean) => Promise<void>>(async () => undefined);
     const conversationIdRef = useRef(conversationId);
     conversationIdRef.current = conversationId;
 
@@ -273,10 +342,14 @@ export function ConversationProvider({
         () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters }),
         [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
     );
-    const conversations = useMemo(
-        () => selectVisibleConversations(allConversations, viewFilters, sortBy),
-        [allConversations, viewFilters, sortBy],
-    );
+    const conversations = useMemo(() => {
+        if (appliedFilters) {
+            return [...filteredConversations]
+                .sort((a, b) => sortComparator(a, b, SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC));
+        }
+
+        return selectVisibleConversations(allConversations, viewFilters, sortBy);
+    }, [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy]);
     const selectedConversation = useMemo(
         () => allConversations.find((item) => item.id === conversationId) ?? null,
         [allConversations, conversationId],
@@ -302,11 +375,39 @@ export function ConversationProvider({
                 setListLoading(false);
                 return;
             }
+            // Callback cũ (basic hoặc bộ filter trước) có thể còn nằm trong
+            // debounce/realtime queue. Không cho nó giành request version của
+            // view đang hiển thị.
+            if (appliedFilters !== appliedFiltersRef.current) return;
+            const requestVersion = listRequestVersionRef.current + 1;
+            listRequestVersionRef.current = requestVersion;
             setListLoading(true);
             try {
-                const response = await fetchConversations({ ...listQuery, page });
+                // Người dùng thường Snooze rồi lọc ngay. Chờ các mutation status
+                // đang bay hoàn tất để truy vấn filter không đọc trạng thái DB cũ.
+                if (appliedFilters && statusRequestQueuesRef.current.size > 0) {
+                    await Promise.allSettled([...statusRequestQueuesRef.current.values()]);
+                }
+                const response = appliedFilters
+                    ? await fetchFilteredConversations(
+                          accountId,
+                          buildConversationFilterPayload(appliedFilters),
+                          page,
+                      )
+                    : await fetchConversations({ ...listQuery, page });
+                if (
+                    listRequestVersionRef.current !== requestVersion
+                    || appliedFilters !== appliedFiltersRef.current
+                ) return;
                 const payload = response.data.payload;
                 setListMeta(response.data.meta);
+                setFilteredConversations(previous => {
+                    if (!appliedFilters) return [];
+                    const kept = append ? previous : [];
+                    const known = new Set(kept.map(conversation => conversation.id));
+
+                    return [...kept, ...payload.filter(conversation => !known.has(conversation.id))];
+                });
                 setAllConversations((previous) => {
                     // Nạp lại trang 1 vẫn giữ conversation đang mở (getter gốc chỉ ẩn nó khỏi list).
                     const kept = append
@@ -320,13 +421,17 @@ export function ConversationProvider({
                     setEndReached(true);
                 }
             } catch {
+                if (listRequestVersionRef.current !== requestVersion) return;
                 useAlert(t('CHAT_LIST.FETCH_ERROR'));
             } finally {
-                setListLoading(false);
+                if (listRequestVersionRef.current === requestVersion) {
+                    setListLoading(false);
+                }
             }
         },
-        [listQuery, withConversationList],
+        [accountId, appliedFilters, listQuery, withConversationList],
     );
+    fetchPageRef.current = fetchPage;
 
     // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
     useEffect(() => {
@@ -351,6 +456,23 @@ export function ConversationProvider({
 
     const setSortFilter = useCallback((value: string) => {
         setSortBy(value);
+    }, []);
+
+    const applyConversationFilters = useCallback((filters: ConversationFilterCondition[]) => {
+        const nextFilters = filters.map(filter => ({ ...filter }));
+        setFilteredConversations(
+            allConversationsRef.current.filter(conversation => matchesLoadedConversation(conversation, nextFilters) === true),
+        );
+        setAppliedFilters(nextFilters);
+    }, []);
+
+    const clearConversationFilters = useCallback(() => {
+        setAppliedFilters(null);
+        setFilteredConversations([]);
+    }, []);
+
+    const refreshAppliedFilters = useCallback(() => {
+        if (appliedFiltersRef.current) void fetchPageRef.current(1, false);
     }, []);
 
     // Chọn conversation theo display_id trên URL: chưa có trong allConversations
@@ -456,6 +578,13 @@ export function ConversationProvider({
                     : item,
             ),
         );
+        setFilteredConversations((current) =>
+            current.map((item) =>
+                item.id === plainMessage.conversation_id
+                    ? applyMessageToConversation(item, plainMessage, embedded?.unread_count ?? item.unread_count)
+                    : item,
+            ),
+        );
     }, []);
 
     const conversationTypeRef = useRef<ConversationType>(conversationType);
@@ -466,11 +595,19 @@ export function ConversationProvider({
         setAllConversations((current) =>
             applyConversationUpdate(current, conversation, conversationTypeRef.current),
         );
+        // Advanced filter là danh sách server-authoritative: realtime chỉ cập
+        // nhật card đã có, không tự chèn record chưa được endpoint filter duyệt.
+        setFilteredConversations((current) =>
+            current.some(item => item.id === conversation.id)
+                ? applyConversationUpdate(current, conversation, conversationTypeRef.current)
+                : current,
+        );
+        refreshAppliedFilters();
         // UPDATE_CONVERSATION gốc phát SCROLL_TO_MESSAGE khi bản ghi đổi là hội thoại đang mở.
         if (conversation.id === conversationIdRef.current) {
             markMessagesReadRef.current(conversation.id);
         }
-    }, []);
+    }, [refreshAppliedFilters]);
 
     // conversationStats/get của ChatList.vue khi nhận 'fetch_conversation_stats':
     // 3 nhịp debounce chọn theo all_count (account càng lớn hỏi càng thưa).
@@ -480,6 +617,9 @@ export function ConversationProvider({
     allCountRef.current = listMeta.all_count;
 
     const fetchMetaData = useCallback(() => {
+        // Debouncer chỉ được tạo một lần; đọc ref để không gọi meta của basic
+        // view bằng closure cũ rồi ghi đè count của advanced filter.
+        if (appliedFiltersRef.current) return;
         fetchConversationMeta(listQueryRef.current).then(
             (response) => setListMeta(response.meta),
             () => undefined,
@@ -701,22 +841,103 @@ export function ConversationProvider({
         [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
     );
 
-    // toggleStatus gốc: gọi API rồi ghi current_status + snoozed_until từ payload lên
-    // conversation (CHANGE_CONVERSATION_STATUS); lỗi nuốt như store gốc.
+    // Đổi status ngay trên UI để thao tác Resolve/Snooze không bị chặn bởi round-trip
+    // API/worker. Request chạy nền sau khi hàm trả về; response server vẫn ghi đè
+    // optimistic state, lỗi thì rollback snapshot.
     const toggleStatus = useCallback(
-        async ({ status, snoozedUntil = null, conversationId: targetId }: ToggleStatusPayload) => {
+        ({ status, snoozedUntil = null, conversationId: targetId }: ToggleStatusPayload) => {
             const targetConversationId = targetId || conversationId;
-            if (!targetConversationId) return;
-            try {
-                const { payload } = await toggleStatusRequest(accountId, targetConversationId, status, snoozedUntil);
-                setAllConversations(current =>
-                    applyConversationStatus(current, targetConversationId, payload.current_status, payload.snoozed_until),
-                );
-            } catch {
-                // Gốc nuốt lỗi; realtime status_changed (nếu có) vẫn đồng bộ lại.
+            if (!targetConversationId) return Promise.resolve();
+
+            const previous = allConversationsRef.current.find(item => item.id === targetConversationId);
+            const optimisticSnoozedUntil = snoozedUntilForStatus(status, snoozedUntil);
+            const refreshFilterOnSettle = appliedFiltersRef.current !== null;
+            const requestVersion = (statusRequestVersionsRef.current.get(targetConversationId) ?? 0) + 1;
+            statusRequestVersionsRef.current.set(targetConversationId, requestVersion);
+            setAllConversations(current =>
+                applyConversationStatus(current, targetConversationId, status, optimisticSnoozedUntil),
+            );
+            setFilteredConversations(current =>
+                matchesSingleStatusFilter(appliedFiltersRef.current, status) === false
+                    ? current.filter(item => item.id !== targetConversationId)
+                    : applyConversationStatus(current, targetConversationId, status, optimisticSnoozedUntil),
+            );
+            if (previous && matchesSingleStatusFilter(appliedFiltersRef.current, status) === false) {
+                const wasMine = previous.meta?.assignee?.id === currentUserId;
+                const wasUnassigned = !previous.meta?.assignee;
+                setListMeta(current => ({
+                    mine_count: Math.max(0, current.mine_count - (wasMine ? 1 : 0)),
+                    assigned_count: Math.max(0, current.assigned_count - (wasUnassigned ? 0 : 1)),
+                    unassigned_count: Math.max(0, current.unassigned_count - (wasUnassigned ? 1 : 0)),
+                    all_count: Math.max(0, current.all_count - 1),
+                }));
             }
+
+            // Giữ thứ tự ghi khi người dùng bấm tiếp trước khi request trước hoàn
+            // tất. UI đã đổi ngay ở trên, còn request sau chỉ rời browser sau khi
+            // request trước settle để persistence không quay ngược sau F5.
+            const previousRequest = statusRequestQueuesRef.current.get(targetConversationId) ?? Promise.resolve();
+            const currentRequest = previousRequest
+                .catch(() => undefined)
+                .then(() => toggleStatusRequest(accountId, targetConversationId, status, snoozedUntil))
+                .then(
+                    ({ payload }) => {
+                        if (statusRequestVersionsRef.current.get(targetConversationId) !== requestVersion) return;
+
+                        setAllConversations(current =>
+                            applyConversationStatus(
+                                current,
+                                targetConversationId,
+                                payload.current_status,
+                                payload.snoozed_until,
+                            ),
+                        );
+                        setFilteredConversations(current =>
+                            applyConversationStatus(
+                                current,
+                                targetConversationId,
+                                payload.current_status,
+                                payload.snoozed_until,
+                            ),
+                        );
+                    },
+                    () => {
+                        if (statusRequestVersionsRef.current.get(targetConversationId) !== requestVersion) return;
+
+                        if (previous) {
+                            setAllConversations(current =>
+                                applyConversationStatus(
+                                    current,
+                                    targetConversationId,
+                                    previous.status,
+                                    previous.snoozed_until,
+                                ),
+                            );
+                            setFilteredConversations(current =>
+                                applyConversationStatus(
+                                    current,
+                                    targetConversationId,
+                                    previous.status,
+                                    previous.snoozed_until,
+                                ),
+                            );
+                        }
+                    },
+                );
+
+            statusRequestQueuesRef.current.set(targetConversationId, currentRequest);
+            void currentRequest.finally(() => {
+                if (statusRequestQueuesRef.current.get(targetConversationId) === currentRequest) {
+                    statusRequestQueuesRef.current.delete(targetConversationId);
+                }
+                if (refreshFilterOnSettle) {
+                    void fetchPageRef.current(1, false);
+                }
+            });
+
+            return currentRequest;
         },
-        [accountId, conversationId],
+        [accountId, conversationId, currentUserId],
     );
 
     // ConversationAction.vue: setCurrentChatPriority lạc quan rồi assignPriority; lỗi → trả lại giá trị cũ.
@@ -727,12 +948,13 @@ export function ConversationProvider({
             setAllConversations(current => applyConversationPriority(current, conversationId, priority));
             try {
                 await togglePriorityRequest(accountId, conversationId, priority);
+                refreshAppliedFilters();
             } catch (error) {
                 setAllConversations(current => applyConversationPriority(current, conversationId, previousPriority));
                 throw error;
             }
         },
-        [accountId, conversationId, selectedConversation?.priority],
+        [accountId, conversationId, refreshAppliedFilters, selectedConversation?.priority],
     );
 
     // assignAgent gốc: setCurrentChatAssignee lạc quan (ConversationAction.vue) rồi POST,
@@ -750,6 +972,7 @@ export function ConversationProvider({
                 setAllConversations(current =>
                     applyConversationAssignee(current, conversationId, assignee, assigneeType),
                 );
+                refreshAppliedFilters();
             } catch (error) {
                 setAllConversations(current =>
                     applyConversationAssignee(current, conversationId, previousAssignee, previousAssigneeType),
@@ -757,7 +980,13 @@ export function ConversationProvider({
                 throw error;
             }
         },
-        [accountId, conversationId, selectedConversation?.meta?.assignee, selectedConversation?.meta?.assignee_type],
+        [
+            accountId,
+            conversationId,
+            refreshAppliedFilters,
+            selectedConversation?.meta?.assignee,
+            selectedConversation?.meta?.assignee_type,
+        ],
     );
 
     // assignTeam gốc: gỡ team = gửi team_id 0.
@@ -769,12 +998,13 @@ export function ConversationProvider({
             try {
                 const assignedTeam = await assignTeamRequest(accountId, conversationId, team?.id ?? 0);
                 setAllConversations(current => applyConversationTeam(current, conversationId, assignedTeam));
+                refreshAppliedFilters();
             } catch (error) {
                 setAllConversations(current => applyConversationTeam(current, conversationId, previousTeam));
                 throw error;
             }
         },
-        [accountId, conversationId, selectedConversation?.meta?.team],
+        [accountId, conversationId, refreshAppliedFilters, selectedConversation?.meta?.team],
     );
 
     const setMuted = useCallback(
@@ -808,6 +1038,7 @@ export function ConversationProvider({
             assigneeTab,
             status,
             sortBy,
+            appliedFilters,
             selectedConversation,
             messages,
             allMessagesLoaded,
@@ -821,6 +1052,8 @@ export function ConversationProvider({
             setAssigneeTab,
             setStatusFilter,
             setSortFilter,
+            applyConversationFilters,
+            clearConversationFilters,
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
@@ -849,6 +1082,7 @@ export function ConversationProvider({
             assigneeTab,
             status,
             sortBy,
+            appliedFilters,
             selectedConversation,
             messages,
             allMessagesLoaded,
@@ -862,6 +1096,8 @@ export function ConversationProvider({
             setAssigneeTab,
             setStatusFilter,
             setSortFilter,
+            applyConversationFilters,
+            clearConversationFilters,
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,

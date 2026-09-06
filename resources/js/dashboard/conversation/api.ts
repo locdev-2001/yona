@@ -1,4 +1,5 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { getJson, postForm, postJson } from '../helper/apiClient';
 import type { ConversationType } from './constants';
 import type {
@@ -77,6 +78,14 @@ function buildConversationQuery(params: Omit<FetchConversationsParams, 'page'> &
 
 export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
     return getJson(`/api/v1/accounts/${params.accountId}/conversations?${buildConversationQuery(params)}`);
+}
+
+export function fetchFilteredConversations(
+    accountId: number,
+    payload: ConversationFilterPayload[],
+    page: number,
+): Promise<ConversationListResponse> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?page=${page}`, { payload });
 }
 
 export function fetchConversationMeta(

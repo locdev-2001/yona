@@ -19,6 +19,7 @@ use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Conversations\FilterService;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
 use App\Services\Notification\MarkConversationReadService;
@@ -32,7 +33,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
-// Bỏ: filter/search (E1/E2), attachments (B9), transcript (F1),
+// Bỏ: search (E2), transcript (F1),
 // custom_attributes (E1), destroy (đi cùng DeleteService các nhóm sau),
 // bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
@@ -44,6 +45,31 @@ class ConversationsController extends Controller
     public function index(Request $request, Account $account): JsonResponse
     {
         $result = $this->finder($request, $account)->perform();
+
+        return response()->json([
+            'data' => [
+                'meta' => $result['count'],
+                'payload' => ConversationResource::collectionFor($result['conversations']),
+            ],
+        ]);
+    }
+
+    public function filter(Request $request, Account $account): JsonResponse
+    {
+        $validated = $request->validate([
+            'payload' => ['required', 'array', 'min:1', 'max:20'],
+            'payload.*' => ['required', 'array'],
+        ]);
+        /** @var AccountUser $accountUser */
+        $accountUser = $request->attributes->get('currentAccountUser');
+
+        $result = (new FilterService(
+            $request->user(),
+            $account,
+            $accountUser,
+            $validated['payload'],
+            (int) $request->query('page', '1'),
+        ))->perform();
 
         return response()->json([
             'data' => [
@@ -159,7 +185,9 @@ class ConversationsController extends Controller
         if (filled($validated['status'] ?? null)) {
             $conversation->status = Conversation::statusFromName($validated['status']);
 
-            if ($request->has('snoozed_until')) {
+            // Chatwoot chỉ parse khi có giá trị truthy. `null` là "Until next
+            // reply"; parse null thành integer sẽ tạo epoch 1970 sai nghĩa.
+            if (filled($request->input('snoozed_until'))) {
                 $conversation->snoozed_until = DateRangeHelper::parseDateTime($request->input('snoozed_until'));
             }
 

@@ -29,7 +29,7 @@ import ConversationList from './ConversationList';
 // và chung một nguồn danh sách: `conversationType` chỉ đổi tham số lọc gửi lên
 // server (ConversationContext) và tiêu đề trang.
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
-// #conversationFilterTeleportTarget); Apply chưa lọc list (E1) — xem trace.
+// #conversationFilterTeleportTarget), Apply gọi endpoint filter riêng.
 const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
     { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count' },
@@ -46,12 +46,15 @@ export default function ChatList({ showConversationList = true }: { showConversa
         assigneeTab,
         status,
         sortBy,
+        appliedFilters,
         inboxId,
         teamId,
         label,
         conversationType,
         isOnExpandedLayout,
         setAssigneeTab,
+        applyConversationFilters,
+        clearConversationFilters,
         loadMoreConversations,
     } = useConversation();
     const { inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
@@ -61,7 +64,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
     useBulkActionsHotKeys(selection.ids.length);
 
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    const [appliedFilter, setAppliedFilter] = useState<ConversationFilterCondition[]>([{ ...DEFAULT_FILTER }]);
+    const [draftFilters, setDraftFilters] = useState<ConversationFilterCondition[]>([{ ...DEFAULT_FILTER }]);
     const [teleportTarget, setTeleportTarget] = useState<HTMLElement | null>(null);
     const attributeFilterTypes = useConversationFilterContext();
 
@@ -76,10 +79,11 @@ export default function ChatList({ showConversationList = true }: { showConversa
 
     const closeAdvanceFiltersModal = useCallback(() => setShowAdvancedFilters(false), []);
 
-    const onApplyFilter = useCallback(() => {
+    const onApplyFilter = useCallback((filters: ConversationFilterCondition[]) => {
         resetBulkActions();
+        applyConversationFilters(filters);
         closeAdvanceFiltersModal();
-    }, [resetBulkActions, closeAdvanceFiltersModal]);
+    }, [resetBulkActions, applyConversationFilters, closeAdvanceFiltersModal]);
 
     const allConversationsSelected = isEveryConversationSelected(conversations, selection.ids);
     const appliedLabels = useMemo(
@@ -107,7 +111,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
             closeAdvanceFiltersModal();
             return;
         }
-        setAppliedFilter([{ ...DEFAULT_FILTER }]);
+        setDraftFilters(appliedFilters ? appliedFilters.map(filter => ({ ...filter })) : [{ ...DEFAULT_FILTER }]);
         setShowAdvancedFilters(true);
     };
 
@@ -127,7 +131,7 @@ export default function ChatList({ showConversationList = true }: { showConversa
         count: listMeta[countKey] || 0,
     }));
 
-    const showAssigneeInConversationCard = assigneeTab === ASSIGNEE_TYPE.ALL;
+    const showAssigneeInConversationCard = appliedFilters !== null || assigneeTab === ASSIGNEE_TYPE.ALL;
     const showEndOfListMessage = conversations.length > 0 && endReached && !listLoading;
 
     return (
@@ -142,8 +146,13 @@ export default function ChatList({ showConversationList = true }: { showConversa
                     activeStatus={status}
                     isOnExpandedLayout={isOnExpandedLayout}
                     onFiltersModal={onToggleAdvanceFiltersModal}
+                    hasAppliedFilters={appliedFilters !== null}
+                    filteredCount={listMeta.all_count || 0}
+                    onResetFilters={clearConversationFilters}
                 />
-                <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
+                {appliedFilters === null ? (
+                    <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
+                ) : null}
                 {!listLoading && !conversations.length ? (
                     <p className="flex overflow-auto justify-center items-center p-4">{t('CHAT_LIST.LIST.404')}</p>
                 ) : null}
@@ -176,9 +185,9 @@ export default function ChatList({ showConversationList = true }: { showConversa
                 {showAdvancedFilters && teleportTarget
                     ? createPortal(
                           <ConversationFilter
-                              filters={appliedFilter}
+                              filters={draftFilters}
                               attributeFilterTypes={attributeFilterTypes}
-                              onChange={setAppliedFilter}
+                              onChange={setDraftFilters}
                               onApplyFilter={onApplyFilter}
                               onClose={closeAdvanceFiltersModal}
                           />,

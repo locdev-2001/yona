@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::LabelsController.
 // Quyền (LabelPolicy): index mở cho mọi thành viên account, show/create/update/
@@ -81,16 +80,29 @@ class LabelsController extends Controller
             $request->merge(['title' => Label::normalizeTitle((string) $request->input('title'))]);
         }
 
+        $normalizedTitle = (string) $request->input('title', '');
+
         return $request->validate([
-            // presence + format + uniqueness: { scope: :account_id } — kiểm trên
-            // title ĐÃ hạ chữ thường.
+            // Giữ nguyên tên hiển thị; uniqueness vẫn không phân biệt hoa thường
+            // để `VIP` và `vip` không tạo ra hai label khó phân biệt.
             'title' => [
                 $label === null ? 'required' : 'sometimes',
                 'string',
+                'max:255',
                 'regex:'.Label::TITLE_REGEX,
-                Rule::unique('labels', 'title')
-                    ->where('account_id', $account->id)
-                    ->ignore($label?->id),
+                function (string $attribute, mixed $value, \Closure $fail) use ($account, $label, $normalizedTitle): void {
+                    $query = Label::query()
+                        ->where('account_id', $account->id)
+                        ->whereRaw('LOWER(title) = ?', [mb_strtolower($normalizedTitle)]);
+
+                    if ($label !== null) {
+                        $query->where('id', '<>', $label->id);
+                    }
+
+                    if ($query->exists()) {
+                        $fail('The title has already been taken.');
+                    }
+                },
             ],
             'description' => ['sometimes', 'nullable', 'string'],
             'color' => ['sometimes', 'string', 'max:255'],

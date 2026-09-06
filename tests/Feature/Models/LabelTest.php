@@ -5,14 +5,17 @@ use App\Models\Account;
 use App\Models\Label;
 use Illuminate\Support\Facades\Queue;
 
-// Port từ spec/models/label_spec.rb. Các case `label.valid?` (regex title,
-// trùng title trong account) nằm ở LabelsControllerTest vì validate ở tầng
-// nhận input như mọi model khác của dự án (xem Team).
+// Port từ spec/models/label_spec.rb. Các case validate title và uniqueness nằm ở
+// LabelsControllerTest vì validation ở tầng nhận input như các model khác.
 
-it('converts uppercase letters to lowercase', function () {
+it('preserves display case and trims surrounding whitespace', function () {
     $label = Label::factory()->create(['title' => 'Hello_World']);
 
-    expect($label->title)->toBe('hello_world');
+    expect($label->title)->toBe('Hello_World');
+
+    $label->update(['title' => '  Khách VIP  ']);
+
+    expect($label->fresh()->title)->toBe('Khách VIP');
 });
 
 it('keeps foreign characters intact', function () {

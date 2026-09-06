@@ -84,7 +84,7 @@ describe('POST /api/v1/accounts/{id}/labels', function () {
         $this->actingAs($this->admin)
             ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => 'Test'])
             ->assertOk()
-            ->assertJsonPath('title', 'test')
+            ->assertJsonPath('title', 'Test')
             ->assertJsonPath('color', Label::DEFAULT_COLOR);
 
         expect(Label::query()->where('account_id', $this->account->id)->count())->toBe(2);
@@ -104,25 +104,27 @@ describe('POST /api/v1/accounts/{id}/labels', function () {
             ->assertUnauthorized();
     });
 
-    it('rejects invalid titles', function (string $title) {
+    it('accepts a free-form display title', function () {
         $this->actingAs($this->admin)
-            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => $title])
+            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => '  Khách VIP #1 / Mới!  '])
+            ->assertOk()
+            ->assertJsonPath('title', 'Khách VIP #1 / Mới!');
+    });
+
+    it('rejects a title containing a line break', function () {
+        $this->actingAs($this->admin)
+            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => "hello\nworld"])
             ->assertStatus(422);
-    })->with([
-        ['_12'],
-        ['jell;;2_12'],
-        ['heeloo _12'],
-        ["hel\nlo_world"],
-    ]);
+    });
 
     // Khác bản gốc: middleware TrimStrings của Laravel cắt khoảng trắng hai đầu
     // TRƯỚC khi validate, nên title kết thúc bằng xuống dòng được nhận và lưu
     // dạng đã cắt (Chatwoot trả 422 nhờ neo \z).
-    it('trims surrounding whitespace before validating the title', function () {
+    it('trims surrounding whitespace before saving the title', function () {
         $this->actingAs($this->admin)
-            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => "hello_world\n"])
+            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => '  Hello World!  '])
             ->assertOk()
-            ->assertJsonPath('title', 'hello_world');
+            ->assertJsonPath('title', 'Hello World!');
     });
 
     it('accepts foreign characters', function () {
@@ -132,9 +134,16 @@ describe('POST /api/v1/accounts/{id}/labels', function () {
             ->assertJsonPath('title', '学中文_12');
     });
 
+    it('accepts uppercase Vietnamese titles without converting them to slugs', function () {
+        $this->actingAs($this->admin)
+            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => '  Khách VIP  '])
+            ->assertOk()
+            ->assertJsonPath('title', 'Khách VIP');
+    });
+
     it('rejects a title already used in the account', function () {
         $this->actingAs($this->admin)
-            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => 'Support'])
+            ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => 'SUPPORT'])
             ->assertStatus(422);
     });
 
@@ -159,7 +168,7 @@ describe('PATCH /api/v1/accounts/{id}/labels/{labelId}', function () {
             ->patchJson("/api/v1/accounts/{$this->account->id}/labels/{$this->label->id}", ['title' => 'Test_2'])
             ->assertOk();
 
-        expect($this->label->fresh()->title)->toBe('test_2');
+        expect($this->label->fresh()->title)->toBe('Test_2');
     });
 
     it('keeps its own title valid on update', function () {

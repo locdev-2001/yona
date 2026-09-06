@@ -1,19 +1,22 @@
 // Port từ dashboard/routes/dashboard/settings/labels/validations.js.
-// `validLabelCharacters` của bản gốc chỉ chặn dấu cách; ở đây dùng thẳng regex
-// của model Label (lib/regex_helper.rb) để thông báo lỗi đúng như chữ nó nói.
-const LABEL_TITLE_PATTERN = /^[\p{L}\p{N}]+[\p{L}\p{N}_-]+$/u;
+// Label là tên hiển thị tự do: giữ chữ hoa, dấu tiếng Việt, khoảng trắng và
+// ký hiệu. Chỉ chặn xuống dòng vì input/chip hiển thị trên một dòng.
+const LABEL_TITLE_PATTERN = /^[^\r\n]+$/u;
 
 export const MIN_LABEL_TITLE_LENGTH = 2;
 
-// Label API chỉ nhận chữ thường — cả ô nhập lẫn payload đều hạ trước.
-export const normalizeLabelTitle = (title: string) => title.toLowerCase();
+// Chỉ cắt khoảng trắng hai đầu; không biến tên hiển thị thành slug.
+export const normalizeLabelTitle = (title: string) => title.trim();
 
-export const validLabelCharacters = (title = '') => LABEL_TITLE_PATTERN.test(title);
+export const validLabelCharacters = (title = '') => LABEL_TITLE_PATTERN.test(normalizeLabelTitle(title));
 
 export function getLabelTitleErrorMessageKey(title: string): string {
-    if (!title) return 'LABEL_MGMT.FORM.NAME.REQUIRED_ERROR';
-    if (title.length < MIN_LABEL_TITLE_LENGTH) return 'LABEL_MGMT.FORM.NAME.MINIMUM_LENGTH_ERROR';
-    if (!validLabelCharacters(title)) return 'LABEL_MGMT.FORM.NAME.VALID_ERROR';
+    const normalizedTitle = normalizeLabelTitle(title);
+    if (!normalizedTitle) return 'LABEL_MGMT.FORM.NAME.REQUIRED_ERROR';
+    if ([...normalizedTitle].length < MIN_LABEL_TITLE_LENGTH) {
+        return 'LABEL_MGMT.FORM.NAME.MINIMUM_LENGTH_ERROR';
+    }
+    if (!validLabelCharacters(normalizedTitle)) return 'LABEL_MGMT.FORM.NAME.VALID_ERROR';
 
     return '';
 }
