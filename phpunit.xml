@@ -25,6 +25,9 @@
         <env name="DB_DATABASE" value="yona_rw_test"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
+        <!-- ENV SMTP_ADDRESS của Chatwoot để trống ở môi trường test: thư tổng hợp
+             (conversation_reply_mailer) chỉ gửi khi cài đặt đã khai SMTP. -->
+        <env name="MAIL_HOST" value=""/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="REDIS_DB" value="4"/>
         <env name="SESSION_DRIVER" value="array"/>

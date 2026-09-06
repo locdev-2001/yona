@@ -115,4 +115,35 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Kênh Email (F1 — port ENV của Chatwoot)
+    |--------------------------------------------------------------------------
+    |
+    | MAILER_INBOUND_EMAIL_DOMAIN bật tính năng chuyển tiếp thư: có domain thì
+    | mỗi inbox email được cấp một địa chỉ `forward_to_email`, và thư trả lời
+    | dùng `reply+<conversation-uuid>@<domain>` làm Reply-To.
+    | MAILER_SENDER_EMAIL là địa chỉ gửi mặc định khi tài khoản chưa khai riêng.
+    |
+    */
+
+    // ENV SMTP_ADDRESS của bản gốc: chưa khai SMTP thì thư tổng hợp không gửi
+    // (`smtp_config_set_or_development?`). Khác `mailers.smtp.host` — khóa đó
+    // luôn có giá trị mặc định nên không dùng để biết đã cấu hình hay chưa.
+    'smtp_address' => env('MAIL_HOST') ?: null,
+
+    'inbound_email_domain' => env('MAILER_INBOUND_EMAIL_DOMAIN') ?: null,
+
+    'sender_email' => env('MAILER_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'accounts@chatwoot.com')),
+
+    // GlobalConfigService SKIP_INCOMING_BCC_PROCESSING — danh sách account_id
+    // (ngăn cách dấu phẩy) không nhận thư chỉ-BCC.
+    'skip_incoming_bcc_processing' => env('SKIP_INCOMING_BCC_PROCESSING', ''),
+
+    'smtp_open_timeout' => (int) env('SMTP_OPEN_TIMEOUT', 15),
+
+    'smtp_read_timeout' => (int) env('SMTP_READ_TIMEOUT', 30),
+
+    'email_processing_timeout' => (int) env('EMAIL_PROCESSING_TIMEOUT_SECONDS', 60),
+
 ];

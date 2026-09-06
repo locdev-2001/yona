@@ -78,6 +78,7 @@ class InboxResource extends JsonResource
             ...$this->sharedChannelAttributes($channel),
             ...$this->webWidgetAttributes($inbox),
             ...$this->apiChannelAttributes($inbox),
+            ...$this->emailChannelAttributes($inbox),
             'provider' => $channel?->getAttribute('provider'),
         ];
     }
@@ -102,6 +103,45 @@ class InboxResource extends JsonResource
             'pre_chat_form_enabled' => $channel->pre_chat_form_enabled,
             'pre_chat_form_options' => $channel->pre_chat_form_options,
             'continuity_via_email' => $channel->continuity_via_email,
+        ];
+    }
+
+    // Khối `if resource.email?` của jbuilder: cột IMAP/SMTP chỉ hiện với admin.
+    private function emailChannelAttributes(Inbox $inbox): array
+    {
+        if (! $inbox->isEmail()) {
+            return [];
+        }
+
+        $channel = $inbox->channel;
+        $forwardingEnabled = filled(config('mail.inbound_email_domain'));
+
+        return [
+            'email' => $channel->email,
+            'forwarding_enabled' => $forwardingEnabled,
+            ...($forwardingEnabled ? ['forward_to_email' => $channel->forward_to_email] : []),
+            ...($this->administrator ? [
+                'imap_login' => $channel->imap_login,
+                'imap_password' => $channel->imap_password,
+                'imap_address' => $channel->imap_address,
+                'imap_port' => $channel->imap_port,
+                'imap_enabled' => $channel->imap_enabled,
+                'imap_enable_ssl' => $channel->imap_enable_ssl,
+                'imap_authentication' => $channel->imap_authentication,
+                'smtp_login' => $channel->smtp_login,
+                'smtp_password' => $channel->smtp_password,
+                'smtp_address' => $channel->smtp_address,
+                'smtp_port' => $channel->smtp_port,
+                'smtp_enabled' => $channel->smtp_enabled,
+                'smtp_domain' => $channel->smtp_domain,
+                'smtp_enable_ssl_tls' => $channel->smtp_enable_ssl_tls,
+                'smtp_enable_starttls_auto' => $channel->smtp_enable_starttls_auto,
+                'smtp_openssl_verify_mode' => $channel->smtp_openssl_verify_mode,
+                'smtp_authentication' => $channel->smtp_authentication,
+            ] : []),
+            ...($this->administrator && ($channel->isMicrosoft() || $channel->isGoogle() || $channel->isLegacyGoogle())
+                ? ['reauthorization_required' => blank($channel->provider_config) || $channel->reauthorizationRequired()]
+                : []),
         ];
     }
 

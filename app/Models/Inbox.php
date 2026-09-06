@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Str;
 
 // Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: contact_inboxes/conversations/messages (nhóm B2-B3),
@@ -139,6 +140,11 @@ class Inbox extends Model
         return $this->hasMany(Webhook::class);
     }
 
+    public function hooks(): HasMany
+    {
+        return $this->hasMany(Integrations\Hook::class);
+    }
+
     public function agentBotInbox(): HasOne
     {
         return $this->hasOne(AgentBotInbox::class);
@@ -160,6 +166,11 @@ class Inbox extends Model
             'id',
             'agent_bot_id',
         );
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
     }
 
     public function contactInboxes(): HasMany
@@ -232,6 +243,47 @@ class Inbox extends Model
     public function isWebWidget(): bool
     {
         return $this->channel_type === 'Channel::WebWidget';
+    }
+
+    public function isEmail(): bool
+    {
+        return $this->channel_type === 'Channel::Email';
+    }
+
+    // Inbox#sanitized_name / #sanitized_business_name — tên dùng làm display name
+    // của header From, đã gỡ ký tự làm hỏng cú pháp địa chỉ thư.
+    public function sanitizedName(): string
+    {
+        if (blank($this->name)) {
+            return $this->isEmail() ? $this->displayNameFromEmail() : '';
+        }
+
+        $sanitized = self::applySanitizationRules($this->name);
+
+        return $sanitized === '' && $this->isEmail() ? $this->displayNameFromEmail() : $sanitized;
+    }
+
+    public function sanitizedBusinessName(): string
+    {
+        $sanitized = blank($this->business_name) ? '' : self::applySanitizationRules($this->business_name);
+
+        return $sanitized === '' ? $this->sanitizedName() : $sanitized;
+    }
+
+    private function displayNameFromEmail(): string
+    {
+        $localPart = explode('@', (string) $this->channel?->email)[0];
+
+        return Str::of($localPart)->replaceMatches('/[^a-zA-Z0-9]+/', ' ')->squish()->title()->value();
+    }
+
+    private static function applySanitizationRules(string $name): string
+    {
+        $sanitized = preg_replace('/[\\<>@"!#$%&*+=?^`{|}~:;()]/', '', $name);
+        $sanitized = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string) $sanitized);
+        $sanitized = preg_replace('/^[[:punct:]]+|[[:punct:]]+$/u', '', (string) $sanitized);
+
+        return Str::of((string) $sanitized)->squish()->value();
     }
 
     // InboxAgentAvailability#available_agents: member của inbox đang 'online'

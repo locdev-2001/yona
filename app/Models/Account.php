@@ -183,6 +183,16 @@ class Account extends Model
         return $this->hasMany(AgentBot::class);
     }
 
+    public function dashboardApps(): HasMany
+    {
+        return $this->hasMany(DashboardApp::class);
+    }
+
+    public function hooks(): HasMany
+    {
+        return $this->hasMany(Integrations\Hook::class);
+    }
+
     public function agentBotInboxes(): HasMany
     {
         return $this->hasMany(AgentBotInbox::class);
@@ -205,6 +215,18 @@ class Account extends Model
 
     // Featurable#feature_enabled? — override trong feature_flags (jsonb) thắng
     // default của config/features.php (quyết định #8: bỏ bitset FlagShihTzu).
+    // Account#inbound_email_domain / #support_email — nguồn địa chỉ thư của
+    // tài khoản: cột riêng của tenant trước, không có thì rơi về biến môi trường.
+    public function inboundEmailDomain(): ?string
+    {
+        return $this->domain ?: config('mail.inbound_email_domain');
+    }
+
+    public function supportEmail(): ?string
+    {
+        return $this->support_email ?: config('mail.sender_email');
+    }
+
     public function featureEnabled(string $name): bool
     {
         return (bool) ($this->feature_flags[$name] ?? config("features.{$name}", false));

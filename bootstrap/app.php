@@ -4,6 +4,7 @@ use App\Http\Middleware\AuthenticateApiAccessToken;
 use App\Http\Middleware\EnsureAccountRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentAccount;
+use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -17,9 +18,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        // Mặt tiền api (§0.4): tiền tố /api, không session/CSRF — widget website
-        // nhúng trên tên miền khách hàng gọi vào đây.
+        // Mặt tiền api (§0.4): không session/CSRF — widget website nhúng trên tên
+        // miền khách hàng và Platform API gọi vào đây. Tiền tố nằm trong chính
+        // routes/api.php vì bản gốc đặt widget dưới /api/v1 còn Platform API
+        // dưới /platform/api/v1 (refs/chatwoot config/routes.rb).
         api: __DIR__.'/../routes/api.php',
+        apiPrefix: '',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -31,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            TrackUserSessionActivity::class,
         ]);
 
         // Request mang api_access_token không có cookie phiên → miễn CSRF
@@ -45,8 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.api_token' => AuthenticateApiAccessToken::class,
         ]);
 
-        $middleware->redirectGuestsTo('/app/login');
-        $middleware->redirectUsersTo('/app');
+        // Console quản trị có màn đăng nhập riêng (guard `super_admin`).
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin/sign_in' : '/app/login',
+        );
+        $middleware->redirectUsersTo(
+            fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin' : '/app',
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

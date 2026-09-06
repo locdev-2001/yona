@@ -3,6 +3,7 @@
 use App\Jobs\Account\ConversationsResolutionSchedulerJob;
 use App\Jobs\AutomationRules\TriggerPendingExecutionsJob;
 use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
+use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
 use Illuminate\Foundation\Inspiring;
@@ -21,3 +22,5 @@ Schedule::job(new ReopenSnoozedNotificationsJob)->cron('*/5 * * * *');
 Schedule::job(new RemoveOldNotificationJob)->cron('30 22 * * *');
 Schedule::job(new ConversationsResolutionSchedulerJob)->cron('*/5 * * * *');
 Schedule::job(new TriggerPendingExecutionsJob)->cron('*/5 * * * *');
+// config/schedule.yml gốc: trigger_imap_email_inboxes_job cron '*/1 * * * *'.
+Schedule::job(new FetchImapEmailInboxesJob)->cron('*/1 * * * *');

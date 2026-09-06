@@ -6,6 +6,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
+use App\Jobs\SendReplyJob;
 use App\Services\MessageTemplates\HookExecutionService;
 use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
@@ -20,8 +21,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 // Port từ refs/chatwoot/app/models/message.rb.
-// Bỏ: SendReplyJob (webhook outbound D4), email content (F1),
-// agent bot/captain (EE), searchkick (EE), translations (F6).
+// Bỏ: agent bot/captain (EE), searchkick (EE), translations (F6).
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
@@ -151,8 +151,8 @@ class Message extends Model
             // phải xong trước mọi after_create_commit bên dưới.
             $message->persistPendingAttachments();
 
-            // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc;
-            // send_reply cắt sang D4.
+            // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc.
+            $message->sendReply();
             $message->reopenConversation();
             $message->setConversationActivity();
             $message->dispatchCreateEvents();
@@ -236,10 +236,42 @@ class Message extends Model
         return $this->content_type === self::CONTENT_TYPES['input_csat'];
     }
 
-    // auto_reply_email? — kênh email chưa port nên chỉ còn nhánh incoming_email.
+    // MessageFilterHelpers#conversation_transcriptable? / #email_reply_summarizable?
+    // Message#send_reply — đẩy tin ra kênh ngoài; SendReplyJob chọn driver.
+    private function sendReply(): void
+    {
+        $job = new SendReplyJob($this);
+
+        // FIXME của bản gốc: chờ vài giây cho tệp đính kèm lưu xong trước khi gửi.
+        $this->pendingAttachments === [] && $this->attachments->isEmpty()
+            ? dispatch($job)
+            : dispatch($job)->delay(now()->addSeconds(2));
+    }
+
+    public function isConversationTranscriptable(): bool
+    {
+        return $this->isIncoming() || $this->isOutgoing();
+    }
+
+    public function isEmailReplySummarizable(): bool
+    {
+        return $this->isIncoming() || $this->isOutgoing() || $this->isInputCsat();
+    }
+
+    // Message#email_notifiable_message? — tin nào được phép chuyển thành thư đi.
+    public function isEmailNotifiableMessage(): bool
+    {
+        if ($this->private || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
+            return false;
+        }
+
+        return $this->message_type !== self::TYPE_TEMPLATE
+            || in_array($this->content_type, [self::CONTENT_TYPES['input_csat'], self::CONTENT_TYPES['text']], true);
+    }
+
     public function isAutoReplyEmail(): bool
     {
-        if ($this->content_type !== self::CONTENT_TYPES['incoming_email']) {
+        if ($this->content_type !== self::CONTENT_TYPES['incoming_email'] && ! $this->inbox->isEmail()) {
             return false;
         }
 

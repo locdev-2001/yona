@@ -16,6 +16,7 @@ export interface GlobalConfig {
     logo: string;
     logoDark: string;
     signupEnabled: boolean;
+    isMfaEnabled: boolean;
     termsURL: string;
     privacyURL: string;
 }
