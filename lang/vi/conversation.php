@@ -70,6 +70,33 @@ return [
         'LOCATION' => '{sender} đã chia sẻ một vị trí',
         'FILE' => '{sender} đã chia sẻ một tệp',
         'MEETING' => '{sender} đã bắt đầu một cuộc họp',
+        // Mở rộng của Yona — bong bóng riêng cho loại tin Zalo (xem ZALO bên dưới).
+        'BUSINESS_CARD' => '{sender} đã gửi một danh thiếp',
+        'BANK_CARD' => '{sender} đã gửi một tài khoản ngân hàng',
+        'REMINDER' => '{sender} đã tạo một nhắc hẹn',
+    ],
+    // Mở rộng của Yona: Zalo có loại tin lõi Chatwoot không có (danh thiếp, thẻ
+    // ngân hàng, nhắc hẹn, cuộc gọi).
+    'ZALO' => [
+        'BUSINESS_CARD' => [
+            'FALLBACK_NAME' => 'Danh thiếp',
+            'VIEW_PROFILE' => 'Xem hồ sơ',
+        ],
+        'BANK_CARD' => [
+            'FALLBACK_NAME' => 'Tài khoản ngân hàng',
+            'COPY_ACCOUNT_NUMBER' => 'Sao chép số tài khoản',
+            'COPIED' => 'Đã sao chép',
+        ],
+        'REMINDER' => [
+            'FALLBACK_TITLE' => 'Nhắc hẹn',
+        ],
+        'CALL' => [
+            'VOICE' => 'Cuộc gọi thoại',
+            'VIDEO' => 'Cuộc gọi video',
+            'MISSED' => 'nhỡ',
+            'BUSY' => 'máy bận',
+            'CANCELED' => 'đã huỷ',
+        ],
     ],
     'UPLOADING_ATTACHMENTS' => 'Đang tải file đính kèm...',
     'REPLIED_TO_STORY' => 'Đã trả lời story của bạn',

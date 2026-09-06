@@ -5,6 +5,7 @@ namespace App\Services\Twilio;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Models\Attachment;
 use App\Models\Channel\TwilioSms;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
@@ -39,6 +40,8 @@ class IncomingMessageService
         if ($contactInbox === null) {
             return null;
         }
+
+        $this->updateContactNameIfNeeded($contactInbox->contact, $channel);
 
         $conversation = IncomingConversationResolver::resolve($contactInbox, $this->additionalAttributes($channel));
 
@@ -76,6 +79,30 @@ class IncomingMessageService
         }
 
         return null;
+    }
+
+    /**
+     * Hồ sơ tạo từ tin đầu tiên thường chỉ có số làm tên; khi Twilio gửi kèm
+     * `ProfileName` ở tin sau thì thay tên số bằng tên thật, và CHỈ khi tên hiện
+     * tại đúng là số — tên do người dùng sửa tay không bị đè.
+     * (update_contact_name_if_needed của bản gốc; nhánh so với số đã định dạng
+     * quốc tế không port vì chưa có thư viện định dạng số.)
+     */
+    private function updateContactNameIfNeeded(Contact $contact, TwilioSms $channel): void
+    {
+        $profileName = $this->params['ProfileName'] ?? null;
+
+        if (blank($profileName) || $contact->name === $profileName) {
+            return;
+        }
+
+        $phoneNumber = $this->phoneNumber($channel);
+
+        if (blank($phoneNumber) || $contact->name !== $phoneNumber) {
+            return;
+        }
+
+        $contact->update(['name' => $profileName]);
     }
 
     // Twilio WhatsApp gửi số dạng `whatsapp:+E164`.

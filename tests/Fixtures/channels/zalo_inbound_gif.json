@@ -1,0 +1,16 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-gif",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500023000,
+  "inbound_kind": "gif",
+  "content": "",
+  "media_url": "https://cdn.zalo.test/funny.gif",
+  "msg_type": "chat.gif"
+}

@@ -7,17 +7,20 @@ use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
+use App\Jobs\SendReplyJob;
 use App\Models\Account;
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\Integrations\GoogleTranslate\ProcessorService as GoogleTranslateProcessorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 // Port từ Api::V1::Accounts::Conversations::MessagesController.
 // Bỏ: update status (đi cùng driver kênh gửi thật), destroy (context menu
-// tin nhắn — port cùng cụm tiện ích), retry (SendReplyJob D4).
+// tin nhắn — port cùng cụm tiện ích).
 class MessagesController extends Controller
 {
     public function index(Request $request, Account $account, int $conversationId): JsonResponse
@@ -78,6 +81,63 @@ class MessagesController extends Controller
         }
 
         return response()->json(['content' => $translatedContent]);
+    }
+
+    /**
+     * messages#retry — port từ MessagesController#retry + #claim_message_retry của
+     * bản gốc. Mọi kênh khai `outbound_retry` (docs/channel-capabilities.md §2.2)
+     * dùng chung đường này: chỉ tin `failed` mới gửi lại, khoá bản ghi để hai cú
+     * bấm không đẩy hai job, rồi trả tin đã cập nhật cho UI.
+     */
+    public function retry(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $message = $conversation->messages()->findOrFail($messageId);
+
+        if ($this->claimMessageRetry($conversation, $message)) {
+            $message->refresh();
+            SendReplyJob::dispatch($message);
+        }
+
+        return response()->json((new MessageResource($message))->toArray($request));
+    }
+
+    private function claimMessageRetry(Conversation $conversation, Message $message): bool
+    {
+        return DB::transaction(function () use ($conversation, $message) {
+            $claimed = $conversation->messages()->whereKey($message->getKey())->lockForUpdate()->first();
+
+            if ($claimed === null || $claimed->status !== Message::STATUSES['failed']) {
+                return false;
+            }
+
+            $attributes = ['status' => Message::STATUSES['sent'], 'content_attributes' => $this->attributesForRetry($claimed)];
+
+            // Bản gốc xoá source_id (trừ inbox API/widget) — còn source_id thì
+            // driver coi tin là tin do kênh dội về và bỏ qua lượt gửi lại.
+            if (! $conversation->inbox->isApi() && ! $conversation->inbox->isWebWidget()) {
+                $attributes['source_id'] = null;
+            }
+
+            $claimed->update($attributes);
+
+            return true;
+        });
+    }
+
+    /**
+     * Bản gốc đặt `content_attributes: {}` (xoá sạch). Ở đây chỉ bỏ lý do lỗi:
+     * xoá sạch sẽ mất `in_reply_to`, `sticker`, `zalo_source_ids` — tức tin gửi
+     * lại rụng trích dẫn và echo của phần đã gửi được sẽ thành bong bóng ma.
+     *
+     * @return array<string, mixed>
+     */
+    private function attributesForRetry(Message $message): array
+    {
+        $attributes = $message->content_attributes ?? [];
+        unset($attributes['external_error']);
+
+        return $attributes;
     }
 
     private function alreadyTranslated(Message $message, string $targetLanguage): bool

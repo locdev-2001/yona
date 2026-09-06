@@ -83,6 +83,9 @@ class InboxResource extends JsonResource
                 ? 'professional'
                 : 'friendly',
             'business_name' => $inbox->business_name,
+            // Năng lực kênh cho FE (docs/channel-capabilities.md §3) — thêm khoá mới ở
+            // cuối khối lõi, không đụng thứ tự khoá đã có của partial gốc.
+            'capabilities' => $inbox->capabilities()->values(),
             ...$this->sharedChannelAttributes($channel),
             ...$this->webWidgetAttributes($inbox),
             ...$this->apiChannelAttributes($inbox),

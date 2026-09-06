@@ -2,13 +2,16 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/api.rb (+ Channelable, WebhookSecretable).
-class Api extends Model
+class Api extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<ApiFactory> */
     use Channelable, HasFactory;
@@ -56,5 +59,31 @@ class Api extends Model
     public function resetSecret(): void
     {
         $this->forceFill(['secret' => self::generateToken()])->save();
+    }
+
+    /** Kênh API: hệ ngoài tự bơm tin vào và đọc tin ra, nội dung do bên tích hợp quyết. */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::InboundImage,
+            Capability::InboundGif,
+            Capability::InboundVideo,
+            Capability::InboundAudio,
+            Capability::InboundFile,
+            Capability::InboundCaption,
+            Capability::OutboundText,
+            Capability::OutboundImage,
+            Capability::OutboundVideo,
+            Capability::OutboundAudio,
+            Capability::OutboundFile,
+            Capability::OutboundReplyTo,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::ProfilePhone,
+            Capability::ProfileEmail,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+        );
     }
 }

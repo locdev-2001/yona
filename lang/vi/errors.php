@@ -51,6 +51,21 @@ return [
             'success' => 'Chúng tôi sẽ thông báo khi tệp xuất danh sách liên hệ đã sẵn sàng.',
         ],
     ],
+    // Kênh Zalo cá nhân — lý do gửi hỏng, khớp `content_attributes.external_error.code`
+    // (App\Services\Zalo\SendOnZaloService). FE dùng `code` để chọn hành động,
+    // `message` để hiện cho agent.
+    'zalo' => [
+        'send' => [
+            'circuit_open' => 'Kết nối Zalo đang lỗi liên tục, tạm dừng gửi một lát.',
+            'session_lost' => 'Phiên Zalo đã hết, bạn quét lại mã QR giúp mình nhé.',
+            'bridge_unreachable' => 'Chưa gọi được dịch vụ Zalo, bạn thử lại sau ít phút.',
+            'secret_mismatch' => 'Dịch vụ Zalo đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.',
+            'zalo_rejected' => 'Zalo từ chối tin này (:detail).',
+            'media_fetch_failed' => 'Không đọc được tệp đính kèm để gửi (:detail).',
+            'unknown' => 'Chưa gửi được tin này ra Zalo (:detail).',
+            'attachment_failed' => 'Không gửi được tệp ":filename": :reason',
+        ],
+    ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'chỉ được chứa chữ cái, chữ số, dấu gạch dưới, dấu gạch nối và dấu chấm',
         'key_conflict' => 'Khóa này không dùng được vì có thể trùng với thuộc tính mặc định.',

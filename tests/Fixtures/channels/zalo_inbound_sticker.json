@@ -1,0 +1,25 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-3",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500002000,
+  "inbound_kind": "sticker",
+  "content": null,
+  "sticker": {
+    "id": 98930,
+    "catId": 61900,
+    "type": 7,
+    "stickerUrl": "https://cdn.zalo.test/api/emoticon/sticker/webpc?eid=98930&size=130",
+    "stickerSpriteUrl": "https://cdn.zalo.test/api/emoticon/sprite?eid=98930&size=130",
+    "url": "https://cdn.zalo.test/api/emoticon/sticker/webpc?eid=98930&size=130",
+    "thumbnail": "https://cdn.zalo.test/api/emoticon/sprite?eid=98930&size=130",
+    "text": "[^61900.98930^]"
+  },
+  "msg_type": "chat.sticker"
+}

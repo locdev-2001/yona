@@ -7,7 +7,7 @@ use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
-use App\Support\Haikunator;
+use App\Support\AnonymousName;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -91,11 +91,16 @@ class ContactInboxWithContactBuilder
         ]);
     }
 
+    // Khác bản gốc một điểm cố ý: Ruby dùng `name || Haikunator...`, mà '' trong Ruby là
+    // truthy nên tên rỗng do kênh gửi lên (Telegram không có first/last name chẳng hạn) được
+    // lưu thẳng, cho ra liên hệ không tên. Dùng blank() để mọi tên rỗng cũng về tên ẩn danh.
     private function contactName(): string
     {
-        $name = $this->contactAttributes['name'] ?? Haikunator::haikunate(1000);
+        $name = $this->contactAttributes['name'] ?? null;
 
-        return Str::limit($name, self::MAX_STRING_COLUMN_LENGTH, '');
+        return blank($name)
+            ? AnonymousName::forAccount($this->account())
+            : Str::limit($name, self::MAX_STRING_COLUMN_LENGTH, '');
     }
 
     private function findContact(): ?Contact

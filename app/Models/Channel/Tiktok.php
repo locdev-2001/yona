@@ -2,6 +2,9 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
+use App\Channels\DeclaresCapabilities;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\TiktokFactory;
@@ -9,7 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/tiktok.rb.
-class Tiktok extends Model
+class Tiktok extends Model implements DeclaresCapabilities
 {
     /** @use HasFactory<TiktokFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -47,5 +50,20 @@ class Tiktok extends Model
             'expires_at' => ['required', 'date'],
             'refresh_token_expires_at' => ['required', 'date'],
         ];
+    }
+
+    /** TikTok DM: driver hiện chỉ dựng tin chữ, chưa kéo đính kèm về (nợ có tên). */
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(
+            Capability::InboundText,
+            Capability::OutboundText,
+            Capability::ProfileName,
+            Capability::ProfileAvatar,
+            Capability::IdentityStableId,
+            Capability::ThreadingContinuous,
+            Capability::SessionOauth,
+            Capability::SessionReauth,
+        );
     }
 }

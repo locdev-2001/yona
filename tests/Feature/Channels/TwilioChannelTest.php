@@ -70,3 +70,27 @@ it('gửi tin đi qua REST API của Twilio', function () {
 
     expect($outgoing->fresh()->source_id)->toBe('SMoutgoing');
 });
+
+it('thay tên số bằng ProfileName khi tin sau mới có tên', function () {
+    $payload = ChannelFixture::load('twilio_incoming');
+    unset($payload['ProfileName']);
+    twilioPost($payload)->assertOk();
+
+    $contact = Message::query()->latest('id')->first()->conversation->contact;
+    expect($contact->name)->toBe('+15557654321');
+
+    twilioPost(ChannelFixture::load('twilio_incoming'))->assertOk();
+
+    expect($contact->refresh()->name)->toBe('Khách Twilio');
+});
+
+it('không đè tên đã được sửa tay bằng ProfileName', function () {
+    twilioPost(ChannelFixture::load('twilio_incoming'))->assertOk();
+
+    $contact = Message::query()->latest('id')->first()->conversation->contact;
+    $contact->update(['name' => 'Tên do agent đặt']);
+
+    twilioPost(ChannelFixture::load('twilio_incoming'))->assertOk();
+
+    expect($contact->refresh()->name)->toBe('Tên do agent đặt');
+});

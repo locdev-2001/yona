@@ -1,0 +1,24 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-card",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500010000,
+  "inbound_kind": "business_card",
+  "content": "",
+  "business_card": {
+    "name": "Nguyễn Phước Lộc",
+    "title": "Nguyễn Phước Lộc",
+    "thumbnail": "https://cdn.zalo.test/avatar/loc.jpg",
+    "url": "https://www.zaloapp.com",
+    "qr_code_url": "https://cdn.zalo.test/qr/loc.jpg",
+    "phone": "0912345678",
+    "contact_uid": "5555000011"
+  },
+  "msg_type": "chat.recommended"
+}

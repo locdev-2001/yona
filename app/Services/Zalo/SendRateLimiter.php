@@ -2,29 +2,19 @@
 
 namespace App\Services\Zalo;
 
-use App\Services\Zalo\Exception\RateCapException;
-use App\Services\Zalo\Exception\SendOutsideWindowException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Port từ App\Modules\Chat\Adapter\ZaloPersonal\Policy\SendRateLimiter (nhánh `main`).
- * Cửa sổ 7h–22h giờ VN + trần 3 tin/số/ngày CHỈ áp cho tin CHỦ ĐỘNG; tin trả lời
- * trong cửa sổ hội thoại là hành vi chat bình thường nên không bị chặn
- * (quyết định đã chốt trong CLAUDE.md).
+ * Bộ ĐẾM tin chủ động theo từng số/ngày. Không chặn gì cả.
+ *
+ * Quyết định founder 07/09/2026: bỏ cửa sổ giờ 7h–22h và trần 3 tin/số/ngày ra
+ * khỏi đường gửi (docs/channel-capabilities.md §2.5 `messaging_window`: Yona
+ * không tự đặt giới hạn tin chủ động). Số liệu vẫn ghi để dựng chính sách sau,
+ * và ngắt mạch (ZaloHealthMonitor) vẫn giữ nguyên vì đó là bảo vệ kỹ thuật.
  */
 class SendRateLimiter
 {
-    public function assertCanSend(int $accountId, string $target, bool $isReply): void
-    {
-        if ($isReply) {
-            return;
-        }
-
-        $this->assertInWindow();
-        $this->assertUnderCap($accountId, $target);
-    }
-
     public function increment(int $accountId, string $target): void
     {
         $key = $this->cacheKey($accountId, $target);
@@ -43,29 +33,6 @@ class SendRateLimiter
         return (int) Cache::get($this->cacheKey($accountId, $target), 0);
     }
 
-    private function assertInWindow(): void
-    {
-        $openHour = (int) config('zalo.send_window.open_hour');
-        $closeHour = (int) config('zalo.send_window.close_hour');
-        $hour = $this->now()->hour;
-
-        if ($hour < $openHour || $hour >= $closeHour) {
-            throw new SendOutsideWindowException(
-                "Tin chủ động chỉ được gửi trong khung {$openHour}h–{$closeHour}h giờ Việt Nam."
-            );
-        }
-    }
-
-    private function assertUnderCap(int $accountId, string $target): void
-    {
-        $cap = (int) config('zalo.daily_promotional_cap');
-        $count = $this->currentCount($accountId, $target);
-
-        if ($count >= $cap) {
-            throw new RateCapException("Đã gửi {$count} tin chủ động đến số này hôm nay, trần là {$cap} tin/ngày.");
-        }
-    }
-
     private function cacheKey(int $accountId, string $target): string
     {
         return "zalo_rate:{$accountId}:{$target}:".$this->now()->format('Ymd');
@@ -78,8 +45,9 @@ class SendRateLimiter
         return max(60, (int) $now->diffInSeconds($now->copy()->addDay()->startOfDay()));
     }
 
+    /** Mốc ngày theo giờ Việt Nam để số liệu đọc được đúng theo ngày làm việc. */
     private function now(): Carbon
     {
-        return Carbon::now((string) config('zalo.send_window.timezone'));
+        return Carbon::now((string) config('zalo.counter_timezone'));
     }
 }

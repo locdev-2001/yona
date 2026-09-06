@@ -1,0 +1,36 @@
+{
+  "type": "relay_event",
+  "event_type": "undo",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "1234567890",
+  "source_id": "8233985727518",
+  "payload": [
+    {
+      "data": {
+        "actionId": "13991110592205",
+        "msgId": "8233985727518",
+        "cliMsgId": "1788715096258",
+        "msgType": "chat.undo",
+        "uidFrom": "9876543210",
+        "idTo": "1234567890",
+        "dName": "Nguyễn Văn A",
+        "ts": "1788715096501",
+        "status": 1,
+        "content": {
+          "globalMsgId": 8233984128820,
+          "cliMsgId": 1788714970591,
+          "deleteMsg": 0,
+          "srcId": "9876543210",
+          "destId": 0
+        },
+        "notify": "1",
+        "ttl": 0,
+        "cmd": 501
+      },
+      "threadId": "9876543210",
+      "isSelf": false,
+      "isGroup": false
+    }
+  ]
+}

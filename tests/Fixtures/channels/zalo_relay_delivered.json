@@ -1,0 +1,24 @@
+{
+  "type": "relay_event",
+  "event_type": "delivered_messages",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "1234567890",
+  "payload": [
+    [
+      {
+        "type": 0,
+        "data": {
+          "msgId": "msg-zalo-out-1",
+          "seen": 0,
+          "deliveredUids": ["9876543210"],
+          "seenUids": [],
+          "realMsgId": "0",
+          "mSTs": 1788715049561
+        },
+        "threadId": "9876543210",
+        "isSelf": false
+      }
+    ]
+  ]
+}

@@ -2,25 +2,62 @@
 
 namespace App\Services\Zalo;
 
+use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Message;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
-use App\Services\Zalo\Exception\RateCapException;
-use App\Services\Zalo\Exception\SendOutsideWindowException;
-use App\Services\Zalo\Exception\ZaloCircuitOpenException;
-use App\Services\Zalo\Exception\ZaloNotConnectedException;
 
 /**
  * Gửi tin ra Zalo cá nhân qua bridge. Port từ ZaloSendService của nhánh `main`,
  * đặt lại trên khung BaseSendOnChannelService để SendReplyJob gọi như mọi kênh khác.
  *
- * Thứ tự kiểm tra: ngắt mạch → phiên còn sống → hạn mức (chỉ tin chủ động) → gửi.
- * Lỗi ghi vào `content_attributes.external_error` qua ChannelMessageStatus, không
- * ném ra ngoài — job gửi tin không được làm hỏng luồng tạo tin.
+ * Một tin của lõi có thể thành NHIỀU lượt gọi bridge (mỗi đính kèm một lượt, vì
+ * zca chỉ nhận một tệp mỗi lần gửi). Mọi msgId bridge trả về được gom vào
+ * `content_attributes.zalo_source_ids`; phần đầu tiên là `source_id` chính.
+ * Hợp đồng này là thứ IncomingMessageService dùng để dedupe tin dội lại.
+ *
+ * Lỗi ghi vào `content_attributes.external_error = {code, message}` qua
+ * ChannelMessageStatus (docs/channel-capabilities.md §2.2 `outbound_retry`) —
+ * `code` ổn định cho UI, `message` đã dịch theo locale của tài khoản.
  */
 class SendOnZaloService extends BaseSendOnChannelService
 {
+    public const ERROR_CIRCUIT_OPEN = 'circuit_open';
+
+    public const ERROR_SESSION_LOST = 'session_lost';
+
+    public const ERROR_BRIDGE_UNREACHABLE = 'bridge_unreachable';
+
+    public const ERROR_SECRET_MISMATCH = 'secret_mismatch';
+
+    public const ERROR_ZALO_REJECTED = 'zalo_rejected';
+
+    public const ERROR_MEDIA_FETCH_FAILED = 'media_fetch_failed';
+
+    public const ERROR_UNKNOWN = 'unknown';
+
+    /**
+     * CHỈ lỗi do Zalo thật sự từ chối mới mở ngắt mạch. Lỗi cấu hình (secret) hay
+     * hạ tầng của mình không được làm khoá đường gửi của tenant.
+     * ZaloHealthMonitor vẫn đếm theo nhãn cũ nên map một lần tại đây.
+     *
+     * @var array<string, string>
+     */
+    private const CIRCUIT_ERROR_TYPES = [
+        self::ERROR_SESSION_LOST => 'session_lost',
+        self::ERROR_ZALO_REJECTED => '429',
+    ];
+
+    /** Lỗi tải media của bridge (services/zalo-bridge/src/media-fetch.mjs). */
+    private const MEDIA_FETCH_ERRORS = ['download_failed_', 'download_too_large', 'fetch_host_not_allowed', 'fetch_scheme_not_allowed'];
+
+    /** media_kind bridge chấp nhận (services/zalo-bridge/src/index.mjs). */
+    private const SENDABLE_MEDIA_KINDS = ['image', 'audio', 'video', 'file'];
+
+    /** SendMessageQuote của zca — thiếu trường nhận dạng thì gửi không trích dẫn. */
+    private const QUOTE_REQUIRED_FIELDS = ['msgId', 'cliMsgId', 'uidFrom', 'msgType', 'ts', 'content'];
+
     protected function channelClass(): string
     {
         return Zalo::class;
@@ -31,88 +68,334 @@ class SendOnZaloService extends BaseSendOnChannelService
         /** @var Zalo $channel */
         $channel = $this->channel();
         $monitor = app(ZaloHealthMonitor::class);
-        $limiter = app(SendRateLimiter::class);
 
-        try {
-            $this->assertSendable($channel, $monitor, $limiter);
-            $sourceId = $this->callBridge($channel, $monitor);
-        } catch (ZaloCircuitOpenException|ZaloNotConnectedException|RateCapException|SendOutsideWindowException $exception) {
-            ChannelMessageStatus::fail($this->message, $exception->getMessage());
+        $failure = $this->circuitOrSessionFailure($channel, $monitor) ?? $this->sendEveryPart($channel, $monitor);
+
+        if ($failure !== null) {
+            ChannelMessageStatus::fail($this->message, $failure);
 
             return;
         }
 
-        if (filled($sourceId)) {
-            $this->message->update(['source_id' => $sourceId]);
-        }
-
-        if (! $this->isReplyInConversationWindow()) {
-            $limiter->increment($channel->account_id, $this->rateLimitTarget());
-        }
-
+        $this->countProactiveMessage($channel);
         $monitor->reset($channel->connectionId());
     }
 
-    private function assertSendable(Zalo $channel, ZaloHealthMonitor $monitor, SendRateLimiter $limiter): void
+    /** @return array{code: string, message: string}|null */
+    private function circuitOrSessionFailure(Zalo $channel, ZaloHealthMonitor $monitor): ?array
     {
         if ($monitor->isCircuitOpen($channel->connectionId())) {
-            throw new ZaloCircuitOpenException('Kết nối Zalo đang lỗi liên tục, tạm dừng gửi.');
+            return $this->failure(self::ERROR_CIRCUIT_OPEN);
         }
 
         if (! $channel->isConnected()) {
-            throw new ZaloNotConnectedException('Tài khoản Zalo cần quét lại mã QR.');
+            return $this->failure(self::ERROR_SESSION_LOST);
         }
 
-        $limiter->assertCanSend(
-            $channel->account_id,
-            $this->rateLimitTarget(),
-            $this->isReplyInConversationWindow(),
-        );
+        return null;
     }
 
-    private function callBridge(Zalo $channel, ZaloHealthMonitor $monitor): ?string
+    /**
+     * Gửi lần lượt từng phần; dừng ngay khi một phần hỏng nhưng vẫn giữ mọi
+     * source_id đã gửi được (tin nửa vời phải dedupe được echo của nửa đã đi).
+     *
+     * @return array{code: string, message: string}|null
+     */
+    private function sendEveryPart(Zalo $channel, ZaloHealthMonitor $monitor): ?array
     {
-        $attachment = $this->message->attachments()->first();
+        $sourceIds = [];
+        $failure = null;
 
-        $payload = array_filter([
+        foreach ($this->messageParts($channel) as $part) {
+            $outcome = $this->callBridge($channel, $monitor, $part['payload']);
+            $sourceIds = [...$sourceIds, ...$outcome['source_ids']];
+
+            if ($outcome['failure'] !== null) {
+                $failure = $this->nameFailingFile($outcome['failure'], $part['filename']);
+                break;
+            }
+        }
+
+        $this->rememberSourceIds($sourceIds);
+
+        return $failure;
+    }
+
+    /**
+     * Một phần = một lượt gọi bridge. Sticker đi riêng; tin có đính kèm thì mỗi
+     * tệp một phần, chú thích + trích dẫn bám vào tệp đầu tiên (zca gộp caption
+     * vào chính tin đính kèm).
+     *
+     * @return list<array{payload: array<string, mixed>, filename: string|null}>
+     */
+    private function messageParts(Zalo $channel): array
+    {
+        $thread = [
             'connection_id' => $channel->connectionId(),
             'thread_id' => $channel->threadId($this->message),
             'thread_type' => $channel->threadType($this->message),
-            'text' => $this->message->content,
-            'file_url' => $attachment?->downloadUrl(),
-            'media_kind' => $attachment?->fileTypeName(),
-            'quote' => $this->message->content_attributes['quote'] ?? null,
-            'sticker' => $this->message->content_attributes['sticker'] ?? null,
-        ], fn ($value) => $value !== null && $value !== '');
+        ];
 
-        $response = app(ZaloBridgeClient::class)->sendMessage($payload, $attachment !== null);
+        $sticker = $this->message->content_attributes['sticker'] ?? null;
+
+        if (filled($sticker)) {
+            return [$this->part([...$thread, 'sticker' => $sticker], null)];
+        }
+
+        $attachments = $this->sendableAttachments();
+
+        if ($attachments === []) {
+            return [$this->part([...$thread, 'text' => $this->message->content, 'quote' => $this->quotePayload()], null)];
+        }
+
+        $parts = [];
+
+        foreach ($attachments as $index => $attachment) {
+            $parts[] = $this->part([
+                ...$thread,
+                'text' => $index === 0 ? $this->message->content : null,
+                'quote' => $index === 0 ? $this->quotePayload() : null,
+                'file_url' => $this->attachmentUrl($attachment),
+                'media_kind' => $attachment->fileTypeName(),
+                // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
+                'filename' => $attachment->filename,
+                'content_type' => $attachment->content_type,
+            ], $attachment->filename);
+        }
+
+        return $parts;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{payload: array<string, mixed>, filename: string|null}
+     */
+    private function part(array $payload, ?string $filename): array
+    {
+        return [
+            'payload' => array_filter($payload, fn ($value) => $value !== null && $value !== ''),
+            'filename' => $filename,
+        ];
+    }
+
+    /**
+     * Chỉ đính kèm MANG TỆP mới gửi ra được (bridge nhận media_kind trong
+     * image/gif/video/audio/file); location/fallback là dữ liệu hiển thị của lõi.
+     *
+     * @return list<Attachment>
+     */
+    private function sendableAttachments(): array
+    {
+        return $this->message->attachments()
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (Attachment $attachment) => in_array($attachment->fileTypeName(), self::SENDABLE_MEDIA_KINDS, true)
+                && filled($this->attachmentUrl($attachment)))
+            ->values()
+            ->all();
+    }
+
+    /** Tệp đã lưu trên đĩa là nguồn chính; đính kèm chỉ có URL ngoài vẫn phải được gửi, không im lặng bỏ. */
+    private function attachmentUrl(Attachment $attachment): string
+    {
+        $downloadUrl = $attachment->downloadUrl();
+
+        return $downloadUrl !== '' ? $downloadUrl : (string) $attachment->external_url;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{source_ids: list<string>, failure: array{code: string, message: string}|null}
+     */
+    private function callBridge(Zalo $channel, ZaloHealthMonitor $monitor, array $payload): array
+    {
+        $response = app(ZaloBridgeClient::class)->sendMessage($payload, isset($payload['file_url']));
 
         if ($response === null) {
-            throw new ZaloNotConnectedException('Không kết nối được dịch vụ Zalo (bridge).');
+            return ['source_ids' => [], 'failure' => $this->failure(self::ERROR_BRIDGE_UNREACHABLE)];
         }
 
         $status = $response->status();
-        $body = $response->json() ?? [];
+        $body = is_array($response->json()) ? $response->json() : [];
+        $detail = (string) ($body['message'] ?? $body['error'] ?? "HTTP {$status}");
+        $code = $this->classify($status, $body);
 
-        if ($status === 503 || ($body['message'] ?? '') === 'not_logged_in') {
-            $monitor->recordError($channel->connectionId(), 'session_lost');
+        if ($code === null) {
+            return ['source_ids' => $this->sourceIdsFrom($body), 'failure' => null];
+        }
+
+        if (isset(self::CIRCUIT_ERROR_TYPES[$code])) {
+            $monitor->recordError($channel->connectionId(), self::CIRCUIT_ERROR_TYPES[$code]);
+        }
+
+        if ($code === self::ERROR_SESSION_LOST) {
             $channel->markState(Zalo::STATE_SESSION_LOST, 'not_logged_in');
-            throw new ZaloNotConnectedException('Phiên Zalo đã hết, vui lòng quét lại mã QR.');
         }
 
-        if ($status === 429 || $status === 403) {
-            $monitor->recordError($channel->connectionId(), (string) $status);
-            throw new ZaloNotConnectedException("Zalo từ chối yêu cầu ({$status}).");
-        }
-
-        if (! $response->successful()) {
-            throw new ZaloNotConnectedException("Bridge lỗi HTTP {$status}: ".($body['message'] ?? 'unknown'));
-        }
-
-        return isset($body['source_id']) ? (string) $body['source_id'] : null;
+        return ['source_ids' => [], 'failure' => $this->failure($code, $detail)];
     }
 
-    /** Số điện thoại là khóa đếm hạn mức; chưa biết số thì dùng định danh luồng. */
+    /**
+     * Tầng lỗi: 503/403 của bridge là kiểm tra SECRET (checkSendSecret trong
+     * services/zalo-bridge/src/index.mjs) — lỗi cấu hình phía mình, tuyệt đối
+     * không được hiểu thành mất phiên Zalo. Chỉ `not_logged_in` mới là mất phiên.
+     *
+     * @param  array<string, mixed>  $body
+     */
+    private function classify(int $status, array $body): ?string
+    {
+        $detail = (string) ($body['message'] ?? '');
+
+        if ($detail === 'not_logged_in') {
+            return self::ERROR_SESSION_LOST;
+        }
+
+        if ($status === 503 || $status === 403) {
+            return self::ERROR_SECRET_MISMATCH;
+        }
+
+        if ($status === 429) {
+            return self::ERROR_ZALO_REJECTED;
+        }
+
+        if ($status >= 500) {
+            return $this->isMediaFetchError($detail) ? self::ERROR_MEDIA_FETCH_FAILED : self::ERROR_ZALO_REJECTED;
+        }
+
+        if ($status >= 400 || ($body['ok'] ?? true) === false) {
+            return self::ERROR_UNKNOWN;
+        }
+
+        return null;
+    }
+
+    private function isMediaFetchError(string $detail): bool
+    {
+        foreach (self::MEDIA_FETCH_ERRORS as $prefix) {
+            if (str_starts_with($detail, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $body
+     * @return list<string>
+     */
+    private function sourceIdsFrom(array $body): array
+    {
+        $ids = $body['source_ids'] ?? null;
+
+        if (! is_array($ids) || $ids === []) {
+            $ids = isset($body['source_id']) ? [$body['source_id']] : [];
+        }
+
+        $ids = array_map(fn ($id) => is_scalar($id) ? (string) $id : '', $ids);
+
+        return array_values(array_filter($ids, fn (string $id) => $id !== ''));
+    }
+
+    /** @param list<string> $sourceIds */
+    private function rememberSourceIds(array $sourceIds): void
+    {
+        $sourceIds = array_values(array_unique($sourceIds));
+
+        if ($sourceIds === []) {
+            return;
+        }
+
+        $attributes = $this->message->content_attributes ?? [];
+        $known = is_array($attributes['zalo_source_ids'] ?? null) ? $attributes['zalo_source_ids'] : [];
+        $attributes['zalo_source_ids'] = array_values(array_unique([...$known, ...$sourceIds]));
+
+        $this->message->update([
+            'source_id' => filled($this->message->source_id) ? $this->message->source_id : $sourceIds[0],
+            'content_attributes' => $attributes,
+        ]);
+    }
+
+    /**
+     * @param  array{code: string, message: string}  $failure
+     * @return array{code: string, message: string}
+     */
+    private function nameFailingFile(array $failure, ?string $filename): array
+    {
+        if (blank($filename)) {
+            return $failure;
+        }
+
+        return [...$failure, 'message' => __('errors.zalo.send.attachment_failed', [
+            'filename' => $filename,
+            'reason' => $failure['message'],
+        ], $this->accountLocale())];
+    }
+
+    /** @return array{code: string, message: string} */
+    private function failure(string $code, ?string $detail = null): array
+    {
+        return [
+            'code' => $code,
+            'message' => __("errors.zalo.send.{$code}", ['detail' => (string) $detail], $this->accountLocale()),
+        ];
+    }
+
+    private function accountLocale(): ?string
+    {
+        return $this->inbox()->account->locale;
+    }
+
+    /**
+     * Trả lời trích dẫn: lõi đã quy `content_attributes.in_reply_to` về id nội bộ
+     * (Message#ensureInReplyTo). zca cần nguyên ảnh chụp tin gốc (`SendMessageQuote`),
+     * thứ driver đã lưu ở `content_attributes.zca_message` lúc nhận tin. Thiếu
+     * trường nhận dạng ⇒ gửi KHÔNG trích dẫn, hơn là gửi trích dẫn hỏng.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function quotePayload(): ?array
+    {
+        $quotedId = $this->message->content_attributes['in_reply_to'] ?? null;
+
+        if (blank($quotedId)) {
+            return null;
+        }
+
+        $quoted = Message::query()
+            ->where('conversation_id', $this->message->conversation_id)
+            ->whereKey($quotedId)
+            ->first();
+
+        $snapshot = $quoted?->content_attributes['zca_message'] ?? null;
+
+        if (! is_array($snapshot) || blank($snapshot['msgId'] ?? null)) {
+            return null;
+        }
+
+        foreach (self::QUOTE_REQUIRED_FIELDS as $field) {
+            if (! array_key_exists($field, $snapshot)) {
+                return null;
+            }
+        }
+
+        return [
+            ...array_intersect_key($snapshot, array_flip(self::QUOTE_REQUIRED_FIELDS)),
+            'ttl' => $snapshot['ttl'] ?? 0,
+            'propertyExt' => $snapshot['propertyExt'] ?? null,
+        ];
+    }
+
+    private function countProactiveMessage(Zalo $channel): void
+    {
+        if ($this->isReplyInConversationWindow()) {
+            return;
+        }
+
+        app(SendRateLimiter::class)->increment($channel->account_id, $this->rateLimitTarget());
+    }
+
+    /** Số điện thoại là khóa đếm; chưa biết số thì dùng định danh luồng. */
     private function rateLimitTarget(): string
     {
         $phone = $this->contact()->phone_number;
@@ -121,8 +404,8 @@ class SendOnZaloService extends BaseSendOnChannelService
     }
 
     /**
-     * Tin TRẢ LỜI = khách có tin đến trong cửa sổ hội thoại → không phải tin chủ
-     * động nên miễn khung giờ lẫn trần ngày (quyết định đã chốt trong CLAUDE.md).
+     * Tin TRẢ LỜI = khách có tin đến trong cửa sổ hội thoại. Từ 07/09/2026 chỉ
+     * còn dùng để THỐNG KÊ tin chủ động — founder đã bỏ mọi giới hạn chặn gửi.
      */
     private function isReplyInConversationWindow(): bool
     {

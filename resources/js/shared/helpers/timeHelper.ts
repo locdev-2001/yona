@@ -1,8 +1,25 @@
 import { format, formatDistanceToNow, fromUnixTime, isSameYear } from 'date-fns';
+import { enUS, vi } from 'date-fns/locale';
+import type { Locale } from 'date-fns';
 
 // Port từ shared/helpers/timeHelper.js (các hàm màn contacts + conversation cần).
+
+// Ngôn ngữ của date-fns cho mọi chuỗi thời gian đọc thành câu. Locale của lần
+// render do máy chủ quyết và in ra ở thẻ <html lang> — cùng nguồn mà i18n dùng,
+// đọc thẳng ở đây để widget/portal không phải kéo theo bundle chuỗi dịch.
+const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, vi };
+
+function activeDateFnsLocale(): Locale {
+    if (typeof document === 'undefined') return enUS;
+    const language = document.documentElement.lang.replace('_', '-').split('-')[0].toLowerCase();
+
+    return DATE_FNS_LOCALES[language] ?? enUS;
+}
+
+// Khác biệt CỐ Ý so với gốc: gốc không truyền locale nên luôn ra tiếng Anh
+// ("about 1 hour ago"). Sản phẩm chạy tiếng Việt nên chuỗi này phải dịch.
 export function dynamicTime(time: number): string {
-    return formatDistanceToNow(fromUnixTime(time), { addSuffix: true });
+    return formatDistanceToNow(fromUnixTime(time), { addSuffix: true, locale: activeDateFnsLocale() });
 }
 
 export function messageStamp(time: number, dateFormat = 'h:mm a'): string {
@@ -21,8 +38,19 @@ export function dateFormat(time: number, df = 'MMM d, yyyy'): string {
     return format(fromUnixTime(time), df);
 }
 
+// Dạng rút gọn (1m/1h/3d) bám gốc nên giữ nguyên ở mọi ngôn ngữ. Các hàm rút gọn
+// đều cắt chuỗi tiếng Anh, vì vậy chúng dựng chuỗi từ đây chứ không qua
+// `dynamicTime` — hàm đó đã dịch theo locale.
+export function distanceToNowInEnglish(time: number): string {
+    return formatDistanceToNow(fromUnixTime(time), { addSuffix: true });
+}
+
 // Rút gọn chuỗi formatDistanceToNow thành 1m/1h/1d/1mo/1y như bản gốc.
-export function shortTimestamp(time: string, withAgo = false): string {
+export function shortTimestamp(time: string | number, withAgo = false): string {
+    if (typeof time === 'number') {
+        return shortTimestamp(distanceToNowInEnglish(time), withAgo);
+    }
+
     const suffix = withAgo ? ' ago' : '';
     const timeMappings: Record<string, string> = {
         'less than a minute ago': 'now',

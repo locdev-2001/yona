@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import Files from 'dashboard/components-next/SharedAttachments/Files';
@@ -52,9 +52,7 @@ export default function ContactMedia({ contactId }: ContactMediaProps) {
         const conversationId = (attachment as { conversation_id?: number }).conversation_id;
         if (!conversationId || !attachment.message_id) return;
 
-        window.location.assign(
-            `${conversationUrl({ accountId, id: conversationId })}?messageId=${attachment.message_id}`,
-        );
+        router.visit(`${conversationUrl({ accountId, id: conversationId })}?messageId=${attachment.message_id}`);
     };
 
     return (

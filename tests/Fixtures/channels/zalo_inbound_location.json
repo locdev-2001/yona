@@ -1,0 +1,22 @@
+{
+  "type": "inbound",
+  "connection_id": 1,
+  "personal_uid": "1234567890",
+  "peer_uid": "9876543210",
+  "thread_id": "9876543210",
+  "thread_type": 0,
+  "source_id": "msg-zalo-location",
+  "direction": "in",
+  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "platform_sent_at": 1719500040000,
+  "inbound_kind": "location",
+  "content": "",
+  "location": {
+    "latitude": 10.762622,
+    "longitude": 106.660172,
+    "title": "Chợ Bến Thành",
+    "address": "Lê Lợi, Quận 1, TP.HCM",
+    "url": "https://maps.google.com/?q=10.762622,106.660172"
+  },
+  "msg_type": "chat.location.new"
+}

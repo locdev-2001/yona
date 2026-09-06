@@ -12,7 +12,7 @@ import {
     mediaAttachments as sortMediaAttachments,
     mediaOverflowCount,
 } from 'dashboard/conversation/conversationbox/contact/sharedAttachments';
-import { dynamicTime, formatDuration, shortTimestamp } from 'shared/helpers/timeHelper';
+import { formatDuration, shortTimestamp } from 'shared/helpers/timeHelper';
 
 import { t } from '../../../i18n';
 
@@ -101,7 +101,7 @@ export default function Media({
     };
 
     const displayTime = (attachment: MessageAttachment): string =>
-        attachment.created_at ? shortTimestamp(dynamicTime(attachment.created_at), true) : '';
+        attachment.created_at ? shortTimestamp(attachment.created_at, true) : '';
 
     const isOverflowTile = (index: number): boolean =>
         isPeekable && !showAll && overflow > 0 && index === peekLimit - 1;

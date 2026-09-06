@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Jobs\SendReplyJob;
+use App\Services\Messages\InReplyToMessageBuilder;
 use App\Services\MessageTemplates\HookExecutionService;
 use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
@@ -137,6 +138,7 @@ class Message extends Model
 
         static::saving(function (Message $message) {
             $message->validateContentLength();
+            $message->ensureInReplyTo();
             $message->ensureProcessedMessageContent();
         });
 
@@ -362,6 +364,16 @@ class Message extends Model
     private function executeMessageTemplateHooks(): void
     {
         (new HookExecutionService($this))->perform();
+    }
+
+    /** before_save :ensure_in_reply_to — refs/chatwoot/app/models/message.rb:310. */
+    private function ensureInReplyTo(): void
+    {
+        (new InReplyToMessageBuilder(
+            message: $this,
+            inReplyTo: $this->content_attributes['in_reply_to'] ?? null,
+            inReplyToExternalId: $this->content_attributes['in_reply_to_external_id'] ?? null,
+        ))->perform();
     }
 
     private function ensureProcessedMessageContent(): void

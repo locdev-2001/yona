@@ -17,6 +17,10 @@ import ImageBubble from './bubbles/Image';
 import EmailBubble from './bubbles/Email/Index';
 import TextBubble from './bubbles/Text';
 import VideoBubble from './bubbles/Video';
+import ZaloBankCardBubble from './bubbles/ZaloBankCard';
+import ZaloBusinessCardBubble from './bubbles/ZaloBusinessCard';
+import ZaloCallBubble from './bubbles/ZaloCall';
+import ZaloReminderBubble from './bubbles/ZaloReminder';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
 
@@ -32,6 +36,8 @@ interface MessageProps {
     groupWithNext?: boolean;
     // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
     chatAttachments?: MessageAttachment[];
+    // Tin được trả lời — MessageList tra sẵn như getInReplyToMessage bên gốc.
+    inReplyTo?: ConversationMessage | null;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -63,11 +69,29 @@ const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.FALLBACK]: FallbackBubble,
 } as const;
 
+// Loại tin riêng của Zalo: lõi Chatwoot không có content_type cho chúng, nên
+// driver chuẩn hoá vào content_attributes và chỗ này rẽ nhánh — đúng cách bản
+// gốc làm với whatsappFlowResponse / contentAttributes.type === 'dyte' /
+// imageType (story Instagram) trong componentToRender.
+const CHANNEL_CARD_BUBBLES = {
+    business_card: ZaloBusinessCardBubble,
+    bank_card: ZaloBankCardBubble,
+    reminder: ZaloReminderBubble,
+    call: ZaloCallBubble,
+} as const;
+
+function resolveChannelCardBubble(contentAttributes: Record<string, unknown>) {
+    const kind = Object.keys(CHANNEL_CARD_BUBBLES).find((key) => Boolean(contentAttributes[key]));
+
+    return kind ? CHANNEL_CARD_BUBBLES[kind as keyof typeof CHANNEL_CARD_BUBBLES] : null;
+}
+
 export default function Message({
     message,
     channelType,
     groupWithNext = false,
     chatAttachments = [],
+    inReplyTo = null,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -128,16 +152,19 @@ export default function Message({
     const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY && orientation !== ORIENTATION.LEFT;
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
+    const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
     // componentToRender của Message.vue: kênh email (tin công khai) và tin
-    // content_type = incoming_email luôn lên bubble email trước mọi nhánh khác.
+    // content_type = incoming_email luôn lên bubble email trước mọi nhánh khác;
+    // các bubble đọc content_attributes đứng trước nhánh theo đính kèm.
     const BubbleComponent =
         (isEmailInbox && !isPrivate && isEmailMessageType) || contentType === CONTENT_TYPES.INCOMING_EMAIL
             ? EmailBubble
-            : BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)];
+            : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
 
     const shouldRenderMessage = Boolean(
         attachments.length > 0 ||
             message.content ||
+            ChannelCardBubble ||
             status === MESSAGE_STATUS.FAILED ||
             contentAttributes.external_error,
     );
@@ -170,7 +197,7 @@ export default function Message({
         contentAttributes,
         attachments,
         filteredCurrentChatAttachments: chatAttachments,
-        inReplyTo: null,
+        inReplyTo,
         variant,
         orientation,
         shouldGroupWithNext,

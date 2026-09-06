@@ -10,7 +10,7 @@ import {
     fileNameFromUrl,
 } from 'dashboard/conversation/conversationbox/contact/sharedAttachments';
 import { formatBytes } from 'shared/helpers/FileHelper';
-import { dynamicTime, shortTimestamp } from 'shared/helpers/timeHelper';
+import { shortTimestamp } from 'shared/helpers/timeHelper';
 
 import { t } from '../../../i18n';
 
@@ -50,7 +50,7 @@ export default function Files({
     };
 
     const displayTime = (attachment: MessageAttachment): string =>
-        attachment.created_at ? shortTimestamp(dynamicTime(attachment.created_at), true) : '';
+        attachment.created_at ? shortTimestamp(attachment.created_at, true) : '';
 
     const onDownloadFile = async (attachment: MessageAttachment) => {
         try {

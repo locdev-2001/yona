@@ -11,7 +11,14 @@ use App\Models\Message;
  */
 class ChannelMessageStatus
 {
-    public static function fail(Message $message, ?string $externalError): void
+    /**
+     * `$externalError` là chuỗi ở các kênh cũ; kênh khai `outbound_retry` theo
+     * docs/channel-capabilities.md §2.2 ghi mảng {code, message} để UI dịch được
+     * lý do và bật nút Thử lại.
+     *
+     * @param  string|array<string, mixed>|null  $externalError
+     */
+    public static function fail(Message $message, string|array|null $externalError): void
     {
         $message->update([
             'status' => Message::STATUSES['failed'],
@@ -19,7 +26,8 @@ class ChannelMessageStatus
         ]);
     }
 
-    public static function markStatus(Message $message, string $status, ?string $externalError = null): void
+    /** @param string|array<string, mixed>|null $externalError */
+    public static function markStatus(Message $message, string $status, string|array|null $externalError = null): void
     {
         $attributes = ['status' => Message::STATUSES[$status]];
 
