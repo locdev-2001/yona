@@ -1,7 +1,9 @@
 # Deployment — Zalo Personal Bridge
 
-Runbook production đầy đủ (aaPanel, Nginx, Supervisor, DB, deploy và chuyển
-server): [Production Deployment — Ubuntu 24.04 + aaPanel](../production-deployment-aapanel.md).
+> Bản trên nhánh `rewrite/chatwoot-laravel`: đường webhook đã đổi thành
+> `POST /webhooks/zalo` (cùng chỗ với webhook các kênh ngoài khác) và mỗi inbox
+> Zalo giữ đúng một tài khoản — `connection_id` mà bridge dùng làm khóa slot
+> chính là `channel_zalo.id`. Runbook production của nhánh `main` chưa port.
 
 ## Cấu trúc
 
@@ -28,7 +30,7 @@ pnpm pm2:start
 File `.env` bridge (KHÔNG commit):
 
 ```
-LARAVEL_WEBHOOK_URL=https://yona.vn/api/integrations/zalo-personal/webhook
+LARAVEL_WEBHOOK_URL=https://yona.vn/webhooks/zalo
 LARAVEL_WEBHOOK_SECRET=<ZALO_BRIDGE_WEBHOOK_SECRET>   # phải khớp với Laravel
 LARAVEL_BASE_URL=https://yona.vn
 BRIDGE_HTTP_HOST=127.0.0.1
