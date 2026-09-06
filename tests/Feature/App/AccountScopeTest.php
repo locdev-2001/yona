@@ -53,11 +53,11 @@ describe('account scoping', function () {
         $account = Account::factory()->create();
         AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->get("/app/accounts/{$account->id}/reports/overview")
+        $this->actingAs($user)->get("/app/accounts/{$account->id}/settings/sla")
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard/PlaceholderView')
-                ->where('view', 'reports/overview'));
+                ->where('view', 'settings/sla'));
     });
 });
 

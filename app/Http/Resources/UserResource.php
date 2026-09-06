@@ -28,4 +28,15 @@ final class UserResource
             'thumbnail' => $user->avatarUrl(),
         ];
     }
+
+    // User#webhook_data.
+    public static function webhookData(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'type' => 'user',
+        ];
+    }
 }

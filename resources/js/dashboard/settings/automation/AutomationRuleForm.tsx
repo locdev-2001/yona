@@ -128,8 +128,10 @@ export default function AutomationRuleForm({ open, mode, rule, initialExecutionD
         setAutomation(current => ({ ...current, actions: current.actions.filter((_, itemIndex) => itemIndex !== index) }));
     };
 
+    // Xoá action_params khi đổi loại action nằm ở AutomationActionInput (nguồn duy nhất);
+    // ở đây chỉ dọn lỗi của đúng node vừa đổi.
     const resetAction = (index: number) =>
-        setAutomation(current => ({ ...current, actions: current.actions.map((action, itemIndex) => (itemIndex === index ? { ...action, action_params: [] } : action)) }));
+        setErrors(current => Object.fromEntries(Object.entries(current).filter(([key]) => key !== `action_${index}`)));
 
     const submit = async () => {
         const nextErrors = validateAutomation(automation);

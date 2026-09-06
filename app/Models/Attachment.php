@@ -189,6 +189,22 @@ class Attachment extends Model
         return Crypt::encryptString(json_encode($attributes));
     }
 
+    // Tham chiếu đã ký tới chính tệp này — cho phép gửi lại một tệp đã lưu
+    // (vd tệp của macro) qua MessageBuilder mà không tải lên lần nữa.
+    public function signedReference(): string
+    {
+        return self::signUpload([
+            'account_id' => $this->account_id,
+            'file_type' => $this->file_type,
+            'disk' => $this->disk,
+            'path' => $this->path,
+            'filename' => $this->filename,
+            'content_type' => $this->content_type,
+            'byte_size' => $this->byte_size,
+            'meta' => $this->meta ?? [],
+        ]);
+    }
+
     /** @return array<string, mixed> */
     public static function resolveSignedUpload(string $signedId, ?int $accountId): array
     {

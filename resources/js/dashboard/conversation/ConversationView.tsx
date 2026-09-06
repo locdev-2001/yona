@@ -1,5 +1,6 @@
 import CmdBarConversationSnooze from 'dashboard/commands/CmdBarConversationSnooze';
 import { useConversationHotKeys } from 'dashboard/commands/useConversationHotKeys';
+import { useMacroHotKeys } from 'dashboard/commands/useMacroHotKeys';
 import Dashboard from '../Dashboard';
 import { ConversationProvider, useConversation } from './ConversationContext';
 import type { ConversationType } from './constants';
@@ -27,6 +28,7 @@ function ConversationLayout({ conversationId }: { conversationId: number }) {
     // shouldShowSidebar gốc: có currentChat + ui_settings.is_contact_sidebar_open.
     const shouldShowSidebar = Boolean(selectedConversation && uiSettings.is_contact_sidebar_open);
     useConversationHotKeys();
+    useMacroHotKeys();
 
     return (
         <section className="flex w-full h-full min-w-0">

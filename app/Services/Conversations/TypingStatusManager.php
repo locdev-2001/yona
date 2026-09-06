@@ -4,6 +4,7 @@ namespace App\Services\Conversations;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Models\AgentBot;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\User;
@@ -15,8 +16,9 @@ class TypingStatusManager
     /** @param array<string, mixed> $params */
     public function __construct(
         private readonly Conversation $conversation,
-        // Widget bắn sự kiện gõ với sender là Contact (khách), dashboard là User.
-        private readonly User|Contact $user,
+        // Widget bắn sự kiện gõ với sender là Contact (khách), dashboard là User,
+        // Application API là AgentBot.
+        private readonly User|Contact|AgentBot $user,
         private readonly array $params,
     ) {}
 

@@ -26,8 +26,10 @@ export function t(key: string, params?: Record<string, string | number>): string
     if (typeof value !== 'string') return key;
 
     let result = value;
-    if (typeof params?.n === 'number') {
-        result = pluralize(result, params.n);
+    // vue-i18n chọn nhánh số nhiều theo `n`; Chatwoot nhiều chỗ truyền `count`.
+    const pluralCount = typeof params?.n === 'number' ? params.n : typeof params?.count === 'number' ? params.count : undefined;
+    if (pluralCount !== undefined) {
+        result = pluralize(result, pluralCount);
     }
     if (params) {
         result = result.replace(/\{(\w+)\}/g, (match, name: string) =>

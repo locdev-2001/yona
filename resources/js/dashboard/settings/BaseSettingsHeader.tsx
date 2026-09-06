@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
 import CustomBrandPolicyWrapper from 'dashboard/components/CustomBrandPolicyWrapper';
+import BackButton from 'dashboard/components/widgets/BackButton';
 import { getHelpUrlForFeature } from 'dashboard/helper/featureHelper';
 
 // Port từ dashboard/routes/dashboard/settings/components/BaseSettingsHeader.vue
@@ -12,6 +13,7 @@ interface BaseSettingsHeaderProps {
     description?: ReactNode;
     linkText?: string;
     featureName?: string;
+    backButtonLabel?: string;
     searchPlaceholder?: string;
     searchQuery?: string;
     onSearchQueryChange?: (query: string) => void;
@@ -25,6 +27,7 @@ export default function BaseSettingsHeader({
     description = '',
     linkText = '',
     featureName = '',
+    backButtonLabel = '',
     searchPlaceholder = '',
     searchQuery = '',
     onSearchQueryChange,
@@ -37,6 +40,7 @@ export default function BaseSettingsHeader({
     return (
         <>
             <div className="flex flex-col items-start w-full">
+                {backButtonLabel ? <BackButton compact buttonLabel={backButtonLabel} className="my-1" /> : null}
                 {title ? (
                     <div className="flex items-center justify-between w-full gap-4 min-h-8 mb-2">
                         <h1 className="text-heading-1 text-n-slate-12">{title}</h1>

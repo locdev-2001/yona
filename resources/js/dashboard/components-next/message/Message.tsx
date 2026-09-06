@@ -48,6 +48,10 @@ const GRID_TEMPLATE_MAP: Record<string, string> = {
     [ORIENTATION.RIGHT]: '"bubble avatar" "meta spacer"',
 };
 
+// [AGENT_BOT, CAPTAIN_ASSISTANT] của Message.vue — sender nào cũng đứng bên
+// phải như tin của agent, và lấy avatar theo avatar_url.
+const BOT_SENDER_TYPES: string[] = [SENDER_TYPES.AGENT_BOT, SENDER_TYPES.CAPTAIN_ASSISTANT];
+
 const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.TEXT]: TextBubble,
     [BUBBLE_NAMES.IMAGE]: ImageBubble,
@@ -69,14 +73,17 @@ export default function Message({
     const contentAttributes = message.content_attributes ?? {};
     const sender = message.sender ?? null;
     const senderType = message.sender_type ?? null;
+    const additionalAttributes = message.additional_attributes ?? {};
 
     const variant: MessageVariant = (() => {
         if (isPrivate) return MESSAGE_VARIANTS.PRIVATE;
         if (status === MESSAGE_STATUS.FAILED) return MESSAGE_VARIANTS.ERROR;
 
-        // Bản gốc: isBot khi sender là agent_bot hoặc không có sender lẫn
-        // additional_attributes.senderName — B3 chưa có agent_bot nên rút còn !sender.
-        if (!sender && messageType === MESSAGE_TYPES.OUTGOING) return MESSAGE_VARIANTS.BOT;
+        const isBot =
+            sender?.type === SENDER_TYPES.AGENT_BOT ||
+            senderType === SENDER_TYPES.AGENT_BOT ||
+            (!sender && !additionalAttributes.senderName);
+        if (isBot && messageType === MESSAGE_TYPES.OUTGOING) return MESSAGE_VARIANTS.BOT;
 
         const variants: Record<number, MessageVariant> = {
             [MESSAGE_TYPES.INCOMING]: MESSAGE_VARIANTS.USER,
@@ -95,6 +102,7 @@ export default function Message({
         const senderId = message.sender_id ?? sender?.id;
         const effectiveSenderType = sender?.type ?? senderType;
         if (!effectiveSenderType || !senderId) return true;
+        if (BOT_SENDER_TYPES.includes(effectiveSenderType)) return true;
 
         return effectiveSenderType.toLowerCase() === SENDER_TYPES.USER.toLowerCase();
     })();
@@ -121,7 +129,13 @@ export default function Message({
 
     const avatarInfo = (() => {
         if (!sender) {
+            const { senderName, senderAvatarUrl } = additionalAttributes;
+            if (senderName) return { name: senderName, src: senderAvatarUrl ?? '' };
             return { name: t('CONVERSATION.BOT'), src: '' };
+        }
+        // Bot dùng avatar_url (avatar riêng hoặc avatar inbox), người dùng dùng thumbnail.
+        if (sender.type && BOT_SENDER_TYPES.includes(sender.type)) {
+            return { name: sender.name ?? '', src: sender.avatar_url ?? '' };
         }
         return { name: sender.name ?? '', src: sender.thumbnail ?? '' };
     })();

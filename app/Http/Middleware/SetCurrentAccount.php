@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\AgentBot;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,6 +20,23 @@ class SetCurrentAccount
 
         if (! $account instanceof Account) {
             $account = Account::query()->findOrFail($account);
+        }
+
+        // validate_token_api_access: account tắt API thì token không vào được.
+        if ($request->attributes->get(AuthenticateApiAccessToken::AUTHENTICATED_BY_TOKEN)
+            && ! $account->apiAndWebhooksEnabled()) {
+            abort(response()->json(['error' => 'API access is not enabled for this account'], 403));
+        }
+
+        // Agent bot không phải thành viên account: chỉ cần thuộc account (hoặc là
+        // system bot) rồi đi tiếp; không có account_user, không share Inertia.
+        $user = $request->user();
+        if ($user instanceof AgentBot) {
+            abort_unless($user->account_id === null || $user->account_id === $account->id, 404);
+
+            $request->attributes->set('currentAccount', $account);
+
+            return $next($request);
         }
 
         $accountUser = $request->user()

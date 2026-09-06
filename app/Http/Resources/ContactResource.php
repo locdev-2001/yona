@@ -88,4 +88,22 @@ class ContactResource extends JsonResource
             ],
         ];
     }
+
+    // Contact#webhook_data.
+    public static function webhookData(Contact $contact): array
+    {
+        return [
+            'account' => $contact->account->webhookData(),
+            'additional_attributes' => $contact->additional_attributes ?? [],
+            'avatar' => $contact->avatarUrl(),
+            'custom_attributes' => $contact->custom_attributes ?? [],
+            'email' => $contact->email,
+            'id' => $contact->id,
+            'identifier' => $contact->identifier,
+            'name' => $contact->name,
+            'phone_number' => $contact->phone_number,
+            'thumbnail' => $contact->avatarUrl(),
+            'blocked' => $contact->blocked,
+        ];
+    }
 }

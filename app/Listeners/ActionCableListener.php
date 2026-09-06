@@ -12,6 +12,7 @@ use App\Http\Resources\UserResource;
 use App\Jobs\ActionCableBroadcastJob;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\AgentBot;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
@@ -252,9 +253,11 @@ class ActionCableListener extends BaseListener
 
         $this->broadcast($account, $this->typingEventListenerTokens($account, $conversation, $user), $type, [
             'conversation' => ConversationResource::pushEventData($conversation),
-            'user' => $user instanceof User
-                ? UserResource::pushEventData($user, $account)
-                : ContactResource::pushEventData($user),
+            'user' => match (true) {
+                $user instanceof User => UserResource::pushEventData($user, $account),
+                $user instanceof AgentBot => $user->pushEventData($conversation->inbox),
+                default => ContactResource::pushEventData($user),
+            },
             'is_private' => $event->data['is_private'] ?? false,
         ]);
     }
@@ -265,10 +268,15 @@ class ActionCableListener extends BaseListener
     }
 
     /** @return list<string> */
-    private function typingEventListenerTokens(Account $account, Conversation $conversation, User|Contact $user): array
+    private function typingEventListenerTokens(Account $account, Conversation $conversation, User|Contact|AgentBot $user): array
     {
         $contactInboxToken = $conversation->contactInbox?->pubsub_token;
-        $currentUserToken = $user instanceof Contact ? $contactInboxToken : $user->pubsub_token;
+        // Bản gốc: respond_to?(:pubsub_token) — agent bot không có token riêng.
+        $currentUserToken = match (true) {
+            $user instanceof Contact => $contactInboxToken,
+            $user instanceof User => $user->pubsub_token,
+            default => null,
+        };
 
         $tokens = [...$this->userTokens($account, $conversation->inbox->members()->get()), $contactInboxToken];
 

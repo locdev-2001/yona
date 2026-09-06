@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
+use App\Models\Concerns\Reportable;
 use App\Notifications\ConfirmationInstructions;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use Avatarable, HasFactory, Notifiable;
+    use Avatarable, HasFactory, Notifiable, Reportable;
 
     public const AVAILABILITY_ONLINE = 0;
 
@@ -88,6 +89,12 @@ class User extends Authenticatable
         // AccessTokenable: mỗi user có token Application API ngay khi tạo.
         static::created(function (User $user) {
             $user->accessToken()->create([]);
+        });
+
+        // remove_macros: macro riêng chết theo tác giả, macro global ở lại
+        // account với created_by rỗng.
+        static::deleting(function (User $user) {
+            Macro::query()->where('created_by_id', $user->id)->personal()->delete();
         });
     }
 

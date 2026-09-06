@@ -10,7 +10,7 @@ import type { PendingAttachment } from 'dashboard/components/widgets/Attachments
 import { appendSignature, removeSignature } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { MESSAGE_MAX_LENGTH } from 'dashboard/conversation/constants';
+import { AGENT_BOT_ASSIGNEE_TYPE, MESSAGE_MAX_LENGTH, STATUS_TYPE } from 'dashboard/conversation/constants';
 import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
 
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
@@ -81,8 +81,14 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const editorRef = useRef<EditorHandle>(null);
 
     const canReply = selectedConversation?.can_reply ?? false;
-    // API inbox: canSendPublicReply luôn true → isPrivate chỉ theo replyType.
-    const isPrivate = replyType === REPLY_EDITOR_MODES.NOTE;
+    // Bot đang giữ hội thoại pending: agent chỉ ghi được ghi chú riêng cho tới
+    // khi bấm "Take over" (canSendPublicReply của ReplyBox.vue).
+    const isBotOwnedPendingConversation =
+        selectedConversation?.status === STATUS_TYPE.PENDING &&
+        selectedConversation?.meta?.assignee_type === AGENT_BOT_ASSIGNEE_TYPE;
+    // API inbox: isWithinMessagingWindow luôn true → canSendPublicReply chỉ còn
+    // phụ thuộc nhánh bot.
+    const isPrivate = isBotOwnedPendingConversation || replyType === REPLY_EDITOR_MODES.NOTE;
     const isOnPrivateNote = isPrivate;
     const isEditorDisabled = !isOnPrivateNote && !canReply;
     // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
@@ -312,7 +318,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
             <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}>
             <ReplyTopPanel
                 mode={replyType}
-                isReplyRestricted={false}
+                isReplyRestricted={isBotOwnedPendingConversation}
                 isEditorDisabled={isEditorDisabled}
                 captainTasksEnabled={captainTasksEnabled}
                 conversationId={conversationId}

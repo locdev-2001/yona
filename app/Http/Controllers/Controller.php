@@ -28,11 +28,10 @@ abstract class Controller
     {
         $conversation = $account->conversations()->where('display_id', $displayId)->firstOrFail();
 
-        /** @var AccountUser $accountUser */
         $accountUser = $request->attributes->get('currentAccountUser');
 
         abort_unless(
-            $conversation->isVisibleTo($request->user(), $accountUser),
+            $conversation->isVisibleTo($request->user(), $accountUser instanceof AccountUser ? $accountUser : null),
             401,
             'You are not authorized to do this action'
         );

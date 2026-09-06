@@ -254,7 +254,8 @@ describe('dispatch wiring', function () {
         Queue::fake();
 
         DomainEvent::dispatch(EventType::CONTACT_CREATED, ['contact' => $contact]);
-        DomainEvent::dispatch(EventType::INBOX_CREATED, ['inbox' => null]);
+        // INBOX_CREATED nay có WebhookListener xử lý — dùng event chưa listener nào nhận.
+        DomainEvent::dispatch(EventType::AGENT_ADDED, []);
 
         Queue::assertPushed(ActionCableBroadcastJob::class, 1);
     });

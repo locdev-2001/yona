@@ -39,7 +39,7 @@ export interface TeamMeta {
 export interface MessageSender {
     id: number;
     name: string | null;
-    type: 'user' | 'contact';
+    type: 'user' | 'contact' | 'agent_bot' | 'captain_assistant';
     thumbnail?: string;
     available_name?: string;
     availability_status?: string;
@@ -59,6 +59,9 @@ export interface ConversationMessage {
     created_at: number;
     private: boolean;
     source_id: string | null;
+    // additional_attributes.senderName/senderAvatarUrl: tin từ tích hợp ngoài
+    // (Slack…) không có sender nhưng vẫn có tên người gửi.
+    additional_attributes?: { senderName?: string; senderAvatarUrl?: string } & Record<string, unknown>;
     sender?: MessageSender;
     sender_type?: string | null;
     sender_id?: number | null;

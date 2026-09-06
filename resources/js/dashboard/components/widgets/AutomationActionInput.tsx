@@ -62,9 +62,12 @@ export default function AutomationActionInput({
         ? String(action.action_params[0] ?? '')
         : typeof action.action_params === 'string' ? action.action_params : '';
 
+    // Đổi loại action luôn kèm xoá tham số cũ trong CÙNG một lần cập nhật: cha có
+    // thể là component controlled (MacroForm) — hai lần gọi liên tiếp đều tính từ
+    // prop cũ nên lần sau sẽ ghi đè lần trước, làm mất action_name vừa chọn.
     const onActionNameChange = (value: FilterOption | null) => {
-        if (!value) return;
-        onChange({ ...action, action_name: String(value.id) });
+        if (!value || String(value.id) === action.action_name) return;
+        onChange({ ...action, action_name: String(value.id), action_params: [] });
         onResetAction();
     };
 

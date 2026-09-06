@@ -47,6 +47,7 @@ export default function EditLiveChatCampaignDialog({
                 mode="edit"
                 selectedCampaign={selectedCampaign}
                 showActionButtons={false}
+                embedded
                 onValidityChange={onValidityChange}
                 onSubmit={submit}
             />

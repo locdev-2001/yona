@@ -1,5 +1,120 @@
 // Sinh bởi `php artisan i18n:generate` từ lang/{locale}/*.php — KHÔNG SỬA TAY.
 const messages: Record<string, unknown> = {
+    "AGENT_BOTS": {
+        "HEADER": "Bots",
+        "LOADING_EDITOR": "Loading editor...",
+        "DESCRIPTION": "Agent Bots are like the most fabulous members of your team. They can handle the small stuff, so you can focus on the stuff that matters. Give them a try. You can manage your bots from this page or create new ones using the 'Add Bot' button.",
+        "LEARN_MORE": "Learn about agent bots",
+        "COUNT": "{n} bot | {n} bots",
+        "SEARCH_PLACEHOLDER": "Search bots...",
+        "NO_RESULTS": "No bots found matching your search",
+        "GLOBAL_BOT": "System bot",
+        "GLOBAL_BOT_BADGE": "System",
+        "AVATAR": {
+            "SUCCESS_DELETE": "Bot avatar deleted successfully",
+            "ERROR_DELETE": "Error deleting bot avatar, please try again"
+        },
+        "BOT_CONFIGURATION": {
+            "TITLE": "Select an agent bot",
+            "DESC": "Assign an Agent Bot to your inbox. They can handle initial conversations and transfer them to a live agent when necessary.",
+            "SUBMIT": "Update",
+            "DISCONNECT": "Disconnect bot",
+            "SUCCESS_MESSAGE": "Successfully updated the agent bot.",
+            "DISCONNECTED_SUCCESS_MESSAGE": "Successfully disconnected the agent bot.",
+            "ERROR_MESSAGE": "Could not update the agent bot. Please try again.",
+            "DISCONNECTED_ERROR_MESSAGE": "Could not disconnect the agent bot. Please try again.",
+            "SELECT_PLACEHOLDER": "Select bot"
+        },
+        "ADD": {
+            "TITLE": "Add Bot",
+            "CANCEL_BUTTON_TEXT": "Cancel",
+            "API": {
+                "SUCCESS_MESSAGE": "Bot added successfully.",
+                "ERROR_MESSAGE": "Could not add bot. Please try again later."
+            }
+        },
+        "LIST": {
+            "404": "No bots found. You can create a bot by clicking the 'Add Bot' button.",
+            "LOADING": "Fetching bots...",
+            "TABLE_HEADER": {
+                "DETAILS": "Bot Details",
+                "URL": "Webhook URL",
+                "ACTIONS": "Actions"
+            }
+        },
+        "DELETE": {
+            "BUTTON_TEXT": "Delete",
+            "TITLE": "Delete bot",
+            "CONFIRM": {
+                "TITLE": "Confirm Deletion",
+                "MESSAGE": "Are you sure you want to delete {name}?",
+                "YES": "Yes, Delete",
+                "NO": "No, Keep"
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Bot deleted successfully.",
+                "ERROR_MESSAGE": "Could not delete bot. Please try again."
+            }
+        },
+        "EDIT": {
+            "BUTTON_TEXT": "Edit",
+            "TITLE": "Edit bot",
+            "API": {
+                "SUCCESS_MESSAGE": "Bot updated successfully.",
+                "ERROR_MESSAGE": "Could not update bot. Please try again."
+            }
+        },
+        "SECRET": {
+            "LABEL": "Webhook Secret",
+            "COPY": "Copy secret to clipboard",
+            "COPY_SUCCESS": "Secret copied to clipboard",
+            "TOGGLE": "Toggle secret visibility",
+            "CREATED_DESC": "Use the secret below to verify webhook signatures. Please copy it now, you can also find it later in the bot settings.",
+            "DONE": "Done",
+            "RESET_SUCCESS": "Webhook secret regenerated successfully",
+            "RESET_ERROR": "Unable to regenerate webhook secret. Please try again"
+        },
+        "ACCESS_TOKEN": {
+            "TITLE": "Access Token",
+            "DESCRIPTION": "Copy the access token and save it securely",
+            "COPY_SUCCESSFUL": "Access token copied to clipboard",
+            "RESET_SUCCESS": "Access token regenerated successfully",
+            "RESET_ERROR": "Unable to regenerate access token. Please try again"
+        },
+        "FORM": {
+            "AVATAR": {
+                "LABEL": "Bot avatar"
+            },
+            "NAME": {
+                "LABEL": "Bot name",
+                "PLACEHOLDER": "Enter bot name",
+                "REQUIRED": "Bot name is required"
+            },
+            "DESCRIPTION": {
+                "LABEL": "Description",
+                "PLACEHOLDER": "What does this bot do?"
+            },
+            "WEBHOOK_URL": {
+                "LABEL": "Webhook URL",
+                "PLACEHOLDER": "https://example.com/webhook",
+                "REQUIRED": "Webhook URL is required"
+            },
+            "ERRORS": {
+                "NAME": "Bot name is required",
+                "URL": "Webhook URL is required",
+                "VALID_URL": "Please enter a valid URL starting with http:// or https://"
+            },
+            "CANCEL": "Cancel",
+            "CREATE": "Create Bot",
+            "UPDATE": "Update Bot"
+        },
+        "WEBHOOK": {
+            "DESCRIPTION": "Configure a webhook bot to integrate with your custom services. The bot will receive and process events from conversations and can respond to them."
+        },
+        "TYPES": {
+            "WEBHOOK": "Webhook bot"
+        }
+    },
     "AGENT_MGMT": {
         "HEADER": "Agents",
         "HEADER_BTN_TXT": "Add Agent",
@@ -2365,6 +2480,9 @@ const messages: Record<string, unknown> = {
             "auto_resolve": {
                 "not_sent_due_to_messaging_window": "Auto-resolve message not sent due to outgoing message restrictions"
             },
+            "agent_bot": {
+                "error_moved_to_open": "Conversation was marked open by system due to an error with the agent bot."
+            },
             "muted": "{user_name} has muted the conversation",
             "unmuted": "{user_name} has unmuted the conversation"
         },
@@ -2564,6 +2682,37 @@ const messages: Record<string, unknown> = {
             "IMPORT_FAILED": "Could not start the import."
         }
     },
+    "DATE_PICKER": {
+        "PREVIOUS_PERIOD": "Previous period",
+        "NEXT_PERIOD": "Next period",
+        "WEEK_NUMBER": "Week #{weekNumber}",
+        "APPLY_BUTTON": "Apply",
+        "CLEAR_BUTTON": "Clear",
+        "DATE_RANGE_INPUT": {
+            "START": "Start Date",
+            "END": "End Date"
+        },
+        "DATE_RANGE_OPTIONS": {
+            "TITLE": "DATE RANGE",
+            "LAST_7_DAYS": "Last 7 days",
+            "LAST_30_DAYS": "Last 30 days",
+            "LAST_3_MONTHS": "Last 3 months",
+            "LAST_6_MONTHS": "Last 6 months",
+            "LAST_YEAR": "Last year",
+            "THIS_WEEK": "This week",
+            "MONTH_TO_DATE": "This month",
+            "CUSTOM_RANGE": "Custom date range"
+        }
+    },
+    "DAYS_OF_WEEK": {
+        "SUNDAY": "Sunday",
+        "MONDAY": "Monday",
+        "TUESDAY": "Tuesday",
+        "WEDNESDAY": "Wednesday",
+        "THURSDAY": "Thursday",
+        "FRIDAY": "Friday",
+        "SATURDAY": "Saturday"
+    },
     "DELETE_CONTACT": {
         "BUTTON_LABEL": "Delete Contact",
         "TITLE": "Delete contact",
@@ -2656,6 +2805,12 @@ const messages: Record<string, unknown> = {
         }
     },
     "ERRORS": {
+        "webhook": {
+            "invalid": "Invalid events"
+        },
+        "reports": {
+            "date_range_too_long": "Date range cannot exceed 6 months"
+        },
         "conversations": {
             "resolved": "Conversation is resolved and does not accept new messages"
         }
@@ -4318,8 +4473,348 @@ const messages: Record<string, unknown> = {
             "VOICE": "Voice"
         }
     },
+    "INBOX_REPORTS": {
+        "HEADER": "Inbox Overview",
+        "DESCRIPTION": "Quickly view your inbox performance with key metrics like conversations, response times, resolution times, and resolved cases—all in one place. Click an inbox name for more details.",
+        "LOADING_CHART": "Loading chart data...",
+        "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
+        "DOWNLOAD_INBOX_REPORTS": "Download inbox reports",
+        "FILTER_DROPDOWN_LABEL": "Select Inbox",
+        "ALL_INBOXES": "All Inboxes",
+        "SEARCH_INBOX": "Search Inbox",
+        "FILTERS": {
+            "INPUT_PLACEHOLDER": {
+                "INBOXES": "Search inboxes"
+            }
+        },
+        "METRICS": {
+            "CONVERSATIONS": {
+                "NAME": "Conversations",
+                "DESC": "( Total )"
+            },
+            "INCOMING_MESSAGES": {
+                "NAME": "Incoming Messages",
+                "DESC": "( Total )"
+            },
+            "OUTGOING_MESSAGES": {
+                "NAME": "Outgoing Messages",
+                "DESC": "( Total )"
+            },
+            "FIRST_RESPONSE_TIME": {
+                "NAME": "First Response Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_TIME": {
+                "NAME": "Resolution Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            }
+        },
+        "CUSTOM_DATE_RANGE": {
+            "CONFIRM": "Apply",
+            "PLACEHOLDER": "Select date range"
+        }
+    },
+    "INTEGRATION_APPS": {
+        "FETCHING": "Fetching Integrations",
+        "NO_HOOK_CONFIGURED": "There are no {integrationId} integrations configured in this account.",
+        "HEADER": "Applications",
+        "COUNT": "{n} integration | {n} integrations",
+        "SEARCH_PLACEHOLDER": "Search...",
+        "NO_RESULTS": "No results found matching your search",
+        "STATUS": {
+            "ENABLED": "Enabled",
+            "DISABLED": "Disabled"
+        },
+        "CONFIGURE": "Configure",
+        "ADD_BUTTON": "Add a new hook",
+        "DELETE": {
+            "TITLE": {
+                "INBOX": "Confirm deletion",
+                "ACCOUNT": "Disconnect"
+            },
+            "MESSAGE": {
+                "INBOX": "Are you sure to delete?",
+                "ACCOUNT": "Are you sure to disconnect?"
+            },
+            "CONFIRM_BUTTON_TEXT": {
+                "INBOX": "Yes, Delete",
+                "ACCOUNT": "Yes, Disconnect"
+            },
+            "CANCEL_BUTTON_TEXT": "Cancel",
+            "API": {
+                "SUCCESS_MESSAGE": "Hook deleted successfully",
+                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+            }
+        },
+        "LIST": {
+            "FETCHING": "Fetching integration hooks",
+            "INBOX": "Inbox",
+            "ACTIONS": "Actions",
+            "DELETE": {
+                "BUTTON_TEXT": "Delete"
+            }
+        },
+        "ADD": {
+            "FORM": {
+                "INBOX": {
+                    "LABEL": "Select Inbox",
+                    "PLACEHOLDER": "Select Inbox"
+                },
+                "SUBMIT": "Create",
+                "VALIDATING_OPENAI": "Validating with OpenAI...",
+                "CANCEL": "Cancel"
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Integration hook added successfully",
+                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+            }
+        },
+        "CONNECT": {
+            "BUTTON_TEXT": "Connect"
+        },
+        "DISCONNECT": {
+            "BUTTON_TEXT": "Disconnect"
+        },
+        "SIDEBAR_DESCRIPTION": {
+            "DIALOGFLOW": "Dialogflow is a natural language processing platform for building conversational interfaces. Integrating it with {installationName} lets bots handle queries first and transfer them to agents when needed. It helps qualify leads and reduce agent workload by answering FAQs. To add Dialogflow, create a Service Account in Google Console and share the credentials. Refer to the docs for details"
+        },
+        "dashboard_apps": {
+            "name": "Dashboard Apps",
+            "description": "Dashboard Apps allow you to create and embed applications that display user information, orders, or payment history, providing more context to your customer support agents."
+        },
+        "dyte": {
+            "name": "Cloudflare RealtimeKit",
+            "short_description": "Start video/voice calls with customers directly from Chatwoot.",
+            "description": "Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot."
+        },
+        "slack": {
+            "name": "Slack",
+            "short_description": "Receive notifications and respond to conversations directly in Slack.",
+            "description": "Integrate Chatwoot with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface."
+        },
+        "webhooks": {
+            "name": "Webhooks",
+            "description": "Webhook events provide real-time updates about activities in your Chatwoot account. You can subscribe to your preferred events, and Chatwoot will send you HTTP callbacks with the updates."
+        },
+        "dialogflow": {
+            "name": "Dialogflow",
+            "short_description": "Build chatbots to handle initial queries before transferring to agents.",
+            "description": "Build chatbots with Dialogflow and easily integrate them into your inbox. These bots can handle initial queries before transferring them to a customer service agent."
+        },
+        "google_translate": {
+            "name": "Google Translate",
+            "short_description": "Automatically translate customer messages for agents.",
+            "description": "Integrate Google Translate to help agents easily translate customer messages. This integration automatically detects the language and converts it to the agent's or admin's preferred language."
+        },
+        "openai": {
+            "name": "OpenAI",
+            "short_description": "AI-powered reply suggestions, summarization, and message enhancement.",
+            "description": "Leverage the power of large language models from OpenAI with the features such as reply suggestions, summarization, message rephrasing, spell-checking, and label classification."
+        },
+        "linear": {
+            "name": "Linear",
+            "short_description": "Create and link Linear issues directly from conversations.",
+            "description": "Create issues in Linear directly from your conversation window. Alternatively, link existing Linear issues for a more streamlined and efficient issue tracking process."
+        },
+        "notion": {
+            "name": "Notion",
+            "short_description": "Integrate databases, documents and pages directly with Captain.",
+            "description": "Connect your Notion workspace to enable Captain to access and generate intelligent responses using content from your databases, documents, and pages to provide more contextual customer support."
+        },
+        "shopify": {
+            "name": "Shopify",
+            "short_description": "Access order details and customer data from your Shopify store.",
+            "description": "Connect your Shopify store to access order details, customer information, and product data directly within your conversations and helps your support team provide faster, more contextual assistance to your customers."
+        },
+        "leadsquared": {
+            "name": "LeadSquared",
+            "short_description": "Sync your contacts and conversations with LeadSquared CRM.",
+            "description": "Sync your contacts and conversations with LeadSquared CRM. This integration automatically creates leads in LeadSquared when new contacts are added, and logs conversation activity to provide your sales team with complete context."
+        }
+    },
     "INTEGRATION_SETTINGS": {
+        "SHOPIFY": {
+            "HEADER": "Shopify",
+            "DELETE": {
+                "TITLE": "Delete Shopify Integration",
+                "MESSAGE": "Are you sure you want to delete the Shopify integration?"
+            },
+            "STORE_URL": {
+                "TITLE": "Connect Shopify Store",
+                "LABEL": "Store URL",
+                "PLACEHOLDER": "your-store.myshopify.com",
+                "HELP": "Enter your Shopify store's myshopify.com URL",
+                "CANCEL": "Cancel",
+                "SUBMIT": "Connect Store"
+            },
+            "ERROR": "There was an error connecting to Shopify. Please try again or contact support if the issue persists."
+        },
+        "HEADER": "Integrations",
+        "DESCRIPTION": "Chatwoot integrates with multiple tools and services to improve your team's efficiency. Explore the list below to configure your favorite apps.",
+        "LEARN_MORE": "Learn more about integrations",
+        "LOADING": "Fetching integrations",
+        "SEARCH_PLACEHOLDER": "Search integrations...",
+        "NO_RESULTS": "No integrations found matching your search",
+        "CAPTAIN": {
+            "DISABLED": "Captain is not enabled on your account.",
+            "CLICK_HERE_TO_CONFIGURE": "Click here to configure",
+            "LOADING_CONSOLE": "Loading Captain Console...",
+            "FAILED_TO_LOAD_CONSOLE": "Failed to load Captain Console. Please refresh and try again."
+        },
+        "WEBHOOK": {
+            "SUBSCRIBED_EVENTS": "Subscribed Events",
+            "LEARN_MORE": "Learn more about webhooks",
+            "PAYWALL": {
+                "TITLE": "Webhooks are available on paid plans",
+                "AVAILABLE_ON": "Use webhooks to receive real-time events from your Chatwoot account.",
+                "UPGRADE_PROMPT": "Upgrade to the Startups, Business, or Enterprise plan to use webhooks.",
+                "UPGRADE_NOW": "Upgrade now",
+                "CANCEL_ANYTIME": "Change or cancel your plan anytime."
+            },
+            "SECRET": {
+                "LABEL": "Secret",
+                "COPY": "Copy secret to clipboard",
+                "COPY_SUCCESS": "Secret copied to clipboard",
+                "TOGGLE": "Toggle secret visibility",
+                "CREATED_DESC": "Your webhook has been created. Use the secret below to verify webhook signatures. Please copy it now — you can also find it later in the webhook edit form.",
+                "DONE": "Done"
+            },
+            "COUNT": "{n} webhook | {n} webhooks",
+            "SEARCH_PLACEHOLDER": "Search webhooks...",
+            "NO_RESULTS": "No webhooks found matching your search",
+            "FORM": {
+                "CANCEL": "Cancel",
+                "DESC": "Webhook events provide you the realtime information about what's happening in your Chatwoot account. Please enter a valid URL to configure a callback.",
+                "SUBSCRIPTIONS": {
+                    "LABEL": "Events",
+                    "EVENTS": {
+                        "CONVERSATION_CREATED": "Conversation Created",
+                        "CONVERSATION_STATUS_CHANGED": "Conversation Status Changed",
+                        "CONVERSATION_UPDATED": "Conversation Updated",
+                        "MESSAGE_CREATED": "Message created",
+                        "MESSAGE_UPDATED": "Message updated",
+                        "WEBWIDGET_TRIGGERED": "Live chat widget opened by the user",
+                        "CONTACT_CREATED": "Contact created",
+                        "CONTACT_UPDATED": "Contact updated",
+                        "CONVERSATION_TYPING_ON": "Conversation Typing On",
+                        "CONVERSATION_TYPING_OFF": "Conversation Typing Off",
+                        "INBOX_UPDATED": "Inbox updated"
+                    }
+                },
+                "NAME": {
+                    "LABEL": "Webhook Name",
+                    "PLACEHOLDER": "Enter the name of the webhook"
+                },
+                "END_POINT": {
+                    "LABEL": "Webhook URL",
+                    "PLACEHOLDER": "Example: {webhookExampleURL}",
+                    "ERROR": "Please enter a valid URL"
+                },
+                "EDIT_SUBMIT": "Update webhook",
+                "ADD_SUBMIT": "Create webhook"
+            },
+            "TITLE": "Webhook",
+            "CONFIGURE": "Configure",
+            "HEADER": "Webhook settings",
+            "HEADER_BTN_TXT": "Add new webhook",
+            "LOADING": "Fetching attached webhooks",
+            "SEARCH_404": "There are no items matching this query",
+            "SIDEBAR_TXT": "<p><b>Webhooks</b> </p> <p>Webhooks are HTTP callbacks which can be defined for every account. They are triggered by events like message creation in Chatwoot. You can create more than one webhook for this account. <br /><br /> For creating a <b>webhook</b>, click on the <b>Add new webhook</b> button. You can also remove any existing webhook by clicking on the Delete button.</p>",
+            "LIST": {
+                "404": "There are no webhooks configured for this account.",
+                "TITLE": "Manage webhooks",
+                "TABLE_HEADER": {
+                    "WEBHOOK_ENDPOINT": "Webhook endpoint",
+                    "ACTIONS": "Actions"
+                }
+            },
+            "EDIT": {
+                "BUTTON_TEXT": "Edit",
+                "TITLE": "Edit webhook",
+                "API": {
+                    "SUCCESS_MESSAGE": "Webhook configuration updated successfully",
+                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                }
+            },
+            "ADD": {
+                "CANCEL": "Cancel",
+                "TITLE": "Add new webhook",
+                "API": {
+                    "SUCCESS_MESSAGE": "Webhook configuration added successfully",
+                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                }
+            },
+            "DELETE": {
+                "BUTTON_TEXT": "Delete",
+                "API": {
+                    "SUCCESS_MESSAGE": "Webhook deleted successfully",
+                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                },
+                "CONFIRM": {
+                    "TITLE": "Confirm Deletion",
+                    "MESSAGE": "Are you sure to delete the webhook? ({webhookURL})",
+                    "YES": "Yes, Delete ",
+                    "NO": "No, Keep it"
+                }
+            }
+        },
+        "SLACK": {
+            "HEADER": "Slack",
+            "DELETE": "Delete",
+            "DELETE_CONFIRMATION": {
+                "TITLE": "Delete the integration",
+                "MESSAGE": "Are you sure you want to delete the integration? Doing so will result in the loss of access to conversations on your Slack workspace."
+            },
+            "HELP_TEXT": {
+                "TITLE": "How to use the Slack Integration?",
+                "BODY": "With this integration, all of your incoming conversations will be synced to the ***{selectedChannelName}*** channel in your Slack workspace. You can manage all your customer conversations right within the channel and never miss a message.\n\nHere are the main features of the integration:\n\n**Respond to conversations from within Slack:** To respond to a conversation in the ***{selectedChannelName}*** Slack channel, simply type out your message and send it as a thread. This will create a response back to the customer through Chatwoot. It's that simple!\n\n **Create private notes:** If you want to create private notes instead of replies, start your message with ***`note:`***. This ensures that your message is kept private and won't be visible to the customer.\n\n**Associate an agent profile:** If the person who replied on Slack has an agent profile in Chatwoot under the same email, the replies will be associated with that agent profile automatically. This means you can easily track who said what and when. On the other hand, when the replier doesn't have an associated agent profile, the replies will appear from the bot profile to the customer.",
+                "SELECTED": "selected"
+            },
+            "SELECT_CHANNEL": {
+                "OPTION_LABEL": "Select a channel",
+                "UPDATE": "Update",
+                "BUTTON_TEXT": "Connect channel",
+                "DESCRIPTION": "Your Slack workspace is now linked with Chatwoot. However, the integration is currently inactive. To activate the integration and connect a channel to Chatwoot, please click the button below.\n\n**Note:** If you are attempting to connect a private channel, add the Chatwoot app to the Slack channel before proceeding with this step.",
+                "ATTENTION_REQUIRED": "Attention required",
+                "EXPIRED": "Your Slack integration has expired. To continue receiving messages on Slack, please delete the integration and connect your workspace again."
+            },
+            "UPDATE_ERROR": "There was an error updating the integration, please try again",
+            "UPDATE_SUCCESS": "The channel is connected successfully",
+            "FAILED_TO_FETCH_CHANNELS": "There was an error fetching the channels from Slack, please try again"
+        },
+        "DYTE": {
+            "CLICK_HERE_TO_JOIN": "Click here to join",
+            "LEAVE_THE_ROOM": "Leave the room",
+            "START_VIDEO_CALL_HELP_TEXT": "Start a new video call with the customer",
+            "JOIN_ERROR": "There was an error joining the call, please try again",
+            "CREATE_ERROR": "There was an error creating a meeting link, please try again"
+        },
         "OPEN_AI": {
+            "AI_ASSIST": "AI Assist",
+            "WITH_AI": " {option} with AI ",
+            "OPTIONS": {
+                "REPLY_SUGGESTION": "Reply Suggestion",
+                "SUMMARIZE": "Summarize",
+                "REPHRASE": "Improve Writing",
+                "FIX_SPELLING_GRAMMAR": "Fix Spelling and Grammar",
+                "SHORTEN": "Shorten",
+                "EXPAND": "Expand",
+                "MAKE_FRIENDLY": "Change message tone to friendly",
+                "MAKE_FORMAL": "Use formal tone",
+                "SIMPLIFY": "Simplify",
+                "CONFIDENT": "Use confident tone",
+                "PROFESSIONAL": "Use professional tone",
+                "CASUAL": "Use casual tone",
+                "STRAIGHTFORWARD": "Use straightforward tone"
+            },
             "REPLY_OPTIONS": {
                 "IMPROVE_REPLY": "Improve reply",
                 "IMPROVE_REPLY_SELECTION": "Improve the selection",
@@ -4337,6 +4832,208 @@ const messages: Record<string, unknown> = {
                 "SUGGESTION": "Suggest a reply",
                 "SUMMARIZE": "Summarize the conversation",
                 "ASK_COPILOT": "Ask Copilot"
+            },
+            "ASSISTANCE_MODAL": {
+                "DRAFT_TITLE": "Draft content",
+                "GENERATED_TITLE": "Generated content",
+                "AI_WRITING": "AI is writing",
+                "BUTTONS": {
+                    "APPLY": "Use this suggestion",
+                    "CANCEL": "Cancel"
+                }
+            },
+            "CTA_MODAL": {
+                "TITLE": "Integrate with OpenAI",
+                "DESC": "Bring advanced AI features to your dashboard with OpenAI's GPT models. To begin, enter the API key from your OpenAI account.",
+                "KEY_PLACEHOLDER": "Enter your OpenAI API key",
+                "BUTTONS": {
+                    "NEED_HELP": "Need help?",
+                    "DISMISS": "Dismiss",
+                    "FINISH": "Finish Setup"
+                },
+                "DISMISS_MESSAGE": "You can setup OpenAI integration later Whenever you want.",
+                "SUCCESS_MESSAGE": "OpenAI integration setup successfully"
+            },
+            "TITLE": "Improve With AI",
+            "SUMMARY_TITLE": "Summary with AI",
+            "REPLY_TITLE": "Reply suggestion with AI",
+            "SUBTITLE": "An improved reply will be generated using AI, based on your current draft.",
+            "TONE": {
+                "TITLE": "Tone",
+                "OPTIONS": {
+                    "PROFESSIONAL": "Professional",
+                    "FRIENDLY": "Friendly"
+                }
+            },
+            "BUTTONS": {
+                "GENERATE": "Generate",
+                "GENERATING": "Generating...",
+                "CANCEL": "Cancel"
+            },
+            "GENERATE_ERROR": "There was an error processing the content, please verify your OpenAI API key and try again"
+        },
+        "DELETE": {
+            "BUTTON_TEXT": "Delete",
+            "API": {
+                "SUCCESS_MESSAGE": "Integration deleted successfully"
+            }
+        },
+        "CONNECT": {
+            "BUTTON_TEXT": "Connect"
+        },
+        "DASHBOARD_APPS": {
+            "TITLE": "Dashboard Apps",
+            "HEADER_BTN_TXT": "Add a new dashboard app",
+            "SIDEBAR_TXT": "<p><b>Dashboard Apps</b></p><p>Dashboard Apps allow organizations to embed an application inside the Chatwoot dashboard to provide the context for customer support agents. This feature allows you to create an application independently and embed that inside the dashboard to provide user information, their orders, or their previous payment history.</p><p>When you embed your application using the dashboard in Chatwoot, your application will get the context of the conversation and contact as a window event. Implement a listener for the message event on your page to receive the context.</p><p>To add a new dashboard app, click on the button 'Add a new dashboard app'.</p>",
+            "DESCRIPTION": "Dashboard Apps allow organizations to embed an application inside the dashboard to provide the context for customer support agents. This feature allows you to create an application independently and embed that to provide user information, their orders, or their previous payment history.",
+            "LEARN_MORE": "Learn more about Dashboard Apps",
+            "COUNT": "{n} dashboard app | {n} dashboard apps",
+            "SEARCH_PLACEHOLDER": "Search dashboard apps...",
+            "NO_RESULTS": "No dashboard apps found matching your search",
+            "LIST": {
+                "404": "There are no dashboard apps configured on this account yet",
+                "LOADING": "Fetching dashboard apps...",
+                "TABLE_HEADER": {
+                    "NAME": "Name",
+                    "ENDPOINT": "Endpoint",
+                    "ACTIONS": "Actions"
+                },
+                "EDIT_TOOLTIP": "Edit app",
+                "DELETE_TOOLTIP": "Delete app"
+            },
+            "FORM": {
+                "TITLE_LABEL": "Name",
+                "TITLE_PLACEHOLDER": "Enter a name for your dashboard app",
+                "TITLE_ERROR": "A name for the dashboard app is required",
+                "URL_LABEL": "Endpoint",
+                "URL_PLACEHOLDER": "Enter the endpoint URL where your app is hosted",
+                "URL_ERROR": "A valid URL is required"
+            },
+            "CREATE": {
+                "HEADER": "Add a new dashboard app",
+                "FORM_SUBMIT": "Submit",
+                "FORM_CANCEL": "Cancel",
+                "API_SUCCESS": "Dashboard app configured successfully",
+                "API_ERROR": "We couldn't create an app. Please try again later"
+            },
+            "UPDATE": {
+                "HEADER": "Edit dashboard app",
+                "FORM_SUBMIT": "Update",
+                "FORM_CANCEL": "Cancel",
+                "API_SUCCESS": "Dashboard app updated successfully",
+                "API_ERROR": "We couldn't update the app. Please try again later"
+            },
+            "DELETE": {
+                "CONFIRM_YES": "Yes, delete it",
+                "CONFIRM_NO": "No, keep it",
+                "TITLE": "Confirm deletion",
+                "MESSAGE": "Are you sure to delete the app - {appName}?",
+                "API_SUCCESS": "Dashboard app deleted successfully",
+                "API_ERROR": "We couldn't delete the app. Please try again later"
+            }
+        },
+        "LINEAR": {
+            "HEADER": "Linear",
+            "ADD_OR_LINK_BUTTON": "Create/Link Linear Issue",
+            "LOADING": "Fetching linear issues...",
+            "LOADING_ERROR": "There was an error fetching the linear issues, please try again",
+            "CREATE": "Create",
+            "LINK": {
+                "SEARCH": "Search issues",
+                "SELECT": "Select issue",
+                "TITLE": "Link",
+                "EMPTY_LIST": "No linear issues found",
+                "LOADING": "Loading",
+                "ERROR": "There was an error fetching the linear issues, please try again",
+                "LINK_SUCCESS": "Issue linked successfully",
+                "LINK_ERROR": "There was an error linking the issue, please try again",
+                "LINK_TITLE": "Conversation (#{conversationId}) with {name}"
+            },
+            "ADD_OR_LINK": {
+                "TITLE": "Create/link linear issue",
+                "DESCRIPTION": "Create Linear issues from conversations, or link existing ones for seamless tracking.",
+                "FORM": {
+                    "TITLE": {
+                        "LABEL": "Title",
+                        "PLACEHOLDER": "Enter title",
+                        "REQUIRED_ERROR": "Title is required"
+                    },
+                    "DESCRIPTION": {
+                        "LABEL": "Description",
+                        "PLACEHOLDER": "Enter description"
+                    },
+                    "TEAM": {
+                        "LABEL": "Team",
+                        "PLACEHOLDER": "Select team",
+                        "SEARCH": "Search team",
+                        "REQUIRED_ERROR": "Team is required"
+                    },
+                    "ASSIGNEE": {
+                        "LABEL": "Assignee",
+                        "PLACEHOLDER": "Select assignee",
+                        "SEARCH": "Search assignee"
+                    },
+                    "PRIORITY": {
+                        "LABEL": "Priority",
+                        "PLACEHOLDER": "Select priority",
+                        "SEARCH": "Search priority"
+                    },
+                    "LABEL": {
+                        "LABEL": "Label",
+                        "PLACEHOLDER": "Select label",
+                        "SEARCH": "Search label"
+                    },
+                    "STATUS": {
+                        "LABEL": "Status",
+                        "PLACEHOLDER": "Select status",
+                        "SEARCH": "Search status"
+                    },
+                    "PROJECT": {
+                        "LABEL": "Project",
+                        "PLACEHOLDER": "Select project",
+                        "SEARCH": "Search project"
+                    }
+                },
+                "CREATE": "Create",
+                "CANCEL": "Cancel",
+                "CREATE_SUCCESS": "Issue created successfully",
+                "CREATE_ERROR": "There was an error creating the issue, please try again",
+                "LOADING_TEAM_ERROR": "There was an error fetching the teams, please try again",
+                "LOADING_TEAM_ENTITIES_ERROR": "There was an error fetching the team entities, please try again"
+            },
+            "ISSUE": {
+                "STATUS": "Status",
+                "PRIORITY": "Priority",
+                "ASSIGNEE": "Assignee",
+                "LABELS": "Labels",
+                "CREATED_AT": "Created at {createdAt}"
+            },
+            "UNLINK": {
+                "TITLE": "Unlink",
+                "SUCCESS": "Issue unlinked successfully",
+                "ERROR": "There was an error unlinking the issue, please try again"
+            },
+            "NO_LINKED_ISSUES": "No linked issues found",
+            "DELETE": {
+                "TITLE": "Are you sure you want to delete the integration?",
+                "MESSAGE": "Are you sure you want to delete the integration?",
+                "CONFIRM": "Yes, delete",
+                "CANCEL": "Cancel"
+            },
+            "CTA": {
+                "TITLE": "Connect to Linear",
+                "AGENT_DESCRIPTION": "Linear workspace is not connected. Request your administrator to connect a workspace to use this integration.",
+                "DESCRIPTION": "Linear workspace is not connected. Click the button below to connect your workspace to use this integration.",
+                "BUTTON_TEXT": "Connect Linear workspace"
+            }
+        },
+        "NOTION": {
+            "HEADER": "Notion",
+            "DELETE": {
+                "TITLE": "Are you sure you want to delete the Notion integration?",
+                "MESSAGE": "Deleting this integration will remove access to your Notion workspace and stop all related functionality.",
+                "CONFIRM": "Yes, delete",
+                "CANCEL": "Cancel"
             }
         }
     },
@@ -4472,6 +5169,127 @@ const messages: Record<string, unknown> = {
             "API": {
                 "ERROR_MESSAGE": "SSO authentication failed. Please check your credentials and try again."
             }
+        }
+    },
+    "MACROS": {
+        "HEADER": "Macros",
+        "DESCRIPTION": "A macro is a set of saved actions that help customer service agents easily complete tasks. The agents can define a set of actions like tagging a conversation with a label, sending an email transcript, updating a custom attribute, etc., and they can run these actions in a single click.",
+        "LEARN_MORE": "Learn more about macros",
+        "COUNT": "{n} macro | {n} macros",
+        "HEADER_BTN_TXT": "Add a new macro",
+        "HEADER_BTN_TXT_SAVE": "Save macro",
+        "LOADING": "Fetching macros",
+        "SEARCH_PLACEHOLDER": "Search macros...",
+        "NO_RESULTS": "No macros found matching your search",
+        "ERROR": "Something went wrong. Please try again",
+        "ORDER_INFO": "Macros will run in the order you add your actions. You can rearrange them by dragging them by the handle beside each node.",
+        "ADD": {
+            "FORM": {
+                "NAME": {
+                    "LABEL": "Macro name",
+                    "PLACEHOLDER": "Enter a name for your macro",
+                    "ERROR": "Name is required for creating a macro"
+                },
+                "ACTIONS": {
+                    "LABEL": "Actions"
+                }
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Macro added successfully",
+                "ERROR_MESSAGE": "Unable to create macro, Please try again later"
+            }
+        },
+        "LIST": {
+            "TABLE_HEADER": {
+                "NAME": "Name",
+                "CREATED BY": "Created by",
+                "LAST_UPDATED_BY": "Last updated by",
+                "VISIBILITY": "Visibility",
+                "ACTIONS": "Actions"
+            },
+            "404": "No macros found"
+        },
+        "DELETE": {
+            "TOOLTIP": "Delete macro",
+            "CONFIRM": {
+                "MESSAGE": "Are you sure to delete ",
+                "YES": "Yes, Delete",
+                "NO": "No"
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Macro deleted successfully",
+                "ERROR_MESSAGE": "There was an error deleting the macro. Please try again later"
+            }
+        },
+        "VIEW": {
+            "TOOLTIP": "View macro"
+        },
+        "EDIT": {
+            "TOOLTIP": "Edit macro",
+            "API": {
+                "SUCCESS_MESSAGE": "Macro updated successfully",
+                "ERROR_MESSAGE": "Could not update Macro, Please try again later"
+            }
+        },
+        "EDITOR": {
+            "START_FLOW": "Start Flow",
+            "END_FLOW": "End Flow",
+            "LOADING": "Fetching macro",
+            "ADD_BTN_TOOLTIP": "Add new action",
+            "DELETE_BTN_TOOLTIP": "Delete Action",
+            "VISIBILITY": {
+                "LABEL": "Macro Visibility",
+                "GLOBAL": {
+                    "LABEL": "Public",
+                    "DESCRIPTION": "This macro is available publicly for all agents in this account.",
+                    "CREATE_DISABLED_DESCRIPTION": "Only administrators can create public macros.",
+                    "EDIT_DISABLED_DESCRIPTION": "Only administrators can edit public macros."
+                },
+                "PERSONAL": {
+                    "LABEL": "Private",
+                    "DESCRIPTION": "This macro will be private to you and not be available to others."
+                }
+            }
+        },
+        "EXECUTE": {
+            "BUTTON_TOOLTIP": "Execute",
+            "PREVIEW": "Preview Macro",
+            "EXECUTED_SUCCESSFULLY": "Macro executed successfully",
+            "EXECUTED_WITHOUT_RESOLVING": "Macro executed. The conversation was not resolved because required attributes are missing."
+        },
+        "ERRORS": {
+            "ATTRIBUTE_KEY_REQUIRED": "Attribute key is required",
+            "FILTER_OPERATOR_REQUIRED": "Filter operator is required",
+            "VALUE_REQUIRED": "Value is required",
+            "VALUE_MUST_BE_BETWEEN_1_AND_998": "Value must be between 1 and 998",
+            "ACTION_PARAMETERS_REQUIRED": "Action parameters are required",
+            "ATLEAST_ONE_CONDITION_REQUIRED": "At least one condition is required",
+            "ATLEAST_ONE_ACTION_REQUIRED": "At least one action is required"
+        },
+        "ACTIONS": {
+            "ASSIGN_TEAM": "Assign a Team",
+            "ASSIGN_AGENT": "Assign an Agent",
+            "ADD_LABEL": "Add a Label",
+            "REMOVE_LABEL": "Remove a Label",
+            "REMOVE_ASSIGNED_AGENT": "Remove Assigned Agent",
+            "REMOVE_ASSIGNED_TEAM": "Remove Assigned Team",
+            "SEND_EMAIL_TRANSCRIPT": "Send an Email Transcript",
+            "MUTE_CONVERSATION": "Mute Conversation",
+            "SNOOZE_CONVERSATION": "Snooze Conversation",
+            "RESOLVE_CONVERSATION": "Resolve Conversation",
+            "CHANGE_STATUS": "Change Status",
+            "SEND_ATTACHMENT": "Send Attachment",
+            "SEND_MESSAGE": "Send a Message",
+            "CHANGE_PRIORITY": "Change Priority",
+            "ADD_PRIVATE_NOTE": "Add a Private Note",
+            "SEND_WEBHOOK_EVENT": "Send Webhook Event"
+        },
+        "PRIORITY_TYPES": {
+            "NONE": "None",
+            "LOW": "Low",
+            "MEDIUM": "Medium",
+            "HIGH": "High",
+            "URGENT": "Urgent"
         }
     },
     "MERGE_CONTACTS": {
@@ -4689,6 +5507,62 @@ const messages: Record<string, unknown> = {
         "VALIDATION_ERROR": "Please fill in all required fields",
         "SUCCESS": "Details saved successfully",
         "ERROR": "Could not save details. Please try again."
+    },
+    "OVERVIEW_REPORTS": {
+        "HEADER": "Overview",
+        "LIVE": "Live",
+        "HEATMAP_ARIA_LABEL": "{metric} by day and hour",
+        "ACCOUNT_CONVERSATIONS": {
+            "HEADER": "Open Conversations",
+            "LOADING_MESSAGE": "Loading conversation metrics...",
+            "OPEN": "Open",
+            "UNATTENDED": "Unattended",
+            "UNASSIGNED": "Unassigned",
+            "PENDING": "Pending"
+        },
+        "CONVERSATION_HEATMAP": {
+            "HEADER": "Conversation Traffic",
+            "NO_CONVERSATIONS": "No conversations",
+            "CONVERSATION": "{count} conversation",
+            "CONVERSATIONS": "{count} conversations",
+            "DOWNLOAD_REPORT": "Download report"
+        },
+        "RESOLUTION_HEATMAP": {
+            "HEADER": "Resolutions",
+            "NO_CONVERSATIONS": "No conversations",
+            "CONVERSATION": "{count} conversation",
+            "CONVERSATIONS": "{count} conversations",
+            "DOWNLOAD_REPORT": "Download report"
+        },
+        "AGENT_CONVERSATIONS": {
+            "HEADER": "Conversations by agents",
+            "LOADING_MESSAGE": "Loading agent metrics...",
+            "NO_AGENTS": "There are no conversations by agents",
+            "TABLE_HEADER": {
+                "AGENT": "Agent",
+                "OPEN": "Open",
+                "UNATTENDED": "Unattended",
+                "STATUS": "Status"
+            }
+        },
+        "TEAM_CONVERSATIONS": {
+            "ALL_TEAMS": "All Teams",
+            "HEADER": "Conversations by teams",
+            "LOADING_MESSAGE": "Loading team metrics...",
+            "NO_TEAMS": "There is no data available",
+            "TABLE_HEADER": {
+                "TEAM": "Team",
+                "OPEN": "Open",
+                "UNATTENDED": "Unattended",
+                "STATUS": "Status"
+            }
+        },
+        "AGENT_STATUS": {
+            "HEADER": "Agent status",
+            "ONLINE": "Online",
+            "BUSY": "Busy",
+            "OFFLINE": "Offline"
+        }
     },
     "PAGINATION_FOOTER": {
         "SHOWING": "Showing {startItem} - {endItem} of {totalItems} item | Showing {startItem} - {endItem} of {totalItems} items",
@@ -4993,6 +5867,172 @@ const messages: Record<string, unknown> = {
             "RESEND": "Resend verification email",
             "RESEND_SUCCESS": "Verification email sent. Please check your inbox.",
             "RESEND_ERROR": "Could not send verification email. Please try again."
+        }
+    },
+    "REPORT": {
+        "HEADER": "Conversations",
+        "LOADING_CHART": "Loading chart data...",
+        "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
+        "DOWNLOAD_CONVERSATION_REPORTS": "Download conversation reports",
+        "DATA_FETCHING_FAILED": "Failed to fetch data, please try again later.",
+        "SUMMARY_FETCHING_FAILED": "Failed to fetch summary, please try again later.",
+        "METRICS": {
+            "CONVERSATIONS": {
+                "NAME": "Conversations",
+                "DESC": "( Total )"
+            },
+            "INCOMING_MESSAGES": {
+                "NAME": "Messages received",
+                "DESC": "( Total )"
+            },
+            "OUTGOING_MESSAGES": {
+                "NAME": "Messages sent",
+                "DESC": "( Total )"
+            },
+            "FIRST_RESPONSE_TIME": {
+                "NAME": "First Response Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_DESCRIPTION": "Based on {count} conversation | Based on {count} conversations",
+                "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_TIME": {
+                "NAME": "Resolution Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_DESCRIPTION": "Based on {count} conversation | Based on {count} conversations",
+                "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            },
+            "BOT_RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            },
+            "BOT_HANDOFF_COUNT": {
+                "NAME": "Handoff Count",
+                "DESC": "( Total )"
+            },
+            "REPLY_TIME": {
+                "NAME": "Customer waiting time",
+                "TOOLTIP_LABEL": "Waiting time",
+                "TOOLTIP_DESCRIPTION": "Based on {count} reply | Based on {count} replies",
+                "TOOLTIP_TEXT": "Waiting time is {metricValue} (based on {conversationCount} replies)",
+                "DESC": ""
+            }
+        },
+        "DATE_RANGE_OPTIONS": {
+            "LAST_7_DAYS": "Last 7 days",
+            "LAST_14_DAYS": "Last 14 days",
+            "LAST_30_DAYS": "Last 30 days",
+            "THIS_MONTH": "This month",
+            "LAST_MONTH": "Last month",
+            "LAST_3_MONTHS": "Last 3 months",
+            "LAST_6_MONTHS": "Last 6 months",
+            "LAST_YEAR": "Last year",
+            "CUSTOM_DATE_RANGE": "Custom date range"
+        },
+        "CUSTOM_DATE_RANGE": {
+            "CONFIRM": "Apply",
+            "PLACEHOLDER": "Select date range"
+        },
+        "GROUP_BY_FILTER_DROPDOWN_LABEL": "Group By",
+        "DURATION_FILTER_LABEL": "Duration",
+        "GROUPING_OPTIONS": {
+            "DAY": "Day",
+            "WEEK": "Week",
+            "MONTH": "Month",
+            "YEAR": "Year"
+        },
+        "BUSINESS_HOURS": "Business Hours",
+        "FILTER_ACTIONS": {
+            "CLEAR_FILTER": "Clear filter",
+            "EMPTY_LIST": "No results found"
+        },
+        "DRILLDOWN": {
+            "TITLE": "{metric} details",
+            "RESULT_COUNT_CONVERSATION": "{count} conversation | {count} conversations",
+            "RESULT_COUNT_MESSAGE": "{count} message | {count} messages",
+            "EMPTY": "No records found for this bar.",
+            "ERROR": "Could not load records. Please try again.",
+            "ADMIN_ONLY": "Only administrators can drill down into report records.",
+            "LOAD_MORE": "Load more",
+            "PREVIOUS_BUCKET": "Previous bar",
+            "NEXT_BUCKET": "Next bar",
+            "UNKNOWN_CONTACT": "Unknown contact",
+            "UNKNOWN_INBOX": "Unknown inbox",
+            "UNASSIGNED_AGENT": "Unassigned",
+            "NO_MESSAGE_CONTENT": "No message content",
+            "MESSAGE_CREATED_AT": "Message created at {time}",
+            "EVENT_OCCURRED_AT": "Event occurred at {time}",
+            "INCOMING_MESSAGE": "Incoming message",
+            "OUTGOING_MESSAGE": "Outgoing message"
+        },
+        "PAGINATION": {
+            "RESULTS": "Showing {start} to {end} of {total} results",
+            "PER_PAGE_TEMPLATE": "{size} / page"
+        }
+    },
+    "REPORTS": {
+        "period": "Reporting period :since to :until",
+        "utc_warning": "The report generated is in UTC timezone",
+        "agent_csv": {
+            "agent_name": "Agent name",
+            "conversations_count": "Assigned conversations",
+            "avg_first_response_time": "Avg first response time",
+            "avg_resolution_time": "Avg resolution time",
+            "resolution_count": "Resolution Count",
+            "avg_customer_waiting_time": "Avg customer waiting time"
+        },
+        "inbox_csv": {
+            "inbox_name": "Inbox name",
+            "inbox_type": "Inbox type",
+            "conversations_count": "No. of conversations",
+            "avg_first_response_time": "Avg first response time",
+            "avg_resolution_time": "Avg resolution time"
+        },
+        "label_csv": {
+            "label_title": "Label",
+            "conversations_count": "No. of conversations",
+            "avg_first_response_time": "Avg first response time",
+            "avg_resolution_time": "Avg resolution time",
+            "avg_reply_time": "Avg reply time",
+            "resolution_count": "Resolution Count"
+        },
+        "team_csv": {
+            "team_name": "Team name",
+            "conversations_count": "Conversations count",
+            "avg_first_response_time": "Avg first response time",
+            "avg_resolution_time": "Avg resolution time",
+            "resolution_count": "Resolution Count",
+            "avg_customer_waiting_time": "Avg customer waiting time"
+        },
+        "conversation_csv": {
+            "conversations_count": "Conversations",
+            "incoming_messages_count": "Messages received",
+            "outgoing_messages_count": "Messages sent",
+            "avg_first_response_time": "Avg first response time",
+            "avg_resolution_time": "Avg resolution time",
+            "resolution_count": "Resolution count",
+            "avg_customer_waiting_time": "Avg customer waiting time"
+        },
+        "conversation_traffic_csv": {
+            "timezone": "Timezone"
+        },
+        "default_group_by": "day",
+        "csat": {
+            "headers": {
+                "contact_name": "Contact Name",
+                "contact_email_address": "Contact Email Address",
+                "contact_phone_number": "Contact Phone Number",
+                "link_to_the_conversation": "Link to the conversation",
+                "agent_name": "Agent Name",
+                "rating": "Rating",
+                "feedback": "Feedback Comment",
+                "recorded_at": "Recorded date"
+            }
         }
     },
     "RESET_PASSWORD": {
@@ -5395,6 +6435,12 @@ const messages: Record<string, unknown> = {
             "NOT_AVAILABLE": "Author is not available"
         }
     },
+    "TIME_UNITS": {
+        "days": "{1} :count day|[2,*] :count days",
+        "hours": "{1} :count hour|[2,*] :count hours",
+        "minutes": "{1} :count minute|[2,*] :count minutes",
+        "seconds": "{0} :count seconds|{1} :count second|[2,*] :count seconds"
+    },
     "TRANSLATE_MODAL": {
         "TITLE": "View translated content",
         "DESC": "You can view the translated content in each langauge.",
@@ -5413,6 +6459,9 @@ const messages: Record<string, unknown> = {
         "ERROR": "That doesn't look like a supported video link",
         "ADD": "Embed",
         "CANCEL": "Cancel"
+    },
+    "WEBHOOKS_SETTINGS": {
+        "HEADER": "Webhook Settings"
     },
     "WIDGET": {
         "COMPONENTS": {

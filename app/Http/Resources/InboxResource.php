@@ -120,4 +120,31 @@ class InboxResource extends JsonResource
             'additional_attributes' => $channel->additional_attributes ?? [],
         ];
     }
+
+    // Inbox::EventDataPresenter#webhook_data — payload sự kiện inbox_created/updated.
+    public static function eventWebhookData(Inbox $inbox): array
+    {
+        return [
+            'allow_messages_after_resolved' => $inbox->allow_messages_after_resolved,
+            'lock_to_single_conversation' => $inbox->lock_to_single_conversation,
+            'auto_assignment_config' => $inbox->auto_assignment_config ?? [],
+            'enable_auto_assignment' => $inbox->enable_auto_assignment,
+            'enable_email_collect' => $inbox->enable_email_collect,
+            'greeting_enabled' => $inbox->greeting_enabled,
+            'greeting_message' => $inbox->greeting_message,
+            'csat_survey_enabled' => $inbox->csat_survey_enabled,
+            'business_name' => $inbox->business_name,
+            'sender_name_type' => $inbox->sender_name_type === Inbox::SENDER_NAME_TYPE_PROFESSIONAL
+                ? 'professional'
+                : 'friendly',
+            'timezone' => $inbox->timezone,
+            'out_of_office_message' => $inbox->out_of_office_message,
+            'working_hours_enabled' => $inbox->working_hours_enabled,
+            'working_hours' => $inbox->weeklySchedule(),
+            'created_at' => $inbox->created_at?->toISOString(),
+            'updated_at' => $inbox->updated_at?->toISOString(),
+            'channel' => $inbox->channel?->toArray(),
+            'account' => $inbox->account->webhookData(),
+        ];
+    }
 }
