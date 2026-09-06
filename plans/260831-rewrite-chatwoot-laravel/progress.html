@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 — 25/40: D1 Automation xong (pixel ≤ 0,03% 9 trạng thái, e2e 13/13), chờ founder nghiệm thu; kế tiếp D3 Macros</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 28/40: D1 QA pass, D3 Macros + D4 Webhooks/Bots xong (QA bấm tay bắt và sửa 4 lỗi), D2 Reports đã có backend + Overview/Conversation; kế tiếp các trang báo cáo còn lại rồi nhóm E</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">25<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
-      <div class="stat"><div class="n">1.196</div><div class="l">test backend xanh (mốc trước khi nhóm B sửa dở)</div></div>
-      <div class="stat"><div class="n">416</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">28<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">1.343</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">478</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:62.5%"></i></div>
+    <div class="bar"><i style="width:70%"></i></div>
   </div>
 
   <div class="board">
@@ -214,16 +214,18 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">3/6 · D1 chờ nghiệm thu</span></div>
-    <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill done">Xong · chờ nghiệm thu</span>
+    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">5/6 · D2 đang hoàn thiện</span></div>
+    <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill done">Xong 06/09</span>
       <span class="fdesc">Đã có bảng rule + pending execution, CRUD/clone/toggle, matcher điều kiện, event listener, queue delay và bộ thực thi hành động chung cho D3 Macros. Builder Settings tạo/sửa rule, chọn điều kiện/hành động; các action cần mail/webhook/tệp/SLA để đúng feature sau, không dựng nút giả.</span>
-      <span class="ftest"><b>Test ngay:</b> Create Automation → Event <i>Message Created</i> → điều kiện <i>Message Content contains</i> “giá” → action <i>Assign a Team</i> + <i>Add a Label</i> → Create → tải lại trang → mở sửa thấy đủ giá trị → nhắn tin có chữ “giá” vào hội thoại → team + nhãn được gán, có dòng activity. Pixel 9 trạng thái sáng/tối ≤ 0,030% (kể cả chế độ chạy sau chờ), e2e 13/13. Trace: <code>reports/trace-d1-automation-rules.md</code>. ⏳ Chờ founder nghiệm thu.</span></div>
-    <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill wait">Chờ</span>
-      <span class="fdesc">Sự kiện báo cáo + tổng hợp + các màn tổng quan/hội thoại/nhân viên/hài lòng.</span></div>
-    <div class="feat"><span class="fid">D3</span><span class="fname">Macro</span><span class="pill wait">Chờ</span>
-      <span class="fdesc">Chuỗi hành động dựng sẵn + nút chạy trong hội thoại.</span></div>
-    <div class="feat"><span class="fid">D4</span><span class="fname">Webhook ra + bot</span><span class="pill wait">Chờ</span>
-      <span class="fdesc">Ký chữ ký, chính sách thử lại, endpoint cho bot.</span></div>
+      <span class="ftest"><b>Test ngay:</b> Create Automation → Event <i>Message Created</i> → điều kiện <i>Message Content contains</i> “giá” → action <i>Assign a Team</i> + <i>Add a Label</i> → Create → tải lại trang → mở sửa thấy đủ giá trị → nhắn tin có chữ “giá” vào hội thoại → team + nhãn được gán, có dòng activity. Pixel 9 trạng thái sáng/tối ≤ 0,030% (kể cả chế độ chạy sau chờ), e2e 13/13. Trace: <code>reports/trace-d1-automation-rules.md</code>. <b>QA phiên chính đã bấm tay đủ vòng trên trình duyệt:</b> tạo rule → tin có "giá" làm nhãn + team + activity hiện tức thời ở tab hội thoại đang mở → tắt rule (có hộp xác nhận như gốc) → tải lại vẫn tắt → sửa → xóa. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill wip">Đang hoàn thiện</span>
+      <span class="fdesc">Ghi sự kiện báo cáo (phản hồi đầu, thời gian trả lời, đóng, chuyển từ bot, mở lại) + tổng hợp theo ngày + lệnh bù dữ liệu cũ; toàn bộ bộ dựng số liệu và ba nhóm endpoint báo cáo; số liệu <b>so với bản gốc trên ~25 endpoint đều khớp, tệp CSV trùng từng byte</b>. Giao diện: thư viện biểu đồ của bản gốc port sang React không thêm phụ thuộc, khung báo cáo, màn Tổng quan (số trực tiếp làm mới mỗi 60 giây như gốc, bản đồ nhiệt lưu lượng) và màn Hội thoại. Chấm ảnh Tổng quan 0,027%, Hội thoại 0,006–0,090%. <b>Đang port:</b> các trang Nhân viên / Hộp thư / Nhãn / Nhóm (cả bản cũ lẫn bản drilldown), Hài lòng, Bot.</span></div>
+    <div class="feat"><span class="fid">D3</span><span class="fname">Macro</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Chuỗi hành động dựng sẵn chạy một cú bấm, dùng lại đúng bộ thực thi hành động của D1 (không nhân bản). Macro chạy trong hàng đợi vẫn ghi đúng tên người bấm nhờ một lớp ngữ cảnh người dùng dùng chung cho mọi việc nền. Giao diện: trình dựng chuỗi hành động kéo thả trong Cài đặt, phạm vi công khai/riêng tư, mục Macros trong bảng bên phải với xem trước và nút chạy, nguồn trong thanh lệnh. Chấm ảnh 8 cảnh ≤0,036% (4 cảnh trong bảng bên phải 0,000%). <b>QA phiên chính bắt hai lỗi mà test tự động bỏ lọt</b> (không đổi được loại hành động trong trình dựng; hoạt động ghi nhầm "do hệ thống" khi chạy nền) — đã sửa và bổ sung e2e bấm thật 33/33.</span>
+      <span class="ftest"><b>Test ngay:</b> Cài đặt → Macros → Add a new macro → đổi hành động đầu thành Add a Label, chọn nhãn → Add new action → Resolve Conversation → Save → mở hội thoại → bảng bên phải → Macros → rê chuột lên macro → ▶ chạy → nhãn gắn, hội thoại đóng, hai dòng hoạt động mang tên bạn hiện ngay không tải lại. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">D4</span><span class="fname">Webhook ra + bot</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Webhook gửi đi cho 12 loại sự kiện, ký chữ ký HMAC kèm mốc thời gian và mã giao, hết giờ 5 giây như gốc — <b>đã kiểm bằng máy nhận thật: chữ ký xác minh đúng</b>. Bot nhân viên: tạo bot, mã truy cập + bí mật, gắn vào hộp thư; hội thoại mới trong hộp thư có bot vào trạng thái chờ bot, bot nhận webhook và trả lời qua API bằng mã của mình, thử lại 3 lần khi bot lỗi rồi tự chuyển sang nhân viên; nhân viên bấm "Take over" để nhận. Danh mục Tích hợp hiện đúng các thẻ như gốc (chỉ Webhooks hoạt động; các tích hợp khác thuộc nhóm F). Chấm ảnh 22/22 cảnh ≤0,039%, hội thoại có bot 0,047%. <b>QA phiên chính bắt bốn lỗi</b> (form lồng trong hộp thoại làm trang tải lại, hội thoại bot không vào trạng thái chờ, bot gọi đổi trạng thái bị lỗi 500, tin bot hiện bên trái) — đã sửa tận gốc, kể cả ca form lồng ở chiến dịch C4.</span>
+      <span class="ftest"><b>Test ngay:</b> Cài đặt → Integrations → Webhooks → Add → dán địa chỉ máy nhận, tích Message created → Create (hiện bí mật) → nhắn tin → máy nhận có payload kèm chữ ký; Bots → Add Bot → Inboxes → api-test → Bot Configuration chọn bot → tạo hội thoại mới → thấy dải "handled by bot", ô soạn khóa về ghi chú → Take over → mở lại, gán cho bạn. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">D5</span><span class="fname">Thông báo</span><span class="pill done">Xong 06/09</span>
       <span class="fdesc">Trung tâm thông báo đầy đủ: hai bảng dữ liệu, <b>một cổng tạo thông báo duy nhất</b>, một nơi quyết định sự kiện nào sinh thông báo gì, tuỳ chọn theo từng người dùng sinh thẳng từ danh sách loại thông báo. Có chuông và huy hiệu trên thanh bên, trang hộp thư cá nhân, cài đặt thông báo trong hồ sơ, và đẩy tức thời qua kênh đã dành sẵn từ nhóm B. Đánh dấu hội thoại đã đọc nay xoá luôn thông báo của nó — trả một món nợ từ B8.</span>
       <span class="ftest"><b>Test ngay:</b> gán một hội thoại cho đồng nghiệp → họ thấy chuông sáng và thẻ thông báo ngay không tải lại → bấm vào mở đúng hội thoại → huy hiệu giảm; lọc "Read", chuột phải đánh dấu chưa đọc thì huy hiệu quay lại. ⏳ Chờ founder nghiệm thu.</span></div>
