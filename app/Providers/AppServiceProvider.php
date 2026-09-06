@@ -17,6 +17,7 @@ use App\Models\Channel\TwilioSms;
 use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
+use App\Models\Channel\Zalo;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             'Channel::Whatsapp' => Whatsapp::class,
             'Channel::Tiktok' => Tiktok::class,
             'Channel::TwitterProfile' => TwitterProfile::class,
+            'Channel::Zalo' => Zalo::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,

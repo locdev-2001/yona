@@ -106,7 +106,7 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
                         name="toggle-imap-enable"
                         checked={isImapEnabled}
                         onChange={event => setImapEnabled(event.target.checked)}
-                    />
+                    />{' '}
                     {t('INBOX_MGMT.IMAP.TOGGLE_AVAILABILITY')}
                 </label>
                 <p>{t('INBOX_MGMT.IMAP.TOGGLE_HELP')}</p>
@@ -153,7 +153,7 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
                                 name="toggle-enable-ssl"
                                 checked={isSslEnabled}
                                 onChange={event => setSslEnabled(event.target.checked)}
-                            />
+                            />{' '}
                             {t('INBOX_MGMT.IMAP.ENABLE_SSL')}
                         </label>
                         <SingleSelectDropdown

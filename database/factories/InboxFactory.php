@@ -15,6 +15,7 @@ use App\Models\Channel\TwilioSms;
 use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
+use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -57,6 +58,15 @@ class InboxFactory extends Factory
         return $this->state([
             'channel_type' => 'Channel::Telegram',
             'channel_id' => fn (array $attributes) => Telegram::factory()
+                ->create(['account_id' => $attributes['account_id']])->id,
+        ]);
+    }
+
+    public function zalo(): static
+    {
+        return $this->state([
+            'channel_type' => 'Channel::Zalo',
+            'channel_id' => fn (array $attributes) => Zalo::factory()
                 ->create(['account_id' => $attributes['account_id']])->id,
         ]);
     }

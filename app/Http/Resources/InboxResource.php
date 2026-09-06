@@ -3,7 +3,15 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
+use App\Models\Channel\FacebookPage;
+use App\Models\Channel\Instagram;
+use App\Models\Channel\Telegram;
+use App\Models\Channel\Tiktok;
+use App\Models\Channel\TwilioSms;
+use App\Models\Channel\TwitterProfile;
+use App\Models\Channel\Whatsapp;
 use App\Models\Inbox;
+use App\Services\Channels\ChannelSetupService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -68,7 +76,7 @@ class InboxResource extends JsonResource
             'out_of_office_message' => $inbox->out_of_office_message,
             'working_hours' => $inbox->weeklySchedule(),
             'timezone' => $inbox->timezone,
-            'callback_webhook_url' => null,
+            'callback_webhook_url' => ChannelSetupService::callbackUrlFor($inbox),
             'allow_messages_after_resolved' => $inbox->allow_messages_after_resolved,
             'lock_to_single_conversation' => $inbox->lock_to_single_conversation,
             'sender_name_type' => $inbox->sender_name_type === Inbox::SENDER_NAME_TYPE_PROFESSIONAL
@@ -79,8 +87,47 @@ class InboxResource extends JsonResource
             ...$this->webWidgetAttributes($inbox),
             ...$this->apiChannelAttributes($inbox),
             ...$this->emailChannelAttributes($inbox),
+            ...$this->zaloChannelAttributes($inbox),
             'provider' => $channel?->getAttribute('provider'),
+            ...$this->externalChannelAttributes($channel),
         ];
+    }
+
+    /**
+     * Khối "Channel specific settings" của jbuilder cho các kênh ngoài (F2–F5).
+     * Mỗi kênh khai đúng phần của nó, không kênh nào biết kênh khác.
+     */
+    private function externalChannelAttributes(?Model $channel): array
+    {
+        return match (true) {
+            $channel instanceof TwitterProfile => ['tweets_enabled' => $channel->tweets_enabled],
+            $channel instanceof FacebookPage => [
+                'page_id' => $channel->page_id,
+                'reauthorization_required' => $channel->reauthorizationRequired(),
+            ],
+            $channel instanceof Instagram => [
+                'instagram_id' => $channel->instagram_id,
+                'reauthorization_required' => $channel->reauthorizationRequired(),
+            ],
+            $channel instanceof Tiktok => ['reauthorization_required' => $channel->reauthorizationRequired()],
+            $channel instanceof Telegram => ['bot_name' => $channel->bot_name],
+            $channel instanceof TwilioSms => [
+                'medium' => $channel->isSms() ? 'sms' : 'whatsapp',
+                'content_templates' => $channel->content_templates ?? [],
+                ...($this->administrator ? [
+                    'auth_token' => $channel->auth_token,
+                    'account_sid' => $channel->account_sid,
+                    'api_key_sid' => $channel->api_key_sid,
+                ] : []),
+            ],
+            $channel instanceof Whatsapp => [
+                'message_templates' => is_array($channel->message_templates) ? $channel->message_templates : [],
+                ...($this->administrator ? ['provider_config' => $channel->provider_config ?? []] : []),
+                'reauthorization_required' => ($channel->provider_config['source'] ?? null) === 'embedded_signup'
+                    && $channel->reauthorizationRequired(),
+            ],
+            default => [],
+        };
     }
 
     private function sharedChannelAttributes(?Model $channel): array
@@ -88,6 +135,25 @@ class InboxResource extends JsonResource
         return collect(self::SHARED_CHANNEL_KEYS)
             ->mapWithKeys(fn (string $key) => [$key => $channel?->getAttribute($key)])
             ->all();
+    }
+
+    // Kênh Zalo cá nhân (G1): FE cần trạng thái phiên để dựng biểu ngữ mất phiên.
+    private function zaloChannelAttributes(Inbox $inbox): array
+    {
+        if (! $inbox->isZalo()) {
+            return [];
+        }
+
+        $channel = $inbox->channel;
+
+        return [
+            'zalo_uid' => $channel->zalo_uid,
+            'zalo_display_name' => $channel->display_name,
+            'zalo_phone' => $channel->phone,
+            'zalo_state' => $channel->state,
+            'zalo_session_lost_reason' => $channel->session_lost_reason,
+            'zalo_last_connected_at' => $channel->last_connected_at?->toIso8601String(),
+        ];
     }
 
     private function webWidgetAttributes(Inbox $inbox): array

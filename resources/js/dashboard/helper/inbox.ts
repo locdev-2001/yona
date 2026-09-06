@@ -13,6 +13,7 @@ export const INBOX_TYPES = {
     SMS: 'Channel::Sms',
     INSTAGRAM: 'Channel::Instagram',
     TIKTOK: 'Channel::Tiktok',
+    ZALO: 'Channel::Zalo',
 } as const;
 
 const INBOX_ICON_MAP_LINE: Record<string, string> = {
@@ -26,6 +27,7 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
     [INBOX_TYPES.LINE]: 'i-woot-line',
     [INBOX_TYPES.INSTAGRAM]: 'i-woot-instagram',
     [INBOX_TYPES.TIKTOK]: 'i-woot-tiktok',
+    [INBOX_TYPES.ZALO]: 'i-ri-chat-3-line',
 };
 
 const DEFAULT_ICON_LINE = 'i-ri-chat-1-line';
@@ -42,6 +44,7 @@ const INBOX_ICON_MAP_FILL: Record<string, string> = {
     [INBOX_TYPES.LINE]: 'i-ri-line-fill',
     [INBOX_TYPES.INSTAGRAM]: 'i-ri-instagram-fill',
     [INBOX_TYPES.TIKTOK]: 'i-ri-tiktok-fill',
+    [INBOX_TYPES.ZALO]: 'i-ri-chat-3-fill',
 };
 
 const DEFAULT_ICON_FILL = 'i-ri-chat-1-fill';

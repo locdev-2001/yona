@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 35/40: F7 Platform API + Super Admin xong; backend F1 Email và F2–F5 kênh ngoài xong, đang port giao diện; F6 tích hợp đang port</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 37/40: F1 Email và F6 tích hợp xong (QA bấm tay); F2–F5 kênh ngoài và G1 Zalo đang port giao diện</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">35<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">37<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
       <div class="stat"><div class="n">1.982</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">671</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">673</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:87.5%"></i></div>
+    <div class="bar"><i style="width:92.5%"></i></div>
   </div>
 
   <div class="board">
@@ -252,14 +252,16 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">F</span><h3>Kênh ngoài &amp; nền tảng</h3><span class="gcount">2/8 · F1, F6, F2–F5 đang port giao diện</span></div>
+    <div class="ghead"><span class="gid">F</span><h3>Kênh ngoài &amp; nền tảng</h3><span class="gcount">4/8 · F2–F5 đang port giao diện</span></div>
     <p class="gnote">Mỗi kênh một đợt độc lập, ưu tiên theo nhu cầu Việt Nam: Email → Facebook → Instagram → Telegram → còn lại.</p>
-    <div class="feat"><span class="fid">F1</span><span class="fname">Kênh Email</span><span class="pill wip">Backend xong · UI đang port</span><span class="fdesc">Gửi qua SMTP + nhận qua IMAP + bóc tách nội dung trả lời — phần khó nhất nhóm F. Backend đã xong: gửi qua SMTP của từng hộp thư, nhận qua IMAP mỗi phút, 4 chiến lược nối thư vào đúng hội thoại.</span></div>
+    <div class="feat"><span class="fid">F1</span><span class="fname">Kênh Email</span><span class="pill done">Xong 07/09</span><span class="fdesc">Hộp thư email: gửi qua SMTP của từng hộp thư, nhận qua IMAP mỗi phút, bốn chiến lược nối thư vào đúng hội thoại (trả lời theo mã thư, chuyển tiếp, địa chỉ cộng, hộp mặc định), bong bóng email với trích dẫn thu gọn, trả lời có CC/BCC, tạo hội thoại email mới từ liên hệ. Chấm ảnh 8/8 màn <b>0,000%</b>; e2e với máy chủ thư thật (GreenMail) 17/17. Đăng nhập Google/Microsoft để dành nhóm tích hợp.</span>
+      <span class="ftest"><b>Test ngay (Gmail app password):</b> Inboxes → Add Inbox → Email → Other providers → điền email + IMAP/SMTP → gán agent → gửi thư từ hộp khác tới địa chỉ đó → sau ≤1 phút hội thoại hiện với bong bóng email → Reply → thư về hộp khách đúng luồng → khách trả lời → nối vào hội thoại cũ. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">F2</span><span class="fname">Facebook Messenger</span><span class="pill wip">Backend xong · UI đang port</span><span class="fdesc">Trang Facebook + webhook + bộ dựng tin riêng. Backend đã xong cho cả 9 kênh ngoài (Messenger, Instagram, Telegram, LINE, SMS, Twilio, WhatsApp Cloud/360Dialog, TikTok), kiểm bằng webhook giả lập.</span></div>
     <div class="feat"><span class="fid">F3</span><span class="fname">Instagram DM</span><span class="pill wait">Chờ</span><span class="fdesc">Đăng nhập Instagram.</span></div>
     <div class="feat"><span class="fid">F4</span><span class="fname">Telegram</span><span class="pill wait">Chờ</span><span class="fdesc">Webhook bot.</span></div>
     <div class="feat"><span class="fid">F5</span><span class="fname">LINE / SMS / WhatsApp / TikTok / Twitter</span><span class="pill wait">Chờ</span><span class="fdesc">Mỗi kênh một đợt riêng theo nhu cầu khách.</span></div>
-    <div class="feat"><span class="fid">F6</span><span class="fname">Tích hợp chọn lọc</span><span class="pill wait">Chờ</span><span class="fdesc">Slack, dịch tự động, chatbot, ứng dụng nhúng.</span></div>
+    <div class="feat"><span class="fid">F6</span><span class="fname">Tích hợp chọn lọc</span><span class="pill done">Xong 07/09</span><span class="fdesc">Ứng dụng nhúng (Dashboard Apps) hiện thành tab trong hội thoại và nhận ngữ cảnh hội thoại/liên hệ; khung móc tích hợp với Slack (kết nối, chọn kênh, gửi/nhận, mở link), Dialogflow, Google Translate (dịch tin), OpenAI, Dyte — mỗi tích hợp là một driver khai trong cấu hình, lõi không rẽ nhánh theo app. Không có khóa thật nên các API ngoài kiểm bằng giả lập; Dashboard app e2e 18/18, chấm ảnh 16/16.</span>
+      <span class="ftest"><b>Test ngay:</b> Settings → Integrations → Dashboard Apps → Add → tên + URL trang của bạn → mở một hội thoại → tab tên app cạnh Messages → bấm thấy trang nhúng. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">F7</span><span class="fname">API nền tảng + quản trị hệ thống</span><span class="pill done">Xong 07/09</span><span class="fdesc">Platform API (tạo tài khoản, người dùng, thành viên, bot qua token ứng dụng nền tảng, phân quyền theo đối tượng) và bảng điều khiển Super Admin riêng (đăng nhập tách biệt, quản lý tài khoản, người dùng, thành viên, token, bot, ứng dụng nền tảng, cấu hình cài đặt, tình trạng hệ thống). e2e 13/13; chấm ảnh 6 màn đạt.</span>
       <span class="ftest"><b>Test ngay:</b> mở <code>/super_admin</code> → đăng nhập john@acme.inc / Password1! → Platform Apps → New → lấy token → <code>curl -H "api_access_token: …" -X POST /platform/api/v1/accounts</code> → thấy tài khoản mới trong Accounts → Users → đổi mật khẩu/khoá. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">F8</span><span class="fname">Xác thực hai lớp + quản lý phiên</span><span class="pill done">Xong 07/09</span><span class="fdesc">Bật xác thực hai lớp bằng mã TOTP (quét QR hoặc nhập tay), mã dự phòng dùng một lần, danh sách thiết bị đang đăng nhập với nút thu hồi, giới hạn 25 phiên kèm màn chọn phiên khi vượt. e2e 11/11; chấm ảnh phiên/bảo mật 0,000%. Bốn màn MFA chưa so được với bản gốc vì bản gốc trên máy chưa bật khóa mã hóa — làm ở đợt gia cố cuối.</span>

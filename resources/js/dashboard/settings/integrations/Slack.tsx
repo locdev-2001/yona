@@ -74,7 +74,10 @@ export default function SlackPage({ code }: SlackPageProps) {
                         <div className="space-y-5">
                             <Integration
                                 accountId={accountId}
-                                integrationId={integration?.id ?? 'slack'}
+                                // Bản gốc truyền thẳng `integration.id` (rỗng khi Slack chưa cấu hình
+                                // client secret nên không có trong danh mục) — giữ nguyên để logo
+                                // hỏng/không hỏng khớp oracle; nút xoá chỉ hiện khi đã kết nối, lúc đó id có thật.
+                                integrationId={integration?.id ?? ''}
                                 integrationName={integration?.name ?? ''}
                                 integrationDescription={integration?.description ?? ''}
                                 integrationEnabled={integration?.enabled ?? false}

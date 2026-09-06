@@ -10,7 +10,7 @@ export interface ChannelOption {
     icon: string;
 }
 
-const ACTIVE_CHANNELS = ['api', 'website', 'email'];
+const ACTIVE_CHANNELS = ['api', 'website', 'email', 'zalo', 'whatsapp', 'sms', 'telegram', 'line'];
 const COMING_SOON_CHANNELS = ['voice'];
 const BETA_CHANNELS = ['tiktok', 'voice', 'whatsapp_call'];
 

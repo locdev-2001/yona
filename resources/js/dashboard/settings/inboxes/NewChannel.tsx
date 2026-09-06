@@ -12,6 +12,15 @@ import SettingsSubPageHeader from '../SettingsSubPageHeader';
 import WizardLayout, { INBOX_WIZARD_ROUTES } from './WizardLayout';
 import WebsiteChannelForm from './channels/Website';
 import EmailChannelForm from './channels/Email';
+import ZaloChannelForm from './channels/Zalo';
+import FacebookChannelForm from './channels/Facebook';
+import InstagramChannelForm from './channels/Instagram';
+import LineChannelForm from './channels/Line';
+import SmsChannelForm from './channels/Sms';
+import TelegramChannelForm from './channels/Telegram';
+import TiktokChannelForm from './channels/Tiktok';
+import TwitterChannelForm from './channels/Twitter';
+import WhatsappChannelForm from './channels/Whatsapp';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
@@ -107,6 +116,15 @@ const CHANNEL_VIEWS: Record<string, () => ReactElement> = {
     api: ApiChannelForm,
     website: WebsiteChannelForm,
     email: EmailChannelForm,
+    zalo: ZaloChannelForm,
+    facebook: FacebookChannelForm,
+    instagram: InstagramChannelForm,
+    line: LineChannelForm,
+    sms: SmsChannelForm,
+    telegram: TelegramChannelForm,
+    tiktok: TiktokChannelForm,
+    twitter: TwitterChannelForm,
+    whatsapp: WhatsappChannelForm,
 };
 
 export default function NewChannel({ channelName }: NewChannelProps) {

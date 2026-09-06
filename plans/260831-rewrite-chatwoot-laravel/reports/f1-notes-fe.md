@@ -100,18 +100,113 @@ Cách wizard kênh được cắm: [c1-notes-fe.md](c1-notes-fe.md).
    kịch bản e2e phải mở thư mục "All Conversations".
 7. **`page.goto(..., { waitUntil: 'networkidle' })` treo** trên các trang có websocket Reverb —
    dùng `domcontentloaded` + chờ tường minh.
+8. **Khoảng trắng giữa `<input type=checkbox>` và nhãn**: template Vue gộp xuống dòng thành MỘT dấu
+   cách, JSX thì không — thiếu `{' '}` làm cả dòng nhãn lệch ~4px và pixel-diff của tab Configuration
+   rớt 0.19–0.26%. Đúng ba chỗ: hai công tắc IMAP (`TOGGLE_AVAILABILITY`, `ENABLE_SSL`) và công tắc
+   SMTP.
+9. **Bubble email cần `w-full` ở khối lưới của `Message`**, không chỉ ở `BaseBubble` —
+   `Message.vue` gắn `'w-full': variant === EMAIL` lên chính div `gridClass`. Thiếu nó bubble co lại
+   theo nội dung (303px thay vì 675px) dù mọi thứ bên trong đúng.
+10. **`php artisan tinker --execute=…` gọi từ Node bằng `execFileSync` treo hàng phút** nếu không
+    truyền `input: ''` — psysh chờ EOF trên stdin. Từng làm mình tưởng job IMAP chậm.
+11. **Fixture pixel bị trôi giữa các kịch bản**: kịch bản `smtp` bật IMAP rồi **lưu**, nên lần đo
+    `config`/`imap` sau đó thấy oracle đã bật sẵn (lệch 1.2%). Fixture setup phải reset toàn bộ cột
+    `imap_*`/`smtp_*` về mặc định ở CẢ HAI bên.
+12. **`Inbox.channel_type` phải là bí danh morph `'Channel::Email'`**, không phải FQCN — ghi
+    `Email::class` thẳng vào cột làm `InboxResource` trả sai loại và UI rơi về nhánh kênh API.
+13. **`Message::create` ghi đè `created_at`** dù có truyền — phải `update()` lại sau khi tạo, nếu
+    không mốc thời gian trong bubble lệch với oracle.
 
 ## Gate
 
 | Gate | Kết quả |
 |---|---|
-| `npx tsc --noEmit` | xanh (file F1); còn 1 lỗi ở `resources/js/superadmin/resource/Form.tsx` — vùng của `f7`, không sửa hộ |
-| `npm test` (vitest) | **PLACEHOLDER** |
-| `npm run build` | xanh |
-| `php artisan i18n:generate --check` | xanh |
-| pixel-diff | **PLACEHOLDER** |
-| audit nút | **PLACEHOLDER** |
-| e2e GreenMail | **PLACEHOLDER** |
+| `npx tsc --noEmit` | xanh |
+| `npm test` (vitest) | **83 file / 671 test pass** (+11 file/test mới của F1 so với 660 trước đó) |
+| `npm run build` | xanh (một lượt đỏ giữa chừng do `channels/Zalo.tsx` của agent khác import `./ZaloQrPanel` chưa tồn tại — chạy lại sau khi họ tạo file thì xanh) |
+| `php artisan i18n:generate --check` | xanh (không phải sinh lại — không thêm khóa nào) |
+| pixel-diff | **8/8 màn = 0.000%** (light + dark) — bảng dưới |
+| audit nút | 2 màn, xem bảng dưới — **1 khác biệt do lỗi backend** |
+| e2e GreenMail | **17/17 kiểm tra đạt** (`f1-email-e2e.mjs`) |
+
+### Vitest mới
+
+`helper/emailQuoteExtractor.test.ts` (13) + `helper/quotedEmailHelper.test.ts` (56) — port nguyên
+`helper/specs/{emailQuoteExtractor,quotedEmailHelper}.spec.js`, chỉ đổi đường import và thêm
+`import { describe, expect, it } from 'vitest'` (spec gốc chạy với globals).
+
+### Pixel-diff (1280×800, light + dark, ngưỡng 0.1%)
+
+Fixture dựng hai bên bằng `~/www/pixel-diff/f1-email-fixture-{oracle.rb,yona.php}` (+ `f1-email-fixture.json`
+dùng chung cho `content_attributes.email`), **đã xoá sạch sau khi đo** — hai bên không còn inbox/kênh email nào.
+Chạy: `node ~/www/pixel-diff/f1-email-ui.mjs [kịch bản...]`.
+
+| Màn | Light | Dark |
+|---|---|---|
+| Thẻ "Other Providers" trong lưới nhà cung cấp (`provider`) | **0.000%** | **0.000%** |
+| Form tạo inbox email (`form`) | **0.000%** | **0.000%** |
+| Tab Configuration, IMAP tắt (`config`) | **0.000%** | **0.000%** |
+| Tab Configuration, bật IMAP (`imap`) | **0.000%** | **0.000%** |
+| Tab Configuration, IMAP đã lưu + bật SMTP (`smtp`) | **0.000%** | **0.000%** |
+| Bubble email thu gọn (`bubble`) | **0.000%** | **0.000%** |
+| Bubble email đã bung trích dẫn (`bubble-open`) | **0.000%** | **0.000%** |
+| ReplyBox chế độ email, đã mở Bcc (`replybox`) | **0.000%** | **0.000%** |
+
+Hai bản có dữ liệu nền khác nhau (logo sidebar, số hội thoại chưa đọc, danh sách hội thoại) nên script
+chụp **đúng vùng của màn đang đo** thay vì cả trang: `.settings` cho ba tab cấu hình, `.col-span-6`
+cho form, `[data-bubble-name="email"]` cho bubble, `.reply-box` cho ReplyBox, và bounding box của
+chính thẻ "Other Providers" cho lưới nhà cung cấp (oracle là bản cài tên Chatwoot nên còn hai thẻ
+OAuth — xem "Khác biệt cố ý" 3).
+
+**Chưa đo:** màn New conversation (`compose`) — bản compose của Yona đã rút gọn từ nhóm C
+(không có tìm contact), khác oracle vì lý do ngoài F1; khối EmailOptions bên trong đã port đủ.
+
+### Audit nút
+
+`node ~/www/pixel-diff/audit-buttons.mjs <base> /settings/inboxes/{id}/configuration`
+
+| Nút | Oracle | Yona |
+|---|---|---|
+| Back | OK → dashboard | OK → dashboard (cùng toạ độ 224,25 51×24) |
+| Update IMAP settings | OK (Δel=3) | **DEAD** — xem Finding 2 |
+
+## Finding gửi phiên chính (ngoài phạm vi sửa của `f1-fe`)
+
+1. **Xoá inbox email KHÔNG xoá bản ghi `channel_email`** → hàng mồ côi giữ ràng buộc unique của cột
+   `email`, nên tạo lại inbox với cùng địa chỉ trả **422** ("has already been taken"). Đây là lý do
+   kịch bản e2e phải tự dọn bằng SQL trước mỗi lượt (`resetFixture` trong `f1-email-e2e.mjs`).
+   Bản gốc Rails `dependent: :destroy` trên `Inbox#channel`. Vùng: `app/Models/Inbox.php` /
+   `InboxesController@destroy` (của `f1-be`).
+2. **`PATCH /inboxes/{id}` với `channel.imap_address = ''` trả 500** —
+   `SQLSTATE[23502] null value in column "imap_address" ... violates not-null constraint`.
+   Nguyên nhân: middleware `ConvertEmptyStringsToNull` của Laravel đổi `''` thành `null`, còn cột
+   `imap_address`/`imap_login`/`smtp_*` là NOT NULL. Bản gốc Vue gửi đúng chuỗi rỗng ấy và Rails
+   lưu `''`, nên FE port **không** thể tránh bằng cách đổi payload. Hệ quả: nút **Update IMAP
+   settings** khi chưa điền gì (hoặc khi tắt IMAP với ô địa chỉ trống) chết — đúng chỗ audit nút bắt
+   được. Chỗ sửa gọn nhất: cast/mutator trên `App\Models\Channel\Email` đổi `null` → `''` cho các
+   cột NOT NULL (hoặc `array_map` trong nhánh email của `InboxesController@update`). Vùng của `f1-be`
+   nên **không tự sửa**.
+
+### E2E GreenMail — 17/17 đạt
+
+`node ~/www/pixel-diff/f1-email-e2e.mjs` (cần GreenMail chạy trước; container đã dừng + xoá sau khi đo):
+
+```
+podman run -d --name greenmail -p 3025:3025 -p 3143:3143 -p 8081:8080 \
+  -e GREENMAIL_OPTS='-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled' \
+  greenmail/standalone:2.1.0
+```
+
+Chuỗi kiểm: thẻ Email bấm được → thẻ "Other Providers" → form 2 ô → tạo inbox → màn Voilà (lời nhắn
+kênh email + link "Click here" sang Configuration) → tab Configuration có IMAP → bật IMAP (tắt SSL,
+127.0.0.1:3143) → khối SMTP hiện ra → bật SMTP (127.0.0.1:3025) → **giữ sau F5** → khách gửi thư →
+`FetchImapEmailInboxesJob` kéo về → hội thoại mới hiện trong danh sách "All" → bubble email đủ
+người gửi/tiêu đề/nội dung → ReplyBox có dòng Cc + nút "Add Bcc" mở ô Bcc → agent trả lời → thư tới
+hộp `khach@yona.test` **kèm `In-Reply-To` đúng** → khách trả lời tiếp → **nối vào đúng hội thoại cũ**
+(giữ đủ 3 tin) → xoá inbox test.
+
+Bước "Add agents" của wizard gọi thẳng `PATCH /inbox_members` (phần chung đã được B1/C1 kiểm) để kịch
+bản tập trung vào phần kênh email.
 
 ## Hướng dẫn founder test tay với Gmail thật (app password)
 

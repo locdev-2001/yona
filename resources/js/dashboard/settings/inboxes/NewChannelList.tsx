@@ -23,6 +23,7 @@ const CHANNEL_KEYS = [
     'instagram',
     'voice',
     'whatsapp_call',
+    'zalo',
 ] as const;
 
 const CHANNEL_ICONS: Record<string, string> = {
@@ -37,6 +38,7 @@ const CHANNEL_ICONS: Record<string, string> = {
     instagram: 'i-woot-instagram',
     voice: 'i-woot-voice',
     whatsapp_call: 'i-woot-whatsapp',
+    zalo: 'i-ri-chat-3-line',
 };
 
 export default function NewChannelList() {

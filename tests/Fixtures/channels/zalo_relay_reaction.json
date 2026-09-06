@@ -1,0 +1,6 @@
+{
+  "type": "relay_event",
+  "event_type": "reaction",
+  "connection_id": 1,
+  "payload": { "msgId": "msg-zalo-1", "icon": "/-heart" }
+}

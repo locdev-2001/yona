@@ -34,6 +34,11 @@ export interface Inbox {
     welcome_title?: string | null;
     welcome_tagline?: string | null;
     web_widget_script?: string | null;
+    // Kênh Zalo cá nhân (G1) — trạng thái phiên cho biểu ngữ quét lại QR.
+    zalo_state?: string | null;
+    zalo_display_name?: string | null;
+    zalo_uid?: string | null;
+    zalo_phone?: string | null;
     website_token?: string | null;
     selected_feature_flags?: string[] | null;
     reply_time?: string | null;
@@ -71,6 +76,17 @@ export interface Inbox {
     additional_attributes?: Record<string, unknown>;
     medium?: string | null;
     voice_enabled?: boolean;
+    // Kênh ngoài F2–F5 (_inbox.json.jbuilder mục "Channel specific settings").
+    bot_name?: string | null;
+    page_id?: string | null;
+    instagram_id?: string | null;
+    tweets_enabled?: boolean | null;
+    account_sid?: string | null;
+    auth_token?: string | null;
+    api_key_sid?: string | null;
+    content_templates?: Record<string, unknown> | unknown[] | null;
+    message_templates?: unknown[] | null;
+    provider_config?: Record<string, unknown> | null;
 }
 
 export interface Agent {

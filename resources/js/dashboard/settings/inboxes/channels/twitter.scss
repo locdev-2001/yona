@@ -1,0 +1,12 @@
+// <style scoped> của settings/inbox/channels/Twitter.vue.
+.login-init {
+    @apply pt-[30%] text-center;
+
+    p {
+        @apply p-6;
+    }
+
+    > a > img {
+        @apply w-60;
+    }
+}
