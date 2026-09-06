@@ -30,20 +30,12 @@ abstract class Controller
 
         /** @var AccountUser $accountUser */
         $accountUser = $request->attributes->get('currentAccountUser');
-        $user = $request->user();
 
-        $allowed = $accountUser->isAdministrator()
-            || $user->inboxes()
-                ->where('inboxes.account_id', $account->id)
-                ->where('inboxes.id', $conversation->inbox_id)
-                ->exists()
-            || ($conversation->team_id !== null
-                && $user->teams()
-                    ->where('teams.account_id', $account->id)
-                    ->where('teams.id', $conversation->team_id)
-                    ->exists());
-
-        abort_unless($allowed, 401, 'You are not authorized to do this action');
+        abort_unless(
+            $conversation->isVisibleTo($request->user(), $accountUser),
+            401,
+            'You are not authorized to do this action'
+        );
 
         return $conversation;
     }

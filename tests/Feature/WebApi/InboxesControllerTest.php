@@ -609,3 +609,79 @@ describe('POST /api/v1/accounts/{id}/inboxes/{inboxId}/reset_secret', function (
             ->and($inbox->channel->refresh()->secret)->toBe($response->json('secret'));
     });
 });
+
+describe('working hours qua PATCH inbox', function () {
+    it('returns the weekly schedule of the inbox', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}")
+            ->assertOk();
+
+        expect($response->json('working_hours'))->toHaveCount(7)
+            ->and($response->json('working_hours.0'))->toBe([
+                'day_of_week' => 0,
+                'closed_all_day' => true,
+                'open_hour' => null,
+                'open_minutes' => null,
+                'close_hour' => null,
+                'close_minutes' => null,
+                'open_all_day' => false,
+            ]);
+    });
+
+    it('updates the working hours sent alongside the inbox attributes', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'working_hours_enabled' => true,
+                'out_of_office_message' => 'We are away',
+                'timezone' => 'Asia/Ho_Chi_Minh',
+                'working_hours' => [
+                    ['day_of_week' => 0, 'closed_all_day' => false, 'open_hour' => 8, 'open_minutes' => 30, 'close_hour' => 12, 'close_minutes' => 0, 'open_all_day' => false],
+                    ['day_of_week' => 1, 'closed_all_day' => false, 'open_hour' => 0, 'open_minutes' => 0, 'close_hour' => 0, 'close_minutes' => 0, 'open_all_day' => true],
+                ],
+            ])
+            ->assertOk();
+
+        $schedule = collect($response->json('working_hours'))->keyBy('day_of_week');
+
+        expect($response->json('working_hours_enabled'))->toBeTrue()
+            ->and($response->json('timezone'))->toBe('Asia/Ho_Chi_Minh')
+            ->and($schedule[0]['open_hour'])->toBe(8)
+            ->and($schedule[0]['open_minutes'])->toBe(30)
+            ->and($schedule[1]['open_all_day'])->toBeTrue()
+            ->and($schedule[1]['close_hour'])->toBe(23)
+            ->and($schedule[1]['close_minutes'])->toBe(59)
+            ->and($schedule[2]['open_hour'])->toBe(9);
+    });
+
+    it('leaves the schedule untouched when the payload has no working hours', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", ['name' => 'Renamed'])
+            ->assertOk();
+
+        expect(collect($response->json('working_hours'))->keyBy('day_of_week')[1]['open_hour'])->toBe(9);
+    });
+
+    it('rejects a day of week outside the week', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'working_hours' => [['day_of_week' => 9, 'closed_all_day' => true]],
+            ])
+            ->assertStatus(422);
+    });
+});

@@ -62,7 +62,7 @@ check: format i18n-check test build ## Full gate: pint + i18n-check + pest + tsc
 tinker: ## artisan tinker
 	$(ARTISAN) tinker
 
-QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled,purgable
+QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled_jobs,purgable
 
 REVERB_PORT ?= 8080
 

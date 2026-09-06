@@ -3,14 +3,15 @@
 namespace App\Listeners;
 
 use App\Events\DomainEvent;
+use App\Finders\NotificationFinder;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\Notification;
 
 // Port từ refs/chatwoot/app/listeners/base_listener.rb.
-// extract_notification_and_account chờ model Notification (D2).
 abstract class BaseListener
 {
     /** @return array{0: Conversation, 1: Account} */
@@ -19,6 +20,16 @@ abstract class BaseListener
         $conversation = $event->data['conversation'];
 
         return [$conversation, $conversation->account];
+    }
+
+    /** @return array{0: Notification, 1: Account, 2: int, 3: int} */
+    protected function extractNotificationAndAccount(DomainEvent $event): array
+    {
+        /** @var Notification $notification */
+        $notification = $event->data['notification'];
+        $finder = new NotificationFinder($notification->user, $notification->account);
+
+        return [$notification, $notification->account, $finder->unreadCount(), $finder->count()];
     }
 
     /** @return array{0: Message, 1: Account} */

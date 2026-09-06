@@ -29,17 +29,21 @@ export interface SidebarLabel {
 
 // Port từ menuItems computed trong sidebar/Sidebar.vue.
 // Ẩn theo quyết định skip EE: Captain, Calls, Companies, Audit Logs,
-// Custom Roles, SLA, Billing, Agent Assignment, Conversation Workflow.
+// Custom Roles, SLA, Billing, Agent Assignment.
+// Conversation Workflow HIỆN từ D6: `auto_resolve_conversations` là tính năng
+// OSS và bật mặc định trong config/features.php, không phải EE như A3 giả định.
 // Nhóm động (Folders/Segments/Tagged) render khi dữ liệu
 // đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
 // badgeCount lấy từ store conversationUnreadCounts (B8) — rỗng khi account chưa
-// bật cờ `conversation_unread_counts`, đúng như oracle.
+// bật cờ `conversation_unread_counts`, đúng như oracle. Huy hiệu mục Inbox là số
+// thông báo chưa đọc (D5), không gắn cờ nào.
 export function buildMenuItems(
     accountId: number,
     inboxes: SidebarInbox[] = [],
     teams: SidebarTeam[] = [],
     labels: SidebarLabel[] = [],
     unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
+    notificationsUnreadCount = 0,
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
@@ -49,6 +53,11 @@ export function buildMenuItems(
             label: t('SIDEBAR.INBOX'),
             icon: 'i-lucide-inbox',
             to: scoped('inbox-view'),
+            // activeOn ['inbox_view', 'inbox_view_conversation'] của bản gốc: mở một
+            // thông báo vẫn phải sáng mục này.
+            activeOn: [scoped('inbox-view')],
+            // getterKeys.count = 'notifications/getUnreadCount' của bản gốc.
+            getterKeys: { count: notificationsUnreadCount },
         },
         {
             name: 'Conversation',
@@ -314,6 +323,13 @@ export function buildMenuItems(
                     label: t('SIDEBAR.DATA'),
                     icon: 'i-lucide-database',
                     to: scoped('settings/data/imports'),
+                },
+                {
+                    name: 'Conversation Workflow',
+                    permissions: ['administrator'],
+                    label: t('SIDEBAR.CONVERSATION_WORKFLOW'),
+                    icon: 'i-lucide-workflow',
+                    to: scoped('settings/conversation-workflow'),
                 },
                 {
                     name: 'Settings Security',

@@ -39,6 +39,9 @@ return [
         'csat' => [
             'not_sent_due_to_messaging_window' => 'CSAT survey not sent due to outgoing message restrictions',
         ],
+        'auto_resolve' => [
+            'not_sent_due_to_messaging_window' => 'Auto-resolve message not sent due to outgoing message restrictions',
+        ],
         'muted' => '{user_name} has muted the conversation',
         'unmuted' => '{user_name} has unmuted the conversation',
     ],

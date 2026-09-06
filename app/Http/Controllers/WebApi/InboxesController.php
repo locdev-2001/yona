@@ -48,6 +48,19 @@ class InboxesController extends Controller
         'business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
     ];
 
+    // params.permit(working_hours: Inbox::OFFISABLE_ATTRS) — lịch tuần đi kèm
+    // PATCH inbox, không có endpoint riêng ở bản gốc.
+    private const WORKING_HOURS_RULES = [
+        'working_hours' => ['sometimes', 'array'],
+        'working_hours.*.day_of_week' => ['required', 'integer', 'between:0,6'],
+        'working_hours.*.closed_all_day' => ['sometimes', 'nullable', 'boolean'],
+        'working_hours.*.open_all_day' => ['sometimes', 'nullable', 'boolean'],
+        'working_hours.*.open_hour' => ['sometimes', 'nullable', 'integer'],
+        'working_hours.*.open_minutes' => ['sometimes', 'nullable', 'integer'],
+        'working_hours.*.close_hour' => ['sometimes', 'nullable', 'integer'],
+        'working_hours.*.close_minutes' => ['sometimes', 'nullable', 'integer'],
+    ];
+
     public function index(Request $request, Account $account): JsonResponse
     {
         $inboxes = $this->policyScope($request, $account)
@@ -93,6 +106,7 @@ class InboxesController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             ...self::INBOX_ATTRIBUTE_RULES,
+            ...self::WORKING_HOURS_RULES,
             'avatar' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp', 'max:15360'],
             'channel' => ['sometimes', 'array'],
         ]);
@@ -102,6 +116,11 @@ class InboxesController extends Controller
 
             if ($request->file('avatar') instanceof UploadedFile) {
                 $inbox->replaceAvatar($request->file('avatar'));
+            }
+
+            // update_inbox_working_hours: chỉ đụng tới lịch khi client gửi khóa này.
+            if (array_key_exists('working_hours', $data)) {
+                $inbox->updateWorkingHours($data['working_hours']);
             }
 
             $this->updateChannel($inbox, $data['channel'] ?? []);
@@ -196,7 +215,7 @@ class InboxesController extends Controller
     // Rails nên đổi khóa 'friendly'/'professional' thành giá trị cột.
     private function inboxAttributesFrom(array $data): array
     {
-        $attributes = collect($data)->except(['avatar', 'channel', 'sender_name_type'])->all();
+        $attributes = collect($data)->except(['avatar', 'channel', 'working_hours', 'sender_name_type'])->all();
 
         if (array_key_exists('sender_name_type', $data)) {
             $attributes['sender_name_type'] = $data['sender_name_type'] === 'professional'

@@ -2,13 +2,14 @@
 
 namespace App\Services\Messages;
 
+use App\Builders\NotificationBuilder;
 use App\Jobs\Conversations\UserMentionJob;
 use App\Models\AccountUser;
 use App\Models\Message;
 use App\Models\TeamMember;
+use App\Models\User;
 
 // Port từ refs/chatwoot/app/services/messages/mention_service.rb.
-// Thông báo `conversation_mention` (NotificationBuilder) chờ model Notification (D2).
 class MentionService
 {
     // Cú pháp mention của bản gốc: markdown link `[@Tên](mention://user/12/Tên)`.
@@ -40,6 +41,36 @@ class MentionService
         );
 
         $this->addMentionedUsersAsParticipants($mentionedUserIds);
+        $this->generateNotificationsForMentions($mentionedUserIds);
+    }
+
+    /** @param list<int> $mentionedUserIds */
+    private function generateNotificationsForMentions(array $mentionedUserIds): void
+    {
+        foreach ($mentionedUserIds as $userId) {
+            if ($this->isSelfMention($userId)) {
+                continue;
+            }
+
+            $user = User::query()->find($userId);
+
+            if ($user === null) {
+                continue;
+            }
+
+            (new NotificationBuilder(
+                'conversation_mention',
+                $user,
+                $this->message->account,
+                $this->message->conversation,
+                $this->message,
+            ))->perform();
+        }
+    }
+
+    private function isSelfMention(int $userId): bool
+    {
+        return $this->message->sender_type === 'User' && $this->message->sender_id === $userId;
     }
 
     private function isValidMentionMessage(): bool

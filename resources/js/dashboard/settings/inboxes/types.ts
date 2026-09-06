@@ -1,3 +1,5 @@
+import type { WorkingHourPayload } from './helpers/businessHour';
+
 // Shape trả về từ InboxResource (api/v1/models/_inbox.json.jbuilder).
 export interface Inbox {
     id: number;
@@ -14,6 +16,7 @@ export interface Inbox {
     enable_auto_assignment: boolean;
     auto_assignment_config: Record<string, unknown>;
     out_of_office_message: string | null;
+    working_hours: WorkingHourPayload[];
     timezone: string;
     callback_webhook_url: string | null;
     allow_messages_after_resolved: boolean;

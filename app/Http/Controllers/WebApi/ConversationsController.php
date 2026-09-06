@@ -21,6 +21,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
+use App\Services\Notification\MarkConversationReadService;
 use App\Support\DateRangeHelper;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -225,6 +226,9 @@ class ConversationsController extends Controller
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
         $isAssignee = $this->isAssignee($request, $conversation);
+
+        // Mở hội thoại là dọn luôn thông báo chưa đọc của chính hội thoại đó.
+        (new MarkConversationReadService($request->user(), $account, $conversation))->perform();
 
         if ($isAssignee && $conversation->assigneeUnreadMessages()->exists()) {
             $this->markSeenAt($conversation, now(), true);

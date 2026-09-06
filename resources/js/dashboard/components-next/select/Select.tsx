@@ -2,23 +2,30 @@ import type { SelectHTMLAttributes } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 
-// Port từ dashboard/components-next/select/Select.vue (nhánh options phẳng;
-// optgroup vào khi màn nào cần).
+// Port từ dashboard/components-next/select/Select.vue.
 export interface SelectOption {
     value: string;
     label: string;
     disabled?: boolean;
 }
 
-interface SelectInputProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+export interface SelectOptionGroup {
+    label: string;
     options: SelectOption[];
+}
+
+interface SelectInputProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+    options?: SelectOption[];
+    // Có `groups` thì `options` bị bỏ qua, đúng nhánh v-if của bản gốc.
+    groups?: SelectOptionGroup[];
     placeholder?: string;
     error?: boolean;
     onChange: (value: string) => void;
 }
 
 export default function SelectInput({
-    options,
+    options = [],
+    groups = [],
     placeholder = '',
     error = false,
     disabled = false,
@@ -45,11 +52,21 @@ export default function SelectInput({
                         {placeholder}
                     </option>
                 ) : null}
-                {options.map(option => (
-                    <option key={option.value} value={option.value} disabled={option.disabled}>
-                        {option.label}
-                    </option>
-                ))}
+                {groups.length > 0
+                    ? groups.map(group => (
+                          <optgroup key={group.label} label={group.label}>
+                              {group.options.map(option => (
+                                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                                      {option.label}
+                                  </option>
+                              ))}
+                          </optgroup>
+                      ))
+                    : options.map(option => (
+                          <option key={option.value} value={option.value} disabled={option.disabled}>
+                              {option.label}
+                          </option>
+                      ))}
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                 <Icon icon="i-lucide-chevron-down" className={`size-4 text-n-slate-11 ${disabled ? 'opacity-50' : ''}`} />

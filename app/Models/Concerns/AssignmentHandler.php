@@ -178,7 +178,9 @@ trait AssignmentHandler
         return $this->team_id === null ? null : Team::query()->find($this->team_id);
     }
 
-    private function currentAssignee(): ?User
+    // Public vì listener chạy sau hook cũng cần người nhận việc hiện tại: quan hệ
+    // `assignee` đã nạp từ trước lần lưu này nên đọc thẳng sẽ trả giá trị cũ.
+    public function currentAssignee(): ?User
     {
         return $this->assignee_id === null ? null : User::query()->find($this->assignee_id);
     }

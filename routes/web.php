@@ -122,6 +122,10 @@ Route::middleware('auth')->group(function () {
                 ->where('subPage', '[a-z_]+')->name('settings_inboxes_page_channel');
             Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
+
+            // Tương đương conversationWorkflow.routes.js.
+            Route::get('/settings/conversation-workflow', fn (Account $account) => Inertia::render('dashboard/settings/conversationWorkflow/Index'))
+                ->name('conversation_workflow_index');
         });
 
         // Tương đương canned.routes.js: mọi vai trò có quyền hội thoại (không riêng
@@ -157,6 +161,15 @@ Route::middleware('auth')->group(function () {
             'dashboard/conversation/ConversationView',
             ['conversationId' => $conversationId, 'conversationType' => 'mention'],
         ))->whereNumber('conversationId')->name('conversation_through_mentions');
+
+        // Tương đương inbox.routes.js: trung tâm thông báo (`inbox_view` +
+        // `inbox_view_conversation`) — cùng một màn, khác mỗi hội thoại đang mở.
+        Route::get('/inbox-view', fn () => Inertia::render('dashboard/notifications/InboxList'))
+            ->name('inbox_view');
+        Route::get('/inbox-view/{type}/{conversationId}', fn (Account $account, string $type, int $conversationId) => Inertia::render(
+            'dashboard/notifications/InboxList',
+            ['conversationId' => $conversationId],
+        ))->where('type', '[a-z_]+')->whereNumber('conversationId')->name('inbox_view_conversation');
 
         // Tương đương contacts routes.js (admin + agent đều vào được).
         Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts_dashboard');

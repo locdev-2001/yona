@@ -69,8 +69,19 @@ it('returns the channel config, branding and a usable session token', function (
         'locale' => 'en',
         'api_host' => config('app.url'),
         'portal' => null,
-        'working_hours' => [],
     ]);
+
+    // Lịch tuần mặc định của inbox đi kèm /config để widget biết giờ mở cửa.
+    expect($config['website_channel_config']['working_hours'])->toHaveCount(7)
+        ->and($config['website_channel_config']['working_hours'][1])->toBe([
+            'day_of_week' => 1,
+            'closed_all_day' => false,
+            'open_hour' => 9,
+            'open_minutes' => 0,
+            'close_hour' => 17,
+            'close_minutes' => 0,
+            'open_all_day' => false,
+        ]);
 
     expect($config['global_config'])->toBe([
         'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),

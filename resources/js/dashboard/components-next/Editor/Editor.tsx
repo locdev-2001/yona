@@ -29,6 +29,8 @@ interface EditorProps {
     message?: string;
     messageType?: MessageType;
     enableCannedResponses?: boolean;
+    // Khóa bộ định dạng + thanh công cụ (FORMATTING của constants/editor.js).
+    channelType?: string;
     className?: string;
     // slot `actions` của bản gốc: thay chỗ bộ đếm ký tự.
     actions?: ReactNode;
@@ -48,6 +50,7 @@ export default function Editor({
     message = '',
     messageType = 'info',
     enableCannedResponses = true,
+    channelType,
     className = '',
     actions,
 }: EditorProps) {
@@ -86,6 +89,7 @@ export default function Editor({
                     placeholder={placeholder}
                     disabled={disabled}
                     uiSettings={uiSettings}
+                    channelType={channelType}
                     enableCannedResponses={enableCannedResponses}
                     onChange={newValue => {
                         if (!disabled) onChange(newValue);

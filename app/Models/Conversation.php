@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -304,6 +305,37 @@ class Conversation extends Model
         return $this->hasMany(Mention::class);
     }
 
+    /** @return MorphMany<Notification, $this> */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'primary_actor');
+    }
+
+    // ConversationPolicy#show?: administrator, thành viên hộp thư hoặc thành viên
+    // team đang giữ hội thoại. Nguồn DUY NHẤT — controller lẫn NotificationBuilder
+    // đều hỏi qua đây.
+    public function isVisibleTo(User $user, AccountUser $accountUser): bool
+    {
+        if ($accountUser->isAdministrator()) {
+            return true;
+        }
+
+        $inboxAccess = $user->inboxes()
+            ->where('inboxes.account_id', $this->account_id)
+            ->where('inboxes.id', $this->inbox_id)
+            ->exists();
+
+        if ($inboxAccess) {
+            return true;
+        }
+
+        return $this->team_id !== null
+            && $user->teams()
+                ->where('teams.account_id', $this->account_id)
+                ->where('teams.id', $this->team_id)
+                ->exists();
+    }
+
     // Cổng DUY NHẤT tạo participant: thay validation ensure_inbox_access của
     // conversation_participant.rb. Trả null khi user không nằm trong
     // assignable_agents (inbox member + administrator) — đúng cách
@@ -450,6 +482,23 @@ class Conversation extends Model
     public function cachedLabelListArray(): array
     {
         return array_values(array_filter(array_map('trim', explode(',', $this->cached_label_list ?? ''))));
+    }
+
+    /**
+     * scope :resolvable_all / :resolvable_not_waiting — hội thoại đang mở đã im
+     * lặng quá `$autoResolveAfter` phút. `$ignoreWaiting` bỏ qua hội thoại đang
+     * chờ agent trả lời.
+     */
+    public function scopeResolvable(Builder $query, ?int $autoResolveAfter, bool $ignoreWaiting = false): Builder
+    {
+        if ((int) $autoResolveAfter === 0) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $query->where('status', self::STATUS_OPEN)
+            ->where('last_activity_at', '<', now()->subMinutes((int) $autoResolveAfter));
+
+        return $ignoreWaiting ? $query->whereNull('waiting_since') : $query;
     }
 
     public function scopeUnassigned(Builder $query): Builder
@@ -689,7 +738,7 @@ class Conversation extends Model
         }
 
         if ($this->isResolved()) {
-            ['key' => $key, 'count' => $count] = $this->autoResolveMessageKey((int) ($this->account->settings['auto_resolve_after'] ?? 0));
+            ['key' => $key, 'count' => $count] = $this->autoResolveMessageKey((int) $this->account->setting('auto_resolve_after'));
 
             return __('conversations.activity.status.'.$key, ['count' => $count]);
         }

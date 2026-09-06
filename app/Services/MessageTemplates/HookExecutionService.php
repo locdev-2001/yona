@@ -7,6 +7,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\MessageTemplates\Template\EmailCollect;
 use App\Services\MessageTemplates\Template\Greeting;
+use App\Services\MessageTemplates\Template\OutOfOffice;
 
 /**
  * Port từ refs/chatwoot/app/services/message_templates/hook_execution_service.rb.
@@ -14,8 +15,8 @@ use App\Services\MessageTemplates\Template\Greeting;
  * ĐIỂM GỌI DUY NHẤT của mọi mẫu tin tự động: `Message::created`. Thêm một mẫu
  * mới = thêm một nhánh ở `triggerTemplates()`, không rải điều kiện ra controller.
  *
- * Chưa port: OutOfOffice (cần Business Hours). CsatSurvey KHÔNG thuộc hook này —
- * bản gốc gọi nó từ CsatSurveyService lúc hội thoại được giải quyết.
+ * CsatSurvey KHÔNG thuộc hook này — bản gốc gọi nó từ CsatSurveyService lúc
+ * hội thoại được giải quyết.
  */
 final class HookExecutionService
 {
@@ -54,6 +55,10 @@ final class HookExecutionService
 
     private function triggerTemplates(): void
     {
+        if ($this->shouldSendOutOfOfficeMessage()) {
+            (new OutOfOffice($this->conversation()))->perform();
+        }
+
         if ($this->shouldSendGreeting()) {
             (new Greeting($this->conversation()))->perform();
         }
@@ -61,6 +66,28 @@ final class HookExecutionService
         if ($this->inbox()->enable_email_collect && $this->shouldSendEmailCollect()) {
             (new EmailCollect($this->conversation()))->perform();
         }
+    }
+
+    private function shouldSendOutOfOfficeMessage(): bool
+    {
+        if ($this->conversation()->campaign_id !== null || ! $this->message->isIncoming()) {
+            return false;
+        }
+
+        // Agent vừa trả lời trong 5 phút qua thì đừng cắt ngang bằng tin ngoài giờ.
+        $hasRecentAgentReply = $this->conversation()->messages()
+            ->outgoing()
+            ->where('private', false)
+            ->where('created_at', '>', now()->subMinutes(5))
+            ->exists();
+
+        if ($hasRecentAgentReply) {
+            return false;
+        }
+
+        return $this->inbox()->outOfOffice()
+            && filled($this->inbox()->out_of_office_message)
+            && ! $this->conversation()->messages()->today()->template()->exists();
     }
 
     // Bỏ cổng `conversation.tweet?` của bản gốc: kênh Twitter chưa port.

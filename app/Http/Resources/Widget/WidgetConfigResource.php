@@ -42,8 +42,9 @@ final class WidgetConfigResource
                 'welcome_tagline' => $channel->welcome_tagline,
                 'welcome_title' => $channel->welcome_title,
                 'widget_color' => $channel->widget_color,
-                // working_hours chờ Business Hours, giống InboxResource.
-                'working_hours' => [],
+                // Bản gốc trả nguyên bản ghi working_hours (kèm id/account_id/timestamps);
+                // widget chỉ đọc 7 khóa lịch nên dùng chung `weeklySchedule()` với dashboard.
+                'working_hours' => $inbox->weeklySchedule(),
                 'working_hours_enabled' => $inbox->working_hours_enabled,
             ],
             'contact' => [

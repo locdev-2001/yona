@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\BulkActionsController;
@@ -20,6 +21,8 @@ use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\LabelsController;
+use App\Http\Controllers\WebApi\NotificationsController;
+use App\Http\Controllers\WebApi\NotificationSettingsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
 use App\Http\Controllers\WebApi\ProfilesController;
@@ -46,6 +49,9 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/profile/availability', [ProfileAvailabilityController::class, 'availability']);
         Route::post('/profile/auto_offline', [ProfileAvailabilityController::class, 'autoOffline']);
         Route::post('/presence', [PresenceController::class, 'update']);
+
+        Route::get('/', [AccountsController::class, 'show']);
+        Route::match(['put', 'patch'], '/', [AccountsController::class, 'update']);
 
         Route::get('/agents', [AgentsController::class, 'index']);
         Route::post('/agents', [AgentsController::class, 'store']);
@@ -126,6 +132,19 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'show'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'update'])->whereNumber('conversationId');
         Route::delete('/conversations/{conversationId}/draft_messages', [DraftMessagesController::class, 'destroy'])->whereNumber('conversationId');
+
+        // resources :notifications + resource :notification_settings (số ít).
+        Route::get('/notifications', [NotificationsController::class, 'index']);
+        Route::get('/notifications/unread_count', [NotificationsController::class, 'unreadCount']);
+        Route::post('/notifications/read_all', [NotificationsController::class, 'readAll']);
+        Route::post('/notifications/destroy_all', [NotificationsController::class, 'destroyAll']);
+        Route::post('/notifications/{notificationId}/snooze', [NotificationsController::class, 'snooze'])->whereNumber('notificationId');
+        Route::post('/notifications/{notificationId}/unread', [NotificationsController::class, 'unread'])->whereNumber('notificationId');
+        Route::match(['put', 'patch'], '/notifications/{notificationId}', [NotificationsController::class, 'update'])->whereNumber('notificationId');
+        Route::delete('/notifications/{notificationId}', [NotificationsController::class, 'destroy'])->whereNumber('notificationId');
+
+        Route::get('/notification_settings', [NotificationSettingsController::class, 'show']);
+        Route::match(['put', 'patch'], '/notification_settings', [NotificationSettingsController::class, 'update']);
 
         Route::get('/labels', [LabelsController::class, 'index']);
         Route::post('/labels', [LabelsController::class, 'store']);
