@@ -7,7 +7,16 @@ use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
 use App\Models\Channel\Email;
+use App\Models\Channel\FacebookPage;
+use App\Models\Channel\Instagram;
+use App\Models\Channel\Line;
+use App\Models\Channel\Sms;
+use App\Models\Channel\Telegram;
+use App\Models\Channel\Tiktok;
+use App\Models\Channel\TwilioSms;
+use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
+use App\Models\Channel\Whatsapp;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
@@ -44,6 +53,15 @@ class AppServiceProvider extends ServiceProvider
             'Channel::Api' => Api::class,
             'Channel::WebWidget' => WebWidget::class,
             'Channel::Email' => Email::class,
+            'Channel::FacebookPage' => FacebookPage::class,
+            'Channel::Instagram' => Instagram::class,
+            'Channel::Telegram' => Telegram::class,
+            'Channel::Line' => Line::class,
+            'Channel::Sms' => Sms::class,
+            'Channel::TwilioSms' => TwilioSms::class,
+            'Channel::Whatsapp' => Whatsapp::class,
+            'Channel::Tiktok' => Tiktok::class,
+            'Channel::TwitterProfile' => TwitterProfile::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,

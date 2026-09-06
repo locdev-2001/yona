@@ -3,6 +3,7 @@
 namespace App\Models\Integrations;
 
 use App\Models\Account;
+use App\Models\Channel\Concerns\Reauthorizable;
 use App\Models\Inbox;
 use App\Support\Integrations\App;
 use Database\Factories\Integrations\HookFactory;
@@ -17,7 +18,10 @@ use Illuminate\Support\Str;
 class Hook extends Model
 {
     /** @use HasFactory<HookFactory> */
-    use HasFactory;
+    use HasFactory, Reauthorizable;
+
+    // Reauthorizable::AUTHORIZATION_ERROR_THRESHOLD mặc định của bản gốc.
+    public const AUTHORIZATION_ERROR_THRESHOLD = 2;
 
     protected $table = 'integrations_hooks';
 

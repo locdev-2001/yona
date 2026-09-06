@@ -3173,6 +3173,16 @@ const messages: Record<string, unknown> = {
         "webhook": {
             "invalid": "Invalid events"
         },
+        "openai": {
+            "invalid_api_key": "OpenAI API key is invalid or revoked. Please check your key in your OpenAI dashboard."
+        },
+        "dyte": {
+            "invalid_message_type": "Invalid message type. Action not permitted",
+            "realtimekit_credentials_required": "Cloudflare RealtimeKit credentials are required. Delete the existing Dyte integration and create it again with Cloudflare RealtimeKit credentials."
+        },
+        "slack": {
+            "invalid_channel_id": "Invalid slack channel. Please try again"
+        },
         "reports": {
             "date_range_too_long": "Date range cannot exceed 6 months"
         },
@@ -6092,7 +6102,8 @@ const messages: Record<string, unknown> = {
         "dyte": {
             "name": "Cloudflare RealtimeKit",
             "short_description": "Start video/voice calls with customers directly from Chatwoot.",
-            "description": "Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot."
+            "description": "Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot.",
+            "meeting_name": ":agent_name has started a meeting"
         },
         "slack": {
             "name": "Slack",
@@ -8093,6 +8104,17 @@ const messages: Record<string, unknown> = {
         "CHANGELOG": "Changelog",
         "LOGOUT": "Log out"
     },
+    "SLACK_UNFURL": {
+        "fields": {
+            "name": "Name",
+            "email": "Email",
+            "phone_number": "Phone",
+            "company_name": "Company",
+            "inbox_name": "Inbox",
+            "inbox_type": "Inbox Type"
+        },
+        "button": "Open conversation"
+    },
     "SLASH_COMMANDS": {
         "HEADING_1": "Heading 1",
         "HEADING_2": "Heading 2",
@@ -8118,6 +8140,34 @@ const messages: Record<string, unknown> = {
         "AVG_REPLY_TIME": "Avg. Customer Waiting Time",
         "RESOLUTION_COUNT": "Resolution Count",
         "CONVERSATIONS": "No. of conversations"
+    },
+    "SUPER_ADMIN": {
+        "account_suspension": {
+            "categories": {
+                "spam": "Spam",
+                "non_payment": "Non-payment",
+                "other": "Other"
+            },
+            "form": {
+                "category": "Suspension category",
+                "category_prompt": "Select a category",
+                "reason": "Suspension reason",
+                "reason_hint": "Enter a reason of up to 256 characters."
+            },
+            "history": {
+                "suspended_at": "Suspended at",
+                "category": "Category",
+                "reason": "Reason",
+                "empty": "No suspension history recorded."
+            }
+        },
+        "users": {
+            "resend_confirmation": {
+                "button": "Resend confirmation email",
+                "sent": "Confirmation email sent.",
+                "already_confirmed": "User is already confirmed."
+            }
+        }
     },
     "SURVEY": {
         "DESCRIPTION": "Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.",

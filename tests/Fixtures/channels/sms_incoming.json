@@ -1,0 +1,19 @@
+[
+  {
+    "type": "message-received",
+    "time": "2021-08-06T10:20:00.000Z",
+    "description": "Incoming message received",
+    "to": "+15551234567",
+    "message": {
+      "id": "1627916692457Kx0y2Nqp",
+      "owner": "+15551234567",
+      "applicationId": "app-id",
+      "time": "2021-08-06T10:20:00.000Z",
+      "segmentCount": 1,
+      "direction": "in",
+      "to": ["+15551234567"],
+      "from": "+15557654321",
+      "text": "Xin chào từ SMS"
+    }
+  }
+]

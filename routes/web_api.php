@@ -9,6 +9,7 @@ use App\Http\Controllers\WebApi\Articles\BulkActionsController as ArticleBulkAct
 use App\Http\Controllers\WebApi\ArticlesController;
 use App\Http\Controllers\WebApi\AutomationRulesController;
 use App\Http\Controllers\WebApi\BulkActionsController;
+use App\Http\Controllers\WebApi\CallbacksController;
 use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\CategoriesController;
@@ -301,6 +302,10 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         // F6 integrations hooks + dashboard_apps — END
 
         // F2-F5 kênh ngoài (callbacks, register page…) — BEGIN (agent f2f5-be sở hữu khối này)
+        // Port từ `resources :callbacks` trong refs/chatwoot/config/routes.rb.
+        Route::post('/callbacks/register_facebook_page', [CallbacksController::class, 'registerFacebookPage']);
+        Route::get('/callbacks/facebook_pages', [CallbacksController::class, 'facebookPages']);
+        Route::post('/callbacks/reauthorize_page/{inboxId}', [CallbacksController::class, 'reauthorizePage'])->whereNumber('inboxId');
         // F2-F5 kênh ngoài — END
 
         // E2 search_controller.rb.

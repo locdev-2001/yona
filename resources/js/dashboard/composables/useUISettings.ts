@@ -3,6 +3,19 @@ import { putJson } from 'dashboard/helper/apiClient';
 // Port từ dashboard/composables/useUISettings.js (phần trang profile cần).
 export type UISettings = Record<string, unknown>;
 
+// slugifyChannel của useUISettings.js gốc — 'Channel::Email' → 'channel_email'.
+export function slugifyChannel(name: string): string {
+    return name?.toLowerCase().replace(' ', '_').replace('-', '_').replace('::', '_');
+}
+
+export function signatureFlagKey(channelType: string): string {
+    return `${slugifyChannel(channelType)}_signature_enabled`;
+}
+
+export function quotedReplyFlagKey(channelType: string): string {
+    return `${slugifyChannel(channelType)}_quoted_reply_enabled`;
+}
+
 export function isEditorHotKeyEnabled(uiSettings: UISettings, key: 'enter' | 'cmd_enter'): boolean {
     const editorMessageKey = uiSettings.editor_message_key as string | undefined;
     const enterToSendEnabled = uiSettings.enter_to_send_enabled as boolean | undefined;

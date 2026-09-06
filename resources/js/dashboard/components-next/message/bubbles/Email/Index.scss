@@ -1,0 +1,21 @@
+// Port từ <style lang="scss"> của components-next/message/bubbles/Email/Index.vue.
+
+// Tailwind reset làm hỏng khối link Google Drive trong thư Gmail.
+.letter-render [class*='gmail_drive_chip'] {
+  box-sizing: initial;
+  @apply bg-n-slate-4 border-n-slate-6 rounded-md !important;
+
+  a {
+    @apply text-n-slate-12 !important;
+
+    img {
+      display: inline-block;
+    }
+  }
+}
+
+// Gmail/Outlook gắn cứng dir="ltr" lên phần tử bọc; ở app RTL thì nội dung thư
+// bị ép LTR bất kể chữ thật sự theo hướng nào.
+[dir='rtl'] .letter-render [dir='ltr'] {
+  direction: inherit;
+}

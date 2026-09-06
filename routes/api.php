@@ -1,5 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\Webhooks\FacebookController as FacebookWebhooksController;
+use App\Http\Controllers\Api\Webhooks\InstagramController as InstagramWebhooksController;
+use App\Http\Controllers\Api\Webhooks\LineController as LineWebhooksController;
+use App\Http\Controllers\Api\Webhooks\SmsController as SmsWebhooksController;
+use App\Http\Controllers\Api\Webhooks\TelegramController as TelegramWebhooksController;
+use App\Http\Controllers\Api\Webhooks\TiktokController as TiktokWebhooksController;
+use App\Http\Controllers\Api\Webhooks\TwilioController as TwilioWebhooksController;
+use App\Http\Controllers\Api\Webhooks\TwitterController as TwitterWebhooksController;
+use App\Http\Controllers\Api\Webhooks\WhatsappController as WhatsappWebhooksController;
+use App\Http\Controllers\Platform\Api\V1\AccountsController as PlatformAccountsController;
+use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccountUsersController;
+use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
+use App\Http\Controllers\Platform\Api\V1\UsersController as PlatformUsersController;
 use App\Http\Controllers\Widget\BroadcastingAuthController;
 use App\Http\Controllers\Widget\CampaignsController;
 use App\Http\Controllers\Widget\ConfigsController;
@@ -11,6 +24,7 @@ use App\Http\Controllers\Widget\InboxMembersController;
 use App\Http\Controllers\Widget\LabelsController;
 use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
+use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
 use Illuminate\Support\Facades\Route;
@@ -21,7 +35,7 @@ use Illuminate\Support\Facades\Route;
 //
 // Port từ khối `namespace :widget` trong refs/chatwoot/config/routes.rb.
 Route::middleware(ResolveWidgetChannel::class)
-    ->prefix('/v1/widget')
+    ->prefix('/api/v1/widget')
     ->group(function () {
         // configs tự dựng hồ sơ khách khi chưa có; inbox_members + campaigns không
         // cần khách (skip_before_action :set_contact của bản gốc).
@@ -60,3 +74,55 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::delete('/labels/{label}', [LabelsController::class, 'destroy']);
         });
     });
+
+// F7 Platform API (/platform/api/v1/*) — BEGIN (agent f7 sở hữu khối này)
+// Port từ `namespace :platform` trong refs/chatwoot/config/routes.rb. Xác thực
+// bằng header api_access_token của một PlatformApp, không session/CSRF.
+Route::middleware(AuthenticatePlatformApp::class)
+    ->prefix('/platform/api/v1')
+    ->group(function () {
+        Route::get('/users/{user}/login', [PlatformUsersController::class, 'login'])->whereNumber('user');
+        Route::post('/users/{user}/token', [PlatformUsersController::class, 'token'])->whereNumber('user');
+        Route::post('/users', [PlatformUsersController::class, 'store']);
+        Route::get('/users/{user}', [PlatformUsersController::class, 'show'])->whereNumber('user');
+        Route::match(['put', 'patch'], '/users/{user}', [PlatformUsersController::class, 'update'])->whereNumber('user');
+        Route::delete('/users/{user}', [PlatformUsersController::class, 'destroy'])->whereNumber('user');
+
+        Route::get('/agent_bots', [PlatformAgentBotsController::class, 'index']);
+        Route::post('/agent_bots', [PlatformAgentBotsController::class, 'store']);
+        Route::get('/agent_bots/{agentBot}', [PlatformAgentBotsController::class, 'show'])->whereNumber('agentBot');
+        Route::match(['put', 'patch'], '/agent_bots/{agentBot}', [PlatformAgentBotsController::class, 'update'])->whereNumber('agentBot');
+        Route::delete('/agent_bots/{agentBot}', [PlatformAgentBotsController::class, 'destroy'])->whereNumber('agentBot');
+        Route::delete('/agent_bots/{agentBot}/avatar', [PlatformAgentBotsController::class, 'destroyAvatar'])->whereNumber('agentBot');
+
+        Route::get('/accounts', [PlatformAccountsController::class, 'index']);
+        Route::post('/accounts', [PlatformAccountsController::class, 'store']);
+        Route::get('/accounts/{account}', [PlatformAccountsController::class, 'show'])->whereNumber('account');
+        Route::match(['put', 'patch'], '/accounts/{account}', [PlatformAccountsController::class, 'update'])->whereNumber('account');
+        Route::delete('/accounts/{account}', [PlatformAccountsController::class, 'destroy'])->whereNumber('account');
+
+        Route::get('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'index'])->whereNumber('account');
+        Route::post('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'store'])->whereNumber('account');
+        Route::delete('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'destroy'])->whereNumber('account');
+    });
+// F7 Platform API — END
+
+// F2-F5 webhook nhận từ kênh ngoài (/webhooks/*) — BEGIN (agent f2f5-be sở hữu khối này)
+// Port từ cuối refs/chatwoot/config/routes.rb. Không session, không CSRF: mỗi kênh
+// tự xác thực theo cách của nhà cung cấp (token trong URL, HMAC header, chữ ký Twilio).
+Route::get('/bot', [FacebookWebhooksController::class, 'verify']);
+Route::post('/bot', [FacebookWebhooksController::class, 'events']);
+
+Route::get('/webhooks/twitter', [TwitterWebhooksController::class, 'crc']);
+Route::post('/webhooks/twitter', [TwitterWebhooksController::class, 'events']);
+Route::post('/webhooks/line/{lineChannelId}', [LineWebhooksController::class, 'processPayload']);
+Route::post('/webhooks/telegram/{botToken}', [TelegramWebhooksController::class, 'processPayload']);
+Route::post('/webhooks/sms/{phoneNumber}', [SmsWebhooksController::class, 'processPayload']);
+Route::get('/webhooks/whatsapp/{phoneNumber}', [WhatsappWebhooksController::class, 'verify']);
+Route::post('/webhooks/whatsapp/{phoneNumber}', [WhatsappWebhooksController::class, 'processPayload']);
+Route::get('/webhooks/instagram', [InstagramWebhooksController::class, 'verify']);
+Route::post('/webhooks/instagram', [InstagramWebhooksController::class, 'events']);
+Route::post('/webhooks/tiktok', [TiktokWebhooksController::class, 'events']);
+Route::post('/twilio/callback', [TwilioWebhooksController::class, 'processPayload']);
+Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'deliveryStatus'])->name('twilio.delivery_status');
+// F2-F5 webhooks — END

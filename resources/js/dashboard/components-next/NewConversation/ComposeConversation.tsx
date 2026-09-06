@@ -17,6 +17,9 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 import { appendSignature, removeSignature } from 'dashboard/helper/editorHelper';
 import { parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { signatureFlagKey } from 'dashboard/composables/useUISettings';
+import EmailOptions from './components/EmailOptions';
 import type { ContactMeta } from 'dashboard/conversation/types';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -37,8 +40,7 @@ interface ComposeConversationProps {
     trigger: (context: { isOpen: boolean }) => ReactNode;
 }
 
-const CHANNEL_TYPE = 'Channel::Api';
-const SIGNATURE_FLAG_KEY = 'channel_api_signature_enabled';
+const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
 interface SidebarInbox {
     id: number;
@@ -56,17 +58,24 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
     const { auth, currentAccount, inboxes = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const messageSignature = auth.user?.message_signature ?? '';
-    const sendWithSignature = Boolean(uiSettings[SIGNATURE_FLAG_KEY]);
 
     const popoverRef = useRef<PopoverHandle>(null);
     const editorRef = useRef<EditorHandle>(null);
     const emojiButtonRef = useRef<HTMLDivElement>(null);
     const [targetInbox, setTargetInbox] = useState<SidebarInbox | null>(null);
+    const [subject, setSubject] = useState('');
+    const [ccEmails, setCcEmails] = useState('');
+    const [bccEmails, setBccEmails] = useState('');
     const [showInboxesDropdown, setShowInboxesDropdown] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [message, setMessage] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [showErrors, setShowErrors] = useState(false);
+
+    const channelType = targetInbox?.channel_type ?? DEFAULT_CHANNEL_TYPE;
+    const isEmailInbox = channelType === INBOX_TYPES.EMAIL;
+    const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
+
 
     const inboxMenuItems: DropdownMenuItem[] = inboxes.map(inbox => ({
         label: inbox.name,
@@ -79,6 +88,9 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
     const clearForm = () => {
         setTargetInbox(null);
         setMessage('');
+        setSubject('');
+        setCcEmails('');
+        setBccEmails('');
         setShowErrors(false);
         setShowInboxesDropdown(false);
     };
@@ -88,7 +100,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
         setTargetInbox(inbox);
         setShowInboxesDropdown(false);
         if (inbox && sendWithSignature && messageSignature) {
-            setMessage(current => appendSignature(current, messageSignature, CHANNEL_TYPE));
+            setMessage(current => appendSignature(current, messageSignature, inbox.channel_type));
         }
     };
 
@@ -96,8 +108,8 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
         if (messageSignature) {
             setMessage(current =>
                 sendWithSignature
-                    ? removeSignature(current, messageSignature, CHANNEL_TYPE)
-                    : appendSignature(current, messageSignature, CHANNEL_TYPE),
+                    ? removeSignature(current, messageSignature, channelType)
+                    : appendSignature(current, messageSignature, channelType),
             );
         }
         onToggleSignature();
@@ -105,13 +117,19 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
 
     const handleSendMessage = async (hide: () => void) => {
         setShowErrors(true);
-        if (!targetInbox || isMessageEmpty) return;
+        // validationRules gốc: subject bắt buộc với inbox email.
+        if (!targetInbox || isMessageEmpty || (isEmailInbox && !subject)) return;
         setIsCreating(true);
         try {
             const conversation = await postJson<{ id: number }>(`/api/v1/accounts/${accountId}/conversations`, {
                 inbox_id: targetInbox.id,
                 contact_id: contact.id,
-                message: { content: message },
+                message: {
+                    content: message,
+                    ...(isEmailInbox && ccEmails ? { cc_emails: ccEmails } : {}),
+                    ...(isEmailInbox && bccEmails ? { bcc_emails: bccEmails } : {}),
+                },
+                ...(isEmailInbox && subject ? { additional_attributes: { mail_subject: subject } } : {}),
             });
             useAlert(t('COMPOSE_NEW_CONVERSATION.FORM.SUCCESS_MESSAGE'));
             clearForm();
@@ -193,6 +211,30 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                                 </div>
                             )}
                         </div>
+                        {isEmailInbox ? (
+                            <EmailOptions
+                                subject={subject}
+                                ccEmails={ccEmails}
+                                bccEmails={bccEmails}
+                                contactEmails={
+                                    contact.email
+                                        ? [
+                                              {
+                                                  label: contact.email,
+                                                  value: contact.id,
+                                                  action: 'email',
+                                              },
+                                          ]
+                                        : []
+                                }
+                                hasErrors={showErrors && !subject}
+                                onChange={value => {
+                                    if (value.subject !== undefined) setSubject(value.subject);
+                                    if (value.ccEmails !== undefined) setCcEmails(value.ccEmails);
+                                    if (value.bccEmails !== undefined) setBccEmails(value.bccEmails);
+                                }}
+                            />
+                        ) : null}
                         <div className="px-4 py-3 h-full">
                             <Editor
                                 ref={editorRef}
@@ -204,7 +246,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                                         : ''
                                 }`}
                                 placeholder={t('COMPOSE_NEW_CONVERSATION.FORM.MESSAGE_EDITOR.PLACEHOLDER')}
-                                channelType={CHANNEL_TYPE}
+                                channelType={channelType}
                                 uiSettings={uiSettings}
                                 onChange={setMessage}
                                 onSend={() => void handleSendMessage(hide)}

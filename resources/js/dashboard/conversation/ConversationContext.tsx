@@ -121,7 +121,13 @@ interface ConversationContextValue {
     clearConversationFilters: () => void;
     loadMoreConversations: () => void;
     fetchPreviousMessages: () => Promise<number>;
-    sendReply: (payload: { content: string; isPrivate: boolean }) => void;
+    sendReply: (payload: {
+        content: string;
+        isPrivate: boolean;
+        cc_emails?: string;
+        bcc_emails?: string;
+        to_emails?: string;
+    }) => void;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
     toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
     togglePriority: (priority: ConversationPriority | null) => Promise<void>;
@@ -795,7 +801,19 @@ export function ConversationProvider({
     // createPendingMessageAndSend: chèn tin pending (status progress) rồi thay bằng
     // bản server trả về; lỗi → đánh dấu failed như bản gốc.
     const sendReply = useCallback(
-        ({ content, isPrivate }: { content: string; isPrivate: boolean }) => {
+        ({
+            content,
+            isPrivate,
+            cc_emails: ccEmails,
+            bcc_emails: bccEmails,
+            to_emails: toEmails,
+        }: {
+            content: string;
+            isPrivate: boolean;
+            cc_emails?: string;
+            bcc_emails?: string;
+            to_emails?: string;
+        }) => {
             if (!conversationId || !selectedConversation) return;
 
             pendingEchoCounter += 1;
@@ -826,6 +844,9 @@ export function ConversationProvider({
                 content,
                 private: isPrivate,
                 echo_id: echoId,
+                ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
+                ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
+                ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
             }).then(
                 (message) => {
                     addMessage(message);

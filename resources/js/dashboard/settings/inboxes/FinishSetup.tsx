@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import { getJson } from 'dashboard/helper/apiClient';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import Dashboard from '../../Dashboard';
 import SettingsContent from '../SettingsContent';
@@ -11,6 +12,7 @@ import Code from 'dashboard/components/Code';
 import EmptyState from 'dashboard/components/widgets/EmptyState';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../types';
+import EmailInboxFinish from './channels/EmailInboxFinish';
 import type { Inbox } from './types';
 
 // Port từ settings/inbox/FinishSetup.vue — nhánh kênh API + Website (QR của
@@ -30,7 +32,14 @@ export default function FinishSetup({ inboxId }: FinishSetupProps) {
     }, [accountId, inboxId]);
 
     const webWidgetScript = inbox?.web_widget_script ?? '';
-    const message = webWidgetScript ? t('INBOX_MGMT.FINISH.WEBSITE_SUCCESS') : t('INBOX_MGMT.FINISH.MESSAGE');
+    // isAnEmailChannel && !provider của bản gốc: màn Voilà không có dòng mô tả
+    // chung, EmailInboxFinish tự viết lời nhắn theo forwarding_enabled.
+    const isEmailFinish = inbox?.channel_type === INBOX_TYPES.EMAIL && !inbox?.provider;
+    const message = isEmailFinish
+        ? ''
+        : webWidgetScript
+          ? t('INBOX_MGMT.FINISH.WEBSITE_SUCCESS')
+          : t('INBOX_MGMT.FINISH.MESSAGE');
 
     return (
         <Dashboard>
@@ -42,6 +51,9 @@ export default function FinishSetup({ inboxId }: FinishSetupProps) {
                                 <div className="my-4 mx-auto max-w-[70%]">
                                     {webWidgetScript ? <Code script={webWidgetScript} /> : null}
                                 </div>
+                                {isEmailFinish && inbox ? (
+                                    <EmailInboxFinish inbox={inbox} inboxId={inboxId} accountId={accountId} />
+                                ) : null}
                                 <div className="flex gap-2 justify-center mt-4">
                                     <a href={accountScopedUrl(accountId, `settings/inboxes/${inboxId}`)}>
                                         <Button outline slate label={t('INBOX_MGMT.FINISH.MORE_SETTINGS')} />

@@ -20,6 +20,12 @@ class Account extends Model
 
     public const STATUS_SUSPENDED = 1;
 
+    // Account#active? — tài khoản bị treo thì ngưng nhận sự kiện từ kênh ngoài.
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
     public const ONBOARDING_STEP_KEY = 'onboarding_step';
 
     protected $fillable = [

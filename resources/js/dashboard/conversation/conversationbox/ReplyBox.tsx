@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { debounce, trimContent } from '@chatwoot/utils';
+import { debounce, getRecipients, trimContent } from '@chatwoot/utils';
 
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
@@ -8,9 +8,24 @@ import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/cons
 import AttachmentsPreview from 'dashboard/components/widgets/AttachmentsPreview';
 import type { PendingAttachment } from 'dashboard/components/widgets/AttachmentsPreview';
 import { appendSignature, removeSignature } from 'dashboard/helper/editorHelper';
-import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
+import { isEditorHotKeyEnabled, quotedReplyFlagKey, signatureFlagKey } from 'dashboard/composables/useUISettings';
+import { getJson } from 'dashboard/helper/apiClient';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import {
+    appendQuotedTextToMessage,
+    buildQuotedEmailHeader,
+    extractQuotedEmailText,
+    truncatePreviewText,
+} from 'dashboard/helper/quotedEmailHelper';
+import ReplyEmailHead from 'dashboard/components/widgets/conversation/ReplyEmailHead';
+import QuotedEmailPreview from 'dashboard/components/widgets/conversation/QuotedEmailPreview';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { AGENT_BOT_ASSIGNEE_TYPE, MESSAGE_MAX_LENGTH, STATUS_TYPE } from 'dashboard/conversation/constants';
+import {
+    AGENT_BOT_ASSIGNEE_TYPE,
+    MESSAGE_MAX_LENGTH,
+    MESSAGE_TYPES,
+    STATUS_TYPE,
+} from 'dashboard/conversation/constants';
 import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
 
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
@@ -19,6 +34,7 @@ import { openCommandBar } from 'dashboard/commands/commandBarStore';
 import { t } from '../../../i18n';
 import { draftKey, getDraft, removeDraft, setDraft } from '../draftApi';
 import { sendMessage } from '../api';
+import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
@@ -37,9 +53,7 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // WhatsApp templates, copilot editor, canned '/' + mention @ + variables,
 // Paste đính kèm (kênh API chưa cần).
 
-const CHANNEL_TYPE = 'Channel::Api';
-// slugifyChannel('Channel::Api') của useUISettings.js gốc → 'channel_api'.
-const SIGNATURE_FLAG_KEY = 'channel_api_signature_enabled';
+const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
 function isMacOS(): boolean {
     return navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone';
@@ -60,19 +74,40 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         selectedConversation,
         conversationId,
         accountId,
+        messages,
         sendReply,
         uiSettings,
         updateUISettings,
         toggleTypingStatus,
     } = useConversation();
-    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount, inboxes = [] } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
     const messageSignature = user.message_signature ?? '';
     // isCloudFeatureEnabled/isFeatureEnabledonAccount gốc = tra cờ trong account.features.
     const captainTasksEnabled = Boolean(currentAccount.features.captain_tasks);
     const voiceRecorderEnabled = Boolean(currentAccount.features.voice_recorder);
 
+    // channelType gốc lấy từ getter inboxes/getInbox(inbox_id). Danh sách inbox
+    // chia sẻ qua Inertia chỉ có id/name/channel_type, nên kênh email nạp thêm
+    // bản đầy đủ (email + forward_to_email) để dựng danh sách người nhận.
+    const channelType =
+        inboxes.find(item => item.id === selectedConversation?.inbox_id)?.channel_type ?? DEFAULT_CHANNEL_TYPE;
+    const isAnEmailChannel = channelType === INBOX_TYPES.EMAIL;
+    const [emailInbox, setEmailInbox] = useState<Inbox | null>(null);
+
+    useEffect(() => {
+        const inboxId = selectedConversation?.inbox_id;
+        if (!isAnEmailChannel || !inboxId) {
+            setEmailInbox(null);
+            return;
+        }
+        void getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`).then(setEmailInbox);
+    }, [accountId, isAnEmailChannel, selectedConversation?.inbox_id]);
+
     const [replyType, setReplyType] = useState<string>(REPLY_EDITOR_MODES.REPLY);
+    const [ccEmails, setCcEmails] = useState('');
+    const [bccEmails, setBccEmails] = useState('');
+    const [toEmails, setToEmails] = useState('');
     const [message, setMessage] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
@@ -94,12 +129,12 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
     const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
 
-    const sendWithSignature = Boolean(uiSettings[SIGNATURE_FLAG_KEY]);
+    const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
     const isSignatureEnabledForInbox = !isPrivate && sendWithSignature;
     const isSignatureAvailable = Boolean(messageSignature);
     const isSignatureActive = isSignatureEnabledForInbox && isSignatureAvailable;
 
-    const maxLength = MESSAGE_MAX_LENGTH.GENERAL;
+    const maxLength = isAnEmailChannel ? MESSAGE_MAX_LENGTH.EMAIL : MESSAGE_MAX_LENGTH.GENERAL;
     const isMessageLengthReachingThreshold = message.length > maxLength - 50;
     const charactersRemaining = maxLength - message.length;
 
@@ -109,7 +144,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const isReplyButtonDisabled =
         isEditorDisabled || isUploading || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
-    const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, CHANNEL_TYPE).trim() !== '';
+    const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, channelType).trim() !== '';
 
     const messagePlaceHolder = isEditorDisabled
         ? t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
@@ -122,6 +157,70 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         const keyLabel = isEditorHotKeyEnabled(uiSettings, 'cmd_enter') ? `(${cmdEnterShortcutLabel()})` : '(↵)';
         return `${sendMessageText} ${keyLabel}`;
     })();
+
+    // ---- Kênh email: người nhận + trích dẫn thư trước ----
+    // getLastEmailInSelectedChat: tin công khai gần nhất, incoming hoặc outgoing.
+    const lastEmail = useMemo(
+        () =>
+            [...messages]
+                .reverse()
+                .find(
+                    item =>
+                        !item.private &&
+                        (item.message_type === MESSAGE_TYPES.INCOMING ||
+                            item.message_type === MESSAGE_TYPES.OUTGOING),
+                ) ?? null,
+        [messages],
+    );
+
+    const quotedReplyPreference = isAnEmailChannel
+        ? Boolean(uiSettings[quotedReplyFlagKey(channelType)])
+        : false;
+    const lastEmailWithQuotedContent = isAnEmailChannel && lastEmail && !lastEmail.private ? lastEmail : null;
+    const quotedEmailText = extractQuotedEmailText(lastEmailWithQuotedContent);
+    const quotedEmailPreviewText = truncatePreviewText(quotedEmailText, 80);
+    const shouldShowQuotedReplyToggle = isAnEmailChannel && !isOnPrivateNote;
+    const shouldShowQuotedPreview =
+        shouldShowQuotedReplyToggle && quotedReplyPreference && Boolean(quotedEmailText);
+
+    const toggleQuotedReply = () => {
+        if (!isAnEmailChannel) return;
+        updateUISettings({ [quotedReplyFlagKey(channelType)]: !quotedReplyPreference });
+    };
+
+    const getMessageWithQuotedEmailText = (content: string): string => {
+        if (!quotedReplyPreference || !shouldShowQuotedReplyToggle || !quotedEmailText) return content;
+
+        const header = buildQuotedEmailHeader(
+            lastEmailWithQuotedContent,
+            selectedConversation?.meta?.sender ?? null,
+            emailInbox,
+        );
+
+        return appendQuotedTextToMessage(content, quotedEmailText, header);
+    };
+
+    // setCCAndToEmailsFromLastChat: chạy khi đổi hội thoại và khi tin email cuối
+    // đổi (bản gốc có hai watcher riêng, cùng gọi một hàm).
+    useEffect(() => {
+        if (!isAnEmailChannel) {
+            setToEmails('');
+            setCcEmails('');
+            setBccEmails('');
+            return;
+        }
+        const conversationContact = selectedConversation?.meta?.sender?.email || '';
+        const { cc, bcc, to } = getRecipients(
+            lastEmail as unknown as Record<string, unknown> | null,
+            conversationContact,
+            emailInbox?.email ?? '',
+            emailInbox?.forward_to_email ?? '',
+        );
+        setToEmails(to.join(', '));
+        setCcEmails(cc.join(', '));
+        setBccEmails(bcc.join(', '));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAnEmailChannel, conversationId, lastEmail, emailInbox]);
 
     // ---- Bản nháp (draftMessages) ----
     // messageRef để hàm debounce và switchDraftContext đọc giá trị mới nhất mà
@@ -139,8 +238,8 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         if (state.isEditorDisabled && state.sendWithSignature) return draft;
 
         return state.sendWithSignature
-            ? appendSignature(draft, state.messageSignature, CHANNEL_TYPE)
-            : removeSignature(draft, state.messageSignature, CHANNEL_TYPE);
+            ? appendSignature(draft, state.messageSignature, channelType)
+            : removeSignature(draft, state.messageSignature, channelType);
     };
 
     const saveDraftFor = (context: { conversationId: number; replyMode: string } | null) => {
@@ -199,8 +298,8 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         if (!messageSignature) return;
         setMessage((current) =>
             isSignatureActive
-                ? appendSignature(current, messageSignature, CHANNEL_TYPE)
-                : removeSignature(current, messageSignature, CHANNEL_TYPE),
+                ? appendSignature(current, messageSignature, channelType)
+                : removeSignature(current, messageSignature, channelType),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSignatureActive]);
@@ -214,13 +313,19 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
 
     const clearMessage = () => {
         // clearMessage gốc: reset rồi gắn lại chữ ký nếu đang bật.
-        setMessage(isSignatureActive ? appendSignature('', messageSignature, CHANNEL_TYPE) : '');
+        setMessage(isSignatureActive ? appendSignature('', messageSignature, channelType) : '');
         setAttachedFiles([]);
     };
 
     const afterSent = () => {
         removeFromDraft();
         clearMessage();
+        // clearEmailField của bản gốc chạy sau khi gửi thành công.
+        if (isAnEmailChannel) {
+            setCcEmails('');
+            setBccEmails('');
+            setToEmails('');
+        }
         editorRef.current?.focusEditorInputField();
         onMessageSent?.();
     };
@@ -242,9 +347,10 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         setIsUploading(true);
         try {
             await sendMessage(accountId, conversationId, {
-                content: message,
+                content: getMessageWithQuotedEmailText(message),
                 private: isPrivate,
                 files: attachedFiles.map((attachment) => attachment.resource),
+                ...emailPayloadFields(),
             });
             afterSent();
         } catch (error: unknown) {
@@ -255,6 +361,13 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         }
     };
 
+    // getMessagePayload gốc: chỉ đính cc/bcc/to khi có giá trị và không phải note.
+    const emailPayloadFields = () => ({
+        ...(ccEmails && !isOnPrivateNote ? { cc_emails: ccEmails } : {}),
+        ...(bccEmails && !isOnPrivateNote ? { bcc_emails: bccEmails } : {}),
+        ...(toEmails && !isOnPrivateNote ? { to_emails: toEmails } : {}),
+    });
+
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
         if (hasAttachments) {
@@ -262,7 +375,11 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
             return;
         }
         if (!isMessageEmpty) {
-            sendReply({ content: message, isPrivate });
+            sendReply({
+                content: getMessageWithQuotedEmailText(message),
+                isPrivate,
+                ...emailPayloadFields(),
+            });
         }
         afterSent();
     };
@@ -281,7 +398,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
 
     // setSignatureFlagForInbox: merge vào ui_settings rồi PUT /api/v1/profile.
     const toggleMessageSignature = () => {
-        updateUISettings({ [SIGNATURE_FLAG_KEY]: !sendWithSignature });
+        updateUISettings({ [signatureFlagKey(channelType)]: !sendWithSignature });
     };
 
     const insertEmoji = (emoji: string) => {
@@ -329,6 +446,18 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 onToggleEditorSize={toggleEditorSize}
             />
             <div className="reply-box__top">
+                {!isOnPrivateNote && isAnEmailChannel ? (
+                    <ReplyEmailHead
+                        toEmails={toEmails}
+                        ccEmails={ccEmails}
+                        bccEmails={bccEmails}
+                        onChange={value => {
+                            if (value.toEmails !== undefined) setToEmails(value.toEmails);
+                            if (value.ccEmails !== undefined) setCcEmails(value.ccEmails);
+                            if (value.bccEmails !== undefined) setBccEmails(value.bccEmails);
+                        }}
+                    />
+                ) : null}
                 <Editor
                     ref={editorRef}
                     value={message}
@@ -337,7 +466,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                     placeholder={messagePlaceHolder}
                     disabled={isEditorDisabled}
                     isPrivate={isOnPrivateNote}
-                    channelType={CHANNEL_TYPE}
+                    channelType={channelType}
                     uiSettings={uiSettings}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
@@ -346,6 +475,13 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                     onTypingOn={() => toggleTyping('on')}
                     onTypingOff={() => toggleTyping('off')}
                 />
+                {shouldShowQuotedPreview ? (
+                    <QuotedEmailPreview
+                        quotedEmailText={quotedEmailText}
+                        previewText={quotedEmailPreviewText}
+                        onToggle={toggleQuotedReply}
+                    />
+                ) : null}
                 {hasAttachments ? (
                     <div className="bg-transparent py-0 mb-2">
                         <AttachmentsPreview className="mt-2" attachments={attachedFiles} onRemoveAttachment={setAttachedFiles} />
@@ -363,6 +499,9 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 isSendDisabled={isReplyButtonDisabled}
                 sendButtonText={isUploading ? t('CONVERSATION.UPLOADING_ATTACHMENTS') : replyButtonLabel}
                 sendWithSignature={sendWithSignature}
+                showQuotedReplyToggle={shouldShowQuotedReplyToggle}
+                quotedReplyEnabled={quotedReplyPreference}
+                onToggleQuotedReply={toggleQuotedReply}
                 onSend={onSendReply}
                 onFileUpload={onFileUpload}
                 onToggleSignature={toggleMessageSignature}

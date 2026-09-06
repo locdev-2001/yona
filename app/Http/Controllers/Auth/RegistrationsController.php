@@ -7,10 +7,8 @@ use App\Exceptions\Account\InvalidEmail;
 use App\Exceptions\Account\UserExists;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Notifications\ConfirmationInstructions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -50,7 +48,7 @@ class RegistrationsController extends Controller
             throw ValidationException::withMessages(['email' => $exception->getMessage()]);
         }
 
-        $this->sendConfirmationInstructions($user);
+        $user->sendConfirmationInstructions();
 
         return redirect('/app/auth/verify-email')->with('signup_email', $user->email);
     }
@@ -65,19 +63,9 @@ class RegistrationsController extends Controller
             ->first();
 
         if ($user) {
-            $this->sendConfirmationInstructions($user);
+            $user->sendConfirmationInstructions();
         }
 
         return back()->with('signup_email', mb_strtolower($email));
-    }
-
-    private function sendConfirmationInstructions(User $user): void
-    {
-        $user->forceFill([
-            'confirmation_token' => $user->confirmation_token ?? Str::random(40),
-            'confirmation_sent_at' => now(),
-        ])->save();
-
-        $user->notify(new ConfirmationInstructions);
     }
 }

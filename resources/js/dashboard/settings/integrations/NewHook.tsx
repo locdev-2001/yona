@@ -9,7 +9,7 @@ import { fetchIntegrationApps } from 'dashboard/composables/useIntegrationApps';
 import { useBranding } from 'shared/composables/useBranding';
 import ModalHeader from 'dashboard/components/ModalHeader';
 import Button from 'dashboard/components-next/button/Button';
-import type { IntegrationApp } from 'dashboard/composables/useIntegrationApps';
+import type { IntegrationApp, IntegrationFormField } from 'dashboard/composables/useIntegrationApps';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/NewHook.vue.
@@ -21,6 +21,13 @@ interface NewHookProps {
 }
 
 type FieldValue = string | boolean;
+
+function initialFieldValue(item: IntegrationFormField): FieldValue {
+    if (item.type === 'checkbox') return false;
+    if (item.type === 'select') return item.options?.[0]?.value ?? '';
+
+    return '';
+}
 
 export default function NewHook({ integration, onClose }: NewHookProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
@@ -42,8 +49,10 @@ export default function NewHook({ integration, onClose }: NewHookProps) {
         [integration.hooks],
     );
 
+    // FormKit bỏ qua khoá `default` của schema (nó chỉ hiểu `value`), nên ô select
+    // của bản gốc luôn mở ở tuỳ chọn ĐẦU TIÊN chứ không phải giá trị `default`.
     const [values, setValues] = useState<Record<string, FieldValue>>(() =>
-        Object.fromEntries(formItems.map(item => [item.name, item.default ?? (item.type === 'checkbox' ? false : '')])),
+        Object.fromEntries(formItems.map(item => [item.name, initialFieldValue(item)])),
     );
     const [selectedInboxId, setSelectedInboxId] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
@@ -108,11 +117,13 @@ export default function NewHook({ integration, onClose }: NewHookProps) {
                                 {item.label}
                                 {item.type === 'textarea' ? (
                                     <textarea
+                                        className="!mb-0"
                                         value={String(values[item.name] ?? '')}
                                         onChange={event => setValue(item.name, event.target.value)}
                                     />
                                 ) : item.type === 'select' ? (
                                     <select
+                                        className="!mb-0"
                                         value={String(values[item.name] ?? '')}
                                         onChange={event => setValue(item.name, event.target.value)}
                                     >
@@ -124,6 +135,7 @@ export default function NewHook({ integration, onClose }: NewHookProps) {
                                     </select>
                                 ) : (
                                     <input
+                                        className="!mb-0"
                                         type={item.type === 'number' ? 'number' : 'text'}
                                         value={String(values[item.name] ?? '')}
                                         onChange={event => setValue(item.name, event.target.value)}
@@ -132,7 +144,7 @@ export default function NewHook({ integration, onClose }: NewHookProps) {
                             </>
                         )}
                         {item.help ? (
-                            <span className="text-n-slate-10 text-sm font-normal mt-2 w-full">{item.help}</span>
+                            <span className="block text-n-slate-10 text-sm font-normal mt-2 w-full">{item.help}</span>
                         ) : null}
                     </label>
                 ))}
@@ -140,7 +152,11 @@ export default function NewHook({ integration, onClose }: NewHookProps) {
                 {isHookTypeInbox ? (
                     <label className="mt-2">
                         {t('INTEGRATION_APPS.ADD.FORM.INBOX.PLACEHOLDER')}
-                        <select value={selectedInboxId} onChange={event => setSelectedInboxId(event.target.value)}>
+                        <select
+                            className="!mb-0"
+                            value={selectedInboxId}
+                            onChange={event => setSelectedInboxId(event.target.value)}
+                        >
                             <option value="" disabled>
                                 {t('INTEGRATION_APPS.ADD.FORM.INBOX.LABEL')}
                             </option>

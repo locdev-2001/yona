@@ -1,18 +1,20 @@
 import type { CSSProperties } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { t } from '../../../i18n';
 
 import { MessageProvider } from './provider';
 import type { MessageContextValue } from './provider';
-import { MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
+import { CONTENT_TYPES, MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
 import ActivityBubble from './bubbles/Activity';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
 import FileBubble from './bubbles/File';
 import ImageBubble from './bubbles/Image';
+import EmailBubble from './bubbles/Email/Index';
 import TextBubble from './bubbles/Text';
 import VideoBubble from './bubbles/Video';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
@@ -75,8 +77,16 @@ export default function Message({
     const senderType = message.sender_type ?? null;
     const additionalAttributes = message.additional_attributes ?? {};
 
+    // isEmailInbox của MessageList.vue = isAnEmailChannel của kênh đang mở.
+    const isEmailInbox = channelType === INBOX_TYPES.EMAIL;
+    const contentType = message.content_type ?? null;
+    const isEmailMessageType =
+        messageType === MESSAGE_TYPES.INCOMING || messageType === MESSAGE_TYPES.OUTGOING;
+
     const variant: MessageVariant = (() => {
         if (isPrivate) return MESSAGE_VARIANTS.PRIVATE;
+        if (isEmailInbox && isEmailMessageType) return MESSAGE_VARIANTS.EMAIL;
+        if (contentType === CONTENT_TYPES.INCOMING_EMAIL) return MESSAGE_VARIANTS.EMAIL;
         if (status === MESSAGE_STATUS.FAILED) return MESSAGE_VARIANTS.ERROR;
 
         const isBot =
@@ -118,7 +128,12 @@ export default function Message({
     const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY && orientation !== ORIENTATION.LEFT;
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
-    const BubbleComponent = BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)];
+    // componentToRender của Message.vue: kênh email (tin công khai) và tin
+    // content_type = incoming_email luôn lên bubble email trước mọi nhánh khác.
+    const BubbleComponent =
+        (isEmailInbox && !isPrivate && isEmailMessageType) || contentType === CONTENT_TYPES.INCOMING_EMAIL
+            ? EmailBubble
+            : BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)];
 
     const shouldRenderMessage = Boolean(
         attachments.length > 0 ||

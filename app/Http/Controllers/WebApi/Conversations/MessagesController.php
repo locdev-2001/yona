@@ -8,12 +8,16 @@ use App\Finders\MessageFinder;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
 use App\Models\Account;
+use App\Models\Message;
+use App\Services\Integrations\GoogleTranslate\ProcessorService as GoogleTranslateProcessorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Throwable;
 
 // Port từ Api::V1::Accounts::Conversations::MessagesController.
 // Bỏ: update status (đi cùng driver kênh gửi thật), destroy (context menu
-// tin nhắn — port cùng cụm tiện ích), retry (SendReplyJob D4), translate (F6).
+// tin nhắn — port cùng cụm tiện ích), retry (SendReplyJob D4).
 class MessagesController extends Controller
 {
     public function index(Request $request, Account $account, int $conversationId): JsonResponse
@@ -47,5 +51,47 @@ class MessagesController extends Controller
         }
 
         return response()->json((new MessageResource($message))->toArray($request));
+    }
+
+    // messages#translate — Integrations::GoogleTranslate::ProcessorService.
+    // `Message#translations` của bản gốc là store_accessor trên content_attributes
+    // (message.rb: store_accessor :content_attributes, …, :translations), không
+    // phải cột riêng — nên bản port lưu đúng chỗ đó.
+    public function translate(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse|Response
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $message = $conversation->messages()->findOrFail($messageId);
+        $targetLanguage = (string) $request->input('target_language');
+
+        if ($this->alreadyTranslated($message, $targetLanguage)) {
+            return response()->noContent(200);
+        }
+
+        try {
+            $translatedContent = (new GoogleTranslateProcessorService($message, $targetLanguage))->perform();
+        } catch (Throwable $exception) {
+            return response()->json(['error' => $exception->getMessage()], 422);
+        }
+
+        if (filled($translatedContent)) {
+            $this->storeTranslation($message, $targetLanguage, $translatedContent);
+        }
+
+        return response()->json(['content' => $translatedContent]);
+    }
+
+    private function alreadyTranslated(Message $message, string $targetLanguage): bool
+    {
+        return filled($message->content_attributes['translations'][$targetLanguage] ?? null);
+    }
+
+    private function storeTranslation(Message $message, string $targetLanguage, string $translatedContent): void
+    {
+        $attributes = $message->content_attributes ?? [];
+        $translations = $attributes['translations'] ?? [];
+        $translations[$targetLanguage] = $translatedContent;
+        $attributes['translations'] = $translations;
+
+        $message->update(['content_attributes' => $attributes]);
     }
 }

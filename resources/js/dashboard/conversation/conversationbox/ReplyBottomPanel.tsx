@@ -23,6 +23,9 @@ interface ReplyBottomPanelProps {
     isSendDisabled: boolean;
     sendButtonText: string;
     sendWithSignature: boolean;
+    showQuotedReplyToggle?: boolean;
+    quotedReplyEnabled?: boolean;
+    onToggleQuotedReply?: () => void;
     onSend: () => void;
     onFileUpload: (file: File) => void;
     onToggleSignature: () => void;
@@ -38,6 +41,9 @@ export default function ReplyBottomPanel({
     isSendDisabled,
     sendButtonText,
     sendWithSignature,
+    showQuotedReplyToggle = false,
+    quotedReplyEnabled = false,
+    onToggleQuotedReply,
     onSend,
     onFileUpload,
     onToggleSignature,
@@ -50,6 +56,10 @@ export default function ReplyBottomPanel({
     const showAttachButton = !isEditorDisabled;
     const showAudioRecorderButton = !isEditorDisabled && showAudioRecorder;
     const showMessageSignatureButton = !isEditorDisabled && !isOnPrivateNote;
+
+    const quotedReplyToggleTooltip = quotedReplyEnabled
+        ? t('CONVERSATION.REPLYBOX.QUOTED_REPLY.DISABLE_TOOLTIP')
+        : t('CONVERSATION.REPLYBOX.QUOTED_REPLY.ENABLE_TOOLTIP');
 
     const signatureToggleTooltip = sendWithSignature
         ? t('CONVERSATION.FOOTER.DISABLE_SIGN_TOOLTIP')
@@ -119,6 +129,17 @@ export default function ReplyBottomPanel({
                         faded
                         sm
                         onClick={onToggleSignature}
+                    />
+                ) : null}
+                {showQuotedReplyToggle ? (
+                    <NextButton
+                        title={quotedReplyToggleTooltip}
+                        icon="i-ph-quotes"
+                        variant={quotedReplyEnabled ? 'solid' : 'faded'}
+                        color="slate"
+                        sm
+                        aria-pressed={quotedReplyEnabled}
+                        onClick={onToggleQuotedReply}
                     />
                 ) : null}
             </div>
