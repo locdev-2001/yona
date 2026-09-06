@@ -32,8 +32,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Chuyển hướng tệp đính kèm: URL kết thúc bằng tên tệp gốc rồi 301 sang tệp
-// thật, đúng hành vi ActiveStorage của bản gốc.
-Route::get('/attachments/{attachment}/{filename}', [AttachmentsController::class, 'show'])
+// thật, đúng hành vi ActiveStorage của bản gốc. `{token}` là chữ ký HMAC của id
+// (kèm hạn dùng cho URL gửi ra ngoài) — chỗ ActiveStorage đặt `signed_id`.
+Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsController::class, 'show'])
     ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show');
 
 Route::redirect('/', '/app');

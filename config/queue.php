@@ -64,11 +64,17 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         * Bất biến của hàng đợi: `media_timeout` của kênh (120s, config/zalo.php)
+         * < `--timeout` của worker (150s) < `retry_after`. Sai thứ tự này thì
+         * Redis trả job về hàng đợi TRONG LÚC nó còn đang chạy → một tin gửi hai
+         * lần cho khách. Lệnh worker mẫu: docs/zalo-bridge/deployment.md.
+         */
         'redis' => [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 180),
             'block_for' => null,
             'after_commit' => false,
         ],

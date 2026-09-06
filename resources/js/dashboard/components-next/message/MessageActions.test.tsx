@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
@@ -45,6 +45,21 @@ const renderMessage = (
         />,
     ).container;
 
+// jsdom chưa cài đặt <dialog>; Dialog của port mở/đóng bằng showModal/close.
+beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function showModal() {
+        this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function close() {
+        this.removeAttribute('open');
+    };
+});
+
+const confirmButtonLabelled = (container: HTMLElement, label: string) =>
+    Array.from(container.querySelectorAll('dialog button')).find(
+        button => button.textContent?.trim() === label,
+    ) as HTMLButtonElement | undefined;
+
 describe('thanh hành động trên tin gate theo năng lực kênh', () => {
     const handlers = { onToggleReaction: vi.fn(), onDeleteMessage: vi.fn() };
 
@@ -77,6 +92,53 @@ describe('thanh hành động trên tin gate theo năng lực kênh', () => {
         fireEvent.click(screen.getByRole('button', { name: '👍' }));
 
         expect(onToggleReaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('bấm "thu hồi" chỉ mở hộp xác nhận, chưa gọi handler', () => {
+        const onDeleteMessage = vi.fn();
+        const container = renderMessage(outgoing(), ['outbound_recall'], { onDeleteMessage });
+
+        expect(container.querySelector('dialog')).toBeNull();
+
+        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
+
+        expect(onDeleteMessage).not.toHaveBeenCalled();
+        expect(container.querySelector('dialog')?.textContent).toContain(
+            'Unsend this message for everyone?',
+        );
+        expect(container.querySelector('dialog')?.textContent).toContain('cannot be undone');
+    });
+
+    it('xác nhận rồi mới thu hồi, huỷ thì không đụng gì', () => {
+        const onDeleteMessage = vi.fn();
+        const container = renderMessage(outgoing(), ['outbound_recall'], { onDeleteMessage });
+
+        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
+        fireEvent.click(confirmButtonLabelled(container, 'Cancel') as HTMLButtonElement);
+
+        expect(onDeleteMessage).not.toHaveBeenCalled();
+        expect(container.querySelector('dialog')).toBeNull();
+
+        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
+        fireEvent.click(confirmButtonLabelled(container, 'Unsend for everyone') as HTMLButtonElement);
+
+        expect(onDeleteMessage).toHaveBeenCalledTimes(1);
+        expect(container.querySelector('dialog')).toBeNull();
+    });
+
+    it('kênh không thu hồi được thì hỏi bằng câu "xoá" của bản gốc', () => {
+        const onDeleteMessage = vi.fn();
+        const container = renderMessage(outgoing(), [], { onDeleteMessage });
+
+        fireEvent.click(container.querySelector('[aria-label="Delete"]') as HTMLElement);
+
+        expect(container.querySelector('dialog')?.textContent).toContain(
+            'Are you sure you want to delete this message?',
+        );
+
+        fireEvent.click(confirmButtonLabelled(container, 'Delete') as HTMLButtonElement);
+
+        expect(onDeleteMessage).toHaveBeenCalledTimes(1);
     });
 
     it('tin đã thu hồi thì không cho thả cảm xúc nữa', () => {

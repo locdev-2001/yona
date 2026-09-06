@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Zalo\ZaloHealthSweepJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use App\Services\Zalo\QrLoginService;
 use App\Services\Zalo\ZaloHealthMonitor;
+use App\Services\Zalo\ZaloProfileSync;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,6 +24,7 @@ class ZaloConnectionsController extends Controller
     public function __construct(
         private readonly QrLoginService $qrLogin,
         private readonly ZaloHealthMonitor $healthMonitor,
+        private readonly ZaloProfileSync $profileSync,
     ) {}
 
     public function startQr(Request $request, Account $account, int $inboxId): JsonResponse
@@ -62,6 +65,7 @@ class ZaloConnectionsController extends Controller
     public function health(Request $request, Account $account, int $inboxId): JsonResponse
     {
         $channel = $this->fetchChannel($request, $account, $inboxId);
+        $this->backfillProfile($channel);
 
         return response()->json([
             'state' => $channel->state,
@@ -78,6 +82,22 @@ class ZaloConnectionsController extends Controller
             // kèm mốc thử lại để "ngắt mạch" không còn vô hình (zalo-deep-audit 6.5).
             'bridge' => $this->healthMonitor->status($channel->connectionId()),
         ]);
+    }
+
+    /**
+     * Hộp thư nối trước khi có bước lưu hồ sơ không có tên/ảnh tài khoản Zalo, và
+     * nhịp tim theo lịch có thể chưa chạy vòng nào. Mở trang cấu hình thì hỏi
+     * bridge NGAY (cùng đường đọc `/health` với nhịp tim, không phải đường thứ
+     * hai), rồi trả về dữ liệu đã lấp — thẻ tài khoản có avatar từ lần vào đầu.
+     */
+    private function backfillProfile(Zalo $channel): void
+    {
+        if (! $channel->isConnected() || ! $this->profileSync->isIncomplete($channel)) {
+            return;
+        }
+
+        ZaloHealthSweepJob::dispatchSync($channel->connectionId());
+        $channel->refresh();
     }
 
     /**

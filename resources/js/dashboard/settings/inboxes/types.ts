@@ -23,6 +23,9 @@ export interface Inbox {
     lock_to_single_conversation: boolean;
     sender_name_type: 'friendly' | 'professional';
     business_name: string | null;
+    // Năng lực kênh (docs/channel-capabilities.md §3) — giao diện gate theo đây,
+    // không theo `channel_type`.
+    capabilities?: readonly string[] | null;
     // Key kênh khác (null với kênh API) — giữ shape như bản gốc.
     website_url?: string | null;
     email?: string | null;

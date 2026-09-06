@@ -2372,7 +2372,11 @@ const messages: Record<string, unknown> = {
         "MESSAGE_ACTIONS": {
             "REACT": "Thả cảm xúc",
             "RECALL": "Thu hồi với mọi người",
-            "DELETE": "Xoá"
+            "DELETE": "Xoá",
+            "RECALL_CONFIRMATION": {
+                "TITLE": "Thu hồi tin nhắn này với cả khách?",
+                "MESSAGE": "Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được."
+            }
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Thử lại",

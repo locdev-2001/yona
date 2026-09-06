@@ -170,7 +170,7 @@ nhánh `main` hoặc đã được sửa trong worktree. Không sửa gì.
 
 Tôi chạy `node -e "import('./src/index.mjs')"` để kiểm import có lỗi symbol không. **Đó là sai lầm:**
 `index.mjs` gọi `boot()` ngay khi load, và `bootRestoreAllSessions()` đọc `.sessions/c6.json` — phiên
-Zalo THẬT của founder. Process đã kịp `Logged in as 614728282576931247` và `restored session
+Zalo THẬT của founder. Process đã kịp `Logged in as <uid-shop>` và `restored session
 connection_id= 6` trước khi tôi kill.
 
 Đã kiểm ngay sau đó bằng một `GET /health?connection_id=6` **read-only** (không truyền `bot_id` nên

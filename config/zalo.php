@@ -27,6 +27,12 @@ return [
     // để phân loại thống kê tin chủ động, không dùng để chặn.
     'reply_window_hours' => 24,
 
+    // Zalo Web chỉ phát MỘT sự kiện typing cho cả lượt gõ, và hàng đợi dev chạy
+    // `--sleep=3` nên job tắt còn trễ thêm 1–4 giây. Để 5 giây thì bong bóng
+    // "đang nhập…" chớp tắt giữa lúc khách vẫn đang gõ; 10 giây là mức chờ đủ
+    // cho một câu dài mà vẫn tắt sớm hơn ngưỡng 30 giây của giao diện.
+    'typing_off_delay' => 10,
+
     // Ngắt mạch khi Zalo thật sự từ chối (429/500 từ zca) hoặc mất phiên.
     // Lỗi cấu hình secret (403/503 của bridge) KHÔNG tính vào đây.
     'circuit_breaker' => [

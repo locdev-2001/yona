@@ -2,7 +2,6 @@
 
 namespace App\Services\Zalo;
 
-use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Channel\Zalo;
 use Illuminate\Support\Str;
 
@@ -27,7 +26,10 @@ class QrLoginService
 
     public const ERROR_NO_QR_SESSION = 'qr_session_missing';
 
-    public function __construct(private readonly ZaloBridgeClient $bridge) {}
+    public function __construct(
+        private readonly ZaloBridgeClient $bridge,
+        private readonly ZaloProfileSync $profileSync,
+    ) {}
 
     /** @return array<string, mixed> */
     public function start(Zalo $channel): array
@@ -119,16 +121,13 @@ class QrLoginService
         }
 
         $channel->update([
-            ...array_filter([
-                'zalo_uid' => $zaloUid,
-                'display_name' => $data['display_name'] ?? null,
-                'phone' => $data['phone'] ?? null,
-            ], fn ($value) => $value !== null),
+            ...array_filter(['zalo_uid' => $zaloUid], fn ($value) => $value !== null),
             'qr_token' => null,
         ]);
 
         $channel->markState(Zalo::STATE_CONNECTED);
-        $this->syncInboxAvatar($channel, $data['avatar'] ?? null);
+        // Vừa quét xong là nguồn chuẩn: tên/SĐT/ảnh mới được phép ghi đè bản cũ.
+        $this->profileSync->apply($channel, $data, authoritative: true);
 
         return [
             'ok' => true,
@@ -212,21 +211,6 @@ class QrLoginService
         }
 
         return null;
-    }
-
-    /**
-     * Avatar + tên tài khoản Zalo làm ảnh đại diện MẶC ĐỊNH của hộp thư — chỉ khi
-     * chủ hộp thư chưa tự đặt ảnh riêng, để lần quét lại không đè ảnh họ chọn.
-     */
-    private function syncInboxAvatar(Zalo $channel, mixed $avatarUrl): void
-    {
-        $inbox = $channel->inbox;
-
-        if ($inbox === null || ! is_string($avatarUrl) || blank($avatarUrl) || $inbox->avatar !== null) {
-            return;
-        }
-
-        AvatarFromUrlJob::dispatch($inbox, $avatarUrl);
     }
 
     /**

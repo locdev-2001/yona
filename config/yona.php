@@ -31,6 +31,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tệp đính kèm
+    |--------------------------------------------------------------------------
+    |
+    | `download_url_ttl`: tuổi thọ (giây) của URL đính kèm ĐÃ KÝ gửi cho dịch vụ
+    | bên ngoài (Zalo bridge, Meta, Twilio…) — tương đương
+    | ActiveStorage::Service.url_expires_in của bản gốc, mặc định 5 phút. URL hiển
+    | thị trong app vẫn ký nhưng không hết hạn, như `blobs/redirect` của gốc.
+    |
+    */
+
+    'attachments' => [
+        'download_url_ttl' => (int) env('ATTACHMENT_DOWNLOAD_URL_TTL', 300),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Xác thực hai lớp (MFA/2FA)
     |--------------------------------------------------------------------------
     |

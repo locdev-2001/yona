@@ -6,6 +6,7 @@ use App\Jobs\ApplicationJob;
 use App\Models\Channel\Zalo;
 use App\Services\Zalo\ZaloBridgeClient;
 use App\Services\Zalo\ZaloHealthMonitor;
+use App\Services\Zalo\ZaloProfileSync;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -27,14 +28,15 @@ class ZaloHealthSweepJob extends ApplicationJob
         $this->onQueue('scheduled_jobs');
     }
 
-    public function handle(ZaloBridgeClient $bridge, ZaloHealthMonitor $monitor): void
+    public function handle(ZaloBridgeClient $bridge, ZaloHealthMonitor $monitor, ZaloProfileSync $profileSync): void
     {
-        $this->channels()->each(function (Zalo $channel) use ($bridge, $monitor) {
+        $this->channels()->each(function (Zalo $channel) use ($bridge, $monitor, $profileSync) {
             $response = $bridge->health($channel);
             $payload = $response !== null && $response->successful() ? (array) $response->json() : null;
 
             if ($payload !== null && ($payload['connected'] ?? false) === true) {
                 $this->markHealthy($channel, $monitor);
+                $this->backfillProfile($channel, $payload, $profileSync);
 
                 return;
             }
@@ -60,6 +62,26 @@ class ZaloHealthSweepJob extends ApplicationJob
             $monitor->reset($channel->connectionId());
             $channel->markState(Zalo::STATE_CONNECTED);
         }
+    }
+
+    /**
+     * Hộp thư nối trước khi có bước lưu hồ sơ (promote cũ) không có tên/ảnh tài
+     * khoản Zalo — thẻ "Tài khoản Zalo đang kết nối" chỉ hiện chữ cái đầu. Nhịp
+     * tim đã cầm sẵn `integrated_display_name`/`integrated_avatar` của bridge nên
+     * lấp luôn, và KHÔNG ghi đè thứ đã có (`authoritative: false`).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function backfillProfile(Zalo $channel, array $payload, ZaloProfileSync $profileSync): void
+    {
+        if (! $profileSync->isIncomplete($channel)) {
+            return;
+        }
+
+        $profileSync->apply($channel, [
+            'display_name' => $payload['integrated_display_name'] ?? null,
+            'avatar' => $payload['integrated_avatar'] ?? null,
+        ], authoritative: false);
     }
 
     private function markFailing(Zalo $channel, ZaloHealthMonitor $monitor, string $reason): void

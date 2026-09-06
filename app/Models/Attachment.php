@@ -75,6 +75,9 @@ class Attachment extends Model
 
     public const GENERIC_FILE_CONTENT_TYPES = ['application/octet-stream'];
 
+    // ActiveStorage::Service.url_expires_in mặc định của gốc = 5 phút.
+    private const DOWNLOAD_URL_TTL_SECONDS = 300;
+
     // FileTypeHelper#image_file? / #video_file? — danh sách loại xem trước được.
     private const IMAGE_CONTENT_TYPES = [
         'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image',
@@ -292,15 +295,90 @@ class Attachment extends Model
     {
         // URL kết thúc bằng tên tệp gốc như ActiveStorage — giao diện lấy tên
         // hiển thị từ chính URL này.
-        return $this->hasFile()
-            ? route('attachments.show', ['attachment' => $this->id, 'filename' => $this->filename])
-            : '';
+        return $this->hasFile() ? $this->signedFileUrl(null) : '';
     }
 
-    // Chatwoot dùng blob url riêng cho dịch vụ ngoài; ở đây cùng một URL đĩa.
+    // `blob.url` của gốc: URL dịch vụ đĩa ký HẠN 5 phút, dành cho bên thứ ba tải
+    // về (redirect không đi qua được ở nhiều nền tảng).
     public function downloadUrl(): string
     {
-        return $this->fileUrl();
+        return $this->hasFile() ? $this->signedFileUrl(self::downloadUrlExpiry()) : '';
+    }
+
+    private function signedFileUrl(?int $expiresAt): string
+    {
+        return route('attachments.show', [
+            'attachment' => $this->id,
+            'token' => self::fileToken((int) $this->id, $expiresAt),
+            'filename' => $this->filename,
+        ]);
+    }
+
+    /**
+     * Hạn của URL tải về rơi vào mốc cố định thay vì `now()+5 phút`: hai lần dựng
+     * URL cho cùng một tệp trong cùng cửa sổ ra ĐÚNG một chuỗi (URL ổn định để
+     * so sánh/cache), tuổi thọ thực nằm trong khoảng 5–10 phút.
+     */
+    private static function downloadUrlExpiry(): int
+    {
+        $ttl = max(60, (int) config('yona.attachments.download_url_ttl', self::DOWNLOAD_URL_TTL_SECONDS));
+
+        return (intdiv(time(), $ttl) + 2) * $ttl;
+    }
+
+    /**
+     * Chữ ký của một tệp đính kèm — tương đương `signed_id` mà ActiveStorage nhét
+     * vào URL blob. Đặt trong ĐƯỜNG DẪN chứ không phải query string để tên tệp
+     * vẫn là đoạn cuối URL (giao diện đọc tên hiển thị từ đó).
+     *
+     * @param  int|null  $expiresAt  null = không hết hạn (URL hiển thị trong app,
+     *                               giống blobs/redirect của gốc)
+     */
+    public static function fileToken(int $attachmentId, ?int $expiresAt): string
+    {
+        $payload = self::base64UrlEncode((string) json_encode(['id' => $attachmentId, 'exp' => $expiresAt]));
+
+        return $payload.'.'.self::base64UrlEncode(hash_hmac('sha256', $payload, self::fileTokenKey(), true));
+    }
+
+    public static function fileTokenIsValid(string $token, int $attachmentId): bool
+    {
+        [$payload, $signature] = array_pad(explode('.', $token, 2), 2, '');
+
+        if ($payload === '' || $signature === '') {
+            return false;
+        }
+
+        $expected = self::base64UrlEncode(hash_hmac('sha256', $payload, self::fileTokenKey(), true));
+
+        if (! hash_equals($expected, $signature)) {
+            return false;
+        }
+
+        $claims = json_decode((string) self::base64UrlDecode($payload), true);
+
+        if (! is_array($claims) || ($claims['id'] ?? null) !== $attachmentId) {
+            return false;
+        }
+
+        $expiresAt = $claims['exp'] ?? null;
+
+        return $expiresAt === null || (is_int($expiresAt) && $expiresAt > time());
+    }
+
+    private static function fileTokenKey(): string
+    {
+        return (string) config('app.key');
+    }
+
+    private static function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private static function base64UrlDecode(string $value): string
+    {
+        return (string) base64_decode(strtr($value, '-_', '+/'), true);
     }
 
     // Gốc resize 250px qua ActiveStorage representation — chưa có biến thể ảnh
