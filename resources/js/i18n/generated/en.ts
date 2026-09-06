@@ -2933,6 +2933,9 @@ const messages: Record<string, unknown> = {
             "INVALID_INPUT": "Invalid Input"
         }
     },
+    "DASHBOARD_APPS": {
+        "LOADING_MESSAGE": "Loading Dashboard App..."
+    },
     "DATA_IMPORTS": {
         "HEADER": "Data",
         "DESCRIPTION": "Bring your existing contacts and past conversations into this account from another support tool. Each import runs in the background, so you can keep working while it finishes, track its progress, and review anything that was skipped along the way.",
