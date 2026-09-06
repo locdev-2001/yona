@@ -240,6 +240,53 @@ const messages: Record<string, unknown> = {
             }
         }
     },
+    "AGENT_REPORTS": {
+        "HEADER": "Agents Overview",
+        "DESCRIPTION": "Easily track agent performance with key metrics such as conversations, response times, resolution times, and resolved cases. Click an agent's name to learn more.",
+        "LOADING_CHART": "Loading chart data...",
+        "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
+        "DOWNLOAD_AGENT_REPORTS": "Download agent reports",
+        "FILTER_DROPDOWN_LABEL": "Select Agent",
+        "FILTERS": {
+            "INPUT_PLACEHOLDER": {
+                "AGENTS": "Search agents"
+            }
+        },
+        "METRICS": {
+            "CONVERSATIONS": {
+                "NAME": "Conversations",
+                "DESC": "( Total )"
+            },
+            "INCOMING_MESSAGES": {
+                "NAME": "Incoming Messages",
+                "DESC": "( Total )"
+            },
+            "OUTGOING_MESSAGES": {
+                "NAME": "Outgoing Messages",
+                "DESC": "( Total )"
+            },
+            "FIRST_RESPONSE_TIME": {
+                "NAME": "First Response Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_TIME": {
+                "NAME": "Resolution Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            }
+        },
+        "CUSTOM_DATE_RANGE": {
+            "CONFIRM": "Apply",
+            "PLACEHOLDER": "Select date range"
+        }
+    },
     "APP_GLOBAL": {
         "TRIAL_MESSAGE": "days trial remaining.",
         "TRAIL_BUTTON": "Buy Now",
@@ -536,6 +583,151 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_LABEL": "Cancel"
         }
     },
+    "ATTRIBUTES_MGMT": {
+        "HEADER": "Custom Attributes",
+        "HEADER_BTN_TXT": "Add Custom Attribute",
+        "LOADING": "Fetching custom attributes",
+        "DESCRIPTION": "A custom attribute tracks additional details about your contacts, companies, or conversations—such as the subscription plan or the date of their first purchase. You can add different types of custom attributes, such as text, lists, or numbers, to capture the specific information you need.",
+        "LEARN_MORE": "Learn more about custom attributes",
+        "COUNT": "{n} attribute | {n} attributes",
+        "SEARCH_PLACEHOLDER": "Search attributes...",
+        "NO_RESULTS": "No attributes found matching your search",
+        "ATTRIBUTE_MODELS": {
+            "CONVERSATION": "Conversation",
+            "CONTACT": "Contact",
+            "COMPANY": "Company"
+        },
+        "ATTRIBUTE_TYPES": {
+            "TEXT": "Text",
+            "NUMBER": "Number",
+            "LINK": "Link",
+            "DATE": "Date",
+            "LIST": "List",
+            "CHECKBOX": "Checkbox"
+        },
+        "ADD": {
+            "TITLE": "Add Custom Attribute",
+            "SUBMIT": "Create",
+            "CANCEL_BUTTON_TEXT": "Cancel",
+            "FORM": {
+                "NAME": {
+                    "LABEL": "Display Name",
+                    "PLACEHOLDER": "Enter custom attribute display name",
+                    "ERROR": "Name is required"
+                },
+                "DESC": {
+                    "LABEL": "Description",
+                    "PLACEHOLDER": "Enter custom attribute description",
+                    "ERROR": "Description is required"
+                },
+                "MODEL": {
+                    "LABEL": "Applies to",
+                    "PLACEHOLDER": "Please select one",
+                    "ERROR": "Model is required"
+                },
+                "TYPE": {
+                    "LABEL": "Type",
+                    "PLACEHOLDER": "Please select a type",
+                    "ERROR": "Type is required",
+                    "LIST": {
+                        "LABEL": "List Values",
+                        "PLACEHOLDER": "Please enter value and press enter key",
+                        "ERROR": "Must have at least one value"
+                    }
+                },
+                "KEY": {
+                    "LABEL": "Key",
+                    "PLACEHOLDER": "Enter custom attribute key",
+                    "ERROR": "Key is required",
+                    "IN_VALID": "Invalid key"
+                },
+                "REGEX_PATTERN": {
+                    "LABEL": "Regex Pattern",
+                    "PLACEHOLDER": "Please enter custom attribute regex pattern. (Optional)"
+                },
+                "REGEX_CUE": {
+                    "LABEL": "Regex Cue",
+                    "PLACEHOLDER": "Please enter regex pattern hint. (Optional)"
+                },
+                "ENABLE_REGEX": {
+                    "LABEL": "Enable regex validation"
+                },
+                "BADGES": {
+                    "PRE_CHAT": "Pre-chat",
+                    "RESOLUTION": "Resolution"
+                }
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Custom Attribute added successfully!",
+                "ERROR_MESSAGE": "Could not create a Custom Attribute. Please try again later."
+            }
+        },
+        "DELETE": {
+            "BUTTON_TEXT": "Delete",
+            "API": {
+                "SUCCESS_MESSAGE": "Custom Attribute deleted successfully.",
+                "ERROR_MESSAGE": "Couldn't delete the custom attribute. Try again."
+            },
+            "CONFIRM": {
+                "TITLE": "Are you sure want to delete - {attributeName}",
+                "PLACE_HOLDER": "Please type {attributeName} to confirm",
+                "MESSAGE": "Deleting will remove the custom attribute",
+                "YES": "Delete ",
+                "NO": "Cancel"
+            }
+        },
+        "EDIT": {
+            "TITLE": "Edit Custom Attribute",
+            "UPDATE_BUTTON_TEXT": "Update",
+            "TYPE": {
+                "LIST": {
+                    "LABEL": "List Values",
+                    "PLACEHOLDER": "Please enter values and press enter key"
+                }
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Custom Attribute updated successfully",
+                "ERROR_MESSAGE": "There was an error updating custom attribute, please try again"
+            }
+        },
+        "TABS": {
+            "HEADER": "Custom Attributes",
+            "CONVERSATION": "Conversation",
+            "CONTACT": "Contact",
+            "COMPANY": "Company"
+        },
+        "LIST": {
+            "TABLE_HEADER": {
+                "NAME": "Name",
+                "DESCRIPTION": "Description",
+                "TYPE": "Type",
+                "KEY": "Key"
+            },
+            "BUTTONS": {
+                "EDIT": "Edit",
+                "DELETE": "Delete"
+            },
+            "EMPTY_RESULT": {
+                "404": "There are no custom attributes created",
+                "NOT_FOUND": "There are no custom attributes configured"
+            },
+            "REGEX_PATTERN": {
+                "LABEL": "Regex Pattern",
+                "PLACEHOLDER": "Please enter custom attribute regex pattern. (Optional)"
+            },
+            "REGEX_CUE": {
+                "LABEL": "Regex Cue",
+                "PLACEHOLDER": "Please enter regex pattern hint. (Optional)"
+            },
+            "ENABLE_REGEX": {
+                "LABEL": "Enable regex validation"
+            }
+        },
+        "BADGES": {
+            "PRE_CHAT": "Pre-chat",
+            "RESOLUTION": "Resolution"
+        }
+    },
     "AUTH": {
         "failed": "Invalid login credentials. Please try again.",
         "unconfirmed": "You have to confirm your email address before continuing. Please confirm your email :email.",
@@ -828,6 +1020,27 @@ const messages: Record<string, unknown> = {
                 "INSTANT_DEDUCTION_NOTE": "Your saved card will be charged immediately upon confirmation.",
                 "GO_BACK": "Go Back",
                 "CONFIRM_PURCHASE": "Confirm Purchase"
+            }
+        }
+    },
+    "BOT_REPORTS": {
+        "HEADER": "Bot Reports",
+        "METRIC": {
+            "TOTAL_CONVERSATIONS": {
+                "LABEL": "No. of Conversations",
+                "TOOLTIP": "Total number of conversations handled by the bot"
+            },
+            "TOTAL_RESPONSES": {
+                "LABEL": "Total Responses",
+                "TOOLTIP": "Total number of responses sent by the bot"
+            },
+            "RESOLUTION_RATE": {
+                "LABEL": "Resolution Rate",
+                "TOOLTIP": "Total number of conversations resolved by the bot / Total number of conversations handled by the bot * 100"
+            },
+            "HANDOFF_RATE": {
+                "LABEL": "Handoff Rate",
+                "TOOLTIP": "Total number of conversations handed off to agents / Total number of conversations handled by the bot * 100"
             }
         }
     },
@@ -1592,6 +1805,64 @@ const messages: Record<string, unknown> = {
             "SINGULAR_DESCRIPTION": "This will permanently delete the selected contact. This action cannot be undone.",
             "CONFIRM_MULTIPLE": "Delete contacts",
             "CONFIRM_SINGLE": "Delete contact"
+        }
+    },
+    "CONTACTS_FILTER": {
+        "TITLE": "Filter Contacts",
+        "SUBTITLE": "Add filters below and hit 'Submit' to filter contacts.",
+        "EDIT_CUSTOM_SEGMENT": "Edit Segment",
+        "CUSTOM_VIEWS_SUBTITLE": "Add or remove filters and update your segment.",
+        "ADD_NEW_FILTER": "Add Filter",
+        "CLEAR_ALL_FILTERS": "Clear All Filters",
+        "FILTER_DELETE_ERROR": "You should have atleast one filter to save",
+        "SUBMIT_BUTTON_LABEL": "Submit",
+        "UPDATE_BUTTON_LABEL": "Update Segment",
+        "CANCEL_BUTTON_LABEL": "Cancel",
+        "CLEAR_BUTTON_LABEL": "Clear Filters",
+        "EMPTY_VALUE_ERROR": "Value is required",
+        "SEGMENT_LABEL": "Segment Name",
+        "SEGMENT_QUERY_LABEL": "Segment Query",
+        "TOOLTIP_LABEL": "Filter contacts",
+        "QUERY_DROPDOWN_LABELS": {
+            "AND": "AND",
+            "OR": "OR"
+        },
+        "OPERATOR_LABELS": {
+            "equal_to": "Equal to",
+            "not_equal_to": "Not equal to",
+            "contains": "Contains",
+            "does_not_contain": "Does not contain",
+            "is_present": "Is present",
+            "is_not_present": "Is not present",
+            "is_greater_than": "Is greater than",
+            "is_lesser_than": "Is lesser than",
+            "days_before": "Is x days before"
+        },
+        "ERRORS": {
+            "VALUE_REQUIRED": "Value is required"
+        },
+        "ATTRIBUTES": {
+            "NAME": "Name",
+            "EMAIL": "Email",
+            "PHONE_NUMBER": "Phone number",
+            "IDENTIFIER": "Identifier",
+            "CITY": "City",
+            "COUNTRY": "Country",
+            "CUSTOM_ATTRIBUTE_LIST": "List",
+            "CUSTOM_ATTRIBUTE_TEXT": "Text",
+            "CUSTOM_ATTRIBUTE_NUMBER": "Number",
+            "CUSTOM_ATTRIBUTE_LINK": "Link",
+            "CUSTOM_ATTRIBUTE_CHECKBOX": "Checkbox",
+            "CREATED_AT": "Created At",
+            "LAST_ACTIVITY": "Last Activity",
+            "REFERER_LINK": "Referrer link",
+            "BLOCKED": "Blocked",
+            "LABELS": "Labels"
+        },
+        "GROUPS": {
+            "STANDARD_FILTERS": "Standard Filters",
+            "ADDITIONAL_FILTERS": "Additional Filters",
+            "CUSTOM_ATTRIBUTES": "Custom Attributes"
         }
     },
     "CONTACTS_LAYOUT": {
@@ -2513,6 +2784,77 @@ const messages: Record<string, unknown> = {
             "CANCEL": "Cancel"
         }
     },
+    "CSAT": {
+        "TITLE": "Rate your conversation",
+        "PLACEHOLDER": "Tell us more...",
+        "RATINGS": {
+            "POOR": "😞 Poor",
+            "FAIR": "😑 Fair",
+            "AVERAGE": "😐 Average",
+            "GOOD": "😀 Good",
+            "EXCELLENT": "😍 Excellent"
+        }
+    },
+    "CSAT_REPORTS": {
+        "HEADER": "CSAT Reports",
+        "NO_RECORDS": "No responses yet",
+        "NO_RECORDS_DESCRIPTION": "CSAT survey responses will appear here once customers start providing feedback.",
+        "DOWNLOAD": "Download CSAT Reports",
+        "DOWNLOAD_FAILED": "Failed to download CSAT Reports",
+        "FILTERS": {
+            "ADD_FILTER": "Add filter",
+            "CLEAR_ALL": "Clear all",
+            "NO_FILTER": "No filters available",
+            "INPUT_PLACEHOLDER": {
+                "AGENTS": "Search agents",
+                "INBOXES": "Search inboxes",
+                "TEAMS": "Search teams",
+                "RATINGS": "Search ratings"
+            },
+            "AGENTS": {
+                "LABEL": "Agent"
+            },
+            "INBOXES": {
+                "LABEL": "Inbox"
+            },
+            "TEAMS": {
+                "LABEL": "Team"
+            },
+            "RATINGS": {
+                "LABEL": "Rating"
+            }
+        },
+        "TABLE": {
+            "HEADER": {
+                "CONTACT_NAME": "Contact",
+                "AGENT_NAME": "Agent",
+                "RATING": "Rating",
+                "FEEDBACK_TEXT": "Feedback comment",
+                "CONVERSATION": "Conversation",
+                "CUSTOMER": "Customer",
+                "RESPONSE": "Response",
+                "HANDLED_BY": "Handled by"
+            },
+            "UNKNOWN_CUSTOMER": "Unknown customer"
+        },
+        "NO_AGENT": "No assigned agent",
+        "NO_FEEDBACK": "No feedback provided",
+        "METRIC": {
+            "TOTAL_RESPONSES": {
+                "LABEL": "Total responses",
+                "TOOLTIP": "Total number of responses collected"
+            },
+            "SATISFACTION_SCORE": {
+                "LABEL": "Satisfaction score",
+                "TOOLTIP": "Total number of positive responses / Total number of responses * 100"
+            },
+            "RESPONSE_RATE": {
+                "LABEL": "Response rate",
+                "TOOLTIP": "Total number of responses / Total number of CSAT survey messages sent * 100"
+            },
+            "RATING_DISTRIBUTION": "Rating distribution"
+        }
+    },
     "CUSTOM_ATTRIBUTES": {
         "BUTTON": "Add custom attribute",
         "COPY_SUCCESSFUL": "Copied to clipboard successfully",
@@ -2813,6 +3155,17 @@ const messages: Record<string, unknown> = {
         },
         "conversations": {
             "resolved": "Conversation is resolved and does not accept new messages"
+        },
+        "custom_filters": {
+            "number_of_records": "Limit reached. The maximum number of allowed custom filters for a user per account is 1000.",
+            "invalid_attribute": "Invalid attribute key - [:key]. The key should be one of [:allowed_keys] or a custom attribute defined in the account.",
+            "invalid_operator": "Invalid operator. The allowed operators for :attribute_name are [:allowed_keys].",
+            "invalid_query_operator": "Query operator must be either \"AND\" or \"OR\".",
+            "invalid_value": "Invalid value. The values provided for :attribute_name are invalid"
+        },
+        "custom_attribute_definition": {
+            "attribute_key_format": "must only contain letters, numbers, underscores, hyphens, and dots",
+            "key_conflict": "The provided key is not allowed as it might conflict with default attributes."
         }
     },
     "FEATURE_SPOTLIGHT": {
@@ -5132,6 +5485,53 @@ const messages: Record<string, unknown> = {
             }
         }
     },
+    "LABEL_REPORTS": {
+        "HEADER": "Labels Overview",
+        "DESCRIPTION": "Track label performance with key metrics including conversations, response times, resolution times, and resolved cases. Click a label name for detailed insights.",
+        "LOADING_CHART": "Loading chart data...",
+        "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
+        "DOWNLOAD_LABEL_REPORTS": "Download label reports",
+        "FILTER_DROPDOWN_LABEL": "Select Label",
+        "FILTERS": {
+            "INPUT_PLACEHOLDER": {
+                "LABELS": "Search labels"
+            }
+        },
+        "METRICS": {
+            "CONVERSATIONS": {
+                "NAME": "Conversations",
+                "DESC": "( Total )"
+            },
+            "INCOMING_MESSAGES": {
+                "NAME": "Incoming Messages",
+                "DESC": "( Total )"
+            },
+            "OUTGOING_MESSAGES": {
+                "NAME": "Outgoing Messages",
+                "DESC": "( Total )"
+            },
+            "FIRST_RESPONSE_TIME": {
+                "NAME": "First Response Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_TIME": {
+                "NAME": "Resolution Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            }
+        },
+        "CUSTOM_DATE_RANGE": {
+            "CONFIRM": "Apply",
+            "PLACEHOLDER": "Select date range"
+        }
+    },
     "LOGIN": {
         "TITLE": "Login to Chatwoot",
         "EMAIL": {
@@ -6050,6 +6450,72 @@ const messages: Record<string, unknown> = {
         },
         "SUBMIT": "Submit"
     },
+    "SEARCH": {
+        "TABS": {
+            "ALL": "All results",
+            "CONTACTS": "Contacts",
+            "CONVERSATIONS": "Conversations",
+            "MESSAGES": "Messages",
+            "ARTICLES": "Articles"
+        },
+        "SECTION": {
+            "CONTACTS": "Contacts",
+            "CONVERSATIONS": "Conversations",
+            "MESSAGES": "Messages",
+            "ARTICLES": "Articles"
+        },
+        "VIEW_MORE": "View more",
+        "LOAD_MORE": "Load more",
+        "SEARCHING_DATA": "Searching",
+        "LOADING_DATA": "Loading",
+        "EMPTY_STATE": "No {item} found for query '{query}'",
+        "EMPTY_STATE_FULL": "No results found for query '{query}'",
+        "PLACEHOLDER_KEYBINDING": "/to focus",
+        "INPUT_PLACEHOLDER": "Type 3 or more characters to search",
+        "RECENT_SEARCHES": "Recent searches",
+        "CLEAR_ALL": "Clear all",
+        "MOST_RECENT": "Most recent",
+        "EMPTY_STATE_DEFAULT": "Search by conversation id, email, phone number, messages for better search results. ",
+        "BOT_LABEL": "Bot",
+        "READ_MORE": "Read more",
+        "READ_LESS": "Read less",
+        "WROTE": "wrote:",
+        "FROM": "From",
+        "EMAIL": "Email",
+        "EMAIL_SUBJECT": "Subject",
+        "PRIVATE": "Private note",
+        "TRANSCRIPT": "Transcript",
+        "CREATED_AT": "created {time}",
+        "UPDATED_AT": "updated {time}",
+        "SORT_BY": {
+            "RELEVANCE": "Relevance"
+        },
+        "DATE_RANGE": {
+            "LAST_7_DAYS": "Last 7 days",
+            "LAST_30_DAYS": "Last 30 days",
+            "LAST_60_DAYS": "Last 60 days",
+            "LAST_90_DAYS": "Last 90 days",
+            "CUSTOM_RANGE": "Custom range:",
+            "CREATED_BETWEEN": "Created between",
+            "AND": "and",
+            "APPLY": "Apply",
+            "BEFORE_DATE": "Before {date}",
+            "AFTER_DATE": "After {date}",
+            "TIME_RANGE": "Filter by time",
+            "CLEAR_FILTER": "Clear filter"
+        },
+        "FILTERS": {
+            "FILTER_MESSAGE": "Filter messages by:",
+            "FROM": "Sender",
+            "IN": "Inbox",
+            "AGENTS": "Agents",
+            "CONTACTS": "Contacts",
+            "INBOXES": "Inboxes",
+            "NO_AGENTS": "No agents found",
+            "NO_CONTACTS": "Start by searching to see results",
+            "NO_INBOXES": "No inboxes found"
+        }
+    },
     "SECURITY_SETTINGS": {
         "TITLE": "Security",
         "DESCRIPTION": "Manage your account security settings.",
@@ -6287,6 +6753,17 @@ const messages: Record<string, unknown> = {
         "VIDEO": "Video",
         "DIVIDER": "Divider"
     },
+    "SUMMARY_REPORTS": {
+        "INBOX": "Inbox",
+        "AGENT": "Agent",
+        "TEAM": "Team",
+        "LABEL": "Label",
+        "AVG_RESOLUTION_TIME": "Avg. Resolution Time",
+        "AVG_FIRST_RESPONSE_TIME": "Avg. First Response Time",
+        "AVG_REPLY_TIME": "Avg. Customer Waiting Time",
+        "RESOLUTION_COUNT": "Resolution Count",
+        "CONVERSATIONS": "No. of conversations"
+    },
     "SURVEY": {
         "DESCRIPTION": "Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.",
         "RATING": {
@@ -6306,6 +6783,56 @@ const messages: Record<string, unknown> = {
     },
     "SWITCH": {
         "TOGGLE": "Toggle switch"
+    },
+    "TEAM_REPORTS": {
+        "HEADER": "Team Overview",
+        "DESCRIPTION": "Get a snapshot of your team's performance with essential metrics, including conversations, response times, resolution times, and resolved cases. Click a team name for more details.",
+        "LOADING_CHART": "Loading chart data...",
+        "NO_ENOUGH_DATA": "We've not received enough data points to generate report, Please try again later.",
+        "DOWNLOAD_TEAM_REPORTS": "Download team reports",
+        "FILTER_DROPDOWN_LABEL": "Select Team",
+        "FILTERS": {
+            "ADD_FILTER": "Add filter",
+            "CLEAR_ALL": "Clear all",
+            "NO_FILTER": "No filters available",
+            "INPUT_PLACEHOLDER": {
+                "TEAMS": "Search teams"
+            }
+        },
+        "METRICS": {
+            "CONVERSATIONS": {
+                "NAME": "Conversations",
+                "DESC": "( Total )"
+            },
+            "INCOMING_MESSAGES": {
+                "NAME": "Incoming Messages",
+                "DESC": "( Total )"
+            },
+            "OUTGOING_MESSAGES": {
+                "NAME": "Outgoing Messages",
+                "DESC": "( Total )"
+            },
+            "FIRST_RESPONSE_TIME": {
+                "NAME": "First Response Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_TIME": {
+                "NAME": "Resolution Time",
+                "DESC": "( Avg )",
+                "INFO_TEXT": "Total number of conversations used for computation:",
+                "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+            },
+            "RESOLUTION_COUNT": {
+                "NAME": "Resolution Count",
+                "DESC": "( Total )"
+            }
+        },
+        "CUSTOM_DATE_RANGE": {
+            "CONFIRM": "Apply",
+            "PLACEHOLDER": "Select date range"
+        }
     },
     "TEAMS_SETTINGS": {
         "NEW_TEAM": "Create new team",

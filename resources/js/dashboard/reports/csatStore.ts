@@ -58,6 +58,11 @@ export function resetCsatStore(): void {
     commit(() => INITIAL_STATE);
 }
 
+// Chỉ dùng cho test: đọc thẳng trạng thái để chấm selector.
+export function csatStateForTest(): CsatState {
+    return state;
+}
+
 function setUIFlag(flag: keyof CsatState['uiFlags'], value: boolean): void {
     commit(current => ({ ...current, uiFlags: { ...current.uiFlags, [flag]: value } }));
 }
