@@ -11,11 +11,13 @@ interface InlineInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const InlineInput = forwardRef<HTMLInputElement, InlineInputProps>(function InlineInput(
-    { label = '', customInputClass = '', customLabelClass = '', onEnterPress, onEscapePress, id, ...attrs },
+    { label = '', customInputClass = '', customLabelClass = '', onEnterPress, onEscapePress, id, className = '', ...attrs },
     ref,
 ) {
+    // `class` đặt trên component ở Vue rơi xuống thẻ gốc (fallthrough attribute),
+    // KHÔNG xuống ô nhập — `customInputClass` mới là class của ô nhập.
     return (
-        <div className="relative flex items-center justify-between w-full gap-3 whitespace-nowrap">
+        <div className={`relative flex items-center justify-between w-full gap-3 whitespace-nowrap ${className}`.trim()}>
             {label ? (
                 <label htmlFor={id} className={`mb-0.5 text-sm font-medium text-n-slate-12 ${customLabelClass}`}>
                     {label}

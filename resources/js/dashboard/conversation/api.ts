@@ -254,6 +254,17 @@ export function togglePriority(
     });
 }
 
+// ConversationApi.updateCustomAttributes — POST /conversations/{id}/custom_attributes
+export function updateConversationCustomAttributes(
+    accountId: number,
+    conversationId: number,
+    customAttributes: Record<string, unknown>,
+): Promise<Conversation> {
+    return postJson<Conversation>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/custom_attributes`, {
+        custom_attributes: customAttributes,
+    });
+}
+
 export function muteConversation(accountId: number, conversationId: number): Promise<void> {
     return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/mute`);
 }

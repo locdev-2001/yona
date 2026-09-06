@@ -10,6 +10,14 @@ import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/D
 // dropdown đã port ở B5 — trạng thái tĩnh khớp pixel.
 interface BulkActionDropdownProps {
     icon: string;
+    // Nhánh `type="contact"` của bản gốc: nút có nhãn, cỡ sm và class riêng.
+    label?: string;
+    size?: 'xs' | 'sm';
+    buttonClassName?: string;
+    // Nút của nhánh contact có trạng thái loading riêng; nhánh conversation chỉ
+    // truyền isLoading cho menu (đúng bản gốc).
+    buttonIsLoading?: boolean;
+    disabled?: boolean;
     tooltip: string;
     isOpen: boolean;
     menuItems: DropdownMenuItem[];
@@ -27,6 +35,11 @@ interface BulkActionDropdownProps {
 
 export default function BulkActionDropdown({
     icon,
+    label = '',
+    size = 'xs',
+    buttonClassName = '',
+    buttonIsLoading = false,
+    disabled = false,
     tooltip,
     isOpen,
     menuItems,
@@ -56,11 +69,14 @@ export default function BulkActionDropdown({
         <div ref={containerRef} className="relative">
             <Button
                 title={tooltip}
+                label={label}
                 icon={icon}
                 slate
-                xs
+                size={size}
                 ghost
-                className={isOpen ? 'bg-n-alpha-2' : ''}
+                isLoading={buttonIsLoading}
+                disabled={disabled || buttonIsLoading}
+                className={`${isOpen ? 'bg-n-alpha-2' : ''} ${buttonClassName}`.trim()}
                 onClick={onToggle}
             />
             {isOpen ? (

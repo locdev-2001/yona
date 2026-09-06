@@ -32,11 +32,18 @@ export interface SidebarLabel {
 // Custom Roles, SLA, Billing, Agent Assignment.
 // Conversation Workflow HIỆN từ D6: `auto_resolve_conversations` là tính năng
 // OSS và bật mặc định trong config/features.php, không phải EE như A3 giả định.
-// Nhóm động (Folders/Segments/Tagged) render khi dữ liệu
-// đổ về từ các tính năng B — hiện truyền mảng rỗng nên tự ẩn như bản gốc.
+// Folders (custom view hội thoại) và Segments (custom view liên hệ) đọc store
+// composables/useCustomViews (E1); nhóm "Tagged With" vẫn rỗng (route liên hệ
+// theo nhãn chưa port).
 // badgeCount lấy từ store conversationUnreadCounts (B8) — rỗng khi account chưa
 // bật cờ `conversation_unread_counts`, đúng như oracle. Huy hiệu mục Inbox là số
 // thông báo chưa đọc (D5), không gắn cờ nào.
+// Custom view rút gọn cho hai nhóm Folders/Segments.
+export interface SidebarCustomView {
+    id: number;
+    name: string;
+}
+
 export function buildMenuItems(
     accountId: number,
     inboxes: SidebarInbox[] = [],
@@ -44,6 +51,8 @@ export function buildMenuItems(
     labels: SidebarLabel[] = [],
     unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
     notificationsUnreadCount = 0,
+    conversationCustomViews: SidebarCustomView[] = [],
+    contactCustomViews: SidebarCustomView[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
@@ -97,9 +106,14 @@ export function buildMenuItems(
                     name: 'Folders',
                     label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
                     icon: 'i-lucide-folder',
+                    activeOn: [scoped('custom_view')],
                     collapsible: true,
                     showTreeLine: true,
-                    children: [],
+                    children: conversationCustomViews.map(view => ({
+                        name: `${view.name}-${view.id}`,
+                        label: view.name,
+                        to: scoped(`custom_view/${view.id}`),
+                    })),
                 },
                 {
                     name: 'Teams',
@@ -167,9 +181,14 @@ export function buildMenuItems(
                     name: 'Segments',
                     icon: 'i-lucide-group',
                     label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
+                    activeOn: [scoped('contacts/segments')],
                     collapsible: true,
                     showTreeLine: true,
-                    children: [],
+                    children: contactCustomViews.map(view => ({
+                        name: `${view.name}-${view.id}`,
+                        label: view.name,
+                        to: scoped(`contacts/segments/${view.id}`),
+                    })),
                 },
                 {
                     name: 'Tagged With',
@@ -177,6 +196,7 @@ export function buildMenuItems(
                     label: t('SIDEBAR.TAGGED_WITH'),
                     collapsible: true,
                     showTreeLine: true,
+                    // Route liên hệ theo nhãn chưa port (nhóm sau) — giữ rỗng.
                     children: [],
                 },
             ],

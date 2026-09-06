@@ -8,6 +8,8 @@ interface CardLayoutProps {
     children: ReactNode;
     after?: ReactNode;
     onClick?: () => void;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 }
 
 export default function CardLayout({
@@ -17,10 +19,14 @@ export default function CardLayout({
     children,
     after,
     onClick,
+    onMouseEnter,
+    onMouseLeave,
 }: CardLayoutProps) {
     return (
         <div
             className={`flex flex-col w-full outline-1 outline outline-n-container -outline-offset-1 group/cardLayout rounded-xl bg-n-solid-2 ${className}`.trim()}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
         >
             <div
                 className={[

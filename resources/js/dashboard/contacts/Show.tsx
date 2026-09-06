@@ -9,13 +9,15 @@ import Spinner from 'dashboard/components-next/spinner/Spinner';
 import ContactDetails from 'dashboard/components-next/Contacts/Pages/ContactDetails';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes';
+import ContactHistory from 'dashboard/components-next/Contacts/ContactsSidebar/ContactHistory';
+import ContactNotes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactNotes';
+import ContactMedia from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMedia';
+import ContactMerge from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMerge';
 import { fetchContact, updateContact } from 'dashboard/contacts/api';
 import type { Contact } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
 
 // Port từ dashboard/routes/dashboard/contacts/pages/ContactManageView.vue.
-// Nội dung các tab sidebar (Attributes/History/Notes/Media/Merge) để trống
-// chờ feature tương ứng (custom attributes E1, conversations B3, notes, merge B11).
 const CONTACT_TABS_OPTIONS = [
     { key: 'ATTRIBUTES', value: 'attributes' },
     { key: 'HISTORY', value: 'history' },
@@ -114,9 +116,23 @@ export default function ContactShow() {
                                 <Spinner />
                             </div>
                         ) : activeTab === 'attributes' ? (
-                            <ContactCustomAttributes selectedContact={selectedContact} />
+                            <ContactCustomAttributes
+                                selectedContact={selectedContact}
+                                onContactUpdated={setSelectedContact}
+                            />
+                        ) : activeTab === 'history' ? (
+                            <ContactHistory contactId={contactId} selectedContact={selectedContact} />
+                        ) : activeTab === 'notes' ? (
+                            <ContactNotes contactId={contactId} />
+                        ) : activeTab === 'media' ? (
+                            <ContactMedia contactId={contactId} />
+                        ) : activeTab === 'merge' && selectedContact ? (
+                            <ContactMerge
+                                selectedContact={selectedContact}
+                                onGoToContactsList={goToContactsList}
+                                onResetTab={() => setActiveTab('attributes')}
+                            />
                         ) : (
-                            // Tab History/Notes/Media/Merge chờ feature tương ứng (B3/B11).
                             <div />
                         )
                     }

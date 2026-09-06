@@ -1,0 +1,91 @@
+<?php
+
+// Port từ khối `public_portal` của refs/chatwoot/config/locales/en.yml (v4.17.1).
+// Đây là chuỗi của trang help center CÔNG KHAI (Blade render phía server), khác
+// với lang/en/help_center.php dành cho màn quản trị.
+return [
+    'search' => [
+        'search_placeholder' => 'Search for article by title or body...',
+        'empty_placeholder' => 'No results found.',
+        'loading_placeholder' => 'Searching...',
+        'results_title' => 'Search results',
+        'results' => 'Search Results',
+        'results_for' => "Search Results for ':query'",
+        'no_results' => "No results found for ':query'",
+        'found_results' => 'Found 1 result|Found :count results',
+        'submit' => 'Search',
+    ],
+    'toc_header' => 'On this page',
+    'sidebar' => [
+        'help_center' => 'Help Center',
+        'categories' => 'Categories',
+        'language' => 'Language',
+        'theme' => 'Theme',
+        'open_sidebar' => 'Open sidebar',
+        'close_sidebar' => 'Close sidebar',
+        'browse' => 'Browse',
+        'back_to_category' => 'Back to :name',
+        'browse_by_topic' => 'Browse by topic',
+        'browse_by_topic_subtitle' => 'Find guides, tutorials, and answers organised by category.',
+        'popular_articles' => 'Popular articles',
+        'popular_articles_subtitle' => 'What other people are reading right now.',
+        'recommended' => 'Recommended articles',
+        'recommended_subtitle' => 'Hand-picked articles to get you started.',
+        'popular_label' => 'Popular topics:',
+        'recommended_label' => 'Recommended topics:',
+        'authors_others' => ':names and :count others',
+        'primary_nav' => 'Primary',
+    ],
+    'hero' => [
+        'sub_title' => 'Search for the articles here or browse the categories below.',
+    ],
+    'common' => [
+        'home' => 'Home',
+        'last_updated_on' => 'Last updated on :last_updated_on',
+        'view_all_articles' => 'View all',
+        'article' => 'article',
+        'articles' => 'articles',
+        'author' => 'author',
+        'authors' => 'authors',
+        'other' => 'other',
+        'others' => 'others',
+        'by' => 'By',
+        'no_articles' => 'There are no articles here',
+        'previous' => 'Previous',
+        'next' => 'Next',
+    ],
+    'article_actions' => [
+        'label' => 'Open in',
+        'view_markdown' => 'View as Markdown',
+        'open_in_chatgpt' => 'Open in ChatGPT',
+        'open_in_claude' => 'Open in Claude',
+        'llm_prompt' => 'Read the following article and help me understand it: :url',
+    ],
+    'footer' => [
+        'made_with' => 'Made with',
+    ],
+    'header' => [
+        'go_to_homepage' => 'Website',
+        'visit_website' => 'Visit website',
+        'language' => 'Language',
+        'appearance' => [
+            'title' => 'Appearance',
+            'system' => 'System',
+            'light' => 'Light',
+            'dark' => 'Dark',
+        ],
+        'featured_articles' => 'Featured Articles',
+        'recommended' => 'Recommended articles',
+        'uncategorized' => 'Uncategorized',
+    ],
+    '404' => [
+        'title' => 'Page not found',
+        'description' => "We couldn't find the page you were looking for.",
+        'back_to_home' => 'Go to home page',
+    ],
+    'not_active' => [
+        'title' => 'Help Center Unavailable',
+        'description' => 'Please contact the site administrator for more information.',
+        'action' => 'If you are the administrator, please upgrade your plan to restore access.',
+    ],
+];

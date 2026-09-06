@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import type { CamelCustomAttribute } from 'dashboard/composables/useCustomAttributes';
 import type { FilterOperator } from '../operators';
 
 // Port từ components-next/filter/helper/filterHelper.js.
@@ -19,6 +20,21 @@ export const CONVERSATION_ATTRIBUTES = {
     REFERER: 'referer',
     CREATED_AT: 'created_at',
     LAST_ACTIVITY_AT: 'last_activity_at',
+} as const;
+
+export const CONTACT_ATTRIBUTES = {
+    NAME: 'name',
+    EMAIL: 'email',
+    PHONE_NUMBER: 'phone_number',
+    IDENTIFIER: 'identifier',
+    COUNTRY_CODE: 'country_code',
+    CITY: 'city',
+    COMPANY_NAME: 'company_name',
+    CREATED_AT: 'created_at',
+    LAST_ACTIVITY_AT: 'last_activity_at',
+    REFERER: 'referer',
+    BLOCKED: 'blocked',
+    LABELS: 'labels',
 } as const;
 
 export interface FilterOption {
@@ -73,3 +89,47 @@ export interface ConversationFilterCondition {
 }
 
 export const replaceUnderscoreWithSpace = (text?: string | null): string => text?.replaceAll('_', ' ') ?? '';
+
+// getCustomAttributeInputType của gốc.
+export const getCustomAttributeInputType = (key: string): FilterInputType => {
+    switch (key) {
+        case 'date':
+            return 'date';
+        case 'list':
+            return 'searchSelect';
+        case 'checkbox':
+            return 'booleanSelect';
+        case 'text':
+        default:
+            return 'plainText';
+    }
+};
+
+// buildAttributesFilterTypes của gốc: bỏ thuộc tính trùng key với thuộc tính chuẩn.
+export const buildAttributesFilterTypes = (
+    attributes: CamelCustomAttribute[],
+    getOperatorTypes: (key: string) => FilterOperator[],
+    filterModel: 'conversation' | 'contact' = 'conversation',
+): FilterType[] => {
+    const standardAttributes: string[] = Object.values(
+        filterModel === 'conversation' ? CONVERSATION_ATTRIBUTES : CONTACT_ATTRIBUTES,
+    );
+
+    return attributes
+        .filter(attribute => !standardAttributes.includes(attribute.attributeKey))
+        .map(attribute => ({
+            attributeKey: attribute.attributeKey,
+            value: attribute.attributeKey,
+            attributeName: attribute.attributeDisplayName,
+            label: attribute.attributeDisplayName,
+            inputType: getCustomAttributeInputType(attribute.attributeDisplayType),
+            attributeDisplayType: attribute.attributeDisplayType,
+            filterOperators: getOperatorTypes(attribute.attributeDisplayType),
+            options:
+                attribute.attributeDisplayType === 'list'
+                    ? attribute.attributeValues.map(item => ({ id: item, name: item }))
+                    : [],
+            dataType: 'text' as const,
+            attributeModel: 'customAttributes' as const,
+        }));
+};

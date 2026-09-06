@@ -8,6 +8,7 @@ import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
+import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
@@ -33,6 +34,8 @@ export default function Sidebar({
     const features = currentAccount.features ?? {};
     // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
     const accountLabels = useLabelsList(accountId);
+    const conversationCustomViews = useCustomViews(accountId, 'conversation');
+    const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
     const unreadCounts = useConversationUnreadCounts();
     // Sidebar.vue dispatch `notifications/unReadCount` khi mount — huy hiệu "My Inbox".
@@ -126,11 +129,24 @@ export default function Sidebar({
                     labelsOnSidebar(accountLabels),
                     unreadCounts,
                     notificationsUnreadCount,
+                    conversationCustomViews,
+                    contactCustomViews,
                 ),
                 role,
                 features,
             ),
-        [accountId, inboxes, teams, accountLabels, unreadCounts, notificationsUnreadCount, role, features],
+        [
+            accountId,
+            inboxes,
+            teams,
+            accountLabels,
+            unreadCounts,
+            notificationsUnreadCount,
+            conversationCustomViews,
+            contactCustomViews,
+            role,
+            features,
+        ],
     );
 
     const asideRef = useRef<HTMLElement>(null);

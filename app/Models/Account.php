@@ -103,6 +103,11 @@ class Account extends Model
             ->withTimestamps();
     }
 
+    public function dataImports(): HasMany
+    {
+        return $this->hasMany(DataImport::class);
+    }
+
     public function labels(): HasMany
     {
         return $this->hasMany(Label::class);
@@ -153,6 +158,16 @@ class Account extends Model
         return $this->hasMany(Macro::class);
     }
 
+    public function customAttributeDefinitions(): HasMany
+    {
+        return $this->hasMany(CustomAttributeDefinition::class);
+    }
+
+    public function customFilters(): HasMany
+    {
+        return $this->hasMany(CustomFilter::class);
+    }
+
     public function automationRulePendingExecutions(): HasMany
     {
         return $this->hasMany(AutomationRulePendingExecution::class);
@@ -176,6 +191,11 @@ class Account extends Model
     public function notificationSettings(): HasMany
     {
         return $this->hasMany(NotificationSetting::class);
+    }
+
+    public function portals(): HasMany
+    {
+        return $this->hasMany(Portal::class);
     }
 
     public function mentions(): HasMany

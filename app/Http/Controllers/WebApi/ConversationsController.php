@@ -7,6 +7,7 @@ use App\Builders\ConversationBuilder;
 use App\Builders\Messages\MessageBuilder;
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Exceptions\CustomFilterException;
 use App\Exceptions\MessageValidationException;
 use App\Finders\ConversationFinder;
 use App\Http\Controllers\Controller;
@@ -36,7 +37,7 @@ use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
 // Bỏ: search (E2), transcript (F1),
-// custom_attributes (E1), destroy (đi cùng DeleteService các nhóm sau),
+// destroy (đi cùng DeleteService các nhóm sau),
 // bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
 {
@@ -65,13 +66,17 @@ class ConversationsController extends Controller
         /** @var AccountUser $accountUser */
         $accountUser = $request->attributes->get('currentAccountUser');
 
-        $result = (new FilterService(
-            $request->user(),
-            $account,
-            $accountUser,
-            $validated['payload'],
-            (int) $request->query('page', '1'),
-        ))->perform();
+        try {
+            $result = (new FilterService(
+                $request->user(),
+                $account,
+                $accountUser,
+                $validated['payload'],
+                (int) $request->query('page', '1'),
+            ))->perform();
+        } catch (CustomFilterException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
 
         return response()->json([
             'data' => [
@@ -96,7 +101,7 @@ class ConversationsController extends Controller
         return response()->json([
             'meta' => ['total_count' => $attachments->total()],
             'payload' => collect($attachments->items())
-                ->map(fn (Attachment $attachment) => $attachment->pushEventData())
+                ->map(fn (Attachment $attachment) => $attachment->apiData())
                 ->values()
                 ->all(),
         ]);
@@ -252,6 +257,35 @@ class ConversationsController extends Controller
             ->toggleTypingStatus();
 
         return response()->noContent(200);
+    }
+
+    // ConversationCustomAttributesConcern#custom_attributes — ghi đè toàn bộ
+    // custom_attributes; `merge=true` thì chỉ trộn các khoá được gửi.
+    public function customAttributes(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $attributes = (array) $request->input('custom_attributes', []);
+
+        if ($request->boolean('merge')) {
+            $attributes = array_merge($conversation->custom_attributes ?? [], $attributes);
+        }
+
+        $conversation->custom_attributes = $attributes;
+        $conversation->save();
+
+        return response()->json((new ConversationResource($conversation))->toArray($request));
+    }
+
+    // ConversationCustomAttributesConcern#destroy_custom_attributes.
+    public function destroyCustomAttributes(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $keys = (array) $request->input('custom_attributes', []);
+
+        $conversation->custom_attributes = array_diff_key($conversation->custom_attributes ?? [], array_flip($keys));
+        $conversation->save();
+
+        return response()->json((new ConversationResource($conversation))->toArray($request));
     }
 
     // update_last_seen: mở hội thoại là đánh dấu đã đọc. Ghi thẳng bằng update

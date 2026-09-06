@@ -1,8 +1,9 @@
 // Port từ dashboard/api/contacts.js + phần action tương ứng của store contacts:
 // đọc camelize (stopPaths custom_attributes), ghi snakecase (giữ nguyên
 // custom_attributes) — đúng như actions.js của Chatwoot.
-import { deleteJson, getJson, postJson, putForm, putJson } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson, postForm, postJson, putForm, putJson } from 'dashboard/helper/apiClient';
 import { camelizeKeys, snakeizeKeys } from 'dashboard/helper/transformKeys';
+import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import type { Contact, ContactsMeta } from './types';
 
 interface RawListResponse {
@@ -119,4 +120,121 @@ export function deleteContact(accountId: number, contactId: number): Promise<unk
 // ContactAPI.destroyAvatar
 export function deleteContactAvatar(accountId: number, contactId: number): Promise<unknown> {
     return deleteJson(`${contactsUrl(accountId)}/${contactId}/avatar`);
+}
+
+// ContactAPI.filter — POST /contacts/filter (segment + bộ lọc liên hệ)
+export async function filterContacts(
+    accountId: number,
+    payload: ConversationFilterPayload[],
+    page: number,
+    sortAttr: string,
+): Promise<ContactsPage> {
+    const response = await postJson<RawListResponse>(
+        `${contactsUrl(accountId)}/filter?page=${page}&sort=${encodeURIComponent(sortAttr)}`,
+        { payload },
+    );
+
+    return toClientPage(response);
+}
+
+// ContactAPI.destroyCustomAttributes — POST /contacts/{id}/destroy_custom_attributes
+export async function deleteContactCustomAttributes(
+    accountId: number,
+    contactId: number,
+    customAttributes: string[],
+): Promise<Contact> {
+    const response = await postJson<{ payload: Record<string, unknown> }>(
+        `${contactsUrl(accountId)}/${contactId}/destroy_custom_attributes`,
+        { custom_attributes: customAttributes },
+    );
+
+    return toClientContact(response.payload);
+}
+
+// ContactAPI.active — GET /contacts/active (liên hệ đang online).
+export async function fetchActiveContacts(accountId: number, page: number, sortAttr: string): Promise<ContactsPage> {
+    const response = await getJson<RawListResponse>(
+        `${contactsUrl(accountId)}/active?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}`,
+    );
+
+    return toClientPage(response);
+}
+
+// ContactAPI.get kèm lọc nhãn — GET /contacts?labels[]=…
+export async function fetchContactsByLabel(
+    accountId: number,
+    label: string,
+    page: number,
+    sortAttr: string,
+): Promise<ContactsPage> {
+    const response = await getJson<RawListResponse>(
+        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}&labels[]=${encodeURIComponent(label)}`,
+    );
+
+    return toClientPage(response);
+}
+
+// ContactAPI.importContacts — POST /contacts/import (multipart, body rỗng khi thành công).
+export function importContacts(accountId: number, file: File): Promise<void> {
+    const form = new FormData();
+    form.set('import_file', file);
+
+    return postForm(`${contactsUrl(accountId)}/import`, form).then(
+        () => undefined,
+        (error: unknown) => (error instanceof SyntaxError ? undefined : Promise.reject(error)),
+    );
+}
+
+// ContactAPI.exportContacts — POST /contacts/export (job nền, gửi email).
+export function exportContacts(
+    accountId: number,
+    query: { payload?: ConversationFilterPayload[]; label?: string },
+): Promise<void> {
+    return postJson(`${contactsUrl(accountId)}/export`, { ...query }).then(
+        () => undefined,
+        (error: unknown) => (error instanceof SyntaxError ? undefined : Promise.reject(error)),
+    );
+}
+
+export interface DataImport {
+    id: number;
+    name: string;
+    dataType: string;
+    status: string;
+    totalRecords: number | null;
+    processedRecords: number | null;
+    failedRecordsUrl: string | null;
+    createdAt: string | null;
+}
+
+// DataImportsAPI.get — GET /data_imports (theo dõi tiến trình lần nhập CSV).
+export async function fetchDataImports(accountId: number): Promise<DataImport[]> {
+    const response = await getJson<{ payload: Record<string, unknown>[] }>(
+        `/api/v1/accounts/${accountId}/data_imports`,
+    );
+
+    return (response.payload ?? []).map(item => camelizeKeys<DataImport>(item));
+}
+
+// ContactAPI.getAttachments — GET /contacts/{id}/attachments (tab Media).
+export interface ContactAttachment {
+    id: number;
+    message_id: number | null;
+    file_type: string;
+    data_url?: string | null;
+    thumb_url?: string | null;
+    file_size?: number | null;
+    extension?: string | null;
+    width?: number | null;
+    height?: number | null;
+    created_at?: number | null;
+    conversation_id?: number | null;
+}
+
+export async function fetchContactAttachments(accountId: number, contactId: number): Promise<ContactAttachment[]> {
+    const response = await getJson<{ payload: ContactAttachment[] }>(
+        `${contactsUrl(accountId)}/${contactId}/attachments`,
+    );
+
+    return response.payload ?? [];
 }

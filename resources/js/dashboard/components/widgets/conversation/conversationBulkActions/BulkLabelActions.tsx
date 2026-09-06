@@ -10,17 +10,22 @@ import { t } from '../../../../../i18n';
 import type { DashboardPageProps } from '../../../../types';
 import BulkActionDropdown from './BulkActionDropdown';
 
-// Port từ conversationBulkActions/BulkLabelActions.vue — nhánh `type="conversation"`.
-// Nhánh `type="contact"` (thanh bulk của trang Contacts) chưa có call-site nên chưa dựng.
+// Port từ conversationBulkActions/BulkLabelActions.vue — hai nhánh `type`.
 interface BulkLabelActionsProps {
+    type?: 'conversation' | 'contact';
     action?: 'assign' | 'remove';
+    isLoading?: boolean;
+    disabled?: boolean;
     // Nút "gỡ nhãn" chỉ liệt kê nhãn đang gắn trên các hội thoại đang chọn.
     appliedLabels?: string[] | null;
     onApply: (labels: string[]) => void;
 }
 
 export default function BulkLabelActions({
+    type = 'conversation',
     action = 'assign',
+    isLoading = false,
+    disabled = false,
     appliedLabels = null,
     onApply,
 }: BulkLabelActionsProps) {
@@ -30,6 +35,7 @@ export default function BulkLabelActions({
     const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
 
     const isRemoveAction = action === 'remove';
+    const isTypeContact = type === 'contact';
     const visibleLabels = isRemoveAction ? labelsForRemoval(labels, appliedLabels) : labels;
 
     const menuItems: DropdownMenuItem[] = visibleLabels.map(label => ({
@@ -63,7 +69,26 @@ export default function BulkLabelActions({
             }
             isOpen={showDropdown}
             menuItems={menuItems}
-            menuClassName="ltr:-right-[6.5rem] rtl:-left-[6.5rem] ltr:2xl:right-0 rtl:2xl:left-0 bottom-8 w-60 max-h-80"
+            label={
+                isTypeContact
+                    ? isRemoveAction
+                        ? t('CONTACTS_BULK_ACTIONS.REMOVE_LABELS')
+                        : t('CONTACTS_BULK_ACTIONS.ASSIGN_LABELS')
+                    : ''
+            }
+            size={isTypeContact ? 'sm' : 'xs'}
+            buttonClassName={
+                isTypeContact
+                    ? '[&>span:nth-child(2)]:hidden md:[&>span:nth-child(2)]:inline w-fit !text-n-blue-11 [&>span]:!text-n-blue-11 !px-2'
+                    : ''
+            }
+            buttonIsLoading={isTypeContact && isLoading}
+            disabled={disabled}
+            menuClassName={
+                isTypeContact
+                    ? 'ltr:right-0 rtl:left-0 mb-1 top-10 w-60 max-h-80'
+                    : 'ltr:-right-[6.5rem] rtl:-left-[6.5rem] ltr:2xl:right-0 rtl:2xl:left-0 bottom-8 w-60 max-h-80'
+            }
             showSearch
             searchPlaceholder={t('BULK_ACTION.SEARCH_INPUT_PLACEHOLDER')}
             renderThumbnail={item => (

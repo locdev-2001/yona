@@ -87,6 +87,11 @@ export default function ContactPanel() {
                     attributeType="contact_attribute"
                     attributeFrom="conversation_contact_panel"
                     emptyStateMessage={t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')}
+                    contactId={contact.id}
+                    contactCustomAttributes={contact.custom_attributes}
+                    onContactCustomAttributesChange={customAttributes =>
+                        setContact(current => ({ ...current, custom_attributes: customAttributes }))
+                    }
                 />
             ),
         },

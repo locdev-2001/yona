@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources\Widget;
 
+use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Conversation;
 
 // Port từ api/v1/widget/conversations/{index,create}.json.jbuilder.
 final class WidgetConversationResource
 {
+    use SerializesAttributeMaps;
+
     /** @return array<string, mixed> */
     public static function summary(?Conversation $conversation): array
     {
@@ -29,7 +32,7 @@ final class WidgetConversationResource
         return [
             ...self::summary($conversation),
             'messages' => WidgetMessageResource::collection($conversation->messages()->orderBy('id')->get()),
-            'custom_attributes' => $conversation->custom_attributes ?? [],
+            'custom_attributes' => self::attributeMap($conversation->custom_attributes),
             // `json.contact @conversation.contact` — jbuilder serialize nguyên
             // bản ghi, widget đọc email/name/phone_number từ đây.
             'contact' => $conversation->contact?->attributesToArray(),

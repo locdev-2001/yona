@@ -90,6 +90,7 @@ class Attachment extends Model
 
     protected $fillable = [
         'account_id',
+        'role',
         'file_type',
         'extension',
         'external_url',
@@ -297,6 +298,18 @@ class Attachment extends Model
     public function messageId(): ?int
     {
         return $this->attachable_type === 'Message' ? $this->attachable_id : null;
+    }
+
+    // _attachment.json.jbuilder = push_event_data + created_at của message
+    // (sender chỉ dùng ở kênh khác, FE chia sẻ tệp không đọc tới).
+    public function apiData(): array
+    {
+        $message = $this->attachable instanceof Message ? $this->attachable : null;
+
+        return [
+            ...$this->pushEventData(),
+            'created_at' => $message?->created_at?->timestamp,
+        ];
     }
 
     public function pushEventData(): array

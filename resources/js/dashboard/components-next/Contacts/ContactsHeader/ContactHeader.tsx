@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { t } from '../../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
 import Input from 'dashboard/components-next/input/Input';
@@ -7,9 +9,7 @@ import type { SortState } from './components/ContactSortMenu';
 import ContactMoreActions from './components/ContactMoreActions';
 
 // Port từ dashboard/components-next/Contacts/ContactsHeader/ContactHeader.vue.
-// Khác biệt cố ý (ghi trong trace): nút filter giữ chỗ (popup ContactsFilter
-// nhóm C, bấm chưa làm gì); nút "New message" giữ chỗ (ComposeConversation B3);
-// nhánh segments (create/delete segment) nhóm C.
+// Khác biệt cố ý (ghi trong trace): nút "New message" giữ chỗ (ComposeConversation B3).
 interface ContactHeaderProps {
     showSearch?: boolean;
     searchValue?: string;
@@ -19,9 +19,17 @@ interface ContactHeaderProps {
     activeOrdering?: string;
     isActiveView?: boolean;
     isLabelView?: boolean;
+    isSegmentsView?: boolean;
+    hasActiveFilters?: boolean;
+    filterSlot?: ReactNode;
     onSearch: (value: string) => void;
     onUpdateSort: (state: SortState) => void;
     onAdd: () => void;
+    onImport: () => void;
+    onExport: () => void;
+    onFilter?: () => void;
+    onCreateSegment?: () => void;
+    onDeleteSegment?: () => void;
 }
 
 export default function ContactHeader({
@@ -33,9 +41,17 @@ export default function ContactHeader({
     activeOrdering = '',
     isActiveView = false,
     isLabelView = false,
+    isSegmentsView = false,
+    hasActiveFilters = false,
+    filterSlot,
     onSearch,
     onUpdateSort,
     onAdd,
+    onImport,
+    onExport,
+    onFilter,
+    onCreateSegment,
+    onDeleteSegment,
 }: ContactHeaderProps) {
     return (
         <header className="sticky top-0 z-20 px-6">
@@ -66,20 +82,44 @@ export default function ContactHeader({
                                 <div className="relative">
                                     <Button
                                         id="toggleContactsFilterButton"
-                                        icon="i-lucide-list-filter"
+                                        icon={isSegmentsView ? 'i-lucide-pen-line' : 'i-lucide-list-filter'}
                                         color="slate"
                                         size="sm"
                                         className="relative w-8"
                                         variant="ghost"
-                                    />
+                                        onClick={onFilter}
+                                    >
+                                        {hasActiveFilters && !isSegmentsView ? (
+                                            <div className="absolute top-0 right-0 w-2 h-2 rounded-full bg-n-brand" />
+                                        ) : null}
+                                    </Button>
+                                    {filterSlot}
                                 </div>
+                            ) : null}
+                            {hasActiveFilters && !isSegmentsView && !isLabelView && !isActiveView ? (
+                                <Button
+                                    icon="i-lucide-save"
+                                    color="slate"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={onCreateSegment}
+                                />
+                            ) : null}
+                            {isSegmentsView && !isLabelView && !isActiveView ? (
+                                <Button
+                                    icon="i-lucide-trash"
+                                    color="slate"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={onDeleteSegment}
+                                />
                             ) : null}
                             <ContactSortMenu
                                 activeSort={activeSort}
                                 activeOrdering={activeOrdering}
                                 onUpdateSort={onUpdateSort}
                             />
-                            <ContactMoreActions onAdd={onAdd} />
+                            <ContactMoreActions onAdd={onAdd} onImport={onImport} onExport={onExport} />
                         </div>
                         <div className="w-px h-4 bg-n-strong" />
                         <Button label={buttonLabel} size="sm" />

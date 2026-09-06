@@ -44,10 +44,11 @@ it('re-reads the conversation for conversation update events', function () {
     Bus::assertDispatched(BroadcastEvent::class, function (BroadcastEvent $job) use ($conversation) {
         $data = $job->event->broadcastWith();
 
+        // `==`: custom_attributes/additional_attributes là stdClass, mỗi lần dựng một instance khác.
         return $data['priority'] === 'high'
             && $data['status'] === 'open'
             && $data['account_id'] === $conversation->account_id
-            && $data === [...ConversationResource::pushEventData($conversation->fresh()), 'account_id' => $conversation->account_id];
+            && $data == [...ConversationResource::pushEventData($conversation->fresh()), 'account_id' => $conversation->account_id];
     });
 });
 

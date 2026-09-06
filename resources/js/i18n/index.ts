@@ -28,9 +28,9 @@ export function t(key: string, params?: Record<string, string | number>): string
     let result = value;
     // vue-i18n chọn nhánh số nhiều theo `n`; Chatwoot nhiều chỗ truyền `count`.
     const pluralCount = typeof params?.n === 'number' ? params.n : typeof params?.count === 'number' ? params.count : undefined;
-    if (pluralCount !== undefined) {
-        result = pluralize(result, pluralCount);
-    }
+    // vue-i18n: message có `|` LUÔN là message số nhiều; `$t(key)` không kèm số
+    // trả nhánh đầu (số ít), không trả nguyên chuỗi kèm dấu gạch đứng.
+    result = pluralize(result, pluralCount ?? 1);
     if (params) {
         result = result.replace(/\{(\w+)\}/g, (match, name: string) =>
             name in params ? String(params[name]) : match,

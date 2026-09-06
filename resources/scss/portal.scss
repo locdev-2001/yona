@@ -1,0 +1,60 @@
+// Port từ app/javascript/portal/application.scss.
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'fonts';
+@import 'next-colors';
+
+// Bundle portal của bản gốc nạp reset Meyer (`widget/assets/scss/reset`); dòng
+// duy nhất còn ảnh hưởng ở đây là line-height của body — thiếu nó hàng chân thẻ
+// danh mục cao thêm 4px so với oracle.
+body {
+  line-height: 1;
+}
+
+html,
+body {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  letter-spacing: 0.2px;
+}
+
+.font-default {
+  font-family:
+    'InterDisplay',
+    -apple-system,
+    system-ui,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Tahoma,
+    Arial,
+    sans-serif,
+    'Noto Sans',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Noto Color Emoji';
+}
+
+.scroll-mt-24 {
+  scroll-margin-top: 6rem;
+}
+
+.top-24 {
+  top: 6rem;
+}
+
+.heading {
+  .permalink {
+    visibility: hidden;
+  }
+
+  &:hover {
+    .permalink {
+      visibility: visible;
+    }
+  }
+}

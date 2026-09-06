@@ -3,12 +3,19 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Builders\ContactInboxBuilder;
+use App\Exceptions\CustomFilterException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContactResource;
+use App\Jobs\Account\ContactsExportJob;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Services\Contacts\FilterService;
+use App\Services\DataImports\ContactsImportService;
 use App\Support\OnlineStatusTracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +25,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 // Port từ Api::V1::Accounts::ContactsController của Chatwoot.
-// Bỏ ở B2: filter (đi cùng segments/custom views), import/export (data imports),
-// contactable_inboxes (dùng cho New conversation — B3), lọc theo labels (nhóm C).
+// Còn thiếu: contactable_inboxes (dùng cho New conversation — B3).
 class ContactsController extends Controller
 {
     public const RESULTS_PER_PAGE = 15;
+
+    public const ATTACHMENT_RESULTS_PER_PAGE = 100;
 
     // Bảng sort_on của Sift: tham số sort → cột/scope tương ứng.
     private const SORT_SCOPES = [
@@ -42,7 +50,92 @@ class ContactsController extends Controller
             ->where('account_id', $account->id)
             ->resolvedContacts(useCrmV2: $account->featureEnabled('crm_v2'));
 
+        // resolved_contacts.tagged_with(params[:labels], any: true)
+        $labels = array_filter((array) $request->query('labels', []));
+
+        if ($labels !== []) {
+            $query->whereHas('labels', fn (Builder $builder) => $builder->whereIn('title', $labels));
+        }
+
         return $this->paginatedContacts($request, $query);
+    }
+
+    // Port từ Contacts::AttachmentsController#index — tệp đã chia sẻ trong mọi
+    // hội thoại của liên hệ, mới nhất trước.
+    public function attachments(Request $request, Account $account, int $contactId): JsonResponse
+    {
+        $contact = $this->fetchContact($account, $contactId);
+
+        $conversationIds = Conversation::query()
+            ->where('account_id', $account->id)
+            ->where('contact_id', $contact->id)
+            ->pluck('display_id', 'id');
+
+        $attachments = Attachment::query()
+            ->whereMorphedTo('attachable', Message::class)
+            ->whereIn('attachable_id', Message::query()->select('id')->whereIn('conversation_id', $conversationIds->keys()))
+            ->with('attachable')
+            ->orderByDesc('created_at')
+            ->paginate(self::ATTACHMENT_RESULTS_PER_PAGE, ['*'], 'page', (int) $request->query('page', '1'));
+
+        return response()->json([
+            'meta' => ['total_count' => $attachments->total()],
+            'payload' => collect($attachments->items())
+                ->map(fn (Attachment $attachment) => [
+                    ...$attachment->apiData(),
+                    'conversation_id' => $conversationIds[$attachment->attachable?->conversation_id] ?? null,
+                ])
+                ->values()
+                ->all(),
+        ]);
+    }
+
+    // contacts#import: tạo một DataImport kèm tệp CSV rồi xếp job nhập.
+    public function import(Request $request, Account $account): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+
+        $file = $request->file('import_file');
+
+        if (! $file instanceof UploadedFile) {
+            return response()->json(['error' => __('errors.contacts.import.failed')], 422);
+        }
+
+        (new ContactsImportService)->perform($account, $request->user(), $file);
+
+        return response()->json(null, 200);
+    }
+
+    // contacts#export: sinh CSV nền rồi gửi liên kết tải về qua email.
+    public function export(Request $request, Account $account): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+
+        ContactsExportJob::dispatch(
+            $account->id,
+            $request->user()->id,
+            $request->input('column_names'),
+            ['payload' => $request->input('payload'), 'label' => $request->input('label')],
+        );
+
+        return response()->json(null, 200);
+    }
+
+    // contacts#filter: segment liên hệ — cùng lõi lọc với hội thoại.
+    public function filter(Request $request, Account $account): JsonResponse
+    {
+        $validated = $request->validate([
+            'payload' => ['required', 'array', 'min:1', 'max:20'],
+            'payload.*' => ['required', 'array'],
+        ]);
+
+        try {
+            $contacts = (new FilterService($account, $validated['payload']))->perform();
+        } catch (CustomFilterException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        return $this->paginatedContacts($request, $contacts);
     }
 
     public function search(Request $request, Account $account): JsonResponse
@@ -287,8 +380,9 @@ class ContactsController extends Controller
         }
     }
 
-    // Validation của model Contact (Rails) — trả 422 shape render_record_invalid:
-    // {message: full messages nối ', ', attributes: [tên thuộc tính]}.
+    // Validation shape của payload; luật nghiệp vụ (định dạng + trùng) do
+    // Contact::validationErrors() quyết định — 422 giữ shape render_record_invalid:
+    // {message: các thông báo nối ', ', attributes: [tên thuộc tính]}.
     private function validateContactPayload(Request $request, Account $account, ?Contact $contact = null): array
     {
         $payload = $request->only([
@@ -296,49 +390,33 @@ class ContactsController extends Controller
             'additional_attributes', 'custom_attributes',
         ]);
 
-        $uniqueRule = fn (string $column) => function ($attribute, $value, $fail) use ($account, $contact, $column) {
-            $exists = $account->contacts()
-                ->where($column, $column === 'email' ? mb_strtolower((string) $value) : $value)
-                ->when($contact, fn (Builder $query) => $query->whereKeyNot($contact->id))
-                ->exists();
-
-            if ($exists) {
-                $fail(sprintf('%s has already been taken', $this->humanizedAttribute($column)));
-            }
-        };
-
-        $validator = Validator::make($payload, [
-            'name' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'email' => ['sometimes', 'nullable', 'regex:'.Contact::EMAIL_REGEX, $uniqueRule('email')],
-            'phone_number' => ['sometimes', 'nullable', 'regex:'.Contact::PHONE_NUMBER_REGEX, $uniqueRule('phone_number')],
-            'identifier' => ['sometimes', 'nullable', 'string', $uniqueRule('identifier')],
+        $data = Validator::make($payload, [
+            'name' => ['sometimes', 'nullable', 'string'],
+            'email' => ['sometimes', 'nullable', 'string'],
+            'phone_number' => ['sometimes', 'nullable', 'string'],
+            'identifier' => ['sometimes', 'nullable', 'string'],
             'blocked' => ['sometimes', 'boolean'],
             'additional_attributes' => ['sometimes', 'array'],
             'custom_attributes' => ['sometimes', 'array'],
-        ], [
-            'name.max' => 'Name is too long (maximum is 255 characters)',
-            'email.regex' => 'Email Invalid email',
-            'phone_number.regex' => 'Phone number should be in e164 format',
-        ]);
+        ])->validate();
 
-        if ($validator->fails()) {
+        $candidate = $contact ? clone $contact : new Contact(['account_id' => $account->id]);
+        $candidate->account_id = $account->id;
+        $candidate->fill(collect($data)->except(['blocked', 'additional_attributes', 'custom_attributes'])->all());
+
+        $errors = $candidate->validationErrors();
+
+        if ($errors !== []) {
             abort(response()->json([
-                'message' => collect($validator->errors()->all())->implode(', '),
-                'attributes' => $validator->errors()->keys(),
+                'message' => collect($errors)->flatten()->implode(', '),
+                'attributes' => array_keys($errors),
             ], 422));
         }
-
-        $data = $validator->validated();
 
         if (array_key_exists('blocked', $data)) {
             $data['blocked'] = filter_var($data['blocked'], FILTER_VALIDATE_BOOLEAN);
         }
 
         return $data;
-    }
-
-    private function humanizedAttribute(string $column): string
-    {
-        return ucfirst(str_replace('_', ' ', $column));
     }
 }

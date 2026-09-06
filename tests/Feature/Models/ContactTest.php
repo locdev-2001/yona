@@ -128,7 +128,8 @@ describe('dispatch events', function () {
             && $event->data['changed_attributes']['name'] === ['Alice', 'Bob']);
 
         $contact->delete();
+        // `==`: custom_attributes/additional_attributes là stdClass, mỗi lần dựng một instance khác.
         Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONTACT_DELETED
-            && $event->data['contact_data'] === [...ContactResource::pushEventData($contact), 'account_id' => $contact->account_id]);
+            && $event->data['contact_data'] == [...ContactResource::pushEventData($contact), 'account_id' => $contact->account_id]);
     });
 });

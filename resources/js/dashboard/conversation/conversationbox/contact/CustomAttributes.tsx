@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
+import CustomAttribute from 'dashboard/components/CustomAttribute';
+import type { CustomAttributeValue } from 'dashboard/components/CustomAttribute';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { deleteContactCustomAttributes, updateContact } from 'dashboard/contacts/api';
+import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { copyTextToClipboard } from 'shared/helpers/clipboard';
 
 import { t } from '../../../../i18n';
 import { useConversation } from '../../ConversationContext';
@@ -9,9 +15,8 @@ import { useCustomAttributeDefinitions } from './customAttributeDefinitions';
 import type { StaticAttributeElement } from './conversationInfoAttributes';
 
 // Port từ routes/dashboard/conversation/customAttributes/CustomAttributes.vue.
-// Khác biệt cố ý: kéo thả sắp xếp bỏ (như ContactPanel), thân custom attribute
-// (CustomAttribute.vue) chờ định nghĩa thuộc tính của E1 — hiện danh sách định
-// nghĩa luôn rỗng nên chỉ còn phần tử tĩnh + câu rỗng, đúng như oracle.
+// Khác biệt cố ý: kéo thả sắp xếp bỏ (như ContactPanel) — thứ tự đã lưu trong
+// ui_settings vẫn được tôn trọng khi đọc.
 const PEEK_LIMIT = 5;
 
 const EVEN_ODD_CLASS = [
@@ -25,6 +30,10 @@ interface CustomAttributesProps {
     emptyStateMessage?: string;
     staticElements?: StaticAttributeElement[];
     renderStaticItem?: (element: StaticAttributeElement) => ReactNode;
+    // Chỉ cần cho attributeType = contact_attribute (nguồn giá trị + nơi ghi).
+    contactId?: number;
+    contactCustomAttributes?: Record<string, unknown>;
+    onContactCustomAttributesChange?: (customAttributes: Record<string, unknown>) => void;
 }
 
 export default function CustomAttributes({
@@ -33,17 +42,34 @@ export default function CustomAttributes({
     emptyStateMessage = '',
     staticElements = [],
     renderStaticItem,
+    contactId = 0,
+    contactCustomAttributes,
+    onContactCustomAttributesChange,
 }: CustomAttributesProps) {
-    const { uiSettings, updateUISettings } = useConversation();
-    const definitions = useCustomAttributeDefinitions(attributeType);
+    const { accountId, selectedConversation, uiSettings, updateUISettings, updateConversationCustomAttributes } =
+        useConversation();
+    const definitions = useCustomAttributeDefinitions(accountId, attributeType);
 
     const orderKey = `conversation_elements_order_${attributeFrom}`;
     const showAllKey = `show_all_attributes_${attributeFrom}`;
     const [showAllAttributes, setShowAllAttributes] = useState(() => Boolean(uiSettings[showAllKey]));
 
+    const isConversationAttribute = attributeType === 'conversation_attribute';
+    const customAttributes = (isConversationAttribute
+        ? (selectedConversation?.custom_attributes ?? {})
+        : (contactCustomAttributes ?? {})) as Record<string, unknown>;
+
     const savedOrder = (uiSettings[orderKey] as string[] | undefined) ?? [];
     const combinedElements = sortBySavedOrder(
-        [...staticElements, ...definitions.map(definition => ({ ...definition, key: definition.attribute_key }))],
+        [
+            ...staticElements,
+            ...definitions.map(definition => ({
+                ...definition,
+                type: 'custom_attribute' as const,
+                key: definition.attribute_key,
+                value: (customAttributes[definition.attribute_key] ?? '') as CustomAttributeValue,
+            })),
+        ],
         savedOrder,
     );
     const displayedElements =
@@ -64,6 +90,43 @@ export default function CustomAttributes({
         updateUISettings({ [showAllKey]: nextValue });
     };
 
+    const persist = async (updatedAttributes: Record<string, unknown>, removedKey?: string) => {
+        if (isConversationAttribute) {
+            await updateConversationCustomAttributes(updatedAttributes);
+            return;
+        }
+        if (!contactId) return;
+
+        const contact = removedKey
+            ? await deleteContactCustomAttributes(accountId, contactId, [removedKey])
+            : await updateContact(accountId, contactId, { customAttributes: updatedAttributes });
+        onContactCustomAttributesChange?.((contact.customAttributes ?? {}) as Record<string, unknown>);
+    };
+
+    const onUpdate = async (key: string, value: CustomAttributeValue) => {
+        try {
+            await persist({ ...customAttributes, [key]: value });
+            useAlert(t('CUSTOM_ATTRIBUTES.FORM.UPDATE.SUCCESS'));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('CUSTOM_ATTRIBUTES.FORM.UPDATE.ERROR'));
+        }
+    };
+
+    const onDelete = async (key: string) => {
+        try {
+            const { [key]: _removed, ...updatedAttributes } = customAttributes;
+            await persist(updatedAttributes, key);
+            useAlert(t('CUSTOM_ATTRIBUTES.FORM.DELETE.SUCCESS'));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('CUSTOM_ATTRIBUTES.FORM.DELETE.ERROR'));
+        }
+    };
+
+    const onCopy = async (value: CustomAttributeValue) => {
+        await copyTextToClipboard(String(value));
+        useAlert(t('CUSTOM_ATTRIBUTES.COPY_SUCCESSFUL'));
+    };
+
     return (
         <div className="conversation--details">
             <div className={`last:rounded-b-lg ${EVEN_ODD_CLASS}`}>
@@ -80,9 +143,24 @@ export default function CustomAttributes({
                             .filter(Boolean)
                             .join(' ')}
                     >
-                        {'type' in element && element.type === 'static_attribute'
-                            ? renderStaticItem?.(element as StaticAttributeElement)
-                            : null}
+                        {element.type === 'static_attribute' ? (
+                            renderStaticItem?.(element as StaticAttributeElement)
+                        ) : (
+                            <CustomAttribute
+                                attributeKey={element.attribute_key}
+                                attributeType={element.attribute_display_type}
+                                values={element.attribute_values}
+                                label={element.attribute_display_name}
+                                description={element.attribute_description}
+                                value={element.value}
+                                showActions
+                                attributeRegex={element.regex_pattern}
+                                regexCue={element.regex_cue}
+                                onUpdate={onUpdate}
+                                onDelete={onDelete}
+                                onCopy={onCopy}
+                            />
+                        )}
                     </div>
                 ))}
             </div>

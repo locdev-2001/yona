@@ -19,9 +19,11 @@ interface Props {
     label?: string;
     // prop route conversation_mentions / conversation_through_mentions.
     conversationType?: ConversationType;
+    // prop route folder_conversations / conversations_through_folders (E1).
+    foldersId?: number;
 }
 
-function ConversationLayout({ conversationId }: { conversationId: number }) {
+function ConversationLayout({ conversationId, foldersId }: { conversationId: number; foldersId: number }) {
     const { isOnExpandedLayout, selectedConversation, uiSettings } = useConversation();
     const showConversationList = isOnExpandedLayout ? !conversationId : true;
     const showMessageView = conversationId ? true : !isOnExpandedLayout;
@@ -32,7 +34,7 @@ function ConversationLayout({ conversationId }: { conversationId: number }) {
 
     return (
         <section className="flex w-full h-full min-w-0">
-            <ChatList showConversationList={showConversationList} />
+            <ChatList showConversationList={showConversationList} foldersId={foldersId} />
             {showMessageView ? <ConversationBox /> : null}
             {shouldShowSidebar ? <ConversationSidebar /> : null}
             <CmdBarConversationSnooze />
@@ -46,6 +48,7 @@ export default function ConversationView({
     teamId = 0,
     label = '',
     conversationType = '',
+    foldersId = 0,
 }: Props) {
     return (
         <Dashboard>
@@ -56,7 +59,7 @@ export default function ConversationView({
                 label={label}
                 conversationType={conversationType}
             >
-                <ConversationLayout conversationId={conversationId} />
+                <ConversationLayout conversationId={conversationId} foldersId={foldersId} />
             </ConversationProvider>
         </Dashboard>
     );

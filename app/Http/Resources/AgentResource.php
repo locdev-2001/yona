@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
@@ -13,6 +14,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // Bỏ: custom_role_id (EE).
 class AgentResource extends JsonResource
 {
+    use SerializesAttributeMaps;
+
     public function __construct(User $resource, private readonly Account $account)
     {
         parent::__construct($resource);
@@ -42,7 +45,7 @@ class AgentResource extends JsonResource
             'email' => $agent->email,
             'provider' => $agent->provider,
             'available_name' => $agent->availableName(),
-            'custom_attributes' => $agent->custom_attributes ?? [],
+            'custom_attributes' => self::attributeMap($agent->custom_attributes),
             'name' => $agent->name,
             'role' => $membership?->roleName() ?? 'agent',
             'thumbnail' => $agent->avatarUrl(),

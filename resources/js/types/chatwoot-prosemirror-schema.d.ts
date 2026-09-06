@@ -7,6 +7,7 @@ declare module '@chatwoot/prosemirror-schema' {
     export { EditorView } from 'prosemirror-view';
 
     export const messageSchema: Schema;
+    export const fullSchema: Schema;
     export function buildMessageSchema(marks: string[], nodes: string[]): Schema;
     export function buildEditor(options: {
         schema: Schema;
@@ -23,6 +24,16 @@ declare module '@chatwoot/prosemirror-schema' {
     }
 
     export const MessageMarkdownSerializer: {
+        serialize(doc: Node): string;
+    };
+
+    export class ArticleMarkdownTransformer {
+        constructor(schema: Schema);
+
+        parse(content: string): Node;
+    }
+
+    export const ArticleMarkdownSerializer: {
         serialize(doc: Node): string;
     };
 

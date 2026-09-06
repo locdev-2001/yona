@@ -22,6 +22,8 @@ interface DialogProps {
     type?: 'alert' | 'edit';
     title?: string;
     description?: string;
+    // Slot #description của bản gốc (mô tả có liên kết/markup).
+    descriptionSlot?: ReactNode;
     cancelButtonLabel?: string;
     confirmButtonLabel?: string;
     disableConfirmButton?: boolean;
@@ -51,6 +53,7 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
         type = 'edit',
         title = '',
         description = '',
+        descriptionSlot,
         cancelButtonLabel = '',
         confirmButtonLabel = '',
         disableConfirmButton = false,
@@ -125,10 +128,11 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
                 onSubmit={handleSubmit}
                 onClick={event => event.stopPropagation()}
             >
-                {title || description ? (
+                {title || description || descriptionSlot ? (
                     <div className="flex flex-col gap-2">
                         <h3 className="text-base font-medium leading-6 text-n-slate-12">{title}</h3>
-                        {description ? <p className="mb-0 text-sm text-n-slate-11">{description}</p> : null}
+                        {descriptionSlot ??
+                            (description ? <p className="mb-0 text-sm text-n-slate-11">{description}</p> : null)}
                     </div>
                 ) : null}
                 {isOpen ? children : null}
