@@ -56,6 +56,19 @@ describe('Telegram', function () {
             && $request['url'] === 'https://yona.test/webhooks/telegram/123456:AAH-token');
     });
 
+    it('lấy tên inbox từ username của bot khi người dùng không đặt tên', function () {
+        Http::fake([
+            'api.telegram.org/*getMe*' => Http::response(['ok' => true, 'result' => ['username' => 'shop_bot']]),
+            'api.telegram.org/*' => Http::response(['ok' => true, 'result' => true]),
+        ]);
+
+        $response = createInboxAs($this->admin, $this->account, [
+            'channel' => ['type' => 'telegram', 'bot_token' => '123456:AAH-no-name'],
+        ])->assertOk();
+
+        expect($response->json('name'))->toBe('shop_bot');
+    });
+
     it('vẫn tạo được inbox khi Telegram trả lỗi', function () {
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => false, 'description' => 'Unauthorized'], 401)]);
 
@@ -65,7 +78,8 @@ describe('Telegram', function () {
         ])->assertOk();
 
         expect(Telegram::query()->where('bot_token', 'token-sai')->exists())->toBeTrue()
-            ->and($response->json('bot_name'))->toBeNull();
+            ->and($response->json('bot_name'))->toBeNull()
+            ->and($response->json('name'))->toBe('Bot hỏng');
     });
 });
 

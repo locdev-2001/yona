@@ -4,6 +4,7 @@ use App\Http\Middleware\AuthenticateApiAccessToken;
 use App\Http\Middleware\EnsureAccountRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentAccount;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,9 +35,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            SetLocale::class,
             HandleInertiaRequests::class,
             TrackUserSessionActivity::class,
         ]);
+
+        // Widget/Platform API cũng phải nói đúng ngôn ngữ của tài khoản.
+        $middleware->api(append: [SetLocale::class]);
 
         // Request mang api_access_token không có cookie phiên → miễn CSRF
         // (token là bằng chứng chống CSRF), như API controller của Chatwoot.

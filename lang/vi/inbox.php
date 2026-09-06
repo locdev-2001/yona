@@ -1,0 +1,81 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/inbox.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'LIST' => [
+        'TITLE' => 'Hộp thư của tôi',
+        'DISPLAY_DROPDOWN' => 'Hiển thị',
+        'LOADING' => 'Tải thông báo',
+        '404' => 'Không có thông báo nào đang hoạt động trong nhóm này.',
+        'NO_NOTIFICATIONS' => 'Không có thông báo',
+        'NOTE' => 'Thông báo từ tất cả các hộp thư đã đăng ký',
+        'NO_MESSAGES_AVAILABLE' => 'Ối! Không thể tải tin nhắn',
+        'SNOOZED_UNTIL' => 'Đã tạm ẩn cho đến khi',
+        'SNOOZED_UNTIL_TOMORROW' => 'Tạm dừng đến ngày mai',
+        'SNOOZED_UNTIL_NEXT_WEEK' => 'Tạm dừng đến tuần sau',
+    ],
+    'ACTION_HEADER' => [
+        'SNOOZE' => 'Tạm dừng đến ngày mai',
+        'DELETE' => 'Tạm dừng đến tuần sau',
+        'BACK' => 'Trờ về',
+    ],
+    'TYPES' => [
+        'CONVERSATION_MENTION' => 'Bạn đã được nhắc đến trong một hội thoại',
+        'CONVERSATION_CREATION' => 'Có hội thoại mới',
+        'CONVERSATION_ASSIGNMENT' => 'Một hội thoại được giao cho bạn',
+        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'Có tin nhắn mới trong hội thoại bạn phụ trách',
+        'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'Có tin nhắn mới trong hội thoại bạn tham gia',
+        'SLA_MISSED_FIRST_RESPONSE' => 'Hội thoại trễ SLA phản hồi đầu tiên',
+        'SLA_MISSED_NEXT_RESPONSE' => 'Hội thoại trễ SLA phản hồi kế tiếp',
+        'SLA_MISSED_RESOLUTION' => 'Hội thoại trễ SLA xử lý xong',
+    ],
+    'TYPES_NEXT' => [
+        'CONVERSATION_MENTION' => 'Được nhắc tên',
+        'CONVERSATION_ASSIGNMENT' => 'Giao cho bạn',
+        'CONVERSATION_CREATION' => 'Hội thoại mới',
+        'SLA_MISSED_FIRST_RESPONSE' => 'Trễ SLA',
+        'SLA_MISSED_NEXT_RESPONSE' => 'Trễ SLA',
+        'SLA_MISSED_RESOLUTION' => 'Trễ SLA',
+        'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'Tin nhắn mới',
+        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'Tin nhắn mới',
+        'SNOOZED_UNTIL' => 'Tạm ẩn {time}',
+        'SNOOZED_ENDS' => 'Đã hết thời gian tạm ẩn',
+    ],
+    'NO_CONTENT' => 'Không có nội dung',
+    'MENU_ITEM' => [
+        'MARK_AS_READ' => 'Đánh dấu đã đọc',
+        'MARK_AS_UNREAD' => 'Đánh dấu là chưa đọc',
+        'SNOOZE' => 'Báo lại',
+        'DELETE' => 'Xoá',
+        'MARK_ALL_READ' => 'Đánh dấu tất cả đã đọc',
+        'DELETE_ALL' => 'Xóa tất cả',
+        'DELETE_ALL_READ' => 'Xóa hết mục đã đọc',
+    ],
+    'DISPLAY_MENU' => [
+        'SORT' => 'Sắp xếp',
+        'DISPLAY' => 'Hiển thị :',
+        'SORT_OPTIONS' => [
+            'NEWEST' => 'Mới nhất',
+            'OLDEST' => 'Cũ nhất',
+            'PRIORITY' => 'Mức độ ưu tiên',
+        ],
+        'DISPLAY_OPTIONS' => [
+            'SNOOZED' => 'Tạm dừng',
+            'READ' => 'Đọc',
+            'LABELS' => 'Nhãn',
+            'CONVERSATION_ID' => 'ID hội thoại',
+        ],
+    ],
+    'ALERTS' => [
+        'MARK_AS_READ' => 'Đã đánh dấu thông báo là đã đọc',
+        'MARK_AS_UNREAD' => 'Đã đánh dấu thông báo là chưa đọc',
+        'SNOOZE' => 'Đã tạm ẩn thông báo',
+        'DELETE' => 'Đã xóa thông báo',
+        'MARK_ALL_READ' => 'Đã đánh dấu tất cả thông báo là đã đọc',
+        'DELETE_ALL' => 'Đã xóa tất cả thông báo',
+        'DELETE_ALL_READ' => 'Đã xóa mọi thông báo đã đọc',
+    ],
+];

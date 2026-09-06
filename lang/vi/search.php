@@ -1,0 +1,72 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/search.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'TABS' => [
+        'ALL' => 'Tất cả kết quả',
+        'CONTACTS' => 'Danh bạ',
+        'CONVERSATIONS' => 'Các hội thoại',
+        'MESSAGES' => 'Tin nhắn',
+        'ARTICLES' => 'Bài viết',
+    ],
+    'SECTION' => [
+        'CONTACTS' => 'Danh bạ',
+        'CONVERSATIONS' => 'Các hội thoại',
+        'MESSAGES' => 'Tin nhắn',
+        'ARTICLES' => 'Bài viết',
+    ],
+    'VIEW_MORE' => 'Xem thêm',
+    'LOAD_MORE' => 'Tải thêm',
+    'SEARCHING_DATA' => 'Đang tìm kiếm',
+    'LOADING_DATA' => 'Đang tải',
+    'EMPTY_STATE' => 'Không tìm thấy {item} nào cho từ khóa "{query}"',
+    'EMPTY_STATE_FULL' => 'Không tìm thấy kết quả nào cho từ khóa "{query}"',
+    'PLACEHOLDER_KEYBINDING' => '/để chuyển vào ô tìm kiếm',
+    'INPUT_PLACEHOLDER' => 'Gõ từ 3 ký tự trở lên để tìm',
+    'RECENT_SEARCHES' => 'Tìm kiếm gần đây',
+    'CLEAR_ALL' => 'Xóa tất cả',
+    'MOST_RECENT' => 'Gần đây nhất',
+    'EMPTY_STATE_DEFAULT' => 'Tìm theo ID hội thoại, email, số điện thoại hoặc nội dung tin nhắn để có kết quả tốt hơn. ',
+    'BOT_LABEL' => 'Bot',
+    'READ_MORE' => 'Xem thêm',
+    'READ_LESS' => 'Thu gọn',
+    'WROTE' => 'đã viết:',
+    'FROM' => 'Từ',
+    'EMAIL' => 'Email',
+    'EMAIL_SUBJECT' => 'Chủ đề',
+    'PRIVATE' => 'Ghi chú riêng',
+    'TRANSCRIPT' => 'Bản ghi hội thoại',
+    'CREATED_AT' => 'tạo {time}',
+    'UPDATED_AT' => 'cập nhật {time}',
+    'SORT_BY' => [
+        'RELEVANCE' => 'Độ liên quan',
+    ],
+    'DATE_RANGE' => [
+        'LAST_7_DAYS' => '7 ngày cuối',
+        'LAST_30_DAYS' => '30 ngày cuối',
+        'LAST_60_DAYS' => '60 ngày cuối',
+        'LAST_90_DAYS' => '90 ngày cuối',
+        'CUSTOM_RANGE' => 'Khoảng tùy chọn:',
+        'CREATED_BETWEEN' => 'Tạo trong khoảng',
+        'AND' => 'and',
+        'APPLY' => 'Áp dụng',
+        'BEFORE_DATE' => 'Trước {date}',
+        'AFTER_DATE' => 'Sau {date}',
+        'TIME_RANGE' => 'Lọc theo thời gian',
+        'CLEAR_FILTER' => 'Xóa bộ lọc',
+    ],
+    'FILTERS' => [
+        'FILTER_MESSAGE' => 'Lọc tin nhắn theo:',
+        'FROM' => 'Người gửi',
+        'IN' => 'Hộp thư',
+        'AGENTS' => 'Nhân viên',
+        'CONTACTS' => 'Liên hệ',
+        'INBOXES' => 'Hộp thư',
+        'NO_AGENTS' => 'Không tìm thấy nhà cung cấp',
+        'NO_CONTACTS' => 'Hãy tìm kiếm để thấy kết quả',
+        'NO_INBOXES' => 'Không tìm thấy hộp thư nào',
+    ],
+];

@@ -116,6 +116,7 @@ return [
 
     'available_locales' => [
         ['name' => 'English', 'iso_639_1_code' => 'en'],
+        ['name' => 'Tiếng Việt', 'iso_639_1_code' => 'vi'],
     ],
 
 ];

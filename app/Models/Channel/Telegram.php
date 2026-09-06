@@ -32,6 +32,12 @@ class Telegram extends Model
         return ['bot_token' => ['required', 'string', 'max:255']];
     }
 
+    // Api::V1::InboxesHelper#inbox_name: inbox Telegram lấy tên từ username của bot.
+    public static function namesInboxItself(): bool
+    {
+        return true;
+    }
+
     public function apiUrl(): string
     {
         return 'https://api.telegram.org/bot'.$this->bot_token;

@@ -1,0 +1,92 @@
+<?php
+
+// Bản dịch tiếng Việt của lang/en/public_portal.php.
+// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
+// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
+
+return [
+    'search' => [
+        'search_placeholder' => 'Tìm bài viết theo tiêu đề hoặc nội dung...',
+        'empty_placeholder' => 'Không tìm thấy kết quả.',
+        'loading_placeholder' => 'Đang tìm kiếm...',
+        'results_title' => 'Các kết quả tìm kiếm',
+        'results' => 'Các kết quả tìm kiếm',
+        'results_for' => 'Search Results for \'{query}\'',
+        'no_results' => 'No results found for \'{query}\'',
+        'found_results' => 'Tìm thấy 1 kết quả|Tìm thấy :count kết quả',
+        'submit' => 'Tìm kiếm',
+    ],
+    'toc_header' => 'Trên trang này',
+    'sidebar' => [
+        'help_center' => 'Trung tâm trợ giúp',
+        'categories' => 'Danh mục',
+        'language' => 'Ngôn ngữ',
+        'theme' => 'Giao diện',
+        'open_sidebar' => 'Mở thanh bên',
+        'close_sidebar' => 'Đóng thanh bên',
+        'browse' => 'Xem nội dung',
+        'back_to_category' => 'Back to {name}',
+        'browse_by_topic' => 'Xem theo chủ đề',
+        'browse_by_topic_subtitle' => 'Tìm hướng dẫn, bài chỉ dẫn và câu trả lời được sắp theo danh mục.',
+        'popular_articles' => 'Bài viết nổi bật',
+        'popular_articles_subtitle' => 'Nội dung nhiều người đang đọc.',
+        'recommended' => 'Bài viết gợi ý',
+        'recommended_subtitle' => 'Những bài viết được chọn lọc để bạn bắt đầu.',
+        'popular_label' => 'Chủ đề nổi bật:',
+        'recommended_label' => 'Chủ đề gợi ý:',
+        'authors_others' => '{names} and {count} others',
+        'primary_nav' => 'Chính',
+    ],
+    'hero' => [
+        'sub_title' => 'Tìm trong bài viết hoặc xem danh mục dưới đây.',
+    ],
+    'common' => [
+        'home' => 'Trang Chủ',
+        'last_updated_on' => 'Cập nhật lần cuối: {last_updated_on}',
+        'view_all_articles' => 'Xem tất cả',
+        'article' => 'bài viết',
+        'articles' => 'bài viết',
+        'author' => 'tác giả',
+        'authors' => 'tác giả',
+        'other' => 'người khác',
+        'others' => 'người khác',
+        'by' => 'By',
+        'no_articles' => 'Không tìm thấy bài viết',
+        'previous' => 'Trước',
+        'next' => 'Tiếp',
+    ],
+    'article_actions' => [
+        'label' => 'Mở bằng',
+        'view_markdown' => 'Xem dạng Markdown',
+        'open_in_chatgpt' => 'Mở trong ChatGPT',
+        'open_in_claude' => 'Mở trong Claude',
+        'llm_prompt' => 'Read the following article and help me understand it: {url}',
+    ],
+    'footer' => [
+        'made_with' => 'Tạo bởi',
+    ],
+    'header' => [
+        'go_to_homepage' => 'Website',
+        'visit_website' => 'Vào website',
+        'language' => 'Ngôn ngữ',
+        'appearance' => [
+            'title' => 'Giao diện',
+            'system' => 'Theo hệ thống',
+            'light' => 'Sáng',
+            'dark' => 'Tối',
+        ],
+        'featured_articles' => 'Bài viết nổi bật',
+        'recommended' => 'Bài viết gợi ý',
+        'uncategorized' => 'Chưa được phân loại',
+    ],
+    '404' => [
+        'title' => 'Không tìm thấy trang',
+        'description' => 'Chúng tôi không tìm thấy trang bạn đang tìm.',
+        'back_to_home' => 'Về trang chủ',
+    ],
+    'not_active' => [
+        'title' => 'Trung tâm trợ giúp chưa mở',
+        'description' => 'Bạn hãy liên hệ quản trị viên của trang để biết thêm thông tin.',
+        'action' => 'Nếu bạn là quản trị viên, hãy nâng cấp gói để mở lại quyền truy cập.',
+    ],
+];

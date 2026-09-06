@@ -1,7 +1,31 @@
 import { locales, defaultLocale } from './generated';
 
 // Nguồn chân lý = lang/{locale}/*.php; bundle trong ./generated do `php artisan i18n:generate` sinh.
-const messages = locales[defaultLocale];
+// Locale của lần render này do máy chủ quyết (middleware SetLocale) và in ra ở
+// thẻ <html lang>; mọi mặt tiền (dashboard, widget, portal, survey) đọc chung chỗ đó.
+function localeFromDocument(): string {
+    if (typeof document === 'undefined') return defaultLocale;
+    const declared = document.documentElement.lang.replace('-', '_');
+
+    return declared in locales ? declared : defaultLocale;
+}
+
+let activeLocale = localeFromDocument();
+let messages = locales[activeLocale];
+
+export function getLocale(): string {
+    return activeLocale;
+}
+
+export function setLocale(locale: string): void {
+    const normalized = locale.replace('-', '_');
+    if (!(normalized in locales)) return;
+    activeLocale = normalized;
+    messages = locales[normalized];
+    if (typeof document !== 'undefined') {
+        document.documentElement.lang = normalized.replace('_', '-');
+    }
+}
 
 // vue-i18n implicit plural: message dạng "a | b" (hoặc 3 nhánh zero|one|other)
 // chọn nhánh theo named param `n`.
@@ -15,13 +39,17 @@ function pluralize(message: string, count: number): string {
 
 // Tương đương $t của vue-i18n bên Chatwoot: tra key lồng nhau + nội suy {param}.
 export function t(key: string, params?: Record<string, string | number>): string {
-    const value = key
-        .split('.')
-        .reduce<unknown>(
-            (node, part) =>
-                node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
-            messages,
-        );
+    const lookup = (source: Record<string, unknown>): unknown =>
+        key
+            .split('.')
+            .reduce<unknown>(
+                (node, part) =>
+                    node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+                source,
+            );
+
+    // Locale thiếu chuỗi (chỉ xảy ra khi bundle cũ) vẫn hiện tiếng Anh, không hiện key thô.
+    const value = lookup(messages) ?? (activeLocale === defaultLocale ? undefined : lookup(locales[defaultLocale]));
 
     if (typeof value !== 'string') return key;
 

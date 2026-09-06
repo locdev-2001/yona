@@ -72,4 +72,13 @@ trait Channelable
     {
         return [];
     }
+
+    /**
+     * Kênh tự quyết tên inbox (Api::V1::InboxesHelper#inbox_name) — Telegram lấy
+     * username của bot. Kênh nào trả true thì form tạo không cần ô tên.
+     */
+    public static function namesInboxItself(): bool
+    {
+        return false;
+    }
 }

@@ -114,6 +114,7 @@ class InboxesController extends Controller
             $channel = $this->createChannel($account, $data['channel']);
 
             return $account->inboxes()->create([
+                'name' => '',
                 ...$this->inboxAttributesFrom($data),
                 'channel_id' => $channel->id,
                 'channel_type' => $channel->getMorphClass(),
@@ -262,14 +263,16 @@ class InboxesController extends Controller
      */
     private function storeRules(mixed $channelType): array
     {
+        $channelClass = is_string($channelType) ? (self::CHANNEL_TYPES[$channelType] ?? null) : null;
+
         $rules = [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => $channelClass && $channelClass::namesInboxItself()
+                ? ['sometimes', 'string', 'max:255']
+                : ['required', 'string', 'max:255'],
             ...self::INBOX_ATTRIBUTE_RULES,
             'channel' => ['required', 'array'],
             'channel.type' => ['required', 'string', 'in:'.implode(',', array_keys(self::CHANNEL_TYPES))],
         ];
-
-        $channelClass = is_string($channelType) ? (self::CHANNEL_TYPES[$channelType] ?? null) : null;
 
         foreach ($channelClass ? $channelClass::channelRules() : [] as $attribute => $rule) {
             $rules["channel.{$attribute}"] = $rule;

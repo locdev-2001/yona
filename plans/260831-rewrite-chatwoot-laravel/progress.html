@@ -108,7 +108,7 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 39/40: G2 đối chiếu automation cũ xong (port thêm gửi email cho nhóm); F2–F5 kênh ngoài đang port giao diện; G3 tiếng Việt + gia cố đang chạy</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 39/40 + G3 đang gia cố: F2–F5 kênh ngoài xong (QA Telegram bấm tay), tiếng Việt toàn bộ xong; còn gia cố + e2e toàn hệ rồi hỏi founder trước khi hợp nhất vào main</b></span>
     </div>
   </header>
 
@@ -116,8 +116,8 @@
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
       <div class="stat"><div class="n">39<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
-      <div class="stat"><div class="n">2.048</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">673</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">2.057</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">685</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
@@ -252,14 +252,15 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">F</span><h3>Kênh ngoài &amp; nền tảng</h3><span class="gcount">4/8 · F2–F5 đang port giao diện</span></div>
+    <div class="ghead"><span class="gid">F</span><h3>Kênh ngoài &amp; nền tảng</h3><span class="gcount">8/8 ✓</span></div>
     <p class="gnote">Mỗi kênh một đợt độc lập, ưu tiên theo nhu cầu Việt Nam: Email → Facebook → Instagram → Telegram → còn lại.</p>
     <div class="feat"><span class="fid">F1</span><span class="fname">Kênh Email</span><span class="pill done">Xong 07/09</span><span class="fdesc">Hộp thư email: gửi qua SMTP của từng hộp thư, nhận qua IMAP mỗi phút, bốn chiến lược nối thư vào đúng hội thoại (trả lời theo mã thư, chuyển tiếp, địa chỉ cộng, hộp mặc định), bong bóng email với trích dẫn thu gọn, trả lời có CC/BCC, tạo hội thoại email mới từ liên hệ. Chấm ảnh 8/8 màn <b>0,000%</b>; e2e với máy chủ thư thật (GreenMail) 17/17. Đăng nhập Google/Microsoft để dành nhóm tích hợp.</span>
       <span class="ftest"><b>Test ngay (Gmail app password):</b> Inboxes → Add Inbox → Email → Other providers → điền email + IMAP/SMTP → gán agent → gửi thư từ hộp khác tới địa chỉ đó → sau ≤1 phút hội thoại hiện với bong bóng email → Reply → thư về hộp khách đúng luồng → khách trả lời → nối vào hội thoại cũ. ⏳ Chờ founder nghiệm thu.</span></div>
-    <div class="feat"><span class="fid">F2</span><span class="fname">Facebook Messenger</span><span class="pill wip">Backend xong · UI đang port</span><span class="fdesc">Trang Facebook + webhook + bộ dựng tin riêng. Backend đã xong cho cả 9 kênh ngoài (Messenger, Instagram, Telegram, LINE, SMS, Twilio, WhatsApp Cloud/360Dialog, TikTok), kiểm bằng webhook giả lập.</span></div>
-    <div class="feat"><span class="fid">F3</span><span class="fname">Instagram DM</span><span class="pill wait">Chờ</span><span class="fdesc">Đăng nhập Instagram.</span></div>
-    <div class="feat"><span class="fid">F4</span><span class="fname">Telegram</span><span class="pill wait">Chờ</span><span class="fdesc">Webhook bot.</span></div>
-    <div class="feat"><span class="fid">F5</span><span class="fname">LINE / SMS / WhatsApp / TikTok / Twitter</span><span class="pill wait">Chờ</span><span class="fdesc">Mỗi kênh một đợt riêng theo nhu cầu khách.</span></div>
+    <div class="feat"><span class="fid">F2</span><span class="fname">Facebook Messenger</span><span class="pill done">Xong 07/09</span><span class="fdesc">Trang Facebook + webhook + bộ dựng tin riêng; kết nối qua SDK Meta (cần App ID thật). Form tạo hộp thư đủ 12 kênh, tự đăng ký webhook khi tạo, màn hoàn tất có QR/địa chỉ callback. Chấm ảnh 14/14; e2e 16/16 (Telegram trọn vòng với webhook giả lập).</span></div>
+    <div class="feat"><span class="fid">F3</span><span class="fname">Instagram DM</span><span class="pill done">Xong 07/09</span><span class="fdesc">Form kết nối Instagram + webhook nhận tin + gửi trả lời; luồng ủy quyền cần App ID thật (đường authorization backend để dành).</span></div>
+    <div class="feat"><span class="fid">F4</span><span class="fname">Telegram</span><span class="pill done">Xong 07/09</span><span class="fdesc">Nhập Bot Token → tự gọi setWebhook → tin từ Telegram vào hội thoại tức thời, trả lời từ dashboard.</span>
+      <span class="ftest"><b>Test ngay:</b> tạo bot bằng BotFather → Inboxes → Add Inbox → Telegram → dán token → gán agent → nhắn cho bot từ Telegram → hội thoại hiện → trả lời. ⏳ Chờ founder nghiệm thu.</span></div>
+    <div class="feat"><span class="fid">F5</span><span class="fname">LINE / SMS / WhatsApp / TikTok / Twitter</span><span class="pill done">Xong 07/09</span><span class="fdesc">LINE, SMS (Bandwidth), Twilio SMS/WhatsApp, WhatsApp Cloud và 360Dialog, TikTok — mỗi kênh một driver riêng, webhook xác thực đúng chữ ký từng nhà cung cấp; Twitter mới có khung. Không có tài khoản thật nên kiểm bằng webhook giả lập.</span></div>
     <div class="feat"><span class="fid">F6</span><span class="fname">Tích hợp chọn lọc</span><span class="pill done">Xong 07/09</span><span class="fdesc">Ứng dụng nhúng (Dashboard Apps) hiện thành tab trong hội thoại và nhận ngữ cảnh hội thoại/liên hệ; khung móc tích hợp với Slack (kết nối, chọn kênh, gửi/nhận, mở link), Dialogflow, Google Translate (dịch tin), OpenAI, Dyte — mỗi tích hợp là một driver khai trong cấu hình, lõi không rẽ nhánh theo app. Không có khóa thật nên các API ngoài kiểm bằng giả lập; Dashboard app e2e 18/18, chấm ảnh 16/16.</span>
       <span class="ftest"><b>Test ngay:</b> Settings → Integrations → Dashboard Apps → Add → tên + URL trang của bạn → mở một hội thoại → tab tên app cạnh Messages → bấm thấy trang nhúng. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">F7</span><span class="fname">API nền tảng + quản trị hệ thống</span><span class="pill done">Xong 07/09</span><span class="fdesc">Platform API (tạo tài khoản, người dùng, thành viên, bot qua token ứng dụng nền tảng, phân quyền theo đối tượng) và bảng điều khiển Super Admin riêng (đăng nhập tách biệt, quản lý tài khoản, người dùng, thành viên, token, bot, ứng dụng nền tảng, cấu hình cài đặt, tình trạng hệ thống). e2e 13/13; chấm ảnh 6 màn đạt.</span>
@@ -275,7 +276,7 @@
       <span class="ftest"><b>Test ngay:</b> chạy <code>services/zalo-bridge</code> (đặt 3 secret trùng <code>.env</code>) → Inboxes → Add Inbox → Zalo → đặt tên → quét QR bằng Zalo trên điện thoại → gán agent → nhắn từ một Zalo khác vào → hội thoại hiện → trả lời từ dashboard → điện thoại nhận. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">G2</span><span class="fname">Đối chiếu tự động hóa cũ</span><span class="pill done">Xong 07/09</span><span class="fdesc">Đối chiếu 14 khả năng của engine tự động hóa cũ với bản port Chatwoot: 9 đã có (bản mới rộng hơn với AND/OR và 7 toán tử), bổ sung "gửi email cho nhóm" (tương đương thông báo nội bộ). Phần gắn với Lead/Task/Pipeline để cắm lại sau khi CDP của Yona được port; canvas kéo thả không thuộc Chatwoot.</span>
       <span class="ftest"><b>Test ngay:</b> Automation → Create → action "Send an Email to Team" → chọn team support + nội dung → Create → nhắn tin khớp điều kiện → thành viên team nhận email. ⏳ Chờ founder nghiệm thu.</span></div>
-    <div class="feat"><span class="fid">G3</span><span class="fname">Tiếng Việt + kiểm thử toàn hệ + hợp nhất</span><span class="pill wait">Chờ</span><span class="fdesc">Dịch toàn bộ, kiểm thử đầu-cuối, gia cố, thay nhánh chính.</span></div>
+    <div class="feat"><span class="fid">G3</span><span class="fname">Tiếng Việt + kiểm thử toàn hệ + hợp nhất</span><span class="pill wip">Tiếng Việt xong · đang gia cố</span><span class="fdesc">Tiếng Việt toàn bộ 5.462 chuỗi (dịch tay hơn nửa vì bản dịch gốc thiếu), chọn ngôn ngữ áp cho dashboard, widget và trang trợ giúp. Đang: gia cố (chống SSRF webhook, mã hóa token bot, thống nhất SSO, sửa vài lệch nhỏ), kiểm thử đầu-cuối toàn hệ; hợp nhất vào nhánh chính chờ founder quyết.</span></div>
   </section>
 
   <section class="decisions">
