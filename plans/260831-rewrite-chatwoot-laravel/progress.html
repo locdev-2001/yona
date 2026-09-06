@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 28/40: D1 QA pass, D3 Macros + D4 Webhooks/Bots xong (QA bấm tay bắt và sửa 4 lỗi), D2 Reports đã có backend + Overview/Conversation; kế tiếp các trang báo cáo còn lại rồi nhóm E</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 29/40: nhóm D đóng đủ 6/6 (D1 QA pass; D3 Macros, D4 Webhooks/Bots, D2 Reports xong — QA bấm tay bắt và sửa 4 lỗi); đang chạy E1 thuộc tính/bộ lọc, E2 tìm kiếm, E4 Help Center backend</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">28<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">29<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
       <div class="stat"><div class="n">1.343</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">478</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">507</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:70%"></i></div>
+    <div class="bar"><i style="width:72.5%"></i></div>
   </div>
 
   <div class="board">
@@ -214,12 +214,13 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">5/6 · D2 đang hoàn thiện</span></div>
+    <div class="ghead"><span class="gid">D</span><h3>Vận hành đội ngũ</h3><span class="gcount">6/6 ✓</span></div>
     <div class="feat"><span class="fid">D1</span><span class="fname">Tự động hóa</span><span class="pill done">Xong 06/09</span>
       <span class="fdesc">Đã có bảng rule + pending execution, CRUD/clone/toggle, matcher điều kiện, event listener, queue delay và bộ thực thi hành động chung cho D3 Macros. Builder Settings tạo/sửa rule, chọn điều kiện/hành động; các action cần mail/webhook/tệp/SLA để đúng feature sau, không dựng nút giả.</span>
       <span class="ftest"><b>Test ngay:</b> Create Automation → Event <i>Message Created</i> → điều kiện <i>Message Content contains</i> “giá” → action <i>Assign a Team</i> + <i>Add a Label</i> → Create → tải lại trang → mở sửa thấy đủ giá trị → nhắn tin có chữ “giá” vào hội thoại → team + nhãn được gán, có dòng activity. Pixel 9 trạng thái sáng/tối ≤ 0,030% (kể cả chế độ chạy sau chờ), e2e 13/13. Trace: <code>reports/trace-d1-automation-rules.md</code>. <b>QA phiên chính đã bấm tay đủ vòng trên trình duyệt:</b> tạo rule → tin có "giá" làm nhãn + team + activity hiện tức thời ở tab hội thoại đang mở → tắt rule (có hộp xác nhận như gốc) → tải lại vẫn tắt → sửa → xóa. ⏳ Chờ founder nghiệm thu.</span></div>
-    <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill wip">Đang hoàn thiện</span>
-      <span class="fdesc">Ghi sự kiện báo cáo (phản hồi đầu, thời gian trả lời, đóng, chuyển từ bot, mở lại) + tổng hợp theo ngày + lệnh bù dữ liệu cũ; toàn bộ bộ dựng số liệu và ba nhóm endpoint báo cáo; số liệu <b>so với bản gốc trên ~25 endpoint đều khớp, tệp CSV trùng từng byte</b>. Giao diện: thư viện biểu đồ của bản gốc port sang React không thêm phụ thuộc, khung báo cáo, màn Tổng quan (số trực tiếp làm mới mỗi 60 giây như gốc, bản đồ nhiệt lưu lượng) và màn Hội thoại. Chấm ảnh Tổng quan 0,027%, Hội thoại 0,006–0,090%. <b>Đang port:</b> các trang Nhân viên / Hộp thư / Nhãn / Nhóm (cả bản cũ lẫn bản drilldown), Hài lòng, Bot.</span></div>
+    <div class="feat"><span class="fid">D2</span><span class="fname">Báo cáo lõi</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Ghi sự kiện báo cáo (phản hồi đầu, thời gian trả lời, đóng, chuyển từ bot, mở lại) + tổng hợp theo ngày + lệnh bù dữ liệu cũ; toàn bộ bộ dựng số liệu và ba nhóm endpoint báo cáo; số liệu <b>so với bản gốc trên ~25 endpoint đều khớp, tệp CSV trùng từng byte</b>. Giao diện: thư viện biểu đồ của bản gốc port sang React không thêm phụ thuộc, khung báo cáo, màn Tổng quan (số trực tiếp làm mới mỗi 60 giây như gốc, bản đồ nhiệt lưu lượng) và màn Hội thoại. Chấm ảnh Tổng quan 0,027%, Hội thoại 0,006–0,090%. Đủ các trang Nhân viên / Hộp thư / Nhãn / Nhóm (cả bản cũ lẫn bản chi tiết từng đối tượng), Hài lòng (bộ lọc, bảng, phân phối điểm) và Bot; 12/12 màn chấm ảnh đạt, rà nút ba trang trùng bản gốc.</span>
+      <span class="ftest"><b>Test ngay:</b> Reports → Overview thấy số hội thoại mở/nhân viên trực tuyến (tự làm mới mỗi phút) → Conversations đổi khoảng ngày, bật Business Hours, tải CSV → Agents bấm tên nhân viên xem chi tiết → CSAT sau khi khách chấm điểm thấy phản hồi → Bot. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">D3</span><span class="fname">Macro</span><span class="pill done">Xong 06/09</span>
       <span class="fdesc">Chuỗi hành động dựng sẵn chạy một cú bấm, dùng lại đúng bộ thực thi hành động của D1 (không nhân bản). Macro chạy trong hàng đợi vẫn ghi đúng tên người bấm nhờ một lớp ngữ cảnh người dùng dùng chung cho mọi việc nền. Giao diện: trình dựng chuỗi hành động kéo thả trong Cài đặt, phạm vi công khai/riêng tư, mục Macros trong bảng bên phải với xem trước và nút chạy, nguồn trong thanh lệnh. Chấm ảnh 8 cảnh ≤0,036% (4 cảnh trong bảng bên phải 0,000%). <b>QA phiên chính bắt hai lỗi mà test tự động bỏ lọt</b> (không đổi được loại hành động trong trình dựng; hoạt động ghi nhầm "do hệ thống" khi chạy nền) — đã sửa và bổ sung e2e bấm thật 33/33.</span>
       <span class="ftest"><b>Test ngay:</b> Cài đặt → Macros → Add a new macro → đổi hành động đầu thành Add a Label, chọn nhãn → Add new action → Resolve Conversation → Save → mở hội thoại → bảng bên phải → Macros → rê chuột lên macro → ▶ chạy → nhãn gắn, hội thoại đóng, hai dòng hoạt động mang tên bạn hiện ngay không tải lại. ⏳ Chờ founder nghiệm thu.</span></div>
@@ -235,7 +236,7 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">E</span><h3>Dữ liệu &amp; khám phá</h3><span class="gcount">0/4</span></div>
+    <div class="ghead"><span class="gid">E</span><h3>Dữ liệu &amp; khám phá</h3><span class="gcount">0/4 · E1, E2, E4 đang port</span></div>
     <div class="feat"><span class="fid">E1</span><span class="fname">Thuộc tính tùy chỉnh + bộ lọc + phân khúc</span><span class="pill wait">Chờ</span>
       <span class="fdesc">8 kiểu hiển thị, trình dựng bộ lọc, lưu thư mục lọc.</span></div>
     <div class="feat"><span class="fid">E2</span><span class="fname">Tìm kiếm toàn cục</span><span class="pill wait">Chờ</span>
