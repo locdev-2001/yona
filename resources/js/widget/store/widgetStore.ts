@@ -173,6 +173,30 @@ export const widgetStore = {
     },
 
     // ── conversation ───────────────────────────────────────────────────────────
+    // conversation/actions.js#createConversation — form tiền chat gửi thông tin
+    // khách + tin đầu trong CÙNG một yêu cầu (tránh đua với việc gộp liên hệ).
+    async createConversation(params: {
+        fullName?: string;
+        emailAddress?: string;
+        phoneNumber?: string;
+        message?: string;
+        contactCustomAttributes?: Record<string, unknown>;
+        customAttributes?: Record<string, unknown>;
+    }): Promise<void> {
+        setState({ uiFlags: { ...state.uiFlags, isCreating: true } });
+        try {
+            const data = await api.createConversation(params);
+            const [message] = data?.messages ?? [];
+            if (message) pushMessageToConversation(message);
+            await widgetStore.getConversationAttributes();
+            emitter.emit(WIDGET_BUS_EVENTS.ON_CONVERSATION_CREATED);
+        } catch {
+            // Bỏ qua như bản gốc.
+        } finally {
+            setState({ uiFlags: { ...state.uiFlags, isCreating: false } });
+        }
+    },
+
     async fetchOldConversations({ before }: { before?: number | string } = {}): Promise<void> {
         try {
             setState({ uiFlags: { ...state.uiFlags, isFetchingList: true } });
@@ -345,6 +369,10 @@ export const widgetStore = {
         } catch {
             // Bỏ qua như bản gốc.
         }
+    },
+
+    clearConversationAttributes(): void {
+        setState({ conversationAttributes: { id: '', status: '' } });
     },
 
     updateConversationAttributes(data: ConversationAttributes): void {

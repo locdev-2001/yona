@@ -6,6 +6,9 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
+use App\Services\MessageTemplates\HookExecutionService;
+use App\Support\LiquidTemplate;
+use App\Support\MessageDrops;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 // Port từ refs/chatwoot/app/models/message.rb.
-// Bỏ: SendReplyJob (webhook outbound D4), email content/liquid (F1), template hooks (D6),
+// Bỏ: SendReplyJob (webhook outbound D4), email content (F1),
 // agent bot/captain (EE), searchkick (EE), translations (F6), csat (C5).
 class Message extends Model
 {
@@ -124,9 +127,10 @@ class Message extends Model
     protected static function booted(): void
     {
         static::creating(function (Message $message) {
-            // ensure_content_type + prevent_message_flooding.
+            // ensure_content_type + prevent_message_flooding + Liquidable#process_liquid_in_content.
             $message->content_type ??= self::CONTENT_TYPES['text'];
             $message->preventMessageFlooding();
+            $message->renderContentVariables();
         });
 
         static::saving(function (Message $message) {
@@ -146,10 +150,11 @@ class Message extends Model
             $message->persistPendingAttachments();
 
             // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc;
-            // send_reply/template hooks cắt sang D4/D6.
+            // send_reply cắt sang D4.
             $message->reopenConversation();
             $message->setConversationActivity();
             $message->dispatchCreateEvents();
+            $message->executeMessageTemplateHooks();
             $message->updateContactActivity();
         });
 
@@ -213,6 +218,16 @@ class Message extends Model
         return $this->message_type === self::TYPE_OUTGOING;
     }
 
+    // auto_reply_email? — kênh email chưa port nên chỉ còn nhánh incoming_email.
+    public function isAutoReplyEmail(): bool
+    {
+        if ($this->content_type !== self::CONTENT_TYPES['incoming_email']) {
+            return false;
+        }
+
+        return data_get($this->content_attributes, 'email.auto_reply') === true;
+    }
+
     public function scopeChat(Builder $query): Builder
     {
         return $query->where('message_type', '!=', self::TYPE_ACTIVITY)->where('private', false);
@@ -270,6 +285,22 @@ class Message extends Model
                 );
             }
         }
+    }
+
+    // Liquidable#process_liquid_in_content: chỉ tin agent gửi ra và tin mẫu mới
+    // được tham chiếu biến — tin của khách giữ nguyên văn.
+    private function renderContentVariables(): void
+    {
+        if (blank($this->content) || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
+            return;
+        }
+
+        $this->content = LiquidTemplate::render($this->content, MessageDrops::forMessage($this));
+    }
+
+    private function executeMessageTemplateHooks(): void
+    {
+        (new HookExecutionService($this))->perform();
     }
 
     private function ensureProcessedMessageContent(): void

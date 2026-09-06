@@ -11,21 +11,32 @@ import { isASubmittedFormMessage } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import { FileBubble, ImageBubble, VideoBubble } from './bubbles';
+import EmailInput from './template/EmailInput';
 import MessageReplyButton from './MessageReplyButton';
 import ReplyToChip from './ReplyToChip';
 import UserMessage from './UserMessage';
 import type { WidgetMessage } from '../types';
 
 // Port từ widget/components/AgentMessage.vue + AgentMessageBubble.vue.
-// Các content_type của bot (cards/form/input_select/input_csat/article/integrations)
-// chưa port — chúng đi cùng C3 (pre-chat), C5 (CSAT) và nhóm D (help center);
-// bong bóng dưới đây là nhánh mặc định y hệt bản gốc.
+// C3 thêm nhánh `input_email` (bong bóng bot xin email). Các content_type còn
+// lại của bot (cards/form/input_select/input_csat/article/integrations) chưa
+// port — chúng đi cùng C5 (CSAT) và nhóm D (help center).
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
 // Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
 const BOT_AVATAR = '/assets/images/chatwoot_bot.png';
 
-function AgentMessageBubble({ content }: { content: string }) {
+function AgentMessageBubble({
+    content,
+    contentType,
+    messageId,
+    messageContentAttributes,
+}: {
+    content: string;
+    contentType: string;
+    messageId: number | string;
+    messageContentAttributes: Record<string, unknown>;
+}) {
     return (
         <div className="chat-bubble-wrap">
             <div className="chat-bubble agent bg-n-background dark:bg-n-solid-3 text-n-slate-12">
@@ -35,6 +46,9 @@ function AgentMessageBubble({ content }: { content: string }) {
                         __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
                     }}
                 />
+                {contentType === 'input_email' ? (
+                    <EmailInput messageId={messageId} messageContentAttributes={messageContentAttributes} />
+                ) : null}
             </div>
         </div>
     );
@@ -134,7 +148,12 @@ export default function AgentMessage({ message, replyTo = null }: AgentMessagePr
                         <div className="flex w-full gap-1">
                             <div className="space-y-2">
                                 {shouldDisplayAgentMessage ? (
-                                    <AgentMessageBubble content={message.content ?? ''} />
+                                    <AgentMessageBubble
+                                        content={message.content ?? ''}
+                                        contentType={contentType}
+                                        messageId={message.id}
+                                        messageContentAttributes={contentAttributes}
+                                    />
                                 ) : null}
                                 {hasAttachments ? (
                                     <div

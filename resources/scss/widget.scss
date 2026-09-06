@@ -506,3 +506,65 @@ blockquote {
     }
   }
 }
+
+// Port từ <style> của widget/components/PreChat/Form.vue (không scoped ở bản gốc).
+// Lớp `formkit-*` do FormKit sinh; bản React dựng tay đúng cây đó.
+.formkit-outer {
+  @apply mt-2;
+
+  .formkit-inner {
+    input[type='checkbox'] {
+      @apply size-4 outline-none;
+    }
+  }
+
+  &[data-invalid] {
+    .formkit-label {
+      @apply text-n-ruby-10;
+    }
+
+    .formkit-inner input,
+    .formkit-inner textarea,
+    .formkit-inner select {
+      @apply outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9 focus:outline-n-ruby-9 dark:focus:outline-n-ruby-9;
+    }
+  }
+}
+
+[data-invalid] .formkit-message {
+  @apply text-n-ruby-10 block text-xs font-normal my-0.5 w-full;
+}
+
+.formkit-outer[data-type='checkbox'] .formkit-wrapper {
+  @apply flex items-center gap-2 px-0.5;
+}
+
+.formkit-messages {
+  @apply list-none m-0 p-0;
+}
+
+// Port từ <style scoped> của widget/components/template/EmailInput.vue.
+.email-input-group {
+  input {
+    @apply dark:bg-n-alpha-black1 rtl:rounded-tl-[0] ltr:rounded-tr-[0] rtl:rounded-bl-[0] ltr:rounded-br-[0] p-2.5 w-full focus:ring-0 focus:outline-n-brand;
+
+    &::placeholder {
+      @apply text-n-slate-10;
+    }
+
+    &.error {
+      @apply outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9;
+    }
+  }
+
+  .button {
+    @apply rtl:rounded-tr-[0] ltr:rounded-tl-[0] rtl:rounded-br-[0] ltr:rounded-bl-[0] rounded-lg h-auto ltr:-ml-px rtl:-mr-px text-xl;
+
+    .spinner {
+      display: block;
+      padding: 0;
+      height: auto;
+      width: auto;
+    }
+  }
+}

@@ -39,4 +39,11 @@ return [
         'muted' => '{user_name} has muted the conversation',
         'unmuted' => '{user_name} has unmuted the conversation',
     ],
+
+    // Nội dung tin mẫu do MessageTemplates sinh ra (email collect; CSAT thuộc C5).
+    'templates' => [
+        'ways_to_reach_you_message_body' => 'Give the team a way to reach you.',
+        'email_input_box_message_body' => 'Get notified by email',
+        'csat_input_message_body' => 'Please rate the conversation',
+    ],
 ];
