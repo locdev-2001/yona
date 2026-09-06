@@ -1,0 +1,69 @@
+// Port: refs/chatwoot/app/javascript/sdk/DOMHelpers.js
+import SDK_CSS from './sdk.css?inline';
+import { IFrameHelper } from './IFrameHelper';
+
+export const loadCSS = (): void => {
+    const css = document.createElement('style');
+    css.innerHTML = `${SDK_CSS}`;
+    css.id = 'cw-widget-styles';
+    css.dataset.turboPermanent = 'true';
+    document.body.appendChild(css);
+};
+
+// Riêng cho Turbo: chiến lược thay body xoá cả style lẫn widget — hàm này lấy lại.
+export const restoreElement = (id: string, newBody: HTMLElement): void => {
+    const element = document.getElementById(id);
+    const newElement = newBody.querySelector(`#${id}`);
+
+    if (element && !newElement) {
+        newBody.appendChild(element);
+    }
+};
+
+export const restoreWidgetInDOM = (newBody: HTMLElement): void => {
+    restoreElement('cw-bubble-holder', newBody);
+    restoreElement('cw-widget-holder', newBody);
+    restoreElement('cw-widget-styles', newBody);
+};
+
+export const addClasses = (elm: Element | null, classes: string): void => {
+    elm?.classList.add(...classes.split(' '));
+};
+
+export const toggleClass = (elm: Element | null, classes: string): void => {
+    elm?.classList.toggle(classes);
+};
+
+export const removeClasses = (elm: Element | null, classes: string): void => {
+    elm?.classList.remove(...classes.split(' '));
+};
+
+export const onLocationChange = ({
+    referrerURL,
+    referrerHost,
+}: {
+    referrerURL: string;
+    referrerHost: string;
+}): void => {
+    IFrameHelper.events.onLocationChange({ referrerURL, referrerHost });
+};
+
+export const onLocationChangeListener = (): void => {
+    let oldHref = document.location.href;
+    const referrerHost = document.location.host;
+    const config = { childList: true, subtree: true };
+
+    onLocationChange({ referrerURL: oldHref, referrerHost });
+
+    const bodyList = document.querySelector('body');
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(() => {
+            if (oldHref !== document.location.href) {
+                oldHref = document.location.href;
+                onLocationChange({ referrerURL: oldHref, referrerHost });
+            }
+        });
+    });
+
+    if (bodyList) observer.observe(bodyList, config);
+};

@@ -1,0 +1,113 @@
+import { apiDelete, apiGet, apiPatch, apiPost, apiPostForm, buildSearch } from './client';
+import { buildSendAttachmentFormData, buildSendMessagePayload } from '../helpers/messageHelpers';
+import type {
+    AvailableAgent,
+    ConversationAttributes,
+    WidgetConfigResponse,
+    WidgetContact,
+    WidgetMessage,
+} from '../types';
+
+// Port từ widget/api/* — mỗi hàm giữ đúng đường dẫn và payload của bản gốc.
+
+const BASE = '/api/v1/widget';
+
+const referrerUrl = () => (window as { referrerURL?: string }).referrerURL || '';
+
+export const fetchConfig = (): Promise<WidgetConfigResponse> =>
+    apiPost<WidgetConfigResponse>(`${BASE}/config${buildSearch()}`);
+
+export const fetchConversationAttributes = (): Promise<Partial<ConversationAttributes> & {
+    contact_last_seen_at?: number;
+}> => apiGet(`${BASE}/conversations${buildSearch()}`);
+
+export const fetchMessages = ({
+    before,
+    after,
+}: { before?: number | string; after?: number | string } = {}): Promise<{
+    payload: WidgetMessage[];
+    meta: { contact_last_seen_at?: number };
+}> => apiGet(`${BASE}/messages${buildSearch({ before, after })}`);
+
+export const sendMessage = (
+    content: string,
+    replyTo: number | string | null = null,
+    { customAttributes, labels }: { customAttributes?: Record<string, unknown>; labels?: string[] } = {},
+): Promise<WidgetMessage> =>
+    apiPost(
+        `${BASE}/messages${buildSearch()}`,
+        buildSendMessagePayload({ content, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
+    );
+
+export const sendAttachment = (
+    { file, replyTo = null }: { file: File | string; replyTo?: number | string | null },
+    { customAttributes, labels }: { customAttributes?: Record<string, unknown>; labels?: string[] } = {},
+): Promise<WidgetMessage> =>
+    apiPostForm(
+        `${BASE}/messages${buildSearch()}`,
+        buildSendAttachmentFormData({ file, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
+    );
+
+export const updateMessage = ({
+    messageId,
+    email,
+    values,
+}: {
+    messageId: number | string;
+    email?: string;
+    values?: unknown;
+}): Promise<{ contact: WidgetContact }> =>
+    apiPatch(`${BASE}/messages/${messageId}${buildSearch()}`, {
+        contact: { email },
+        message: { submitted_values: values },
+    });
+
+export const toggleTyping = (typingStatus: 'on' | 'off'): Promise<void> =>
+    apiPost(`${BASE}/conversations/toggle_typing${buildSearch()}`, { typing_status: typingStatus });
+
+export const setUserLastSeenAt = (lastSeen: number): Promise<void> =>
+    apiPost(`${BASE}/conversations/update_last_seen${buildSearch()}`, { contact_last_seen_at: lastSeen });
+
+export const toggleStatus = (): Promise<void> => apiGet(`${BASE}/conversations/toggle_status${buildSearch()}`);
+
+export const sendEmailTranscript = (): Promise<void> =>
+    apiPost(`${BASE}/conversations/transcript${buildSearch()}`);
+
+export const setConversationCustomAttributes = (customAttributes: Record<string, unknown>): Promise<void> =>
+    apiPost(`${BASE}/conversations/set_custom_attributes${buildSearch()}`, { custom_attributes: customAttributes });
+
+export const deleteConversationCustomAttribute = (customAttribute: string): Promise<void> =>
+    apiPost(`${BASE}/conversations/destroy_custom_attributes${buildSearch()}`, {
+        custom_attribute: [customAttribute],
+    });
+
+export const fetchContact = (): Promise<WidgetContact> => apiGet(`${BASE}/contact${buildSearch()}`);
+
+export const updateContact = (user: Record<string, unknown>): Promise<WidgetContact> =>
+    apiPatch(`${BASE}/contact${buildSearch()}`, user);
+
+export const setContactUser = (
+    identifier: string | number,
+    user: Record<string, unknown>,
+): Promise<WidgetContact & { widget_auth_token?: string }> =>
+    apiPatch(`${BASE}/contact/set_user${buildSearch()}`, { identifier, ...user });
+
+export const setContactCustomAttributes = (customAttributes: Record<string, unknown>): Promise<WidgetContact> =>
+    apiPatch(`${BASE}/contact${buildSearch()}`, { custom_attributes: customAttributes });
+
+export const deleteContactCustomAttribute = (customAttribute: string): Promise<WidgetContact> =>
+    apiPost(`${BASE}/contact/destroy_custom_attributes${buildSearch()}`, { custom_attributes: [customAttribute] });
+
+export const fetchAvailableAgents = (): Promise<{ payload: AvailableAgent[] }> =>
+    apiGet(`${BASE}/inbox_members${buildSearch()}`);
+
+export const createEvent = (name: string): Promise<void> =>
+    apiPost(`${BASE}/events${buildSearch()}`, {
+        name,
+        event_info: { initiated_at: { timestamp: new Date().toString() }, referer: referrerUrl() },
+    });
+
+export const createLabel = (label: string): Promise<void> => apiPost(`${BASE}/labels${buildSearch()}`, { label });
+
+export const destroyLabel = (label: string): Promise<void> =>
+    apiDelete(`${BASE}/labels/${label}${buildSearch()}`);

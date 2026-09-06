@@ -21,6 +21,10 @@ Route::get('/attachments/{attachment}/{filename}', [AttachmentsController::class
 
 Route::redirect('/', '/app');
 
+// Trang widget chạy trong iframe của SDK (`/widget?website_token=...`) — không
+// dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.
+Route::get('/widget', fn () => view('widget'))->name('widget');
+
 Route::middleware('guest')->group(function () {
     Route::get('/app/login', [SessionsController::class, 'create'])->name('login');
     Route::post('/app/login', [SessionsController::class, 'store']);

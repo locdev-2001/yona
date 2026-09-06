@@ -1,0 +1,508 @@
+// Port từ widget/assets/scss/woot.scss + views/_conversation.scss.
+// Biến màu (--slate-*, --solid-*, ...) dùng chung bộ next-colors của dashboard,
+// không chép lại (bản gốc lặp cả bảng màu trong woot.scss).
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'widget-fonts';
+@import 'next-colors';
+
+// Bản gốc KHÔNG ép Inter cho body widget (khác dashboard) — chữ chạy bằng
+// font hệ thống của tailwind; ép Inter vào đây làm lệch pixel với oracle.
+html,
+body {
+  @apply antialiased h-full;
+
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.is-mobile {
+  display: block;
+
+  .actions {
+    .close-button {
+      display: block !important;
+    }
+
+    .new-window--button {
+      display: none !important;
+    }
+  }
+}
+
+.is-bubble-hidden {
+  .actions {
+    .close-button {
+      display: block !important;
+    }
+  }
+}
+
+.actions {
+  .close-button {
+    display: none;
+  }
+}
+
+.message-content {
+  ul {
+    @apply list-disc list-inside;
+  }
+
+  ol {
+    @apply list-decimal list-inside;
+  }
+
+  li {
+    padding-inline-start: 1.5em;
+    text-indent: -1.5em;
+
+    > p:first-child {
+      @apply inline;
+    }
+
+    > * {
+      text-indent: 0;
+    }
+  }
+}
+
+.is-flat-design {
+  .chat-bubble {
+    border-radius: 0 !important;
+    box-shadow: none;
+  }
+
+  button {
+    border-radius: 0 !important;
+  }
+
+  input {
+    border-radius: 0;
+  }
+}
+
+label {
+  @apply block font-medium py-1 px-0 capitalize;
+}
+
+input:not(.reset-base),
+textarea:not(.reset-base) {
+  font-family: inherit;
+  @apply rounded-lg box-border bg-n-background dark:bg-n-alpha-2 border-none outline outline-1 outline-offset-[-1px] outline-n-weak block text-base leading-[1.5] p-2.5 w-full text-n-slate-12 focus:outline-n-brand focus:ring-1 focus:ring-n-brand;
+
+  &:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  &:placeholder-shown {
+    @apply text-ellipsis;
+  }
+}
+
+textarea {
+  resize: none;
+}
+
+.user-message-input {
+  @apply border-none outline-none w-full placeholder:text-n-slate-10 resize-none h-8 min-h-8 max-h-60 py-1 px-0 my-2 bg-n-background text-n-slate-12 transition-all duration-200;
+}
+
+p code {
+  @apply bg-n-slate-3 dark:bg-n-alpha-2 text-n-slate-11 text-sm inline-block rounded py-px px-1;
+}
+
+pre {
+  @apply bg-n-slate-3 dark:bg-n-alpha-2 text-n-slate-11 overflow-y-auto rounded-md p-2 mt-1 mb-2 block leading-[1.5] whitespace-pre-wrap;
+
+  code {
+    @apply bg-transparent text-n-slate-11 p-0 text-sm;
+  }
+}
+
+blockquote {
+  @apply ltr:border-l-4 rtl:border-r-4 border-n-slate-3 dark:border-n-alpha-2 border-solid my-1 px-0 text-n-slate-11 py-1 ltr:pr-2 rtl:pr-4 ltr:pl-4 rtl:pl-2;
+}
+
+.button {
+  @apply appearance-none bg-n-brand border border-solid border-n-brand text-white cursor-pointer inline-block text-sm h-10 leading-none outline-none outline-0 py-1 px-4 text-center no-underline select-none align-middle whitespace-nowrap;
+
+  &:focus,
+  &:hover {
+    @apply no-underline border-n-brand brightness-110;
+  }
+
+  &:active,
+  &.active {
+    @apply no-underline border-n-brand brightness-125;
+  }
+
+  &[disabled],
+  &:disabled,
+  &.disabled {
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &.small {
+    @apply text-xs h-6 py-1 px-3;
+  }
+
+  &.block {
+    width: 100%;
+  }
+
+  &.transparent {
+    background: transparent;
+    border: 0;
+    height: auto;
+  }
+
+  &.compact {
+    padding: 0;
+  }
+}
+
+.banner {
+  @apply text-white text-sm font-semibold p-3 text-center;
+
+  &.success {
+    @apply bg-n-teal-9;
+  }
+
+  &.error {
+    @apply bg-n-ruby-9;
+  }
+}
+
+.conversation--container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  color-scheme: light dark;
+
+  &.light-scheme {
+    color-scheme: light;
+  }
+
+  &.dark-scheme {
+    color-scheme: dark;
+  }
+}
+
+.conversation-wrap {
+  flex: 1;
+  @apply px-2 pt-8 pb-2;
+}
+
+.message--loader {
+  text-align: center;
+}
+
+.typing-bubble {
+  @apply max-w-[2.4rem] p-2 ltr:rounded-bl-[1.25rem] rtl:rounded-br-[1.25rem] ltr:rounded-tl-lg rtl:rounded-tr-lg;
+}
+
+.image {
+  display: block;
+
+  .wrap {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+
+    &::before {
+      background-image: linear-gradient(-180deg, transparent 3%, #1f2d3d 130%);
+      bottom: 0;
+      content: '';
+      height: 20%;
+      left: 0;
+      opacity: 0.8;
+      position: absolute;
+      width: 100%;
+    }
+  }
+
+  img {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .time {
+    @apply text-xs bottom-1 text-white ltr:right-3 rtl:left-3 whitespace-nowrap absolute;
+  }
+}
+
+.file {
+  .icon-wrap {
+    @apply text-[2.5rem] text-n-brand leading-none ltr:ml-1 rtl:mr-1 ltr:mr-2 rtl:ml-2;
+  }
+
+  .download {
+    @apply text-n-brand font-medium p-0 m-0 text-xs no-underline;
+  }
+}
+
+.conversation-wrap {
+  .agent-message {
+    @apply items-end flex flex-row justify-start mt-0 ltr:mr-0 rtl:mr-2 mb-0.5 ltr:ml-2 rtl:ml-0 max-w-[88%];
+
+    .avatar-wrap {
+      @apply flex-shrink-0 h-6 w-6;
+
+      .user-thumbnail-box {
+        @apply -mt-8;
+      }
+    }
+
+    .message-wrap {
+      @apply flex-grow flex-shrink-0 ltr:ml-2 rtl:mr-2 max-w-[90%];
+    }
+  }
+
+  &.is-typing .messages-wrap div:last-child {
+    .agent-message {
+      .agent-name {
+        display: none;
+      }
+
+      .user-thumbnail-box {
+        margin-top: 0;
+      }
+    }
+  }
+
+  .agent-name {
+    @apply text-xs font-medium my-2 ltr:pl-0.5 rtl:pr-0.5;
+  }
+
+  .has-attachment {
+    overflow: hidden;
+
+    :not([audio]) {
+      padding: 0;
+    }
+
+    &.has-text {
+      @apply mt-1;
+    }
+  }
+
+  .agent-message-wrap {
+    + .agent-message-wrap {
+      @apply mt-0.5;
+
+      .agent-message .chat-bubble {
+        @apply ltr:rounded-tl-[0.25rem] rtl:rounded-tr-[0.25rem];
+      }
+    }
+
+    + .user-message-wrap {
+      @apply mt-4;
+    }
+
+    &.has-response + .user-message-wrap {
+      @apply mt-0.5;
+
+      .chat-bubble {
+        @apply ltr:rounded-tr-[0.25rem] rtl:rounded-tl-[0.25rem];
+      }
+    }
+
+    &.has-response + .agent-message-wrap {
+      @apply mt-4;
+    }
+  }
+
+  .user-message {
+    @apply flex items-end flex-row justify-end max-w-[85%] ltr:text-right rtl:text-left mt-0 ltr:ml-auto rtl:mr-auto ltr:mr-1 rtl:ml-1 mb-0.5;
+
+    .message-wrap {
+      @apply max-w-full ltr:mr-2 rtl:ml-2;
+    }
+
+    .in-progress {
+      opacity: 0.6;
+    }
+
+    .is-failed {
+      @apply flex items-end flex-row-reverse;
+
+      .chat-bubble.user {
+        @apply bg-n-ruby-9 dark:bg-n-ruby-9 #{!important};
+      }
+    }
+  }
+
+  .user.has-attachment {
+    .icon-wrap {
+      @apply text-white;
+    }
+
+    .download {
+      @apply text-white;
+    }
+  }
+
+  .user-message-wrap {
+    + .user-message-wrap {
+      @apply mt-0.5;
+
+      .user-message .chat-bubble {
+        @apply ltr:rounded-tr-[0.25rem] rtl:rounded-tl-[0.25rem];
+      }
+    }
+
+    + .agent-message-wrap {
+      @apply mt-4;
+    }
+  }
+
+  p:not(:last-child) {
+    @apply mb-4;
+  }
+}
+
+.unread-wrap {
+  width: 100%;
+  height: auto;
+  max-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  overflow: hidden;
+
+  .unread-messages {
+    @apply pb-2;
+  }
+
+  .clear-button {
+    transition: all 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    @apply bg-transparent text-n-brand border-none border-0 font-semibold text-base ml-1 py-0 pl-0 pr-2.5 hover:brightness-75 hover:translate-x-1;
+  }
+
+  .close-unread-button {
+    transition: all 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    @apply bg-n-slate-3 dark:bg-n-slate-12 text-n-slate-12 dark:text-n-slate-1 hover:brightness-95 border-none border-0 font-medium text-xxs rounded-2xl mb-3;
+  }
+}
+
+.unread-messages {
+  @apply flex flex-col flex-nowrap mt-0 overflow-y-auto w-full pb-2;
+
+  .chat-bubble-wrap {
+    @apply mb-1;
+
+    &:first-child {
+      margin-top: auto;
+    }
+
+    .chat-bubble {
+      @apply border border-solid border-n-slate-5 dark:border-n-slate-11/50 text-n-black;
+    }
+
+    + .chat-bubble-wrap {
+      .chat-bubble {
+        @apply ltr:rounded-tl-[0.25rem] rtl:rounded-tr-[0.25rem];
+      }
+    }
+
+    &:last-child .chat-bubble {
+      @apply ltr:rounded-bl-[1.25rem] rtl:rounded-br-[1.25rem];
+    }
+  }
+}
+
+.is-widget-right .unread-wrap {
+  @apply ltr:text-right rtl:text-left overflow-hidden;
+
+  .chat-bubble-wrap {
+    .chat-bubble {
+      @apply ltr:rounded-br-[0.25rem] rtl:rounded-bl-[0.25rem] rounded-[1.25rem];
+    }
+
+    + .chat-bubble-wrap {
+      .chat-bubble {
+        @apply ltr:rounded-tr-[0.25rem] rtl:rounded-tl-[0.25rem];
+      }
+    }
+
+    &:last-child .chat-bubble {
+      @apply ltr:rounded-br-[1.25rem] rtl:rounded-bl-[1.25rem];
+    }
+  }
+
+  .close-unread-wrap {
+    text-align: right;
+  }
+}
+
+.chat-bubble {
+  @apply shadow-[0_0.25rem_6px_rgba(50,50,93,0.08),0_1px_3px_rgba(0,0,0,0.05)] rounded-[1.25rem] inline-block text-sm leading-[1.5] max-w-full ltr:text-left rtl:text-right py-3 px-4 text-white;
+
+  word-break: break-word;
+
+  :not([audio]) {
+    max-width: 100%;
+  }
+
+  > a {
+    @apply text-n-brand;
+    word-break: break-all;
+  }
+
+  .link {
+    text-decoration: underline;
+  }
+
+  &.user {
+    @apply ltr:rounded-br-[0.25rem] rtl:rounded-bl-[0.25rem];
+
+    > a {
+      @apply text-white;
+    }
+
+    p code {
+      @apply bg-n-alpha-2 dark:bg-n-alpha-1 text-white;
+    }
+  }
+
+  &.agent {
+    @apply ltr:rounded-bl-[0.25rem] rtl:rounded-br-[0.25rem] text-n-slate-12;
+
+    .link {
+      @apply text-n-brand;
+      word-break: break-word;
+    }
+  }
+}
+
+// Spinner của shared/components/Spinner.vue — cùng định nghĩa với app.scss dashboard.
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  @apply relative inline-block w-6 h-6 align-middle;
+
+  &:before {
+    @apply border-n-slate-10 border-2 border-solid content-[''] box-border absolute top-[50%] left-[50%] rounded-full border-t-n-strong -ml-2.5 -mt-2.5 w-6 h-6 animate-[spinner_0.9s_linear_infinite];
+  }
+
+  &.small {
+    @apply w-4 h-4;
+
+    &:before {
+      @apply w-4 h-4 -mt-2;
+    }
+  }
+}
