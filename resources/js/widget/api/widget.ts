@@ -21,6 +21,30 @@ export const fetchConversationAttributes = (): Promise<Partial<ConversationAttri
     contact_last_seen_at?: number;
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);
 
+// endPoints.js#createConversation — tin đầu tiên đi kèm ngay trong yêu cầu tạo.
+export const createConversation = (params: {
+    fullName?: string;
+    emailAddress?: string;
+    phoneNumber?: string;
+    message?: string;
+    contactCustomAttributes?: Record<string, unknown>;
+    customAttributes?: Record<string, unknown>;
+}): Promise<{ messages?: WidgetMessage[] }> =>
+    apiPost(`${BASE}/conversations${buildSearch()}`, {
+        contact: {
+            name: params.fullName,
+            email: params.emailAddress,
+            phone_number: params.phoneNumber,
+            custom_attributes: params.contactCustomAttributes,
+        },
+        message: {
+            content: params.message,
+            timestamp: new Date().toString(),
+            referer_url: referrerUrl(),
+        },
+        custom_attributes: params.customAttributes,
+    });
+
 export const fetchMessages = ({
     before,
     after,

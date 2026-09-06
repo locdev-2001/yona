@@ -38,7 +38,8 @@ describe('GET /api/v1/widget/messages', function () {
 
         $response = $this->getJson($session->url('messages'), $session->headers())->assertOk();
 
-        expect($response->json('payload'))->toHaveCount(2);
+        // 2 tin tạo sẵn + 2 tin mẫu email-collect (khách chưa có email, kênh Website).
+        expect($response->json('payload'))->toHaveCount(4);
         expect($response->json('meta.contact_last_seen_at'))->toBe(0);
     });
 
@@ -81,7 +82,7 @@ describe('POST /api/v1/widget/messages', function () {
             ->assertOk();
 
         expect(Conversation::query()->count())->toBe($conversations);
-        expect($conversation->messages()->reorder('id', 'desc')->first()->content)->toBe('hello world');
+        expect($conversation->messages()->incoming()->reorder('id', 'desc')->first()->content)->toBe('hello world');
     });
 
     it('creates the conversation together with the first message', function () {
@@ -190,7 +191,7 @@ describe('POST /api/v1/widget/messages', function () {
             ],
         ], $session->headers())->assertOk();
 
-        $attachment = $conversation->messages()->reorder('id', 'desc')->first()->attachments->first();
+        $attachment = $conversation->messages()->incoming()->reorder('id', 'desc')->first()->attachments->first();
 
         expect($attachment)->not->toBeNull();
         expect($attachment->file_type)->toBe(Attachment::FILE_TYPE_IMAGE);
@@ -306,6 +307,33 @@ describe('PATCH /api/v1/widget/messages/{id}', function () {
 
         expect($existing->fresh()->name)->toBe('John Doe');
         expect(Contact::query()->whereKey($session->contact->id)->exists())->toBeFalse();
+    });
+
+    // continuity_via_email: khách điền lại email đã dùng ở phiên trước thì mọi
+    // hội thoại cũ về chung một hồ sơ, agent không thấy hai người lạ.
+    it('reattaches the earlier conversations of the same email', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        $conversation = widgetConversationFor($session);
+        $message = Message::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'conversation_id' => $conversation->id,
+            'content_type' => Message::CONTENT_TYPES['input_email'],
+        ]);
+
+        $known = Contact::factory()->create(['account_id' => $session->account->id, 'email' => 'john@example.com']);
+        $knownInbox = ContactInbox::factory()->create(['contact_id' => $known->id, 'inbox_id' => $session->inbox->id]);
+        $earlierConversation = widgetConversationFor($session, $knownInbox);
+
+        $this->patchJson(
+            $session->url("messages/{$message->id}"),
+            ['contact' => ['email' => 'john@example.com']],
+            $session->headers()
+        )->assertOk();
+
+        expect($conversation->fresh()->contact_id)->toBe($known->id);
+        expect($earlierConversation->fresh()->contact_id)->toBe($known->id);
+        expect($known->conversations()->count())->toBe(2);
     });
 
     it('stores submitted values for other content types', function () {

@@ -33,6 +33,7 @@ import AccessToken from 'dashboard/settings/profile/AccessToken';
 import Widget from 'dashboard/modules/widget-preview/components/Widget';
 import LockToSingleConversationPreview from './components/LockToSingleConversationPreview';
 import SenderNameExamplePreview from './components/SenderNameExamplePreview';
+import PreChatFormSettings from './PreChatForm/Settings';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
 import {
@@ -48,8 +49,8 @@ import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
 
 // Port từ settings/inbox/Settings.vue — nhánh kênh API + Web Widget. Tab
-// Business Hours / CSAT / Pre-chat form / Bot hiện trên thanh tab như oracle
-// (feature tương ứng chưa port — nội dung trống, vào cùng tính năng của chúng).
+// Business Hours / CSAT / Bot hiện trên thanh tab như oracle (feature tương ứng
+// chưa port — nội dung trống, vào cùng tính năng của chúng).
 interface ShowProps {
     inboxId: number;
     tab?: string | null;
@@ -760,6 +761,16 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                             {selectedTabKey === 'collaborators' ? (
                                 <div className="mx-6 max-w-4xl">
                                     <CollaboratorsPage inbox={inbox} onInboxUpdated={syncInboxData} />
+                                </div>
+                            ) : null}
+
+                            {selectedTabKey === 'pre-chat-form' ? (
+                                <div>
+                                    <PreChatFormSettings
+                                        inbox={inbox}
+                                        uiSettings={uiSettings}
+                                        onInboxUpdated={syncInboxData}
+                                    />
                                 </div>
                             ) : null}
 

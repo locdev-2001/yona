@@ -22,3 +22,23 @@ export function SignOutIcon({ size = '22', className = '' }: { size?: string | n
         </svg>
     );
 }
+
+// chevron-right của shared/.../icons.json (khác bản trong dashboard-icons.json —
+// nét 1px thay vì 0.75px), dùng cho nút gửi của bong bóng nhập email.
+const CHEVRON_RIGHT_PATH =
+    'M8.293 4.293a1 1 0 0 0 0 1.414L14.586 12l-6.293 6.293a1 1 0 1 0 1.414 1.414l7-7a1 1 0 0 0 0-1.414l-7-7a1 1 0 0 0-1.414 0Z';
+
+export function ChevronRightIcon({ size = '20', className = '' }: { size?: string | number; className?: string }) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            fill="none"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            className={className}
+        >
+            <path d={CHEVRON_RIGHT_PATH} fill="currentColor" />
+        </svg>
+    );
+}

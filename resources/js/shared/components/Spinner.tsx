@@ -2,6 +2,7 @@
 interface SpinnerProps {
     size?: 'small' | 'tiny' | 'message' | '';
     colorScheme?: 'primary' | 'warning' | 'success' | '';
+    className?: string;
 }
 
 const COLOR_SCHEME_CLASSES: Record<string, string> = {
@@ -10,8 +11,8 @@ const COLOR_SCHEME_CLASSES: Record<string, string> = {
     success: 'before:!border-t-n-teal-9',
 };
 
-export default function Spinner({ size = 'small', colorScheme = '' }: SpinnerProps) {
+export default function Spinner({ size = 'small', colorScheme = '', className = '' }: SpinnerProps) {
     const colorSchemeClasses = COLOR_SCHEME_CLASSES[colorScheme] ?? colorScheme;
 
-    return <span className={`spinner ${size} ${colorSchemeClasses}`} />;
+    return <span className={`spinner ${size} ${colorSchemeClasses} ${className}`} />;
 }

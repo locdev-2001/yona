@@ -15,13 +15,12 @@ export default function Home() {
         [agents],
     );
 
-    // configMixin#shouldShowPreChatForm — form tiền chat thuộc C3, ở đây chỉ rẽ nhánh.
-    const preChatFields = channelConfig?.preChatFormOptions?.pre_chat_fields ?? [];
-    const shouldShowPreChatForm =
-        Boolean(channelConfig?.preChatFormEnabled) && preChatFields.some(field => field.enabled);
+    // Home.vue chỉ xét cờ bật form (KHÔNG dùng shouldShowPreChatForm) — form không
+    // có trường nào bật vẫn hiện ô nhập tin nhắn, đúng bản gốc.
+    const preChatFormEnabled = Boolean(channelConfig?.preChatFormEnabled);
 
     const startConversation = () => {
-        if (shouldShowPreChatForm && !conversationSize) {
+        if (preChatFormEnabled && !conversationSize) {
             replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
             return;
         }

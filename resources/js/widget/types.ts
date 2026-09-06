@@ -34,7 +34,11 @@ export interface PreChatField {
     type: string;
     required: boolean;
     enabled: boolean;
+    // Chỉ có ở trường sinh từ thuộc tính tuỳ biến.
+    placeholder?: string;
     values?: string[];
+    regex_pattern?: string;
+    regex_cue?: string;
 }
 
 export interface PreChatFormOptions {
