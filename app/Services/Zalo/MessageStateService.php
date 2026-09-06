@@ -151,10 +151,23 @@ class MessageStateService
         return "zalo:pending-recall:{$inbox->id}:{$sourceId}";
     }
 
+    /**
+     * Một tin Yona gửi đi có thể mang NHIỀU msgId (mỗi đính kèm một lượt gọi
+     * bridge — SendOnZaloService::rememberSourceIds). Thu hồi hay biểu cảm có
+     * thể trỏ vào msgId của phần thứ hai, nên tra hụt `source_id` chính thì phải
+     * tra tiếp danh sách bí danh, nếu không tin gốc không bao giờ được áp.
+     */
     private function findMessage(Inbox $inbox, ?string $sourceId): ?Message
     {
-        return blank($sourceId)
-            ? null
-            : Message::query()->where('inbox_id', $inbox->id)->where('source_id', $sourceId)->first();
+        if (blank($sourceId)) {
+            return null;
+        }
+
+        $message = Message::query()->where('inbox_id', $inbox->id)->where('source_id', $sourceId)->first();
+
+        return $message ?? Message::query()
+            ->where('inbox_id', $inbox->id)
+            ->whereRaw("jsonb_exists((content_attributes)::jsonb -> 'external_source_ids', ?)", [$sourceId])
+            ->first();
     }
 }

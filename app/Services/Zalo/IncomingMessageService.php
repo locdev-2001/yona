@@ -14,6 +14,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
+use App\Services\Zalo\Exception\EchoAwaitingSourceIdException;
 use Illuminate\Support\Carbon;
 
 /**
@@ -85,6 +86,12 @@ class IncomingMessageService
 
     private const THREAD_KIND_GROUP = 'group';
 
+    /**
+     * Cờ do lớp hàng đợi bật khi đã chờ hết lượt cho tin dội lại: dựng tin ngay
+     * lượt này thay vì hoãn tiếp (xem EchoAwaitingSourceIdException).
+     */
+    public const ECHO_WAIT_EXHAUSTED = 'echo_wait_exhausted';
+
     /** @var array{kind: string, data: array<string, mixed>}|null */
     private ?array $card = null;
 
@@ -115,6 +122,8 @@ class IncomingMessageService
 
             return null;
         }
+
+        $this->guardEchoStillSettling($sourceId);
 
         $contactInbox = $this->resolveContactInbox($threadUid);
 
@@ -206,6 +215,28 @@ class IncomingMessageService
         // Mốc rác (0, âm) hoặc đồng hồ điện thoại chạy trước: thà lấy giờ máy chủ
         // còn hơn ném tin ra khỏi dòng thời gian.
         return $sentAt->year < 2000 || $sentAt->isFuture() ? null : $sentAt;
+    }
+
+    /**
+     * Tin dội lại chưa khớp bí danh nào có thể là phần sau của một tin Yona đang
+     * gửi dở: chiều ra ghi msgId của TỪNG phần ngay khi bridge trả về, nhưng
+     * echo vẫn có thể về trước lượt ghi đó (bằng chứng: `g1-inbound-evidence.md`
+     * §7, tin ma 884). Nhường một nhịp cho chiều ra rồi hãy kết luận.
+     *
+     * Lô lịch sử (`backfill`) không có cuộc đua này — tin đã cũ hàng giờ — nên
+     * không bắt nó chờ.
+     */
+    private function guardEchoStillSettling(?string $sourceId): void
+    {
+        if ($sourceId === null || $this->direction() === 'in' || $this->isBackfill()) {
+            return;
+        }
+
+        if (($this->params[self::ECHO_WAIT_EXHAUSTED] ?? null) === true) {
+            return;
+        }
+
+        throw new EchoAwaitingSourceIdException("Tin dội lại {$sourceId} chưa khớp bí danh nào của chiều ra");
     }
 
     /**

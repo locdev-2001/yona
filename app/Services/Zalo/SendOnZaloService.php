@@ -110,15 +110,64 @@ class SendOnZaloService extends BaseSendOnChannelService
             $outcome = $this->callBridge($channel, $monitor, $part['payload']);
             $sourceIds = [...$sourceIds, ...$outcome['source_ids']];
 
+            // Ghi bí danh NGAY sau mỗi phần, trước khi gửi phần kế: echo của phần
+            // vừa đi có thể về trước lúc vòng lặp kết thúc, và chiều vào chỉ dedupe
+            // được khi msgId đó đã nằm trong `external_source_ids`
+            // (`g1-inbound-evidence.md` §7 — tin ma 884).
+            $this->rememberSourceIds($outcome['source_ids']);
+
             if ($outcome['failure'] !== null) {
                 $failure = $this->nameFailingFile($outcome['failure'], $part['filename']);
                 break;
             }
         }
 
-        $this->rememberSourceIds($sourceIds);
+        $this->absorbEchoDuplicates($sourceIds);
 
         return $failure;
+    }
+
+    /**
+     * Chốt sau khi gửi: echo về sớm hơn lượt ghi bí danh vẫn có thể đã dựng được
+     * một tin trùng. Gộp nó vào tin gốc — giữ biểu cảm khách đã thả, chỉ nhận
+     * đính kèm khi tin gốc chưa có tệp nào — rồi xoá hẳn bản ghi thừa.
+     * Không có tin ma thì đây là một truy vấn rỗng (idempotent, gọi lại vô hại).
+     *
+     * @param  list<string>  $sourceIds
+     */
+    private function absorbEchoDuplicates(array $sourceIds): void
+    {
+        $sourceIds = array_values(array_unique($sourceIds));
+
+        if ($sourceIds === []) {
+            return;
+        }
+
+        $duplicates = Message::query()
+            ->where('inbox_id', $this->message->inbox_id)
+            ->whereKeyNot($this->message->getKey())
+            ->whereIn('source_id', $sourceIds)
+            ->get();
+
+        foreach ($duplicates as $duplicate) {
+            $this->absorb($duplicate);
+        }
+    }
+
+    private function absorb(Message $duplicate): void
+    {
+        foreach ($duplicate->reactionList() as $reaction) {
+            $this->message->setReaction($reaction['by'], $reaction['emoji']);
+        }
+
+        // Hook `deleting` của Message xoá đính kèm theo quan hệ đã nạp — dời xong
+        // phải rỗng quan hệ đó, nếu không tệp vừa dời sẽ bị xoá khỏi đĩa luôn.
+        if ($this->message->attachments()->count() === 0 && $duplicate->attachments()->count() > 0) {
+            $duplicate->attachments()->update(['attachable_id' => $this->message->getKey()]);
+        }
+
+        $duplicate->setRelation('attachments', $duplicate->attachments()->getRelated()->newCollection());
+        $duplicate->delete();
     }
 
     /**
