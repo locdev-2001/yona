@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 39/40 + G3 đang gia cố: F2–F5 kênh ngoài xong (QA Telegram bấm tay), tiếng Việt toàn bộ xong; còn gia cố + e2e toàn hệ rồi hỏi founder trước khi hợp nhất vào main</b></span>
+      <span class="chip">Cập nhật <b>07/09/2026 04:30 — 40/40 đã port (gia cố G3 + e2e toàn hệ xanh). Giai đoạn CẦU TOÀN: chuẩn năng lực kênh + Zalo nghiệm thu trên phiên thật (8 lô sửa, 6 commit)</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">39<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
-      <div class="stat"><div class="n">2.057</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">685</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">40<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">2.214</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">792</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:97.5%"></i></div>
+    <div class="bar"><i style="width:100%"></i></div>
   </div>
 
   <div class="board">
@@ -277,6 +277,18 @@
     <div class="feat"><span class="fid">G2</span><span class="fname">Đối chiếu tự động hóa cũ</span><span class="pill done">Xong 07/09</span><span class="fdesc">Đối chiếu 14 khả năng của engine tự động hóa cũ với bản port Chatwoot: 9 đã có (bản mới rộng hơn với AND/OR và 7 toán tử), bổ sung "gửi email cho nhóm" (tương đương thông báo nội bộ). Phần gắn với Lead/Task/Pipeline để cắm lại sau khi CDP của Yona được port; canvas kéo thả không thuộc Chatwoot.</span>
       <span class="ftest"><b>Test ngay:</b> Automation → Create → action "Send an Email to Team" → chọn team support + nội dung → Create → nhắn tin khớp điều kiện → thành viên team nhận email. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">G3</span><span class="fname">Tiếng Việt + kiểm thử toàn hệ + hợp nhất</span><span class="pill wip">Tiếng Việt xong · đang gia cố</span><span class="fdesc">Tiếng Việt toàn bộ 5.462 chuỗi (dịch tay hơn nửa vì bản dịch gốc thiếu), chọn ngôn ngữ áp cho dashboard, widget và trang trợ giúp. Đang: gia cố (chống SSRF webhook, mã hóa token bot, thống nhất SSO, sửa vài lệch nhỏ), kiểm thử đầu-cuối toàn hệ; hợp nhất vào nhánh chính chờ founder quyết.</span></div>
+  </section>
+
+  <section class="decisions">
+    <h2>Giai đoạn cầu toàn — Zalo trước (07/09/2026)</h2>
+    <ul class="dlist">
+      <li><span class="k">Chuẩn kênh</span><span><code>docs/channel-capabilities.md</code>: một bộ năng lực chung cho mọi kênh; driver khai báo, <code>Inbox::supports()</code>, UI gate theo năng lực, contract test chạy theo khai báo. 13 kênh đã khai báo (Quyết định 15).</span></li>
+      <li><span class="k">Zalo PASS trên phiên thật</span><span>Nhắn/sticker/GIF/ảnh/file hai chiều (gửi đủ nhiều tệp, tên tệp thật), danh thiếp, nhắc hẹn, reaction hai chiều, thu hồi hai chiều (có xác nhận), khách đang gõ, đã giao/đã xem, avatar khách, tin nhóm có người gửi, lời mời kết bạn → liên hệ nháp, bridge tự nối lại khi rớt mạng, khôi phục phiên sau restart không cần quét lại, không trùng tin khi backfill.</span></li>
+      <li><span class="k">UI chat</span><span>Icon kênh Zalo ở card/header/sidebar, panel phải hiện sẵn ≥1280px (nhớ theo tài khoản), "Hội thoại trước" lên đầu, bỏ "Không có sẵn", nút Thử lại kèm lý do lỗi, tên khách ẩn danh dễ thương ("Gấu nâu ẩn danh"), bỏ Title Case máy móc, thời gian tương đối tiếng Việt.</span></li>
+      <li><span class="k">Hồ sơ khách</span><span>Avatar về hồ sơ (nhận <code>image/jpg</code>, sniff nội dung), số điện thoại chuẩn E.164 chỉ từ hồ sơ người gửi, một khách trên nhiều inbox = một hồ sơ, chỉ thăng Lead khi có SĐT/email.</span></li>
+      <li><span class="k">Phiên & vận hành</span><span>Mất phiên hiện ở sidebar/card/khung chat, ngắt kết nối/đổi tài khoản, xoá inbox đăng xuất bridge, thẻ tài khoản Zalo có avatar, health sweep + ngắt mạch half-open, cookie phiên 0600, URL đính kèm có chữ ký, bỏ giới hạn tin chủ động (Quyết định 15).</span></li>
+      <li><span class="k">Commit</span><span><code>ea17d4c</code> · <code>7c002b2</code> · <code>1d2cc66</code> · <code>66c15be</code> · <code>80c51e5</code>. Đang làm: đua echo tin nhiều phần, lõi media (SSRF/cap/stream + 7 kênh gắn đính kèm trước save). Kế tiếp: lô 7 test/CI, CSAT widget, audit UX chat, hỏi founder trước khi hợp nhất vào main.</span></li>
+    </ul>
   </section>
 
   <section class="decisions">
