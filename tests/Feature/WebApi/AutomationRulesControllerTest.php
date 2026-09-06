@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AutomationRule;
+use App\Models\Team;
 use App\Models\User;
 
 beforeEach(function () {
@@ -111,4 +112,20 @@ it('rejects delayed rules while the account feature is disabled', function () {
         ->assertUnprocessable();
 
     expect($this->account->automationRules()->count())->toBe(0);
+});
+
+it('accepts the team email action and keeps its payload shape', function () {
+    $team = Team::factory()->create(['account_id' => $this->account->id]);
+
+    $this->actingAs($this->admin)
+        ->postJson("/api/v1/accounts/{$this->account->id}/automation_rules", d1AutomationPayload([
+            'actions' => [[
+                'action_name' => 'send_email_to_team',
+                'action_params' => [['team_ids' => [$team->id], 'message' => 'Vào xem hội thoại']],
+            ]],
+        ]))
+        ->assertOk()
+        ->assertJsonPath('actions.0.action_name', 'send_email_to_team')
+        ->assertJsonPath('actions.0.action_params.0.team_ids.0', $team->id)
+        ->assertJsonPath('actions.0.action_params.0.message', 'Vào xem hội thoại');
 });

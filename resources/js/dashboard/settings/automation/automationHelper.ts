@@ -147,6 +147,15 @@ export const generateActionParams = (params: unknown): unknown[] => {
         return allPrimitive ? [...params] : params.map(item => (isOption(item) ? item.id : item));
     }
     if (isOption(params)) return [params.id];
+    // team_message: gốc gửi nguyên object nên team_ids chưa chỉnh tay vẫn là
+    // {id, name} của dropdown và backend không tra ra đội nào — chuẩn hoá về id.
+    if (params && typeof params === 'object' && 'team_ids' in params) {
+        const payload = params as { team_ids?: unknown; message?: unknown };
+        return [{
+            team_ids: (Array.isArray(payload.team_ids) ? payload.team_ids : []).map(item => (isOption(item) ? item.id : item)),
+            message: String(payload.message ?? ''),
+        }];
+    }
     if (params && typeof params === 'object') return [params];
     if (!params) return [];
     return [params];
@@ -211,6 +220,19 @@ export const formatAutomation = (rule: AutomationRule, optionSets: AutomationOpt
         const inputType = getActionDefinition(action.action_name)?.inputType;
         if (inputType === 'multi_select' || inputType === 'search_select') {
             return { ...action, action_params: getActionDropdownValues(action.action_name, optionSets).filter(item => params.includes(item.id)) };
+        }
+        // team_message giữ shape object của gốc: team_ids về lại FilterOption để
+        // dropdown hiện tên đội, message là chuỗi thuần.
+        if (inputType === 'team_message') {
+            const payload = (params[0] ?? {}) as { team_ids?: unknown; message?: unknown };
+            const teamIds = asArray(payload.team_ids).map(item => (isOption(item) ? item.id : item));
+            return {
+                ...action,
+                action_params: {
+                    team_ids: getActionDropdownValues(action.action_name, optionSets).filter(item => teamIds.includes(item.id)),
+                    message: String(payload.message ?? ''),
+                },
+            };
         }
         return { ...action, action_params: [...params] };
     }),

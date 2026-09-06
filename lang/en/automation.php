@@ -108,6 +108,7 @@ return [
         'ASSIGN_AGENT' => 'Assign to Agent', 'ASSIGN_TEAM' => 'Assign a Team',
         'REMOVE_ASSIGNED_AGENT' => 'Remove Assigned Agent', 'REMOVE_ASSIGNED_TEAM' => 'Remove Assigned Team',
         'ADD_LABEL' => 'Add a Label', 'REMOVE_LABEL' => 'Remove a Label',
+        'SEND_EMAIL_TO_TEAM' => 'Send an Email to Team',
         'SEND_MESSAGE' => 'Send a Message', 'ADD_PRIVATE_NOTE' => 'Add a Private Note',
         'MUTE_CONVERSATION' => 'Mute Conversation', 'SNOOZE_CONVERSATION' => 'Snooze Conversation',
         'OPEN_CONVERSATION' => 'Open conversation', 'PENDING_CONVERSATION' => 'Mark conversation as pending',

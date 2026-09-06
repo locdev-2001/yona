@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 38/40: G1 kênh Zalo cá nhân xong (QA với bridge giả); F2–F5 kênh ngoài đang port giao diện; G2 đối chiếu automation cũ đang chạy</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 39/40: G2 đối chiếu automation cũ xong (port thêm gửi email cho nhóm); F2–F5 kênh ngoài đang port giao diện; G3 tiếng Việt + gia cố đang chạy</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">38<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
-      <div class="stat"><div class="n">2.044</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">39<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">2.048</div><div class="l">test backend xanh</div></div>
       <div class="stat"><div class="n">673</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:95%"></i></div>
+    <div class="bar"><i style="width:97.5%"></i></div>
   </div>
 
   <div class="board">
@@ -269,11 +269,12 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">G</span><h3>Zalo cá nhân + hợp nhất</h3><span class="gcount">1/3 · G2 đang chạy</span></div>
+    <div class="ghead"><span class="gid">G</span><h3>Zalo cá nhân + hợp nhất</h3><span class="gcount">2/3 · G3 đang chạy</span></div>
     <p class="gnote">Chỉ bắt đầu sau khi lõi xong — trích từ nhánh chính, cắm vào khung kênh mới.</p>
     <div class="feat"><span class="fid">G1</span><span class="fname">Driver Zalo</span><span class="pill done">Xong 07/09</span><span class="fdesc">Kênh Zalo cá nhân cắm vào khung kênh chung như mọi kênh khác: tạo hộp thư → quét QR (poll trạng thái, tự chốt phiên) → gán nhân viên; tin từ cầu nối vào hội thoại tức thời, trả lời đi qua cầu nối với trần ≤3 tin quảng cáo/số/ngày và khung 7h–22h chỉ áp cho tin chủ động; biểu ngữ mất phiên + quét lại. Cầu nối Node chép nguyên từ nhánh chính. e2e giả lập 21/21. <b>Cần tài khoản Zalo thật để nghiệm thu cuối.</b></span>
       <span class="ftest"><b>Test ngay:</b> chạy <code>services/zalo-bridge</code> (đặt 3 secret trùng <code>.env</code>) → Inboxes → Add Inbox → Zalo → đặt tên → quét QR bằng Zalo trên điện thoại → gán agent → nhắn từ một Zalo khác vào → hội thoại hiện → trả lời từ dashboard → điện thoại nhận. ⏳ Chờ founder nghiệm thu.</span></div>
-    <div class="feat"><span class="fid">G2</span><span class="fname">Đối chiếu tự động hóa cũ</span><span class="pill wait">Chờ</span><span class="fdesc">Bổ sung phần automation cũ chưa được D1 phủ.</span></div>
+    <div class="feat"><span class="fid">G2</span><span class="fname">Đối chiếu tự động hóa cũ</span><span class="pill done">Xong 07/09</span><span class="fdesc">Đối chiếu 14 khả năng của engine tự động hóa cũ với bản port Chatwoot: 9 đã có (bản mới rộng hơn với AND/OR và 7 toán tử), bổ sung "gửi email cho nhóm" (tương đương thông báo nội bộ). Phần gắn với Lead/Task/Pipeline để cắm lại sau khi CDP của Yona được port; canvas kéo thả không thuộc Chatwoot.</span>
+      <span class="ftest"><b>Test ngay:</b> Automation → Create → action "Send an Email to Team" → chọn team support + nội dung → Create → nhắn tin khớp điều kiện → thành viên team nhận email. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">G3</span><span class="fname">Tiếng Việt + kiểm thử toàn hệ + hợp nhất</span><span class="pill wait">Chờ</span><span class="fdesc">Dịch toàn bộ, kiểm thử đầu-cuối, gia cố, thay nhánh chính.</span></div>
   </section>
 
