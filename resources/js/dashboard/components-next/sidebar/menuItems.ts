@@ -242,10 +242,10 @@ export function buildMenuItems(
             label: t('SIDEBAR.HELP_CENTER.TITLE'),
             icon: 'i-lucide-library-big',
             children: [
-                { name: 'Articles', label: t('SIDEBAR.HELP_CENTER.ARTICLES'), to: scoped('portals') },
-                { name: 'Categories', label: t('SIDEBAR.HELP_CENTER.CATEGORIES'), to: scoped('portals/categories') },
-                { name: 'Locales', label: t('SIDEBAR.HELP_CENTER.LOCALES'), to: scoped('portals/locales') },
-                { name: 'Settings', label: t('SIDEBAR.HELP_CENTER.SETTINGS'), to: scoped('portals/settings') },
+                { name: 'Articles', label: t('SIDEBAR.HELP_CENTER.ARTICLES'), to: scoped('portals/portals_articles_index') },
+                { name: 'Categories', label: t('SIDEBAR.HELP_CENTER.CATEGORIES'), to: scoped('portals/portals_categories_index') },
+                { name: 'Locales', label: t('SIDEBAR.HELP_CENTER.LOCALES'), to: scoped('portals/portals_locales_index') },
+                { name: 'Settings', label: t('SIDEBAR.HELP_CENTER.SETTINGS'), to: scoped('portals/portals_settings_index') },
             ],
         },
         {

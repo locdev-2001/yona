@@ -24,6 +24,11 @@ Backend đã có sẵn từ `e4-notes-be.md` — file này chỉ nói phần hi�
    Nên thêm `"league/commonmark": "^2.10"` vào `require` khi có mạng để khỏi phụ thuộc gián tiếp.
 4. **Bố cục `documentation`** của trang công khai (30+ partial trong
    `views/public/api/v1/portals/documentation_layout/**`) CHƯA port — xem §5.
+5. **Đăng nhập `/app/login` đang hỏng trên máy dev lúc bàn giao** (POST trả lại trang login,
+   `errors` rỗng) do agent song song đang sửa dở `SessionsController` cho MFA/user sessions —
+   KHÔNG phải lỗi E4. Vì thế lượt chấm pixel cuối cùng của các màn dashboard lấy từ lượt chạy
+   liền trước (cùng mã nguồn, chỉ khác hai sửa lỗi ở §11 vốn không đụng các màn đó);
+   bốn màn `/hc` không cần đăng nhập nên đã chấm lại sau cùng.
 
 ---
 
@@ -234,11 +239,13 @@ Turbo nên phần lớn bài test không còn nghĩa), `portal/specs/{PublicArti
 
 | Gate | Kết quả |
 |---|---|
-| `npx tsc --noEmit` | sạch |
-| `npx vitest run` (toàn bộ) | 76 file / 576 test — xanh (trong đó 48 test mới của E4) |
+| `npx tsc --noEmit` | sạch ở toàn bộ file E4. Lúc bàn giao còn **1 lỗi của agent khác**: `resources/js/v3/views/login/Index.tsx(56,35)` — `router.post` nhận `Record<string, unknown>` (agent MFA đang sửa dở, cùng nguyên nhân với đăng nhập hỏng ở §0.5). Không sửa hộ. |
+| `npx vitest run` (toàn bộ) | 77 file / 584 test — xanh (trong đó 48 test mới của E4) |
 | `npm run build` | xanh (client + sdk) |
 | `php artisan i18n:generate` | sinh lại bundle, thêm namespace `HELP_CENTER` + `PUBLIC_PORTAL` |
 | `vendor/bin/pint` (file của e4-fe) | passed |
+| `vendor/bin/pest tests/Feature/HelpCenter` (DB `yona_rw_test_e4fe`) | 112 test / 295 assertion — xanh |
+| Toàn suite Pest trên `yona_rw_test_e4fe` | 1588 test — xanh, đã `dropdb` (lượt chạy trước đó 30 đỏ vì agent song song đang sửa dở `Inbox::isEmail`, chạy lại thì xanh) |
 | pixel-diff `~/www/pixel-diff/e4-helpcenter-ui.mjs` | xem §8 |
 | `audit-buttons.mjs` 3 trang | xem §9 |
 | e2e `~/www/pixel-diff/e4-helpcenter-e2e.mjs` | xem §10 |
@@ -249,10 +256,71 @@ Chạy: `node ~/www/pixel-diff/e4-helpcenter-ui.mjs [kịch bản …]`
 (script tự seed portal "Trung tâm trợ giúp" + 1 danh mục + 2 bài **giống nhau hai bên**
 qua API rồi dọn sạch khi xong).
 
-| Kịch bản | light | dark |
-|---|---|---|
-| `empty` (chưa có portal) | (điền sau khi chạy đủ) | |
+| Kịch bản | light | dark | ghi chú |
+|---|---|---|---|
+| `empty` — chưa có portal (trạng thái rỗng) | 0,075% | 0,081% | |
+| `create-dialog` — hộp thoại tạo portal | **0,000%** | **0,000%** | sau khi che vùng ô slug (`mask-diff.mjs`); trước khi che 7,081%/2,871% do thiếu một hàng |
+| `articles-empty` — portal rỗng | 0,030% | 0,030% | |
+| `articles` — 1 danh mục + 2 bài | 0,030% | 0,030% | |
+| `editor-new` — trình soạn bài mới | 0,030% | 0,030% | |
+| `editor-edit` — trình soạn bài đã có | 0,030% | 0,030% | |
+| `categories-empty` — trạng thái rỗng | **0,041%** | **0,052%** | sau khi che lưới thẻ giả (thứ tự bất định ở bản gốc) |
+| `categories` — có danh mục thật | 0,065% | 0,076% | |
+| `locales` | 0,058% | 0,066% | |
+| `settings` — tab General | **0,038%** | **0,052%** | sau khi che khối từ hàng Slug xuống |
+| `hc-portal` — trang portal công khai | **0,000%** | **0,000%** | |
+| `hc-category` — trang danh mục công khai | **0,000%** | **0,000%** | |
+| `hc-article` — trang bài viết công khai | **0,000%** | **0,000%** | |
+| `hc-search` — tìm kiếm công khai | **0,000%** | **0,000%** | |
+
+Nhiễu nền chung của mọi màn dashboard (~0,03%) là logo sidebar + bút chì ô search, giống
+mọi màn đã chấm trước đó. Ba kịch bản có mask chấm lại bằng
+`node mask-diff.mjs e4-helpcenter-{create-dialog,settings,categories-empty}-{light,dark}`.
+
+Script: `~/www/pixel-diff/e4-helpcenter-ui.mjs`; seed/dọn thủ công:
+`~/www/pixel-diff/e4-seed.mjs seed|clean`. Đã dọn sạch fixture hai bên sau khi chấm
+(oracle 0 portal, yona 0 portal).
 
 ## 9. audit-buttons
 
+`node audit-buttons.mjs http://localhost:8000 <path>` trên ba trang, so trực tiếp với oracle:
+
+| Trang | Kết quả |
+|---|---|
+| `/portals/{slug}/en/articles` | 10 nút — 9 OK, 1 DEAD ("All articles (2)") |
+| `/portals/{slug}/en/categories` | 4 nút — 4 OK |
+| `/portals/{slug}/settings` | 7 nút — 6 OK, 1 DEAD ("General") |
+
+Hai nút DEAD là **tab đang mở** (bấm lại chính nó không đổi gì) — chạy audit trên oracle
+cho ra ĐÚNG hai mục DEAD đó, nên là parity chứ không phải nút chết.
+Tab "Mine" bị audit ghi là không đổi URL vì Inertia điều hướng chậm hơn 700ms của script;
+kiểm lại bằng `e4-tab-probe.mjs` → URL đổi sang `/en/articles/mine` đúng như oracle.
+
 ## 10. e2e
+
+`node ~/www/pixel-diff/e4-helpcenter-e2e.mjs` — **11/11 bước đạt**:
+
+1. Form tạo portal không có ô slug ✅
+2. Tạo portal qua hộp thoại → slug tự sinh `trung-tam-tro-giup-e2e` ✅
+3. Tạo danh mục qua popover ✅
+4. Viết bài mới (tạo khi ô tiêu đề mất focus) ✅
+5. Tự lưu nội dung bài (autosave 500ms) ✅
+6. Publish bài viết → `status=published` ✅
+7. Trang portal công khai hiện bài ✅
+8. Trang bài viết công khai hiện nội dung ✅
+9. Tìm kiếm công khai ra bài ✅
+10. Lưu trữ bài từ menu thẻ → `status=archived` ✅
+11. Xoá portal ở màn Settings → còn 0 portal ✅
+
+Script tự dọn portal trước và sau khi chạy.
+
+## 11. Hai lỗi thật e2e bắt được (đã sửa)
+
+1. **`POST /categories` 500** khi form gửi `icon: ''`/`icon_color: ''`: middleware
+   `ConvertEmptyStringsToNull` của Laravel biến chuỗi rỗng thành `null`, mà hai cột này
+   `NOT NULL DEFAULT ''` → vi phạm ràng buộc. Sửa ở
+   `app/Http/Controllers/WebApi/CategoriesController::categoryParams()` (đổi null → '').
+   **Đây là file của `e4-be`** — sửa vì `e4-be` đã bàn giao và nút "New category" hỏng hẳn
+   nếu không sửa; 112 test `tests/Feature/HelpCenter` vẫn xanh sau khi sửa.
+2. **Trang Categories trắng** khi danh mục có `description = null` (API trả null cho mô tả
+   rỗng): `CategoryCard` gọi `description.length` → `TypeError`. Đã cho phép null.

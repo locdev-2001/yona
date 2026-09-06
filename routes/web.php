@@ -334,6 +334,12 @@ Route::middleware('auth')->group(function () {
             ->whereNumber('contactId')->name('contacts_edit_label');
         // E3 contacts/data routes — END
 
+        // F8 MFA/sessions pages — BEGIN (agent f8 sở hữu khối này)
+        // profile.routes.js: trang con `mfa` của profile settings.
+        Route::get('/profile/mfa', fn (Account $account) => Inertia::render('dashboard/settings/profile/mfa/MfaSettings'))
+            ->name('profile_settings_mfa');
+        // F8 MFA/sessions pages — END
+
         // E2 search.routes.js.
         Route::get('/search/{tab?}', fn (Account $account, ?string $tab = null) => Inertia::render('dashboard/search/SearchView', [
             'tab' => $tab,
