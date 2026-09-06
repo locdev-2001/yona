@@ -19,8 +19,21 @@ export interface DropdownMenuItem {
     [key: string]: unknown;
 }
 
+export interface DropdownMenuSection {
+    title?: string;
+    items: DropdownMenuItem[];
+    isLoading?: boolean;
+    emptyState?: string;
+}
+
 interface DropdownMenuProps {
-    menuItems: DropdownMenuItem[];
+    menuItems?: DropdownMenuItem[];
+    // Nhánh menuSections của bản gốc: nhóm có tiêu đề, loading và empty riêng.
+    menuSections?: DropdownMenuSection[];
+    // Bộ lọc do caller tự làm (danh sách đã fetch theo từ khoá) — không lọc lại tại chỗ.
+    disableLocalFiltering?: boolean;
+    isSearching?: boolean;
+    onSearch?: (query: string) => void;
     thumbnailSize?: number;
     isLoading?: boolean;
     showSearch?: boolean;
@@ -35,7 +48,11 @@ interface DropdownMenuProps {
 }
 
 export default function DropdownMenu({
-    menuItems,
+    menuItems = [],
+    menuSections,
+    disableLocalFiltering = false,
+    isSearching = false,
+    onSearch,
     thumbnailSize = 20,
     isLoading = false,
     showSearch = false,
@@ -53,9 +70,44 @@ export default function DropdownMenu({
         if (showSearch) searchInputRef.current?.focus();
     }, [showSearch]);
 
-    const visibleItems = searchQuery
-        ? menuItems.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
-        : menuItems;
+    const hasSections = Boolean(menuSections?.length);
+
+    const matchesQuery = (item: DropdownMenuItem) =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const visibleItems = searchQuery && !disableLocalFiltering ? menuItems.filter(matchesQuery) : menuItems;
+
+    const visibleSections =
+        disableLocalFiltering || !searchQuery
+            ? (menuSections ?? [])
+            : (menuSections ?? [])
+                  .map(section => ({ ...section, items: section.items.filter(matchesQuery) }))
+                  .filter(section => section.items.length > 0);
+
+    const showEmptyState = hasSections ? visibleSections.length === 0 : visibleItems.length === 0;
+
+    const renderItem = (item: DropdownMenuItem, key: string) => (
+        <button
+            key={key}
+            type="button"
+            className={[
+                'inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
+                item.isSelected ? 'bg-n-alpha-1 dark:bg-n-solid-active' : '',
+                item.action === 'delete' ? 'text-n-ruby-11' : 'text-n-slate-12',
+            ].join(' ')}
+            disabled={item.disabled}
+            onClick={() => onAction(item)}
+        >
+            {renderThumbnail
+                ? renderThumbnail(item)
+                : item.thumbnail ? (
+                      <Avatar name={item.thumbnail.name} src={item.thumbnail.src} size={thumbnailSize} roundedFull />
+                  ) : null}
+            {item.icon ? <Icon icon={item.icon} className="flex-shrink-0 size-3.5" /> : null}
+            {item.label ? <span className="min-w-0 text-sm font-420 truncate">{item.label}</span> : null}
+            {renderTrailingIcon ? renderTrailingIcon(item) : null}
+        </button>
+    );
 
     return (
         <div
@@ -70,47 +122,52 @@ export default function DropdownMenu({
                         type="search"
                         placeholder={searchPlaceholder || t('DROPDOWN_MENU.SEARCH_PLACEHOLDER')}
                         className="reset-base w-full h-8 py-2 ltr:pl-10 ltr:pr-2 rtl:pl-2 rtl:pr-10 text-sm focus:outline-none border-none rounded-lg bg-n-alpha-black2 dark:bg-n-solid-1 text-n-slate-12"
-                        onChange={event => setSearchQuery(event.target.value)}
+                        onChange={event => {
+                            setSearchQuery(event.target.value);
+                            onSearch?.(event.target.value);
+                        }}
                     />
                 </div>
             ) : null}
             <div className="flex flex-col gap-2 overflow-y-auto min-h-0 px-2 pb-2">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-2">
-                        <Spinner size={24} />
-                    </div>
-                ) : null}
-                {visibleItems.map((item, index) => (
-                    <button
-                        key={`${item.value}-${index}`}
-                        type="button"
-                        className={[
-                            'inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
-                            item.isSelected ? 'bg-n-alpha-1 dark:bg-n-solid-active' : '',
-                            item.action === 'delete' ? 'text-n-ruby-11' : 'text-n-slate-12',
-                        ].join(' ')}
-                        disabled={item.disabled}
-                        onClick={() => onAction(item)}
-                    >
-                        {renderThumbnail
-                            ? renderThumbnail(item)
-                            : item.thumbnail ? (
-                                  <Avatar
-                                      name={item.thumbnail.name}
-                                      src={item.thumbnail.src}
-                                      size={thumbnailSize}
-                                      roundedFull
-                                  />
+                {hasSections
+                    ? visibleSections.map((section, sectionIndex) => (
+                          <div key={section.title ?? sectionIndex} className="flex flex-col gap-1">
+                              {section.title ? (
+                                  <p className="px-2 py-2 text-xs mb-0 font-medium text-n-slate-11 uppercase tracking-wide sticky top-0 z-10 bg-n-alpha-3 backdrop-blur-sm truncate min-w-0">
+                                      {section.title}
+                                  </p>
                               ) : null}
-                        {item.icon ? <Icon icon={item.icon} className="flex-shrink-0 size-3.5" /> : null}
-                        {item.label ? (
-                            <span className="min-w-0 text-sm font-420 truncate">{item.label}</span>
-                        ) : null}
-                        {renderTrailingIcon ? renderTrailingIcon(item) : null}
-                    </button>
-                ))}
-                {!isLoading && !visibleItems.length ? (
-                    <div className="text-sm text-n-slate-11 px-2 py-1.5">{t('DROPDOWN_MENU.EMPTY_STATE')}</div>
+                              {section.isLoading ? (
+                                  <div className="flex items-center justify-center py-2">
+                                      <Spinner size={24} />
+                                  </div>
+                              ) : !section.items.length && section.emptyState ? (
+                                  <div className="text-sm text-n-slate-11 px-2 py-1.5">{section.emptyState}</div>
+                              ) : (
+                                  section.items.map((item, itemIndex) => renderItem(item, `${item.value}-${itemIndex}`))
+                              )}
+                              {sectionIndex < visibleSections.length - 1 ? (
+                                  <div className="h-px bg-n-alpha-2 mx-2 my-1" />
+                              ) : null}
+                          </div>
+                      ))
+                    : (
+                          <>
+                              {isLoading ? (
+                                  <div className="flex items-center justify-center py-2">
+                                      <Spinner size={24} />
+                                  </div>
+                              ) : null}
+                              {visibleItems.map((item, index) => renderItem(item, `${item.value}-${index}`))}
+                          </>
+                      )}
+                {showEmptyState && !isLoading ? (
+                    <div className="text-sm text-n-slate-11 px-2 py-1.5">
+                        {isSearching
+                            ? t('DROPDOWN_MENU.SEARCHING')
+                            : t('DROPDOWN_MENU.EMPTY_STATE')}
+                    </div>
                 ) : null}
             </div>
             {footer ? <div className="shrink-0">{footer}</div> : null}

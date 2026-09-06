@@ -22,9 +22,12 @@ const NAMESPACES: Record<EntityReportType, string> = {
 interface EntityReportsPageProps {
     type: EntityReportType;
     id?: number;
+    // AgentReports.vue (bộ cũ) trỏ nhãn nút tải về vào `REPORT.DOWNLOAD_AGENT_REPORTS`,
+    // một key KHÔNG tồn tại — Chatwoot in nguyên key ra nút. Giữ nguyên để khớp oracle.
+    downloadLabelKey?: string;
 }
 
-export default function EntityReportsPage({ type, id }: EntityReportsPageProps) {
+export default function EntityReportsPage({ type, id, downloadLabelKey }: EntityReportsPageProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const entities = useReportEntities(currentAccount.id, type);
     const namespace = NAMESPACES[type];
@@ -50,7 +53,7 @@ export default function EntityReportsPage({ type, id }: EntityReportsPageProps) 
             selectedItem={selectedItem}
             hasBackButton={Boolean(id)}
             reportTitle={t(`${namespace}.HEADER`)}
-            downloadButtonLabel={t(`${namespace}.DOWNLOAD_${type.toUpperCase()}_REPORTS`)}
+            downloadButtonLabel={t(downloadLabelKey ?? `${namespace}.DOWNLOAD_${type.toUpperCase()}_REPORTS`)}
         />
     );
 }

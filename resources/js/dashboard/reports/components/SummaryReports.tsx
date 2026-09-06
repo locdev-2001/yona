@@ -58,6 +58,10 @@ const SHOW_PATHS: Record<EntityReportType, string> = {
 // Bảng hiển thị mọi thực thể của tài khoản, bản gốc không phân trang.
 const ALL_ROWS_IN_ONE_PAGE = Number.MAX_SAFE_INTEGER;
 
+// Bản gốc khai `width` cho từng cột, nhưng @tanstack/table chỉ đọc `size` — nên
+// `header.getSize()` luôn trả bề rộng mặc định 150px. Giữ nguyên bề rộng đó.
+const COLUMN_WIDTH = 150;
+
 const renderAvgTime = (value?: number | null) => (value ? formatTime(value) : '--');
 const renderCount = (value?: number | null) => (value ? value.toLocaleString() : '--');
 
@@ -121,7 +125,7 @@ export default function SummaryReports({ type }: { type: EntityReportType }) {
         {
             id: 'name',
             header: t(`SUMMARY_REPORTS.${type.toUpperCase()}`),
-            size: 300,
+            size: COLUMN_WIDTH,
             cell: row => (
                 <Link
                     href={accountScopedUrl(accountId, `${SHOW_PATHS[type]}/${row.id}`)}
@@ -131,11 +135,11 @@ export default function SummaryReports({ type }: { type: EntityReportType }) {
                 </Link>
             ),
         },
-        { id: 'conversationsCount', header: t('SUMMARY_REPORTS.CONVERSATIONS'), size: 200, cell: row => textCell(row.conversationsCount) },
-        { id: 'avgFirstResponseTime', header: t('SUMMARY_REPORTS.AVG_FIRST_RESPONSE_TIME'), size: 200, cell: row => textCell(row.avgFirstResponseTime) },
-        { id: 'avgResolutionTime', header: t('SUMMARY_REPORTS.AVG_RESOLUTION_TIME'), size: 200, cell: row => textCell(row.avgResolutionTime) },
-        { id: 'avgReplyTime', header: t('SUMMARY_REPORTS.AVG_REPLY_TIME'), size: 200, cell: row => textCell(row.avgReplyTime) },
-        { id: 'resolutionsCount', header: t('SUMMARY_REPORTS.RESOLUTION_COUNT'), size: 200, cell: row => textCell(row.resolutionsCount) },
+        { id: 'conversationsCount', header: t('SUMMARY_REPORTS.CONVERSATIONS'), size: COLUMN_WIDTH, cell: row => textCell(row.conversationsCount) },
+        { id: 'avgFirstResponseTime', header: t('SUMMARY_REPORTS.AVG_FIRST_RESPONSE_TIME'), size: COLUMN_WIDTH, cell: row => textCell(row.avgFirstResponseTime) },
+        { id: 'avgResolutionTime', header: t('SUMMARY_REPORTS.AVG_RESOLUTION_TIME'), size: COLUMN_WIDTH, cell: row => textCell(row.avgResolutionTime) },
+        { id: 'avgReplyTime', header: t('SUMMARY_REPORTS.AVG_REPLY_TIME'), size: COLUMN_WIDTH, cell: row => textCell(row.avgReplyTime) },
+        { id: 'resolutionsCount', header: t('SUMMARY_REPORTS.RESOLUTION_COUNT'), size: COLUMN_WIDTH, cell: row => textCell(row.resolutionsCount) },
     ];
 
     const downloadReports = () => {
