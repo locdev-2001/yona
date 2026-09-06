@@ -70,11 +70,15 @@ class IncomingMessageService
             $this->message->sender()->associate($this->contact);
         }
 
-        $this->message->save();
-
+        // Gốc gắn đính kèm TRƯỚC `save!` (`process_message_attachments` rồi mới
+        // `@message.save!`, incoming_message_service.rb:34-35) nên `message.created`
+        // phát ra đã có đính kèm; gắn sau khi lưu thì payload realtime rỗng và
+        // bong bóng chỉ hiện lại sau khi tải lại trang.
         if ($this->hasMessageParams()) {
             $this->processMessageAttachments();
         }
+
+        $this->message->save();
 
         return $this->message;
     }
@@ -139,11 +143,17 @@ class IncomingMessageService
         );
 
         if ($attributes === null) {
+            // URL tệp của Telegram nhúng bot token nên KHÔNG được đẩy ra trình
+            // duyệt: fallback chỉ giữ tên tệp để agent biết khách đã gửi gì.
+            $this->message->pendingAttachments[] = new Attachment(
+                RemoteAttachmentDownloader::fallbackAttributes($this->message->account_id, $file['file_name'] ?? null),
+            );
+
             return;
         }
 
         $attributes['file_type'] = $this->fileContentType($attributes['content_type']);
-        $this->message->attachments()->create($attributes);
+        $this->message->pendingAttachments[] = new Attachment($attributes);
     }
 
     private function attachLocation(): void
@@ -154,7 +164,7 @@ class IncomingMessageService
             return;
         }
 
-        $this->message->attachments()->create([
+        $this->message->pendingAttachments[] = new Attachment([
             'account_id' => $this->message->account_id,
             'file_type' => Attachment::FILE_TYPE_LOCATION,
             'fallback_title' => data_get($this->params, 'message.venue.title', ''),
@@ -171,7 +181,7 @@ class IncomingMessageService
             return;
         }
 
-        $this->message->attachments()->create([
+        $this->message->pendingAttachments[] = new Attachment([
             'account_id' => $this->message->account_id,
             'file_type' => Attachment::FILE_TYPE_CONTACT,
             'fallback_title' => (string) ($card['phone_number'] ?? ''),

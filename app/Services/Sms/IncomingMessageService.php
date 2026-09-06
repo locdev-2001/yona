@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Builders\ContactInboxWithContactBuilder;
+use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
@@ -42,9 +43,12 @@ class IncomingMessageService
             'source_id' => $this->params['id'] ?? null,
         ]);
         $message->sender()->associate($contactInbox->contact);
-        $message->save();
 
+        // Gốc: `attach_files` rồi `@message.save!`
+        // (sms/incoming_message_service.rb:17-18).
         $this->attachFiles($message);
+
+        $message->save();
 
         return $message;
     }
@@ -65,9 +69,14 @@ class IncomingMessageService
                 basicAuth: [$config['api_key'] ?? '', $config['api_secret'] ?? ''],
             );
 
-            if ($attributes !== null) {
-                $message->attachments()->create($attributes);
-            }
+            // URL media của Bandwidth cần basic auth của kênh nên không đưa ra
+            // trình duyệt được; hỏng thì giữ dấu vết bằng fallback không liên kết.
+            $message->pendingAttachments[] = new Attachment(
+                $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
+                    $message->account_id,
+                    basename((string) parse_url((string) $mediaUrl, PHP_URL_PATH)) ?: null,
+                ),
+            );
         }
     }
 }

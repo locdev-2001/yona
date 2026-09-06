@@ -160,13 +160,22 @@ class Message extends Model
             // phải xong trước mọi after_create_commit bên dưới.
             $message->persistPendingAttachments();
 
-            // execute_after_create_commit_callbacks — giữ đúng thứ tự bản gốc.
-            $message->sendReply();
-            $message->reopenConversation();
-            $message->setConversationActivity();
-            $message->dispatchCreateEvents();
-            $message->executeMessageTemplateHooks();
-            $message->updateContactActivity();
+            // execute_after_create_commit_callbacks: gốc là `after_create_commit`,
+            // tức CHẠY SAU KHI transaction ngoài cùng commit. Builder Facebook /
+            // Instagram và hai mailbox bọc cả cụm "tạo tin + gắn đính kèm" trong
+            // một transaction — phát sự kiện ngay trong hook `created` thì
+            // `message.created` bay đi lúc đính kèm chưa tồn tại, và một lần
+            // rollback sau đó để lại tin "ma" trên giao diện.
+            // afterCommit chạy ngay lập tức khi không có transaction nào đang mở,
+            // nên các kênh không bọc transaction giữ nguyên hành vi cũ.
+            $message->getConnection()->afterCommit(function () use ($message) {
+                $message->sendReply();
+                $message->reopenConversation();
+                $message->setConversationActivity();
+                $message->dispatchCreateEvents();
+                $message->executeMessageTemplateHooks();
+                $message->updateContactActivity();
+            });
         });
 
         static::updated(function (Message $message) {

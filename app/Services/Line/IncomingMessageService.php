@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
+use App\Services\Channels\RemoteAttachmentDownloader;
 
 /**
  * Port từ refs/chatwoot/app/services/line/incoming_message_service.rb.
@@ -70,9 +71,13 @@ class IncomingMessageService
             'source_id' => (string) data_get($event, 'message.id'),
         ]);
         $message->sender()->associate($contactInbox->contact);
-        $message->save();
 
+        // Gốc: `attach_files event['message']` rồi mới `@message.save!`
+        // (incoming_message_service.rb:29-30) — đính kèm phải có mặt trong
+        // payload `message.created`.
         $this->attachFile($message, (array) ($event['message'] ?? []));
+
+        $message->save();
     }
 
     /** @return array<string, mixed> */
@@ -111,22 +116,21 @@ class IncomingMessageService
             return;
         }
 
-        $response = (new LineClient($this->inbox->channel))->messageContent((string) $lineMessage['id']);
-
-        if (! $response->successful()) {
-            return;
-        }
-
-        $contentType = trim(explode(';', (string) $response->header('Content-Type'))[0]) ?: 'application/octet-stream';
-        $extension = str_contains($contentType, '/') ? explode('/', $contentType)[1] : 'bin';
-
-        $attributes = Attachment::storeContents(
-            $response->body(),
-            $lineMessage['fileName'] ?? "media-{$lineMessage['id']}.{$extension}",
-            $contentType,
-            $message->account_id,
+        $client = new LineClient($this->inbox->channel);
+        $attributes = RemoteAttachmentDownloader::download(
+            url: $client->messageContentUrl((string) $lineMessage['id']),
+            accountId: $message->account_id,
+            filename: $lineMessage['fileName'] ?? null,
+            headers: $client->authHeaders(),
         );
 
-        $message->attachments()->create($attributes);
+        // API nội dung của LINE cần channel token nên URL không đưa ra ngoài
+        // được: fallback chỉ giữ tên tệp, tin vẫn tới tay agent.
+        $message->pendingAttachments[] = new Attachment(
+            $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
+                $message->account_id,
+                $lineMessage['fileName'] ?? null,
+            ),
+        );
     }
 }

@@ -9,6 +9,14 @@ use App\Services\Tiktok\MessageService;
 // Port từ refs/chatwoot/app/jobs/webhooks/tiktok_events_job.rb.
 class TiktokEventsJob extends ApplicationJob
 {
+    /**
+     * `retry_on LockAcquisitionError, wait: 2.seconds, attempts: 8` của bản gốc.
+     * Chạy lại an toàn vì MessageService tra `source_id` trước khi dựng tin mới.
+     */
+    public int $tries = 8;
+
+    public int $backoff = 2;
+
     /** @var list<string> */
     private const SUPPORTED_EVENTS = ['im_send_msg', 'im_receive_msg', 'im_mark_read_msg'];
 
