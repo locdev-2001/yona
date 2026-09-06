@@ -57,6 +57,13 @@ class Account extends Model
 
     protected static function booted(): void
     {
+        // has_many :inboxes, dependent: :destroy_async — phải xóa qua model, vì
+        // FK `inboxes.account_id ON DELETE CASCADE` không kích hoạt hook của Inbox
+        // và sẽ bỏ lại hàng channel_* mồ côi.
+        static::deleting(function (Account $account) {
+            $account->inboxes()->cursor()->each(fn (Inbox $inbox) => $inbox->delete());
+        });
+
         static::deleted(function (Account $account) {
             DB::statement("DROP SEQUENCE IF EXISTS camp_dpid_seq_{$account->id}");
             DB::statement("DROP SEQUENCE IF EXISTS conv_dpid_seq_{$account->id}");
