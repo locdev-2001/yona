@@ -17,6 +17,8 @@ Mở `/dashboard` lần đầu: tab mặc định **"Của tôi 0"** → cột g
 | 7 | Khung chat | Tin đã gửi từ Yona (881) hiện nhãn "từ điện thoại" vì tin ma echo 882 tạo trước fix đua | 🟡 (dữ liệu cũ) | Nhãn sai ngữ nghĩa | Đã xoá 882/884 bằng tay; fix đua đã có test khoá | — |
 | 8 | Khung chat | Hành động trên tin chỉ hiện khi hover, không có ở mobile/touch; không có menu chuột phải | 🟡 | Touch không hover được | Thêm nút ⋯ luôn hiện mờ trên touch (`@media (hover: none)`) hoặc long-press | Oracle cũng hover |
 | 9 | Panel phải | "Hành động của hội thoại" 4 dropdown "Không có" xếp dọc chiếm 1/3 panel | 🟡 | Việc thường làm (gán cho mình) vẫn 2 click + cuộn | Nút "Gán cho tôi" 1 click cạnh dropdown; gom 4 dropdown thành 2 hàng | Giống oracle |
+| 12 | Cài đặt → Hộp thư | Inbox Zalo hiện phụ đề "Kênh API" | 🔴 | Nhãn kênh sai ngay trang quản lý kênh; SME nhiều inbox sẽ lẫn | Map `channel_type` → nhãn ở cùng helper icon kênh (`helper/inbox.ts`), thêm "Zalo"; bỏ nhánh mặc định rơi về API | Oracle không có Zalo |
+| 13 | Cài đặt → Câu trả lời mẫu | Empty state: "Không có câu trả lời soạn trước nào…" trong khi tiêu đề là "Câu trả lời mẫu"; không có nút tạo ngay trong empty state | 🟡 | Thuật ngữ lệch, thiếu dẫn lối | Thống nhất "câu trả lời mẫu"; empty state có nút "Thêm câu trả lời mẫu" | Giống oracle |
 | 10 | Light mode | Bong bóng/panel/tab đều đọc được, tương phản ổn | ✅ | — | — | — |
 | 11 | Realtime | Tin mới, badge, typing, tick trạng thái cập nhật không reload (đã kiểm nhiều lần trong phiên) | ✅ | — | — | — |
 
@@ -39,4 +41,4 @@ Icon Zalo nhận diện rõ ở 3 nơi; panel phải hiện sẵn với "Hội t
 2. (S) #4 Ctrl+K + hiển thị phím theo hệ điều hành.
 3. (S) #1 tab mặc định "Tất cả" + empty state theo ngữ cảnh (cần founder duyệt vì lệch gốc — đề xuất làm).
 4. (S) #5 rút nhãn tab, bỏ mũi tên.
-5. (S) #3 empty state câu trả lời mẫu có link; (M) #9 nút "Gán cho tôi".
+5. (S) #12 nhãn kênh Zalo ở danh sách hộp thư; (S) #3/#13 empty state câu trả lời mẫu; (M) #9 nút "Gán cho tôi".
