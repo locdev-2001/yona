@@ -100,3 +100,22 @@ describe('action helpers', () => {
         expect(formatDelay(45)).toBe('45m');
     });
 });
+
+describe('hành động gửi thư cho đội', () => {
+    const teamRule: AutomationRule = {
+        ...savedRule,
+        actions: [{ action_name: 'send_email_to_team', action_params: [{ team_ids: [3], message: 'Vào xem nhé' }] }],
+    };
+
+    it('hydrate team_ids thành option rồi sinh lại đúng id thuần (round-trip)', () => {
+        const formatted = formatAutomation(teamRule, optionSets);
+
+        expect(formatted.actions[0].action_params).toEqual({ team_ids: [{ id: 3, name: 'Sales' }], message: 'Vào xem nhé' });
+        expect(generateAutomationPayload(formatted).actions).toEqual(teamRule.actions);
+    });
+
+    it('dropdown lấy danh sách đội và không vẽ ô nhập trên cùng hàng', () => {
+        expect(getActionDropdownValues('send_email_to_team', optionSets)).toEqual(optionSets.teams);
+        expect(showActionInput('send_email_to_team')).toBe(false);
+    });
+});

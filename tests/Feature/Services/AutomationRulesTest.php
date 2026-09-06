@@ -6,8 +6,11 @@ use App\Models\Conversation;
 use App\Models\Label;
 use App\Models\Message;
 use App\Models\Team;
+use App\Models\User;
+use App\Notifications\TeamAutomationNotification;
 use App\Services\AutomationRules\ActionService;
 use App\Services\AutomationRules\ConditionsFilterService;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     $this->account = Account::factory()->create();
@@ -88,3 +91,61 @@ it('runs all supported status and priority actions without retriggering the same
     expect($this->conversation->fresh()->priorityName())->toBe('urgent')
         ->and($this->conversation->fresh()->statusName())->toBe('pending');
 });
+
+it('emails every member of the selected teams when the rule says so', function () {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    Notification::fake();
+
+    $agent = User::factory()->create(['email' => 'sales-agent@acme.test']);
+    $this->team->members()->attach($agent->id);
+
+    $rule = d1RuleForTest(['actions' => [[
+        'action_name' => 'send_email_to_team',
+        'action_params' => [['team_ids' => [$this->team->id], 'message' => 'Khách hỏi giá, vào xem nhé']],
+    ]]]);
+
+    (new ActionService($rule, $this->account, $this->conversation))->perform();
+
+    Notification::assertSentOnDemand(
+        TeamAutomationNotification::class,
+        fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === [$agent->email],
+    );
+});
+
+it('still resolves teams when the builder sends dropdown objects instead of ids', function () {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    Notification::fake();
+
+    $agent = User::factory()->create(['email' => 'legacy-agent@acme.test']);
+    $this->team->members()->attach($agent->id);
+    $otherAccountTeam = Team::factory()->create(['account_id' => Account::factory()->create()->id]);
+
+    $rule = d1RuleForTest(['actions' => [[
+        'action_name' => 'send_email_to_team',
+        'action_params' => [[
+            'team_ids' => [['id' => $this->team->id, 'name' => 'Sales'], ['id' => $otherAccountTeam->id]],
+            'message' => 'Lời nhắn',
+        ]],
+    ]]]);
+
+    (new ActionService($rule, $this->account, $this->conversation))->perform();
+
+    Notification::assertSentOnDemandTimes(TeamAutomationNotification::class, 1);
+});
+
+it('sends nothing when smtp is not configured', function () {
+    config(['mail.smtp_address' => null]);
+    Notification::fake();
+
+    $agent = User::factory()->create();
+    $this->team->members()->attach($agent->id);
+
+    $rule = d1RuleForTest(['actions' => [[
+        'action_name' => 'send_email_to_team',
+        'action_params' => [['team_ids' => [$this->team->id], 'message' => 'Không gửi']],
+    ]]]);
+
+    (new ActionService($rule, $this->account, $this->conversation))->perform();
+
+    Notification::assertNothingSent();
+})->skip(fn () => app()->environment('local'), 'Bản gốc vẫn gửi ở môi trường local.');

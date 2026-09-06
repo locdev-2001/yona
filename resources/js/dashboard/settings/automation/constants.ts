@@ -77,9 +77,10 @@ export const AUTOMATION_RULE_EVENTS = [
     { key: 'conversation_opened', value: 'CONVERSATION_OPENED' },
 ];
 
-// Chỉ expose action đã có driver trong ActionExecutor (xem trace D1 mục "để nợ"):
-// send_email_to_team (F1 mailer), send_email_transcript, send_webhook_event (D4),
-// send_attachment (chưa có seam lưu trữ), add_sla (EE) bị ẩn để không sinh nút giả.
+// Chỉ expose action đã có driver (xem trace D1 + reports/g2-notes.md mục "để nợ"):
+// send_email_transcript, send_webhook_event (thiếu Conversation::webhookData),
+// send_attachment (chưa có seam lưu trữ cho rule), add_sla (EE) bị ẩn để không
+// sinh nút giả.
 export const AUTOMATION_ACTION_TYPES: AutomationActionDefinition[] = [
     { key: 'assign_agent', label: 'ASSIGN_AGENT', inputType: 'search_select' },
     { key: 'assign_team', label: 'ASSIGN_TEAM', inputType: 'search_select' },
@@ -87,6 +88,7 @@ export const AUTOMATION_ACTION_TYPES: AutomationActionDefinition[] = [
     { key: 'remove_assigned_team', label: 'REMOVE_ASSIGNED_TEAM', inputType: null },
     { key: 'add_label', label: 'ADD_LABEL', inputType: 'multi_select' },
     { key: 'remove_label', label: 'REMOVE_LABEL', inputType: 'multi_select' },
+    { key: 'send_email_to_team', label: 'SEND_EMAIL_TO_TEAM', inputType: 'team_message' },
     { key: 'mute_conversation', label: 'MUTE_CONVERSATION', inputType: null },
     { key: 'snooze_conversation', label: 'SNOOZE_CONVERSATION', inputType: null },
     { key: 'resolve_conversation', label: 'RESOLVE_CONVERSATION', inputType: null },

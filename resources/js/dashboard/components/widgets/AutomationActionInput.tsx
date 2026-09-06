@@ -10,8 +10,8 @@ import type { AutomationAction } from 'dashboard/settings/automation/types';
 import type { AutomationActionDefinition } from 'dashboard/settings/automation/constants';
 
 // Port từ dashboard/components/widgets/AutomationActionInput.vue — một hàng
-// action dùng chung cho Automation và Macros (D3). Bỏ: team_message, email,
-// url, attachment (action chưa có driver bị ẩn khỏi actionTypes nên không tới đây).
+// action dùng chung cho Automation và Macros (D3). Bỏ: email, attachment
+// (action chưa có driver bị ẩn khỏi actionTypes nên không tới đây).
 interface ActionTypeOption extends AutomationActionDefinition {
     labelText: string;
     icon: string;
@@ -36,6 +36,52 @@ const isOption = (value: unknown): value is FilterOption =>
     Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'id' in (value as object);
 
 const asOptionArray = (value: unknown): FilterOption[] => (Array.isArray(value) ? value.filter(isOption) : []);
+
+// Port từ AutomationActionTeamMessageInput.vue — đội nhận thư + lời nhắn kèm.
+interface TeamMessageValue {
+    team_ids: FilterOption[];
+    message: string;
+}
+
+const asTeamMessage = (value: unknown): TeamMessageValue => {
+    const payload = (Array.isArray(value) ? value[0] : value) as Partial<TeamMessageValue> | null | undefined;
+    return {
+        team_ids: asOptionArray(payload?.team_ids),
+        message: typeof payload?.message === 'string' ? payload.message : '',
+    };
+};
+
+function TeamMessageInput({
+    value,
+    teams,
+    dropdownMaxHeight,
+    onChange,
+}: {
+    value: unknown;
+    teams: FilterOption[];
+    dropdownMaxHeight: string;
+    onChange: (value: TeamMessageValue) => void;
+}) {
+    const current = asTeamMessage(value);
+
+    return (
+        <div className="flex flex-col gap-2">
+            <MultiSelect
+                value={current.team_ids}
+                options={teams}
+                dropdownMaxHeight={dropdownMaxHeight}
+                onChange={selected => onChange({ ...current, team_ids: selected })}
+            />
+            <textarea
+                className="mb-0 !text-sm"
+                rows={4}
+                value={current.message}
+                placeholder={t('AUTOMATION.ACTION.TEAM_MESSAGE_INPUT_PLACEHOLDER')}
+                onChange={event => onChange({ ...current, message: event.target.value })}
+            />
+        </div>
+    );
+}
 
 export default function AutomationActionInput({
     action,
@@ -123,6 +169,14 @@ export default function AutomationActionInput({
                         <Button type="button" sm solid slate icon="i-lucide-trash" className="flex-shrink-0" onClick={onRemoveAction} />
                     ) : null}
                 </div>
+                {inputType === 'team_message' ? (
+                    <TeamMessageInput
+                        value={action.action_params}
+                        teams={dropdownValues}
+                        dropdownMaxHeight={dropdownMaxHeight}
+                        onChange={value => onChange({ ...action, action_params: value })}
+                    />
+                ) : null}
                 {inputType === 'textarea' ? (
                     <WootMessageEditor
                         value={messageValue}

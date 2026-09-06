@@ -83,7 +83,7 @@ class AutomationRule extends Model
     /** @var list<string> */
     public const SUPPORTED_ACTIONS = [
         'assign_agent', 'assign_team', 'remove_assigned_agent', 'remove_assigned_team',
-        'add_label', 'remove_label', 'send_message', 'add_private_note', 'mute_conversation',
+        'add_label', 'remove_label', 'send_email_to_team', 'send_message', 'add_private_note', 'mute_conversation',
         'snooze_conversation', 'open_conversation', 'pending_conversation',
         'resolve_conversation', 'change_priority',
     ];
