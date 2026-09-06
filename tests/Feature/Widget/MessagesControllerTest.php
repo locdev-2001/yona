@@ -5,6 +5,7 @@ use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
+use App\Models\CsatSurveyResponse;
 use App\Models\Label;
 use App\Models\Message;
 use Illuminate\Http\UploadedFile;
@@ -353,5 +354,30 @@ describe('PATCH /api/v1/widget/messages/{id}', function () {
         )->assertOk();
 
         expect($message->fresh()->content_attributes['submitted_values'])->toBe([['name' => 'plan', 'value' => 'pro']]);
+    });
+
+    // C5: bong bóng khảo sát trong widget đi qua đúng endpoint này.
+    it('records the csat rating submitted from the widget bubble', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        $conversation = widgetConversationFor($session);
+        $message = Message::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'conversation_id' => $conversation->id,
+            'content_type' => Message::CONTENT_TYPES['input_csat'],
+        ]);
+
+        $this->patchJson(
+            $session->url("messages/{$message->id}"),
+            ['message' => ['submitted_values' => ['csat_survey_response' => ['rating' => 5, 'feedback_message' => 'great']]]],
+            $session->headers()
+        )->assertOk();
+
+        $response = CsatSurveyResponse::sole();
+        expect($response->rating)->toBe(5);
+        expect($response->feedback_message)->toBe('great');
+        expect($response->conversation_id)->toBe($conversation->id);
+        expect($message->fresh()->content_attributes['submitted_values'])
+            ->toBe(['csat_survey_response' => ['rating' => 5, 'feedback_message' => 'great']]);
     });
 });

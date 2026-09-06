@@ -30,6 +30,24 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
 
 const DEFAULT_ICON_LINE = 'i-ri-chat-1-line';
 
-export function getInboxIconByType(type: string): string {
-    return INBOX_ICON_MAP_LINE[type] ?? DEFAULT_ICON_LINE;
+// Biến thể `fill` của bản gốc — thẻ campaign dùng bộ này.
+const INBOX_ICON_MAP_FILL: Record<string, string> = {
+    [INBOX_TYPES.WEB]: 'i-ri-global-fill',
+    [INBOX_TYPES.FB]: 'i-ri-messenger-fill',
+    [INBOX_TYPES.TWITTER]: 'i-ri-twitter-x-fill',
+    [INBOX_TYPES.WHATSAPP]: 'i-ri-whatsapp-fill',
+    [INBOX_TYPES.API]: 'i-ri-cloudy-fill',
+    [INBOX_TYPES.EMAIL]: 'i-ri-mail-fill',
+    [INBOX_TYPES.TELEGRAM]: 'i-ri-telegram-fill',
+    [INBOX_TYPES.LINE]: 'i-ri-line-fill',
+    [INBOX_TYPES.INSTAGRAM]: 'i-ri-instagram-fill',
+    [INBOX_TYPES.TIKTOK]: 'i-ri-tiktok-fill',
+};
+
+const DEFAULT_ICON_FILL = 'i-ri-chat-1-fill';
+
+export function getInboxIconByType(type: string, variant: 'line' | 'fill' = 'line'): string {
+    return variant === 'fill'
+        ? (INBOX_ICON_MAP_FILL[type] ?? DEFAULT_ICON_FILL)
+        : (INBOX_ICON_MAP_LINE[type] ?? DEFAULT_ICON_LINE);
 }

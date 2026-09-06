@@ -9,6 +9,7 @@ use App\Finders\MessageFinder;
 use App\Http\Resources\Widget\WidgetMessageResource;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Support\SubmittedValues;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,7 @@ class MessagesController extends WidgetController
                 $message->update([
                     'content_attributes' => [
                         ...($message->content_attributes ?? []),
-                        'submitted_values' => $request->input('message.submitted_values'),
+                        'submitted_values' => SubmittedValues::permit($request->input('message.submitted_values')),
                     ],
                 ]);
             }

@@ -20,6 +20,9 @@ export interface SidebarMenuChild {
     label: string;
     // Tương đương meta.permissions của route Chatwoot: rỗng = mọi thành viên.
     permissions?: AccountRole[];
+    // Tương đương meta.featureFlag của route Chatwoot: mục chỉ hiện khi account
+    // bật cờ đó (accounts.feature_flags).
+    featureFlag?: string;
     icon?: string | ReactNode;
     to?: string;
     activeOn?: string[];

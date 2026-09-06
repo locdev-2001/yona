@@ -14,12 +14,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 // Port từ refs/chatwoot/app/models/message.rb.
 // Bỏ: SendReplyJob (webhook outbound D4), email content (F1),
-// agent bot/captain (EE), searchkick (EE), translations (F6), csat (C5).
+// agent bot/captain (EE), searchkick (EE), translations (F6).
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
@@ -188,6 +189,11 @@ class Message extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    public function csatSurveyResponse(): HasOne
+    {
+        return $this->hasOne(CsatSurveyResponse::class);
+    }
+
     // validate_attachments_limit (before_add) — chặn trước khi thêm tệp thứ 16.
     public static function guardAttachmentsLimit(int $currentCount): void
     {
@@ -216,6 +222,11 @@ class Message extends Model
     public function isOutgoing(): bool
     {
         return $this->message_type === self::TYPE_OUTGOING;
+    }
+
+    public function isInputCsat(): bool
+    {
+        return $this->content_type === self::CONTENT_TYPES['input_csat'];
     }
 
     // auto_reply_email? — kênh email chưa port nên chỉ còn nhánh incoming_email.

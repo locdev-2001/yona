@@ -3,6 +3,7 @@
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentsController;
 use App\Http\Controllers\WebApi\BulkActionsController;
+use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
@@ -136,6 +137,13 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
         Route::match(['put', 'patch'], '/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'update'])->whereNumber('cannedResponseId');
         Route::delete('/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'destroy'])->whereNumber('cannedResponseId');
+
+        // {campaignId} là display_id per-account, không phải khoá chính.
+        Route::get('/campaigns', [CampaignsController::class, 'index']);
+        Route::post('/campaigns', [CampaignsController::class, 'store']);
+        Route::get('/campaigns/{campaignId}', [CampaignsController::class, 'show'])->whereNumber('campaignId');
+        Route::match(['put', 'patch'], '/campaigns/{campaignId}', [CampaignsController::class, 'update'])->whereNumber('campaignId');
+        Route::delete('/campaigns/{campaignId}', [CampaignsController::class, 'destroy'])->whereNumber('campaignId');
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

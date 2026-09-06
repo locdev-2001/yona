@@ -383,6 +383,14 @@ blockquote {
     @apply pb-2;
   }
 
+  // UnreadMessage.vue có <style scoped> riêng cho bong bóng nên thắng `.chat-bubble`
+  // chung (padding 1rem thay py-3). Ở React không có scoped style: đặt utility
+  // thẳng trên thẻ thì `.chat-bubble` (cùng specificity, đứng sau) đè mất → phải
+  // nâng specificity ở đây, nếu không bong bóng thấp hơn oracle 8px.
+  .chat-bubble {
+    @apply max-w-[85%] cursor-pointer p-4;
+  }
+
   .clear-button {
     transition: all 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     @apply bg-transparent text-n-brand border-none border-0 font-semibold text-base ml-1 py-0 pl-0 pr-2.5 hover:brightness-75 hover:translate-x-1;
@@ -541,6 +549,47 @@ blockquote {
 
 .formkit-messages {
   @apply list-none m-0 p-0;
+}
+
+// Port từ <style scoped> của shared/components/CustomerSatisfaction.vue.
+.customer-satisfaction {
+  .ratings {
+    .emoji-button {
+      @apply shadow-none grayscale text-2xl outline-none transition-all duration-200;
+
+      &.selected,
+      &:hover,
+      &:focus,
+      &:active {
+        @apply grayscale-0 scale-[1.32];
+      }
+
+      &.disabled {
+        @apply cursor-not-allowed opacity-50 pointer-events-none;
+      }
+    }
+  }
+
+  .feedback-form {
+    input {
+      @apply h-10 dark:bg-n-alpha-black1 rtl:rounded-tl-[0] rtl:rounded-tr-[0] ltr:rounded-tr-[0] ltr:rounded-tl-[0] rtl:rounded-bl-[0] ltr:rounded-br-[0] ltr:rounded-bl-[0.25rem] rtl:rounded-br-[0.25rem] rounded-lg p-2.5 w-full focus:ring-0 focus:outline-n-brand;
+
+      &::placeholder {
+        @apply text-n-slate-10;
+      }
+    }
+
+    .button {
+      @apply rtl:rounded-tr-[0] rtl:rounded-tl-[0] appearance-none ltr:rounded-tl-[0] ltr:rounded-tr-[0] rtl:rounded-br-[0] ltr:rounded-bl-[0] rounded-lg h-auto ltr:-ml-px rtl:-mr-px text-xl;
+
+      .spinner {
+        display: block;
+        padding: 0;
+        height: auto;
+        width: auto;
+      }
+    }
+  }
 }
 
 // Port từ <style scoped> của widget/components/template/EmailInput.vue.

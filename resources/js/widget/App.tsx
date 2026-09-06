@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Spinner from 'shared/components/Spinner';
 import { emitter } from 'shared/helpers/emitter';
 
 import { setLocale as setApiLocale } from './api/client';
-import { WIDGET_BUS_EVENTS } from './helpers/constants';
+import { CAMPAIGN_SNOOZE_DURATION, WIDGET_BUS_EVENTS } from './helpers/constants';
 import { getExtraSpaceToScroll, IFrameHelper, loadedEventConfig } from './helpers/iframe';
 import { getLocale } from './helpers/urlParams';
 import { t } from './i18n';
+import { useInboxAvailability } from './components/Availability';
 import { useWidgetState } from './store/hooks';
 import { widgetStore } from './store/widgetStore';
 import { currentRoute, replaceRoute, useWidgetRoute, WIDGET_ROUTES } from './router';
+import Campaigns from './views/Campaigns';
 import Home from './views/Home';
 import Messages from './views/Messages';
 import PreChatForm from './views/PreChatForm';
@@ -21,9 +23,9 @@ import { SDK_SET_BUBBLE_VISIBILITY } from '../sdk/constants/frameEvents';
 import type { AppConfig } from './types';
 
 // Port từ widget/App.vue — vỏ ứng dụng + toàn bộ giao thức postMessage với SDK.
-// Nhánh campaign (C4), pre-chat (C3) và React Native WebView chưa port.
+// Nhánh React Native WebView chưa port.
 
-const UNREAD_OR_CAMPAIGN_ROUTES: string[] = [WIDGET_ROUTES.UNREAD_MESSAGES];
+const UNREAD_OR_CAMPAIGN_ROUTES: string[] = [WIDGET_ROUTES.UNREAD_MESSAGES, WIDGET_ROUTES.CAMPAIGNS];
 
 export default function App() {
     const route = useWidgetRoute();
@@ -40,6 +42,14 @@ export default function App() {
 
     const [isMobile, setMobile] = useState(false);
     const isIFrame = IFrameHelper.isIFrame();
+    const activeCampaign = useWidgetState(state => state.activeCampaign);
+    const agents = useWidgetState(state => state.agents);
+    const { isInWorkingHours } = useInboxAvailability(agents);
+    // App.vue giữ campaignsSnoozedTill trong `data` (không render) — ref giữ đúng
+    // vai đó và luôn đọc được giá trị mới nhất trong listener postMessage.
+    const campaignsSnoozedTill = useRef<number | undefined>(undefined);
+    const isInWorkingHoursRef = useRef(isInWorkingHours);
+    isInWorkingHoursRef.current = isInWorkingHours;
 
     const setIframeHeight = (isFixedHeight: boolean) => {
         window.requestAnimationFrame(() => {
@@ -73,6 +83,10 @@ export default function App() {
                     void widgetStore.fetchOldConversations();
                     void widgetStore.fetchAvailableAgents();
                     void widgetStore.fetchContact();
+                    // App.vue#setCampaignReadData — SDK gửi mốc tạm ngưng đọc từ cookie.
+                    if (message.campaignsSnoozedTill) {
+                        campaignsSnoozedTill.current = Number(message.campaignsSnoozedTill);
+                    }
                     break;
                 }
                 case 'widget-visible':
@@ -80,10 +94,13 @@ export default function App() {
                         top: document.querySelector('.conversation--container')?.scrollHeight ?? 0,
                     });
                     break;
-                case 'change-url':
-                    (window as { referrerURL?: string }).referrerURL = String(message.referrerURL ?? '');
+                case 'change-url': {
+                    const referrerURL = String(message.referrerURL ?? '');
+                    widgetStore.initCampaigns(referrerURL, isInWorkingHoursRef.current);
+                    (window as { referrerURL?: string }).referrerURL = referrerURL;
                     widgetStore.patchAppConfig({ referrerHost: String(message.referrerHost ?? '') });
                     break;
+                }
                 case 'toggle-close-button':
                     setMobile(Boolean(message.isMobile));
                     break;
@@ -149,6 +166,7 @@ export default function App() {
                         unsetUnreadView();
                         replaceRoute(WIDGET_ROUTES.HOME);
                     }
+                    if (!isOpen) widgetStore.resetCampaign();
                     break;
                 }
                 case SDK_SET_BUBBLE_VISIBILITY:
@@ -203,6 +221,56 @@ export default function App() {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // App.vue#registerCampaignEvents
+    useEffect(() => {
+        const onCampaignClick = () => {
+            const campaign = widgetStore.getState().activeCampaign;
+            if (shouldShowPreChatForm()) {
+                replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
+            } else {
+                replaceRoute(WIDGET_ROUTES.MESSAGES);
+                if (campaign) emitter.emit(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, { campaignId: campaign.id });
+            }
+            unsetUnreadView();
+        };
+        const onExecuteCampaign = (details: unknown) => {
+            const { campaignId, customAttributes } = (details ?? {}) as {
+                campaignId?: number;
+                customAttributes?: Record<string, unknown>;
+            };
+            if (!campaignId) return;
+            void widgetStore.executeCampaign(campaignId, customAttributes);
+            replaceRoute(WIDGET_ROUTES.MESSAGES);
+        };
+        const onSnoozeCampaigns = () => {
+            campaignsSnoozedTill.current = Date.now() + CAMPAIGN_SNOOZE_DURATION;
+        };
+
+        emitter.on(WIDGET_BUS_EVENTS.ON_CAMPAIGN_MESSAGE_CLICK, onCampaignClick);
+        emitter.on(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, onExecuteCampaign);
+        emitter.on(WIDGET_BUS_EVENTS.SNOOZE_CAMPAIGNS, onSnoozeCampaigns);
+        return () => {
+            emitter.off(WIDGET_BUS_EVENTS.ON_CAMPAIGN_MESSAGE_CLICK, onCampaignClick);
+            emitter.off(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, onExecuteCampaign);
+            emitter.off(WIDGET_BUS_EVENTS.SNOOZE_CAMPAIGNS, onSnoozeCampaigns);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // App.vue: `watch activeCampaign -> setCampaignView`.
+    useEffect(() => {
+        if (!isIFrame || !activeCampaign) return;
+
+        const state = widgetStore.getState();
+        const isSnoozed = Boolean(campaignsSnoozedTill.current && campaignsSnoozedTill.current > Date.now());
+        if (Object.keys(state.conversations).length || isSnoozed) return;
+
+        replaceRoute(WIDGET_ROUTES.CAMPAIGNS);
+        setIframeHeight(true);
+        IFrameHelper.sendMessage({ event: 'setUnreadMode' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeCampaign, isIFrame]);
 
     // App.vue#handleUnreadNotificationDot
     useEffect(() => {
@@ -271,12 +339,29 @@ export default function App() {
                 .filter(Boolean)
                 .join(' ')}
         >
-            {isUnreadView ? <UnreadMessages /> : <ViewWithHeader route={route}>{view}</ViewWithHeader>}
+            {route === WIDGET_ROUTES.CAMPAIGNS ? (
+                <Campaigns />
+            ) : isUnreadView ? (
+                <UnreadMessages />
+            ) : (
+                <ViewWithHeader route={route}>{view}</ViewWithHeader>
+            )}
         </div>
     );
 }
 
 const conversationSizeNow = () => Object.keys(widgetStore.getState().conversations).length;
+
+// configMixin#shouldShowPreChatForm — form chỉ hiện khi bật cờ VÀ có ít nhất một
+// trường đang bật.
+const shouldShowPreChatForm = (): boolean => {
+    const channelConfig = widgetStore.getState().channelConfig;
+    const enabledFields = (channelConfig?.preChatFormOptions?.pre_chat_fields ?? []).filter(
+        field => field.enabled,
+    );
+
+    return Boolean(channelConfig?.preChatFormEnabled) && enabledFields.length > 0;
+};
 
 // BUBBLE.LABEL — SDK ưu tiên launcherTitle của trang khách rồi mới tới nhãn này.
 const widgetBubbleLabel = () => t('BUBBLE.LABEL');

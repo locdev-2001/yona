@@ -14,8 +14,8 @@ use App\Services\MessageTemplates\Template\Greeting;
  * ĐIỂM GỌI DUY NHẤT của mọi mẫu tin tự động: `Message::created`. Thêm một mẫu
  * mới = thêm một nhánh ở `triggerTemplates()`, không rải điều kiện ra controller.
  *
- * Chưa port: OutOfOffice (cần Business Hours) và CsatSurvey (C5 — gọi từ
- * CsatSurveyService khi hội thoại được giải quyết, không đi qua hook này).
+ * Chưa port: OutOfOffice (cần Business Hours). CsatSurvey KHÔNG thuộc hook này —
+ * bản gốc gọi nó từ CsatSurveyService lúc hội thoại được giải quyết.
  */
 final class HookExecutionService
 {

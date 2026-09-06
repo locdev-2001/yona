@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
 // Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
 // PriorityActivityMessageHandler, ConversationMuteHelpers).
 // Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), agent bot/bot_handoff + SLA (EE/D4),
-// campaigns (C4), activity theo Current.executed_by automation/contact (D1/C).
+// activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
@@ -101,6 +101,7 @@ class Conversation extends Model
         'first_reply_created_at',
         'waiting_since',
         'last_activity_at',
+        'campaign_id',
     ];
 
     public static function statusFromName(string $name): int
@@ -133,7 +134,8 @@ class Conversation extends Model
     {
         static::creating(function (Conversation $conversation) {
             // validate_additional_attributes + determine_conversation_status +
-            // ensure_waiting_since (nhánh campaign/bot chưa port).
+            // ensure_waiting_since. determine_conversation_status: nhánh campaign
+            // (handle_campaign_status) chỉ bật bot khi inbox có agent_bot — chưa port (D4).
             if (! is_array($conversation->additional_attributes)) {
                 $conversation->additional_attributes = [];
             }
@@ -270,6 +272,11 @@ class Conversation extends Model
     public function contactInbox(): BelongsTo
     {
         return $this->belongsTo(ContactInbox::class);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 
     public function assignee(): BelongsTo
@@ -741,7 +748,13 @@ class Conversation extends Model
         ActivityMessageJob::dispatch($this, $this->activityMessageParams($content));
     }
 
-    private function activityMessageParams(string $content, ?array $contentAttributes = null): array
+    /**
+     * Bộ tham số chuẩn của một tin activity trong hội thoại — nguồn duy nhất cho
+     * mọi nơi cần chèn tin loại này (đổi nhãn, đổi trạng thái, CSAT không gửi được).
+     *
+     * @return array<string, mixed>
+     */
+    public function activityMessageParams(string $content, ?array $contentAttributes = null): array
     {
         $params = [
             'account_id' => $this->account_id,

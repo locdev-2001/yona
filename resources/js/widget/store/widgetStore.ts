@@ -1,7 +1,16 @@
 import * as api from '../api/widget';
-import { setAuthToken } from '../api/client';
-import { AGENT_TYPING_TIMEOUT, MESSAGE_TYPE, WIDGET_BUS_EVENTS } from '../helpers/constants';
+import { getWebsiteToken, setAuthToken } from '../api/client';
+import {
+    AGENT_TYPING_TIMEOUT,
+    CAMPAIGN_CACHE_EXPIRY,
+    CAMPAIGN_CACHE_KEY_PREFIX,
+    MESSAGE_TYPE,
+    WIDGET_BUS_EVENTS,
+} from '../helpers/constants';
 import { emitter } from 'shared/helpers/emitter';
+import { getFromCache, setCache } from 'shared/helpers/cache';
+import { campaignTimer } from '../helpers/campaignTimer';
+import { filterCampaigns, formatCampaigns } from '../helpers/campaignHelper';
 import { IFrameHelper } from '../helpers/iframe';
 import {
     createTemporaryMessage,
@@ -14,6 +23,7 @@ import type {
     AvailableAgent,
     ChannelConfig,
     ConversationAttributes,
+    WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
     WidgetMessage,
@@ -47,6 +57,9 @@ export interface WidgetState {
     agents: AvailableAgent[];
     conversationAttributes: ConversationAttributes;
     banner: BannerState | null;
+    campaigns: WidgetCampaign[];
+    activeCampaign: WidgetCampaign | null;
+    campaignsFetched: boolean;
 }
 
 const DEFAULT_APP_CONFIG: AppConfig = {
@@ -82,6 +95,9 @@ let state: WidgetState = {
     agents: [],
     conversationAttributes: { id: '', status: '' },
     banner: null,
+    campaigns: [],
+    activeCampaign: null,
+    campaignsFetched: false,
 };
 
 type Listener = () => void;
@@ -570,6 +586,81 @@ export const widgetStore = {
         } catch {
             // Bỏ qua như bản gốc.
         }
+    },
+
+    // ── campaign ──────────────────────────────────────────────────────────────
+    // store/modules/campaign.js — MỘT chỗ quyết định campaign nào được hẹn giờ:
+    // lọc theo URL hiện tại + cửa sổ giờ làm việc rồi giao cho campaignTimer.
+    resetCampaignTimers(currentURL: string, isInBusinessHours: boolean): void {
+        const matched = filterCampaigns({
+            campaigns: formatCampaigns({ campaigns: state.campaigns }),
+            currentURL,
+            isInBusinessHours,
+        });
+        campaignTimer.initTimers(matched, campaignId => void widgetStore.startCampaign(campaignId));
+    },
+
+    async fetchCampaigns(currentURL: string, isInBusinessHours: boolean): Promise<void> {
+        const cacheKey = `${CAMPAIGN_CACHE_KEY_PREFIX}${getWebsiteToken()}`;
+        const cached = getFromCache<WidgetCampaign[]>(cacheKey, CAMPAIGN_CACHE_EXPIRY);
+
+        if (cached) {
+            setState({ campaigns: cached, campaignsFetched: true });
+            widgetStore.resetCampaignTimers(currentURL, isInBusinessHours);
+            return;
+        }
+
+        try {
+            const campaigns = await api.fetchCampaigns();
+            setCache(cacheKey, campaigns);
+            setState({ campaigns, campaignsFetched: true });
+            widgetStore.resetCampaignTimers(currentURL, isInBusinessHours);
+        } catch {
+            // Bỏ qua như bản gốc (uiFlags.isError chỉ để debug, không hiện ra UI).
+        }
+    },
+
+    // Trang SPA đổi URL liên tục: chỉ gọi API lần đầu, các lần sau hẹn lại giờ
+    // trên danh sách đã có.
+    initCampaigns(currentURL: string, isInBusinessHours: boolean): void {
+        if (state.campaigns.length) {
+            widgetStore.resetCampaignTimers(currentURL, isInBusinessHours);
+            return;
+        }
+
+        if (!state.campaignsFetched) {
+            void widgetStore.fetchCampaigns(currentURL, isInBusinessHours);
+        }
+    },
+
+    // Hết giờ ở trang: chỉ nhả khi widget đang đóng, và luôn đọc lại danh sách
+    // từ server để campaign vừa bị tắt không bắn nữa.
+    async startCampaign(campaignId: number): Promise<void> {
+        if (state.appConfig.isWidgetOpen) return;
+
+        try {
+            const campaigns = await api.fetchCampaigns();
+            const campaign = campaigns.find(item => item.id === campaignId);
+            if (campaign) setState({ activeCampaign: campaign });
+        } catch {
+            // Bỏ qua như bản gốc.
+        }
+    },
+
+    async executeCampaign(campaignId: number, customAttributes?: Record<string, unknown>): Promise<void> {
+        setState({ uiFlags: { ...state.uiFlags, isCreating: true } });
+        try {
+            await api.triggerCampaign(campaignId, customAttributes);
+            setState({ activeCampaign: null });
+        } catch {
+            // Bỏ qua như bản gốc.
+        } finally {
+            setState({ uiFlags: { ...state.uiFlags, isCreating: false } });
+        }
+    },
+
+    resetCampaign(): void {
+        setState({ activeCampaign: null });
     },
 
     async createEvent(name: string): Promise<void> {

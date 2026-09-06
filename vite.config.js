@@ -12,6 +12,8 @@ export default defineConfig({
                 'resources/js/app.tsx',
                 'resources/scss/widget.scss',
                 'resources/js/widget/main.tsx',
+                'resources/scss/survey.scss',
+                'resources/js/survey/main.tsx',
             ],
             refresh: true,
         }),

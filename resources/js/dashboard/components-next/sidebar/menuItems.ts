@@ -199,7 +199,13 @@ export function buildMenuItems(
             children: [
                 { name: 'Live chat', label: t('SIDEBAR.LIVE_CHAT'), to: scoped('campaigns/live_chat') },
                 { name: 'SMS', label: t('SIDEBAR.SMS'), to: scoped('campaigns/sms') },
-                { name: 'WhatsApp', label: t('SIDEBAR.WHATSAPP'), to: scoped('campaigns/whatsapp') },
+                // campaigns.routes.js: nhánh WhatsApp gắn FEATURE_FLAGS.WHATSAPP_CAMPAIGNS.
+                {
+                    name: 'WhatsApp',
+                    label: t('SIDEBAR.WHATSAPP'),
+                    to: scoped('campaigns/whatsapp'),
+                    featureFlag: 'whatsapp_campaign',
+                },
             ],
         },
         {

@@ -2,10 +2,11 @@
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\MessageTemplates\Template\CsatSurvey;
 use App\Services\MessageTemplates\Template\EmailCollect;
 use App\Services\MessageTemplates\Template\Greeting;
 
-// Port từ spec/services/message_templates/template/{email_collect,greeting}_spec.rb.
+// Port từ spec/services/message_templates/template/{email_collect,greeting,csat_survey}_spec.rb.
 
 it('creates the two email collect messages', function () {
     $conversation = Conversation::factory()->create();
@@ -47,3 +48,29 @@ it('renders template variables in the greeting message', function (string $greet
         fn (Conversation $conversation) => "Hey, {$conversation->contact->name} welcome to our board. - from {$conversation->account->name}",
     ],
 ]);
+
+it('creates a csat survey message with the default copy', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->inbox->update(['csat_config' => []]);
+
+    (new CsatSurvey($conversation))->perform();
+
+    $message = $conversation->messages()->sole();
+
+    expect($message->message_type)->toBe(Message::TYPE_TEMPLATE);
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['input_csat']);
+    expect($message->content)->toBe(__('conversations.templates.csat_input_message_body'));
+    expect($message->content_attributes['display_type'])->toBe('emoji');
+});
+
+it('creates a csat survey message from the inbox configuration', function () {
+    $conversation = Conversation::factory()->create();
+    $conversation->inbox->update(['csat_config' => ['display_type' => 'star', 'message' => 'Please rate your experience']]);
+
+    (new CsatSurvey($conversation->fresh()))->perform();
+
+    $message = $conversation->messages()->sole();
+
+    expect($message->content)->toBe('Please rate your experience');
+    expect($message->content_attributes['display_type'])->toBe('star');
+});

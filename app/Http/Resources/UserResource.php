@@ -6,8 +6,9 @@ use App\Models\Account;
 use App\Models\User;
 
 // Port từ User#push_event_data (app/models/user.rb). availability_status đi
-// theo account_user của account đang đứng (Current.account) — không có account
-// thì như gốc trả nil, ở đây giữ 'offline' để payload không đổi shape.
+// theo account_user của account đang đứng (Current.account); không có account
+// (vd API widget) thì null y như bản gốc — widget đọc null là "không có chấm
+// trạng thái", trả 'offline' sẽ vẽ thừa một chấm xám.
 final class UserResource
 {
     public static function pushEventData(User $user, ?Account $account = null): array
@@ -23,7 +24,7 @@ final class UserResource
             'available_name' => $user->availableName(),
             'avatar_url' => $user->avatarUrl(),
             'type' => 'user',
-            'availability_status' => $membership?->availabilityStatus() ?? 'offline',
+            'availability_status' => $membership?->availabilityStatus(),
             'thumbnail' => $user->avatarUrl(),
         ];
     }

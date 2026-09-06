@@ -11,6 +11,7 @@ import { isASubmittedFormMessage } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import { FileBubble, ImageBubble, VideoBubble } from './bubbles';
+import CustomerSatisfaction from './template/CustomerSatisfaction';
 import EmailInput from './template/EmailInput';
 import MessageReplyButton from './MessageReplyButton';
 import ReplyToChip from './ReplyToChip';
@@ -18,9 +19,9 @@ import UserMessage from './UserMessage';
 import type { WidgetMessage } from '../types';
 
 // Port từ widget/components/AgentMessage.vue + AgentMessageBubble.vue.
-// C3 thêm nhánh `input_email` (bong bóng bot xin email). Các content_type còn
-// lại của bot (cards/form/input_select/input_csat/article/integrations) chưa
-// port — chúng đi cùng C5 (CSAT) và nhóm D (help center).
+// C3 thêm nhánh `input_email` (bong bóng bot xin email), C5 thêm `input_csat`
+// (bong bóng khảo sát). Các content_type còn lại của bot (cards/form/
+// input_select/article/integrations) chưa port — đi cùng nhóm D (help center).
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
 // Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
@@ -37,6 +38,21 @@ function AgentMessageBubble({
     messageId: number | string;
     messageContentAttributes: Record<string, unknown>;
 }) {
+    // Bong bóng CSAT thay hẳn bong bóng chữ (bản gốc loại `input_csat` khỏi
+    // nhánh `v-if` của chat-bubble) — tiêu đề đã nằm trong chính component.
+    if (contentType === 'input_csat') {
+        return (
+            <div className="chat-bubble-wrap">
+                <CustomerSatisfaction
+                    messageId={messageId}
+                    submittedValues={messageContentAttributes.submitted_values}
+                    displayType={messageContentAttributes.display_type as string | undefined}
+                    message={content}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="chat-bubble-wrap">
             <div className="chat-bubble agent bg-n-background dark:bg-n-solid-3 text-n-slate-12">

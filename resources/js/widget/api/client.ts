@@ -16,6 +16,8 @@ export const setWebsiteToken = (token: string): void => {
     websiteToken = token;
 };
 
+export const getWebsiteToken = (): string => websiteToken;
+
 export const setLocale = (value: string): void => {
     locale = value;
 };
