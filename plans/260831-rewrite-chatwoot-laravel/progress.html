@@ -108,20 +108,20 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 31/40: E1 thuộc tính/bộ lọc/thư mục và E2 tìm kiếm xong (QA bấm tay); backend E3 nhập/xuất liên hệ và E4 Help Center xong, giao diện đang port</b></span>
+      <span class="chip">Cập nhật <b>06/09/2026 (tối) — 32/40: E4 Help Center xong (QA bấm tay: tạo cổng → bài → xuất bản → trang công khai); E3 giao diện, F1 Email và F8 xác thực hai lớp đang port</b></span>
     </div>
   </header>
 
   <div class="board">
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
-      <div class="stat"><div class="n">31<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
+      <div class="stat"><div class="n">32<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
       <div class="stat"><div class="n">1.588</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">584</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">591</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
-    <div class="bar"><i style="width:77.5%"></i></div>
+    <div class="bar"><i style="width:80%"></i></div>
   </div>
 
   <div class="board">
@@ -236,7 +236,7 @@
   </section>
 
   <section class="group">
-    <div class="ghead"><span class="gid">E</span><h3>Dữ liệu &amp; khám phá</h3><span class="gcount">2/4 · E3, E4 đang port giao diện</span></div>
+    <div class="ghead"><span class="gid">E</span><h3>Dữ liệu &amp; khám phá</h3><span class="gcount">3/4 · E3 đang port giao diện</span></div>
     <div class="feat"><span class="fid">E1</span><span class="fname">Thuộc tính tùy chỉnh + bộ lọc + phân khúc</span><span class="pill done">Xong 06/09</span>
       <span class="fdesc">Định nghĩa thuộc tính cho hội thoại/liên hệ (văn bản, số, liên kết, ngày, danh sách, ô tích), hiện và sửa ngay trong bảng bên phải; bộ lọc nhận cả thuộc tính tùy chỉnh cho hội thoại lẫn liên hệ, lưu thành Thư mục (hội thoại) hoặc Phân khúc (liên hệ) trên thanh bên. Lõi lọc gom về một chỗ dùng chung. <b>Theo lệnh founder, người dùng không bao giờ thấy hay nhập khóa kỹ thuật</b> — hệ thống tự sinh từ tên. Chấm ảnh 22/22 cảnh ≤0,031%; e2e bấm thật 24/24.</span>
       <span class="ftest"><b>Test ngay:</b> Cài đặt → Custom Attributes → Add → tên "Gói quan tâm", kiểu List, thêm 2 giá trị → Create (không có ô Key) → mở hội thoại → Conversation Information → chọn giá trị → F5 còn → bộ lọc hội thoại chọn "Gói quan tâm" = giá trị → Apply → Save filter → thư mục hiện trên thanh bên, mở ra đúng hội thoại → xóa thư mục. ⏳ Chờ founder nghiệm thu.</span></div>
@@ -245,8 +245,9 @@
       <span class="ftest"><b>Test ngay:</b> thanh bên → ô tìm kiếm → gõ "Trang" → Enter → ba nhóm kết quả → tab Messages → bấm kết quả mở đúng hội thoại → quay lại thấy tìm kiếm gần đây. ⏳ Chờ founder nghiệm thu.</span></div>
     <div class="feat"><span class="fid">E3</span><span class="fname">Liên hệ nâng cao + nhập/xuất</span><span class="pill wip">Backend xong · UI đang port</span>
       <span class="fdesc">Bảng sắp xếp được + thao tác hàng loạt + nhập CSV có ánh xạ cột. Backend đã xong: nhập 100 dòng có 5 dòng lỗi → 95 vào + tệp lỗi tải về, xuất CSV gửi email.</span></div>
-    <div class="feat"><span class="fid">E4</span><span class="fname">Chiến dịch một lần + Trung tâm trợ giúp</span><span class="pill wip">Backend xong · UI đang port</span>
-      <span class="fdesc">Cổng bài viết + trang công khai + trình soạn. Backend đã xong (5 bảng, tìm kiếm toàn văn, slug tự sinh không dấu, JSON công khai).</span></div>
+    <div class="feat"><span class="fid">E4</span><span class="fname">Chiến dịch một lần + Trung tâm trợ giúp</span><span class="pill done">Xong 06/09</span>
+      <span class="fdesc">Cổng bài viết với trình soạn tự lưu, danh mục, ngôn ngữ, cài đặt; trang công khai <code>/hc/&lt;cổng&gt;</code> dựng bằng Blade giữ nguyên DOM/CSS bản gốc (4 trang công khai chấm ảnh <b>0,000%</b>), có tìm kiếm, sitemap, đổi giao diện sáng/tối và ngôn ngữ. <b>Đường dẫn tự sinh từ tên không dấu — người dùng không nhập slug.</b> e2e 11/11. Chưa port bố cục "documentation" của trang công khai.</span>
+      <span class="ftest"><b>Test ngay:</b> Help Center → Create Portal → đặt tên → New article → gõ tiêu đề (bài tự tạo) → gõ nội dung (tự lưu) → Publish → mở <code>/hc/&lt;slug&gt;/en</code> thấy bài → tìm kiếm trên trang công khai → Settings → Delete portal. ⏳ Chờ founder nghiệm thu.</span></div>
   </section>
 
   <section class="group">
