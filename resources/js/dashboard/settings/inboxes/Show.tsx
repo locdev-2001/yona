@@ -816,6 +816,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                     webWidgetScript={inbox.web_widget_script ?? ''}
                                                 />
                                             </div>
+                                            <p className="mt-2 text-center text-label-small text-n-slate-11">
+                                                {t('INBOX_MGMT.SETTINGS_POPUP.EMBED_SCRIPT.HINT_IN_BUILDER')}
+                                            </p>
                                         </div>
                                     ) : null}
                                 </div>

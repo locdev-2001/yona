@@ -48,3 +48,4 @@ Icon Zalo nhận diện rõ ở 3 nơi; panel phải hiện sẵn với "Hội t
 | # | Màn | Finding | Mức | Đề xuất |
 |---|---|---|---|---|
 | 15 | Cài đặt → Hộp thư → Website → tab Cài đặt (cuối trang) | Mã nhúng chỉ hiện sau khi bấm nút chuyển "Xem trước / **Kịch bản**" — "Kịch bản" là dịch máy của "Script"; khối nằm cuối trang dài, tab Cấu hình (nơi người dùng tìm) không có | 🔴 | Đổi nhãn thành "Mã nhúng" (`lang/vi/inbox_mgmt.php:1419`); thêm khối "Đoạn mã nhúng" + Sao chép lên đầu tab Cấu hình (agent `website-embed-snippet-ux` đang làm); nút "Sao Chép" → "Sao chép" |
+| 16 | Bảng lệnh Ctrl+K | Chân bảng còn tiếng Anh: "to select · to navigate · esc to close · move to parent"; placeholder đã dịch | 🟡 | ninja-keys hỗ trợ `footerHtml`/`noResultsText` — truyền chuỗi từ `lang/vi` (một chỗ), kiểm cả "No results" |

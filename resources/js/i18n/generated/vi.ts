@@ -1193,7 +1193,7 @@ const messages: Record<string, unknown> = {
         "NO_RESULTS": "Không tìm thấy câu trả lời mẫu nào khớp",
         "SEARCH_404": "Không có kết quả nào phù hợp.",
         "LIST": {
-            "404": "Không có câu trả lời soạn trước nào có sẵn trong tài khoản này.",
+            "404": "Chưa có câu trả lời mẫu nào trong tài khoản này.",
             "TITLE": "Quản lý câu trả lời mẫu",
             "DESC": "Câu trả lời mẫu là những đoạn trả lời soạn sẵn dùng để phản hồi hội thoại thật nhanh.",
             "TABLE_HEADER": {
@@ -1318,7 +1318,11 @@ const messages: Record<string, unknown> = {
         "LOAD_MORE_CONVERSATIONS": "Tải thêm các hội thoại",
         "EOF": "Tất cả các hội thoại đã được tải 🎉",
         "LIST": {
-            "404": "Không có bất kì hoạt động trò chuyện nào trong nhóm."
+            "404": "Không có bất kì hoạt động trò chuyện nào trong nhóm.",
+            "NONE_ASSIGNED_TO_ME": "Chưa có hội thoại nào được gán cho bạn.",
+            "NONE_UNASSIGNED": "Mọi hội thoại đều đã có người phụ trách.",
+            "VIEW_UNASSIGNED": "Xem {count} hội thoại chưa gán",
+            "VIEW_ALL": "Xem tất cả {count} hội thoại"
         },
         "FAILED_TO_SEND": "Gửi thất bại",
         "FETCH_ERROR": "Không tải được hội thoại. Bạn hãy thử lại.",
@@ -1331,7 +1335,7 @@ const messages: Record<string, unknown> = {
         "FILTER_ALL": "Tất cả",
         "ASSIGNEE_TYPE_TABS": {
             "me": "Của tôi",
-            "unassigned": "Chưa được phân công",
+            "unassigned": "Chưa gán",
             "all": "Tất cả"
         },
         "CHAT_STATUS_FILTER_ITEMS": {
@@ -1558,7 +1562,7 @@ const messages: Record<string, unknown> = {
     },
     "COMPONENTS": {
         "CODE": {
-            "BUTTON_TEXT": "Sao Chép",
+            "BUTTON_TEXT": "Sao chép",
             "CODEPEN": "Mở trong CodePen",
             "COPY_SUCCESSFUL": "Đã chép"
         },
@@ -2676,7 +2680,7 @@ const messages: Record<string, unknown> = {
             "ASSIGN": "Gán"
         },
         "CONTEXT_MENU": {
-            "COPY": "Sao Chép",
+            "COPY": "Sao chép",
             "REPLY_TO": "Trả lời tin nhắn này",
             "DELETE": "Xoá",
             "CREATE_A_CANNED_RESPONSE": "Thêm vào câu trả lời soạn sẵn",
@@ -3546,7 +3550,7 @@ const messages: Record<string, unknown> = {
         "PREFERRED": "Ưu tiên"
     },
     "GENERAL_SETTINGS": {
-        "BACK": "Trờ về",
+        "BACK": "Trở về",
         "FORM": {
             "AUTO_RESOLVE": {
                 "TITLE": "Tự động đánh dấu hội thoại đã xử lý xong",
@@ -3795,7 +3799,7 @@ const messages: Record<string, unknown> = {
                     }
                 },
                 "CREATE_FLOW_PAGE": {
-                    "BACK_BUTTON": "Trờ về",
+                    "BACK_BUTTON": "Trở về",
                     "BASIC_SETTINGS_PAGE": {
                         "HEADER": "Tạo cổng",
                         "TITLE": "Thông tin trung tâm trợ giúp",
@@ -4071,7 +4075,7 @@ const messages: Record<string, unknown> = {
             "SUCCESS_ARTICLE_INSERTED": "Đã chèn bài viết",
             "PREVIEW_LINK": "Xem trước bài viết",
             "CANCEL": "Đóng",
-            "BACK": "Trờ về",
+            "BACK": "Trở về",
             "BACK_RESULTS": "Quay lại kết quả"
         },
         "UPGRADE_PAGE": {
@@ -4697,7 +4701,7 @@ const messages: Record<string, unknown> = {
         "ACTION_HEADER": {
             "SNOOZE": "Tạm dừng đến ngày mai",
             "DELETE": "Tạm dừng đến tuần sau",
-            "BACK": "Trờ về"
+            "BACK": "Trở về"
         },
         "TYPES": {
             "CONVERSATION_MENTION": "Bạn đã được nhắc đến trong một hội thoại",
@@ -5704,6 +5708,12 @@ const messages: Record<string, unknown> = {
         "SETTINGS_POPUP": {
             "MESSENGER_HEADING": "Tập lệnh Messenger",
             "MESSENGER_SUB_HEAD": "Đặt nút này bên trong thẻ body của bạn",
+            "EMBED_SCRIPT": {
+                "TITLE": "Đoạn mã nhúng",
+                "DESCRIPTION": "Dán đoạn mã này ngay trước thẻ </body> của website.",
+                "CUSTOMIZE_LINK": "Tuỳ chỉnh giao diện widget",
+                "HINT_IN_BUILDER": "Lấy mã nhúng ở tab Cấu hình."
+            },
             "ALLOWED_DOMAINS": {
                 "TITLE": "Tên miền được phép",
                 "DESCRIPTION": "Giới hạn website nào được nhúng widget chat của bạn. Vì an toàn, chỉ thêm tên miền bạn sở hữu và tin tưởng. Thêm một hoặc nhiều tên miền, cách nhau bằng dấu phẩy. Để trống là cho phép mọi tên miền (không nên dùng khi chạy thật).",
@@ -5836,7 +5846,7 @@ const messages: Record<string, unknown> = {
                     "PHONE_NUMBER": "Số điện thoại",
                     "NOT_ENTERED": "Chưa nhập",
                     "VERIFY_NOTICE": "Chatwoot sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.",
-                    "BACK": "Trờ về",
+                    "BACK": "Trở về",
                     "CANCEL": "Huỷ",
                     "CONTINUE": "Tiếp tục",
                     "REVIEW_MIGRATION": "Xem lại phần chuyển đổi",
@@ -6168,7 +6178,7 @@ const messages: Record<string, unknown> = {
                 },
                 "WIDGET_VIEW_OPTION": {
                     "PREVIEW": "Xem trước",
-                    "SCRIPT": "Kịch bản"
+                    "SCRIPT": "Mã nhúng"
                 },
                 "WIDGET_BUBBLE_POSITION": {
                     "LEFT": "Trái",
@@ -6230,6 +6240,7 @@ const messages: Record<string, unknown> = {
             "API": "Kênh API",
             "INSTAGRAM": "Instagram",
             "TIKTOK": "TikTok",
+            "ZALO": "Zalo",
             "VOICE": "Thoại"
         }
     },
@@ -7154,7 +7165,7 @@ const messages: Record<string, unknown> = {
             "LOADING_QR": "Đang tải...",
             "MANUAL_ENTRY": "Không quét được? Nhập mã thủ công",
             "SECRET_KEY": "Khóa bí mật",
-            "COPY": "Sao Chép",
+            "COPY": "Sao chép",
             "ENTER_CODE": "Nhập mã 6 số từ ứng dụng xác thực của bạn",
             "ENTER_CODE_PLACEHOLDER": "000000",
             "VERIFY_BUTTON": "Xác minh và tiếp tục",
@@ -7387,7 +7398,7 @@ const messages: Record<string, unknown> = {
             "CONNECT_TITLE": "Kết nối tài khoản {name} của bạn",
             "CONNECT_SUBTITLE": "Điền nhanh vài thông tin này",
             "CONNECT": "Kết nối",
-            "BACK": "Trờ về",
+            "BACK": "Trở về",
             "SETUP_LATER": "Thiết lập sau trong ứng dụng",
             "FACEBOOK_SUBTITLE": "Cấp quyền truy cập và chọn một Trang để kết nối.",
             "FACEBOOK_LAUNCH": "Tiếp tục với Facebook",
@@ -7596,7 +7607,7 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Token truy cập",
                 "NOTE": "Có thể sử dụng Token này nếu bạn đang xây dựng tích hợp dựa trên API",
                 "PAID_PLAN_NOTE": "Access token API có ở các gói trả phí.",
-                "COPY": "Sao Chép",
+                "COPY": "Sao chép",
                 "RESET": "Tạo lại",
                 "CONFIRM_RESET": "Bạn chắc chắn chứ?",
                 "CONFIRM_HINT": "Bấm lần nữa để xác nhận",
@@ -8353,7 +8364,7 @@ const messages: Record<string, unknown> = {
         "SUPER_ADMIN_CONSOLE": "Console quản trị",
         "DOCS": "Đọc tài liệu",
         "CHANGELOG": "Nhật ký thay đổi",
-        "LOGOUT": "Log out"
+        "LOGOUT": "Đăng xuất"
     },
     "SLACK_UNFURL": {
         "fields": {

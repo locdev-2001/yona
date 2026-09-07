@@ -1318,7 +1318,11 @@ const messages: Record<string, unknown> = {
         "LOAD_MORE_CONVERSATIONS": "Load more conversations",
         "EOF": "All conversations loaded 🎉",
         "LIST": {
-            "404": "There are no active conversations in this group."
+            "404": "There are no active conversations in this group.",
+            "NONE_ASSIGNED_TO_ME": "No conversation is assigned to you.",
+            "NONE_UNASSIGNED": "Every conversation already has an assignee.",
+            "VIEW_UNASSIGNED": "View {count} unassigned",
+            "VIEW_ALL": "View all {count} conversations"
         },
         "FAILED_TO_SEND": "Failed to send",
         "FETCH_ERROR": "Couldn't load conversations. Please try again.",
@@ -5704,6 +5708,12 @@ const messages: Record<string, unknown> = {
         "SETTINGS_POPUP": {
             "MESSENGER_HEADING": "Messenger Script",
             "MESSENGER_SUB_HEAD": "Place this button inside your body tag",
+            "EMBED_SCRIPT": {
+                "TITLE": "Embed script",
+                "DESCRIPTION": "Paste this snippet right before the </body> tag of your website.",
+                "CUSTOMIZE_LINK": "Customize the widget appearance",
+                "HINT_IN_BUILDER": "Get the embed script in the Configuration tab."
+            },
             "ALLOWED_DOMAINS": {
                 "TITLE": "Allowed Domains",
                 "DESCRIPTION": "Restrict which websites can embed your chat widget. For security, only add domains you own and trust. Add one or more domains separated by commas. Leave blank to allow all domains (not recommended for production).",
@@ -6230,6 +6240,7 @@ const messages: Record<string, unknown> = {
             "API": "API Channel",
             "INSTAGRAM": "Instagram",
             "TIKTOK": "TikTok",
+            "ZALO": "Zalo",
             "VOICE": "Voice"
         }
     },

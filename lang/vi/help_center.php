@@ -221,7 +221,7 @@ return [
                 ],
             ],
             'CREATE_FLOW_PAGE' => [
-                'BACK_BUTTON' => 'Trờ về',
+                'BACK_BUTTON' => 'Trở về',
                 'BASIC_SETTINGS_PAGE' => [
                     'HEADER' => 'Tạo cổng',
                     'TITLE' => 'Thông tin trung tâm trợ giúp',
@@ -497,7 +497,7 @@ return [
         'SUCCESS_ARTICLE_INSERTED' => 'Đã chèn bài viết',
         'PREVIEW_LINK' => 'Xem trước bài viết',
         'CANCEL' => 'Đóng',
-        'BACK' => 'Trờ về',
+        'BACK' => 'Trở về',
         'BACK_RESULTS' => 'Quay lại kết quả',
     ],
     'UPGRADE_PAGE' => [

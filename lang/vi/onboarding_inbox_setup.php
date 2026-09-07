@@ -52,7 +52,7 @@ return [
         'CONNECT_TITLE' => 'Kết nối tài khoản {name} của bạn',
         'CONNECT_SUBTITLE' => 'Điền nhanh vài thông tin này',
         'CONNECT' => 'Kết nối',
-        'BACK' => 'Trờ về',
+        'BACK' => 'Trở về',
         'SETUP_LATER' => 'Thiết lập sau trong ứng dụng',
         'FACEBOOK_SUBTITLE' => 'Cấp quyền truy cập và chọn một Trang để kết nối.',
         'FACEBOOK_LAUNCH' => 'Tiếp tục với Facebook',
