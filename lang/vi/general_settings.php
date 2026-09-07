@@ -5,7 +5,7 @@
 // khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
-    'BACK' => 'Trờ về',
+    'BACK' => 'Trở về',
     'FORM' => [
         'AUTO_RESOLVE' => [
             'TITLE' => 'Tự động đánh dấu hội thoại đã xử lý xong',

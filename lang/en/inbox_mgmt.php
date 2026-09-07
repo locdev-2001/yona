@@ -950,6 +950,12 @@ return [
     'SETTINGS_POPUP' => [
         'MESSENGER_HEADING' => 'Messenger Script',
         'MESSENGER_SUB_HEAD' => 'Place this button inside your body tag',
+        'EMBED_SCRIPT' => [
+            'TITLE' => 'Embed script',
+            'DESCRIPTION' => 'Paste this snippet right before the </body> tag of your website.',
+            'CUSTOMIZE_LINK' => 'Customize the widget appearance',
+            'HINT_IN_BUILDER' => 'Get the embed script in the Configuration tab.',
+        ],
         'ALLOWED_DOMAINS' => [
             'TITLE' => 'Allowed Domains',
             'DESCRIPTION' => 'Restrict which websites can embed your chat widget. For security, only add domains you own and trust. Add one or more domains separated by commas. Leave blank to allow all domains (not recommended for production).',
@@ -1477,6 +1483,7 @@ return [
         'API' => 'API Channel',
         'INSTAGRAM' => 'Instagram',
         'TIKTOK' => 'TikTok',
+        'ZALO' => 'Zalo',
         'VOICE' => 'Voice',
     ],
 ];

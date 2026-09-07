@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { patchJson } from 'dashboard/helper/apiClient';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
-import { sanitizeAllowedDomains } from 'dashboard/helper/URLHelper';
+import { accountScopedUrl, sanitizeAllowedDomains } from 'dashboard/helper/URLHelper';
 import Code from 'dashboard/components/Code';
 import Button from 'dashboard/components-next/button/Button';
 import TextArea from 'dashboard/components-next/textarea/TextArea';
@@ -113,6 +113,28 @@ export default function ConfigurationPage({ inbox, onInboxUpdated }: Configurati
         return (
             <div>
                 <div className="space-y-4">
+                    <SettingsToggleSection
+                        header={t('INBOX_MGMT.SETTINGS_POPUP.EMBED_SCRIPT.TITLE')}
+                        description={t('INBOX_MGMT.SETTINGS_POPUP.EMBED_SCRIPT.DESCRIPTION')}
+                        hideToggle
+                        editor={
+                            <>
+                                <div className="p-3 rounded-lg bg-n-slate-2 [&_code]:!bg-n-slate-2 min-w-0 overflow-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:whitespace-pre-wrap">
+                                    <Code
+                                        script={inbox.web_widget_script ?? ''}
+                                        lang="html"
+                                        className="!text-start"
+                                    />
+                                </div>
+                                <Link
+                                    href={accountScopedUrl(accountId, `settings/inboxes/${inbox.id}`)}
+                                    className="inline-block mt-3 text-n-blue-11 hover:underline text-label-small"
+                                >
+                                    {t('INBOX_MGMT.SETTINGS_POPUP.EMBED_SCRIPT.CUSTOMIZE_LINK')}
+                                </Link>
+                            </>
+                        }
+                    />
                     <SettingsToggleSection
                         header={t('INBOX_MGMT.SETTINGS_POPUP.ALLOWED_DOMAINS.TITLE')}
                         description={t('INBOX_MGMT.SETTINGS_POPUP.ALLOWED_DOMAINS.DESCRIPTION')}

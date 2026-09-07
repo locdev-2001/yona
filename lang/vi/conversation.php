@@ -413,7 +413,7 @@ return [
         'ASSIGN' => 'Gán',
     ],
     'CONTEXT_MENU' => [
-        'COPY' => 'Sao Chép',
+        'COPY' => 'Sao chép',
         'REPLY_TO' => 'Trả lời tin nhắn này',
         'DELETE' => 'Xoá',
         'CREATE_A_CANNED_RESPONSE' => 'Thêm vào câu trả lời soạn sẵn',

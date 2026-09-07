@@ -6,7 +6,7 @@
 
 return [
     'CODE' => [
-        'BUTTON_TEXT' => 'Sao Chép',
+        'BUTTON_TEXT' => 'Sao chép',
         'CODEPEN' => 'Mở trong CodePen',
         'COPY_SUCCESSFUL' => 'Đã chép',
     ],

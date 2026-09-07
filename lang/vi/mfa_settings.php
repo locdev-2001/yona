@@ -25,7 +25,7 @@ return [
         'LOADING_QR' => 'Đang tải...',
         'MANUAL_ENTRY' => 'Không quét được? Nhập mã thủ công',
         'SECRET_KEY' => 'Khóa bí mật',
-        'COPY' => 'Sao Chép',
+        'COPY' => 'Sao chép',
         'ENTER_CODE' => 'Nhập mã 6 số từ ứng dụng xác thực của bạn',
         'ENTER_CODE_PLACEHOLDER' => '000000',
         'VERIFY_BUTTON' => 'Xác minh và tiếp tục',

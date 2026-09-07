@@ -106,7 +106,7 @@ return [
             'TITLE' => 'Token truy cập',
             'NOTE' => 'Có thể sử dụng Token này nếu bạn đang xây dựng tích hợp dựa trên API',
             'PAID_PLAN_NOTE' => 'Access token API có ở các gói trả phí.',
-            'COPY' => 'Sao Chép',
+            'COPY' => 'Sao chép',
             'RESET' => 'Tạo lại',
             'CONFIRM_RESET' => 'Bạn chắc chắn chứ?',
             'CONFIRM_HINT' => 'Bấm lần nữa để xác nhận',

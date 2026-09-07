@@ -952,6 +952,12 @@ return [
     'SETTINGS_POPUP' => [
         'MESSENGER_HEADING' => 'Tập lệnh Messenger',
         'MESSENGER_SUB_HEAD' => 'Đặt nút này bên trong thẻ body của bạn',
+        'EMBED_SCRIPT' => [
+            'TITLE' => 'Đoạn mã nhúng',
+            'DESCRIPTION' => 'Dán đoạn mã này ngay trước thẻ </body> của website.',
+            'CUSTOMIZE_LINK' => 'Tuỳ chỉnh giao diện widget',
+            'HINT_IN_BUILDER' => 'Lấy mã nhúng ở tab Cấu hình.',
+        ],
         'ALLOWED_DOMAINS' => [
             'TITLE' => 'Tên miền được phép',
             'DESCRIPTION' => 'Giới hạn website nào được nhúng widget chat của bạn. Vì an toàn, chỉ thêm tên miền bạn sở hữu và tin tưởng. Thêm một hoặc nhiều tên miền, cách nhau bằng dấu phẩy. Để trống là cho phép mọi tên miền (không nên dùng khi chạy thật).',
@@ -1084,7 +1090,7 @@ return [
                 'PHONE_NUMBER' => 'Số điện thoại',
                 'NOT_ENTERED' => 'Chưa nhập',
                 'VERIFY_NOTICE' => 'Chatwoot sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.',
-                'BACK' => 'Trờ về',
+                'BACK' => 'Trở về',
                 'CANCEL' => 'Huỷ',
                 'CONTINUE' => 'Tiếp tục',
                 'REVIEW_MIGRATION' => 'Xem lại phần chuyển đổi',
@@ -1416,7 +1422,7 @@ return [
             ],
             'WIDGET_VIEW_OPTION' => [
                 'PREVIEW' => 'Xem trước',
-                'SCRIPT' => 'Kịch bản',
+                'SCRIPT' => 'Mã nhúng',
             ],
             'WIDGET_BUBBLE_POSITION' => [
                 'LEFT' => 'Trái',
@@ -1479,6 +1485,7 @@ window.chatwootSettings = {options};',
         'API' => 'Kênh API',
         'INSTAGRAM' => 'Instagram',
         'TIKTOK' => 'TikTok',
+        'ZALO' => 'Zalo',
         'VOICE' => 'Thoại',
     ],
 ];

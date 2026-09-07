@@ -20,7 +20,7 @@ return [
     'ACTION_HEADER' => [
         'SNOOZE' => 'Tạm dừng đến ngày mai',
         'DELETE' => 'Tạm dừng đến tuần sau',
-        'BACK' => 'Trờ về',
+        'BACK' => 'Trở về',
     ],
     'TYPES' => [
         'CONVERSATION_MENTION' => 'Bạn đã được nhắc đến trong một hội thoại',
