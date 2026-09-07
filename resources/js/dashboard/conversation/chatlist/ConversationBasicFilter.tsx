@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
@@ -26,23 +27,38 @@ const SORT_OPTION_VALUES = [
 // vào ui_settings.conversations_filter_by như useUISettings gốc.
 interface ConversationBasicFilterProps {
     isOnExpandedLayout?: boolean;
+    // Bảng chọn này còn được mở từ pill trạng thái cạnh tiêu đề (ChatListHeader),
+    // nên trạng thái đóng/mở do phía trên giữ; không truyền thì tự quản như cũ.
+    isOpen?: boolean;
+    onOpenChange?: (isOpen: boolean) => void;
+    // Vùng "bấm ra ngoài thì đóng". Mặc định là chính nút này; khi có thêm nút mở
+    // ở nơi khác thì phía trên truyền vùng bao cả hai vào.
+    dismissBoundaryRef?: RefObject<HTMLElement | null>;
 }
 
-export default function ConversationBasicFilter({ isOnExpandedLayout = false }: ConversationBasicFilterProps) {
+export default function ConversationBasicFilter({
+    isOnExpandedLayout = false,
+    isOpen,
+    onOpenChange,
+    dismissBoundaryRef,
+}: ConversationBasicFilterProps) {
     const { status, sortBy, setStatusFilter, setSortFilter } = useConversation();
-    const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+    const [ownDropdownOpen, setOwnDropdownOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
+    const showActionsDropdown = isOpen ?? ownDropdownOpen;
+    const setShowActionsDropdown = onOpenChange ?? setOwnDropdownOpen;
 
     useEffect(() => {
         if (!showActionsDropdown) return undefined;
 
         const handleClickAway = (event: globalThis.MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) setShowActionsDropdown(false);
+            const boundary = dismissBoundaryRef?.current ?? rootRef.current;
+            if (!boundary?.contains(event.target as Node)) setShowActionsDropdown(false);
         };
         document.addEventListener('mousedown', handleClickAway);
 
         return () => document.removeEventListener('mousedown', handleClickAway);
-    }, [showActionsDropdown]);
+    }, [showActionsDropdown, setShowActionsDropdown, dismissBoundaryRef]);
 
     const chatStatusOptions = STATUS_OPTION_VALUES.map(value => ({
         label: t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${value}.TEXT`),
@@ -75,7 +91,7 @@ export default function ConversationBasicFilter({ isOnExpandedLayout = false }: 
                 slate
                 faded
                 xs
-                onClick={() => setShowActionsDropdown(open => !open)}
+                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
             />
             {showActionsDropdown ? (
                 <div

@@ -13,6 +13,30 @@ import { QUICK_REACTIONS } from './helpers/reactions';
 // context menu chuột phải (chưa port). Thanh hành động hiện khi rê chuột lên tin,
 // gate theo NĂNG LỰC KÊNH (docs/channel-capabilities.md §3 FE) — không theo
 // `channel_type`. Kênh không khai gì thì không render gì.
+//
+// Máy không rê chuột được (điện thoại, máy tính bảng) sẽ không bao giờ kích hoạt
+// `group-hover`, nên ở đó thanh hành động nấp sau một nút ⋯ hiện mờ sẵn cạnh bong
+// bóng; bấm ⋯ mới mở thanh. Máy có chuột giữ nguyên hành vi rê chuột.
+const HOVERLESS_POINTER_QUERY = '(hover: none)';
+
+function useHoverlessPointer(): boolean {
+    const [isHoverless, setHoverless] = useState(
+        () => window.matchMedia?.(HOVERLESS_POINTER_QUERY).matches ?? false,
+    );
+
+    useEffect(() => {
+        const query = window.matchMedia?.(HOVERLESS_POINTER_QUERY);
+        if (!query) return undefined;
+
+        const onChange = (event: MediaQueryListEvent) => setHoverless(event.matches);
+        setHoverless(query.matches);
+        query.addEventListener('change', onChange);
+
+        return () => query.removeEventListener('change', onChange);
+    }, []);
+
+    return isHoverless;
+}
 
 // Hộp xác nhận chỉ dựng khi cần: thanh hành động có ở MỌI tin, gắn sẵn một
 // <dialog> cho mỗi bong bóng là phình DOM vô ích.
@@ -54,16 +78,29 @@ export default function MessageActions({ className = '' }: { className?: string 
         useMessageContext();
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isConfirmingDelete, setConfirmingDelete] = useState(false);
+    const [isBarExpanded, setBarExpanded] = useState(false);
+    const isHoverlessPointer = useHoverlessPointer();
     const rootRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!isPickerOpen) return undefined;
-        const onDocumentMouseDown = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) setIsPickerOpen(false);
+        if (!isPickerOpen && !isBarExpanded) return undefined;
+        const onPointerDownOutside = (event: Event) => {
+            if (rootRef.current?.contains(event.target as Node)) return;
+            setIsPickerOpen(false);
+            setBarExpanded(false);
         };
-        document.addEventListener('mousedown', onDocumentMouseDown);
-        return () => document.removeEventListener('mousedown', onDocumentMouseDown);
-    }, [isPickerOpen]);
+        document.addEventListener('mousedown', onPointerDownOutside);
+        document.addEventListener('touchstart', onPointerDownOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', onPointerDownOutside);
+            document.removeEventListener('touchstart', onPointerDownOutside);
+        };
+    }, [isPickerOpen, isBarExpanded]);
+
+    useEffect(() => {
+        if (!isHoverlessPointer) setBarExpanded(false);
+    }, [isHoverlessPointer]);
 
     const inbox = { capabilities: inboxCapabilities };
     const isDeleted = Boolean(contentAttributes.deleted);
@@ -87,15 +124,35 @@ export default function MessageActions({ className = '' }: { className?: string 
 
     if (!canReact && !canDelete) return null;
 
-    const buttonClass =
-        'size-6 grid place-content-center rounded-md text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 cursor-pointer transition-colors duration-150';
+    // Ngón tay cần vùng chạm rộng hơn con trỏ chuột (WCAG 2.2 Target Size).
+    const buttonClass = `${
+        isHoverlessPointer ? 'size-9' : 'size-6'
+    } grid place-content-center rounded-md text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 cursor-pointer transition-colors duration-150`;
+    // Không rê chuột được thì thanh phải tự hiện: nút ⋯ mờ sẵn, các nút thật chỉ
+    // bung khi bấm ⋯. Có chuột thì giữ nguyên hành vi cũ (ẩn tới khi rê lên tin).
+    const areActionsVisible = !isHoverlessPointer || isBarExpanded;
+    const visibilityClass = isHoverlessPointer
+        ? 'opacity-60 focus-within:opacity-100'
+        : 'opacity-0 focus-within:opacity-100 group-hover/message:opacity-100';
 
     return (
         <div
             ref={rootRef}
-            className={`relative flex items-center gap-0.5 opacity-0 focus-within:opacity-100 group-hover/message:opacity-100 transition-opacity duration-150 ${className}`.trim()}
+            className={`relative flex items-center gap-0.5 ${visibilityClass} transition-opacity duration-150 ${className}`.trim()}
         >
-            {canReact ? (
+            {isHoverlessPointer && !isBarExpanded ? (
+                <button
+                    type="button"
+                    className={buttonClass}
+                    title={t('CONVERSATION.MESSAGE_ACTIONS.MORE')}
+                    aria-label={t('CONVERSATION.MESSAGE_ACTIONS.MORE')}
+                    aria-expanded={false}
+                    onClick={() => setBarExpanded(true)}
+                >
+                    <Icon icon="i-lucide-ellipsis" className="size-[14px]" />
+                </button>
+            ) : null}
+            {areActionsVisible && canReact ? (
                 <button
                     type="button"
                     className={buttonClass}
@@ -107,7 +164,7 @@ export default function MessageActions({ className = '' }: { className?: string 
                     <Icon icon="i-lucide-smile-plus" className="size-[14px]" />
                 </button>
             ) : null}
-            {canDelete ? (
+            {areActionsVisible && canDelete ? (
                 <button
                     type="button"
                     className={buttonClass}
@@ -122,7 +179,9 @@ export default function MessageActions({ className = '' }: { className?: string 
                 <div
                     role="group"
                     aria-label={t('CONVERSATION.MESSAGE_ACTIONS.REACT')}
-                    className={`absolute bottom-7 z-20 flex items-center gap-0.5 p-1 rounded-full border border-n-weak bg-n-solid-2 shadow-md ${
+                    className={`absolute ${
+                        isHoverlessPointer ? 'bottom-10' : 'bottom-7'
+                    } z-20 flex items-center gap-0.5 p-1 rounded-full border border-n-weak bg-n-solid-2 shadow-md ${
                         orientation === ORIENTATION.RIGHT ? 'ltr:right-0 rtl:left-0' : 'ltr:left-0 rtl:right-0'
                     }`}
                 >
@@ -131,10 +190,13 @@ export default function MessageActions({ className = '' }: { className?: string 
                             key={emoji}
                             type="button"
                             aria-label={emoji}
-                            className="size-7 grid place-content-center rounded-full hover:bg-n-alpha-2 cursor-pointer transition-transform duration-150 hover:scale-110"
+                            className={`${
+                                isHoverlessPointer ? 'size-9' : 'size-7'
+                            } grid place-content-center rounded-full hover:bg-n-alpha-2 cursor-pointer transition-transform duration-150 hover:scale-110`}
                             onClick={() => {
                                 onToggleReaction?.(emoji);
                                 setIsPickerOpen(false);
+                                setBarExpanded(false);
                             }}
                         >
                             {emoji}
@@ -149,6 +211,7 @@ export default function MessageActions({ className = '' }: { className?: string 
                     confirmLabel={deleteLabel}
                     onConfirm={() => {
                         setConfirmingDelete(false);
+                        setBarExpanded(false);
                         onDeleteMessage?.();
                     }}
                     onClose={() => setConfirmingDelete(false)}

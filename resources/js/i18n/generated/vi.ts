@@ -1357,6 +1357,7 @@ const messages: Record<string, unknown> = {
         },
         "VIEW_FILTER": "Xem",
         "SORT_TOOLTIP_LABEL": "Sắp xếp hội thoại",
+        "STATUS_FILTER_TOOLTIP_LABEL": "Lọc theo trạng thái",
         "CHAT_SORT": {
             "STATUS": "Trạng thái",
             "ORDER_BY": "Sắp xếp theo"
@@ -1554,6 +1555,14 @@ const messages: Record<string, unknown> = {
             "DARK_MODE": "Tối",
             "SYSTEM_MODE": "Theo hệ thống",
             "SNOOZE_NOTIFICATION": "Tạm ẩn thông báo"
+        },
+        "NO_RESULTS": "Không tìm thấy kết quả nào",
+        "FOOTER": {
+            "SELECT": "để chọn",
+            "NAVIGATE": "để di chuyển",
+            "CLOSE": "để đóng",
+            "MOVE_TO_PARENT": "quay lại nhóm trên",
+            "ESC_KEY": "esc"
         }
     },
     "COMMON": {
@@ -2374,6 +2383,7 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
+            "MORE": "Thêm hành động",
             "REACT": "Thả cảm xúc",
             "RECALL": "Thu hồi với mọi người",
             "DELETE": "Xoá",

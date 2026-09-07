@@ -3,6 +3,7 @@ import './commandbar.scss';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '../../i18n';
+import CommandBarFooter from './CommandBarFooter';
 import { useAppearanceHotKeys } from './useAppearanceHotKeys';
 import { useGoToCommandHotKeys } from './useGoToCommandHotKeys';
 import { useCommandBarActions } from './commandBarStore';
@@ -45,6 +46,7 @@ export default function CommandBar() {
     useAppearanceHotKeys();
     const actions = useCommandBarActions();
     const [currentCommandRoot, setCurrentCommandRoot] = useState<string | null>(null);
+    const [hasNoMatches, setHasNoMatches] = useState(false);
 
     const placeholder = useMemo(
         () =>
@@ -67,27 +69,35 @@ export default function CommandBar() {
         const originalClose = element.close.bind(element);
         element.open = (options = {}) => {
             setCurrentCommandRoot(options.parent ?? null);
+            setHasNoMatches(false);
             originalOpen(options);
         };
         element.close = () => {
             setCurrentCommandRoot(null);
+            setHasNoMatches(false);
             originalClose();
         };
 
         const onSelected = (event: Event) => {
             const { action } = (event as CustomEvent<NinjaSelectedDetail>).detail ?? {};
+            setHasNoMatches(false);
             if (Array.isArray(action?.children) && action.children.length) {
                 setCurrentCommandRoot(action.id ?? null);
             }
         };
         const onChange = (event: Event) => {
             const { actions: matched = [] } = (event as CustomEvent<NinjaChangeDetail>).detail ?? {};
+            // ninja-keys không báo "không có kết quả"; danh sách rỗng là tín hiệu duy nhất.
+            setHasNoMatches(matched.length === 0);
             if (matched.length > 0) {
                 const uniqueParents = [...new Set(matched.map(item => item.parent).filter(Boolean))];
                 setCurrentCommandRoot(uniqueParents.length === 1 ? (uniqueParents[0] as string) : null);
             }
         };
-        const onClosed = () => setCurrentCommandRoot(null);
+        const onClosed = () => {
+            setCurrentCommandRoot(null);
+            setHasNoMatches(false);
+        };
 
         element.addEventListener('selected', onSelected);
         element.addEventListener('change', onChange);
@@ -102,5 +112,9 @@ export default function CommandBar() {
         };
     }, []);
 
-    return <ninja-keys ref={ninjaRef} noAutoLoadMdIcons hideBreadcrumbs placeholder={placeholder} />;
+    return (
+        <ninja-keys ref={ninjaRef} noAutoLoadMdIcons hideBreadcrumbs placeholder={placeholder}>
+            <CommandBarFooter hasNoMatches={hasNoMatches} />
+        </ninja-keys>
+    );
 }

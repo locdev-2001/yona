@@ -47,6 +47,7 @@ return [
     ],
     'VIEW_FILTER' => 'View',
     'SORT_TOOLTIP_LABEL' => 'Sort conversations',
+    'STATUS_FILTER_TOOLTIP_LABEL' => 'Filter by status',
     'CHAT_SORT' => [
         'STATUS' => 'Status',
         'ORDER_BY' => 'Order by',

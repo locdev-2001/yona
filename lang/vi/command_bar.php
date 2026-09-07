@@ -82,4 +82,12 @@ return [
         'SYSTEM_MODE' => 'Theo hệ thống',
         'SNOOZE_NOTIFICATION' => 'Tạm ẩn thông báo',
     ],
+    'NO_RESULTS' => 'Không tìm thấy kết quả nào',
+    'FOOTER' => [
+        'SELECT' => 'để chọn',
+        'NAVIGATE' => 'để di chuyển',
+        'CLOSE' => 'để đóng',
+        'MOVE_TO_PARENT' => 'quay lại nhóm trên',
+        'ESC_KEY' => 'esc',
+    ],
 ];

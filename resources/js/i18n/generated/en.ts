@@ -1357,6 +1357,7 @@ const messages: Record<string, unknown> = {
         },
         "VIEW_FILTER": "View",
         "SORT_TOOLTIP_LABEL": "Sort conversations",
+        "STATUS_FILTER_TOOLTIP_LABEL": "Filter by status",
         "CHAT_SORT": {
             "STATUS": "Status",
             "ORDER_BY": "Order by"
@@ -1554,6 +1555,14 @@ const messages: Record<string, unknown> = {
             "DARK_MODE": "Dark",
             "SYSTEM_MODE": "System",
             "SNOOZE_NOTIFICATION": "Snooze Notification"
+        },
+        "NO_RESULTS": "No results found",
+        "FOOTER": {
+            "SELECT": "to select",
+            "NAVIGATE": "to navigate",
+            "CLOSE": "to close",
+            "MOVE_TO_PARENT": "move to parent",
+            "ESC_KEY": "esc"
         }
     },
     "COMMON": {
@@ -2374,6 +2383,7 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "from phone",
         "MESSAGE_ACTIONS": {
+            "MORE": "More actions",
             "REACT": "React",
             "RECALL": "Unsend for everyone",
             "DELETE": "Delete",
