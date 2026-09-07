@@ -1,0 +1,42 @@
+{
+  "_source": {
+    "message_id": 751,
+    "captured_at": "2026-09-07T00:45:00+07:00",
+    "origin": "captured",
+    "note": "content.globalMsgId mới là tin bị thu hồi, msgId là của chính sự kiện"
+  },
+  "type": "relay_event",
+  "event_type": "undo",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "source_id": "zalo-personal-undo-8230000000015",
+  "payload": [
+    {
+      "data": {
+        "actionId": "13991110592205",
+        "msgId": "8230000000015",
+        "cliMsgId": "1788700000015",
+        "msgType": "chat.undo",
+        "uidFrom": "8800000000000002",
+        "idTo": "7700000000000001",
+        "dName": "Khách A",
+        "ts": "1788700840000",
+        "status": 1,
+        "content": {
+          "globalMsgId": 8230000000011,
+          "cliMsgId": 1788700000011,
+          "deleteMsg": 0,
+          "srcId": "8800000000000002",
+          "destId": 0
+        },
+        "notify": "1",
+        "ttl": 0,
+        "cmd": 501
+      },
+      "threadId": "8800000000000002",
+      "isSelf": false,
+      "isGroup": false
+    }
+  ]
+}

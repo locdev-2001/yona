@@ -8,6 +8,11 @@ return [
     'EOF' => 'All conversations loaded 🎉',
     'LIST' => [
         404 => 'There are no active conversations in this group.',
+        // Yona: empty list explains WHY it is empty and points at the tab that has work.
+        'NONE_ASSIGNED_TO_ME' => 'No conversation is assigned to you.',
+        'NONE_UNASSIGNED' => 'Every conversation already has an assignee.',
+        'VIEW_UNASSIGNED' => 'View {count} unassigned',
+        'VIEW_ALL' => 'View all {count} conversations',
     ],
     'FAILED_TO_SEND' => 'Failed to send',
     'FETCH_ERROR' => 'Couldn\'t load conversations. Please try again.',

@@ -9,7 +9,7 @@ import { useMentionableAgents } from 'dashboard/conversation/mentionApi';
 import { t } from '../../../../i18n';
 import type { AvailabilityStatus, DashboardPageProps } from '../../../types';
 import CaretAnchoredPicker from './CaretAnchoredPicker';
-import type { CaretPosition } from './CaretAnchoredPicker';
+import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import { buildMentionItems, countMentionItems } from './mentionHelpers';
 import type { MentionFilter, MentionPickerItem, MentionRecord } from './mentionHelpers';
 
@@ -21,7 +21,7 @@ interface TagAgentsProps {
     caretPosition: CaretPosition | null;
     searchKey: string;
     onSelectAgent: (record: MentionRecord) => void;
-    onClose: () => void;
+    onClose: (reason: PickerCloseReason) => void;
     onRemoveTrigger: () => void;
 }
 

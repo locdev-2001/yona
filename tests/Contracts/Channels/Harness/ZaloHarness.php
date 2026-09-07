@@ -14,18 +14,29 @@ use LogicException;
 use Tests\Feature\Channels\ChannelFixture;
 
 /**
- * Zalo cá nhân trong khung contract. Fixture là payload THẬT của bridge
- * (tests/Fixtures/channels/zalo_*.json, đã ẩn PII); bridge và CDN Zalo được giả
- * bằng Http::fake nên contract đo đúng cái driver bắn ra.
+ * Zalo cá nhân trong khung contract. Fixture là bộ vàng trích từ payload THẬT của
+ * bridge (tests/Fixtures/channels/zalo/real/*.json — PII giả nhất quán, mỗi file
+ * ghi `_source`); bridge và CDN Zalo được giả bằng Http::fake nên contract đo đúng
+ * cái driver bắn ra. Hình dạng bộ vàng được khoá bởi ZaloFixtureShapeTest.
  */
 final class ZaloHarness implements ChannelHarness
 {
+    /** Thư mục bộ fixture vàng — mọi loại tin của Zalo đều lấy từ đây. */
+    private const REAL = 'zalo/real/';
+
     /** Fixture thật cho từng năng lực tin đến. */
     private const INBOUND_FIXTURES = [
         // Bản có `listener_data` để driver lưu được ảnh chụp zca — trích dẫn chiều
         // ra của Zalo dựng từ đó (SendMessageQuote cần đủ 6 trường).
-        Capability::InboundText->value => 'zalo_contract_text',
-        Capability::InboundImage->value => 'zalo_inbound_image',
+        Capability::InboundText->value => 'text',
+        Capability::InboundImage->value => 'image',
+        Capability::InboundGif->value => 'gif',
+        Capability::InboundFile->value => 'file',
+        Capability::InboundSticker->value => 'sticker',
+        Capability::InboundLocation->value => 'location',
+        Capability::InboundContactCard->value => 'business_card',
+        Capability::InboundBankCard->value => 'bank_card',
+        Capability::InboundReminder->value => 'reminder_created',
     ];
 
     private ?Conversation $conversation = null;
@@ -54,7 +65,7 @@ final class ZaloHarness implements ChannelHarness
 
         // Driver dedupe theo `source_id` trên cả inbox: bơm cùng một fixture hai lần
         // (contract này gọi, contract kia gọi) phải ra hai tin khác nhau như đời thật.
-        $payload = ChannelFixture::load($fixture);
+        $payload = ChannelFixture::load(self::REAL.$fixture);
         $sourceId = $payload['source_id'].'-'.(++$this->sequence);
         $payload['source_id'] = $sourceId;
 
@@ -84,14 +95,22 @@ final class ZaloHarness implements ChannelHarness
 
     public function receiveEvent(Capability $capability, Message $target): void
     {
-        $fixture = match ($capability) {
-            Capability::EventSeen => 'zalo_relay_seen',
-            Capability::EventDelivered => 'zalo_relay_delivered',
+        $payload = ChannelFixture::load(self::REAL.match ($capability) {
+            Capability::EventSeen => 'seen',
+            Capability::EventDelivered => 'delivered',
+            Capability::EventReaction => 'reaction',
+            Capability::EventRecall => 'undo',
             default => throw new LogicException("Zalo chưa có fixture sự kiện cho {$capability->value}"),
-        };
+        });
 
-        $payload = ChannelFixture::load($fixture);
-        $payload['payload'][0][0]['data']['msgId'] = $target->source_id;
+        // Biên nhận đi theo lô (payload[0] là MẢNG), còn reaction/undo là một sự
+        // kiện đơn — hai hình dạng khác nhau nên phải trỏ đích ở đúng chỗ.
+        match ($capability) {
+            Capability::EventSeen, Capability::EventDelivered => $payload['payload'][0][0]['data']['msgId'] = $target->source_id,
+            Capability::EventReaction => $payload['payload'][0]['data']['content']['rMsg'][0]['gMsgID'] = $target->source_id,
+            Capability::EventRecall => $payload['payload'][0]['data']['content']['globalMsgId'] = $target->source_id,
+            default => null,
+        };
 
         $this->dispatch($payload);
     }

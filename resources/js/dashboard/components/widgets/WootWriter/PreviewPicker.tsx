@@ -36,10 +36,13 @@ interface PreviewPickerProps<TItem extends PreviewPickerItem> {
     previewLayout?: PreviewLayout;
     className?: string;
     style?: React.CSSProperties;
+    /** Ô soạn thảo giữ focus và tự lọc — bảng không dựng ô tìm kiếm riêng. */
+    hideSearch?: boolean;
     onSelect: (index: number) => void;
     renderPreview?: (item: TItem | undefined) => ReactNode;
     renderLeading?: (item: TItem, isSelected: boolean) => ReactNode;
     renderFilters?: () => ReactNode;
+    renderEmpty?: () => ReactNode;
 }
 
 function PreviewPickerInner<TItem extends PreviewPickerItem>(
@@ -55,10 +58,12 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
         previewLayout = 'side',
         className = '',
         style,
+        hideSearch = false,
         onSelect,
         renderPreview,
         renderLeading,
         renderFilters,
+        renderEmpty,
     }: PreviewPickerProps<TItem>,
     ref: React.ForwardedRef<PreviewPickerHandle>,
 ) {
@@ -101,8 +106,8 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
     useImperativeHandle(ref, () => ({ scrollSelectedIntoView }));
 
     useEffect(() => {
-        searchRef.current?.focus();
-    }, []);
+        if (!hideSearch) searchRef.current?.focus();
+    }, [hideSearch]);
 
     const groupFor = (index: number): string | null => {
         const { group } = items[index];
@@ -118,23 +123,25 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
             data-popover-content
         >
             <div className={`flex flex-col min-h-0 ${listClass}`}>
-                <div className="relative flex items-center flex-shrink-0 h-11 px-3 border-b border-n-strong">
-                    <Icon icon="i-lucide-search" className="size-4 text-n-slate-10" />
-                    <input
-                        ref={searchRef}
-                        value={search}
-                        type="text"
-                        role="combobox"
-                        aria-autocomplete="list"
-                        aria-expanded="true"
-                        aria-controls={listboxId}
-                        aria-activedescendant={items.length ? optionId(selectedIndex) : undefined}
-                        aria-label={searchPlaceholder}
-                        className="w-full h-full px-2 text-sm bg-transparent outline-none text-n-slate-12 placeholder:text-n-slate-10 reset-base"
-                        placeholder={searchPlaceholder}
-                        onChange={event => onSearchChange(event.target.value)}
-                    />
-                </div>
+                {hideSearch ? null : (
+                    <div className="relative flex items-center flex-shrink-0 h-11 px-3 border-b border-n-strong">
+                        <Icon icon="i-lucide-search" className="size-4 text-n-slate-10" />
+                        <input
+                            ref={searchRef}
+                            value={search}
+                            type="text"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded="true"
+                            aria-controls={listboxId}
+                            aria-activedescendant={items.length ? optionId(selectedIndex) : undefined}
+                            aria-label={searchPlaceholder}
+                            className="w-full h-full px-2 text-sm bg-transparent outline-none text-n-slate-12 placeholder:text-n-slate-10 reset-base"
+                            placeholder={searchPlaceholder}
+                            onChange={event => onSearchChange(event.target.value)}
+                        />
+                    </div>
+                )}
                 {renderFilters ? (
                     // mousedown.prevent của gốc: bấm tab lọc không cướp focus khỏi ô tìm kiếm.
                     <div
@@ -186,7 +193,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
                     </ul>
                     {!items.length ? (
                         <div role="status" className="flex items-center px-2 py-1.5 text-sm text-n-slate-11">
-                            {isLoading ? <Spinner size={16} /> : emptyLabel}
+                            {isLoading ? <Spinner size={16} /> : (renderEmpty?.() ?? emptyLabel)}
                         </div>
                     ) : null}
                 </div>

@@ -17,5 +17,5 @@ return [
     'SUPER_ADMIN_CONSOLE' => 'Console quản trị',
     'DOCS' => 'Đọc tài liệu',
     'CHANGELOG' => 'Nhật ký thay đổi',
-    'LOGOUT' => 'Log out',
+    'LOGOUT' => 'Đăng xuất',
 ];

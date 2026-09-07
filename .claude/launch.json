@@ -18,6 +18,16 @@
                 "services/zalo-bridge/src/index.mjs"
             ],
             "port": 3710
+        },
+        {
+            "name": "reverb",
+            "runtimeExecutable": "php",
+            "runtimeArgs": [
+                "artisan",
+                "reverb:start",
+                "--port=8080"
+            ],
+            "port": 8080
         }
     ]
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { modifierKeyLabel } from 'shared/helpers/kbd';
 import PublicSearchInput from './PublicSearchInput';
 import type { SearchInputHandle } from './PublicSearchInput';
 import SearchSuggestions from './SearchSuggestions';
@@ -29,7 +30,7 @@ export default function PublicArticleSearch({ size = 'default', showKbd = false 
     const kbdLabel = useMemo(() => {
         if (!showKbd) return '';
 
-        return /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) ? '⌘ K' : 'Ctrl K';
+        return `${modifierKeyLabel()} K`;
     }, [showKbd]);
 
     useEffect(() => {

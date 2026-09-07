@@ -85,6 +85,12 @@ function useWindowSize(): { width: number; height: number } {
     return size;
 }
 
+/**
+ * Vì sao bảng đóng: 'keyboard' (Escape) thì con trỏ vẫn thuộc về ô soạn và phải
+ * được trả về đó; 'outside' là người dùng bấm đi chỗ khác — không giành lại focus.
+ */
+export type PickerCloseReason = 'keyboard' | 'outside';
+
 interface CaretAnchoredPickerProps<TItem extends PreviewPickerItem> {
     caretPosition: CaretPosition | null;
     items: TItem[];
@@ -94,11 +100,23 @@ interface CaretAnchoredPickerProps<TItem extends PreviewPickerItem> {
     emptyLabel?: string;
     isLoading?: boolean;
     onSelect: (item: TItem) => void;
-    onClose: () => void;
+    onClose: (reason: PickerCloseReason) => void;
     onRemoveTrigger: () => void;
     renderPreview?: (item: TItem | undefined) => ReactNode;
     renderLeading?: (item: TItem, isSelected: boolean) => ReactNode;
     renderFilters?: () => ReactNode;
+    renderEmpty?: () => ReactNode;
+    /**
+     * Ô soạn thảo giữ focus: từ khoá là chính ký tự kích hoạt đang gõ, bảng không
+     * dựng ô tìm kiếm riêng và để Backspace cho ô soạn thảo (xoá hết ký tự kích
+     * hoạt là bảng tự đóng qua onExit của plugin gợi ý).
+     */
+    keepFocusInEditor?: boolean;
+    /**
+     * Khối không được che khi bảng bung lên trên (thanh tab Trả lời/Lưu ý riêng
+     * nằm ngay trên ô soạn). Vắng mặt thì neo vào chính con trỏ như bản gốc.
+     */
+    boundaryElement?: HTMLElement | null;
 }
 
 export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
@@ -115,6 +133,9 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
     renderPreview,
     renderLeading,
     renderFilters,
+    renderEmpty,
+    keepFocusInEditor = false,
+    boundaryElement = null,
 }: CaretAnchoredPickerProps<TItem>) {
     const [caretAnchorElement, setCaretAnchorElement] = useState<HTMLDivElement | null>(null);
     const pickerRef = useRef<PreviewPickerHandle>(null);
@@ -126,7 +147,12 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
 
     const hasPreview = Boolean(renderPreview);
 
-    const above = caretAnchor.top - VIEWPORT_MARGIN - GAP;
+    // Mép trên của khối phải chừa chỗ (nếu có) — nếu không thì chính con trỏ.
+    const boundaryTop = boundaryElement
+        ? Math.min(boundaryElement.getBoundingClientRect().top, caretAnchor.top)
+        : caretAnchor.top;
+
+    const above = boundaryTop - VIEWPORT_MARGIN - GAP;
     const below = windowHeight - caretAnchor.bottom - VIEWPORT_MARGIN - GAP;
     const placeAbove = above > below;
     const availableHeight = Math.min(MAX_HEIGHT, Math.max(placeAbove ? above : below, 0));
@@ -154,7 +180,7 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
         maxHeight: `${availableHeight}px`,
         ...(showsPreview ? { minHeight: `${Math.min(MIN_HEIGHT, availableHeight)}px` } : {}),
         ...(placeAbove
-            ? { bottom: `${windowHeight - caretAnchor.top + GAP}px` }
+            ? { bottom: `${windowHeight - boundaryTop + GAP}px` }
             : { top: `${caretAnchor.bottom + GAP}px` }),
     };
 
@@ -188,21 +214,27 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
         'Shift+Tab': withPicker(() =>
             setSelectedIndex(current => (items.length ? (current === 0 ? items.length - 1 : current - 1) : current)),
         ),
-        Escape: withPicker(onClose),
-        Backspace: {
-            action: (event: KeyboardEvent) => {
-                if (search) return;
-                event.preventDefault();
-                onRemoveTrigger();
-            },
-            allowOnFocusedInput: true,
-        },
+        Escape: withPicker(() => onClose('keyboard')),
+        // Focus ở ô soạn: Backspace là phím xoá chữ bình thường, xoá hết ký tự
+        // kích hoạt thì plugin gợi ý tự đóng bảng — không cướp phím của người gõ.
+        ...(keepFocusInEditor
+            ? {}
+            : {
+                  Backspace: {
+                      action: (event: KeyboardEvent) => {
+                          if (search) return;
+                          event.preventDefault();
+                          onRemoveTrigger();
+                      },
+                      allowOnFocusedInput: true,
+                  },
+              }),
     });
 
     // v-on-click-outside của gốc.
     useEffect(() => {
         const onPointerDown = (event: MouseEvent) => {
-            if (!pickerHostRef.current?.contains(event.target as Node)) onClose();
+            if (!pickerHostRef.current?.contains(event.target as Node)) onClose('outside');
         };
         document.addEventListener('mousedown', onPointerDown);
         return () => document.removeEventListener('mousedown', onPointerDown);
@@ -237,10 +269,12 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
                         previewLayout={previewLayout}
                         className="fixed z-[9999]"
                         style={pickerStyle}
+                        hideSearch={keepFocusInEditor}
                         onSelect={selectAtIndex}
                         renderPreview={renderPreview}
                         renderLeading={renderLeading}
                         renderFilters={renderFilters}
+                        renderEmpty={renderEmpty}
                     />
                 </div>,
                 document.body,

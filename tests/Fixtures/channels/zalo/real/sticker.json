@@ -1,0 +1,51 @@
+{
+  "_source": {
+    "message_id": 696,
+    "captured_at": "2026-09-07T00:32:00+07:00",
+    "origin": "captured"
+  },
+  "type": "inbound",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "peer_uid": "8800000000000002",
+  "thread_id": "8800000000000002",
+  "thread_type": 0,
+  "source_id": "8230000000002",
+  "is_self": false,
+  "direction": "in",
+  "user": {
+    "name": "Khách A",
+    "avatar": "https://cdn.zalo.test/avatar/khach-a.jpg"
+  },
+  "platform_sent_at": 1788700060000,
+  "inbound_kind": "sticker",
+  "msg_type": "chat.sticker",
+  "content": null,
+  "sticker": {
+    "id": 98930,
+    "catId": 61900,
+    "type": 7,
+    "stickerUrl": "https://cdn.zalo.test/api/emoticon/sticker/webpc?eid=98930&size=130",
+    "stickerSpriteUrl": "https://cdn.zalo.test/api/emoticon/sprite?eid=98930&size=130",
+    "url": "https://cdn.zalo.test/api/emoticon/sticker/webpc?eid=98930&size=130",
+    "thumbnail": "https://cdn.zalo.test/api/emoticon/sprite?eid=98930&size=130",
+    "text": "[^61900.98930^]"
+  },
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "8230000000002",
+    "cliMsgId": "1788700000002",
+    "msgType": "chat.sticker",
+    "uidFrom": "8800000000000002",
+    "idTo": "7700000000000001",
+    "dName": "Khách A",
+    "content": {
+      "id": 98930,
+      "catId": 61900,
+      "type": 7
+    },
+    "ts": "1788700060000",
+    "ttl": 0
+  }
+}

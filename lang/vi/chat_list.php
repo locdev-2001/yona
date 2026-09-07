@@ -10,6 +10,11 @@ return [
     'EOF' => 'Tất cả các hội thoại đã được tải 🎉',
     'LIST' => [
         '404' => 'Không có bất kì hoạt động trò chuyện nào trong nhóm.',
+        // Cột hội thoại rỗng phải nói rõ vì sao rỗng và chỉ sang tab đang có việc.
+        'NONE_ASSIGNED_TO_ME' => 'Chưa có hội thoại nào được gán cho bạn.',
+        'NONE_UNASSIGNED' => 'Mọi hội thoại đều đã có người phụ trách.',
+        'VIEW_UNASSIGNED' => 'Xem {count} hội thoại chưa gán',
+        'VIEW_ALL' => 'Xem tất cả {count} hội thoại',
     ],
     'FAILED_TO_SEND' => 'Gửi thất bại',
     'FETCH_ERROR' => 'Không tải được hội thoại. Bạn hãy thử lại.',
@@ -20,9 +25,11 @@ return [
         'INPUT' => 'Tìm kiếm cho người, đoạn chat, lưu trữ trả lời ..',
     ],
     'FILTER_ALL' => 'Tất cả',
+    // Nhãn tab phải ngắn để ba tab vừa bề rộng mặc định của cột hội thoại
+    // (tiếng Việt dài hơn tiếng Anh) — xem reports/ux-deviations.md.
     'ASSIGNEE_TYPE_TABS' => [
         'me' => 'Của tôi',
-        'unassigned' => 'Chưa được phân công',
+        'unassigned' => 'Chưa gán',
         'all' => 'Tất cả',
     ],
     'CHAT_STATUS_FILTER_ITEMS' => [

@@ -17,7 +17,9 @@ class AgentBotFactory extends Factory
             'account_id' => Account::factory(),
             'name' => fake()->name(),
             'description' => fake()->sentence(),
-            'outgoing_url' => 'https://'.fake()->unique()->domainName().'/bot',
+            // TLD `.invalid` (RFC 2606) không bao giờ phân giải: bot giả trong test
+            // không kéo theo lượt gọi Internet thật khi listener bắn webhook.
+            'outgoing_url' => 'https://'.fake()->unique()->domainWord().'.invalid/bot',
             'bot_type' => AgentBot::TYPE_WEBHOOK,
             'bot_config' => [],
         ];

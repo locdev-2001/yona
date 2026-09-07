@@ -32,3 +32,12 @@ export function updateColorScheme(scheme: ColorScheme): void {
     }
     setColorTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
 }
+
+// Nhãn của ba chế độ giao diện — NGUỒN DUY NHẤT cho cả command bar
+// (useAppearanceHotKeys) lẫn menu hồ sơ ở sidebar, để hai chỗ không bao giờ
+// nói khác nhau và không chỗ nào vẽ cứng chữ tiếng Anh.
+export const COLOR_SCHEME_OPTIONS: readonly { scheme: ColorScheme; titleKey: string }[] = Object.freeze([
+    { scheme: 'light', titleKey: 'COMMAND_BAR.COMMANDS.LIGHT_MODE' },
+    { scheme: 'dark', titleKey: 'COMMAND_BAR.COMMANDS.DARK_MODE' },
+    { scheme: 'auto', titleKey: 'COMMAND_BAR.COMMANDS.SYSTEM_MODE' },
+]);

@@ -64,6 +64,7 @@ import {
     sortComparator,
 } from './realtimeReducers';
 import {
+    ASSIGNEE_TAB_VALUES,
     ASSIGNEE_TYPE,
     CONVERSATION_TYPE,
     CONVERSATIONS_PER_PAGE,
@@ -302,12 +303,22 @@ export function ConversationProvider({
         });
     }, [isOnExpandedLayout, updateUISettings]);
 
+    // Bộ lọc cơ bản của danh sách hội thoại nằm chung một khoá `ui_settings`.
+    // Yona thêm `assignee_type` vào cụm này (xem reports/ux-deviations.md #1).
     const filterSettings = (user.ui_settings?.conversations_filter_by ?? {}) as {
         status?: string;
         order_by?: string;
+        assignee_type?: string;
     };
 
-    const [assigneeTab, setAssigneeTabState] = useState<AssigneeTab>(ASSIGNEE_TYPE.ME);
+    // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" như Chatwoot —
+    // chủ shop một người mở inbox lần đầu phải thấy khách đang chờ, không phải một
+    // cột trống. Người dùng đổi tab thì lựa chọn được nhớ lại.
+    const [assigneeTab, setAssigneeTabState] = useState<AssigneeTab>(
+        ASSIGNEE_TAB_VALUES.includes(filterSettings.assignee_type as AssigneeTab)
+            ? (filterSettings.assignee_type as AssigneeTab)
+            : ASSIGNEE_TYPE.ALL,
+    );
     const [status, setStatus] = useState<ConversationStatusFilter>(
         (filterSettings.status as ConversationStatusFilter) || STATUS_TYPE.OPEN,
     );
@@ -463,17 +474,46 @@ export function ConversationProvider({
         void fetchPage(pageRef.current + 1, true);
     }, [endReached, listLoading, fetchPage]);
 
-    const setAssigneeTab = useCallback((tab: AssigneeTab) => {
-        setAssigneeTabState(tab);
-    }, []);
+    // Một điểm ghi duy nhất cho cả cụm `conversations_filter_by`: server merge NÔNG
+    // (array_merge ở ProfilesController) nên mỗi lần lưu phải gửi đủ ba khoá, nếu
+    // không khoá không gửi sẽ bị xoá mất.
+    const persistConversationFilters = useCallback(
+        (patch: { status?: string; order_by?: string; assignee_type?: AssigneeTab }) => {
+            updateUISettings({
+                conversations_filter_by: {
+                    status,
+                    order_by: sortBy,
+                    assignee_type: assigneeTab,
+                    ...patch,
+                },
+            });
+        },
+        [assigneeTab, sortBy, status, updateUISettings],
+    );
 
-    const setStatusFilter = useCallback((value: ConversationStatusFilter) => {
-        setStatus(value);
-    }, []);
+    const setAssigneeTab = useCallback(
+        (tab: AssigneeTab) => {
+            setAssigneeTabState(tab);
+            persistConversationFilters({ assignee_type: tab });
+        },
+        [persistConversationFilters],
+    );
 
-    const setSortFilter = useCallback((value: string) => {
-        setSortBy(value);
-    }, []);
+    const setStatusFilter = useCallback(
+        (value: ConversationStatusFilter) => {
+            setStatus(value);
+            persistConversationFilters({ status: value });
+        },
+        [persistConversationFilters],
+    );
+
+    const setSortFilter = useCallback(
+        (value: string) => {
+            setSortBy(value);
+            persistConversationFilters({ order_by: value });
+        },
+        [persistConversationFilters],
+    );
 
     const applyConversationFilters = useCallback((filters: ConversationFilterCondition[]) => {
         const nextFilters = filters.map(filter => ({ ...filter }));

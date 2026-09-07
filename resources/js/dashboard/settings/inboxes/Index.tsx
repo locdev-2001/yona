@@ -86,6 +86,7 @@ export default function InboxesIndex() {
                     <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
                     <ChannelName
                         channelType={inbox.channel_type}
+                        medium={inbox.medium}
                         className="text-body-main text-n-slate-11"
                     />
                 </div>

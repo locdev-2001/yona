@@ -1,0 +1,39 @@
+{
+  "_source": {
+    "message_id": 884,
+    "captured_at": "2026-09-07T03:00:00+07:00",
+    "origin": "captured",
+    "note": "bridge dội lại tin CRM vừa gửi — direction=echo, không meter"
+  },
+  "type": "inbound",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "peer_uid": "8800000000000002",
+  "thread_id": "8800000000000002",
+  "thread_type": 0,
+  "source_id": "8230000000012",
+  "is_self": true,
+  "direction": "echo",
+  "user": {
+    "name": "Khách A",
+    "avatar": "https://cdn.zalo.test/avatar/khach-a.jpg"
+  },
+  "platform_sent_at": 1788700660000,
+  "inbound_kind": "text",
+  "msg_type": "chat.text",
+  "content": "Còn hàng bạn nhé!",
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "8230000000012",
+    "cliMsgId": "1788700000012",
+    "msgType": "webchat",
+    "uidFrom": "7700000000000001",
+    "idTo": "8800000000000002",
+    "dName": "Chủ Shop",
+    "content": "Còn hàng bạn nhé!",
+    "ts": "1788700660000",
+    "ttl": 0
+  },
+  "bridge_outbound_echo": true
+}

@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
 import SelectMenu from 'dashboard/components-next/selectmenu/SelectMenu';
-import { putJson } from '../../helper/apiClient';
 import { useConversation } from '../ConversationContext';
 import type { ConversationStatusFilter } from '../types';
 
@@ -58,25 +57,14 @@ export default function ConversationBasicFilter({ isOnExpandedLayout = false }: 
     const activeChatStatusLabel = chatStatusOptions.find(option => option.value === status)?.label || '';
     const activeChatSortLabel = chatSortOptions.find(option => option.value === sortBy)?.label || '';
 
-    const saveSelectedFilter = (type: 'status' | 'sort', value: string) => {
-        void putJson('/api/v1/profile', {
-            ui_settings: {
-                conversations_filter_by: {
-                    status: type === 'status' ? value : status,
-                    order_by: type === 'sort' ? value : sortBy,
-                },
-            },
-        });
-    };
-
+    // Việc lưu vào ui_settings nằm trong ConversationContext (một điểm ghi cho cả
+    // cụm conversations_filter_by, gồm cả tab người phụ trách).
     const handleStatusChange = (value: string) => {
         setStatusFilter(value as ConversationStatusFilter);
-        saveSelectedFilter('status', value);
     };
 
     const handleSortChange = (value: string) => {
         setSortFilter(value);
-        saveSelectedFilter('sort', value);
     };
 
     return (

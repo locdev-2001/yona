@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { updateColorScheme } from 'dashboard/helper/themeHelper';
+import { COLOR_SCHEME_OPTIONS, updateColorScheme } from 'dashboard/helper/themeHelper';
 import type { ColorScheme } from 'dashboard/helper/themeHelper';
 import {
     ICON_APPEARANCE,
@@ -18,20 +18,21 @@ import { clearCommandBarActions, setCommandBarActions } from './commandBarStore'
 
 const SOURCE = 'appearance';
 
-const THEME_OPTIONS: { key: ColorScheme; titleKey: string; icon: string }[] = [
-    { key: 'light', titleKey: 'COMMAND_BAR.COMMANDS.LIGHT_MODE', icon: ICON_LIGHT_MODE },
-    { key: 'dark', titleKey: 'COMMAND_BAR.COMMANDS.DARK_MODE', icon: ICON_DARK_MODE },
-    { key: 'auto', titleKey: 'COMMAND_BAR.COMMANDS.SYSTEM_MODE', icon: ICON_SYSTEM_MODE },
-];
+// Nhãn đến từ COLOR_SCHEME_OPTIONS (themeHelper); ở đây chỉ thêm icon của ninja-keys.
+const THEME_ICONS: Record<ColorScheme, string> = {
+    light: ICON_LIGHT_MODE,
+    dark: ICON_DARK_MODE,
+    auto: ICON_SYSTEM_MODE,
+};
 
 export function buildAppearanceActions(): CommandBarAction[] {
-    const options: CommandBarAction[] = THEME_OPTIONS.map(theme => ({
-        id: theme.key,
+    const options: CommandBarAction[] = COLOR_SCHEME_OPTIONS.map(theme => ({
+        id: theme.scheme,
         title: t(theme.titleKey),
         parent: 'appearance_settings',
         section: t('COMMAND_BAR.SECTIONS.APPEARANCE'),
-        icon: theme.icon,
-        handler: () => updateColorScheme(theme.key),
+        icon: THEME_ICONS[theme.scheme],
+        handler: () => updateColorScheme(theme.scheme),
     }));
 
     return [
