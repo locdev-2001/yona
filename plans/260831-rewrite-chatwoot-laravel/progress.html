@@ -108,7 +108,7 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>07/09/2026 20:10 — 40/40 đã port. Giai đoạn CẦU TOÀN: chuẩn năng lực kênh, Zalo 8 lô nghiệm thu trên phiên thật, lõi media, UI chat theo audit, test/CI ổn định (12 commit)</b></span>
+      <span class="chip">Cập nhật <b>07/09/2026 20:20 — 40/40 đã port. Giai đoạn CẦU TOÀN đợt 1 đóng: chuẩn năng lực kênh, Zalo 8 lô trên phiên thật, lõi media, UI chat theo audit, CSAT widget, test/CI ổn định (15 commit). Kế tiếp: bố cục di động, giờ theo locale, poll Zalo 409, dữ liệu thật từ điện thoại, hợp nhất main</b></span>
     </div>
   </header>
 
@@ -289,7 +289,7 @@
       <li><span class="k">Phiên & vận hành</span><span>Mất phiên hiện ở sidebar/card/khung chat, ngắt kết nối/đổi tài khoản, xoá inbox đăng xuất bridge, thẻ tài khoản Zalo có avatar, health sweep + ngắt mạch half-open, cookie phiên 0600, URL đính kèm có chữ ký, bỏ giới hạn tin chủ động (Quyết định 15).</span></li>
       <li><span class="k">UI chat theo audit</span><span>Bảng câu trả lời mẫu <code>/</code> giữ focus và đóng bằng Escape, Ctrl+K mở bảng lệnh trên mọi hệ điều hành, tab mặc định "Tất cả" nhớ theo người dùng, empty state theo ngữ cảnh, nhãn kênh Zalo, menu hồ sơ tiếng Việt, mã nhúng widget lên đầu tab Cấu hình.</span></li>
       <li><span class="k">Kiểm thử</span><span>Fixture golden Zalo từ payload thật, suite không gọi Internet hay bridge thật (phát hiện 13 test từng gõ vào phiên Zalo của founder), CI một workflow đủ 8 gate, harness e2e Zalo/handoff/CSAT tự dựng dữ liệu.</span></li>
-      <li><span class="k">Commit</span><span><code>ea17d4c</code> · <code>7c002b2</code> · <code>1d2cc66</code> · <code>66c15be</code> · <code>80c51e5</code> · <code>ad68533</code> · <code>573821a</code> · <code>eb35e8f</code> · <code>4bf46a5</code>. Đang làm: CSAT widget sau reload, polish chat (bảng lệnh tiếng Việt, hành động trên tin ở touch). Còn mở: gom dropdown panel phải (cần founder duyệt), dữ liệu thật từ điện thoại, hợp nhất main (hỏi founder).</span></li>
+      <li><span class="k">Commit</span><span><code>ea17d4c</code> · <code>7c002b2</code> · <code>1d2cc66</code> · <code>66c15be</code> · <code>80c51e5</code> · <code>ad68533</code> · <code>573821a</code> · <code>eb35e8f</code> · <code>4bf46a5</code>. Đã thêm <code>8329116</code> (CSAT widget + điều hướng khách quay lại) và commit polish chat. Kế tiếp: 🔴 dashboard chưa có bố cục di động (&lt;768px danh sách đè khung chat), giờ dưới bong bóng theo locale, poll Zalo trả 409, gom dropdown panel phải (cần founder duyệt), nghiệm thu dữ liệu thật từ điện thoại, hợp nhất main (hỏi founder).</span></li>
     </ul>
   </section>
 
