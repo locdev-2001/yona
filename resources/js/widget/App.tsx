@@ -80,7 +80,7 @@ export default function App() {
                     if (message.locale) setApiLocale(String(message.locale));
                     IFrameHelper.sendMessage({ event: 'setBubbleLabel', label: widgetBubbleLabel() });
                     widgetStore.setAppConfig(message as unknown as Partial<AppConfig>);
-                    void widgetStore.fetchOldConversations();
+                    void widgetStore.fetchOldConversations().then(showMessagesWhenConversationExists);
                     void widgetStore.fetchAvailableAgents();
                     void widgetStore.fetchContact();
                     // App.vue#setCampaignReadData — SDK gửi mốc tạm ngưng đọc từ cookie.
@@ -158,9 +158,7 @@ export default function App() {
                     widgetStore.patchAppConfig({ isWidgetOpen: isOpen });
 
                     const activeRoute = currentRoute();
-                    if (activeRoute === WIDGET_ROUTES.HOME && isOpen && conversationSizeNow()) {
-                        replaceRoute(WIDGET_ROUTES.MESSAGES);
-                    }
+                    showMessagesWhenConversationExists();
                     if (!isOpen && UNREAD_OR_CAMPAIGN_ROUTES.includes(activeRoute)) {
                         void widgetStore.setUserLastSeen();
                         unsetUnreadView();
@@ -351,6 +349,20 @@ export default function App() {
 }
 
 const conversationSizeNow = () => Object.keys(widgetStore.getState().conversations).length;
+
+// App.vue#toggle-open (shouldShowMessageView): mở widget khi đang ở màn hình chủ
+// mà đã có hội thoại thì vào thẳng khung chat.
+// Bản gốc nhúng sẵn window.chatwootWebChannel vào HTML nên danh sách tin đã nạp
+// xong trước lúc khách bấm bong bóng; bản này phải POST /config trước, tin có thể
+// về SAU sự kiện `toggle-open` — khi đó luật trên đọc phải danh sách rỗng và
+// widget kẹt ở màn hình chủ. Vì vậy luật nằm ở đúng một chỗ và được chạy lại khi
+// danh sách tin nạp xong.
+export const showMessagesWhenConversationExists = (): void => {
+    if (!widgetStore.getState().appConfig.isWidgetOpen) return;
+    if (currentRoute() !== WIDGET_ROUTES.HOME) return;
+    if (!conversationSizeNow()) return;
+    replaceRoute(WIDGET_ROUTES.MESSAGES);
+};
 
 // configMixin#shouldShowPreChatForm — form chỉ hiện khi bật cờ VÀ có ít nhất một
 // trường đang bật.
