@@ -19,6 +19,7 @@ Mở `/dashboard` lần đầu: tab mặc định **"Của tôi 0"** → cột g
 | 9 | Panel phải | "Hành động của hội thoại" 4 dropdown "Không có" xếp dọc chiếm 1/3 panel | 🟡 | Việc thường làm (gán cho mình) vẫn 2 click + cuộn | Nút "Gán cho tôi" 1 click cạnh dropdown; gom 4 dropdown thành 2 hàng | Giống oracle |
 | 12 | Cài đặt → Hộp thư | Inbox Zalo hiện phụ đề "Kênh API" | 🔴 | Nhãn kênh sai ngay trang quản lý kênh; SME nhiều inbox sẽ lẫn | Map `channel_type` → nhãn ở cùng helper icon kênh (`helper/inbox.ts`), thêm "Zalo"; bỏ nhánh mặc định rơi về API | Oracle không có Zalo |
 | 13 | Cài đặt → Câu trả lời mẫu | Empty state: "Không có câu trả lời soạn trước nào…" trong khi tiêu đề là "Câu trả lời mẫu"; không có nút tạo ngay trong empty state | 🟡 | Thuật ngữ lệch, thiếu dẫn lối | Thống nhất "câu trả lời mẫu"; empty state có nút "Thêm câu trả lời mẫu" | Giống oracle |
+| 14 | Menu hồ sơ (avatar góc dưới) | Locale vi vẫn hiện "Log out", "Light / Dark / System" tiếng Anh | 🟡 | Lẫn ngôn ngữ ở menu dùng hằng ngày | Khoá i18n cho 4 chuỗi trong `lang/vi` (`PROFILE_SETTINGS`/`APPEARANCE`), `i18n:generate` | Oracle en |
 | 10 | Light mode | Bong bóng/panel/tab đều đọc được, tương phản ổn | ✅ | — | — | — |
 | 11 | Realtime | Tin mới, badge, typing, tick trạng thái cập nhật không reload (đã kiểm nhiều lần trong phiên) | ✅ | — | — | — |
 
