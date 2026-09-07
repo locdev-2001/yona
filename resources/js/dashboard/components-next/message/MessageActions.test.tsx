@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
@@ -180,5 +180,64 @@ describe('hàng biểu cảm dưới bong bóng', () => {
         const [group] = groupReactions(readReactions({ reactions: [{ emoji: '👍', by: 'agent:self' }] }));
 
         expect(group.reactedBySelf).toBe(true);
+    });
+});
+
+// Máy cảm ứng không rê chuột được: `group-hover` không bao giờ chạy nên thanh hành
+// động phải nấp sau nút ⋯ hiện sẵn (finding #8 của audit UX chat 07/09).
+describe('thanh hành động trên máy không rê chuột được', () => {
+    const originalMatchMedia = window.matchMedia;
+
+    const stubPointer = (isHoverless: boolean) => {
+        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+            matches: query === '(hover: none)' ? isHoverless : false,
+            media: query,
+            onchange: null,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        })) as unknown as typeof window.matchMedia;
+    };
+
+    afterEach(() => {
+        window.matchMedia = originalMatchMedia;
+    });
+
+    it('hiện nút ⋯ thay cho thanh hành động, bấm mới bung cảm xúc và thu hồi', () => {
+        stubPointer(true);
+        renderMessage(outgoing(), ['outbound_reaction', 'outbound_recall'], {
+            onToggleReaction: vi.fn(),
+            onDeleteMessage: vi.fn(),
+        });
+
+        const moreButton = screen.getByRole('button', { name: 'More actions' });
+        expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Unsend for everyone' })).toBeNull();
+
+        fireEvent.click(moreButton);
+
+        expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'React' })).not.toBeNull();
+        expect(screen.getByRole('button', { name: 'Unsend for everyone' })).not.toBeNull();
+    });
+
+    it('thanh ⋯ hiện sẵn (không phụ thuộc rê chuột) trên máy cảm ứng', () => {
+        stubPointer(true);
+        const container = renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction: vi.fn() });
+
+        const bar = container.querySelector('button[aria-label="More actions"]')?.parentElement;
+        expect(bar?.className).toContain('opacity-60');
+        expect(bar?.className).not.toContain('group-hover/message:opacity-100');
+    });
+
+    it('máy có chuột giữ nguyên hành vi cũ: không có nút ⋯, thanh ẩn tới khi rê lên tin', () => {
+        stubPointer(false);
+        const container = renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction: vi.fn() });
+
+        expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+        const bar = container.querySelector('button[aria-label="React"]')?.parentElement;
+        expect(bar?.className).toContain('group-hover/message:opacity-100');
     });
 });

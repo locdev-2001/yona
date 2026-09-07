@@ -80,4 +80,12 @@ return [
         'SYSTEM_MODE' => 'System',
         'SNOOZE_NOTIFICATION' => 'Snooze Notification',
     ],
+    'NO_RESULTS' => 'No results found',
+    'FOOTER' => [
+        'SELECT' => 'to select',
+        'NAVIGATE' => 'to navigate',
+        'CLOSE' => 'to close',
+        'MOVE_TO_PARENT' => 'move to parent',
+        'ESC_KEY' => 'esc',
+    ],
 ];

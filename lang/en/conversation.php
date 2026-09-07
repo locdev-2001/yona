@@ -106,6 +106,7 @@ return [
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
     'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [
+        'MORE' => 'More actions',
         'REACT' => 'React',
         'RECALL' => 'Unsend for everyone',
         'DELETE' => 'Delete',

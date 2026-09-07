@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { formatNumber } from '@chatwoot/utils';
 
 import { t } from '../../../i18n';
@@ -37,6 +38,10 @@ export default function ChatListHeader({
 }: ChatListHeaderProps) {
     const { toggleConversationLayout } = useConversation();
     const hasAppliedFiltersOrActiveFolders = hasAppliedFilters || hasActiveFolders;
+    // LỆCH CÓ CHỦ ĐÍCH so với Chatwoot: pill trạng thái cạnh tiêu đề là nhãn tĩnh
+    // ở gốc, ở đây nó mở luôn bảng lọc trạng thái (xem reports/ux-deviations.md).
+    const [isStatusFilterOpen, setStatusFilterOpen] = useState(false);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     const filterTeleportTarget = (
         <div
@@ -47,6 +52,7 @@ export default function ChatListHeader({
 
     return (
         <div
+            ref={headerRef}
             className={`flex items-center justify-between gap-2 px-3 h-[3.25rem] ${
                 hasAppliedFiltersOrActiveFolders ? 'border-b border-n-strong' : ''
             }`}
@@ -64,9 +70,17 @@ export default function ChatListHeader({
                     </span>
                 ) : null}
                 {!hasAppliedFiltersOrActiveFolders ? (
-                    <span className="px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 text-xxs text-n-slate-12 shrink-0">
+                    <button
+                        type="button"
+                        title={t('CHAT_LIST.STATUS_FILTER_TOOLTIP_LABEL')}
+                        aria-label={t('CHAT_LIST.STATUS_FILTER_TOOLTIP_LABEL')}
+                        aria-expanded={isStatusFilterOpen}
+                        className="flex items-center gap-1 px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 hover:bg-n-slate-4 text-xxs text-n-slate-12 shrink-0 cursor-pointer transition-colors duration-150"
+                        onClick={() => setStatusFilterOpen(open => !open)}
+                    >
                         {t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`)}
-                    </span>
+                        <span className="i-lucide-chevron-down size-3 shrink-0" aria-hidden="true" />
+                    </button>
                 ) : null}
             </div>
             <div className="flex items-center gap-1">
@@ -134,7 +148,13 @@ export default function ChatListHeader({
                         {filterTeleportTarget}
                     </div>
                 )}
-                {!hasAppliedFiltersOrActiveFolders ? <ConversationBasicFilter /> : null}
+                {!hasAppliedFiltersOrActiveFolders ? (
+                    <ConversationBasicFilter
+                        isOpen={isStatusFilterOpen}
+                        onOpenChange={setStatusFilterOpen}
+                        dismissBoundaryRef={headerRef}
+                    />
+                ) : null}
                 <SwitchLayout isOnExpandedLayout={isOnExpandedLayout} onToggle={toggleConversationLayout} />
             </div>
         </div>

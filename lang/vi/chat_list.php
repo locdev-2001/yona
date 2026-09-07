@@ -51,6 +51,7 @@ return [
     ],
     'VIEW_FILTER' => 'Xem',
     'SORT_TOOLTIP_LABEL' => 'Sắp xếp hội thoại',
+    'STATUS_FILTER_TOOLTIP_LABEL' => 'Lọc theo trạng thái',
     'CHAT_SORT' => [
         'STATUS' => 'Trạng thái',
         'ORDER_BY' => 'Sắp xếp theo',
