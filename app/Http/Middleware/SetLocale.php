@@ -34,6 +34,10 @@ class SetLocale
             $request->query('locale'),
             data_get($request->user()?->ui_settings, 'locale'),
             $this->accountLocale($request),
+            // Khách vô danh (trang chủ, portal, survey) chưa có hồ sơ để hỏi:
+            // theo ngôn ngữ trình duyệt, chỉ nhận khi khớp locale đang bật —
+            // không khớp thì rơi về `app.locale` như cũ.
+            ...$request->getLanguages(),
         ];
 
         foreach ($candidates as $candidate) {
@@ -52,12 +56,24 @@ class SetLocale
         return is_object($account) ? ($account->locale ?? null) : null;
     }
 
-    /** Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null. */
+    /**
+     * Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null.
+     *
+     * Thử nguyên mã trước (`pt_BR`), rồi mới rút về mã ngôn ngữ (`pt`) — trình
+     * duyệt gửi `vi-VN` nhưng bản dịch nằm ở `vi`, không rút gọn thì khách Việt
+     * vẫn thấy tiếng Anh.
+     */
     private function supported(string $candidate): ?string
     {
-        $normalized = str_replace('-', '_', $candidate);
         $enabled = array_column(config('yona.available_locales', []), 'iso_639_1_code');
+        $normalized = str_replace('-', '_', $candidate);
 
-        return in_array($normalized, $enabled, true) ? $normalized : null;
+        foreach ([$normalized, strtok($normalized, '_')] as $option) {
+            if (is_string($option) && in_array($option, $enabled, true)) {
+                return $option;
+            }
+        }
+
+        return null;
     }
 }

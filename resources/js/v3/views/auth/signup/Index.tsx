@@ -5,6 +5,7 @@ import SignupForm from './components/Signup/Form';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import type { SharedPageProps } from '../../../../types';
 import signupBg from '../../../../../images/auth/signup-bg.jpg';
+import { BrandMark } from '../../../components/BrandMark';
 
 // Port từ v3/views/auth/signup/Index.vue
 // (Testimonials chỉ hiện trên Chatwoot cloud — bỏ).
@@ -21,18 +22,7 @@ export default function SignupIndex() {
                 <div className="flex-1 flex items-center justify-center py-10 px-10">
                     <div className="max-w-[420px] w-full">
                         <div className="mb-6">
-                            <img
-                                src={globalConfig.logo}
-                                alt={globalConfig.installationName}
-                                className="block w-auto h-7 dark:hidden"
-                            />
-                            {globalConfig.logoDark ? (
-                                <img
-                                    src={globalConfig.logoDark}
-                                    alt={globalConfig.installationName}
-                                    className="hidden w-auto h-7 dark:block"
-                                />
-                            ) : null}
+                            <BrandMark className="h-7" />
                             <h2 className="mt-6 text-2xl font-semibold text-n-slate-12">{t('REGISTER.TRY_WOOT')}</h2>
                             <p className="mt-2 text-sm text-n-slate-11">
                                 {t('REGISTER.HAVE_AN_ACCOUNT')}{' '}
@@ -42,6 +32,13 @@ export default function SignupIndex() {
                             </p>
                         </div>
                         <SignupForm />
+                        <a
+                            href="/"
+                            className="flex items-center gap-1.5 mt-6 text-sm font-medium w-fit text-n-slate-11 hover:text-n-slate-12"
+                        >
+                            <span className="i-lucide-arrow-left size-4" aria-hidden="true" />
+                            {t('LANDING.nav.back_to_home')}
+                        </a>
                     </div>
                 </div>
             </div>

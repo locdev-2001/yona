@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -37,7 +38,9 @@ use Inertia\Inertia;
 Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsController::class, 'show'])
     ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show');
 
-Route::redirect('/', '/app');
+// Trang chủ công khai (nhánh `main` mang sang): gốc tên miền là trang giới thiệu
+// sản phẩm, không đẩy thẳng khách vào màn đăng nhập như Chatwoot gốc.
+Route::get('/', LandingController::class)->name('home');
 
 // Trang widget chạy trong iframe của SDK (`/widget?website_token=...`) — không
 // dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.

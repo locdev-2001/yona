@@ -12,6 +12,7 @@ import MfaVerification from 'dashboard/components/auth/MfaVerification';
 import SessionLimitOverlay from 'dashboard/components/auth/SessionLimitOverlay';
 import type { UserSessionRow } from 'dashboard/settings/profile/ActiveSessions';
 import type { SharedPageProps } from '../../../types';
+import { BrandMark } from '../../components/BrandMark';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -111,18 +112,9 @@ export default function LoginIndex() {
     return (
         <main className="flex flex-col w-full min-h-screen py-20 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8">
             <section className="max-w-5xl mx-auto">
-                <img
-                    src={globalConfig.logo}
-                    alt={globalConfig.installationName}
-                    className="block w-auto h-8 mx-auto dark:hidden"
-                />
-                {globalConfig.logoDark ? (
-                    <img
-                        src={globalConfig.logoDark}
-                        alt={globalConfig.installationName}
-                        className="hidden w-auto h-8 mx-auto dark:block"
-                    />
-                ) : null}
+                <div className="flex justify-center">
+                    <BrandMark />
+                </div>
                 <h2 className="mt-6 text-3xl font-medium text-center text-n-slate-12">
                     {replaceInstallationName(t('LOGIN.TITLE'))}
                 </h2>
@@ -217,6 +209,13 @@ export default function LoginIndex() {
                     </form>
                 </section>
             )}
+            <a
+                href="/"
+                className="flex items-center justify-center gap-1.5 mx-auto mt-8 text-sm font-medium w-fit text-n-slate-11 hover:text-n-slate-12"
+            >
+                <span className="i-lucide-arrow-left size-4" aria-hidden="true" />
+                {t('LANDING.nav.back_to_home')}
+            </a>
             <SnackbarContainer />
         </main>
     );

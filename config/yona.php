@@ -114,6 +114,9 @@ return [
     'branding' => [
         'installation_name' => env('INSTALLATION_NAME', 'Yona'),
         'brand_name' => env('BRAND_NAME', 'Yona'),
+        'logo' => env('LOGO', '/brand-assets/logo.svg'),
+        // Bản logo cho nền tối — cùng tên tệp với bản gốc (public/brand-assets/logo_dark.svg).
+        'logo_dark' => env('LOGO_DARK', '/brand-assets/logo_dark.svg'),
         'logo_thumbnail' => env('LOGO_THUMBNAIL', '/brand-assets/logo.svg'),
         'widget_brand_url' => env('WIDGET_BRAND_URL', 'https://yona.vn'),
     ],

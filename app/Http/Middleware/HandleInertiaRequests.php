@@ -23,9 +23,12 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'globalConfig' => [
-                'installationName' => config('app.name'),
-                'logo' => '/brand-assets/logo.svg',
-                'logoDark' => '/brand-assets/logo-dark.svg',
+                // Thương hiệu lấy từ config('yona.branding') — nguồn duy nhất dùng
+                // chung với trang chủ, widget và email; viết cứng ở đây từng làm
+                // đường dẫn logo tối lệch tên tệp thật và trả 404.
+                'installationName' => config('yona.branding.installation_name'),
+                'logo' => config('yona.branding.logo'),
+                'logoDark' => config('yona.branding.logo_dark'),
                 'signupEnabled' => config('yona.signup_enabled'),
                 'isMfaEnabled' => (bool) config('yona.mfa_enabled'),
                 'termsURL' => config('yona.terms_url'),

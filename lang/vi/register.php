@@ -26,7 +26,7 @@ return [
     ],
     'EMAIL' => [
         'LABEL' => 'Email công việc',
-        'PLACEHOLDER' => 'Enter your work email address. E.g., bruce{\'@\'}wayne{\'.\'}enterprises',
+        'PLACEHOLDER' => 'Nhập email công việc của bạn. Ví dụ: an{\'@\'}congty{\'.\'}vn',
         'ERROR' => 'Vui lòng nhập địa chỉ email công việc hợp lệ.',
     ],
     'PASSWORD' => [
