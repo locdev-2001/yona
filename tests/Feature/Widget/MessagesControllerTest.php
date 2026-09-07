@@ -44,6 +44,35 @@ describe('GET /api/v1/widget/messages', function () {
         expect($response->json('meta.contact_last_seen_at'))->toBe(0);
     });
 
+    // C5: sau khi hội thoại đóng và khách đã chấm điểm, tải lại widget vẫn phải
+    // nhận được bong bóng khảo sát kèm điểm đã gửi để hiện ở trạng thái đã gửi.
+    it('returns the resolved conversation csat message with the submitted rating', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        $conversation = widgetConversationFor($session);
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED]);
+        Message::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'conversation_id' => $conversation->id,
+            'message_type' => Message::TYPE_TEMPLATE,
+            'content' => 'Please rate the conversation',
+            'content_type' => Message::CONTENT_TYPES['input_csat'],
+            'content_attributes' => [
+                'display_type' => 'emoji',
+                'submitted_values' => ['csat_survey_response' => ['rating' => 4, 'feedback_message' => 'phuc vu tot']],
+            ],
+        ]);
+
+        $response = $this->getJson($session->url('messages'), $session->headers())->assertOk();
+
+        $csat = collect($response->json('payload'))->firstWhere('content_type', 'input_csat');
+        expect($csat)->not->toBeNull();
+        expect($csat['content'])->toBe('Please rate the conversation');
+        expect($csat['content_attributes']['display_type'])->toBe('emoji');
+        expect($csat['content_attributes']['submitted_values'])
+            ->toBe(['csat_survey_response' => ['rating' => 4, 'feedback_message' => 'phuc vu tot']]);
+    });
+
     it('returns an empty payload when the visitor has no conversation', function () {
         $session = WidgetSession::make();
 
