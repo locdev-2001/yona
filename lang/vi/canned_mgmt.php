@@ -15,7 +15,7 @@ return [
     'NO_RESULTS' => 'Không tìm thấy câu trả lời mẫu nào khớp',
     'SEARCH_404' => 'Không có kết quả nào phù hợp.',
     'LIST' => [
-        '404' => 'Không có câu trả lời soạn trước nào có sẵn trong tài khoản này.',
+        '404' => 'Chưa có câu trả lời mẫu nào trong tài khoản này.',
         'TITLE' => 'Quản lý câu trả lời mẫu',
         'DESC' => 'Câu trả lời mẫu là những đoạn trả lời soạn sẵn dùng để phản hồi hội thoại thật nhanh.',
         'TABLE_HEADER' => [

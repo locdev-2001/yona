@@ -9,7 +9,7 @@ import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
 import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import { updateColorScheme } from 'dashboard/helper/themeHelper';
+import { COLOR_SCHEME_OPTIONS, updateColorScheme } from 'dashboard/helper/themeHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
 import type { ColorScheme } from 'dashboard/helper/themeHelper';
 import {
@@ -24,16 +24,11 @@ import type { DashboardPageProps } from '../../types';
 // Khác gốc: Appearance mở submenu đổi theme trực tiếp (gốc mở ninja-keys — B10);
 // Contact support / Docs / Changelog (link chatwoot.com) bỏ theo branding;
 // Keyboard shortcuts vào B10.
-const APPEARANCE_OPTIONS: { scheme: ColorScheme; labelKey: string; icon: string }[] = [
-    { scheme: 'light', labelKey: 'COMBOBOX.LIGHT', icon: 'i-lucide-sun' },
-    { scheme: 'dark', labelKey: 'COMBOBOX.DARK', icon: 'i-lucide-moon' },
-    { scheme: 'auto', labelKey: 'COMBOBOX.SYSTEM', icon: 'i-lucide-monitor' },
-];
-
-const APPEARANCE_LABELS: Record<ColorScheme, string> = {
-    light: 'Light',
-    dark: 'Dark',
-    auto: 'System',
+// Nhãn lấy từ COLOR_SCHEME_OPTIONS (themeHelper) — chỗ này chỉ thêm icon Lucide.
+const APPEARANCE_ICONS: Record<ColorScheme, string> = {
+    light: 'i-lucide-sun',
+    dark: 'i-lucide-moon',
+    auto: 'i-lucide-monitor',
 };
 
 export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
@@ -68,15 +63,16 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                     <Icon icon="i-lucide-palette" className="size-4 text-n-slate-11" />
                     <span className="flex-grow text-left rtl:text-right">{t('SIDEBAR_ITEMS.APPEARANCE')}</span>
                     <div className="flex gap-1">
-                        {APPEARANCE_OPTIONS.map(option => (
+                        {COLOR_SCHEME_OPTIONS.map(option => (
                             <button
                                 key={option.scheme}
                                 type="button"
-                                title={APPEARANCE_LABELS[option.scheme]}
+                                title={t(option.titleKey)}
+                                aria-label={t(option.titleKey)}
                                 className="flex size-7 items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
                                 onClick={() => updateColorScheme(option.scheme)}
                             >
-                                <Icon icon={option.icon} className="size-4" />
+                                <Icon icon={APPEARANCE_ICONS[option.scheme]} className="size-4" />
                             </button>
                         ))}
                     </div>

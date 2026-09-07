@@ -5,6 +5,9 @@ export const ASSIGNEE_TYPE = {
     ALL: 'all',
 } as const;
 
+// Giá trị hợp lệ của tab người phụ trách — dùng để lọc dữ liệu đọc từ ui_settings.
+export const ASSIGNEE_TAB_VALUES = Object.values(ASSIGNEE_TYPE);
+
 export const STATUS_TYPE = {
     OPEN: 'open',
     RESOLVED: 'resolved',

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { debounce, getRecipients, trimContent } from '@chatwoot/utils';
 
+import { shortcutLabel } from 'shared/helpers/kbd';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -55,13 +56,9 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
-function isMacOS(): boolean {
-    return navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone';
-}
-
 // useKbd(['$mod', '+', 'enter']) của bản gốc: '⌘ + ↵' (mac) / 'CTRL + ↵'.
 function cmdEnterShortcutLabel(): string {
-    return [isMacOS() ? '⌘' : 'Ctrl', '+', '↵'].join(' ').toUpperCase();
+    return shortcutLabel(['$mod', '+', 'enter']);
 }
 
 interface ReplyBoxProps {
@@ -114,6 +111,9 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const [isUploading, setIsUploading] = useState(false);
 
     const editorRef = useRef<EditorHandle>(null);
+    // Bảng gợi ý `/` bung lên trên phải dừng ở mép khối soạn, không che thanh tab
+    // Trả lời / Lưu ý riêng nằm ngay trên nó.
+    const replyBoxRef = useRef<HTMLDivElement>(null);
 
     const canReply = selectedConversation?.can_reply ?? false;
     // Bot đang giữ hội thoại pending: agent chỉ ghi được ghi chú riêng cho tới
@@ -432,7 +432,10 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     return (
         <>
             <ReplyBoxBanner message={message} isOnPrivateNote={isOnPrivateNote} />
-            <div className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}>
+            <div
+                ref={replyBoxRef}
+                className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}
+            >
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={isBotOwnedPendingConversation}
@@ -460,6 +463,7 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 ) : null}
                 <Editor
                     ref={editorRef}
+                    pickerBoundaryRef={replyBoxRef}
                     value={message}
                     editorId={`reply-${conversationId}-${isPrivate ? REPLY_EDITOR_MODES.NOTE : REPLY_EDITOR_MODES.REPLY}`}
                     className="input popover-prosemirror-menu"

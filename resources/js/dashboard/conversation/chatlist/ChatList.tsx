@@ -27,6 +27,8 @@ import { ASSIGNEE_TYPE, CONVERSATION_TYPE, STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { appliedLabelsForSelection } from '../labelHelpers';
 import type { AssigneeTab } from '../types';
+import NextButton from 'dashboard/components-next/button/Button';
+import { emptyListHint } from './emptyListHint';
 import ChatListHeader from './ChatListHeader';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
@@ -181,6 +183,8 @@ export default function ChatList({
         count: listMeta[countKey] || 0,
     }));
 
+    const emptyHint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
+
     const showAssigneeInConversationCard = appliedFilters !== null || assigneeTab === ASSIGNEE_TYPE.ALL;
     const showEndOfListMessage = conversations.length > 0 && endReached && !listLoading;
 
@@ -208,7 +212,18 @@ export default function ChatList({
                     <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
                 ) : null}
                 {!listLoading && !conversations.length ? (
-                    <p className="flex overflow-auto justify-center items-center p-4">{t('CHAT_LIST.LIST.404')}</p>
+                    <div className="flex flex-col gap-2 items-center px-4 py-6 text-center">
+                        <p className="mb-0 text-sm text-n-slate-11">{t(emptyHint.messageKey)}</p>
+                        {emptyHint.action ? (
+                            <NextButton
+                                sm
+                                slate
+                                icon="i-lucide-arrow-right"
+                                label={t(emptyHint.action.labelKey, { count: emptyHint.action.count })}
+                                onClick={() => setAssigneeTab(emptyHint.action!.tab)}
+                            />
+                        ) : null}
+                    </div>
                 ) : null}
                 <ConversationBulkActions
                     accountId={accountId}

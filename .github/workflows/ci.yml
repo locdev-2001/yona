@@ -3,89 +3,122 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, rewrite/chatwoot-laravel]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  detect:
-    runs-on: ubuntu-latest
-    outputs:
-      has_php: ${{ steps.c.outputs.has_php }}
-      has_node: ${{ steps.c.outputs.has_node }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: c
-        run: |
-          [ -f composer.json ] && echo "has_php=true" >> "$GITHUB_OUTPUT" || echo "has_php=false" >> "$GITHUB_OUTPUT"
-          [ -f package.json ] && echo "has_node=true" >> "$GITHUB_OUTPUT" || echo "has_node=false" >> "$GITHUB_OUTPUT"
+env:
+  NODE_VERSION: '22'
+  PHP_VERSION: '8.4'
 
+jobs:
+  # PHP: định dạng, Pest toàn bộ (Postgres + pg_trgm/pgcrypto + redis), bundle i18n,
+  # snapshot năng lực kênh.
   backend:
-    needs: detect
-    if: needs.detect.outputs.has_php == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: yona_test
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
         image: redis:7
         ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_DATABASE: yona_rw_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: ''
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: '6379'
+      # Trùng Tests\TestCase::TEST_REDIS_DATABASE — suite flush đúng chỉ số này.
+      REDIS_DB: '4'
     steps:
       - uses: actions/checkout@v4
+
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-          extensions: pdo_pgsql, redis, mbstring, bcmath, intl
+          php-version: ${{ env.PHP_VERSION }}
+          # gd: fixture đính kèm dựng JPEG thật; pgsql/redis: DB + hàng đợi test.
+          extensions: pdo_pgsql, pgsql, redis, gd, mbstring, bcmath, intl, zip
           coverage: none
+
       - name: Cache Composer
         uses: actions/cache@v4
         with:
           path: ~/.cache/composer
           key: composer-${{ hashFiles('**/composer.lock') }}
+
       - run: composer install --no-interaction --prefer-dist --no-progress
+
       - run: cp .env.example .env && php artisan key:generate
+
       - name: Lint (Pint)
         run: vendor/bin/pint --test
-      - name: Static analysis (Larastan)
-        run: vendor/bin/phpstan analyse --no-progress || true
-      - name: Setup DB roles (yona_app RLS-enforced + yona_owner)
-        run: psql -h 127.0.0.1 -U postgres -d yona_test -f database/sql/setup-roles.sql
-      - name: Migrate + test (Pest)
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: yona_test
-          DB_USERNAME: yona_app
-          DB_PASSWORD: ''
-          DB_PRIVILEGED_USERNAME: yona_owner
-          DB_PRIVILEGED_PASSWORD: ''
-          REDIS_HOST: 127.0.0.1
-        run: |
-          php artisan migrate --database=pgsql_privileged --force
-          php artisan db:seed --class=PlatformPermissionSeeder --force
-          php artisan db:seed --class=AdminPermissionSeeder --force
-          php artisan test
 
+      - name: Tạo DB test + extension
+        run: |
+          psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE ${DB_DATABASE}"
+          psql -h 127.0.0.1 -U postgres -d "${DB_DATABASE}" \
+            -c "CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+
+      - name: Pest (toàn bộ)
+        run: php artisan test --compact
+
+      - name: Snapshot năng lực kênh không lệch khai báo
+        # Test tự ghi lại snapshot khi có UPDATE_CAPABILITY_SNAPSHOT; ở CI biến đó
+        # không được đặt, nên file phải y nguyên như trong repo.
+        run: git diff --exit-code -- tests/Contracts/Channels/capability-matrix.snapshot.json
+
+      - name: Bundle i18n khớp lang/
+        run: php artisan i18n:generate --check
+
+  # Frontend: kiểu, unit test, build thật (ghi nhớ build-verify-gate-frontend).
   frontend:
-    needs: detect
-    if: needs.detect.outputs.has_node == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint --if-present
-      - run: pnpm run build --if-present
+
+      - name: Typecheck (tsc)
+        run: pnpm run tsc
+
+      - name: Unit test (vitest)
+        run: pnpm run test
+
+      - name: Build (vite + sdk)
+        run: pnpm run build
+
+  # Bridge Zalo chạy bằng node:test, không cần Postgres/Redis.
+  bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/zalo-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # --ignore-scripts: test chỉ cần giải được `zca-js`, không cần build sharp/pm2.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: node --test
+        run: node --test src/*.test.mjs

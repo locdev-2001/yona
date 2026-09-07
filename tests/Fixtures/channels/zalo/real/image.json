@@ -1,0 +1,44 @@
+{
+  "_source": {
+    "message_id": 734,
+    "captured_at": "2026-09-07T00:33:00+07:00",
+    "origin": "captured"
+  },
+  "type": "inbound",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "peer_uid": "8800000000000002",
+  "thread_id": "8800000000000002",
+  "thread_type": 0,
+  "source_id": "8230000000003",
+  "is_self": false,
+  "direction": "in",
+  "user": {
+    "name": "Khách A",
+    "avatar": "https://cdn.zalo.test/avatar/khach-a.jpg"
+  },
+  "platform_sent_at": 1788700120000,
+  "inbound_kind": "image",
+  "msg_type": "chat.photo",
+  "content": "Ảnh sản phẩm",
+  "media_url": "https://cdn.zalo.test/media/anh-san-pham.jpg",
+  "media_filename": "anh-san-pham.jpg",
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "8230000000003",
+    "cliMsgId": "1788700000003",
+    "msgType": "chat.photo",
+    "uidFrom": "8800000000000002",
+    "idTo": "7700000000000001",
+    "dName": "Khách A",
+    "content": {
+      "title": "Ảnh sản phẩm",
+      "href": "https://cdn.zalo.test/media/anh-san-pham.jpg",
+      "thumb": "https://cdn.zalo.test/media/anh-san-pham-thumb.jpg",
+      "params": "{\"degrees\":0}"
+    },
+    "ts": "1788700120000",
+    "ttl": 0
+  }
+}

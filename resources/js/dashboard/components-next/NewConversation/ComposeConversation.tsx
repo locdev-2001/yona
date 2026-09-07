@@ -20,6 +20,7 @@ import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { signatureFlagKey } from 'dashboard/composables/useUISettings';
 import EmailOptions from './components/EmailOptions';
+import { shortcutLabel } from 'shared/helpers/kbd';
 import type { ContactMeta } from 'dashboard/conversation/types';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -143,7 +144,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
     };
 
     const sendButtonLabel = t('COMPOSE_NEW_CONVERSATION.FORM.ACTION_BUTTONS.SEND', {
-        keyCode: isEditorHotKeyEnabled(uiSettings, 'cmd_enter') ? '⌘ + ↵' : '↵',
+        keyCode: isEditorHotKeyEnabled(uiSettings, 'cmd_enter') ? shortcutLabel(['$mod', '+', 'enter']) : '↵',
     });
 
     const handleEmojiSelect = (selection: PickerSelection) => {

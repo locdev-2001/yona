@@ -1,0 +1,27 @@
+{
+  "_source": {
+    "message_id": 757,
+    "captured_at": "2026-09-07T00:42:00+07:00",
+    "origin": "captured",
+    "note": "khách đã xem tin tenant gửi"
+  },
+  "type": "relay_event",
+  "event_type": "seen_messages",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "payload": [
+    [
+      {
+        "type": 0,
+        "data": {
+          "idTo": "8800000000000002",
+          "msgId": "8230000000012",
+          "realMsgId": "0"
+        },
+        "threadId": "8800000000000002",
+        "isSelf": false
+      }
+    ]
+  ]
+}

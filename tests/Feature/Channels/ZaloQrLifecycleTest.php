@@ -175,6 +175,9 @@ it('từ chối khi quét nhầm tài khoản Zalo khác', function () {
 });
 
 it('trả trạng thái sức khỏe kèm cờ ngắt mạch', function () {
+    // Endpoint sức khoẻ hỏi thẳng cầu nối: thiếu fake là test gọi bridge THẬT của
+    // founder ở 127.0.0.1:3710 (Http::preventStrayRequests bắt được, xem TestCase).
+    fakeZaloBridge();
     $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890']);
     $monitor = app(ZaloHealthMonitor::class);
     for ($i = 0; $i < 5; $i++) {

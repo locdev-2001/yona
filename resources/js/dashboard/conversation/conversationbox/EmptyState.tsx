@@ -1,6 +1,10 @@
+import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
+import NextButton from 'dashboard/components-next/button/Button';
 import LoadingState from 'dashboard/components/widgets/LoadingState';
+import { emptyListHint } from '../chatlist/emptyListHint';
+import { modifierKeyLabel } from 'shared/helpers/kbd';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
@@ -21,6 +25,8 @@ function Hotkey({ children, customClass }: { children: string; customClass: stri
 }
 
 function FeaturePlaceholder() {
+    // Gốc vẽ cứng '⌘'; SME Việt phần lớn dùng Windows/Linux nên phải theo hệ điều hành.
+    const modifierKey = modifierKeyLabel();
     const keyShortcuts = [
         { key: 'K', description: t('CONVERSATION.EMPTY_STATE.CMD_BAR') },
         { key: '/', description: t('CONVERSATION.EMPTY_STATE.KEYBOARD_SHORTCUTS') },
@@ -31,8 +37,8 @@ function FeaturePlaceholder() {
             {keyShortcuts.map(keyShortcut => (
                 <div key={keyShortcut.key} className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
-                        <Hotkey customClass="w-8 h-6 text-lg font-medium text-n-slate-12 outline outline-n-container outline-1 bg-n-alpha-3">
-                            ⌘
+                        <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 outline outline-n-container outline-1 bg-n-alpha-3">
+                            {modifierKey}
                         </Hotkey>
                         <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 outline outline-n-container outline-1 bg-n-alpha-3">
                             {keyShortcut.key}
@@ -45,7 +51,7 @@ function FeaturePlaceholder() {
     );
 }
 
-function EmptyStateMessage({ message }: { message: string }) {
+function EmptyStateMessage({ message, action }: { message: string; action?: ReactNode }) {
     return (
         <div className="flex flex-col items-center justify-center h-full">
             <img className="m-4 w-32 hidden dark:block" src="/assets/images/dashboard/no-chat-dark.svg" alt="No Chat dark" />
@@ -54,14 +60,19 @@ function EmptyStateMessage({ message }: { message: string }) {
                 {message}
                 <br />
             </span>
+            {action}
             <FeaturePlaceholder />
         </div>
     );
 }
 
 export default function EmptyState() {
-    const { conversations, listLoading } = useConversation();
+    const { conversations, listLoading, assigneeTab, listMeta, appliedFilters, setAssigneeTab } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+
+    // Cùng quy tắc với cột danh sách (emptyListHint): khung chat không được nói
+    // "không có tin nhắn nào từ khách hàng" trong khi khách đang chờ ở tab bên cạnh.
+    const hint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
 
     return (
         <div className="flex-1 min-w-0 px-0 flex flex-col items-center justify-center h-full bg-n-surface-1">
@@ -71,7 +82,21 @@ export default function EmptyState() {
                     {!inboxes.length ? (
                         <EmptyStateMessage message={t('CONVERSATION.NO_INBOX_AGENT')} />
                     ) : !conversations.length ? (
-                        <EmptyStateMessage message={t('CONVERSATION.NO_MESSAGE_1')} />
+                        <EmptyStateMessage
+                            message={hint.action ? t(hint.messageKey) : t('CONVERSATION.NO_MESSAGE_1')}
+                            action={
+                                hint.action ? (
+                                    <NextButton
+                                        sm
+                                        slate
+                                        icon="i-lucide-arrow-right"
+                                        className="mt-3"
+                                        label={t(hint.action.labelKey, { count: hint.action.count })}
+                                        onClick={() => setAssigneeTab(hint.action!.tab)}
+                                    />
+                                ) : null
+                            }
+                        />
                     ) : (
                         <EmptyStateMessage message={t('CONVERSATION.SELECT_A_CONVERSATION')} />
                     )}

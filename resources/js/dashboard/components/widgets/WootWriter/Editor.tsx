@@ -15,7 +15,7 @@ import type { Plugin } from 'prosemirror-state';
 import { createTypingIndicator } from '@chatwoot/utils';
 
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
-import type { CaretPosition } from './CaretAnchoredPicker';
+import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import TagAgents from './TagAgents';
 import type { MentionRecord } from './mentionHelpers';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
@@ -43,6 +43,8 @@ interface EditorProps {
     className?: string;
     enableSuggestions?: boolean;
     enableCannedResponses?: boolean;
+    /** Khối bảng gợi ý không được che khi bung lên trên (thanh tab của ô soạn). */
+    pickerBoundaryRef?: React.RefObject<HTMLElement | null>;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -98,6 +100,15 @@ const MENU_BY_KEY: Record<string, string[]> = {
     'Context::Default': ['strong', 'em', 'code', 'link', 'strike', 'bulletList', 'orderedList', 'undo', 'redo'],
 };
 
+// Phím do bảng gợi ý (`/` câu trả lời mẫu, `@` nhắc tên) sở hữu khi nó đang mở.
+const PICKER_OWNED_KEYS = new Set(['Enter', 'Tab', 'ArrowUp', 'ArrowDown']);
+
+// Shift+Enter vẫn là xuống dòng của ô soạn; Shift+Tab thuộc bảng (lùi lựa chọn).
+export function isPickerOwnedKey(event: KeyboardEvent): boolean {
+    if (!PICKER_OWNED_KEYS.has(event.key)) return false;
+    return !(event.key === 'Enter' && event.shiftKey);
+}
+
 function hasPressedEnterAndNotCmdOrShift(event: KeyboardEvent): boolean {
     return event.key === 'Enter' && !event.metaKey && !event.ctrlKey && !event.shiftKey;
 }
@@ -118,6 +129,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         className = '',
         enableSuggestions = true,
         enableCannedResponses = true,
+        pickerBoundaryRef,
         onChange,
         onFocus,
         onBlur,
@@ -130,6 +142,9 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     ref,
 ) {
     const editorHostRef = useRef<HTMLDivElement>(null);
+    const isPickerOpenRef = useRef(false);
+    // Hàm đóng của bảng gợi ý đang mở — ô soạn cần gọi được nó từ handler keydown.
+    const dismissActivePickerRef = useRef<(reason: PickerCloseReason) => void>(() => undefined);
     const editorRootRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const schemaRef = useRef<Schema | null>(null);
@@ -291,6 +306,22 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                 },
                 keydown: (view_, event) => {
                     if (callbacksRef.current.disabled) return false;
+                    if (isPickerOpenRef.current && event.key === 'Escape') {
+                        // Escape khi bảng gợi ý đang mở = "đóng bảng", không phải
+                        // "rời ô soạn". useKeyboardEvents ở tầng document blur mọi ô
+                        // nhập khi gặp Escape (parity Chatwoot) nên phải chặn phím
+                        // ngay tại ô soạn, nếu không ký tự kích hoạt kẹt lại và người
+                        // dùng phải bấm chuột mới xoá được (finding UX #2).
+                        event.preventDefault();
+                        event.stopPropagation();
+                        dismissActivePickerRef.current('keyboard');
+                        return true;
+                    }
+                    if (isPickerOpenRef.current && isPickerOwnedKey(event)) {
+                        // Bảng lắng nghe ở tầng document nên vẫn nhận được phím này.
+                        event.preventDefault();
+                        return true;
+                    }
                     const settings = callbacksRef.current.uiSettings;
                     // Enter gửi tin / Cmd+Enter gửi tin theo editor_message_key.
                     if (isEditorHotKeyEnabled(settings, 'enter') && hasPressedEnterAndNotCmdOrShift(event)) {
@@ -337,6 +368,11 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     // shouldShowUserMentions gốc: chỉ hiện khi đang soạn ghi chú riêng.
     const shouldShowUserMentions = showUserMentions && isPrivate;
 
+    // Bảng gợi ý đang mở thì phím điều hướng/chọn thuộc về nó, không thuộc ô soạn:
+    // Enter chọn mục chứ không gửi tin hay xuống dòng, mũi tên chạy trong danh sách
+    // chứ không dời con trỏ (dời con trỏ sẽ đóng bảng giữa chừng).
+    isPickerOpenRef.current = shouldShowCannedResponses || shouldShowUserMentions;
+
     useEffect(() => {
         onToggleCannedMenu?.(shouldShowCannedResponses);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -358,15 +394,17 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         return { top: top - root.getBoundingClientRect().top, height: bottom - top };
     }, [suggestionRange]);
 
-    // Popup tự giữ focus; đóng lại thì trả focus về editor. Gợi ý vẫn còn hiệu lực
-    // trong tài liệu nên chỉ mở lại khi gõ ký tự kích hoạt lần nữa.
-    const dismissPicker = (setShowMenu: (isOpen: boolean) => void) => () => {
+    // Đóng bảng gợi ý thì trả focus về ô soạn. Gợi ý vẫn còn hiệu lực trong tài
+    // liệu nên chỉ mở lại khi gõ ký tự kích hoạt lần nữa.
+    const dismissPicker = (setShowMenu: (isOpen: boolean) => void) => (reason: PickerCloseReason) => {
         setShowMenu(false);
-        viewRef.current?.focus();
+        // Bấm ra ngoài thì tuyệt đối không giành lại focus của chỗ người dùng vừa bấm.
+        if (reason === 'keyboard') viewRef.current?.focus();
     };
 
     const dismissCannedResponses = dismissPicker(setShowCannedMenu);
     const dismissUserMentions = dismissPicker(setShowUserMentions);
+    dismissActivePickerRef.current = shouldShowCannedResponses ? dismissCannedResponses : dismissUserMentions;
 
     // Xóa ký tự kích hoạt → plugin tự đóng popup qua onExit.
     const removeSuggestionTrigger = () => {
@@ -427,6 +465,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                     caretPosition={caretPosition}
                     searchKey={cannedSearchKey}
                     schema={schemaRef.current}
+                    boundaryElement={pickerBoundaryRef?.current ?? null}
                     onReplace={insertCannedResponse}
                     onClose={dismissCannedResponses}
                     onRemoveTrigger={removeSuggestionTrigger}

@@ -1,0 +1,53 @@
+{
+  "_source": {
+    "message_id": 768,
+    "captured_at": "2026-09-07T00:36:00+07:00",
+    "origin": "captured"
+  },
+  "type": "inbound",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "peer_uid": "8800000000000002",
+  "thread_id": "8800000000000002",
+  "thread_type": 0,
+  "source_id": "8230000000006",
+  "is_self": false,
+  "direction": "in",
+  "user": {
+    "name": "Khách A",
+    "avatar": "https://cdn.zalo.test/avatar/khach-a.jpg"
+  },
+  "platform_sent_at": 1788700300000,
+  "inbound_kind": "business_card",
+  "msg_type": "chat.recommended",
+  "content": "",
+  "business_card": {
+    "name": "Khách D",
+    "title": "Khách D",
+    "thumbnail": "https://cdn.zalo.test/avatar/khach-d.jpg",
+    "url": "https://zalo.test/khach-d",
+    "qr_code_url": "https://cdn.zalo.test/qr/khach-d.jpg",
+    "phone": "0900000006",
+    "contact_uid": "8800000000000006"
+  },
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "8230000000006",
+    "cliMsgId": "1788700000006",
+    "msgType": "chat.recommended",
+    "uidFrom": "8800000000000002",
+    "idTo": "7700000000000001",
+    "dName": "Khách A",
+    "content": {
+      "title": "Khách D",
+      "description": "Danh thiếp",
+      "href": "https://zalo.test/khach-d",
+      "thumb": "https://cdn.zalo.test/avatar/khach-d.jpg",
+      "params": "{\"userId\":\"8800000000000006\",\"qrCodeUrl\":\"https://cdn.zalo.test/qr/khach-d.jpg\",\"phone\":\"0900000006\"}",
+      "action": "recommened.user"
+    },
+    "ts": "1788700300000",
+    "ttl": 0
+  }
+}

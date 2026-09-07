@@ -1,0 +1,43 @@
+{
+  "_source": {
+    "message_id": 713,
+    "captured_at": "2026-09-07T00:34:00+07:00",
+    "origin": "captured",
+    "note": "khách thả tim lên tin của tenant"
+  },
+  "type": "relay_event",
+  "event_type": "reaction",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "payload": [
+    {
+      "data": {
+        "actionId": "1700309570899",
+        "msgId": "8230000000014",
+        "cliMsgId": "1788700000014",
+        "msgType": "chat.reaction",
+        "uidFrom": "8800000000000002",
+        "idTo": "7700000000000001",
+        "dName": "Khách A",
+        "content": {
+          "rMsg": [
+            {
+              "gMsgID": "8230000000012",
+              "cMsgID": 1788700000012,
+              "msgType": 1
+            }
+          ],
+          "rIcon": "/-strong",
+          "rType": 3,
+          "source": 6
+        },
+        "ts": "1788700780000",
+        "ttl": 0
+      },
+      "threadId": "8800000000000002",
+      "isSelf": false,
+      "isGroup": false
+    }
+  ]
+}

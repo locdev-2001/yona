@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\Channel;
 use App\Models\Inbox;
+use Illuminate\Support\Facades\Http;
 
 // `belongs_to :channel, dependent: :destroy` của refs/chatwoot/app/models/inbox.rb:
 // xóa inbox phải kéo theo hàng channel_*, nếu không hàng mồ côi giữ ràng buộc unique
@@ -29,6 +30,10 @@ function channelCascadeCases(): array
 }
 
 it('deletes the channel row with the inbox and frees its identifiers', function (string $state, string $channelClass, array $identifiers) {
+    // Xoá inbox Zalo báo cho bridge đăng xuất phiên: không giả là test gõ vào
+    // bridge THẬT ở 127.0.0.1:3710 (Http::preventStrayRequests bắt được).
+    Http::fake([rtrim(config('zalo.bridge.url'), '/').'/*' => Http::response(['ok' => true])]);
+
     $account = Account::factory()->create();
     $inbox = $state === 'api'
         ? Inbox::factory()->create(['account_id' => $account->id])

@@ -1,19 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { useEffect, useMemo } from 'react';
+import { Link, usePage } from '@inertiajs/react';
 import DOMPurify from 'dompurify';
 import { picoSearch } from '@chatwoot/pico-search';
 import type { Schema } from 'prosemirror-model';
 
 import CaretAnchoredPicker from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';
-import type { CaretPosition } from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';
+import type { CaretPosition, PickerCloseReason } from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';
 import { fetchCannedResponses, useCannedResponses } from 'dashboard/composables/useCannedResponses';
 import { stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import MessageFormatter, { getPlainText } from 'shared/helpers/MessageFormatter';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
 
 // Port từ dashboard/components/widgets/conversation/CannedResponse.vue.
 // Bỏ `variables` (biến {{...}} thuộc D1) → nội dung xem trước = nội dung chèn.
+//
+// Lệch có chủ đích so với v4.17.1 (reports/ux-deviations.md, mục "Bảng câu trả
+// lời mẫu"): bảng KHÔNG dựng ô tìm kiếm riêng và không cướp focus — từ khoá là
+// phần chữ gõ ngay sau `/` trong ô soạn. Nhờ vậy Escape đóng, xoá `/` đóng, và
+// ký tự `/` không còn kẹt lại khi người dùng gõ nhầm.
 
 const SNIPPET_LEAD = 24;
 const HIGHLIGHT_CLASS = 'text-n-blue-text';
@@ -30,8 +36,9 @@ interface CannedResponseProps {
     caretPosition: CaretPosition | null;
     searchKey: string;
     schema: Schema | null;
+    boundaryElement?: HTMLElement | null;
     onReplace: (content: string) => void;
-    onClose: () => void;
+    onClose: (reason: PickerCloseReason) => void;
     onRemoveTrigger: () => void;
 }
 
@@ -48,6 +55,7 @@ export default function CannedResponse({
     caretPosition,
     searchKey,
     schema,
+    boundaryElement = null,
     onReplace,
     onClose,
     onRemoveTrigger,
@@ -55,14 +63,13 @@ export default function CannedResponse({
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const { records, isFetching } = useCannedResponses(accountId);
-    // Ký tự kích hoạt có thể đã kèm chữ sẵn (draft, hoặc con trỏ lùi lại vào nó).
-    const [searchQuery, setSearchQuery] = useState(searchKey);
 
     useEffect(() => {
         fetchCannedResponses(accountId, { force: true });
     }, [accountId]);
 
-    const searchTerm = searchQuery.trim();
+    // Từ khoá = chữ gõ sau `/` trong ô soạn (plugin gợi ý cập nhật theo từng phím).
+    const searchTerm = searchKey.trim();
 
     const preparedRecords = useMemo(
         () =>
@@ -102,17 +109,34 @@ export default function CannedResponse({
         }));
     }, [preparedRecords, searchTerm]);
 
+    // Chưa có câu trả lời mẫu nào thì dẫn thẳng tới chỗ tạo, đừng chỉ báo "không
+    // tìm thấy" (finding UX #3 — cùng câu chữ với empty state trang Cài đặt).
+    const renderEmpty = () => (
+        <span className="flex flex-wrap items-center gap-1">
+            <span>{t('CANNED_MGMT.LIST.404')}</span>
+            <Link
+                href={accountScopedUrl(accountId, 'settings/canned-response/list')}
+                className="font-medium underline text-n-blue-text"
+            >
+                {t('CANNED_MGMT.HEADER_BTN_TXT')}
+            </Link>
+        </span>
+    );
+
     return (
         <CaretAnchoredPicker<CannedPickerItem>
             caretPosition={caretPosition}
             items={items}
-            search={searchQuery}
-            onSearchChange={setSearchQuery}
+            search={searchKey}
+            onSearchChange={() => undefined}
             searchPlaceholder={t('COMBOBOX.SEARCH_PLACEHOLDER')}
             isLoading={isFetching}
+            keepFocusInEditor
+            boundaryElement={boundaryElement}
             emptyLabel={
                 searchTerm ? t('COMBOBOX.EMPTY_SEARCH_RESULTS', { searchTerm }) : t('COMBOBOX.EMPTY_STATE')
             }
+            renderEmpty={records.length ? undefined : renderEmpty}
             onSelect={item => onReplace(item.content)}
             onClose={onClose}
             onRemoveTrigger={onRemoveTrigger}

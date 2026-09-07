@@ -67,3 +67,28 @@ export function getInboxIconByType(
         ? (INBOX_ICON_MAP_FILL[type] ?? fallback ?? DEFAULT_ICON_FILL)
         : (INBOX_ICON_MAP_LINE[type] ?? fallback ?? DEFAULT_ICON_LINE);
 }
+
+// Khóa i18n `INBOX_MGMT.CHANNELS.*` cho từng loại kênh — đi CÙNG bản đồ icon ở
+// trên để nhãn và icon không bao giờ lệch nhau. Không có nhánh mặc định: kênh
+// chưa khai báo trả về null để nơi gọi tự quyết (bản gốc rơi hết về "API
+// Channel", làm inbox Zalo hiện sai là "Kênh API").
+const INBOX_LABEL_KEY_MAP: Record<string, string> = {
+    [INBOX_TYPES.FB]: 'MESSENGER',
+    [INBOX_TYPES.WEB]: 'WEB_WIDGET',
+    [INBOX_TYPES.TWITTER]: 'TWITTER_PROFILE',
+    [INBOX_TYPES.TWILIO]: 'TWILIO_SMS',
+    [INBOX_TYPES.WHATSAPP]: 'WHATSAPP',
+    [INBOX_TYPES.SMS]: 'SMS',
+    [INBOX_TYPES.EMAIL]: 'EMAIL',
+    [INBOX_TYPES.TELEGRAM]: 'TELEGRAM',
+    [INBOX_TYPES.LINE]: 'LINE',
+    [INBOX_TYPES.API]: 'API',
+    [INBOX_TYPES.INSTAGRAM]: 'INSTAGRAM',
+    [INBOX_TYPES.TIKTOK]: 'TIKTOK',
+    [INBOX_TYPES.ZALO]: 'ZALO',
+};
+
+/** NGUỒN DUY NHẤT của nhãn kênh — trả về khóa i18n, hoặc null nếu chưa khai báo. */
+export function getInboxLabelKeyByType(type: string): string | null {
+    return INBOX_LABEL_KEY_MAP[type] ?? null;
+}

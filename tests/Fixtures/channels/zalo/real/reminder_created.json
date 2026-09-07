@@ -1,0 +1,46 @@
+{
+  "_source": {
+    "message_id": 763,
+    "captured_at": "2026-09-07T00:49:00+07:00",
+    "origin": "captured"
+  },
+  "type": "inbound",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "peer_uid": "8800000000000002",
+  "thread_id": "8800000000000002",
+  "thread_type": 0,
+  "source_id": "8230000000008",
+  "is_self": false,
+  "direction": "in",
+  "user": {
+    "name": "Khách A",
+    "avatar": "https://cdn.zalo.test/avatar/khach-a.jpg"
+  },
+  "platform_sent_at": 1788700420000,
+  "inbound_kind": "text",
+  "msg_type": "chat.ecard",
+  "content": "[Link] ⏰ Hẹn gọi tư vấn gói Team https://cdn.zalo.test/media/reminder-01.png",
+  "listener_data": {
+    "actionId": "1700309570777",
+    "msgId": "8230000000008",
+    "cliMsgId": "1788700000008",
+    "msgType": "chat.ecard",
+    "uidFrom": "8800000000000002",
+    "idTo": "7700000000000001",
+    "dName": "Khách A",
+    "content": {
+      "title": "⏰ Hẹn gọi tư vấn gói Team",
+      "description": "Thứ Hai, 7 tháng 9 lúc 00:49",
+      "href": "https://cdn.zalo.test/media/reminder-01.png",
+      "thumb": "https://cdn.zalo.test/media/reminder-01.png",
+      "childnumber": 0,
+      "action": "show.profile",
+      "params": "{\"isMain\":0,\"notifyTxt\":\"⏰ Hẹn gọi tư vấn gói Team\",\"header\":\"\",\"layoutType\":2,\"previewTxt\":\"⏰ Hẹn gọi tư vấn gói Team\",\"actions\":[{\"actionId\":\"action.open.reminder\",\"data\":\"{\\\"act\\\":\\\"create_reminder\\\",\\\"data\\\":\\\"{\\\\\\\"reminderId\\\\\\\":\\\\\\\"216100000000000001\\\\\\\",\\\\\\\"startTime\\\\\\\":1788700900000,\\\\\\\"repeat\\\\\\\":0}\\\"}\"}]}",
+      "type": "8"
+    },
+    "ts": "1788700420000",
+    "ttl": 0
+  }
+}

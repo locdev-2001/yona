@@ -1,0 +1,25 @@
+{
+  "_source": {
+    "message_id": null,
+    "captured_at": "2026-09-07T01:06:00+07:00",
+    "origin": "captured",
+    "note": "gõ phím không sinh tin nào — chỉ bật 'đang nhập…'"
+  },
+  "type": "relay_event",
+  "event_type": "typing",
+  "connection_id": 1,
+  "bot_id": 1,
+  "personal_uid": "7700000000000001",
+  "payload": [
+    {
+      "type": 0,
+      "data": {
+        "uid": "8800000000000002",
+        "ts": "1788700900000",
+        "isPC": 1
+      },
+      "threadId": "8800000000000002",
+      "isSelf": false
+    }
+  ]
+}
