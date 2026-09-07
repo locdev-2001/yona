@@ -5,6 +5,6 @@
 // khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
-    'OR' => 'Or',
+    'OR' => 'Hoặc',
     'CLICK_HERE' => 'click vào đây',
 ];

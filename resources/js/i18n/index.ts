@@ -37,6 +37,14 @@ function pluralize(message: string, count: number): string {
     return count === 0 ? choices[0] : count === 1 ? choices[1] : choices[2];
 }
 
+// vue-i18n coi `@` là ký tự đặc biệt (linked message) nên chuỗi gốc Chatwoot bọc
+// nó trong literal: `example{'@'}companyname.com`. Bản port không có cú pháp
+// liên kết đó, nhưng vẫn phải trả literal về ký tự thật — nếu không placeholder
+// email hiện nguyên dấu ngoặc trước mặt người dùng.
+function unescapeLiterals(message: string): string {
+    return message.replace(/\{'([^']*)'\}/g, '$1');
+}
+
 // Tương đương $t của vue-i18n bên Chatwoot: tra key lồng nhau + nội suy {param}.
 export function t(key: string, params?: Record<string, string | number>): string {
     const lookup = (source: Record<string, unknown>): unknown =>
@@ -64,5 +72,6 @@ export function t(key: string, params?: Record<string, string | number>): string
             name in params ? String(params[name]) : match,
         );
     }
-    return result;
+
+    return unescapeLiterals(result);
 }

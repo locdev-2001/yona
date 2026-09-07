@@ -19,6 +19,8 @@ export default defineConfig({
                 'resources/scss/superadmin.scss',
                 'resources/scss/superadmin-auth.scss',
                 'resources/js/superadmin/main.tsx',
+                'resources/css/landing.css',
+                'resources/js/landing/main.tsx',
             ],
             refresh: true,
         }),

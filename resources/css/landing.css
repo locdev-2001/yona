@@ -1,0 +1,55 @@
+/* Trang chủ công khai — token màu mang nguyên từ nhánh `main`
+   (resources/css/app.css: "Modern Soft-Neutral SaaS Dashboard"). Chuyển từ cú
+   pháp `@theme` của Tailwind v4 sang biến CSS + config v3 (tailwind.landing.config.js). */
+@config "../../tailwind.landing.config.js";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --canvas: hsl(222, 19%, 93%);
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(222, 47%, 11%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222, 47%, 11%);
+    --primary: hsl(221, 83%, 53%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --secondary: hsl(210, 40%, 96%);
+    --secondary-foreground: hsl(222, 47%, 11%);
+    --muted: hsl(210, 40%, 96%);
+    --muted-foreground: hsl(215, 16%, 47%);
+    --accent: hsl(214, 100%, 97%);
+    --accent-foreground: hsl(224, 76%, 48%);
+    --border: hsl(214, 32%, 91%);
+    --ring: hsl(221, 83%, 53%);
+    --radius-shell: 1.25rem;
+    --sidebar-primary: hsl(221, 83%, 53%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+}
+
+.dark {
+    --canvas: hsl(222, 47%, 6%);
+    --background: hsl(222, 47%, 7%);
+    --foreground: hsl(214, 32%, 91%);
+    --card: hsl(221, 39%, 13%);
+    --card-foreground: hsl(214, 32%, 91%);
+    --primary: hsl(217, 91%, 60%);
+    --primary-foreground: hsl(222, 47%, 7%);
+    --secondary: hsl(217, 33%, 17%);
+    --secondary-foreground: hsl(214, 32%, 91%);
+    --muted: hsl(217, 33%, 17%);
+    --muted-foreground: hsl(215, 20%, 65%);
+    --accent: hsl(217, 33%, 20%);
+    --accent-foreground: hsl(213, 94%, 78%);
+    --border: hsl(217, 33%, 22%);
+    --ring: hsl(217, 91%, 60%);
+    --sidebar-primary: hsl(217, 91%, 60%);
+    --sidebar-primary-foreground: hsl(222, 47%, 7%);
+}
+
+@layer base {
+    body {
+        @apply bg-canvas text-foreground font-sans antialiased;
+    }
+}
