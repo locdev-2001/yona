@@ -108,7 +108,7 @@
       <span class="chip">DB dev <span class="mono">yona_rw</span></span>
       <span class="chip">Plan <span class="mono">plans/260831-rewrite-chatwoot-laravel</span></span>
       <span class="chip">Bật môi trường <span class="mono">cd ~/www/yona &amp;&amp; make up</span></span>
-      <span class="chip">Cập nhật <b>07/09/2026 04:30 — 40/40 đã port (gia cố G3 + e2e toàn hệ xanh). Giai đoạn CẦU TOÀN: chuẩn năng lực kênh + Zalo nghiệm thu trên phiên thật (8 lô sửa, 6 commit)</b></span>
+      <span class="chip">Cập nhật <b>07/09/2026 20:10 — 40/40 đã port. Giai đoạn CẦU TOÀN: chuẩn năng lực kênh, Zalo 8 lô nghiệm thu trên phiên thật, lõi media, UI chat theo audit, test/CI ổn định (12 commit)</b></span>
     </div>
   </header>
 
@@ -116,8 +116,8 @@
     <h2>Tổng quan tiến độ</h2>
     <div class="stats">
       <div class="stat"><div class="n">40<span style="color:var(--muted);font-size:18px">/40</span></div><div class="l">tính năng hoàn thành</div></div>
-      <div class="stat"><div class="n">2.214</div><div class="l">test backend xanh</div></div>
-      <div class="stat"><div class="n">792</div><div class="l">test giao diện xanh</div></div>
+      <div class="stat"><div class="n">2.256</div><div class="l">test backend xanh</div></div>
+      <div class="stat"><div class="n">820</div><div class="l">test giao diện xanh</div></div>
       <div class="stat"><div class="n">~62</div><div class="l">bảng OSS cần port</div></div>
       <div class="stat"><div class="n">1.057</div><div class="l">component Vue → React</div></div>
     </div>
@@ -287,7 +287,9 @@
       <li><span class="k">UI chat</span><span>Icon kênh Zalo ở card/header/sidebar, panel phải hiện sẵn ≥1280px (nhớ theo tài khoản), "Hội thoại trước" lên đầu, bỏ "Không có sẵn", nút Thử lại kèm lý do lỗi, tên khách ẩn danh dễ thương ("Gấu nâu ẩn danh"), bỏ Title Case máy móc, thời gian tương đối tiếng Việt.</span></li>
       <li><span class="k">Hồ sơ khách</span><span>Avatar về hồ sơ (nhận <code>image/jpg</code>, sniff nội dung), số điện thoại chuẩn E.164 chỉ từ hồ sơ người gửi, một khách trên nhiều inbox = một hồ sơ, chỉ thăng Lead khi có SĐT/email.</span></li>
       <li><span class="k">Phiên & vận hành</span><span>Mất phiên hiện ở sidebar/card/khung chat, ngắt kết nối/đổi tài khoản, xoá inbox đăng xuất bridge, thẻ tài khoản Zalo có avatar, health sweep + ngắt mạch half-open, cookie phiên 0600, URL đính kèm có chữ ký, bỏ giới hạn tin chủ động (Quyết định 15).</span></li>
-      <li><span class="k">Commit</span><span><code>ea17d4c</code> · <code>7c002b2</code> · <code>1d2cc66</code> · <code>66c15be</code> · <code>80c51e5</code>. Đang làm: đua echo tin nhiều phần, lõi media (SSRF/cap/stream + 7 kênh gắn đính kèm trước save). Kế tiếp: lô 7 test/CI, CSAT widget, audit UX chat, hỏi founder trước khi hợp nhất vào main.</span></li>
+      <li><span class="k">UI chat theo audit</span><span>Bảng câu trả lời mẫu <code>/</code> giữ focus và đóng bằng Escape, Ctrl+K mở bảng lệnh trên mọi hệ điều hành, tab mặc định "Tất cả" nhớ theo người dùng, empty state theo ngữ cảnh, nhãn kênh Zalo, menu hồ sơ tiếng Việt, mã nhúng widget lên đầu tab Cấu hình.</span></li>
+      <li><span class="k">Kiểm thử</span><span>Fixture golden Zalo từ payload thật, suite không gọi Internet hay bridge thật (phát hiện 13 test từng gõ vào phiên Zalo của founder), CI một workflow đủ 8 gate, harness e2e Zalo/handoff/CSAT tự dựng dữ liệu.</span></li>
+      <li><span class="k">Commit</span><span><code>ea17d4c</code> · <code>7c002b2</code> · <code>1d2cc66</code> · <code>66c15be</code> · <code>80c51e5</code> · <code>ad68533</code> · <code>573821a</code> · <code>eb35e8f</code> · <code>4bf46a5</code>. Đang làm: CSAT widget sau reload, polish chat (bảng lệnh tiếng Việt, hành động trên tin ở touch). Còn mở: gom dropdown panel phải (cần founder duyệt), dữ liệu thật từ điện thoại, hợp nhất main (hỏi founder).</span></li>
     </ul>
   </section>
 
