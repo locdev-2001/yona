@@ -1,13 +1,15 @@
 # Yona
 
-> ## ⚠️ NHÁNH `rewrite/chatwoot-laravel` — ĐỌC TRƯỚC MỌI THỨ KHÁC
-> **Lệnh founder 31/08/2026:** viết lại 100% Chatwoot v4.17.1 (`refs/chatwoot`, TRỪ `enterprise/` — cấm mở) sang Laravel + Inertia/React, UI giống 100% Chatwoot. Fresh start — mô tả sản phẩm/kiến trúc cũ bên dưới KHÔNG áp dụng trên nhánh này (chỉ còn đúng trên `main` tới khi swap). Zalo cá nhân + automation trích từ main cắm lại SAU (nhóm G).
-> - **Nguồn chuẩn duy nhất:** `plans/260831-rewrite-chatwoot-laravel/` — `plan.md` (13 quyết định kiến trúc + Giao thức kiểm chứng 6 điểm + Trạng thái hiện tại) và `feature-roadmap.md` (40 tính năng A→G, thứ tự thi công).
-> - **Cách giao hàng:** port TỪNG TÍNH NĂNG — đủ migration → backend → UI, xong là test được ngay trên UI. Không big-bang.
-> - **DoD mỗi tính năng:** Pest port từ RSpec xanh + bảng trace Ruby↔PHP + pixel-diff đạt + founder bấm kịch bản "Test ngay". Thiếu 1 = chưa done.
-> - **Artifact tiến độ (cập nhật khi xong mỗi tính năng):** https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c
-> - DB dev nhánh này = `yona_rw` (main vẫn dùng `yona`, không đụng). Chỉ 1 phiên code trên nhánh tại một thời điểm.
-> - Bắt đầu phiên: đọc mục **Trạng thái** trong `plan.md` để biết đang ở tính năng nào, làm tiếp đúng mục đó.
+> ## ⚠️ BẢN VIẾT LẠI ĐÃ LÀ `main` — ĐỌC TRƯỚC MỌI THỨ KHÁC
+> **08/09/2026:** bản viết lại 100% Chatwoot v4.17.1 sang Laravel + Inertia/React đã **merge vào `main`** (fast-forward, 116 commit). Từ đây **làm thẳng trên `main`**; `rewrite/chatwoot-laravel` chỉ còn là dấu vết, không commit lên đó nữa. Mốc quay lại: tag `main-truoc-rewrite`.
+> - Mô tả sản phẩm/kiến trúc bên dưới là của bản CŨ (Perfex-style) — **không còn đúng**; kiến trúc hiện hành xem `plans/260831-rewrite-chatwoot-laravel/plan.md` và `docs/`.
+> - **Nguồn chuẩn:** `plans/260831-rewrite-chatwoot-laravel/plan.md` (quyết định kiến trúc + Trạng thái + việc kế tiếp), `docs/channel-capabilities.md` (chuẩn năng lực mọi kênh tin nhắn), `docs/code-standards.md` §0.
+> - Nguồn Ruby/Vue để đối chiếu: `refs/chatwoot` — **CẤM** mở `refs/chatwoot/enterprise/`.
+> - **Giai đoạn hiện tại:** cầu toàn sản phẩm (40/40 tính năng đã port) — phê phán tính năng, tập trung chat, UX "wow"; lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
+> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
+> - **Artifact tiến độ:** https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c
+> - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev: app **8610**, Reverb **8611**, Zalo bridge **8612** (nguồn duy nhất `.env`); oracle Chatwoot podman :3000.
+> - Bắt đầu phiên: đọc mục **Trạng thái** trong `plan.md`.
 
 **Codename / repo:** yona (github.com/locflamedia/yona)
 **Tên sản phẩm:** Yona — domain **yona.vn** (rebrand 22/07/2026; tên cũ "Chó rách CRM" / repo cho-rach-management)
