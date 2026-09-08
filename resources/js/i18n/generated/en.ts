@@ -2378,6 +2378,9 @@ const messages: Record<string, unknown> = {
                 "CANCELED": "canceled"
             }
         },
+        "LINK_PREVIEW": {
+            "FALLBACK_TITLE": "Link"
+        },
         "FRIEND_REQUEST": {
             "TITLE": "Friend request"
         },
@@ -2955,6 +2958,7 @@ const messages: Record<string, unknown> = {
             "bank_card": "[Bank account]",
             "reminder": "[Reminder]",
             "call": "[Call]",
+            "link": "[Link]",
             "friend_request": "[Friend request]"
         }
     },

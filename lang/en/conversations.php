@@ -73,7 +73,7 @@ return [
     ],
 
     // config/locales/en.yml — conversations.messages.deleted (Message#deleted).
-    // Năm nhãn dưới là phần mở rộng của Yona: loại tin riêng của Zalo không có
+    // Sáu nhãn dưới là phần mở rộng của Yona: loại tin riêng của Zalo không có
     // content_type trong lõi nên `content` giữ nhãn đọc được để card hội thoại,
     // tìm kiếm và webhook không rỗng (chi tiết ở content_attributes).
     'messages' => [
@@ -82,6 +82,7 @@ return [
         'bank_card' => '[Bank account]',
         'reminder' => '[Reminder]',
         'call' => '[Call]',
+        'link' => '[Link]',
         'friend_request' => '[Friend request]',
     ],
 ];

@@ -7,15 +7,19 @@
   "thread_type": 0,
   "source_id": "msg-zalo-link",
   "direction": "in",
-  "user": { "name": "Nguyễn Văn A", "avatar": "https://cdn.zalo.test/a.jpg" },
+  "user": {
+    "name": "Nguyễn Văn A",
+    "avatar": "https://cdn.zalo.test/a.jpg"
+  },
   "platform_sent_at": 1719500050000,
   "inbound_kind": "link",
   "content": "Anh xem giúp em",
-  "link": {
+  "msg_type": "chat.recommended",
+  "link_preview": {
     "url": "https://yona.vn/bang-gia",
     "title": "Bảng giá Yona",
     "description": "Gói Team 299k/tháng",
-    "thumb": "https://cdn.zalo.test/thumb/yona.jpg"
-  },
-  "msg_type": "chat.link"
+    "image": "https://cdn.zalo.test/thumb/yona.jpg",
+    "source": "yona.vn"
+  }
 }

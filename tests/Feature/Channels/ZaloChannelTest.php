@@ -640,17 +640,55 @@ it('đưa vị trí vào contract location của lõi', function () {
         ->and($attachment->fallback_title)->toBe('Chợ Bến Thành, Lê Lợi, Quận 1, TP.HCM');
 });
 
-it('đưa link vào contract fallback của lõi thay cho chuỗi [Link] thô', function () {
+it('đưa link vào content_attributes.link_preview thay cho chuỗi [Link] thô', function () {
     zaloWebhook(zaloPayload('zalo_inbound_link', $this->channel))->assertOk();
 
     $message = Message::query()->latest('id')->first();
-    $attachment = $message->attachments()->first();
 
-    expect($attachment)->not->toBeNull()
-        ->and($attachment->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
-        ->and($attachment->external_url)->toBe('https://yona.vn/bang-gia')
-        ->and($attachment->fallback_title)->toBe('Bảng giá Yona')
-        ->and($message->content)->toBe('Anh xem giúp em');
+    expect($message->content_attributes['link_preview'])->toBe([
+        'url' => 'https://yona.vn/bang-gia',
+        'title' => 'Bảng giá Yona',
+        'description' => 'Gói Team 299k/tháng',
+        'image' => 'https://cdn.zalo.test/thumb/yona.jpg',
+        'source' => 'yona.vn',
+    ])
+        // Chú thích khách gõ kèm link vẫn là nội dung tin (`inbound_caption`).
+        ->and($message->content)->toBe('Anh xem giúp em')
+        // Không nhân đôi cùng một link ra đính kèm fallback.
+        ->and($message->attachments()->count())->toBe(0);
+});
+
+it('thẻ liên kết chat.recommended KHÔNG bị đọc nhầm thành danh thiếp', function () {
+    // Tin 951: Zalo dùng chung msgType cho danh thiếp và thẻ liên kết; gộp lại
+    // thì URL thô leo lên làm tên người trong ô xem trước.
+    $payload = json_decode(file_get_contents(base_path('tests/Fixtures/channels/zalo/real/link_card.json')), true);
+    $url = $payload['link_preview']['url'];
+
+    zaloWebhook(zaloPayload('zalo_inbound_link', $this->channel, [
+        'content' => '',
+        'msg_type' => 'chat.recommended',
+        'link_preview' => $payload['link_preview'],
+    ]))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->content_attributes)->not->toHaveKey('business_card')
+        ->and($message->content_attributes['link_preview']['source'])->toBe('qr.thanhtoan.test')
+        // Không có tiêu đề thì nhãn hiển thị là chính URL, không phải "[Danh thiếp]".
+        ->and($message->content)->toBe($url);
+});
+
+it('vẫn đọc được khoá `link` cũ của bridge chưa khởi động lại', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_link', $this->channel, [
+        'link_preview' => null,
+        'link' => ['url' => 'https://yona.vn/bang-gia', 'title' => 'Bảng giá Yona', 'thumb' => 'https://cdn.zalo.test/thumb/yona.jpg'],
+    ]))->assertOk();
+
+    expect(Message::query()->latest('id')->first()->content_attributes['link_preview'])->toBe([
+        'url' => 'https://yona.vn/bang-gia',
+        'title' => 'Bảng giá Yona',
+        'image' => 'https://cdn.zalo.test/thumb/yona.jpg',
+    ]);
 });
 
 it('giữ dấu vết tệp khi URL CDN đã hết hạn thay vì lưu tin rỗng', function () {

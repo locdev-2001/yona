@@ -29,7 +29,7 @@ Giá trị là chuỗi snake_case ổn định, dùng chung backend/FE/webhook.
 | `inbound_bank_card` | thẻ tài khoản ngân hàng | `content_attributes.bank_card {bank_name, bank_bin, account_number, account_holder?, qr_url?}` |
 | `inbound_reminder` | nhắc hẹn/lịch | `content_attributes.reminder {title, at, href?}` (cả lúc tạo và lúc tới giờ) |
 | `inbound_call_log` | cuộc gọi thoại/video (nhỡ/đã gọi/thời lượng) | `content_attributes.call {kind, status, duration}` |
-| `inbound_link_preview` | link kèm preview | `content` + `content_attributes.link_preview {url,title,description,image}` |
+| `inbound_link_preview` | link kèm preview | `content` + `content_attributes.link_preview {url,title,description,image,source}` (`source` = tên miền nguồn; `content` = chú thích khách gõ, thiếu thì tiêu đề/URL) |
 | `inbound_caption` | chú thích kèm media | `content` của cùng message chứa attachment (KHÔNG tách 2 tin) |
 | `inbound_forward` | tin chuyển tiếp | `content_attributes.forwarded_from` |
 

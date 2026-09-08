@@ -2378,6 +2378,9 @@ const messages: Record<string, unknown> = {
                 "CANCELED": "đã huỷ"
             }
         },
+        "LINK_PREVIEW": {
+            "FALLBACK_TITLE": "Liên kết"
+        },
         "FRIEND_REQUEST": {
             "TITLE": "Lời mời kết bạn"
         },
@@ -2955,6 +2958,7 @@ const messages: Record<string, unknown> = {
             "bank_card": "[Tài khoản ngân hàng]",
             "reminder": "[Nhắc hẹn]",
             "call": "[Cuộc gọi]",
+            "link": "[Liên kết]",
             "friend_request": "[Lời mời kết bạn]"
         }
     },

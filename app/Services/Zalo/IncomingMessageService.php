@@ -40,8 +40,6 @@ class IncomingMessageService
 
     private const LOCATION_KIND = 'location';
 
-    private const LINK_KIND = 'link';
-
     /** Số Zalo trả về là số nội địa Việt Nam, còn lõi chỉ nhận E.164. */
     private const VIETNAM_DIALING_CODE = '84';
 
@@ -719,11 +717,13 @@ class IncomingMessageService
 
         $kind = (string) ($this->params['inbound_kind'] ?? 'file');
 
-        // Vị trí và link có contract sẵn trong lõi (`location`, `fallback`) —
-        // map thẳng vào đó thay vì dựng bong bóng riêng cho Zalo.
+        // Vị trí có contract đính kèm sẵn trong lõi — map thẳng vào đó thay vì
+        // dựng bong bóng riêng cho Zalo. Xem trước liên kết KHÔNG đi đường đính
+        // kèm: docs/channel-capabilities.md §2.1 để nó ở
+        // `content_attributes.link_preview` (một nguồn duy nhất, khỏi lệch với
+        // fallback_title).
         $mapped = match ($kind) {
             self::LOCATION_KIND => $this->locationAttachment($accountId),
-            self::LINK_KIND => $this->linkAttachment($accountId),
             default => null,
         };
 
@@ -788,30 +788,6 @@ class IncomingMessageService
             'coordinates_long' => (float) $longitude,
             'fallback_title' => $title === '' ? null : mb_substr($title, 0, 255),
             'external_url' => $location['url'] ?? null,
-        ]);
-    }
-
-    /**
-     * Link / webcontent: lõi có contract `fallback` (`external_url` +
-     * `fallback_title`) — dùng nó thay vì nhét chuỗi thô "[Link] Tiêu đề https://…"
-     * vào nội dung tin.
-     */
-    private function linkAttachment(int $accountId): ?Attachment
-    {
-        $link = is_array($this->params['link'] ?? null) ? $this->params['link'] : [];
-        $url = $link['url'] ?? null;
-
-        if (blank($url)) {
-            return null;
-        }
-
-        $title = filled($link['title'] ?? null) ? (string) $link['title'] : (string) $url;
-
-        return new Attachment([
-            'account_id' => $accountId,
-            'file_type' => Attachment::FILE_TYPE_FALLBACK,
-            'external_url' => (string) $url,
-            'fallback_title' => mb_substr($title, 0, 255),
         ]);
     }
 

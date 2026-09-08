@@ -73,6 +73,58 @@ describe('bong bóng danh thiếp Zalo', () => {
     });
 });
 
+describe('bong bóng xem trước liên kết', () => {
+    // Tin 951 (08/09/2026): khách gửi link ảnh QR chuyển khoản. Zalo dùng chung
+    // msgType với danh thiếp nên trước đây UI hiện "đã gửi một danh thiếp
+    // https://…" — URL thô đứng làm tên người.
+    const preview = {
+        link_preview: {
+            url: 'https://qr.thanhtoan.test/img?bank=Ngan+Hang+Test&acc=100000000000',
+            image: 'https://cdn.zalo.test/photolink/zlv-test',
+            source: 'qr.thanhtoan.test',
+        },
+    };
+
+    it('hiện ảnh xem trước, tên miền và URL rút gọn, mở tab mới an toàn', () => {
+        const container = renderZalo(zaloMessage(preview, preview.link_preview.url));
+        const card = screen.getByTestId('link-preview-card');
+
+        expect(card.getAttribute('href')).toBe(preview.link_preview.url);
+        expect(card.getAttribute('target')).toBe('_blank');
+        expect(card.getAttribute('rel')).toContain('noopener');
+        expect(card.getAttribute('rel')).toContain('noreferrer');
+        expect(screen.getByTestId('link-preview-image').getAttribute('src')).toBe(preview.link_preview.image);
+        expect(container.textContent).toContain('qr.thanhtoan.test');
+        expect(container.textContent).not.toContain('danh thiếp');
+    });
+
+    it('dùng tiêu đề và mô tả khi kênh gửi kèm, giữ chú thích khách gõ', () => {
+        renderZalo(
+            zaloMessage(
+                {
+                    link_preview: {
+                        url: 'https://tin-tuc.test/bai-viet',
+                        title: 'Bảng giá Yona',
+                        description: 'Gói Team 299k/tháng',
+                    },
+                },
+                'Anh xem giúp em',
+            ),
+        );
+
+        expect(screen.getByText('Bảng giá Yona')).not.toBeNull();
+        expect(screen.getByText('Gói Team 299k/tháng')).not.toBeNull();
+        expect(screen.getByText('Anh xem giúp em')).not.toBeNull();
+    });
+
+    it('không rơi về bong bóng danh thiếp', () => {
+        const container = renderZalo(zaloMessage(preview, preview.link_preview.url));
+
+        expect(container.querySelector('[data-bubble-name="link-preview"]')).not.toBeNull();
+        expect(container.querySelector('[data-bubble-name="attachment"]')).toBeNull();
+    });
+});
+
 describe('bong bóng thẻ ngân hàng Zalo', () => {
     const card = {
         bank_card: {
@@ -162,6 +214,8 @@ describe('ô xem trước trong danh sách hội thoại', () => {
         ['[Tài khoản ngân hàng]', { bank_card: { account_number: '1' } }],
         ['[Cuộc gọi]', { call: { outcome: 'missed' } }],
         ['Hẹn gọi tư vấn gói Team', { reminder: { title: 'Hẹn gọi tư vấn gói Team' } }],
+        // Thẻ liên kết: nhãn là tiêu đề/URL thật, KHÔNG phải "[Danh thiếp]".
+        ['Bảng giá Yona', { link_preview: { url: 'https://tin-tuc.test/x', title: 'Bảng giá Yona' } }],
     ])('hiện nhãn "%s" thay vì "Không có nội dung"', (label, contentAttributes) => {
         const container = render(<MessagePreview message={zaloMessage(contentAttributes, label)} />).container;
 

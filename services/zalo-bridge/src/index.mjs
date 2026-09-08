@@ -19,6 +19,7 @@ import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reco
 import {
     applyGroupContextToPayload,
     applyInboundDescriptorToPayload,
+    buildLinkPreview,
     coerceContentObject,
     contentLabelFromObject,
     enrichInboundBody,
@@ -27,6 +28,7 @@ import {
     normalizeMentions,
     parseInboundLinkPreview,
     parseInboundLocation,
+    inboundCardKind,
     captionBesideLink,
     parseZinstantBankCardSource,
     stickerUrlFromId,
@@ -1162,6 +1164,17 @@ function parseInboundDescriptor(message) {
             if (shouldDropZaloLinkBanner(msgType, c, card)) {
                 return null;
             }
+            // Danh thiếp và thẻ liên kết dùng chung msgType — tách theo content.action.
+            if (inboundCardKind(c, card) === 'link') {
+                const preview = parseInboundLinkPreview(c, msgType) ?? buildLinkPreview(card.url, coerceContentObject(c));
+                return {
+                    inbound_kind: 'link',
+                    link_preview: preview,
+                    caption: captionBesideLink(extractInboundPlainText(message), preview),
+                    peerUid,
+                    msgType,
+                };
+            }
             if (!card.phone && d && (d.phone || d.phoneNumber)) {
                 card.phone = String(d.phone ?? d.phoneNumber).trim();
             }
@@ -1207,7 +1220,7 @@ function parseInboundDescriptor(message) {
     if (linkPreview) {
         return {
             inbound_kind: 'link',
-            link: linkPreview,
+            link_preview: linkPreview,
             caption: captionBesideLink(plain, linkPreview),
             peerUid,
             msgType,

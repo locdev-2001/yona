@@ -17,17 +17,42 @@ namespace App\Services\Zalo;
  */
 class InboundCardParser
 {
-    /** Khóa dịch nhãn dự phòng, dùng chung cho mọi kind trừ nhắc hẹn (lấy tiêu đề thật). */
+    /** Khóa dịch nhãn dự phòng, dùng khi thẻ không tự mang chữ đọc được. */
     private const LABEL_KEYS = [
         'business_card' => 'conversations.messages.business_card',
         'bank_card' => 'conversations.messages.bank_card',
         'reminder' => 'conversations.messages.reminder',
         'call' => 'conversations.messages.call',
         'friend_request' => 'conversations.messages.friend_request',
+        'link_preview' => 'conversations.messages.link',
+    ];
+
+    /**
+     * Thẻ tự mang chữ đọc được thì lấy chữ đó làm nhãn thay vì chuỗi dịch: nhắc
+     * hẹn dùng tiêu đề khách đặt, liên kết dùng tiêu đề trang — thiếu thì URL.
+     *
+     * @var array<string, list<string>>
+     */
+    private const LABEL_FROM_DATA = [
+        'reminder' => ['title'],
+        'link_preview' => ['title', 'url'],
     ];
 
     /** Bridge gửi sẵn các kind này thành object cùng tên trong payload. */
     private const PASSTHROUGH_KINDS = ['business_card', 'bank_card', 'call', 'friend_request'];
+
+    /**
+     * Tên cũ của khoá xem trước liên kết trong payload bridge, và tên cũ của ảnh
+     * trong đó. Bridge đã đổi sang khoá chuẩn `link_preview`/`image`
+     * (docs/channel-capabilities.md §2.1) nhưng chỉ có hiệu lực sau khi khởi động
+     * lại, nên vẫn đọc được bản cũ đang bay.
+     */
+    private const LEGACY_LINK_KEY = 'link';
+
+    private const LEGACY_LINK_IMAGE_KEY = 'thumb';
+
+    /** @var list<string> */
+    private const LINK_PREVIEW_KEYS = ['url', 'title', 'description', 'image', 'source'];
 
     private const REMINDER_MSG_TYPE = 'chat.ecard';
 
@@ -52,9 +77,50 @@ class InboundCardParser
             }
         }
 
+        $link = self::linkPreview($params);
+
+        if ($link !== null) {
+            return ['kind' => 'link_preview', 'data' => $link];
+        }
+
         $reminder = self::reminder($params);
 
         return $reminder === null ? null : ['kind' => 'reminder', 'data' => $reminder];
+    }
+
+    /**
+     * Xem trước liên kết theo khoá chuẩn §2.1 `{url, title, description, image,
+     * source}`. Chỉ nhận URL http(s): thẻ không có URL thì chẳng có gì để mở.
+     *
+     * @param  array<string, mixed>  $params
+     * @return array<string, mixed>|null
+     */
+    private static function linkPreview(array $params): ?array
+    {
+        $raw = $params['link_preview'] ?? $params[self::LEGACY_LINK_KEY] ?? null;
+
+        if (! is_array($raw)) {
+            return null;
+        }
+
+        $raw['image'] ??= $raw[self::LEGACY_LINK_IMAGE_KEY] ?? null;
+        $url = trim((string) ($raw['url'] ?? ''));
+
+        if (! preg_match('#^https?://#i', $url)) {
+            return null;
+        }
+
+        $preview = ['url' => $url];
+
+        foreach (self::LINK_PREVIEW_KEYS as $key) {
+            $value = trim((string) ($raw[$key] ?? ''));
+
+            if ($value !== '') {
+                $preview[$key] = $value;
+            }
+        }
+
+        return $preview;
     }
 
     /**
@@ -65,9 +131,15 @@ class InboundCardParser
      */
     public static function label(string $kind, array $data, ?string $locale = null): string
     {
-        $title = $kind === 'reminder' ? trim((string) ($data['title'] ?? '')) : '';
+        foreach (self::LABEL_FROM_DATA[$kind] ?? [] as $key) {
+            $value = trim((string) ($data[$key] ?? ''));
 
-        return $title !== '' ? $title : __(self::LABEL_KEYS[$kind], [], $locale);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return __(self::LABEL_KEYS[$kind], [], $locale);
     }
 
     /**
