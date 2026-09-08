@@ -219,7 +219,7 @@ Chiều ngược lại của contract: lõi gọi bridge để tác động lên
 Mọi route dưới đây dùng **cùng một cửa xác thực**:
 
 ```
-POST http://127.0.0.1:3710/personal-messages/<hành động>
+POST http://127.0.0.1:8612/personal-messages/<hành động>
 Header: X-Bridge-Send-Secret: <BRIDGE_SEND_SECRET>
 Content-Type: application/json
 ```

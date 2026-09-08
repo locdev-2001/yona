@@ -38,7 +38,7 @@ make dev      # server + queue + logs + Vite (composer run dev)
 ## Day-to-day
 
 ```bash
-make dev            # run the app (http://localhost:8000)
+make dev            # run the app (http://localhost:8610)
 make migrate        # pending migrations on dev + test DBs (as yona_owner)
 make db-roles       # re-apply role grants (idempotent; run after adding tables)
 make test           # Pest suite (runs on yona_test, RLS enforced)

@@ -165,7 +165,7 @@ it('gộp tin ma trùng source_id vào tin gốc sau khi gửi xong', function (
     ]);
     $ghost->setReaction('9876543210', '👍');
 
-    Http::fake(['127.0.0.1:3710/personal-messages/send' => Http::sequence()
+    Http::fake([zaloBridgePattern('personal-messages/send') => Http::sequence()
         ->push(['ok' => true, 'source_id' => 'msg-a'])
         ->push(['ok' => true, 'source_id' => 'msg-b'])]);
 

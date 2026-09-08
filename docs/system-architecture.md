@@ -206,7 +206,7 @@ config/
 
 7. **Zalo bridge lives outside modules:**
    - Bridge process in `services/zalo-bridge/` (fetches QR, handles callback, maintains session) — a separate Node.js service, not PHP.
-   - Bridge endpoint: `config('services.zalo_bridge.url')`, env `ZALO_BRIDGE_URL` (default: `http://127.0.0.1:3710`).
+   - Bridge endpoint: `config('services.zalo_bridge.url')`, env `ZALO_BRIDGE_URL` (default: `http://127.0.0.1:8612`).
    - Webhook: `POST /api/integrations/zalo-personal/webhook` (declared in `routes/api.php`, handled by `app/Http/Controllers/Chat/ZaloPersonal/ZaloPersonalWebhookController`).
    - **Generic dispatcher (P11)**: `POST {bridge}/zca/:method` — allowlist reflection 146 method (`src/zca-adapter.mjs` + snapshot M1 gate), tier guard (send→409, 39 destructive→403 trừ elevated secret + `TenantPermission::ZaloDestructive`, media→415, deny→403). B1 isolation: RLS `zalo_connections` là control chính + token-từ-session `HMAC(connection_id + workspace)` verify với binding ghi lúc promote (persist qua slot meta).
    - **Relay forwarder**: subscribe 10 event zca chưa wired (né 5 bespoke + `cipher_key`) → `old_messages`/`undo` đi outbox durable, chatty fire-and-forget; Laravel (P02/P09 inbox-full-messaging): undo/seen/delivered/reaction ĐI THEO `messages` qua `App\Modules\Chat\Status\MessageStatusService`, typing broadcast-only, lạ → structured log (kho `relay_events` ĐÃ DROP). Outbound MỌI kênh đi `App\Modules\Chat\Delivery\DeliveryPipeline` (rate-limit + meterReply; quota gate removed 25/07). Flow docs: `features/messaging/{zalo-generic-dispatcher,message-state-pipeline,channel-framework-contract}.md`.

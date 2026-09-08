@@ -31,7 +31,7 @@ function channelCascadeCases(): array
 
 it('deletes the channel row with the inbox and frees its identifiers', function (string $state, string $channelClass, array $identifiers) {
     // Xoá inbox Zalo báo cho bridge đăng xuất phiên: không giả là test gõ vào
-    // bridge THẬT ở 127.0.0.1:3710 (Http::preventStrayRequests bắt được).
+    // bridge THẬT ở cầu nối cấu hình ở config/zalo.php (Http::preventStrayRequests bắt được).
     Http::fake([rtrim(config('zalo.bridge.url'), '/').'/*' => Http::response(['ok' => true])]);
 
     $account = Account::factory()->create();

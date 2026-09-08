@@ -122,7 +122,7 @@ Authorization: every `ZaloConnectionController` action opens with `abort_unless(
 |----------|----------|
 | **QR expires without scan** | UI shows "QR Expired - Scan a new one"; retry button requests a fresh slot via `POST /integrations/zalo`. |
 | **Network error during scan** | UI retries polling; if timeout > threshold, prompts user to refresh page. |
-| **Bridge not running** | `POST /integrations/zalo` answers 503 ("bridge chưa chạy ở cổng 3710") and deletes the slot it had just inserted. |
+| **Bridge not running** | `POST /integrations/zalo` answers 503 ("bridge chưa chạy ở cổng 8612") and deletes the slot it had just inserted. |
 | **Bridge auth fails** | `/integrations/zalo/qr-status` passes the bridge's non-OK status through; polling loop exits and the page offers a new QR. |
 | **Admin scans but closes page before promote** | Slot stays `qr_waiting` and nothing is bound; requesting a new QR creates a fresh slot. |
 | **Two admins connect simultaneously** | Each gets its own `connection_id` slot; the partial unique on `(workspace_id, personal_uid)` keeps only one live slot per Zalo account. |

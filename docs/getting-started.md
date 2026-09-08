@@ -62,7 +62,7 @@ php artisan db:seed
 # In project root
 php artisan serve
 
-# Runs on http://localhost:8000
+# Runs on http://localhost:8610
 ```
 
 ### Frontend (Vite dev server)
@@ -72,7 +72,7 @@ php artisan serve
 npm run dev
 
 # Runs on http://localhost:5173
-# Auto-proxies API to http://localhost:8000
+# Auto-proxies API to http://localhost:8610
 ```
 
 ### Zalo Bridge (Optional — for Inbox testing)
@@ -87,15 +87,15 @@ make bridge
 pnpm install
 pnpm dev
 
-# Runs on http://127.0.0.1:3710
-# Webhook target: http://localhost:8000/api/integrations/zalo-personal/webhook
+# Runs on http://127.0.0.1:8612
+# Webhook target: http://localhost:8610/api/integrations/zalo-personal/webhook
 ```
 
 If you don't need Inbox testing, the app runs fine without the bridge (sends return 422 gracefully).
 
 ## 4. Login & Explore
 
-1. Navigate to **http://localhost:8000** (or http://localhost:5173 if dev server handles it).
+1. Navigate to **http://localhost:8610** (or http://localhost:5173 if dev server handles it).
 2. Enter test credentials:
    - Email: `admin@example.com`
    - Password: `password`
@@ -115,7 +115,7 @@ If you don't need Inbox testing, the app runs fine without the bridge (sends ret
 ### Prerequisites
 
 - Zalo personal account (any account, not OA).
-- Bridge running at `http://127.0.0.1:3710`.
+- Bridge running at `http://127.0.0.1:8612`.
 
 ### Steps
 
@@ -167,8 +167,8 @@ php artisan serve --port=8001
 
 ### Zalo Bridge Connection Failed
 
-- Verify bridge is running: `curl http://127.0.0.1:3710/health`.
-- Check `.env`: `ZALO_BRIDGE_URL=http://127.0.0.1:3710`.
+- Verify bridge is running: `curl http://127.0.0.1:8612/health`.
+- Check `.env`: `ZALO_BRIDGE_URL=http://127.0.0.1:8612`.
 - If QR won't scan, restart bridge + reload Integrations page.
 
 ### Inbound Message Not Appearing
