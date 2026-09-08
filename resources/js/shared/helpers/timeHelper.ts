@@ -16,6 +16,32 @@ function activeDateFnsLocale(): Locale {
     return DATE_FNS_LOCALES[language] ?? enUS;
 }
 
+// Mẫu định dạng của bản gốc viết theo thói quen tiếng Anh ("Sep 7, 10:37 PM").
+// Giữ nguyên chữ ký hàm (nơi gọi vẫn truyền mẫu như Chatwoot) nhưng đổi sang mẫu
+// tương đương của locale — một chỗ duy nhất, thêm ngôn ngữ chỉ cần thêm một hàng.
+// KHÁC BIỆT CỐ Ý so với gốc: gốc in ngày giờ tiếng Anh ở mọi ngôn ngữ.
+const PATTERN_BY_LOCALE: Record<string, Record<string, string>> = {
+    vi: {
+        'h:mm a': 'HH:mm',
+        'LLL d, h:mm a': 'd MMM, HH:mm',
+        'LLL d y, h:mm a': 'd MMM y, HH:mm',
+        'LLL d yyyy, h:mm a': 'd MMM yyyy, HH:mm',
+        'MMM d, yyyy': 'd MMM, yyyy',
+    },
+};
+
+function localizedPattern(pattern: string): string {
+    const language = activeDateFnsLocale().code?.split('-')[0] ?? 'en';
+
+    return PATTERN_BY_LOCALE[language]?.[pattern] ?? pattern;
+}
+
+function formatInLocale(time: number | Date, pattern: string): string {
+    const value = typeof time === 'number' ? fromUnixTime(time) : time;
+
+    return format(value, localizedPattern(pattern), { locale: activeDateFnsLocale() });
+}
+
 // Khác biệt CỐ Ý so với gốc: gốc không truyền locale nên luôn ra tiếng Anh
 // ("about 1 hour ago"). Sản phẩm chạy tiếng Việt nên chuỗi này phải dịch.
 export function dynamicTime(time: number): string {
@@ -23,19 +49,20 @@ export function dynamicTime(time: number): string {
 }
 
 export function messageStamp(time: number, dateFormat = 'h:mm a'): string {
-    return format(fromUnixTime(time), dateFormat);
+    return formatInLocale(time, dateFormat);
 }
 
 export function messageTimestamp(time: number, dateFormat = 'MMM d, yyyy'): string {
     const messageTime = fromUnixTime(time);
     if (!isSameYear(messageTime, new Date())) {
-        return format(messageTime, 'LLL d y, h:mm a');
+        return formatInLocale(messageTime, 'LLL d y, h:mm a');
     }
-    return format(messageTime, dateFormat);
+
+    return formatInLocale(messageTime, dateFormat);
 }
 
 export function dateFormat(time: number, df = 'MMM d, yyyy'): string {
-    return format(fromUnixTime(time), df);
+    return formatInLocale(time, df);
 }
 
 // Dạng rút gọn (1m/1h/3d) bám gốc nên giữ nguyên ở mọi ngôn ngữ. Các hàm rút gọn

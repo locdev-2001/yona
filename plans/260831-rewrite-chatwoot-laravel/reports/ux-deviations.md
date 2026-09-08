@@ -39,3 +39,11 @@ ghi ở đây kèm lý do, ảnh trước/sau và cách harness pixel loại tr�
 | Mọi mặt tiền công khai | `SetLocale` đọc thêm `Accept-Language` cho khách vô danh và rút `vi-VN` → `vi` | Khách chưa đăng nhập không có hồ sơ để hỏi locale; trước đây người Việt mở trang chủ vẫn thấy tiếng Anh | — | Playwright mặc định gửi `en-US` nên harness không đổi hành vi; harness nào cần tiếng Việt phải đặt `locale: 'vi-VN'` |
 
 Kiến trúc: trang chủ là **bề mặt riêng** (`resources/js/landing/**` + `resources/css/landing.css` + `tailwind.landing.config.js` + `landing.blade.php`) như widget/survey/portal — `tailwind.config.js` (bản port nguyên của Chatwoot) không bị thêm token nào, bundle dashboard không phình.
+
+## Ngày giờ theo ngôn ngữ (08/09/2026)
+
+| Màn | Lệch so với oracle | Lý do | Ghi chú harness |
+|---|---|---|---|
+| Bong bóng tin, bảng CSAT, thư viện đính kèm, thẻ hội thoại | Gốc in ngày giờ tiếng Anh ở mọi ngôn ngữ ("Sep 7, 10:37 PM"); Yona theo locale — tiếng Việt dùng giờ 24 và ngày trước tháng ("7 thg 9, 22:37") | Giao diện tiếng Việt lẫn ngày giờ tiếng Anh là lỗi hiển thị trước mặt người dùng | Harness chạy `locale: en-US` nên không đổi; harness nào đặt `vi-VN` phải chụp lại baseline |
+
+Cài đặt ở một chỗ: `resources/js/shared/helpers/timeHelper.ts` (`PATTERN_BY_LOCALE` + `formatInLocale`) — nơi gọi vẫn truyền mẫu như Chatwoot, thêm ngôn ngữ chỉ cần thêm một hàng.
