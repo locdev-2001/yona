@@ -4,7 +4,7 @@ import Button from 'dashboard/components-next/button/Button';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
-import { useContactPanelOpen } from '../contactPanelVisibility';
+import { useContactPanelControl } from '../contactPanelVisibility';
 
 // Port từ components-next/Conversation/SidepanelSwitch.vue — nhóm nút nổi góc
 // phải vùng tin nhắn: mở ContactPanel (lưu ui_settings.is_contact_sidebar_open).
@@ -14,13 +14,14 @@ export default function SidepanelSwitch() {
     const { uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const showCopilotTab = Boolean(currentAccount.features.captain_integration);
-    const isContactSidebarOpen = useContactPanelOpen(uiSettings);
-    const isCopilotPanelOpen = Boolean(uiSettings.is_copilot_panel_open);
-
     // Gốc chỉ MỞ được bằng nút này (đóng phải tìm dấu × trong panel). Panel giờ
     // mở sẵn trên màn rộng nên nút phải đóng được, và lựa chọn được nhớ lại.
-    const handleConversationSidebarToggle = () =>
-        updateUISettings({ is_contact_sidebar_open: !isContactSidebarOpen, is_copilot_panel_open: false });
+    // Trên màn hẹp cùng nút này bật/tắt lớp phủ (không ghi ui_settings).
+    const { isOpen: isContactSidebarOpen, toggle: handleConversationSidebarToggle } = useContactPanelControl(
+        uiSettings,
+        updateUISettings,
+    );
+    const isCopilotPanelOpen = Boolean(uiSettings.is_copilot_panel_open);
 
     const handleCopilotSidebarToggle = () =>
         updateUISettings({ is_contact_sidebar_open: false, is_copilot_panel_open: true });

@@ -449,6 +449,7 @@ return [
     ],
     'SIDEBAR' => [
         'CONTACT' => 'Liên hệ',
+        'CLOSE_OVERLAY' => 'Đóng bảng thông tin',
         'COPILOT' => 'Copilot',
     ],
     'VOICE_WIDGET' => [

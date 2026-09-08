@@ -3,7 +3,11 @@ export const AVAILABILITY_STATUS_KEYS = ['online', 'busy', 'offline'] as const;
 
 export type AvailabilityStatus = (typeof AVAILABILITY_STATUS_KEYS)[number];
 
-export const SMALL_SCREEN_BREAKPOINT = 1024;
+// Bằng breakpoint `md` của Tailwind — cùng ngưỡng mà CSS dùng để đổi cột phải
+// từ lớp phủ sang cột tĩnh. Gốc: dashboard/constants/globals.js.
+export const SMALL_SCREEN_BREAKPOINT = 768;
+
+export const LARGE_SCREEN_BREAKPOINT = 1024;
 
 export const SNOOZE_OPTIONS = {
     UNTIL_NEXT_REPLY: 'until_next_reply',

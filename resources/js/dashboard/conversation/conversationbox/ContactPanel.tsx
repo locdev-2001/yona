@@ -8,6 +8,7 @@ import { conversationSidebarItemsOrder } from 'dashboard/composables/useUISettin
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { useContactPanelControl } from '../contactPanelVisibility';
 import type { ContactMeta } from '../types';
 import ContactConversations from './contact/ContactConversations';
 import ContactInfo from './contact/ContactInfo';
@@ -48,13 +49,16 @@ export default function ContactPanel() {
         currentAccount.id,
         selectedConversation?.meta.sender ?? NO_CONTACT,
     );
+    // Đóng panel đi qua một chỗ duy nhất: màn rộng ghi ui_settings, màn hẹp tắt
+    // lớp phủ. Ghi thẳng ui_settings ở đây sẽ không đóng nổi lớp phủ di động.
+    const { setOpen: setContactPanelOpen } = useContactPanelControl(uiSettings, updateUISettings);
 
     if (!selectedConversation) return null;
 
     const isContactSidebarItemOpen = (key: string) =>
         typeof uiSettings[key] === 'boolean' ? Boolean(uiSettings[key]) : SECTIONS_OPEN_BY_DEFAULT.includes(key);
     const toggleSidebarUIState = (key: string) => updateUISettings({ [key]: !isContactSidebarItemOpen(key) });
-    const closeContactPanel = () => updateUISettings({ is_contact_sidebar_open: false, is_copilot_panel_open: false });
+    const closeContactPanel = () => setContactPanelOpen(false);
 
     const sections: Record<string, SidebarSection | null> = {
         conversation_actions: {

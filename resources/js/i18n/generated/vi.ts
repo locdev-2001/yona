@@ -2725,6 +2725,7 @@ const messages: Record<string, unknown> = {
         },
         "SIDEBAR": {
             "CONTACT": "Liên hệ",
+            "CLOSE_OVERLAY": "Đóng bảng thông tin",
             "COPILOT": "Copilot"
         },
         "VOICE_WIDGET": {

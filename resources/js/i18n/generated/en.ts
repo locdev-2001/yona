@@ -2725,6 +2725,7 @@ const messages: Record<string, unknown> = {
         },
         "SIDEBAR": {
             "CONTACT": "Contact",
+            "CLOSE_OVERLAY": "Close details panel",
             "COPILOT": "Copilot"
         },
         "VOICE_WIDGET": {
