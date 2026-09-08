@@ -3,11 +3,15 @@ export const AVAILABILITY_STATUS_KEYS = ['online', 'busy', 'offline'] as const;
 
 export type AvailabilityStatus = (typeof AVAILABILITY_STATUS_KEYS)[number];
 
-// Bằng breakpoint `md` của Tailwind — cùng ngưỡng mà CSS dùng để đổi cột phải
-// từ lớp phủ sang cột tĩnh. Gốc: dashboard/constants/globals.js.
-export const SMALL_SCREEN_BREAKPOINT = 768;
+// Hai ngưỡng bố cục của màn hội thoại — NGUỒN DUY NHẤT, mọi nơi khác đọc lại từ
+// đây (quyết định founder 08/09/2026, ghi ở ux-deviations.md):
+//   < 1024  : hai-màn — danh sách HOẶC khung chat, panel phải là lớp phủ
+//   1024–1279: hai cột — danh sách + khung chat, panel phải vẫn là lớp phủ
+//   >= 1280 : ba cột — panel phải là cột tĩnh, mở sẵn và nhớ lựa chọn
+// Trùng `lg` và `xl` của Tailwind để lớp CSS `xl:` và nhánh JS luôn đổi cùng lúc.
+export const SMALL_SCREEN_BREAKPOINT = 1024;
 
-export const LARGE_SCREEN_BREAKPOINT = 1024;
+export const LARGE_SCREEN_BREAKPOINT = 1280;
 
 export const SNOOZE_OPTIONS = {
     UNTIL_NEXT_REPLY: 'until_next_reply',

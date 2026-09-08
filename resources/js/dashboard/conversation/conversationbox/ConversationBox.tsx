@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { useIsLargeScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import { useDashboardApps } from 'dashboard/composables/useDashboardApps';
@@ -21,6 +22,8 @@ export default function ConversationBox({
     className?: string;
 }) {
     const { accountId, selectedConversation, isOnExpandedLayout } = useConversation();
+    // Dưới ngưỡng ba cột cụm nút này sống trong mũ khung chat, không nổi đè lên tin.
+    const isWideLayout = useIsLargeScreen();
     const currentChat = selectedConversation;
     const { apps: dashboardApps } = useDashboardApps(accountId);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -54,7 +57,7 @@ export default function ConversationBox({
             <div className="flex h-full min-h-0 m-0" style={{ display: activeIndex ? 'none' : undefined }}>
                 {currentChat ? <MessagesView /> : isInboxView ? null : <EmptyState />}
                 {/* slot của ConversationBox.vue: ConversationView đặt SidepanelSwitch khi có currentChat */}
-                {currentChat ? <SidepanelSwitch /> : null}
+                {currentChat && isWideLayout ? <SidepanelSwitch /> : null}
             </div>
             {currentChat
                 ? dashboardApps.map((dashboardApp, index) => (

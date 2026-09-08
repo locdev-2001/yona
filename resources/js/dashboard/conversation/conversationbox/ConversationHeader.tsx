@@ -7,6 +7,7 @@ import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
+import { useIsLargeScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { STATUS_TYPE } from '../constants';
@@ -14,10 +15,16 @@ import { useConversation } from '../ConversationContext';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MoreActions from './MoreActions';
+import SidepanelSwitch from './SidepanelSwitch';
 
 // Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
 // (EE), ConversationCallButton (voice EE), cảnh báo HMAC unverified (chỉ áp
 // dụng WebWidget — C3). BackButton hiện ở expanded layout.
+//
+// Lệch có chủ đích (founder 08/09/2026, ux-deviations.md): dưới ngưỡng ba cột
+// (LARGE_SCREEN_BREAKPOINT) mũ khung chat gom về MỘT dòng thay vì hai — tên +
+// icon kênh cùng dòng, hành động thu thành nút icon, mã hội thoại nhường chỗ.
+// Từ 1280px trở lên giữ nguyên bản gốc từng pixel.
 export default function ConversationHeader({
     className = '',
     showBackButton = false,
@@ -27,6 +34,7 @@ export default function ConversationHeader({
 }) {
     const { selectedConversation, accountId, inboxId, teamId, label } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const isWideLayout = useIsLargeScreen();
 
     if (!selectedConversation) return null;
 
@@ -52,8 +60,46 @@ export default function ConversationHeader({
         }
     };
 
+    if (!isWideLayout) {
+        return (
+            <div
+                data-testid="conversation-header"
+                className={`flex flex-row items-center justify-between gap-2 flex-1 w-full min-w-0 px-2 h-12 ${className}`}
+            >
+                <div className="flex items-center justify-start min-w-0 flex-1 gap-2">
+                    {showBackButton ? (
+                        <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId, label })} />
+                    ) : null}
+                    <Avatar
+                        name={currentContact.name ?? ''}
+                        src={currentContact.thumbnail}
+                        size={32}
+                        status={contactAvailabilityStatus}
+                        hideOfflineStatus
+                    />
+                    <div className="flex items-center min-w-0 gap-1.5">
+                        <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
+                            {currentContact.name}
+                        </span>
+                        {inbox ? (
+                            <ChannelIcon inbox={inbox} className="size-4 flex-shrink-0 text-n-slate-11" />
+                        ) : null}
+                        {isSnoozed ? (
+                            <span title={snoozedDisplayText} className="i-lucide-alarm-clock size-4 flex-shrink-0 text-n-amber-10" />
+                        ) : null}
+                    </div>
+                </div>
+                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
+                    <SidepanelSwitch variant="inline" />
+                    <MoreActions isCompact />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
+            data-testid="conversation-header"
             className={`flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 ${className}`}
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">

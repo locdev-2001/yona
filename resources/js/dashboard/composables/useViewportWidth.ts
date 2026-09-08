@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
+import { LARGE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 
 // Nguồn duy nhất cho "màn hình rộng bao nhiêu" ở phía dashboard — thay cho
 // `useWindowSize()` của @vueuse mà Chatwoot dùng. Mọi quyết định bố cục theo
@@ -23,11 +23,20 @@ export function useViewportWidth(): number {
     return width;
 }
 
+/** Hẹp hơn `lg` (1024px) — điện thoại và tablet dọc: bố cục hai-màn. */
 export function isSmallScreen(viewportWidth: number): boolean {
     return viewportWidth > 0 && viewportWidth < SMALL_SCREEN_BREAKPOINT;
 }
 
-/** Khung nhìn hẹp hơn breakpoint `md` (768px) — điện thoại và tablet dọc nhỏ. */
 export function useIsSmallScreen(): boolean {
     return isSmallScreen(useViewportWidth());
+}
+
+/** Từ `xl` (1280px) trở lên — đủ chỗ dựng ba cột, panel phải thành cột tĩnh. */
+export function isLargeScreen(viewportWidth: number): boolean {
+    return viewportWidth >= LARGE_SCREEN_BREAKPOINT;
+}
+
+export function useIsLargeScreen(): boolean {
+    return isLargeScreen(useViewportWidth());
 }

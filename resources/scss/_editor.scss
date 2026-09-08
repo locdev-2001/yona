@@ -68,15 +68,16 @@
 }
 
 // Port từ ResizableEditorWrapper.vue <style>: editor trong ReplyBox lấy chiều cao
-// từ biến của wrapper (mặc định 120px, kéo trong [80px, container - 200 - panel]).
+// từ biến của wrapper. Công thức và các trần/sàn ở dashboard/conversation/composerHeight.ts —
+// mặc định bám theo nội dung (một dòng khi rỗng), kéo trong [32px, container - 200 - panel].
 .resizable-editor-wrapper {
   .resizable-editor-body {
     @apply overflow-auto;
 
     height: clamp(
-      var(--editor-min-allowed, 5rem),
-      var(--editor-height, 5rem),
-      var(--editor-max-allowed, 7.5rem)
+      var(--editor-min-allowed, 2rem),
+      var(--editor-height, 2rem),
+      var(--editor-max-allowed, 12.5rem)
     );
     transition:
       height var(--editor-height-transition),
