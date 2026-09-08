@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
     applyGroupContextToPayload,
     applyInboundDescriptorToPayload,
+    buildLinkPreview,
     captionBesideLink,
+    inboundCardKind,
     contentLabelFromObject,
     enrichInboundBody,
     mediaCaptionFromContent,
@@ -12,6 +14,7 @@ import {
     normalizeMentions,
     parseInboundLinkPreview,
     parseInboundLocation,
+    recommendedCardKind,
     parseVietQrEmv,
     parseZinstantBankCardSource,
 } from './inbound-content.mjs';
@@ -278,7 +281,7 @@ test('1.12: chat.link ra contract fallback thay chuỗi "[Link] … https://…"
             { href: 'https://yona.vn/bang-gia', title: 'Bảng giá Yona', description: 'Gói Team', thumb: 'https://cdn/t.jpg' },
             'chat.link'
         ),
-        { url: 'https://yona.vn/bang-gia', title: 'Bảng giá Yona', description: 'Gói Team', thumb: 'https://cdn/t.jpg' }
+        { url: 'https://yona.vn/bang-gia', title: 'Bảng giá Yona', description: 'Gói Team', image: 'https://cdn/t.jpg' }
     );
 });
 
@@ -294,6 +297,75 @@ test('1.12: chữ khách gõ kèm link giữ lại, chuỗi bridge tự dựng t
     assert.equal(captionBesideLink('[Link] Bảng giá https://yona.vn', link), null);
     assert.equal(captionBesideLink('https://yona.vn', link), null);
     assert.equal(captionBesideLink('', link), null);
+});
+
+// ── chat.recommended: danh thiếp vs thẻ liên kết (hình dạng THẬT, PII giả) ──
+// Zalo dùng CHUNG msgType cho hai loại; gộp lại thì URL thô leo lên làm tên người.
+
+// Tin 951 (08/09/2026): khách chia sẻ link ảnh QR chuyển khoản.
+const LINK_CARD_CONTENT = {
+    title: null,
+    description: null,
+    href: 'https://qr.thanhtoan.test/img?bank=Ngan+Hang+Test&acc=100000000000',
+    thumb: 'https://cdn.zalo.test/photolink/720/zlv-test',
+    childnumber: 0,
+    action: 'recommened.link',
+    params: '{"tWidth":540,"thumb_src_type":0,"src":"qr.thanhtoan.test","tHeight":540,"tType":1,"linkType":5,"type":5}',
+    type: null,
+};
+
+// Tin 949: danh thiếp người thật — cùng msgType, khác action.
+const CONTACT_CARD_CONTENT = {
+    title: 'Khách D',
+    description: '{"phone":"+84900000006","qrCodeUrl":"https://cdn.zalo.test/qr/khach-d.jpg"}',
+    href: 'https://zaloapp.com',
+    thumb: 'https://cdn.zalo.test/avatar/khach-d.jpg',
+    childnumber: 0,
+    action: 'recommened.user',
+    params: '8800000000000006',
+    type: null,
+};
+
+test('chat.recommended: action tách danh thiếp khỏi thẻ liên kết (Zalo viết thiếu chữ d)', () => {
+    assert.equal(recommendedCardKind(CONTACT_CARD_CONTENT), 'contact_card');
+    assert.equal(recommendedCardKind(LINK_CARD_CONTENT), 'link');
+    // Biến thể viết đúng chính tả, phòng khi Zalo sửa.
+    assert.equal(recommendedCardKind({ action: 'recommended.user' }), 'contact_card');
+    assert.equal(recommendedCardKind({ action: 'recommended.link' }), 'link');
+    // Cuộc gọi / action lạ / không có action: không phải hai loại này.
+    assert.equal(recommendedCardKind({ action: 'recommened.calltime' }), null);
+    assert.equal(recommendedCardKind({ href: 'https://a.vn' }), null);
+    assert.equal(recommendedCardKind(null), null);
+});
+
+test('không có action thì dấu hiệu định danh người mới ra danh thiếp', () => {
+    assert.equal(inboundCardKind(CONTACT_CARD_CONTENT, { url: 'https://qr.thanhtoan.test' }), 'contact_card');
+    assert.equal(inboundCardKind(LINK_CARD_CONTENT, { url: 'https://zaloapp.com', phone: '0900000006' }), 'link');
+
+    const noAction = { href: 'https://tin-tuc.test/bai-viet', title: 'Bài viết' };
+    assert.equal(inboundCardKind(noAction, { url: 'https://tin-tuc.test/bai-viet' }), 'link');
+    assert.equal(inboundCardKind(noAction, { url: 'https://tin-tuc.test', phone: '0900000006' }), 'contact_card');
+    assert.equal(inboundCardKind(noAction, { url: 'https://tin-tuc.test', contact_uid: '8800000000000006' }), 'contact_card');
+    assert.equal(inboundCardKind(noAction, { url: 'https://zalo.me/khach-d' }), 'contact_card');
+});
+
+test('thẻ liên kết ra link_preview chuẩn §2.1, source lấy từ content.params.src', () => {
+    assert.deepEqual(parseInboundLinkPreview(LINK_CARD_CONTENT, 'chat.recommended'), {
+        url: 'https://qr.thanhtoan.test/img?bank=Ngan+Hang+Test&acc=100000000000',
+        image: 'https://cdn.zalo.test/photolink/720/zlv-test',
+        source: 'qr.thanhtoan.test',
+    });
+    // title/description null của Zalo không được biến thành chuỗi "null".
+    assert.equal('title' in parseInboundLinkPreview(LINK_CARD_CONTENT, 'chat.recommended'), false);
+});
+
+test('buildLinkPreview dựng được cả khi content không mang href (dự phòng từ card.url)', () => {
+    assert.deepEqual(buildLinkPreview('https://a.test/x', { title: 'Tiêu đề', params: '{"src":"a.test"}' }), {
+        url: 'https://a.test/x',
+        title: 'Tiêu đề',
+        source: 'a.test',
+    });
+    assert.deepEqual(buildLinkPreview('https://a.test/x', null), { url: 'https://a.test/x' });
 });
 
 test('1.10: một ánh xạ chung cho MỌI loại tin — hai lane không thể lệch nhau', () => {
@@ -313,8 +385,8 @@ test('1.10: một ánh xạ chung cho MỌI loại tin — hai lane không thể
         location: { latitude: 1, longitude: 2 },
         content: '',
     });
-    assert.deepEqual(map({ inbound_kind: 'link', link: { url: 'https://a.vn' }, caption: 'xem nhé' }), {
-        link: { url: 'https://a.vn' },
+    assert.deepEqual(map({ inbound_kind: 'link', link_preview: { url: 'https://a.vn' }, caption: 'xem nhé' }), {
+        link_preview: { url: 'https://a.vn' },
         content: 'xem nhé',
     });
     assert.deepEqual(map({ inbound_kind: 'call', call: { media: 'voice' } }), { call: { media: 'voice' }, content: '' });

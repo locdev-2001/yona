@@ -49,8 +49,14 @@ Content-Type: application/json
 | `file` | `media_url`, `media_filename`, chú thích → `content` | đính kèm `file_type=file` |
 | `sticker` | `sticker{stickerUrl,url,thumbnail,…}` | `content_type=sticker` + đính kèm ảnh `external_url` |
 | `location` | `location{latitude,longitude,address?,title?,url}` | đính kèm `file_type=location` (`coordinates_lat/long`, `fallback_title`) |
-| `link` | `link{url,title?,description?,thumb?}`, chữ khách gõ kèm → `content` | đính kèm `fallback` (`external_url` + `fallback_title`) |
+| `link` | `link_preview{url,title?,description?,image?,source?}`, chữ khách gõ kèm → `content` | `content_attributes.link_preview` (§2.1); `content` = chú thích, thiếu thì tiêu đề/URL |
 | `business_card` | `business_card{name,title,thumbnail,url,phone?,qr_code_url?}` | `content_attributes.business_card` |
+
+> `chat.recommended` mang CẢ HAI loại trên; `content.action` là thứ tách chúng:
+> `recommened.user` → danh thiếp, `recommened.link` → thẻ liên kết (Zalo viết
+> thiếu chữ `d`, biến thể `recommended.*` cũng được nhận). Tin không khai action
+> thì xét dấu hiệu định danh người (số điện thoại / uid / QR hồ sơ / URL
+> zaloapp.com|zalo.me); không có ⇒ liên kết.
 | `bank_card` | `bank_card{bank_name,bank_bin,account_number,account_holder,logo_url,qr_url}` | `content_attributes.bank_card` |
 | `call` | `call{media,direction,outcome,duration_seconds,callback_enabled}` | `content_attributes.call` |
 

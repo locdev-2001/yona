@@ -427,8 +427,64 @@ export function isLocationMsgType(msgType) {
 }
 
 /**
- * 1.12: link/webcontent ra contract `fallback` của lõi (external_url +
- * fallback_title) thay cho chuỗi thô `[Link] Tiêu đề https://…`.
+ * Zalo dùng CHUNG `msgType: chat.recommended` cho danh thiếp người và thẻ liên
+ * kết chia sẻ; thứ phân biệt hai loại là `content.action`:
+ *   - `recommened.user` → danh thiếp (Zalo viết thiếu chữ `d`, đúng nguyên văn);
+ *   - `recommened.link` → thẻ liên kết, `href` là URL khách chia sẻ.
+ * Gộp cả hai thành danh thiếp thì URL thô leo lên làm tên người (tin 951: khách
+ * gửi link ảnh QR chuyển khoản, UI hiện "đã gửi một danh thiếp https://qr…").
+ *
+ * Nhận cả biến thể viết đúng `recommended.*` phòng khi Zalo sửa chính tả.
+ *
+ * @returns {'contact_card'|'link'|null} null khi action không phải hai loại này
+ */
+export function recommendedCardKind(content) {
+    const obj = coerceContentObject(content);
+    if (!obj || typeof obj !== 'object') {
+        return null;
+    }
+    const match = String(obj.action ?? '')
+        .trim()
+        .toLowerCase()
+        .match(/^recommen(?:d)?ed\.([a-z]+)$/);
+    if (!match) {
+        return null;
+    }
+    if (match[1] === 'user') {
+        return 'contact_card';
+    }
+    return match[1] === 'link' ? 'link' : null;
+}
+
+/** Hồ sơ người trên Zalo luôn nằm dưới hai tên miền này (`tryZaloContactCardFromLinkPlain` dùng cùng dấu hiệu). */
+const ZALO_PROFILE_URL_PATTERN = /(?:^|\/\/|\.)(?:zaloapp\.com|zalo\.me)(?:$|[/?#])/i;
+
+/**
+ * Thẻ đã bóc là danh thiếp hay chỉ là liên kết chia sẻ. Chỗ DUY NHẤT quyết định
+ * — cả `chat.recommended` lẫn `chat.link` đi qua đây.
+ *
+ * `content.action` là bằng chứng mạnh nhất; tin cũ/biến thể không khai action thì
+ * xét dấu hiệu định danh người: số điện thoại, uid, mã QR hồ sơ, hoặc URL trỏ về
+ * hồ sơ Zalo. Không có dấu hiệu nào ⇒ liên kết, vì thẻ liên kết mới là loại
+ * không mang thông tin người.
+ *
+ * @returns {'contact_card'|'link'}
+ */
+export function inboundCardKind(content, card) {
+    const declared = recommendedCardKind(content);
+    if (declared) {
+        return declared;
+    }
+    const hasIdentity = Boolean(card?.phone || card?.contact_uid || card?.qr_code_url);
+    return hasIdentity || ZALO_PROFILE_URL_PATTERN.test(String(card?.url ?? '')) ? 'contact_card' : 'link';
+}
+
+/**
+ * 1.12: link/webcontent ra khoá chuẩn `link_preview` của
+ * docs/channel-capabilities.md §2.1 (`{url, title, description, image, source}`)
+ * thay cho chuỗi thô `[Link] Tiêu đề https://…`.
+ *
+ * `source` = `content.params.src` — tên miền Zalo tự bóc ra để hiện dưới thẻ.
  */
 export function parseInboundLinkPreview(content, msgType) {
     if (msgType !== 'chat.link' && msgType !== 'chat.webcontent' && msgType !== 'chat.recommended') {
@@ -442,14 +498,26 @@ export function parseInboundLinkPreview(content, msgType) {
     if (!/^https?:\/\//i.test(url)) {
         return null;
     }
+    return buildLinkPreview(url, obj);
+}
+
+/**
+ * Chỗ DUY NHẤT dựng object `link_preview` — dùng cho cả nhánh thẻ liên kết
+ * (`recommened.link`, `title`/`description` đều null) lẫn nhánh link thường.
+ */
+export function buildLinkPreview(url, contentObject) {
+    const obj = contentObject && typeof contentObject === 'object' ? contentObject : {};
     const title = String(obj.title ?? '').trim();
     const description = String(obj.description ?? obj.desc ?? '').trim();
-    const thumb = String(obj.thumb ?? obj.thumbnail ?? '').trim();
+    const image = String(obj.thumb ?? obj.thumbnail ?? '').trim();
+    const params = parseContentParams(obj.params);
+    const source = String(params?.src ?? params?.source ?? '').trim();
     return {
-        url,
+        url: String(url).trim(),
         ...(title ? { title } : {}),
         ...(description ? { description } : {}),
-        ...(thumb ? { thumb } : {}),
+        ...(image ? { image } : {}),
+        ...(source ? { source } : {}),
     };
 }
 
@@ -569,7 +637,7 @@ export function applyInboundDescriptorToPayload(payload, desc, { sticker = null,
             payload.content = '';
             return payload;
         case 'link':
-            payload.link = desc.link;
+            payload.link_preview = desc.link_preview;
             payload.content = caption;
             return payload;
         default:

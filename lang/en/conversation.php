@@ -98,6 +98,11 @@ return [
             'CANCELED' => 'canceled',
         ],
     ],
+    // Mở rộng của Yona: xem trước liên kết (`inbound_link_preview`,
+    // docs/channel-capabilities.md §2.1) — trung tính theo kênh.
+    'LINK_PREVIEW' => [
+        'FALLBACK_TITLE' => 'Link',
+    ],
     // Mở rộng của Yona: năng lực `friend_request` (docs/channel-capabilities.md
     // §2.4) — trung tính theo kênh, không nằm trong khối ZALO.
     'FRIEND_REQUEST' => [

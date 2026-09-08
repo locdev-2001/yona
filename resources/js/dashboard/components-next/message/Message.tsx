@@ -14,6 +14,7 @@ import MessageError from './MessageError';
 import ActivityBubble from './bubbles/Activity';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
+import LinkPreviewBubble from './bubbles/LinkPreview';
 import FileBubble from './bubbles/File';
 import ImageBubble from './bubbles/Image';
 import EmailBubble from './bubbles/Email/Index';
@@ -83,6 +84,7 @@ const BUBBLE_COMPONENTS = {
 // whatsappFlowResponse / contentAttributes.type === 'dyte' / imageType (story
 // Instagram) trong componentToRender.
 const CHANNEL_CARD_BUBBLES = {
+    link_preview: LinkPreviewBubble,
     business_card: ZaloBusinessCardBubble,
     bank_card: ZaloBankCardBubble,
     reminder: ZaloReminderBubble,

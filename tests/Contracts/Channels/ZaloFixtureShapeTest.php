@@ -31,7 +31,8 @@ const ZALO_FAKE_NAMES = [
     'Khách A', 'Khách B', 'Khách C', 'Khách D', 'Khách E', 'Chủ Shop', 'Nhóm Khách Sỉ',
 ];
 
-const ZALO_ALLOWED_HOSTS = ['cdn.zalo.test', 'zalo.test', 'zinstant.zalo.test', 'maps.google.com'];
+// `qr.thanhtoan.test` = bên thứ ba khách chia sẻ link tới (thẻ liên kết) — không phải host của Zalo.
+const ZALO_ALLOWED_HOSTS = ['cdn.zalo.test', 'zalo.test', 'zinstant.zalo.test', 'maps.google.com', 'qr.thanhtoan.test'];
 
 /** Khoá bắt buộc cho MỌI payload `type: inbound` (đúng envelope index.mjs dựng). */
 const ZALO_INBOUND_KEYS = [
@@ -57,6 +58,9 @@ function zaloFixtureShapes(): array
         'gif' => [...ZALO_INBOUND_KEYS, 'content', 'media_url', 'media_filename'],
         'file' => [...ZALO_INBOUND_KEYS, 'content', 'media_url', 'media_filename'],
         'business_card' => [...ZALO_INBOUND_KEYS, 'content', 'business_card.name', 'business_card.title', 'business_card.thumbnail', 'business_card.url', 'business_card.qr_code_url', 'business_card.phone', 'business_card.contact_uid'],
+        // Thẻ liên kết: CÙNG msgType `chat.recommended` với danh thiếp, tách nhau
+        // bằng `listener_data.content.action` (`recommened.link` vs `recommened.user`).
+        'link_card' => [...ZALO_INBOUND_KEYS, 'content', 'link_preview.url', 'link_preview.image', 'link_preview.source', 'listener_data.content.action', 'listener_data.content.href', 'listener_data.content.params'],
         'bank_card' => [...ZALO_INBOUND_KEYS, 'content', 'bank_card.bank_name', 'bank_card.bank_bin', 'bank_card.account_number', 'bank_card.account_holder', 'bank_card.logo_url', 'bank_card.qr_url'],
         // Nhắc hẹn đi đường `chat.ecard`: dữ liệu thẻ nằm trong listener_data.content.
         'reminder_created' => [...ZALO_INBOUND_KEYS, 'content', 'listener_data.content.title', 'listener_data.content.description', 'listener_data.content.href', 'listener_data.content.params'],
