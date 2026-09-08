@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { isSmallScreen, useViewportWidth } from 'dashboard/composables/useViewportWidth';
+import { isLargeScreen, useViewportWidth } from 'dashboard/composables/useViewportWidth';
+import { LARGE_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 
 // Lệnh founder 07/09/2026: panel phải (thông tin liên hệ) mở SẴN trên màn rộng —
@@ -12,11 +13,21 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 // không chỉ theo trình duyệt. Chưa từng bấm thì khoá vắng mặt và mặc định theo
 // bề rộng khung nhìn.
 //
-// Dưới breakpoint `md` panel là LỚP PHỦ đè lên khung chat: nó không bao giờ mở
+// Dưới `xl` (1280px) panel là LỚP PHỦ đè lên khung chat: nó không bao giờ mở
 // sẵn (kể cả khi `ui_settings` nhớ "mở" từ màn rộng) và chỉ bật trong phiên xem
-// hiện tại khi người dùng bấm nút. Lựa chọn màn rộng vì thế không bị lớp phủ di
-// động ghi đè — hai ngữ cảnh giữ trạng thái riêng.
-export const CONTACT_PANEL_WIDE_BREAKPOINT = 1280;
+// hiện tại khi người dùng bấm nút. Lựa chọn màn rộng vì thế không bị lớp phủ ghi
+// đè — hai ngữ cảnh giữ trạng thái riêng. Ngưỡng này lấy thẳng từ
+// LARGE_SCREEN_BREAKPOINT để chỉ có một con số cho cả CSS `xl:` lẫn JS.
+export const CONTACT_PANEL_WIDE_BREAKPOINT = LARGE_SCREEN_BREAKPOINT;
+
+/** Panel phải đang ở dạng lớp phủ (chưa đủ chỗ cho cột tĩnh). */
+export function isContactPanelOverlay(viewportWidth: number): boolean {
+    return viewportWidth > 0 && !isLargeScreen(viewportWidth);
+}
+
+export function useIsContactPanelOverlay(): boolean {
+    return isContactPanelOverlay(useViewportWidth());
+}
 
 export const CONTACT_PANEL_OPEN_KEY = 'is_contact_sidebar_open';
 
@@ -63,7 +74,7 @@ export function useContactPanelOpen(uiSettings: UISettings): boolean {
     const viewportWidth = useViewportWidth();
     const overlay = useContactPanelOverlayOpen();
 
-    if (isSmallScreen(viewportWidth)) return overlay;
+    if (isContactPanelOverlay(viewportWidth)) return overlay;
 
     return isContactPanelOpen(uiSettings, viewportWidth);
 }
@@ -78,17 +89,17 @@ export function useContactPanelControl(
 ): { isOpen: boolean; setOpen: (open: boolean) => void; toggle: () => void } {
     const viewportWidth = useViewportWidth();
     const isOpen = useContactPanelOpen(uiSettings);
-    const smallScreen = isSmallScreen(viewportWidth);
+    const overlayMode = isContactPanelOverlay(viewportWidth);
 
     const setOpen = useCallback(
         (open: boolean) => {
-            if (smallScreen) {
+            if (overlayMode) {
                 setContactPanelOverlayOpen(open);
                 return;
             }
             updateUISettings({ [CONTACT_PANEL_OPEN_KEY]: open, is_copilot_panel_open: false });
         },
-        [smallScreen, updateUISettings],
+        [overlayMode, updateUISettings],
     );
 
     const toggle = useCallback(() => setOpen(!isOpen), [isOpen, setOpen]);

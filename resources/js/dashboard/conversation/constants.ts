@@ -82,7 +82,6 @@ export const LAYOUT_TYPES = {
     EXPANDED: 'expanded',
 } as const;
 
-export const LARGE_SCREEN_BREAKPOINT = 1024;
 
 // wootConstants.CONVERSATION_TYPE — tab Mentions/Participating/Unattended dùng
 // chung màn ChatList, chỉ khác tham số `conversation_type` gửi lên server.

@@ -7,10 +7,14 @@ import { LAYOUT_TYPES } from './constants';
 // `expanded`. Ở màn hẹp, gốc vẫn dựng ba cột cạnh nhau nên danh sách 340px đè
 // lên khung chat và không mở nổi hội thoại trên điện thoại.
 //
-// Lệch có chủ đích (ux-deviations.md): dưới breakpoint `md` BUỘC bố cục
+// Lệch có chủ đích (ux-deviations.md): dưới SMALL_SCREEN_BREAKPOINT BUỘC bố cục
 // hai-màn — cùng cơ chế `isOnExpandedLayout` mà gốc đã có, không thêm nhánh
 // layout thứ hai. Nhờ vậy mọi thứ ăn theo nó (danh sách chiếm hết bề rộng, nút
 // quay lại trong header, bỏ viền trái khung chat) tự đúng theo.
+//
+// Ngưỡng nâng 768 → 1024 (quyết định founder 08/09/2026): ở 820px bản cũ dựng
+// đủ ba cột nên khung chat chỉ còn 1px. Ba mức bố cục và hai hằng số quyết định
+// chúng nằm ở `dashboard/constants/globals.ts`.
 
 /** Người dùng đã bật bố cục mở rộng bằng nút ⇥ chưa. */
 export function hasExpandedLayoutPreference(uiSettings: UISettings): boolean {

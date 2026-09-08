@@ -17,7 +17,7 @@ import ResolveAction from './ResolveAction';
 // Port từ widgets/conversation/MoreActions.vue: ResolveAction + menu ⋮ (mute/unmute
 // theo currentChat.muted, send transcript) + EmailTranscriptModal; cùng nhận lệnh
 // từ command bar qua emitter.
-export default function MoreActions() {
+export default function MoreActions({ isCompact = false }: { isCompact?: boolean } = {}) {
     const { selectedConversation, accountId, muteConversation, unmuteConversation } = useConversation();
     const [showEmailActionsModal, setShowEmailActionsModal] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -81,8 +81,8 @@ export default function MoreActions() {
     };
 
     return (
-        <div className="relative flex items-center gap-2 actions--container">
-            <ResolveAction />
+        <div className={`relative flex items-center actions--container ${isCompact ? 'gap-1' : 'gap-2'}`}>
+            <ResolveAction isCompact={isCompact} />
             <div ref={actionsRef} className="relative flex items-center group">
                 <NextButton
                     title={t('CONVERSATION.HEADER.MORE_ACTIONS')}

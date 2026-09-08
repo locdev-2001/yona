@@ -2615,6 +2615,8 @@ const messages: Record<string, unknown> = {
             "MESSAGING_RESTRICTED_WHATSAPP": "You can only reply using a template message due to 24-hour message window restriction",
             "MESSAGING_RESTRICTED_API": "You can only reply using a template message due to message window restriction",
             "MESSAGE_SIGNATURE_NOT_CONFIGURED": "Message signature is not configured, please configure it in profile settings.",
+            "MESSAGE_SIGNATURE_NOT_CONFIGURED_SHORT": "No message signature yet — click to set one up",
+            "RESIZE_COMPOSER": "Drag to resize the composer",
             "COPILOT_MSG_INPUT": "Give copilot additional prompts, or ask anything else... Press enter to send follow-up",
             "CLICK_HERE": "Click here to update",
             "WHATSAPP_TEMPLATES": "Whatsapp Templates"

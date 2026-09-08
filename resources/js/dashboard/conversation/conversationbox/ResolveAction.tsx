@@ -14,6 +14,15 @@ import type { ConversationStatus } from '../types';
 // Port từ components/buttons/ResolveAction.vue. Bỏ: ConversationResolveAttributesModal +
 // useConversationRequiredAttributes (EE). ButtonGroup gốc = div bọc 2 nút. Bấm Snooze gốc
 // KHÔNG đóng dropdown (chỉ mở command bar) — giữ y vậy để pixel khớp.
+//
+// `isCompact` (dưới ngưỡng ba cột): nhãn nhường chỗ cho icon để mũ khung chat gọn
+// trong một dòng; hành động và phím tắt không đổi.
+const COMPACT_ICONS = {
+    resolve: 'i-lucide-check',
+    reopen: 'i-lucide-rotate-ccw',
+    open: 'i-lucide-rotate-ccw',
+} as const;
+
 const getConversationParams = () => {
     const allConversations = document.querySelectorAll<HTMLElement>('.conversations-list .conversation');
     const activeConversation = document.querySelector('div.conversations-list div.conversation.active');
@@ -26,7 +35,7 @@ const getConversationParams = () => {
     };
 };
 
-export default function ResolveAction() {
+export default function ResolveAction({ isCompact = false }: { isCompact?: boolean } = {}) {
     const { selectedConversation, toggleStatus: toggleStatusRequest } = useConversation();
     const [isLoading, setIsLoading] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -120,7 +129,9 @@ export default function ResolveAction() {
             >
                 {isOpen ? (
                     <NextButton
-                        label={t('CONVERSATION.HEADER.RESOLVE_ACTION')}
+                        label={isCompact ? undefined : t('CONVERSATION.HEADER.RESOLVE_ACTION')}
+                        title={t('CONVERSATION.HEADER.RESOLVE_ACTION')}
+                        icon={isCompact ? COMPACT_ICONS.resolve : undefined}
                         sm
                         slate
                         noAnimation
@@ -130,7 +141,9 @@ export default function ResolveAction() {
                     />
                 ) : isResolved ? (
                     <NextButton
-                        label={t('CONVERSATION.HEADER.REOPEN_ACTION')}
+                        label={isCompact ? undefined : t('CONVERSATION.HEADER.REOPEN_ACTION')}
+                        title={t('CONVERSATION.HEADER.REOPEN_ACTION')}
+                        icon={isCompact ? COMPACT_ICONS.reopen : undefined}
                         sm
                         slate
                         noAnimation
@@ -140,7 +153,9 @@ export default function ResolveAction() {
                     />
                 ) : showOpenButton ? (
                     <NextButton
-                        label={t('CONVERSATION.HEADER.OPEN_ACTION')}
+                        label={isCompact ? undefined : t('CONVERSATION.HEADER.OPEN_ACTION')}
+                        title={t('CONVERSATION.HEADER.OPEN_ACTION')}
+                        icon={isCompact ? COMPACT_ICONS.open : undefined}
                         sm
                         slate
                         noAnimation
@@ -164,7 +179,11 @@ export default function ResolveAction() {
             {showActionsDropdown ? (
                 <div
                     ref={dropdownRef}
-                    className="border rounded-lg shadow-lg border-n-strong dark:border-n-strong box-content p-2 w-fit z-10 bg-n-alpha-3 backdrop-blur-[100px] absolute block left-auto top-full mt-0.5 start-0 xl:start-auto xl:end-0 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0"
+                    className={`border rounded-lg shadow-lg border-n-strong dark:border-n-strong box-content p-2 w-fit z-10 bg-n-alpha-3 backdrop-blur-[100px] absolute block left-auto top-full mt-0.5 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0 ${
+                        // Nút gọn nằm sát mép phải màn hẹp: neo start-0 như gốc thì
+                        // menu 156px tràn ra ngoài khung nhìn.
+                        isCompact ? 'end-0' : 'start-0 xl:start-auto xl:end-0'
+                    }`}
                 >
                     <ul className="mb-0 list-none m-0 p-0">
                         {!isPending ? (
