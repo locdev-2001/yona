@@ -4,7 +4,7 @@
 // cửa duy nhất nói chuyện với Zalo — Laravel chỉ gọi HTTP vào bridge.
 return [
     'bridge' => [
-        'url' => env('ZALO_BRIDGE_URL', 'http://127.0.0.1:3710'),
+        'url' => env('ZALO_BRIDGE_URL', 'http://127.0.0.1:8612'),
         // Bridge → Laravel: header X-Zalo-Personal-Bridge-Secret.
         'webhook_secret' => env('ZALO_BRIDGE_WEBHOOK_SECRET', ''),
         // Laravel → bridge: gửi tin (X-Bridge-Send-Secret) và thao tác QR (X-Bridge-UI-Secret).

@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\Queue;
 function fakeZaloSendBridge(array $overrides = []): void
 {
     Http::fake([
-        '127.0.0.1:3710/personal-messages/send' => Http::response(['ok' => true, 'source_id' => 'sent-1']),
-        '127.0.0.1:3710/*' => Http::response(['ok' => true]),
+        zaloBridgePattern('personal-messages/send') => Http::response(['ok' => true, 'source_id' => 'sent-1']),
+        zaloBridgePattern('*') => Http::response(['ok' => true]),
         ...$overrides,
     ]);
 }
@@ -190,7 +190,7 @@ it('không gửi lại tin do bridge dội về', function () {
 });
 
 it('ghi lỗi khi phiên Zalo đã mất', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['message' => 'not_logged_in'], 503)]);
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['message' => 'not_logged_in'], 503)]);
 
     $message = zaloOutgoing($this->conversation);
 
@@ -258,7 +258,7 @@ it('không đếm tin trả lời trong cửa sổ hội thoại vào số tin c
 // ── Lô 3: mọi đính kèm đều đi, tên tệp thật, lỗi có cấu trúc, thử lại ──
 
 it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::sequence()
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::sequence()
         ->push(['ok' => true, 'source_ids' => ['msg-a', 'msg-a-caption']])
         ->push(['ok' => true, 'source_id' => 'msg-b'])
         ->push(['ok' => true, 'source_id' => 'msg-c'])]);
@@ -302,7 +302,7 @@ it('gửi tên tệp gốc và content-type thật của tệp .docx tới bridg
 });
 
 it('giữ source_id của tệp đã gửi được và nêu tên tệp hỏng khi lượt sau lỗi', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::sequence()
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::sequence()
         ->push(['ok' => true, 'source_id' => 'msg-a'])
         ->push(['ok' => false, 'message' => 'download_failed_404'], 500)]);
 
@@ -320,7 +320,7 @@ it('giữ source_id của tệp đã gửi được và nêu tên tệp hỏng k
 });
 
 it('coi 503 thiếu secret là lỗi cấu hình: không đổi trạng thái kênh, không mở ngắt mạch', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(
         ['ok' => false, 'error' => 'bridge secret not configured'], 503
     )]);
 
@@ -332,7 +332,7 @@ it('coi 503 thiếu secret là lỗi cấu hình: không đổi trạng thái k�
 });
 
 it('coi 403 sai secret là lỗi cấu hình chứ không phải Zalo từ chối', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['ok' => false, 'message' => 'Forbidden'], 403)]);
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['ok' => false, 'message' => 'Forbidden'], 403)]);
 
     $message = zaloOutgoing($this->conversation);
 
@@ -342,7 +342,7 @@ it('coi 403 sai secret là lỗi cấu hình chứ không phải Zalo từ chố
 });
 
 it('đếm lỗi zca thật vào ngắt mạch', function () {
-    fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['ok' => false, 'message' => 'ZaloApiError: rate limited'], 500)]);
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['ok' => false, 'message' => 'ZaloApiError: rate limited'], 500)]);
 
     $message = zaloOutgoing($this->conversation);
 
@@ -383,7 +383,7 @@ describe('POST …/messages/{message}/retry', function () {
     }
 
     it('đổi tin thất bại về sent, xoá lý do lỗi và đẩy lại SendReplyJob', function () {
-        fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['message' => 'not_logged_in'], 503)]);
+        fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['message' => 'not_logged_in'], 503)]);
         $message = zaloOutgoing($this->conversation);
         expect($message->refresh()->status)->toBe(Message::STATUSES['failed']);
 
@@ -406,7 +406,7 @@ describe('POST …/messages/{message}/retry', function () {
     });
 
     it('giữ nguyên trích dẫn và bí danh source_id khi gửi lại', function () {
-        fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['message' => 'not_logged_in'], 503)]);
+        fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['message' => 'not_logged_in'], 503)]);
         $message = zaloOutgoing($this->conversation);
         $quoted = $this->conversation->messages()->create([
             'account_id' => $this->conversation->account_id,
@@ -451,7 +451,7 @@ describe('POST …/messages/{message}/retry', function () {
     });
 
     it('từ chối người không thấy được hội thoại', function () {
-        fakeZaloSendBridge(['127.0.0.1:3710/personal-messages/send' => Http::response(['message' => 'not_logged_in'], 503)]);
+        fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['message' => 'not_logged_in'], 503)]);
         $message = zaloOutgoing($this->conversation);
 
         $outsider = User::factory()->create();

@@ -33,7 +33,7 @@ LARAVEL_WEBHOOK_URL=https://yona.vn/webhooks/zalo
 LARAVEL_WEBHOOK_SECRET=<ZALO_BRIDGE_WEBHOOK_SECRET>   # phải khớp với Laravel
 LARAVEL_BASE_URL=https://yona.vn
 BRIDGE_HTTP_HOST=127.0.0.1
-BRIDGE_HTTP_PORT=3710
+BRIDGE_HTTP_PORT=8612
 BRIDGE_SEND_SECRET=<ZALO_BRIDGE_SEND_SECRET>
 BRIDGE_UI_SECRET=<ZALO_BRIDGE_UI_SECRET>
 ```
@@ -41,7 +41,7 @@ BRIDGE_UI_SECRET=<ZALO_BRIDGE_UI_SECRET>
 File `.env` Laravel (thêm vào `.env`):
 
 ```
-ZALO_BRIDGE_URL=http://127.0.0.1:3710
+ZALO_BRIDGE_URL=http://127.0.0.1:8612
 ZALO_BRIDGE_WEBHOOK_SECRET=<same as above>
 ZALO_BRIDGE_SEND_SECRET=<same as above>
 ZALO_BRIDGE_UI_SECRET=<same as above>
@@ -53,7 +53,7 @@ Khi agent gửi ảnh/tệp, Laravel đưa cho bridge một URL tải tệp dự
 còn bridge chỉ tải từ những host nằm trong allowlist (fail-closed, chống SSRF).
 Allowlist mặc định gồm host của `LARAVEL_WEBHOOK_URL` **và** `LARAVEL_BASE_URL`.
 
-`APP_URL` khai host khác cả hai — kinh điển là `http://localhost:8000` trong khi
+`APP_URL` khai host khác cả hai — kinh điển là `http://localhost:8610` trong khi
 bridge nói chuyện với `127.0.0.1` — thì bridge trả HTTP 500 `fetch_host_not_allowed`;
 trên Yona tin hiện lỗi **"chưa kết nối"** chứ không nói host, nên rất dễ đi tìm nhầm
 chỗ. Hai cách xử lý:
@@ -141,10 +141,10 @@ Kiểm sau restart:
 
 ```bash
 # 1. Sống lại chưa
-curl http://127.0.0.1:3710/
+curl http://127.0.0.1:8612/
 
 # 2. Từng slot đã ready chưa (phase=ready, connected=true)
-curl -s "http://127.0.0.1:3710/health?connection_id=<id>" -H "X-Bridge-UI-Secret: <UI_SECRET>" | jq '{phase, connected, session_lost_reason, resilience}'
+curl -s "http://127.0.0.1:8612/health?connection_id=<id>" -H "X-Bridge-UI-Secret: <UI_SECRET>" | jq '{phase, connected, session_lost_reason, resilience}'
 
 # 3. Log khôi phục
 pm2 logs zalo-personal-bridge --lines 50 | grep -E "restored session|mat phien|hen dang nhap lai"
@@ -165,11 +165,11 @@ backoff (tối đa 5 phút) rồi kiểm lại trước khi động tay.
 
 ```bash
 # Bridge đang chạy? — liveness, KHÔNG cần secret, không tham số
-curl http://127.0.0.1:3710/
+curl http://127.0.0.1:8612/
 
 # Slot status — BẮT BUỘC secret (từ 07/09/2026 gọi thiếu secret trả 403).
 # Chỉ đọc: không tạo slot, không ghi meta.
-curl "http://127.0.0.1:3710/health?connection_id=1" -H "X-Bridge-UI-Secret: <UI_SECRET>"
+curl "http://127.0.0.1:8612/health?connection_id=1" -H "X-Bridge-UI-Secret: <UI_SECRET>"
 ```
 
 Dùng `GET /` cho uptime check của pm2/nginx — `GET /health` mang uid, tên và avatar

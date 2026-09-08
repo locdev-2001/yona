@@ -45,7 +45,7 @@ beforeEach(function () {
         'cdn.zalo.test/*' => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
         // Bridge phải được giả ở ĐÂY chứ không riêng từng test: tin đi ra và việc
         // xoá inbox đều gọi bridge trong cùng request (QUEUE_CONNECTION=sync), nên
-        // thiếu fake là suite gõ thẳng vào bridge THẬT của founder ở 127.0.0.1:3710.
+        // thiếu fake là suite gõ thẳng vào bridge THẬT của founder ở cầu nối cấu hình ở config/zalo.php.
         rtrim(config('zalo.bridge.url'), '/').'/*' => Http::response(['ok' => true]),
     ]);
 

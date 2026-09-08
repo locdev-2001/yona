@@ -33,8 +33,8 @@ setup: ## First-time: deps + env + key + DB + migrate + assets
 dev: ## Vite dev server
 	pnpm dev
 
-serve: ## Laravel dev server (port 8000)
-	$(ARTISAN) serve --port=8000
+serve: ## Laravel dev server (cổng lấy từ SERVER_PORT trong .env)
+	$(ARTISAN) serve
 
 migrate: ## Run migrations (yona_rw)
 	$(ARTISAN) migrate
@@ -64,16 +64,21 @@ tinker: ## artisan tinker
 
 QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled_jobs,purgable
 
-REVERB_PORT ?= 8080
+# Cổng là MỘT nguồn duy nhất: .env. `artisan serve`/`reverb:start` tự đọc
+# SERVER_PORT/REVERB_SERVER_PORT, Makefile chỉ đọc lại để kiểm tra và in thông báo.
+APP_PORT ?= $(shell sed -n 's/^SERVER_PORT=//p' .env 2>/dev/null | head -1)
+APP_PORT := $(if $(APP_PORT),$(APP_PORT),8610)
+REVERB_PORT ?= $(shell sed -n 's/^REVERB_SERVER_PORT=//p' .env 2>/dev/null | head -1)
+REVERB_PORT := $(if $(REVERB_PORT),$(REVERB_PORT),8611)
 
-up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve (:8000) + queue worker + reverb (:8080) chạy nền
+up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve + queue worker + reverb chạy nền (cổng theo .env)
 	$(ORACLE) up
-	@if curl -sf -o /dev/null http://localhost:8000; then \
-		echo "yona: đã chạy sẵn trên :8000"; \
+	@if curl -sf -o /dev/null http://localhost:$(APP_PORT); then \
+		echo "yona: đã chạy sẵn trên :$(APP_PORT)"; \
 	else \
-		nohup $(PHP) artisan serve --port=8000 > storage/logs/serve.log 2>&1 & \
-		sleep 2 && curl -sf -o /dev/null http://localhost:8000 \
-			&& echo "yona: đã start trên :8000 (log: storage/logs/serve.log)" \
+		nohup $(PHP) artisan serve > storage/logs/serve.log 2>&1 & \
+		sleep 2 && curl -sf -o /dev/null http://localhost:$(APP_PORT) \
+			&& echo "yona: đã start trên :$(APP_PORT) (log: storage/logs/serve.log)" \
 			|| { echo "yona: START LỖI — xem storage/logs/serve.log"; exit 1; }; \
 	fi
 	@if [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; then \
@@ -86,7 +91,7 @@ up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona
 	@if [ -f storage/logs/reverb.pid ] && kill -0 $$(cat storage/logs/reverb.pid) 2>/dev/null; then \
 		echo "reverb: đã chạy sẵn (pid $$(cat storage/logs/reverb.pid))"; \
 	else \
-		nohup $(PHP) artisan reverb:start --port=$(REVERB_PORT) > storage/logs/reverb.log 2>&1 & \
+		nohup $(PHP) artisan reverb:start > storage/logs/reverb.log 2>&1 & \
 		echo $$! > storage/logs/reverb.pid; \
 		echo "reverb: đã start trên :$(REVERB_PORT) (log: storage/logs/reverb.log)"; \
 	fi
@@ -95,11 +100,11 @@ up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona
 worker: ## Queue worker foreground (dev): đủ tier theo phân tầng Chatwoot
 	$(ARTISAN) queue:listen --queue=$(QUEUE_TIERS) --tries=1
 
-reverb: ## Reverb websocket server foreground (:8080) — thay ActionCable
-	$(ARTISAN) reverb:start --port=$(REVERB_PORT) --debug
+reverb: ## Reverb websocket server foreground (cổng theo .env) — thay ActionCable
+	$(ARTISAN) reverb:start --debug
 
 down: ## Tắt yona serve + worker + reverb + oracle
-	@pkill -f 'artisan serve --port=8000' && echo "yona: đã tắt" || echo "yona: không có process nào"
+	@pkill -f 'artisan serve' && echo "yona: đã tắt" || echo "yona: không có process nào"
 	@if [ -f storage/logs/worker.pid ]; then \
 		{ kill $$(cat storage/logs/worker.pid) 2>/dev/null && echo "worker: đã tắt"; } || echo "worker: không có process nào"; \
 		rm -f storage/logs/worker.pid; \
@@ -110,9 +115,9 @@ down: ## Tắt yona serve + worker + reverb + oracle
 	else echo "reverb: không có process nào"; fi
 	$(ORACLE) down
 
-status: ## Kiểm tra cổng 3000/8000/8080 + worker + container podman
+status: ## Kiểm tra oracle + yona + reverb + worker + container podman (cổng theo .env)
 	@printf 'oracle  :3000  '; curl -sf -o /dev/null http://localhost:3000 && echo OK || echo TẮT
-	@printf 'yona    :8000  '; curl -sf -o /dev/null http://localhost:8000 && echo OK || echo TẮT
+	@printf 'yona    :$(APP_PORT)  '; curl -sf -o /dev/null http://localhost:$(APP_PORT) && echo OK || echo TẮT
 	@printf 'worker         '; { [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; } && echo OK || echo TẮT
 	@printf 'reverb  :$(REVERB_PORT)  '; curl -sf -o /dev/null http://localhost:$(REVERB_PORT)/up && echo OK || echo TẮT
 	@podman ps --format '  podman: {{.Names}} ({{.Status}})' 2>/dev/null || true

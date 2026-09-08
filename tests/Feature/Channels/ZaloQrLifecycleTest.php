@@ -29,15 +29,15 @@ function zaloUserOf(Account $account, int $role): User
 function fakeZaloBridge(array $overrides = []): void
 {
     Http::fake([
-        '127.0.0.1:3710/auth/qr/start' => Http::response(['ok' => true]),
-        '127.0.0.1:3710/auth/qr/status*' => Http::response(['phase' => 'qr_waiting', 'qr_image' => 'data:image/png;base64,AAA']),
-        '127.0.0.1:3710/auth/qr/promote' => Http::response([
+        zaloBridgePattern('auth/qr/start') => Http::response(['ok' => true]),
+        zaloBridgePattern('auth/qr/status*') => Http::response(['phase' => 'qr_waiting', 'qr_image' => 'data:image/png;base64,AAA']),
+        zaloBridgePattern('auth/qr/promote') => Http::response([
             'personal_uid' => '1234567890',
             'display_name' => 'Chủ shop',
             'phone' => '+84901234567',
             'avatar' => 'https://zalo.example/avatar.jpg',
         ]),
-        '127.0.0.1:3710/*' => Http::response(['ok' => true]),
+        zaloBridgePattern('*') => Http::response(['ok' => true]),
         ...$overrides,
     ]);
 }
@@ -176,7 +176,7 @@ it('từ chối khi quét nhầm tài khoản Zalo khác', function () {
 
 it('trả trạng thái sức khỏe kèm cờ ngắt mạch', function () {
     // Endpoint sức khoẻ hỏi thẳng cầu nối: thiếu fake là test gọi bridge THẬT của
-    // founder ở 127.0.0.1:3710 (Http::preventStrayRequests bắt được, xem TestCase).
+    // founder ở cầu nối cấu hình ở config/zalo.php (Http::preventStrayRequests bắt được, xem TestCase).
     fakeZaloBridge();
     $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890']);
     $monitor = app(ZaloHealthMonitor::class);
@@ -215,7 +215,7 @@ it('không nối được cầu nối thì báo bridge_unreachable', function ()
 });
 
 it('cầu nối từ chối thì báo bridge_rejected chứ không nói cầu nối chưa chạy', function () {
-    fakeZaloBridge(['127.0.0.1:3710/auth/qr/start' => Http::response(['message' => 'login_in_progress'], 409)]);
+    fakeZaloBridge([zaloBridgePattern('auth/qr/start') => Http::response(['message' => 'login_in_progress'], 409)]);
 
     $this->actingAs($this->admin)
         ->postJson("/api/v1/accounts/{$this->account->id}/inboxes/{$this->inbox->id}/zalo/qr")
@@ -367,7 +367,7 @@ it('webhook bridge báo phiên sống lại thì mở luôn mạch ngắt', func
 });
 
 it('bridge hỏng ba nhịp liên tiếp mới hạ trạng thái kênh', function () {
-    Http::fake(['127.0.0.1:3710/health*' => Http::response(['ok' => true, 'connected' => false, 'phase' => 'session_lost'])]);
+    Http::fake([zaloBridgePattern('health*') => Http::response(['ok' => true, 'connected' => false, 'phase' => 'session_lost'])]);
     $this->channel->update(['state' => Zalo::STATE_CONNECTED, 'zalo_uid' => '1234567890']);
     $connectionId = $this->channel->connectionId();
 
@@ -384,7 +384,7 @@ it('bridge hỏng ba nhịp liên tiếp mới hạ trạng thái kênh', functi
 });
 
 it('bridge sống lại thì nhịp tim tự đưa kênh về connected', function () {
-    Http::fake(['127.0.0.1:3710/health*' => Http::response(['ok' => true, 'connected' => true, 'phase' => 'ready'])]);
+    Http::fake([zaloBridgePattern('health*') => Http::response(['ok' => true, 'connected' => true, 'phase' => 'ready'])]);
     $this->channel->update(['state' => Zalo::STATE_SESSION_LOST, 'zalo_uid' => '1234567890']);
 
     runZaloHealthSweep($this->channel->connectionId());
@@ -396,7 +396,7 @@ it('bridge sống lại thì nhịp tim tự đưa kênh về connected', functi
 // thay cho avatar — nhịp tim và trang cấu hình phải tự lấp.
 it('nhịp tim lấp tên và ảnh tài khoản Zalo cho hộp thư nối từ trước', function () {
     Queue::fake();
-    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+    Http::fake([zaloBridgePattern('health*') => Http::response([
         'ok' => true,
         'connected' => true,
         'phase' => 'ready',
@@ -417,7 +417,7 @@ it('nhịp tim lấp tên và ảnh tài khoản Zalo cho hộp thư nối từ 
 
 it('nhịp tim không đè tên đã có và chỉ thử đắp ảnh đúng một lần', function () {
     Queue::fake();
-    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+    Http::fake([zaloBridgePattern('health*') => Http::response([
         'ok' => true,
         'connected' => true,
         'phase' => 'ready',
@@ -442,7 +442,7 @@ it('nhịp tim không đè tên đã có và chỉ thử đắp ảnh đúng m�
 it('mở trang cấu hình khi kênh chưa có tên thì hỏi bridge lấp ngay trong lần trả về đầu', function () {
     // Chỉ giả job avatar: nhịp tim chạy thật (dispatchSync) mới lấp được tên.
     Queue::fake([AvatarFromUrlJob::class]);
-    Http::fake(['127.0.0.1:3710/health*' => Http::response([
+    Http::fake([zaloBridgePattern('health*') => Http::response([
         'ok' => true,
         'connected' => true,
         'phase' => 'ready',

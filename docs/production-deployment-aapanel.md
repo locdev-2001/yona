@@ -17,9 +17,9 @@ Nó cũng là checklist dựng lại server mới theo cùng cấu hình.
 | Database | aaPanel PostgreSQL, `/www/server/pgsql`, port `5432` |
 | Cache/queue/session | Redis `127.0.0.1:6379` |
 | Queue | Horizon dưới Supervisor |
-| Realtime | Reverb dưới Supervisor, `127.0.0.1:8080` |
+| Realtime | Reverb dưới Supervisor, `127.0.0.1:8611` |
 | SSR | Inertia SSR dưới Supervisor, port `13714` |
-| Zalo Bridge | PM2, `127.0.0.1:3710` |
+| Zalo Bridge | PM2, `127.0.0.1:8612` |
 | Deploy user | `root` (chủ đích theo cấu hình aaPanel hiện tại) |
 | PHP runtime group | `www` |
 
@@ -27,10 +27,10 @@ Luồng request:
 
 ```text
 Internet -> Nginx 443 -> public/index.php -> PHP-FPM 8.4
-                    |-> /app/*, /apps/* -> Reverb :8080
+                    |-> /app/*, /apps/* -> Reverb :8611
 Laravel -> Redis -> Horizon
 Laravel -> Inertia SSR :13714
-Laravel <-> Zalo Bridge :3710 -> Zalo
+Laravel <-> Zalo Bridge :8612 -> Zalo
 ```
 
 ## 2. Yêu cầu hệ thống
@@ -224,7 +224,7 @@ REVERB_HOST=yona.vn
 REVERB_PORT=443
 REVERB_SCHEME=https
 REVERB_SERVER_HOST=127.0.0.1
-REVERB_SERVER_PORT=8080
+REVERB_SERVER_PORT=8611
 
 INERTIA_SSR_ENABLED=true
 INERTIA_SSR_URL=http://127.0.0.1:13714
@@ -304,7 +304,7 @@ location / {
 }
 
 location ^~ /app {
-    proxy_pass http://127.0.0.1:8080;
+    proxy_pass http://127.0.0.1:8611;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header Upgrade $http_upgrade;
@@ -317,7 +317,7 @@ location ^~ /app {
 }
 
 location ^~ /apps {
-    proxy_pass http://127.0.0.1:8080;
+    proxy_pass http://127.0.0.1:8611;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -370,7 +370,7 @@ environment=HOME="/home/www",USER="www",PATH="/usr/local/sbin:/usr/local/bin:/us
 ```ini
 [program:yona-reverb]
 directory=/www/wwwroot/yona.vn
-command=/www/server/php/84/bin/php artisan reverb:start --host=127.0.0.1 --port=8080 --no-interaction
+command=/www/server/php/84/bin/php artisan reverb:start --host=127.0.0.1 --port=8611 --no-interaction
 user=www
 autostart=true
 autorestart=true
@@ -503,7 +503,7 @@ pm2 save
 Sau reboot, kiểm tra bridge và login state:
 
 ```bash
-curl http://127.0.0.1:3710/
+curl http://127.0.0.1:8612/
 pm2 logs zalo-personal-bridge --lines 100
 ```
 
@@ -518,7 +518,7 @@ cd /www/wwwroot/yona.vn && php artisan horizon:status
 cd /www/wwwroot/yona.vn && php artisan inertia:check-ssr
 /www/server/panel/pyenv/bin/supervisorctl -c /etc/supervisor/supervisord.conf status yona-horizon yona-reverb yona-ssr
 pm2 status
-ss -ltnp | grep -E ':(3710|8080|13714)'
+ss -ltnp | grep -E ':(8612|8611|13714)'
 /www/server/nginx/sbin/nginx -t
 ```
 
@@ -529,7 +529,7 @@ Kỳ vọng:
 - Inertia SSR `running`.
 - Supervisor cả ba process `RUNNING`.
 - Bridge PM2 `online`.
-- `3710` và `8080` chỉ bind `127.0.0.1`; SSR ở port `13714`.
+- `8612` và `8611` chỉ bind `127.0.0.1`; SSR ở port `13714`.
 
 Log vận hành:
 

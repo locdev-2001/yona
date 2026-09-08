@@ -17,7 +17,7 @@ export const WIDGET_BROADCASTING_AUTH_ENDPOINT = '/api/v1/widget/broadcasting/au
 export function createWidgetEcho(): Echo<'reverb'> {
     const env = import.meta.env;
     const scheme = env.VITE_REVERB_SCHEME ?? 'http';
-    const port = Number(env.VITE_REVERB_PORT ?? 8080);
+    const port = Number(env.VITE_REVERB_PORT ?? 8611);
 
     return new Echo({
         broadcaster: 'reverb',

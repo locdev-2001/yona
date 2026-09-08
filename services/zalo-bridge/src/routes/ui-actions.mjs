@@ -625,7 +625,7 @@ export function registerUiActionsRoutes(app, deps) {
         if (!u) return null;
         // Allow relative URLs returned by Laravel upload (e.g. "/storage/...")
         if (u.startsWith('/')) {
-            const base = String(process.env.LARAVEL_BASE_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+            const base = String(process.env.LARAVEL_BASE_URL || 'http://127.0.0.1:8610').replace(/\/+$/, '');
             u = base + u;
         }
         // Normalize localhost to IPv4 loopback for fetch stability

@@ -69,7 +69,7 @@ const SESSIONS_DIR = path.join(PLUGIN_ROOT, '.sessions');
 const OUTBOX_DIR = path.join(PLUGIN_ROOT, '.outbox');
 const OUTBOX_DEAD_DIR = path.join(PLUGIN_ROOT, '.outbox-dead');
 const BRIDGE_HTTP_HOST = process.env.BRIDGE_HTTP_HOST || '127.0.0.1';
-const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 3710);
+const BRIDGE_HTTP_PORT = Number(process.env.BRIDGE_HTTP_PORT || 8612);
 const BRIDGE_SEND_SECRET = process.env.BRIDGE_SEND_SECRET || '';
 const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 // P11: secret RIÊNG cho 39 method destructive qua /zca/:method (defense-in-depth,
