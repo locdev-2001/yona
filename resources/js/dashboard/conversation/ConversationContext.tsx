@@ -8,6 +8,7 @@ import { readReactions } from 'dashboard/components-next/message/helpers/reactio
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
 import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
@@ -47,6 +48,7 @@ import {
     applyConversationStatus,
     snoozedUntilForStatus,
 } from './lifecycleReducers';
+import { hasExpandedLayoutPreference, isOnExpandedLayout as computeExpandedLayout } from './layoutMode';
 import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
@@ -293,15 +295,18 @@ export function ConversationProvider({
     }, []);
 
     // isOnExpandedLayout + toggleConversationLayout của ConversationView.vue/ChatListHeader.vue.
-    const isOnExpandedLayout =
-        ((uiSettings.conversation_display_type as string | undefined) ?? LAYOUT_TYPES.CONDENSED) !== LAYOUT_TYPES.CONDENSED;
+    // Ngưỡng màn hẹp cộng thêm ở layoutMode.ts (xem ghi chú lệch trong file đó).
+    const viewportWidth = useViewportWidth();
+    const isOnExpandedLayout = computeExpandedLayout(uiSettings, viewportWidth);
     const toggleConversationLayout = useCallback(() => {
-        const newViewType = isOnExpandedLayout ? LAYOUT_TYPES.CONDENSED : LAYOUT_TYPES.EXPANDED;
+        // Nút ⇥ chỉ hiện từ `md` trở lên nên luôn lật đúng lựa chọn đã lưu, không
+        // bị ngưỡng màn hẹp làm lệch.
+        const newViewType = hasExpandedLayoutPreference(uiSettings) ? LAYOUT_TYPES.CONDENSED : LAYOUT_TYPES.EXPANDED;
         updateUISettings({
             conversation_display_type: newViewType,
             previously_used_conversation_display_type: newViewType,
         });
-    }, [isOnExpandedLayout, updateUISettings]);
+    }, [uiSettings, updateUISettings]);
 
     // Bộ lọc cơ bản của danh sách hội thoại nằm chung một khoá `ui_settings`.
     // Yona thêm `assignee_type` vào cụm này (xem reports/ux-deviations.md #1).

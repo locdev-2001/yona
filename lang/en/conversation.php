@@ -448,6 +448,7 @@ return [
     ],
     'SIDEBAR' => [
         'CONTACT' => 'Contact',
+        'CLOSE_OVERLAY' => 'Close details panel',
         'COPILOT' => 'Copilot',
     ],
     'VOICE_WIDGET' => [

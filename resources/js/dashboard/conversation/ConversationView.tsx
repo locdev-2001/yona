@@ -8,6 +8,7 @@ import ChatList from './chatlist/ChatList';
 import ConversationBox from './conversationbox/ConversationBox';
 import ConversationSidebar from './conversationbox/ConversationSidebar';
 import { useContactPanelOpen } from './contactPanelVisibility';
+import { showConversationList as computeShowList, showMessageView as computeShowMessageView } from './layoutMode';
 
 // Port từ routes/dashboard/conversation/ConversationView.vue — trang 3 cột
 // (Sidebar shell + ChatList + ConversationBox). Layout expanded (⇥) như gốc:
@@ -26,8 +27,8 @@ interface Props {
 
 function ConversationLayout({ conversationId, foldersId }: { conversationId: number; foldersId: number }) {
     const { isOnExpandedLayout, selectedConversation, uiSettings } = useConversation();
-    const showConversationList = isOnExpandedLayout ? !conversationId : true;
-    const showMessageView = conversationId ? true : !isOnExpandedLayout;
+    const showConversationList = computeShowList(isOnExpandedLayout, conversationId);
+    const showMessageView = computeShowMessageView(isOnExpandedLayout, conversationId);
     // shouldShowSidebar gốc: có currentChat + ui_settings.is_contact_sidebar_open.
     // Lệch có chủ đích: chưa từng chọn thì mở sẵn trên màn ≥1280px (ux-deviations.md).
     const isContactPanelOpen = useContactPanelOpen(uiSettings);

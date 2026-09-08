@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
+import { isSmallScreen, useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 
 // Lệnh founder 07/09/2026: panel phải (thông tin liên hệ) mở SẴN trên màn rộng —
@@ -10,6 +11,11 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 // (PUT /api/v1/profile) — cùng chỗ Chatwoot đã lưu, nên nhớ theo TÀI KHOẢN chứ
 // không chỉ theo trình duyệt. Chưa từng bấm thì khoá vắng mặt và mặc định theo
 // bề rộng khung nhìn.
+//
+// Dưới breakpoint `md` panel là LỚP PHỦ đè lên khung chat: nó không bao giờ mở
+// sẵn (kể cả khi `ui_settings` nhớ "mở" từ màn rộng) và chỉ bật trong phiên xem
+// hiện tại khi người dùng bấm nút. Lựa chọn màn rộng vì thế không bị lớp phủ di
+// động ghi đè — hai ngữ cảnh giữ trạng thái riêng.
 export const CONTACT_PANEL_WIDE_BREAKPOINT = 1280;
 
 export const CONTACT_PANEL_OPEN_KEY = 'is_contact_sidebar_open';
@@ -25,25 +31,67 @@ export function isContactPanelOpen(uiSettings: UISettings, viewportWidth: number
     return viewportWidth >= CONTACT_PANEL_WIDE_BREAKPOINT;
 }
 
-function currentViewportWidth(): number {
-    return typeof window === 'undefined' ? 0 : window.innerWidth;
+// Trạng thái lớp phủ trên màn hẹp: chỉ sống trong phiên xem, không ghi
+// `ui_settings`. Để ngoài React (external store) vì cả nút mở (SidepanelSwitch)
+// lẫn panel (ConversationSidebar) đều phải đọc/ghi cùng một giá trị mà không có
+// tổ tiên chung nào ngoài ConversationView.
+let overlayOpen = false;
+const overlaySubscribers = new Set<() => void>();
+
+function subscribeOverlay(onChange: () => void): () => void {
+    overlaySubscribers.add(onChange);
+    return () => {
+        overlaySubscribers.delete(onChange);
+    };
 }
 
-/** Bề rộng khung nhìn hiện tại, cập nhật khi người dùng đổi cỡ cửa sổ. */
-export function useViewportWidth(): number {
-    const [width, setWidth] = useState(currentViewportWidth);
+export function setContactPanelOverlayOpen(open: boolean): void {
+    if (overlayOpen === open) return;
+    overlayOpen = open;
+    overlaySubscribers.forEach((onChange) => onChange());
+}
 
-    useEffect(() => {
-        const onResize = () => setWidth(currentViewportWidth());
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
-    }, []);
+function readOverlayOpen(): boolean {
+    return overlayOpen;
+}
 
-    return width;
+function useContactPanelOverlayOpen(): boolean {
+    return useSyncExternalStore(subscribeOverlay, readOverlayOpen, () => false);
 }
 
 export function useContactPanelOpen(uiSettings: UISettings): boolean {
     const viewportWidth = useViewportWidth();
+    const overlay = useContactPanelOverlayOpen();
+
+    if (isSmallScreen(viewportWidth)) return overlay;
 
     return isContactPanelOpen(uiSettings, viewportWidth);
+}
+
+/**
+ * Một chỗ duy nhất quyết định panel phải đang mở hay đóng và cách lật nó: màn
+ * rộng ghi `ui_settings` (nhớ lâu dài), màn hẹp chỉ lật lớp phủ của phiên xem.
+ */
+export function useContactPanelControl(
+    uiSettings: UISettings,
+    updateUISettings: (patch: UISettings) => void,
+): { isOpen: boolean; setOpen: (open: boolean) => void; toggle: () => void } {
+    const viewportWidth = useViewportWidth();
+    const isOpen = useContactPanelOpen(uiSettings);
+    const smallScreen = isSmallScreen(viewportWidth);
+
+    const setOpen = useCallback(
+        (open: boolean) => {
+            if (smallScreen) {
+                setContactPanelOverlayOpen(open);
+                return;
+            }
+            updateUISettings({ [CONTACT_PANEL_OPEN_KEY]: open, is_copilot_panel_open: false });
+        },
+        [smallScreen, updateUISettings],
+    );
+
+    const toggle = useCallback(() => setOpen(!isOpen), [isOpen, setOpen]);
+
+    return { isOpen, setOpen, toggle };
 }

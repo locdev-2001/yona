@@ -1,3 +1,5 @@
+import { usePage } from '@inertiajs/react';
+
 import Icon from 'dashboard/components-next/icon/Icon';
 
 // Port từ sidebar/MobileSidebarLauncher.vue
@@ -7,6 +9,14 @@ interface MobileSidebarLauncherProps {
 }
 
 export default function MobileSidebarLauncher({ isMobileSidebarOpen, onToggle }: MobileSidebarLauncherProps) {
+    // Gốc ẩn nút này trên mọi route hội thoại (`v-if="!isConversationRoute"`).
+    // Yona chỉ ẩn khi ĐANG mở một hội thoại: lúc đó nút nổi góc dưới đè lên ô
+    // soạn tin, và đường về thanh điều hướng là nút quay lại danh sách. Màn danh
+    // sách của cùng route đó vẫn cần nút để mở thanh điều hướng.
+    const { conversationId } = usePage().props as { conversationId?: number | null };
+
+    if (conversationId) return null;
+
     return (
         <button
             id="mobile-sidebar-launcher"
