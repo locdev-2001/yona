@@ -30,3 +30,7 @@ Thumbs.db
 /plans/**/reports/tool-results
 __pycache__/
 .claude/hooks/.logs/
+
+# aaPanel quản lý các file này trong document root
+/.user.ini
+/public/.well-known/

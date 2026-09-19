@@ -470,8 +470,8 @@ mọi inbox (session bridge cũ trỏ tới connection_id không còn tồn tạ
 ## 12. Chuyển server đang chạy bản cũ sang bản viết lại
 
 Làm một lần, cho server đã chạy bản CRM cũ (Horizon, Inertia SSR, hai role
-PostgreSQL, schema Perfex). Cách an toàn nhất là **dựng database mới song song**
-— database cũ giữ nguyên làm đường lui, không cần dump.
+PostgreSQL, schema Perfex). Database cũ bị **xóa hẳn và dựng lại cùng tên** —
+quyết định của chủ sản phẩm, dữ liệu cũ không giữ lại.
 
 ### B1. Sao lưu thứ sẽ bị ghi đè
 
@@ -494,14 +494,25 @@ $SUPERVISORCTL stop yona-horizon yona-ssr
 corepack pnpm --dir services/zalo-bridge exec pm2 stop zalo-personal-bridge
 ```
 
-### B3. Database mới + extension
+### B3. Xóa database cũ, dựng lại cùng tên
+
+**Không hoàn tác được.** Toàn bộ dữ liệu bản cũ mất vĩnh viễn.
 
 ```bash
 PSQL="sudo -u postgres /www/server/pgsql/bin/psql"
-sudo -u postgres /www/server/pgsql/bin/createdb --owner=yona_app --encoding=UTF8 --template=template0 yona_v2
-$PSQL -d yona_v2 -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
-$PSQL -d postgres -v ON_ERROR_STOP=1 -c "REVOKE ALL ON DATABASE yona_v2 FROM PUBLIC;"
+PGBIN=/www/server/pgsql/bin
+
+# ngắt mọi kết nối còn bám vào database trước khi drop
+$PSQL -d postgres -v ON_ERROR_STOP=1 -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'yona' AND pid <> pg_backend_pid();"
+$PSQL -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE yona;"
+
+sudo -u postgres $PGBIN/createdb --owner=yona_app --encoding=UTF8 --template=template0 yona
+$PSQL -d yona -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
+$PSQL -d postgres -v ON_ERROR_STOP=1 -c "REVOKE ALL ON DATABASE yona FROM PUBLIC;"
 ```
+
+Dựng lại với owner `yona_app` (chính là `DB_USERNAME`) là có chủ đích: schema mới
+không dùng RLS nên không cần role thứ hai, và migration cần quyền tạo bảng.
 
 `pg_trgm` là bắt buộc: migration tạo index `gin_trgm_ops` cho `contacts` và
 `messages`. Thiếu nó thì migrate chết giữa chừng. `deploy.sh` cũng tự tạo khi
@@ -513,7 +524,6 @@ Role `yona_owner` của kiến trúc RLS cũ không còn vai trò gì — để 
 
 ```bash
 cd /www/wwwroot/yona.vn
-sed -i 's/^DB_DATABASE=.*/DB_DATABASE=yona_v2/' .env
 sed -i '/^DB_PRIVILEGED_/d;/^INERTIA_SSR_/d;/^HORIZON_/d;/^TELESCOPE_/d;/^PULSE_/d;/^LOG_VIEWER_/d;/^WIDGET_CHANNEL_INBOUND_SECRET=/d' .env
 ```
 
@@ -529,14 +539,26 @@ vẫn khớp `services/zalo-bridge/.env`.
 ### B5. Xóa trạng thái Redis của bản cũ
 
 Job trong hàng đợi trỏ tới class không còn tồn tại, session và cache mang cấu
-trúc cũ. Chung prefix theo `APP_NAME` nên phải dọn:
+trúc cũ. Chung prefix theo `APP_NAME` nên bản mới sẽ đọc phải đồ của bản cũ.
+
+**Kiểm tra Redis có dùng chung với ứng dụng khác không trước đã** — server này
+còn chạy app khác thì `FLUSHDB` sẽ xóa luôn dữ liệu của họ:
 
 ```bash
-redis-cli -n 0 FLUSHDB   # queue + session
-redis-cli -n 1 FLUSHDB   # cache
+redis-cli -n 0 --scan --pattern '*' | sed 's/:.*//' | sort -u | head -20
 ```
 
-Nếu Redis này còn phục vụ ứng dụng khác thì chỉ xóa theo prefix thay vì `FLUSHDB`.
+Chỉ xóa đúng key của Yona (prefix = slug của `APP_NAME`):
+
+```bash
+PREFIX="$(sed -n 's/^APP_NAME=//p' .env | tr -d '"' | tr '[:upper:] ' '[:lower:]-')"
+for db in 0 1; do
+    redis-cli -n "$db" --scan --pattern "$PREFIX-*" | xargs -r -n 500 redis-cli -n "$db" DEL
+done
+```
+
+Chỉ khi Redis này phục vụ riêng Yona mới được dùng `redis-cli -n 0 FLUSHDB`
+và `redis-cli -n 1 FLUSHDB` cho nhanh.
 
 ### B6. Deploy
 
@@ -550,7 +572,7 @@ git merge --ff-only origin/main
 ./deploy.sh
 ```
 
-Database `yona_v2` đang trống nên migrate thường là đủ — **không** cần
+Database `yona` vừa dựng lại đang trống nên migrate thường là đủ — **không** cần
 `DEPLOY_FRESH_DB`. Script sẽ tự gỡ `yona-horizon`/`yona-ssr`, dựng `yona-queue` +
 `yona-reverb`, tạo cron scheduler và đăng ký pm2 startup.
 
@@ -590,8 +612,9 @@ redis-cli -n 0 FLUSHDB && redis-cli -n 1 FLUSHDB
 php artisan optimize:clear && php artisan optimize && php artisan up
 ```
 
-Database cũ chưa hề bị đụng tới, nên đường lui này đưa về đúng trạng thái trước
-cutover.
+Đường lui này chỉ trả **code và cấu hình** về bản cũ. Database cũ đã bị xóa ở B3
+nên dữ liệu không quay lại được — bản cũ sẽ khởi động trên schema trống và phải
+migrate lại từ đầu. Đây là cái giá đã chấp nhận khi chọn xóa sạch.
 
 ---
 
