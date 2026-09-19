@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Channel\WebWidget;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -45,6 +46,7 @@ class SetLocale
             $request->route()?->parameter('locale'),
             data_get($request->user()?->ui_settings, 'locale'),
             $this->accountLocale($request),
+            $this->widgetAccountLocale($request),
             $request->cookie(self::COOKIE),
         ];
 
@@ -64,7 +66,29 @@ class SetLocale
         return is_object($account) ? ($account->locale ?? null) : null;
     }
 
-    /** Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null. */
+    /**
+     * Ngôn ngữ của trang widget: do doanh nghiệp chủ hộp thư chọn, không phải
+     * ngôn ngữ trình duyệt của khách — giống khóa `locale` mà /widget/config trả
+     * về. Chỉ hỏi ở trang widget để không thêm truy vấn cho mọi request API.
+     */
+    private function widgetAccountLocale(Request $request): ?string
+    {
+        $token = $request->query('website_token');
+
+        if (! $request->routeIs('widget') || ! is_string($token) || $token === '') {
+            return null;
+        }
+
+        return WebWidget::query()->where('website_token', $token)->first()?->inbox?->account?->locale;
+    }
+
+    /**
+     * Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null.
+     *
+     * Thử nguyên mã trước (`pt_BR`), rồi mới rút về mã ngôn ngữ (`pt`) — trình
+     * duyệt gửi `vi-VN` nhưng bản dịch nằm ở `vi`, không rút gọn thì khách Việt
+     * vẫn thấy tiếng Anh.
+     */
     private function supported(string $candidate): ?string
     {
         if ($candidate === '') {

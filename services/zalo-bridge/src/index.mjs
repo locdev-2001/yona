@@ -2668,9 +2668,12 @@ async function boot() {
 // module này để đọc/kiểm tra thì KHÔNG được chạy: boot() khôi phục MỌI phiên Zalo
 // THẬT trong .sessions/ và mở WebSocket thứ hai bằng cookie của tenant — Zalo đá
 // phiên đang chạy (DuplicateConnection 3000) và founder mất inbox.
+// pm2 (fork mode) không đưa file này vào argv: nó chạy ProcessContainerFork.js
+// rồi `import()` script thật, và đường dẫn script nằm ở pm_exec_path.
+const invokedPath = process.env.pm_exec_path ?? process.argv[1];
 const isEntrypoint =
-    typeof process.argv[1] === 'string' &&
-    path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+    typeof invokedPath === 'string' &&
+    path.resolve(invokedPath) === fileURLToPath(import.meta.url);
 
 if (isEntrypoint) {
     boot().catch((e) => {
