@@ -88,10 +88,6 @@ class SendOnInstagramService extends BaseSendOnChannelService
      */
     private function withHumanAgentTag(array $params): array
     {
-        if (! config('services.instagram.human_agent_tag')) {
-            return $params;
-        }
-
         return [...$params, 'messaging_type' => 'MESSAGE_TAG', 'tag' => 'HUMAN_AGENT'];
     }
 }

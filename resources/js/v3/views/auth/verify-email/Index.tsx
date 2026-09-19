@@ -4,7 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import NextButton from 'dashboard/components-next/button/Button';
-import SnackbarContainer from 'v3/components/SnackBar/Container';
+import AuthShell, { authCard } from 'v3/components/AuthShell';
 import type { SharedPageProps } from '../../../../types';
 
 interface VerifyEmailProps extends SharedPageProps {
@@ -31,8 +31,8 @@ export default function VerifyEmailIndex() {
     };
 
     return (
-        <main className="flex flex-col w-full min-h-screen py-20 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8">
-            <section className="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg">
+        <AuthShell>
+            <section className={authCard}>
                 <div className="mb-6">
                     <h2 className="text-2xl font-semibold text-n-slate-12">{t('REGISTER.VERIFY_EMAIL.TITLE')}</h2>
                     <p className="mt-2 text-sm text-n-slate-11">
@@ -51,7 +51,6 @@ export default function VerifyEmailIndex() {
                     />
                 </div>
             </section>
-            <SnackbarContainer />
-        </main>
+        </AuthShell>
     );
 }

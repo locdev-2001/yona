@@ -19,6 +19,9 @@
 
 @if ($portal->fileBaseData())
     <link rel="icon" href="{{ $portal->fileBaseData()['file_url'] }}">
+@else
+    {{-- Portal chưa tải logo riêng thì dùng icon của hệ thống. --}}
+    @include('partials.favicon')
 @endif
 
 @unless ($isPlainLayout)

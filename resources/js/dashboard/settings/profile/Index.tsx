@@ -250,15 +250,13 @@ export default function ProfileSettingsIndex() {
                     <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')}>
                         <ChangePassword />
                     </SectionLayout>
-                    {globalConfig.isMfaEnabled ? (
-                        <SectionLayout
-                            withBorder
-                            title={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')}
-                            description={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')}
-                        >
-                            <MfaSettingsCard />
-                        </SectionLayout>
-                    ) : null}
+                    <SectionLayout
+                        withBorder
+                        title={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')}
+                        description={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')}
+                    >
+                        <MfaSettingsCard />
+                    </SectionLayout>
                     <SectionLayout
                         withBorder
                         title={t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.TITLE')}

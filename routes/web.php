@@ -42,6 +42,24 @@ Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsControlle
 // sản phẩm, không đẩy thẳng khách vào màn đăng nhập như Chatwoot gốc.
 Route::get('/', LandingController::class)->name('home');
 
+// Web app manifest: tên và màu lấy từ cấu hình thương hiệu nên phải sinh động,
+// không đặt tệp tĩnh trong public/. `maskable` là bản nền đặc riêng — Android
+// cắt icon theo mặt nạ nên bản bo góc nền trong suốt sẽ lẹm vào logo.
+Route::get('/site.webmanifest', fn () => response()->json([
+    'name' => config('yona.branding.installation_name'),
+    'short_name' => config('yona.branding.brand_name'),
+    'start_url' => '/app',
+    'scope' => '/',
+    'display' => 'standalone',
+    'theme_color' => config('yona.branding.theme_color'),
+    'background_color' => config('yona.branding.theme_color'),
+    'icons' => [
+        ['src' => '/app-icon-192x192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => '/app-icon-512x512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => '/pwa-maskable-512x512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+    ],
+], options: JSON_UNESCAPED_SLASHES)->header('Content-Type', 'application/manifest+json'))->name('site_manifest');
+
 // Trang widget chạy trong iframe của SDK (`/widget?website_token=...`) — không
 // dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.
 Route::get('/widget', fn () => view('widget'))->name('widget');
@@ -416,7 +434,6 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
         Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
         Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
 
-        Route::post('/accounts/{id}/seed', [SuperAdminAccountsController::class, 'seed'])->whereNumber('id');
         Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
 
         Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');

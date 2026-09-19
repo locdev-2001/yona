@@ -4,30 +4,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Signup
-    |--------------------------------------------------------------------------
-    |
-    | Tương đương ENABLE_ACCOUNT_SIGNUP của Chatwoot. Khi tắt, trang login
-    | không hiện link "Create a new account" và route signup bị chặn.
-    |
-    */
-
-    'signup_enabled' => env('ENABLE_ACCOUNT_SIGNUP', false),
-
-    /*
-    |--------------------------------------------------------------------------
     | Phiên bản + console quản trị
     |--------------------------------------------------------------------------
     |
     | `version` hiện ở thanh điều hướng /super_admin và trang Instance Health
-    | (Chatwoot.config[:version] của bản gốc). `account_seeding_enabled` tương
-    | ứng ENABLE_ACCOUNT_SEEDING — mặc định tắt vì job sinh dữ liệu mẫu chưa port.
+    | (Chatwoot.config[:version] của bản gốc).
     |
     */
 
     'version' => env('YONA_VERSION', '4.17.1'),
-
-    'account_seeding_enabled' => (bool) env('ENABLE_ACCOUNT_SEEDING', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -50,14 +35,10 @@ return [
     | Xác thực hai lớp (MFA/2FA)
     |--------------------------------------------------------------------------
     |
-    | Chatwoot bật MFA khi cấu hình đủ khoá mã hoá ActiveRecord; Laravel luôn có
-    | APP_KEY nên tính năng sẵn sàng mặc định, cờ này chỉ để tắt khi cần.
     | MAX_USER_SESSIONS: số phiên đăng nhập song song tối đa của một user —
     | chạm trần thì màn đăng nhập bắt chọn phiên để thu hồi.
     |
     */
-
-    'mfa_enabled' => (bool) env('MFA_ENABLED', true),
 
     'max_user_sessions' => (int) env('MAX_USER_SESSIONS', 25),
 
@@ -114,10 +95,13 @@ return [
     'branding' => [
         'installation_name' => env('INSTALLATION_NAME', 'Yona'),
         'brand_name' => env('BRAND_NAME', 'Yona'),
-        'logo' => env('LOGO', '/brand-assets/logo.svg'),
-        // Bản logo cho nền tối — cùng tên tệp với bản gốc (public/brand-assets/logo_dark.svg).
-        'logo_dark' => env('LOGO_DARK', '/brand-assets/logo_dark.svg'),
-        'logo_thumbnail' => env('LOGO_THUMBNAIL', '/brand-assets/logo.svg'),
+        'logo' => env('LOGO', '/brand-assets/logo.png'),
+        // Bản logo cho nền tối — cùng tên tệp với bản gốc (public/brand-assets/logo_dark.png).
+        'logo_dark' => env('LOGO_DARK', '/brand-assets/logo_dark.png'),
+        'logo_thumbnail' => env('LOGO_THUMBNAIL', '/brand-assets/logo_thumbnail.png'),
+        // Màu nền của icon ứng dụng — thanh địa chỉ trình duyệt di động và
+        // splash screen khi cài về màn hình chính dùng màu này.
+        'theme_color' => env('THEME_COLOR', '#041738'),
         'widget_brand_url' => env('WIDGET_BRAND_URL', 'https://yona.vn'),
     ],
 

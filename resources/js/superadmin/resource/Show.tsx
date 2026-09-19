@@ -17,7 +17,6 @@ type Props = {
     record: { id: number; title: string; url: string | null };
     fields: SuperAdminField[];
     accountUserForm?: AccountUserForm;
-    seedEnabled?: boolean;
     mfaEnabled?: boolean;
     confirmed?: boolean;
     impersonateUrl?: string;
@@ -32,7 +31,6 @@ export default function ResourceShow({
     record,
     fields,
     accountUserForm,
-    seedEnabled = false,
     mfaEnabled,
     confirmed = true,
     impersonateUrl,
@@ -109,25 +107,6 @@ export default function ResourceShow({
                         <a className="button" target="_blank" rel="noreferrer" href={impersonateUrl}>
                             Impersonate user
                         </a>
-                    </div>
-                </section>
-            ) : null}
-
-            {resource === 'accounts' && seedEnabled ? (
-                <section className="main-content__body">
-                    <hr />
-                    <div className="form-actions">
-                        <div className="pb-3">
-                            <p>Click the button to generate seed data into this account for demos.</p>
-                            <p className="text-color-red">
-                                Note: This will clear all the existing data in this account.
-                            </p>
-                        </div>
-                        <input
-                            type="submit"
-                            value="Generate Seed Data"
-                            onClick={() => router.post(`${record.url}/seed`)}
-                        />
                     </div>
                 </section>
             ) : null}

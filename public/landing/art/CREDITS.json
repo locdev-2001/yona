@@ -1,0 +1,207 @@
+{
+  "ghi_chu": "Ảnh trang trí từ Art Institute of Chicago, chỉ tác phẩm thuộc phạm vi công cộng (CC0). Đã cắt bỏ viền bồi và cắt sát theo khung; xuất xứ giữ lại để kiểm chứng giấy phép.",
+  "anh": [
+    {
+      "tep": "art/hero-1.webp",
+      "rong": 212,
+      "cao": 268,
+      "tac_pham": "Fragment",
+      "tac_gia": "Khuyết danh",
+      "nien_dai": "16th century",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/1890"
+    },
+    {
+      "tep": "art/hero-2.webp",
+      "rong": 236,
+      "cao": 168,
+      "tac_pham": "The Eruption of Vesuvius",
+      "tac_gia": "Pierre-Jacques Volaire",
+      "nien_dai": "1771",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/57996"
+    },
+    {
+      "tep": "art/hero-3.webp",
+      "rong": 248,
+      "cao": 196,
+      "tac_pham": "Water Lilies",
+      "tac_gia": "Claude Monet",
+      "nien_dai": "1906",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/16568"
+    },
+    {
+      "tep": "art/hero-4.webp",
+      "rong": 176,
+      "cao": 176,
+      "tac_pham": "Fragment",
+      "tac_gia": "Khuyết danh",
+      "nien_dai": "c. 1600",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/1992"
+    },
+    {
+      "tep": "art/hero-5.webp",
+      "rong": 268,
+      "cao": 104,
+      "tac_pham": "Panel (Furnishing Fabric)",
+      "tac_gia": "Lancaster Prints",
+      "nien_dai": "1856",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/9415"
+    },
+    {
+      "tep": "art/rule-1.webp",
+      "rong": 152,
+      "cao": 152,
+      "tac_pham": "The Beach at Sainte-Adresse",
+      "tac_gia": "Claude Monet",
+      "nien_dai": "1867",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/14598"
+    },
+    {
+      "tep": "art/rule-2.webp",
+      "rong": 152,
+      "cao": 152,
+      "tac_pham": "Fragment (From an Orphrey Band)",
+      "tac_gia": "Khuyết danh",
+      "nien_dai": "15th century",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/1871"
+    },
+    {
+      "tep": "art/rule-3.webp",
+      "rong": 152,
+      "cao": 152,
+      "tac_pham": "Fragment",
+      "tac_gia": "Khuyết danh",
+      "nien_dai": "17th century",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/1885"
+    },
+    {
+      "tep": "art/rule-4.webp",
+      "rong": 152,
+      "cao": 152,
+      "tac_pham": "Lilies (Corey Memorial Window)",
+      "tac_gia": "Louis Comfort Tiffany",
+      "nien_dai": "1892–95",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/192781"
+    },
+    {
+      "tep": "art/end-1.webp",
+      "rong": 168,
+      "cao": 168,
+      "tac_pham": "Apples",
+      "tac_gia": "Henri Matisse",
+      "nien_dai": "1916",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/64001"
+    },
+    {
+      "tep": "art/end-2.webp",
+      "rong": 184,
+      "cao": 124,
+      "tac_pham": "Water Lily Pond",
+      "tac_gia": "Claude Monet",
+      "nien_dai": "1917–19",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/97933"
+    },
+    {
+      "tep": "art/end-3.webp",
+      "rong": 152,
+      "cao": 112,
+      "tac_pham": "Landscape",
+      "tac_gia": "Jean Charles Cazin",
+      "nien_dai": "c. 1895",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/874"
+    },
+    {
+      "tep": "art/end-4.webp",
+      "rong": 140,
+      "cao": 116,
+      "tac_pham": "Rocks at Port-Goulphar, Belle-Île",
+      "tac_gia": "Claude Monet",
+      "nien_dai": "1886",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/20545"
+    },
+    {
+      "tep": "art/end-5.webp",
+      "rong": 164,
+      "cao": 116,
+      "tac_pham": "On the Bank of the Seine, Bennecourt",
+      "tac_gia": "Claude Monet",
+      "nien_dai": "1868",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/81539"
+    },
+    {
+      "tep": "art/feat-ink-1.webp",
+      "rong": 246,
+      "cao": 300,
+      "tac_pham": "Copy of Botanical Engraving of \"Celtis\"",
+      "tac_gia": "William Henry Fox Talbot",
+      "nien_dai": "1840/45",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/127282",
+      "xu_ly": "nền giấy chuyển thành trong suốt, nét đưa về #111111"
+    },
+    {
+      "tep": "art/feat-ink-2.webp",
+      "rong": 243,
+      "cao": 300,
+      "tac_pham": "Young Bull",
+      "tac_gia": "Albrecht Dürer",
+      "nien_dai": "c. 1496, erroneously inscribed in another hand 1508",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/23506",
+      "xu_ly": "nền giấy chuyển thành trong suốt, nét đưa về #111111"
+    },
+    {
+      "tep": "art/feat-ink-3.webp",
+      "rong": 260,
+      "cao": 300,
+      "tac_pham": "The Double Bass Player",
+      "tac_gia": "Alphonse Legros",
+      "nien_dai": "c. 1873",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/70",
+      "xu_ly": "nền giấy chuyển thành trong suốt, nét đưa về #111111"
+    },
+    {
+      "tep": "art/end-ink-1.webp",
+      "rong": 150,
+      "cao": 89,
+      "tac_pham": "Fishing Craft near the Cliffs at Collioure",
+      "tac_gia": "Adolphe Appian",
+      "nien_dai": "1878",
+      "bo_suu_tap": "Art Institute of Chicago",
+      "giay_phep": "Public Domain (CC0)",
+      "trang": "https://www.artic.edu/artworks/65",
+      "xu_ly": "nền giấy chuyển thành trong suốt, nét đưa về #111111"
+    }
+  ]
+}

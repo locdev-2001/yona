@@ -9,6 +9,8 @@
         <script>
             window.globalConfig = @json($globalConfig);
         </script>
+        @include('partials.favicon')
+        @include('partials.analytics')
         @vite(['resources/scss/survey.scss', 'resources/js/survey/main.tsx'])
     </head>
     <body class="h-full">

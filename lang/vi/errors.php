@@ -38,7 +38,6 @@ return [
         'invalid_backup_code' => 'Mã dự phòng không đúng',
         'invalid_token' => 'Token xác thực hai lớp sai hoặc đã hết hạn',
         'invalid_credentials' => 'Thông tin đăng nhập hoặc mã xác minh không đúng',
-        'feature_unavailable' => 'Chưa dùng được xác thực hai lớp. Bạn hãy cấu hình khóa mã hóa.',
     ],
     'sessions' => [
         'cannot_revoke_current' => 'Bạn không thể thu hồi phiên đang dùng.',
