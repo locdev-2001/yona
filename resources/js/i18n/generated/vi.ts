@@ -5335,8 +5335,8 @@ const messages: Record<string, unknown> = {
                 }
             },
             "AGENTS": {
-                "TITLE": "Nhà Cung Cấp",
-                "DESC": "Tại đây bạn có thể thêm các tác nhân để quản lý hộp thư mới tạo của mình. Chỉ những nhân viên được chọn này mới có quyền truy cập vào hộp thư của bạn. Các nhân viên không thuộc hộp thư này sẽ không thể xem hoặc trả lời thư trong hộp thư này khi họ đăng nhập. <br> <b>PS:</b> Với tư cách là quản trị viên, nếu bạn cần quyền truy cập vào tất cả các hộp thư, bạn nên thêm mình làm nhân viên cho tất cả các hộp thư mà bạn tạo.",
+                "TITLE": "Nhân viên",
+                "DESC": "Tại đây bạn có thể thêm nhân viên để quản lý hộp thư mới tạo của mình. Chỉ những nhân viên được chọn này mới có quyền truy cập vào hộp thư của bạn. Các nhân viên không thuộc hộp thư này sẽ không thể xem hoặc trả lời thư trong hộp thư này khi họ đăng nhập. <br> <b>PS:</b> Với tư cách là quản trị viên, nếu bạn cần quyền truy cập vào tất cả các hộp thư, bạn nên thêm mình làm nhân viên cho tất cả các hộp thư mà bạn tạo.",
                 "VALIDATION_ERROR": "Hãy thêm ít nhất một nhân viên vào hộp thư mới",
                 "PICK_AGENTS": "Chọn nhân viên cho hộp thư"
             },
@@ -5379,13 +5379,13 @@ const messages: Record<string, unknown> = {
             "DESC": ""
         },
         "AGENTS": {
-            "BUTTON_TEXT": "Thêm các nhà cung cấp",
-            "ADD_AGENTS": "Thêm các nhà cung cấp vào hộp thư của bạn..."
+            "BUTTON_TEXT": "Thêm nhân viên",
+            "ADD_AGENTS": "Đang thêm nhân viên vào hộp thư của bạn..."
         },
         "FINISH": {
             "TITLE": "Hộp thư của bạn đã sẵn sàng!",
             "MESSAGE": "Giờ đây, bạn có thể tương tác với khách hàng thông qua Kênh mới của mình. Chúc vui vẻ ủng hộ",
-            "BUTTON_TEXT": "Đưa cho tôi",
+            "BUTTON_TEXT": "Đưa tôi tới đó",
             "MORE_SETTINGS": "Nhiều tuỳ chọn hơn",
             "WEBSITE_SUCCESS": "Bạn đã hoàn thành việc tạo kênh trang web thành công. Sao chép mã được hiển thị bên dưới và dán vào trang web của bạn. Lần tới khi khách hàng sử dụng hội thoại trực tiếp, hội thoại sẽ tự động xuất hiện trong hộp thư của bạn.",
             "WHATSAPP_QR_INSTRUCTION": "Quét mã QR bên trên để thử nhanh hộp thư WhatsApp của bạn",
