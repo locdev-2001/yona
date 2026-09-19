@@ -421,6 +421,14 @@ activate_code() {
     run git merge --ff-only "$REMOTE_REF"
 }
 
+# Cache biên dịch của bản trước trỏ tới provider/route/view không còn tồn tại.
+# Phải xóa bằng rm chứ không bằng artisan: chính artisan sẽ chết khi nạp chúng.
+clear_stale_caches() {
+    log 'Xóa cache biên dịch của bản trước'
+    run find "$APP_DIR/bootstrap/cache" -maxdepth 1 -name '*.php' -delete
+    run find "$APP_DIR/storage/framework/views" -maxdepth 1 -name '*.php' -delete
+}
+
 enable_maintenance_mode() {
     is_enabled "$DEPLOY_MAINTENANCE" || return 0
 
@@ -976,14 +984,15 @@ main() {
     fetch_code
     enable_maintenance_mode
     activate_code
+    clear_stale_caches
     install_dependencies
     assert_i18n_bundles_current
     build_frontend
     ensure_database_extensions
     deploy_database
     prepare_laravel
-    deploy_zalo_bridge
     prepare_runtime_permissions
+    deploy_zalo_bridge
     ensure_system_services
     restart_application_processes
     disable_maintenance_mode
