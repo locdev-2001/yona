@@ -24,6 +24,7 @@
                 } catch (e) { /* noop */ }
             })();
         </script>
+        @viteReactRefresh
         @vite(['resources/css/landing.css', 'resources/js/landing/main.tsx'])
     </head>
     <body class="min-h-screen">
