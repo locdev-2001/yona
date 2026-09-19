@@ -36,13 +36,6 @@ describe('GET /api/v1/profile/mfa', function () {
             ->assertJson(['enabled' => true, 'backup_codes_generated' => true, 'remaining_backup_codes' => 10]);
     });
 
-    it('returns 403 when the feature is switched off', function () {
-        config()->set('yona.mfa_enabled', false);
-
-        $this->actingAs(User::factory()->create())->getJson('/api/v1/profile/mfa')
-            ->assertForbidden()
-            ->assertJson(['error' => __('errors.mfa.feature_unavailable')]);
-    });
 });
 
 describe('POST /api/v1/profile/mfa', function () {

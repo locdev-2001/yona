@@ -1,55 +1,160 @@
-/* Trang chủ công khai — token màu mang nguyên từ nhánh `main`
-   (resources/css/app.css: "Modern Soft-Neutral SaaS Dashboard"). Chuyển từ cú
-   pháp `@theme` của Tailwind v4 sang biến CSS + config v3 (tailwind.landing.config.js). */
+/* Bề mặt công khai — token theo docs/design-system.md §1.
+   Màu khai bằng bộ ba kênh RGB (không phải hex) để modifier opacity của Tailwind
+   hoạt động: `bg-primary-600/10` cần dạng này mới sinh ra rgb(... / 0.1). */
 @config "../../tailwind.landing.config.js";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --canvas: hsl(222, 19%, 93%);
-    --background: hsl(0, 0%, 100%);
-    --foreground: hsl(222, 47%, 11%);
-    --card: hsl(0, 0%, 100%);
-    --card-foreground: hsl(222, 47%, 11%);
-    --primary: hsl(221, 83%, 53%);
-    --primary-foreground: hsl(0, 0%, 100%);
-    --secondary: hsl(210, 40%, 96%);
-    --secondary-foreground: hsl(222, 47%, 11%);
-    --muted: hsl(210, 40%, 96%);
-    --muted-foreground: hsl(215, 16%, 47%);
-    --accent: hsl(214, 100%, 97%);
-    --accent-foreground: hsl(224, 76%, 48%);
-    --border: hsl(214, 32%, 91%);
-    --ring: hsl(221, 83%, 53%);
-    --radius-shell: 1.25rem;
-    --sidebar-primary: hsl(221, 83%, 53%);
-    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+/* ── Font ─────────────────────────────────────────────────────────────────
+   Be Vietnam Pro cho mọi chữ. Bản Tnum là cắt của chính nó với chữ số đều
+   bề rộng, chỉ chứa chữ số nên ký tự khác tự rơi về bản thường (§1.2). */
+@font-face {
+    font-family: 'Be Vietnam Pro';
+    src: url('../fonts/BeVietnamPro/BeVietnamPro-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro';
+    src: url('../fonts/BeVietnamPro/BeVietnamPro-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro';
+    src: url('../fonts/BeVietnamPro/BeVietnamPro-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
-.dark {
-    --canvas: hsl(222, 47%, 6%);
-    --background: hsl(222, 47%, 7%);
-    --foreground: hsl(214, 32%, 91%);
-    --card: hsl(221, 39%, 13%);
-    --card-foreground: hsl(214, 32%, 91%);
-    --primary: hsl(217, 91%, 60%);
-    --primary-foreground: hsl(222, 47%, 7%);
-    --secondary: hsl(217, 33%, 17%);
-    --secondary-foreground: hsl(214, 32%, 91%);
-    --muted: hsl(217, 33%, 17%);
-    --muted-foreground: hsl(215, 20%, 65%);
-    --accent: hsl(217, 33%, 20%);
-    --accent-foreground: hsl(213, 94%, 78%);
-    --border: hsl(217, 33%, 22%);
-    --ring: hsl(217, 91%, 60%);
-    --sidebar-primary: hsl(217, 91%, 60%);
-    --sidebar-primary-foreground: hsl(222, 47%, 7%);
+/* JetBrains Mono — CHỈ cho nhãn eyebrow (§4.2). Bản cắt còn 220 ký tự gồm đủ
+   chữ hoa tiếngViệt có dấu, 10 KB mỗi weight. Giấy phép OFL, kèm OFL.txt. */
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/JetBrainsMono/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/JetBrainsMono/JetBrainsMono-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Be Vietnam Pro Tnum';
+    src: url('../fonts/BeVietnamPro/BeVietnamProTnum-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro Tnum';
+    src: url('../fonts/BeVietnamPro/BeVietnamProTnum-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro Tnum';
+    src: url('../fonts/BeVietnamPro/BeVietnamProTnum-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Thương hiệu — bóc từ logo trong yona-brand-kit */
+    --c-navy: 1 23 64; /* #011740 — chỉ dùng cho dải tối, không phải màu chữ */
+    --c-blue: 0 125 255; /* #007DFF — nhận diện, KHÔNG mang chữ (3.91:1) */
+    --c-cyan: 0 186 253; /* #00BAFD — chỉ trên nền navy */
+
+    /* Primary — hue 211, dựng quanh --c-blue */
+    --c-primary-50: 235 244 255;
+    --c-primary-100: 209 231 255;
+    --c-primary-200: 163 208 255;
+    --c-primary-300: 107 179 255;
+    --c-primary-400: 51 150 255;
+    --c-primary-500: 0 125 255;
+    --c-primary-600: 0 104 214; /* 5.31:1 trắng · 4.59:1 linen — nền nút */
+    --c-primary-700: 0 84 173; /* 7.31:1 — link, hover nút */
+    --c-primary-800: 0 64 133;
+    --c-primary-900: 0 44 92;
+
+    /* Trung tính ẤM (linen). Xám lạnh làm trang trông như template;
+       ba bậc nền 0/50/100 là toàn bộ vốn liếng phân tầng của trang. */
+    --c-neutral-0: 255 255 255; /* nền gốc */
+    --c-neutral-50: 250 249 246; /* #FAF9F6 — dải xen kẽ */
+    --c-neutral-100: 241 238 233; /* #F1EEE9 — giếng ảnh, panel */
+    --c-neutral-200: 232 229 223;
+    --c-neutral-300: 222 219 214; /* #DEDBD6 — hairline, khung lưới */
+    --c-neutral-400: 168 163 153; /* chỉ cho đồ hoạ, không mang chữ */
+    --c-neutral-500: 112 107 99; /* 4.57:1 trên linen — bậc nhỏ nhất còn đạt AA */
+    --c-neutral-600: 92 88 81;
+    --c-neutral-700: 61 58 53;
+    --c-neutral-800: 38 36 33;
+    --c-neutral-900: 17 17 17; /* #111111 — chữ tiêu đề */
+
+    /* Tông nền cho khối media. Mỗi khối tính năng một tông để ba khối liên
+       tiếp không đọc thành một mảng duy nhất. Chỉ dùng làm NỀN, không mang chữ. */
+    --c-tone-sage: 228 234 226;
+    --c-tone-sand: 238 231 219;
+
+    /* Trạng thái — đều ≥5.4:1 trên trắng */
+    --c-success: 11 122 68;
+    --c-success-tint: 231 247 238;
+    --c-warning: 154 91 0;
+    --c-warning-tint: 254 243 226;
+    --c-danger: 196 43 43;
+    --c-danger-tint: 253 236 236;
+}
+
+@layer components {
+    /* Hoa văn chấm bi cho nền section bảng giá.
+       Ngoại lệ có chủ đích của §0.2 (không gradient nền): đây không phải chuyển
+       màu mà là một hoa văn đều, và nó là thứ duy nhất phân biệt bề mặt bảng giá
+       với các dải nền phẳng còn lại. Chỉ dùng ở landing. */
+    .bg-dotfield {
+        background-image: radial-gradient(rgb(var(--c-neutral-400) / 0.5) 1px, transparent 1px);
+        background-size: 12px 12px;
+    }
+
+    /* Chấm bi thưa dần về giữa để không cạnh tranh với thẻ giá đặt ở tâm. */
+    .bg-dotfield-fade {
+        mask-image: radial-gradient(ellipse 62% 76% at 50% 50%, transparent 38%, #000 100%);
+    }
 }
 
 @layer base {
     body {
-        @apply bg-canvas text-foreground font-sans antialiased;
+        @apply bg-neutral-0 font-sans text-base font-light text-neutral-700 antialiased;
+    }
+
+    /* Tiêu đề không bao giờ đậm — nhấn mạnh bằng màu, không bằng weight (§0.4) */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-normal text-neutral-900;
+    }
+
+    /* Giảm chuyển động: bỏ chuyển vị, giữ đổi màu (§5.4) */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            transition-property: opacity, color, background-color, border-color !important;
+            animation: none !important;
+        }
     }
 }

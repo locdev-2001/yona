@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -16,7 +16,7 @@ import type { DashboardPageProps } from '../../../types';
 
 // Port từ dashboard/routes/dashboard/settings/profile/MfaSettings.vue.
 export default function MfaSettings() {
-    const { globalConfig, currentAccount } = usePage<DashboardPageProps>().props;
+    const { globalConfig } = usePage<DashboardPageProps>().props;
 
     const [mfaEnabled, setMfaEnabled] = useState(false);
     const [showSetup, setShowSetup] = useState(false);
@@ -28,16 +28,11 @@ export default function MfaSettings() {
     const managementRef = useRef<MfaManagementHandle>(null);
 
     useEffect(() => {
-        if (!globalConfig.isMfaEnabled) {
-            router.visit(`/app/accounts/${currentAccount.id}/profile/settings`);
-            return;
-        }
-
         mfaApi
             .get()
             .then(status => setMfaEnabled(status.enabled))
             .catch(() => {});
-    }, [globalConfig.isMfaEnabled, currentAccount.id]);
+    }, []);
 
     const startMfaSetup = async () => {
         try {

@@ -5,20 +5,32 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Chọn ngôn ngữ cho một request — nguồn duy nhất của locale phía máy chủ.
  *
  * Blade in ra `app()->getLocale()` ở thẻ <html lang>, frontend đọc lại từ đó, nên
- * mọi mặt tiền (dashboard, widget, portal công khai, survey, email) dùng chung
- * đúng một cách quyết định thứ tự ưu tiên này.
+ * mọi mặt tiền đều thống nhất.
+ *
+ * Không đoán theo Accept-Language: sản phẩm bán cho SME Việt, khách vãng lai
+ * phải thấy tiếng Việt kể cả khi trình duyệt cài tiếng Anh. Muốn đổi thì bấm
+ * bộ chọn ngôn ngữ, và lựa chọn đó được nhớ bằng cookie.
  */
 class SetLocale
 {
+    private const COOKIE = 'yona_locale';
+
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $this->resolve($request);
+        $picked = $this->supported((string) $request->query('locale'));
+
+        if ($picked !== null) {
+            Cookie::queue(Cookie::forever(self::COOKIE, $picked));
+        }
+
+        $locale = $picked ?? $this->resolve($request);
 
         if ($locale !== null) {
             App::setLocale($locale);
@@ -31,13 +43,9 @@ class SetLocale
     {
         $candidates = [
             $request->route()?->parameter('locale'),
-            $request->query('locale'),
             data_get($request->user()?->ui_settings, 'locale'),
             $this->accountLocale($request),
-            // Khách vô danh (trang chủ, portal, survey) chưa có hồ sơ để hỏi:
-            // theo ngôn ngữ trình duyệt, chỉ nhận khi khớp locale đang bật —
-            // không khớp thì rơi về `app.locale` như cũ.
-            ...$request->getLanguages(),
+            $request->cookie(self::COOKIE),
         ];
 
         foreach ($candidates as $candidate) {
@@ -56,15 +64,13 @@ class SetLocale
         return is_object($account) ? ($account->locale ?? null) : null;
     }
 
-    /**
-     * Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null.
-     *
-     * Thử nguyên mã trước (`pt_BR`), rồi mới rút về mã ngôn ngữ (`pt`) — trình
-     * duyệt gửi `vi-VN` nhưng bản dịch nằm ở `vi`, không rút gọn thì khách Việt
-     * vẫn thấy tiếng Anh.
-     */
+    /** Trả về mã locale đúng như thư mục lang/ nếu được bật, ngược lại null. */
     private function supported(string $candidate): ?string
     {
+        if ($candidate === '') {
+            return null;
+        }
+
         $enabled = array_column(config('yona.available_locales', []), 'iso_639_1_code');
         $normalized = str_replace('-', '_', $candidate);
 

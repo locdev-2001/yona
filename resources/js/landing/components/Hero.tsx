@@ -1,71 +1,65 @@
-import { useEffect, useState } from 'react';
-
 import type { LandingConfig } from '../config';
-import { ButtonLink } from './Button';
-import DotField from './DotField';
+import { ArtMark } from './ArtMark';
+import { CtaPair } from './Button';
+import { Section } from './Section';
 
-// Bảng màu chấm theo chủ đề: chàm→tím trên nền thương hiệu, sáng hơn ở chế độ
-// tối. Nền sáng cần alpha cao hơn, nếu không chấm bị chìm vào nền xám nhạt.
-const DOTS_LIGHT = { gradientFrom: 'rgba(67, 56, 202, 0.60)', gradientTo: 'rgba(147, 51, 234, 0.45)', glowColor: 'rgba(129, 140, 248, 0.55)' };
-const DOTS_DARK = { gradientFrom: 'rgba(165, 180, 252, 0.55)', gradientTo: 'rgba(196, 181, 253, 0.32)', glowColor: '#4f46e5' };
-
-// Theo dõi lớp `dark` trên <html> để đổi bảng màu ngay khi khách chuyển giao diện
-// (nhánh `main`: hooks/use-is-dark.ts).
-function useIsDark(): boolean {
-    const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
-
-    useEffect(() => {
-        const observer = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')));
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => observer.disconnect();
-    }, []);
-
-    return dark;
-}
+/**
+ * Hai cụm tranh chồng lấn, mỗi cụm có một tấm tràn hẳn khỏi mép màn hình.
+ *
+ * Xếp rời từng tấm cách đều là thứ làm chúng trông như tranh treo tường. Chồng
+ * lấn và cắt cụt ở mép mới đọc ra là một mảng thị giác của trang.
+ */
+const ART = [
+    { src: 'hero-1', width: 212, height: 268, className: '-left-28 top-2' },
+    { src: 'hero-5', width: 268, height: 104, className: '-left-52 top-60' },
+    { src: 'hero-2', width: 236, height: 168, className: '-right-32 top-0' },
+    { src: 'hero-3', width: 248, height: 196, className: '-right-44 top-36' },
+    { src: 'hero-4', width: 176, height: 176, className: '-right-16 top-72' },
+];
 
 export function Hero({ config }: { config: LandingConfig }) {
     const { urls, strings, isAuthenticated } = config;
-    const dots = useIsDark() ? DOTS_DARK : DOTS_LIGHT;
+    const hero = strings.hero;
 
     return (
-        <section className="relative isolate flex min-h-[640px] items-center overflow-hidden lg:min-h-[86vh]">
-            <div className="pointer-events-none absolute inset-0 -z-10">
-                <DotField dotRadius={4} dotSpacing={18} bulgeStrength={80} glowRadius={200} {...dots} />
+        <Section surface="base" rhythm="md">
+            {ART.map((art) => (
+                <ArtMark key={art.src} {...art} />
+            ))}
+
+            {/* Ba dòng: dòng giữa là thông điệp, hai dòng kia lùi lại bằng alpha.
+                50% chứ không phải 40%: 40% chỉ đạt 2.61:1, dưới ngưỡng 3:1 của
+                chữ lớn. 50% cho 3.54:1 mà mắt gần như không thấy khác. */}
+            <h1 className="relative mx-auto max-w-4xl text-balance text-center text-display text-neutral-900/50">
+                {hero.title_lead}
+                <br />
+                <span className="text-neutral-900">{hero.title_focus}</span>
+                <br />
+                {hero.title_tail}
+            </h1>
+
+            <p className="relative mx-auto mt-6 max-w-reading text-pretty text-center text-base font-light text-neutral-700">
+                {hero.subtitle}
+            </p>
+
+            <div className="relative mt-8">
+                {isAuthenticated ? (
+                    <CtaPair align="center" primary={{ label: hero.cta_dashboard, href: urls.dashboard }} />
+                ) : (
+                    <CtaPair
+                        align="center"
+                        primary={{ label: hero.cta_primary, href: urls.register }}
+                        secondary={{ label: hero.cta_secondary, href: urls.login }}
+                    />
+                )}
             </div>
-            <div className="to-canvas pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent" />
-            {/* Lớp phủ toả tròn làm dịu các chấm ngay sau phần chữ để phụ đề vẫn đọc được. */}
-            <div className="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(ellipse_55%_45%_at_50%_45%,var(--canvas)_0%,transparent_70%)]" />
 
-            <div className="mx-auto w-full max-w-3xl px-4 py-24 text-center sm:px-6">
-                <span className="border-border/70 bg-card/60 text-muted-foreground inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-medium backdrop-blur-sm">
-                    {strings.hero.eyebrow}
-                </span>
-
-                <h1 className="mt-6 text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">{strings.hero.title}</h1>
-
-                <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg text-pretty">{strings.hero.subtitle}</p>
-
-                <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                    {isAuthenticated ? (
-                        <ButtonLink href={urls.dashboard} size="lg">
-                            {strings.hero.cta_dashboard}
-                            <span className="i-lucide-arrow-right size-4" aria-hidden="true" />
-                        </ButtonLink>
-                    ) : (
-                        <>
-                            <ButtonLink href={urls.register} size="lg">
-                                {strings.hero.cta_primary}
-                                <span className="i-lucide-arrow-right size-4" aria-hidden="true" />
-                            </ButtonLink>
-                            <ButtonLink href={urls.login} variant="outline" size="lg">
-                                {strings.hero.cta_secondary}
-                            </ButtonLink>
-                        </>
-                    )}
-                </div>
-
-                <p className="text-muted-foreground mt-5 text-sm">{strings.hero.hint}</p>
-            </div>
-        </section>
+            {/* Dòng gỡ rào ngay dưới CTA: nó trả lời câu hỏi đầu tiên người đọc
+                nghĩ tới khi thấy nút, đúng chỗ họ đang nhìn. */}
+            <p className="relative mt-5 flex items-center justify-center gap-2 text-caption text-neutral-500">
+                <span aria-hidden className="i-lucide-circle-check size-3.5" />
+                {hero.fine}
+            </p>
+        </Section>
     );
 }

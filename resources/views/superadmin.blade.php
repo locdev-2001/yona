@@ -6,6 +6,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="initial-scale=1">
         <title inertia>{{ config('app.name', 'Yona') }}</title>
+        @include('partials.favicon')
+        @include('partials.analytics')
         @viteReactRefresh
         @vite(['resources/scss/superadmin.scss', 'resources/js/superadmin/main.tsx'])
         @inertiaHead

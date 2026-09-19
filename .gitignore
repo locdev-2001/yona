@@ -30,3 +30,4 @@ Thumbs.db
 /plans/**/reports/tool-results
 __pycache__/
 .claude/hooks/.logs/
+.playwright-mcp/

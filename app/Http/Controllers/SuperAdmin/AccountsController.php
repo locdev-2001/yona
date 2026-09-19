@@ -30,7 +30,6 @@ class AccountsController extends ResourceController
                     ->map(fn (User $user) => ['value' => $user->id, 'label' => "#{$user->id} {$user->name}"])->all(),
                 'roles' => array_values(AccountUser::ROLE_NAMES),
             ],
-            'seedEnabled' => (bool) config('yona.account_seeding_enabled'),
         ];
     }
 
@@ -52,13 +51,6 @@ class AccountsController extends ResourceController
         DeleteObjectJob::dispatch($this->findRecord($id));
 
         return redirect('/super_admin/accounts')->with('notice', 'Account deletion is in progress.');
-    }
-
-    public function seed(int $id): RedirectResponse
-    {
-        $this->findRecord($id);
-
-        return back()->with('notice', 'Account seeding triggered');
     }
 
     public function resetCache(int $id): RedirectResponse

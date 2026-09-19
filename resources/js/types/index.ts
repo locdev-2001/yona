@@ -15,8 +15,6 @@ export interface GlobalConfig {
     installationName: string;
     logo: string;
     logoDark: string;
-    signupEnabled: boolean;
-    isMfaEnabled: boolean;
     termsURL: string;
     privacyURL: string;
     // App id của Meta — kênh Facebook/Instagram chỉ bật khi cấu hình (như

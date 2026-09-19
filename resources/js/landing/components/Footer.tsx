@@ -1,15 +1,76 @@
 import { fillPlaceholders, type LandingConfig } from '../config';
 import { BrandLogo } from './BrandLogo';
 
+// Chỉ liệt kê đích thật sự tồn tại; không dựng link chết cho đầy cột.
 export function Footer({ config }: { config: LandingConfig }) {
-    const { brand, strings, year } = config;
+    const { brand, strings, urls, year, locale, locales } = config;
+
+    const columns = [
+        {
+            heading: strings.footer.product,
+            links: [
+                { label: strings.nav.features, href: '#features' },
+                { label: strings.nav.pricing, href: '#pricing' },
+            ],
+        },
+        {
+            heading: strings.footer.account,
+            links: [
+                { label: strings.nav.login, href: urls.login },
+                { label: strings.nav.register, href: urls.register },
+            ],
+        },
+        {
+            heading: strings.footer.language,
+            links: locales.map((option) => ({
+                label: option.label,
+                href: option.url,
+                current: option.code === locale,
+            })),
+        },
+    ];
 
     return (
-        <footer className="border-border/60 border-t">
-            <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-4 py-10 text-center sm:flex-row sm:justify-between sm:px-6 sm:text-left">
-                <BrandLogo brand={brand} />
-                <p className="text-muted-foreground text-sm">{strings.footer.tagline}</p>
-                <p className="text-muted-foreground/80 text-sm">{fillPlaceholders(strings.footer.copyright, { year })}</p>
+        <footer className="border-t border-neutral-300 bg-neutral-0">
+            <div className="mx-auto max-w-container px-4 py-14 md:px-10 md:py-20">
+                <div className="grid gap-10 md:grid-cols-5">
+                    <div className="max-w-sm md:col-span-2">
+                        <BrandLogo brand={brand} />
+                        <p className="mt-4 text-sm font-light text-neutral-600">{strings.footer.tagline}</p>
+                    </div>
+
+                    {columns.map((column) => (
+                        <nav key={column.heading}>
+                            <p className="font-mono text-eyebrow font-medium uppercase text-neutral-500">
+                                {column.heading}
+                            </p>
+                            <ul className="mt-5 space-y-1">
+                                {column.links.map((link) => (
+                                    <li key={link.label}>
+                                        <a
+                                            href={link.href}
+                                            aria-current={'current' in link && link.current ? 'true' : undefined}
+                                            className={`inline-flex min-h-11 items-center rounded text-sm md:min-h-0 md:py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 ${
+                                                'current' in link && link.current
+                                                    ? 'text-neutral-900'
+                                                    : 'text-neutral-600 hover:text-neutral-900'
+                                            }`}
+                                        >
+                                            {link.label}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    ))}
+                </div>
+
+                {/* Hàng cuối tách riêng: bản quyền và định vị sản phẩm không thuộc
+                    về cột link nào. */}
+                <div className="mt-16 flex flex-col gap-2 border-t border-neutral-300 pt-6 text-caption text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+                    <p>{fillPlaceholders(strings.footer.copyright, { year })}</p>
+                    <p>{strings.footer.note}</p>
+                </div>
             </div>
         </footer>
     );

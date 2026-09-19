@@ -1,0 +1,844 @@
+{
+  "meta": {
+    "nguon": "https://www.intercom.com/ — đo bằng Playwright, viewport 1440x900, đã cuộn hết trang trước khi đo",
+    "ngay_do": "2026-09-19",
+    "cao_trang": 8763,
+    "so_section": 10,
+    "phuong_phap": "getComputedStyle + getBoundingClientRect trên từng <section>. Mọi con số dưới đây là đo được, không ước lượng.",
+    "muc_dich": "Đạt độ giống về NGÔN NGỮ THIẾT KẾ và NHỊP TRANG trước, rồi mới điều chỉnh theo ý Yona. Không sao chép chữ, ảnh, logo hay thương hiệu của Intercom."
+  },
+  "tokens_do_duoc": {
+    "mau": {
+      "muc": "#111111",
+      "muc_70": "rgba(17,17,17,0.7) — chữ phụ trong thẻ",
+      "muc_40": "rgba(17,17,17,0.4) — dòng tiêu đề bị làm mờ",
+      "nen_goc": "#FFFFFF",
+      "nen_dai": "#FAF9F6",
+      "nen_panel": "#F1EEE9",
+      "hairline": "#DEDBD6",
+      "dau_cong": "#D3CEC6",
+      "accent_1": "#0007CB (xanh dương đậm)",
+      "accent_2": "#FF5600 (cam)"
+    },
+    "chu": {
+      "ho_chu": "Saans (sans) + SaansMono (nhãn nhỏ) + Serrif (hiếm)",
+      "h1_hero": "80px / lh 80px (1.0) / ls -2.4px (-0.03em) / w400 / center",
+      "h2_closing": "80px — dòng kết dùng đúng cỡ hero",
+      "h2_section": "54px / lh 54px (1.0) / ls -1.6px (-0.0296em) / w400 / left",
+      "h2_nhan_section": "24px / lh 24px / ls -0.48px — nhãn dải, KHÔNG phải tiêu đề",
+      "h3_the": "20px / lh 24px / ls -0.2px / w400",
+      "h3_lon": "24px — dùng ở khối 'Together' và pricing",
+      "body_lead": "16px / lh 22.4px (1.4) / w300 / #111 / max-width 640px",
+      "body_the": "16px / lh 24px (1.5) / w400 / #111 @70%",
+      "body_gon": "14px / lh 19.6px / w400 / #111 @70%",
+      "eyebrow": "12px / w400-500 / ls 0.6-1.2px (0.05-0.1em) / uppercase / FONT MONO"
+    },
+    "hinh_khoi": {
+      "bo_goc": "4px (nút đặc, 18 lần) · 6px (nút ghost, 11 lần) · còn lại vuông",
+      "bong_do": "không dùng trên trang chủ",
+      "nut_chinh": "bg #111111 · r4px · h40 · px12-14 · 14-16px · w400 · chữ trắng · KHÔNG viền",
+      "nut_phu": "trong suốt · r4-6px · h40 · px12 · 16px · w400 · chữ #111 · VIỀN 1px",
+      "link_chu": "14px · #111 @70% · không gạch chân · không mũi tên"
+    }
+  },
+  "luoi": {
+    "container": "1170px (mép trái x=135 ở viewport 1440)",
+    "he_luoi": "12 cột, gap 16px",
+    "cot_doc": "1171px rộng, viền 1px #DEDBD6 hai bên — khung chạy suốt trang",
+    "dau_cong": "8x8px #D3CEC6 tại giao điểm section",
+    "cot_doc_van_ban": "640px (max-width của đoạn dẫn)",
+    "nhip_doc": {
+      "lon": "112px trên/dưới — các khối tính năng",
+      "vua": "80px — hero, carousel sản phẩm, testimonial, pricing",
+      "nho": "64px — dải logo",
+      "ket": "216px — riêng section cuối, gấp đôi nhịp lớn"
+    }
+  },
+  "chrome": {
+    "nav": {
+      "cao": "108px tổng (gồm banner thông báo phía trên) — nav thuần khoảng 64px",
+      "nen": "#FFFFFF đặc, không viền dưới, không bóng, không blur",
+      "trai": "logo",
+      "giua": "Product · Customers · Resources · Pricing (4 mục, có dropdown)",
+      "phai": "Log in · Contact sales · View demo · Start free trial",
+      "banner": "một dải thông báo sự kiện phía trên cùng, đóng được"
+    },
+    "footer": {
+      "cao": 494,
+      "so_cot": 8,
+      "cau_truc": "8 nhóm link, nhóm đầu 11 mục (sản phẩm), các nhóm còn lại 3-7 mục",
+      "ghi_chu": "rất dày. Đây là footer của công ty 30k khách, không phải khuôn mẫu bắt buộc."
+    }
+  },
+  "sections": [
+    {
+      "id": 0,
+      "ten": "Hero",
+      "vai_tro": "Tuyên ngôn sản phẩm",
+      "do_duoc": {
+        "y": 112,
+        "cao": 672,
+        "nen": "trong suốt (trắng)",
+        "pt": "80px",
+        "pb": "100px"
+      },
+      "giai_phau": [
+        "h1 80px căn giữa, rộng 742px, 3 dòng, dòng không trọng tâm ở alpha 0.4",
+        "đoạn dẫn 16px w300",
+        "MỘT nút đặc duy nhất (Start free trial)",
+        "4 ẢNH TRANG TRÍ NHỎ bleed ở bốn góc"
+      ],
+      "media": [
+        {
+          "w": 176,
+          "h": 243,
+          "x": 42,
+          "ghi_chu": "trái trên, trong viewport"
+        },
+        {
+          "w": 194,
+          "h": 243,
+          "x": -79,
+          "ghi_chu": "trái dưới, TRÀN RA NGOÀI mép trái"
+        },
+        {
+          "w": 287,
+          "h": 190,
+          "x": 1243,
+          "ghi_chu": "phải trên"
+        },
+        {
+          "w": 151,
+          "h": 197,
+          "x": 1315,
+          "ghi_chu": "phải dưới, tràn mép phải"
+        }
+      ],
+      "cta": {
+        "so_nut": 1,
+        "kieu": "chỉ nút đặc"
+      },
+      "phat_hien_quan_trong": "Hero KHÔNG có hai nút. Chỉ một. Và bốn ảnh trang trí bleed là thứ làm hero không rỗng — chúng chiếm hai bên khoảng trắng mà tiêu đề căn giữa để lại.",
+      "yona": {
+        "giu": "h1 80px ba dòng alpha, đoạn dẫn w300",
+        "sua": "bỏ nút phụ ở hero, còn một nút Dùng thử miễn phí",
+        "can_them": "4 ảnh trang trí nhỏ. Yona không có kho ảnh nghệ thuật như Intercom. Phương án thay thế: 4 ảnh chụp bong bóng chat Zalo thật (cắt nhỏ, vuông góc) đặt ở bốn góc, hoặc bỏ hẳn và chấp nhận hero thưa hơn.",
+        "quyet_dinh_can_hoi": "dùng mảnh chat làm ảnh trang trí, hay bỏ?"
+      }
+    },
+    {
+      "id": 1,
+      "ten": "Carousel sản phẩm",
+      "vai_tro": "Cho thấy hai sản phẩm là một trải nghiệm liền mạch",
+      "do_duoc": {
+        "y": 784,
+        "cao": 795,
+        "nen": "#FAF9F6",
+        "pt": "80px",
+        "pb": "80px"
+      },
+      "giai_phau": [
+        "h2 CHỈ 24px (nhãn dải, căn trái): 'Two products, one seamless experience'",
+        "hai tab nhãn: Intercom helpdesk | Fin AI Agent",
+        "carousel ngang: slide 1 tại x=133, slide 2 tại x=2482 (ngoài màn hình)",
+        "mỗi slide = ảnh nền trang trí 1173x513 + ảnh screenshot 1173x513 CHỒNG LÊN"
+      ],
+      "media": [
+        {
+          "w": 1173,
+          "h": 513,
+          "lop": 2,
+          "ghi_chu": "screenshot layer trên ảnh nền trang trí, cùng kích thước"
+        }
+      ],
+      "cta": {
+        "so_nut": 0
+      },
+      "phat_hien_quan_trong": "Đây là chỗ tôi hiểu sai nặng nhất. Nhãn section ở đây chỉ 24px, không phải 54px. Và ảnh screenshot KHÔNG đặt trên nền phẳng — nó nằm trên một ảnh nền trang trí (vân gỗ/màu ấm) cùng kích thước. Đó là lý do media của Intercom có chiều sâu còn của tôi thì phẳng.",
+      "yona": {
+        "giu": "nhãn 24px + hai tab + ảnh lớn 1170x513",
+        "sua": "tab phải bấm được thật (Hộp thư | Hồ sơ khách), không phải nhãn giả",
+        "can_them": "ảnh nền trang trí dưới screenshot. Rẻ nhất: một khối màu linen #F1EEE9 lệch 24px so với ảnh, tạo lớp kép mà không cần asset."
+      }
+    },
+    {
+      "id": 2,
+      "ten": "Dải logo khách hàng",
+      "vai_tro": "Bằng chứng xã hội",
+      "do_duoc": {
+        "y": 1580,
+        "cao": 516,
+        "nen": "trong suốt",
+        "pt": "64px",
+        "pb": "64px"
+      },
+      "giai_phau": [
+        "eyebrow MONO uppercase 12px: 'Trusted by 30,000+ leading brands'",
+        "lưới 6 cột x 24 logo (4 hàng), logo đơn sắc"
+      ],
+      "cta": {
+        "so_nut": 0
+      },
+      "yona": {
+        "van_de": "Yona CHƯA CÓ khách hàng để trưng logo. Bịa logo khách là gian dối.",
+        "thay_the": "giữ nguyên ô này nhưng đổi nội dung thành dải KÊNH được hỗ trợ (Zalo, Messenger, Instagram, Telegram, WhatsApp, LINE, TikTok) — đúng vai trò 'chứng minh độ phủ', trung thực, và đã có sẵn icon.",
+        "sua_so_voi_hien_tai": "hiện đang là 1 hàng 7 icon. Nên đổi sang lưới 4 cột x 2 hàng cho gần nhịp 6x4 của tham chiếu, và eyebrow phải ở cỡ mono 12px ls 0.1em."
+      }
+    },
+    {
+      "id": 3,
+      "ten": "Khối tính năng A (Helpdesk)",
+      "vai_tro": "Trụ sản phẩm thứ nhất",
+      "do_duoc": {
+        "y": 2096,
+        "cao": 1364,
+        "nen": "#FAF9F6",
+        "pt": "112px",
+        "pb": "112px"
+      },
+      "giai_phau": [
+        "eyebrow + icon",
+        "h2 54px, hai dòng, căn trái, rộng 696px",
+        "ẢNH MINH HOẠ MỰC 315x306 tại x=918 — nằm NGANG HÀNG với tiêu đề, bên phải",
+        "đoạn dẫn 16px w300 max-w 640px",
+        "2 nút: đặc (Start free trial) + viền 1px (View demo)",
+        "carousel media 1169x528, lại là lớp kép (nền trang trí + screenshot)",
+        "lưới 3 cột: h3 20px + body 16px @70% + link 'Learn more' 14px @70%"
+      ],
+      "cta": {
+        "so_nut": 2,
+        "kieu": "đặc + viền 1px"
+      },
+      "phat_hien_quan_trong": "Có một ảnh minh hoạ vẽ mực 315px ở BÊN PHẢI tiêu đề. Nó lặp ở cả ba khối tính năng (315x306, 315x307, 315x315). Đây là yếu tố thị giác giữ cho hàng tiêu đề không bị trống nửa phải — thứ trang của tôi đang thiếu và là lý do phần đầu mỗi khối trông rỗng.",
+      "yona": {
+        "giu": "toàn bộ thứ tự: eyebrow → h2 54px → đoạn dẫn → 2 nút → media → lưới 3 cột",
+        "can_them": "ảnh minh hoạ 315px bên phải tiêu đề. Yona không có illustrator. Phương án: (a) thuê/mua một bộ 3 hình mực, (b) dùng ảnh chụp mảnh giao diện (một bong bóng chat, một thẻ liên hệ) cắt vuông, (c) bỏ và chấp nhận hàng tiêu đề trống nửa phải.",
+        "quyet_dinh_can_hoi": "chọn (a), (b) hay (c)?"
+      }
+    },
+    {
+      "id": 4,
+      "ten": "Khối tính năng B (Fin AI)",
+      "vai_tro": "Trụ sản phẩm thứ hai",
+      "do_duoc": {
+        "y": 3460,
+        "cao": 1328,
+        "nen": "trong suốt (trắng)",
+        "pt": "112px",
+        "pb": "112px"
+      },
+      "giai_phau": [
+        "giống hệt khối A, kể cả ảnh mực 315x307 tại x=918",
+        "media 700x700 (vuông, không phải 16:9)"
+      ],
+      "cta": {
+        "so_nut": 2
+      },
+      "phat_hien_quan_trong": "Lặp NGUYÊN VĂN cấu trúc khối A, chỉ đổi bề mặt nền. Xác nhận: nhịp đến từ sự lặp lại, không phải từ việc mỗi khối một kiểu.",
+      "yona": {
+        "anh_xa": "Zalo cá nhân — trụ khác biệt của Yona, đúng vị trí trụ thứ hai"
+      }
+    },
+    {
+      "id": 5,
+      "ten": "Khối tính năng C (Together)",
+      "vai_tro": "Hai trụ kết hợp",
+      "do_duoc": {
+        "y": 4788,
+        "cao": 1219,
+        "nen": "#FAF9F6",
+        "pt": "112px",
+        "pb": "112px"
+      },
+      "giai_phau": [
+        "eyebrow + h2 54px + ảnh mực 315x315",
+        "2 nút",
+        "LƯỚI 3 CỘT, MỖI Ô CÓ ẢNH 380x380 (lớp kép: nền trang trí + ảnh)",
+        "h3 ở đây là 24px, không phải 20px"
+      ],
+      "cta": {
+        "so_nut": 2
+      },
+      "phat_hien_quan_trong": "Khối thứ ba KHÔNG dùng một ảnh lớn mà dùng ba ảnh vuông 380x380. Đây là biến thể duy nhất được phép — nó đến sau hai khối giống hệt nhau nên đọc như cao trào, không như lộn xộn.",
+      "yona": {
+        "anh_xa": "Hồ sơ & pipeline — ba ảnh vuông: thẻ liên hệ, pipeline, dòng thời gian hội thoại"
+      }
+    },
+    {
+      "id": 6,
+      "ten": "Testimonial",
+      "vai_tro": "Tiếng nói khách hàng",
+      "do_duoc": {
+        "y": 6007,
+        "cao": 640,
+        "nen": "#FAF9F6",
+        "pt": "80px",
+        "pb": "80px"
+      },
+      "giai_phau": [
+        "3 quote xoay vòng",
+        "mỗi quote: ảnh chân dung 209x259 + trích dẫn lớn có cụm được BÔI NỀN MÀU + tên + vai trò",
+        "hàng nhãn mono phía trên: tên công ty / ngành / kết quả"
+      ],
+      "cta": {
+        "so_nut": 0
+      },
+      "yona": {
+        "van_de": "Yona chưa có khách hàng để trích dẫn. BỎ HẲN section này. Bịa testimonial là gian dối, và là dạng slop tệ nhất.",
+        "thay_the": "dùng ô này cho 'Từ tin nhắn tới đơn chốt' (4 bước) — nội dung thật, cùng vị trí nhịp."
+      }
+    },
+    {
+      "id": 7,
+      "ten": "Tích hợp",
+      "vai_tro": "Hợp với công cụ đang dùng",
+      "do_duoc": {
+        "y": 6647,
+        "cao": 646,
+        "nen": "trong suốt",
+        "pt": "112px",
+        "pb": "112px"
+      },
+      "giai_phau": [
+        "eyebrow + h2 54px hai dòng",
+        "2 nút",
+        "một ảnh lưới logo 459x422 bên phải"
+      ],
+      "cta": {
+        "so_nut": 2
+      },
+      "yona": {
+        "anh_xa": "Bốn nguyên tắc cho thị trường Việt (chống trùng, liên hệ nháp, ghi nguồn, tôn trọng luật) — hoặc bỏ nếu trang đã đủ dài."
+      }
+    },
+    {
+      "id": 8,
+      "ten": "Bảng giá",
+      "vai_tro": "Giá minh bạch",
+      "do_duoc": {
+        "y": 7293,
+        "cao": 798,
+        "nen": "#FAF9F6",
+        "pt": "80px",
+        "pb": "80px"
+      },
+      "giai_phau": [
+        "h2 54px căn giữa: 'Transparent pricing'",
+        "ẢNH NỀN TRANG TRÍ FULL-BLEED 1440x798 phía sau toàn bộ section",
+        "một thẻ giá ở giữa: h3 24px + giá lớn + eyebrow mono 'Per Seat/Mo'",
+        "2 nút: đặc (Start free trial) + viền (Contact sales)",
+        "dòng chữ nhỏ dưới cùng"
+      ],
+      "cta": {
+        "so_nut": 2
+      },
+      "phat_hien_quan_trong": "Section pricing có ảnh nền tràn toàn màn hình 1440px — không phải nền phẳng. Đây là section duy nhất được full-bleed.",
+      "yona": {
+        "giu": "thẻ giá giữa trang, eyebrow mono cho đơn vị, 2 nút, dòng chữ nhỏ",
+        "sua": "giá hiện là '0đ / mỗi tháng' — đúng sự thật, giữ",
+        "can_them": "nền full-bleed. Rẻ nhất: một dải #F1EEE9 tràn mép thay cho ảnh."
+      }
+    },
+    {
+      "id": 9,
+      "ten": "Kết trang",
+      "vai_tro": "CTA cuối",
+      "do_duoc": {
+        "y": 8171,
+        "cao": 592,
+        "nen": "#FFFFFF",
+        "pt": "216px",
+        "pb": "216px"
+      },
+      "giai_phau": [
+        "h2 80px — ĐÚNG CỠ HERO, căn giữa",
+        "2 nút căn giữa",
+        "5+ ẢNH TRANG TRÍ NHỎ rải quanh: 144x144, 115x126, 115x115, 101x144, 115x106"
+      ],
+      "cta": {
+        "so_nut": 2
+      },
+      "phat_hien_quan_trong": "pt/pb 216px — gấp đôi nhịp lớn. Và lại là ảnh trang trí rải quanh, đối xứng với hero. Trang mở bằng 80px + ảnh rải, đóng bằng 80px + ảnh rải. Đó là cách nó khép vòng.",
+      "yona": {
+        "giu": "h2 80px, 2 nút, nhịp 216px",
+        "can_them": "ảnh rải — cùng quyết định với hero"
+      }
+    }
+  ],
+  "doi_chieu_trang_yona_hien_tai": {
+    "da_dung": [
+      "container 1170px, lưới hairline dọc + dấu cộng ở góc",
+      "nền ấm #FFFFFF / #FAF9F6 / #F1EEE9, hairline #DEDBD6",
+      "chữ #111111, h1 80px, h2 54px, h3 20px, body 16px w300 — khớp số",
+      "nút r4px h40, nút phụ viền 1px",
+      "nhịp 112px / 64px, xen kẽ nền",
+      "bộ khung khối tính năng: eyebrow → h2 → đoạn dẫn → 2 nút → media → lưới 3 cột",
+      "locale mặc định vi + bộ chọn ngôn ngữ nhớ bằng cookie",
+      "ảnh chụp giao diện thật, tiếng Việt, dữ liệu Việt"
+    ],
+    "con_thieu_theo_do_uu_tien": [
+      {
+        "uu_tien": 1,
+        "thieu": "Ảnh trang trí nhỏ ở hero (4) và kết trang (5)",
+        "vi_sao_quan_trong": "Đây là thứ lấp hai bên khoảng trắng của tiêu đề căn giữa. Không có nó, hero và kết trang là chữ trôi trên nền trắng — chính xác là cảm giác 'AI slop' đang bị phàn nàn.",
+        "can_quyet_dinh": true
+      },
+      {
+        "uu_tien": 2,
+        "thieu": "Ảnh minh hoạ 315px bên phải tiêu đề mỗi khối tính năng",
+        "vi_sao_quan_trong": "Không có nó, hàng tiêu đề 54px chiếm nửa trái, nửa phải trống hoàn toàn. Lặp ba lần thành ba mảng trống.",
+        "can_quyet_dinh": true
+      },
+      {
+        "uu_tien": 3,
+        "thieu": "Lớp kép dưới screenshot (ảnh nền trang trí)",
+        "vi_sao_quan_trong": "Media của Intercom có chiều sâu. Của mình là ảnh dán phẳng trong khung linen.",
+        "giai_phap_khong_can_asset": "khối màu #F1EEE9 lệch 24px phía sau ảnh"
+      },
+      {
+        "uu_tien": 4,
+        "thieu": "Carousel ngang cho media (2 slide) + tab bấm được",
+        "vi_sao_quan_trong": "Tab hiện tại là nhãn giả, đã gỡ. Tab thật cho phép khoe 2 màn hình trong 1 chỗ."
+      },
+      {
+        "uu_tien": 5,
+        "thieu": "Khối tính năng thứ ba dùng lưới 3 ảnh vuông 380x380 thay vì 1 ảnh lớn",
+        "vi_sao_quan_trong": "Biến thể duy nhất được phép, tạo cao trào sau hai khối lặp."
+      },
+      {
+        "uu_tien": 6,
+        "thieu": "Eyebrow dùng font MONO",
+        "ghi_chu": "XUNG ĐỘT với ràng buộc 'một font Việt duy nhất'. Be Vietnam Pro không có bản mono. Chấp nhận lệch, hoặc dùng ls 0.1em để gợi cảm giác mono."
+      },
+      {
+        "uu_tien": 7,
+        "thieu": "Nền full-bleed cho section pricing"
+      },
+      {
+        "uu_tien": 8,
+        "thieu": "Kết trang pt/pb 216px (hiện 112px)"
+      },
+      {
+        "uu_tien": 9,
+        "thieu": "Dải kênh nên là lưới 4x2, không phải 1 hàng 7 icon"
+      }
+    ],
+    "co_y_KHONG_lam": [
+      {
+        "muc": "Dải logo khách hàng 24 logo",
+        "ly_do": "Yona chưa có khách để trưng. Thay bằng dải kênh."
+      },
+      {
+        "muc": "Section testimonial + ảnh chân dung",
+        "ly_do": "Chưa có khách hàng thật để trích dẫn. Bịa là gian dối."
+      },
+      {
+        "muc": "Footer 8 cột",
+        "ly_do": "Yona chưa có đủ đích thật. Link chết để lấp cột còn tệ hơn footer thưa."
+      },
+      {
+        "muc": "Nút chính màu đen #111",
+        "ly_do": "Đã chốt primary là xanh dương theo brand kit."
+      },
+      {
+        "muc": "Banner sự kiện trên nav",
+        "ly_do": "Chưa có sự kiện."
+      }
+    ]
+  },
+  "ke_hoach_10_section_cho_yona": [
+    {
+      "stt": 1,
+      "ten": "Hero",
+      "nen": "trắng",
+      "nhip": "pt80 pb100",
+      "noi_dung": "h1 80px 3 dòng + đoạn dẫn + 1 NÚT + 4 ảnh trang trí góc"
+    },
+    {
+      "stt": 2,
+      "ten": "Ảnh sản phẩm có tab",
+      "nen": "#FAF9F6",
+      "nhip": "80/80",
+      "noi_dung": "nhãn 24px + 2 tab bấm được + ảnh lớp kép 1170x513"
+    },
+    {
+      "stt": 3,
+      "ten": "Dải kênh",
+      "nen": "trắng",
+      "nhip": "64/64",
+      "noi_dung": "eyebrow mono + lưới 4x2 icon kênh"
+    },
+    {
+      "stt": 4,
+      "ten": "Hộp thư",
+      "nen": "#FAF9F6",
+      "nhip": "112/112",
+      "noi_dung": "bộ khung đầy đủ + ảnh minh hoạ 315px"
+    },
+    {
+      "stt": 5,
+      "ten": "Zalo cá nhân",
+      "nen": "trắng",
+      "nhip": "112/112",
+      "noi_dung": "bộ khung đầy đủ, lặp nguyên văn"
+    },
+    {
+      "stt": 6,
+      "ten": "Hồ sơ & pipeline",
+      "nen": "#FAF9F6",
+      "nhip": "112/112",
+      "noi_dung": "bộ khung nhưng media = 3 ảnh vuông 380x380, h3 24px"
+    },
+    {
+      "stt": 7,
+      "ten": "Từ tin nhắn tới đơn chốt",
+      "nen": "trắng",
+      "nhip": "112/112",
+      "noi_dung": "4 bước — thay chỗ testimonial"
+    },
+    {
+      "stt": 8,
+      "ten": "Bốn nguyên tắc",
+      "nen": "#FAF9F6",
+      "nhip": "112/112",
+      "noi_dung": "thay chỗ tích hợp; cân nhắc bỏ nếu trang quá dài"
+    },
+    {
+      "stt": 9,
+      "ten": "Bảng giá",
+      "nen": "#F1EEE9 full-bleed",
+      "nhip": "80/80",
+      "noi_dung": "h2 54px giữa + thẻ giá + eyebrow mono đơn vị + 2 nút"
+    },
+    {
+      "stt": 10,
+      "ten": "Kết trang",
+      "nen": "trắng",
+      "nhip": "216/216",
+      "noi_dung": "h2 80px + 2 nút + ảnh rải"
+    }
+  ],
+  "cau_hoi_chan_viec": [
+    {
+      "id": "anh-trang-tri",
+      "cau_hoi": "Ảnh trang trí nhỏ ở hero, kết trang và bên phải mỗi tiêu đề khối — Intercom dùng ảnh nghệ thuật và hình vẽ mực. Yona lấy đâu ra?",
+      "phuong_an": [
+        "A. Cắt mảnh giao diện thật (bong bóng chat Zalo, thẻ liên hệ, badge kênh) thành ảnh vuông nhỏ — miễn phí, trung thực, đúng sản phẩm",
+        "B. Mua/thuê một bộ minh hoạ mực 8-10 hình — giống tham chiếu nhất, tốn tiền và thời gian",
+        "C. Bỏ hẳn, chấp nhận hero và kết trang thưa hơn tham chiếu"
+      ],
+      "khuyen_nghi": "A — nó vừa lấp khoảng trắng vừa khoe sản phẩm, và không cần chờ asset bên ngoài"
+    },
+    {
+      "id": "do-dai-trang",
+      "cau_hoi": "10 section có quá dài cho một sản phẩm chưa có khách?",
+      "phuong_an": [
+        "A. Đủ 10 như tham chiếu",
+        "B. Rút còn 8, bỏ 'Bốn nguyên tắc' và gộp dải kênh vào hero"
+      ],
+      "khuyen_nghi": "B cho bản đầu, thêm sau khi có nội dung thật"
+    },
+    {
+      "id": "font-mono",
+      "cau_hoi": "Eyebrow của Intercom dùng font mono. Ràng buộc của Yona là một font Việt duy nhất.",
+      "phuong_an": [
+        "A. Giữ một font, dùng ls 0.1em gợi cảm giác mono",
+        "B. Thêm một font mono thứ hai chỉ cho eyebrow"
+      ],
+      "khuyen_nghi": "A — giữ ràng buộc đã chốt"
+    }
+  ],
+  "quyet_dinh_da_chot": {
+    "ngay": "2026-09-19",
+    "anh_trang_tri": {
+      "chon": "Kiếm ảnh nghệ thuật trên mạng",
+      "rang_buoc": "CHỈ dùng nguồn public domain / CC0 có thể kiểm chứng. Ghi lại xuất xứ từng ảnh vào manifest. Không lấy ảnh không rõ giấy phép, không lấy ảnh của Intercom.",
+      "nguon_da_kiem_tra": [
+        "Met Museum Open Access API — CC0, collectionapi.metmuseum.org",
+        "Art Institute of Chicago API — có cờ is_public_domain"
+      ]
+    },
+    "so_section": 10,
+    "font_eyebrow": {
+      "chon": "Thêm font mono thứ hai",
+      "ghi_chu": "Phá ràng buộc 'một font Việt duy nhất' một cách có chủ đích, giới hạn ở eyebrow. Mono không cần dấu tiếng Việt đầy đủ vì eyebrow là nhãn ngắn — nhưng vẫn phải subset đủ dấu, nếu không 'HỘP THƯ' sẽ vỡ."
+    }
+  },
+  "da_thuc_hien": {
+    "ngay": "2026-09-19",
+    "trang_thai": "10 section đã dựng xong, đúng thứ tự trong ke_hoach_10_section_cho_yona (bản 10 section đầy đủ)",
+    "so_do_khop": {
+      "container": "1170px ✓",
+      "luoi_hairline": "1px #DEDBD6 + dấu + 8px ✓",
+      "h1_hero": "80px / lh 1.05 / ls -0.03em / w400 / center ✓",
+      "h2_section": "54px / lh 1.05 / ls -0.03em ✓",
+      "h3_the": "20px / lh 1.2 / ls -0.01em ✓",
+      "body": "16px w300 ✓",
+      "nut": "r4px h40, phụ viền 1px ✓",
+      "nhip": "216 / 112 / 80 / 64 ✓",
+      "nen": "#FFFFFF · #FAF9F6 · #F1EEE9 ✓"
+    },
+    "lech_co_chu_dich": [
+      "Nút chính xanh dương thay vì #111 — brand kit đã chốt",
+      "Không có dải logo khách và section testimonial — chưa có khách thật, bịa là gian dối",
+      "Footer 3 cột thay vì 8 — chưa đủ đích thật",
+      "Kết trang có 2 tranh thay vì 5 — chỉ chọn được 9 tác phẩm CC0 đạt yêu cầu, không dùng lại ảnh"
+    ],
+    "tai_san_moi": {
+      "tranh_trang_tri": "9 tệp public/landing/art/*.webp, 261 KB, CC0 từ Art Institute of Chicago, xuất xứ ở CREDITS.json",
+      "font_mono": "JetBrains Mono bản cắt 220 ký tự có đủ dấu tiếng Việt, 10 KB/weight, OFL",
+      "anh_san_pham": "inbox · feature-inbox · feature-zalo · feature-contacts · square-contacts · square-contact · square-panel — chụp giao diện thật, tiếng Việt"
+    },
+    "kiem_chung": {
+      "tsc": "xanh",
+      "vite_build": "xanh",
+      "pint": "xanh",
+      "pest": "2234/2259 pass; 25 fail còn lại đều do dev server Vite đang chạy (public/hot → SSR gọi [::1]:5173). Gỡ public/hot thì pass.",
+      "cong_design_system": "7/7 sạch + gate xuất xứ tranh rỗng",
+      "responsive": "375 · 768 · 1024 · 1280 · 1440 — overflow ngang 0, không tranh nào đè chữ, đích chạm <768px đều ≥44px"
+    },
+    "hoi_quy_da_sua": "Đổi APP_LOCALE sang vi làm 43 test hỏng vì test khẳng định chuỗi tiếng Anh. Đã ghim APP_LOCALE=en trong phpunit.xml thay vì sửa 43 khẳng định."
+  },
+  "doi_chieu_truc_quan": {
+    "ngay": "2026-09-19",
+    "phuong_phap": "Chụp cả hai trang ở 1440x900, cuộn hết rồi chụp full-page, ghép cạnh nhau và đo tỉ lệ điểm ảnh.",
+    "loi_do_da_phat_hien_va_sua": [
+      "Hero Intercom có 2 NÚT (Start free trial đặc + View demo viền 1px), không phải 1. Bản đo section-level của tôi chỉ bắt được 1 và tôi đã gỡ nút phụ dựa trên đó.",
+      "Hero có một dòng nhỏ 14px dưới CTA ('14 day free trial. No credit card required.') — doc của tôi từng ghi 'cấm chú thích nhỏ dưới CTA', sai với thực tế.",
+      "Bề rộng h1 của Intercom là 742px = 51% viewport; của tôi 1024px = 71%. Đã thu về 896px = 61% (tiếng Việt dài hơn nên không về được 51%)."
+    ],
+    "suc_nang_thi_giac": {
+      "cach_do": "tỉ lệ điểm ảnh trên ảnh full-page: trắng (RGB>242), tối (L<120), có màu (saturation>0.25)",
+      "truoc": {
+        "trang": "78.7%",
+        "toi": "1.2%",
+        "co_mau": "0.8%",
+        "cao": "9175px"
+      },
+      "intercom": {
+        "trang": "77.6%",
+        "toi": "2.5%",
+        "co_mau": "3.3%",
+        "cao": "9360px"
+      },
+      "sau": {
+        "trang": "76.4%",
+        "toi": "4.0%",
+        "co_mau": "3.6%",
+        "cao": "10112px"
+      },
+      "ket_luan": "Trước khi sửa, trang chỉ có một nửa mảng tối và một phần tư mảng màu của tham chiếu — đó là lý do nhìn vẫn nhạt dù mọi token đều khớp. Sau khi sửa, mảng màu khớp (3.6 vs 3.3) và mảng tối vượt nhẹ (4.0 vs 2.5)."
+    },
+    "da_sua_theo_doi_chieu": [
+      "Hero: 2 nút + dòng gỡ rào có icon check + h1 thu về max-w-4xl",
+      "Ảnh trang trí: thay toàn bộ 9 tranh khắc gỗ đồng chất bằng 17 tác phẩm CC0 đa dạng (hoa văn dệt, trừu tượng, phong cảnh, trường màu), cắt bỏ viền bồi, xếp CHỒNG LẤN thành cụm và tràn mép",
+      "Loại 2 ảnh chụp hiện vật có nền phòng chụp xám — trên nền trắng của trang đọc ra như lỗi",
+      "Section 'Từ tin nhắn tới đơn chốt' thêm ảnh báo cáo rộng — trước đó nó và 'Bốn nguyên tắc' là hai section liền nhau toàn chữ",
+      "Section 'Bốn nguyên tắc' đổi từ lưới 2x2 toàn chữ sang 4 cột, mỗi ô một tranh vuông",
+      "Kết trang: 2 tranh lên 5 tranh",
+      "Ngưỡng hiện tranh nâng từ lg lên xl — ở 1024 container co lại làm cả cụm hero đè lên h1"
+    ],
+    "con_lech_co_chu_dich": [
+      "Nút chính xanh dương thay vì #111 — brand kit đã chốt",
+      "Không có dải logo khách và section testimonial — Yona chưa có khách thật",
+      "Footer 3 cột thay vì 8 — chưa đủ đích thật",
+      "Ảnh sản phẩm đặt trên tấm linen lệch thay vì ảnh nền trang trí — không có asset nền riêng",
+      "Trang cao hơn 8% do section 'Bốn bước' có thêm ảnh"
+    ],
+    "kiem_chung": {
+      "pest": "2259/2259 pass (bỏ public/hot trước khi chạy; để nguyên thì 25 test SSR hỏng vì Vite dev server)",
+      "tsc": "xanh",
+      "vite_build": "xanh",
+      "pint": "xanh",
+      "cong_design_system": "7/7 sạch + gate xuất xứ tranh rỗng",
+      "responsive": "375 · 1024 · 1280 · 1440 — tràn ngang 0, KHÔNG tranh nào đè chữ ở bất kỳ ngưỡng nào, đích chạm <768px đều ≥44px"
+    }
+  },
+  "doi_chieu_tung_section": {
+    "ngay": "2026-09-19",
+    "phuong_phap": "Cắt từng section khỏi ảnh full-page của cả hai trang theo toạ độ đo được, ghép cạnh nhau ở tỉ lệ 0.40 (đọc được chữ).",
+    "ket_luan_sai_can_sua_trong_doc": {
+      "doc_dang_ghi": "§7.2 — 'Lặp nguyên khối này cho MỌI khối tính năng... Biến thể duy nhất được phép là media ba ảnh vuông ở khối cuối'",
+      "thuc_te": "Intercom KHÔNG lặp nguyên văn. Ba khối tính năng có ba dạng media khác nhau: (A) ảnh rộng full + lưới 3 cột bên dưới; (B) chia đôi — ảnh trong panel trái, 3 mục accordion bên phải, mục đang mở có nền xám; (C) ba ảnh vuông + 3 cột text dưới.",
+      "he_qua": "Yona đang dùng dạng (A) cho cả hai khối đầu nên khối Zalo lặp y hệt khối Hộp thư."
+    },
+    "bang_do": [
+      {
+        "n": 1,
+        "ten": "Hero",
+        "ic_px": 654,
+        "yona_px": 593,
+        "khop": [
+          "h1 3 dòng alpha",
+          "2 nút",
+          "dòng gỡ rào",
+          "cụm tranh chồng lấn"
+        ],
+        "lech": [
+          "IC đặt tranh SÁT chữ hơn nhiều (~60px); của tôi dạt ra hai mép, giữa trống",
+          "IC có tấm bị cắt bởi mép TRÊN của section; của tôi không tấm nào bị cắt trên",
+          "IC có dòng social proof nhỏ phía trên h1; chỗ đó của tôi trống (không có review thật)",
+          "IC h1 chiếm 51% bề ngang, của tôi 61%"
+        ]
+      },
+      {
+        "n": 2,
+        "ten": "Ảnh sản phẩm có tab",
+        "ic_px": 795,
+        "yona_px": 1007,
+        "khop": [
+          "nhãn nhỏ căn trái",
+          "hai tab",
+          "một ảnh lớn"
+        ],
+        "lech": [
+          "IC nhãn nửa đầu mờ nửa sau đậm; của tôi một màu",
+          "IC tab là SEGMENTED CONTROL có viền chia đôi cả bề rộng container; của tôi tab gạch chân nhỏ",
+          "IC screenshot NHỎ HƠN khối, nổi trên nền ảnh vân gỗ ấm; của tôi ảnh gần phủ kín giếng linen",
+          "cao hơn IC 212px"
+        ]
+      },
+      {
+        "n": 3,
+        "ten": "Dải logo / dải kênh",
+        "ic_px": 516,
+        "yona_px": 313,
+        "khop": [
+          "eyebrow mono căn giữa"
+        ],
+        "lech": [
+          "IC 24 logo / 6 cột / 4 hàng, mảng xám đặc; của tôi 8 icon / 4 cột / 2 hàng — thưa hơn hẳn",
+          "IC logo ĐƠN SẮC xám; icon kênh của tôi giữ màu thương hiệu, thành một dãy đốm màu",
+          "thấp hơn IC 203px"
+        ]
+      },
+      {
+        "n": 4,
+        "ten": "Khối tính năng A",
+        "ic_px": 1364,
+        "yona_px": 1463,
+        "khop": [
+          "eyebrow → h2 2 dòng → đoạn dẫn → 2 nút → ảnh rộng → lưới 3 cột"
+        ],
+        "lech": [
+          "IC eyebrow mở đầu bằng DẤU VUÔNG NHỎ MÀU (xanh), không phải icon lucide",
+          "IC tranh minh hoạ là NÉT MỰC ĐEN TRONG SUỐT, hoà vào nền trắng; của tôi là khối hoa văn ĐẶC, hút mắt mạnh hơn cả tiêu đề — sai vai trò",
+          "IC screenshot nằm trên nền MÀU (xanh lá nhạt) phủ kín khối, ảnh bo góc nhẹ và có bóng; của tôi nền linen, ảnh vuông góc viền 1px",
+          "IC ô đầu trong lưới 3 cột có NỀN XÁM (ô nổi bật), hai ô kia trong suốt; của tôi ba ô đều nhau",
+          "IC mỗi ô có dấu vuông màu trước tiêu đề",
+          "IC lưới 3 cột KHÔNG có border-t phía trên",
+          "IC 'Learn more' KHÔNG có mũi tên; của tôi có →"
+        ]
+      },
+      {
+        "n": 5,
+        "ten": "Khối tính năng B",
+        "ic_px": 1328,
+        "yona_px": 1447,
+        "khop": [
+          "eyebrow → h2 → đoạn dẫn → 2 nút"
+        ],
+        "lech": [
+          "IC media là BỐ CỤC CHIA ĐÔI: ảnh nhỏ trong panel xám bên trái, 3 mục accordion bên phải, mục đang mở có nền xám và chữ đậm hơn",
+          "Yona lặp y hệt dạng của khối A (ảnh rộng + lưới 3 cột) → hai khối đọc giống hệt nhau",
+          "IC eyebrow có chấm vuông CAM (khác màu khối A) để phân biệt hai dòng sản phẩm"
+        ]
+      },
+      {
+        "n": 6,
+        "ten": "Khối tính năng C",
+        "ic_px": 1219,
+        "yona_px": 1172,
+        "khop": [
+          "ba ảnh vuông + 3 cột text dưới"
+        ],
+        "lech": [
+          "IC có HAI eyebrow cạnh nhau (xanh + cam) đánh dấu đây là khối kết hợp",
+          "IC ba ảnh có nền màu khác nhau và bo góc; của tôi nền linen, vuông góc",
+          "IC h3 dưới ảnh 24px; của tôi 20px"
+        ]
+      },
+      {
+        "n": 7,
+        "ten": "Testimonial ↔ 4 bước",
+        "ic_px": 640,
+        "yona_px": 1291,
+        "khop": [
+          "(không có gì — hai nội dung khác hẳn)"
+        ],
+        "lech": [
+          "IC gọn 640px: hàng 3 tab tên công ty + quote có cụm BÔI NỀN XANH + ảnh chân dung",
+          "Yona 1291px — GẤP ĐÔI. Ảnh báo cáo tôi thêm vào có heatmap gần như trống trơn, đọc ra là một bảng rỗng: yếu hơn cả không có ảnh",
+          "đây là section lệch nhiều nhất trang: +651px"
+        ]
+      },
+      {
+        "n": 8,
+        "ten": "Tích hợp ↔ 4 nguyên tắc",
+        "ic_px": 646,
+        "yona_px": 841,
+        "khop": [
+          "chữ bên trái, hình bên phải (IC) / lưới 4 ô (Yona)"
+        ],
+        "lech": [
+          "IC gọn: chữ trái + lưới 18 logo công cụ bên phải",
+          "Yona 4 tranh nghệ thuật vuông cạnh nhau — đẹp nhưng đọc ra như một dãy tranh treo, không liên quan nội dung nguyên tắc"
+        ]
+      },
+      {
+        "n": 9,
+        "ten": "Bảng giá",
+        "ic_px": 798,
+        "yona_px": 874,
+        "khop": [
+          "h2 căn giữa, một thẻ giá ở giữa, 2 nút"
+        ],
+        "lech": [
+          "IC nền là HOA VĂN CHẤM BI tràn mép; của tôi nền linen phẳng",
+          "IC thẻ giá có DẤU + Ở BỐN GÓC thay cho viền liền",
+          "IC con số giá rất lớn (~40px) với đơn vị mono nhỏ BÊN DƯỚI; của tôi giá nhỏ hơn, đơn vị nằm cạnh",
+          "IC dòng chữ nhỏ nằm trong một khối RIÊNG bên dưới thẻ; của tôi nằm trong thẻ"
+        ]
+      },
+      {
+        "n": 10,
+        "ten": "Kết trang",
+        "ic_px": 592,
+        "yona_px": 720,
+        "khop": [
+          "h2 cỡ hero căn giữa, 2 nút, tranh rải quanh"
+        ],
+        "lech": [
+          "IC rải 6 ảnh KHẮP chiều ngang, cả TRÊN và DƯỚI dòng chữ, có tấm nằm gần giữa; của tôi dồn hai mép, chừa giữa trống",
+          "IC trộn nét mực đen trong suốt với ảnh màu; của tôi toàn ảnh màu đặc",
+          "IC h2 một dòng; của tôi hai dòng"
+        ]
+      },
+      {
+        "n": 11,
+        "ten": "Footer",
+        "ic_px": 488,
+        "yona_px": 327,
+        "khop": [
+          "nền sáng, cột link, chữ nhỏ"
+        ],
+        "lech": [
+          "IC 6 cột dày + hàng dưới cùng (Terms · Privacy · Security); của tôi 3 cột thưa, không có hàng dưới"
+        ]
+      }
+    ],
+    "xep_theo_do_lech": [
+      "7 (+651)",
+      "2 (+212)",
+      "3 (-203)",
+      "8 (+195)",
+      "11 (-161)",
+      "10 (+128)",
+      "5 (+119)",
+      "4 (+99)",
+      "9 (+76)",
+      "1 (-61)",
+      "6 (-47)"
+    ]
+  }
+}

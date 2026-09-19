@@ -84,10 +84,6 @@ class SendOnFacebookService extends BaseSendOnChannelService
      */
     private function withHumanAgentTag(array $params): array
     {
-        if (! config('services.facebook.human_agent_tag')) {
-            return [...$params, 'messaging_type' => 'RESPONSE'];
-        }
-
         return [...$params, 'messaging_type' => 'MESSAGE_TAG', 'tag' => 'HUMAN_AGENT'];
     }
 }

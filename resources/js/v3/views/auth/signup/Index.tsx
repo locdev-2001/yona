@@ -1,24 +1,14 @@
-import { usePage } from '@inertiajs/react';
-
 import { t } from '../../../../i18n';
 import SignupForm from './components/Signup/Form';
-import SnackbarContainer from 'v3/components/SnackBar/Container';
-import type { SharedPageProps } from '../../../../types';
-import signupBg from '../../../../../images/auth/signup-bg.jpg';
+import AuthShell from 'v3/components/AuthShell';
 import { BrandMark } from '../../../components/BrandMark';
 
 // Port từ v3/views/auth/signup/Index.vue
 // (Testimonials chỉ hiện trên Chatwoot cloud — bỏ).
 export default function SignupIndex() {
-    const { globalConfig } = usePage<SharedPageProps>().props;
-
     return (
-        <div
-            className="relative w-full h-full min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat p-4"
-            style={{ backgroundImage: `url(${signupBg})` }}
-        >
-            <div className="absolute inset-0 bg-n-gray-12/60 dark:bg-n-gray-1/80 backdrop-blur-sm" />
-            <div className="relative flex max-w-[960px] bg-white dark:bg-n-solid-2 rounded-lg outline outline-1 outline-n-container shadow-sm">
+        <AuthShell>
+            <div className="flex max-w-[960px] bg-white dark:bg-n-solid-2 rounded-lg outline outline-1 outline-n-container shadow-sm">
                 <div className="flex-1 flex items-center justify-center py-10 px-10">
                     <div className="max-w-[420px] w-full">
                         <div className="mb-6">
@@ -42,7 +32,6 @@ export default function SignupIndex() {
                     </div>
                 </div>
             </div>
-            <SnackbarContainer />
-        </div>
+        </AuthShell>
     );
 }

@@ -41,7 +41,6 @@ return [
         'app_secret' => env('FB_APP_SECRET'),
         'verify_token' => env('FB_VERIFY_TOKEN'),
         'api_version' => env('FB_API_VERSION', 'v22.0'),
-        'human_agent_tag' => env('ENABLE_MESSENGER_CHANNEL_HUMAN_AGENT', false),
     ],
 
     'instagram' => [
@@ -49,7 +48,6 @@ return [
         'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
         'ig_verify_token' => env('IG_VERIFY_TOKEN'),
         'api_version' => env('INSTAGRAM_API_VERSION', 'v22.0'),
-        'human_agent_tag' => env('ENABLE_INSTAGRAM_CHANNEL_HUMAN_AGENT', false),
     ],
 
     'whatsapp_cloud' => [

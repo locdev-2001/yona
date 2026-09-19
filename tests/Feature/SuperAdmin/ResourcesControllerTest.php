@@ -162,10 +162,10 @@ it('chỉ hiện installation config chưa khoá', function () {
 it('lưu app config vào installation_configs', function () {
     $this->post('/super_admin/app_config', [
         'config' => 'general',
-        'app_config' => ['ENABLE_ACCOUNT_SIGNUP' => 'true', 'KHONG_DUOC_PHEP' => 'x'],
+        'app_config' => ['WEBHOOK_TIMEOUT' => '15', 'KHONG_DUOC_PHEP' => 'x'],
     ])->assertRedirect('/super_admin/settings');
 
-    expect(InstallationConfig::valueOf('ENABLE_ACCOUNT_SIGNUP'))->toBe('true')
+    expect(InstallationConfig::valueOf('WEBHOOK_TIMEOUT'))->toBe('15')
         ->and(InstallationConfig::query()->where('name', 'KHONG_DUOC_PHEP')->exists())->toBeFalse();
 });
 

@@ -18,7 +18,7 @@ export default function SuperAdminLogin() {
             <main className="flex flex-col bg-woot-25 min-h-screen w-full py-20 sm:px-6 lg:px-8">
                 <section className="max-w-5xl mx-auto">
                     <img
-                        src="/brand-assets/logo.svg"
+                        src="/brand-assets/logo.png"
                         alt="Yona"
                         className="mx-auto h-8 w-auto block"
                     />

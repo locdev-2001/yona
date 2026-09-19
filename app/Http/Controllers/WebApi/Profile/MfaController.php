@@ -8,30 +8,12 @@ use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\ManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 
 // Port api/v1/profile/mfa_controller.rb + view jbuilder tương ứng.
-class MfaController extends Controller implements HasMiddleware
+class MfaController extends Controller
 {
-    // Tương đương before_action :check_mfa_feature_available của bản gốc.
-    public static function middleware(): array
-    {
-        return [
-            function (Request $request, \Closure $next) {
-                if (! config('yona.mfa_enabled')) {
-                    return response()->json(
-                        ['error' => __('errors.mfa.feature_unavailable')],
-                        Response::HTTP_FORBIDDEN,
-                    );
-                }
-
-                return $next($request);
-            },
-        ];
-    }
-
     public function show(Request $request): JsonResponse
     {
         $service = $this->service($request);

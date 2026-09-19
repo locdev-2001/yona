@@ -36,7 +36,6 @@ return [
         'invalid_backup_code' => 'Invalid backup code',
         'invalid_token' => 'Invalid or expired MFA token',
         'invalid_credentials' => 'Invalid credentials or verification code',
-        'feature_unavailable' => 'MFA feature is not available. Please configure encryption keys.',
     ],
     // Chatwoot đặt ở `profile_settings.sessions` — chuyển vào đây để không đụng
     // namespace PROFILE_SETTINGS của bundle FE (lang/en/profile_settings.php).

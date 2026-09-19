@@ -6,7 +6,7 @@ import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage, putJson } from 'dashboard/helper/apiClient';
 import FormInput from 'v3/components/Form/Input';
-import SnackbarContainer from 'v3/components/SnackBar/Container';
+import AuthShell, { authCard } from 'v3/components/AuthShell';
 import NextButton from 'dashboard/components-next/button/Button';
 import type { SharedPageProps } from '../../../../types';
 
@@ -47,11 +47,8 @@ export default function PasswordEdit() {
     };
 
     return (
-        <div className="flex flex-col justify-center w-full min-h-screen py-12 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8">
-            <form
-                className="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
-                onSubmit={event => void submitForm(event)}
-            >
+        <AuthShell>
+            <form className={authCard} onSubmit={event => void submitForm(event)}>
                 <h1 className="mb-1 text-2xl font-medium tracking-tight text-left text-n-slate-12">
                     {t('SET_NEW_PASSWORD.TITLE')}
                 </h1>
@@ -92,7 +89,6 @@ export default function PasswordEdit() {
                     />
                 </div>
             </form>
-            <SnackbarContainer />
-        </div>
+        </AuthShell>
     );
 }

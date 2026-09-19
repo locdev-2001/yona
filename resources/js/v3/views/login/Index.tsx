@@ -6,7 +6,7 @@ import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useBranding } from 'shared/composables/useBranding';
 import FormInput from 'v3/components/Form/Input';
-import SnackbarContainer from 'v3/components/SnackBar/Container';
+import AuthShell, { authCard } from 'v3/components/AuthShell';
 import NextButton from 'dashboard/components-next/button/Button';
 import MfaVerification from 'dashboard/components/auth/MfaVerification';
 import SessionLimitOverlay from 'dashboard/components/auth/SessionLimitOverlay';
@@ -32,7 +32,6 @@ interface LoginPageProps extends SharedPageProps {
 
 export default function LoginIndex() {
     const {
-        globalConfig,
         errors,
         mfaRequired,
         mfaToken,
@@ -110,54 +109,44 @@ export default function LoginIndex() {
     };
 
     return (
-        <main className="flex flex-col w-full min-h-screen py-20 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8">
-            <section className="max-w-5xl mx-auto">
-                <div className="flex justify-center">
-                    <BrandMark />
-                </div>
-                <h2 className="mt-6 text-3xl font-medium text-center text-n-slate-12">
-                    {replaceInstallationName(t('LOGIN.TITLE'))}
-                </h2>
-                {globalConfig.signupEnabled ? (
-                    <p className="mt-3 text-sm text-center text-n-slate-11">
-                        {t('COMMON.OR')}{' '}
-                        <a href="/app/auth/signup" className="lowercase text-link text-n-brand">
-                            {t('LOGIN.CREATE_NEW_ACCOUNT')}
-                        </a>
-                    </p>
-                ) : null}
-            </section>
-
+        <AuthShell>
             {showSessionLimit ? (
-                <section className="mt-11">
-                    <SessionLimitOverlay
-                        sessions={sessions ?? []}
-                        onRevoke={sessionId => submitLogin({ revoke_session_id: sessionId })}
-                        onRevokeAll={() => submitLogin({ revoke_all_sessions: true })}
-                        onCancel={resetAfterCancel}
-                    />
-                </section>
+                <SessionLimitOverlay
+                    sessions={sessions ?? []}
+                    onRevoke={sessionId => submitLogin({ revoke_session_id: sessionId })}
+                    onRevokeAll={() => submitLogin({ revoke_all_sessions: true })}
+                    onCancel={resetAfterCancel}
+                />
             ) : showMfa ? (
-                <section className="mt-11">
-                    <MfaVerification
-                        isVerifying={showLoading}
-                        errorMessage={mfaError ?? ''}
-                        onVerify={({ otpCode, backupCode }) =>
-                            postLogin({
-                                mfa_token: mfaToken ?? '',
-                                otp_code: otpCode ?? '',
-                                backup_code: backupCode ?? '',
-                            })
-                        }
-                        onCancel={resetAfterCancel}
-                    />
-                </section>
+                <MfaVerification
+                    isVerifying={showLoading}
+                    errorMessage={mfaError ?? ''}
+                    onVerify={({ otpCode, backupCode }) =>
+                        postLogin({
+                            mfa_token: mfaToken ?? '',
+                            otp_code: otpCode ?? '',
+                            backup_code: backupCode ?? '',
+                        })
+                    }
+                    onCancel={resetAfterCancel}
+                />
             ) : (
-                <section
-                    className={`bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg mb-8 mt-15 ${
-                        hasErrored ? 'animate-wiggle' : ''
-                    }`}
-                >
+                <div className={`${authCard} ${hasErrored ? 'animate-wiggle' : ''}`}>
+                    <div className="mb-6">
+                        <BrandMark className="h-7" />
+                        <h2 className="mt-6 text-2xl font-semibold text-n-slate-12">
+                            {replaceInstallationName(t('LOGIN.TITLE'))}
+                        </h2>
+                        <p className="mt-2 text-sm text-n-slate-11">
+                            {t('COMMON.OR')}{' '}
+                            <a
+                                href="/app/auth/signup"
+                                className="lowercase text-n-blue-10 font-medium hover:text-n-blue-11"
+                            >
+                                {t('LOGIN.CREATE_NEW_ACCOUNT')}
+                            </a>
+                        </p>
+                    </div>
                     <form className="space-y-5" onSubmit={submitFormLogin}>
                         <FormInput
                             value={credentials.email}
@@ -207,16 +196,15 @@ export default function LoginIndex() {
                             isLoading={showLoading}
                         />
                     </form>
-                </section>
+                    <a
+                        href="/"
+                        className="flex items-center gap-1.5 mt-6 text-sm font-medium w-fit text-n-slate-11 hover:text-n-slate-12"
+                    >
+                        <span className="i-lucide-arrow-left size-4" aria-hidden="true" />
+                        {t('LANDING.nav.back_to_home')}
+                    </a>
+                </div>
             )}
-            <a
-                href="/"
-                className="flex items-center justify-center gap-1.5 mx-auto mt-8 text-sm font-medium w-fit text-n-slate-11 hover:text-n-slate-12"
-            >
-                <span className="i-lucide-arrow-left size-4" aria-hidden="true" />
-                {t('LANDING.nav.back_to_home')}
-            </a>
-            <SnackbarContainer />
-        </main>
+        </AuthShell>
     );
 }

@@ -9,18 +9,14 @@ use Illuminate\Support\Facades\Notification;
 // Port từ refs/chatwoot/spec/controllers/api/v1/accounts_controller_spec.rb (create)
 // — đổi devise_token_auth JSON API sang flow session/Inertia.
 
-describe('signup disabled', function () {
-    it('redirects the signup page to login and returns 404 for the endpoint', function () {
-        config(['yona.signup_enabled' => false]);
+it('serves the signup page to guests', function () {
+    config(['inertia.ssr.enabled' => false]);
 
-        $this->get('/app/auth/signup')->assertRedirect('/app/login');
-        $this->post('/app/auth/signup', ['email' => 'a@b.com', 'password' => 'Password1!'])->assertNotFound();
-    });
+    $this->get('/app/auth/signup')->assertOk();
 });
 
 describe('POST /app/auth/signup', function () {
     beforeEach(function () {
-        config(['yona.signup_enabled' => true]);
         Notification::fake();
     });
 
@@ -80,7 +76,6 @@ describe('POST /app/auth/signup', function () {
 
 describe('GET /app/auth/confirmation', function () {
     it('confirms the user, logs in, and redirects to onboarding', function () {
-        config(['yona.signup_enabled' => true]);
         Notification::fake();
 
         $this->post('/app/auth/signup', [
