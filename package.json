@@ -2,6 +2,7 @@
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "packageManager": "pnpm@11.8.0",
     "scripts": {
         "build": "vite build && vite build --config vite.sdk.config.js",
         "build:sdk": "vite build --config vite.sdk.config.js",

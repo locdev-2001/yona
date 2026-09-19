@@ -31,3 +31,7 @@ Thumbs.db
 __pycache__/
 .claude/hooks/.logs/
 .playwright-mcp/
+
+# aaPanel quản lý các file này trong document root
+/.user.ini
+/public/.well-known/

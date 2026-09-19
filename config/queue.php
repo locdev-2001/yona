@@ -68,7 +68,7 @@ return [
          * Bất biến của hàng đợi: `media_timeout` của kênh (120s, config/zalo.php)
          * < `--timeout` của worker (150s) < `retry_after`. Sai thứ tự này thì
          * Redis trả job về hàng đợi TRONG LÚC nó còn đang chạy → một tin gửi hai
-         * lần cho khách. Lệnh worker mẫu: docs/zalo-bridge/deployment.md.
+         * lần cho khách. Lệnh worker mẫu: docs/deployment.md §8.
          */
         'redis' => [
             'driver' => 'redis',

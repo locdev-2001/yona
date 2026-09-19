@@ -48,7 +48,7 @@ Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
 - Auth/Perm: RBAC
 
 ## Kiến trúc trọng tâm
-**Quy ước kiến trúc xuyên suốt: `docs/code-standards.md` §0 — ĐỌC TRƯỚC KHI VIẾT CODE.** Tóm tắt: module chia theo **chức năng** (không có module "Integration" gom đồ bên ngoài); `app/Http/` + `app/Models/` ở gốc, module chỉ chứa nghiệp vụ; ba mặt tiền route `web.php` / `web_api.php` / `api.php` cùng gọi một lõi — mọi tính năng phải mở ra API được mà không viết lại; UI gom theo chức năng.
+**Quy ước kiến trúc xuyên suốt — ĐỌC TRƯỚC KHI VIẾT CODE.** Module chia theo **chức năng** (không có module "Integration" gom đồ bên ngoài); `app/Http/` + `app/Models/` ở gốc, module chỉ chứa nghiệp vụ; ba mặt tiền route `web.php` / `web_api.php` / `api.php` cùng gọi một lõi — mọi tính năng phải mở ra API được mà không viết lại; UI gom theo chức năng.
 
 **CDP làm trục trung tâm** — mọi nguồn (inbox, import, tích hợp) đổ vào; mọi hành động (automation, báo cáo) đọc ra.
 **Addons/Entitlements framework** = nền monetization, dựng ngay Phase 1.
@@ -96,7 +96,6 @@ Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.j
 | **Entitlements** | Khung bật/tắt tính năng theo gói đã mua (nền monetization) |
 | **Conversation metering** | Đếm số hội thoại theo **từng kênh** — hiện chỉ THỐNG KÊ, chưa dùng để chặn hay tính phí |
 | **Zalo cá nhân** | Kênh inbox Phase 1 (không phải OA — OA hoãn vì chưa có tài khoản test) |
-→ Full glossary: docs/glossary.md
 
 ## Projects
 | Name | What |
