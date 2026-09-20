@@ -22,7 +22,7 @@ const ART = [
     { src: 'hero-1', width: 212, height: 283, size: 'w-36 2xl:w-48', className: 'left-8 top-1/4' },
     { src: 'hero-3', width: 248, height: 159, size: 'w-40 2xl:w-52', className: '-left-10 bottom-1/4' },
     { src: 'hero-2', width: 236, height: 285, size: 'w-36 2xl:w-48', className: 'right-8 top-1/3' },
-    { src: 'hero-4', width: 176, height: 162, size: 'w-36 2xl:w-48', className: '-right-10 bottom-1/4' },
+    { src: 'hero-4', width: 176, height: 137, size: 'w-36 2xl:w-48', className: '-right-10 bottom-1/4' },
 ];
 
 export function Hero({ config }: { config: LandingConfig }) {
@@ -47,9 +47,11 @@ export function Hero({ config }: { config: LandingConfig }) {
                 bỏ trống chỗ này — bịa số liệu hay tên khách còn tệ hơn thưa. */}
 
             {/* Ba dòng: dòng giữa là thông điệp, hai dòng kia lùi lại bằng alpha.
-                50% chứ không phải 40%: 40% chỉ đạt 2.61:1, dưới ngưỡng 3:1 của
-                chữ lớn. 50% cho 3.54:1 mà mắt gần như không thấy khác. */}
-            <h1 className="relative mx-auto max-w-4xl text-balance text-center text-display text-neutral-900/50">
+                60% chứ không phải 50%: 50% cho 3.54:1 — qua ngưỡng 3:1 của chữ
+                lớn nhưng vẫn đọc ra như chữ placeholder bị vô hiệu, nhất là khi
+                hai dòng nhạt kẹp một dòng đậm. 60% cho 4.94:1, vượt cả ngưỡng
+                chữ thân, mà vẫn nhạt hơn dòng mực rõ rệt. */}
+            <h1 className="relative mx-auto max-w-4xl text-balance text-center text-display text-neutral-900/60">
                 {hero.title_lead}
                 <br />
                 <span className="text-neutral-900">{hero.title_focus}</span>

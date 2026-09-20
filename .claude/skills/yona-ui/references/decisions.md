@@ -87,6 +87,19 @@ phụ thuộc vòng 2, đừng để landing gánh tiếp.** Ngưỡng `C9` tron
 đang nới rộng có chủ đích vì lý do này — siết lại sau khi revamp dashboard, nếu
 không nó chỉ là số trang trí.
 
+## Phản hồi từ gate thẩm mỹ mà ta CỐ Ý không sửa
+
+Review mù 20/09 nêu mấy điểm dưới đây. Đã cân nhắc và giữ nguyên — ghi ở đây để
+lượt review sau không nêu lại, và để không thành im lặng bỏ qua.
+
+| Phản hồi | Vì sao giữ |
+|---|---|
+| "Hai tranh hero bị mép cắt trong khi hai tranh kia nằm trọn - hai kiểu xử lý cho cùng một loại vật" | Đúng là không đồng nhất, nhưng cố ý: mỗi bên một tấm trọn + một tấm tràn nhẹ. Cả bốn tấm đều tràn thì thành mảnh vụn dán mép (đã xảy ra); cả bốn đều trọn thì mất hẳn cảm giác cụm tràn ra ngoài khung |
+| "Ô vuông đổi màu và đổi cỡ qua ba section: xanh 8px, navy 8px, mực 4px" | Màu là hệ accent theo mạch sản phẩm, có chủ đích. Cỡ 4px ở thẻ giá thì đúng là ngoại lệ duy nhất - giữ vì nó đánh dấu một THẺ, không phải một section |
+| "Nền hero trắng còn hai section kia kem" | Hệ ba bậc bề mặt xen kẽ, không phải lỗi. Hai section đó không liền nhau trên trang |
+| "Dòng chữ nhỏ dưới CTA là tầng chữ thứ năm trong hero, làm loãng cụm nút" | Bề mặt tham chiếu CÓ dòng này ở đúng vị trí đó. Bỏ đi là đi ngược số đo |
+| "Dấu góc dưới-phải bị che" | Bong bóng chat `woot-widget-bubble` cố định ở góc dưới-phải (đo: x1356, rộng 64px), che dấu góc ở x1416. Không phải dấu bị thiếu. Dời widget là quyết định sản phẩm, không phải việc của chuẩn UI |
+
 ## Bài học về cách làm việc
 
 **Đo một lần trên trang động là vô nghĩa.** Bốn con số sai ở trên đều sinh từ đây.

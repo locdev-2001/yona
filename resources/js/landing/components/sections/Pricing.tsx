@@ -54,7 +54,11 @@ export function Pricing({ config }: { config: LandingConfig }) {
                         <span className="mt-2 block font-mono text-eyebrow uppercase text-neutral-500">{pricing.unit}</span>
                     </p>
 
-                    <ul className="mt-8 space-y-3 border-t border-neutral-300 pt-8">
+                    {/* mx-auto w-fit: từng dòng tick vẫn căn trái (đúng cho danh sách), nhưng
+                    CẢ KHỐI phải nằm giữa thẻ. Trước đây ul trải hết bề rộng nên ba dòng
+                    dồn về trái, chừa ~240px trống bên phải trong khi tiêu đề, giá và cặp
+                    nút đều căn giữa. */}
+                <ul className="mx-auto mt-8 w-fit space-y-3 border-t border-neutral-300 pt-8">
                         {Object.entries(pricing.points).map(([key, point]) => (
                             <li key={key} className="flex gap-2.5 text-sm font-light text-neutral-700">
                                 <span aria-hidden className="i-lucide-check mt-0.5 size-4 shrink-0 text-primary-700" />
@@ -78,8 +82,11 @@ export function Pricing({ config }: { config: LandingConfig }) {
                 {/* Chú thích là một khối riêng, không phải một dòng chữ trơ
                     dưới thẻ: cùng bề rộng, cùng nền, và chia đường biên với
                     thẻ ở trên thay vì cách một khoảng trắng. */}
-                <div className="relative border-t border-neutral-300 bg-neutral-100 px-8 py-6">
-                    <InkCorners />
+                {/* KHÔNG có InkCorners riêng: nền neutral-100 chạy liên tục từ thẻ
+                    xuống đây nên mắt đọc ra MỘT panel, mà panel đó lại có hai hàng dấu
+                    góc cách nhau 37px kẹp đường kẻ - trông như render lặp. Bốn dấu ở
+                    ngoài cùng là đủ đóng khung cả cụm. */}
+                <div className="border-t border-neutral-300 bg-neutral-100 px-8 py-6">
                     <p className="text-center text-base text-neutral-700">{pricing.fine}</p>
                 </div>
             </div>

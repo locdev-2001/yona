@@ -36,9 +36,11 @@ OUT = Path("public/landing/art")
 # Khung cần lấp: tên tệp -> bề rộng đích. Chiều cao để ảnh tự quyết theo tỉ lệ
 # gốc — ép tỉ lệ thì nét bị kéo méo, mà nét méo thì nhìn ra ngay.
 SLOTS = {
-    "hero-1": 212, "hero-2": 236, "hero-3": 248, "hero-4": 176, "hero-5": 268,
+    "hero-1": 212, "hero-2": 236, "hero-3": 248, "hero-4": 176,
     "end-1": 120, "end-2": 100, "end-3": 116, "end-4": 144, "end-5": 132,
+    "end-ink-1": 300,
     "rule-1": 249, "rule-2": 249, "rule-3": 249, "rule-4": 249,
+    "feat-ink-1": 493, "feat-ink-2": 486, "feat-ink-3": 521,
 }
 
 
@@ -108,10 +110,37 @@ def to_ink(im: Image.Image) -> Image.Image:
     return img.crop(bbox) if bbox else img
 
 
-def build(width_for: dict[str, int]) -> None:
+def hop_khung(ink: Image.Image, ti_le_min: float, muc_min: float, muc_max: float) -> bool:
+    """Tranh có hợp với khung của nó không: đủ ngang, và độ đậm nằm trong dải.
+
+    Hai lỗi thật 20/09 đều từ chỗ này:
+    - `hero-4` 69.5% mực giữa cụm 16-28% -> một khối đen hút mắt hơn cả nút CTA
+    - `rule-1` tỉ lệ 0.68 (tranh dọc) trong khung 4:3 -> co còn 104px cạnh ba tấm
+      186-200px, đọc ra như ảnh lỗi chưa tải xong
+    """
+    import numpy as _np
+
+    a = _np.asarray(ink).astype(_np.float32)
+    muc = float((a[..., 3] / 255.0 > 0.35).mean() * 100)
+    return ink.width / ink.height >= ti_le_min and muc_min <= muc <= muc_max
+
+
+def build(width_for: dict[str, int], ti_le_min: float = 0.0,
+          muc_min: float = 0.0, muc_max: float = 100.0) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     picked: list[dict] = []
     seen: set[str] = set()
+
+    # Chống trùng theo TÁC PHẨM, không theo image_id: cùng một tác phẩm có nhiều
+    # id trong bộ sưu tập, nên lọc theo id để lọt một bản khắc dùng ở BA khung
+    # (feat-ink-3, hero-1, hero-4). Doc bắt mỗi khối một ảnh khác nhau.
+    da_dung: set[tuple[str, str]] = set()
+    if (OUT / "CREDITS.json").exists():
+        cu = json.load(open(OUT / "CREDITS.json"))
+        for c in cu.get("anh", []):
+            if c["tep"].replace("art/", "").replace(".webp", "") in width_for:
+                continue  # khung đang dựng lại thì được phép lấy tác phẩm khác
+            da_dung.add((c.get("tac_pham", ""), c.get("tac_gia", "")))
 
     for page in range(1, 8):
         if len(picked) >= len(width_for):
@@ -123,6 +152,9 @@ def build(width_for: dict[str, int]) -> None:
             if not iid or iid in seen or not rec.get("is_public_domain"):
                 continue
             seen.add(iid)
+            khoa = (rec.get("title") or "", rec.get("artist_title") or "")
+            if khoa in da_dung:
+                continue
             im = fetch(iid)
             if im is None:
                 continue
@@ -135,6 +167,9 @@ def build(width_for: dict[str, int]) -> None:
                 continue
             if ink.width < 120 or ink.height < 120:
                 continue
+            if not hop_khung(ink, ti_le_min, muc_min, muc_max):
+                continue
+            da_dung.add(khoa)
             picked.append({"rec": rec, "ink": ink})
             print(f"  nhận {rec['title'][:44]:<46} giấy {paper:.0%} màu {colour:.1%}")
 
@@ -169,11 +204,20 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--build", action="store_true")
     ap.add_argument("--only", nargs="*", help="chỉ dựng lại vài khung")
+    ap.add_argument("--ti-le-min", type=float, default=0.0, help="tỉ lệ rộng/cao tối thiểu")
+    ap.add_argument("--muc-min", type=float, default=0.0, help="%% diện tích có mực, tối thiểu")
+    ap.add_argument("--muc-max", type=float, default=100.0, help="%% diện tích có mực, tối đa")
     args = ap.parse_args()
 
+    if args.only:
+        la = [k for k in args.only if k not in SLOTS]
+        if la:
+            # Im lặng no-op ở đây từng ngốn ba lượt chạy: `--only feat-ink-3` lọc
+            # ra rỗng vì SLOTS chưa khai khung đó, script thoát 0 không nói gì.
+            sys.exit(f"khung không có trong SLOTS: {', '.join(la)}\ncó: {', '.join(SLOTS)}")
     slots = {k: v for k, v in SLOTS.items() if not args.only or k in args.only}
     if args.build:
-        build(slots)
+        build(slots, args.ti_le_min, args.muc_min, args.muc_max)
     else:
         print("khung sẽ dựng:", ", ".join(slots))
 
