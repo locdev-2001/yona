@@ -1,7 +1,8 @@
+@config "../../tailwind/superadmin.config.cjs";
 // Console quản trị: CSS Administrate trước, Tailwind sau — đúng thứ tự thẻ
 // <link> của bản gốc, đảo lại thì preflight Tailwind bị ghi đè và trang lệch.
 @import 'vendor/administrate';
-@import 'superadmin-auth';
+@import 'superadmin-auth-base';
 
 // Inertia gắn trang vào một div bọc; console dùng layout cao toàn màn hình nên
 // div đó phải kéo hết chiều cao (bản gốc render thẳng vào <body>).

@@ -8,6 +8,7 @@
         "build:sdk": "vite build --config vite.sdk.config.js",
         "dev": "vite",
         "tsc": "tsc --noEmit",
+        "check:css": "node scripts/check-css-surfaces.mjs",
         "test": "vitest run",
         "check:ui": "python3 scripts/check-ui.py --url http://127.0.0.1:8610/?locale=vi",
         "check:ui:self": "python3 scripts/check-ui.py --self-test"
