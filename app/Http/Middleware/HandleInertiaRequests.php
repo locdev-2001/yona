@@ -29,6 +29,7 @@ class HandleInertiaRequests extends Middleware
                 'installationName' => config('yona.branding.installation_name'),
                 'logo' => config('yona.branding.logo'),
                 'logoDark' => config('yona.branding.logo_dark'),
+                'logoThumbnail' => config('yona.branding.logo_thumbnail'),
                 'termsURL' => config('yona.terms_url'),
                 'privacyURL' => config('yona.privacy_url'),
                 'fbAppId' => config('services.facebook.app_id'),

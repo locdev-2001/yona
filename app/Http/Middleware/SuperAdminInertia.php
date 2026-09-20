@@ -24,6 +24,7 @@ class SuperAdminInertia
         Inertia::share([
             'superAdmin' => fn () => [
                 'installationName' => config('yona.branding.installation_name', config('app.name')),
+                'logo' => config('yona.branding.logo'),
                 'logoThumbnail' => config('yona.branding.logo_thumbnail'),
                 'version' => config('yona.version'),
                 'navigation' => $this->registry->navigationItems(),

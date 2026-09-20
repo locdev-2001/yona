@@ -8,6 +8,7 @@ import { parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
 import FormInput from 'v3/components/Form/Input';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
 import NextButton from 'dashboard/components-next/button/Button';
+import { BrandMark } from '../../../../components/BrandMark';
 
 // Port từ v3/views/auth/reset/password/Index.vue
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,6 +41,7 @@ export default function ResetPasswordIndex() {
     return (
         <AuthShell>
             <form className={authCard} onSubmit={event => void submit(event)}>
+                <BrandMark className="h-7 mb-6" />
                 <h1 className="mb-1 text-2xl font-medium tracking-tight text-left text-n-slate-12">
                     {t('RESET_PASSWORD.TITLE')}
                 </h1>

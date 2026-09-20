@@ -1,23 +1,18 @@
-// Tương đương next/icon/Logo.vue — logo mark Yona (thay logo woot, gỡ nhãn Chatwoot)
+import { usePage } from '@inertiajs/react';
+
+import type { SharedPageProps } from '../../../types';
+
+// Tương đương next/icon/Logo.vue — logo mark Yona (thay logo woot, gỡ nhãn Chatwoot).
+// Lấy từ globalConfig như BrandMark thay vì vẽ tay SVG: mark thật là ảnh gradient,
+// và bản tự vẽ không đổi theo env LOGO_THUMBNAIL nên lệch với mọi bề mặt khác.
 export default function Logo({ className }: { className?: string }) {
+    const { globalConfig } = usePage<SharedPageProps>().props;
+
     return (
-        <svg
-            className={className}
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <rect width="24" height="24" rx="7" fill="#2781F6" />
-            <path
-                d="M6.5 7 L12 13 L17.5 7 M12 13 L12 18.5"
-                stroke="#fff"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-            />
-        </svg>
+        <img
+            src={globalConfig.logoThumbnail}
+            alt={globalConfig.installationName}
+            className={`object-contain rounded-md ${className ?? 'size-4'}`}
+        />
     );
 }

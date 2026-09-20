@@ -57,7 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <div className="flex mx-4 mb-4 border-slate-100 border-b py-6">
                         <Link href="/super_admin">
                             <img
-                                alt="Admin Dashboard"
+                                alt={superAdmin.installationName}
                                 className="h-10"
                                 src={superAdmin.logoThumbnail}
                             />

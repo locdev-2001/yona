@@ -7,7 +7,7 @@ const INPUT_CLASS =
 
 // Port từ app/views/super_admin/devise/sessions/new.html.erb.
 export default function SuperAdminLogin() {
-    const { flash } = usePage<SuperAdminPageProps>().props;
+    const { flash, superAdmin } = usePage<SuperAdminPageProps>().props;
     const { data, setData, post, processing } = useForm({
         super_admin: { email: '', password: '' },
     });
@@ -18,8 +18,8 @@ export default function SuperAdminLogin() {
             <main className="flex flex-col bg-woot-25 min-h-screen w-full py-20 sm:px-6 lg:px-8">
                 <section className="max-w-5xl mx-auto">
                     <img
-                        src="/brand-assets/logo.png"
-                        alt="Yona"
+                        src={superAdmin.logo}
+                        alt={superAdmin.installationName}
                         className="mx-auto h-8 w-auto block"
                     />
                     <h2 className="mt-6 text-center text-3xl font-medium text-slate-900">

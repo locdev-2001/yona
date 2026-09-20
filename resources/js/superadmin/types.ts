@@ -21,6 +21,7 @@ export type SuperAdminRow = {
 export type SuperAdminPageProps = {
     superAdmin: {
         installationName: string;
+        logo: string;
         logoThumbnail: string;
         version: string;
         navigation: { resource: string; label: string; url: string }[];

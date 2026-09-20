@@ -8,6 +8,7 @@ import { parseApiErrorMessage, putJson } from 'dashboard/helper/apiClient';
 import FormInput from 'v3/components/Form/Input';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
 import NextButton from 'dashboard/components-next/button/Button';
+import { BrandMark } from '../../../components/BrandMark';
 import type { SharedPageProps } from '../../../../types';
 
 // Port từ v3/views/auth/password/Edit.vue (đường "Accept invitation" của agent
@@ -49,6 +50,7 @@ export default function PasswordEdit() {
     return (
         <AuthShell>
             <form className={authCard} onSubmit={event => void submitForm(event)}>
+                <BrandMark className="h-7 mb-6" />
                 <h1 className="mb-1 text-2xl font-medium tracking-tight text-left text-n-slate-12">
                     {t('SET_NEW_PASSWORD.TITLE')}
                 </h1>

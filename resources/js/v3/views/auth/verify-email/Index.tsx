@@ -5,6 +5,7 @@ import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import NextButton from 'dashboard/components-next/button/Button';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
+import { BrandMark } from '../../../components/BrandMark';
 import type { SharedPageProps } from '../../../../types';
 
 interface VerifyEmailProps extends SharedPageProps {
@@ -34,7 +35,8 @@ export default function VerifyEmailIndex() {
         <AuthShell>
             <section className={authCard}>
                 <div className="mb-6">
-                    <h2 className="text-2xl font-semibold text-n-slate-12">{t('REGISTER.VERIFY_EMAIL.TITLE')}</h2>
+                    <BrandMark className="h-7" />
+                    <h2 className="mt-6 text-2xl font-semibold text-n-slate-12">{t('REGISTER.VERIFY_EMAIL.TITLE')}</h2>
                     <p className="mt-2 text-sm text-n-slate-11">
                         {t('REGISTER.VERIFY_EMAIL.DESCRIPTION', { email })}
                     </p>
