@@ -7,6 +7,9 @@ import type { SharedPageProps } from '../../types';
 export function useBranding() {
     const { globalConfig } = usePage<SharedPageProps>().props;
 
+    // Thừa kể từ khi t() tự thay tên cài đặt cho mọi chuỗi: giữ lại để những nơi
+    // gọi sẵn không phải sửa, và để chuỗi KHÔNG đi qua t() (dữ liệu từ API, mô tả
+    // tích hợp lưu trong DB) vẫn được thay.
     const replaceInstallationName = (text: string): string =>
         text.replace(/Chatwoot/g, globalConfig.installationName);
 

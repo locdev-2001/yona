@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Account;
 use App\Models\Channel\WebWidget;
 use Closure;
 use Illuminate\Http\Request;
@@ -34,6 +35,11 @@ class SetLocale
         $locale = $picked ?? $this->resolve($request);
 
         if ($locale !== null) {
+            // ponytail: App::setLocale() ghi đè config('app.locale') và không có ai
+            // đặt lại. Dưới PHP-FPM mỗi request boot config mới nên vô hại; chuyển
+            // sang Octane/FrankenPHP thì phải chụp APP_LOCALE lúc boot và khôi phục
+            // ở nhánh không tra ra ngôn ngữ, nếu không request sau đội ngôn ngữ của
+            // request trước.
             App::setLocale($locale);
         }
 
@@ -59,11 +65,25 @@ class SetLocale
         return null;
     }
 
+    /**
+     * Route dashboard khai `{account}` là số (`whereNumber`), nên tham số chỉ là
+     * Account khi handler có type-hint Account và Laravel binding ngầm. Route nào
+     * nhận id thô thì trước đây rơi hết xuống config('app.locale') — cùng một
+     * tài khoản mà màn này tiếng Việt, màn kia tiếng Anh. Nhận cả hai dạng.
+     */
     private function accountLocale(Request $request): ?string
     {
         $account = $request->route()?->parameter('account');
 
-        return is_object($account) ? ($account->locale ?? null) : null;
+        if (is_object($account)) {
+            return $account->locale ?? null;
+        }
+
+        if (! is_scalar($account) || ! ctype_digit((string) $account)) {
+            return null;
+        }
+
+        return Account::query()->whereKey((int) $account)->value('locale');
     }
 
     /**

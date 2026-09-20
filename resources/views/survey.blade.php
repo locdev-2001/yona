@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {{-- Port từ app/views/survey/responses/show.html.erb — trang khảo sát công khai
      `/survey/responses/{uuid}`; không layout dashboard, không đăng nhập. --}}
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
+<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
     <head>
         <meta charset="utf-8">
         <title>{{ config('yona.branding.installation_name', config('app.name', 'Yona')) }}</title>

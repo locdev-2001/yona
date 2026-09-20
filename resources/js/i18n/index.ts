@@ -45,6 +45,17 @@ function unescapeLiterals(message: string): string {
     return message.replace(/\{'([^']*)'\}/g, '$1');
 }
 
+// Chuỗi gốc Chatwoot dùng chính chữ "Chatwoot" làm chỗ trống cho tên cài đặt;
+// bản gốc thay nó ở từng nơi gọi (useBranding.replaceInstallationName), nên màn
+// nào quên gọi là tên "Chatwoot" lọt thẳng ra trước mặt người dùng. Thay ở đây,
+// một lần, cho mọi mặt tiền. Tên đọc từ <html data-installation-name> — cùng
+// đường mà locale đã đi, nên widget/portal/survey không phải nạp thêm gì.
+function installationName(): string {
+    if (typeof document === 'undefined') return 'Yona';
+
+    return document.documentElement.dataset.installationName || 'Yona';
+}
+
 // Tương đương $t của vue-i18n bên Chatwoot: tra key lồng nhau + nội suy {param}.
 export function t(key: string, params?: Record<string, string | number>): string {
     const lookup = (source: Record<string, unknown>): unknown =>
@@ -73,5 +84,5 @@ export function t(key: string, params?: Record<string, string | number>): string
         );
     }
 
-    return unescapeLiterals(result);
+    return unescapeLiterals(result).replace(/Chatwoot/g, installationName());
 }
