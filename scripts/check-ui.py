@@ -534,6 +534,10 @@ def main() -> int:
     ap.add_argument("--save-crops", help="cắt từng section ra thư mục này")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--self-test", action="store_true", help="chạy check trên fixture lỗi, khẳng định nó trượt")
+    ap.add_argument("--login", nargs=2, metavar=("EMAIL", "MATKHAU"),
+                    help="đăng nhập trước khi kiểm (bề mặt dashboard). CHỈ dùng cho dev — "
+                         "không đưa thông tin đăng nhập vào bất kỳ tệp nào trong repo")
+    ap.add_argument("--login-url", default="/app/login")
     args = ap.parse_args()
 
     if args.self_test:
@@ -559,6 +563,15 @@ def main() -> int:
             browser = pw.chromium.launch()
             page = browser.new_page()
             try:
+                if args.login:
+                    from urllib.parse import urljoin
+
+                    goc = args.url or args.reference
+                    page.goto(urljoin(goc, args.login_url), wait_until="load")
+                    page.get_by_test_id("email_input").fill(args.login[0])
+                    page.get_by_test_id("password_input").fill(args.login[1])
+                    page.get_by_test_id("submit_button").click()
+                    page.wait_for_timeout(2500)
                 if args.reference:
                     tat_ca.append(c10_do_hai_lan(page, args.reference))
                 if args.url:
