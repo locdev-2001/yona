@@ -1,0 +1,6 @@
+# Phụ thuộc cho scripts/check-ui.py và scripts/make-landing-art.py
+# Lần đầu còn cần: python -m playwright install chromium
+playwright>=1.40
+pillow>=10.0
+numpy>=1.26
+requests>=2.31
