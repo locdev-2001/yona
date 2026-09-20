@@ -1,38 +1,24 @@
 // Port: refs/chatwoot/app/javascript/shared/helpers/AudioNotificationHelper.js (phần SDK dùng).
 export const initOnEvents = ['click', 'touchstart', 'keypress', 'keydown'];
 
-export const getAudioContext = (): AudioContext | undefined => {
-    try {
-        const AudioContextClass =
-            window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-        return AudioContextClass ? new AudioContextClass() : undefined;
-    } catch {
-        return undefined;
-    }
-};
-
+// KHÁC BIỆT CỐ Ý so với bản gốc: gốc `fetch` tệp mp3 rồi decodeAudioData qua
+// AudioContext. SDK luôn chạy trên origin của khách nên fetch đó là chéo origin
+// → trình duyệt chặn CORS và in lỗi đỏ vào console website của khách. Thẻ
+// <audio> tải tài nguyên chéo origin không cần CORS, nên đổi sang HTMLAudioElement.
+// Gọi sau tương tác đầu tiên của người dùng (initOnEvents) nên autoplay policy cho phát.
 export const getAlertAudio = async (
     baseUrl = '',
     requestContext?: { type?: string; alertTone?: string },
 ): Promise<void> => {
-    const audioContext = getAudioContext();
-    if (!audioContext) return;
+    if (typeof Audio === 'undefined') return;
 
     const { type = 'dashboard', alertTone = 'ding' } = requestContext ?? {};
+    const audio = new Audio(`${baseUrl}/audio/${type}/${alertTone}.mp3`);
+    audio.preload = 'auto';
 
-    try {
-        const response = await fetch(new Request(`${baseUrl}/audio/${type}/${alertTone}.mp3`));
-        const audioBuffer = await audioContext.decodeAudioData(await response.arrayBuffer());
-
-        window.playAudioAlert = () => {
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioContext.destination);
-            source.loop = false;
-            source.start();
-        };
-    } catch {
-        // Không có tệp âm thanh thì im lặng, đúng bản gốc.
-    }
+    window.playAudioAlert = () => {
+        audio.currentTime = 0;
+        // Bị autoplay policy chặn thì im lặng, đúng bản gốc.
+        void audio.play().catch(() => {});
+    };
 };
