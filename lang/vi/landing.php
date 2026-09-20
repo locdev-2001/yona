@@ -163,8 +163,7 @@ return [
     ],
 
     'closing' => [
-        'title' => 'Thử bằng chính tin nhắn của bạn',
-        'subtitle' => 'Kết nối một kênh, đổ hội thoại thật vào và xem nó chạy. Mất vài phút.',
+        'title' => 'Thử với tin nhắn của bạn',
         'cta_primary' => 'Dùng thử miễn phí',
         'cta_secondary' => 'Đăng nhập',
     ],

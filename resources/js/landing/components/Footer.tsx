@@ -41,16 +41,25 @@ export function Footer({ config }: { config: LandingConfig }) {
 
                     {columns.map((column) => (
                         <nav key={column.heading}>
-                            <p className="font-mono text-eyebrow font-medium uppercase text-neutral-500">
+                            {/* text-eyebrow giờ lh 1.0 (12px) nên chật; thêm pb-1 để
+                                nhịp dưới tiêu đề cột ra gần 16px như số đo thật, thay
+                                vì đổi lineHeight dùng chung của cả trang. */}
+                            <p className="font-mono text-eyebrow font-medium uppercase text-neutral-500 pb-1">
                                 {column.heading}
                             </p>
                             <ul className="mt-5 space-y-1">
                                 {column.links.map((link) => (
                                     <li key={link.label}>
+                                        {/* Link cột: weight THƯỜNG + gạch chân mảnh theo số
+                                            đo thật (14/18, có underline) — không phải
+                                            font-light kế thừa từ body. Gạch chân dùng
+                                            neutral-300 để không cạnh tranh với chữ, đậm
+                                            hơn khi hover. Vùng bấm ≥44px dưới 768px giữ
+                                            nguyên bằng min-h-11. */}
                                         <a
                                             href={link.href}
                                             aria-current={'current' in link && link.current ? 'true' : undefined}
-                                            className={`inline-flex min-h-11 items-center rounded text-sm md:min-h-0 md:py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 ${
+                                            className={`inline-flex min-h-11 items-center rounded text-sm font-normal underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-600 md:min-h-0 md:py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 ${
                                                 'current' in link && link.current
                                                     ? 'text-neutral-900'
                                                     : 'text-neutral-600 hover:text-neutral-900'

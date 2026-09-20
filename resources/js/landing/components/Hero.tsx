@@ -4,17 +4,25 @@ import { CtaPair } from './Button';
 import { Section } from './Section';
 
 /**
- * Hai cụm tranh chồng lấn, mỗi cụm có một tấm tràn hẳn khỏi mép màn hình.
+ * Bốn tấm, hai mỗi bên: mỗi bên một tấm HIỆN TRỌN trong lề và một tấm tràn nhẹ
+ * khỏi mép.
  *
- * Xếp rời từng tấm cách đều là thứ làm chúng trông như tranh treo tường. Chồng
- * lấn và cắt cụt ở mép mới đọc ra là một mảng thị giác của trang.
+ * Bản trước đẩy cả năm tấm ra ngoài mép nên tấm nào cũng mất một nửa — đọc ra
+ * là mảnh vụn dán vào cạnh màn hình. Bề mặt tham chiếu để phần lớn tranh hiện
+ * trọn, chỉ một hai tấm bị mép cắt, và cắt cũng chỉ chừng một phần ba.
+ *
+ * Bề rộng khai bằng class để co theo breakpoint: ở 1280 lề chỉ còn 192px nên
+ * tranh phải nhỏ lại mới nằm gọn mà không chạm tiêu đề.
+ *
+ * Đặt NGANG dải tiêu đề, không đậu ở bốn góc. Đẩy hết ra góc thì giữa trang
+ * trống một khoảng lớn và bốn tấm đọc ra là bốn thứ rời rạc ghim vào mép.
+ * Chúng phải vây quanh chữ thì mới thành một cụm.
  */
 const ART = [
-    { src: 'hero-1', width: 212, height: 268, className: '-left-28 top-2' },
-    { src: 'hero-5', width: 268, height: 104, className: '-left-52 top-60' },
-    { src: 'hero-2', width: 236, height: 168, className: '-right-32 top-0' },
-    { src: 'hero-3', width: 248, height: 196, className: '-right-44 top-36' },
-    { src: 'hero-4', width: 176, height: 176, className: '-right-16 top-72' },
+    { src: 'hero-1', width: 212, height: 283, size: 'w-36 2xl:w-48', className: 'left-8 top-1/4' },
+    { src: 'hero-3', width: 248, height: 159, size: 'w-40 2xl:w-52', className: '-left-10 bottom-1/4' },
+    { src: 'hero-2', width: 236, height: 285, size: 'w-36 2xl:w-48', className: 'right-8 top-1/3' },
+    { src: 'hero-4', width: 176, height: 162, size: 'w-36 2xl:w-48', className: '-right-10 bottom-1/4' },
 ];
 
 export function Hero({ config }: { config: LandingConfig }) {
@@ -22,10 +30,21 @@ export function Hero({ config }: { config: LandingConfig }) {
     const hero = strings.hero;
 
     return (
-        <Section surface="base" rhythm="md">
-            {ART.map((art) => (
+        // accent="primary": hero mở đầu mạch hội thoại, dấu góc + eyebrow của
+        // section này dùng cùng màu nhấn với mạch đó.
+        <Section
+            surface="base"
+            rhythm="md"
+            accent="primary"
+            fill
+            art={ART.map((art) => (
                 <ArtMark key={art.src} {...art} />
             ))}
+        >
+
+            {/* Bề mặt tham chiếu có một dòng 14px căn giữa phía trên h1 (bằng
+                chứng xã hội của họ). Yona chưa có khách thật để trưng ra nên
+                bỏ trống chỗ này — bịa số liệu hay tên khách còn tệ hơn thưa. */}
 
             {/* Ba dòng: dòng giữa là thông điệp, hai dòng kia lùi lại bằng alpha.
                 50% chứ không phải 40%: 40% chỉ đạt 2.61:1, dưới ngưỡng 3:1 của
@@ -42,6 +61,9 @@ export function Hero({ config }: { config: LandingConfig }) {
                 {hero.subtitle}
             </p>
 
+            {/* Giữ hai nút (không chuyển sang form bắt email như bề mặt tham
+                chiếu): Yona chưa có luồng đăng ký chỉ-bằng-email, dựng form mà
+                không biết nó dẫn đi đâu là bịa một bước sản phẩm chưa tồn tại. */}
             <div className="relative mt-8">
                 {isAuthenticated ? (
                     <CtaPair align="center" primary={{ label: hero.cta_dashboard, href: urls.dashboard }} />
@@ -55,11 +77,9 @@ export function Hero({ config }: { config: LandingConfig }) {
             </div>
 
             {/* Dòng gỡ rào ngay dưới CTA: nó trả lời câu hỏi đầu tiên người đọc
-                nghĩ tới khi thấy nút, đúng chỗ họ đang nhìn. */}
-            <p className="relative mt-5 flex items-center justify-center gap-2 text-caption text-neutral-500">
-                <span aria-hidden className="i-lucide-circle-check size-3.5" />
-                {hero.fine}
-            </p>
+                nghĩ tới khi thấy nút, đúng chỗ họ đang nhìn. 14px căn giữa,
+                không icon — số đo thật của bề mặt tham chiếu. */}
+            <p className="relative mt-5 text-center text-sm text-neutral-500">{hero.fine}</p>
         </Section>
     );
 }

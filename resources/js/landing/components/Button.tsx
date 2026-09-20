@@ -11,10 +11,11 @@ const BASE =
 const VARIANT = {
     primary:
         'bg-primary-600 text-neutral-0 hover:bg-primary-700 active:bg-primary-800 disabled:bg-neutral-200 disabled:text-neutral-400',
-    // Nút phụ chỉ là một đường kẻ mảnh cùng tông với khung lưới. Viền đậm biến
-    // nó thành nút thứ hai ngang hàng và triệt tiêu thứ bậc của CTA chính.
+    // Viền MỰC, không phải xám nhạt. Đo trên bề mặt tham chiếu: nút phụ dùng
+    // viền 1px cùng màu chữ. Thứ bậc đã nằm ở tương phản đặc/rỗng — viền xám
+    // nhạt thì nút phụ đọc ra như nút bị vô hiệu chứ không phải lựa chọn hai.
     secondary:
-        'border border-neutral-300 text-neutral-900 hover:border-neutral-400 hover:bg-neutral-50 active:bg-neutral-100 disabled:text-neutral-400',
+        'border border-neutral-900 text-neutral-900 hover:border-neutral-700 hover:text-neutral-700 active:bg-neutral-100 disabled:border-neutral-300 disabled:text-neutral-300',
     ghost: 'text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100 disabled:text-neutral-400',
     // Trên nền navy: đảo vòng focus sang trắng để còn nhìn thấy.
     onDark:

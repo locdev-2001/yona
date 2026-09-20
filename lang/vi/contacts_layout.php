@@ -100,7 +100,7 @@ return [
         ],
     ],
     'PAGINATION_FOOTER' => [
-        'SHOWING' => 'Showing {startItem} - {endItem} of {totalItems} contacts',
+        'SHOWING' => 'Đang hiển thị {startItem} - {endItem} trong {totalItems} liên hệ',
     ],
     'FILTER' => [
         'NAME' => 'Tên',

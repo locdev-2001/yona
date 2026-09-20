@@ -38,9 +38,9 @@ Trang auth (`v3/` — đăng nhập, đăng ký, đặt lại mật khẩu) thu�
 
 Vi phạm một dòng là sai, không phải "chưa tối ưu".
 
-1. **KHÔNG `box-shadow`.** Tách lớp bằng ba bậc bề mặt (§7.1) hoặc viền `1px neutral-300`. Hai ngoại lệ, không có cái thứ ba: lớp phủ nổi → `shadow-overlay`; ảnh sản phẩm ở landing → `shadow-media` (§7.2).
+1. **KHÔNG `box-shadow`.** Tách lớp bằng ba bậc bề mặt (§7.1) hoặc viền `1px neutral-300`. Một ngoại lệ duy nhất: lớp phủ nổi → `shadow-overlay`. (Ngoại lệ `shadow-media` cho ảnh sản phẩm ở landing **đã bỏ** — đo lại thì khung media của bề mặt tham chiếu chỉ có viền `1px`, xem §7.2.)
 2. **KHÔNG `backdrop-filter`, KHÔNG gradient nền, KHÔNG glow.** Ngoại lệ: hoa văn chấm bi `.bg-dotfield` cho nền section bảng giá — hoa văn đều, không phải chuyển màu.
-3. **Thẻ / panel / section / bảng bo `0`.** Nút, input, chip, tab, tooltip bo `4px` (`rounded`). Avatar `rounded-full`. Ngoại lệ: **ảnh sản phẩm ở landing** bo `8px` (`rounded-media`) — nó nằm trên một mảng màu nên cần tự tách khỏi nền (§7.2).
+3. **Thẻ / panel / section / bảng / ảnh sản phẩm bo `0`.** Nút, input, chip, tab, tooltip bo `4px` (`rounded`). Avatar `rounded-full`. Không còn ngoại lệ nào: ảnh sản phẩm ở landing tràn sát viền khung nên không cần tự tách khỏi nền (§7.2).
 4. **KHÔNG `font-weight` ≥ 600.** Chỉ có 300 / 400 / 500. Nhấn mạnh bằng **màu**, không bằng độ đậm.
 5. **Mọi `line-height` ≥ 1.05.** Dấu tiếng Việt chồng hai tầng (`Ế Ộ Ữ`) bị cắt dưới mức đó.
 6. **Tracking đổi dấu ở 16px.** Trên 16px → âm (tới −0.03em). Dưới 16px → dương (tới +0.08em).
@@ -367,16 +367,18 @@ Không có thư viện animation trong repo — dùng CSS thuần, điều khi�
 
 | Vai trò | Class | Cỡ | lh | ls | Weight |
 |---|---|---|---|---|---|
-| Display | `text-display` | clamp 40→80px | 1.05 | −0.03em | `font-normal` |
-| Heading 1 | `text-h1` | clamp 32→54px | 1.05 | −0.03em | `font-normal` |
-| Heading 2 | `text-h2` | 28px | 1.1 | −0.03em | `font-normal` |
-| Heading 3 | `text-h3` | 24px | 1.15 | −0.02em | `font-normal` |
-| Heading 4 | `text-h4` | 20px | 1.2 | −0.01em | `font-normal` |
-| Lead | `text-lead` | 18px | 1.5 | −0.01em | `font-light` |
+| Display | `text-display` | clamp 32→80px | 1.05 | −0.03em | `font-normal` |
+| Heading 1 | `text-h1` | clamp 28→54px | 1.05 | −0.03em | `font-normal` |
+| Heading 2 | `text-h2` | 24px | 1.05 | −0.02em | `font-normal` |
+| Heading 3 | `text-h3` | 20px | 1.2 | −0.01em | `font-normal` |
+| Heading 4 | `text-h4` | 16px | 1.4 | −0.01em | `font-normal` |
+| Lead | `text-lead` | 18px | 1.45 | −0.01em | `font-light` |
 | Body | `text-base` | 16px | 1.5 | 0 | `font-normal` |
 | Body nhỏ | `text-sm` | 14px | 1.5 | 0 | `font-normal` |
-| Eyebrow | `text-eyebrow` | 12px | 1.2 | +0.08em | `font-medium uppercase` |
+| Eyebrow | `text-eyebrow` | 12px | 1.2 | +0.05em | `font-normal uppercase` |
 | Caption | `text-caption` | 12px | 1.4 | 0 | `font-normal` |
+
+Thang này **không có bậc 32px**. Bề mặt tham chiếu dùng 80 · 54 · 28 · 24 · 20 · 16 · 14 · 12; bậc 32px trước đây của ta nằm giữa 24 và 54 mà không mang vai nào riêng, nên tiêu đề khối nhỏ và caption dưới ảnh đều về `text-h2` 24px.
 
 Tiêu đề 3–5 từ mới dùng `text-display`; dài hơn hạ xuống `text-h1`.
 
@@ -400,13 +402,17 @@ Dùng alpha trên `color`, **không** dùng thuộc tính `opacity` (nó kéo th
 
 ### §4.2 Trần Eyebrow
 
-Eyebrow luôn là `font-mono text-eyebrow font-medium uppercase text-neutral-500`. Dáng mono là thứ tách nó khỏi chữ thân — cùng font với thân thì nó chỉ là một dòng chữ nhỏ viết hoa.
+Eyebrow là `font-mono text-eyebrow uppercase text-neutral-900`, mở đầu bằng một **vuông đặc `8×8`** cùng màu accent của section, cách chữ `8px`.
 
-Eyebrow là **một phần của bộ khung khối tính năng** (§7.2) nên mỗi khối tính năng được đúng một cái, kèm icon 16px.
+Hai điểm đã sửa theo số đo: nhãn ở màu **MỰC**, không phải `neutral-500` — nhãn xám nhạt tụt xuống hàng chú thích, còn ở bề mặt tham chiếu nó là dòng đầu của khối và đọc ngang hàng tiêu đề. Và weight **thường**, không `medium`.
 
-Ngoài khối tính năng: **tối đa 2** eyebrow rời cho cả trang (ví dụ dải kênh, tiêu đề cột footer). Hero **không** có eyebrow.
+`lh 1.2` chứ không phải `1.0` như đo được: nhãn là chữ HOA tiếng Việt, dấu chồng hai tầng (`Ộ Ữ Ế`) bị cắt dưới `1.05` (§0.5). Đây là lệch có chủ đích vì bề mặt tham chiếu chỉ có chữ Latin không dấu.
 
-Cấm hai eyebrow trong cùng một section.
+Dáng mono là thứ tách nó khỏi chữ thân — cùng font với thân thì nó chỉ là một dòng chữ nhỏ viết hoa. **Không dùng icon** ở vị trí này: icon kể một nội dung thứ hai cạnh nhãn, còn vuông đặc chỉ neo nhãn vào lề trái.
+
+**Hai eyebrow cạnh nhau (`EyebrowPair`, cách `24px`) được phép** khi section nói về cả hai mạch sản phẩm cùng lúc — bề mặt tham chiếu làm đúng thế ở khối kết hợp. Bản trước của mục này cấm điều đó; lệnh cấm đã bỏ.
+
+Hero **không** có eyebrow.
 
 ### §4.3 Cột số
 
@@ -531,28 +537,43 @@ Ba bậc bề mặt, không dùng bậc thứ tư:
 
 Breakpoint: `375 · 768 · 1024 · 1440`.
 
-### §7.1b Khung lưới của trang — BẮT BUỘC
+### §7.1b Dấu cấu trúc của trang — BẮT BUỘC
 
-Hai đường kẻ dọc `1px neutral-300` ở đúng mép container, chạy suốt chiều cao **mỗi** section, cộng một dấu `+` `8×8px` (`neutral-400`) ở bốn góc.
+**Bốn hình vuông ĐẶC `8×8px` ở bốn góc mỗi section, thụt `16px` khỏi mép MÀN HÌNH** (không phải mép container). Không có đường kẻ dọc. Không có hairline ngang. Không có dấu `+`.
 
-Đây không phải trang trí. Bề mặt công khai có nhiều khoảng trắng; không có khung, mỗi section trôi nổi riêng lẻ và trang mất cấu trúc — đó chính là cảm giác "do máy sinh ra". Khung lưới là thứ rẻ nhất biến khoảng trắng thành bố cục.
+Bản trước của mục này quy định hai đường kẻ dọc `1px` ở mép container cộng dấu `+` ở bốn góc. Đo lại bề mặt tham chiếu từng phần tử: **toàn trang không có một phần tử nào rộng ≤2px cao >150px, và không có phần tử nào cao ≤2px rộng >300px** — nghĩa là không có kẻ dọc và không có hairline ngang nào cả. Thứ duy nhất đánh cấu trúc là 68 hình vuông đặc `8×8`. Kẻ dọc chạy suốt thì **vẽ ra cái khung**; bốn dấu vuông thì **chỉ đánh dấu bốn góc** — cùng công dụng chống "trôi nổi", nhưng nhẹ hơn một bậc và không cạnh tranh với chữ.
+
+Dấu vuông xuất hiện ở đúng ba chỗ:
+
+| Chỗ | Cỡ | Thụt | Màu |
+|---|---|---|---|
+| Bốn góc section | `8×8` | 16px khỏi mép màn hình | màu accent của section |
+| Bốn góc trong thẻ / giếng ảnh | `8×8` | 16px vào trong hộp | `neutral-300` |
+| Đầu mỗi nhãn eyebrow | `8×8` | — | màu accent của section |
+| Bốn góc thẻ giá | `4×4` | 0 (đúng góc) | `neutral-900` |
+
+**Màu accent theo mạch sản phẩm.** Section nói về mạch nào thì cả bốn dấu góc, dấu eyebrow và thanh accent trong section đó dùng một màu:
+
+| Accent | Class | Dùng cho |
+|---|---|---|
+| `primary` | `bg-primary-600` | mạch hội thoại — hộp thư, Zalo, kênh, vòng đời |
+| `navy` | `bg-navy` | mạch hồ sơ / dữ liệu — CRM, pipeline, nguyên tắc |
+| `neutral` | `bg-neutral-300` | section trung tính — ảnh sản phẩm, kết trang |
+
+**KHÔNG dùng `cyan` làm accent** — §1 chốt cyan chỉ được đặt trên nền navy.
 
 ```tsx
-<section className={`${surface} overflow-x-clip`}>          {/* clip: dấu + thò ra 4px */}
-  <div className="mx-auto max-w-container py-16 md:py-28">
-    <div className="relative px-4 md:px-10">
-      <div aria-hidden className="pointer-events-none absolute inset-0 hidden md:block">
-        <span className="absolute inset-y-0 left-0  w-px bg-neutral-300" />
-        <span className="absolute inset-y-0 right-0 w-px bg-neutral-300" />
-        {/* 4 × PlusMark ở -left-1/-right-1 × -top-1/-bottom-1 */}
-      </div>
-      {children}
-    </div>
-  </div>
-</section>
+<Section surface="band" accent="primary">…</Section>
+// Section tự vẽ: <div className="absolute inset-4 hidden md:block"> + 4 × span.size-2
 ```
 
-Chỉ hiện từ `md`. Dưới 768px container chạm mép nên đường kẻ vô nghĩa.
+**Thanh accent `2px`** đánh dấu từng ô trong một hàng, thay cho `border-t` chạy suốt. Dài `w-1/5` bề ngang ô — đây là **lựa chọn của ta, không phải số đo**.
+
+> Bản trước ghi "đo được 82px / 58px / 51px / 18px". Sai. Bề mặt tham chiếu có carousel tự chạy, và mấy thanh đó là **thanh tiến trình** của nó: đo lại cùng một thanh sau 1.8 giây thì nó đã nở từ 42.2px lên 106px. Bốn con số kia chỉ là khung hình bắt được lúc chụp. Bài học: **đo trang có animation thì phải đo hai lần cách nhau vài giây** rồi so, trước khi ghi bất cứ con số nào vào doc.
+
+Một đường kẻ suốt hàng nối các ô thành một dải liền; đoạn ngắn thì mỗi ô được đọc riêng.
+
+Chỉ hiện từ `md`. Dưới 768px container chạm mép nên dấu góc chồng lên nội dung.
 
 ### §7.2 Landing — mười section, thứ tự cố định
 
@@ -560,15 +581,15 @@ Chỉ hiện từ `md`. Dưới 768px container chạm mép nên đường kẻ 
 
 | # | Section | Bề mặt | Nhịp | Nội dung |
 |---|---|---|---|---|
-| 1 | Hero | `base` | `md` 80px | h1 `text-display` 3 dòng căn giữa · đoạn dẫn · **2 nút** · dòng gỡ rào · cụm 5 tranh |
-| 2 | Ảnh sản phẩm | `band` | `md` | nhãn `text-h2` nửa mờ nửa đậm · **segmented control** chia đôi cả bề rộng · giếng `tone-sand` |
-| 3 | Dải kênh | `base` | `sm` 64px | eyebrow mono căn giữa · lưới 4 cột × 3 hàng, icon **đơn sắc** · ghi chú |
+| 1 | Hero | `base` | `md` + **`fill`** | h1 `text-display` 3 dòng căn giữa · đoạn dẫn · **2 nút** · dòng gỡ rào 14px · 5 nét mực ở hai lề. **Cao đúng một màn hình** (`min-h-[calc(100dvh-4rem)]`, nội dung căn giữa dọc) — nav cố định 64px đã trừ. |
+| 2 | Ảnh sản phẩm | `band` | `md` | nhãn `text-h2` nửa mờ nửa đậm · hai tab chia đôi bề rộng, mỗi tab một **thanh accent 2px** ở góc trên-trái, nhãn `text-h3` · ảnh rộng đúng container, **không viền** |
+| 3 | Dải kênh | `base` | `sm` 64px | eyebrow mono **căn trái mép container** · lưới 4 cột × 3 hàng, icon **đơn sắc** · ghi chú |
 | 4 | Tính năng A | `band` | `lg` 112px | bộ khung đầy đủ, media rộng |
 | 5 | Tính năng B | `base` | `lg` | khung chữ như A, media **chia đôi** |
 | 6 | Tính năng C | `band` | `lg` | khung chữ như A, media **ba ảnh vuông** ba tông nền |
-| 7 | Bốn bước | `base` | `md` | eyebrow · h1 · 4 cột, số thứ tự `font-mono`. **Cố tình không ảnh** — nằm giữa hai section có hình nên đây là quãng nghỉ |
-| 8 | Nguyên tắc | `band` | `lg` | lưới 4 cột, **mỗi ô một tranh vuông** phía trên tiêu đề |
-| 9 | Bảng giá | `panel` **tràn mép** | `md` | h1 căn giữa · một thẻ giá · 2 nút · chữ nhỏ |
+| 7 | Bốn bước | `base` | `md` | eyebrow · h1 · 4 cột, số thứ tự `font-mono` màu mực, thanh accent `51×2` ở đỉnh từng ô. **Cố tình không ảnh** — nằm giữa hai section có hình nên đây là quãng nghỉ |
+| 8 | Nguyên tắc | `band` | `lg` | lưới 4 cột, mỗi ô một tranh **tỉ lệ 4/3** phía trên tiêu đề |
+| 9 | Bảng giá | `band` **tràn mép** | `md` | h1 căn giữa · thẻ giá `max-w-price` nền `neutral-100` pad 64, dấu góc `4×4` mực, **giá `text-h1` 54px** · 2 nút · chữ nhỏ trong **khối riêng xếp liền dưới thẻ** |
 | 10 | Kết trang | `base` | `xl` **216px** | `text-display` căn giữa · 2 nút · 6 tranh rải **khắp bề ngang**, cả trên lẫn dưới |
 
 **Hai nút ở mọi section có CTA, kể cả hero.** Nút lẻ trôi giữa khoảng trắng là dấu hiệu rõ nhất của trang dựng máy.
@@ -589,22 +610,31 @@ Phần media thì **mỗi khối một dạng**:
 
 | Khối | Dạng media | Sau media |
 |---|---|---|
-| A | một ảnh rộng trong giếng màu | lưới 3 cột, ô đầu có nền `neutral-100` |
-| B | **chia đôi**: ảnh trong panel trái, các mục mở/đóng bên phải, mục đang mở có nền | — |
-| C | **ba ảnh vuông**, mỗi ảnh một tông nền khác | lưới 3 cột, h3 lên `text-h2` |
+| A | một ảnh rộng trong khung viền `1px` | lưới 3 cột **không khoảng hở**, mỗi ô có thanh accent `82×2` + vuông `8×8`, ô đầu nền `neutral-900/5` |
+| B | **chia đôi 3/5 · 2/5 không khoảng hở**: ảnh trong panel trái, các mục mở/đóng bên phải; mỗi mục có thanh accent `18×2` + vuông `8×8`, mục đang mở nền `neutral-900/5` | — |
+| C | **ba giếng vuông** nền `neutral-100`, ảnh `cover`, 4 dấu góc mỗi giếng | lưới 3 cột, h3 lên `text-h2` (24px) |
 
 Lặp một dạng media cho cả ba khối là lỗi: khối thứ hai sẽ đọc y hệt khối thứ nhất, và trang mất một nhịp.
 
-**Lưới 3 cột không có `border-t`** và link "Tìm hiểu thêm" **không có mũi tên** — ba mũi tên cạnh nhau đọc thành hoa văn chứ không thành ba hành động.
+**Lưới 3 cột không có `border-t`** (thanh accent `2px` ở đỉnh từng ô thay cho nó) và link "Tìm hiểu thêm" **không có mũi tên** — ba mũi tên cạnh nhau đọc thành hoa văn chứ không thành ba hành động.
 
-**Giếng ảnh có tông màu riêng.** Ảnh chụp không bao giờ đặt trần lên nền trang. Nó nằm giữa một mảng màu rộng (`neutral-100` · `tone-sage` · `tone-sand`), với lề `p-4 md:p-12`, bo `8px` và `shadow-media`.
+**Khung ảnh: viền `1px neutral-300`, VUÔNG GÓC, KHÔNG padding, KHÔNG bóng — ảnh tràn sát viền.**
 
-Mảng màu quanh ảnh mới là thứ cho khối media sức nặng. Ảnh phủ kín giếng thì khối chỉ còn là cái khung, và ảnh dán phẳng trên nền trắng là lý do media của trang dựng máy trông rỗng. Ba khối tính năng dùng ba tông khác nhau để chúng không đọc thành một mảng duy nhất.
+Bản trước của mục này quy định ngược lại: ảnh nằm giữa một giếng tông màu với lề `p-4 md:p-12`, bo `8px` và `shadow-media`. Đo lại thì khung media của bề mặt tham chiếu là hộp `1171×530` viền `1px` và ảnh chiếm trọn bên trong — không có dải màu nào quanh ảnh. Dạng "ảnh bồi trong khung" làm khối cao thêm ~130px và đọc ra như ảnh treo tường, không phải màn hình sản phẩm.
+
+Nền `neutral-100` **chỉ lộ ra khi ảnh không phủ kín hộp** — giếng vuông và panel trái của dạng chia đôi. Đó đúng là hai chỗ bề mặt tham chiếu để nền lộ, và ở đó nó dùng **một** tông `neutral-100` cho cả ba, không phải ba tông khác nhau.
+
+| Dạng | Viền | Nền lộ | Dấu góc trong |
+|---|---|---|---|
+| ảnh rộng (khối tính năng) | `1px neutral-300` | không | không |
+| ảnh tab (section 2) | **không viền** | không | không |
+| giếng vuông (khối C) | không viền | `neutral-100` | 4 × `8×8 neutral-300` |
+| panel trái (khối B) | `1px neutral-300` | `neutral-100` | không |
 
 **Ảnh chụp sản phẩm — bắt buộc:**
 - Chụp **giao diện thật, dữ liệu thật, đúng ngôn ngữ trang đang render**. Ảnh tiếng Anh trên trang tiếng Việt là lỗi nội dung.
 - Mỗi khối một ảnh **khác nhau**. Dùng lại một ảnh cho hai khối là lỗi.
-- **Cấm** `object-cover`: ảnh đã cắt sẵn, cover phóng to rồi cắt tiếp và thường rơi vào một góc trắng. Dùng `h-auto w-full` kèm `width`/`height` gốc.
+- Mặc định `h-auto w-full` kèm `width`/`height` gốc — **không** `object-cover`: ảnh đã cắt sẵn, cover phóng to rồi cắt tiếp và thường rơi vào một góc trắng. Ngoại lệ duy nhất: ảnh **vuông** trong giếng vuông, nơi tỉ lệ đã trùng nên cover không cắt gì (`<ProductShot cover />`).
 - **Cấm** khung giữ chỗ nét đứt và "ảnh sản phẩm" dựng bằng `<div>` trong bản ship.
 - Tránh ảnh có thao tác phá huỷ (nút xoá màu đỏ) hay trạng thái rỗng.
 
@@ -623,13 +653,19 @@ Tiêu đề căn giữa để trống hai bên; tiêu đề 54px căn trái đ�
 | Ngữ nghĩa | `aria-hidden`, `alt=""`, `pointer-events-none select-none`, `loading="lazy"` |
 | Ngưỡng hiện | **`xl` (1280px) cho mọi vị trí.** Dưới ngưỡng container co lại nhưng tranh thì không, nên khoảng lệch âm kéo tranh vào đè lên chữ — đo ở 1024 thấy cả cụm hero đè lên h1. Dưới ngưỡng phải **ẩn hẳn**. |
 | Bố cục | **Chồng lấn thành cụm**, mỗi cụm có ít nhất một tấm tràn hẳn khỏi mép màn hình. Xếp rời từng tấm cách đều là thứ làm chúng trông như tranh treo tường. |
-| Chất ảnh | **Không dùng ảnh chụp hiện vật có nền phòng chụp** — mảng xám đó trên nền trắng của trang đọc ra như lỗi. Ưu tiên tranh, hoa văn dệt, trường màu. |
-| Đa dạng | Bộ ảnh phải **lệch nhau về thể loại** (tranh sơn dầu, hoa văn, trừu tượng, phong cảnh). Một bộ đồng chất trông như bộ sưu tập bảo tàng, không như art direction. |
+| **Không đè chữ** | Tấm nào cũng phải nằm **trên** dải chữ, **dưới** dải chữ, hoặc **ngoài bề ngang** dải chữ. Không có ngoại lệ. Ở section cao bằng màn hình thì đặt ra lề hai bên: vị trí dọc của chữ đổi theo chiều cao màn hình nên `top` cố định sẽ đè ở một cỡ màn hình nào đó. |
+| Lớp chứa | Tranh đi qua prop `art` của `Section` — lớp này phủ **toàn bộ chiều cao section**. Đặt tranh làm con của div nội dung là sai: div đó chỉ cao bằng dòng chữ nên `top`/`bottom` luôn rơi sát chữ, không đặt được ra ngoài. |
+| Chất ảnh | **CHỈ nét mực nền trong suốt.** Khối màu đặc bị cấm. Đo bề mặt tham chiếu: tranh quanh tiêu đề là nét trên nền trong suốt, nó tan vào nền trắng và lùi sau chữ. Khối màu đặc thành vật thể thứ hai cạnh tiêu đề, hút mắt mạnh hơn cả chữ, và trên trang CRM đọc ra như ảnh nhặt đại về dán vào. Kiểm bằng máy: alpha trong suốt > 25% và điểm có màu < 5%. |
+| Đa dạng | Đa dạng **chủ đề**, đồng nhất **chất liệu**. Bản trước của mục này bảo trộn sơn dầu / hoa văn / trừu tượng cho "lệch nhau" — trộn chất liệu chính là thứ làm hero và section kết trông như tường tranh. |
 | Tràn mép | Được phép tràn khỏi container; section phải có `overflow-x-clip` nếu không trang trượt ngang |
 
 Loại chủ đề không hợp trang bán hàng: chân dung nhìn thẳng, tượng tôn giáo, khoả thân, thú bị thương. Trang trí phải lùi lại, không kể chuyện riêng của nó.
 
-**Đo được sức nặng.** Trang trí tồn tại để bù mảng tối và mảng màu. Đo trên ảnh chụp toàn trang: tỉ lệ điểm ảnh tối (`L < 120`) và điểm ảnh có màu (`saturation > 0.25`). Bề mặt tham chiếu ở 2.5% tối / 3.3% có màu. Lệch xuống dưới một nửa thì trang đọc ra nhạt và loãng, dù mọi token đều đúng.
+**Đo được sức nặng.** Đo trên ảnh chụp toàn trang: tỉ lệ điểm ảnh tối (`L < 120`) và điểm ảnh có màu (`saturation > 0.25`). Bề mặt tham chiếu ở **2.5% tối / 3.3% có màu / 77.6% trắng**.
+
+Hiện tại: **2.5% tối** (khớp đúng) / **0.5% có màu** / 88.4% trắng. Mảng tối do nét mực lo xong; mảng màu thì không — và nó KHÔNG phải việc của trang trí. Đo riêng ảnh sản phẩm: `inbox.png` 88% trắng 0.6% màu, `feature-contacts.png` 95.5% trắng 0.7% màu. Giao diện dashboard hiện là nền sáng gần như không màu, nên không khung ảnh nào, không cách cắt nào kéo con số đó lên được. Chốt lại: **mảng màu của trang phụ thuộc vào revamp dashboard, không phải vào landing.**
+
+Tái lập bộ tranh: `scripts/make-landing-art.py --build`.
 
 ### §7.3 Portal help center
 

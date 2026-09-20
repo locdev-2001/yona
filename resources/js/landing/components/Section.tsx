@@ -1,31 +1,40 @@
 import type { ReactNode } from 'react';
 
 /**
- * Khung lưới của trang: hai đường kẻ dọc ở đúng mép container, chạy suốt chiều
- * cao mỗi section, với dấu cộng ở bốn góc.
+ * Màu của dấu cấu trúc. Bề mặt tham chiếu luân phiên hai màu nhận diện theo
+ * dòng sản phẩm mà section đang nói tới, và một màu xám cho section trung tính
+ * — nhờ vậy mắt nhận ra "khối này vẫn thuộc mạch hội thoại" mà không cần chữ.
  *
- * Đây không phải trang trí. Bề mặt công khai có nhiều khoảng trắng; không có
- * khung, mỗi section trôi nổi riêng lẻ và trang mất cấu trúc.
+ * Yona có hai mạch: hội thoại (primary) và hồ sơ/dữ liệu (navy). KHÔNG dùng
+ * cyan ở đây: §1 chốt cyan chỉ được đặt trên nền navy.
  */
-function Rails() {
-    return (
-        <div aria-hidden className="pointer-events-none absolute inset-0 hidden md:block">
-            <span className="absolute inset-y-0 left-0 w-px bg-neutral-300" />
-            <span className="absolute inset-y-0 right-0 w-px bg-neutral-300" />
-            <PlusMark className="-left-1 -top-1" />
-            <PlusMark className="-right-1 -top-1" />
-            <PlusMark className="-left-1 -bottom-1" />
-            <PlusMark className="-right-1 -bottom-1" />
-        </div>
-    );
-}
+export const ACCENT = {
+    primary: 'bg-primary-600',
+    navy: 'bg-navy',
+    neutral: 'bg-neutral-300',
+} as const;
 
-function PlusMark({ className }: { className: string }) {
+export type Accent = keyof typeof ACCENT;
+
+/**
+ * Bốn hình vuông đặc 8x8 ở bốn góc section, thụt 16px khỏi mép MÀN HÌNH (không
+ * phải mép container).
+ *
+ * Đo trên bề mặt tham chiếu: toàn trang không có một đường kẻ dọc 1px nào và
+ * không có hairline ngang nào — cấu trúc chỉ được đánh bằng những dấu vuông
+ * này. Hai đường kẻ dọc chạy suốt mỗi section (bản trước của tệp này) là một hệ
+ * khác và rậm hơn: nó vẽ ra cái khung, thay vì chỉ đánh dấu bốn góc.
+ */
+function CornerMarks({ accent }: { accent: Accent }) {
+    const mark = `absolute block size-2 ${ACCENT[accent]}`;
+
     return (
-        <span className={`absolute block size-2 ${className}`}>
-            <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-neutral-400" />
-            <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-neutral-400" />
-        </span>
+        <div aria-hidden className="pointer-events-none absolute inset-4 hidden md:block">
+            <span className={`${mark} left-0 top-0`} />
+            <span className={`${mark} right-0 top-0`} />
+            <span className={`${mark} bottom-0 left-0`} />
+            <span className={`${mark} bottom-0 right-0`} />
+        </div>
     );
 }
 
@@ -35,7 +44,6 @@ const SURFACE = {
     panel: 'bg-neutral-100',
 } as const;
 
-// Nhịp đo từ bề mặt tham chiếu, không chọn bừa.
 const RHYTHM = {
     xl: 'py-24 md:py-[13.5rem]', // 216px — riêng section kết
     lg: 'py-16 md:py-28', // 112px — khối tính năng
@@ -48,7 +56,26 @@ interface SectionProps {
     children: ReactNode;
     surface?: keyof typeof SURFACE;
     rhythm?: keyof typeof RHYTHM;
-    rails?: boolean;
+    accent?: Accent;
+    marks?: boolean;
+    /**
+     * Section chiếm đúng một màn hình: cao tối thiểu bằng viewport trừ 64px
+     * thanh nav cố định, nội dung căn giữa theo chiều dọc.
+     *
+     * `min-h` chứ không phải `h`: chữ dài hơn dự kiến thì section cao thêm,
+     * còn hơn là chữ bị cắt. `dvh` chứ không phải `vh`: trên iOS `vh` tính cả
+     * dải địa chỉ đang ẩn, nên hero bị đẩy quá một màn hình.
+     */
+    fill?: boolean;
+    /**
+     * Tranh trang trí, đặt trong một lớp phủ TOÀN BỘ chiều cao section.
+     *
+     * Phải là lớp riêng chứ không phải con của div nội dung: div nội dung chỉ
+     * cao bằng dòng chữ, nên `top`/`bottom` của tranh luôn rơi sát chữ và
+     * không có cách nào đặt tranh ra phía trên hay phía dưới khối chữ. Nhịp
+     * 216px của section kết nằm NGOÀI div đó.
+     */
+    art?: ReactNode;
     /**
      * Lớp hoa văn trang trí phủ toàn bộ section, nằm SAU nội dung.
      *
@@ -65,37 +92,50 @@ export function Section({
     children,
     surface = 'base',
     rhythm = 'lg',
-    rails = true,
+    accent = 'neutral',
+    marks = true,
+    fill = false,
+    art,
     backdrop,
     className = '',
 }: SectionProps) {
-    // overflow-x-clip: dấu cộng ở góc và ảnh trang trí thò ra ngoài container,
-    // khi màn hình hẹp hơn 1170px thì phần thò ra đó đẩy cả trang trượt ngang.
     return (
         <section id={id} className={`relative ${SURFACE[surface]} overflow-x-clip`}>
             {backdrop && <div aria-hidden className={`pointer-events-none absolute inset-0 ${backdrop}`} />}
-            <div className={`relative mx-auto max-w-container ${RHYTHM[rhythm]}`}>
-                <div className={`relative px-4 md:px-10 ${className}`}>
-                    {rails && <Rails />}
-                    {children}
+            {marks && <CornerMarks accent={accent} />}
+            {art && (
+                <div aria-hidden className="pointer-events-none absolute inset-0">
+                    {art}
                 </div>
+            )}
+            <div
+                className={`relative mx-auto max-w-container ${RHYTHM[rhythm]} ${
+                    fill ? 'flex min-h-[calc(100dvh-4rem)] flex-col justify-center' : ''
+                }`}
+            >
+                <div className={`relative px-4 md:px-10 ${className}`}>{children}</div>
             </div>
         </section>
     );
 }
 
 /**
- * Nhãn nhỏ in hoa, mở đầu bằng một chấm vuông màu thương hiệu.
+ * Nhãn nhỏ in hoa, mở đầu bằng một vuông đặc 8x8 cùng màu với dấu góc section.
  *
- * Font mono tách nó khỏi chữ thân; chấm vuông là thứ neo nó vào lề trái và cho
- * mắt một điểm bắt đầu. Icon minh hoạ ở vị trí này lại kể một nội dung thứ hai
- * cạnh nhãn, thừa.
+ * Đo được: 12px, lh 1.0, ls +0.05em, weight thường, màu MỰC — không phải xám.
+ * Nhãn xám nhạt tụt xuống hàng chú thích; ở bề mặt tham chiếu nó là dòng đầu
+ * của khối và đọc ngang hàng tiêu đề.
  */
-export function Eyebrow({ children }: { children: ReactNode }) {
+export function Eyebrow({ children, accent = 'primary' }: { children: ReactNode; accent?: Accent }) {
     return (
-        <p className="flex items-center gap-2 font-mono text-eyebrow font-medium uppercase text-neutral-500">
-            <span aria-hidden className="size-1.5 shrink-0 bg-primary-600" />
+        <span className="inline-flex items-center gap-2 font-mono text-eyebrow uppercase text-neutral-900">
+            <span aria-hidden className={`size-2 shrink-0 ${ACCENT[accent]}`} />
             {children}
-        </p>
+        </span>
     );
+}
+
+/** Hai nhãn cạnh nhau: section nói về cả hai mạch sản phẩm cùng lúc. */
+export function EyebrowPair({ children }: { children: ReactNode }) {
+    return <p className="flex flex-wrap items-center gap-x-6 gap-y-2">{children}</p>;
 }

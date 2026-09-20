@@ -2074,7 +2074,7 @@ const messages: Record<string, unknown> = {
             }
         },
         "PAGINATION_FOOTER": {
-            "SHOWING": "Showing {startItem} - {endItem} of {totalItems} contacts"
+            "SHOWING": "Đang hiển thị {startItem} - {endItem} trong {totalItems} liên hệ"
         },
         "FILTER": {
             "NAME": "Tên",
@@ -7130,8 +7130,7 @@ const messages: Record<string, unknown> = {
             "fine": "Bộ đếm hội thoại vẫn chạy để chúng tôi hiểu cách bạn dùng, nhưng không có hạn mức nào đang áp."
         },
         "closing": {
-            "title": "Thử bằng chính tin nhắn của bạn",
-            "subtitle": "Kết nối một kênh, đổ hội thoại thật vào và xem nó chạy. Mất vài phút.",
+            "title": "Thử với tin nhắn của bạn",
             "cta_primary": "Dùng thử miễn phí",
             "cta_secondary": "Đăng nhập"
         },
@@ -7690,8 +7689,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "PAGINATION_FOOTER": {
-        "SHOWING": "Showing {startItem} - {endItem} of {totalItems} items",
-        "CURRENT_PAGE_INFO": "{currentPage} of {totalPages} pages"
+        "SHOWING": "Đang hiển thị {startItem} - {endItem} trong {totalItems} mục",
+        "CURRENT_PAGE_INFO": "Trang {currentPage} trong {totalPages}"
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Tìm quốc gia",
