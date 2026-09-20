@@ -14,6 +14,8 @@ return [
         'dashboard' => 'Vào Dashboard',
         'back_to_home' => 'Về trang chủ',
         'language' => 'Ngôn ngữ',
+        'demo' => 'Đặt lịch demo',
+        'zalo' => 'Zalo cá nhân',
     ],
 
     'cta' => [
@@ -175,5 +177,159 @@ return [
         'account' => 'Tài khoản',
         'language' => 'Ngôn ngữ',
         'note' => 'Sản phẩm của người Việt, làm cho thị trường Việt.',
+    ],
+
+    'demo' => [
+        'meta' => [
+            'title' => 'Đặt lịch demo Yona · 15 phút, kết nối Zalo ngay trong buổi gọi',
+            'description' => 'Để lại tên và số điện thoại, chúng tôi gọi lại trong giờ làm việc. Buổi gọi 15 phút, kết nối Zalo của bạn ngay tại chỗ.',
+        ],
+        'eyebrow' => 'Đặt lịch demo',
+        'title' => 'Để lại số, chúng tôi gọi lại',
+        'lead' => 'Một buổi 15 phút. Chúng tôi kết nối Zalo của bạn ngay trong buổi gọi, không cần cài gì trước.',
+        'promise' => [
+            'connect' => 'Quét QR kết nối Zalo cá nhân ngay trong buổi gọi, bạn xem tin nhắn thật chạy về hộp thư.',
+            'fit' => 'Nói thẳng chỗ nào Yona làm được, chỗ nào chưa. Chưa có thì chúng tôi nói là chưa có.',
+            'callback' => 'Gọi lại trong giờ làm việc, từ 8h tới 18h các ngày trong tuần.',
+        ],
+        'form' => [
+            'legend' => 'Thông tin liên hệ',
+            'name_label' => 'Tên bạn',
+            'name_placeholder' => 'Ví dụ: Trần Thu Hà',
+            'phone_label' => 'Số điện thoại',
+            'phone_placeholder' => '0912 345 678',
+            'phone_hint' => 'Số này cũng là số Zalo thì tốt nhất, chúng tôi nhắn trước khi gọi.',
+            'phone_invalid' => 'Số điện thoại chưa đúng. Nhập dạng 0912345678 hoặc +84912345678.',
+            'note_label' => 'Bạn đang bán gì, đang gặp vướng ở đâu (không bắt buộc)',
+            'note_placeholder' => 'Ví dụ: shop mỹ phẩm, ba bạn cùng trả lời một số Zalo, hay bị trùng khách.',
+            'honeypot_label' => 'Website',
+            'submit' => 'Gửi và chờ gọi lại',
+            'required_note' => 'Dấu * là ô bắt buộc.',
+            'privacy' => 'Chúng tôi dùng số của bạn để liên hệ về Yona, không bán cho ai và không thêm vào danh sách quảng cáo.',
+            'failed' => 'Gửi không thành công. Bạn thử lại, hoặc nhắn Zalo và gọi hotline bên dưới, cách nào cũng tới đúng người.',
+        ],
+        'alt' => [
+            'title' => 'Muốn nhắn ngay thay vì chờ gọi lại',
+            'hotline' => 'Gọi hotline',
+            'zalo' => 'Nhắn Zalo',
+            'note' => 'Bạn cũng có thể bấm bong bóng chat ở góc phải, đó chính là Yona đang chạy thật.',
+        ],
+        'thanks' => [
+            'meta' => [
+                'title' => 'Đã nhận yêu cầu đặt lịch demo · Yona',
+                'description' => 'Chúng tôi đã nhận thông tin của bạn và sẽ gọi lại trong giờ làm việc.',
+            ],
+            'eyebrow' => 'Đã nhận',
+            'title' => 'Đã nhận. Chúng tôi gọi lại trong giờ làm việc.',
+            'lead' => 'Yêu cầu của bạn đã nằm trong hộp thư của chúng tôi, cùng chỗ với tin nhắn khách hàng. Không cần gửi lại.',
+            'next' => [
+                'when' => 'Trong giờ làm việc, từ 8h tới 18h các ngày trong tuần.',
+                'how' => 'Chúng tôi nhắn Zalo trước rồi mới gọi, để bạn biết ai đang gọi.',
+                'prepare' => 'Bạn chuẩn bị điện thoại có Zalo đang đăng nhập là đủ.',
+            ],
+            'cta_home' => 'Về trang chủ',
+            'cta_zalo' => 'Xem Yona làm gì với Zalo cá nhân',
+        ],
+    ],
+
+    'zalo_page' => [
+        'meta' => [
+            'title' => 'Quản lý khách Zalo cá nhân · Yona',
+            'description' => 'Gom tin nhắn Zalo cá nhân của cả nhóm về một hộp thư dùng chung. Quét QR một lần, khách thành hồ sơ, số điện thoại là khoá chống trùng.',
+        ],
+        'hero' => [
+            'eyebrow' => 'Zalo cá nhân',
+            'title_a' => 'Bán bằng Zalo cá nhân,',
+            'title_b' => 'quản như một hộp thư',
+            'lead' => 'Quét QR một lần. Tin nhắn khách từ Zalo cá nhân đổ về hộp thư dùng chung, ai trả lời cũng thấy, và mỗi khách tự thành một hồ sơ.',
+            'cta_primary' => 'Đặt lịch demo',
+            'cta_secondary' => 'Xem các kênh khác',
+        ],
+        'problem' => [
+            'eyebrow' => 'Vấn đề',
+            'title' => 'Zalo cá nhân bán tốt, nhưng không quản được',
+            'items' => [
+                'mixed' => [
+                    'title' => 'Tin khách lẫn tin riêng',
+                    'description' => 'Đơn hàng nằm giữa tin gia đình và nhóm bạn. Tìm lại một cuộc trao đổi ba ngày trước là dò tay.',
+                ],
+                'shared' => [
+                    'title' => 'Nhiều người, một máy',
+                    'description' => 'Cả nhóm dùng chung một điện thoại để trả lời. Ai đang cầm máy thì người khác phải chờ.',
+                ],
+                'blind' => [
+                    'title' => 'Không ai biết ai đã trả lời',
+                    'description' => 'Hai người trả lời cùng một khách hai kiểu, hoặc không ai trả lời vì tưởng người kia đã làm.',
+                ],
+                'lost' => [
+                    'title' => 'Khách rơi không dấu vết',
+                    'description' => 'Người hỏi giá rồi im. Không có chỗ nào ghi lại để hôm sau nhắn lại, nên khách đó coi như mất.',
+                ],
+            ],
+        ],
+        'solution' => [
+            'eyebrow' => 'Cách Yona giải',
+            'title_a' => 'Một lần quét QR,',
+            'title_b' => 'cả nhóm dùng chung một hộp thư',
+            'body' => 'Yona nối vào đúng tài khoản Zalo bạn đang bán, không đổi số, không bắt khách thêm bạn mới. Tin nhắn vào ra vẫn ở Zalo, chỉ thêm một bản trong hộp thư để cả nhóm cùng thấy.',
+            'cards' => [
+                'qr' => [
+                    'title' => 'Quét QR một lần',
+                    'body' => 'Đăng nhập bằng mã QR như khi mở Zalo trên máy tính. Không cần đăng ký gì với Zalo.',
+                ],
+                'shared' => [
+                    'title' => 'Hộp thư dùng chung',
+                    'body' => 'Mỗi người một tài khoản Yona, cùng nhìn một hàng hội thoại, thấy rõ ai đang trả lời ai.',
+                ],
+                'draft' => [
+                    'title' => 'Người lạ là liên hệ nháp',
+                    'body' => 'Người mới nhắn lần đầu chưa vào danh sách khách. Xác nhận có nhu cầu thật rồi mới thành hồ sơ.',
+                ],
+                'dedupe' => [
+                    'title' => 'Số điện thoại chống trùng',
+                    'body' => 'Cùng một người nhắn ở Zalo và website vẫn gộp về một hồ sơ, vì khoá là số điện thoại.',
+                ],
+            ],
+        ],
+        'caps' => [
+            'eyebrow' => 'Làm được thật',
+            'title' => 'Những gì Yona làm được trên Zalo cá nhân',
+            'note' => 'Danh sách này là năng lực đang chạy trong sản phẩm, không phải kế hoạch.',
+            'items' => [
+                'recall' => [
+                    'title' => 'Thu hồi hai chiều',
+                    'description' => 'Bạn thu hồi tin trong Yona thì tin trên Zalo cũng mất, và ngược lại.',
+                ],
+                'reaction' => [
+                    'title' => 'Thả cảm xúc',
+                    'description' => 'Cảm xúc khách thả hiện trong hộp thư, và bạn thả lại được từ Yona.',
+                ],
+                'group' => [
+                    'title' => 'Tin nhóm hiện tên người gửi',
+                    'description' => 'Nhóm nhiều người vẫn biết câu nào của ai, không phải đoán theo lượt.',
+                ],
+                'rich' => [
+                    'title' => 'Vị trí, danh thiếp, thẻ ngân hàng',
+                    'description' => 'Những thứ khách gửi kèm đều hiện đúng dạng, không thành một dòng chữ trống.',
+                ],
+            ],
+        ],
+        'risk' => [
+            'eyebrow' => 'Nói trước',
+            'title' => 'Zalo cá nhân không có API chính thức',
+            'body' => 'Chúng tôi nói thẳng để bạn quyết định với đủ thông tin, thay vì tự phát hiện sau khi đã chuyển việc sang.',
+            'points' => [
+                'unofficial' => 'Kết nối đi qua đường không chính thức. Zalo có thể đổi cách hoạt động bất cứ lúc nào và kết nối sẽ gián đoạn.',
+                'ban' => 'Tài khoản Zalo có thể bị hạn chế hoặc khóa. Rủi ro này có thật và không ai loại bỏ được nó.',
+                'keep' => 'Tin nhắn đã về Yona thì nằm lại trong hộp thư và hồ sơ khách, kể cả khi kết nối dừng.',
+                'oa' => 'Cần một kênh chính thức và ổn định lâu dài thì Zalo OA là đường đúng, và đó là việc khác.',
+            ],
+        ],
+        'closing' => [
+            'title' => 'Xem thử với tin nhắn Zalo của bạn',
+            'lead' => 'Một buổi 15 phút. Chúng tôi quét QR ngay trong buổi gọi để bạn thấy tin thật chạy về.',
+            'cta_primary' => 'Đặt lịch demo',
+            'cta_secondary' => 'Về trang chủ',
+        ],
     ],
 ];

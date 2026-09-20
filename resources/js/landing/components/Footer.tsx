@@ -9,8 +9,10 @@ export function Footer({ config }: { config: LandingConfig }) {
         {
             heading: strings.footer.product,
             links: [
-                { label: strings.nav.features, href: '#features' },
-                { label: strings.nav.pricing, href: '#pricing' },
+                { label: strings.nav.features, href: `${urls.home}#features` },
+                { label: strings.nav.zalo, href: urls.zalo },
+                { label: strings.nav.pricing, href: `${urls.home}#pricing` },
+                { label: strings.nav.demo, href: urls.demo },
             ],
         },
         {

@@ -15,9 +15,84 @@ export interface FeatureStrings {
     cards: Record<string, Card>;
 }
 
+interface Meta {
+    title: string;
+    description: string;
+}
+
+export interface Item {
+    title: string;
+    description: string;
+}
+
+/** Trang đặt lịch demo: một màn hình, một khối form. */
+export interface DemoStrings {
+    meta: Meta;
+    eyebrow: string;
+    title: string;
+    lead: string;
+    promise: Record<'connect' | 'fit' | 'callback', string>;
+    form: {
+        legend: string;
+        name_label: string;
+        name_placeholder: string;
+        phone_label: string;
+        phone_placeholder: string;
+        phone_hint: string;
+        phone_invalid: string;
+        note_label: string;
+        note_placeholder: string;
+        honeypot_label: string;
+        submit: string;
+        required_note: string;
+        privacy: string;
+        failed: string;
+    };
+    alt: { title: string; hotline: string; zalo: string; note: string };
+    thanks: {
+        meta: Meta;
+        eyebrow: string;
+        title: string;
+        lead: string;
+        next: Record<'when' | 'how' | 'prepare', string>;
+        cta_home: string;
+        cta_zalo: string;
+    };
+}
+
+/** Trang một-kênh cho Zalo cá nhân. */
+export interface ZaloPageStrings {
+    meta: Meta;
+    hero: { eyebrow: string; title_a: string; title_b: string; lead: string; cta_primary: string; cta_secondary: string };
+    problem: { eyebrow: string; title: string; items: Record<'mixed' | 'shared' | 'blind' | 'lost', Item> };
+    solution: FeatureStrings;
+    caps: {
+        eyebrow: string;
+        title: string;
+        note: string;
+        items: Record<'recall' | 'reaction' | 'group' | 'rich', Item>;
+    };
+    risk: {
+        eyebrow: string;
+        title: string;
+        body: string;
+        points: Record<'unofficial' | 'ban' | 'keep' | 'oa', string>;
+    };
+    closing: { title: string; lead: string; cta_primary: string; cta_secondary: string };
+}
+
 export interface LandingStrings {
-    meta: { title: string; description: string };
-    nav: { features: string; pricing: string; login: string; register: string; dashboard: string; language: string };
+    meta: Meta;
+    nav: {
+        features: string;
+        pricing: string;
+        login: string;
+        register: string;
+        dashboard: string;
+        language: string;
+        demo: string;
+        zalo: string;
+    };
     cta: { primary: string; secondary: string; learn: string };
     hero: {
         title_lead: string;
@@ -55,6 +130,8 @@ export interface LandingStrings {
     };
     closing: { title: string; subtitle: string; cta_primary: string; cta_secondary: string };
     footer: { tagline: string; copyright: string; product: string; account: string; language: string; note: string };
+    demo: DemoStrings;
+    zalo_page: ZaloPageStrings;
 }
 
 export interface LandingLocale {
@@ -63,14 +140,35 @@ export interface LandingLocale {
     url: string;
 }
 
+/** Trang nào đang được render. Một bundle cho cả bề mặt, blade đẩy khoá này xuống. */
+export type LandingPage = 'home' | 'zalo_personal' | 'demo' | 'demo_thanks';
+
+/**
+ * Form gửi kiểu native: server validate rồi redirect kèm lỗi và giá trị cũ.
+ * Không có state form trong React, nên không có lớp xử lý lỗi mạng ở client và
+ * tắt JS vẫn gửi được.
+ */
+export interface LandingForm {
+    action: string;
+    csrf: string;
+    errors: Record<string, string[]>;
+    old: { name: string; phone: string; note: string };
+    failed: boolean;
+}
+
 export interface LandingConfig {
+    page: LandingPage;
+    meta: Meta;
     brand: { name: string; logo: string };
     isAuthenticated: boolean;
-    urls: { home: string; login: string; register: string; dashboard: string };
+    urls: { home: string; login: string; register: string; dashboard: string; demo: string; zalo: string };
+    /** Rỗng khi chưa cấu hình số thật: trang ẩn khối liên hệ thay vì bày số không ai bắt máy. */
+    contact: { hotline: string | null; zaloUrl: string | null };
     strings: LandingStrings;
     year: number;
     locale: string;
     locales: LandingLocale[];
+    form?: LandingForm;
 }
 
 declare global {

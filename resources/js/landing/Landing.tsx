@@ -1,8 +1,7 @@
 import { landingConfig } from './config';
 import { Feature } from './components/Feature';
-import { Footer } from './components/Footer';
-import { Header } from './components/Header';
 import { Hero } from './components/Hero';
+import { Shell } from './components/Shell';
 import { Channels } from './components/sections/Channels';
 import { Closing } from './components/sections/Closing';
 import { Flow } from './components/sections/Flow';
@@ -23,11 +22,8 @@ export function Landing() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col pt-16">
-            <Header config={config} />
-
-            <main className="flex-1">
-                <Hero config={config} />
+        <Shell config={config}>
+            <Hero config={config} />
                 <ProductTabs strings={strings.showcase} />
                 <Channels strings={strings.channels} />
 
@@ -102,13 +98,10 @@ export function Landing() {
                     }}
                 />
 
-                <Flow strings={strings.flow} />
-                <Rules strings={strings.rules} />
-                <Pricing config={config} />
-                <Closing config={config} />
-            </main>
-
-            <Footer config={config} />
-        </div>
+            <Flow strings={strings.flow} />
+            <Rules strings={strings.rules} />
+            <Pricing config={config} />
+            <Closing config={config} />
+        </Shell>
     );
 }

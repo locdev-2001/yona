@@ -304,6 +304,11 @@ const messages: Record<string, unknown> = {
             "MESSAGE_CLOUD": "You are not part of any accounts right now. If you think this is a mistake, please reach out to our support team.",
             "MESSAGE_SELF_HOSTED": "You are not part of any accounts right now. Please reach out to your administrator.",
             "LOGOUT": "Log out"
+        },
+        "PLACEHOLDER": {
+            "TITLE": "This page is not ready yet",
+            "DESCRIPTION": "We are still finishing this part. You can go back to all conversations to keep working.",
+            "BACK": "Back to all conversations"
         }
     },
     "ASSIGNMENT_POLICY": {
@@ -6981,7 +6986,9 @@ const messages: Record<string, unknown> = {
             "register": "Try it free",
             "dashboard": "Go to dashboard",
             "back_to_home": "Back to home",
-            "language": "Language"
+            "language": "Language",
+            "demo": "Book a demo",
+            "zalo": "Personal Zalo"
         },
         "cta": {
             "primary": "Try it free",
@@ -7143,6 +7150,158 @@ const messages: Record<string, unknown> = {
             "account": "Account",
             "language": "Language",
             "note": "Built in Vietnam, for the Vietnamese market."
+        },
+        "demo": {
+            "meta": {
+                "title": "Book a Yona demo · 15 minutes, Zalo connected on the call",
+                "description": "Leave your name and phone number and we call back during business hours. A 15 minute call, with your Zalo connected on the spot."
+            },
+            "eyebrow": "Book a demo",
+            "title": "Leave your number, we call back",
+            "lead": "One 15 minute call. We connect your Zalo account during the call, with nothing to install beforehand.",
+            "promise": {
+                "connect": "We scan the QR code on the call, so you watch real messages land in the inbox.",
+                "fit": "We say plainly what Yona does and what it does not do yet.",
+                "callback": "We call back during business hours, 8am to 6pm on weekdays."
+            },
+            "form": {
+                "legend": "Contact details",
+                "name_label": "Your name",
+                "name_placeholder": "For example: Tran Thu Ha",
+                "phone_label": "Phone number",
+                "phone_placeholder": "0912 345 678",
+                "phone_hint": "A number that also has Zalo works best, we message before calling.",
+                "phone_invalid": "That phone number is not valid. Use 0912345678 or +84912345678.",
+                "note_label": "What you sell and where it hurts (optional)",
+                "note_placeholder": "For example: a cosmetics shop, three people answering one Zalo account, duplicate customers.",
+                "honeypot_label": "Website",
+                "submit": "Send and wait for our call",
+                "required_note": "Fields marked * are required.",
+                "privacy": "We use your number to contact you about Yona. We do not sell it and do not add it to any marketing list.",
+                "failed": "Sending failed. Try again, or use the Zalo and hotline buttons below, both reach the same people."
+            },
+            "alt": {
+                "title": "Rather message us now than wait for a call",
+                "hotline": "Call the hotline",
+                "zalo": "Message on Zalo",
+                "note": "You can also use the chat bubble in the corner. That is Yona running in production."
+            },
+            "thanks": {
+                "meta": {
+                    "title": "Demo request received · Yona",
+                    "description": "We have your details and will call back during business hours."
+                },
+                "eyebrow": "Received",
+                "title": "Got it. We call back during business hours.",
+                "lead": "Your request is now in our inbox, next to real customer messages. No need to send it again.",
+                "next": {
+                    "when": "During business hours, 8am to 6pm on weekdays.",
+                    "how": "We send a Zalo message first so you know who is calling.",
+                    "prepare": "All you need is a phone with Zalo logged in."
+                },
+                "cta_home": "Back to home",
+                "cta_zalo": "See what Yona does with personal Zalo"
+            }
+        },
+        "zalo_page": {
+            "meta": {
+                "title": "Manage personal Zalo customers · Yona",
+                "description": "Bring your team personal Zalo messages into one shared inbox. Scan a QR code once, customers become records, the phone number is the dedupe key."
+            },
+            "hero": {
+                "eyebrow": "Personal Zalo",
+                "title_a": "Sell on personal Zalo,",
+                "title_b": "run it like an inbox",
+                "lead": "Scan a QR code once. Customer messages from personal Zalo land in a shared inbox everyone can see, and each customer becomes a record.",
+                "cta_primary": "Book a demo",
+                "cta_secondary": "See other channels"
+            },
+            "problem": {
+                "eyebrow": "The problem",
+                "title": "Personal Zalo sells well but cannot be managed",
+                "items": {
+                    "mixed": {
+                        "title": "Customer chats mixed with private ones",
+                        "description": "Orders sit between family chats and group threads. Finding a conversation from three days ago means scrolling."
+                    },
+                    "shared": {
+                        "title": "Several people, one phone",
+                        "description": "The team shares one handset to reply. Whoever holds it, everyone else waits."
+                    },
+                    "blind": {
+                        "title": "Nobody knows who replied",
+                        "description": "Two people answer the same customer differently, or nobody answers because each assumed the other did."
+                    },
+                    "lost": {
+                        "title": "Customers disappear without a trace",
+                        "description": "Someone asks the price then goes quiet. Nothing records it for a follow up, so that customer is gone."
+                    }
+                }
+            },
+            "solution": {
+                "eyebrow": "How Yona solves it",
+                "title_a": "One QR scan,",
+                "title_b": "one inbox for the whole team",
+                "body": "Yona connects to the exact Zalo account you already sell on. No new number, no asking customers to add anyone. Messages still live in Zalo, with a copy in the inbox so the team can see them.",
+                "cards": {
+                    "qr": {
+                        "title": "Scan a QR code once",
+                        "body": "Log in with a QR code, the same way you open Zalo on a desktop. Nothing to register with Zalo."
+                    },
+                    "shared": {
+                        "title": "A shared inbox",
+                        "body": "Each person gets their own Yona account and they all see one conversation list, including who is replying to whom."
+                    },
+                    "draft": {
+                        "title": "Strangers stay draft contacts",
+                        "body": "A first time sender is not a customer yet. They become a record once the intent is real."
+                    },
+                    "dedupe": {
+                        "title": "Phone number prevents duplicates",
+                        "body": "The same person writing on Zalo and on the website still merges into one record, because the key is the phone number."
+                    }
+                }
+            },
+            "caps": {
+                "eyebrow": "Actually works",
+                "title": "What Yona does on personal Zalo",
+                "note": "This list is what ships today, not a roadmap.",
+                "items": {
+                    "recall": {
+                        "title": "Two way message recall",
+                        "description": "Unsend in Yona and it disappears in Zalo, and the other way round."
+                    },
+                    "reaction": {
+                        "title": "Reactions",
+                        "description": "Reactions from customers show in the inbox, and you can react back from Yona."
+                    },
+                    "group": {
+                        "title": "Group messages name the sender",
+                        "description": "In a busy group you still see who wrote what, without guessing by turn."
+                    },
+                    "rich": {
+                        "title": "Location, contact cards, bank cards",
+                        "description": "What customers attach renders as itself instead of an empty line of text."
+                    }
+                }
+            },
+            "risk": {
+                "eyebrow": "Said upfront",
+                "title": "Personal Zalo has no official API",
+                "body": "We say this plainly so you decide with full information, instead of finding out after moving your work over.",
+                "points": {
+                    "unofficial": "The connection uses an unofficial path. Zalo can change how it works at any time and the connection will break.",
+                    "ban": "A Zalo account can be limited or locked. That risk is real and nobody can remove it.",
+                    "keep": "Messages already in Yona stay in the inbox and in the customer records, even if the connection stops.",
+                    "oa": "If you need an official channel that is stable long term, Zalo OA is the right road, and that is a different job."
+                }
+            },
+            "closing": {
+                "title": "See it with your own Zalo messages",
+                "lead": "One 15 minute call. We scan the QR code during the call so you watch real messages arrive.",
+                "cta_primary": "Book a demo",
+                "cta_secondary": "Back to home"
+            }
         }
     },
     "LOGIN": {

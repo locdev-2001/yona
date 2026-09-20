@@ -46,6 +46,13 @@ CHU_LON_PX = 18.0
 
 # đo 20/09 · intercom.com · 1440px · đã đo 2 lần
 SUC_NANG_THAM_CHIEU = {"trang": 77.6, "toi": 2.5, "mau": 3.3}
+# đo 20/09 · intercom.com · 390px · đã đo 2 lần (hai lượt ra số trùng khít)
+#
+# Dải này phụ thuộc viewport, không phải một hằng số của trang: CÙNG một trang
+# tham chiếu đọc 3.2% tối ở 1440px và 4.8% ở 390px, vì màn hẹp thì chữ chiếm tỉ
+# lệ diện tích lớn hơn hẳn. Đọ ảnh chụp 390px với dải đo ở 1440px làm mọi trang
+# lành đều trượt.
+SUC_NANG_THAM_CHIEU_HEP = {"trang": 76.3, "toi": 4.8, "mau": 2.6}
 # ta chọn — dải chấp nhận quanh tham chiếu. Rộng vì mảng màu phụ thuộc ảnh sản
 # phẩm, mà ảnh sản phẩm phụ thuộc giao diện dashboard (vòng 2).
 SUC_NANG_DUNG_SAI = {"trang": 12.0, "toi": 3.0, "mau": 3.5}
@@ -229,6 +236,10 @@ JS_THU_THAP = r"""
   const dich_cham = [];
   if (innerWidth < 768) {
     document.querySelectorAll('a,button,[role=button],input,select').forEach(el => {
+      // Nhánh aria-hidden không tới tay người dùng nào: trình đọc màn hình bỏ
+      // qua, và nó cũng không nhận được chạm. Bẫy honeypot của form công khai
+      // nằm ở đây, và nó KHÔNG phải một đích chạm.
+      if (el.closest('[aria-hidden="true"]')) return;
       const r = rect(el);
       if (r.width < 1 || r.height < 1) return;
       if (r.height < 44 || r.width < 44) {
@@ -373,15 +384,16 @@ def c9_suc_nang(page, url: str, w: int, h: int) -> tuple[KetQua, dict]:
     import io
 
     sn = _suc_nang(Image.open(io.BytesIO(png)))
+    chuan = SUC_NANG_THAM_CHIEU_HEP if w < 768 else SUC_NANG_THAM_CHIEU
     loi = []
     for k, v in sn.items():
-        lech = abs(v - SUC_NANG_THAM_CHIEU[k])
+        lech = abs(v - chuan[k])
         if lech > SUC_NANG_DUNG_SAI[k]:
             loi.append(
-                f"{k} {v:.1f}% lệch {lech:.1f} điểm khỏi tham chiếu {SUC_NANG_THAM_CHIEU[k]}% "
-                f"(dung sai {SUC_NANG_DUNG_SAI[k]})"
+                f"{k} {v:.1f}% lệch {lech:.1f} điểm khỏi tham chiếu {chuan[k]}% "
+                f"(dung sai {SUC_NANG_DUNG_SAI[k]}, đo ở {w}px)"
             )
-    return KetQua("C9", "sức nặng thị giác trong dải", not loi, loi), sn
+    return KetQua("C9", "sức nặng thị giác trong dải", not loi, loi), {**sn, "_vp": float(w)}
 
 
 def c10_do_hai_lan(page, url: str) -> KetQua:
@@ -621,8 +633,9 @@ def main() -> int:
                 print(f"      … thêm {len(k.chi_tiet) - 12} chỗ")
         if "suc_nang" in phu:
             sn = phu["suc_nang"]
+            chuan = SUC_NANG_THAM_CHIEU_HEP if sn.get("_vp", 1440) < 768 else SUC_NANG_THAM_CHIEU
             print(f"\n  sức nặng: trắng {sn['trang']:.1f}% · tối {sn['toi']:.1f}% · màu {sn['mau']:.1f}%"
-                  f"   (tham chiếu {SUC_NANG_THAM_CHIEU['trang']}/{SUC_NANG_THAM_CHIEU['toi']}/{SUC_NANG_THAM_CHIEU['mau']})")
+                  f"   (tham chiếu {chuan['trang']}/{chuan['toi']}/{chuan['mau']} ở {int(sn.get('_vp', 1440))}px)")
         if "crops" in phu:
             print(f"\n  đã cắt {len(phu['crops'])} ảnh section — GIAO CHO AGENT KHÁC XEM, đừng tự chấm")
         truot = [k for k in ds if not k.dat]

@@ -57,7 +57,7 @@ export function Closing({ config }: { config: LandingConfig }) {
                         <CtaPair
                             align="center"
                             primary={{ label: closing.cta_primary, href: urls.register }}
-                            secondary={{ label: closing.cta_secondary, href: urls.login }}
+                            secondary={{ label: strings.nav.demo, href: urls.demo }}
                         />
                     )}
                 </div>

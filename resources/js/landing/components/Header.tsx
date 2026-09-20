@@ -19,16 +19,23 @@ export function Header({ config }: { config: LandingConfig }) {
 
                 <nav className="flex items-center gap-1 md:gap-2">
                     <a
-                        href="#features"
+                        href={`${urls.home}#features`}
                         className="hidden h-11 items-center rounded px-3 text-neutral-700 md:inline-flex md:h-10 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                     >
                         {strings.nav.features}
                     </a>
                     <a
-                        href="#pricing"
+                        href={`${urls.home}#pricing`}
                         className="hidden h-11 items-center rounded px-3 text-neutral-700 md:inline-flex md:h-10 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                     >
                         {strings.nav.pricing}
+                    </a>
+
+                    <a
+                        href={urls.demo}
+                        className="hidden h-11 items-center rounded px-3 text-neutral-700 md:inline-flex md:h-10 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                    >
+                        {strings.nav.demo}
                     </a>
 
                     <LocaleSwitch config={config} />

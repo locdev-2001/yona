@@ -177,6 +177,10 @@ VITE_REVERB_HOST="${REVERB_HOST}"
 VITE_REVERB_PORT="${REVERB_PORT}"
 VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 
+REVERB_INTERNAL_HOST=127.0.0.1
+REVERB_INTERNAL_PORT=8611
+REVERB_INTERNAL_SCHEME=http
+
 ZALO_BRIDGE_URL=http://127.0.0.1:8612
 ZALO_BRIDGE_WEBHOOK_SECRET=
 ZALO_BRIDGE_SEND_SECRET=
@@ -184,6 +188,15 @@ ZALO_BRIDGE_UI_SECRET=
 
 ALLOW_PRIVATE_WEBHOOK_URLS=false
 ```
+
+> **`REVERB_INTERNAL_*` không phải thứ trang trí.** `REVERB_HOST` là tên miền
+> công khai cho trình duyệt, đồng thời là `hostname` của app trong
+> `config/reverb.php` — đổi nó là client không khớp nữa. Còn khi Laravel đẩy sự
+> kiện, nó gọi HTTP từ chính server; để trống bộ `INTERNAL` là mỗi tin nhắn phải
+> đi ra DNS, qua CDN rồi vòng về máy này. Một cú nấc DNS 10 giây đã giết 8 job
+> `MessageReceived` ngày 16/09/2026 — 8 tin khách không hiện realtime mà không
+> ai biết, cho tới khi Horizon phơi ra. Trỏ loopback là bỏ luôn cả DNS lẫn TLS
+> cho đường nội bộ.
 
 Sinh secret mà không ghi giá trị cố định vào Git:
 
@@ -433,13 +446,42 @@ Lưu ý vận hành:
 
 ## 9. Những thứ vẫn phải làm tay một lần
 
-`deploy.sh` không đụng vào ba thứ này vì chúng chứa bí mật hoặc do aaPanel quản:
+`deploy.sh` không đụng vào những thứ này vì chúng chứa bí mật hoặc do aaPanel quản:
 
 - Cài PHP/PostgreSQL/Redis/Node và mở `disable_functions` (mục 2).
 - Tạo database + role, tạo `.env` và sinh secret (mục 4, 5, 6).
 - Vhost Nginx + SSL (mục 7).
+- **Timezone của PHP** — xem ngay dưới.
 
-Xong ba thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
+Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
+
+### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
+
+aaPanel để mặc định `date.timezone = PRC` (UTC+8). Laravel tự đặt lại timezone
+theo `config('app.timezone')` nên ứng dụng chạy đúng giờ — **trừ lúc exception
+nổ trước khi app nạp xong config**. Những dòng log đó ghi giờ lệch +1, và hiện
+channel là `laravel.ERROR` thay vì `production.ERROR`. Đủ để chẩn đoán nhầm một
+sự cố đã qua thành sự cố đang xảy ra (đã xảy ra 20/09/2026).
+
+Sửa **cả hai** file — PHP-FPM đọc `php.ini`, còn artisan và worker Horizon đọc
+`php-cli.ini`:
+
+```bash
+cd /www/server/php/84/etc
+cp php.ini php.ini.bak && cp php-cli.ini php-cli.ini.bak
+sed -i 's|^date.timezone = PRC|date.timezone = Asia/Ho_Chi_Minh|' php.ini php-cli.ini
+/etc/init.d/php-fpm-84 reload
+cd /www/wwwroot/yona.vn && php artisan horizon:terminate
+
+php -r 'echo date_default_timezone_get(), " ", date("H:i:s"), PHP_EOL;'
+```
+
+`php.ini` dùng chung cho mọi site chạy cùng bản PHP — kiểm site nào đang dùng
+trước khi sửa:
+
+```bash
+grep -rl '/84/' /www/server/panel/vhost/nginx/*.conf
+```
 
 ---
 

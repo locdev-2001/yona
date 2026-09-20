@@ -107,6 +107,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bề mặt bán hàng
+    |--------------------------------------------------------------------------
+    |
+    | Trang đặt lịch demo cần một chỗ để lead rơi vào. `lead_inbox_id` là hộp
+    | thư kênh API của chính Yona: lead thành một hội thoại đến, nằm cùng chỗ
+    | với tin khách — vừa không mất lead vừa là bằng chứng sản phẩm tự dùng được.
+    |
+    | Hotline và link Zalo để RỖNG khi chưa có số thật. Trang ẩn khối đó thay vì
+    | bày một số không ai bắt máy.
+    |
+    */
+    'marketing' => [
+        'lead_inbox_id' => env('YONA_LEAD_INBOX_ID') ? (int) env('YONA_LEAD_INBOX_ID') : null,
+        'hotline' => env('YONA_HOTLINE'),
+        'zalo_url' => env('YONA_ZALO_CONTACT_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Widget
     |--------------------------------------------------------------------------
     |

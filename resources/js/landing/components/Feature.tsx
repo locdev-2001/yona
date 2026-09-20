@@ -92,7 +92,7 @@ export function Feature({ id, strings, media, art, cta, learnHref, surface = 'ba
  * Vẫn là đoạn ngắn chứ không phải border-t: kẻ suốt hàng nối các ô thành một
  * dải liền, đoạn ngắn thì đánh dấu từng ô riêng.
  */
-function AccentBar({ accent, className }: { accent: Accent; className: string }) {
+export function AccentBar({ accent, className }: { accent: Accent; className: string }) {
     return <span aria-hidden className={`absolute left-0 top-0 h-0.5 ${ACCENT[accent]} ${className}`} />;
 }
 

@@ -20,4 +20,9 @@ return [
         'MESSAGE_SELF_HOSTED' => 'You are not part of any accounts right now. Please reach out to your administrator.',
         'LOGOUT' => 'Log out',
     ],
+    'PLACEHOLDER' => [
+        'TITLE' => 'This page is not ready yet',
+        'DESCRIPTION' => 'We are still finishing this part. You can go back to all conversations to keep working.',
+        'BACK' => 'Back to all conversations',
+    ],
 ];

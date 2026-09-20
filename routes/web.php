@@ -10,11 +10,13 @@ use App\Http\Controllers\Auth\ConfirmationsController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
 use App\Http\Controllers\Public\Portals\SearchController as PublicSearchController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SuperAdmin\AccessTokensController as SuperAdminAccessTokensController;
 use App\Http\Controllers\SuperAdmin\AccountsController as SuperAdminAccountsController;
 use App\Http\Controllers\SuperAdmin\AccountUsersController as SuperAdminAccountUsersController;
@@ -40,7 +42,22 @@ Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsControlle
 
 // Trang chủ công khai (nhánh `main` mang sang): gốc tên miền là trang giới thiệu
 // sản phẩm, không đẩy thẳng khách vào màn đăng nhập như Chatwoot gốc.
-Route::get('/', LandingController::class)->name('home');
+Route::get('/', [LandingController::class, 'home'])->name('home');
+
+// Trang một-kênh cho Zalo cá nhân: điểm khác biệt của sản phẩm cần một trang
+// riêng để xếp hạng và để gửi link cho khách đang hỏi về Zalo.
+Route::get('/zalo-ca-nhan', [LandingController::class, 'zaloPersonal'])->name('channels.zalo_personal');
+
+// Đặt lịch demo — kênh thu lead chạy được khi luồng tự đăng ký còn chặn. POST bị
+// giới hạn 5 lượt / 10 phút mỗi IP: form công khai không có gì ngăn bot ngoài
+// bẫy honeypot trong controller.
+Route::get('/dat-lich-demo', [DemoRequestsController::class, 'create'])->name('demo_request.create');
+Route::post('/dat-lich-demo', [DemoRequestsController::class, 'store'])
+    ->middleware('throttle:5,10')->name('demo_request.store');
+Route::get('/dat-lich-demo/cam-on', [DemoRequestsController::class, 'thanks'])->name('demo_request.thanks');
+
+// sitemap.xml cho công cụ tìm kiếm — chỉ liệt kê trang thật đang trả 200.
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // Web app manifest: tên và màu lấy từ cấu hình thương hiệu nên phải sinh động,
 // không đặt tệp tĩnh trong public/. `maskable` là bản nền đặc riêng — Android

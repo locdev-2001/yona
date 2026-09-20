@@ -1,17 +1,28 @@
 <!DOCTYPE html>
-{{-- Trang chủ công khai `/`. Bề mặt riêng như survey/portal: blade + entry Vite
-     riêng, không nạp bundle dashboard. Font self-host qua @font-face trong
-     landing.css, không nhúng link tới nhà cung cấp ngoài. --}}
+{{-- Mọi trang của bề mặt công khai (`/`, `/zalo-ca-nhan`, `/dat-lich-demo`).
+     Bề mặt riêng như survey/portal: blade + entry Vite riêng, không nạp bundle
+     dashboard. Font self-host qua @font-face trong landing.css, không nhúng link
+     tới nhà cung cấp ngoài.
+
+     MỘT blade cho mọi trang: `landingConfig.page` quyết định component nào được
+     mount. Thêm blade mới là thêm một chỗ nữa phải khai trong content của
+     tailwind.landing.config.js, quên thì class riêng của trang đó rụng khỏi CSS. --}}
 <html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ $landingConfig['strings']['meta']['title'] }}</title>
-        <meta name="description" content="{{ $landingConfig['strings']['meta']['description'] }}">
+        <title>{{ $landingConfig['meta']['title'] }}</title>
+        <meta name="description" content="{{ $landingConfig['meta']['description'] }}">
+        {{-- Trang cảm ơn không có gì để xếp hạng, và lọt vào kết quả tìm kiếm thì
+             khách vào đó trước khi gửi form. --}}
+        @if ($landingConfig['page'] === 'demo_thanks')
+            <meta name="robots" content="noindex, follow">
+        @endif
+        <link rel="canonical" href="{{ url()->current() }}">
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
-        <meta property="og:title" content="{{ $landingConfig['strings']['meta']['title'] }}">
-        <meta property="og:description" content="{{ $landingConfig['strings']['meta']['description'] }}">
+        <meta property="og:title" content="{{ $landingConfig['meta']['title'] }}">
+        <meta property="og:description" content="{{ $landingConfig['meta']['description'] }}">
         <meta property="og:image" content="{{ url('/open-graph-1200x630.png') }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:image" content="{{ url('/twitter-x-card-1200x675.png') }}">
@@ -25,8 +36,8 @@
     </head>
     <body>
         <div id="app"></div>
-        {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — chỉ trang chủ,
-             không nhúng vào partials.analytics vì partial đó dùng chung cho
+        {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
+             khai, không nhúng vào partials.analytics vì partial đó dùng chung cho
              dashboard/superadmin/survey. --}}
         <script>
             (function(d,t) {

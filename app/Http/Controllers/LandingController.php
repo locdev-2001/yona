@@ -2,49 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LandingPayload;
 use Illuminate\Contracts\View\View;
 
+/**
+ * Các trang marketing tĩnh của bề mặt công khai. Trang nào cần nhận dữ liệu
+ * người dùng gửi lên thì có controller riêng (xem DemoRequestsController).
+ */
 class LandingController extends Controller
 {
-    public function __invoke(): View
+    public function home(): View
     {
-        return view('landing', [
-            'landingConfig' => [
-                'brand' => [
-                    'name' => config('yona.branding.brand_name'),
-                    'logo' => config('yona.branding.logo'),
-                ],
-                'isAuthenticated' => auth()->check(),
-                'urls' => [
-                    'home' => route('home'),
-                    'login' => route('login'),
-                    'register' => route('signup'),
-                    'dashboard' => route('dashboard'),
-                ],
-                'strings' => trans('landing'),
-                'year' => now()->year,
-                'locale' => app()->getLocale(),
-                // Bộ chọn ngôn ngữ đi qua ?locale=, middleware SetLocale ghi nhớ
-                // bằng cookie nên lần sau vào thẳng không cần tham số.
-                'locales' => $this->locales(),
-            ],
-        ]);
+        return view('landing', ['landingConfig' => LandingPayload::make('home')]);
     }
 
     /**
-     * Tiếng Việt đứng đầu bộ chọn: thị trường chính là Việt Nam, và thứ tự trong
-     * config là thứ tự chữ cái chứ không mang ý nghĩa sản phẩm.
+     * Trang một-kênh cho Zalo cá nhân. Đây là điểm khác biệt của sản phẩm nên nó
+     * cần một trang riêng để xếp hạng và để gửi link cho khách đang hỏi về Zalo,
+     * thay vì một mục trong trang chủ nói về mọi thứ cùng lúc.
      */
-    private function locales(): array
+    public function zaloPersonal(): View
     {
-        $locales = array_map(fn (array $locale) => [
-            'code' => $locale['iso_639_1_code'],
-            'label' => $locale['name'],
-            'url' => route('home', ['locale' => $locale['iso_639_1_code']]),
-        ], config('yona.available_locales', []));
-
-        usort($locales, fn (array $a, array $b) => ($b['code'] === 'vi') <=> ($a['code'] === 'vi'));
-
-        return $locales;
+        return view('landing', [
+            'landingConfig' => LandingPayload::make('zalo_personal', [
+                'meta' => trans('landing.zalo_page.meta'),
+            ]),
+        ]);
     }
 }

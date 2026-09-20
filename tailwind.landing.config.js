@@ -78,7 +78,9 @@ export default {
       transitionDuration: { press: '160ms', fast: '150ms', DEFAULT: '200ms', slow: '300ms' },
       // price: thẻ giá rộng 696px trên container 1170 — đo được, và không biểu
       // diễn được bằng thang phân số vì khu nội dung đã trừ padding hai bên.
-      maxWidth: { container: '1170px', reading: '660px', price: '696px' },
+      // form: cột form của trang thu lead (đo 20/09 · 1440px · check-ui C10 xanh
+      // nên số đo tĩnh). Hai ô chia đôi trong cột này ra đúng 284px mỗi ô.
+      maxWidth: { container: '1170px', reading: '660px', price: '696px', form: '592px' },
     },
   },
   plugins: [

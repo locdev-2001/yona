@@ -22,4 +22,9 @@ return [
         'MESSAGE_SELF_HOSTED' => 'Hiện bạn chưa thuộc tài khoản nào. Bạn hãy liên hệ quản trị viên.',
         'LOGOUT' => 'Log out',
     ],
+    'PLACEHOLDER' => [
+        'TITLE' => 'Phần này chưa sẵn sàng',
+        'DESCRIPTION' => 'Chúng tôi đang hoàn thiện phần này. Bạn có thể quay lại tất cả hội thoại để tiếp tục làm việc.',
+        'BACK' => 'Về tất cả hội thoại',
+    ],
 ];
