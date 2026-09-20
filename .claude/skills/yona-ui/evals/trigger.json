@@ -1,0 +1,42 @@
+[
+ {
+  "query": "sửa lại section bảng giá trên trang chủ",
+  "should_trigger": true
+ },
+ {
+  "query": "làm trang landing cho Yona",
+  "should_trigger": true
+ },
+ {
+  "query": "đổi màu nút trên trang chủ",
+  "should_trigger": true
+ },
+ {
+  "query": "thêm một section vào trang công khai",
+  "should_trigger": true
+ },
+ {
+  "query": "căn lại spacing của hero",
+  "should_trigger": true
+ },
+ {
+  "query": "dựng component mới cho marketing site",
+  "should_trigger": true
+ },
+ {
+  "query": "sửa query N+1 ở ContactsController",
+  "should_trigger": false
+ },
+ {
+  "query": "viết test cho webhook Zalo",
+  "should_trigger": false
+ },
+ {
+  "query": "thêm cột vào bảng conversations",
+  "should_trigger": false
+ },
+ {
+  "query": "dịch chuỗi lang sang tiếng Anh",
+  "should_trigger": false
+ }
+]

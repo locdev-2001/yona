@@ -5,6 +5,7 @@
 > - Mô tả sản phẩm/kiến trúc bên dưới là của bản CŨ (Perfex-style) — **không còn đúng**; kiến trúc hiện hành xem `plans/260831-rewrite-chatwoot-laravel/plan.md`.
 > - **Nguồn chuẩn:** `plans/260831-rewrite-chatwoot-laravel/plan.md` (quyết định kiến trúc + Trạng thái + việc kế tiếp). Năng lực kênh: `app/Channels/CapabilitySet.php` + `DeclaresCapabilities` là nơi khai duy nhất. Triển khai production: `docs/deployment.md`.
 > - Nguồn Ruby/Vue để đối chiếu: `refs/chatwoot` — **CẤM** mở `refs/chatwoot/enterprise/`.
+> - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
 > - **Giai đoạn hiện tại:** cầu toàn sản phẩm (40/40 tính năng đã port) — phê phán tính năng, tập trung chat, UX "wow"; lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
 > - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
 > - **Artifact tiến độ:** https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c
