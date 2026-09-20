@@ -57,6 +57,24 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 - **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ là nguồn làm giàu dữ liệu.
 - Lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
 
+## Nhánh mới = worktree mới (bắt buộc với mọi phiên AI)
+
+Nhiều phiên AI chạy song song trên cùng một checkout. Đổi nhánh trong `~/Documents/GitHub/yona` là kéo nhánh dưới chân phiên khác: cây làm việc đổi, commit bị rebase mất SHA, test đang chạy đọc nhầm mã. **Đã xảy ra thật 20/09/2026.**
+
+Luật: **phiên AI nào cần nhánh mới để code thì tạo worktree, không `git checkout -b` trong checkout chính.**
+
+```bash
+git worktree add /Users/beru/Documents/GitHub/worktrees/<slug> -b <ten-nhanh>
+cd /Users/beru/Documents/GitHub/worktrees/<slug>
+```
+
+Hoặc gọi skill `ck:worktree` — nó dùng đúng gốc `/Users/beru/Documents/GitHub/worktrees` này.
+
+- Checkout chính `~/Documents/GitHub/yona` **luôn ở `main`**; sửa lặt vặt và tài liệu thì commit thẳng trên đó.
+- **Cổng dev là tài nguyên dùng chung:** 8610/8611/8612 lấy từ `.env`. Chỉ MỘT worktree được `make up` tại một thời điểm; worktree khác muốn chạy song song phải đổi `SERVER_PORT`/`REVERB_SERVER_PORT`/`ZALO_BRIDGE_URL` trong `.env` riêng của nó. **DB `yona_rw` cũng dùng chung** — worktree này migrate là worktree kia thấy ngay.
+- Xong việc: merge rồi `git worktree remove <path>`, đừng để worktree chết nằm lại.
+- Trước khi đụng vào checkout chính: `git worktree list` và `git status` xem có phiên khác đang làm dở không.
+
 ## Theo dõi việc
 
 GitHub Issues, nhãn hai trục: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
