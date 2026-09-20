@@ -21,6 +21,8 @@
 #   DEPLOY_RUNTIME_USER=www          User chạy queue worker/Reverb/scheduler.
 #   DEPLOY_SUPERVISOR_CONF_DIR=/etc/supervisor/conf.d
 #   DEPLOY_SUPERVISORCTL=            Đè lệnh supervisorctl (mặc định: tự dò aaPanel).
+#   DEPLOY_FORCE_REBUILD=0           1 = cài lại dependency và build FE dù không
+#                                      có file nào đổi giữa hai revision.
 #   DEPLOY_HEALTHCHECK=1             Check APP_URL/up after deployment.
 #   DEPLOY_HEALTH_URL=https://...    Override the health-check URL.
 #   DEPLOY_DRY_RUN=1                 Print mutating commands without running them.
@@ -60,6 +62,7 @@ readonly DEPLOY_ZALO_BRIDGE="${DEPLOY_ZALO_BRIDGE:-auto}"
 readonly DEPLOY_MANAGE_SERVICES="${DEPLOY_MANAGE_SERVICES:-1}"
 readonly DEPLOY_RUNTIME_USER="${DEPLOY_RUNTIME_USER:-www}"
 readonly DEPLOY_SUPERVISOR_CONF_DIR="${DEPLOY_SUPERVISOR_CONF_DIR:-/etc/supervisor/conf.d}"
+readonly DEPLOY_FORCE_REBUILD="${DEPLOY_FORCE_REBUILD:-0}"
 readonly DEPLOY_HEALTHCHECK="${DEPLOY_HEALTHCHECK:-1}"
 readonly DEPLOY_DRY_RUN="${DEPLOY_DRY_RUN:-0}"
 readonly DEPLOY_ALLOW_ROOT="${DEPLOY_ALLOW_ROOT:-1}"
@@ -84,7 +87,15 @@ readonly MINIMUM_PHP_VERSION='8.3.0'
 readonly MINIMUM_NODE_MAJOR=22
 readonly DEFAULT_BRIDGE_PORT=8612
 
+readonly VITE_MANIFEST='public/build/manifest.json'
+readonly SDK_BUNDLE='public/packs/js/sdk.js'
+# Mọi thứ vite/tailwind đọc khi build. Lệch pattern này = build thừa hoặc thiếu.
+readonly FRONTEND_INPUT_PATTERN='^(resources/|theme/|tailwind/|scripts/check-css-surfaces\.mjs$|package\.json$|pnpm-lock\.yaml$|vite\..*config\.js$|tailwind\..*config\.js$|postcss\.config\.js$|tsconfig.*\.json$)'
+readonly COMPOSER_INPUT_PATTERN='^composer\.(json|lock)$'
+
 MAINTENANCE_ACTIVE=0
+CHANGED_FILES=''
+STEP_TIMINGS=()
 STARTED_AT="$(date +%s)"
 OLD_REVISION=""
 NEW_REVISION=""
@@ -132,6 +143,17 @@ run_pnpm() {
     else
         run "$PNPM_BIN" "$@"
     fi
+}
+
+# Đo từng bước để biết maintenance window thật sự tiêu ở đâu, thay vì đoán.
+step() {
+    local label="$1"
+    local started
+    shift
+
+    started="$(date +%s)"
+    "$@"
+    STEP_TIMINGS+=("$(printf '%6ss  %s' "$(( $(date +%s) - started ))" "$label")")
 }
 
 validate_boolean() {
@@ -270,6 +292,7 @@ validate_environment() {
     validate_boolean DEPLOY_MAINTENANCE "$DEPLOY_MAINTENANCE"
     validate_boolean DEPLOY_FRESH_DB "$DEPLOY_FRESH_DB"
     validate_boolean DEPLOY_SEED_DEMO "$DEPLOY_SEED_DEMO"
+    validate_boolean DEPLOY_FORCE_REBUILD "$DEPLOY_FORCE_REBUILD"
     validate_boolean DEPLOY_HEALTHCHECK "$DEPLOY_HEALTHCHECK"
     validate_boolean DEPLOY_DRY_RUN "$DEPLOY_DRY_RUN"
     validate_boolean DEPLOY_ALLOW_ROOT "$DEPLOY_ALLOW_ROOT"
@@ -441,16 +464,68 @@ enable_maintenance_mode() {
     MAINTENANCE_ACTIVE=1
 }
 
-install_dependencies() {
-    log 'Cài PHP dependencies production'
-    run "$COMPOSER_BIN" install \
-        --no-dev \
-        --no-interaction \
-        --prefer-dist \
-        --optimize-autoloader
+# Deploy tại chỗ dùng lại đúng một checkout, nên thứ không đổi giữa hai revision
+# thì không cần dựng lại. Trên 30 commit gần nhất composer.lock đổi 0 lần còn
+# frontend đổi ~18 lần: bỏ được bước nào là rút ngắn maintenance window bấy nhiêu.
+record_changed_files() {
+    local new_revision
 
-    log 'Cài frontend build dependencies'
-    run_pnpm install --frozen-lockfile --prod=false
+    # Chạy lại trên cùng revision nghĩa là đang sửa một bản deploy hỏng — lúc đó
+    # "không có gì đổi" là kết luận sai, phải dựng lại tất cả.
+    if is_enabled "$DEPLOY_FORCE_REBUILD" || is_enabled "$DEPLOY_DRY_RUN"; then
+        CHANGED_FILES='__all__'
+        return 0
+    fi
+
+    new_revision="$(git rev-parse --short HEAD)"
+    if [[ "$OLD_REVISION" == "$new_revision" ]]; then
+        CHANGED_FILES='__all__'
+        return 0
+    fi
+
+    CHANGED_FILES="$(git diff --name-only "$OLD_REVISION" "$new_revision")"
+}
+
+changed_matching() {
+    if [[ "$CHANGED_FILES" == '__all__' ]]; then
+        return 0
+    fi
+
+    printf '%s\n' "$CHANGED_FILES" | grep -qE "$1"
+}
+
+# Bundle thiếu thì phải build lại bất kể git nói gì: lần deploy trước có thể
+# chết giữa chừng và để lại public/build dở dang.
+frontend_build_needed() {
+    [[ -f "$APP_DIR/$VITE_MANIFEST" && -f "$APP_DIR/$SDK_BUNDLE" ]] || return 0
+
+    changed_matching "$FRONTEND_INPUT_PATTERN"
+}
+
+install_dependencies() {
+    if [[ ! -f "$APP_DIR/vendor/autoload.php" ]] || changed_matching "$COMPOSER_INPUT_PATTERN"; then
+        log 'Cài PHP dependencies production'
+        run "$COMPOSER_BIN" install \
+            --no-dev \
+            --no-interaction \
+            --prefer-dist \
+            --optimize-autoloader
+    else
+        # Lớp PHP mới không nằm trong classmap của bản trước thì autoload trượt,
+        # nên dù bỏ qua install vẫn phải dựng lại classmap.
+        log 'composer.lock không đổi; chỉ dựng lại classmap'
+        run "$COMPOSER_BIN" dump-autoload \
+            --no-dev \
+            --optimize \
+            --no-interaction
+    fi
+
+    if frontend_build_needed; then
+        log 'Cài frontend build dependencies'
+        run_pnpm install --frozen-lockfile --prod=false
+    else
+        log 'Frontend không đổi; bỏ qua cài devDependencies.'
+    fi
 }
 
 assert_i18n_bundles_current() {
@@ -461,6 +536,11 @@ assert_i18n_bundles_current() {
 }
 
 build_frontend() {
+    if ! frontend_build_needed; then
+        log 'Frontend không đổi; giữ nguyên bundle đã build.'
+        return 0
+    fi
+
     log 'Build frontend (dashboard, widget, survey, portal, superadmin, landing, SDK)'
     run_pnpm run build
 }
@@ -974,26 +1054,28 @@ main() {
     OLD_REVISION="$(git rev-parse --short HEAD)"
     log "Bắt đầu deploy $DEPLOY_BRANCH từ revision $OLD_REVISION"
 
-    fetch_code
-    enable_maintenance_mode
-    activate_code
-    clear_stale_caches
-    install_dependencies
-    assert_i18n_bundles_current
-    build_frontend
-    ensure_database_extensions
-    deploy_database
-    prepare_laravel
-    prepare_runtime_permissions
-    deploy_zalo_bridge
-    ensure_system_services
-    restart_application_processes
-    disable_maintenance_mode
-    health_check
+    step 'fetch'          fetch_code
+    step 'maintenance on' enable_maintenance_mode
+    step 'activate'       activate_code
+    step 'clear caches'   clear_stale_caches
+    record_changed_files
+    step 'dependencies'   install_dependencies
+    step 'i18n check'     assert_i18n_bundles_current
+    step 'build frontend' build_frontend
+    step 'db extensions'  ensure_database_extensions
+    step 'migrate'        deploy_database
+    step 'laravel cache'  prepare_laravel
+    step 'permissions'    prepare_runtime_permissions
+    step 'zalo bridge'    deploy_zalo_bridge
+    step 'services'       ensure_system_services
+    step 'restart'        restart_application_processes
+    step 'maintenance off' disable_maintenance_mode
+    step 'health check'   health_check
 
     NEW_REVISION="$(git rev-parse --short HEAD)"
     duration="$(( $(date +%s) - STARTED_AT ))"
     log "Deploy thành công: $OLD_REVISION -> $NEW_REVISION (${duration}s)"
+    printf '%s\n' "${STEP_TIMINGS[@]}" >&2
     report_post_deploy_steps
 }
 

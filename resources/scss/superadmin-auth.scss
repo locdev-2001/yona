@@ -1,22 +1,2 @@
-// Nền chung của khu /super_admin: Tailwind + font Inter + biến màu.
-// Màn đăng nhập chỉ dùng đúng phần này (bản gốc cũng không nạp CSS Administrate
-// ở layout devise); console dùng thêm CSS Administrate trong superadmin.scss.
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
-@import 'fonts';
-@import 'next-colors';
-
-body {
-  font-family:
-    Inter,
-    -apple-system,
-    system-ui,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif !important;
-}
+@config "../../tailwind/superadmin.config.cjs";
+@import "superadmin-auth-base";
