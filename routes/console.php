@@ -28,3 +28,10 @@ Schedule::job(new FetchImapEmailInboxesJob)->cron('*/1 * * * *');
 // G1 Zalo: nhịp tim Laravel ↔ zalo-bridge. Không có nó, bridge chết là DB vẫn báo
 // "connected" và chủ shop không thấy gì (zalo-deep-audit 6.5).
 Schedule::job(new ZaloHealthSweepJob)->cron('*/1 * * * *')->withoutOverlapping();
+
+// Horizon chỉ vẽ được biểu đồ thông lượng/thời gian chờ nếu có ai chụp ảnh
+// hàng đợi định kỳ; không có dòng này thì tab Metrics trống.
+Schedule::command('horizon:snapshot')->everyFiveMinutes();
+// Pulse ghi thẳng vào PostgreSQL dùng chung — dọn bản ghi quá hạn mỗi giờ để
+// bảng pulse_* không phình ra cạnh dữ liệu khách.
+Schedule::command('pulse:trim')->hourly();

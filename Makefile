@@ -62,7 +62,9 @@ check: format i18n-check test build ## Full gate: pint + i18n-check + pest + tsc
 tinker: ## artisan tinker
 	$(ARTISAN) tinker
 
-QUEUE_TIERS = critical,high,medium,default,mailers,low,scheduled_jobs,purgable
+# Thứ tự tier là MỘT nguồn duy nhất: config/queue_tiers.php. Horizon
+# (production) đọc cùng file đó, Makefile chỉ đọc lại cho queue:listen dev.
+QUEUE_TIERS := $(shell $(PHP) -r 'echo implode(",", require "config/queue_tiers.php");')
 
 # Cổng là MỘT nguồn duy nhất: .env. `artisan serve`/`reverb:start` tự đọc
 # SERVER_PORT/REVERB_SERVER_PORT, Makefile chỉ đọc lại để kiểm tra và in thông báo.

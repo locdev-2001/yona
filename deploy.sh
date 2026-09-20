@@ -21,7 +21,6 @@
 #   DEPLOY_RUNTIME_USER=www          User chạy queue worker/Reverb/scheduler.
 #   DEPLOY_SUPERVISOR_CONF_DIR=/etc/supervisor/conf.d
 #   DEPLOY_SUPERVISORCTL=            Đè lệnh supervisorctl (mặc định: tự dò aaPanel).
-#   DEPLOY_QUEUE_PROCESSES=4         Số worker của program yona-queue.
 #   DEPLOY_HEALTHCHECK=1             Check APP_URL/up after deployment.
 #   DEPLOY_HEALTH_URL=https://...    Override the health-check URL.
 #   DEPLOY_DRY_RUN=1                 Print mutating commands without running them.
@@ -61,7 +60,6 @@ readonly DEPLOY_ZALO_BRIDGE="${DEPLOY_ZALO_BRIDGE:-auto}"
 readonly DEPLOY_MANAGE_SERVICES="${DEPLOY_MANAGE_SERVICES:-1}"
 readonly DEPLOY_RUNTIME_USER="${DEPLOY_RUNTIME_USER:-www}"
 readonly DEPLOY_SUPERVISOR_CONF_DIR="${DEPLOY_SUPERVISOR_CONF_DIR:-/etc/supervisor/conf.d}"
-readonly DEPLOY_QUEUE_PROCESSES="${DEPLOY_QUEUE_PROCESSES:-4}"
 readonly DEPLOY_HEALTHCHECK="${DEPLOY_HEALTHCHECK:-1}"
 readonly DEPLOY_DRY_RUN="${DEPLOY_DRY_RUN:-0}"
 readonly DEPLOY_ALLOW_ROOT="${DEPLOY_ALLOW_ROOT:-1}"
@@ -76,10 +74,11 @@ readonly COMPOSER_BIN="${DEPLOY_COMPOSER_BIN:-composer}"
 readonly PNPM_BIN="${DEPLOY_PNPM_BIN:-pnpm}"
 
 readonly CRON_FILE='/etc/cron.d/yona-scheduler'
-readonly SUPERVISOR_QUEUE_PROGRAM='yona-queue'
+readonly SUPERVISOR_QUEUE_PROGRAM='yona-horizon'
 readonly SUPERVISOR_REVERB_PROGRAM='yona-reverb'
-# Program của kiến trúc cũ: Horizon và Inertia SSR đều không còn trong ứng dụng.
-readonly SUPERVISOR_LEGACY_PROGRAMS=('yona-horizon' 'yona-ssr')
+# Program không còn dùng: yona-queue là worker `queue:work` trước khi chuyển
+# sang Horizon — để lại nghĩa là hai nguồn cùng lấy job từ một hàng đợi.
+readonly SUPERVISOR_LEGACY_PROGRAMS=('yona-queue' 'yona-ssr')
 
 readonly MINIMUM_PHP_VERSION='8.3.0'
 readonly MINIMUM_NODE_MAJOR=22
@@ -677,15 +676,6 @@ install_system_file() {
 }
 
 # Danh sách tier lấy từ Makefile để dev và production dùng chung một nguồn.
-queue_tiers() {
-    local tiers
-
-    tiers="$(sed -n 's/^QUEUE_TIERS = //p' "$APP_DIR/Makefile" 2>/dev/null | head -1 | tr -d '[:space:]')"
-    [[ -n "$tiers" ]] || tiers='critical,high,medium,default,mailers,low,scheduled_jobs,purgable'
-
-    printf '%s' "$tiers"
-}
-
 supervisor_program_config() {
     local program="$1"
     local command_line="$2"
@@ -724,8 +714,8 @@ environment=HOME="$runtime_home",USER="$DEPLOY_RUNTIME_USER",PATH="/usr/local/sb
 CONFIG
 }
 
-# Gỡ program của kiến trúc cũ: chúng gọi artisan horizon / inertia:start-ssr,
-# hai lệnh đã biến mất, nên chỉ còn restart-loop và làm nhiễu log.
+# Gỡ program không còn dùng: yona-queue (đã thay bằng yona-horizon) và yona-ssr
+# (inertia:start-ssr đã biến mất). Để lại là chạy trùng hoặc restart-loop.
 remove_legacy_supervisor_programs() {
     local program config
 
@@ -788,8 +778,9 @@ ensure_supervisor_programs() {
     reverb_port="$(env_value REVERB_SERVER_PORT)"
     [[ -n "$reverb_port" ]] || reverb_port='8611'
 
-    # Bất biến: media_timeout kênh (120s) < --timeout worker (150s) < retry_after (180s).
-    queue_command="$php_path artisan queue:work redis --queue=$(queue_tiers) --timeout=150 --tries=3 --max-time=3600 --sleep=1 --no-interaction"
+    # Horizon là master process: nó tự đẻ worker theo config/horizon.php (tier,
+    # maxProcesses, timeout). Supervisor chỉ nuôi đúng một master.
+    queue_command="$php_path artisan horizon"
     reverb_command="$php_path artisan reverb:start --host=$reverb_host --port=$reverb_port --no-interaction"
 
     run_privileged mkdir -p "$DEPLOY_SUPERVISOR_CONF_DIR"
@@ -799,7 +790,7 @@ ensure_supervisor_programs() {
 
     install_system_file \
         "$DEPLOY_SUPERVISOR_CONF_DIR/$SUPERVISOR_QUEUE_PROGRAM.conf" 0644 \
-        "$(supervisor_program_config "$SUPERVISOR_QUEUE_PROGRAM" "$queue_command" 180 "$DEPLOY_QUEUE_PROCESSES")" \
+        "$(supervisor_program_config "$SUPERVISOR_QUEUE_PROGRAM" "$queue_command" 180 1)" \
         && changed=1
 
     install_system_file \
@@ -894,8 +885,10 @@ reload_php_fpm() {
 }
 
 restart_application_processes() {
-    log 'Yêu cầu queue worker khởi động lại graceful'
-    run "$PHP_BIN" artisan queue:restart --no-interaction
+    # horizon:terminate cho worker chạy nốt job hiện tại rồi thoát; supervisor
+    # dựng lại master với mã mới. `queue:restart` không đụng được master Horizon.
+    log 'Yêu cầu Horizon khởi động lại graceful'
+    run "$PHP_BIN" artisan horizon:terminate --no-interaction
 
     log 'Yêu cầu Reverb khởi động lại graceful'
     run "$PHP_BIN" artisan reverb:restart --no-interaction

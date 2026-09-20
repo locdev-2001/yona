@@ -18,7 +18,7 @@ quy trình deploy hằng ngày.
 | PHP-FPM | `/etc/init.d/php-fpm-84` |
 | Database | PostgreSQL 16 (aaPanel), port `5432` |
 | Cache / queue / session | Redis `127.0.0.1:6379` |
-| Queue | `artisan queue:work` dưới Supervisor |
+| Queue | `artisan horizon` dưới Supervisor, dashboard `/horizon` |
 | Realtime | Reverb dưới Supervisor, `127.0.0.1:8611` |
 | Zalo bridge | PM2, `127.0.0.1:8612` |
 | Scheduler | cron `* * * * *` gọi `artisan schedule:run` |
@@ -28,7 +28,7 @@ quy trình deploy hằng ngày.
 ```text
 Internet ──443──▶ Nginx ──▶ public/index.php ──▶ PHP-FPM 8.4
                     └──▶ /app, /apps ──▶ Reverb :8611 (WebSocket)
-Laravel ──▶ Redis ──▶ queue:work (supervisor)
+Laravel ──▶ Redis ──▶ Horizon (supervisor) ──▶ worker theo tier
 Laravel ◀─▶ Zalo bridge :8612 ──▶ Zalo
 ```
 
@@ -72,8 +72,8 @@ exec  putenv  proc_open  readlink  symlink
 pcntl_alarm  pcntl_signal  pcntl_sigprocmask
 ```
 
-Thiếu `pcntl_*` thì `queue:work` không nhận được tín hiệu dừng và
-`queue:restart` sẽ không có tác dụng. Sau khi sửa:
+Thiếu `pcntl_*` thì worker không nhận được tín hiệu dừng và
+`horizon:terminate` sẽ không có tác dụng. Sau khi sửa:
 
 ```bash
 /etc/init.d/php-fpm-84 reload
@@ -303,15 +303,15 @@ location ^~ /apps {
 
 Không phải dựng tay. Mỗi lần deploy, script:
 
-1. **Gỡ** program của kiến trúc cũ nếu còn: `yona-horizon`, `yona-ssr` (hai lệnh
-   `artisan horizon` và `inertia:start-ssr` đã biến mất khỏi ứng dụng, để lại
-   chỉ tạo restart-loop).
+1. **Gỡ** program không còn dùng nếu còn: `yona-queue` (worker `queue:work`
+   trước khi chuyển sang Horizon — để lại là hai nguồn cùng lấy job) và
+   `yona-ssr` (`inertia:start-ssr` đã biến mất khỏi ứng dụng).
 2. **Cảnh báo** nếu trong `conf.d/` có file khác cũng chạy `queue:work`,
    `queue:listen`, `horizon` hoặc `reverb:start` trỏ vào cùng app — script không
    tự xóa đồ của người khác, nhưng nói cho bạn biết để gỡ, vì hai nguồn cùng
    chạy nghĩa là mỗi job xử lý hai lần.
-3. **Ghi** `yona-queue.conf` và `yona-reverb.conf` — chỉ khi nội dung lệch. Giống
-   hệt thì không đụng, không `reread`, không restart.
+3. **Ghi** `yona-horizon.conf` và `yona-reverb.conf` — chỉ khi nội dung lệch.
+   Giống hệt thì không đụng, không `reread`, không restart.
 4. `supervisorctl reread` + `update` khi có thay đổi, rồi `start` cả hai program.
 5. **Ghi** `/etc/cron.d/yona-scheduler`, sau khi cảnh báo nếu đã có cron khác
    (trong `/etc/cron.d/` hoặc crontab của `root`/user runtime) cũng gọi
@@ -321,14 +321,13 @@ Hai file conf mang dòng đầu `; File này do deploy.sh sinh ra` — **sửa t
 ghi đè** ở lần deploy sau. Muốn đổi thì đổi biến môi trường (mục 10) hoặc sửa
 `deploy.sh`.
 
-Nội dung `yona-queue.conf` sinh ra:
+Nội dung `yona-horizon.conf` sinh ra:
 
 ```ini
-[program:yona-queue]
+[program:yona-horizon]
 directory=/www/wwwroot/yona.vn
-command=/www/server/php/84/bin/php artisan queue:work redis --queue=critical,high,medium,default,mailers,low,scheduled_jobs,purgable --timeout=150 --tries=3 --max-time=3600 --sleep=1 --no-interaction
-process_name=%(program_name)s_%(process_num)02d
-numprocs=4
+command=/www/server/php/84/bin/php artisan horizon
+numprocs=1
 user=www
 autostart=true
 autorestart=true
@@ -338,17 +337,25 @@ stopwaitsecs=180
 stopasgroup=true
 killasgroup=true
 redirect_stderr=true
-stdout_logfile=/www/wwwroot/yona.vn/storage/logs/yona-queue.log
+stdout_logfile=/www/wwwroot/yona.vn/storage/logs/yona-horizon.log
 ...
 ```
 
-Danh sách tier queue lấy thẳng từ `QUEUE_TIERS` trong `Makefile`, nên dev và
-production luôn chạy cùng một bộ hàng đợi — sửa một chỗ là đủ.
+Supervisor chỉ nuôi **một** process: Horizon là master, nó tự đẻ worker con theo
+`config/horizon.php`. Số worker tối đa đặt bằng `HORIZON_MAX_PROCESSES` trong
+`.env` (mặc định 4), không còn `DEPLOY_QUEUE_PROCESSES`.
+
+Danh sách tier queue nằm ở `config/queue_tiers.php` — Horizon (production) và
+`Makefile` (dev) đọc cùng file đó, sửa một chỗ là đủ. `balance` để `false` nên
+worker quét tuần tự từ `critical` xuống `purgable`, đúng như `queue:work
+--queue=...` trước đây; bật balance sẽ chia process theo hàng đợi và **mất ưu
+tiên tuyệt đối**.
 
 > **Bất biến của hàng đợi, đừng phá:** `media_timeout` của kênh Zalo (120s,
-> `config/zalo.php`) < `--timeout` của worker (150s) < `retry_after` của Redis
-> (180s, `config/queue.php`). Sai thứ tự này thì Redis trả job về hàng đợi trong
-> lúc nó còn đang chạy → **một tin nhắn gửi hai lần cho khách**.
+> `config/zalo.php`) < `timeout` của worker (150s, `config/horizon.php`) <
+> `retry_after` của Redis (180s, `config/queue.php`). Sai thứ tự này thì Redis
+> trả job về hàng đợi trong lúc nó còn đang chạy → **một tin nhắn gửi hai lần
+> cho khách**.
 
 `yona-reverb.conf` tương tự, chạy `reverb:start` với `REVERB_SERVER_HOST` /
 `REVERB_SERVER_PORT` đọc từ `.env`.
@@ -359,9 +366,37 @@ Kiểm tra sau deploy:
 
 ```bash
 SUPERVISORCTL="/www/server/panel/pyenv/bin/supervisorctl -c /etc/supervisor/supervisord.conf"
-$SUPERVISORCTL status yona-queue:* yona-reverb
+$SUPERVISORCTL status yona-horizon yona-reverb
 cat /etc/cron.d/yona-scheduler
 ```
+
+### Ba dashboard vận hành
+
+| URL | Xem gì | Nguồn dữ liệu |
+|-----|--------|----------------|
+| `/horizon` | Hàng đợi theo tier, job đang chạy, job lỗi, throughput | Redis |
+| `/pulse` | Request chậm, truy vấn chậm, job chậm, exception, user hoạt động | Bảng `pulse_*` trong PostgreSQL |
+| `/log-viewer` | `storage/logs/*.log` qua giao diện | File log của chính app |
+
+Cả ba **chặn sau guard `super_admin`** (`auth:super_admin`), khách lạ bị đẩy về
+`/super_admin/sign_in`. Nghiệm thu: đăng nhập bằng tài khoản agent thường rồi mở
+`/log-viewer` — phải không vào được.
+
+Lưu ý vận hành:
+
+- **Horizon chỉ hiển thị, không cảnh báo.** Worker chết vẫn phải có thứ khác báo
+  (issue #38).
+- `horizon:snapshot` chạy 5 phút/lần qua scheduler; thiếu nó thì tab Metrics
+  trống.
+- **Pulse ghi thẳng vào PostgreSQL dùng chung với dữ liệu khách.** Recorder bắn
+  theo mỗi request/job/cache-hit đã lấy mẫu 10% (`PULSE_*_SAMPLE_RATE`).
+  `pulse:trim` chạy mỗi giờ. Thấy độ trễ request tăng thì hạ sample rate hoặc
+  `PULSE_ENABLED=false`. Pulse ghi *pattern* route (`.../{website_token}`) chứ
+  không ghi URL thật, nên token không rơi vào bảng.
+- Thẻ **Servers** của Pulse tắt (`PULSE_SERVERS_ENABLED=false`) vì nó cần thêm
+  một daemon `pulse:check`; CPU/RAM/đĩa xem ở aaPanel.
+- Log Viewer chỉ đọc `storage/logs`, **không** mở `/var/log/nginx` hay log hệ
+  thống, và **không cho xoá file** từ giao diện (gate `deleteLogFile` trả false).
 
 ---
 
@@ -407,7 +442,7 @@ Thứ tự `deploy.sh` thực hiện:
 9. Cài + `pm2 startOrReload` Zalo bridge, kiểm tra readiness và session.
 10. Chuẩn hóa quyền: `.env` thành `root:www 640`, `storage/` + `bootstrap/cache` cho group `www`.
 11. Dựng/đồng bộ Supervisor + cron scheduler, gỡ program cũ, cảnh báo trùng (mục 8).
-12. `queue:restart`, `reverb:restart`, reload PHP-FPM.
+12. `horizon:terminate`, `reverb:restart`, reload PHP-FPM.
 13. Tắt maintenance, health-check `https://yona.vn/up`.
 
 Lỗi giữa chừng → script **giữ nguyên maintenance mode**. Sửa nguyên nhân rồi
@@ -426,7 +461,6 @@ chạy lại; đừng `artisan up` trước khi xác minh.
 | `DEPLOY_ZALO_BRIDGE` | `auto` | `auto` = chạy khi bridge có `.env` |
 | `DEPLOY_MANAGE_SERVICES` | `1` | Tự dựng Supervisor + cron + pm2 startup |
 | `DEPLOY_RUNTIME_USER` | `www` | User chạy queue worker / Reverb / scheduler |
-| `DEPLOY_QUEUE_PROCESSES` | `4` | Số worker của `yona-queue` |
 | `DEPLOY_SUPERVISOR_CONF_DIR` | `/etc/supervisor/conf.d` | Nơi ghi file program |
 | `DEPLOY_SUPERVISORCTL` | tự dò aaPanel | Đè lệnh `supervisorctl` |
 | `DEPLOY_HEALTHCHECK` | `1` | Gọi `APP_URL/up` sau deploy |
@@ -573,7 +607,7 @@ git merge --ff-only origin/main
 ```
 
 Database `yona` vừa dựng lại đang trống nên migrate thường là đủ — **không** cần
-`DEPLOY_FRESH_DB`. Script sẽ tự gỡ `yona-horizon`/`yona-ssr`, dựng `yona-queue` +
+`DEPLOY_FRESH_DB`. Script sẽ tự gỡ `yona-queue`/`yona-ssr`, dựng `yona-horizon` +
 `yona-reverb`, tạo cron scheduler và đăng ký pm2 startup.
 
 ### B7. Tạo tài khoản và kết nối lại Zalo
@@ -590,7 +624,7 @@ Zalo lại. Session cũ trỏ `connection_id` của database cũ nên không dù
 
 ```bash
 curl -fsS https://yona.vn/up && echo OK
-$SUPERVISORCTL status yona-queue:* yona-reverb
+$SUPERVISORCTL status yona-horizon yona-reverb
 tail -f storage/logs/queue.log
 ```
 
@@ -626,7 +660,7 @@ migrate lại từ đầu. Đây là cái giá đã chấp nhận khi chọn xó
 curl -fsS https://yona.vn/up && echo OK
 
 SUPERVISORCTL="/www/server/panel/pyenv/bin/supervisorctl -c /etc/supervisor/supervisord.conf"
-$SUPERVISORCTL status yona-queue:* yona-reverb
+$SUPERVISORCTL status yona-horizon yona-reverb
 
 cd /www/wwwroot/yona.vn && corepack pnpm --dir services/zalo-bridge exec pm2 status
 curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
@@ -636,11 +670,14 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 
 ```text
 /www/wwwroot/yona.vn/storage/logs/laravel.log
-/www/wwwroot/yona.vn/storage/logs/queue.log
+/www/wwwroot/yona.vn/storage/logs/yona-horizon.log
 /www/wwwroot/yona.vn/storage/logs/reverb.log
 /www/wwwroot/yona.vn/storage/logs/scheduler.log
 /www/wwwroot/yona.vn/storage/logs/zalo-bridge/{out,error}.log
 ```
+
+Đọc qua giao diện: `/log-viewer` (chỉ super admin, chỉ `storage/logs`, không cho
+xoá file). Qua CLI: `php artisan pail`.
 
 ### Sự cố thường gặp
 
@@ -648,9 +685,10 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 |---|---|
 | Deploy dừng ở `Bundle i18n lệch lang/` | Ai đó sửa `lang/**` mà quên `php artisan i18n:generate` + commit |
 | Giao diện đúng nhưng realtime chết | Reverb không chạy, hoặc `VITE_REVERB_*` lúc build khác `.env` hiện tại → build lại |
-| Job không chạy sau deploy | `pcntl_*` còn bị chặn nên `queue:restart` vô hiệu → worker vẫn giữ code cũ |
+| Job không chạy sau deploy | `pcntl_*` còn bị chặn nên `horizon:terminate` vô hiệu → worker vẫn giữ code cũ. Mở `/horizon` xem master có sống không |
 | Gửi Zalo báo "chưa kết nối" | Host của `APP_URL` không nằm trong allowlist fetch của bridge; hoặc session cần quét QR lại |
-| Tin nhắn gửi hai lần | Bất biến `media_timeout < --timeout < retry_after` bị phá (mục 8) |
+| Tin nhắn gửi hai lần | Bất biến `media_timeout < timeout < retry_after` bị phá (mục 8) |
+| Job theo lịch nằm im | Sai tên hàng đợi trong `config/queue_tiers.php` → tab Horizon của tier đó trống |
 | Deploy dừng vì working tree bẩn | Có file sửa trực tiếp trên server — commit hoặc `git checkout --` trước |
 
 ### Rollback
@@ -665,7 +703,7 @@ git reset --hard <commit-cu>
 composer install --no-dev --optimize-autoloader
 corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm run build
 php artisan optimize:clear && php artisan optimize
-php artisan queue:restart && php artisan reverb:restart
+php artisan horizon:terminate && php artisan reverb:restart
 /etc/init.d/php-fpm-84 reload
 ```
 

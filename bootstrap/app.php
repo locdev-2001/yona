@@ -56,8 +56,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Console quản trị có màn đăng nhập riêng (guard `super_admin`).
+        // Dashboard vận hành của gói ngoài (/horizon, /pulse, /log-viewer) cũng
+        // chạy trên guard super_admin, nên guest phải về đúng màn đăng nhập đó.
         $middleware->redirectGuestsTo(
-            fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin/sign_in' : '/app/login',
+            fn (Request $request) => $request->is('super_admin', 'super_admin/*', 'horizon', 'horizon/*', 'pulse', 'pulse/*', 'log-viewer', 'log-viewer/*')
+                ? '/super_admin/sign_in'
+                : '/app/login',
         );
         $middleware->redirectUsersTo(
             fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin' : '/app',
