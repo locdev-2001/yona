@@ -3,10 +3,18 @@
 // Port từ refs/chatwoot/config/installation_config.yml (v4.17.1) — mô tả mọi
 // cấu hình toàn cài đặt: giá trị mặc định, nhãn hiển thị, kiểu nhập và cờ
 // `locked` (khoá thì không sửa được ở màn Installation configs).
+//
+// `value` ở đây CHỈ là mặc định của bảng `installation_configs`; lúc chạy thương
+// hiệu đọc từ config/yona.php (env). Đổi logo hay tên hiển thị thì sửa ở đó,
+// không sửa ở đây, nếu không hai nguồn sẽ lệch.
+//
+// Các khoá `CHATWOOT_*` giữ nguyên tên và mô tả của bản gốc: đó là tên khoá
+// trong port map Ruby↔PHP, không phải nhãn thương hiệu lọt lưới. Chúng cấu hình
+// widget "Contact Support" trên trang billing — Yona chưa có billing nên chết.
 return [
     [
         'name' => 'INSTALLATION_NAME',
-        'value' => 'Chatwoot',
+        'value' => 'Yona',
         'display_title' => 'Installation Name',
         'description' => 'The installation wide name that would be used in the dashboard, title etc.',
     ],
@@ -30,39 +38,39 @@ return [
     ],
     [
         'name' => 'BRAND_URL',
-        'value' => 'https://www.chatwoot.com',
+        'value' => 'https://yona.vn',
         'display_title' => 'Brand URL',
         'description' => 'The URL that would be used in emails under the section “Powered By”',
     ],
     [
         'name' => 'WIDGET_BRAND_URL',
-        'value' => 'https://www.chatwoot.com',
+        'value' => 'https://yona.vn',
         'display_title' => 'Widget Brand URL',
         'description' => 'The URL that would be used in the widget under the section “Powered By”',
     ],
     [
         'name' => 'BRAND_NAME',
-        'value' => 'Chatwoot',
+        'value' => 'Yona',
         'display_title' => 'Brand Name',
         'description' => 'The name that would be used in emails and the widget',
     ],
     [
         'name' => 'TERMS_URL',
-        'value' => 'https://www.chatwoot.com/terms-of-service',
+        'value' => 'https://yona.vn/terms',
         'display_title' => 'Terms URL',
         'description' => 'The terms of service URL displayed in Signup Page',
     ],
     [
         'name' => 'PRIVACY_URL',
-        'value' => 'https://www.chatwoot.com/privacy-policy',
+        'value' => 'https://yona.vn/privacy-policy',
         'display_title' => 'Privacy URL',
         'description' => 'The privacy policy URL displayed in the app',
     ],
     [
         'name' => 'DISPLAY_MANIFEST',
         'value' => true,
-        'display_title' => 'Chatwoot Metadata',
-        'description' => 'Display default Chatwoot metadata like favicons and upgrade warnings',
+        'display_title' => 'Yona Metadata',
+        'description' => 'Display default Yona metadata like favicons and upgrade warnings',
         'type' => 'boolean',
     ],
     [
@@ -92,7 +100,7 @@ return [
         'name' => 'WEBHOOK_TIMEOUT',
         'value' => 5,
         'display_title' => 'Webhook request timeout (seconds)',
-        'description' => 'Maximum time Chatwoot waits for a webhook response before failing the request',
+        'description' => 'Maximum time Yona waits for a webhook response before failing the request',
         'locked' => false,
     ],
     [
@@ -302,7 +310,7 @@ return [
         'name' => 'MARKETING_CONVERSION_TRACKING_CONFIG',
         'value' => null,
         'display_title' => 'Marketing Conversion Tracking Config',
-        'description' => 'JSON config for Chatwoot Cloud signup and plan activation conversion tracking',
+        'description' => 'JSON config for Yona Cloud signup and plan activation conversion tracking',
         'locked' => true,
         'type' => 'code',
     ],
@@ -315,13 +323,13 @@ return [
     [
         'name' => 'DEPLOYMENT_ENV',
         'value' => 'self-hosted',
-        'description' => 'The deployment environment of the installation, to differentiate between Chatwoot cloud and self-hosted',
+        'description' => 'The deployment environment of the installation, to differentiate between Yona cloud and self-hosted',
     ],
     [
         'name' => 'CLOUD_ANALYTICS_TOKEN',
         'value' => null,
         'display_title' => 'Analytics Token',
-        'description' => 'The Amplitude analytics API key for Chatwoot cloud',
+        'description' => 'The Amplitude analytics API key for Yona cloud',
         'type' => 'secret',
     ],
     [
@@ -389,7 +397,7 @@ return [
         'name' => 'ACCOUNT_SECURITY_NOTIFICATION_WEBHOOK_URL',
         'display_title' => 'Webhook URL to post security analysis',
         'value' => null,
-        'description' => 'Used to notify Chatwoot about account abuses, potential threads (Should be a Discord Webhook URL)',
+        'description' => 'Used to notify Yona about account abuses, potential threads (Should be a Discord Webhook URL)',
     ],
     [
         'name' => 'CHATWOOT_INSTANCE_ADMIN_EMAIL',
