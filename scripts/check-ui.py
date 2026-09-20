@@ -21,6 +21,7 @@ import argparse
 import json
 import math
 import sys
+from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -280,7 +281,15 @@ JS_THU_THAP = r"""
 
   const sections = Array.from(document.querySelectorAll('header, main > *, footer')).map(s => {
     const r = rect(s);
-    return { top: Math.round(r.top + scrollY), h: Math.round(r.height), tag: s.tagName.toLowerCase(), id: s.id || '' };
+    // `fill`: section TỰ KHAI mình cao đúng một màn hình bằng min-height trên
+    // lớp trong. Section không khai thì nó cao theo nội dung, và ép nó vừa một
+    // màn hình ở 390px là đòi một thứ nó chưa bao giờ hứa.
+    const khai_fill = Array.from(s.querySelectorAll('*')).some(el => {
+      const mh = getComputedStyle(el).minHeight;
+      return mh && mh !== 'auto' && mh !== '0px' && parseFloat(mh) > innerHeight * 0.5;
+    });
+    return { top: Math.round(r.top + scrollY), h: Math.round(r.height),
+             tag: s.tagName.toLowerCase(), id: s.id || '', fill: khai_fill };
   });
 
   return { chu, tranh, anh_loi, dich_cham, nhom, sections,
@@ -326,12 +335,22 @@ def kiem_mot_viewport(page, w: int, h: int, url: str) -> tuple[list[KetQua], dic
     kq.append(KetQua("C1", "tranh trang trí không đè chữ", not loi, loi))
 
     # C3 — section đầu vừa một màn hình
+    #
+    # Chỉ áp cho trang CÓ HỨA điều đó: trang chủ (yêu cầu của chủ dự án 20/09) và
+    # bất kỳ section đầu nào tự khai `fill`. Trang form hai cột ở 390px xếp chồng
+    # thành 1349px — không trang nào hai cột vừa nổi 844px, và ép nó vừa chỉ tạo
+    # ra một lỗi không sửa được bằng cách nào đúng.
     secs = d["sections"]
     if len(secs) >= 2:
-        cao = secs[0]["h"] + secs[1]["h"]
-        dat = cao <= d["vh"] + 1
-        ct = [] if dat else [f"[{vp}] nav+hero cao {cao}px > viewport {d['vh']}px"]
-        kq.append(KetQua("C3", "nav + section đầu vừa một màn hình", dat, ct))
+        la_trang_chu = urlparse(url).path in ("", "/")
+        if la_trang_chu or secs[1].get("fill"):
+            cao = secs[0]["h"] + secs[1]["h"]
+            dat = cao <= d["vh"] + 1
+            ct = [] if dat else [f"[{vp}] nav+hero cao {cao}px > viewport {d['vh']}px"]
+            kq.append(KetQua("C3", "nav + section đầu vừa một màn hình", dat, ct))
+        else:
+            kq.append(KetQua("C3", "nav + section đầu vừa một màn hình", True,
+                             bo_qua="section đầu không khai `fill`, và đây không phải trang chủ"))
 
     # C4 — không tràn ngang, không ảnh lỗi
     loi = ([f"[{vp}] trang trượt ngang"] if d["tran_ngang"] else []) + [

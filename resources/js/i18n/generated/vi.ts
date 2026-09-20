@@ -307,8 +307,8 @@ const messages: Record<string, unknown> = {
         },
         "PLACEHOLDER": {
             "TITLE": "Phần này chưa sẵn sàng",
-            "DESCRIPTION": "Chúng tôi đang hoàn thiện phần này. Bạn có thể quay lại tất cả hội thoại để tiếp tục làm việc.",
-            "BACK": "Về tất cả hội thoại"
+            "DESCRIPTION": "Chúng tôi đang hoàn thiện và sẽ mở khi xong.",
+            "BACK": "Quay lại hội thoại"
         }
     },
     "ASSIGNMENT_POLICY": {

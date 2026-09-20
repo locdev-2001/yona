@@ -11,6 +11,10 @@ import { ACCENT, Eyebrow, Section } from '../components/Section';
  *
  * Nói rõ ba thứ khách đang muốn biết: khi nào được gọi, gọi thế nào, cần chuẩn
  * bị gì. `noindex` đặt trong blade.
+ *
+ * Cả khối nằm trong một thẻ `neutral-100` rộng bằng container, chữ bên trong vẫn
+ * giữ bề rộng đọc được. Bản trước để một cột 660px giữa màn 1440 và đo được
+ * 96.8% trắng: bên phải trống hẳn, trang đọc ra như chưa dựng xong.
  */
 export function DemoThanks({ config }: { config: LandingConfig }) {
     const { strings, urls } = config;
@@ -18,14 +22,14 @@ export function DemoThanks({ config }: { config: LandingConfig }) {
 
     return (
         <Section surface="base" rhythm="md" accent="primary" fill>
-            <div className="mx-auto max-w-reading">
+            <div className="bg-neutral-100 p-6 md:p-16">
                 <Eyebrow accent="primary">{thanks.eyebrow}</Eyebrow>
 
-                <h1 className="mt-5 text-balance text-h1">{thanks.title}</h1>
+                <h1 className="mt-5 max-w-3xl text-balance text-h1">{thanks.title}</h1>
 
-                <p className="mt-5 text-lead font-light text-neutral-700">{thanks.lead}</p>
+                <p className="mt-5 max-w-reading text-lead font-light text-neutral-700">{thanks.lead}</p>
 
-                <ul className="mt-8 flex flex-col gap-4">
+                <ul className="mt-8 flex max-w-reading flex-col gap-4">
                     {Object.entries(thanks.next).map(([key, line]) => (
                         <li key={key} className="flex gap-4">
                             <span aria-hidden className={`mt-2 size-2 shrink-0 ${ACCENT.primary}`} />

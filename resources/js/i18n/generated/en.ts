@@ -307,8 +307,8 @@ const messages: Record<string, unknown> = {
         },
         "PLACEHOLDER": {
             "TITLE": "This page is not ready yet",
-            "DESCRIPTION": "We are still finishing this part. You can go back to all conversations to keep working.",
-            "BACK": "Back to all conversations"
+            "DESCRIPTION": "We are still finishing it and will open it when it is ready.",
+            "BACK": "Back to conversations"
         }
     },
     "ASSIGNMENT_POLICY": {

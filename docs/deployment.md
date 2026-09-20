@@ -197,6 +197,11 @@ ALLOW_PRIVATE_WEBHOOK_URLS=false
 > `MessageReceived` ngày 16/09/2026 — 8 tin khách không hiện realtime mà không
 > ai biết, cho tới khi Horizon phơi ra. Trỏ loopback là bỏ luôn cả DNS lẫn TLS
 > cho đường nội bộ.
+>
+> Ba chỗ phải mang **cùng một số cổng**: `REVERB_SERVER_PORT` (Reverb nghe),
+> `REVERB_INTERNAL_PORT` (Laravel gọi vào) và `proxy_pass` trong vhost Nginx
+> (trình duyệt nối vào). Lệch một chỗ là realtime chết câm — giao diện vẫn chạy,
+> chỉ không có tin mới. Con số cụ thể không quan trọng, khớp nhau mới quan trọng.
 
 Sinh secret mà không ghi giá trị cố định vào Git:
 
