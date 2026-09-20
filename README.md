@@ -11,6 +11,28 @@ merge vào `main` (08/09/2026). Mốc quay lại bản cũ: tag `main-truoc-rewr
 
 ---
 
+## Trạng thái (20/09/2026)
+
+Production đang chạy tại **https://yona.vn**. 40/40 tính năng Chatwoot đã port,
+tiếng Việt đầy đủ, ~2.2k test Pest + ~800 test vitest xanh.
+
+Nhưng **khách lạ chưa tự đi hết được từ trang chủ tới hộp thư**. Bốn nút chặn,
+theo đúng thứ tự khách gặp:
+
+| Chặn ở đâu | Vì sao | Issue |
+|---|---|---|
+| Đăng ký | Chưa cấu hình SMTP → thư xác nhận không bao giờ tới, mà đăng nhập lại đòi `confirmed_at` | [#36](https://github.com/locflamedia/yona/issues/36) |
+| Onboarding | Website là trường bắt buộc duy nhất, thông báo lỗi không có chỗ hiện | [#62](https://github.com/locflamedia/yona/issues/62) |
+| Màn hình đầu | "Liên hệ với quản trị viên của bạn" — nói với chính quản trị viên, không có nút kết nối kênh | [#63](https://github.com/locflamedia/yona/issues/63) |
+| Kênh Zalo | Chưa nghiệm thu bằng tài khoản Zalo thật trên production | [#48](https://github.com/locflamedia/yona/issues/48) |
+
+Kênh dùng được thật hôm nay: **Zalo cá nhân · widget website · email (IMAP/SMTP)**.
+Telegram/LINE/Twilio chạy được nếu khách tự mang thông tin của họ. Messenger,
+Instagram, WhatsApp Cloud, TikTok **chưa dùng được** — cần Meta App + App Review
+đứng tên Yona ([#57](https://github.com/locflamedia/yona/issues/57)).
+
+Ảnh rà soát giao diện kèm giải thích: [plans/reports/ui-audit-260920-evidence.md](https://github.com/locflamedia/yona/blob/evidence/ui-audit-260920/plans/reports/ui-audit-260920-evidence.md).
+
 ## Tech stack
 
 | Lớp | Công nghệ |
@@ -38,7 +60,17 @@ make down      # tắt hết
 Cổng lấy **một nguồn duy nhất** từ `.env`: app `8610` (`SERVER_PORT`), Reverb
 `8611` (`REVERB_SERVER_PORT`), Zalo bridge `8612`. Đừng truyền `--port` ở nơi khác.
 
-Tài khoản seed: `john@acme.inc` / `Password1!`. Super admin console (`/superadmin`):
+Tài khoản seed: `john@acme.inc` / `Password1!`.
+
+> **Đăng ký ở local sẽ kẹt.** `MAIL_MAILER=log` nên thư xác nhận chỉ nằm trong
+> `storage/logs`, trong khi đăng nhập đòi `confirmed_at`. Tạo tài khoản thử bằng
+> cách đánh dấu xác nhận sẵn:
+>
+> ```bash
+> php artisan tinker --execute="(new App\\Builders\\AccountBuilder(accountName:'Shop thử', email:'thu@shop.test', userFullName:'Chị Hà', userPassword:'Password1!', confirmed:true))->perform();"
+> ```
+
+Super admin console (`/superadmin`):
 
 ```bash
 php artisan super-admin:create ban@yona.vn --name="Tên" --password='<mật khẩu>'
@@ -89,6 +121,18 @@ sửa lõi**. Ba mặt tiền route (`web` / `web_api` / `api`) cùng gọi mộ
 mọi tính năng phải mở ra API được mà không viết lại.
 
 ---
+
+## Theo dõi việc
+
+GitHub Issues là nơi duy nhất. Nhãn đọc theo hai trục:
+
+- **Mức độ** — `P0` chặn khách, `P1` phải xong trước khi bán rộng, `P2` nợ chất lượng
+- **Loại việc** — `type:fix` / `type:feat` / `type:docs` / `type:chore` cho việc trong code;
+  `ops` hạ tầng, `legal` pháp lý & tuân thủ, `gtm` bán hàng & vận hành khách
+- **Vùng** — `module:inbox` / `module:platform` / `module:marketing` / `module:billing`
+
+Việc ngoài code (SMTP, sao lưu, giám sát, hồ sơ pháp lý, giá, tài liệu) nằm cùng
+chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
 
 ## Deploy
 
