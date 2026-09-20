@@ -13,6 +13,9 @@ export default defineConfig({
     },
     test: {
         environment: 'jsdom',
+        // jsdom mặc định chạy ở about:blank — origin mờ, nên localStorage/sessionStorage
+        // là undefined và mọi test đụng tới chúng nổ TypeError. Đặt URL thật để có origin.
+        environmentOptions: { jsdom: { url: 'http://localhost' } },
         include: ['resources/js/**/*.test.{ts,tsx}'],
         setupFiles: ['resources/js/test-setup.ts'],
     },
