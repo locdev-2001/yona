@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { format, getDay } from 'date-fns';
+import { getDay } from 'date-fns';
 
 import VizHeatmapChart from 'shared/components/charts/viz/HeatmapChart';
 import { groupHeatmapByDay, type HeatmapPoint } from 'shared/helpers/reportsDataHelper';
+import { formatInLocale } from 'shared/helpers/timeHelper';
 import { t } from '../../../../i18n';
 
 // Port từ reports/components/heatmaps/BaseHeatmap.vue
@@ -74,7 +75,7 @@ export default function BaseHeatmap({
             return {
                 id: dateKey,
                 label: daysOfWeek[getDay(date)],
-                description: format(new Date(dateKey), 'MMM d, yyyy'),
+                description: formatInLocale(new Date(dateKey), 'MMM d, yyyy'),
                 data: columns.map(({ id }) => valuesByHour.get(id) ?? null),
             };
         });

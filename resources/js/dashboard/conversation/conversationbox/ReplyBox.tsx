@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { debounce, getRecipients, trimContent } from '@chatwoot/utils';
 
-import { shortcutLabel } from 'shared/helpers/kbd';
+import { isTouchOnlyDevice, shortcutLabel } from 'shared/helpers/kbd';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -146,14 +146,17 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
     const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, channelType).trim() !== '';
 
+    // Trên thiết bị cảm ứng, placeholder bỏ phần gợi ý phím tắt.
+    const isTouchOnly = isTouchOnlyDevice();
     const messagePlaceHolder = isEditorDisabled
         ? t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
         : isPrivate
-          ? t('CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
-          : t('CONVERSATION.FOOTER.MSG_INPUT');
+          ? t(isTouchOnly ? 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
+          : t(isTouchOnly ? 'CONVERSATION.FOOTER.MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.MSG_INPUT');
 
     const replyButtonLabel = (() => {
         const sendMessageText = isPrivate ? t('CONVERSATION.REPLYBOX.CREATE') : t('CONVERSATION.REPLYBOX.SEND');
+        if (isTouchOnly) return sendMessageText;
         const keyLabel = isEditorHotKeyEnabled(uiSettings, 'cmd_enter') ? `(${cmdEnterShortcutLabel()})` : '(↵)';
         return `${sendMessageText} ${keyLabel}`;
     })();

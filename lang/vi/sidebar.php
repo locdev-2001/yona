@@ -18,7 +18,7 @@ return [
     'REPORTS' => 'Báo cáo',
     'SETTINGS' => 'Cài đặt',
     'CONTACTS' => 'Liên hệ',
-    'ACTIVE' => 'Có hiệu lực',
+    'ACTIVE' => 'Đang hoạt động',
     'COMPANIES' => 'Công ty',
     'ALL_COMPANIES' => 'Tất cả công ty',
     'CAPTAIN' => 'Captain',

@@ -63,7 +63,7 @@ return [
     'BUBBLE' => [
         'LABEL' => 'Trò chuyện với chúng tôi',
     ],
-    'POWERED_BY' => 'CC bởi Chatwoot',
+    'POWERED_BY' => 'Cung cấp bởi Chatwoot',
     'EMAIL_PLACEHOLDER' => 'Vui lòng nhập email',
     'CHAT_PLACEHOLDER' => 'Gõ tin nhắn của bạn',
     'TODAY' => 'Hôm nay',

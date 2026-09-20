@@ -2611,6 +2611,8 @@ const messages: Record<string, unknown> = {
             "DISABLE_SIGN_TOOLTIP": "Disable signature",
             "MSG_INPUT": "Shift + enter for new line. Start with '/' to select a Canned Response.",
             "PRIVATE_MSG_INPUT": "Shift + enter for new line. This will be visible only to Agents",
+            "MSG_INPUT_TOUCH": "Type a message…",
+            "PRIVATE_MSG_INPUT_TOUCH": "Private note — visible to agents only",
             "MESSAGING_RESTRICTED": "You cannot reply to this conversation",
             "MESSAGING_RESTRICTED_WHATSAPP": "You can only reply using a template message due to 24-hour message window restriction",
             "MESSAGING_RESTRICTED_API": "You can only reply using a template message due to message window restriction",
@@ -5255,7 +5257,7 @@ const messages: Record<string, unknown> = {
                     "BOUND_ACCOUNT": "This inbox is connected to: {name}",
                     "CONNECTED": "Connected. Redirecting…",
                     "RETRY": "Show a new QR code",
-                    "BRIDGE_DOWN": "The Zalo connector service is not running. Start services/zalo-bridge and try again.",
+                    "BRIDGE_DOWN": "The Zalo connection is temporarily unavailable. Try again in a few minutes, or contact support if it persists.",
                     "EXPIRED": "The QR code expired before it was scanned.",
                     "MISMATCH": "That QR code belongs to a different Zalo account. Scan the account already connected to this inbox."
                 }
@@ -5404,7 +5406,7 @@ const messages: Record<string, unknown> = {
             "DISCONNECT": "Disconnect Zalo",
             "DISCONNECT_CONFIRM": "Disconnect this Zalo account? The inbox stops receiving messages until you scan a QR code again.",
             "DISCONNECT_DONE": "Zalo account disconnected.",
-            "DISCONNECT_BRIDGE_DOWN": "Disconnected in Yona, but the Zalo connector did not answer — the session may stay alive there until it restarts.",
+            "DISCONNECT_BRIDGE_DOWN": "Disconnected in Yona, but the Zalo connection did not answer — the session may stay alive on Zalo for a few more minutes.",
             "SWITCH_ACCOUNT": "Connect another account",
             "STATE": {
                 "CONNECTED": "Connected",
@@ -5420,8 +5422,8 @@ const messages: Record<string, unknown> = {
                 "OPEN": "Paused after {count} errors, retrying at {time}"
             },
             "ERRORS": {
-                "BRIDGE_UNREACHABLE": "Could not reach the Zalo connector. Start services/zalo-bridge and try again.",
-                "BRIDGE_REJECTED": "The Zalo connector refused the request. Check its logs, then try again.",
+                "BRIDGE_UNREACHABLE": "The Zalo connection is temporarily unavailable. Try again in a few minutes, or contact support if it persists.",
+                "BRIDGE_REJECTED": "The Zalo connection could not process the request. Try again, or contact support if it persists.",
                 "NO_QR_SESSION": "No QR sign-in session is open. Start a new one.",
                 "ACCOUNT_MISMATCH": "That QR code belongs to a different Zalo account. This inbox is connected to {name}.",
                 "ACCOUNT_IN_USE": "That Zalo account is already connected to inbox \"{inbox}\". One account can only serve one inbox."

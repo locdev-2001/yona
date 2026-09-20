@@ -38,7 +38,7 @@ return [
             'CARD' => [
                 'ORDER' => 'Thứ tự',
                 'PRIORITY' => 'Mức độ ưu tiên',
-                'ACTIVE' => 'Có hiệu lực',
+                'ACTIVE' => 'Đang bật',
                 'INACTIVE' => 'Đang tắt',
                 'POPOVER' => 'Hộp thư đã thêm',
                 'EDIT' => 'Chỉnh sửa',

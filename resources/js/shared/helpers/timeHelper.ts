@@ -27,6 +27,9 @@ const PATTERN_BY_LOCALE: Record<string, Record<string, string>> = {
         'LLL d y, h:mm a': 'd MMM y, HH:mm',
         'LLL d yyyy, h:mm a': 'd MMM yyyy, HH:mm',
         'MMM d, yyyy': 'd MMM, yyyy',
+        'dd MMM yyyy, h:mm a': 'dd MMM yyyy, HH:mm',
+        'MMM-yyyy': 'MMM yyyy',
+        'dd-MMM': 'dd MMM',
     },
 };
 
@@ -36,7 +39,7 @@ function localizedPattern(pattern: string): string {
     return PATTERN_BY_LOCALE[language]?.[pattern] ?? pattern;
 }
 
-function formatInLocale(time: number | Date, pattern: string): string {
+export function formatInLocale(time: number | Date, pattern: string): string {
     const value = typeof time === 'number' ? fromUnixTime(time) : time;
 
     return format(value, localizedPattern(pattern), { locale: activeDateFnsLocale() });

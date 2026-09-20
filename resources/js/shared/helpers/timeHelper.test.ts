@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { dynamicTime, formatDuration, messageStamp, messageTimestamp, shortTimestamp } from './timeHelper';
+import { dynamicTime, formatDuration, formatInLocale, messageStamp, messageTimestamp, shortTimestamp } from './timeHelper';
 
 describe('formatDuration', () => {
     it('định dạng mm:ss và hh:mm:ss', () => {
@@ -80,5 +80,31 @@ describe('định dạng ngày giờ theo locale', () => {
         document.documentElement.lang = 'vi';
         expect(messageStamp(stamp)).toBe('22:37');
         expect(messageTimestamp(stamp, 'LLL d, h:mm a')).toBe('7 thg 9, 22:37');
+    });
+});
+
+describe('formatInLocale', () => {
+    afterEach(() => {
+        document.documentElement.lang = 'en';
+    });
+
+    // Báo cáo chạy tiếng Việt nhưng ngày in tiếng Anh ("Sep 14, 2026") — mọi mẫu
+    // ngày của trang Báo cáo phải đi qua đây và đổi theo locale.
+    it('đổi tên tháng và thứ tự theo locale vi', () => {
+        const date = new Date(2026, 8, 14);
+
+        document.documentElement.lang = 'en';
+        expect(formatInLocale(date, 'MMM d, yyyy')).toBe('Sep 14, 2026');
+
+        document.documentElement.lang = 'vi';
+        expect(formatInLocale(date, 'MMM d, yyyy')).not.toContain('Sep');
+        expect(formatInLocale(date, 'dd-MMM')).not.toContain('Sep');
+        expect(formatInLocale(date, 'MMM-yyyy')).not.toContain('Sep');
+    });
+
+    it('bỏ AM/PM khi locale vi', () => {
+        document.documentElement.lang = 'vi';
+        const evening = new Date(2026, 8, 14, 20, 5);
+        expect(formatInLocale(evening, 'dd MMM yyyy, h:mm a')).toContain('20:05');
     });
 });

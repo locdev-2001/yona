@@ -88,8 +88,8 @@ return [
     'LIST' => [
         'TABLE_HEADER' => [
             'NAME' => 'Tên',
-            'ACTIVE' => 'Có hiệu lực',
-            'CREATED_ON' => 'Được tạo trên',
+            'ACTIVE' => 'Đang bật',
+            'CREATED_ON' => 'Ngày tạo',
             'ACTIONS' => 'Hành động',
         ],
         '404' => 'Không tìm thấy quy tắc tự động hóa',

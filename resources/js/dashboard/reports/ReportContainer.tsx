@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { formatTime } from '@chatwoot/utils';
-import { format, fromUnixTime } from 'date-fns';
+import { fromUnixTime } from 'date-fns';
 
 import BarChart from 'shared/components/charts/BarChart';
 import LoadingState from 'dashboard/components/widgets/LoadingState';
+import { formatInLocale } from 'shared/helpers/timeHelper';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
@@ -91,11 +92,11 @@ export default function ReportContainer({
                 const lastDay = firstDay + 6;
                 const weekFirstDate = new Date(weekDate.setDate(firstDay));
                 const weekLastDate = new Date(weekDate.setDate(lastDay));
-                return `${format(weekFirstDate, 'dd-MMM')} - ${format(weekLastDate, 'dd-MMM')}`;
+                return `${formatInLocale(weekFirstDate, 'dd-MMM')} - ${formatInLocale(weekLastDate, 'dd-MMM')}`;
             }
-            if (groupBy?.period === GROUP_BY_FILTER[3].period) return format(fromUnixTime(element.timestamp), 'MMM-yyyy');
-            if (groupBy?.period === GROUP_BY_FILTER[4].period) return format(fromUnixTime(element.timestamp), 'yyyy');
-            return format(fromUnixTime(element.timestamp), 'dd-MMM');
+            if (groupBy?.period === GROUP_BY_FILTER[3].period) return formatInLocale(fromUnixTime(element.timestamp), 'MMM-yyyy');
+            if (groupBy?.period === GROUP_BY_FILTER[4].period) return formatInLocale(fromUnixTime(element.timestamp), 'yyyy');
+            return formatInLocale(fromUnixTime(element.timestamp), 'dd-MMM');
         });
 
         return {
