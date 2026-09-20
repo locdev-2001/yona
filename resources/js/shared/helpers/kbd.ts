@@ -35,3 +35,14 @@ export function shortcutLabel(keys: string[]): string {
         .join(' ')
         .toUpperCase();
 }
+
+/**
+ * Thiết bị chỉ có cảm ứng (không có con trỏ hover). Gợi ý phím tắt trên những
+ * máy này là vô nghĩa — bàn phím ảo không có ⌘/Ctrl và không hiện Shift+Enter.
+ * KHÁC BIỆT CỐ Ý so với bản gốc: gốc hiện nhãn phím tắt ở mọi thiết bị.
+ */
+export function isTouchOnlyDevice(): boolean {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+
+    return window.matchMedia('(hover: none)').matches;
+}

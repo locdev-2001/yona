@@ -1,18 +1,18 @@
 import { usePage } from '@inertiajs/react';
 import { formatTime } from '@chatwoot/utils';
-import { format, fromUnixTime } from 'date-fns';
+import { fromUnixTime } from 'date-fns';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import TimeAgo from 'dashboard/components/ui/TimeAgo';
 import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
-import { shortTimestamp } from 'shared/helpers/timeHelper';
+import { formatInLocale, shortTimestamp } from 'shared/helpers/timeHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import type { DrilldownRecord } from '../types';
 
 // Port từ reports/components/ReportDrilldownCard.vue
 
-const formatTimestamp = (timestamp?: number) => (timestamp ? format(fromUnixTime(timestamp), 'dd MMM yyyy, h:mm a') : '');
+const formatTimestamp = (timestamp?: number) => (timestamp ? formatInLocale(fromUnixTime(timestamp), 'dd MMM yyyy, h:mm a') : '');
 const compactTimestamp = (timestamp?: number) => (timestamp ? shortTimestamp(timestamp).trim() : '');
 
 export default function ReportDrilldownCard({ record }: { record: DrilldownRecord }) {

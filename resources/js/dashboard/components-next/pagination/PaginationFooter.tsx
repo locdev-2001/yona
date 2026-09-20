@@ -3,10 +3,14 @@ import Button from 'dashboard/components-next/button/Button';
 
 // Port từ dashboard/components-next/pagination/PaginationFooter.vue
 // (useNumberFormatter: Intl compact/full như bản gốc).
-const formatCompactNumber = (value: number) =>
-    new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+// KHÁC BIỆT CỐ Ý so với bản gốc: gốc ghim 'en' nên số ngăn cách kiểu Anh ở mọi
+// ngôn ngữ. Lấy locale của lần render (cùng nguồn với i18n) để tiếng Việt ra đúng.
+const activeLocale = () => (typeof document === 'undefined' ? 'en' : document.documentElement.lang || 'en');
 
-const formatFullNumber = (value: number) => new Intl.NumberFormat('en').format(value);
+const formatCompactNumber = (value: number) =>
+    new Intl.NumberFormat(activeLocale(), { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+
+const formatFullNumber = (value: number) => new Intl.NumberFormat(activeLocale()).format(value);
 
 interface PaginationFooterProps {
     currentPage: number;
@@ -45,7 +49,7 @@ export default function PaginationFooter({
     });
 
     const pageInfo = t('PAGINATION_FOOTER.CURRENT_PAGE_INFO', {
-        currentPage: '',
+        currentPage: formatFullNumber(currentPage),
         totalPages: formatCompactNumber(totalPages),
         n: totalPages,
     });

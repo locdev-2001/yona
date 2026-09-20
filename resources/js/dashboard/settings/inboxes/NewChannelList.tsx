@@ -11,19 +11,21 @@ import type { DashboardPageProps } from '../../types';
 
 // Port từ settings/inbox/ChannelList.vue — bước 1 chọn kênh.
 // Bỏ card tiktok (chỉ hiện khi cài đặt có tiktokAppId — mình không cấu hình).
+// KHÁC BIỆT CỐ Ý so với bản gốc: Zalo đứng đầu (kênh chính của sản phẩm), kênh
+// chưa bấm được dồn xuống cuối để không chen giữa các kênh dùng được.
 const CHANNEL_KEYS = [
+    'zalo',
     'website',
-    'facebook',
+    'email',
+    'telegram',
     'whatsapp',
     'sms',
-    'email',
     'api',
-    'telegram',
     'line',
+    'facebook',
     'instagram',
-    'voice',
     'whatsapp_call',
-    'zalo',
+    'voice',
 ] as const;
 
 const CHANNEL_ICONS: Record<string, string> = {

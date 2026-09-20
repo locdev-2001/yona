@@ -11,7 +11,9 @@ export interface ChannelOption {
 }
 
 const ACTIVE_CHANNELS = ['api', 'website', 'email', 'zalo', 'whatsapp', 'sms', 'telegram', 'line'];
-const COMING_SOON_CHANNELS = ['voice'];
+// Kênh chưa mở phải nói rõ là chưa mở — card xám không nhãn khiến người dùng
+// tưởng hỏng. Meta (facebook/instagram/whatsapp_call) còn chờ App Review.
+const COMING_SOON_CHANNELS = ['voice', 'facebook', 'instagram', 'whatsapp_call'];
 const BETA_CHANNELS = ['tiktok', 'voice', 'whatsapp_call'];
 
 interface ChannelItemProps {

@@ -48,10 +48,10 @@ function resolveErrorMessage(body: ZaloApiErrorBody | undefined, boundAccountNam
     switch (body?.error_code) {
         case 'bridge_unreachable':
             return t('INBOX_MGMT.ZALO_SESSION.ERRORS.BRIDGE_UNREACHABLE');
-        case 'bridge_rejected': {
-            const base = t('INBOX_MGMT.ZALO_SESSION.ERRORS.BRIDGE_REJECTED');
-            return body.bridge_message ? `${base} (${body.bridge_message})` : base;
-        }
+        case 'bridge_rejected':
+            // `bridge_message` là văn bản kỹ thuật của bridge — backend đã ghi log,
+            // không ghép vào câu hiện cho người dùng cuối.
+            return t('INBOX_MGMT.ZALO_SESSION.ERRORS.BRIDGE_REJECTED');
         case 'zalo_account_mismatch':
             return t('INBOX_MGMT.ZALO_SESSION.ERRORS.ACCOUNT_MISMATCH', {
                 name: body.bound_display_name ?? boundAccountName ?? '',

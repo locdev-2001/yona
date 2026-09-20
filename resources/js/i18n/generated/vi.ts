@@ -340,7 +340,7 @@ const messages: Record<string, unknown> = {
                 "CARD": {
                     "ORDER": "Thứ tự",
                     "PRIORITY": "Mức độ ưu tiên",
-                    "ACTIVE": "Có hiệu lực",
+                    "ACTIVE": "Đang bật",
                     "INACTIVE": "Đang tắt",
                     "POPOVER": "Hộp thư đã thêm",
                     "EDIT": "Chỉnh sửa"
@@ -826,8 +826,8 @@ const messages: Record<string, unknown> = {
         "LIST": {
             "TABLE_HEADER": {
                 "NAME": "Tên",
-                "ACTIVE": "Có hiệu lực",
-                "CREATED_ON": "Được tạo trên",
+                "ACTIVE": "Đang bật",
+                "CREATED_ON": "Ngày tạo",
                 "ACTIONS": "Hành động"
             },
             "404": "Không tìm thấy quy tắc tự động hóa",
@@ -2610,7 +2610,9 @@ const messages: Record<string, unknown> = {
             "ENABLE_SIGN_TOOLTIP": "Bật chữ ký",
             "DISABLE_SIGN_TOOLTIP": "Tắt chữ ký",
             "MSG_INPUT": "Nhập tin nhắn… (/ để chọn câu trả lời mẫu)",
-            "PRIVATE_MSG_INPUT": "Shift + enter cho dòng mới. Điều này sẽ chỉ hiển thị cho Nhân viên",
+            "PRIVATE_MSG_INPUT": "Ghi chú nội bộ (Shift + Enter để xuống dòng) — chỉ nhân viên thấy",
+            "MSG_INPUT_TOUCH": "Nhập tin nhắn…",
+            "PRIVATE_MSG_INPUT_TOUCH": "Ghi chú nội bộ — chỉ nhân viên thấy",
             "MESSAGING_RESTRICTED": "Bạn không trả lời được hội thoại này",
             "MESSAGING_RESTRICTED_WHATSAPP": "Do giới hạn cửa sổ 24 giờ, bạn chỉ trả lời được bằng tin mẫu",
             "MESSAGING_RESTRICTED_API": "Do giới hạn cửa sổ nhắn tin, bạn chỉ trả lời được bằng tin mẫu",
@@ -5255,7 +5257,7 @@ const messages: Record<string, unknown> = {
                     "BOUND_ACCOUNT": "Hộp thư này đang gắn tài khoản: {name}",
                     "CONNECTED": "Đã kết nối. Đang chuyển trang…",
                     "RETRY": "Hiện mã QR mới",
-                    "BRIDGE_DOWN": "Dịch vụ kết nối Zalo chưa chạy. Hãy khởi động services/zalo-bridge rồi thử lại.",
+                    "BRIDGE_DOWN": "Kết nối Zalo đang tạm gián đoạn. Vui lòng thử lại sau ít phút, nếu vẫn lỗi hãy liên hệ hỗ trợ.",
                     "EXPIRED": "Mã QR đã hết hạn trước khi được quét.",
                     "MISMATCH": "Mã QR này thuộc về một tài khoản Zalo khác. Hãy quét đúng tài khoản đang kết nối với hộp thư này."
                 }
@@ -5404,7 +5406,7 @@ const messages: Record<string, unknown> = {
             "DISCONNECT": "Ngắt kết nối Zalo",
             "DISCONNECT_CONFIRM": "Ngắt kết nối tài khoản Zalo này? Hộp thư sẽ ngừng nhận tin cho tới khi bạn quét lại mã QR.",
             "DISCONNECT_DONE": "Đã ngắt kết nối tài khoản Zalo.",
-            "DISCONNECT_BRIDGE_DOWN": "Đã ngắt trong Yona, nhưng cầu nối Zalo không trả lời — phiên bên đó có thể còn sống tới khi cầu nối khởi động lại.",
+            "DISCONNECT_BRIDGE_DOWN": "Đã ngắt trong Yona, nhưng kết nối Zalo chưa phản hồi — phiên bên Zalo có thể còn sống thêm ít phút.",
             "SWITCH_ACCOUNT": "Gắn tài khoản khác",
             "STATE": {
                 "CONNECTED": "Đang kết nối",
@@ -5413,15 +5415,15 @@ const messages: Record<string, unknown> = {
                 "DISCONNECTED": "Đã ngắt kết nối"
             },
             "BRIDGE": {
-                "LABEL": "Cầu nối Zalo",
+                "LABEL": "Kết nối Zalo",
                 "OK": "Bình thường",
                 "DEGRADED": "Có lỗi ({count} lượt)",
                 "HALF_OPEN": "Đang thử lại",
                 "OPEN": "Tạm dừng sau {count} lỗi, thử lại lúc {time}"
             },
             "ERRORS": {
-                "BRIDGE_UNREACHABLE": "Không kết nối được cầu nối Zalo. Hãy khởi động services/zalo-bridge rồi thử lại.",
-                "BRIDGE_REJECTED": "Cầu nối Zalo từ chối yêu cầu. Hãy xem log của cầu nối rồi thử lại.",
+                "BRIDGE_UNREACHABLE": "Kết nối Zalo đang tạm gián đoạn. Vui lòng thử lại sau ít phút, nếu vẫn lỗi hãy liên hệ hỗ trợ.",
+                "BRIDGE_REJECTED": "Kết nối Zalo chưa xử lý được yêu cầu. Vui lòng thử lại, nếu vẫn lỗi hãy liên hệ hỗ trợ.",
                 "NO_QR_SESSION": "Chưa có phiên quét mã QR nào đang mở. Hãy mở phiên mới.",
                 "ACCOUNT_MISMATCH": "Mã QR vừa quét thuộc tài khoản Zalo khác. Hộp thư này đang gắn tài khoản {name}.",
                 "ACCOUNT_IN_USE": "Tài khoản Zalo đó đã gắn vào hộp thư \"{inbox}\". Một tài khoản chỉ phục vụ được một hộp thư."
@@ -5677,7 +5679,7 @@ const messages: Record<string, unknown> = {
                     "CONNECTED": "Đã kết nối",
                     "VERIFIED": "Đã xác minh",
                     "STANDARD": "Chuẩn",
-                    "ACTIVE": "Có hiệu lực",
+                    "ACTIVE": "Đang hoạt động",
                     "EXPIRED": "Đã hết hạn",
                     "FLAGGED": "Bị gắn cờ",
                     "RESTRICTED": "Bị hạn chế",
@@ -5922,7 +5924,7 @@ const messages: Record<string, unknown> = {
             "ASSIGNMENT_ORDER_LABEL": "Thứ tự phân công",
             "ASSIGNMENT_METHOD_LABEL": "Cách phân công",
             "POLICY_STATUS": {
-                "ACTIVE": "Có hiệu lực",
+                "ACTIVE": "Đang bật",
                 "INACTIVE": "Đang tắt"
             },
             "PRIORITY": {
@@ -6226,7 +6228,7 @@ const messages: Record<string, unknown> = {
                 "USER_MESSAGE": "Xin chào",
                 "AGENT_MESSAGE": "Xin chào"
             },
-            "BRANDING_TEXT": "CC bởi Chatwoot",
+            "BRANDING_TEXT": "Cung cấp bởi Chatwoot",
             "SCRIPT_SETTINGS": "\nwindow.chatwootSettings = {options};"
         },
         "EMAIL_PROVIDERS": {
@@ -7689,8 +7691,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "PAGINATION_FOOTER": {
-        "SHOWING": "Đang hiển thị {startItem} - {endItem} trong {totalItems} mục",
-        "CURRENT_PAGE_INFO": "Trang {currentPage} trong {totalPages}"
+        "SHOWING": "Hiển thị {startItem}–{endItem} trong tổng số {totalItems} mục",
+        "CURRENT_PAGE_INFO": "Trang {currentPage}/{totalPages}"
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Tìm quốc gia",
@@ -8448,7 +8450,7 @@ const messages: Record<string, unknown> = {
         "REPORTS": "Báo cáo",
         "SETTINGS": "Cài đặt",
         "CONTACTS": "Liên hệ",
-        "ACTIVE": "Có hiệu lực",
+        "ACTIVE": "Đang hoạt động",
         "COMPANIES": "Công ty",
         "ALL_COMPANIES": "Tất cả công ty",
         "CAPTAIN": "Captain",
@@ -8908,7 +8910,7 @@ const messages: Record<string, unknown> = {
         "BUBBLE": {
             "LABEL": "Trò chuyện với chúng tôi"
         },
-        "POWERED_BY": "CC bởi Chatwoot",
+        "POWERED_BY": "Cung cấp bởi Chatwoot",
         "EMAIL_PLACEHOLDER": "Vui lòng nhập email",
         "CHAT_PLACEHOLDER": "Gõ tin nhắn của bạn",
         "TODAY": "Hôm nay",

@@ -483,7 +483,7 @@ return [
                 'BOUND_ACCOUNT' => 'Hộp thư này đang gắn tài khoản: {name}',
                 'CONNECTED' => 'Đã kết nối. Đang chuyển trang…',
                 'RETRY' => 'Hiện mã QR mới',
-                'BRIDGE_DOWN' => 'Dịch vụ kết nối Zalo chưa chạy. Hãy khởi động services/zalo-bridge rồi thử lại.',
+                'BRIDGE_DOWN' => 'Kết nối Zalo đang tạm gián đoạn. Vui lòng thử lại sau ít phút, nếu vẫn lỗi hãy liên hệ hỗ trợ.',
                 'EXPIRED' => 'Mã QR đã hết hạn trước khi được quét.',
                 'MISMATCH' => 'Mã QR này thuộc về một tài khoản Zalo khác. Hãy quét đúng tài khoản đang kết nối với hộp thư này.',
             ],
@@ -632,7 +632,7 @@ return [
         'DISCONNECT' => 'Ngắt kết nối Zalo',
         'DISCONNECT_CONFIRM' => 'Ngắt kết nối tài khoản Zalo này? Hộp thư sẽ ngừng nhận tin cho tới khi bạn quét lại mã QR.',
         'DISCONNECT_DONE' => 'Đã ngắt kết nối tài khoản Zalo.',
-        'DISCONNECT_BRIDGE_DOWN' => 'Đã ngắt trong Yona, nhưng cầu nối Zalo không trả lời — phiên bên đó có thể còn sống tới khi cầu nối khởi động lại.',
+        'DISCONNECT_BRIDGE_DOWN' => 'Đã ngắt trong Yona, nhưng kết nối Zalo chưa phản hồi — phiên bên Zalo có thể còn sống thêm ít phút.',
         'SWITCH_ACCOUNT' => 'Gắn tài khoản khác',
         'STATE' => [
             'CONNECTED' => 'Đang kết nối',
@@ -641,15 +641,15 @@ return [
             'DISCONNECTED' => 'Đã ngắt kết nối',
         ],
         'BRIDGE' => [
-            'LABEL' => 'Cầu nối Zalo',
+            'LABEL' => 'Kết nối Zalo',
             'OK' => 'Bình thường',
             'DEGRADED' => 'Có lỗi ({count} lượt)',
             'HALF_OPEN' => 'Đang thử lại',
             'OPEN' => 'Tạm dừng sau {count} lỗi, thử lại lúc {time}',
         ],
         'ERRORS' => [
-            'BRIDGE_UNREACHABLE' => 'Không kết nối được cầu nối Zalo. Hãy khởi động services/zalo-bridge rồi thử lại.',
-            'BRIDGE_REJECTED' => 'Cầu nối Zalo từ chối yêu cầu. Hãy xem log của cầu nối rồi thử lại.',
+            'BRIDGE_UNREACHABLE' => 'Kết nối Zalo đang tạm gián đoạn. Vui lòng thử lại sau ít phút, nếu vẫn lỗi hãy liên hệ hỗ trợ.',
+            'BRIDGE_REJECTED' => 'Kết nối Zalo chưa xử lý được yêu cầu. Vui lòng thử lại, nếu vẫn lỗi hãy liên hệ hỗ trợ.',
             'NO_QR_SESSION' => 'Chưa có phiên quét mã QR nào đang mở. Hãy mở phiên mới.',
             'ACCOUNT_MISMATCH' => 'Mã QR vừa quét thuộc tài khoản Zalo khác. Hộp thư này đang gắn tài khoản {name}.',
             'ACCOUNT_IN_USE' => 'Tài khoản Zalo đó đã gắn vào hộp thư "{inbox}". Một tài khoản chỉ phục vụ được một hộp thư.',
@@ -905,7 +905,7 @@ return [
                 'CONNECTED' => 'Đã kết nối',
                 'VERIFIED' => 'Đã xác minh',
                 'STANDARD' => 'Chuẩn',
-                'ACTIVE' => 'Có hiệu lực',
+                'ACTIVE' => 'Đang hoạt động',
                 'EXPIRED' => 'Đã hết hạn',
                 'FLAGGED' => 'Bị gắn cờ',
                 'RESTRICTED' => 'Bị hạn chế',
@@ -1150,7 +1150,7 @@ return [
         'ASSIGNMENT_ORDER_LABEL' => 'Thứ tự phân công',
         'ASSIGNMENT_METHOD_LABEL' => 'Cách phân công',
         'POLICY_STATUS' => [
-            'ACTIVE' => 'Có hiệu lực',
+            'ACTIVE' => 'Đang bật',
             'INACTIVE' => 'Đang tắt',
         ],
         'PRIORITY' => [
@@ -1454,7 +1454,7 @@ return [
             'USER_MESSAGE' => 'Xin chào',
             'AGENT_MESSAGE' => 'Xin chào',
         ],
-        'BRANDING_TEXT' => 'CC bởi Chatwoot',
+        'BRANDING_TEXT' => 'Cung cấp bởi Chatwoot',
         'SCRIPT_SETTINGS' => '
 window.chatwootSettings = {options};',
     ],

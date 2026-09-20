@@ -63,7 +63,7 @@ describe('ZaloQrPanel', () => {
         expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('báo lỗi trung lập khi không kết nối được cầu nối (bridge_unreachable)', async () => {
+    it('báo lỗi trung lập khi không kết nối được bridge (bridge_unreachable)', async () => {
         vi.stubGlobal(
             'fetch',
             vi.fn((url: string) => {
@@ -76,10 +76,12 @@ describe('ZaloQrPanel', () => {
 
         render(<ZaloQrPanel accountId={1} inboxId={7} onConnected={vi.fn()} />);
 
-        await waitFor(() => expect(screen.getByText(/Không kết nối được cầu nối/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/Kết nối Zalo đang tạm gián đoạn/)).toBeInTheDocument());
+        // Không được lộ tên thư mục/dịch vụ cho người dùng cuối.
+        expect(screen.queryByText(/zalo-bridge/)).not.toBeInTheDocument();
     });
 
-    it('báo lỗi khi cầu nối/Zalo từ chối yêu cầu (bridge_rejected)', async () => {
+    it('báo lỗi trung lập khi bridge/Zalo từ chối yêu cầu, không ghép thông điệp kỹ thuật (bridge_rejected)', async () => {
         vi.stubGlobal(
             'fetch',
             vi.fn((url: string) => {
@@ -94,7 +96,8 @@ describe('ZaloQrPanel', () => {
 
         render(<ZaloQrPanel accountId={1} inboxId={7} onConnected={vi.fn()} />);
 
-        await waitFor(() => expect(screen.getByText(/từ chối/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/chưa xử lý được yêu cầu/)).toBeInTheDocument());
+        expect(screen.queryByText(/invalid session/)).not.toBeInTheDocument();
     });
 
     it('QR hết hạn tự làm mới bằng cách gọi lại POST /qr', async () => {

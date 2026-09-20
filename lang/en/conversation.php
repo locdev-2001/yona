@@ -336,6 +336,8 @@ return [
         'DISABLE_SIGN_TOOLTIP' => 'Disable signature',
         'MSG_INPUT' => 'Shift + enter for new line. Start with \'/\' to select a Canned Response.',
         'PRIVATE_MSG_INPUT' => 'Shift + enter for new line. This will be visible only to Agents',
+        'MSG_INPUT_TOUCH' => 'Type a message…',
+        'PRIVATE_MSG_INPUT_TOUCH' => 'Private note — visible to agents only',
         'MESSAGING_RESTRICTED' => 'You cannot reply to this conversation',
         'MESSAGING_RESTRICTED_WHATSAPP' => 'You can only reply using a template message due to 24-hour message window restriction',
         'MESSAGING_RESTRICTED_API' => 'You can only reply using a template message due to message window restriction',

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { isMacOS, modifierKeyLabel, shortcutLabel } from './kbd';
+import { isMacOS, isTouchOnlyDevice, modifierKeyLabel, shortcutLabel } from './kbd';
 
 function stubPlatform(platform: string, userAgentDataPlatform?: string) {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
@@ -45,5 +45,36 @@ describe('kbd', () => {
 
         stubPlatform('Linux x86_64');
         expect(shortcutLabel(['$mod', '+', 'enter'])).toBe('CTRL + ↵');
+    });
+});
+
+describe('isTouchOnlyDevice', () => {
+    // jsdom không có window.matchMedia — cũng là lý do helper phải tự phòng thân.
+    function stubHover(matches: boolean | null) {
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            writable: true,
+            value:
+                matches === null
+                    ? undefined
+                    : (query: string) => ({ matches: query === '(hover: none)' && matches }) as MediaQueryList,
+        });
+    }
+
+    afterEach(() => Reflect.deleteProperty(window, 'matchMedia'));
+
+    it('máy cảm ứng (hover: none) → true, gợi ý phím tắt phải bị ẩn', () => {
+        stubHover(true);
+        expect(isTouchOnlyDevice()).toBe(true);
+    });
+
+    it('máy có chuột → false', () => {
+        stubHover(false);
+        expect(isTouchOnlyDevice()).toBe(false);
+    });
+
+    it('trình duyệt không có matchMedia → false, không nổ', () => {
+        stubHover(null);
+        expect(isTouchOnlyDevice()).toBe(false);
     });
 });

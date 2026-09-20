@@ -6,6 +6,7 @@ use App\Models\Channel\Zalo;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Cửa DUY NHẤT nói chuyện với bridge Node (services/zalo-bridge). Port từ các
@@ -104,7 +105,9 @@ class ZaloBridgeClient
                 ->withHeaders($headers)
                 ->timeout($timeout ?? (int) config('zalo.bridge.timeout'))
                 ->post($this->url($path), $payload);
-        } catch (ConnectionException) {
+        } catch (ConnectionException $e) {
+            $this->logUnreachable('POST', $path, $e);
+
             return null;
         }
     }
@@ -120,9 +123,25 @@ class ZaloBridgeClient
                 ->withHeaders($headers)
                 ->timeout((int) config('zalo.bridge.timeout'))
                 ->get($this->url($path), $query);
-        } catch (ConnectionException) {
+        } catch (ConnectionException $e) {
+            $this->logUnreachable('GET', $path, $e);
+
             return null;
         }
+    }
+
+    /**
+     * Chi tiết kỹ thuật (tên dịch vụ, URL, lý do) chỉ đi vào log — người dùng
+     * cuối chỉ thấy câu trung lập của INBOX_MGMT.ZALO_SESSION.ERRORS.
+     */
+    private function logUnreachable(string $method, string $path, ConnectionException $e): void
+    {
+        Log::warning('zalo.bridge.unreachable', [
+            'method' => $method,
+            'path' => $path,
+            'url' => $this->url($path),
+            'reason' => $e->getMessage(),
+        ]);
     }
 
     /** @return array<string, string> */
