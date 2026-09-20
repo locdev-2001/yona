@@ -74,7 +74,7 @@ export function Landing() {
                     surface="band"
                     accent="navy"
                     strings={strings.features.crm}
-                    art={{ src: 'feat-ink-3', width: 260, height: 300 }}
+                    art={{ src: 'feat-ink-3', width: 260, height: 399 }}
                     cta={cta}
                     learnHref={urls.register}
                     media={{

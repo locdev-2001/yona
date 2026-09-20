@@ -63,7 +63,10 @@ function LocaleSwitch({ config }: { config: LandingConfig }) {
     return (
         <div
             aria-label={strings.nav.language}
-            className="mr-1 flex items-center gap-0.5 md:mr-2 md:border-l md:border-neutral-300 md:pl-2"
+            // ml-2/pl-3: gạch dọc phải nằm GIỮA hai cụm. Trước đây chỉ có pl-2 nên nó
+            // cách mục nav bên trái 12px mà cách "VI" 16px, dính hẳn về bên trái và
+            // đọc ra như dấu phân cách của mục nav chứ không phải của bộ ngôn ngữ.
+            className="mr-1 flex items-center gap-0.5 md:ml-3 md:mr-2 md:border-l md:border-neutral-300 md:pl-3"
         >
             {locales.map((option) => {
                 const active = option.code === locale;
@@ -76,7 +79,9 @@ function LocaleSwitch({ config }: { config: LandingConfig }) {
                         lang={option.code}
                         aria-current={active ? 'true' : undefined}
                         className={`inline-flex h-11 min-w-11 items-center justify-center rounded px-2 text-sm uppercase md:h-10 md:min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 ${
-                            active ? 'text-neutral-900' : 'text-neutral-500 hover:text-neutral-900'
+                            // neutral-700 chứ không phải 500: ở 14px in hoa, 500 đọc ra như
+                            // đã bị vô hiệu hoá thay vì một lựa chọn bấm được.
+                            active ? 'text-neutral-900' : 'text-neutral-700 hover:text-neutral-900'
                         }`}
                     >
                         {option.code}

@@ -26,10 +26,11 @@ export function Rules({ strings }: { strings: LandingStrings['rules'] }) {
                     return (
                         <div key={key}>
                             {/* framed=false: đây là tranh trang trí trong lưới, không
-                                phải khung ảnh sản phẩm nên không cần viền 1px. marks
-                                "neutral" giữ bốn dấu vuông xám bên trong như giếng ảnh
-                                ở các khối tính năng khác. */}
-                            <MediaFrame framed={false} marks="neutral" className="aspect-[4/3]">
+                                phải khung ảnh sản phẩm nên không cần viền 1px. BỎ dấu
+                                vuông bên trong: bốn tranh nhân bốn dấu là 16 dấu trong
+                                một section, đo được tổng 21 dấu ở đây so với 4-8 ở các
+                                section khác. Dày tới mức đọc ra là nhiễu. */}
+                            <MediaFrame framed={false} className="aspect-[4/3]">
                                 <img
                                     aria-hidden
                                     alt=""

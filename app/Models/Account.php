@@ -40,7 +40,6 @@ class Account extends Model
     ];
 
     protected $attributes = [
-        'locale' => 'en',
         'status' => self::STATUS_ACTIVE,
     ];
 
@@ -57,6 +56,14 @@ class Account extends Model
 
     protected static function booted(): void
     {
+        // Ngôn ngữ mặc định của account phải là APP_LOCALE. Trước đây giá trị 'en'
+        // nằm cứng ở $attributes và ở default của cột, còn AccountBuilder lại gán
+        // config('app.locale') — account tạo ngoài builder (seeder, admin, import)
+        // ra một ngôn ngữ, tạo trong builder ra ngôn ngữ khác.
+        static::creating(function (Account $account) {
+            $account->locale ??= config('app.locale');
+        });
+
         // has_many :inboxes, dependent: :destroy_async — phải xóa qua model, vì
         // FK `inboxes.account_id ON DELETE CASCADE` không kích hoạt hook của Inbox
         // và sẽ bỏ lại hàng channel_* mồ côi.

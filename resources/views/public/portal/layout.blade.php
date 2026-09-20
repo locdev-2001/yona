@@ -1,7 +1,7 @@
 {{-- Port từ app/views/layouts/portal.html.erb (+ portal.html+plain.erb).
      Biến dùng chung do BaseController::portalViewData cấp. --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', $locale) }}">
+<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', $locale) }}">
     <head>
         @include('public.portal.partials.head')
     </head>

@@ -94,15 +94,14 @@
   },
   {
    "tep": "art/feat-ink-3.webp",
-   "rong": 260,
-   "cao": 300,
-   "tac_pham": "The Double Bass Player",
-   "tac_gia": "Alphonse Legros",
-   "nien_dai": "c. 1873",
+   "rong": 521,
+   "cao": 799,
+   "tac_pham": "Manet Seated, Turned to the Right",
+   "tac_gia": "Hilaire Germain Edgar Degas",
+   "nien_dai": "1864–65",
    "bo_suu_tap": "Art Institute of Chicago",
    "giay_phep": "Public Domain (CC0)",
-   "trang": "https://www.artic.edu/artworks/70",
-   "xu_ly": "nền giấy chuyển thành trong suốt, nét đưa về #111111"
+   "xu_ly": "tách mực theo độ sáng, nền trong suốt, cắt sát nét"
   },
   {
    "tep": "art/hero-1.webp",
@@ -140,10 +139,10 @@
   {
    "tep": "art/hero-4.webp",
    "rong": 176,
-   "cao": 162,
-   "tac_pham": "Laziness",
-   "tac_gia": "Félix Edouard Vallotton",
-   "nien_dai": "1896",
+   "cao": 137,
+   "tac_pham": "Mahana atua (Day of the God)",
+   "tac_gia": "Paul Gauguin",
+   "nien_dai": "1894/95, printed and published 1921",
    "bo_suu_tap": "Art Institute of Chicago",
    "giay_phep": "Public Domain (CC0)",
    "xu_ly": "tách mực theo độ sáng, nền trong suốt, cắt sát nét"

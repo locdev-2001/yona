@@ -2,7 +2,7 @@
 {{-- Trang chủ công khai `/`. Bề mặt riêng như survey/portal: blade + entry Vite
      riêng, không nạp bundle dashboard. Font self-host qua @font-face trong
      landing.css, không nhúng link tới nhà cung cấp ngoài. --}}
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
+<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
