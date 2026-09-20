@@ -293,6 +293,37 @@ location ^~ /apps {
 }
 ```
 
+Tạo `/www/server/panel/vhost/nginx/extension/yona.vn/cache-policy.conf`:
+
+```nginx
+# KHÔNG dùng add_header trong các location này: add_header ở cấp location nuốt
+# mất Strict-Transport-Security kế thừa từ server block.
+
+# Tệp nhúng trên website khách. Tên cố định vì đoạn script do backend sinh
+# (WebWidget::web_widget_script) trỏ thẳng BASE_URL + "/packs/js/sdk.js" và
+# khách đã dán vào site của họ — không hash tên được. Rule chung của aaPanel
+# `location ~ .*\.(js|css)?$ { expires 12h; }` khiến mọi bản sửa widget mất
+# tới 12 tiếng mới tới khách. Khớp chính xác (=) thắng rule regex đó.
+location = /packs/js/sdk.js {
+    expires 1m;
+    error_log /dev/null;
+    access_log /dev/null;
+}
+
+# Ngược lại: asset có content hash, đổi nội dung là đổi tên nên cache dài được.
+# 12h của rule chung chỉ làm khách tải lại vô ích.
+location ^~ /build/assets/ {
+    expires 1y;
+    error_log /dev/null;
+    access_log /dev/null;
+}
+```
+
+Đổi xong phải **purge cache CDN một lần** cho `/packs/js/sdk.js`: header mới
+không làm hết hạn những bản đã nằm sẵn ở edge. Sau đó bước `cdn sdk.js` của
+`deploy.sh` sẽ tự canh — nó so `Last-Modified` giữa URL thường và URL kèm tham
+số phá cache, lệch nhau là cảnh báo.
+
 ```bash
 /www/server/nginx/sbin/nginx -t && /etc/init.d/nginx reload
 ```

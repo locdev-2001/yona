@@ -1017,6 +1017,47 @@ health_check() {
     fi
 }
 
+# `public/packs/js/sdk.js` là tệp nhúng trên website khách: tên cố định (đoạn
+# script do WebWidget::web_widget_script sinh trỏ thẳng vào đó) nên không hash
+# được, và CDN cache nó theo URL. Deploy xong mà edge còn giữ bản cũ thì khách
+# vẫn chạy mã cũ — đã xảy ra thật 20/09/2026, bản sửa nằm ở origin suốt 12 tiếng
+# mà không ai biết. So Last-Modified của URL thường với URL kèm tham số phá cache:
+# lệch nhau nghĩa là edge còn bẩn.
+verify_cdn_fresh() {
+    local app_url url moc_edge moc_goc
+    is_enabled "$DEPLOY_HEALTHCHECK" || return 0
+
+    app_url="$(env_value APP_URL)"
+    [[ -n "$app_url" ]] || return 0
+    url="${app_url%/}/packs/js/sdk.js"
+
+    if is_enabled "$DEPLOY_DRY_RUN"; then
+        print_command curl --fail --silent --head --max-time 10 "$url"
+        return 0
+    fi
+
+    moc_edge="$(sdk_last_modified "$url")" || return 0
+    moc_goc="$(sdk_last_modified "$url?cache_bust=$(date +%s)")" || return 0
+
+    if [[ -z "$moc_edge" || -z "$moc_goc" ]]; then
+        warn 'Không đọc được Last-Modified của sdk.js; bỏ qua kiểm CDN.'
+        return 0
+    fi
+
+    [[ "$moc_edge" == "$moc_goc" ]] && return 0
+
+    # Không fail cả lần deploy: ứng dụng vẫn chạy đúng, chỉ widget trên site
+    # khách là còn cũ. Nhưng phải hét lên, vì im lặng chính là cái bẫy lần trước.
+    warn "CDN còn phát sdk.js cũ — edge: $moc_edge | origin: $moc_goc"
+    warn "  Purge cache cho $url rồi kiểm lại, nếu không bản sửa widget sẽ không tới khách."
+}
+
+sdk_last_modified() {
+    curl --fail --silent --show-error --head --max-time 10 \
+        -A 'yona-deploy/1.0 (verify-cdn)' "$1" 2>/dev/null \
+        | tr -d '\r' | awk 'tolower($1) == "last-modified:" { $1 = ""; sub(/^ /, ""); print }'
+}
+
 report_post_deploy_steps() {
     [[ "$DATABASE_WAS_RESET" -eq 1 ]] || return 0
 
@@ -1071,6 +1112,7 @@ main() {
     step 'restart'        restart_application_processes
     step 'maintenance off' disable_maintenance_mode
     step 'health check'   health_check
+    step 'cdn sdk.js'     verify_cdn_fresh
 
     NEW_REVISION="$(git rev-parse --short HEAD)"
     duration="$(( $(date +%s) - STARTED_AT ))"
