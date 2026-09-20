@@ -97,7 +97,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Horizon không đi qua Gate mà qua callback riêng; mặc định của nó là
         // `environment('local')`, tức production 403 cho cả super admin.
-        Horizon::auth(fn () => Auth::guard('super_admin')->check());
+        //
+        // Phải kiểm tra lớp có thật: deploy chạy `artisan down` TRƯỚC
+        // `composer install`, nên ở lần deploy đầu sau khi thêm gói (và ở mọi
+        // lần rollback về commit chưa có nó) vendor chưa có Horizon. Gọi thẳng
+        // là mọi lệnh artisan chết theo, kể cả lệnh đang dựng lại vendor.
+        if (class_exists(Horizon::class)) {
+            Horizon::auth(fn () => Auth::guard('super_admin')->check());
+        }
 
         // Xoá file log từ giao diện web: không. Log là thứ duy nhất dựng lại
         // được chuyện gì đã xảy ra với tin nhắn khách khi có sự cố.
