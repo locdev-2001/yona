@@ -1,104 +1,88 @@
 # Yona
 
-> ## ⚠️ BẢN VIẾT LẠI ĐÃ LÀ `main` — ĐỌC TRƯỚC MỌI THỨ KHÁC
-> **08/09/2026:** bản viết lại 100% Chatwoot v4.17.1 sang Laravel + Inertia/React đã **merge vào `main`** (fast-forward, 116 commit). Từ đây **làm thẳng trên `main`**; `rewrite/chatwoot-laravel` chỉ còn là dấu vết, không commit lên đó nữa. Mốc quay lại: tag `main-truoc-rewrite`.
-> - Mô tả sản phẩm/kiến trúc bên dưới là của bản CŨ (Perfex-style) — **không còn đúng**; kiến trúc hiện hành xem `plans/260831-rewrite-chatwoot-laravel/plan.md`.
-> - **Nguồn chuẩn:** `plans/260831-rewrite-chatwoot-laravel/plan.md` (quyết định kiến trúc + Trạng thái + việc kế tiếp). Năng lực kênh: `app/Channels/CapabilitySet.php` + `DeclaresCapabilities` là nơi khai duy nhất. Triển khai production: `docs/deployment.md`.
+> ## ⚠️ ĐỌC TRƯỚC MỌI THỨ KHÁC
+> **Codebase = bản viết lại 100% Chatwoot v4.17.1 sang Laravel + Inertia/React**, đã merge vào `main` 08/09/2026. Làm thẳng trên `main`. Mốc quay lại: tag `main-truoc-rewrite`.
+> - **Nguồn chuẩn kiến trúc + việc kế tiếp:** `plans/260831-rewrite-chatwoot-laravel/plan.md`. Năng lực kênh khai DUY NHẤT ở `app/Channels/CapabilitySet.php` + `DeclaresCapabilities`. Triển khai production: `docs/deployment.md`.
+> - **Việc đang mở theo dõi ở GitHub Issues**, không phải trong file này: `gh issue list --label P0`.
 > - Nguồn Ruby/Vue để đối chiếu: `refs/chatwoot` — **CẤM** mở `refs/chatwoot/enterprise/`.
 > - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
-> - **Giai đoạn hiện tại:** cầu toàn sản phẩm (40/40 tính năng đã port) — phê phán tính năng, tập trung chat, UX "wow"; lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
-> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
-> - **Artifact tiến độ:** https://claude.ai/code/artifact/d740e226-5b81-4f5c-8910-12ecf84a999c
-> - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev: app **8610**, Reverb **8611**, Zalo bridge **8612** (nguồn duy nhất `.env`); oracle Chatwoot podman :3000.
-> - Bắt đầu phiên: đọc mục **Trạng thái** trong `plan.md`.
+> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP khi port, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
+> - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev lấy từ `.env`: app **8610**, Reverb **8611**, Zalo bridge **8612**; oracle Chatwoot podman :3000.
+> - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
-**Codename / repo:** yona (github.com/locflamedia/yona)
-**Tên sản phẩm:** Yona — domain **yona.vn** (rebrand 22/07/2026; tên cũ "Chó rách CRM" / repo cho-rach-management)
-**Định vị:** **Conversational CRM & Automation** (chốt 22/07/2026) — CRM lấy hội thoại làm cửa vào: gom tin nhắn khách từ mọi kênh chat về một inbox (Zalo trước, thêm kênh = thêm driver), biến hội thoại thành khách hàng, tự động hóa chăm sóc. Nội dung định vị/marketing KHÔNG giới hạn theo kênh cụ thể — hướng đa kênh tương lai
-**Status:** Đang phát triển, bootstrapped, team 3 dev
+**Repo:** github.com/locflamedia/yona · **Domain:** yona.vn · **Team:** bootstrapped, 3 dev
+**Định vị:** Conversational CRM — gom tin nhắn khách từ mọi kênh chat về một hộp thư, biến hội thoại thành hồ sơ khách hàng. Marketing KHÔNG giới hạn theo một kênh cụ thể.
+**Đối tượng:** SME Việt bán online — kể cả hộ kinh doanh, nhà phân phối nhỏ, kinh doanh phi chính thức.
 
-## Là gì
-SaaS B2B: CRM + quản lý dự án (kiểu Perfex), nhắm SME Việt đang quản khách bằng **Zalo + Excel**.
-Khác biệt cốt lõi: **inbox đa kênh** (Zalo, Messenger, TikTok) đưa hội thoại về → chuyển thành Lead/Client.
+---
 
-## Đối tượng
-SME Việt Nam, mảng kinh doanh online — kể cả hộ kinh doanh, nhà phân phối nhỏ, kinh doanh phi chính thức. Không giới hạn ở agency dịch vụ.
+## Sản phẩm hôm nay thực sự là gì (20/09/2026)
 
-## Mô hình kinh doanh
-SaaS freemium: free core → add-on trả phí. Tính phí theo **conversation metering** (đếm per-channel).
-**Trạng thái 25/07/2026:** CHƯA áp hạn mức — dùng không giới hạn, chỉ thống kê. Số liệu tích lũy để xây chính sách gói cước sau; áp hạn mức ngay từ đầu gây phản ứng ngược.
-Gói: Free / Team / Business. Thanh toán: VNPay / MoMo.
+Production chạy tại https://yona.vn. 40/40 tính năng Chatwoot đã port, tiếng Việt đầy đủ, ~2.2k Pest + ~800 vitest xanh.
 
-## Tech Stack
-- Backend: PHP / Laravel
-- Frontend: Inertia + React (TypeScript), Tailwind + Radix — KHÔNG phải Vue/Next.js
-- DB: PostgreSQL + Row-Level Security (multi-tenant isolation)
-- Auth/Perm: RBAC
+**Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · 2FA, RBAC, Platform API, Super Admin.
 
-## Kiến trúc trọng tâm
-**Quy ước kiến trúc xuyên suốt — ĐỌC TRƯỚC KHI VIẾT CODE.** Module chia theo **chức năng** (không có module "Integration" gom đồ bên ngoài); `app/Http/` + `app/Models/` ở gốc, module chỉ chứa nghiệp vụ; ba mặt tiền route `web.php` / `web_api.php` / `api.php` cùng gọi một lõi — mọi tính năng phải mở ra API được mà không viết lại; UI gom theo chức năng.
+**KHÔNG có trong code — đừng viết marketing hay code dựa trên chúng:**
+- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. (Trang chủ đang hứa sai: issue #35.)
+- **Gói cước, thanh toán, entitlements** — chưa có gì.
+- **Thông báo đẩy** — có công tắc trong cài đặt nhưng không có service worker/VAPID (#58).
+- **Messenger, Instagram, WhatsApp Cloud, TikTok** — có wizard nhưng cần Meta App + App Review đứng tên Yona (#57).
 
-**CDP làm trục trung tâm** — mọi nguồn (inbox, import, tích hợp) đổ vào; mọi hành động (automation, báo cáo) đọc ra.
-**Addons/Entitlements framework** = nền monetization, dựng ngay Phase 1.
+**Bốn nút đang chặn khách lạ tự đi hết:** SMTP chưa có nên không ai đăng ký được (#36) → onboarding bắt buộc Website (#62) → màn hình đầu bảo chủ tài khoản đi hỏi quản trị viên (#63) → Zalo chưa nghiệm thu bằng tài khoản thật (#48).
+
+Ảnh rà soát giao diện: nhánh `evidence/ui-audit-260920`, file `plans/reports/ui-audit-260920-evidence.md`.
+
+---
+
+## Quy ước kiến trúc — ĐỌC TRƯỚC KHI VIẾT CODE
+
+Module chia theo **chức năng**, không có module "Integration" gom đồ bên ngoài — Zalo là adapter của chức năng nhắn tin. `app/Http/` + `app/Models/` ở gốc; module chỉ chứa nghiệp vụ. Ba mặt tiền route `web.php` / `web_api.php` / `api.php` cùng gọi một lõi — mọi tính năng phải mở ra API được mà không viết lại. Thêm kênh mới = thêm driver, **không sửa lõi**. UI gom theo chức năng.
+
+Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radix — KHÔNG Vue/Next · PostgreSQL · Redis · Reverb · bridge Node cho Zalo (`services/zalo-bridge`, zca-js).
 
 ## 4 quy tắc xuyên suốt
-1. **Chống trùng:** gộp 1 người từ nhiều nguồn thành 1 hồ sơ — khóa chính = số điện thoại.
-2. **Phân biệt rõ:** người lạ = "Liên hệ nháp"; chỉ thành "Lead" khi xác nhận có nhu cầu.
-3. **Ghi nguồn:** mỗi khách lưu rõ đến từ kênh nào.
-4. **Tôn trọng luật & nền tảng:** chỉ gửi 7h–22h, ≤3 tin QC/số/ngày, luôn có opt-out, chỉ chủ động gửi khi còn trong cửa sổ cho phép của kênh.
 
-## Roadmap
-- **Phase 0 (đã có):** multi-tenant, RBAC, Client/Contact/Lead/Pipeline, Projects/Milestones/Tasks/Timers, custom fields, audit log, attachments, notes, reminders, email templates, notifications, admin area, support login-as, product announcements board.
-- **Phase 1 (ra mắt + thu tiền + cửa vào Zalo):** import Excel/CSV (map cột, loại trùng); **Inbox Zalo CÁ NHÂN** (1 màn hình chat, bộ lọc riêng tư trước khi vào hệ thống) — KHÔNG dùng Zalo OA ở giai đoạn này; hội thoại → Liên hệ nháp → Lead; gói cước + VNPay/MoMo + Entitlements; onboarding. *Xong khi: ≥10 khách trả phí, inbox Zalo ổn định, người mới tự kết nối được.*
+1. **Chống trùng:** một người từ nhiều nguồn gộp thành một hồ sơ — khóa chính = số điện thoại.
+2. **Phân biệt rõ:** người lạ = "Liên hệ nháp", không phải khách tiềm năng.
+3. **Ghi nguồn:** mỗi hồ sơ lưu rõ đến từ kênh nào.
+4. **Tôn trọng luật & nền tảng:** tin chủ động chỉ 7h–22h, ≤3 tin QC/số/ngày, luôn có opt-out, chỉ gửi khi còn trong cửa sổ cho phép của kênh.
 
-  > **Quyết định Zalo (26/06):** Phase 1 tích hợp **Zalo cá nhân**, không phải Zalo OA. Lý do: OA phức tạp và **chưa có tài khoản test**. Lưu ý kỹ thuật: Zalo cá nhân **không có API chính thức** — phải dùng giải pháp không chính thức (QR login / web automation / thư viện reverse-engineer như zca-js). Rủi ro: vi phạm ToS, nguy cơ khóa tài khoản, API có thể đổi bất ngờ. Cần đánh giá rủi ro này trong brief. OA để dành cho giai đoạn sau khi có tài khoản test.
-- **Phase 2 (khác biệt + giữ chân):** thêm Inbox Messenger, rồi TikTok.
-- **Phase 3:** quản lý hợp đồng (contract management).
-- **Phase 4:** automation theo trigger (đổi stage, phát hiện keyword, hợp đồng sắp hết hạn); chatbot auto-reply trong inbox; CDP Layer 2 (cá nhân hóa hành vi); kênh gửi Email + SMS + reply-via-same-channel.
-- **Phase 5:** marketplace addon mở cho bên thứ ba.
+## Quyết định đã chốt — đừng làm sai lại
 
-## Quyết định đã chốt (không làm sai lại)
-- Hội thoại đếm **per-channel**, không gộp theo người CDP. Cùng người trên Zalo + Mess = 2 hội thoại.
-- Bộ đếm chỉ tính khi **tenant trả lời**, không tính inbound.
-- **Không chặn gì cả** (chốt 25/07/2026): gate hạn mức đã gỡ khỏi code, bộ đếm giữ nguyên. Gate chỉ dựng lại khi mở gói thu phí.
-- **Luôn nhận inbound** — bảo toàn lead capture.
-- **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo = nguồn làm giàu CDP.
+- **Zalo CÁ NHÂN, không phải Zalo OA.** Không có API chính thức → QR login qua zca-js; rủi ro ToS và khóa tài khoản là có thật, phải nói trước với khách (#43).
+- Hội thoại đếm **per-channel**, không gộp theo người. Cùng người trên Zalo + Messenger = 2 hội thoại.
+- Bộ đếm chỉ tính khi **tenant trả lời**, không tính tin inbound.
+- **Gate hạn mức đã gỡ hoàn toàn** (25/07/2026) — dùng không giới hạn, chỉ thống kê. Đừng tự dựng lại gate khi chưa có lệnh.
+- **Luôn nhận inbound** — để không mất lead.
+- **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ là nguồn làm giàu dữ liệu.
+- Lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
+
+## Theo dõi việc
+
+GitHub Issues, nhãn hai trục: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
 
 ## Ghi chú công cụ
-- Figma FigJam board (file key YAvnMFXP9hAHb2CSaLy7sB) — board trên Figma vẫn mang tên cũ "Chó rách CRM". Lưu ý: mỗi lần tạo diagram là một node mới — cần xóa bản cũ thủ công.
 
+Figma FigJam board (file key `YAvnMFXP9hAHb2CSaLy7sB`) — board vẫn mang tên cũ "Chó rách CRM"; mỗi lần tạo diagram là một node mới, phải xóa bản cũ thủ công.
 
+---
 
 # Memory
 
 ## Me
-Technical founder & kỹ sư phần mềm. Nền tảng: PHP/Laravel, Vue/Next.js. GitHub: **locflamedia**. Đang dẫn dắt team 3 dev (bootstrapped, tự lực) xây SaaS CRM cho SME Việt. Hiện tự chạy phần lớn việc và là người định hướng sản phẩm.
+Technical founder & kỹ sư phần mềm. Nền tảng PHP/Laravel, Vue/Next.js. GitHub **locflamedia**. Dẫn team 3 dev bootstrapped; tự chạy phần lớn việc và là người định hướng sản phẩm.
 
 ## Terms
-| Term | Meaning |
-|------|---------|
-| **CDP** | Customer Data Platform — hồ sơ khách hợp nhất, trục trung tâm của sản phẩm |
+| Term | Nghĩa |
+|------|-------|
 | **Tenant** | Một khách hàng (doanh nghiệp) dùng SaaS, có không gian dữ liệu riêng |
-| **Liên hệ nháp** | Người lạ nhắn lần đầu, chưa vào pipeline |
-| **Lead** | Liên hệ đã xác nhận có nhu cầu, đưa vào Pipeline |
-| **Entitlements** | Khung bật/tắt tính năng theo gói đã mua (nền monetization) |
-| **Conversation metering** | Đếm số hội thoại theo **từng kênh** — hiện chỉ THỐNG KÊ, chưa dùng để chặn hay tính phí |
-| **Zalo cá nhân** | Kênh inbox Phase 1 (không phải OA — OA hoãn vì chưa có tài khoản test) |
-
-## Projects
-| Name | What |
-|------|------|
-| **Yona** | SaaS CRM + quản lý dự án cho SME Việt. Repo: yona. Định vị: "Quản lý khách hàng tập trung & tự động hóa" |
-
-## Key Decisions (đã chốt — đừng làm sai lại)
-- **Inbox Phase 1 = Zalo CÁ NHÂN, KHÔNG phải Zalo OA** (OA phức tạp, chưa có tài khoản test). Zalo cá nhân không có API chính thức → dùng QR login/web automation (zca-js); có rủi ro ToS/khóa acc.
-- Hội thoại đếm **theo từng kênh**, KHÔNG gộp theo người CDP (cùng người trên Zalo + Mess = 2 hội thoại).
-- Bộ đếm hội thoại chỉ tính khi **tenant trả lời**, không tính tin inbound.
-- **Gate hạn mức đã gỡ hoàn toàn** (25/07/2026) — cho dùng không giới hạn, chỉ thống kê. Đừng tự dựng lại gate khi chưa có lệnh.
-- **Luôn nhận inbound** — để không mất lead.
-- **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ tích hợp làm giàu dữ liệu cho CDP.
+| **Liên hệ nháp** | Người lạ nhắn lần đầu, chưa xác nhận nhu cầu |
+| **Conversation metering** | Đếm hội thoại theo từng kênh — hiện chỉ THỐNG KÊ, không chặn, không tính tiền |
+| **Zalo cá nhân** | Kênh chính hiện tại, không phải OA |
+| **Oracle** | Bản Chatwoot gốc chạy podman :3000 để đối chiếu pixel |
+| ~~Lead / Pipeline / Entitlements~~ | **Chưa tồn tại trong code.** Là dự định, không phải hiện trạng |
 
 ## Preferences
 - Tiếng Việt xuyên suốt.
 - Trả lời kỹ thuật trực tiếp, súc tích, không vòng vo.
-- Luôn tạo artifact để theo dõi tiến độ khi planning.
+- Luôn tạo artifact theo dõi tiến độ khi planning.
