@@ -39,13 +39,15 @@ export default {
       // trang đọc như bảng thông số.
       display: ['clamp(2rem, 5.6vw, 5rem)', { lineHeight: '1.05', letterSpacing: '-0.03em' }],
       h1: ['clamp(1.75rem, 3.75vw, 3.375rem)', { lineHeight: '1.05', letterSpacing: '-0.03em' }],
-      h2: ['2rem', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
+      h2: ['1.5rem', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
       h3: ['1.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em' }],
       h4: ['1rem', { lineHeight: '1.4', letterSpacing: '-0.01em' }],
       lead: ['1.125rem', { lineHeight: '1.45', letterSpacing: '-0.01em' }],
       base: ['1rem', { lineHeight: '1.5' }],
       sm: ['0.875rem', { lineHeight: '1.5' }],
-      eyebrow: ['0.75rem', { lineHeight: '1.2', letterSpacing: '0.1em' }],
+      // lh 1.2 chứ không phải 1.0 như đo được: nhãn eyebrow là chữ HOA tiếng Việt,
+      // dấu chồng hai tầng (Ộ Ữ Ế) bị cắt dưới 1.05 — xem §0.5.
+      eyebrow: ['0.75rem', { lineHeight: '1.2', letterSpacing: '0.05em' }],
       caption: ['0.75rem', { lineHeight: '1.4' }],
     },
     extend: {
@@ -62,8 +64,6 @@ export default {
         cyan: rgb('--c-cyan'),
         primary: scale('primary', [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]),
         neutral: scale('neutral', [0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900]),
-        'tone-sage': rgb('--c-tone-sage'),
-        'tone-sand': rgb('--c-tone-sand'),
         success: rgb('--c-success'),
         'success-tint': rgb('--c-success-tint'),
         warning: rgb('--c-warning'),
@@ -76,7 +76,9 @@ export default {
         'in-out': 'cubic-bezier(0.77, 0, 0.175, 1)', // di chuyển TRÊN màn hình
       },
       transitionDuration: { press: '160ms', fast: '150ms', DEFAULT: '200ms', slow: '300ms' },
-      maxWidth: { container: '1170px', reading: '660px' },
+      // price: thẻ giá rộng 696px trên container 1170 — đo được, và không biểu
+      // diễn được bằng thang phân số vì khu nội dung đã trừ padding hai bên.
+      maxWidth: { container: '1170px', reading: '660px', price: '696px' },
     },
   },
   plugins: [

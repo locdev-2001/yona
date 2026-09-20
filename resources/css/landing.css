@@ -103,10 +103,6 @@
     --c-neutral-800: 38 36 33;
     --c-neutral-900: 17 17 17; /* #111111 — chữ tiêu đề */
 
-    /* Tông nền cho khối media. Mỗi khối tính năng một tông để ba khối liên
-       tiếp không đọc thành một mảng duy nhất. Chỉ dùng làm NỀN, không mang chữ. */
-    --c-tone-sage: 228 234 226;
-    --c-tone-sand: 238 231 219;
 
     /* Trạng thái — đều ≥5.4:1 trên trắng */
     --c-success: 11 122 68;

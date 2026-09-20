@@ -22,12 +22,26 @@ export function ArtMark({
     src,
     width,
     height,
+    size,
     className,
     from = 'xl',
 }: {
     src: string;
+    /** Kích thước gốc của tệp — chỉ để trình duyệt giữ chỗ, tránh nhảy bố cục. */
     width: number;
     height: number;
+    /**
+     * Bề rộng hiển thị, khai bằng class Tailwind để co theo breakpoint.
+     *
+     * Bản trước ép `style={{width, height}}` cứng: một cỡ cho mọi màn hình. Ở
+     * 1280 lề hai bên tiêu đề chỉ còn 192px, mà tranh thì vẫn 212-268px, nên
+     * cách duy nhất để tranh không đè chữ là đẩy nó ra ngoài mép — và thế là
+     * tấm nào cũng bị cắt mất một nửa. Cho bề rộng co lại theo breakpoint thì
+     * tranh nằm GỌN trong lề, hiện trọn vẹn.
+     *
+     * Chiều cao luôn `h-auto`: ép cả hai chiều là nét bị kéo méo.
+     */
+    size: string;
     className: string;
     from?: keyof typeof FROM;
 }) {
@@ -42,8 +56,7 @@ export function ArtMark({
             decoding="async"
             // select-none: ảnh trang trí không nên bị tóm vào vùng bôi đen khi
             // người đọc quét chọn tiêu đề.
-            className={`pointer-events-none absolute select-none ${FROM[from]} ${className}`}
-            style={{ width, height }}
+            className={`pointer-events-none absolute h-auto select-none ${FROM[from]} ${size} ${className}`}
         />
     );
 }

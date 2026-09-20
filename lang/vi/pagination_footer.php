@@ -5,6 +5,6 @@
 // khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
-    'SHOWING' => 'Showing {startItem} - {endItem} of {totalItems} items',
-    'CURRENT_PAGE_INFO' => '{currentPage} of {totalPages} pages',
+    'SHOWING' => 'Đang hiển thị {startItem} - {endItem} trong {totalItems} mục',
+    'CURRENT_PAGE_INFO' => 'Trang {currentPage} trong {totalPages}',
 ];

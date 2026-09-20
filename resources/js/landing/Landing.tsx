@@ -40,12 +40,11 @@ export function Landing() {
                     learnHref={urls.register}
                     media={{
                         kind: 'wide',
-                        tone: 'sage',
                         shot: {
                             src: '/landing/feature-inbox.png',
-                            alt: 'Danh sách hội thoại của Yona bên trái, khung chat và hồ sơ khách bên phải',
-                            width: 1240,
-                            height: 700,
+                            alt: 'Danh sách hội thoại của Yona bên trái, khung chat của một khách từ website bên phải',
+                            width: 1600,
+                            height: 728,
                         },
                     }}
                 />
@@ -59,7 +58,6 @@ export function Landing() {
                     learnHref={urls.register}
                     media={{
                         kind: 'split',
-                        tone: 'sand',
                         shot: {
                             src: '/landing/feature-zalo-tall.png',
                             alt: 'Hội thoại Zalo cá nhân trong hộp thư Yona, kèm danh sách các hội thoại khác',
@@ -74,6 +72,7 @@ export function Landing() {
                     trào chứ không như lộn xộn. */}
                 <Feature
                     surface="band"
+                    accent="navy"
                     strings={strings.features.crm}
                     art={{ src: 'feat-ink-3', width: 260, height: 300 }}
                     cta={cta}
@@ -84,20 +83,20 @@ export function Landing() {
                             {
                                 src: '/landing/square-contacts.png',
                                 alt: 'Danh sách liên hệ với tên và số điện thoại khách Việt',
-                                width: 760,
-                                height: 760,
+                                width: 1000,
+                                height: 1000,
                             },
                             {
                                 src: '/landing/square-contact.png',
                                 alt: 'Hồ sơ một khách hàng với thuộc tính và lịch sử hội thoại',
-                                width: 760,
-                                height: 760,
+                                width: 1000,
+                                height: 1000,
                             },
                             {
                                 src: '/landing/square-panel.png',
                                 alt: 'Bảng hồ sơ khách hiện bên phải hội thoại, có số điện thoại và thuộc tính',
-                                width: 760,
-                                height: 760,
+                                width: 1000,
+                                height: 1000,
                             },
                         ],
                     }}

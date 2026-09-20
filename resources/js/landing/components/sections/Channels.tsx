@@ -23,10 +23,11 @@ const CHANNELS = [
 
 export function Channels({ strings }: { strings: LandingStrings['channels'] }) {
     return (
-        <Section surface="base" rhythm="sm">
-            <div className="flex justify-center">
-                <Eyebrow>{strings.eyebrow}</Eyebrow>
-            </div>
+        <Section surface="base" rhythm="sm" accent="primary">
+            {/* Eyebrow đứng ở mép container, không căn giữa: nó là dòng mở đầu của
+                khối, đọc ngang hàng với phần còn lại thay vì tách riêng thành một
+                nhãn nổi ở giữa trang. */}
+            <Eyebrow>{strings.eyebrow}</Eyebrow>
 
             <ul className="mt-10 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 md:grid-cols-4">
                 {CHANNELS.map(({ key, icon, label }) => (
@@ -37,7 +38,7 @@ export function Channels({ strings }: { strings: LandingStrings['channels'] }) {
                 ))}
             </ul>
 
-            <p className="mt-10 text-center text-caption text-neutral-500">{strings.note}</p>
+            <p className="mt-10 text-caption text-neutral-500">{strings.note}</p>
         </Section>
     );
 }

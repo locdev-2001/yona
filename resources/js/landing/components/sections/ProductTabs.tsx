@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import type { LandingStrings } from '../../config';
-import { MediaWell, ProductShot } from '../ProductShot';
-import { Section } from '../Section';
+import { MediaFrame, ProductShot } from '../ProductShot';
+import { ACCENT, Section } from '../Section';
 
 // Hai mặt của cùng một dữ liệu. Tab bấm được thật — nhãn tab không bấm được là
 // một lời hứa suông với người đọc.
@@ -12,8 +12,8 @@ const TABS = [
         shot: {
             src: '/landing/inbox.png',
             alt: 'Hộp thư Yona: danh sách hội thoại từ Zalo và website, đang mở một cuộc trò chuyện',
-            width: 1440,
-            height: 900,
+            width: 1600,
+            height: 728,
         },
     },
     {
@@ -21,8 +21,8 @@ const TABS = [
         shot: {
             src: '/landing/feature-contacts.png',
             alt: 'Danh sách liên hệ của Yona với tên và số điện thoại khách Việt',
-            width: 1240,
-            height: 700,
+            width: 1600,
+            height: 728,
         },
     },
 ];
@@ -39,11 +39,14 @@ export function ProductTabs({ strings }: { strings: LandingStrings['showcase'] }
                 {strings.title_lead} <span className="text-neutral-900">{strings.title_focus}</span>
             </h2>
 
-            {/* Segmented control chia đôi cả bề rộng: hai tab gạch chân nhỏ ở góc
-                trái không đọc ra là một lựa chọn ngang hàng giữa hai sản phẩm. */}
+            {/* Segmented control chia đôi cả bề rộng. Dấu hiệu "đang chọn" là thanh
+                accent + màu chữ, KHÔNG phải mảng nền — tô nền cho ô đang chọn biến
+                ô còn lại thành "vùng chết", trong khi cả hai tab vẫn bấm được như
+                nhau. */}
             <div role="tablist" aria-label={strings.title_focus} className="mt-8 grid grid-cols-2 border border-neutral-300">
                 {TABS.map((tab, i) => {
                     const on = tab.key === active;
+                    const accentColor = i === 0 ? ACCENT.primary : ACCENT.navy;
 
                     return (
                         <button
@@ -52,23 +55,28 @@ export function ProductTabs({ strings }: { strings: LandingStrings['showcase'] }
                             role="tab"
                             aria-selected={on}
                             onClick={() => setActive(tab.key)}
-                            className={`min-h-11 px-4 py-3 text-sm transition-colors duration-fast focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600 ${
+                            className={`relative min-h-11 p-4 text-left text-h3 transition-colors duration-fast focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600 ${
                                 i === 1 ? 'border-l border-neutral-300' : ''
-                            } ${on ? 'bg-neutral-0 text-neutral-900' : 'text-neutral-500 hover:text-neutral-900'}`}
+                            } ${on ? 'text-neutral-900' : 'text-neutral-500 hover:text-neutral-900'}`}
                         >
+                            {/* Thanh accent cố định theo VỊ TRÍ tab, không theo trạng thái
+                                chọn: nó là danh tính của sản phẩm đang được nói tới, không
+                                phải một dấu "đang xem". */}
+                            <span aria-hidden className={`absolute left-0 top-0 h-0.5 w-1/5 ${accentColor}`} />
                             {strings.tabs[tab.key]}
                         </button>
                     );
                 })}
             </div>
 
-            {/* Ảnh nhỏ hơn khối và có lề rộng: mảng màu quanh ảnh mới là thứ cho
-                khối media sức nặng, ảnh phủ kín thì khối chỉ còn là cái khung. */}
-            <MediaWell tone="sand" className="border border-t-0 border-neutral-300">
-                <div className="mx-auto max-w-4xl">
+            {/* Ảnh tràn sát mép, không viền, không giếng màu: khối tính năng có
+                viền để phân biệt thẻ, còn ảnh sản phẩm ở đây đọc như một màn hình
+                thật đặt lên trang chứ không phải ảnh bồi trong khung. */}
+            <div className="mt-8">
+                <MediaFrame framed={false}>
                     <ProductShot {...current.shot} priority={active === 'inbox'} />
-                </div>
-            </MediaWell>
+                </MediaFrame>
+            </div>
         </Section>
     );
 }

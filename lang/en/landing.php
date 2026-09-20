@@ -164,7 +164,6 @@ return [
 
     'closing' => [
         'title' => 'Try it with your own messages',
-        'subtitle' => 'Connect one channel, pour real conversations in and watch it run. Takes a few minutes.',
         'cta_primary' => 'Try it free',
         'cta_secondary' => 'Log in',
     ],
