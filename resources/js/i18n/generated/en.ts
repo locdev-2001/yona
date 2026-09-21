@@ -6988,6 +6988,8 @@ const messages: Record<string, unknown> = {
             "dashboard": "Go to dashboard",
             "back_to_home": "Back to home",
             "language": "Language",
+            "menu": "Menu",
+            "menu_close": "Close menu",
             "demo": "Book a demo",
             "zalo": "Personal Zalo"
         },

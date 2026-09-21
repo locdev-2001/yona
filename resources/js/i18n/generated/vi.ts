@@ -6988,6 +6988,8 @@ const messages: Record<string, unknown> = {
             "dashboard": "Vào Dashboard",
             "back_to_home": "Về trang chủ",
             "language": "Ngôn ngữ",
+            "menu": "Menu",
+            "menu_close": "Đóng menu",
             "demo": "Đặt lịch demo",
             "zalo": "Zalo cá nhân"
         },
@@ -7212,7 +7214,7 @@ const messages: Record<string, unknown> = {
             "hero": {
                 "eyebrow": "Zalo cá nhân",
                 "title_a": "Bán bằng Zalo cá nhân,",
-                "title_b": "quản như một hộp thư",
+                "title_b": "quản như một hộp thư",
                 "lead": "Quét QR một lần. Tin nhắn khách từ Zalo cá nhân đổ về hộp thư dùng chung, ai trả lời cũng thấy, và mỗi khách tự thành một hồ sơ.",
                 "cta_primary": "Đặt lịch demo",
                 "cta_secondary": "Xem các kênh khác"
@@ -7242,7 +7244,7 @@ const messages: Record<string, unknown> = {
             "solution": {
                 "eyebrow": "Cách Yona giải",
                 "title_a": "Một lần quét QR,",
-                "title_b": "cả nhóm dùng chung một hộp thư",
+                "title_b": "cả nhóm dùng chung một hộp thư",
                 "body": "Yona nối vào đúng tài khoản Zalo bạn đang bán, không đổi số, không bắt khách thêm bạn mới. Tin nhắn vào ra vẫn ở Zalo, chỉ thêm một bản trong hộp thư để cả nhóm cùng thấy.",
                 "cards": {
                     "qr": {
@@ -7298,7 +7300,7 @@ const messages: Record<string, unknown> = {
                 }
             },
             "closing": {
-                "title": "Xem thử với tin nhắn Zalo của bạn",
+                "title": "Xem thử với tin nhắn Zalo của bạn",
                 "lead": "Một buổi 15 phút. Chúng tôi quét QR ngay trong buổi gọi để bạn thấy tin thật chạy về.",
                 "cta_primary": "Đặt lịch demo",
                 "cta_secondary": "Về trang chủ"
