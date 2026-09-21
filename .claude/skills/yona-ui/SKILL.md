@@ -21,7 +21,7 @@ Vi phạm là sai, không phải "chưa tối ưu". Mỗi dòng dưới đây đ
 2. **KHÔNG `backdrop-filter`, KHÔNG gradient nền, KHÔNG glow.** Ngoại lệ: hoa văn chấm bi `.bg-dotfield` ở nền bảng giá.
 3. **Thẻ / panel / section / bảng / ảnh sản phẩm bo `0`.** Nút, input, chip, tab, tooltip bo `4px`. Avatar `rounded-full`.
 4. **KHÔNG `font-weight` ≥ 600.** Chỉ 300 / 400 / 500. Nhấn mạnh bằng **màu**, không bằng độ đậm.
-5. **Mọi `line-height` ≥ 1.05.** Dấu tiếng Việt chồng hai tầng (`Ế Ộ Ữ`) bị cắt dưới mức đó.
+5. **Mọi `line-height` ≥ 1.2.** Dấu tiếng Việt chồng hai tầng (`Ế Ộ Ữ`) cần 1.183 lần cỡ chữ — đo 21/09 bằng `TextMetrics`, không phải 1.05 như bề mặt tham chiếu tiếng Anh.
 6. **Tracking đổi dấu ở 16px.** Trên 16px → âm (tới −0.03em). Dưới 16px → dương.
 7. **Chữ dùng bậc trung tính ≥ 500**, tương phản ≥ 4.5:1. `primary-500` và `cyan` không được mang chữ.
 8. **KHÔNG dark mode.**
@@ -43,10 +43,24 @@ Chưa chạy hết các bước này thì **không được nói "xong"**.
 1. build lại                                    (asset đã build mới là thứ trình duyệt thấy)
 2. npm run check:ui                             <- gate máy
 3. python3 scripts/check-ui.py --url <url> --save-crops <thư-mục>
-4. GIAO ẢNH CHO MỘT AGENT MỚI review thẩm mỹ    <- gate mắt
-5. sửa theo phát hiện, quay lại bước 1
-6. chỉ khi bước 2 và bước 4 đều sạch mới được nói "xong"
+4. GIAO ẢNH CHO MỘT AGENT MỚI review thẩm mỹ    <- gate mắt, chạy MỘT vòng
+5. ĐO LẠI bằng Playwright mọi phát hiện đo được <- bắt buộc, xem dưới
+6. sửa những cái sống sót bước 5, build lại, chạy lại bước 2
+7. xong khi bước 2 xanh và mọi phát hiện đã được xử lý hoặc bác có số đo
 ```
+
+**Gate mắt chạy MỘT vòng, không lặp tới khi nó hết phát hiện.** Đo 21/09 qua bốn
+vòng: vòng 2 sai 4 phát hiện, vòng 3 sai 4, vòng 4 sai **8/13**. Tỉ lệ sai TĂNG
+khi trang càng đúng — gate đọc ảnh tĩnh nên phải suy ra cấu trúc, và trang càng
+ít lỗi thật thì suy diễn càng lấp chỗ trống. Chạy lặp tới khi nó sạch là chạy
+tới khi nó bịa.
+
+**Bước 5 không bỏ được.** Phát hiện về **kích thước, màu, tương phản, số lượng**
+phải đo lại bằng trình duyệt: gate đã ba lần đọc "viền mảnh 1px" thành "viền
+nhạt" (đo được 4.57:1), hai lần đếm 4 vạch thành 2 vì desktop xếp chúng trên hai
+hàng, và báo "ô nhập dưới 44px" khi mọi ô đều ≥44 (thứ dưới ngưỡng là honeypot).
+Phát hiện về **bố cục, nhịp, thứ bậc, lặp khuôn** thì ảnh là bằng chứng đúng —
+đó mới là chỗ gate có giá trị.
 
 **Bước 4 không được tự làm.** Agent đang dựng là người chấm tệ nhất chính sản phẩm của nó. Bằng chứng: phiên 19–20/09 agent mở ảnh ra xem ba lần và ba lần tuyên bố đạt, trong khi người dùng nhìn phát ra ngay bốn lỗi. Nó đã tự thuyết phục mình từng quyết định là hợp lý, nên nhìn lại chỉ thấy cái nó muốn thấy.
 

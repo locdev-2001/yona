@@ -12,9 +12,9 @@ Khớp chính xác `fontSize` trong config.
 
 | Class | Cỡ | lh | ls |
 |---|---|---|---|
-| `text-display` | clamp 32→80px | 1.05 | −0.03em |
-| `text-h1` | clamp 28→54px | 1.05 | −0.03em |
-| `text-h2` | 24px | 1.05 | −0.02em |
+| `text-display` | clamp 32→80px | 1.2 | −0.03em |
+| `text-h1` | clamp 28→54px | 1.2 | −0.03em |
+| `text-h2` | 24px | 1.2 | −0.02em |
 | `text-h3` | 20px | 1.2 | −0.01em |
 | `text-h4` | 16px | 1.4 | −0.01em |
 | `text-lead` | 18px | 1.45 | −0.01em |
@@ -28,8 +28,13 @@ nào riêng. Tiêu đề khối nhỏ và caption dưới ảnh đều dùng `te
 
 Weight: chỉ `font-light` 300 · `font-normal` 400 · `font-medium` 500.
 
-`text-eyebrow` có `lh 1.2` chứ không phải 1.0 — nhãn là chữ HOA tiếng Việt, dấu
-chồng hai tầng (`Ộ Ữ Ế`) bị cắt dưới 1.05. *(ta chọn, vì lý do ngôn ngữ)*
+**Mọi bậc tiêu đề `lh 1.2`, không phải 1.05.** Bề mặt tham chiếu là trang tiếng
+Anh nên 1.05 đủ cho nó. Tiếng Việt thì không: đo 21/09 bằng `TextMetrics` trên
+Be Vietnam Pro, chuỗi `Ộ Ữ Ế ằ ạ` ở 54px cần **63.9px** mực thật (ascent 60.8 +
+descent 12.3) trong khi `lh 1.05` chỉ cho 57px. Tỉ lệ cần đo được **1.183** ở cả
+54px lẫn 80px. *(đo 21/09 · Be Vietnam Pro · TextMetrics)*
+
+`text-eyebrow` cũng `lh 1.2`, cùng lý do — nhãn là chữ HOA tiếng Việt.
 
 ## Font
 
@@ -86,6 +91,7 @@ dùng một màu.
 | Container | **1170px** (`max-w-container`) |
 | Cột đọc | **660px** (`max-w-reading`) |
 | Thẻ giá | **696px** (`max-w-price`) |
+| Cột form | **592px** (`max-w-form`) — hai ô chia đôi ra đúng 284px mỗi ô |
 | Nhịp dọc | `xl` 216px · `lg` 112px · `md` 80px · `sm` 64px |
 
 ## Bo góc và bóng
@@ -154,6 +160,22 @@ Cỡ: `md` cao 40px (`h-11` dưới 768px cho đủ đích chạm) · `sm` cao 3
 vùng chạm lên 44px).
 
 Chỉ `transform` có transition. Màu đổi tức thì, không fade.
+
+## Ô nhập
+
+```tsx
+// resources/js/landing/components/Field.tsx
+'h-11 md:h-10 rounded border border-neutral-300 bg-neutral-0 px-3 text-base'
+```
+
+Cao 40px, padding ngang 12px, viền `1px` *(đo 20/09 · 1440px)*. Dưới 768px cao
+44px cho đủ đích chạm, giống nút — không giữ 40 rồi nới vùng chạm bằng khoảng đệm.
+
+Bo `4px` theo §3 thay vì 2px của bề mặt tham chiếu: 2px không có trong thang bo,
+và một bậc bo riêng cho input là một bậc nữa phải nhớ.
+
+Nhãn `text-sm` đặt TRÊN ô. Lỗi và dấu bắt buộc màu `danger`. Ô nằm trên panel
+`neutral-100` thì nền ô là `neutral-0`: viền mang affordance, không phải nền.
 
 ## Nội dung hiển thị
 

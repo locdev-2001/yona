@@ -124,6 +124,55 @@ thú bị thương. Trang trí phải lùi lại, không kể chuyện riêng c�
 
 Tái lập bộ tranh: `python3 scripts/make-landing-art.py --build`.
 
+## Trang ngoài trang chủ
+
+Một blade (`landing.blade.php`), một entry Vite, một bundle. `landingConfig.page`
+chọn component. Thêm blade mới là thêm một chỗ nữa phải khai trong `content` của
+`tailwind.landing.config.js`, quên thì class riêng của trang đó rụng khỏi CSS.
+
+Khung chung đi qua `Shell`: nav 64px, `main`, footer. Neo trong trang (`#features`,
+`#pricing`) phải viết tuyệt đối `${urls.home}#features` — ở trang khác thì neo
+tương đối trỏ vào chỗ không tồn tại.
+
+| Trang | Khuôn |
+|---|---|
+| `/` | mười section, xem bảng trên |
+| `/zalo-ca-nhan` | trang một-kênh: hero · vấn đề · khối tính năng (media chia đôi) · năng lực · **nói thẳng rủi ro** · kết trang |
+| `/dat-lich-demo` | trang thu lead, xem dưới |
+| `/dat-lich-demo/cam-on` | trang cuối luồng: một thẻ `neutral-100` rộng bằng container, `noindex` trong blade |
+
+### Trang thu lead
+
+**Một màn hình. Không có section marketing nào phía dưới.** *(đo 20/09 · 1440px:
+trang thu lead của bề mặt tham chiếu cao 967px)* Người vào đây đã quyết định để
+lại số; thêm section kể chuyện là thêm chỗ để họ cuộn đi rồi quên mất cái form.
+
+| Thành phần | Số đo |
+|---|---|
+| bố cục | chia đôi bề ngang: chữ trái, form phải |
+| cột form | `max-w-form` 592px, trong panel `neutral-100` pad 24 / 40 từ `md` |
+| hai ô ngắn | chia đôi cột, 284px mỗi ô |
+| nút gửi | rộng hết cột form |
+| tranh trang trí | **không có**. Trang chỉ có một việc, tranh cạnh form là thứ đầu tiên hút mắt khỏi ô đang cần điền |
+
+Panel `neutral-100` sau form không phải trang trí: bản trắng trơn đo được 95.7%
+trắng và C9 trượt đúng, vì trang thu lead của bề mặt tham chiếu là bề mặt ĐẬM
+nhất của họ (74.0% trắng, 10.4% mảng màu).
+
+**Không dùng `fill`.** Ở desktop nội dung đã vừa một màn hình mà không cần ép
+`min-h`; ở 390px hai cột xếp chồng thành 1349px nên `fill` chỉ hứa một thứ nó
+không giữ được.
+
+Bẫy bot là một ô `aria-hidden` + `tabIndex={-1}` trong hộp `size-0 overflow-hidden`
+— không `display:none`, vì một số bot bỏ qua ô ẩn kiểu đó.
+
+### Nói thẳng rủi ro
+
+Trang kênh nào có rủi ro nền tảng thì có một section nói rủi ro, accent `navy`,
+nội dung trong panel `neutral-100`. Với Zalo cá nhân: không có API chính thức,
+có thể gián đoạn, tài khoản có thể bị khoá. Để khách tự phát hiện sau khi đã
+chuyển việc sang là mất khách.
+
 ## Footer
 
 `bg-neutral-0`, **có** `border-t neutral-300`. Tiêu đề cột `text-eyebrow` mono.
