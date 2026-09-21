@@ -307,7 +307,8 @@ const messages: Record<string, unknown> = {
         },
         "PLACEHOLDER": {
             "TITLE": "Phần này chưa sẵn sàng",
-            "DESCRIPTION": "Chúng tôi đang hoàn thiện và sẽ mở khi xong.",
+            "TITLE_NAMED": "{name} chưa sẵn sàng",
+            "DESCRIPTION": "Chúng tôi sẽ mở ngay khi xong.",
             "BACK": "Quay lại hội thoại"
         }
     },
