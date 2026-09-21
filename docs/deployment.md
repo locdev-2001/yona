@@ -186,6 +186,11 @@ ZALO_BRIDGE_WEBHOOK_SECRET=
 ZALO_BRIDGE_SEND_SECRET=
 ZALO_BRIDGE_UI_SECRET=
 
+# Bề mặt bán hàng. Lấy YONA_LEAD_INBOX_ID sau khi tạo hộp thư nhận lead (mục 9).
+YONA_LEAD_INBOX_ID=
+YONA_HOTLINE=
+YONA_ZALO_CONTACT_URL=
+
 ALLOW_PRIVATE_WEBHOOK_URLS=false
 ```
 
@@ -457,8 +462,37 @@ Lưu ý vận hành:
 - Tạo database + role, tạo `.env` và sinh secret (mục 4, 5, 6).
 - Vhost Nginx + SSL (mục 7).
 - **Timezone của PHP** — xem ngay dưới.
+- **Hộp thư nhận lead** của trang `/dat-lich-demo` — xem ngay dưới.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
+
+### Hộp thư nhận lead cho `/dat-lich-demo`
+
+Trang đặt lịch demo đổ lead vào một hộp thư kênh API của chính Yona: mỗi lead
+thành một hội thoại đến, nằm cùng chỗ với tin khách. Không có bảng riêng, không
+có hàng đợi riêng — cùng đường mà widget đang đi.
+
+Chưa cấu hình `YONA_LEAD_INBOX_ID` thì form **báo lỗi kèm hotline/Zalo**, không
+hiện trang cảm ơn giả. Đây là chủ ý: mất lead âm thầm tệ hơn nói thẳng là hỏng.
+
+Tạo hộp thư trên chính production, bằng giao diện:
+
+1. Đăng nhập tài khoản Yona nội bộ → **Cài đặt → Hộp thư → Thêm hộp thư → API**.
+2. Đặt tên gợi nhớ, ví dụ `Lead từ trang đặt lịch demo`.
+3. Gán đúng những người sẽ gọi lại cho khách.
+4. Lấy `id` của hộp thư ở URL trang cài đặt hộp thư đó.
+
+```bash
+cd /www/wwwroot/yona.vn
+sed -i 's|^YONA_LEAD_INBOX_ID=$|YONA_LEAD_INBOX_ID=<id vừa lấy>|' .env
+sed -i 's|^YONA_HOTLINE=$|YONA_HOTLINE=<số thật>|' .env
+sed -i 's|^YONA_ZALO_CONTACT_URL=$|YONA_ZALO_CONTACT_URL=<link zalo>|' .env
+php artisan config:clear
+```
+
+Nghiệm thu bằng cách gửi thật một lượt qua `https://yona.vn/dat-lich-demo` rồi
+mở hộp thư xem hội thoại có nổi lên không. Hotline và link Zalo để rỗng thì
+trang **ẩn hẳn** khối liên hệ nhanh — không bày một số không ai bắt máy.
 
 ### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
 

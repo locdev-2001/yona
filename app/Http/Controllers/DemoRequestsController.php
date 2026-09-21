@@ -58,9 +58,15 @@ class DemoRequestsController extends Controller
         } catch (Throwable $exception) {
             // KHÔNG ghi tên hay số điện thoại vào log: Nghị định 13 coi đó là dữ
             // liệu cá nhân, mà log đi qua nhiều tay hơn cơ sở dữ liệu.
+            // KHÔNG ghi `getMessage()` thô. `contact_inboxes` có
+            // `unique(inbox_id, source_id)` và `source_id` của lead là số điện
+            // thoại, nên một lần đụng unique là Postgres trả về message chứa
+            // nguyên giá trị đó — số khách rơi thẳng vào log (Nghị định 13).
+            // Lớp exception + tệp:dòng đủ để lần ra chỗ hỏng.
             Log::error('demo_request.intake_failed', [
                 'ip' => $request->ip(),
-                'exception' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'at' => basename($exception->getFile()).':'.$exception->getLine(),
             ]);
 
             // Không hiện trang cảm ơn khi chưa nhận được gì. Khách quay lại form

@@ -29,12 +29,16 @@
         <script>
             window.landingConfig = @json($landingConfig);
         </script>
+        {{-- JSON-LD sinh ở server: bot đọc HTML thô, không chờ React mount. --}}
+        @foreach (\App\Support\LandingStructuredData::make($landingConfig['page'], $landingConfig['meta']) as $luocDo)
+            <script type="application/ld+json">@json($luocDo, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)</script>
+        @endforeach
         @include('partials.favicon')
         @include('partials.analytics')
         @viteReactRefresh
         @vite(['resources/css/landing.css', 'resources/js/landing/main.tsx'])
     </head>
-    <body>
+    <body data-page="{{ $landingConfig['page'] }}">
         <div id="app"></div>
         {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
              khai, không nhúng vào partials.analytics vì partial đó dùng chung cho

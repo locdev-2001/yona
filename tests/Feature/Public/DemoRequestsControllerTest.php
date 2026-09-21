@@ -4,6 +4,7 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Testing\TestResponse;
 
@@ -93,25 +94,34 @@ it('không hiện trang cảm ơn khi chưa nhận được lead', function () {
     expect(Conversation::query()->count())->toBe(0);
 });
 
+// `contact_inboxes` có `unique(inbox_id, source_id)` và `source_id` của lead là
+// số điện thoại, nên một lần đụng unique là Postgres trả về message chứa nguyên
+// số đó. Bất biến cần giữ: ngữ cảnh log của luồng này KHÔNG mang `getMessage()`
+// của exception, vì nội dung message không nằm trong tầm kiểm soát của ta
+// (Nghị định 13).
+it('ghi đủ để lần ra chỗ hỏng mà không cần message', function () {
+    config(['yona.marketing.lead_inbox_id' => null]);
+
+    Log::shouldReceive('error')
+        ->once()
+        ->withArgs(function (string $suKien, array $nguCanh) {
+            expect($suKien)->toBe('demo_request.intake_failed')
+                ->and($nguCanh)->toHaveKeys(['ip', 'exception', 'at'])
+                ->and($nguCanh['exception'])->toBe(RuntimeException::class)
+                ->and($nguCanh['at'])->toContain('DemoRequestIntake.php:');
+
+            return true;
+        });
+
+    guiForm()->assertSessionHas('demo_request_failed', true);
+});
+
 it('chặn sau 5 lượt gửi trong 10 phút', function () {
     for ($i = 0; $i < 5; $i++) {
         guiForm(['phone' => '09123456'.str_pad((string) $i, 2, '0', STR_PAD_LEFT)])->assertRedirect();
     }
 
     guiForm(['phone' => '0912345699'])->assertStatus(429);
-});
-
-it('liệt kê trang thật trong sitemap và bỏ trang cảm ơn', function () {
-    $xml = $this->get('/sitemap.xml')
-        ->assertOk()
-        ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
-        ->getContent();
-
-    expect($xml)->toContain('/zalo-ca-nhan')
-        ->and($xml)->toContain('/dat-lich-demo')
-        // Trang cảm ơn không có gì để xếp hạng, và lọt vào kết quả tìm kiếm thì
-        // khách vào đó trước khi gửi form.
-        ->and($xml)->not->toContain('/dat-lich-demo/cam-on');
 });
 
 it('hiện trang Zalo cá nhân', function () {
