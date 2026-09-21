@@ -154,3 +154,24 @@
         }
     }
 }
+
+/* Trang thu lead ẩn bong bóng chat dưới 768px.
+
+   Bong bóng là `position:fixed` góc phải với `z-index` 2147483000, còn trang
+   form thì cuộn: đo 21/09 · 390px thấy nó lần lượt chồng lên ô tên, ô số, ô ghi
+   chú và nút gửi tuỳ vị trí cuộn — chạm vào vùng đó mở chat chứ không focus ô.
+   Nâng bong bóng lên chỉ dịch vấn đề sang phần tử khác (đo sau khi nâng 96px:
+   vẫn chồng 1658-2816px²), vì trang cuộn dài thì một điểm cố định luôn đâm vào
+   thứ gì đó.
+
+   Khách đã vào tới trang này là đã có ý định để lại số; widget chat ở đây chỉ
+   cạnh tranh với chính cái form. Desktop giữ nguyên — ở đó form nằm cột phải,
+   không chạm góc bong bóng.
+
+   KHÔNG sửa `resources/js/sdk/sdk.css`: tệp đó là thứ khách dán vào site của họ. */
+@media (max-width: 767px) {
+    body[data-page='demo'] .woot-widget-bubble,
+    body[data-page='demo'] .woot-widget-holder {
+        display: none;
+    }
+}

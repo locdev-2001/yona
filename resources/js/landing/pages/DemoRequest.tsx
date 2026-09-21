@@ -39,7 +39,7 @@ export function DemoRequest({ config }: { config: LandingConfig }) {
                     <ul className="mt-8 flex flex-col gap-4">
                         {Object.entries(demo.promise).map(([key, line]) => (
                             <li key={key} className="flex gap-4">
-                                <span aria-hidden className={`mt-2 size-2 shrink-0 ${ACCENT.primary}`} />
+                                <span aria-hidden className={`mt-3 h-0.5 w-2 shrink-0 ${ACCENT.primary}`} />
                                 <span className="text-base font-light text-neutral-700">{line}</span>
                             </li>
                         ))}
@@ -49,7 +49,18 @@ export function DemoRequest({ config }: { config: LandingConfig }) {
                 </div>
 
                 <div className="w-full max-w-form bg-neutral-100 p-6 md:p-10">
-                    <form method="post" action={form?.action} className="relative flex flex-col gap-5">
+                    <form
+                        method="post"
+                        action={form?.action}
+                        aria-labelledby="form-demo-ten"
+                        className="relative flex flex-col gap-5"
+                    >
+                        {/* Form không có tiêu đề nhìn thấy được vì cột chữ bên trái đã nói
+                            hết. Trình đọc màn hình thì không có "bên trái", nó cần một tên
+                            cho vùng này. */}
+                        <h2 id="form-demo-ten" className="sr-only">
+                            {demo.form.legend}
+                        </h2>
                         <input type="hidden" name="_token" value={form?.csrf ?? ''} />
                         <Honeypot label={demo.form.honeypot_label} />
 
@@ -58,6 +69,10 @@ export function DemoRequest({ config }: { config: LandingConfig }) {
                                 {demo.form.failed}
                             </p>
                         )}
+
+                        {/* Chú thích bắt buộc đặt TRƯỚC ô đầu tiên: đọc sau khi đã bấm gửi
+                            thì nó không còn là chú thích nữa. */}
+                        <p className="text-sm text-neutral-500">{demo.form.required_note}</p>
 
                         {/* Tên và số chia đôi cột form: đo được 284px mỗi ô trên cột 592px. */}
                         <div className="grid gap-5 sm:grid-cols-2">
@@ -93,12 +108,9 @@ export function DemoRequest({ config }: { config: LandingConfig }) {
                             rows={4}
                         />
 
-                        <div>
-                            <button type="submit" className={buttonClass('primary', 'md', 'w-full')}>
-                                {demo.form.submit}
-                            </button>
-                            <p className="mt-3 text-sm text-neutral-500">{demo.form.required_note}</p>
-                        </div>
+                        <button type="submit" className={buttonClass('primary', 'md', 'w-full')}>
+                            {demo.form.submit}
+                        </button>
 
                         <p className="text-sm text-neutral-500">{demo.form.privacy}</p>
                     </form>
@@ -112,15 +124,21 @@ export function DemoRequest({ config }: { config: LandingConfig }) {
  * Đường đi khác cho người không muốn chờ gọi lại.
  *
  * Ẩn hẳn khi chưa cấu hình số thật: một hotline không ai bắt máy tệ hơn là không
- * có hotline. Ghi chú về bong bóng chat vẫn hiện, vì widget luôn có.
+ * có hotline.
+ *
+ * Ghi chú về bong bóng chat chỉ hiện từ `md` trở lên: dưới 768px trang này ẩn
+ * widget (xem `landing.css`) vì nó chồng lên ô nhập, nên câu "bấm bong bóng chat
+ * ở góc phải" sẽ trỏ vào chỗ không có gì.
  */
 function AltContact({ config }: { config: LandingConfig }) {
     const { contact, strings } = config;
     const alt = strings.demo.alt;
     const hasChannel = Boolean(contact.hotline || contact.zaloUrl);
 
+    // Không kênh nào VÀ ghi chú đã ẩn ở mobile → cả khối rỗng, chỉ còn một đường
+    // kẻ không dẫn tới gì (đo 21/09 · 390px: cao 25px, không con nào hiện).
     return (
-        <div className="mt-10 border-t border-neutral-300 pt-6">
+        <div className={`mt-10 border-t border-neutral-300 pt-6 ${hasChannel ? '' : 'hidden md:block'}`}>
             {hasChannel && <h2 className="text-h3">{alt.title}</h2>}
 
             {hasChannel && (
@@ -138,7 +156,7 @@ function AltContact({ config }: { config: LandingConfig }) {
                 </div>
             )}
 
-            <p className={`text-sm text-neutral-500 ${hasChannel ? 'mt-4' : ''}`}>{alt.note}</p>
+            <p className={`hidden text-sm text-neutral-500 md:block ${hasChannel ? 'mt-4' : ''}`}>{alt.note}</p>
         </div>
     );
 }

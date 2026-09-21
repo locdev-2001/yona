@@ -9,6 +9,11 @@
  * nền. Bề mặt tham chiếu làm ngược lại (trang trắng, ô hơi sẫm) nhưng quan hệ
  * sáng/tối giữa ô và nền vẫn giữ một bậc, chỉ đảo chiều theo bề mặt chứa nó.
  *
+ * Viền `neutral-500`, KHÔNG phải `neutral-300` như hairline chỗ khác. WCAG 1.4.11
+ * đòi ≥3:1 cho ranh giới thành phần điều khiển, mà đo được: `neutral-300` trên
+ * panel kem chỉ 1.19:1 và `neutral-400` cũng chỉ 2.17:1. Ở 1.19:1 ba ô nhập đọc
+ * ra như đang bị vô hiệu hoá. `neutral-500` cho 4.57:1.
+ *
  * Bo `4px` theo luật §3 thay vì 2px của bề mặt tham chiếu: 2px không có trong
  * thang bo của mình, và một bậc bo riêng cho input là một bậc nữa phải nhớ.
  */
@@ -44,7 +49,7 @@ export function Field({
     placeholder,
 }: FieldProps) {
     const describedBy = [hint ? `${name}-hint` : null, error ? `${name}-error` : null].filter(Boolean).join(' ');
-    const border = error ? 'border-danger' : 'border-neutral-300';
+    const border = error ? 'border-danger' : 'border-neutral-500';
 
     return (
         <div>

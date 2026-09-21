@@ -399,6 +399,17 @@ def c9_suc_nang(page, url: str, w: int, h: int) -> tuple[KetQua, dict]:
     page.set_viewport_size({"width": w, "height": h})
     page.goto(url, wait_until="load")
     _cuon_het(page)
+
+    # Trang cuối luồng (xác nhận, cảm ơn) tự khai `noindex` vì nó không có gì để
+    # xếp hạng. Cũng chính vì thế nó ngắn, và trên trang ngắn thì tỉ lệ này đo
+    # chủ yếu là footer so với nội dung: một thay đổi bố cục nhỏ ở trang cảm ơn
+    # làm số nhảy 25 điểm mà mắt không thấy khác gì. Không có dải đo được cho
+    # loại trang này, và ép nó khớp dải của một trang chủ marketing là chạy theo
+    # con số. Gate thẩm mỹ vẫn xem trang này như mọi trang khác.
+    if page.evaluate("() => !!document.querySelector('meta[name=robots][content*=noindex]')"):
+        return KetQua("C9", "sức nặng thị giác trong dải", True,
+                      bo_qua="trang khai noindex (trang cuối luồng), không có dải đo được"), {}
+
     png = page.screenshot(full_page=True)
     import io
 
@@ -615,7 +626,8 @@ def main() -> int:
                         tat_ca.extend(kq)
                     kq9, sn = c9_suc_nang(page, args.url, *vps[len(vps) // 2])
                     tat_ca.append(kq9)
-                    phu["suc_nang"] = sn
+                    if sn:  # rỗng khi C9 bỏ qua (trang cuối luồng)
+                        phu["suc_nang"] = sn
                     if args.save_crops:
                         paths = luu_crop(page, args.url, vps[len(vps) // 2][0], vps[len(vps) // 2][1], Path(args.save_crops))
                         phu["crops"] = [str(p) for p in paths]

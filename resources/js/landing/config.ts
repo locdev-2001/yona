@@ -90,6 +90,8 @@ export interface LandingStrings {
         register: string;
         dashboard: string;
         language: string;
+        menu: string;
+        menu_close: string;
         demo: string;
         zalo: string;
     };

@@ -37,16 +37,22 @@ export default {
       // Thang đo từ bề mặt tham chiếu: tiêu đề section 54px, không phải 28px.
       // Chênh lệch cỡ chữ CHÍNH LÀ thứ tạo nhịp cho trang — bóp nhỏ nó thì
       // trang đọc như bảng thông số.
-      display: ['clamp(2rem, 5.6vw, 5rem)', { lineHeight: '1.05', letterSpacing: '-0.03em' }],
-      h1: ['clamp(1.75rem, 3.75vw, 3.375rem)', { lineHeight: '1.05', letterSpacing: '-0.03em' }],
-      h2: ['1.5rem', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
+      // lh 1.2 chứ không phải 1.05 như bề mặt tham chiếu (tiếng Anh) dùng. Đo
+      // 21/09 bằng TextMetrics trên Be Vietnam Pro: chuỗi có dấu chồng hai tầng
+      // (`Ộ Ữ Ế ằ ạ`) ở 54px cần 63.9px mực thật (ascent 60.8 + descent 12.3),
+      // trong khi lh 1.05 chỉ cho 57px — dấu tràn 5-10.6px sang vùng dòng kế
+      // trên 4/6 tiêu đề của /zalo-ca-nhan. Tỉ lệ cần đo được là 1.183 ở CẢ 54px
+      // lẫn 80px; 1.2 cho biên an toàn mà không kéo tiêu đề rời rạc.
+      display: ['clamp(2rem, 5.6vw, 5rem)', { lineHeight: '1.2', letterSpacing: '-0.03em' }],
+      h1: ['clamp(1.75rem, 3.75vw, 3.375rem)', { lineHeight: '1.2', letterSpacing: '-0.03em' }],
+      h2: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
       h3: ['1.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em' }],
       h4: ['1rem', { lineHeight: '1.4', letterSpacing: '-0.01em' }],
       lead: ['1.125rem', { lineHeight: '1.45', letterSpacing: '-0.01em' }],
       base: ['1rem', { lineHeight: '1.5' }],
       sm: ['0.875rem', { lineHeight: '1.5' }],
-      // lh 1.2 chứ không phải 1.0 như đo được: nhãn eyebrow là chữ HOA tiếng Việt,
-      // dấu chồng hai tầng (Ộ Ữ Ế) bị cắt dưới 1.05 — xem §0.5.
+      // lh 1.2: nhãn eyebrow là chữ HOA tiếng Việt, dấu chồng hai tầng cần
+      // nhiều chỗ hơn chữ thường — cùng lý do với thang tiêu đề ở trên.
       eyebrow: ['0.75rem', { lineHeight: '1.2', letterSpacing: '0.05em' }],
       caption: ['0.75rem', { lineHeight: '1.4' }],
     },

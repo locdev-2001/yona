@@ -24,7 +24,12 @@ interface FeatureProps {
     id?: string;
     strings: FeatureStrings;
     media: Media;
-    art: { src: string; width: number; height: number };
+    /**
+     * Tranh trang trí. Bỏ trống ở trang chỉ có MỘT khối tính năng: ở trang chủ
+     * tranh xuất hiện đều ở cả ba khối nên nó đọc ra là một hệ, còn một tấm lẻ
+     * duy nhất giữa bài thì đọc ra là ảnh nhặt về dán vào.
+     */
+    art?: { src: string; width: number; height: number };
     cta: { primary: { label: string; href: string }; secondary: { label: string; href: string }; learn: string };
     learnHref: string;
     surface?: 'base' | 'band';
@@ -40,7 +45,9 @@ export function Feature({ id, strings, media, art, cta, learnHref, surface = 'ba
                 đề 54px chiếm nửa trái và bỏ trống nửa phải, lặp ba lần thành ba
                 mảng rỗng. Nét mực nền trong suốt nên nó lùi sau chữ, không tranh
                 chỗ với tiêu đề như một tấm ảnh đặc sẽ làm. */}
-            <ArtMark src={art.src} width={art.width} height={art.height} size="w-48 2xl:w-60" className="right-10 top-0" />
+            {art && (
+                <ArtMark src={art.src} width={art.width} height={art.height} size="w-48 2xl:w-60" className="right-10 top-0" />
+            )}
 
             <Eyebrow accent={accent}>{strings.eyebrow}</Eyebrow>
 

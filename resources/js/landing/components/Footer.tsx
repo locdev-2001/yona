@@ -35,17 +35,21 @@ export function Footer({ config }: { config: LandingConfig }) {
     return (
         <footer className="border-t border-neutral-300 bg-neutral-0">
             <div className="mx-auto max-w-container px-4 py-14 md:px-10 md:py-20">
-                <div className="grid gap-10 md:grid-cols-5">
-                    <div className="max-w-sm md:col-span-2">
+                {/* Ba cột link xếp 2 cột từ 380px, không phải 1 cột dọc suốt.
+                    Đo 21/09 · 390px: một cột cho 8 link (mỗi link min-h-11 theo
+                    luật đích chạm) đẩy footer lên 920px — nặng gấp 1.6 lần nội
+                    dung trang cảm ơn, khách phải vuốt thêm màn hình rưỡi chỉ để
+                    thấy dòng bản quyền. */}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-5">
+                    <div className="col-span-2 max-w-sm">
                         <BrandLogo brand={brand} />
                         <p className="mt-4 text-sm font-light text-neutral-600">{strings.footer.tagline}</p>
                     </div>
 
                     {columns.map((column) => (
                         <nav key={column.heading}>
-                            {/* text-eyebrow giờ lh 1.0 (12px) nên chật; thêm pb-1 để
-                                nhịp dưới tiêu đề cột ra gần 16px như số đo thật, thay
-                                vì đổi lineHeight dùng chung của cả trang. */}
+                            {/* pb-1 để nhịp dưới tiêu đề cột ra gần 16px như số đo
+                                thật, thay vì đổi lineHeight dùng chung của cả trang. */}
                             <p className="font-mono text-eyebrow font-medium uppercase text-neutral-500 pb-1">
                                 {column.heading}
                             </p>
