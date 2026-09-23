@@ -3,7 +3,7 @@
 > ## ⚠️ ĐỌC TRƯỚC MỌI THỨ KHÁC
 > **Codebase = bản viết lại 100% Chatwoot v4.17.1 sang Laravel + Inertia/React**, đã merge vào `main` 08/09/2026. Làm thẳng trên `main`. Mốc quay lại: tag `main-truoc-rewrite`.
 > - **Nguồn chuẩn kiến trúc + việc kế tiếp:** `plans/260831-rewrite-chatwoot-laravel/plan.md`. Năng lực kênh khai DUY NHẤT ở `app/Channels/CapabilitySet.php` + `DeclaresCapabilities`. Triển khai production: `docs/deployment.md`.
-> - **Việc đang mở theo dõi ở GitHub Issues**, không phải trong file này: `gh issue list --label P0`.
+> - **Việc đang mở theo dõi ở Công việc của dash.yona.vn** qua MCP `yona-dash` (skill `yona-issues`), không phải trong file này và không tạo GitHub issue nữa: `list_tasks` với `tag: "P0"`.
 > - Nguồn Ruby/Vue để đối chiếu: `refs/chatwoot` — **CẤM** mở `refs/chatwoot/enterprise/`.
 > - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
 > - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP khi port, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
