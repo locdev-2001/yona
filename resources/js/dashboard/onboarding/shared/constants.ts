@@ -1,4 +1,8 @@
-// Port từ dashboard/routes/dashboard/onboarding/shared/constants.js
+import { t } from '../../../i18n';
+
+// Port từ dashboard/routes/dashboard/onboarding/shared/constants.js. Danh sách vai
+// trò/ngành/nguồn thay bằng bộ hợp SME bán online Việt Nam: giá trị lưu vào
+// custom_attributes là khoá ổn định, nhãn đọc từ ONBOARDING_NEXT.OPTIONS.
 export interface SelectOption {
     value: string;
     label: string;
@@ -12,51 +16,27 @@ export const COMPANY_SIZE_OPTIONS: SelectOption[] = [
     { value: '500+', label: '500+' },
 ];
 
-export const INDUSTRY_OPTIONS: SelectOption[] = [
-    { value: 'Aerospace & Defense', label: 'Aerospace & Defense' },
-    { value: 'Agriculture & Food', label: 'Agriculture & Food' },
-    { value: 'Automotive & Transportation', label: 'Automotive & Transportation' },
-    { value: 'Chemicals & Materials', label: 'Chemicals & Materials' },
-    { value: 'Construction & Built Environment', label: 'Construction & Built Environment' },
-    { value: 'Consumer Packaged Goods (CPG)', label: 'Consumer Packaged Goods (CPG)' },
-    { value: 'Education', label: 'Education' },
-    { value: 'Entertainment', label: 'Entertainment' },
-    { value: 'Finance', label: 'Finance' },
-    { value: 'Government & Nonprofit', label: 'Government & Nonprofit' },
-    { value: 'Healthcare', label: 'Healthcare' },
-    { value: 'Hospitality & Tourism', label: 'Hospitality & Tourism' },
-    { value: 'Industrial & Energy', label: 'Industrial & Energy' },
-    { value: 'Legal & Compliance', label: 'Legal & Compliance' },
-    { value: 'Lifestyle & Leisure', label: 'Lifestyle & Leisure' },
-    { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
-    { value: 'Luxury & Fashion', label: 'Luxury & Fashion' },
-    { value: 'News & Media', label: 'News & Media' },
-    { value: 'Professional Services & Agencies', label: 'Professional Services & Agencies' },
-    { value: 'Real Estate & PropTech', label: 'Real Estate & PropTech' },
-    { value: 'Retail & E-commerce', label: 'Retail & E-commerce' },
-    { value: 'Sports', label: 'Sports' },
-    { value: 'Technology', label: 'Technology' },
-    { value: 'Telecommunications', label: 'Telecommunications' },
-    { value: 'Other', label: 'Other' },
-];
+export const USER_ROLE_KEYS = ['owner', 'sales_manager', 'customer_support', 'marketing', 'other'] as const;
 
-export const REFERRAL_SOURCE_OPTIONS: SelectOption[] = [
-    { value: 'google', label: 'Google' },
-    { value: 'reddit', label: 'Reddit' },
-    { value: 'twitter', label: 'Twitter/X' },
-    { value: 'linkedin', label: 'LinkedIn' },
-    { value: 'friend', label: 'Friend/Colleague' },
-    { value: 'blog', label: 'Blog/Article' },
-    { value: 'github', label: 'GitHub' },
-    { value: 'other', label: 'Other' },
-];
+export const INDUSTRY_KEYS = [
+    'fashion',
+    'beauty',
+    'mother_baby',
+    'food_beverage',
+    'electronics',
+    'home_living',
+    'education',
+    'travel_services',
+    'real_estate',
+    'wholesale',
+    'other',
+] as const;
 
-export const USER_ROLE_OPTIONS: SelectOption[] = [
-    { value: 'founder', label: 'Founder/CEO' },
-    { value: 'product_manager', label: 'Product Manager' },
-    { value: 'engineering', label: 'Engineering' },
-    { value: 'support_lead', label: 'Support Lead' },
-    { value: 'marketing', label: 'Marketing' },
-    { value: 'sales', label: 'Sales' },
-    { value: 'other', label: 'Other' },
-];
+export const REFERRAL_SOURCE_KEYS = ['zalo', 'facebook', 'tiktok', 'google', 'friend', 'youtube', 'other'] as const;
+
+type TranslatedOptionGroup = 'USER_ROLE' | 'INDUSTRY' | 'REFERRAL_SOURCE';
+
+// Gọi lúc render (không phải lúc nạp module) để nhãn theo đúng locale đang bật.
+export function translatedOptions(group: TranslatedOptionGroup, keys: readonly string[]): SelectOption[] {
+    return keys.map(key => ({ value: key, label: t(`ONBOARDING_NEXT.OPTIONS.${group}.${key.toUpperCase()}`) }));
+}

@@ -7687,8 +7687,8 @@ const messages: Record<string, unknown> = {
         "READ_LATEST_UPDATES": "Read our latest updates",
         "ALL_CONVERSATION": {
             "TITLE": "All your conversations in one place",
-            "DESCRIPTION": "View all the conversations from your customers in one single dashboard. You can filter the conversations by the incoming channel, label and status.",
-            "NEW_LINK": "Click here to create an inbox"
+            "DESCRIPTION": "Messages your customers send through Zalo, your website, email and more land in one shared inbox. Filter conversations by channel, label and status.",
+            "NEW_LINK": "Connect Zalo, your website or email"
         },
         "TEAM_MEMBERS": {
             "TITLE": "Invite your team members",
@@ -7781,12 +7781,44 @@ const messages: Record<string, unknown> = {
         },
         "PLACEHOLDERS": {
             "SELECT_ROLE": "Select your role",
-            "ENTER_WEBSITE": "www.example.com",
+            "ENTER_WEBSITE": "e.g. yourshop.com",
             "SELECT_LANGUAGE": "Select language",
             "SELECT_TIMEZONE": "Select timezone",
             "SELECT_COMPANY_SIZE": "Select company size",
             "SELECT_INDUSTRY": "Select industry",
             "SELECT_REFERRAL_SOURCE": "Select source"
+        },
+        "OPTIONAL": "Optional",
+        "OPTIONS": {
+            "USER_ROLE": {
+                "OWNER": "Shop owner / business owner",
+                "SALES_MANAGER": "Sales manager",
+                "CUSTOMER_SUPPORT": "Sales consultant / customer care",
+                "MARKETING": "Marketing",
+                "OTHER": "Other"
+            },
+            "INDUSTRY": {
+                "FASHION": "Fashion",
+                "BEAUTY": "Cosmetics & beauty",
+                "MOTHER_BABY": "Mother & baby",
+                "FOOD_BEVERAGE": "Food & beverage",
+                "ELECTRONICS": "Electronics & accessories",
+                "HOME_LIVING": "Furniture & household",
+                "EDUCATION": "Education & courses",
+                "TRAVEL_SERVICES": "Travel & services",
+                "REAL_ESTATE": "Real estate",
+                "WHOLESALE": "Wholesale / distributor",
+                "OTHER": "Other"
+            },
+            "REFERRAL_SOURCE": {
+                "ZALO": "Zalo",
+                "FACEBOOK": "Facebook",
+                "TIKTOK": "TikTok",
+                "GOOGLE": "Google",
+                "FRIEND": "Friend or partner referral",
+                "YOUTUBE": "YouTube",
+                "OTHER": "Other"
+            }
         },
         "EMAIL_VERIFIED": "Email verified",
         "SETTING_UP": "Setting up your account...",

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
@@ -6,8 +6,7 @@ import { t } from '../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
-import NextButton from 'dashboard/components-next/button/Button';
-import InlineInput from 'dashboard/components-next/inline-input/InlineInput';
+import Input from 'dashboard/components-next/input/Input';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import OnboardingLayout from './shared/OnboardingLayout';
 import OnboardingSection from './shared/OnboardingSection';
@@ -15,53 +14,52 @@ import OnboardingFormRow from './account-details/OnboardingFormRow';
 import OnboardingFormSelect from './account-details/OnboardingFormSelect';
 import {
     COMPANY_SIZE_OPTIONS,
-    INDUSTRY_OPTIONS,
-    REFERRAL_SOURCE_OPTIONS,
-    USER_ROLE_OPTIONS,
+    INDUSTRY_KEYS,
+    REFERRAL_SOURCE_KEYS,
+    USER_ROLE_KEYS,
+    translatedOptions,
 } from './shared/constants';
+import { browserTimezone, defaultTimezone, supportedTimezones, timezoneOptions } from './shared/timezone';
 import type { SharedPageProps } from '../../types';
 
 interface OnboardingPageProps extends SharedPageProps {
     account: { id: number; name: string; locale: string; custom_attributes: Record<string, unknown> };
+    languages: { name: string; iso_639_1_code: string }[];
 }
 
-const LANGUAGE_OPTIONS = [
-    { value: 'en', label: 'English' },
-    { value: 'vi', label: 'Tiếng Việt' },
-];
-
 // Port từ dashboard/routes/dashboard/onboarding/Index.vue
-// (enrichment brand-info + bước inbox_setup là cloud-only — bỏ).
+// (enrichment brand-info + bước inbox_setup là cloud-only — bỏ). Không trường nào
+// bắt buộc: website chỉ cần cho inbox web-widget tự tạo của bước inbox_setup.
 export default function OnboardingIndex() {
-    const { auth, account } = usePage<OnboardingPageProps>().props;
+    const { auth, account, languages = [] } = usePage<OnboardingPageProps>().props;
+
+    const { zoneOptions, initialTimezone } = useMemo(() => {
+        const browserZone = browserTimezone();
+        const options = timezoneOptions(supportedTimezones(), browserZone);
+        return { zoneOptions: options, initialTimezone: defaultTimezone(options, browserZone) };
+    }, []);
+    const languageOptions = useMemo(
+        () =>
+            [...languages]
+                .sort((a, b) => a.iso_639_1_code.localeCompare(b.iso_639_1_code))
+                .map(language => ({ value: language.iso_639_1_code, label: language.name })),
+        [languages],
+    );
 
     const [userRole, setUserRole] = useState('');
     const [website, setWebsite] = useState('');
-    const [locale, setLocale] = useState(account.locale || '');
-    const [timezone, setTimezone] = useState('');
+    // Ngôn ngữ của account không nằm trong danh sách thì để trống (server giữ nguyên), không gửi giá trị server sẽ từ chối.
+    const [locale, setLocale] = useState(() =>
+        languageOptions.some(option => option.value === account.locale) ? account.locale : '',
+    );
+    const [timezone, setTimezone] = useState(initialTimezone);
     const [companySize, setCompanySize] = useState('');
     const [industry, setIndustry] = useState('');
     const [referralSource, setReferralSource] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
-    const [isEditingWebsite, setEditingWebsite] = useState(false);
-    const [showErrorOnFields, setShowErrorOnFields] = useState(false);
-    const websiteInput = useRef<HTMLInputElement>(null);
 
     const userName = auth.user?.name || '';
     const userEmail = auth.user?.email || '';
-
-    const timezoneOptions = (() => {
-        try {
-            return Intl.supportedValuesOf('timeZone').map(tz => ({ value: tz, label: tz.replace(/_/g, ' ') }));
-        } catch {
-            return [];
-        }
-    })();
-
-    const enableWebsiteEditing = () => {
-        setEditingWebsite(true);
-        window.setTimeout(() => websiteInput.current?.focus(), 0);
-    };
 
     const normalizeWebsiteUrl = (raw: string) => {
         const trimmed = (raw || '').trim();
@@ -72,14 +70,6 @@ export default function OnboardingIndex() {
     const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
         if (isSubmitting) return;
-
-        if (!website.trim()) {
-            useAlert(t('ONBOARDING_NEXT.VALIDATION_ERROR'));
-            setShowErrorOnFields(true);
-            window.setTimeout(() => setShowErrorOnFields(false), 600);
-            enableWebsiteEditing();
-            return;
-        }
 
         setSubmitting(true);
         router.post(
@@ -127,7 +117,8 @@ export default function OnboardingIndex() {
                         <OnboardingFormSelect
                             value={userRole}
                             onChange={setUserRole}
-                            options={USER_ROLE_OPTIONS}
+                            options={translatedOptions('USER_ROLE', USER_ROLE_KEYS)}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.YOUR_ROLE')}
                             placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_ROLE')}
                         />
                     </OnboardingFormRow>
@@ -137,34 +128,38 @@ export default function OnboardingIndex() {
                     <div className="flex items-center gap-2 px-3 py-3">
                         <span className="text-sm font-medium text-n-slate-12">{account.name}</span>
                     </div>
-                    <OnboardingFormRow title={t('ONBOARDING_NEXT.FIELDS.WEBSITE')} icon="i-lucide-globe">
-                        <div className="flex items-center justify-end gap-2">
-                            <InlineInput
-                                ref={websiteInput}
-                                value={website}
-                                onChange={event => setWebsite(event.target.value)}
-                                readOnly={!isEditingWebsite}
-                                placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.ENTER_WEBSITE')}
-                                customInputClass={[
-                                    'w-auto text-end px-1 py-0.5 -my-0.5 mx-0 placeholder:text-n-slate-9 rounded',
-                                    showErrorOnFields ? 'animate-shake' : '',
-                                ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                onEnterPress={() => websiteInput.current?.blur()}
-                                onBlur={() => setEditingWebsite(false)}
-                            />
-                            <NextButton type="button" icon="i-lucide-pencil" slate xs ghost onClick={enableWebsiteEditing} />
-                        </div>
+                    <OnboardingFormRow
+                        title={t('ONBOARDING_NEXT.FIELDS.WEBSITE')}
+                        hint={t('ONBOARDING_NEXT.OPTIONAL')}
+                        icon="i-lucide-globe"
+                    >
+                        <Input
+                            type="text"
+                            inputMode="url"
+                            autoComplete="url"
+                            size="sm"
+                            value={website}
+                            onChange={event => setWebsite(event.target.value)}
+                            placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.ENTER_WEBSITE')}
+                            aria-label={t('ONBOARDING_NEXT.FIELDS.WEBSITE')}
+                            customInputClass="text-end"
+                        />
                     </OnboardingFormRow>
                     <OnboardingFormRow title={t('ONBOARDING_NEXT.FIELDS.LANGUAGE')} icon="i-lucide-languages">
-                        <OnboardingFormSelect value={locale} onChange={setLocale} options={LANGUAGE_OPTIONS} />
+                        <OnboardingFormSelect
+                            value={locale}
+                            onChange={setLocale}
+                            options={languageOptions}
+                            placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_LANGUAGE')}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.LANGUAGE')}
+                        />
                     </OnboardingFormRow>
                     <OnboardingFormRow title={t('ONBOARDING_NEXT.FIELDS.TIMEZONE')} icon="i-lucide-clock">
                         <OnboardingFormSelect
                             value={timezone}
                             onChange={setTimezone}
-                            options={timezoneOptions}
+                            options={zoneOptions}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.TIMEZONE')}
                             placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_TIMEZONE')}
                         />
                     </OnboardingFormRow>
@@ -172,7 +167,8 @@ export default function OnboardingIndex() {
                         <OnboardingFormSelect
                             value={industry}
                             onChange={setIndustry}
-                            options={INDUSTRY_OPTIONS}
+                            options={translatedOptions('INDUSTRY', INDUSTRY_KEYS)}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.INDUSTRY')}
                             placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_INDUSTRY')}
                         />
                     </OnboardingFormRow>
@@ -181,6 +177,7 @@ export default function OnboardingIndex() {
                             value={companySize}
                             onChange={setCompanySize}
                             options={COMPANY_SIZE_OPTIONS}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.COMPANY_SIZE')}
                             placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_COMPANY_SIZE')}
                         />
                     </OnboardingFormRow>
@@ -188,7 +185,8 @@ export default function OnboardingIndex() {
                         <OnboardingFormSelect
                             value={referralSource}
                             onChange={setReferralSource}
-                            options={REFERRAL_SOURCE_OPTIONS}
+                            options={translatedOptions('REFERRAL_SOURCE', REFERRAL_SOURCE_KEYS)}
+                            ariaLabel={t('ONBOARDING_NEXT.FIELDS.REFERRAL_SOURCE')}
                             placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.SELECT_REFERRAL_SOURCE')}
                         />
                     </OnboardingFormRow>

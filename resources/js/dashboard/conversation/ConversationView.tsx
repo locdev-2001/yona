@@ -7,6 +7,8 @@ import type { ConversationType } from './constants';
 import ChatList from './chatlist/ChatList';
 import ConversationBox from './conversationbox/ConversationBox';
 import ConversationSidebar from './conversationbox/ConversationSidebar';
+import OnboardingView from './conversationbox/OnboardingView';
+import { useShowAdminOnboarding } from './conversationbox/useShowAdminOnboarding';
 import { useContactPanelOpen } from './contactPanelVisibility';
 import { showConversationList as computeShowList, showMessageView as computeShowMessageView } from './layoutMode';
 
@@ -33,8 +35,21 @@ function ConversationLayout({ conversationId, foldersId }: { conversationId: num
     // Lệch có chủ đích: chưa từng chọn thì mở sẵn trên màn ≥1280px (ux-deviations.md).
     const isContactPanelOpen = useContactPanelOpen(uiSettings);
     const shouldShowSidebar = Boolean(selectedConversation && isContactPanelOpen);
+    const showAdminOnboarding = useShowAdminOnboarding();
     useConversationHotKeys();
     useMacroHotKeys();
+
+    // Bố cục hai-màn (điện thoại, hoặc đã bấm ⇥) chỉ dựng khung chat khi đã chọn
+    // hội thoại, nên màn bắt đầu của quản trị viên nằm trong khung chat sẽ không
+    // bao giờ hiện. Account chưa có hộp thư thì danh sách cũng rỗng — nhường chỗ
+    // cho màn bắt đầu. Chừa đáy dưới `md` để thẻ cuối cuộn lên khỏi nút menu nổi.
+    if (showAdminOnboarding && isOnExpandedLayout && !conversationId) {
+        return (
+            <section className="flex w-full h-full min-w-0 overflow-auto pb-16 md:pb-0">
+                <OnboardingView />
+            </section>
+        );
+    }
 
     return (
         <section className="flex w-full h-full min-w-0">

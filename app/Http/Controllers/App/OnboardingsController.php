@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,6 +15,8 @@ use Inertia\Response;
 // (self-hosted: chỉ bước account_details; inbox_setup là bước cloud-only).
 class OnboardingsController extends Controller
 {
+    private const CUSTOM_ATTRIBUTE_KEYS = ['website', 'industry', 'company_size', 'timezone', 'referral_source', 'user_role'];
+
     public function show(Request $request, Account $account): RedirectResponse|Response
     {
         $this->abortUnlessAdministratorPage($request);
@@ -24,6 +27,7 @@ class OnboardingsController extends Controller
 
         return Inertia::render('dashboard/onboarding/Index', [
             'account' => $account->only(['id', 'name', 'locale', 'custom_attributes']),
+            'languages' => config('yona.available_locales'),
         ]);
     }
 
@@ -36,15 +40,18 @@ class OnboardingsController extends Controller
             return redirect("/app/accounts/{$account->id}/dashboard");
         }
 
+        // Website không bắt buộc: Chatwoot đòi nó để tạo inbox web-widget ở bước
+        // inbox_setup, bước mà bản này không chạy — và phần lớn shop chỉ bán qua chat.
         $accountParams = $request->validate([
-            'name' => ['nullable', 'string'],
-            'locale' => ['nullable', 'string', 'max:10'],
-            'website' => ['required', 'string'],
-            'industry' => ['nullable', 'string'],
-            'company_size' => ['nullable', 'string'],
-            'timezone' => ['nullable', 'string'],
-            'referral_source' => ['nullable', 'string'],
-            'user_role' => ['nullable', 'string'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'locale' => ['nullable', 'string', Rule::in(array_column(config('yona.available_locales'), 'iso_639_1_code'))],
+            'website' => ['nullable', 'string', 'max:255'],
+            'industry' => ['nullable', 'string', 'max:255'],
+            'company_size' => ['nullable', 'string', 'max:255'],
+            // Trình duyệt có thể gửi tên cũ (Asia/Saigon) thay cho tên hiện hành (Asia/Ho_Chi_Minh).
+            'timezone' => ['nullable', 'string', 'timezone:all_with_bc'],
+            'referral_source' => ['nullable', 'string', 'max:255'],
+            'user_role' => ['nullable', 'string', 'max:255'],
         ]);
 
         $account->fill(array_filter([
@@ -54,14 +61,10 @@ class OnboardingsController extends Controller
 
         $account->custom_attributes = [
             ...$account->custom_attributes,
-            ...array_filter([
-                'website' => $accountParams['website'],
-                'industry' => $accountParams['industry'] ?? null,
-                'company_size' => $accountParams['company_size'] ?? null,
-                'timezone' => $accountParams['timezone'] ?? null,
-                'referral_source' => $accountParams['referral_source'] ?? null,
-                'user_role' => $accountParams['user_role'] ?? null,
-            ], fn ($value) => $value !== null),
+            ...array_filter(
+                array_intersect_key($accountParams, array_flip(self::CUSTOM_ATTRIBUTE_KEYS)),
+                fn ($value) => $value !== null,
+            ),
         ];
         $account->save();
 

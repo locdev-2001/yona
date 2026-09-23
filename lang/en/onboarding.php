@@ -11,8 +11,8 @@ return [
     'READ_LATEST_UPDATES' => 'Read our latest updates',
     'ALL_CONVERSATION' => [
         'TITLE' => 'All your conversations in one place',
-        'DESCRIPTION' => 'View all the conversations from your customers in one single dashboard. You can filter the conversations by the incoming channel, label and status.',
-        'NEW_LINK' => 'Click here to create an inbox',
+        'DESCRIPTION' => 'Messages your customers send through Zalo, your website, email and more land in one shared inbox. Filter conversations by channel, label and status.',
+        'NEW_LINK' => 'Connect Zalo, your website or email',
     ],
     'TEAM_MEMBERS' => [
         'TITLE' => 'Invite your team members',

@@ -8,11 +8,12 @@ import { modifierKeyLabel } from 'shared/helpers/kbd';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import OnboardingView from './OnboardingView';
+import { useShowAdminOnboarding } from './useShowAdminOnboarding';
 
 // Port từ widgets/conversation/EmptyState/EmptyState.vue + EmptyStateMessage.vue
-// + FeaturePlaceholder.vue. Bỏ ở B3: OnboardingView (nhánh account 0 inbox của
-// admin — B1 đã có inbox nên không tới); uiFlags.isFetching của store inboxes
-// không có (inboxes share sẵn qua page props) → chỉ còn loading của chat list.
+// + FeaturePlaceholder.vue. uiFlags.isFetching của store inboxes không có (inboxes
+// share sẵn qua page props) → chỉ còn loading của chat list.
 function Hotkey({ children, customClass }: { children: string; customClass: string }) {
     // kbd.hotkey của bản gốc là style global (Hotkey.vue) — inline luôn class tương đương.
     return (
@@ -69,10 +70,19 @@ function EmptyStateMessage({ message, action }: { message: string; action?: Reac
 export default function EmptyState() {
     const { conversations, listLoading, assigneeTab, listMeta, appliedFilters, setAssigneeTab } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const showAdminOnboarding = useShowAdminOnboarding();
 
     // Cùng quy tắc với cột danh sách (emptyListHint): khung chat không được nói
     // "không có tin nhắn nào từ khách hàng" trong khi khách đang chờ ở tab bên cạnh.
     const hint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
+
+    if (showAdminOnboarding) {
+        return (
+            <div className="h-full overflow-auto w-full">
+                <OnboardingView />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 min-w-0 px-0 flex flex-col items-center justify-center h-full bg-n-surface-1">

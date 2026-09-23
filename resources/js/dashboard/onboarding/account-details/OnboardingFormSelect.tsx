@@ -8,6 +8,7 @@ interface OnboardingFormSelectProps {
     options: SelectOption[];
     placeholder?: string;
     hasError?: boolean;
+    ariaLabel?: string;
 }
 
 export default function OnboardingFormSelect({
@@ -16,11 +17,13 @@ export default function OnboardingFormSelect({
     options,
     placeholder = '',
     hasError = false,
+    ariaLabel,
 }: OnboardingFormSelectProps) {
     return (
         <div className="relative flex items-center justify-end">
             <select
                 value={value}
+                aria-label={ariaLabel}
                 className={[
                     '!h-auto !w-auto !py-0 !ps-0 !pe-[17px] !m-0 !rounded-none !bg-transparent !bg-none !outline-none text-sm text-end border-0 cursor-pointer appearance-none focus:outline-none focus:ring-0',
                     value ? 'text-n-slate-12' : 'text-n-slate-9',
