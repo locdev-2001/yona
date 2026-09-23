@@ -20,15 +20,15 @@
 
 Production chạy tại https://yona.vn. 40/40 tính năng Chatwoot đã port, tiếng Việt đầy đủ, ~2.2k Pest + ~800 vitest xanh.
 
-**Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · 2FA, RBAC, Platform API, Super Admin.
+**Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · thông báo đẩy trình duyệt (Web Push, VAPID tự sinh) · 2FA, RBAC, Platform API, Super Admin.
 
 **KHÔNG có trong code — đừng viết marketing hay code dựa trên chúng:**
-- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. (Trang chủ đang hứa sai: issue #35.)
+- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. Landing đã sửa ngày 24/09 để không hứa nữa; `tests/Feature/Public/LandingClaimsTest.php` chặn tái phát.
 - **Gói cước, thanh toán, entitlements** — chưa có gì.
-- **Thông báo đẩy** — có công tắc trong cài đặt nhưng không có service worker/VAPID (#58).
+- **Bộ đếm hội thoại (metering)** — `MeteringService` đã bỏ khi viết lại; chỉ còn số đếm của báo cáo.
 - **Messenger, Instagram, WhatsApp Cloud, TikTok** — có wizard nhưng cần Meta App + App Review đứng tên Yona (#57).
 
-**Hai nút còn chặn khách lạ tự đi hết** (23/09/2026): onboarding bắt buộc Website (#62) → màn hình đầu bảo chủ tài khoản đi hỏi quản trị viên (#63). Đã gỡ: SMTP đăng ký (#36), nghiệm thu Zalo bằng tài khoản thật + khách pilot (#48).
+**Luồng khách lạ tự đăng ký tới màn đầu tiên** đã thông trong code (24/09/2026): website không còn bắt buộc ở onboarding, quản trị viên account chưa có hộp thư thấy màn bắt đầu (cả trên điện thoại). Còn chờ deploy. Trên production, ảnh đính kèm và trang 404 chỉ đúng sau khi sửa vhost nginx theo `docs/deployment.md` mục 7.
 
 Ảnh rà soát giao diện: nhánh `evidence/ui-audit-260920`, file `plans/reports/ui-audit-260920-evidence.md`.
 
@@ -77,7 +77,7 @@ Hoặc gọi skill `ck:worktree` — nó dùng đúng gốc `/Users/beru/Documen
 
 ## Theo dõi việc
 
-GitHub Issues, nhãn hai trục: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
+Công việc (kanban) của dash.yona.vn qua MCP `yona-dash` (skill `yona-issues`) là nơi DUY NHẤT; không dùng GitHub Issues. Nhãn: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng · vùng `module:*`. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
 
 ## Ghi chú công cụ
 
@@ -95,7 +95,7 @@ Technical founder & kỹ sư phần mềm. Nền tảng PHP/Laravel, Vue/Next.js
 |------|-------|
 | **Tenant** | Một khách hàng (doanh nghiệp) dùng SaaS, có không gian dữ liệu riêng |
 | **Liên hệ nháp** | Người lạ nhắn lần đầu, chưa xác nhận nhu cầu |
-| **Conversation metering** | Đếm hội thoại theo từng kênh — hiện chỉ THỐNG KÊ, không chặn, không tính tiền |
+| **Conversation metering** | Đếm hội thoại theo từng kênh — quyết định cho gói cước sau này; **chưa có trong code** (bỏ khi viết lại), không chặn, không tính tiền |
 | **Zalo cá nhân** | Kênh chính hiện tại, không phải OA |
 | **Oracle** | Bản Chatwoot gốc chạy podman :3000 để đối chiếu pixel |
 | ~~Lead / Pipeline / Entitlements~~ | **Chưa tồn tại trong code.** Là dự định, không phải hiện trạng |
