@@ -18,14 +18,16 @@ máy dev ── ssh -L (user dbtunnel, key chỉ mở được 127.0.0.1:5432) �
 - Bảng tạo sau lần cấp quyền gần nhất chưa đọc được. Deploy xong có bảng mới thì chạy lại bước 3
   (chạy lại được nhiều lần; muốn giữ mật khẩu cũ thì bỏ `PASSWORD :'pw'` khỏi dòng `ALTER ROLE`).
 
-## 1. Tunnel user (một lần; dùng chung với dash nhưng mỗi repo một key)
+## 1. Tunnel user (một lần, dùng chung với dash)
 
-`<PUBKEY>` là nội dung `~/.ssh/yona_prod_db.pub` ở máy dev (chưa có thì `ssh-keygen -t ed25519 -N '' -f ~/.ssh/yona_prod_db`).
+Mỗi người một key, **một key dùng cho cả hai DB** (yona và dash). `<PUBKEY>` là nội dung `~/.ssh/yona_prod_db.pub`
+ở máy người đó (chưa có thì `ssh-keygen -t ed25519 -N '' -C "yona-prod-db-<tên>" -f ~/.ssh/yona_prod_db`).
+Mỗi key đúng **một dòng** mở cả hai cổng — hai dòng cho cùng một key thì SSH chỉ dùng dòng đầu.
 
 ```bash
 id dbtunnel >/dev/null 2>&1 || useradd --system --create-home --shell /usr/sbin/nologin dbtunnel
 install -d -m 700 -o dbtunnel -g dbtunnel ~dbtunnel/.ssh
-echo 'restrict,port-forwarding,permitopen="127.0.0.1:5432" <PUBKEY>' >> ~dbtunnel/.ssh/authorized_keys
+echo 'restrict,port-forwarding,permitopen="127.0.0.1:5432",permitopen="127.0.0.1:3306" <PUBKEY>' >> ~dbtunnel/.ssh/authorized_keys
 chown dbtunnel:dbtunnel ~dbtunnel/.ssh/authorized_keys && chmod 600 ~dbtunnel/.ssh/authorized_keys
 sshd -T | grep -iE '^(allowtcpforwarding|allowusers|allowgroups)'   # forwarding phải là yes/local; có AllowUsers thì thêm dbtunnel
 ```
@@ -100,5 +102,5 @@ Dán vào nhóm `PROD_DB_*` trong `.env` của repo yona ở máy dev, rồi th�
 
 ```bash
 sudo -u postgres /www/server/pgsql/bin/psql -d yona -c 'ALTER ROLE yona_readonly NOLOGIN'
-sed -i '/permitopen="127.0.0.1:5432"/d' ~dbtunnel/.ssh/authorized_keys
+sed -i '/yona-prod-db-<tên>/d' ~dbtunnel/.ssh/authorized_keys   # thu hồi quyền tunnel của một người (cả hai DB)
 ```
