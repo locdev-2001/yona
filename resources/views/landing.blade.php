@@ -14,11 +14,14 @@
         <title>{{ $landingConfig['meta']['title'] }}</title>
         <meta name="description" content="{{ $landingConfig['meta']['description'] }}">
         {{-- Trang cảm ơn không có gì để xếp hạng, và lọt vào kết quả tìm kiếm thì
-             khách vào đó trước khi gửi form. --}}
-        @if ($landingConfig['page'] === 'demo_thanks')
+             khách vào đó trước khi gửi form. Trang 404 thì không có gì để lập chỉ
+             mục, và canonical về một URL không tồn tại là tự mâu thuẫn. --}}
+        @if (in_array($landingConfig['page'], ['demo_thanks', 'not_found'], true))
             <meta name="robots" content="noindex, follow">
         @endif
-        <link rel="canonical" href="{{ url()->current() }}">
+        @if ($landingConfig['page'] !== 'not_found')
+            <link rel="canonical" href="{{ url()->current() }}">
+        @endif
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="{{ $landingConfig['meta']['title'] }}">
@@ -42,7 +45,10 @@
         <div id="app"></div>
         {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
              khai, không nhúng vào partials.analytics vì partial đó dùng chung cho
-             dashboard/superadmin/survey. --}}
+             dashboard/superadmin/survey. Trang 404 thì không: nó cũng là trang lỗi
+             của Help Center và link khảo sát của tenant, khách của tenant không
+             nên thấy khung chat của Yona. --}}
+        @if ($landingConfig['page'] !== 'not_found')
         <script>
             (function(d,t) {
                 var BASE_URL="https://yona.vn";
@@ -58,5 +64,6 @@
                 }
             })(document,"script");
         </script>
+        @endif
     </body>
 </html>

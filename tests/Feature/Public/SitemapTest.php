@@ -6,10 +6,10 @@ it('serves sitemap.xml as xml', function () {
         ->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
 });
 
-it('lists every public marketing page', function () {
+it('lists every public marketing and legal page', function () {
     $xml = $this->get('/sitemap.xml')->getContent();
 
-    foreach (['home', 'channels.zalo_personal', 'demo_request.create'] as $name) {
+    foreach (['home', 'channels.zalo_personal', 'demo_request.create', 'legal.terms', 'legal.privacy'] as $name) {
         expect($xml)->toContain('<loc>'.route($name).'</loc>');
     }
 });

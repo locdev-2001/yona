@@ -3,7 +3,7 @@ import { BrandLogo } from './BrandLogo';
 
 // Chỉ liệt kê đích thật sự tồn tại; không dựng link chết cho đầy cột.
 export function Footer({ config }: { config: LandingConfig }) {
-    const { brand, strings, urls, year, locale, locales } = config;
+    const { brand, strings, legalNav, urls, year, locale, locales } = config;
 
     const columns = [
         {
@@ -23,6 +23,13 @@ export function Footer({ config }: { config: LandingConfig }) {
             ],
         },
         {
+            heading: legalNav.heading,
+            links: [
+                { label: legalNav.terms, href: urls.terms },
+                { label: legalNav.privacy, href: urls.privacy },
+            ],
+        },
+        {
             heading: strings.footer.language,
             links: locales.map((option) => ({
                 label: option.label,
@@ -35,12 +42,13 @@ export function Footer({ config }: { config: LandingConfig }) {
     return (
         <footer className="border-t border-neutral-300 bg-neutral-0">
             <div className="mx-auto max-w-container px-4 py-14 md:px-10 md:py-20">
-                {/* Ba cột link xếp 2 cột từ 380px, không phải 1 cột dọc suốt.
+                {/* Các cột link xếp 2 cột từ 380px, không phải 1 cột dọc suốt.
                     Đo 21/09 · 390px: một cột cho 8 link (mỗi link min-h-11 theo
                     luật đích chạm) đẩy footer lên 920px — nặng gấp 1.6 lần nội
                     dung trang cảm ơn, khách phải vuốt thêm màn hình rưỡi chỉ để
-                    thấy dòng bản quyền. */}
-                <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-5">
+                    thấy dòng bản quyền. Desktop: khối thương hiệu 2 phần + 4 cột
+                    link = 6. */}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-6">
                     <div className="col-span-2 max-w-sm">
                         <BrandLogo brand={brand} />
                         <p className="mt-4 text-sm font-light text-neutral-600">{strings.footer.tagline}</p>

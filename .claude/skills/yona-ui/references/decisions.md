@@ -97,6 +97,8 @@ không nó chỉ là số trang trí.
 | trang chủ | **390px** | **76.3%** | **4.8%** | **2.6%** |
 | trang sản phẩm | 1440px | 86.4% | 3.6% | 2.5% |
 | trang thu lead | 1440px | **74.0%** | 2.6% | **10.4%** |
+| trang pháp lý (TB `/legal/privacy` + `/legal/terms-and-policies`, đo 24/09) | 1440px | **91.95%** | 3.5% | 2.9% |
+| trang pháp lý (như trên) | 390px | 84.05% | 6.15% | 11.25% |
 
 Hai điều rút ra, cả hai đều từng làm ta sửa nhầm chỗ:
 
@@ -118,7 +120,13 @@ Mỗi cái đều là gate tổng quát hoá quá tay một quyết định củ
 |---|---|---|
 | C3 | ép MỌI trang có section đầu vừa một màn hình | chỉ ép trang chủ (yêu cầu chủ dự án) và section tự khai `fill`. Trang form hai cột ở 390px xếp chồng thành 1349px, không bố cục nào vừa nổi 844px |
 | C6 | đếm mọi `input` làm đích chạm | bỏ qua nhánh `aria-hidden`. Ô bẫy honeypot không phải đích chạm, và nó từng báo `187x24 < 44px` |
-| C9 | một dải cho mọi viewport, mọi trang | hai dải theo viewport; bỏ qua trang khai `noindex` |
+| C9 | một dải cho mọi viewport, mọi trang | hai dải theo viewport; bỏ qua trang khai `noindex`; trang văn bản (`data-page` = `terms`/`privacy`) dùng dải đo trên trang pháp lý của tham chiếu |
+
+Vì sao trang văn bản có dải riêng: điều khoản và chính sách gần như toàn chữ trên
+nền trắng. Đọ nó với dải trang chủ marketing (77.6% trắng) thì trang pháp lý
+nào cũng trượt, kể cả trang pháp lý của chính bề mặt tham chiếu (91.1–92.8%).
+Đo loại trang tương ứng bên tham chiếu, không nới dung sai. Thêm một trang văn
+bản mới = thêm `data-page` của nó vào `TRANG_VAN_BAN` trong `check-ui.py`.
 
 Vì sao bỏ C9 ở trang khai `noindex`: đó là trang cuối luồng nên nó ngắn, mà trên
 trang ngắn tỉ lệ này đo chủ yếu footer so với nội dung. Một thay đổi bố cục ở

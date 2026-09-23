@@ -288,7 +288,22 @@ include enable-php-84.conf;
 Tạo `/www/server/panel/vhost/nginx/extension/yona.vn/laravel-runtime.conf`:
 
 ```nginx
+# Laravel tự trả lỗi của nó: trang 404 có thương hiệu cho web, JSON cho /api/*.
+# Xem "Lỗi 404 và URL tệp đính kèm phải tới được Laravel" ngay dưới.
+fastcgi_intercept_errors off;
+
 location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+
+# Route Laravel có URL kết thúc bằng đuôi ảnh: tệp đính kèm (.../anh.jpg) và
+# pixel đếm lượt xem bài Help Center (/hc/<portal>/articles/<bài>.png). Không
+# phải tệp tĩnh. Khớp tiền tố ^~ thắng rule regex ảnh của aaPanel.
+location ^~ /attachments/ {
+    try_files $uri /index.php?$query_string;
+}
+
+location ^~ /hc/ {
     try_files $uri $uri/ /index.php?$query_string;
 }
 
@@ -315,6 +330,97 @@ location ^~ /apps {
     proxy_read_timeout 60s;
 }
 ```
+
+### Lỗi 404 và URL tệp đính kèm phải tới được Laravel
+
+Vhost aaPanel sinh sẵn hai thứ chặn phản hồi của Laravel trước khi tới trình
+duyệt. Đã xảy ra thật trên `yona.vn` (kiểm 24/09/2026): mọi 404 ra trang
+`nginx` trần 146 byte, kể cả `/api/v1/<lạ>` (trả `text/html` thay vì JSON) và
+`/terms`; ảnh trong hộp thư hiện "Ảnh này không còn nữa." dù tệp vẫn nằm
+nguyên ở `/storage/...`.
+
+**1. nginx đè trang lỗi của PHP.** Khối `#ERROR-PAGE-START` trong vhost có
+`error_page 404 /404.html;`, và `fastcgi_intercept_errors on;` đang bật (thường
+ở `nginx.conf` của aaPanel). Khi intercept bật, nginx thay phản hồi của PHP bằng
+trang của nó cho **mọi mã có `error_page`**. Hành vi đo được khớp đúng cơ chế
+này: 404 bị thay, còn `/api/v1/profile` vẫn trả 401 JSON vì 401 không có
+`error_page`. `/404.html` không có trong `public/`, nên kết quả là trang 404
+mặc định của nginx.
+
+Sửa bằng hai việc:
+
+- `fastcgi_intercept_errors off;` ở cấp server, đã có trong
+  `laravel-runtime.conf` phía trên. Nó đè giá trị kế thừa từ khối `http`.
+- Comment dòng `error_page 404 /404.html;` trong khối `#ERROR-PAGE-START` của
+  vhost (aaPanel → Website → yona.vn → Config file).
+
+Tìm chỗ đang bật intercept trước khi sửa:
+
+```bash
+grep -rn "fastcgi_intercept_errors\|error_page" \
+    /www/server/nginx/conf/nginx.conf \
+    /www/server/nginx/conf/enable-php-84.conf \
+    /www/server/panel/vhost/nginx/yona.vn.conf
+```
+
+Nếu `fastcgi_intercept_errors on` nằm **trong một `location`** (ví dụ khối PHP
+của `enable-php-84.conf`) thì dòng cấp server không đè được nó. Khi đó phải tắt
+ngay tại `location` đó, và việc này ảnh hưởng mọi site cùng dùng PHP 8.4.
+
+**2. Rule ảnh tĩnh nuốt URL tệp đính kèm.** Vhost aaPanel có
+`location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$ { expires 30d; ... }`. URL đính kèm
+trong hộp thư có dạng `/attachments/{id}/{chữ ký}/{tên tệp gốc}`, kết thúc bằng
+`.jpg`/`.png`, nên rơi vào rule này. nginx đi tìm tệp tĩnh trong `public/`,
+không thấy, trả 404, và trình duyệt không bao giờ nhận được lệnh chuyển hướng
+301 sang `/storage/...`. Avatar không bị vì chúng trỏ thẳng `/storage/...`.
+Còn `error_page 404` thì nginx chuyển tiếp 404 đó vào `index.php`: Laravel xử
+lý đúng URL gốc nhưng nginx giữ mã 404 (đo 24/09: `/attachments/1/sai/x.pdf` →
+403 của Laravel, `/attachments/1/sai/x.jpg` → cùng trang 403 đó nhưng mã 404).
+Vì vậy gỡ `error_page 404` là bắt buộc, không chỉ tắt intercept: còn nó thì
+bước kiểm của `deploy.sh` không phân biệt được ảnh hỏng với ảnh lành.
+
+URL phải kết thúc bằng tên tệp gốc vì giao diện đọc tên hiển thị của tệp từ
+chính đoạn cuối URL, như Chatwoot. Nên sửa ở nginx:
+`location ^~ /attachments/` (đã có trong `laravel-runtime.conf`). Khớp tiền tố
+`^~` làm nginx dừng tìm regex, nên rule ảnh không còn chạm tới đường dẫn này.
+
+Cùng rule đó nuốt pixel đếm lượt xem của Help Center
+(`/hc/<portal>/articles/<bài>.png`, route Laravel): trang bài viết vẫn mở được
+nhưng lượt xem đứng yên. `location ^~ /hc/` sửa theo cùng cách. Thêm route
+Laravel nào có URL kết thúc bằng `.jpg/.png/.gif/.js/.css` thì phải thêm
+tiền tố của nó vào đây và vào bước `nginx 404` của `deploy.sh`.
+
+**Kiểm bằng curl** sau khi `nginx -t` và reload. `deploy.sh` cũng tự chạy các
+phép kiểm này ở bước `nginx 404`, sai là cảnh báo kèm trỏ về mục này.
+
+```bash
+# Trang lạ: 404 và là trang của Yona (có dấu data-page="not_found")
+curl -s -o /tmp/yona-404.html -w '%{http_code} %{content_type}\n' https://yona.vn/khong-ton-tai
+grep -c 'data-page="not_found"' /tmp/yona-404.html          # mong đợi: 1
+
+# Tệp tĩnh không tồn tại: phải là trang nginx, KHÔNG phải trang Yona.
+# Ra trang Yona nghĩa là error_page 404 vẫn còn (xem mục 2 ở trên).
+curl -s https://yona.vn/khong-ton-tai.jpg | grep -c 'data-page="not_found"'   # mong đợi: 0
+
+# API lạ: 404 kèm JSON
+curl -s -w '\n%{http_code} %{content_type}\n' https://yona.vn/api/v1/khong-ton-tai
+# mong đợi: {"error":"Resource could not be found"} / 404 application/json
+
+# URL ảnh đính kèm tới được Laravel (id 0 không tồn tại nên Laravel trả 404 của nó)
+curl -s -o /tmp/yona-att.html -w '%{http_code}\n' https://yona.vn/attachments/0/x/x.jpg
+grep -c 'data-page="not_found"' /tmp/yona-att.html          # mong đợi: 1
+
+# Pixel Help Center tới được Laravel (portal "x" không tồn tại nên Laravel trả 404 của nó)
+curl -s -o /tmp/yona-hc.html -w '%{http_code}\n' https://yona.vn/hc/x/articles/x.png
+grep -c 'data-page="not_found"' /tmp/yona-hc.html           # mong đợi: 1
+
+# Chắc nhất: một ảnh thật trong hộp thư (chuột phải vào ảnh → sao chép địa chỉ ảnh)
+curl -sI '<URL ảnh vừa chép>' | grep -Ei '^(HTTP|location)'
+# mong đợi: HTTP/2 301 và location: https://yona.vn/storage/attachments/...
+```
+
+Trang nginx trần (`<center>nginx</center>`, 146 byte) ở bất kỳ lệnh nào, trừ
+lệnh tệp tĩnh không tồn tại, nghĩa là cấu hình trên chưa ăn.
 
 Tạo `/www/server/panel/vhost/nginx/extension/yona.vn/cache-policy.conf`:
 
@@ -587,6 +693,11 @@ Thứ tự `deploy.sh` thực hiện:
 11. Dựng/đồng bộ Supervisor + cron scheduler, gỡ program cũ, cảnh báo trùng (mục 8).
 12. `horizon:terminate`, `reverb:restart`, reload PHP-FPM.
 13. Tắt maintenance, health-check `https://yona.vn/up`.
+14. Kiểm CDN còn giữ `sdk.js` cũ không, và kiểm nginx có để lỗi của Laravel đi
+    qua không: URL lạ phải ra trang 404 của Yona, `/api/v1/<lạ>` phải trả JSON,
+    `/attachments/0/.../x.jpg` và `/hc/.../articles/x.png` phải tới được Laravel
+    (mục 7). Hai bước này chỉ **cảnh báo**, không dừng deploy: ứng dụng đã chạy,
+    cái hỏng nằm ở vhost.
 
 Lỗi giữa chừng → script **giữ nguyên maintenance mode**. Sửa nguyên nhân rồi
 chạy lại; đừng `artisan up` trước khi xác minh.
@@ -606,7 +717,7 @@ chạy lại; đừng `artisan up` trước khi xác minh.
 | `DEPLOY_RUNTIME_USER` | `www` | User chạy queue worker / Reverb / scheduler |
 | `DEPLOY_SUPERVISOR_CONF_DIR` | `/etc/supervisor/conf.d` | Nơi ghi file program |
 | `DEPLOY_SUPERVISORCTL` | tự dò aaPanel | Đè lệnh `supervisorctl` |
-| `DEPLOY_HEALTHCHECK` | `1` | Gọi `APP_URL/up` sau deploy |
+| `DEPLOY_HEALTHCHECK` | `1` | Gọi `APP_URL/up` sau deploy, rồi kiểm CDN `sdk.js` và kiểm nginx trả 404 của Laravel |
 | `DEPLOY_HEALTH_URL` | — | Đè URL health-check |
 | `DEPLOY_DRY_RUN` | `0` | In lệnh thay vì chạy |
 | `DEPLOY_ALLOW_ROOT` | `1` | Cho phép deploy bằng root (aaPanel) |
@@ -833,6 +944,9 @@ xoá file). Qua CLI: `php artisan pail`.
 | Tin nhắn gửi hai lần | Bất biến `media_timeout < timeout < retry_after` bị phá (mục 8) |
 | Job theo lịch nằm im | Sai tên hàng đợi trong `config/queue_tiers.php` → tab Horizon của tier đó trống |
 | Deploy dừng vì working tree bẩn | Có file sửa trực tiếp trên server — commit hoặc `git checkout --` trước |
+| Link lạ ra trang trắng chữ `nginx`, API lỗi trả HTML thay vì JSON | Vhost đang đè 404 của Laravel (`error_page 404` + `fastcgi_intercept_errors on`) — mục 7 |
+| Ảnh trong hộp thư báo "Ảnh này không còn nữa." nhưng `/storage/...` vẫn mở được | Rule ảnh tĩnh của aaPanel nuốt URL `/attachments/.../*.jpg`, thiếu `location ^~ /attachments/` — mục 7 |
+| Lượt xem bài Help Center đứng yên dù có người đọc | Rule ảnh tĩnh của aaPanel nuốt pixel `/hc/.../articles/*.png`, thiếu `location ^~ /hc/` — mục 7 |
 
 ### Rollback
 

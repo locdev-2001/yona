@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\LegalPagesController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -55,6 +56,14 @@ Route::get('/dat-lich-demo', [DemoRequestsController::class, 'create'])->name('d
 Route::post('/dat-lich-demo', [DemoRequestsController::class, 'store'])
     ->middleware('throttle:5,10')->name('demo_request.store');
 Route::get('/dat-lich-demo/cam-on', [DemoRequestsController::class, 'thanks'])->name('demo_request.thanks');
+
+// Hai trang pháp lý mà trang đăng ký và footer trỏ tới. `/terms` và
+// `/privacy-policy` là URL mặc định cũ của TERMS_URL/PRIVACY_URL, đã in dưới nút
+// đăng ký, nên chuyển hướng vĩnh viễn thay vì để 404.
+Route::get('/dieu-khoan', [LegalPagesController::class, 'terms'])->name('legal.terms');
+Route::get('/chinh-sach-rieng-tu', [LegalPagesController::class, 'privacy'])->name('legal.privacy');
+Route::permanentRedirect('/terms', '/dieu-khoan');
+Route::permanentRedirect('/privacy-policy', '/chinh-sach-rieng-tu');
 
 // sitemap.xml cho công cụ tìm kiếm — chỉ liệt kê trang thật đang trả 200.
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');

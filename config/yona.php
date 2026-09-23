@@ -60,12 +60,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | Tương đương TERMS_URL / PRIVACY_URL trong installation config Chatwoot —
-    | hiện dưới nút đăng ký.
+    | hiện dưới nút đăng ký và ở footer bề mặt công khai. Mặc định trỏ vào hai
+    | trang pháp lý của chính bản cài đặt này; `/terms` và `/privacy-policy` cũ
+    | chuyển hướng 301 về đây nên link đã phát ra ngoài vẫn sống.
     |
     */
 
-    'terms_url' => env('TERMS_URL', 'https://yona.vn/terms'),
-    'privacy_url' => env('PRIVACY_URL', 'https://yona.vn/privacy-policy'),
+    'terms_url' => env('TERMS_URL', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/dieu-khoan'),
+    'privacy_url' => env('PRIVACY_URL', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/chinh-sach-rieng-tu'),
 
     /*
     |--------------------------------------------------------------------------

@@ -54,6 +54,15 @@ SUC_NANG_THAM_CHIEU = {"trang": 77.6, "toi": 2.5, "mau": 3.3}
 # lệ diện tích lớn hơn hẳn. Đọ ảnh chụp 390px với dải đo ở 1440px làm mọi trang
 # lành đều trượt.
 SUC_NANG_THAM_CHIEU_HEP = {"trang": 76.3, "toi": 4.8, "mau": 2.6}
+# Trang văn bản (điều khoản, chính sách) là loại trang khác hẳn trang marketing:
+# gần như toàn chữ trên nền trắng. Đo trang pháp lý của chính bề mặt tham chiếu
+# (intercom.com/legal/privacy + /legal/terms-and-policies, lấy trung bình hai trang).
+# đo 24/09 · 1440px · đã đo 2 lần (hai lượt ra số trùng khít)
+SUC_NANG_THAM_CHIEU_VAN_BAN = {"trang": 91.95, "toi": 3.5, "mau": 2.9}
+# đo 24/09 · 390px · đã đo 2 lần
+SUC_NANG_THAM_CHIEU_VAN_BAN_HEP = {"trang": 84.05, "toi": 6.15, "mau": 11.25}
+# `data-page` trên <body> của các trang văn bản (LegalPagesController).
+TRANG_VAN_BAN = {"terms", "privacy"}
 # ta chọn — dải chấp nhận quanh tham chiếu. Rộng vì mảng màu phụ thuộc ảnh sản
 # phẩm, mà ảnh sản phẩm phụ thuộc giao diện dashboard (vòng 2).
 SUC_NANG_DUNG_SAI = {"trang": 12.0, "toi": 3.0, "mau": 3.5}
@@ -414,7 +423,11 @@ def c9_suc_nang(page, url: str, w: int, h: int) -> tuple[KetQua, dict]:
     import io
 
     sn = _suc_nang(Image.open(io.BytesIO(png)))
-    chuan = SUC_NANG_THAM_CHIEU_HEP if w < 768 else SUC_NANG_THAM_CHIEU
+    la_van_ban = page.evaluate("() => document.body.dataset.page || ''") in TRANG_VAN_BAN
+    if la_van_ban:
+        chuan = SUC_NANG_THAM_CHIEU_VAN_BAN_HEP if w < 768 else SUC_NANG_THAM_CHIEU_VAN_BAN
+    else:
+        chuan = SUC_NANG_THAM_CHIEU_HEP if w < 768 else SUC_NANG_THAM_CHIEU
     loi = []
     for k, v in sn.items():
         lech = abs(v - chuan[k])
@@ -423,7 +436,7 @@ def c9_suc_nang(page, url: str, w: int, h: int) -> tuple[KetQua, dict]:
                 f"{k} {v:.1f}% lệch {lech:.1f} điểm khỏi tham chiếu {chuan[k]}% "
                 f"(dung sai {SUC_NANG_DUNG_SAI[k]}, đo ở {w}px)"
             )
-    return KetQua("C9", "sức nặng thị giác trong dải", not loi, loi), {**sn, "_vp": float(w)}
+    return KetQua("C9", "sức nặng thị giác trong dải", not loi, loi), {**sn, "_vp": float(w), "_chuan": chuan}
 
 
 def c10_do_hai_lan(page, url: str) -> KetQua:
@@ -664,7 +677,7 @@ def main() -> int:
                 print(f"      … thêm {len(k.chi_tiet) - 12} chỗ")
         if "suc_nang" in phu:
             sn = phu["suc_nang"]
-            chuan = SUC_NANG_THAM_CHIEU_HEP if sn.get("_vp", 1440) < 768 else SUC_NANG_THAM_CHIEU
+            chuan = sn["_chuan"]
             print(f"\n  sức nặng: trắng {sn['trang']:.1f}% · tối {sn['toi']:.1f}% · màu {sn['mau']:.1f}%"
                   f"   (tham chiếu {chuan['trang']}/{chuan['toi']}/{chuan['mau']} ở {int(sn.get('_vp', 1440))}px)")
         if "crops" in phu:

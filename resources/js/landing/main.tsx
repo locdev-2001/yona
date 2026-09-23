@@ -5,6 +5,8 @@ import { Shell } from './components/Shell';
 import { Landing } from './Landing';
 import { DemoRequest } from './pages/DemoRequest';
 import { DemoThanks } from './pages/DemoThanks';
+import { LegalDocument } from './pages/LegalDocument';
+import { NotFound } from './pages/NotFound';
 import { ZaloPersonal } from './pages/ZaloPersonal';
 
 const container = document.getElementById('app');
@@ -20,6 +22,9 @@ if (container) {
         zalo_personal: <ZaloPersonal config={config} />,
         demo: <DemoRequest config={config} />,
         demo_thanks: <DemoThanks config={config} />,
+        terms: <LegalDocument config={config} />,
+        privacy: <LegalDocument config={config} />,
+        not_found: <NotFound config={config} />,
     }[config.page];
 
     createRoot(container).render(config.page === 'home' ? page : <Shell config={config}>{page}</Shell>);

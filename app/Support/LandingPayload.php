@@ -35,7 +35,12 @@ final class LandingPayload
                 'dashboard' => route('dashboard'),
                 'demo' => route('demo_request.create'),
                 'zalo' => route('channels.zalo_personal'),
+                // Cùng nguồn với link dưới nút đăng ký: cài đặt nào trỏ
+                // TERMS_URL/PRIVACY_URL ra ngoài thì footer cũng theo.
+                'terms' => config('yona.terms_url'),
+                'privacy' => config('yona.privacy_url'),
             ],
+            'legalNav' => trans('legal.nav'),
             // Rỗng khi chưa có số thật: trang ẩn khối liên hệ thay vì bày một số
             // không ai bắt máy.
             'contact' => [

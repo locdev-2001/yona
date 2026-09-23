@@ -12,7 +12,7 @@ use Illuminate\Http\Response;
  * `lastmod` từng sinh bằng `now()`, nghĩa là mọi URL báo "vừa sửa hôm nay" mỗi
  * ngày kể cả khi trang không đổi một chữ. Google phát hiện `lastmod` không khớp
  * nội dung thì bỏ qua trường đó cho cả site — tệ hơn là không khai. Ngày thật
- * chỉ có được khi nội dung trang nằm trong database; ba trang này là component
+ * chỉ có được khi nội dung trang nằm trong database; các trang này là component
  * React tĩnh nên không có ngày nào để khai.
  *
  * `priority` thì Google đã công bố không dùng từ 2023.
@@ -27,6 +27,8 @@ class SitemapController extends Controller
         'home',
         'channels.zalo_personal',
         'demo_request.create',
+        'legal.terms',
+        'legal.privacy',
     ];
 
     public function __invoke(): Response

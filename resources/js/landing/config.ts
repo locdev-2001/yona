@@ -144,7 +144,35 @@ export interface LandingLocale {
 }
 
 /** Trang nào đang được render. Một bundle cho cả bề mặt, blade đẩy khoá này xuống. */
-export type LandingPage = 'home' | 'zalo_personal' | 'demo' | 'demo_thanks';
+export type LandingPage = 'home' | 'zalo_personal' | 'demo' | 'demo_thanks' | 'terms' | 'privacy' | 'not_found';
+
+/**
+ * Một mục của văn bản pháp lý. Đoạn văn, danh sách và ghi chú cuối đều tuỳ chọn:
+ * mục ngắn chỉ có một đoạn, mục liệt kê quyền thì có đoạn dẫn rồi danh sách.
+ */
+export interface LegalSection {
+    heading: string;
+    body?: Record<string, string>;
+    points?: Record<string, string>;
+    note?: string;
+}
+
+/** Điều khoản hoặc chính sách riêng tư, máy chủ đã điền sẵn ngày cập nhật. */
+export interface LegalDocument {
+    eyebrow: string;
+    title: string;
+    updated: string;
+    lead: string;
+    sections: Record<string, LegalSection>;
+    related: { heading: string; label: string; href: string };
+}
+
+export interface NotFoundStrings {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    home: string;
+}
 
 /**
  * Form gửi kiểu native: server validate rồi redirect kèm lỗi và giá trị cũ.
@@ -164,14 +192,27 @@ export interface LandingConfig {
     meta: Meta;
     brand: { name: string; logo: string };
     isAuthenticated: boolean;
-    urls: { home: string; login: string; register: string; dashboard: string; demo: string; zalo: string };
+    urls: {
+        home: string;
+        login: string;
+        register: string;
+        dashboard: string;
+        demo: string;
+        zalo: string;
+        terms: string;
+        privacy: string;
+    };
     /** Rỗng khi chưa cấu hình số thật: trang ẩn khối liên hệ thay vì bày số không ai bắt máy. */
     contact: { hotline: string | null; zaloUrl: string | null };
     strings: LandingStrings;
+    /** Nhãn cột Pháp lý ở footer, lấy từ `lang/{locale}/legal.php`. */
+    legalNav: { heading: string; terms: string; privacy: string };
     year: number;
     locale: string;
     locales: LandingLocale[];
     form?: LandingForm;
+    legalDocument?: LegalDocument;
+    notFound?: NotFoundStrings;
 }
 
 declare global {

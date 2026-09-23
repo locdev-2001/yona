@@ -91,6 +91,22 @@ describe('file urls', function () {
             ->and($attachment->thumbUrl())->toBe($attachment->fileUrl());
     });
 
+    // data_url mà hộp thư nhận phải dẫn tới đúng tệp đang nằm trên đĩa của nó:
+    // 301 (vĩnh viễn, trình duyệt cache được) sang URL do chính disk đó dựng.
+    it('redirects the image data url to the stored file on its disk', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('IMG_1234.jpg'));
+        $dataUrl = $attachment->pushEventData()['data_url'];
+
+        expect($dataUrl)->toEndWith('/IMG_1234.jpg');
+
+        $this->get($dataUrl)
+            ->assertStatus(301)
+            ->assertRedirect(Storage::disk($attachment->disk)->url($attachment->path));
+
+        Storage::disk($attachment->disk)->assertExists($attachment->path);
+    });
+
     // ActiveStorage nhét signed_id vào URL; ở đây là token HMAC ở đoạn giữa. Biết
     // id và tên tệp gốc mà không có chữ ký thì không mở được tệp.
     it('serves the file only with a valid signature', function () {

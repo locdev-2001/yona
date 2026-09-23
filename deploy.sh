@@ -23,7 +23,8 @@
 #   DEPLOY_SUPERVISORCTL=            Đè lệnh supervisorctl (mặc định: tự dò aaPanel).
 #   DEPLOY_FORCE_REBUILD=0           1 = cài lại dependency và build FE dù không
 #                                      có file nào đổi giữa hai revision.
-#   DEPLOY_HEALTHCHECK=1             Check APP_URL/up after deployment.
+#   DEPLOY_HEALTHCHECK=1             Check APP_URL/up after deployment, then warn
+#                                      when the CDN or nginx hides Laravel's responses.
 #   DEPLOY_HEALTH_URL=https://...    Override the health-check URL.
 #   DEPLOY_DRY_RUN=1                 Print mutating commands without running them.
 #   DEPLOY_ALLOW_ROOT=1              Root is the chosen aaPanel deploy user.
@@ -89,6 +90,9 @@ readonly DEFAULT_BRIDGE_PORT=8612
 
 readonly VITE_MANIFEST='public/build/manifest.json'
 readonly SDK_BUNDLE='public/packs/js/sdk.js'
+# Dấu trên <body> của trang 404 do Laravel render (resources/views/errors/404.blade.php).
+# Thấy nó nghĩa là phản hồi đi từ Laravel ra, không bị nginx thay bằng trang của nó.
+readonly NOT_FOUND_PAGE_MARKER='data-page="not_found"'
 # Mọi thứ vite/tailwind đọc khi build. Lệch pattern này = build thừa hoặc thiếu.
 readonly FRONTEND_INPUT_PATTERN='^(resources/|theme/|tailwind/|scripts/check-css-surfaces\.mjs$|package\.json$|pnpm-lock\.yaml$|vite\..*config\.js$|tailwind\..*config\.js$|postcss\.config\.js$|tsconfig.*\.json$)'
 readonly COMPOSER_INPUT_PATTERN='^composer\.(json|lock)$'
@@ -1058,6 +1062,88 @@ sdk_last_modified() {
         | tr -d '\r' | awk 'tolower($1) == "last-modified:" { $1 = ""; sub(/^ /, ""); print }'
 }
 
+# Laravel tự trả lỗi của nó: trang 404 của Yona cho web, JSON cho /api/*. Vhost
+# aaPanel mặc định (`error_page 404` + `fastcgi_intercept_errors on`) thay mọi 404
+# của PHP bằng trang nginx trần, còn rule ảnh tĩnh `\.(jpg|png|...)$` nuốt URL tệp
+# đính kèm `/attachments/.../anh.jpg` trước khi nó tới Laravel. Cả hai đã xảy ra
+# thật 24/09/2026: API lỗi trả HTML, ảnh trong hộp thư báo "không còn nữa". /up
+# vẫn 200 nên health check không thấy gì.
+#
+# Chỉ cảnh báo như verify_cdn_fresh: ứng dụng đã chạy đúng, cái hỏng nằm ở vhost
+# mà script này không sửa.
+verify_nginx_passes_laravel_errors() {
+    local app_url probe
+    is_enabled "$DEPLOY_HEALTHCHECK" || return 0
+
+    app_url="$(env_value APP_URL)"
+    [[ -n "$app_url" ]] || return 0
+    app_url="${app_url%/}"
+    probe="yona-deploy-probe-$(date +%s)"
+
+    if is_enabled "$DEPLOY_DRY_RUN"; then
+        print_command curl --silent --max-time 10 "$app_url/$probe"
+        print_command curl --silent --max-time 10 "$app_url/$probe.jpg"
+        print_command curl --silent --max-time 10 "$app_url/attachments/0/$probe/$probe.jpg"
+        print_command curl --silent --max-time 10 "$app_url/hc/$probe/articles/$probe.png"
+        print_command curl --silent --max-time 10 "$app_url/api/v1/$probe"
+        return 0
+    fi
+
+    # Khi nginx đè mọi 404 thì URL đuôi ảnh cũng ra trang nginx dù rule ảnh đã
+    # sửa hay chưa, nên chỉ kiểm chúng sau khi trang 404 chung đã tới được Laravel.
+    #
+    # Còn `error_page 404` thì 404 của rule ảnh bị nginx chuyển tiếp vào Laravel
+    # (vẫn giữ mã 404): route đuôi ảnh bị nuốt vẫn ra trang 404 của Yona, còn ảnh
+    # thật nhận 404 thay vì 301. Phép dò bằng id 0 khi đó không phân biệt được,
+    # nên phải thấy tệp tĩnh không tồn tại ra trang nginx trước đã.
+    if ! is_laravel_not_found_page "$app_url/$probe"; then
+        warn "nginx đang đè trang 404 của Laravel: $app_url/$probe không ra trang 404 của Yona."
+        warn '  Tắt fastcgi_intercept_errors và bỏ error_page 404 của aaPanel: docs/deployment.md mục 7.'
+        warn '  URL tệp đính kèm và pixel Help Center chưa kiểm được cho tới khi sửa xong lỗi này.'
+    elif is_laravel_not_found_page "$app_url/$probe.jpg"; then
+        warn "nginx chuyển 404 của tệp tĩnh vào Laravel: $app_url/$probe.jpg ra trang 404 của Yona."
+        warn '  Thường do error_page 404 của aaPanel còn trong vhost; bỏ nó theo docs/deployment.md mục 7.'
+        warn '  URL tệp đính kèm và pixel Help Center chưa kiểm được cho tới khi sửa xong lỗi này.'
+    else
+        warn_if_static_rule_swallows "$app_url/attachments/0/$probe/$probe.jpg" /attachments/ \
+            'ảnh trong hộp thư sẽ báo "không còn nữa"'
+        warn_if_static_rule_swallows "$app_url/hc/$probe/articles/$probe.png" /hc/ \
+            'lượt xem bài Help Center đứng yên'
+    fi
+
+    if ! is_json_response "$app_url/api/v1/$probe"; then
+        warn "API lạ không trả JSON: $app_url/api/v1/$probe"
+        warn '  Widget và client API nhận trang HTML thay vì lỗi đọc được: docs/deployment.md mục 7.'
+    fi
+}
+
+# Route Laravel có URL kết thúc bằng đuôi ảnh (<url> <tiền tố location> <hậu quả>):
+# rule regex ảnh tĩnh của aaPanel trả 404 của nginx trước khi request tới PHP.
+warn_if_static_rule_swallows() {
+    is_laravel_not_found_page "$1" && return 0
+
+    warn "Route Laravel đuôi ảnh không tới được Laravel: $1"
+    warn "  Rule ảnh tĩnh của aaPanel đang nuốt $2, $3."
+    warn "  Thêm location ^~ $2: docs/deployment.md mục 7."
+}
+
+# Không --fail: 404 chính là câu trả lời mong đợi.
+is_laravel_not_found_page() {
+    local response
+    response="$(curl --silent --max-time 10 -A 'yona-deploy/1.0 (verify-nginx)' \
+        -w '\n%{http_code}' "$1" 2>/dev/null)" || return 1
+
+    [[ "${response##*$'\n'}" == '404' && "$response" == *"$NOT_FOUND_PAGE_MARKER"* ]]
+}
+
+is_json_response() {
+    local content_type
+    content_type="$(curl --silent --max-time 10 -A 'yona-deploy/1.0 (verify-nginx)' \
+        -o /dev/null -w '%{content_type}' "$1" 2>/dev/null)" || return 1
+
+    [[ "${content_type,,}" == application/json* ]]
+}
+
 report_post_deploy_steps() {
     [[ "$DATABASE_WAS_RESET" -eq 1 ]] || return 0
 
@@ -1113,6 +1199,7 @@ main() {
     step 'maintenance off' disable_maintenance_mode
     step 'health check'   health_check
     step 'cdn sdk.js'     verify_cdn_fresh
+    step 'nginx 404'      verify_nginx_passes_laravel_errors
 
     NEW_REVISION="$(git rev-parse --short HEAD)"
     duration="$(( $(date +%s) - STARTED_AT ))"
