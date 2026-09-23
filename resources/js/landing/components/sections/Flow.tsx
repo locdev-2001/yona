@@ -8,7 +8,7 @@ import { Eyebrow, Section } from '../Section';
 //
 // Section này cố tình KHÔNG có ảnh. Nó nằm giữa hai section đều có hình, nên
 // một nhịp chỉ-chữ ở đây là quãng nghỉ; thêm ảnh vào chỉ kéo dài trang.
-const ORDER = ['capture', 'qualify', 'nurture', 'close'] as const;
+const ORDER = ['capture', 'assign', 'reply', 'resolve'] as const;
 
 export function Flow({ strings }: { strings: LandingStrings['flow'] }) {
     return (

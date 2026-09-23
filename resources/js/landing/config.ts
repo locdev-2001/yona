@@ -107,18 +107,19 @@ export interface LandingStrings {
         cta_dashboard: string;
     };
     showcase: { title_lead: string; title_focus: string; tabs: Record<'inbox' | 'records', string> };
-    channels: { eyebrow: string; note: string };
+    /** `coming_soon` mang placeholder `:channels`, tên kênh lấy từ danh sách kênh của section. */
+    channels: { eyebrow: string; coming_soon: string; note: string };
     features: Record<'inbox' | 'zalo' | 'crm', FeatureStrings>;
     flow: {
         eyebrow: string;
         title: string;
         subtitle: string;
-        steps: Record<'capture' | 'qualify' | 'nurture' | 'close', { title: string; description: string }>;
+        steps: Record<'capture' | 'assign' | 'reply' | 'resolve', { title: string; description: string }>;
     };
     rules: {
         eyebrow: string;
         title: string;
-        items: Record<'dedupe' | 'draft' | 'source' | 'respect', { title: string; description: string }>;
+        items: Record<'dedupe' | 'draft' | 'source' | 'inbound', { title: string; description: string }>;
     };
     pricing: {
         title: string;

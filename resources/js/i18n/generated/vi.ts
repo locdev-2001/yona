@@ -6978,7 +6978,7 @@ const messages: Record<string, unknown> = {
     "LANDING": {
         "meta": {
             "title": "Yona · CRM hội thoại cho SME Việt",
-            "description": "Gom tin nhắn khách từ Zalo, Messenger, TikTok về một hộp thư. Biến hội thoại thành khách hàng và tự động hóa chăm sóc."
+            "description": "Gom tin nhắn khách từ Zalo cá nhân, website và email về một hộp thư. Biến hội thoại thành hồ sơ khách hàng, tự động gắn nhãn và phân công theo quy tắc."
         },
         "nav": {
             "features": "Tính năng",
@@ -7002,7 +7002,7 @@ const messages: Record<string, unknown> = {
             "title_lead": "Gom mọi tin nhắn khách",
             "title_focus": "về một hộp thư",
             "title_tail": "và chốt đơn nhanh hơn",
-            "subtitle": "Yona là CRM lấy hội thoại làm cửa vào. Khách nhắn ở Zalo, Messenger hay website đều về cùng một nơi, và tự thành hồ sơ khách hàng.",
+            "subtitle": "Yona là CRM lấy hội thoại làm cửa vào. Khách nhắn ở Zalo, website hay email đều về cùng một nơi, và tự thành hồ sơ khách hàng.",
             "cta_primary": "Dùng thử miễn phí",
             "cta_secondary": "Đăng nhập",
             "fine": "Miễn phí khi đang hoàn thiện. Không cần thẻ tín dụng.",
@@ -7018,6 +7018,7 @@ const messages: Record<string, unknown> = {
         },
         "channels": {
             "eyebrow": "Khách nhắn ở đâu, Yona nhận ở đó",
+            "coming_soon": "Sắp có: :channels.",
             "note": "Thêm kênh là thêm driver, không phải xây lại hệ thống."
         },
         "features": {
@@ -7025,11 +7026,11 @@ const messages: Record<string, unknown> = {
                 "eyebrow": "Hộp thư hội thoại",
                 "title_a": "Một hộp thư cho cả đội,",
                 "title_b": "mọi kênh đổ về",
-                "body": "Zalo, Messenger và website cùng vào một danh sách. Cả đội nhìn chung một hội thoại theo thời gian thực, nên không ai trả lời trùng và không tin nào rơi.",
+                "body": "Zalo, website và email cùng vào một danh sách. Cả đội nhìn chung một hội thoại theo thời gian thực, nên không ai trả lời trùng và không tin nào rơi.",
                 "cards": {
                     "collision": {
                         "title": "Không ai trả lời trùng",
-                        "body": "Người khác mở hội thoại là bạn thấy ngay. Giao việc và nhắc nhau bằng ghi chú riêng, khách không đọc được."
+                        "body": "Đồng nghiệp đang gõ trả lời là bạn thấy ngay. Giao hội thoại cho đúng người và nhắc nhau bằng ghi chú riêng, khách không đọc được."
                     },
                     "history": {
                         "title": "Lịch sử nằm cạnh tin nhắn",
@@ -7043,65 +7044,65 @@ const messages: Record<string, unknown> = {
             },
             "zalo": {
                 "eyebrow": "Zalo cá nhân",
-                "title_a": "Kênh mà các CRM khác",
+                "title_a": "Kênh mà nhiều CRM",
                 "title_b": "bỏ trống",
-                "body": "Phần lớn SME Việt bán hàng bằng Zalo cá nhân chứ không phải Official Account. Yona nhận cả hai, và tin nhắn Zalo cá nhân đi vào cùng hộp thư với mọi kênh còn lại.",
+                "body": "Phần lớn SME Việt bán hàng bằng Zalo cá nhân chứ không phải Official Account. Yona kết nối thẳng vào Zalo cá nhân, và tin nhắn đi vào cùng hộp thư với mọi kênh còn lại.",
                 "cards": {
                     "qr": {
                         "title": "Kết nối bằng quét QR",
                         "body": "Mở Yona, quét mã, xong. Không chờ duyệt Official Account, không cần giấy phép doanh nghiệp."
                     },
-                    "filter": {
-                        "title": "Lọc trước khi vào hệ thống",
-                        "body": "Bạn chọn hội thoại nào được đưa vào CRM. Chuyện riêng vẫn nằm ngoài dữ liệu công ty."
+                    "reply": {
+                        "title": "Trả lời từ Yona, khách nhận trên Zalo",
+                        "body": "Tin bạn gửi trong hộp thư đi ra từ chính tài khoản Zalo bạn đang bán hàng. Thu hồi và thả cảm xúc cũng đi hai chiều."
                     },
                     "key": {
                         "title": "Số điện thoại là khóa",
-                        "body": "Cùng một số trên Zalo và Messenger sẽ gộp thành một hồ sơ, không tách ra thành hai khách."
+                        "body": "Cùng một số trên Zalo và website sẽ gộp thành một hồ sơ, không tách ra thành hai khách."
                     }
                 }
             },
             "crm": {
-                "eyebrow": "Hồ sơ và pipeline",
+                "eyebrow": "Hồ sơ khách hàng",
                 "title_a": "Hội thoại tự trở thành",
                 "title_b": "hồ sơ khách hàng",
-                "body": "Người lạ nhắn lần đầu thành liên hệ nháp, ghi rõ đến từ kênh nào. Khi xác nhận có nhu cầu thật thì một chạm là thành Lead và vào đúng giai đoạn pipeline.",
+                "body": "Ai nhắn tới cũng có hồ sơ, kèm lịch sử mọi lần trao đổi và kênh khách đã dùng. Nhãn, ghi chú và thuộc tính riêng của bạn nằm cùng một chỗ.",
                 "cards": {
                     "draft": {
-                        "title": "Người lạ chưa phải Lead",
-                        "body": "Ai nhắn cũng chỉ thành liên hệ nháp. Vào pipeline khi đã xác nhận nhu cầu, nên số liệu không bị thổi phồng."
+                        "title": "Người lạ chưa vào danh sách",
+                        "body": "Người nhắn tới mà chưa có số điện thoại hay email là liên hệ nháp. Có số hoặc email rồi mới vào danh sách liên hệ, nên danh sách không bị thổi phồng."
                     },
                     "source": {
                         "title": "Luôn biết khách từ đâu",
-                        "body": "Mỗi hồ sơ ghi lại kênh đầu tiên. Biết kênh nào ra đơn thì mới biết nên đổ công vào đâu."
+                        "body": "Mỗi hội thoại ghi rõ kênh nó đến. Báo cáo theo từng kênh cho thấy kênh nào đông khách, để biết nên đổ công vào đâu."
                     },
-                    "respect": {
-                        "title": "Tôn trọng luật và người nhận",
-                        "body": "Chỉ gửi trong khung 7h tới 22h, tối đa ba tin quảng cáo mỗi số mỗi ngày, luôn có đường từ chối."
+                    "attributes": {
+                        "title": "Trường thông tin của riêng bạn",
+                        "body": "Thêm thuộc tính tùy biến như size, ngày sinh hay mã đơn, rồi lọc danh sách liên hệ theo đúng các trường đó. Nhập và xuất CSV khi cần."
                     }
                 }
             }
         },
         "flow": {
             "eyebrow": "Vòng đời hội thoại",
-            "title": "Từ tin nhắn tới đơn chốt",
+            "title": "Từ tin nhắn đầu tới lúc xong việc",
             "subtitle": "Hội thoại đi hết vòng đời trong một hệ thống, không phải chép tay sang chỗ khác.",
             "steps": {
                 "capture": {
                     "title": "Nhận",
-                    "description": "Khách nhắn. Hệ thống tạo liên hệ nháp và ghi rõ đến từ kênh nào."
+                    "description": "Khách nhắn. Hệ thống tạo hồ sơ và ghi rõ hội thoại đến từ kênh nào."
                 },
-                "qualify": {
-                    "title": "Xác nhận",
-                    "description": "Có nhu cầu thật thì một chạm thành Lead, vào đúng giai đoạn pipeline."
+                "assign": {
+                    "title": "Giao",
+                    "description": "Quy tắc tự động gắn nhãn và giao hội thoại cho đúng người hoặc đúng nhóm, theo điều kiện bạn đặt."
                 },
-                "nurture": {
-                    "title": "Chăm",
-                    "description": "Workflow tự nhắn, tạo việc và gắn nhãn theo kịch bản đã đặt sẵn."
+                "reply": {
+                    "title": "Trả lời",
+                    "description": "Câu trả lời mẫu và macro lo phần câu hỏi lặp lại. Cần người khác vào thì nhắc tên họ trong ghi chú riêng."
                 },
-                "close": {
-                    "title": "Chốt",
-                    "description": "Kéo thả qua các giai đoạn cho tới khi thành khách hàng."
+                "resolve": {
+                    "title": "Xong",
+                    "description": "Đánh dấu đã xử lý, mời khách chấm điểm hài lòng, và xem báo cáo đội trả lời nhanh tới đâu."
                 }
             }
         },
@@ -7111,25 +7112,25 @@ const messages: Record<string, unknown> = {
             "items": {
                 "dedupe": {
                     "title": "Một người, một hồ sơ",
-                    "description": "Cùng số điện thoại thì gộp làm một, dù đến từ Zalo hôm nay và Messenger tháng sau."
+                    "description": "Cùng số điện thoại thì gộp làm một, dù đến từ Zalo hôm nay và website tháng sau."
                 },
                 "draft": {
-                    "title": "Người lạ chưa phải Lead",
-                    "description": "Ai nhắn cũng thành liên hệ nháp. Chỉ vào pipeline khi đã xác nhận có nhu cầu, để số liệu không bị thổi phồng."
+                    "title": "Người lạ chưa vào danh sách",
+                    "description": "Ai nhắn cũng có hồ sơ, nhưng chưa có số điện thoại hay email thì chỉ là liên hệ nháp, chưa vào danh sách liên hệ. Số liệu vì thế không bị thổi phồng."
                 },
                 "source": {
                     "title": "Luôn biết khách từ đâu",
-                    "description": "Mỗi hồ sơ ghi rõ kênh đầu tiên. Biết kênh nào ra đơn thì mới biết nên đổ công vào đâu."
+                    "description": "Mỗi hội thoại ghi rõ kênh nó đến. Biết kênh nào đông khách thì mới biết nên đổ công vào đâu."
                 },
-                "respect": {
-                    "title": "Tôn trọng luật và người nhận",
-                    "description": "Chỉ gửi trong khung 7h tới 22h, tối đa ba tin quảng cáo mỗi số mỗi ngày, luôn có đường từ chối."
+                "inbound": {
+                    "title": "Không để rơi tin khách",
+                    "description": "Không có hạn mức sử dụng nào chặn tin đến hay hội thoại mới. Dùng nhiều đến đâu, khách nhắn vẫn vào hộp thư."
                 }
             }
         },
         "pricing": {
             "title": "Hiện tại dùng không giới hạn",
-            "subtitle": "Yona đang trong giai đoạn hoàn thiện. Chúng tôi đếm số hội thoại để xây chính sách gói cước, nhưng chưa chặn gì cả.",
+            "subtitle": "Yona đang trong giai đoạn hoàn thiện. Chưa có gói thu phí nào, nên không có tính năng nào bị khóa sau gói trả tiền.",
             "plan": "Bản đang hoàn thiện",
             "price": "0đ",
             "unit": "mỗi tháng",
@@ -7139,7 +7140,7 @@ const messages: Record<string, unknown> = {
                 "notice": "Khi có gói thu phí, chúng tôi báo trước"
             },
             "cta": "Bắt đầu ngay",
-            "fine": "Bộ đếm hội thoại vẫn chạy để chúng tôi hiểu cách bạn dùng, nhưng không có hạn mức nào đang áp."
+            "fine": "Không có hạn mức nào đang áp. Danh sách liên hệ xuất được ra tệp CSV bất cứ lúc nào, dữ liệu là của bạn."
         },
         "closing": {
             "title": "Thử với tin nhắn của bạn",
@@ -7257,7 +7258,7 @@ const messages: Record<string, unknown> = {
                     },
                     "draft": {
                         "title": "Người lạ là liên hệ nháp",
-                        "body": "Người mới nhắn lần đầu chưa vào danh sách khách. Xác nhận có nhu cầu thật rồi mới thành hồ sơ."
+                        "body": "Người mới nhắn mà chưa có số điện thoại hay email thì chưa vào danh sách liên hệ. Có số, lấy từ hồ sơ Zalo hoặc do bạn nhập, là vào danh sách."
                     },
                     "dedupe": {
                         "title": "Số điện thoại chống trùng",
@@ -7296,7 +7297,7 @@ const messages: Record<string, unknown> = {
                     "unofficial": "Kết nối đi qua đường không chính thức. Zalo có thể đổi cách hoạt động bất cứ lúc nào và kết nối sẽ gián đoạn.",
                     "ban": "Tài khoản Zalo có thể bị hạn chế hoặc khóa. Rủi ro này có thật và không ai loại bỏ được nó.",
                     "keep": "Tin nhắn đã về Yona thì nằm lại trong hộp thư và hồ sơ khách, kể cả khi kết nối dừng.",
-                    "oa": "Cần một kênh chính thức và ổn định lâu dài thì Zalo OA là đường đúng, và đó là việc khác."
+                    "oa": "Cần một kênh chính thức và ổn định lâu dài thì Zalo OA là đường đúng. Yona hiện chưa kết nối Zalo OA."
                 }
             },
             "closing": {

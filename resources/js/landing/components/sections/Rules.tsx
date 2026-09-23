@@ -10,7 +10,7 @@ const ITEMS = [
     { key: 'dedupe', art: 'rule-1' },
     { key: 'draft', art: 'rule-2' },
     { key: 'source', art: 'rule-3' },
-    { key: 'respect', art: 'rule-4' },
+    { key: 'inbound', art: 'rule-4' },
 ] as const;
 
 export function Rules({ strings }: { strings: LandingStrings['rules'] }) {
