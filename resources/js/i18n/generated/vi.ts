@@ -693,7 +693,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "SUCCESS_MESSAGE": "Thuộc tính tuỳ chỉnh được sửa thành công",
-                "ERROR_MESSAGE": "Đã xảy ra lỗi khi cập nhật \bthuộc tính tuỳ chỉnh, vui lòng thử lại"
+                "ERROR_MESSAGE": "Đã xảy ra lỗi khi cập nhật thuộc tính tuỳ chỉnh, vui lòng thử lại"
             }
         },
         "TABS": {
@@ -863,7 +863,7 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_TEXT": "Huỷ",
             "API": {
                 "SUCCESS_MESSAGE": "Quy tắc tự động hóa được thêm thành công",
-                "ERROR_MESSAGE": "Không thể cập nhật \bquy tắc tự động hóa, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không thể cập nhật quy tắc tự động hóa, Vui lòng thử lại sau"
             }
         },
         "CLONE": {
@@ -895,7 +895,7 @@ const messages: Record<string, unknown> = {
         },
         "TOGGLE": {
             "ACTIVATION_TITLE": "Kích hoạt quy tắc tự động hóa",
-            "DEACTIVATION_TITLE": "Vô hiệu hóa \bquy tắc tự động hóa",
+            "DEACTIVATION_TITLE": "Vô hiệu hóa quy tắc tự động hóa",
             "ACTIVATION_DESCRIPTION": "Thao tác này sẽ kích hoạt quy tắc tự động hóa tên '{automationName}'. Bạn có chắc là muốn tiếp tục?",
             "DEACTIVATION_DESCRIPTION": "Thao tác này sẽ vô hiệu hóa quy tắc tự động hóa tên '{automationName}'. Bạn có chắc là muốn tiếp tục?",
             "CONFIRMATION_LABEL": "Có",
@@ -919,7 +919,7 @@ const messages: Record<string, unknown> = {
             "SEND_MESSAGE": "Gửi một tin nhắn",
             "ADD_PRIVATE_NOTE": "Thêm một ghi chú riêng",
             "MUTE_CONVERSATION": "Tắt tiếng hội thoại",
-            "SNOOZE_CONVERSATION": "Tạm dừng \bhội thoại",
+            "SNOOZE_CONVERSATION": "Tạm dừng hội thoại",
             "OPEN_CONVERSATION": "Mở hội thoại",
             "PENDING_CONVERSATION": "Đánh dấu hội thoại là đang chờ",
             "RESOLVE_CONVERSATION": "Giải quyết hội thoại",
@@ -1469,7 +1469,7 @@ const messages: Record<string, unknown> = {
         "FRIEND_REQUEST": "[Lời mời kết bạn]",
         "HIDE_QUOTED_TEXT": "Ẩn văn bản được trích dẫn",
         "SHOW_QUOTED_TEXT": "Hiện Văn bản được trích dẫn",
-        "MESSAGE_READ": "\bĐọc",
+        "MESSAGE_READ": "Đọc",
         "SENDING": "Đang gửi",
         "UNREAD_COUNT_OVERFLOW": "9+"
     },
@@ -1495,7 +1495,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_ASSIGNEE": "Thay đổi người được phân công",
             "CHANGE_PRIORITY": "Đổi mức ưu tiên",
             "CHANGE_TEAM": "Thay đổi nhóm",
-            "SNOOZE_CONVERSATION": "Tạm dừng \bhội thoại",
+            "SNOOZE_CONVERSATION": "Tạm dừng hội thoại",
             "EXECUTE_MACRO": "Chạy macro",
             "ADD_LABEL": "Thêm nhãn vào hội thoại",
             "REMOVE_LABEL": "Xoá nhãn khỏi hội thoại",
@@ -1549,7 +1549,7 @@ const messages: Record<string, unknown> = {
             "REOPEN_CONVERSATION": "Mở lại hội thoại",
             "RESOLVE_CONVERSATION": "Giải quyết hội thoại",
             "SEND_TRANSCRIPT": "Gửi bản ghi qua email",
-            "SNOOZE_CONVERSATION": "Tạm dừng \bhội thoại",
+            "SNOOZE_CONVERSATION": "Tạm dừng hội thoại",
             "UNTIL_NEXT_REPLY": "Cho đến phản hồi kế tiếp",
             "UNTIL_NEXT_WEEK": "Cho đến tuần sau",
             "UNTIL_TOMORROW": "Cho đến ngày mai",
@@ -2805,7 +2805,7 @@ const messages: Record<string, unknown> = {
         },
         "ACCORDION": {
             "CONTACT_DETAILS": "Chi tiết liên hệ",
-            "CONVERSATION_ACTIONS": "Hành động của \bhội thoại",
+            "CONVERSATION_ACTIONS": "Hành động của hội thoại",
             "CONVERSATION_LABELS": "Nhãn hội thoại",
             "CONVERSATION_INFO": "Thông tin hội thoại",
             "CONTACT_NOTES": "Ghi chú liên hệ",
@@ -4781,7 +4781,7 @@ const messages: Record<string, unknown> = {
             },
             "DISPLAY_OPTIONS": {
                 "SNOOZED": "Tạm dừng",
-                "READ": "\bĐọc",
+                "READ": "Đọc",
                 "LABELS": "Nhãn",
                 "CONVERSATION_ID": "ID hội thoại"
             }
@@ -5032,7 +5032,7 @@ const messages: Record<string, unknown> = {
                     },
                     "SUBMIT_BUTTON": "Tạo kênh Bandwidth",
                     "API": {
-                        "ERROR_MESSAGE": "Chúng tôi không thể xác thực \bchứng chỉ Bandwidth, vui lòng thử lại"
+                        "ERROR_MESSAGE": "Chúng tôi không thể xác thực chứng chỉ Bandwidth, vui lòng thử lại"
                     },
                     "API_CALLBACK": {
                         "TITLE": "URL gọi lại",
@@ -5290,7 +5290,7 @@ const messages: Record<string, unknown> = {
                 },
                 "SUBMIT_BUTTON": "Tạo Kênh Telegram",
                 "API": {
-                    "ERROR_MESSAGE": "Chúng tôi không thể lưu kênh \btelegram"
+                    "ERROR_MESSAGE": "Chúng tôi không thể lưu kênh telegram"
                 }
             },
             "AUTH": {
@@ -7707,7 +7707,7 @@ const messages: Record<string, unknown> = {
             "REMOVE_ASSIGNED_TEAM": "Bỏ nhóm đang phụ trách",
             "SEND_EMAIL_TRANSCRIPT": "Gửi bản ghi hội thoại qua email",
             "MUTE_CONVERSATION": "Tắt tiếng hội thoại",
-            "SNOOZE_CONVERSATION": "Tạm dừng \bhội thoại",
+            "SNOOZE_CONVERSATION": "Tạm dừng hội thoại",
             "RESOLVE_CONVERSATION": "Giải quyết hội thoại",
             "CHANGE_STATUS": "Đổi trạng thái",
             "SEND_ATTACHMENT": "Gửi tệp đính kèm",
@@ -7739,7 +7739,7 @@ const messages: Record<string, unknown> = {
         "SUMMARY": {
             "TITLE": "Tóm tắt",
             "DELETE_WARNING": "Liên hệ của <strong>{primaryContactName}</strong> sẽ bị xoá.",
-            "ATTRIBUTE_WARNING": "\bChi tiết liên hệ của <strong>{primaryContactName}</strong> \bsẽ được sao chép đến <strong>{parentContactName}</strong>."
+            "ATTRIBUTE_WARNING": "Chi tiết liên hệ của <strong>{primaryContactName}</strong> sẽ được sao chép đến <strong>{parentContactName}</strong>."
         },
         "SEARCH": {
             "ERROR_MESSAGE": "Có lỗi xảy ra. Bạn hãy thử lại sau."
@@ -8389,7 +8389,7 @@ const messages: Record<string, unknown> = {
             "PASSWORD_CONFIRMATION": {
                 "LABEL": "Xác nhận mật khẩu mới",
                 "ERROR": "Xác nhận mật khẩu phải khớp với mật khẩu",
-                "PLACEHOLDER": "Vui lòng nhập lại mật khẩu \bmới"
+                "PLACEHOLDER": "Vui lòng nhập lại mật khẩu mới"
             }
         }
     },

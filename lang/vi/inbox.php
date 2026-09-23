@@ -64,7 +64,7 @@ return [
         ],
         'DISPLAY_OPTIONS' => [
             'SNOOZED' => 'Tạm dừng',
-            'READ' => 'Đọc',
+            'READ' => 'Đọc',
             'LABELS' => 'Nhãn',
             'CONVERSATION_ID' => 'ID hội thoại',
         ],

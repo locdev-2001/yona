@@ -19,7 +19,7 @@ return [
     'SUMMARY' => [
         'TITLE' => 'Tóm tắt',
         'DELETE_WARNING' => 'Liên hệ của <strong>{primaryContactName}</strong> sẽ bị xoá.',
-        'ATTRIBUTE_WARNING' => 'Chi tiết liên hệ của <strong>{primaryContactName}</strong> sẽ được sao chép đến <strong>{parentContactName}</strong>.',
+        'ATTRIBUTE_WARNING' => 'Chi tiết liên hệ của <strong>{primaryContactName}</strong> sẽ được sao chép đến <strong>{parentContactName}</strong>.',
     ],
     'SEARCH' => [
         'ERROR_MESSAGE' => 'Có lỗi xảy ra. Bạn hãy thử lại sau.',

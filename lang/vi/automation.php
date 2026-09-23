@@ -119,7 +119,7 @@ return [
         'CANCEL_BUTTON_TEXT' => 'Huỷ',
         'API' => [
             'SUCCESS_MESSAGE' => 'Quy tắc tự động hóa được thêm thành công',
-            'ERROR_MESSAGE' => 'Không thể cập nhật quy tắc tự động hóa, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không thể cập nhật quy tắc tự động hóa, Vui lòng thử lại sau',
         ],
     ],
     'CLONE' => [
@@ -151,7 +151,7 @@ return [
     ],
     'TOGGLE' => [
         'ACTIVATION_TITLE' => 'Kích hoạt quy tắc tự động hóa',
-        'DEACTIVATION_TITLE' => 'Vô hiệu hóa quy tắc tự động hóa',
+        'DEACTIVATION_TITLE' => 'Vô hiệu hóa quy tắc tự động hóa',
         'ACTIVATION_DESCRIPTION' => 'Thao tác này sẽ kích hoạt quy tắc tự động hóa tên \'{automationName}\'. Bạn có chắc là muốn tiếp tục?',
         'DEACTIVATION_DESCRIPTION' => 'Thao tác này sẽ vô hiệu hóa quy tắc tự động hóa tên \'{automationName}\'. Bạn có chắc là muốn tiếp tục?',
         'CONFIRMATION_LABEL' => 'Có',
@@ -175,7 +175,7 @@ return [
         'SEND_MESSAGE' => 'Gửi một tin nhắn',
         'ADD_PRIVATE_NOTE' => 'Thêm một ghi chú riêng',
         'MUTE_CONVERSATION' => 'Tắt tiếng hội thoại',
-        'SNOOZE_CONVERSATION' => 'Tạm dừng hội thoại',
+        'SNOOZE_CONVERSATION' => 'Tạm dừng hội thoại',
         'OPEN_CONVERSATION' => 'Mở hội thoại',
         'PENDING_CONVERSATION' => 'Đánh dấu hội thoại là đang chờ',
         'RESOLVE_CONVERSATION' => 'Giải quyết hội thoại',

@@ -108,7 +108,7 @@ return [
         'REMOVE_ASSIGNED_TEAM' => 'Bỏ nhóm đang phụ trách',
         'SEND_EMAIL_TRANSCRIPT' => 'Gửi bản ghi hội thoại qua email',
         'MUTE_CONVERSATION' => 'Tắt tiếng hội thoại',
-        'SNOOZE_CONVERSATION' => 'Tạm dừng hội thoại',
+        'SNOOZE_CONVERSATION' => 'Tạm dừng hội thoại',
         'RESOLVE_CONVERSATION' => 'Giải quyết hội thoại',
         'CHANGE_STATUS' => 'Đổi trạng thái',
         'SEND_ATTACHMENT' => 'Gửi tệp đính kèm',

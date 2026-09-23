@@ -13,7 +13,7 @@ return [
     ],
     'ACCORDION' => [
         'CONTACT_DETAILS' => 'Chi tiết liên hệ',
-        'CONVERSATION_ACTIONS' => 'Hành động của hội thoại',
+        'CONVERSATION_ACTIONS' => 'Hành động của hội thoại',
         'CONVERSATION_LABELS' => 'Nhãn hội thoại',
         'CONVERSATION_INFO' => 'Thông tin hội thoại',
         'CONTACT_NOTES' => 'Ghi chú liên hệ',

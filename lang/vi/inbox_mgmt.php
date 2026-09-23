@@ -240,7 +240,7 @@ return [
                 ],
                 'SUBMIT_BUTTON' => 'Tạo kênh Bandwidth',
                 'API' => [
-                    'ERROR_MESSAGE' => 'Chúng tôi không thể xác thực chứng chỉ Bandwidth, vui lòng thử lại',
+                    'ERROR_MESSAGE' => 'Chúng tôi không thể xác thực chứng chỉ Bandwidth, vui lòng thử lại',
                 ],
                 'API_CALLBACK' => [
                     'TITLE' => 'URL gọi lại',
@@ -498,7 +498,7 @@ return [
             ],
             'SUBMIT_BUTTON' => 'Tạo Kênh Telegram',
             'API' => [
-                'ERROR_MESSAGE' => 'Chúng tôi không thể lưu kênh telegram',
+                'ERROR_MESSAGE' => 'Chúng tôi không thể lưu kênh telegram',
             ],
         ],
         'AUTH' => [

@@ -108,7 +108,7 @@ return [
         ],
         'API' => [
             'SUCCESS_MESSAGE' => 'Thuộc tính tuỳ chỉnh được sửa thành công',
-            'ERROR_MESSAGE' => 'Đã xảy ra lỗi khi cập nhật thuộc tính tuỳ chỉnh, vui lòng thử lại',
+            'ERROR_MESSAGE' => 'Đã xảy ra lỗi khi cập nhật thuộc tính tuỳ chỉnh, vui lòng thử lại',
         ],
     ],
     'TABS' => [

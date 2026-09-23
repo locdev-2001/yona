@@ -158,7 +158,7 @@ return [
     'FRIEND_REQUEST' => '[Lời mời kết bạn]',
     'HIDE_QUOTED_TEXT' => 'Ẩn văn bản được trích dẫn',
     'SHOW_QUOTED_TEXT' => 'Hiện Văn bản được trích dẫn',
-    'MESSAGE_READ' => 'Đọc',
+    'MESSAGE_READ' => 'Đọc',
     'SENDING' => 'Đang gửi',
     'UNREAD_COUNT_OVERFLOW' => '9+',
 ];

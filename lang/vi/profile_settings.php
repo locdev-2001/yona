@@ -243,7 +243,7 @@ return [
         'PASSWORD_CONFIRMATION' => [
             'LABEL' => 'Xác nhận mật khẩu mới',
             'ERROR' => 'Xác nhận mật khẩu phải khớp với mật khẩu',
-            'PLACEHOLDER' => 'Vui lòng nhập lại mật khẩu mới',
+            'PLACEHOLDER' => 'Vui lòng nhập lại mật khẩu mới',
         ],
     ],
 ];

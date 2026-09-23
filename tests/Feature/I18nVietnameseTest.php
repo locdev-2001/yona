@@ -50,6 +50,17 @@ it('phủ mọi key tiếng Anh, kể cả key lồng, và không thêm key lạ
         ->and(array_keys(array_diff_key($vietnamese, $english)))->toBe([]);
 });
 
+// Ký tự điều khiển (vd U+0008 lọt vào khi dịch) không hiện trên macOS nhưng
+// trình duyệt Linux/Windows vẽ thành ô vuông giữa câu.
+it('không có ký tự điều khiển trong chuỗi dịch', function (string $locale) {
+    $withControlCharacters = array_keys(array_filter(
+        flattenLocale($locale),
+        fn ($message) => is_string($message) && preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $message) === 1,
+    ));
+
+    expect($withControlCharacters)->toBe([]);
+})->with(['en', 'vi']);
+
 it('giữ nguyên tham số nội suy của bản tiếng Anh', function () {
     $english = flattenLocale('en');
     $vietnamese = flattenLocale('vi');
