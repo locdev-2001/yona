@@ -263,6 +263,9 @@ const tailwindConfig = {
           'logos',
           'ri',
           'ph',
+          // Nút phát/dừng tin ghi âm, chip video, icon tệp và thẻ liên hệ dùng
+          // i-teenyicons-* như bản gốc; thiếu bộ này thì các nút đó hiện trống.
+          'teenyicons',
           'fluent',
         ]),
       },
