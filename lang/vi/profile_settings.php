@@ -153,7 +153,7 @@ return [
             'READ_MORE' => 'Xem thêm',
         ],
         'EMAIL_NOTIFICATIONS_SECTION' => [
-            'TITLE' => 'thông báo Email',
+            'TITLE' => 'Thông báo qua email',
             'NOTE' => 'Cập nhật tùy chọn thông báo qua email của bạn tại đây',
             'CONVERSATION_ASSIGNMENT' => 'Gửi thông báo qua email khi hội thoại được chỉ định cho tôi',
             'CONVERSATION_CREATION' => 'Gửi thông báo qua email khi hội thoại mới được tạo',
@@ -180,13 +180,15 @@ return [
                 'SLA_MISSED_RESOLUTION' => 'Một hội thoại trễ SLA xử lý xong',
             ],
             'BROWSER_PERMISSION' => 'Hãy cho phép trình duyệt hiện thông báo đẩy để bạn nhận được chúng',
+            'PUSH_ENABLE_FAILED' => 'Không bật được thông báo đẩy trên trình duyệt này. Vui lòng thử lại sau.',
+            'PUSH_PERMISSION_DENIED' => 'Trình duyệt đang chặn thông báo của trang này. Hãy cho phép thông báo trong cài đặt trang của trình duyệt rồi bật lại.',
         ],
         'API' => [
             'UPDATE_SUCCESS' => 'Tùy chọn thông báo của bạn đã được cập nhật thành công',
             'UPDATE_ERROR' => 'Đã xảy ra lỗi khi cập nhật tùy chọn, vui lòng thử lại',
         ],
         'PUSH_NOTIFICATIONS_SECTION' => [
-            'TITLE' => 'thông báo',
+            'TITLE' => 'Thông báo đẩy',
             'NOTE' => 'Cập nhật tùy chọn thông báo của bạn tại đây',
             'CONVERSATION_ASSIGNMENT' => 'Gửi thông báo khi hội thoại được chỉ định cho tôi',
             'CONVERSATION_CREATION' => 'Gửi thông báo khi hội thoại mới được tạo',

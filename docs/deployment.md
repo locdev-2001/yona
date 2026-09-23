@@ -463,6 +463,7 @@ Lưu ý vận hành:
 - Vhost Nginx + SSL (mục 7).
 - **Timezone của PHP** — xem ngay dưới.
 - **Hộp thư nhận lead** của trang `/dat-lich-demo` — xem ngay dưới.
+- **Kiểm máy chủ gửi được thông báo đẩy** — xem ngay dưới (không có bí mật phải điền).
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
 
@@ -493,6 +494,36 @@ php artisan config:clear
 Nghiệm thu bằng cách gửi thật một lượt qua `https://yona.vn/dat-lich-demo` rồi
 mở hộp thư xem hội thoại có nổi lên không. Hotline và link Zalo để rỗng thì
 trang **ẩn hẳn** khối liên hệ nhanh — không bày một số không ai bắt máy.
+
+### Thông báo đẩy trình duyệt (Web Push)
+
+Không phải cấu hình khoá: lần đầu một người đã đăng nhập mở dashboard, máy chủ tự
+sinh cặp khoá VAPID và lưu vào `installation_configs` (`VAPID_KEYS`, locked). Bảng
+`notification_subscriptions` do `deploy.sh` migrate như mọi bảng khác. Chỉ cần kiểm
+một lần rằng máy chủ đủ điều kiện:
+
+```bash
+# OpenSSL phải có đường cong P-256 — thiếu thì dashboard ẩn hẳn phần thông báo đẩy
+php -r 'var_dump(in_array("prime256v1", openssl_get_curve_names()));'
+# Máy chủ phải gọi ra được các push service (Chrome/Cốc Cốc, Firefox, Safari)
+curl -sI https://fcm.googleapis.com | head -1
+curl -sI https://updates.push.services.mozilla.com | head -1
+curl -sI https://web.push.apple.com | head -1
+```
+
+- `APP_URL` phải là `https://yona.vn`: vừa là `subject` của VAPID (Safari từ chối
+  subject không phải https), vừa là gốc link mở hội thoại khi bấm thông báo.
+- Horizon phải chạy queue `default` (có sẵn trong `config/queue_tiers.php`).
+- `/sw.js` phục vụ tĩnh từ `public/` ở gốc tên miền. **Không** gắn cache dài hạn
+  cho riêng file này — trình duyệt cần thấy bản mới khi service worker đổi.
+- Muốn tự quản khoá: đặt **cả hai** `VAPID_PUBLIC_KEY` và `VAPID_PRIVATE_KEY`
+  trong `.env` rồi `php artisan config:cache`. **Không đổi cặp khoá** sau khi đã
+  có người bật thông báo: mọi đăng ký cũ mất hiệu lực, người dùng phải bật lại.
+
+Nghiệm thu: Cài đặt hồ sơ → Tùy chọn thông báo → bật "cho phép trình duyệt hiện
+thông báo đẩy", tick cột "Thông báo đẩy" cho "Một hội thoại được giao cho bạn",
+nhờ người khác giao một hội thoại → hệ điều hành hiện thông báo, bấm vào mở đúng
+hội thoại.
 
 ### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
 

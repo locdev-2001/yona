@@ -40,6 +40,7 @@ use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
+use App\Http\Controllers\WebApi\NotificationSubscriptionsController;
 use App\Http\Controllers\WebApi\PortalsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\Profile\MfaController;
@@ -77,6 +78,13 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile/sessions', [ProfileSessionsController::class, 'index']);
     Route::delete('/profile/sessions/{id}', [ProfileSessionsController::class, 'destroy'])->whereNumber('id');
     // F8 MFA + user sessions — END
+});
+
+// resource :notification_subscriptions (số ít, không gắn account). Nhận cả phiên
+// lẫn header api_access_token như Api::BaseController của bản gốc.
+Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
+    Route::post('/notification_subscriptions', [NotificationSubscriptionsController::class, 'store']);
+    Route::delete('/notification_subscriptions', [NotificationSubscriptionsController::class, 'destroy']);
 });
 
 // auth.api_token đứng trước auth: header api_access_token (Application API,

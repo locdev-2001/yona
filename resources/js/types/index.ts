@@ -22,6 +22,9 @@ export interface GlobalConfig {
     // window.chatwootConfig.fbAppId của bản gốc).
     fbAppId?: string;
     fbApiVersion?: string;
+    // Khoá công khai VAPID cho Web Push (như window.chatwootConfig.vapidPublicKey
+    // của bản gốc); null khi máy chủ không có khoá — giao diện ẩn phần đẩy.
+    vapidPublicKey?: string | null;
 }
 
 export interface SharedPageProps {

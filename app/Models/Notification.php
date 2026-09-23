@@ -8,6 +8,7 @@ use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\UserResource;
 use App\Jobs\Notification\EmailNotificationJob;
+use App\Jobs\Notification\PushNotificationJob;
 use App\Jobs\Notification\RemoveDuplicateNotificationJob;
 use App\Support\PlainTextContent;
 use Database\Factories\NotificationFactory;
@@ -252,9 +253,13 @@ class Notification extends Model
         return $actor instanceof Message ? MessageResource::pushEventData($actor) : null;
     }
 
-    // process_notification_delivery: email theo cài đặt + dọn thông báo trùng.
+    // process_notification_delivery: đẩy + email theo cài đặt, rồi dọn thông báo trùng.
     private function processDelivery(): void
     {
+        if ($this->userSubscribedTo('push')) {
+            PushNotificationJob::dispatch($this->id);
+        }
+
         if ($this->userSubscribedTo('email')) {
             EmailNotificationJob::dispatch($this->id);
         }

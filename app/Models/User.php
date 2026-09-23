@@ -216,6 +216,11 @@ class User extends Authenticatable
         return $this->hasMany(NotificationSetting::class);
     }
 
+    public function notificationSubscriptions(): HasMany
+    {
+        return $this->hasMany(NotificationSubscription::class);
+    }
+
     // User#assigned_inboxes: admin thấy mọi inbox của account, agent chỉ inbox mình là member.
     /** @return Builder<Inbox> */
     public function assignedInboxes(Account $account, AccountUser $accountUser): Builder

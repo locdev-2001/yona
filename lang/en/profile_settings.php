@@ -178,6 +178,8 @@ return [
                 'SLA_MISSED_RESOLUTION' => 'A conversation misses resolution SLA',
             ],
             'BROWSER_PERMISSION' => 'Enable push notifications for your browser so you’re able to receive them',
+            'PUSH_ENABLE_FAILED' => 'Could not turn on push notifications in this browser. Please try again later.',
+            'PUSH_PERMISSION_DENIED' => 'Notifications are blocked for this site. Allow them in your browser’s site settings, then turn this on again.',
         ],
         'API' => [
             'UPDATE_SUCCESS' => 'Your notification preferences are updated successfully',

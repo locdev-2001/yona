@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Notification\VapidService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -34,6 +35,10 @@ class HandleInertiaRequests extends Middleware
                 'privacyURL' => config('yona.privacy_url'),
                 'fbAppId' => config('services.facebook.app_id'),
                 'fbApiVersion' => config('services.facebook.api_version'),
+                // window.chatwootConfig.vapidPublicKey: có khoá mới hiện phần thông
+                // báo đẩy. Closure chỉ chạy khi render trang, và chỉ tra khoá cho
+                // người đã đăng nhập — trang công khai, request JSON không đụng tới.
+                'vapidPublicKey' => fn () => $request->user() !== null ? app(VapidService::class)->publicKey() : null,
             ],
             'flash' => [
                 'alert' => $request->session()->get('alert'),

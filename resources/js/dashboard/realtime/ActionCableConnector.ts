@@ -1,5 +1,4 @@
-import { router } from '@inertiajs/react';
-
+import { logout } from 'dashboard/helper/logout';
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import BaseActionCableConnector from './BaseActionCableConnector';
 import { realtimeStore } from './store';
@@ -109,8 +108,7 @@ class ActionCableConnector extends BaseActionCableConnector {
         emitter.emit(FETCH_CONVERSATION_STATS_EVENT);
     };
 
-    // Cùng cách SidebarProfileMenu: route `logout` của yona (Inertia gửi kèm CSRF).
-    onLogout = () => router.post('/app/logout');
+    onLogout = () => logout();
 
     onReload = () => window.location.reload();
 

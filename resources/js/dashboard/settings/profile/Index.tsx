@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
+import { logout } from 'dashboard/helper/logout';
 import { useBranding } from 'shared/composables/useBranding';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
@@ -103,7 +104,7 @@ export default function ProfileSettingsIndex() {
 
         // Gốc: đổi email → clearCookiesOnLogout (đăng nhập lại bằng email mới sau xác nhận).
         if (hasEmailChanged && success) {
-            router.post('/app/logout');
+            logout();
         } else if (success) {
             // Store gốc cập nhật currentUser sau updateProfile → sidebar thấy avatar/tên mới ngay.
             router.reload({ only: ['auth'] });

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
+import { logout } from 'dashboard/helper/logout';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
@@ -42,7 +43,6 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
     // với mục menu mở modal để không đụng Sidebar.tsx của tính năng khác.
     useSidebarKeyboardShortcuts(currentAccount.id, setShowShortcutModal);
 
-    const logout = () => router.post('/app/logout');
 
     const menu = (
         <DropdownBody className="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
