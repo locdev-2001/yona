@@ -26,6 +26,16 @@
                 "reverb:start"
             ],
             "port": 8611
+        },
+        {
+            "name": "worker",
+            "runtimeExecutable": "php",
+            "runtimeArgs": [
+                "artisan",
+                "queue:listen",
+                "--queue=critical,high,medium,default,mailers,low,scheduled_jobs,purgable",
+                "--tries=1"
+            ]
         }
     ]
 }
