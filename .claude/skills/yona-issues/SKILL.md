@@ -1,6 +1,6 @@
 ---
 name: yona-issues
-description: Chuẩn ghi và theo dõi việc (lỗi, đề xuất, nợ chất lượng) của Yona trên Công việc của dash.yona.vn qua MCP yona-dash - tạo với đầy đủ trường, gắn nhãn, đính kèm ảnh/tài liệu làm bằng chứng, cập nhật, chuyển cột, xoá, tra việc đang mở. Dùng khi phát hiện lỗi, đề xuất việc, hỏi "còn việc gì", "ném lên issue", "tạo issue", "tạo task", "ghi lại", hoặc khi cần biết đang có việc gì chặn bán hàng.
+description: Chuẩn ghi và theo dõi việc (lỗi, đề xuất, nợ chất lượng) của Yona trên Công việc của dash.yona.vn qua MCP yona-dash - tạo với đầy đủ trường, gắn nhãn, đính kèm ảnh/tài liệu làm bằng chứng, cập nhật, chuyển cột, xoá, tra việc đang mở; đọc DB production (chỉ đọc) của yona.vn và dash để đo và kiểm chứng. Dùng khi phát hiện lỗi, đề xuất việc, hỏi "còn việc gì", "ném lên issue", "tạo issue", "tạo task", "ghi lại", hoặc khi cần biết đang có việc gì chặn bán hàng.
 ---
 
 # Công việc trên dash — chuẩn của Yona
@@ -129,6 +129,24 @@ Mô tả mở đầu bằng liên kết "GitHub #…" là việc do GitHub đổ
 - Đuôi file cho phép nằm ở `get_task_options.allowed_file_extensions`. File khác đuôi (`.webp`, `.md`, `.log`…) thì đổi sang đuôi được phép (chụp lại `.png`, log đổi `.txt`) hoặc nén `.zip`.
 - Ảnh chụp bằng trình duyệt của AI thì lưu ra file trong thư mục scratchpad rồi đính kèm; mỗi ảnh ghi rõ trong bình luận: màn hình nào, thiết bị/khung nhìn, bước tái hiện.
 - Xem lại bằng chứng đã có: `read_task_attachment` (ảnh trả về dạng ảnh, log trả về chữ).
+
+## Đọc DB production để kiểm chứng
+
+Chỉ đọc — quyền do DB khoá (user chỉ SELECT, phiên read-only, timeout 30 giây), không có cách ghi.
+Dùng để đo số liệu thật cho mô tả/bình luận (bao nhiêu tài khoản bị ảnh hưởng, bản ghi lỗi trông ra sao),
+tái hiện lỗi, và nghiệm thu sau khi sửa.
+
+| DB | Lệnh |
+|---|---|
+| yona.vn (PostgreSQL) | `.claude/skills/yona-issues/scripts/prod-db.sh "SELECT …"` |
+| dash.yona.vn (MySQL, repo riêng) | `~/www/dash_yona/scripts/prod-db.sh "SELECT …"` |
+
+- Khám phá trước: `--tables`, `--describe <bảng>`. Bảng có cột bí mật bị ẩn thì `SELECT *` lỗi — chọn cột cụ thể.
+- Luôn có `WHERE`/`LIMIT`; đếm bằng `count(*)` thay vì kéo cả bảng. Xuất để xử lý tiếp: `--csv` (yona), `--tsv` (dash).
+- Lỗi "thiếu PROD_DB_…" → báo founder làm theo `references/prod-db-setup.md` (yona) hoặc
+  `~/www/dash_yona/scripts/prod-db-setup.md` (dash). Lỗi "permission denied" với bảng mới → nhờ founder chạy lại bước cấp quyền.
+- **Dữ liệu khách thật:** chỉ đưa vào công việc số đếm, id, trạng thái, mốc thời gian. Không chép tên, số điện thoại,
+  email, nội dung tin nhắn của khách vào công việc, bình luận, commit hay log — cần dẫn chứng thì ghi id bản ghi.
 
 ## Trước khi tạo việc mới
 
