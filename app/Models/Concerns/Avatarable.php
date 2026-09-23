@@ -80,5 +80,17 @@ trait Avatarable
         ]);
 
         $this->unsetRelation('avatar');
+        $this->saveOwnerAfterAvatarChange();
+    }
+
+    // avatar.attach của Rails lưu lại record chủ khi nó không còn thay đổi chờ
+    // ghi, nên hook cập nhật chạy và người đang xem nhận ảnh mới (Contact phát
+    // contact.updated). Eloquent bỏ qua hook khi không cột nào đổi nên phải chạm
+    // updated_at; còn thay đổi chờ ghi thì lần save của nơi gọi sẽ chạy hook.
+    private function saveOwnerAfterAvatarChange(): void
+    {
+        if (! $this->isDirty()) {
+            $this->touch();
+        }
     }
 }

@@ -2,7 +2,7 @@ import type { MessageAttachment } from 'dashboard/components-next/message/helper
 import { CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import type { ConversationType } from './constants';
 import { matchesLabels } from './labelHelpers';
-import type { AssigneeTab, Conversation, ConversationMessage } from './types';
+import type { AssigneeTab, ContactMeta, Conversation, ConversationMessage } from './types';
 
 // Hàm thuần port từ store conversations của Chatwoot (mutations ADD_MESSAGE /
 // UPDATE_CONVERSATION / SET_ALL_CONVERSATION, action addConversation, getters
@@ -143,6 +143,28 @@ export function applyConversationContact(
 ): Conversation[] {
     return conversations.map((item) =>
         item.id === conversationId ? { ...item, meta: { ...item.meta, sender } } : item,
+    );
+}
+
+// Payload contact.updated = push_event_data của contact + phong bì broadcast
+// (account_id, performer khi agent thao tác) — phong bì không thuộc về khách.
+export type ContactUpdatedPayload = ContactMeta & { account_id?: number; performer?: unknown };
+
+// EDIT_CONTACT (onContactUpdate): bản gốc đọc khách của card/header/panel từ store
+// contacts theo meta.sender.id; ở đây các chỗ đó đọc thẳng meta.sender nên đổi
+// sender của mọi hội thoại cùng khách. Trộn vào sender cũ để giữ các trường
+// payload không mang (availability_status…).
+export function applyContactUpdate(conversations: Conversation[], contact: ContactUpdatedPayload): Conversation[] {
+    const { account_id: _accountId, performer: _performer, ...contactFields } = contact;
+    void _accountId;
+    void _performer;
+    const belongsToContact = (item: Conversation) => item.meta?.sender?.id === contact.id;
+    if (!conversations.some(belongsToContact)) return conversations;
+
+    return conversations.map((item) =>
+        belongsToContact(item)
+            ? { ...item, meta: { ...item.meta, sender: { ...item.meta.sender, ...contactFields } } }
+            : item,
     );
 }
 

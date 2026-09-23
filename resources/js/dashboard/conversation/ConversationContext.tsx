@@ -53,6 +53,7 @@ import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
     appendMessageAttachments,
+    applyContactUpdate,
     applyConversationAdded,
     applyConversationContact,
     applyConversationLastActivity,
@@ -65,6 +66,7 @@ import {
     shouldAddConversationToList,
     sortComparator,
 } from './realtimeReducers';
+import type { ContactUpdatedPayload } from './realtimeReducers';
 import {
     ASSIGNEE_TAB_VALUES,
     ASSIGNEE_TYPE,
@@ -793,6 +795,13 @@ export function ConversationProvider({
         if (conversation?.id && sender) {
             setAllConversations((current) => applyConversationContact(current, conversation.id, sender));
         }
+    });
+    // onContactUpdate → contacts/updateContact: card, header và panel liên hệ
+    // (useContactDetails theo meta.sender) cùng đổi, không cần tải lại trang.
+    useRealtimeEvent<ContactUpdatedPayload>('contact.updated', (contact) => {
+        if (!contact?.id) return;
+        setAllConversations((current) => applyContactUpdate(current, contact));
+        setFilteredConversations((current) => applyContactUpdate(current, contact));
     });
     useRealtimeEvent('fetch_conversation_stats', refetchListMeta);
 

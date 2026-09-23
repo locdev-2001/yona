@@ -1,8 +1,11 @@
 <?php
 
+use App\Jobs\ActionCableBroadcastJob;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Contact;
+use App\Models\Inbox;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 // Port từ spec/jobs/avatar/avatar_from_url_job_spec.rb + hai khác biệt cố ý:
@@ -115,4 +118,41 @@ it('không ghi thuộc tính đồng bộ khi URL rỗng', function () {
     (new AvatarFromUrlJob($this->contact, null))->handle();
 
     expect($this->contact->refresh()->additional_attributes)->toBe([]);
+});
+
+it('phát contact.updated kèm thumbnail mới cho người đang xem sau khi gắn avatar', function () {
+    Http::fake([AVATAR_URL => Http::response(pngBytes(), 200, ['Content-Type' => 'image/jpg'])]);
+    Queue::fake();
+
+    (new AvatarFromUrlJob($this->contact, AVATAR_URL))->handle();
+
+    $thumbnail = $this->contact->refresh()->avatarUrl();
+
+    expect($thumbnail)->not->toBe('');
+    Queue::assertPushed(ActionCableBroadcastJob::class, fn (ActionCableBroadcastJob $job) => $job->eventName === 'contact.updated'
+        && $job->members === ["account_{$this->contact->account_id}"]
+        && $job->data['id'] === $this->contact->id
+        && $job->data['thumbnail'] === $thumbnail);
+});
+
+it('không phát contact.updated khi không gắn được ảnh', function () {
+    Http::fake([AVATAR_URL => Http::response('<html>lỗi</html>', 200, ['Content-Type' => 'image/jpeg'])]);
+    Queue::fake();
+
+    (new AvatarFromUrlJob($this->contact, AVATAR_URL))->handle();
+
+    Queue::assertNotPushed(ActionCableBroadcastJob::class, fn (ActionCableBroadcastJob $job) => $job->eventName === 'contact.updated');
+});
+
+it('gắn avatar cho model không phải Contact cũng lưu lại record chủ', function () {
+    $inbox = Inbox::factory()->create();
+    $previousUpdatedAt = $inbox->updated_at;
+    Http::fake([AVATAR_URL => Http::response(pngBytes(), 200, ['Content-Type' => 'image/png'])]);
+
+    (new AvatarFromUrlJob($inbox, AVATAR_URL))->handle();
+
+    $inbox->refresh();
+
+    expect($inbox->avatarUrl())->not->toBe('')
+        ->and($inbox->updated_at->greaterThan($previousUpdatedAt))->toBeTrue();
 });

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { getTypingUsersText } from '../helper/conversationHelper';
 import {
     appendMessageAttachments,
+    applyContactUpdate,
     applyConversationUpdate,
     applyIncomingMessage,
     matchesConversationView,
@@ -112,6 +113,54 @@ describe('applyConversationUpdate', () => {
         expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'mention')).toHaveLength(0);
         expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'participating')).toHaveLength(0);
         expect(applyConversationUpdate([], buildConversation({ id: 9 }), 'unattended')).toHaveLength(1);
+    });
+});
+
+describe('applyContactUpdate', () => {
+    const contactOf = (conversation: Conversation) => conversation.meta.sender;
+
+    it('đổi avatar + tên ở mọi hội thoại cùng khách, giữ trường payload không mang, bỏ phong bì broadcast', () => {
+        const zalo = buildConversation({
+            id: 4,
+            meta: {
+                sender: { id: 3, name: 'Khách ẩn danh', thumbnail: '', availability_status: 'online' },
+                channel: 'Channel::Zalo',
+            },
+        });
+        const widget = buildConversation({
+            id: 5,
+            meta: { sender: { id: 3, name: 'Khách ẩn danh', thumbnail: '' }, channel: 'Channel::WebWidget' },
+        });
+
+        const result = applyContactUpdate([zalo, widget], {
+            id: 3,
+            name: 'Lan',
+            thumbnail: 'https://yona.test/avatar.png',
+            account_id: 2,
+            performer: { id: 7, name: 'Agent', type: 'user' },
+        });
+
+        expect(result.map(contactOf)).toEqual([
+            { id: 3, name: 'Lan', thumbnail: 'https://yona.test/avatar.png', availability_status: 'online' },
+            { id: 3, name: 'Lan', thumbnail: 'https://yona.test/avatar.png' },
+        ]);
+        expect(result[0].meta.channel).toBe('Channel::Zalo');
+    });
+
+    it('không đụng hội thoại của khách khác', () => {
+        const other = buildConversation({ id: 6, meta: { sender: { id: 9, name: 'Khác', thumbnail: 'cu.png' }, channel: null } });
+        const same = buildConversation({ id: 4 });
+
+        const result = applyContactUpdate([other, same], { id: 3, name: 'Contact', thumbnail: 'moi.png' });
+
+        expect(result[0]).toBe(other);
+        expect(contactOf(result[1]).thumbnail).toBe('moi.png');
+    });
+
+    it('trả lại đúng mảng cũ khi không hội thoại nào thuộc khách đó', () => {
+        const conversations = [buildConversation({ id: 4 })];
+
+        expect(applyContactUpdate(conversations, { id: 99, name: 'Lạ', thumbnail: 'x.png' })).toBe(conversations);
     });
 });
 
