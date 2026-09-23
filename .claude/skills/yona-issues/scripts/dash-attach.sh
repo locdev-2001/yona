@@ -42,7 +42,10 @@ PY
 
 upload_url=${mcp_url%/mcp}/upload
 args=(-sS -H "Authorization: Bearer $token" -F "task_id=$task_id")
-[[ -n $comment ]] && args+=(-F "comment=$comment")
+# --form-string: gửi nguyên văn. Với -F, curl coi ";" là chỗ bắt đầu tham số
+# (;type=…) nên bình luận bị cắt cụt ở dấu chấm phẩy đầu tiên, còn "@"/"<" đầu
+# chuỗi bị hiểu là đọc tệp.
+[[ -n $comment ]] && args+=(--form-string "comment=$comment")
 for file in "${files[@]}"; do args+=(-F "file[]=@$file"); done
 
 curl "${args[@]}" -w '\n' "$upload_url"
