@@ -28,7 +28,7 @@ Production chạy tại https://yona.vn. 40/40 tính năng Chatwoot đã port, t
 - **Thông báo đẩy** — có công tắc trong cài đặt nhưng không có service worker/VAPID (#58).
 - **Messenger, Instagram, WhatsApp Cloud, TikTok** — có wizard nhưng cần Meta App + App Review đứng tên Yona (#57).
 
-**Bốn nút đang chặn khách lạ tự đi hết:** SMTP chưa có nên không ai đăng ký được (#36) → onboarding bắt buộc Website (#62) → màn hình đầu bảo chủ tài khoản đi hỏi quản trị viên (#63) → Zalo chưa nghiệm thu bằng tài khoản thật (#48).
+**Hai nút còn chặn khách lạ tự đi hết** (23/09/2026): onboarding bắt buộc Website (#62) → màn hình đầu bảo chủ tài khoản đi hỏi quản trị viên (#63). Đã gỡ: SMTP đăng ký (#36), nghiệm thu Zalo bằng tài khoản thật + khách pilot (#48).
 
 Ảnh rà soát giao diện: nhánh `evidence/ui-audit-260920`, file `plans/reports/ui-audit-260920-evidence.md`.
 
