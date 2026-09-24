@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentAccount;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUserSessionActivity;
+use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\ValidateCsrfToken;
 use App\Support\SessionExpiryResponses;
 use App\Support\SuperAdminArea;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\Middleware\TrustProxies as FrameworkTrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -40,6 +42,10 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Production đứng sau Cloudflare: ip() phải là IP khách, không phải IP
+        // edge. Dải proxy tin cậy nằm ở config/trustedproxy.php.
+        $middleware->replace(FrameworkTrustProxies::class, TrustProxies::class);
+
         $middleware->web(append: [
             SetLocale::class,
             HandleInertiaRequests::class,
