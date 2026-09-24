@@ -201,6 +201,17 @@ it('xoá hội thoại hay liên hệ gỡ luôn tin và tệp bên dưới kh�
         ->and(meilisearchIds(SearchTarget::Conversations, (string) $this->conversation->display_id, $this->account->id))->not->toContain($this->conversation->id);
 });
 
+it('sửa liên hệ thì hội thoại của liên hệ đó tìm được theo thông tin mới', function () {
+    indexInMeilisearch([$this->conversation, $this->contact]);
+    expect(meilisearchIds(SearchTarget::Conversations, 'hanh', $this->account->id))->toBe([$this->conversation->id]);
+
+    $this->contact->update(['name' => 'Anh Quốc', 'email' => 'quoc@example.test']);
+    indexInMeilisearch([$this->contact]);
+
+    expect(meilisearchIds(SearchTarget::Conversations, 'quoc', $this->account->id))->toBe([$this->conversation->id])
+        ->and(meilisearchIds(SearchTarget::Conversations, 'hanh', $this->account->id))->toBe([]);
+});
+
 it('đồng bộ id không còn trong PostgreSQL thì gỡ khỏi chỉ mục', function () {
     $message = ($this->message)('đơn hàng số 12');
     indexInMeilisearch([$message]);

@@ -104,6 +104,10 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
         if ($vanished !== []) {
             $this->remove($target, $vanished);
         }
+
+        if ($target === SearchTarget::Contacts && $documents !== []) {
+            $this->indexContactConversations(array_column($documents, 'id'));
+        }
     }
 
     public function remove(SearchTarget $target, array $ids): void
@@ -191,6 +195,26 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
         }
 
         return $filters;
+    }
+
+    /**
+     * Tài liệu hội thoại mang tên, email, SĐT của khách: sửa liên hệ thì đồng bộ lại
+     * các hội thoại của liên hệ đó.
+     *
+     * @param  list<int>  $contactIds
+     */
+    private function indexContactConversations(array $contactIds): void
+    {
+        SearchTarget::Conversations->documents()
+            ->whereIn('conversations.contact_id', $contactIds)
+            ->select('conversations.id')
+            ->toBase()
+            ->chunkById(
+                self::MATCHING_CONVERSATION_LIMIT,
+                fn ($rows) => $this->index(SearchTarget::Conversations, $rows->map(fn (object $row) => (int) $row->id)->all()),
+                'conversations.id',
+                'id',
+            );
     }
 
     /** @param  list<int>  $conversationIds */
