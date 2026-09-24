@@ -1,15 +1,33 @@
+import { isJumboEmoji } from 'shared/helpers/jumboEmoji';
 import { t } from '../../../../i18n';
 import BaseBubble from './Base';
 import FormattedContent from './FormattedContent';
 import AttachmentChips from '../chips/AttachmentChips';
 import { useMessageContext } from '../provider';
+import { MESSAGE_VARIANTS } from '../constants';
 import { emphasizeMentions, readGroupMentions } from '../helpers/groupSender';
 
 // Port từ bubbles/Text/Index.vue — bỏ TranslationToggle (EE) và
 // submittedEmail (template email, F1).
 
+// Chỉ tin thường của khách và nhân viên; ghi chú riêng, bot, tin lỗi giữ khung màu riêng.
+const JUMBO_EMOJI_VARIANTS: string[] = [MESSAGE_VARIANTS.USER, MESSAGE_VARIANTS.AGENT];
+
 export default function TextBubble() {
-    const { content, attachments, contentAttributes } = useMessageContext();
+    const { content, attachments, contentAttributes, variant, replyQuote } = useMessageContext();
+
+    const isJumbo =
+        JUMBO_EMOJI_VARIANTS.includes(variant) && !attachments?.length && !replyQuote && isJumboEmoji(content);
+
+    if (isJumbo) {
+        return (
+            <BaseBubble className="!bg-transparent !p-0" dataBubbleName="text">
+                <span data-jumbo-emoji className="block text-4xl leading-tight">
+                    {content?.trim()}
+                </span>
+            </BaseBubble>
+        );
+    }
 
     const isEmpty = !content && !attachments?.length;
     // Nhắc tên trong nhóm phải nổi lên như ở app gốc của kênh.
