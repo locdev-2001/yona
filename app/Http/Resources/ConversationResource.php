@@ -99,13 +99,14 @@ class ConversationResource extends JsonResource
         /** @var Conversation $conversation */
         $conversation = $this->resource;
 
-        // Ngoài danh sách (sự kiện realtime) luôn đọc mới, không giữ tin cuối cũ trên model.
+        // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
+        // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
         $lastMessage = $conversation->relationLoaded('latestMessage')
             ? $conversation->latestMessage
-            : $conversation->latestMessage()->first();
+            : $conversation->messagesNewestFirst()->first();
         $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
             ? $conversation->latestNonActivityMessage
-            : $conversation->latestNonActivityMessage()->first();
+            : $conversation->lastNonActivityMessage();
 
         return [
             'meta' => $this->meta($conversation),

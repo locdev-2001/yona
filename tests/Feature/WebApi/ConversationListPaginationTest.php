@@ -43,7 +43,13 @@ function paginationListFixtures(int $conversationCount): array
         $messageAttributes = ['account_id' => $account->id, 'inbox_id' => $inbox->id, 'conversation_id' => $conversation->id];
         Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_INCOMING, 'sender_type' => 'Contact', 'sender_id' => $contact->id, 'created_at' => now()->subHour()]);
         Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_INCOMING, 'sender_type' => 'Contact', 'sender_id' => $contact->id, 'created_at' => now()->subMinutes(10)]);
-        Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_OUTGOING, 'sender_type' => 'User', 'sender_id' => $admin->id, 'created_at' => now()->subMinutes(5)]);
+        $outgoingAt = now()->subMinutes(5);
+        Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_OUTGOING, 'sender_type' => 'User', 'sender_id' => $admin->id, 'created_at' => $outgoingAt]);
+
+        // Hai tin trùng mốc giờ: tin id lớn hơn phải là tin cuối ở cả hai đường dựng thẻ.
+        if ($index % 4 === 0) {
+            Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_OUTGOING, 'sender_type' => 'User', 'sender_id' => $admin->id, 'created_at' => $outgoingAt]);
+        }
 
         if ($index % 2 === 1) {
             Message::factory()->create([...$messageAttributes, 'message_type' => Message::TYPE_ACTIVITY, 'created_at' => now()->subMinute()]);
@@ -83,6 +89,22 @@ it('renders preloaded cards exactly like cards built one by one', function () {
     $preloaded = ConversationResource::collectionFor(Conversation::query()->where('account_id', $account->id)->orderBy('id')->get());
 
     expect(json_encode($preloaded, JSON_PRETTY_PRINT))->toBe(json_encode($oneByOne, JSON_PRETTY_PRINT));
+});
+
+// Thẻ đơn lẻ dựng lại ở mỗi tin mới: truy vấn gộp theo hội thoại có thể rơi vào
+// kế hoạch vòng lặp lồng nhau khi thống kê bảng cũ, chậm theo bậc ba số tin.
+it('builds a single card from index lookups instead of the per-page aggregate', function () {
+    [$account, $admin] = paginationListFixtures(1);
+    $this->actingAs($admin);
+    $conversation = Conversation::query()->where('account_id', $account->id)->firstOrFail();
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    ConversationResource::pushEventData($conversation);
+    $aggregateQueries = collect(DB::getQueryLog())->filter(fn (array $query) => str_contains($query['query'], '_aggregate'));
+    DB::disableQueryLog();
+
+    expect($aggregateQueries)->toBeEmpty();
 });
 
 it('hands out a cursor on the first page and serves later pages without tab counts', function () {
