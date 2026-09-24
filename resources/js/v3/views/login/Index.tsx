@@ -15,6 +15,9 @@ import type { SharedPageProps } from '../../../types';
 import { BrandMark } from '../../components/BrandMark';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Khoá lỗi máy chủ trả khi trang để mở quá lâu (token CSRF hết hạn), cùng chuỗi
+// với App\Support\SessionExpiryResponses::PAGE_EXPIRED_ERROR.
+const PAGE_EXPIRED_ERROR = 'page_expired';
 
 // Port từ v3/views/login/Index.vue (Google OAuth + SAML chưa port — xem bảng
 // trace A1). Chatwoot nhận 206/409 từ axios; Yona là Inertia nên hai trạng thái
@@ -61,16 +64,24 @@ export default function LoginIndex() {
         document.title = replaceInstallationName(t('LOGIN.TITLE'));
     }, [replaceInstallationName]);
 
-    const postLogin = (payload: Record<string, string | number | boolean>) => {
+    const postLogin = (payload: Record<string, string | number | boolean>, retriedAfterPageExpired = false) => {
         setHasErrored(false);
         setDismissed(false);
         setShowLoading(true);
 
         router.post('/app/login', payload, {
             onError: pageErrors => {
+                // Máy chủ vừa cấp token mới cùng lỗi này: gửi lại một lần để người
+                // dùng chỉ phải bấm Đăng nhập một lần.
+                if (pageErrors[PAGE_EXPIRED_ERROR] && !retriedAfterPageExpired) {
+                    postLogin(payload, true);
+                    return;
+                }
                 setShowLoading(false);
                 setHasErrored(true);
-                useAlert(pageErrors.email || pageErrors.password || t('LOGIN.API.UNAUTH'));
+                useAlert(
+                    pageErrors[PAGE_EXPIRED_ERROR] || pageErrors.email || pageErrors.password || t('LOGIN.API.UNAUTH'),
+                );
             },
             onSuccess: page => {
                 setShowLoading(false);
