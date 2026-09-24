@@ -9,6 +9,7 @@
         "dev": "vite",
         "tsc": "tsc --noEmit",
         "check:css": "node scripts/check-css-surfaces.mjs",
+        "check:brand": "node scripts/check-brand-leak.mjs",
         "test": "vitest run",
         "check:ui": "python3 scripts/check-ui.py --url http://127.0.0.1:8610/?locale=vi",
         "check:ui:self": "python3 scripts/check-ui.py --self-test"
