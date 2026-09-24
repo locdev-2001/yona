@@ -17,7 +17,9 @@ use Illuminate\Support\Carbon;
 
 // Tìm hội thoại, tin nhắn, liên hệ và tệp của một account theo từ khoá. Chữ người
 // đọc (tên, nội dung, tiêu đề thư, tên tệp) khớp không dấu qua SearchTerm; email,
-// số điện thoại, mã khớp nguyên văn. Articles: trả rỗng tới khi có Help Center.
+// số điện thoại, mã khớp nguyên văn. Mỗi loại xếp theo mức liên quan của chữ người
+// đọc (SearchTerm::orderByRelevance) rồi mới tới mới hơn trước, id cuối cùng để
+// các trang không chồng nhau. Articles: trả rỗng tới khi có Help Center.
 class SearchService
 {
     public const RESULTS_PER_PAGE = 15;
@@ -113,8 +115,10 @@ class SearchService
             $query = $this->applyTimeFilter($query, 'conversations.last_activity_at');
         }
 
-        return $query->with(['contact', 'inbox', 'assignee.accountUsers'])
+        return $term->orderByRelevance($query, 'contacts.name', self::MAIL_SUBJECT_SQL)
+            ->with(['contact', 'inbox', 'assignee.accountUsers'])
             ->orderByDesc('conversations.created_at')
+            ->orderByDesc('conversations.id')
             ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
             ->get();
     }
@@ -122,9 +126,19 @@ class SearchService
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {
-        return $this->orderedMessagePage(
-            $this->filteredMessages()->whereRaw(...$this->searchTerm()->foldedMatch('messages.content')),
-        );
+        $term = $this->searchTerm();
+
+        // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các
+        // trang liền nhau đảo chỗ và trùng bản ghi.
+        return $term->orderByRelevance(
+            $this->filteredMessages()->whereRaw(...$term->foldedMatch('messages.content')),
+            'messages.content',
+        )
+            ->with(self::MESSAGE_RESULT_RELATIONS)
+            ->orderByDesc('messages.created_at')
+            ->orderByDesc('messages.id')
+            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
+            ->get();
     }
 
     // Mỗi tệp khớp là một kết quả (một tin ba tệp khớp ra ba dòng). Phạm vi, quyền
@@ -132,12 +146,16 @@ class SearchService
     /** @return Collection<int, Attachment> */
     public function filterFiles(): Collection
     {
-        return Attachment::query()
+        $term = $this->searchTerm();
+
+        $query = Attachment::query()
             ->select('attachments.*')
             ->whereMorphedTo('attachable', Message::class)
             ->whereIn('attachments.attachable_id', $this->filteredMessages()->select('messages.id'))
             ->whereIn('attachments.file_type', Attachment::SEARCHABLE_FILE_TYPES)
-            ->whereRaw(...$this->searchTerm()->foldedMatch(Attachment::DISPLAY_NAME_SQL))
+            ->whereRaw(...$term->foldedMatch(Attachment::DISPLAY_NAME_SQL));
+
+        return $term->orderByRelevance($query, Attachment::DISPLAY_NAME_SQL)
             ->with(['attachable' => fn (MorphTo $morph) => $morph->morphWith([
                 Message::class => self::MESSAGE_RESULT_RELATIONS,
             ])])
@@ -178,8 +196,10 @@ class SearchService
             $query = $this->applyTimeFilter($query, 'contacts.last_activity_at');
         }
 
-        return $query->resolvedContacts($this->currentAccount->featureEnabled('crm_v2'))
+        return $term->orderByRelevance($query, 'contacts.name')
+            ->resolvedContacts($this->currentAccount->featureEnabled('crm_v2'))
             ->orderOnLastActivityAt('desc')
+            ->orderByDesc('contacts.id')
             ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
             ->get();
     }
@@ -228,22 +248,6 @@ class SearchService
     private function advancedSearchEnabled(): bool
     {
         return $this->currentAccount->featureEnabled('advanced_search');
-    }
-
-    /**
-     * @param  Builder<Message>  $query
-     * @return Collection<int, Message>
-     */
-    private function orderedMessagePage(Builder $query): Collection
-    {
-        // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các
-        // trang liền nhau đảo chỗ và trùng bản ghi.
-        return $query->with(self::MESSAGE_RESULT_RELATIONS)
-            ->reorder()
-            ->orderByDesc('messages.created_at')
-            ->orderByDesc('messages.id')
-            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
-            ->get();
     }
 
     /**

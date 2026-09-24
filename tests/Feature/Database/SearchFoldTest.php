@@ -3,8 +3,10 @@
 use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Contact;
+use App\Models\Message;
 use App\Services\SearchService;
 use App\Support\SearchTerm;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 // search_fold là luật bỏ dấu phía máy chủ; resources/js/shared/helpers/searchFold.ts
@@ -24,12 +26,23 @@ function searchFoldCases(): array
 
 function foldedSearchIndexes(): array
 {
+    return array_column(foldedSearchColumns(), 2);
+}
+
+/** @return array<string, array{0: class-string<Model>, 1: string, 2: string}> */
+function foldedSearchColumns(): array
+{
     return [
-        'index_messages_on_folded_content',
-        'index_messages_on_folded_group_sender_name',
-        'index_contacts_on_folded_name',
-        'index_attachments_on_folded_display_name',
+        'message content' => [Message::class, 'messages.content', 'index_messages_on_folded_content'],
+        'group member name' => [Message::class, SearchService::GROUP_SENDER_NAME_SQL, 'index_messages_on_folded_group_sender_name'],
+        'contact name' => [Contact::class, 'contacts.name', 'index_contacts_on_folded_name'],
+        'file name' => [Attachment::class, Attachment::DISPLAY_NAME_SQL, 'index_attachments_on_folded_display_name'],
     ];
+}
+
+function explainedPlan(string $sql, array $bindings): string
+{
+    return collect(DB::select("EXPLAIN {$sql}", $bindings))->pluck('QUERY PLAN')->implode("\n");
 }
 
 it('folds every shared case exactly like the frontend helper', function (string $input, string $folded) {
@@ -57,21 +70,25 @@ it('has every folded trigram index built and valid', function () {
 
 // Biểu thức truy vấn lệch biểu thức index một ký tự là planner im lặng quét cả
 // bảng. Tắt seqscan: còn dùng được index thì plan phải đi qua đúng index đó.
-it('lets the search expression use its folded trigram index', function (string $table, string $columnSql, string $index) {
+it('lets the search expression use its folded trigram index', function (string $model, string $columnSql, string $index) {
     DB::statement('SET LOCAL enable_seqscan = off');
+    $table = (new $model)->getTable();
     [$condition, $bindings] = (new SearchTerm('bao gia'))->foldedMatch($columnSql);
 
-    $plan = collect(DB::select("EXPLAIN SELECT {$table}.id FROM {$table} WHERE {$condition}", $bindings))
-        ->pluck('QUERY PLAN')
-        ->implode("\n");
+    expect(explainedPlan("SELECT {$table}.id FROM {$table} WHERE {$condition}", $bindings))->toContain($index);
+})->with(foldedSearchColumns());
 
-    expect($plan)->toContain($index);
-})->with([
-    'message content' => ['messages', 'messages.content', 'index_messages_on_folded_content'],
-    'group member name' => ['messages', SearchService::GROUP_SENDER_NAME_SQL, 'index_messages_on_folded_group_sender_name'],
-    'contact name' => ['contacts', 'contacts.name', 'index_contacts_on_folded_name'],
-    'file name' => ['attachments', Attachment::DISPLAY_NAME_SQL, 'index_attachments_on_folded_display_name'],
-]);
+// Xếp hạng liên quan chỉ nằm ở ORDER BY: phần lọc vẫn phải đi qua index trigram.
+it('keeps the folded trigram index usable when ordering by relevance', function (string $model, string $columnSql, string $index) {
+    DB::statement('SET LOCAL enable_seqscan = off');
+    $term = new SearchTerm('bao gia');
+    $query = $term->orderByRelevance($model::query()->select('id')->whereRaw(...$term->foldedMatch($columnSql)), $columnSql)
+        ->orderByDesc('created_at')
+        ->orderByDesc('id')
+        ->limit(SearchService::RESULTS_PER_PAGE);
+
+    expect(explainedPlan($query->toSql(), $query->getBindings()))->toContain($index)->toContain('Sort');
+})->with(foldedSearchColumns());
 
 it('splits the folded query into distinct words', function (string $query, array $words) {
     expect((new SearchTerm($query))->foldedWords())->toBe($words);

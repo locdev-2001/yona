@@ -98,7 +98,8 @@ describe('#perform', function () {
 });
 
 describe('contact search', function () {
-    it('searches name, email, phone_number and identifier ordered by last_activity_at', function () {
+    // Tên chứa trọn từ khoá đứng trước; khớp qua email, mã thì theo last_activity_at.
+    it('searches name, email, phone_number and identifier ordered by relevance then last_activity_at', function () {
         Contact::factory()->create(['account_id' => $this->account->id]);
         // Liên hệ chưa xác định danh tính (không email/phone/identifier) không lên kết quả.
         Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Harry Potter']);
@@ -121,7 +122,7 @@ describe('contact search', function () {
 
         $ids = e2Search(['q' => 'Potter '], 'Contact')->perform()['contacts']->pluck('id')->all();
 
-        expect($ids)->toBe([$harry4->id, $harry3->id, $harry2->id, $this->harry->id]);
+        expect($ids)->toBe([$this->harry->id, $harry4->id, $harry3->id, $harry2->id]);
     });
 });
 
@@ -151,7 +152,8 @@ describe('message search', function () {
 
     // Đường mới (bỏ dấu, theo từng từ) với từ khoá ASCII một từ phải ra đúng tập và
     // đúng thứ tự như đường ILIKE cũ, trên dữ liệu trộn: nội dung NULL, trùng
-    // created_at, hoa/thường. Nhiều từ thì nới ra: mọi tin cụm liền nhau từng ra vẫn ra.
+    // created_at, hoa/thường — ở đây mọi tin đều chứa trọn từ nên xếp hạng liên quan
+    // không đổi thứ tự. Nhiều từ thì nới ra: mọi tin cụm liền nhau từng ra vẫn ra.
     it('returns exactly what the plain ILIKE search returned for single-word ASCII queries', function () {
         $sameMoment = now()->subHour();
         searchTestMessage(['content' => null]);
@@ -690,4 +692,115 @@ describe('file search', function () {
         [' ', 'Hợp đồng.docx'],
         [null, null],
     ]);
+});
+
+describe('relevance ranking', function () {
+    it('puts the exact phrase first, then every word whole, then words found only inside longer words', function (string $query) {
+        $phrase = searchTestMessage(['content' => 'Báo giá tháng 9', 'created_at' => now()->subDays(3)]);
+        $apart = searchTestMessage(['content' => 'Anh báo lại giúp em giá sỉ nhé', 'created_at' => now()->subDays(2)]);
+        $insideLongerWord = searchTestMessage(['content' => 'Thông báo giao việc', 'created_at' => now()->subDay()]);
+
+        expect(searchResultIds($query, 'Message'))->toBe([$phrase->id, $apart->id, $insideLongerWord->id]);
+    })->with(['bao gia', 'Báo Giá', 'bao-gia']);
+
+    it('keeps newest first inside the same rank', function () {
+        $olderPhrase = searchTestMessage(['content' => 'Báo giá tháng 8', 'created_at' => now()->subDays(5)]);
+        $newerPhrase = searchTestMessage(['content' => 'Gửi anh báo giá tháng 9', 'created_at' => now()->subDays(4)]);
+        $olderPartial = searchTestMessage(['content' => 'Thông báo giao việc cũ', 'created_at' => now()->subDays(2)]);
+        $newerPartial = searchTestMessage(['content' => 'Thông báo giao việc mới', 'created_at' => now()->subDay()]);
+
+        expect(searchResultIds('bao gia', 'Message'))
+            ->toBe([$newerPhrase->id, $olderPhrase->id, $newerPartial->id, $olderPartial->id]);
+    });
+
+    it('does not count words split by punctuation as the exact phrase', function () {
+        $punctuated = searchTestMessage(['content' => 'Mai em báo, giá để sau', 'created_at' => now()->subDay()]);
+        $phrase = searchTestMessage(['content' => 'Báo giá tháng 9', 'created_at' => now()->subDays(2)]);
+
+        expect(searchResultIds('bao gia', 'Message'))->toBe([$phrase->id, $punctuated->id]);
+    });
+
+    // Thứ tự phải toàn phần (mức liên quan, created_at, id) thì mới cắt trang được:
+    // trùng created_at và thứ tự id ngược thời gian là chỗ các trang hay lặp hoặc sót.
+    it('pages through every rank without repeating or skipping a message', function () {
+        $sameMoment = now()->subHour();
+        $minutesAfter = fn (int $index) => $index <= 4 ? 0 : ($index * 7) % 12 + 1;
+        $phrases = collect(range(1, 12))->map(fn (int $index) => searchTestMessage([
+            'content' => "Báo giá đợt {$index}",
+            'created_at' => $sameMoment->copy()->subDay()->addMinutes($minutesAfter($index)),
+        ]));
+        $partials = collect(range(1, 12))->map(fn (int $index) => searchTestMessage([
+            'content' => "Thông báo giao việc {$index}",
+            'created_at' => $sameMoment->copy()->addMinutes($minutesAfter($index)),
+        ]));
+        $newestFirst = fn ($messages) => $messages
+            ->sortBy([['created_at', 'desc'], ['id', 'desc']])
+            ->pluck('id')
+            ->all();
+
+        $pages = collect(range(1, 3))
+            ->map(fn (int $page) => searchResultIds('bao gia', 'Message', ['page' => $page]));
+
+        expect($pages->map(fn (array $ids) => count($ids))->all())->toBe([15, 9, 0])
+            ->and($pages->flatten()->all())->toBe([...$newestFirst($phrases), ...$newestFirst($partials)]);
+    });
+
+    it('ranks files by name the same way', function () {
+        $phrase = searchTestFile($this->message, ['filename' => 'bao-gia_thang-9.pdf', 'created_at' => now()->subDays(2)]);
+        $insideLongerWord = searchTestFile($this->message, ['filename' => 'thong-bao-giao-viec.pdf', 'created_at' => now()->subDay()]);
+
+        expect(searchResultIds('bao gia', 'Attachment'))->toBe([$phrase->id, $insideLongerWord->id]);
+    });
+
+    it('ranks contacts whose name holds the whole word above names that only contain it', function () {
+        $partial = Contact::factory()->create([
+            'account_id' => $this->account->id,
+            'name' => 'Lan Anh',
+            'email' => 'lananh@shop.test',
+            'last_activity_at' => now()->subMinute(),
+        ]);
+        $whole = Contact::factory()->create([
+            'account_id' => $this->account->id,
+            'name' => 'Trường An',
+            'email' => 'truongan@shop.test',
+            'last_activity_at' => now()->subDays(3),
+        ]);
+
+        expect(searchResultIds('an', 'Contact'))->toBe([$whole->id, $partial->id]);
+    });
+
+    it('ranks conversations by the best of contact name and email subject', function () {
+        $partialContact = Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Bảo Giao']);
+        $partial = Conversation::factory()->create([
+            'account_id' => $this->account->id,
+            'inbox_id' => $this->inbox->id,
+            'contact_id' => $partialContact->id,
+            'created_at' => now()->subMinute(),
+        ]);
+        $phraseSubject = Conversation::factory()->create([
+            'account_id' => $this->account->id,
+            'inbox_id' => $this->inbox->id,
+            'additional_attributes' => ['mail_subject' => 'Báo giá tháng 9'],
+            'created_at' => now()->subDays(3),
+        ]);
+
+        expect(searchResultIds('bao gia', 'Conversation'))->toBe([$phraseSubject->id, $partial->id]);
+    });
+
+    it('treats regex characters in the query as plain text', function () {
+        $phrase = searchTestMessage(['content' => 'Giá (50%) + quà? [mới] c++ $5 ^_^ a|b {1} \\', 'created_at' => now()->subDay()]);
+        $insideLongerWord = searchTestMessage(['content' => 'Giao (50%) + quà? [mới] c++ $5 ^_^ a|b {1} \\']);
+
+        expect(searchResultIds('gia (50%) + qua?', 'Message'))->toBe([$phrase->id, $insideLongerWord->id]);
+
+        foreach (['[moi] c++ $5', '^_^ a|b {1}', '\\'] as $query) {
+            expect(searchResultIds($query, 'Message'))->toBe([$insideLongerWord->id, $phrase->id]);
+        }
+    });
+
+    it('keeps newest first when the query has no word left', function () {
+        $newer = searchTestMessage(['content' => 'Báo giá', 'created_at' => now()->addMinute()]);
+
+        expect(searchResultIds(' - ', 'Message'))->toBe([$newer->id, $this->message->id]);
+    });
 });
