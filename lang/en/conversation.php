@@ -230,6 +230,15 @@ return [
         'TRANSCRIPT_SHOW_MORE' => 'Show more',
         'TRANSCRIPT_SHOW_LESS' => 'Show less',
     ],
+    'SEARCH_IN_CONVERSATION' => [
+        'OPEN' => 'Search in conversation',
+        'PLACEHOLDER' => 'Search in conversation',
+        'OLDER' => 'Older result (Enter)',
+        'NEWER' => 'Newer result (Shift+Enter)',
+        'CLOSE' => 'Close search (Esc)',
+        'NO_RESULTS' => 'No results',
+        'ERROR' => 'Error, try again',
+    ],
     'HEADER' => [
         'RESOLVE_ACTION' => 'Resolve',
         'REOPEN_ACTION' => 'Reopen',

@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import BackButton from 'dashboard/components/widgets/BackButton';
+import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -16,6 +18,7 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MoreActions from './MoreActions';
 import SidepanelSwitch from './SidepanelSwitch';
+import ConversationSearchBar from './search/ConversationSearchBar';
 
 // Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
 // (EE), ConversationCallButton (voice EE), cảnh báo HMAC unverified (chỉ áp
@@ -35,8 +38,25 @@ export default function ConversationHeader({
     const { selectedConversation, accountId, inboxId, teamId, label } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const isWideLayout = useIsLargeScreen();
+    const [isSearchOpen, setSearchOpen] = useState(false);
+    const selectedConversationId = selectedConversation?.id;
+
+    useEffect(() => setSearchOpen(false), [selectedConversationId]);
 
     if (!selectedConversation) return null;
+
+    const closeSearch = () => setSearchOpen(false);
+    const searchButton = (
+        <Button
+            ghost
+            slate
+            sm
+            icon="i-lucide-search"
+            title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OPEN')}
+            className="!rounded-full"
+            onClick={() => setSearchOpen(true)}
+        />
+    );
 
     const currentContact = selectedConversation.meta.sender;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
@@ -59,6 +79,17 @@ export default function ConversationHeader({
             // Gốc nuốt lỗi clipboard (headless/không quyền) — không toast.
         }
     };
+
+    if (!isWideLayout && isSearchOpen) {
+        return (
+            <div
+                data-testid="conversation-header"
+                className={`flex flex-row items-center flex-1 w-full min-w-0 px-2 h-12 ${className}`}
+            >
+                <ConversationSearchBar onClose={closeSearch} />
+            </div>
+        );
+    }
 
     if (!isWideLayout) {
         return (
@@ -88,6 +119,7 @@ export default function ConversationHeader({
                     </div>
                 </div>
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
+                    {searchButton}
                     <SidepanelSwitch variant="inline" />
                     <MoreActions isCompact />
                 </div>
@@ -138,9 +170,16 @@ export default function ConversationHeader({
                     </div>
                 </div>
             </div>
-            <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
-                <MoreActions />
-            </div>
+            {isSearchOpen ? (
+                <div className="flex items-center flex-shrink-0 w-full xl:w-[26rem] xl:max-w-[50%]">
+                    <ConversationSearchBar onClose={closeSearch} />
+                </div>
+            ) : (
+                <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
+                    {searchButton}
+                    <MoreActions />
+                </div>
+            )}
         </div>
     );
 }

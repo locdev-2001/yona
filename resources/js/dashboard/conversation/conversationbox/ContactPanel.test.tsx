@@ -51,7 +51,7 @@ describe('ContactPanel accordions', () => {
             'Conversation Information',
             'Contact Attributes',
             'Contact Notes',
-            'Attachments',
+            'Media, files and links',
             'Conversation participants',
         ]);
     });

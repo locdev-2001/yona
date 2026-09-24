@@ -209,3 +209,10 @@ body {
     }
   }
 }
+
+// Từ khoá của thanh tìm trong hội thoại (CSS Custom Highlight API) — cùng màu
+// với kiểu tô kết quả tìm kiếm (SEARCH_MATCH_CLASS), sáng lẫn tối.
+::highlight(conversation-search) {
+  background-color: rgb(var(--amber-4));
+  color: rgb(var(--slate-12));
+}

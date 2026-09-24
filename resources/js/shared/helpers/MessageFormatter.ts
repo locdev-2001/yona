@@ -138,6 +138,11 @@ export default class MessageFormatter {
         return this.md.render(this.message);
     }
 
+    // Liên kết trong tin theo đúng bộ linkify đang biến chúng thành link ở bong bóng.
+    get links(): Array<{ url: string; text: string }> {
+        return (this.md.linkify.match(this.message) ?? []).map(match => ({ url: match.url, text: match.text }));
+    }
+
     get plainText(): string {
         const strippedOutHtml = new DOMParser().parseFromString(this.formattedMessage, 'text/html');
         return strippedOutHtml.body.textContent || '';

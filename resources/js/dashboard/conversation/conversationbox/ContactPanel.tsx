@@ -17,7 +17,7 @@ import ConversationAction from './contact/ConversationAction';
 import ConversationInfo from './contact/ConversationInfo';
 import ConversationParticipant from './contact/ConversationParticipant';
 import CustomAttributes from './contact/CustomAttributes';
-import SharedFiles from './contact/SharedFiles';
+import SharedContent from './contact/SharedContent';
 import { useContactDetails } from './contact/useContactDetails';
 import MacroList from '../macros/MacroList';
 
@@ -136,7 +136,7 @@ export default function ContactPanel() {
             title: t('CONVERSATION_SIDEBAR.ACCORDION.SHARED_FILES'),
             openKey: 'is_shared_files_open',
             compact: true,
-            body: <SharedFiles />,
+            body: <SharedContent />,
         },
         linear_issues: null,
         shopify_orders: null,

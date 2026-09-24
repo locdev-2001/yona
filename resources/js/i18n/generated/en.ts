@@ -2517,6 +2517,15 @@ const messages: Record<string, unknown> = {
             "TRANSCRIPT_SHOW_MORE": "Show more",
             "TRANSCRIPT_SHOW_LESS": "Show less"
         },
+        "SEARCH_IN_CONVERSATION": {
+            "OPEN": "Search in conversation",
+            "PLACEHOLDER": "Search in conversation",
+            "OLDER": "Older result (Enter)",
+            "NEWER": "Newer result (Shift+Enter)",
+            "CLOSE": "Close search (Esc)",
+            "NO_RESULTS": "No results",
+            "ERROR": "Error, try again"
+        },
         "HEADER": {
             "RESOLVE_ACTION": "Resolve",
             "REOPEN_ACTION": "Reopen",
@@ -2874,7 +2883,7 @@ const messages: Record<string, unknown> = {
             "MACROS": "Macros",
             "LINEAR_ISSUES": "Linked Linear Issues",
             "SHOPIFY_ORDERS": "Shopify Orders",
-            "SHARED_FILES": "Attachments"
+            "SHARED_FILES": "Media, files and links"
         },
         "SHARED_FILES": {
             "EMPTY": "No attachments yet",
@@ -2886,7 +2895,16 @@ const messages: Record<string, unknown> = {
             "SHOW_LESS": "Show less",
             "MORE_COUNT": "+{count}",
             "UNTITLED_FILE": "Untitled file",
-            "JUMP_TO_MESSAGE": "Jump to message"
+            "JUMP_TO_MESSAGE": "Jump to message",
+            "TAB_MEDIA": "Media",
+            "TAB_FILES": "Files",
+            "TAB_LINKS": "Links",
+            "EMPTY_TAB": "Nothing here in this conversation yet",
+            "LOAD_MORE": "Load more",
+            "LOAD_ERROR": "Could not load. Please try again.",
+            "OPEN_LINK": "Open link",
+            "OPEN_SCREEN": "View media, files and links",
+            "BACK": "Back"
         },
         "SHOPIFY": {
             "ORDER_ID": "Order #{id}",

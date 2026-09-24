@@ -109,6 +109,53 @@ export function fetchConversationAttachments(
     ).then(response => response.payload ?? []);
 }
 
+// Mục "Ảnh/video · Tệp" ở panel hội thoại: một trang của một loại, mới trước.
+export type SharedAttachmentKind = 'media' | 'files';
+
+export interface SharedAttachmentPage {
+    attachments: MessageAttachment[];
+    totalCount: number;
+}
+
+export function fetchSharedAttachments(
+    accountId: number,
+    conversationId: number,
+    kind: SharedAttachmentKind,
+    page: number,
+): Promise<SharedAttachmentPage> {
+    return getJson<{ payload?: MessageAttachment[]; meta?: { total_count?: number } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/attachments?${new URLSearchParams({ kind, page: String(page) })}`,
+    ).then(response => ({ attachments: response.payload ?? [], totalCount: response.meta?.total_count ?? 0 }));
+}
+
+export interface LinkMessage {
+    message_id: number;
+    content: string;
+    created_at: number;
+}
+
+export interface SharedLinkPage {
+    messages: LinkMessage[];
+    hasMore: boolean;
+}
+
+export function fetchSharedLinks(accountId: number, conversationId: number, page: number): Promise<SharedLinkPage> {
+    return getJson<{ payload?: LinkMessage[]; meta?: { has_more?: boolean } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/links?page=${page}`,
+    ).then(response => ({ messages: response.payload ?? [], hasMore: Boolean(response.meta?.has_more) }));
+}
+
+// Thanh tìm trong hội thoại: id mọi tin khớp, mới trước.
+export function searchConversationMessages(
+    accountId: number,
+    conversationId: number,
+    query: string,
+): Promise<number[]> {
+    return getJson<{ payload?: { message_ids?: number[] } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/search/messages?${new URLSearchParams({ q: query })}`,
+    ).then(response => response.payload?.message_ids ?? []);
+}
+
 // getPreviousMessages gốc: `after` chỉ gửi khi khác `before`.
 export function fetchMessages(
     accountId: number,

@@ -18,6 +18,7 @@ export interface MessageAttachment {
     width?: number | null;
     height?: number | null;
     fallback_title?: string | null;
+    filename?: string | null;
     created_at?: number;
     sender?: Record<string, unknown> | null;
 }

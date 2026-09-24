@@ -2517,6 +2517,15 @@ const messages: Record<string, unknown> = {
             "TRANSCRIPT_SHOW_MORE": "Xem thêm",
             "TRANSCRIPT_SHOW_LESS": "Thu gọn"
         },
+        "SEARCH_IN_CONVERSATION": {
+            "OPEN": "Tìm trong hội thoại",
+            "PLACEHOLDER": "Tìm trong hội thoại",
+            "OLDER": "Kết quả cũ hơn (Enter)",
+            "NEWER": "Kết quả mới hơn (Shift+Enter)",
+            "CLOSE": "Đóng tìm kiếm (Esc)",
+            "NO_RESULTS": "Không thấy",
+            "ERROR": "Lỗi, thử lại"
+        },
         "HEADER": {
             "RESOLVE_ACTION": "Giải quyết",
             "REOPEN_ACTION": "Mở lại",
@@ -2874,7 +2883,7 @@ const messages: Record<string, unknown> = {
             "MACROS": "Macro",
             "LINEAR_ISSUES": "Issue Linear đã gắn",
             "SHOPIFY_ORDERS": "Đơn hàng Shopify",
-            "SHARED_FILES": "Tệp đính kèm"
+            "SHARED_FILES": "Ảnh/video, tệp và liên kết"
         },
         "SHARED_FILES": {
             "EMPTY": "Chưa có tệp đính kèm nào",
@@ -2886,7 +2895,16 @@ const messages: Record<string, unknown> = {
             "SHOW_LESS": "Thu gọn",
             "MORE_COUNT": "+{count}",
             "UNTITLED_FILE": "Tệp chưa đặt tên",
-            "JUMP_TO_MESSAGE": "Tới tin nhắn"
+            "JUMP_TO_MESSAGE": "Tới tin nhắn",
+            "TAB_MEDIA": "Ảnh/video",
+            "TAB_FILES": "Tệp",
+            "TAB_LINKS": "Liên kết",
+            "EMPTY_TAB": "Chưa có gì trong hội thoại này",
+            "LOAD_MORE": "Xem thêm",
+            "LOAD_ERROR": "Không tải được. Bạn hãy thử lại.",
+            "OPEN_LINK": "Mở liên kết",
+            "OPEN_SCREEN": "Xem ảnh/video, tệp và liên kết",
+            "BACK": "Quay lại"
         },
         "SHOPIFY": {
             "ORDER_ID": "Đơn #{id}",

@@ -40,7 +40,7 @@ export default function Files({
     const visibleFiles = !isPeekable || showAll ? fileList : fileList.slice(0, peekLimit);
 
     const displayName = (attachment: MessageAttachment): string =>
-        fileNameFromUrl(attachment.data_url) || t('CONVERSATION_SIDEBAR.SHARED_FILES.UNTITLED_FILE');
+        attachment.filename || fileNameFromUrl(attachment.data_url) || t('CONVERSATION_SIDEBAR.SHARED_FILES.UNTITLED_FILE');
 
     const displaySize = (attachment: MessageAttachment): string => {
         if (attachment.file_size) return formatBytes(attachment.file_size);

@@ -231,6 +231,15 @@ return [
         'TRANSCRIPT_SHOW_MORE' => 'Xem thêm',
         'TRANSCRIPT_SHOW_LESS' => 'Thu gọn',
     ],
+    'SEARCH_IN_CONVERSATION' => [
+        'OPEN' => 'Tìm trong hội thoại',
+        'PLACEHOLDER' => 'Tìm trong hội thoại',
+        'OLDER' => 'Kết quả cũ hơn (Enter)',
+        'NEWER' => 'Kết quả mới hơn (Shift+Enter)',
+        'CLOSE' => 'Đóng tìm kiếm (Esc)',
+        'NO_RESULTS' => 'Không thấy',
+        'ERROR' => 'Lỗi, thử lại',
+    ],
     'HEADER' => [
         'RESOLVE_ACTION' => 'Giải quyết',
         'REOPEN_ACTION' => 'Mở lại',
