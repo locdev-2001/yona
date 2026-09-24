@@ -42,7 +42,7 @@ class NotificationsController extends Controller
     // read_all: không có primary_actor thì đánh dấu đã đọc toàn bộ account.
     public function readAll(Request $request, Account $account): Response
     {
-        $query = $this->userNotifications($request, $account)->unread();
+        $query = $this->userNotifications($request, $account);
         $primaryActor = $this->primaryActor($request, $account);
 
         if ($primaryActor !== null) {
@@ -50,7 +50,7 @@ class NotificationsController extends Controller
                 ->where('primary_actor_id', $primaryActor->id);
         }
 
-        $query->get()->each(fn (Notification $notification) => $notification->update(['read_at' => now()]));
+        Notification::markAllRead($query);
 
         return response()->noContent(200);
     }

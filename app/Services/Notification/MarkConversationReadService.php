@@ -23,13 +23,10 @@ class MarkConversationReadService
             return;
         }
 
-        Notification::query()
+        Notification::markAllRead(Notification::query()
             ->where('user_id', $this->user->id)
             ->where('account_id', $this->account->id)
             ->where('primary_actor_type', $this->conversation->getMorphClass())
-            ->where('primary_actor_id', $this->conversation->id)
-            ->unread()
-            ->get()
-            ->each(fn (Notification $notification) => $notification->update(['read_at' => now()]));
+            ->where('primary_actor_id', $this->conversation->id));
     }
 }

@@ -126,6 +126,26 @@ class Notification extends Model
         return $query->whereNull('read_at');
     }
 
+    // Đánh dấu đọc hàng loạt bằng một câu UPDATE rồi phát MỘT notification.updated mang
+    // số chưa đọc cuối. Cập nhật từng bản ghi sẽ phát N event với số lùi dần; tab nhận
+    // lệch thứ tự thì chuông và tiêu đề nháy số cũ.
+    /** @param Builder<Notification> $query */
+    public static function markAllRead(Builder $query): void
+    {
+        $unreadQuery = (clone $query)->unread();
+        $latestNotificationId = (clone $unreadQuery)->orderByDesc('last_activity_at')->orderByDesc('id')->value('id');
+
+        if ($latestNotificationId === null) {
+            return;
+        }
+
+        $unreadQuery->update(['read_at' => now()]);
+
+        DomainEvent::dispatch(EventType::NOTIFICATION_UPDATED, [
+            'notification' => static::query()->findOrFail($latestNotificationId),
+        ]);
+    }
+
     public function typeName(): string
     {
         return array_flip(self::TYPES)[$this->notification_type] ?? '';

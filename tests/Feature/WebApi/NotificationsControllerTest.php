@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ActionCableBroadcastJob;
 use App\Jobs\Notification\DeleteNotificationJob;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -85,6 +86,39 @@ describe('POST /api/v1/accounts/{id}/notifications/read_all', function () {
 
         expect($first->fresh()->read_at)->not->toBeNull()
             ->and($second->fresh()->read_at)->toBeNull();
+    });
+
+    it('broadcasts a single notification.updated carrying the final unread count', function () {
+        $this->admin->update(['pubsub_token' => 'admin-token']);
+        foreach (range(1, 3) as $ignored) {
+            notificationForAdminUser($this->account, $this->admin);
+        }
+        Queue::fake();
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/v1/accounts/{$this->account->id}/notifications/read_all")
+            ->assertOk();
+
+        $notificationBroadcasts = collect(Queue::pushedJobs()[ActionCableBroadcastJob::class] ?? [])
+            ->map(fn (array $pushed) => $pushed['job'])
+            ->filter(fn (ActionCableBroadcastJob $job) => str_starts_with($job->eventName, 'notification.'))
+            ->values();
+
+        expect($notificationBroadcasts)->toHaveCount(1)
+            ->and($notificationBroadcasts[0]->eventName)->toBe('notification.updated')
+            ->and($notificationBroadcasts[0]->data['unread_count'])->toBe(0)
+            ->and(Notification::query()->unread()->count())->toBe(0);
+    });
+
+    it('stays silent when nothing is unread', function () {
+        notificationForAdminUser($this->account, $this->admin, ['read_at' => now()]);
+        Queue::fake();
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/v1/accounts/{$this->account->id}/notifications/read_all")
+            ->assertOk();
+
+        Queue::assertNotPushed(ActionCableBroadcastJob::class);
     });
 });
 
