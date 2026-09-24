@@ -6,10 +6,9 @@ use App\Channels\DeclaresCapabilities;
 use App\Http\Resources\InboxResource;
 use App\Models\Account;
 use App\Models\AccountUser;
-use App\Models\Channel\TwilioSms;
 use App\Models\Inbox;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Tests\Contracts\Channels\ChannelCatalog;
 
 // Khung khai báo năng lực kênh — docs/channel-capabilities.md §3.
 // Sổ đăng ký kênh DUY NHẤT là morph map (AppServiceProvider): thêm kênh mới mà
@@ -17,38 +16,14 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 
 const CAPABILITY_SNAPSHOT_PATH = 'tests/Contracts/Channels/capability-matrix.snapshot.json';
 
-/** @return array<string, class-string> morph type => model kênh */
-function channelMorphMap(): array
-{
-    return collect(Relation::morphMap())
-        ->filter(fn (string $class, string $type) => str_starts_with($type, 'Channel::'))
-        ->all();
-}
-
-/** Kênh có nhiều biến thể thì mỗi biến thể là một dòng snapshot riêng (§3: quyết lúc đọc model). */
-function channelVariants(): array
-{
-    $variants = [];
-
-    foreach (channelMorphMap() as $type => $class) {
-        $variants[$type] = new $class;
-    }
-
-    $variants['Channel::TwilioSms (medium=whatsapp)'] = new TwilioSms(['medium' => 'whatsapp']);
-
-    ksort($variants);
-
-    return $variants;
-}
-
 it('mọi kênh trong morph map đều tự khai năng lực', function () {
-    foreach (channelMorphMap() as $type => $class) {
+    foreach (ChannelCatalog::morphMap() as $type => $class) {
         expect(new $class)->toBeInstanceOf(DeclaresCapabilities::class, "{$type} chưa implement DeclaresCapabilities");
     }
 });
 
 it('khai báo chỉ chứa năng lực hợp lệ, không trùng, đúng thứ tự enum', function () {
-    foreach (channelVariants() as $type => $channel) {
+    foreach (ChannelCatalog::variants() as $type => $channel) {
         $values = $channel->capabilities()->values();
 
         expect($channel->capabilities())->toBeInstanceOf(CapabilitySet::class)
@@ -64,7 +39,7 @@ it('khai báo chỉ chứa năng lực hợp lệ, không trùng, đúng thứ t
 it('ma trận khai báo khớp snapshot đã chốt', function () {
     $current = [];
 
-    foreach (channelVariants() as $type => $channel) {
+    foreach (ChannelCatalog::variants() as $type => $channel) {
         $current[$type] = $channel->capabilities()->values();
     }
 
