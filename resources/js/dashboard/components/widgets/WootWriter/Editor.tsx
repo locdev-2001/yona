@@ -10,7 +10,7 @@ import {
     buildMessageSchema,
 } from '@chatwoot/prosemirror-schema';
 import { suggestionsPlugin, triggerCharacters } from '@chatwoot/prosemirror-schema/src/mentions/plugin';
-import type { Node as ProseMirrorNode, Schema } from 'prosemirror-model';
+import type { Node as ProseMirrorNode, ResolvedPos, Schema } from 'prosemirror-model';
 import type { Plugin } from 'prosemirror-state';
 import { createTypingIndicator } from '@chatwoot/utils';
 
@@ -18,7 +18,7 @@ import CannedResponse from 'dashboard/components/widgets/conversation/CannedResp
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import TagAgents from './TagAgents';
 import TagGroupMembers from './TagGroupMembers';
-import { MEMBER_MENTION_TYPE, filterGroupMembers } from './groupMemberMentions';
+import { MEMBER_MENTION_TYPE, filterGroupMembers, multiWordTriggerMatcher, type SuggestionMatch } from './groupMemberMentions';
 import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
@@ -74,6 +74,12 @@ interface MentionTarget {
 }
 
 const NO_GROUP_MEMBERS: GroupMember[] = [];
+
+type SuggestionMatcher = ($position: ResolvedPos) => SuggestionMatch | null;
+
+const MENTION_TRIGGER = '@';
+const singleWordMention: SuggestionMatcher = triggerCharacters(MENTION_TRIGGER, 0);
+const multiWordMention: SuggestionMatcher = multiWordTriggerMatcher(MENTION_TRIGGER);
 
 interface SuggestionArgs {
     view: EditorView;
@@ -180,8 +186,9 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     callbacksRef.current = { onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, onAttachFiles, disabled, uiSettings };
 
     // Plugin gợi ý được dựng lại mỗi lần createState chạy nên phải đọc cờ qua ref.
-    const suggestionFlagsRef = useRef({ isPrivate, enableCannedResponses });
-    suggestionFlagsRef.current = { isPrivate, enableCannedResponses };
+    const mentionsGroupMembers = !isPrivate && groupMembers.length > 0;
+    const suggestionFlagsRef = useRef({ isPrivate, enableCannedResponses, mentionsGroupMembers });
+    suggestionFlagsRef.current = { isPrivate, enableCannedResponses, mentionsGroupMembers };
 
     // keyup → typingOn (một lần) rồi tự typingOff sau 4s không gõ; blur → typingOff ngay.
     const typingIndicatorRef = useRef(
@@ -197,18 +204,18 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 
     // createSuggestionPlugin của Editor.vue — một khuôn cho mọi ký tự kích hoạt.
     const createSuggestionPlugin = ({
-        trigger,
+        matcher,
         setShowMenu,
         setSearchTerm,
         isAllowed,
     }: {
-        trigger: string;
+        matcher: SuggestionMatcher;
         setShowMenu: (isOpen: boolean) => void;
         setSearchTerm: (term: string) => void;
         isAllowed: () => boolean;
     }): Plugin =>
         suggestionsPlugin({
-            matcher: triggerCharacters(trigger, 0),
+            matcher,
             suggestionClass: '',
             onEnter: (args: SuggestionArgs) => {
                 if (!isAllowed()) return false;
@@ -238,14 +245,17 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         return [
             // Gốc còn một plugin `@` nữa cho công cụ Captain (EE, không port); nhánh
             // nhắc tên của nó luôn được phép vì `enableCaptainTools` bằng false.
+            // Tên thành viên nhóm nhiều từ nên từ khoá `@` được kéo qua khoảng trắng;
+            // nhắc tên nhân viên ở Lưu ý riêng giữ một từ như cũ.
             createSuggestionPlugin({
-                trigger: '@',
+                matcher: $position =>
+                    (suggestionFlagsRef.current.mentionsGroupMembers ? multiWordMention : singleWordMention)($position),
                 setShowMenu: setShowUserMentions,
                 setSearchTerm: setMentionSearchKey,
                 isAllowed: () => true,
             }),
             createSuggestionPlugin({
-                trigger: '/',
+                matcher: triggerCharacters('/', 0),
                 setShowMenu: setShowCannedMenu,
                 setSearchTerm: setCannedSearchKey,
                 isAllowed: () => {

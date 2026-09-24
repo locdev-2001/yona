@@ -4,9 +4,15 @@ import {
     MessageMarkdownTransformer,
     buildMessageSchema,
 } from '@chatwoot/prosemirror-schema';
+import { triggerCharacters } from '@chatwoot/prosemirror-schema/src/mentions/plugin';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
-import { MEMBER_MENTION_TYPE, extractMemberMentions, filterGroupMembers } from './groupMemberMentions';
+import {
+    MEMBER_MENTION_TYPE,
+    extractMemberMentions,
+    filterGroupMembers,
+    multiWordTriggerMatcher,
+} from './groupMemberMentions';
 
 const schema = buildMessageSchema(
     ['strong', 'em', 'code', 'link', 'strike'],
@@ -99,10 +105,47 @@ describe('filterGroupMembers', () => {
         { external_id: '4', name: 'An' },
     ];
 
+    const names = (searchKey: string, list = members) => filterGroupMembers(list, searchKey).map(member => member.name);
+
     it('lọc không dấu, không phân biệt hoa thường', () => {
-        expect(filterGroupMembers(members, 'binh').map(member => member.name)).toEqual(['Bình']);
-        expect(filterGroupMembers(members, 'DUNG').map(member => member.name)).toEqual(['Dũng']);
-        expect(filterGroupMembers(members, 'd').map(member => member.name)).toEqual(['Dũng', 'Đạt']);
+        expect(names('binh')).toEqual(['Bình']);
+        expect(names('DUNG')).toEqual(['Dũng']);
+        expect(names('d')).toEqual(['Dũng', 'Đạt']);
+    });
+
+    describe('nhiều từ, cùng luật với ô tìm kiếm', () => {
+        const group = [
+            { external_id: '1', name: 'Nguyễn Văn Bình' },
+            { external_id: '2', name: 'Trần Thị An' },
+            { external_id: '3', name: 'Anh Bình' },
+            { external_id: '4', name: 'Bình An' },
+            { external_id: '5', name: 'Lê Đức' },
+            { external_id: '6', name: 'An Bình Dương' },
+        ];
+
+        it('khớp từng từ dù không liền nhau hay đảo thứ tự: "an binh" ra "Bình An"', () => {
+            expect(names('an binh', group)).toContain('Bình An');
+            expect(names('binh an', group)).toContain('Bình An');
+            expect(names('an duc', group)).toEqual([]);
+        });
+
+        it('tên khớp đúng cụm lên đầu, rồi đủ từ trọn, rồi từ nằm trong từ dài hơn', () => {
+            expect(names('an binh', group)).toEqual(['An Bình Dương', 'Bình An', 'Nguyễn Văn Bình', 'Anh Bình']);
+            expect(names('binh an', group)).toEqual(['Bình An', 'An Bình Dương', 'Nguyễn Văn Bình', 'Anh Bình']);
+        });
+
+        it('gõ có dấu hay không dấu, hoa hay thường ra cùng một danh sách', () => {
+            expect(names('BÌNH  An', group)).toEqual(names('binh an', group));
+        });
+
+        it('xếp hạng trước rồi mới cắt 50 mục: tên khớp đúng cụm nằm cuối danh sách vẫn lọt vào', () => {
+            const crowded = [
+                ...Array.from({ length: 60 }, (_, index) => ({ external_id: String(index), name: `Anh Bình ${index}` })),
+                { external_id: 'x', name: 'Bình An' },
+            ];
+
+            expect(names('binh an', crowded)[0]).toBe('Bình An');
+        });
     });
 
     it('từ khoá rỗng giữ nguyên thứ tự máy chủ trả, tối đa 50 mục', () => {
@@ -110,5 +153,72 @@ describe('filterGroupMembers', () => {
 
         const many = Array.from({ length: 60 }, (_, index) => ({ external_id: String(index), name: `Khách ${index}` }));
         expect(filterGroupMembers(many, 'khach')).toHaveLength(50);
+    });
+});
+
+// Đoạn văn một dòng trong ô soạn; `|` trong phần chữ là vị trí con trỏ.
+function resolveCursor(...parts: Inline[]) {
+    let cursor = -1;
+    let offset = 0;
+    const inline: ProseMirrorNode[] = [];
+
+    for (const part of parts) {
+        if (typeof part === 'string') {
+            const caret = part.indexOf('|');
+            const text = part.replace('|', '');
+            if (caret !== -1) cursor = offset + caret;
+            if (text) inline.push(schema.text(text));
+            offset += text.length;
+        } else {
+            inline.push(schema.nodes.mention.create({ userId: part.id, userFullName: part.name, mentionType: MEMBER_MENTION_TYPE }));
+            offset += 1;
+        }
+    }
+
+    const doc = schema.node('doc', null, [schema.node('paragraph', null, inline)]);
+    const paragraphStart = 1;
+
+    return doc.resolve(paragraphStart + cursor);
+}
+
+describe('multiWordTriggerMatcher', () => {
+    const matchMember = multiWordTriggerMatcher('@');
+    const matchSingleWord = triggerCharacters('@', 0);
+    const queryAt = (...parts: Inline[]) => matchMember(resolveCursor(...parts))?.text ?? null;
+
+    it('từ khoá kéo qua khoảng trắng từ @ tới con trỏ', () => {
+        expect(queryAt('@an binh|')).toBe('an binh');
+        expect(queryAt('Chào @Bình An|')).toBe('Bình An');
+        expect(matchMember(resolveCursor('Chào @an binh|'))?.range).toEqual({ from: 6, to: 14 });
+    });
+
+    it('con trỏ giữa câu chỉ lấy tới hết từ đang gõ, không nuốt phần câu phía sau', () => {
+        expect(queryAt('@an| binh ơi')).toBe('an');
+        expect(queryAt('@an bi|nh ơi')).toBe('an binh');
+        expect(matchMember(resolveCursor('@an bi|nh ơi'))?.range).toEqual({ from: 1, to: 9 });
+    });
+
+    it('tag đã chèn nằm giữa @ và con trỏ thì không còn là từ khoá', () => {
+        expect(queryAt('@an ', { id: '555', name: 'Bình' }, ' binh|')).toBeNull();
+        expect(queryAt({ id: '555', name: 'Bình' }, ' @an binh|')).toBe('an binh');
+    });
+
+    it('@ dính liền chữ phía trước (email) không mở gợi ý', () => {
+        expect(queryAt('gửi a@shop vn|')).toBeNull();
+    });
+
+    it.each<[string, Inline[]]>([
+        ['giữa một từ', ['@bi|nh ơi']],
+        ['chỉ có @', ['@|']],
+        ['con trỏ trước @', ['|@an']],
+        ['@ trong email', ['gửi a@b|']],
+        ['sau lời chào', ['Chào @bi|']],
+        ['ngay sau tag', [{ id: '555', name: 'Bình' }, '@bi|']],
+        ['hai @ liền nhau', ['@a|@b']],
+        ['@ thứ hai trong câu', ['@an @bi|']],
+    ])('khi không có khoảng trắng thì y hệt bộ nhận một từ: %s', (_, parts) => {
+        const $position = resolveCursor(...parts);
+
+        expect(matchMember($position)).toEqual(matchSingleWord($position));
     });
 });

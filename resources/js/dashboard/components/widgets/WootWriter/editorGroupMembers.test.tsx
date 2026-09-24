@@ -31,6 +31,8 @@ beforeAll(() => {
 const MEMBERS = [
     { external_id: '555', name: 'Bình', avatar: null },
     { external_id: '777', name: 'An', avatar: null },
+    { external_id: '888', name: 'Anh Bình', avatar: null },
+    { external_id: '999', name: 'Bình An', avatar: null },
 ];
 
 const optionNames = () => screen.getAllByRole('option').map(option => option.querySelector('.text-sm')?.textContent);
@@ -70,7 +72,7 @@ describe('Editor · nhắc tên thành viên nhóm', () => {
 
         await screen.findAllByRole('option');
         expect(screen.getByText('Group members')).toBeTruthy();
-        expect(optionNames()).toEqual(['Bình', 'An']);
+        expect(optionNames()).toEqual(['Bình', 'An', 'Anh Bình', 'Bình An']);
     });
 
     it('gõ @bi lọc không dấu, Enter chèn tag thành viên chứ không gửi tin', async () => {
@@ -78,7 +80,7 @@ describe('Editor · nhắc tên thành viên nhóm', () => {
 
         type('@');
         type('bi');
-        await waitFor(() => expect(optionNames()).toEqual(['Bình']));
+        await waitFor(() => expect(optionNames()).toEqual(['Bình', 'Anh Bình', 'Bình An']));
 
         // Ô soạn nhường Enter cho bảng (bảng nghe ở tầng document).
         pressInEditor('Enter');
@@ -86,6 +88,32 @@ describe('Editor · nhắc tên thành viên nhóm', () => {
         await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('[@Bình](mention://member/555/B%C3%ACnh) '));
         expect(onSend).not.toHaveBeenCalled();
         await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+    });
+
+    it('gõ @an binh (có khoảng trắng, đảo thứ tự) ra Bình An; Enter thay cả cụm bằng tag', async () => {
+        const { type, pressInEditor, onChange, onSend } = renderEditor();
+
+        type('@an');
+        type(' ');
+        type('binh');
+        await waitFor(() => expect(optionNames()).toEqual(['Bình An', 'Anh Bình']));
+
+        pressInEditor('Enter');
+
+        await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('[@Bình An](mention://member/999/B%C3%ACnh%20An) '));
+        expect(onSend).not.toHaveBeenCalled();
+    });
+
+    it('gõ tiếp câu sau @ tới khi không còn ai khớp thì bảng đóng và Enter gửi tin', async () => {
+        const { type, pressInEditor, onSend } = renderEditor();
+
+        type('@an');
+        await screen.findAllByRole('option');
+        type(' oi mai hop');
+
+        await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
+        pressInEditor('Enter');
+        expect(onSend).toHaveBeenCalledTimes(1);
     });
 
     it('không ai khớp thì không mở bảng và Enter gửi tin như thường', async () => {

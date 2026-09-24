@@ -2,16 +2,13 @@ import { useMemo } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
-import { escapeHtml } from 'shared/helpers/escapeHtml';
-import { highlightSegments } from 'shared/helpers/searchFold';
+import { searchHighlightHtml } from 'dashboard/helper/searchHighlight';
 import { t } from '../../../../i18n';
 import CaretAnchoredPicker from './CaretAnchoredPicker';
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 
 // Bảng gợi ý thành viên nhóm khi gõ `@` ở chế độ Trả lời. Ô soạn giữ focus: từ khoá
-// là chữ gõ ngay sau `@`, danh sách đã được Editor lọc sẵn.
-
-const HIGHLIGHT_CLASS = 'text-n-blue-text';
+// là chữ gõ ngay sau `@`, danh sách đã được Editor lọc và xếp sẵn.
 
 interface TagGroupMembersProps {
     caretPosition: CaretPosition | null;
@@ -31,16 +28,6 @@ interface GroupMemberPickerItem {
     group: string;
 }
 
-// Tên đến từ kênh nên phải mã hoá trước khi vào HTML của bảng; đoạn khớp (không
-// dấu) được tô sáng.
-function highlightedName(name: string, searchKey: string): string {
-    return highlightSegments(name, searchKey)
-        .map(segment =>
-            segment.match ? `<span class="${HIGHLIGHT_CLASS}">${escapeHtml(segment.text)}</span>` : escapeHtml(segment.text),
-        )
-        .join('');
-}
-
 export default function TagGroupMembers({
     caretPosition,
     searchKey,
@@ -58,7 +45,7 @@ export default function TagGroupMembers({
                 id: member.external_id,
                 member,
                 label: member.name,
-                title: highlightedName(member.name, searchKey),
+                title: searchHighlightHtml(member.name, searchKey),
                 group: groupLabel,
             })),
         [members, searchKey, groupLabel],
