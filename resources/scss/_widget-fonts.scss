@@ -27,3 +27,22 @@ $widget-inter-weights: (
   font-display: swap;
   src: url('../fonts/Inter/Inter-Italic.woff2') format('woff2');
 }
+
+// Chữ của khung chat theo design: Be Vietnam Pro tự host (không gọi dịch vụ font
+// bên ngoài từ site khách). Chỉ có 3 nét 300/400/500 trong repo; 600/700 trình
+// duyệt tự tổng hợp từ nét 500.
+$widget-be-vietnam-weights: (
+  300: 'Light',
+  400: 'Regular',
+  500: 'Medium',
+);
+
+@each $weight, $name in $widget-be-vietnam-weights {
+  @font-face {
+    font-family: 'Be Vietnam Pro';
+    font-style: normal;
+    font-weight: $weight;
+    font-display: swap;
+    src: url('../fonts/BeVietnamPro/BeVietnamPro-#{$name}.woff2') format('woff2');
+  }
+}

@@ -45,6 +45,8 @@
   --yona-chat-scrim-soft: rgba(23, 24, 26, 0.3);
   --yona-chat-on-scrim: #ffffff;
   --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
+  --yona-chat-send-idle: #d2d6db;
+  --yona-chat-font: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 .dark {
@@ -66,6 +68,7 @@
   --yona-chat-on-solid-soft: rgb(var(--slate-11));
   --yona-chat-quote-own: rgba(255, 255, 255, 0.08);
   --yona-chat-dot: rgb(var(--slate-8));
+  --yona-chat-send-idle: rgb(var(--slate-7));
   --yona-chat-progress-track: rgba(255, 255, 255, 0.25);
 }
 
@@ -75,11 +78,11 @@
   transition: background-color 0.3s ease;
 }
 
-// Bản gốc KHÔNG ép Inter cho body widget (khác dashboard) — chữ chạy bằng
-// font hệ thống của tailwind; ép Inter vào đây làm lệch pixel với oracle.
 html,
 body {
   @apply antialiased h-full;
+
+  font-family: var(--yona-chat-font);
 
   margin: 0;
   padding: 0;
