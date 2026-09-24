@@ -10,6 +10,11 @@ use App\Services\Webhooks\Trigger;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
+function webhookHeaderPrefixes(): array
+{
+    return (new ReflectionClassConstant(Trigger::class, 'HEADER_PREFIXES'))->getValue();
+}
+
 it('gửi POST kèm chữ ký HMAC và các header giao hàng', function () {
     Http::fake(['https://example.com/hook' => Http::response('', 200)]);
 
@@ -19,13 +24,36 @@ it('gửi POST kèm chữ ký HMAC và các header giao hàng', function () {
 
     Http::assertSent(function ($request) use ($payload) {
         $body = $request->body();
-        $timestamp = $request->header('X-Chatwoot-Timestamp')[0];
+        $timestamp = $request->header('X-Yona-Timestamp')[0];
         $expected = 'sha256='.hash_hmac('sha256', "{$timestamp}.{$body}", 'sec-ret');
 
         return $body === json_encode($payload)
             && $request->header('Content-Type')[0] === 'application/json'
-            && $request->header('X-Chatwoot-Delivery')[0] === 'delivery-1'
-            && $request->header('X-Chatwoot-Signature')[0] === $expected;
+            && $request->header('X-Yona-Delivery')[0] === 'delivery-1'
+            && $request->header('X-Yona-Signature')[0] === $expected;
+    });
+});
+
+// Máy nhận viết theo tên header cũ vẫn kiểm được chữ ký: mọi tiền tố mang đúng giá trị của tên chính.
+it('gửi kèm header theo tên cũ với cùng giá trị như tên chính', function () {
+    Http::fake();
+
+    (new WebhookJob('https://example.com/hook', ['event' => 'contact_created'], Trigger::TYPE_ACCOUNT, 'sec-ret', 'delivery-1'))->handle();
+
+    $prefixes = webhookHeaderPrefixes();
+    expect($prefixes[0])->toBe('X-Yona')->and(count($prefixes))->toBeGreaterThan(1);
+
+    Http::assertSent(function ($request) use ($prefixes) {
+        foreach (array_slice($prefixes, 1) as $legacyPrefix) {
+            foreach (['Delivery', 'Timestamp', 'Signature'] as $suffix) {
+                if ($request->header("{$legacyPrefix}-{$suffix}") !== $request->header("X-Yona-{$suffix}")
+                    || $request->header("X-Yona-{$suffix}") === []) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     });
 });
 
@@ -65,8 +93,15 @@ it('không gắn header chữ ký khi webhook không có secret', function () {
 
     (new WebhookJob('https://example.com/hook', ['event' => 'contact_created']))->handle();
 
-    Http::assertSent(fn ($request) => $request->header('X-Chatwoot-Signature') === []
-        && $request->header('X-Chatwoot-Timestamp') === []);
+    Http::assertSent(function ($request) {
+        foreach (webhookHeaderPrefixes() as $prefix) {
+            if ($request->header("{$prefix}-Signature") !== [] || $request->header("{$prefix}-Timestamp") !== []) {
+                return false;
+            }
+        }
+
+        return true;
+    });
 });
 
 it('đánh dấu tin thất bại khi webhook của kênh API lỗi', function () {

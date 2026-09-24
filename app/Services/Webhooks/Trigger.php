@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/webhooks/trigger.rb — một chỗ duy nhất gửi HTTP ra
-// ngoài cho cả ba loại webhook (account, inbox API, agent bot).
+// Một chỗ duy nhất gửi HTTP ra ngoài cho cả ba loại webhook (account, inbox API, agent bot).
 class Trigger
 {
     public const TYPE_ACCOUNT = 'account_webhook';
@@ -24,6 +23,10 @@ class Trigger
     private const ERROR_HANDLED_EVENTS = ['message_created', 'message_updated'];
 
     private const RETRYABLE_AGENT_BOT_STATUSES = [429, 500];
+
+    // Tiền tố đầu tiên là tên chính; tiền tố sau giữ cho máy nhận đã viết theo tên
+    // header cũ, cùng giá trị nên kiểm chữ ký theo tên nào cũng được.
+    private const HEADER_PREFIXES = ['X-Yona', 'X-Chatwoot'];
 
     public function __construct(
         private readonly string $url,
@@ -85,14 +88,22 @@ class Trigger
     {
         $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
 
+        $signedValues = [];
+
         if (filled($this->deliveryId)) {
-            $headers['X-Chatwoot-Delivery'] = $this->deliveryId;
+            $signedValues['Delivery'] = $this->deliveryId;
         }
 
         if (filled($this->secret)) {
             $timestamp = (string) now()->getTimestamp();
-            $headers['X-Chatwoot-Timestamp'] = $timestamp;
-            $headers['X-Chatwoot-Signature'] = 'sha256='.hash_hmac('sha256', "{$timestamp}.{$body}", (string) $this->secret);
+            $signedValues['Timestamp'] = $timestamp;
+            $signedValues['Signature'] = 'sha256='.hash_hmac('sha256', "{$timestamp}.{$body}", (string) $this->secret);
+        }
+
+        foreach (self::HEADER_PREFIXES as $prefix) {
+            foreach ($signedValues as $suffix => $value) {
+                $headers["{$prefix}-{$suffix}"] = $value;
+            }
         }
 
         return $headers;

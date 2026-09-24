@@ -59,6 +59,11 @@ export const SOURCE_ALLOWLIST = [
         reason: 'import từ gói npm thật; gỡ khi các gói được gọi qua alias trung tính.',
     },
     {
+        path: 'app/Services/Webhooks/Trigger.php',
+        tokens: ['X-Chatwoot'],
+        reason: 'Tiền tố header webhook cũ gửi song song với X-Yona để máy nhận đã viết theo tên cũ vẫn kiểm được chữ ký.',
+    },
+    {
         path: /^(lang\/(en|vi)\/inbox_mgmt\.php|resources\/js\/i18n\/generated\/(en|vi)\.ts)$/,
         tokens: ['window.chatwootSettings'],
         reason: 'Mã nhúng của Trình tạo widget phải khớp biến SDK đang đọc; đổi cùng lúc với SDK nhúng.',
