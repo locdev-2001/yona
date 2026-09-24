@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { groupReactions, readReactions } from './helpers/reactions';
+import { LONG_PRESS_MS } from './MessageActions';
 
 const BASE_TIME = 1756707112;
 
@@ -35,6 +36,8 @@ const renderMessage = (
         onDeleteMessage?: () => void;
         onReplyTo?: (message: ConversationMessage) => void;
         onForward?: (message: ConversationMessage) => void;
+        onCreateCannedResponse?: (message: ConversationMessage) => void;
+        onTranslate?: (message: ConversationMessage) => void;
     } = {},
 ) =>
     render(
@@ -46,6 +49,8 @@ const renderMessage = (
             onDeleteMessage={handlers.onDeleteMessage}
             onReplyTo={handlers.onReplyTo}
             onForward={handlers.onForward}
+            onCreateCannedResponse={handlers.onCreateCannedResponse}
+            onTranslate={handlers.onTranslate}
         />,
     ).container;
 
@@ -64,91 +69,374 @@ const confirmButtonLabelled = (container: HTMLElement, label: string) =>
         button => button.textContent?.trim() === label,
     ) as HTMLButtonElement | undefined;
 
-describe('thanh hành động trên tin gate theo năng lực kênh', () => {
-    const handlers = { onToggleReaction: vi.fn(), onDeleteMessage: vi.fn() };
+const originalMatchMedia = window.matchMedia;
 
-    it('kênh chưa khai năng lực thì không có nút cảm xúc, chỉ còn "Xoá" một chiều như bản gốc', () => {
-        renderMessage(outgoing(), [], handlers);
+const stubPointer = (isHoverless: boolean) => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(hover: none)' ? isHoverless : false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+};
+
+afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+    vi.useRealTimers();
+});
+
+const ALL_CAPABILITIES = ['outbound_reaction', 'outbound_reply_to', 'outbound_recall'];
+
+const allHandlers = () => ({
+    onToggleReaction: vi.fn(),
+    onDeleteMessage: vi.fn(),
+    onReplyTo: vi.fn(),
+    onForward: vi.fn(),
+    onCreateCannedResponse: vi.fn(),
+});
+
+const bubbleOf = (container: HTMLElement) =>
+    container.querySelector('[data-message-id] [class*="grid-area:bubble"]') as HTMLElement;
+
+const menuLabels = () =>
+    screen.getAllByRole('menuitem').map(item => item.textContent?.trim());
+
+const openMoreMenu = () => fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+describe('thanh rê chuột gọn: cảm xúc, trả lời, ⋯', () => {
+    it('chỉ còn ba nút theo thứ tự cố định, thao tác khác nằm trong menu', () => {
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+        const bar = container.querySelector('[data-testid="message-action-bar"]') as HTMLElement;
+        const labels = Array.from(bar.querySelectorAll(':scope > button')).map(button =>
+            button.getAttribute('aria-label'),
+        );
+        expect(labels).toEqual(['React', 'Reply', 'More actions']);
+    });
+
+    it('vùng bấm 32px và có tooltip', () => {
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+        container.querySelectorAll('[data-testid="message-action-bar"] > button').forEach(button => {
+            expect(button.className).toContain('size-8');
+            expect(button.getAttribute('title')).toBe(button.getAttribute('aria-label'));
+        });
+    });
+
+    it('ẩn tới khi rê lên tin hoặc focus bằng bàn phím', () => {
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+        const bar = container.querySelector('[data-testid="message-action-bar"]') as HTMLElement;
+        expect(bar.className).toContain('group-hover/message:opacity-100');
+        expect(bar.className).toContain('focus-within:opacity-100');
+    });
+
+    it('kênh không khai năng lực nào thì không có nút cảm xúc và trả lời, vẫn còn ⋯', () => {
+        renderMessage(outgoing(), [], allHandlers());
 
         expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'Delete' })).not.toBeNull();
+        expect(screen.queryByRole('button', { name: 'Reply' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'More actions' })).not.toBeNull();
     });
 
-    it('hiện nút thả cảm xúc khi kênh khai outbound_reaction', () => {
-        renderMessage(outgoing(), ['outbound_reaction'], handlers);
+    it('bấm Trả lời gọi onReplyTo với chính tin đó', () => {
+        const handlers = allHandlers();
+        const payload = outgoing();
+        renderMessage(payload, ALL_CAPABILITIES, handlers);
 
-        expect(screen.getByRole('button', { name: 'React' })).not.toBeNull();
-    });
+        fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
 
-    it('nhãn "thu hồi" chỉ khi kênh khai outbound_recall, ngược lại là "xoá"', () => {
-        const withRecall = renderMessage(outgoing(), ['outbound_recall'], handlers);
-        expect(withRecall.querySelector('[aria-label="Unsend for everyone"]')).not.toBeNull();
-
-        const withoutRecall = renderMessage(outgoing(), ['outbound_reaction'], handlers);
-        expect(withoutRecall.querySelector('[aria-label="Delete"]')).not.toBeNull();
+        expect(handlers.onReplyTo).toHaveBeenCalledWith(payload);
     });
 
     it('bấm emoji trong bộ chọn nhanh gọi handler', () => {
-        const onToggleReaction = vi.fn();
-        renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction });
+        const handlers = allHandlers();
+        renderMessage(outgoing(), ALL_CAPABILITIES, handlers);
 
         fireEvent.click(screen.getByRole('button', { name: 'React' }));
         fireEvent.click(screen.getByRole('button', { name: '👍' }));
 
-        expect(onToggleReaction).toHaveBeenCalledTimes(1);
+        expect(handlers.onToggleReaction).toHaveBeenCalledTimes(1);
     });
 
+    it('tin đã thu hồi thì không cho thả cảm xúc nữa', () => {
+        renderMessage(outgoing({ content_attributes: { deleted: true } }), ALL_CAPABILITIES, allHandlers());
+
+        expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
+    });
+});
+
+describe('menu ⋯ và menu chuột phải là một', () => {
+    it('nhóm Trả lời, Chuyển tiếp | nội dung | Thu hồi tách riêng chữ đỏ', () => {
+        renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+        openMoreMenu();
+
+        expect(menuLabels()).toEqual([
+            'Reply',
+            'Forward',
+            'Copy text',
+            'Copy link to message',
+            'Create canned response',
+            'Unsend for everyone',
+        ]);
+        expect(screen.getAllByRole('separator')).toHaveLength(2);
+        const danger = screen.getByRole('menuitem', { name: 'Unsend for everyone' });
+        expect(danger.className).toContain('text-n-ruby-11');
+    });
+
+    it('chuột phải vào bong bóng mở đúng menu đó', () => {
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+        openMoreMenu();
+        const fromMoreButton = menuLabels();
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(screen.queryByRole('menu')).toBeNull();
+
+        const isNativeMenuAllowed = fireEvent.contextMenu(bubbleOf(container).firstElementChild as HTMLElement, {
+            clientX: 40,
+            clientY: 50,
+        });
+
+        expect(isNativeMenuAllowed).toBe(false);
+        expect(menuLabels()).toEqual(fromMoreButton);
+    });
+
+    it('thao tác kênh không hỗ trợ thì ẩn hẳn, không hiện mờ', () => {
+        renderMessage(outgoing(), [], allHandlers());
+
+        openMoreMenu();
+
+        expect(menuLabels()).not.toContain('Reply');
+        expect(menuLabels()).toContain('Delete');
+        expect(screen.queryByRole('menuitem', { name: 'Unsend for everyone' })).toBeNull();
+    });
+
+    it('Dịch chỉ hiện khi nơi dựng có dịch vụ dịch', () => {
+        renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+        openMoreMenu();
+        expect(screen.queryByRole('menuitem', { name: 'Translate' })).toBeNull();
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        const onTranslate = vi.fn();
+        const payload = outgoing({ id: 12 });
+        renderMessage(payload, ALL_CAPABILITIES, { ...allHandlers(), onTranslate });
+        fireEvent.click(screen.getAllByRole('button', { name: 'More actions' })[1]);
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Translate' }));
+
+        expect(onTranslate).toHaveBeenCalledWith(payload);
+    });
+
+    it('Tạo câu trả lời mẫu gọi handler với chính tin đó', () => {
+        const handlers = allHandlers();
+        const payload = outgoing();
+        renderMessage(payload, ALL_CAPABILITIES, handlers);
+
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Create canned response' }));
+
+        expect(handlers.onCreateCannedResponse).toHaveBeenCalledWith(payload);
+        expect(screen.queryByRole('menu')).toBeNull();
+    });
+
+    it('Chuyển tiếp có cả khi kênh nguồn không khai năng lực nào', () => {
+        const handlers = allHandlers();
+        const payload = outgoing();
+        renderMessage(payload, [], handlers);
+
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Forward' }));
+
+        expect(handlers.onForward).toHaveBeenCalledWith(payload);
+    });
+
+    it('ghi chú riêng không trả lời, không chuyển tiếp được', () => {
+        renderMessage(outgoing({ private: true }), ALL_CAPABILITIES, allHandlers());
+
+        openMoreMenu();
+
+        expect(menuLabels()).not.toContain('Reply');
+        expect(menuLabels()).not.toContain('Forward');
+    });
+
+    describe('sao chép', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+
+        beforeEach(() => {
+            writeText.mockClear();
+            Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        });
+
+        it('Sao chép nội dung chép đúng chữ của tin', () => {
+            renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+            openMoreMenu();
+            fireEvent.click(screen.getByRole('menuitem', { name: 'Copy text' }));
+
+            expect(writeText).toHaveBeenCalledWith('Đã nhận đơn ạ');
+        });
+
+        it('Sao chép liên kết mở hội thoại tại đúng tin (tham số messageId)', () => {
+            window.history.replaceState({}, '', '/app/accounts/1/conversations/2?foo=bar');
+            renderMessage(outgoing({ id: 77 }), ALL_CAPABILITIES, allHandlers());
+
+            openMoreMenu();
+            fireEvent.click(screen.getByRole('menuitem', { name: 'Copy link to message' }));
+
+            expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/app/accounts/1/conversations/2?messageId=77`);
+        });
+
+        it('tin chỉ có tệp, không có chữ thì không có Sao chép nội dung', () => {
+            renderMessage(
+                outgoing({
+                    content: null,
+                    attachments: [{ id: 1, file_type: 'file', data_url: '/f.pdf', file_size: 10, extension: 'pdf' }],
+                } as unknown as Partial<ConversationMessage>),
+                ALL_CAPABILITIES,
+                allHandlers(),
+            );
+
+            openMoreMenu();
+
+            expect(menuLabels()).not.toContain('Copy text');
+            expect(menuLabels()).toContain('Copy link to message');
+        });
+    });
+
+    it('bàn phím: mở bằng ⋯, mũi tên đi giữa các mục, Esc đóng và trả focus về ⋯', () => {
+        renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+        const moreButton = screen.getByRole('button', { name: 'More actions' });
+
+        fireEvent.click(moreButton);
+        const menu = screen.getByRole('menu');
+        expect(moreButton.getAttribute('aria-expanded')).toBe('true');
+        expect(document.activeElement?.textContent).toBe('Reply');
+
+        fireEvent.keyDown(menu, { key: 'ArrowDown' });
+        expect(document.activeElement?.textContent).toBe('Forward');
+        fireEvent.keyDown(menu, { key: 'ArrowUp' });
+        fireEvent.keyDown(menu, { key: 'ArrowUp' });
+        expect(document.activeElement?.textContent).toBe('Unsend for everyone');
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(screen.queryByRole('menu')).toBeNull();
+        expect(document.activeElement).toBe(moreButton);
+    });
+});
+
+describe('thu hồi và xoá luôn qua hộp xác nhận', () => {
     it('bấm "thu hồi" chỉ mở hộp xác nhận, chưa gọi handler', () => {
-        const onDeleteMessage = vi.fn();
-        const container = renderMessage(outgoing(), ['outbound_recall'], { onDeleteMessage });
+        const handlers = allHandlers();
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, handlers);
 
-        expect(container.querySelector('dialog')).toBeNull();
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Unsend for everyone' }));
 
-        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
-
-        expect(onDeleteMessage).not.toHaveBeenCalled();
-        expect(container.querySelector('dialog')?.textContent).toContain(
-            'Unsend this message for everyone?',
-        );
+        expect(handlers.onDeleteMessage).not.toHaveBeenCalled();
+        expect(container.querySelector('dialog')?.textContent).toContain('Unsend this message for everyone?');
         expect(container.querySelector('dialog')?.textContent).toContain('cannot be undone');
     });
 
     it('xác nhận rồi mới thu hồi, huỷ thì không đụng gì', () => {
-        const onDeleteMessage = vi.fn();
-        const container = renderMessage(outgoing(), ['outbound_recall'], { onDeleteMessage });
+        const handlers = allHandlers();
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, handlers);
 
-        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Unsend for everyone' }));
         fireEvent.click(confirmButtonLabelled(container, 'Cancel') as HTMLButtonElement);
 
-        expect(onDeleteMessage).not.toHaveBeenCalled();
+        expect(handlers.onDeleteMessage).not.toHaveBeenCalled();
         expect(container.querySelector('dialog')).toBeNull();
 
-        fireEvent.click(container.querySelector('[aria-label="Unsend for everyone"]') as HTMLElement);
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Unsend for everyone' }));
         fireEvent.click(confirmButtonLabelled(container, 'Unsend for everyone') as HTMLButtonElement);
 
-        expect(onDeleteMessage).toHaveBeenCalledTimes(1);
-        expect(container.querySelector('dialog')).toBeNull();
+        expect(handlers.onDeleteMessage).toHaveBeenCalledTimes(1);
     });
 
-    it('kênh không thu hồi được thì hỏi bằng câu "xoá" của bản gốc', () => {
-        const onDeleteMessage = vi.fn();
-        const container = renderMessage(outgoing(), [], { onDeleteMessage });
+    it('kênh không thu hồi được thì nhãn và câu hỏi là "xoá"', () => {
+        const handlers = allHandlers();
+        const container = renderMessage(outgoing(), [], handlers);
 
-        fireEvent.click(container.querySelector('[aria-label="Delete"]') as HTMLElement);
+        openMoreMenu();
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
-        expect(container.querySelector('dialog')?.textContent).toContain(
-            'Are you sure you want to delete this message?',
-        );
-
+        expect(container.querySelector('dialog')?.textContent).toContain('Are you sure you want to delete this message?');
         fireEvent.click(confirmButtonLabelled(container, 'Delete') as HTMLButtonElement);
-
-        expect(onDeleteMessage).toHaveBeenCalledTimes(1);
+        expect(handlers.onDeleteMessage).toHaveBeenCalledTimes(1);
     });
 
-    it('tin đã thu hồi thì không cho thả cảm xúc nữa', () => {
-        renderMessage(outgoing({ content_attributes: { deleted: true } }), ['outbound_reaction'], handlers);
+    it('tin đến không có thao tác xoá', () => {
+        renderMessage(outgoing({ message_type: 0 }), ALL_CAPABILITIES, allHandlers());
 
-        expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
+        openMoreMenu();
+
+        expect(menuLabels()).not.toContain('Unsend for everyone');
+        expect(menuLabels()).not.toContain('Delete');
+    });
+});
+
+describe('điện thoại: nhấn giữ mở bottom sheet', () => {
+    const touchAt = (x: number, y: number) => ({ touches: [{ clientX: x, clientY: y }] });
+
+    it('không còn dấu ⋯ hay thanh thao tác thường trực', () => {
+        stubPointer(true);
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+
+        expect(container.querySelector('[data-testid="message-action-bar"]')).toBeNull();
+        expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+    });
+
+    it('nhấn giữ mở sheet: hàng cảm xúc trên, danh sách thao tác dưới, vùng bấm 44px', () => {
+        stubPointer(true);
+        vi.useFakeTimers();
+        const handlers = allHandlers();
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, handlers);
+
+        fireEvent.touchStart(bubbleOf(container), touchAt(10, 10));
+        act(() => {
+            vi.advanceTimersByTime(LONG_PRESS_MS);
+        });
+        fireEvent.touchEnd(bubbleOf(container));
+
+        const sheet = screen.getByRole('dialog', { name: 'More actions' });
+        const reactionRow = screen.getByRole('group', { name: 'React' });
+        expect(sheet.contains(reactionRow)).toBe(true);
+        expect(reactionRow.compareDocumentPosition(screen.getByRole('menu'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        screen.getAllByRole('menuitem').forEach(item => expect(item.className).toContain('min-h-11'));
+        reactionRow.querySelectorAll('button').forEach(button => expect(button.className).toContain('size-11'));
+
+        fireEvent.click(screen.getByRole('button', { name: '❤️' }));
+        expect(handlers.onToggleReaction).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('dialog', { name: 'More actions' })).toBeNull();
+    });
+
+    it('chạm ngắn hoặc kéo để cuộn thì không mở sheet', () => {
+        stubPointer(true);
+        vi.useFakeTimers();
+        const container = renderMessage(outgoing(), ALL_CAPABILITIES, allHandlers());
+        const bubble = bubbleOf(container);
+
+        fireEvent.touchStart(bubble, touchAt(10, 10));
+        act(() => {
+            vi.advanceTimersByTime(LONG_PRESS_MS / 2);
+        });
+        fireEvent.touchEnd(bubble);
+        act(() => {
+            vi.advanceTimersByTime(LONG_PRESS_MS);
+        });
+        expect(screen.queryByRole('menu')).toBeNull();
+
+        fireEvent.touchStart(bubble, touchAt(10, 10));
+        fireEvent.touchMove(bubble, touchAt(10, 60));
+        act(() => {
+            vi.advanceTimersByTime(LONG_PRESS_MS);
+        });
+        expect(screen.queryByRole('menu')).toBeNull();
     });
 });
 
@@ -187,191 +475,3 @@ describe('hàng biểu cảm dưới bong bóng', () => {
     });
 });
 
-// Máy cảm ứng không rê chuột được: `group-hover` không bao giờ chạy nên thanh hành
-// động phải nấp sau nút ⋯ hiện sẵn (finding #8 của audit UX chat 07/09).
-describe('thanh hành động trên máy không rê chuột được', () => {
-    const originalMatchMedia = window.matchMedia;
-
-    const stubPointer = (isHoverless: boolean) => {
-        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-            matches: query === '(hover: none)' ? isHoverless : false,
-            media: query,
-            onchange: null,
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-            addListener: vi.fn(),
-            removeListener: vi.fn(),
-            dispatchEvent: vi.fn(),
-        })) as unknown as typeof window.matchMedia;
-    };
-
-    afterEach(() => {
-        window.matchMedia = originalMatchMedia;
-    });
-
-    it('hiện nút ⋯ thay cho thanh hành động, bấm mới bung cảm xúc và thu hồi', () => {
-        stubPointer(true);
-        renderMessage(outgoing(), ['outbound_reaction', 'outbound_recall'], {
-            onToggleReaction: vi.fn(),
-            onDeleteMessage: vi.fn(),
-        });
-
-        const moreButton = screen.getByRole('button', { name: 'More actions' });
-        expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
-        expect(screen.queryByRole('button', { name: 'Unsend for everyone' })).toBeNull();
-
-        fireEvent.click(moreButton);
-
-        expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'React' })).not.toBeNull();
-        expect(screen.getByRole('button', { name: 'Unsend for everyone' })).not.toBeNull();
-    });
-
-    it('thanh ⋯ hiện sẵn (không phụ thuộc rê chuột) trên máy cảm ứng', () => {
-        stubPointer(true);
-        const container = renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction: vi.fn() });
-
-        const bar = container.querySelector('button[aria-label="More actions"]')?.parentElement;
-        expect(bar?.className).toContain('opacity-60');
-        expect(bar?.className).not.toContain('group-hover/message:opacity-100');
-    });
-
-    it('máy có chuột giữ nguyên hành vi cũ: không có nút ⋯, thanh ẩn tới khi rê lên tin', () => {
-        stubPointer(false);
-        const container = renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction: vi.fn() });
-
-        expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
-        const bar = container.querySelector('button[aria-label="React"]')?.parentElement;
-        expect(bar?.className).toContain('group-hover/message:opacity-100');
-    });
-});
-
-describe('nút Trả lời trên thanh hành động', () => {
-    const originalMatchMedia = window.matchMedia;
-
-    afterEach(() => {
-        window.matchMedia = originalMatchMedia;
-    });
-
-    it('kênh khai outbound_reply_to thì có nút Trả lời và bấm gọi onReplyTo với chính tin đó', () => {
-        const onReplyTo = vi.fn();
-        const payload = outgoing();
-        renderMessage(payload, ['outbound_reply_to'], { onReplyTo });
-
-        fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
-
-        expect(onReplyTo).toHaveBeenCalledTimes(1);
-        expect(onReplyTo).toHaveBeenCalledWith(payload);
-    });
-
-    it('kênh không khai năng lực thì không có nút Trả lời', () => {
-        renderMessage(outgoing(), ['outbound_reaction'], { onReplyTo: vi.fn(), onToggleReaction: vi.fn() });
-
-        expect(screen.queryByRole('button', { name: 'Reply' })).toBeNull();
-    });
-
-    it('ghi chú riêng không trả lời trích dẫn được', () => {
-        renderMessage(outgoing({ private: true }), ['outbound_reply_to'], { onReplyTo: vi.fn() });
-
-        expect(screen.queryByRole('button', { name: 'Reply' })).toBeNull();
-    });
-
-    it('thứ tự nút cố định: Trả lời → Cảm xúc → Thu hồi', () => {
-        const container = renderMessage(outgoing(), ['outbound_reply_to', 'outbound_reaction', 'outbound_recall'], {
-            onReplyTo: vi.fn(),
-            onToggleReaction: vi.fn(),
-            onDeleteMessage: vi.fn(),
-        });
-
-        const labels = Array.from(container.querySelectorAll('.message-bubble-container button[aria-label]')).map(
-            button => button.getAttribute('aria-label'),
-        );
-
-        expect(labels).toEqual(['Reply', 'React', 'Unsend for everyone']);
-    });
-
-    it('máy cảm ứng: Trả lời nằm sau nút ⋯, bấm xong thì thanh thu lại', () => {
-        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-            matches: query === '(hover: none)',
-            media: query,
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-        })) as unknown as typeof window.matchMedia;
-        const onReplyTo = vi.fn();
-        renderMessage(outgoing(), ['outbound_reply_to'], { onReplyTo });
-
-        expect(screen.queryByRole('button', { name: 'Reply' })).toBeNull();
-
-        fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
-
-        expect(onReplyTo).toHaveBeenCalledTimes(1);
-        expect(screen.queryByRole('button', { name: 'Reply' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'More actions' })).not.toBeNull();
-    });
-});
-
-describe('nút Chuyển tiếp trên thanh hành động', () => {
-    const originalMatchMedia = window.matchMedia;
-
-    afterEach(() => {
-        window.matchMedia = originalMatchMedia;
-    });
-
-    it('có nút Chuyển tiếp dù kênh nguồn không khai năng lực nào; bấm gọi onForward với chính tin đó', () => {
-        const onForward = vi.fn();
-        const payload = outgoing({ message_type: 0, sender: undefined, sender_type: 'Contact' });
-        renderMessage(payload, [], { onForward });
-
-        fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
-
-        expect(onForward).toHaveBeenCalledTimes(1);
-        expect(onForward).toHaveBeenCalledWith(payload);
-    });
-
-    it('không truyền onForward thì không có nút', () => {
-        renderMessage(outgoing(), ['outbound_reaction'], { onToggleReaction: vi.fn() });
-
-        expect(screen.queryByRole('button', { name: 'Forward' })).toBeNull();
-    });
-
-    it('ghi chú riêng không chuyển tiếp được', () => {
-        renderMessage(outgoing({ private: true }), [], { onForward: vi.fn() });
-        expect(screen.queryByRole('button', { name: 'Forward' })).toBeNull();
-    });
-
-    it('thứ tự nút cố định: Trả lời → Cảm xúc → Chuyển tiếp → Thu hồi', () => {
-        const container = renderMessage(outgoing(), ['outbound_reply_to', 'outbound_reaction', 'outbound_recall'], {
-            onReplyTo: vi.fn(),
-            onToggleReaction: vi.fn(),
-            onDeleteMessage: vi.fn(),
-            onForward: vi.fn(),
-        });
-
-        const labels = Array.from(container.querySelectorAll('.message-bubble-container button[aria-label]')).map(
-            button => button.getAttribute('aria-label'),
-        );
-
-        expect(labels).toEqual(['Reply', 'React', 'Forward', 'Unsend for everyone']);
-    });
-
-    it('máy cảm ứng: Chuyển tiếp nằm sau nút ⋯, bấm xong thì thanh thu lại', () => {
-        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-            matches: query === '(hover: none)',
-            media: query,
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-        })) as unknown as typeof window.matchMedia;
-        const onForward = vi.fn();
-        renderMessage(outgoing(), [], { onForward });
-
-        expect(screen.queryByRole('button', { name: 'Forward' })).toBeNull();
-
-        fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
-
-        expect(onForward).toHaveBeenCalledTimes(1);
-        expect(screen.queryByRole('button', { name: 'Forward' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'More actions' })).not.toBeNull();
-    });
-});

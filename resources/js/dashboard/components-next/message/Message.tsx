@@ -42,7 +42,7 @@ import { useSenderIdentityContext } from './SenderIdentityContext';
 
 // Port từ dashboard/components-next/message/Message.vue. Payload spine giữ
 // snake_case (message_type, content_attributes…) — map sang biến camelCase tại
-// đây thay cho useCamelCase của bản gốc. Bỏ ở B3: context menu (B5), các bubble
+// đây thay cho useCamelCase của bản gốc. Bỏ ở B3: các bubble
 // email/CSAT/form/location/contact/embed… (C5/F), MessageError retry (chưa có
 // external_error ở API), highlight theo route messageId, WhatsappReferral.
 
@@ -62,6 +62,8 @@ interface MessageProps {
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
     onReplyTo?: (message: ConversationMessage) => void;
     onForward?: (message: ConversationMessage) => void;
+    onCreateCannedResponse?: (message: ConversationMessage) => void;
+    onTranslate?: (message: ConversationMessage) => void;
     onJumpToMessage?: (messageId: number) => void;
 }
 
@@ -122,6 +124,8 @@ export default function Message({
     onDeleteMessage,
     onReplyTo,
     onForward,
+    onCreateCannedResponse,
+    onTranslate,
     onJumpToMessage,
 }: MessageProps) {
     const messageType = message.message_type;
@@ -237,6 +241,8 @@ export default function Message({
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
         onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
         onForward: onForward ? () => onForward(message) : undefined,
+        onCreateCannedResponse: onCreateCannedResponse ? () => onCreateCannedResponse(message) : undefined,
+        onTranslate: onTranslate ? () => onTranslate(message) : undefined,
         onJumpToMessage,
     };
 
@@ -272,17 +278,15 @@ export default function Message({
                                 />
                             </div>
                         )}
-                        <div
+                        <MessageActions
                             className={`[grid-area:bubble] flex min-w-0 items-end ${
                                 orientation === ORIENTATION.RIGHT
                                     ? 'ltr:ml-8 rtl:mr-8 justify-end'
                                     : 'ltr:mr-8 rtl:ml-8'
                             }`}
                         >
-                            {orientation === ORIENTATION.RIGHT ? <MessageActions className="self-end me-1" /> : null}
                             <BubbleComponent />
-                            {orientation === ORIENTATION.LEFT ? <MessageActions className="self-end ms-1" /> : null}
-                        </div>
+                        </MessageActions>
                         {contentAttributes.external_error ? (
                             <MessageError
                                 className={`[grid-area:meta] ${FLEX_ORIENTATION_MAP[orientation]}`}

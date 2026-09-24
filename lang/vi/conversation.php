@@ -118,6 +118,13 @@ return [
         'FORWARD' => 'Chuyển tiếp',
         'RECALL' => 'Thu hồi với mọi người',
         'DELETE' => 'Xoá',
+        'COPIED' => 'Đã sao chép nội dung tin nhắn',
+        'COPY_FAILED' => 'Không sao chép được. Bạn hãy thử lại.',
+        'TRANSLATION' => [
+            'LOADING' => 'Đang dịch…',
+            'FAILED' => 'Chưa dịch được tin nhắn này. Bạn hãy thử lại sau.',
+            'CLOSE' => 'Đóng',
+        ],
         'RECALL_CONFIRMATION' => [
             'TITLE' => 'Thu hồi tin nhắn này với cả khách?',
             'MESSAGE' => 'Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được.',
@@ -471,13 +478,13 @@ return [
         'ASSIGN' => 'Gán',
     ],
     'CONTEXT_MENU' => [
-        'COPY' => 'Sao chép',
+        'COPY' => 'Sao chép nội dung',
         'REPLY_TO' => 'Trả lời tin nhắn này',
         'DELETE' => 'Xoá',
-        'CREATE_A_CANNED_RESPONSE' => 'Thêm vào câu trả lời soạn sẵn',
+        'CREATE_A_CANNED_RESPONSE' => 'Tạo câu trả lời mẫu',
         'TRANSLATE' => 'Dịch',
-        'COPY_PERMALINK' => 'Chép liên kết tới tin nhắn',
-        'LINK_COPIED' => 'Đã chép URL tin nhắn',
+        'COPY_PERMALINK' => 'Sao chép liên kết tới tin',
+        'LINK_COPIED' => 'Đã sao chép liên kết tới tin nhắn',
         'DELETE_CONFIRMATION' => [
             'TITLE' => 'Bạn chắc chắn muốn xóa tin nhắn này?',
             'MESSAGE' => 'Bạn không thể hoàn tác thao tác này',

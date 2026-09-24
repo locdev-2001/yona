@@ -2407,6 +2407,13 @@ const messages: Record<string, unknown> = {
             "FORWARD": "Forward",
             "RECALL": "Unsend for everyone",
             "DELETE": "Delete",
+            "COPIED": "Message text copied",
+            "COPY_FAILED": "Could not copy. Please try again.",
+            "TRANSLATION": {
+                "LOADING": "Translating…",
+                "FAILED": "Could not translate this message. Please try again later.",
+                "CLOSE": "Close"
+            },
             "RECALL_CONFIRMATION": {
                 "TITLE": "Unsend this message for everyone?",
                 "MESSAGE": "The message disappears on the customer's side too. This cannot be undone."
@@ -2756,13 +2763,13 @@ const messages: Record<string, unknown> = {
             "ASSIGN": "Assign"
         },
         "CONTEXT_MENU": {
-            "COPY": "Copy",
+            "COPY": "Copy text",
             "REPLY_TO": "Reply to this message",
             "DELETE": "Delete",
-            "CREATE_A_CANNED_RESPONSE": "Add to canned responses",
+            "CREATE_A_CANNED_RESPONSE": "Create canned response",
             "TRANSLATE": "Translate",
-            "COPY_PERMALINK": "Copy link to the message",
-            "LINK_COPIED": "Message URL copied to the clipboard",
+            "COPY_PERMALINK": "Copy link to message",
+            "LINK_COPIED": "Message link copied",
             "DELETE_CONFIRMATION": {
                 "TITLE": "Are you sure you want to delete this message?",
                 "MESSAGE": "You cannot undo this action",

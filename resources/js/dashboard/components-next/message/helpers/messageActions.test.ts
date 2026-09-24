@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveMessageActions } from './messageActions';
+import { groupMessageActions, hasAnyMessageAction, messagePermalink, resolveMessageActions } from './messageActions';
 import type { MessageActionInput } from './messageActions';
 
 const ALL_HANDLERS = { reply: true, react: true, delete: true, forward: true };
@@ -84,5 +84,75 @@ describe('resolveMessageActions — chuyển tiếp', () => {
         ['nơi dựng không truyền handler', { handlers: { ...ALL_HANDLERS, forward: false } }],
     ])('không chuyển tiếp được: %s', (_label, overrides) => {
         expect(resolveMessageActions(input(overrides as Partial<MessageActionInput>)).forward).toBe(false);
+    });
+});
+
+describe('resolveMessageActions — thao tác trên nội dung', () => {
+    const withText = (overrides: Partial<MessageActionInput> = {}) =>
+        input({
+            content: 'Số tài khoản 0123',
+            handlers: { ...ALL_HANDLERS, createCannedResponse: true, translate: true },
+            ...overrides,
+        });
+
+    it('tin có chữ thì sao chép, sao chép liên kết, tạo câu trả lời mẫu và dịch được', () => {
+        const flags = resolveMessageActions(withText());
+
+        expect([flags.copy, flags.copyLink, flags.createCannedResponse, flags.translate]).toEqual([true, true, true, true]);
+    });
+
+    it('tin không có chữ vẫn sao chép liên kết được, còn lại ẩn', () => {
+        const flags = resolveMessageActions(withText({ content: '   ' }));
+
+        expect([flags.copy, flags.copyLink, flags.createCannedResponse, flags.translate]).toEqual([false, true, false, false]);
+    });
+
+    it('Dịch và Tạo câu trả lời mẫu cần nơi dựng truyền handler (dịch vụ dịch đang bật)', () => {
+        const flags = resolveMessageActions(withText({ handlers: ALL_HANDLERS }));
+
+        expect(flags.translate).toBe(false);
+        expect(flags.createCannedResponse).toBe(false);
+        expect(flags.copy).toBe(true);
+    });
+
+    it('tin đã xoá hoặc chưa lưu không có thao tác nội dung nào', () => {
+        const deleted = resolveMessageActions(withText({ contentAttributes: { deleted: true } }));
+        expect([deleted.copy, deleted.copyLink, deleted.translate]).toEqual([false, false, false]);
+
+        expect(resolveMessageActions(withText({ id: -4 })).copyLink).toBe(false);
+    });
+});
+
+describe('groupMessageActions — một nguồn danh sách cho mọi menu', () => {
+    it('chia ba nhóm theo thứ tự, thu hồi/xoá luôn ở nhóm cuối riêng', () => {
+        const flags = resolveMessageActions(
+            input({
+                messageType: 1,
+                content: 'Chào anh',
+                inboxCapabilities: ['outbound_reply_to', 'outbound_recall'],
+                handlers: { ...ALL_HANDLERS, createCannedResponse: true, translate: true },
+            }),
+        );
+
+        expect(groupMessageActions(flags).map(group => group.map(action => action.id))).toEqual([
+            ['reply', 'forward'],
+            ['copy', 'copyLink', 'createCannedResponse', 'translate'],
+            ['delete'],
+        ]);
+    });
+
+    it('bỏ nhóm rỗng thay vì vẽ vạch ngăn thừa', () => {
+        const flags = resolveMessageActions(input({ messageType: 0, content: null, inboxCapabilities: [], handlers: { ...ALL_HANDLERS, forward: false } }));
+
+        expect(groupMessageActions(flags).map(group => group.map(action => action.id))).toEqual([['copyLink']]);
+        expect(hasAnyMessageAction(flags)).toBe(true);
+    });
+});
+
+describe('messagePermalink', () => {
+    it('giữ đường dẫn hội thoại, thay toàn bộ tham số bằng id tin', () => {
+        expect(messagePermalink('https://yona.vn/app/accounts/1/conversations/9?page=2#x', 55, 'messageId')).toBe(
+            'https://yona.vn/app/accounts/1/conversations/9?messageId=55',
+        );
     });
 });
