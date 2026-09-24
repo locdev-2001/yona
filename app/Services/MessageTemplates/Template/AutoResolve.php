@@ -24,7 +24,7 @@ final class AutoResolve extends BaseTemplate
         }
 
         ActivityMessageJob::dispatch($this->conversation, $this->conversation->activityMessageParams(
-            __('conversations.activity.auto_resolve.not_sent_due_to_messaging_window'),
+            $this->conversation->inAccountLocale(fn () => __('conversations.activity.auto_resolve.not_sent_due_to_messaging_window')),
         ));
     }
 

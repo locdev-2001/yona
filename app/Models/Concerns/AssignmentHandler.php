@@ -89,11 +89,13 @@ trait AssignmentHandler
     {
         $userName = auth()->user()?->name;
 
-        if ($this->assignmentAttributeChanged('team_id')) {
-            $this->createTeamChangeActivity($userName);
-        } elseif ($this->assignmentAttributeChanged('assignee_id')) {
-            $this->createAssigneeChangeActivity($userName);
-        }
+        $this->inAccountLocale(function () use ($userName) {
+            if ($this->assignmentAttributeChanged('team_id')) {
+                $this->createTeamChangeActivity($userName);
+            } elseif ($this->assignmentAttributeChanged('assignee_id')) {
+                $this->createAssigneeChangeActivity($userName);
+            }
+        });
     }
 
     private function createAssigneeChangeActivity(?string $userName): void

@@ -26,13 +26,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Traits\Localizable;
 
 // Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), SLA (EE),
 // activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Reportable;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable;
 
     public const STATUS_OPEN = 0;
 
@@ -803,6 +804,11 @@ class Conversation extends Model
     // ActivityMessageHandler#create_activity — nhánh status + priority.
     private function createActivity(): void
     {
+        $this->inAccountLocale(fn () => $this->createStatusPriorityLabelActivity());
+    }
+
+    private function createStatusPriorityLabelActivity(): void
+    {
         $userName = auth()->user()?->name;
         $activityUserName = CurrentExecutedBy::get() instanceof AutomationRule
             ? __('automation.system_name')
@@ -937,9 +943,25 @@ class Conversation extends Model
             return;
         }
 
-        $content = __('conversations.activity.'.$changeType, ['user_name' => $user->name]);
+        $content = $this->inAccountLocale(
+            fn () => __('conversations.activity.'.$changeType, ['user_name' => $user->name]),
+        );
 
         ActivityMessageJob::dispatch($this, $this->activityMessageParams($content));
+    }
+
+    /**
+     * Tin hoạt động lưu một lần cho cả account cùng đọc nên phải dựng theo ngôn
+     * ngữ của account, không theo ngôn ngữ giao diện của người đang thao tác.
+     *
+     * @template TResult
+     *
+     * @param  \Closure(): TResult  $build
+     * @return TResult
+     */
+    public function inAccountLocale(\Closure $build): mixed
+    {
+        return $this->withLocale($this->account?->locale ?: config('app.locale'), $build);
     }
 
     /**

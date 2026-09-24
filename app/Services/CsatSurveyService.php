@@ -69,7 +69,7 @@ final class CsatSurveyService
     private function createCsatNotSentActivityMessage(): void
     {
         ActivityMessageJob::dispatch($this->conversation, $this->conversation->activityMessageParams(
-            __('conversations.activity.csat.not_sent_due_to_messaging_window'),
+            $this->conversation->inAccountLocale(fn () => __('conversations.activity.csat.not_sent_due_to_messaging_window')),
         ));
     }
 

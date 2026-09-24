@@ -142,12 +142,9 @@ class Trigger
 
         $conversation->update(['status' => Conversation::STATUS_OPEN]);
 
-        ActivityMessageJob::dispatch($conversation, [
-            'account_id' => $conversation->account_id,
-            'inbox_id' => $conversation->inbox_id,
-            'message_type' => Message::TYPE_ACTIVITY,
-            'content' => __('conversations.activity.agent_bot.error_moved_to_open'),
-        ]);
+        ActivityMessageJob::dispatch($conversation, $conversation->activityMessageParams(
+            $conversation->inAccountLocale(fn () => __('conversations.activity.agent_bot.error_moved_to_open')),
+        ));
     }
 
     private function message(): ?Message
