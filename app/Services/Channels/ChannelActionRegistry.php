@@ -4,6 +4,7 @@ namespace App\Services\Channels;
 
 use App\Models\Inbox;
 use App\Services\Channels\Stickers\StickerCatalog;
+use App\Services\Widget\WidgetStickerCatalog;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
 use App\Services\Zalo\ZaloStickerCatalog;
@@ -27,6 +28,7 @@ class ChannelActionRegistry
     /** @var array<string, class-string<StickerCatalog>> */
     private const STICKER_CATALOGS = [
         'Channel::Zalo' => ZaloStickerCatalog::class,
+        'Channel::WebWidget' => WidgetStickerCatalog::class,
     ];
 
     public static function for(Inbox $inbox): ?ChannelOutboundActions

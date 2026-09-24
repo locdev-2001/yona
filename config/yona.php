@@ -169,6 +169,11 @@ return [
 
     'widget_token_expiry_days' => (int) env('WIDGET_TOKEN_EXPIRY', 180),
 
+    // Bộ sticker khách chọn được trong widget, dùng chung mọi inbox:
+    // [['id' => …, 'url' => …, 'pack_id' => …, 'label' => …], …]. Để rỗng thì
+    // widget ẩn tab Sticker.
+    'widget_stickers' => [],
+
     'available_locales' => [
         ['name' => 'English', 'iso_639_1_code' => 'en'],
         ['name' => 'Tiếng Việt', 'iso_639_1_code' => 'vi'],

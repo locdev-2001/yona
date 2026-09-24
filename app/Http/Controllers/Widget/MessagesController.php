@@ -119,6 +119,30 @@ class MessagesController extends WidgetController
         };
     }
 
+    /**
+     * Sticker khách chọn gửi lên là MÃ trong danh mục của kênh
+     * (`content_attributes.sticker`), không phải URL: máy chủ tự tra ảnh và
+     * payload, khách không nhét được ảnh ngoài vào tin.
+     *
+     * @return array<string, mixed>
+     */
+    protected function messageParams(Request $request, Conversation $conversation): array
+    {
+        $params = parent::messageParams($request, $conversation);
+
+        if ($request->input('message.content_type') !== 'sticker') {
+            return $params;
+        }
+
+        $stickerId = $request->input('message.content_attributes.sticker');
+
+        return [
+            ...$params,
+            'content_type' => 'sticker',
+            'sticker_id' => is_scalar($stickerId) ? (string) $stickerId : null,
+        ];
+    }
+
     // prevent_reply_to_resolved_conversation — ẩn ô soạn tin ở FE không chặn
     // được request, nên cờ inbox phải chặn ở đây.
     private function rejectReplyToResolvedConversation(Request $request): ?JsonResponse

@@ -2,6 +2,7 @@
 
 namespace App\Services\Messages;
 
+use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
 use App\Models\Attachment;
 use App\Models\Inbox;
@@ -10,7 +11,8 @@ use App\Services\Channels\Stickers\StickerCatalogException;
 use App\Services\Channels\Stickers\StickerLibrary;
 
 /**
- * Tin `content_type: sticker` do agent gửi: client chỉ đưa `sticker_id`, máy chủ
+ * Tin `content_type: sticker` do agent gửi, hoặc khách gửi từ bề mặt của kênh
+ * khai `inbound_sticker` (widget website): client chỉ đưa `sticker_id`, máy chủ
  * tra danh mục của kênh rồi tự dựng tin theo đúng hình dạng sticker nhận về —
  * `content` rỗng, `content_attributes.sticker` là payload của driver, một đính
  * kèm ảnh trỏ `external_url`. Nhờ vậy bong bóng, ô xem trước, realtime và webhook
@@ -36,7 +38,7 @@ final class StickerMessageBuilder
         $this->guardStandalone();
 
         try {
-            $sticker = app(StickerLibrary::class)->resolve($this->inbox, $this->stickerId());
+            $sticker = app(StickerLibrary::class)->resolve($this->inbox, $this->stickerId(), $this->direction());
         } catch (StickerCatalogException $exception) {
             throw new MessageValidationException($exception->getMessage());
         }
@@ -56,13 +58,23 @@ final class StickerMessageBuilder
             $this->reject('private_note');
         }
 
-        if ($this->message->message_type !== Message::TYPE_OUTGOING) {
+        if (! $this->isOutgoing() && ! $this->inbox->supports(Capability::InboundSticker)) {
             $this->reject('outgoing_only');
         }
 
         if (filled($this->params['attachments'] ?? null)) {
             $this->reject('with_attachments');
         }
+    }
+
+    private function isOutgoing(): bool
+    {
+        return $this->message->message_type === Message::TYPE_OUTGOING;
+    }
+
+    private function direction(): Capability
+    {
+        return $this->isOutgoing() ? Capability::OutboundSticker : Capability::InboundSticker;
     }
 
     private function stickerId(): string

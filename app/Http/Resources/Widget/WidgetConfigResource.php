@@ -5,6 +5,8 @@ namespace App\Http\Resources\Widget;
 use App\Models\Channel\WebWidget;
 use App\Models\Contact;
 use App\Models\ContactInbox;
+use App\Services\Channels\Stickers\Sticker;
+use App\Services\Widget\WidgetStickerCatalog;
 use DateTimeZone;
 use Throwable;
 
@@ -37,6 +39,7 @@ final class WidgetConfigResource
                 // Giây; widget ẩn nút thu hồi khi hết hạn và điền số phút vào hộp xác nhận.
                 'recall_window' => (int) $channel->recallWindow()->totalSeconds,
                 'reply_time' => $channel->reply_time,
+                'stickers' => array_map(fn (Sticker $sticker) => $sticker->toApi(), app(WidgetStickerCatalog::class)->all()),
                 'timezone' => $inbox->timezone,
                 'utc_off_set' => self::utcOffset($inbox->timezone),
                 'website_name' => $inbox->name,

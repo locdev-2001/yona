@@ -181,6 +181,7 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::InboundVideo,
             Capability::InboundAudio,
             Capability::InboundFile,
+            Capability::InboundSticker,
             Capability::InboundCaption,
             Capability::OutboundText,
             Capability::OutboundImage,

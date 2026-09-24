@@ -59,15 +59,19 @@ final class StickerLibrary
         return $this->result(self::SOURCE_RECENT, $recent, packs: $this->packsOf($recent));
     }
 
-    public function resolve(Inbox $inbox, string $stickerId): Sticker
+    /**
+     * `$direction` là năng lực kênh phải khai cho chiều của tin: agent gửi cần
+     * `outbound_sticker`, khách gửi từ bề mặt của kênh cần `inbound_sticker`.
+     */
+    public function resolve(Inbox $inbox, string $stickerId, Capability $direction = Capability::OutboundSticker): Sticker
     {
-        return $this->catalog($inbox)->find($inbox, $stickerId)
+        return $this->catalog($inbox, $direction)->find($inbox, $stickerId)
             ?? throw StickerCatalogException::notFound($inbox->account->locale);
     }
 
-    private function catalog(Inbox $inbox): StickerCatalog
+    private function catalog(Inbox $inbox, Capability $direction = Capability::OutboundSticker): StickerCatalog
     {
-        $catalog = $inbox->supports(Capability::OutboundSticker) ? ChannelActionRegistry::stickers($inbox) : null;
+        $catalog = $inbox->supports($direction) ? ChannelActionRegistry::stickers($inbox) : null;
 
         return $catalog ?? throw StickerCatalogException::notSupported($inbox->account->locale);
     }
