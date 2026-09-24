@@ -46,15 +46,39 @@ describe('phục hồi phiên khi request JSON bị từ chối', () => {
         expect(reload).not.toHaveBeenCalled();
     });
 
-    it('419 và phiên đã mất: tải lại trang một lần, trả response gốc', async () => {
+    it('419 và phiên đã mất: gửi lại bằng token mới, endpoint cần đăng nhập trả 401 thì tải lại trang một lần', async () => {
         const { sendWithSessionRecovery } = await loadModule();
         stubProbe(401);
-        const send = vi.fn().mockResolvedValue(jsonResponse(419));
+        const send = vi.fn().mockResolvedValueOnce(jsonResponse(419)).mockResolvedValueOnce(jsonResponse(401));
+
+        const response = await sendWithSessionRecovery(send);
+
+        expect(send).toHaveBeenCalledTimes(2);
+        expect(response.status).toBe(401);
+        expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('419 trên trang cho khách (quên mật khẩu): gửi lại bằng token mới là xong, không tải lại', async () => {
+        const { sendWithSessionRecovery } = await loadModule();
+        stubProbe(401);
+        const send = vi.fn().mockResolvedValueOnce(jsonResponse(419)).mockResolvedValueOnce(jsonResponse(200));
+
+        const response = await sendWithSessionRecovery(send);
+
+        expect(send).toHaveBeenCalledTimes(2);
+        expect(response.status).toBe(200);
+        expect(reload).not.toHaveBeenCalled();
+    });
+
+    it('401 và phiên đã mất: tải lại trang một lần, không gửi lại', async () => {
+        const { sendWithSessionRecovery } = await loadModule();
+        stubProbe(401);
+        const send = vi.fn().mockResolvedValue(jsonResponse(401));
 
         const response = await sendWithSessionRecovery(send);
 
         expect(send).toHaveBeenCalledTimes(1);
-        expect(response.status).toBe(419);
+        expect(response.status).toBe(401);
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
