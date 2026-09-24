@@ -59,6 +59,11 @@ export const SOURCE_ALLOWLIST = [
         reason: 'Tiền tố header webhook cũ gửi song song với X-Yona để máy nhận đã viết theo tên cũ vẫn kiểm được chữ ký.',
     },
     {
+        path: 'tests/Feature/Public/NoLegacyBrandNameTest.php',
+        tokens: ['chatwoot', 'chwt.app'],
+        reason: 'Test chặn hồi quy phải viết đúng chuỗi cần chặn trong HTML trả ra.',
+    },
+    {
         path: 'resources/js/shared/legacyContracts.ts',
         tokens: ANY_TOKEN,
         reason: 'Tên công khai đời trước của SDK nhúng và app nhúng dashboard — bí danh để mã nhúng khách đã dán không gãy.',
