@@ -9655,7 +9655,8 @@ const messages: Record<string, unknown> = {
             "DELIVERED": "Delivered",
             "SEEN": "Seen",
             "SENDING": "Sending…",
-            "FAILED": "Not sent"
+            "FAILED": "Not sent",
+            "FAILED_TITLE": "Could not send the message"
         },
         "COMPOSER": {
             "ADD": "Add photo or file",

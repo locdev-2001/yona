@@ -43,3 +43,12 @@ export function DownloadIcon({ size = 14 }: { size?: number }) {
         </svg>
     );
 }
+
+export function AlertCircleIcon({ size = 15 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7.5v5M12 16.2v.3" />
+        </svg>
+    );
+}

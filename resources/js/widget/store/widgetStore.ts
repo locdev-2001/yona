@@ -169,6 +169,48 @@ function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMe
     pushMessageToConversation(message);
 }
 
+// Một lần gửi tin của khách: `request` gọi máy chủ với metadata hội thoại đang chờ
+// (sticker không mang metadata). Gửi hỏng thì giữ nguyên `OutgoingSend` trong bộ nhớ
+// theo id tin tạm để "Thử lại" gửi đúng chữ, tệp và tin được trả lời; File không
+// serialize được nên tải lại trang là mất và nút "Thử lại" ẩn đi.
+interface OutgoingSend {
+    temporaryMessage: WidgetMessage;
+    carriesPendingMetadata: boolean;
+    request: (metadata: ReturnType<typeof pendingMetadata>) => Promise<WidgetMessage>;
+}
+
+interface FailedSend {
+    send: OutgoingSend;
+    isNetworkFailure: boolean;
+}
+
+const failedSends = new Map<number | string, FailedSend>();
+
+// Không có phản hồi (mất mạng) hoặc máy chủ lỗi 5xx: gửi lại có cơ hội thành công.
+const isNetworkFailure = (error: unknown): boolean =>
+    !(error instanceof WidgetApiError) || error.status === 0 || error.status >= 500;
+
+async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
+    const { temporaryMessage, carriesPendingMetadata, request } = send;
+    failedSends.delete(temporaryMessage.id);
+    pushMessageToConversation({ ...temporaryMessage, status: 'in_progress' });
+    const metadata = carriesPendingMetadata ? pendingMetadata() : {};
+
+    try {
+        const data = await request(metadata);
+        if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
+        replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
+    } catch (error) {
+        if (!state.conversations[temporaryMessage.id]) return;
+        failedSends.set(temporaryMessage.id, { send, isNetworkFailure: isNetworkFailure(error) });
+        patchMessage(temporaryMessage.id, () => ({
+            ...temporaryMessage,
+            status: 'failed',
+            attachments: temporaryMessage.attachments?.map(attachment => ({ ...attachment, status: 'failed' })),
+        }));
+    }
+}
+
 async function sendAttachmentMessage({
     files,
     previews,
@@ -183,8 +225,6 @@ async function sendAttachmentMessage({
     onProgress?: (fileIndex: number, percent: number) => void;
 }): Promise<void> {
     const temporaryMessage = createTemporaryMessage({ content: caption || undefined, attachments: previews, replyTo });
-    const metadata = pendingMetadata();
-    pushMessageToConversation(temporaryMessage);
 
     const fileSizes = previews.map(preview => preview.file_size ?? 0);
     const reportProgress = (loadedBytes: number) => {
@@ -199,13 +239,11 @@ async function sendAttachmentMessage({
         }));
     };
 
-    try {
-        const data = await api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress);
-        if (hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
-        replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
-    } catch {
-        pushMessageToConversation({ ...temporaryMessage, status: 'failed' });
-    }
+    await deliverOutgoingMessage({
+        temporaryMessage,
+        carriesPendingMetadata: true,
+        request: metadata => api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress),
+    });
 }
 
 // conversation/mutations.js#pushMessageToConversation
@@ -360,15 +398,11 @@ export const widgetStore = {
     },
 
     async sendMessageWithData(message: WidgetMessage): Promise<void> {
-        const metadata = pendingMetadata();
-        pushMessageToConversation(message);
-        try {
-            const data = await api.sendMessage(message.content ?? '', message.replyTo ?? null, metadata);
-            if (hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
-            pushMessageToConversation({ ...data, status: 'sent' });
-        } catch {
-            pushMessageToConversation({ ...message, status: 'failed' });
-        }
+        await deliverOutgoingMessage({
+            temporaryMessage: message,
+            carriesPendingMetadata: true,
+            request: metadata => api.sendMessage(message.content ?? '', message.replyTo ?? null, metadata),
+        });
     },
 
     // Đường một tệp cũ của ô nhập: cùng một đường với nhiều tệp, mảng một phần tử.
@@ -408,13 +442,23 @@ export const widgetStore = {
             contentAttributes: { sticker: stickerId },
             replyTo,
         });
-        pushMessageToConversation(temporaryMessage);
-        try {
-            const data = await api.sendSticker(stickerId, replyTo);
-            replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
-        } catch {
-            pushMessageToConversation({ ...temporaryMessage, status: 'failed' });
-        }
+        await deliverOutgoingMessage({
+            temporaryMessage,
+            carriesPendingMetadata: false,
+            request: () => api.sendSticker(stickerId, replyTo),
+        });
+    },
+
+    // Gửi lại tin hỏng ngay tại chỗ (không tạo tin mới) bằng đúng payload đã giữ.
+    async retryMessage(messageId: number | string): Promise<void> {
+        const failedSend = failedSends.get(messageId);
+        if (!failedSend || state.conversations[messageId]?.status !== 'failed') return;
+        await deliverOutgoingMessage(failedSend.send);
+    },
+
+    // Chỉ tin hỏng còn payload trong bộ nhớ mới gửi lại được.
+    retryableFailureOf(messageId: number | string): Pick<FailedSend, 'isNetworkFailure'> | undefined {
+        return failedSends.get(messageId);
     },
 
     // Máy chủ quyết định được thu hồi hay không; thành công thì đánh dấu tại chỗ để
@@ -453,6 +497,7 @@ export const widgetStore = {
     },
 
     clearConversations(): void {
+        failedSends.clear();
         setState({ conversations: {}, pendingCustomAttributes: {}, pendingLabels: [] });
     },
 

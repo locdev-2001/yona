@@ -197,6 +197,7 @@ return [
         'SEEN' => 'Seen',
         'SENDING' => 'Sending…',
         'FAILED' => 'Not sent',
+        'FAILED_TITLE' => 'Could not send the message',
     ],
     'COMPOSER' => [
         'ADD' => 'Add photo or file',

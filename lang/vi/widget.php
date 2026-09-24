@@ -195,6 +195,7 @@ return [
         'SEEN' => 'Đã xem',
         'SENDING' => 'Đang gửi…',
         'FAILED' => 'Chưa gửi được',
+        'FAILED_TITLE' => 'Không gửi được tin nhắn',
     ],
     'COMPOSER' => [
         'ADD' => 'Gửi ảnh hoặc tệp',
