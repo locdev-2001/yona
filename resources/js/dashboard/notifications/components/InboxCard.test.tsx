@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { setLocale } from '../../../i18n';
 import InboxCard, { formatPushMessage } from './InboxCard';
 import type { NotificationRecord } from '../types';
 
@@ -81,5 +82,32 @@ describe('InboxCard', () => {
         );
 
         expect(container.querySelector('.i-lucide-alarm-clock-plus')).not.toBeNull();
+    });
+
+    describe('mốc thời gian bằng tiếng Việt', () => {
+        const secondsFromNow = (seconds: number) => Math.floor(Date.now() / 1000) + seconds;
+
+        afterEach(() => setLocale('en'));
+
+        it('thông báo vừa tạo hiện "vừa xong", không lộ chữ "now"', () => {
+            setLocale('vi');
+            const { container } = renderCard(buildNotification({ last_activity_at: secondsFromNow(-5) }));
+
+            expect(container.textContent).toContain('vừa xong');
+            expect(container.textContent).not.toMatch(/\bnow\b/);
+        });
+
+        it('hạn tạm ẩn là độ dài tiếng Việt', () => {
+            setLocale('vi');
+            const { container } = renderCard(
+                buildNotification({
+                    last_activity_at: secondsFromNow(-3600),
+                    snoozed_until: new Date((secondsFromNow(2 * 3600)) * 1000).toISOString(),
+                }),
+            );
+
+            expect(container.textContent).toContain('Tạm ẩn 2 giờ');
+            expect(container.textContent).toContain('1 giờ');
+        });
     });
 });

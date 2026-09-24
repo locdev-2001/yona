@@ -4,7 +4,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
-import { shortenSnoozeTime, snoozedReopenTimeToTimestamp } from 'dashboard/helper/snoozeHelpers';
+import { snoozedReopenTimeToTimestamp } from 'dashboard/helper/snoozeHelpers';
 import { shortTimestamp } from 'shared/helpers/timeHelper';
 import { t } from '../../../i18n';
 import { NOTIFICATION_TYPES_MAPPING } from '../helpers';
@@ -93,12 +93,11 @@ export default function InboxCard({
     const [typeIcon = '', typeColor = 'text-n-blue-11'] = NOTIFICATION_TYPES_MAPPING[notificationType] ?? [];
     const typeText = notificationType ? t(`INBOX.TYPES_NEXT.${notificationType}`) : '';
 
-    const snoozedUntilTime = inboxItem.snoozed_until
-        ? shortenSnoozeTime(snoozedReopenTimeToTimestamp(inboxItem.snoozed_until) ?? 0)
-        : null;
+    const snoozedUntilTimestamp = snoozedReopenTimeToTimestamp(inboxItem.snoozed_until);
+    const snoozedUntilTime = snoozedUntilTimestamp ? shortTimestamp(snoozedUntilTimestamp) : null;
     const hasLastSnoozed = Boolean(inboxItem.meta?.last_snoozed_at);
     const snoozedText = !hasLastSnoozed
-        ? t('INBOX.TYPES_NEXT.SNOOZED_UNTIL', { time: shortTimestamp(snoozedUntilTime ?? '') })
+        ? t('INBOX.TYPES_NEXT.SNOOZED_UNTIL', { time: snoozedUntilTime ?? '' })
         : t('INBOX.TYPES_NEXT.SNOOZED_ENDS');
 
     const closeContextMenu = () => {

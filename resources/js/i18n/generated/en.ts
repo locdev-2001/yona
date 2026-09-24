@@ -9364,6 +9364,18 @@ const messages: Record<string, unknown> = {
             "NOT_AVAILABLE": "Author is not available"
         }
     },
+    "TIME_AGO": {
+        "SHORT": {
+            "NOW": "now",
+            "MINUTES": "{count}m",
+            "HOURS": "{count}h",
+            "DAYS": "{count}d",
+            "WEEKS": "{count}w",
+            "MONTHS": "{count}mo",
+            "YEARS": "{count}y",
+            "AGO": "{time} ago"
+        }
+    },
     "TIME_UNITS": {
         "days": "{1} :count day|[2,*] :count days",
         "hours": "{1} :count hour|[2,*] :count hours",

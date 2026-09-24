@@ -190,14 +190,27 @@ export default function ConversationCard({
                         </div>
                     </div>
                 ) : null}
-                <h4
-                    className={[
-                        'conversation--user text-sm my-0 mx-2 pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12',
-                        hasUnread ? 'font-semibold' : 'font-medium',
-                    ].join(' ')}
+                {/* Thời gian cùng hàng với tên: tên nhường đúng bề rộng chữ thời gian của từng ngôn ngữ. */}
+                <div
+                    className={['flex items-center gap-2 min-w-0 pt-0.5 ltr:ml-2 rtl:mr-2', compact ? 'ltr:mr-3 rtl:ml-3' : '']
+                        .filter(Boolean)
+                        .join(' ')}
                 >
-                    {currentContact.name}
-                </h4>
+                    <h4
+                        className={[
+                            'conversation--user text-sm my-0 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 text-n-slate-12',
+                            hasUnread ? 'font-semibold' : 'font-medium',
+                        ].join(' ')}
+                    >
+                        {currentContact.name}
+                    </h4>
+                    <TimeAgo
+                        lastActivityTimestamp={chat.timestamp}
+                        createdAtTimestamp={chat.created_at}
+                        conversationId={chat.id}
+                        className="flex-shrink-0 whitespace-nowrap font-normal"
+                    />
+                </div>
                 {lastMessageInChat ? (
                     <MessagePreview
                         key="message-preview"
@@ -213,21 +226,12 @@ export default function ConversationCard({
                         <span className="mx-0.5">{t('CHAT_LIST.NO_MESSAGES')}</span>
                     </p>
                 )}
-                <div
-                    className={[
-                        'absolute flex flex-col ltr:right-3 rtl:left-3',
-                        showMetaSection ? 'top-8' : 'top-4',
-                    ].join(' ')}
-                >
-                    <span className="ml-auto font-normal leading-4 text-xxs">
-                        <TimeAgo
-                            lastActivityTimestamp={chat.timestamp}
-                            createdAtTimestamp={chat.created_at}
-                            conversationId={chat.id}
-                        />
-                    </span>
-                    {hasUnread ? <UnreadBadge count={unreadCount} className="ltr:ml-auto rtl:mr-auto mt-1" /> : null}
-                </div>
+                {hasUnread ? (
+                    <UnreadBadge
+                        count={unreadCount}
+                        className={['absolute ltr:right-3 rtl:left-3', showMetaSection ? 'top-[3.25rem]' : 'top-9'].join(' ')}
+                    />
+                ) : null}
                 {showLabelsSection ? (
                     <CardLabels conversationLabels={chat.labels ?? []} className="mt-0.5 mx-2 mb-0" />
                 ) : null}

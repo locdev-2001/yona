@@ -14,7 +14,6 @@ import {
 } from 'date-fns';
 
 import { SNOOZE_OPTIONS } from 'dashboard/constants/globals';
-import { distanceToNowInEnglish } from 'shared/helpers/timeHelper';
 
 // Port từ dashboard/helper/snoozeHelpers.js. Bỏ ở B5: generateSnoozeSuggestions
 // (cần cả cây snoozeDateParser ~1.7k dòng — gợi ý NLP khi gõ, nợ B10).
@@ -60,27 +59,3 @@ export const snoozedReopenTime = (snoozedUntil: string | null | undefined): stri
 
 export const snoozedReopenTimeToTimestamp = (snoozedUntil: string | null | undefined): number | null =>
     snoozedUntil ? getUnixTime(new Date(snoozedUntil)) : null;
-
-const UNIT_SHORT: Record<string, string> = {
-    minute: 'm',
-    minutes: 'm',
-    hour: 'h',
-    hours: 'h',
-    day: 'd',
-    days: 'd',
-    month: 'mo',
-    months: 'mo',
-    year: 'y',
-    years: 'y',
-};
-
-// Nhận mốc thời gian (unix) hoặc sẵn chuỗi tiếng Anh: phép rút gọn cắt chữ
-// tiếng Anh nên không dùng được chuỗi đã dịch theo locale.
-export const shortenSnoozeTime = (snoozedUntil: string | number | null | undefined): string | null => {
-    if (!snoozedUntil) return null;
-    if (typeof snoozedUntil === 'number') return shortenSnoozeTime(distanceToNowInEnglish(snoozedUntil));
-
-    return snoozedUntil
-        .replace(/^in\s+/i, '')
-        .replace(/\s(minute|hour|day|month|year)s?\b/gi, (match, unit: string) => UNIT_SHORT[unit.toLowerCase()] || match);
-};

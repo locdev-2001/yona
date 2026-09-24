@@ -5,7 +5,6 @@ import {
     findSnoozeTime,
     findStartOfNextMonth,
     findStartOfNextWeek,
-    shortenSnoozeTime,
     snoozedReopenTime,
     snoozedReopenTimeToTimestamp,
 } from './snoozeHelpers';
@@ -78,14 +77,5 @@ describe('snoozedReopenTime', () => {
         const date = new Date(2026, 8, 7, 9, 0);
         expect(snoozedReopenTimeToTimestamp(date.toISOString())).toBe(Math.floor(date.getTime() / 1000));
         expect(snoozedReopenTimeToTimestamp(null)).toBeNull();
-    });
-});
-
-describe('shortenSnoozeTime', () => {
-    it('rút gọn đơn vị', () => {
-        expect(shortenSnoozeTime('in 2 hours')).toBe('2h');
-        expect(shortenSnoozeTime('in 3 days')).toBe('3d');
-        expect(shortenSnoozeTime('in 1 month')).toBe('1mo');
-        expect(shortenSnoozeTime(null)).toBeNull();
     });
 });
