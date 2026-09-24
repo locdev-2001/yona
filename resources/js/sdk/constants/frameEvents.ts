@@ -3,5 +3,7 @@
 // Port: refs/chatwoot/app/javascript/shared/constants/sharedFrameEvents.js
 export const FRAME_MESSAGE_PREFIX = 'chatwoot-widget:';
 export const SDK_SET_BUBBLE_VISIBILITY = 'sdk-set-bubble-visibility';
+// Widget xin SDK xoá phiên khách (nút "Bắt đầu cuộc trò chuyện mới").
+export const RESET_SESSION_EVENT = 'resetSession';
 // SDK dựng lại iframe kèm cờ này (giá trị là mã riêng từng lần xoá) để widget quên cả token nó tự lưu.
 export const NEW_SESSION_URL_PARAM = 'new_session';

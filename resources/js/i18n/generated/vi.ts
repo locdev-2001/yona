@@ -9496,6 +9496,13 @@ const messages: Record<string, unknown> = {
         "CONTINUE_CONVERSATION": "Tiếp tục hội thoại",
         "YOU": "You",
         "START_NEW_CONVERSATION": "Bắt đầu hội thoại mới",
+        "RESET_SESSION": {
+            "BUTTON": "Bắt đầu cuộc trò chuyện mới",
+            "CONFIRM_TITLE": "Bắt đầu cuộc trò chuyện mới?",
+            "CONFIRM_BODY": "Khung chat sẽ bắt đầu lại như một khách mới. Các tin nhắn trước đó sẽ không còn hiện trên trình duyệt này.",
+            "CONFIRM": "Bắt đầu lại",
+            "CANCEL": "Huỷ"
+        },
         "VIEW_UNREAD_MESSAGES": "Bạn có tin nhắn chưa đọc",
         "UNREAD_VIEW": {
             "VIEW_MESSAGES_BUTTON": "Xem tin nhắn mới",

@@ -8,6 +8,7 @@ import { widgetStore } from '../store/widgetStore';
 import { getAuthToken } from '../api/client';
 import { t } from '../i18n';
 import { SignOutIcon } from './icons';
+import ResetSessionButton from './ResetSessionButton';
 
 // Port từ widget/components/HeaderActions.vue (bỏ nhánh React Native WebView —
 // app RN không thuộc phạm vi nhóm C).
@@ -23,6 +24,7 @@ export default function HeaderActions({
     const enabledFeatures = useWidgetState(state => state.channelConfig?.enabledFeatures);
     const websiteToken = useWidgetState(state => state.channelConfig?.websiteToken ?? '');
     const locale = useWidgetState(state => state.channelConfig?.locale ?? 'en');
+    const hasConversationHistory = useWidgetState(state => Object.keys(state.conversations).length > 0);
 
     const hasEndConversationEnabled = Boolean(enabledFeatures?.includes('end_conversation'));
     const canLeaveConversation = (
@@ -56,6 +58,7 @@ export default function HeaderActions({
                     <SignOutIcon size="22" className="text-n-slate-12" />
                 </button>
             ) : null}
+            {isIframe && hasConversationHistory ? <ResetSessionButton /> : null}
             {showPopoutButton ? (
                 <button
                     type="button"

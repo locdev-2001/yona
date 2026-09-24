@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IFrameHelper } from './IFrameHelper';
-import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM } from './constants/frameEvents';
+import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
 import { setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import type { ChatwootInstance } from './types';
@@ -152,6 +152,21 @@ describe('giữ phiên khách qua tải lại trang', () => {
             'https://app.yona.vn/widget?website_token=website-token&cw_conversation=visitor-token',
         );
     });
+
+    it('iframe nạp lại lúc khung chat đang mở thì báo cho widget biết khung đang mở', () => {
+        const iframe = mountAppFrame();
+        const postMessage = vi.fn();
+        Object.defineProperty(iframe, 'contentWindow', { value: { postMessage }, configurable: true });
+        window.$chatwoot.isOpen = true;
+        IFrameHelper.initPostMessageCommunication();
+
+        postFromWidget(loadedMessage('visitor-token'));
+
+        expect(postMessage).toHaveBeenCalledWith(
+            `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: 'toggle-open', isOpen: true })}`,
+            '*',
+        );
+    });
 });
 
 describe('xoá phiên khách', () => {
@@ -185,5 +200,16 @@ describe('xoá phiên khách', () => {
         expect(firstId).toBeTruthy();
         expect(secondId).toBeTruthy();
         expect(secondId).not.toBe(firstId);
+    });
+
+    it('widget xin xoá phiên qua postMessage thì SDK đi đúng đường xoá phiên đó', () => {
+        setCookieWithDomain('cw_conversation', 'visitor-token');
+        mountAppFrame();
+        IFrameHelper.initPostMessageCommunication();
+
+        postFromWidget({ event: RESET_SESSION_EVENT });
+
+        expect(getCookie('cw_conversation')).toBeUndefined();
+        expect(newSessionIdOf(IFrameHelper.getAppFrame()!.src)).toBeTruthy();
     });
 });

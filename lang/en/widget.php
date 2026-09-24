@@ -55,6 +55,13 @@ return [
     'CONTINUE_CONVERSATION' => 'Continue conversation',
     'YOU' => 'You',
     'START_NEW_CONVERSATION' => 'Start a new conversation',
+    'RESET_SESSION' => [
+        'BUTTON' => 'Start a new chat',
+        'CONFIRM_TITLE' => 'Start a new chat?',
+        'CONFIRM_BODY' => 'The chat will start over as a new visitor. Earlier messages will no longer show in this browser.',
+        'CONFIRM' => 'Start over',
+        'CANCEL' => 'Cancel',
+    ],
     'VIEW_UNREAD_MESSAGES' => 'You have unread messages',
     'UNREAD_VIEW' => [
         'VIEW_MESSAGES_BUTTON' => 'See new messages',

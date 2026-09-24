@@ -19,7 +19,7 @@ import { isWidgetColorLighter } from './helpers/colorHelper';
 import { dispatchWindowEvent } from './helpers/customEvent';
 import { CHATWOOT_ERROR, CHATWOOT_POSTBACK, CHATWOOT_READY } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
-import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM } from './constants/frameEvents';
+import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
 import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
@@ -175,6 +175,11 @@ export const IFrameHelper = {
                 enableEmojiPicker: window.$chatwoot.enableEmojiPicker,
                 enableEndConversation: window.$chatwoot.enableEndConversation,
             });
+            // Iframe nạp lại lúc khung chat đang mở (khách vừa bắt đầu phiên mới) phải biết mình
+            // đang hiện, nếu không nó xử lý tin đến như khi khung đang đóng.
+            if (window.$chatwoot.isOpen) {
+                IFrameHelper.sendMessage('toggle-open', { isOpen: true });
+            }
             IFrameHelper.onLoad({ widgetColor: message.config.channelConfig.widgetColor });
             IFrameHelper.toggleCloseButton();
 
@@ -208,6 +213,10 @@ export const IFrameHelper = {
 
         setAuthCookie({ data: { widgetAuthToken } }: { data: { widgetAuthToken: string } }): void {
             updateAuthCookie(widgetAuthToken, window.$chatwoot.baseDomain);
+        },
+
+        [RESET_SESSION_EVENT](): void {
+            IFrameHelper.startNewSession();
         },
 
         setCampaignReadOn(): void {
