@@ -79,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
 
-        // Polymorphic type lưu đúng tên lớp Ruby của Chatwoot ('Channel::Api',
+        // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
         Relation::morphMap([
             'Channel::Api' => Api::class,

@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Port từ refs/chatwoot/app/models/concerns/out_of_offisable.rb.
- *
  * Lịch tuần của một inbox: 7 dòng `working_hours` sinh ngay khi inbox ra đời,
  * cùng bộ câu hỏi "giờ này còn mở cửa không".
  */

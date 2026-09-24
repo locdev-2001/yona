@@ -1,7 +1,7 @@
 <?php
 
 // Bảng vùng giờ của ActiveSupport (ActiveSupport::TimeZone::MAPPING, giữ nguyên
-// THỨ TỰ) — Chatwoot suy vùng giờ từ độ lệch bằng cách quét bảng này theo thứ tự
+// THỨ TỰ) — bản gốc suy vùng giờ từ độ lệch bằng cách quét bảng này theo thứ tự
 // và lấy vùng khớp đầu tiên, nên muốn số liệu trùng thì phải quét đúng bảng đó.
 // Nguồn: `rails runner 'ActiveSupport::TimeZone.all…'` trên oracle v4.17.1.
 return [

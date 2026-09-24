@@ -1,6 +1,6 @@
 <?php
 
-// Tương đương lib/limits.rb của Chatwoot (phần đã dùng tới) + hạn mức tệp
+// Tương đương lib/limits.rb (phần đã dùng tới) + hạn mức tệp
 // lấy từ installation config (MAXIMUM_FILE_UPLOAD_SIZE).
 return [
     'conversation_message_per_minute' => env('CONVERSATION_MESSAGE_PER_MINUTE_LIMIT', 200),

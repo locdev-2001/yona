@@ -7,7 +7,6 @@ use App\Models\AccountUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/account_users_controller.rb
 // — chỉ có biểu mẫu gắn người dùng vào account, nằm ngay trong trang show của
 // Account/User nên không có màn riêng.
 class AccountUsersController extends Controller

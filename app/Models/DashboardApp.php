@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/dashboard_app.rb — một trang web nhúng vào
+// Một trang web nhúng vào
 // khung hội thoại dưới dạng tab.
 class DashboardApp extends Model
 {

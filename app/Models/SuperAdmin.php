@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 
-// Port từ refs/chatwoot/app/models/super_admin.rb — `class SuperAdmin < User`,
+// `class SuperAdmin < User`,
 // STI trên cột users.type. Guard `super_admin` dùng model này nên phiên đăng
 // nhập console quản trị tách hẳn phiên agent.
 class SuperAdmin extends User

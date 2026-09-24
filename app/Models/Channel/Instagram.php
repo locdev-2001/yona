@@ -16,7 +16,7 @@ use Database\Factories\Channel\InstagramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/instagram.rb (Instagram login trực tiếp).
+// Kênh Instagram đăng nhập trực tiếp.
 class Instagram extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<InstagramFactory> */

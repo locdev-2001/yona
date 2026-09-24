@@ -11,7 +11,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-// Port từ refs/chatwoot/app/controllers/concerns/website_token_helper.rb
 // (#set_web_widget + #set_contact + #auth_token_params).
 //
 // Đây là BIÊN VÀO của khách website: chỉ có hai bằng chứng — `website_token`

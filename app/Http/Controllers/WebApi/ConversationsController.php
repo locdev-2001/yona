@@ -38,7 +38,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-// Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
 // Bỏ: transcript (F1),
 // destroy (đi cùng DeleteService các nhóm sau),
 // bot_handoff (AgentBot chưa port).
@@ -235,7 +234,7 @@ class ConversationsController extends Controller
         } elseif (filled($validated['status'] ?? null)) {
             $conversation->status = Conversation::statusFromName($validated['status']);
 
-            // Chatwoot chỉ parse khi có giá trị truthy. `null` là "Until next
+            // Bản gốc chỉ parse khi có giá trị truthy. `null` là "Until next
             // reply"; parse null thành integer sẽ tạo epoch 1970 sai nghĩa.
             if (filled($request->input('snoozed_until'))) {
                 $conversation->snoozed_until = DateRangeHelper::parseDateTime($request->input('snoozed_until'));

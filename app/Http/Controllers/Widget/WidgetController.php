@@ -14,7 +14,6 @@ use App\Support\BrowserInfo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/base_controller.rb.
 // Ngữ cảnh khách (kênh, contact_inbox, contact) do ResolveWidgetChannel đặt vào
 // request; controller chỉ đọc ra, không tự tra lại.
 abstract class WidgetController extends Controller

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/installation_config.rb — cấu hình toàn cài
+// Cấu hình toàn cài
 // đặt. Giá trị nằm trong serialized_value.value; `locked` = không cho sửa ở
 // màn Installation configs của Super Admin.
 class InstallationConfig extends Model

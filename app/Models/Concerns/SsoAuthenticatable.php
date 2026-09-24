@@ -5,8 +5,7 @@ namespace App\Models\Concerns;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/concerns/sso_authenticatable.rb — token đăng
-// nhập một lần, sống 5 phút trong cache (bản gốc dùng Redis::Alfred).
+// Token đăng nhập một lần, sống 5 phút trong cache (bản gốc dùng Redis::Alfred).
 trait SsoAuthenticatable
 {
     public const SSO_TOKEN_TTL_SECONDS = 300;

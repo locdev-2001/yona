@@ -5,8 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// Port các bảng Help Center của Chatwoot: portals, portals_members, categories,
-// related_categories, articles (db/schema.rb).
+// Các bảng Help Center: portals, portals_members, categories,
+// related_categories, articles.
 // Bỏ `folders` (bảng còn trong schema gốc nhưng không có controller/UI nào dùng)
 // và `article_embeddings` (Captain — enterprise).
 return new class extends Migration
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->index('channel_web_widget_id');
         });
 
-        // portals_members của Chatwoot: bảng nối không id.
+        // Portals_members: bảng nối không id.
         Schema::create('portal_members', function (Blueprint $table) {
             $table->foreignId('portal_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

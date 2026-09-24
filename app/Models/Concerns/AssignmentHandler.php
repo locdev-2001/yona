@@ -14,8 +14,7 @@ use App\Models\User;
 use App\Services\AutoAssignment\AgentAssignmentService;
 use App\Support\CurrentExecutedBy;
 
-// Port từ refs/chatwoot/app/models/concerns/assignment_handler.rb +
-// assignee_activity_message_handler.rb + team_activity_message_handler.rb.
+// Gán agent/team cho hội thoại kèm tin hoạt động tương ứng.
 trait AssignmentHandler
 {
     // Bản gốc gọi runAssignmentCommitCallbacks() ở after_commit khai báo TRƯỚC

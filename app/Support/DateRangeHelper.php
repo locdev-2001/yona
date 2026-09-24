@@ -5,8 +5,7 @@ namespace App\Support;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
 
-// Port từ refs/chatwoot/app/helpers/date_range_helper.rb#parse_date_time —
-// client gửi mốc thời gian dạng epoch giây.
+// Client gửi mốc thời gian dạng epoch giây.
 final class DateRangeHelper
 {
     public static function parseDateTime(mixed $value): Carbon

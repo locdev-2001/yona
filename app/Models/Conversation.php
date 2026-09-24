@@ -26,8 +26,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/conversation.rb (+ concerns ActivityMessageHandler,
-// PriorityActivityMessageHandler, ConversationMuteHelpers).
 // Bỏ: FilteredCountInvalidator (bộ đếm theo bộ lọc lưu — E1), csat (C5), SLA (EE),
 // activity theo Current.executed_by automation/contact (D1/C).
 class Conversation extends Model
@@ -591,7 +589,7 @@ class Conversation extends Model
             ->first();
     }
 
-    // Chatwoot để acts_as_taggable_on ghi cached_label_list ngay trong lượt save
+    // Bản gốc để acts_as_taggable_on ghi cached_label_list ngay trong lượt save
     // đổi nhãn; ở đây hook này là chỗ duy nhất đồng bộ cache + event + activity.
     protected function labelListChanged(array $previous, array $current): void
     {

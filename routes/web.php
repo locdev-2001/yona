@@ -44,7 +44,7 @@ Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsControlle
     ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show');
 
 // Trang chủ công khai (nhánh `main` mang sang): gốc tên miền là trang giới thiệu
-// sản phẩm, không đẩy thẳng khách vào màn đăng nhập như Chatwoot gốc.
+// sản phẩm, không đẩy thẳng khách vào màn đăng nhập như bản gốc.
 Route::get('/', [LandingController::class, 'home'])->name('home');
 
 // Trang một-kênh cho Zalo cá nhân: điểm khác biệt của sản phẩm cần một trang
@@ -426,7 +426,7 @@ Route::middleware('auth')->group(function () {
             'tab' => $tab,
         ]))->where('tab', 'conversations|messages|contacts|files|articles')->name('search');
 
-        // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
+        // Trang con chưa port (nhóm B→F): giữ đúng URL cũ, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])
             ->where('view', '.*')->name('account_view');
     });
@@ -451,7 +451,7 @@ Route::prefix('/hc')->group(function () {
 
 // F7 Super Admin (/super_admin/*) — BEGIN (agent f7 sở hữu khối này)
 // Port từ `devise_for :super_admins` + `namespace :super_admin` trong
-// refs/chatwoot/config/routes.rb. Guard riêng `super_admin`, layout riêng.
+// Guard riêng `super_admin`, layout riêng.
 Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(function () {
     Route::middleware('guest:super_admin')->group(function () {
         Route::get('/sign_in', [SuperAdminSessionsController::class, 'create'])->name('super_admin.login');

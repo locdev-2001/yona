@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/models/concerns/labelable.rb — chỗ duy nhất biết
+// Chỗ duy nhất biết
 // cách gắn/gỡ nhãn cho MỌI model (Conversation, Contact). Bản gốc uỷ thác cho
 // gem acts_as_taggable_on; ở đây là bảng `taggings` khóa ngoại thật, nên chỉ
 // gắn được nhãn đã tồn tại trong account (title lạ bị bỏ qua).

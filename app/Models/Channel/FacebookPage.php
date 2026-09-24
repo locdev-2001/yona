@@ -16,8 +16,7 @@ use Database\Factories\Channel\FacebookPageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/facebook_page.rb. Subscribe/unsubscribe
-// (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
+// Subscribe/unsubscribe (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
 class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<FacebookPageFactory> */

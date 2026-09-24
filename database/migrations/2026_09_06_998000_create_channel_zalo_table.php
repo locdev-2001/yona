@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Kênh Zalo cá nhân (G1) — không có bảng tương ứng trong db/schema.rb của Chatwoot;
+// Kênh Zalo cá nhân (G1) — không có bảng tương ứng trong schema gốc;
 // khuôn cột bám bảng `zalo_connections` của nhánh `main` nhưng gọn lại vì ở đây
 // mỗi inbox chỉ giữ ĐÚNG MỘT tài khoản Zalo, nên khóa slot của bridge chính là
 // `channel_zalo.id` (không cần sequence connection_id riêng).

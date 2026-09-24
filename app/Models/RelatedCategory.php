@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/related_category.rb — bảng nối một chiều
+// Bảng nối một chiều
 // giữa hai category (A liên quan B không kéo theo B liên quan A).
 class RelatedCategory extends Model
 {

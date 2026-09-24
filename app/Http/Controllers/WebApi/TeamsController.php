@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-// Port từ Api::V1::Accounts::TeamsController của Chatwoot.
 // Quyền: chỉ administrator được create/update/destroy (TeamPolicy), index/show
 // mở cho mọi thành viên account.
 class TeamsController extends Controller

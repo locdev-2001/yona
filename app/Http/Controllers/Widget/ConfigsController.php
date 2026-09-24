@@ -10,8 +10,7 @@ use App\Support\WidgetTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/configs_controller.rb —
-// cửa vào của mọi phiên khách: chưa có token (hoặc token hỏng) thì dựng hồ sơ
+// Cửa vào của mọi phiên khách: chưa có token (hoặc token hỏng) thì dựng hồ sơ
 // nháp mới, có token hợp lệ thì dùng lại đúng phiên cũ.
 class ConfigsController extends WidgetController
 {

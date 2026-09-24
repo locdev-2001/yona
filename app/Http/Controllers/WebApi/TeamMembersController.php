@@ -10,7 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-// Port từ Api::V1::Accounts::TeamMembersController của Chatwoot.
 // Payload trả về là agent (partial _agent dùng chung → AgentResource).
 class TeamMembersController extends Controller
 {

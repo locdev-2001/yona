@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/models/mention.rb.
 class Mention extends Model
 {
     /** @use HasFactory<MentionFactory> */

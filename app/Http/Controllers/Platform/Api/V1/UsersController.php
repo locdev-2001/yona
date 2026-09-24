@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/platform/api/v1/users_controller.rb.
 class UsersController extends PlatformController
 {
     public function show(Request $request, User $user): JsonResponse

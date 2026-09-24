@@ -9,7 +9,7 @@ use App\Models\Message;
 use App\Models\User;
 
 /**
- * Port của `Liquidable#message_drops` + `app/drops/*.rb` (Chatwoot): bộ biến mà
+ * Bộ biến mà
  * nội dung tin nhắn `outgoing`/`template` được phép tham chiếu.
  *
  * Chưa có nguồn dữ liệu nên bỏ: `inbox.avatar_url`, `inbox.email` (kênh email —

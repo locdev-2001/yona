@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
-// Current context của Chatwoot (Current.account/Current.account_user) —
+// Current context (Current.account/Current.account_user) —
 // resolve account từ route, chặn ngoài thành viên, share cho Inertia.
 class SetCurrentAccount
 {

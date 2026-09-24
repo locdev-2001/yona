@@ -7,8 +7,6 @@ use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/dashboards/account_dashboard.rb (bỏ nhánh
-// enterprise: limits/manually_managed_features/all_features/captain_models).
 class AccountDashboard extends Dashboard
 {
     public function modelClass(): string

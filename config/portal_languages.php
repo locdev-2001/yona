@@ -1,7 +1,6 @@
 <?php
 
-// Port từ refs/chatwoot/config/languages/language_map.yml (v4.17.1) — tên ngôn ngữ
-// hiển thị ở bộ chuyển locale của help center công khai.
+// Tên ngôn ngữ hiển thị ở bộ chuyển locale của help center công khai.
 return [
     'af' => 'Afrikaans',
     'af_NA' => 'Afrikaans (Namibia)',

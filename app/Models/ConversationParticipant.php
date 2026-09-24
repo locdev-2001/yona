@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/conversation_participant.rb.
 // Kiểm tra quyền vào inbox nằm ở Conversation::addParticipant() — cổng duy nhất
 // tạo bản ghi này. FilteredCountInvalidator không port (B8 bỏ tầng cache đếm).
 class ConversationParticipant extends Model

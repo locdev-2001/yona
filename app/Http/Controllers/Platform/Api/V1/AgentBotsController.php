@@ -9,7 +9,6 @@ use App\Models\PlatformAppPermissible;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/platform/api/v1/agent_bots_controller.rb.
 class AgentBotsController extends PlatformController
 {
     public function index(Request $request): JsonResponse

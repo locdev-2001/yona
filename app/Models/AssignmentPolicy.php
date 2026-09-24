@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/assignment_policy.rb.
 // enum assignment_order chỉ có round_robin ở CE (balanced là enterprise).
 class AssignmentPolicy extends Model
 {

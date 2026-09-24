@@ -8,8 +8,7 @@ use App\Support\BrowserInfo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/events_controller.rb —
-// widget bắn sự kiện (webwidget.triggered, campaign.triggered) vào cùng
+// Widget bắn sự kiện (webwidget.triggered, campaign.triggered) vào cùng
 // dispatcher với phần còn lại của hệ thống.
 class EventsController extends WidgetController
 {

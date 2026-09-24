@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/attachment.rb.
 // ActiveStorage thay bằng cột disk/path/filename/content_type/byte_size (quyết định #9)
 // và attachable morph thay `belongs_to :message` (bảng dùng chung với avatar A4).
 class Attachment extends Model

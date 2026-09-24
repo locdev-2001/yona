@@ -24,7 +24,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-// Port từ Api::V1::Accounts::ContactsController của Chatwoot.
 // Còn thiếu: contactable_inboxes (dùng cho New conversation — B3).
 class ContactsController extends Controller
 {

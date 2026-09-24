@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/models/article.rb (PgSearch → tsvector có trọng số).
+// Tìm kiếm toàn văn bằng tsvector có trọng số.
 // Bỏ LlmFormattable/article_embeddings (Captain — enterprise).
 class Article extends Model
 {

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 — bảng `reporting_events` (sự kiện thô,
+// Bảng `reporting_events` (sự kiện thô,
 // nguồn duy nhất của mọi số liệu báo cáo) và `reporting_events_rollups` (tổng
 // hợp theo ngày × chiều × chỉ số).
 return new class extends Migration

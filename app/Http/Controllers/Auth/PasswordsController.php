@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ DeviseOverrides::PasswordsController của Chatwoot.
 // #update xác nhận luôn tài khoản chưa confirm (đường "Accept invitation"
 // trong mail mời agent đi qua đây). Bỏ: nhánh SAML (EE).
 class PasswordsController extends Controller
@@ -24,7 +23,7 @@ class PasswordsController extends Controller
         $user = User::fromEmail($data['email']);
         $user?->notify(new ResetPasswordInstructions($user->generateResetPasswordToken()));
 
-        // Luôn 200 như Chatwoot — không lộ email nào tồn tại.
+        // Luôn 200 như bản gốc — không lộ email nào tồn tại.
         return response()->json([
             'message' => __('Request for password reset is successful. A email with instructions will be sent to your email if it exists.'),
         ]);

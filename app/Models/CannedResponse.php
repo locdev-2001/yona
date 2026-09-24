@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/canned_response.rb.
 // Bỏ: AccountCacheRevalidator (endpoint cache_keys chưa port — xem note B10).
 class CannedResponse extends Model
 {

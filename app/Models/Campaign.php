@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-// Port từ refs/chatwoot/app/models/campaign.rb.
 // Bỏ: trigger!/execute_campaign (one_off — kênh SMS/WhatsApp chưa port, E4),
 // invalidate_filtered_unread_count_filters (bộ đếm theo bộ lọc — E1).
 class Campaign extends Model

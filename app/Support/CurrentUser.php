@@ -5,8 +5,7 @@ namespace App\Support;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-// Port từ thuộc tính `Current.user` của refs/chatwoot (CurrentAttributes): người
-// dùng đứng sau thay đổi, quyết định tên chủ thể trong activity message và người
+// Người dùng đứng sau thay đổi, quyết định tên chủ thể trong activity message và người
 // gửi tin nhắn. Ngoài request có auth sẵn, các job nền phải tự đặt giá trị này.
 final class CurrentUser
 {

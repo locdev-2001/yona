@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
-// Bản dịch pending execution của Chatwoot OSS. Một unique episode tránh duplicate
+// Bản dịch pending execution. Một unique episode tránh duplicate
 // khi listener nhận cùng event hai lần; processing/executing tách để crash không
 // gửi lại message khách hàng đã nhận.
 class AutomationRulePendingExecution extends Model

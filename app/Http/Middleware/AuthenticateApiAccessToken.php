@@ -16,9 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-// Port từ AccessTokenAuthHelper của Chatwoot: cùng một endpoint nhận cả session
+// Cùng một endpoint nhận cả session
 // (dashboard) lẫn header api_access_token (Application API). Header có mặt →
-// token quyết định; token sai → 401 'Invalid Access Token' như bản gốc.
+// token quyết định; token sai → 401 'Invalid Access Token'.
 // Implement AuthenticatesRequests để nhận cùng bậc ưu tiên với middleware `auth`
 // trong middlewarePriority — nếu không, `auth` bị đẩy lên chạy trước và chặn
 // request token bằng 401 trước khi middleware này kịp xác thực.

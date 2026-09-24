@@ -9,9 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Port của endpoint `/bot` mà Chatwoot mount từ gem facebook-messenger
- * (`Facebook::Messenger::Server`): GET xác nhận verify token, POST bung từng
- * phần tử `messaging`/`standby` thành một job như các handler `Bot.on` của gem.
+ * Endpoint `/bot` của Messenger: GET xác nhận verify token, POST bung từng
+ * phần tử `messaging`/`standby` thành một job.
  */
 class FacebookController extends Controller
 {

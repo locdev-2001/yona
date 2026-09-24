@@ -1,7 +1,6 @@
 <?php
 
-// Port từ refs/chatwoot/config/features.yml (v4.17.1) — default bật/tắt của
-// từng feature flag. accounts.feature_flags (jsonb) chỉ lưu override per-account;
+// Default bật/tắt của từng feature flag. accounts.feature_flags (jsonb) chỉ lưu override per-account;
 // Account::featureEnabled() đọc override trước rồi rơi về default ở đây.
 // display_name/help_url/premium của bản gốc thêm khi màn Super Admin (F7) cần.
 return [
@@ -42,9 +41,7 @@ return [
     'linear_integration' => false,
     'captain_integration' => false,
     'custom_roles' => false,
-    'chatwoot_v4' => true,
     'captain_v1_action_classifier' => false,
-    'contact_chatwoot_support_team' => true,
     'shopify_integration' => false,
     'search_with_gin' => false,
     'channel_instagram' => true,

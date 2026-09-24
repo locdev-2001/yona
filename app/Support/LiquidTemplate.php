@@ -3,8 +3,7 @@
 namespace App\Support;
 
 /**
- * Port thu gọn của `Liquid::Template.parse(...).render(drops)` mà Chatwoot dùng
- * trong `app/models/concerns/liquidable.rb`: CHỈ thay biến `{{ a.b }}`.
+ * Bản thu gọn của Liquid: CHỈ thay biến `{{ a.b }}`.
  *
  * Filter (`| upcase`), tag (`{% if %}`) và template WhatsApp chưa cần cho nhóm C
  * — khi cần, đổi lớp này sang một thư viện Liquid thật, mọi call-site giữ nguyên.

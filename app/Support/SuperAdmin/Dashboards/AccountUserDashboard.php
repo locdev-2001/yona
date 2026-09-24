@@ -6,7 +6,6 @@ use App\Models\AccountUser;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/dashboards/account_user_dashboard.rb.
 class AccountUserDashboard extends Dashboard
 {
     public function modelClass(): string

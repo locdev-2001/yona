@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 (bảng `csat_survey_responses`).
-// Bỏ 3 cột chỉ có mã enterprise ghi vào (`csat_review_notes`,
+// Bảng `csat_survey_responses`. Bỏ 3 cột chỉ có mã enterprise ghi vào (`csat_review_notes`,
 // `review_notes_updated_at`, `review_notes_updated_by_id`) — quyết định #12.
 return new class extends Migration
 {

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/custom_filter.rb.
 // Bỏ: invalidate cache đếm chưa đọc theo filter (FilteredCountStore chưa port).
 class CustomFilter extends Model
 {

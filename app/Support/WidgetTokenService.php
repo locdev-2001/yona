@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-// Port từ refs/chatwoot/app/services/widget/token_service.rb: token nhận diện
+// Token nhận diện
 // PHIÊN KHÁCH của widget — mang source_id + inbox_id, hạn mặc định 180 ngày.
 // Khóa ký = APP_KEY (thay `Rails.application.secret_key_base`).
 final class WidgetTokenService

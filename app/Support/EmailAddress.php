@@ -2,8 +2,7 @@
 
 namespace App\Support;
 
-// Port từ app/helpers/email_helper.rb + concern EmailAddressParseable của Chatwoot:
-// mọi thao tác trên chuỗi địa chỉ thư (tách, chuẩn hóa, kiểm tra) nằm ở đây,
+// Mọi thao tác trên chuỗi địa chỉ thư (tách, chuẩn hóa, kiểm tra) nằm ở đây,
 // không rải Mail::Address ra khắp nơi.
 class EmailAddress
 {

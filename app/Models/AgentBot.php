@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 
-// Port từ refs/chatwoot/app/models/agent_bot.rb. Implement Authenticatable vì
-// bot đăng nhập Application API bằng access_token như một "người dùng" (Chatwoot
+// Implement Authenticatable vì
+// bot đăng nhập Application API bằng access_token như một "người dùng" (bản gốc
 // gán Current.user = AgentBot).
 class AgentBot extends Model implements Authenticatable
 {

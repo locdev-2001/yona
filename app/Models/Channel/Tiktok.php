@@ -14,7 +14,6 @@ use Database\Factories\Channel\TiktokFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/tiktok.rb.
 class Tiktok extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<TiktokFactory> */

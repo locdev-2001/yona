@@ -4,8 +4,7 @@ namespace App\Support;
 
 use App\Models\Contact;
 
-// Port từ `Current.contact` của refs/chatwoot (lib/current.rb), do
-// WebsiteTokenHelper#set_contact gán. Model đọc nó để biết thay đổi đến từ
+// Liên hệ đứng sau request widget hiện tại, gán khi xác thực token website. Model đọc nó để biết thay đổi đến từ
 // KHÁCH chứ không phải agent (ví dụ nội dung activity "Conversation was
 // resolved by <tên khách>").
 final class CurrentContact

@@ -7,7 +7,6 @@ use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/dashboards/access_token_dashboard.rb.
 class AccessTokenDashboard extends Dashboard
 {
     public function modelClass(): string

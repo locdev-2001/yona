@@ -4,7 +4,7 @@ namespace App\Support;
 
 use Illuminate\Http\Request;
 
-// Thay gem `browser` của Chatwoot (dùng trong Api::V1::Widget::BaseController
+// Thay gem `browser` (dùng trong Api::V1::Widget::BaseController
 // #browser_params và #timestamp_params): đọc User-Agent + Accept-Language rồi
 // trả đúng bộ khóa mà panel hội thoại của dashboard đang hiển thị.
 final class BrowserInfo

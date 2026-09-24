@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-// Port từ Administrate::BaseDashboard (refs/chatwoot/app/dashboards/*.rb): mô tả
-// duy nhất một tài nguyên — kiểu từng thuộc tính, cột nào lên bảng, trường nào
+// Mô tả duy nhất một tài nguyên — kiểu từng thuộc tính, cột nào lên bảng, trường nào
 // lên trang xem/biểu mẫu, bộ lọc nào hiện trong ô select. Controller và trang
 // React đều đọc từ đây nên thêm cột chỉ sửa một chỗ.
 abstract class Dashboard

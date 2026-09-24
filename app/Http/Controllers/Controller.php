@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 abstract class Controller
 {
     // Tương đương check_authorization của Api::V1::Accounts::BaseController +
-    // policy "administrator" của Chatwoot: 401 với đúng chuỗi lỗi bản gốc.
+    // policy "administrator": 401 với đúng chuỗi lỗi bản gốc.
     protected function authorizeAdministrator(Request $request): void
     {
         $accountUser = $request->attributes->get('currentAccountUser');

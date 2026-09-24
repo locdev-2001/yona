@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 (bảng `canned_responses`): đúng 4 cột
+// Bảng `canned_responses`: đúng 4 cột
 // nghiệp vụ, không index nào ngoài khóa chính — uniqueness (short_code trong
 // account) là validate ở tầng nhận input, y bản gốc.
 return new class extends Migration

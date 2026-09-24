@@ -32,7 +32,7 @@ class InboxFactory extends Factory
         ];
     }
 
-    // Factory :channel_widget của Chatwoot: kênh Website + inbox cùng account.
+    // Factory :channel_widget: kênh Website + inbox cùng account.
     public function webWidget(): static
     {
         return $this->state([
@@ -42,7 +42,7 @@ class InboxFactory extends Factory
         ]);
     }
 
-    // Factory :channel_email của Chatwoot: kênh Email + inbox cùng account.
+    // Factory :channel_email: kênh Email + inbox cùng account.
     public function email(): static
     {
         return $this->state([
@@ -143,7 +143,7 @@ class InboxFactory extends Factory
         ]);
     }
 
-    // Factory :inbox của Chatwoot mặc định gắn kênh api cùng account.
+    // Factory :inbox mặc định gắn kênh api cùng account.
     public function configure(): static
     {
         return $this->afterMaking(function (Inbox $inbox) {

@@ -7,7 +7,6 @@ use App\Models\AccountUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/platform/api/v1/account_users_controller.rb.
 // Bản gốc render thẳng model nên payload là toàn bộ cột của account_users.
 class AccountUsersController extends PlatformController
 {

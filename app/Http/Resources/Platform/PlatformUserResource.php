@@ -5,7 +5,6 @@ namespace App\Http\Resources\Platform;
 use App\Models\AccountUser;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/views/platform/api/v1/models/_user.json.jbuilder.
 final class PlatformUserResource
 {
     public static function toArray(User $user): array

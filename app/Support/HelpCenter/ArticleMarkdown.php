@@ -7,12 +7,11 @@ use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\MarkdownConverter;
 
-// Port của `ChatwootMarkdownRenderer#render_article` (+ CustomMarkdownRenderer):
-// CommonMark + bảng, bọc bảng trong `.tableWrapper`, `^chữ^` thành <sup>,
+// Render bài viết Help Center: CommonMark + bảng, bọc bảng trong `.tableWrapper`, `^chữ^` thành <sup>,
 // đọc bề rộng cột từ chú thích `<!--cw-colwidths:...-->` mà trình soạn thảo ghi ra.
 final class ArticleMarkdown
 {
-    // Trùng cellMinWidth của @chatwoot/prosemirror-schema.
+    // Trùng cellMinWidth của schema ProseMirror dùng chung.
     private const TABLE_CELL_MIN_WIDTH_PX = 50;
 
     private const COLWIDTHS_PATTERN = '/<!--cw-colwidths:([\d,]+)-->/';

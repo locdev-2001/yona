@@ -17,7 +17,7 @@ use Database\Factories\Channel\WhatsappFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/whatsapp.rb. Mỗi nhà cung cấp là một
+// Mỗi nhà cung cấp là một
 // driver riêng (providerService), lõi kênh không biết chi tiết Cloud/360Dialog.
 class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
 {

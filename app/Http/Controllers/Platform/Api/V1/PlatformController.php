@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/platform_controller.rb — lớp nền của
+// Lớp nền của
 // Platform API: app đã xác thực nằm trong request, mọi bản ghi thao tác phải
 // nằm trong danh sách permissible của app đó.
 abstract class PlatformController extends Controller

@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/models/category.rb.
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */

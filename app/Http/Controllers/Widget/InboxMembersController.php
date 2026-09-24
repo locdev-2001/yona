@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/inbox_members_controller.rb
 // (skip_before_action :set_contact — khách chưa có phiên vẫn xem được đội ngũ).
 class InboxMembersController extends WidgetController
 {

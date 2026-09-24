@@ -6,7 +6,6 @@ use App\Services\AutoAssignment\InboxRoundRobinService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/inbox_member.rb.
 // FilteredCountInvalidator để lại B8.
 class InboxMember extends Model
 {

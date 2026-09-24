@@ -9,7 +9,7 @@ use App\Support\OnlineStatusTracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Thay RoomChannel#subscribed/update_presence của Chatwoot: Reverb không có
+// Thay RoomChannel#subscribed/update_presence: Reverb không có
 // hook subscribe phía server, nên FE gọi endpoint này làm heartbeat; server ghi
 // presence rồi bắn presence.update về đúng pubsub_token người gọi.
 class PresenceController extends Controller

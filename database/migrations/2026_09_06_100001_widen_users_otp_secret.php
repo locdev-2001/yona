@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 // otp_secret được mã hoá ở tầng ứng dụng nên chuỗi lưu dài hơn varchar(255) và
 // không còn so sánh trực tiếp được — nới sang text và bỏ ràng buộc unique đã mất
-// ý nghĩa (Chatwoot giữ được vì dùng mã hoá xác định/deterministic).
+// ý nghĩa (bản gốc giữ được vì dùng mã hoá xác định/deterministic).
 return new class extends Migration
 {
     public function up(): void

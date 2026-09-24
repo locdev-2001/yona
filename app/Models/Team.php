@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/team.rb.
 // Bỏ: conversations/messages/reporting_events (nhóm B–D), cache invalidation
 // unread counts (cùng B4), push_event_data (realtime B4), Audit::Team (EE).
 class Team extends Model
@@ -42,7 +41,7 @@ class Team extends Model
         });
     }
 
-    // before_validation của Chatwoot: bỏ ký tự điều khiển, trim, hạ chữ thường.
+    // before_validation: bỏ ký tự điều khiển, trim, hạ chữ thường.
     // Validate (presence + unique) phải chạy TRÊN tên đã chuẩn hóa, nên nơi
     // nhận input gọi hàm này trước khi kiểm tra.
     public static function normalizeName(string $name): string

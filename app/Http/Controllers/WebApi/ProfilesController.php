@@ -11,7 +11,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-// Port từ Api::V1::ProfilesController của Chatwoot (show/update/avatar).
 // availability + auto_offline tách ở ProfileAvailabilityController;
 // reset_access_token (F8), set_active_account (khi account switcher cần) chưa port.
 class ProfilesController extends Controller

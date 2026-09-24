@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-// Port từ refs/chatwoot/app/services/base_token_service.rb — chỗ duy nhất biết
+// Chỗ duy nhất biết
 // định dạng JWT trong codebase. Gem `jwt` của Ruby thay bằng HS256 tự ký:
 // chỉ cần một thuật toán, không cần thêm phụ thuộc.
 final class Jwt

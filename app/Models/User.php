@@ -73,7 +73,7 @@ class User extends Authenticatable
             'current_sign_in_at' => 'datetime',
             'last_sign_in_at' => 'datetime',
             'otp_required_for_login' => 'boolean',
-            // Chatwoot mã hoá hai cột này ở tầng ứng dụng (ActiveRecord encrypts);
+            // Bản gốc mã hoá hai cột này ở tầng ứng dụng (ActiveRecord encrypts);
             // ở đây dùng cast encrypted của Laravel (khoá APP_KEY).
             'otp_secret' => 'encrypted',
             'otp_backup_codes' => 'encrypted:array',
@@ -126,7 +126,7 @@ class User extends Authenticatable
         return (bool) $this->otp_required_for_login;
     }
 
-    // Tương đương User.from_email của Chatwoot (email đã chuẩn hóa lowercase khi lưu).
+    // Tương đương User.from_email (email đã chuẩn hóa lowercase khi lưu).
     public static function fromEmail(?string $email): ?self
     {
         if ($email === null || $email === '') {
@@ -148,7 +148,7 @@ class User extends Authenticatable
         return $token;
     }
 
-    /** @return list<string> Rule mật khẩu chung cho signup + đổi mật khẩu (độ phức tạp như Chatwoot). */
+    /** @return list<string> Rule mật khẩu chung cho signup + đổi mật khẩu (độ phức tạp như bản gốc). */
     public static function passwordRules(): array
     {
         return [

@@ -117,7 +117,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Kênh Email (F1 — port ENV của Chatwoot)
+    | Kênh Email (F1 — port ENV)
     |--------------------------------------------------------------------------
     |
     | MAILER_INBOUND_EMAIL_DOMAIN bật tính năng chuyển tiếp thư: có domain thì
@@ -134,7 +134,7 @@ return [
 
     'inbound_email_domain' => env('MAILER_INBOUND_EMAIL_DOMAIN') ?: null,
 
-    'sender_email' => env('MAILER_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'accounts@chatwoot.com')),
+    'sender_email' => env('MAILER_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
 
     // GlobalConfigService SKIP_INCOMING_BCC_PROCESSING — danh sách account_id
     // (ngăn cách dấu phẩy) không nhận thư chỉ-BCC.

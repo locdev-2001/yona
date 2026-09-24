@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port các bảng kênh ngoài của db/schema.rb (Chatwoot v4.17.1): Facebook Messenger,
+// Các bảng kênh ngoài: Facebook Messenger,
 // Instagram, Telegram, LINE, SMS (Bandwidth), Twilio SMS/WhatsApp, WhatsApp Cloud,
 // TikTok, Twitter. Cột mang bí mật để `text` vì cast `encrypted` sinh chuỗi dài hơn.
 return new class extends Migration

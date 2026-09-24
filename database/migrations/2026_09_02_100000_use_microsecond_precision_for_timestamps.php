@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-// Chatwoot (schema.rb `precision: nil` / Rails 7 `precision: 6`) lưu timestamp
+// Bản gốc (schema.rb `precision: nil` / Rails 7 `precision: 6`) lưu timestamp
 // 6 số lẻ; Laravel `timestamps()` mặc định precision 0 làm nhiều bản ghi cùng
 // giây thành tie khi order by created_at. Nâng mọi cột timestamp hiện có lên
 // timestamp(6); migration mới phải khai báo `timestamps(6)` / `timestamp('x', 6)`.

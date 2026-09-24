@@ -5,8 +5,7 @@ namespace App\Support;
 use App\Models\Account;
 use Illuminate\Support\Facades\Redis;
 
-// Port từ refs/chatwoot/lib/online_status_tracker.rb + key ONLINE_* của
-// lib/redis/redis_keys.rb. Presence = sorted set (score = unix time, member =
+// Presence = sorted set (score = unix time, member =
 // id); status online|busy|offline = hash {user_id => status}.
 final class OnlineStatusTracker
 {

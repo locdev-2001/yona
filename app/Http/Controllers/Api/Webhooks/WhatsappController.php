@@ -9,7 +9,6 @@ use App\Models\Channel\Whatsapp;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/webhooks/whatsapp_controller.rb.
 class WhatsappController extends Controller
 {
     use VerifiesMetaSignature;

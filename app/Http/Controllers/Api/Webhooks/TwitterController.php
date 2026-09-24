@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Port từ refs/chatwoot/app/controllers/api/v1/webhooks_controller.rb (twitter_crc
- * + twitter_events). CHỈ khung: CRC trả lời đúng để Twitter giữ đăng ký webhook;
+ * Webhook Twitter (CRC + sự kiện). CHỈ khung: CRC trả lời đúng để Twitter giữ đăng ký webhook;
  * xử lý sự kiện DM chưa port (xem note F2-F5).
  */
 class TwitterController extends Controller

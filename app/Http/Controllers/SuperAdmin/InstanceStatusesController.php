@@ -9,7 +9,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/instance_statuses_controller.rb.
 class InstanceStatusesController extends Controller
 {
     public function show(): Response

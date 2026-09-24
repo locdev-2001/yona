@@ -7,7 +7,6 @@ use App\Jobs\Webhooks\TiktokEventsJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/webhooks/tiktok_controller.rb.
 class TiktokController extends Controller
 {
     private const MAX_SIGNATURE_DELAY_SECONDS = 5;

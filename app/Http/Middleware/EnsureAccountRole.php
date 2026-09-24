@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-// Tương đương meta.permissions của router Chatwoot (routeHelpers#validateLoggedInRoutes):
+// Tương đương meta.permissions của router bản gốc (routeHelpers#validateLoggedInRoutes):
 // route ngoài quyền thì đưa về dashboard của account, không báo lỗi.
 class EnsureAccountRole
 {

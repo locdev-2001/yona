@@ -14,7 +14,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 // Port từ Administrate::ApplicationController + các controller
-// refs/chatwoot/app/controllers/super_admin/*: một luồng CRUD duy nhất cho mọi
+// Một luồng CRUD duy nhất cho mọi
 // tài nguyên, khác biệt nằm trong Dashboard tương ứng.
 abstract class ResourceController extends Controller
 {

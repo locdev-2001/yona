@@ -4,7 +4,7 @@ namespace App\Models\Concerns;
 
 use Illuminate\Support\Facades\Redis;
 
-// Port từ refs/chatwoot/app/models/concerns/reauthorizable.rb — đếm lỗi xác thực
+// Đếm lỗi xác thực
 // của dịch vụ ngoài trong Redis, quá ngưỡng thì bật cờ "cần cấp quyền lại".
 // Ngưỡng do chính lớp dùng trait khai qua hằng AUTHORIZATION_ERROR_THRESHOLD.
 trait Reauthorizable

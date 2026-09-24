@@ -36,7 +36,6 @@ use Illuminate\Support\Facades\Route;
 // khai (docs/code-standards.md §0.4). Widget website nhúng trên tên miền khách
 // hàng là người dùng đầu tiên của mặt tiền này — không session, không CSRF.
 //
-// Port từ khối `namespace :widget` trong refs/chatwoot/config/routes.rb.
 Route::middleware(ResolveWidgetChannel::class)
     ->prefix('/api/v1/widget')
     ->group(function () {
@@ -80,8 +79,7 @@ Route::middleware(ResolveWidgetChannel::class)
     });
 
 // F7 Platform API (/platform/api/v1/*) — BEGIN (agent f7 sở hữu khối này)
-// Port từ `namespace :platform` trong refs/chatwoot/config/routes.rb. Xác thực
-// bằng header api_access_token của một PlatformApp, không session/CSRF.
+// Platform API: xác thực bằng header api_access_token của một PlatformApp, không session/CSRF.
 Route::middleware(AuthenticatePlatformApp::class)
     ->prefix('/platform/api/v1')
     ->group(function () {
@@ -112,7 +110,7 @@ Route::middleware(AuthenticatePlatformApp::class)
 // F7 Platform API — END
 
 // F2-F5 webhook nhận từ kênh ngoài (/webhooks/*) — BEGIN (agent f2f5-be sở hữu khối này)
-// Port từ cuối refs/chatwoot/config/routes.rb. Không session, không CSRF: mỗi kênh
+// Webhook nhà cung cấp. Không session, không CSRF: mỗi kênh
 // tự xác thực theo cách của nhà cung cấp (token trong URL, HMAC header, chữ ký Twilio).
 Route::get('/bot', [FacebookWebhooksController::class, 'verify']);
 Route::post('/bot', [FacebookWebhooksController::class, 'events']);

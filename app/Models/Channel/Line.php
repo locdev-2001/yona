@@ -13,7 +13,7 @@ use Database\Factories\Channel\LineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/line.rb. Gem line-bot-sdk được thay
+// Gem line-bot-sdk được thay
 // bằng App\Services\Line\LineClient (Http facade).
 class Line extends Model implements DeclaresCapabilities, DeclaresPlatform
 {

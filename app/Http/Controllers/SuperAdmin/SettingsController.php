@@ -7,8 +7,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/settings_controller.rb —
-// bản CE chỉ còn danh sách mục cấu hình (phần gói cước/billing là enterprise).
+// Bản CE chỉ còn danh sách mục cấu hình (phần gói cước/billing là enterprise).
 class SettingsController extends Controller
 {
     public function show(): Response

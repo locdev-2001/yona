@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 (bảng `conversation_participants` và
-// `mentions`): cùng bộ cột, cùng unique (user_id, conversation_id) và ba index
+// Bảng `conversation_participants` và `mentions`: cùng bộ cột, cùng unique (user_id, conversation_id) và ba index
 // đơn theo từng khóa ngoại.
 return new class extends Migration
 {

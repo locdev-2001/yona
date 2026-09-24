@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/models/message.rb.
 // Bỏ: agent bot/captain (EE), searchkick (EE), translations (F6).
 class Message extends Model
 {
@@ -531,7 +530,7 @@ class Message extends Model
         (new HookExecutionService($this))->perform();
     }
 
-    /** before_save :ensure_in_reply_to — refs/chatwoot/app/models/message.rb:310. */
+    /** before_save :ensure_in_reply_to —.rb:310. */
     private function ensureInReplyTo(): void
     {
         (new InReplyToMessageBuilder(

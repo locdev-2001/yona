@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/direct_uploads_controller.rb.
 // Không có ActiveStorage nên gộp hai bước (tạo blob → PUT tệp) thành một POST
 // multipart, y như Conversations\DirectUploadsController của dashboard.
 class DirectUploadsController extends WidgetController

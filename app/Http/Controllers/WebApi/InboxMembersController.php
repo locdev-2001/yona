@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-// Port từ Api::V1::Accounts::InboxMembersController của Chatwoot.
 // create chỉ THÊM id còn thiếu, update diff add/remove, destroy bỏ qua id lạ —
 // đúng phép toán bản gốc. inbox_id sai → 404 (find của Rails), user_id không
 // tồn tại → 422 'User must exist' (belongs_to :user). Khác chủ đích: user của

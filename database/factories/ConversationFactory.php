@@ -22,7 +22,7 @@ class ConversationFactory extends Factory
         ];
     }
 
-    // Factory :conversation của Chatwoot tự sinh inbox/contact/contact_inbox
+    // Factory :conversation tự sinh inbox/contact/contact_inbox
     // cùng account khi không truyền vào.
     public function configure(): static
     {

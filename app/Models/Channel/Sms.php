@@ -13,7 +13,7 @@ use Database\Factories\Channel\SmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/sms.rb (nhà cung cấp Bandwidth).
+// Kênh SMS qua nhà cung cấp Bandwidth.
 // Phần gọi API nằm ở App\Services\Sms\BandwidthClient.
 class Sms extends Model implements DeclaresCapabilities, DeclaresPlatform
 {

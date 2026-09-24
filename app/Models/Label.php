@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
-// Port từ refs/chatwoot/app/models/label.rb.
 // Bỏ: messages/reporting_events (báo cáo nhãn — nhóm E), AccountCacheRevalidator
 // (cache key theo account — chưa port).
 class Label extends Model

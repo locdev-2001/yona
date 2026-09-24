@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 // Port app/models/user_session.rb — một dòng cho mỗi phiên đăng nhập của user.
-// `client_id` là id phiên của tầng session (Chatwoot: client của devise_token_auth,
+// `client_id` là id phiên của tầng session (bản gốc: client của devise_token_auth,
 // Yona: id phiên Laravel), nên revoke một dòng ở đây = đăng xuất đúng thiết bị đó.
 class UserSession extends Model
 {

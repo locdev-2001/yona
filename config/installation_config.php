@@ -1,16 +1,11 @@
 <?php
 
-// Port từ refs/chatwoot/config/installation_config.yml (v4.17.1) — mô tả mọi
-// cấu hình toàn cài đặt: giá trị mặc định, nhãn hiển thị, kiểu nhập và cờ
+// Mô tả mọi cấu hình toàn cài đặt: giá trị mặc định, nhãn hiển thị, kiểu nhập và cờ
 // `locked` (khoá thì không sửa được ở màn Installation configs).
 //
 // `value` ở đây CHỈ là mặc định của bảng `installation_configs`; lúc chạy thương
 // hiệu đọc từ config/yona.php (env). Đổi logo hay tên hiển thị thì sửa ở đó,
 // không sửa ở đây, nếu không hai nguồn sẽ lệch.
-//
-// Các khoá `CHATWOOT_*` giữ nguyên tên và mô tả của bản gốc: đó là tên khoá
-// trong port map Ruby↔PHP, không phải nhãn thương hiệu lọt lưới. Chúng cấu hình
-// widget "Contact Support" trên trang billing — Yona chưa có billing nên chết.
 return [
     [
         'name' => 'INSTALLATION_NAME',
@@ -198,7 +193,7 @@ return [
     [
         'name' => 'AZURE_APP_ID',
         'display_title' => 'Azure App ID',
-        'description' => 'The App ID that will be used to authenticate with customer Microsoft accounts. Find more details on setting up Azure here: https://chwt.app/dev/ms',
+        'description' => 'The App ID that will be used to authenticate with customer Microsoft accounts.',
         'locked' => false,
     ],
     [
@@ -277,28 +272,6 @@ return [
         'type' => 'secret',
     ],
     [
-        'name' => 'CHATWOOT_INBOX_TOKEN',
-        'value' => null,
-        'display_title' => 'Inbox Token',
-        'description' => 'The Chatwoot Inbox Token for Contact Support in Cloud',
-        'locked' => false,
-        'type' => 'secret',
-    ],
-    [
-        'name' => 'CHATWOOT_INBOX_HMAC_KEY',
-        'value' => null,
-        'display_title' => 'Inbox HMAC Key',
-        'description' => 'The Chatwoot Inbox HMAC Key for Contact Support in Cloud',
-        'locked' => false,
-        'type' => 'secret',
-    ],
-    [
-        'name' => 'CHATWOOT_CLOUD_PLANS',
-        'display_title' => 'Cloud Plans',
-        'value' => null,
-        'description' => 'Config to store stripe plans for cloud',
-    ],
-    [
         'name' => 'CAPTAIN_TOPUP_OPTIONS',
         'display_title' => 'Captain Topup Options',
         'value' => [
@@ -313,12 +286,6 @@ return [
         'description' => 'JSON config for Yona Cloud signup and plan activation conversion tracking',
         'locked' => true,
         'type' => 'code',
-    ],
-    [
-        'name' => 'CHATWOOT_CLOUD_PLAN_FEATURES',
-        'display_title' => 'Planwise Features List',
-        'value' => null,
-        'description' => 'Config to features and their associated plans',
     ],
     [
         'name' => 'DEPLOYMENT_ENV',
@@ -377,34 +344,10 @@ return [
         'description' => 'The number of licenses purchased for the installation, retrieved from the billing API',
     ],
     [
-        'name' => 'CHATWOOT_SUPPORT_WEBSITE_TOKEN',
-        'value' => null,
-        'description' => 'The Chatwoot website token, used to identify the Chatwoot inbox and display the "Contact Support" option on the billing page',
-        'type' => 'secret',
-    ],
-    [
-        'name' => 'CHATWOOT_SUPPORT_SCRIPT_URL',
-        'value' => null,
-        'description' => 'The Chatwoot script base URL, to display the "Contact Support" option on the billing page',
-    ],
-    [
-        'name' => 'CHATWOOT_SUPPORT_IDENTIFIER_HASH',
-        'value' => null,
-        'description' => 'The Chatwoot identifier hash, to validate the contact in the live chat window.',
-        'type' => 'secret',
-    ],
-    [
         'name' => 'ACCOUNT_SECURITY_NOTIFICATION_WEBHOOK_URL',
         'display_title' => 'Webhook URL to post security analysis',
         'value' => null,
         'description' => 'Used to notify Yona about account abuses, potential threads (Should be a Discord Webhook URL)',
-    ],
-    [
-        'name' => 'CHATWOOT_INSTANCE_ADMIN_EMAIL',
-        'display_title' => 'Instance Admin Email',
-        'value' => null,
-        'description' => 'The email of the instance administrator to receive compliance-related notifications',
-        'locked' => false,
     ],
     [
         'name' => 'API_CHANNEL_NAME',

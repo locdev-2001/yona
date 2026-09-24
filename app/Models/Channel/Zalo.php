@@ -121,8 +121,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
     }
 
     /**
-     * Contract lõi `reauthorization_required` (như Facebook/Instagram/Tiktok của
-     * Chatwoot): hộp thư cần người dùng đăng nhập lại thì sidebar, thẻ hội thoại
+     * Contract lõi `reauthorization_required` (như Facebook/Instagram/Tiktok): hộp thư cần người dùng đăng nhập lại thì sidebar, thẻ hội thoại
      * và trang cấu hình cùng hiện cảnh báo mà không kênh nào biết tên kênh nào.
      */
     public function reauthorizationRequired(): bool

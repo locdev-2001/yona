@@ -13,7 +13,6 @@ use App\Support\WidgetTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/contacts_controller.rb
 // (+ WidgetHelper#build_contact_inbox_with_token).
 class ContactsController extends WidgetController
 {

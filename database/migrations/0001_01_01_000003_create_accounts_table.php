@@ -41,7 +41,7 @@ return new class extends Migration
             $table->unique(['account_id', 'user_id'], 'uniq_user_id_per_account_id');
         });
 
-        // Giữ hành vi Chatwoot: mỗi account có sequence display_id riêng cho
+        // Mỗi account có sequence display_id riêng cho
         // conversations/campaigns, tạo bằng trigger ngay khi insert account.
         DB::unprepared(<<<'SQL'
             CREATE OR REPLACE FUNCTION accounts_after_insert_row_tr() RETURNS trigger AS $$

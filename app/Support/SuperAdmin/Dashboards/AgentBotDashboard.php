@@ -6,7 +6,6 @@ use App\Models\AgentBot;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/dashboards/agent_bot_dashboard.rb.
 class AgentBotDashboard extends Dashboard
 {
     public function modelClass(): string

@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Bảng `working_hours` của Chatwoot: một dòng cho mỗi thứ trong tuần của inbox.
+        // Bảng `working_hours`: một dòng cho mỗi thứ trong tuần của inbox.
         Schema::create('working_hours', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inbox_id')->nullable()->constrained()->cascadeOnDelete();

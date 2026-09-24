@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1: bảng campaigns. display_id sinh qua PG
+// Bảng campaigns. display_id sinh qua PG
 // trigger đọc sequence per-account (camp_dpid_seq_<account_id>, tạo sẵn từ
 // migration accounts) — cùng lối conversations, quyết định #7.
 return new class extends Migration

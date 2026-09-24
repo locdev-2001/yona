@@ -52,7 +52,7 @@ return [
             'provider' => 'super_admins',
         ],
 
-        // Khách của widget website: RoomChannel của Chatwoot chấp nhận đúng một
+        // Khách của widget website: RoomChannel chấp nhận đúng một
         // bằng chứng — biết pubsub_token của contact_inbox. Guard này chỉ dùng
         // cho auth kênh broadcast (routes/channels.php), không cho route HTTP.
         'widget' => [

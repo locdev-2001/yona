@@ -8,7 +8,6 @@ use App\Support\SuperAdmin\Dashboards\InstallationConfigDashboard;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/installation_configs_controller.rb
 // — chỉ thao tác trên cấu hình chưa khoá, và luôn ghi locked = false.
 class InstallationConfigsController extends ResourceController
 {

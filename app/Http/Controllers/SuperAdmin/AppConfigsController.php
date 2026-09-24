@@ -10,8 +10,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/app_configs_controller.rb —
-// mỗi mục cài đặt chỉ cho sửa đúng danh sách khoá của nó.
+// Mỗi mục cài đặt chỉ cho sửa đúng danh sách khoá của nó.
 class AppConfigsController extends Controller
 {
     private const GENERAL_CONFIGS = [

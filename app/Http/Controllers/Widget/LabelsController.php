@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Widget;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/labels_controller.rb —
-// widget chỉ gắn/gỡ được nhãn ĐÃ tồn tại trong account, không tạo nhãn mới.
+// Widget chỉ gắn/gỡ được nhãn ĐÃ tồn tại trong account, không tạo nhãn mới.
 class LabelsController extends WidgetController
 {
     public function store(Request $request): Response

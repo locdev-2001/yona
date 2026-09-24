@@ -14,7 +14,7 @@ use Database\Factories\Channel\TelegramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/telegram.rb. Phần gọi Bot API nằm ở
+// Phần gọi Bot API nằm ở
 // App\Services\Telegram\TelegramClient (lõi model không nói chuyện HTTP).
 class Telegram extends Model implements DeclaresCapabilities, DeclaresPlatform
 {

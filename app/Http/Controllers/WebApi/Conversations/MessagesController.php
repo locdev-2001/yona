@@ -132,7 +132,7 @@ class MessagesController extends Controller
     }
 
     /**
-     * messages#reactions — ngoài bản gốc (Chatwoot v4.17.1 không có UI biểu cảm);
+     * messages#reactions — ngoài bản gốc;
      * dựng theo docs/channel-capabilities.md §2.2 `outbound_reaction`. Lõi trung
      * tính: emoji vào, driver kênh tự dịch sang mã của nền tảng.
      */

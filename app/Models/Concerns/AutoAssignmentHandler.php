@@ -6,7 +6,6 @@ use App\Jobs\AutoAssignment\AssignmentJob;
 use App\Models\Conversation;
 use App\Services\AutoAssignment\AgentAssignmentService;
 
-// Port từ refs/chatwoot/app/models/concerns/auto_assignment_handler.rb.
 trait AutoAssignmentHandler
 {
     protected static function bootAutoAssignmentHandler(): void

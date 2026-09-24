@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Port từ refs/chatwoot/app/controllers/api/v1/accounts/callbacks_controller.rb —
- * bước sau khi người dùng đăng nhập Facebook: liệt kê trang, tạo inbox từ trang
+ * Bước sau khi người dùng đăng nhập Facebook: liệt kê trang, tạo inbox từ trang
  * đã chọn, cấp quyền lại cho trang cũ. Gem koala thay bằng Http facade.
  */
 class CallbacksController extends Controller

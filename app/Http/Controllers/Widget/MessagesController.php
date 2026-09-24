@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/messages_controller.rb.
 class MessagesController extends WidgetController
 {
     public function index(Request $request): JsonResponse
@@ -59,7 +58,7 @@ class MessagesController extends WidgetController
                 ))->perform();
             });
         } catch (MessageValidationException $exception) {
-            // render_record_invalid của Chatwoot: khóa `message`, không phải `error`.
+            // render_record_invalid: khóa `message`, không phải `error`.
             return response()->json(['message' => $exception->getMessage()], 422);
         }
 
@@ -175,7 +174,7 @@ class MessagesController extends WidgetController
         return $conversation;
     }
 
-    // Chatwoot quét trên MỌI hội thoại của khách chứ không chỉ hội thoại cuối,
+    // Bản gốc quét trên MỌI hội thoại của khách chứ không chỉ hội thoại cuối,
     // để khách nhiều luồng vẫn sửa được tin của mình — và chỉ của mình.
     private function fetchVisitorMessage(Request $request, int $messageId): Message
     {

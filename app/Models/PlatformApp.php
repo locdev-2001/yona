@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/platform_app.rb — ứng dụng gọi Platform API,
+// Ứng dụng gọi Platform API,
 // xác thực bằng access_token đa hình (AccessTokenable).
 class PlatformApp extends Model
 {

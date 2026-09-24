@@ -6,8 +6,7 @@ use Illuminate\Support\Str;
 
 /**
  * Nguồn duy nhất chuẩn hoá và nhận dạng kiểu MIME của tệp máy chủ tự tải về.
- * Tương đương `normalized_content_type` của refs/chatwoot/lib/safe_fetch/fetcher.rb
- * cộng bước đoán kiểu từ chính nội dung (gem `marcel` mà ActiveStorage dùng).
+ * Chuẩn hoá content type khai báo, cộng bước đoán kiểu từ chính nội dung (gem `marcel` mà ActiveStorage dùng).
  */
 final class MimeType
 {

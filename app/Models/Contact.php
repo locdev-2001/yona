@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/contact.rb.
 // Bỏ ở B2: conversations/messages (B3), csat_survey_responses + notes (tính năng sau),
 // ip_lookup job, CONTACT_MERGED (đi cùng merge B10),
 // LlmFormattable (enterprise).
@@ -311,7 +310,7 @@ class Contact extends Model
      * Contacts::SyncAttributes — đồng bộ location/country_code từ
      * additional_attributes và thăng hạng visitor → lead.
      *
-     * LỆCH CÓ CHỦ ĐÍCH so với Chatwoot gốc (`contact.rb#set_contact_type`, thăng
+     * LỆCH CÓ CHỦ ĐÍCH so với bản gốc (`contact.rb#set_contact_type`, thăng
      * lead khi `additional_attributes` có bất kỳ khoá `social_*`): ở Yona người
      * lạ vừa nhắn vào từ một kênh mạng xã hội là **Liên hệ nháp**, chỉ thành
      * **Lead** khi đã có SỐ ĐIỆN THOẠI hoặc EMAIL — từ hồ sơ kênh hay do agent

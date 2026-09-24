@@ -18,7 +18,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-// Port từ refs/chatwoot/app/models/notification.rb.
 class Notification extends Model
 {
     /** @use HasFactory<NotificationFactory> */

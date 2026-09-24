@@ -7,8 +7,7 @@ return [
     | Phiên bản + console quản trị
     |--------------------------------------------------------------------------
     |
-    | `version` hiện ở thanh điều hướng /super_admin và trang Instance Health
-    | (Chatwoot.config[:version] của bản gốc).
+    | `version` hiện ở thanh điều hướng /super_admin và trang Instance Health.
     |
     */
 
@@ -60,7 +59,7 @@ return [
     | Blocked email domains
     |--------------------------------------------------------------------------
     |
-    | Tương đương BLOCKED_EMAIL_DOMAINS của Chatwoot — mỗi dòng một pattern,
+    | Tương đương BLOCKED_EMAIL_DOMAINS — mỗi dòng một pattern,
     | so khớp regex với domain email đăng ký.
     |
     */
@@ -72,7 +71,7 @@ return [
     | Legal links
     |--------------------------------------------------------------------------
     |
-    | Tương đương TERMS_URL / PRIVACY_URL trong installation config Chatwoot —
+    | Tương đương TERMS_URL / PRIVACY_URL trong installation config bản gốc —
     | hiện dưới nút đăng ký và ở footer bề mặt công khai. Mặc định trỏ vào hai
     | trang pháp lý của chính bản cài đặt này; `/terms` và `/privacy-policy` cũ
     | chuyển hướng 301 về đây nên link đã phát ra ngoài vẫn sống.
@@ -144,7 +143,7 @@ return [
     | Widget
     |--------------------------------------------------------------------------
     |
-    | WIDGET_TOKEN_EXPIRY của Chatwoot (ngày). available_locales thay
+    | WIDGET_TOKEN_EXPIRY (ngày). available_locales thay
     | LANGUAGES_CONFIG — widget dựng danh sách ngôn ngữ từ đây.
     |
     */

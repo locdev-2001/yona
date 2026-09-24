@@ -1,6 +1,6 @@
 <?php
 
-// Thứ tự phân tầng hàng đợi (port từ Chatwoot `config/sidekiq.yml`): job ở tier
+// Thứ tự phân tầng hàng đợi: job ở tier
 // trước luôn được lấy trước job ở tier sau.
 //
 // Đây là NGUỒN DUY NHẤT. File cố ý không gọi env()/helper nào để `php -r

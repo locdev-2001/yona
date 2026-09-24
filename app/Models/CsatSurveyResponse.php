@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/csat_survey_response.rb.
 // Bỏ nhánh review notes (chỉ mã enterprise ghi) — xem migration; bộ scope
 // `filter_by_*` chỉ phục vụ báo cáo CSAT nên port cùng D2.
 class CsatSurveyResponse extends Model

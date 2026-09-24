@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/dashboard_controller.rb —
-// trang HTML rỗng, số liệu nạp bằng một lần gọi JSON vào chính đường dẫn đó.
+// Trang HTML rỗng, số liệu nạp bằng một lần gọi JSON vào chính đường dẫn đó.
 class DashboardController extends Controller
 {
     private const STATS_CACHE_SECONDS = 1800;

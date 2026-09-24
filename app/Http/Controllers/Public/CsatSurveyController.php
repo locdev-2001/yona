@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/controllers/public/api/v1/csat_survey_controller.rb.
 // Khách chấm điểm ngoài widget (đường dẫn khảo sát gửi kèm tin) — không phiên,
 // không token: bằng chứng danh tính là `uuid` của hội thoại trên URL.
 class CsatSurveyController extends Controller

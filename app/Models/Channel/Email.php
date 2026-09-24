@@ -14,7 +14,6 @@ use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/email.rb (+ Channelable, Reauthorizable).
 class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<EmailFactory> */

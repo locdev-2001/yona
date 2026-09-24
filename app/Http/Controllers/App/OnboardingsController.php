@@ -11,7 +11,6 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/accounts/onboardings_controller.rb
 // (self-hosted: chỉ bước account_details; inbox_setup là bước cloud-only).
 class OnboardingsController extends Controller
 {
@@ -40,7 +39,7 @@ class OnboardingsController extends Controller
             return redirect("/app/accounts/{$account->id}/dashboard");
         }
 
-        // Website không bắt buộc: Chatwoot đòi nó để tạo inbox web-widget ở bước
+        // Website không bắt buộc: bản gốc đòi nó để tạo inbox web-widget ở bước
         // inbox_setup, bước mà bản này không chạy — và phần lớn shop chỉ bán qua chat.
         $accountParams = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],

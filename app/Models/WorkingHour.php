@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * Port từ refs/chatwoot/app/models/working_hour.rb — một dòng cho mỗi thứ
+ * Một dòng cho mỗi thứ
  * trong tuần của một inbox.
  *
  * Validation của ActiveRecord chạy ở `save`; ở đây gom vào hook `saving` để mọi

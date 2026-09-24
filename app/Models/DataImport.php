@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 
-// Port từ refs/chatwoot/app/models/data_import.rb.
 // Chỉ nhánh nhập CSV liên hệ (legacy_contacts_csv_import) được port — nguồn
 // tích hợp freshdesk/intercom cần API bên ngoài, hoãn (xem note e3-notes-be).
 class DataImport extends Model
@@ -25,7 +24,7 @@ class DataImport extends Model
 
     public const ROLE_FAILED_RECORDS = 'failed_records';
 
-    // enum status của Chatwoot — số lưu trong DB, tên hiển thị ra API.
+    // enum status — số lưu trong DB, tên hiển thị ra API.
     public const STATUSES = [
         'pending' => 0,
         'processing' => 1,

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/devise/sessions_controller.rb
 // — đăng nhập riêng cho console quản trị, guard `super_admin`.
 class SessionsController extends Controller
 {

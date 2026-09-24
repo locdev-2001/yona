@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-// Port từ refs/chatwoot/app/models/macro.rb.
 // has_many_attached :files → attachments polymorphic (quyết định #9).
 class Macro extends Model
 {

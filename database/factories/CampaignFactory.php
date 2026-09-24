@@ -21,7 +21,7 @@ class CampaignFactory extends Factory
         ];
     }
 
-    // Factory :campaign của Chatwoot tự sinh inbox kênh Website cùng account.
+    // Factory :campaign tự sinh inbox kênh Website cùng account.
     public function configure(): static
     {
         return $this->afterMaking(function (Campaign $campaign) {

@@ -33,7 +33,6 @@ use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
-// Port từ Api::V1::Accounts::InboxesController của Chatwoot.
 // B1 chỉ có driver kênh API; các action kênh khác (agent_bot, sync_templates,
 // health, campaigns…) port cùng tính năng của chúng.
 class InboxesController extends Controller

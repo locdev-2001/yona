@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ refs/chatwoot/db/schema.rb — platform_apps, platform_app_permissibles
-// (Platform API) và installation_configs (cấu hình toàn cài đặt, Super Admin).
+// platform_apps, platform_app_permissibles (Platform API) và installation_configs (cấu hình toàn cài đặt, Super Admin).
 return new class extends Migration
 {
     public function up(): void

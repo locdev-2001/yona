@@ -8,7 +8,6 @@ use App\Jobs\Webhooks\InstagramEventsJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/webhooks/instagram_controller.rb.
 class InstagramController extends Controller
 {
     use VerifiesMetaSignature;

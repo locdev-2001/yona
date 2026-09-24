@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/integrations/hook.rb — một kết nối đã bật
+// Một kết nối đã bật
 // giữa account (hoặc inbox) và một ứng dụng trong danh mục tích hợp.
 class Hook extends Model
 {

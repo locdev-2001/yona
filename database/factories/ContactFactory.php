@@ -19,7 +19,7 @@ class ContactFactory extends Factory
         ];
     }
 
-    // trait :with_email của factory Chatwoot.
+    // trait :with_email của factory gốc.
     public function withEmail(): static
     {
         return $this->state(fn () => ['email' => fake()->unique()->safeEmail()]);

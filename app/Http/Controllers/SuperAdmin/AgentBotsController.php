@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/agent_bots_controller.rb.
 class AgentBotsController extends ResourceController
 {
     protected function dashboard(): Dashboard

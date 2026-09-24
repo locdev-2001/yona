@@ -7,7 +7,6 @@ use App\Models\Campaign;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/campaigns_controller.rb
 // (skip_before_action :set_contact — widget hỏi campaign trước khi có phiên khách)
 // + view index.json.jbuilder.
 class CampaignsController extends WidgetController

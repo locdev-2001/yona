@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // Port từ `ensure_access_token`/`set_platform_app` của
-// refs/chatwoot/app/controllers/platform_controller.rb — header api_access_token
-// phải trỏ tới token do một PlatformApp sở hữu.
+// Header api_access_token phải trỏ tới token do một PlatformApp sở hữu.
 class AuthenticatePlatformApp
 {
     public const PLATFORM_APP = 'platformApp';

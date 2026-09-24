@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/access_token.rb — token của Application API
+// Token của Application API
 // (header api_access_token), owner polymorphic (User; AgentBot vào ở D4).
 class AccessToken extends Model
 {

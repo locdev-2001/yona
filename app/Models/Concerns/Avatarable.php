@@ -9,7 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-// Tương đương concern Avatarable của Chatwoot: mọi model có avatar
+// Tương đương concern Avatarable: mọi model có avatar
 // (User, Inbox…) dùng chung một chỗ gắn/thay/đọc URL.
 trait Avatarable
 {

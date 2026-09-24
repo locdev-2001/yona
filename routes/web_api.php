@@ -63,9 +63,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 // Mặt tiền web_api: JSON cho chính FE (session auth) — map path /api/v1
-// như dashboard API của Chatwoot (quyết định #3).
+// như dashboard API (quyết định #3).
 
-// Profile không gắn account (Chatwoot: /api/v1/profile).
+// Profile không gắn account (bản gốc: /api/v1/profile).
 Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile', [ProfilesController::class, 'show']);
     Route::match(['put', 'patch'], '/profile', [ProfilesController::class, 'update']);
@@ -91,7 +91,7 @@ Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function
 });
 
 // auth.api_token đứng trước auth: header api_access_token (Application API,
-// curl/bot) thế chỗ session — cùng endpoint như Chatwoot.
+// curl/bot) thế chỗ session — cùng endpoint như bản gốc.
 Route::middleware(['auth.api_token', 'auth', 'account.scope'])
     ->prefix('/api/v1/accounts/{account}')
     ->whereNumber('account')
@@ -126,7 +126,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/inboxes/{inboxId}/avatar', [InboxesController::class, 'destroyAvatar'])->whereNumber('inboxId');
 
         // inbox_members: show theo /:inbox_id, create/update/destroy trên collection
-        // với inbox_id trong body — đúng route Chatwoot.
+        // với inbox_id trong body — đúng route bản gốc.
         Route::get('/inbox_members/{inboxId}', [InboxMembersController::class, 'show'])->whereNumber('inboxId');
         Route::post('/inbox_members', [InboxMembersController::class, 'store']);
         Route::match(['put', 'patch'], '/inbox_members', [InboxMembersController::class, 'update']);
@@ -338,7 +338,6 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         // F6 integrations hooks + dashboard_apps — END
 
         // F2-F5 kênh ngoài (callbacks, register page…) — BEGIN (agent f2f5-be sở hữu khối này)
-        // Port từ `resources :callbacks` trong refs/chatwoot/config/routes.rb.
         Route::post('/callbacks/register_facebook_page', [CallbacksController::class, 'registerFacebookPage']);
         Route::get('/callbacks/facebook_pages', [CallbacksController::class, 'facebookPages']);
         Route::post('/callbacks/reauthorize_page/{inboxId}', [CallbacksController::class, 'reauthorizePage'])->whereNumber('inboxId');
@@ -415,7 +414,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/teams/{teamId}/team_members', [TeamMembersController::class, 'destroy'])->whereNumber('teamId');
     });
 
-// D2 Reports — mặt tiền /api/v2 của Chatwoot (reports, summary_reports, live_reports).
+// D2 Reports — mặt tiền /api/v2 (reports, summary_reports, live_reports).
 Route::middleware(['auth.api_token', 'auth', 'account.scope'])
     ->prefix('/api/v2/accounts/{account}')
     ->whereNumber('account')

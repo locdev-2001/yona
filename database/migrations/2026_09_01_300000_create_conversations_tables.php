@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1: bảng conversations + messages +
+// Bảng conversations + messages +
 // access_tokens. display_id sinh qua PG trigger đọc sequence per-account
 // (conv_dpid_seq_<account_id>, tạo sẵn từ migration accounts) — quyết định #7.
 return new class extends Migration
@@ -121,7 +121,7 @@ return new class extends Migration
             CREATE INDEX index_messages_on_source_id ON messages (source_id);
         SQL);
 
-        // Morph map mới lưu 'User' thay 'App\Models\User' như Chatwoot —
+        // Morph map mới lưu 'User' thay 'App\Models\User' như bản gốc —
         // dữ liệu polymorphic cũ (avatar attachments) chuyển theo.
         DB::table('attachments')->where('attachable_type', 'App\\Models\\User')->update(['attachable_type' => 'User']);
         DB::table('attachments')->where('attachable_type', 'App\\Models\\Inbox')->update(['attachable_type' => 'Inbox']);

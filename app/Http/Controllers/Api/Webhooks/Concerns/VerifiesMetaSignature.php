@@ -6,8 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Port từ refs/chatwoot/app/controllers/concerns/meta_token_verify_concern.rb —
- * hai cửa xác thực của Meta: `hub.verify_token` lúc đăng ký, `X-Hub-Signature-256`
+ * Hai cửa xác thực của Meta: `hub.verify_token` lúc đăng ký, `X-Hub-Signature-256`
  * cho mỗi payload.
  */
 trait VerifiesMetaSignature

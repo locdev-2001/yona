@@ -4,7 +4,6 @@ namespace App\Http\Resources\Platform;
 
 use App\Models\AgentBot;
 
-// Port từ refs/chatwoot/app/views/platform/api/v1/models/_agent_bot.json.jbuilder.
 final class PlatformAgentBotResource
 {
     public static function toArray(AgentBot $agentBot): array

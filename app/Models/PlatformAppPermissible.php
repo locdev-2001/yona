@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-// Port từ refs/chatwoot/app/models/platform_app_permissible.rb — bản ghi mà một
+// Bản ghi mà một
 // platform app được phép thao tác (Account, User, AgentBot).
 class PlatformAppPermissible extends Model
 {

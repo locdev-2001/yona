@@ -7,8 +7,7 @@ use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/dashboards/installation_config_dashboard.rb —
-// scoped_resource của controller chỉ lấy bản ghi chưa khoá.
+// Scoped_resource của controller chỉ lấy bản ghi chưa khoá.
 class InstallationConfigDashboard extends Dashboard
 {
     public function modelClass(): string

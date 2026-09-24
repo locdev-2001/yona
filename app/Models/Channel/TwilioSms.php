@@ -13,7 +13,7 @@ use Database\Factories\Channel\TwilioSmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/twilio_sms.rb — một model phục vụ hai
+// Một model phục vụ hai
 // medium (SMS và WhatsApp qua Twilio). Gem twilio-ruby thay bằng App\Services\Twilio\TwilioClient.
 class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
 {

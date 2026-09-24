@@ -7,8 +7,7 @@ use App\Jobs\Webhooks\SmsEventsJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/webhooks/sms_controller.rb — Bandwidth
-// gửi một mảng JSON ở gốc payload (`params['_json']` của Rails).
+// Bandwidth gửi một mảng JSON ở gốc payload (`params['_json']` của Rails).
 class SmsController extends Controller
 {
     public function processPayload(Request $request): Response

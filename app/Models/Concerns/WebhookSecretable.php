@@ -4,8 +4,7 @@ namespace App\Models\Concerns;
 
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/concerns/webhook_secretable.rb — has_secure_token
-// :secret (base58 24 ký tự) + reset_secret!. Dùng chung cho Webhook, AgentBot
+// has_secure_token :secret (base58 24 ký tự) + reset_secret!. Dùng chung cho Webhook, AgentBot
 // và mọi kênh có secret; thêm nơi cần secret = dùng trait, không chép lại.
 trait WebhookSecretable
 {

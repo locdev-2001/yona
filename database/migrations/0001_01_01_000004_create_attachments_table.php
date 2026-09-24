@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // Thay ActiveStorage (quyết định #9): một bảng attachments polymorphic
         // dùng chung — avatar user (A4), attachment message (B9), logo inbox…
-        // Giữ các cột nghiệp vụ của bảng attachments Chatwoot (file_type,
+        // Giữ các cột nghiệp vụ của bảng attachments bản gốc (file_type,
         // extension, external_url, coordinates, meta); message_id → morph.
         Schema::create('attachments', function (Blueprint $table) {
             $table->id();

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 (`notification_settings` + `notifications`):
+// `notification_settings` + `notifications`:
 // cùng bộ cột, cùng tên index. Bản gốc không đặt khóa ngoại; ở đây ràng buộc thật
 // theo quy ước của repo nên xóa account/user là dọn luôn thông báo.
 return new class extends Migration

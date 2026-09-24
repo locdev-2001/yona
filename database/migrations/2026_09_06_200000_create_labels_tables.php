@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ db/schema.rb Chatwoot v4.17.1 (bảng `labels`) + thiết kế lại phần gán
+// Bảng `labels` + thiết kế lại phần gán
 // nhãn: bỏ gem acts_as_taggable_on (bảng tags/taggings đa ngữ cảnh, tagger,
 // context) — `taggings` ở đây chỉ nối `labels` với một bản ghi trong cùng
 // account, khóa ngoại thật nên xóa nhãn là gỡ liên kết luôn.

@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-// Port từ Api::V1::Accounts::AgentsController của Chatwoot.
 // Bỏ: usage_limits/LimitExceededError + reserve_email_send_capacity (billing
 // cloud/EE), custom_role_id (EE). UserPolicy: index mở cho member,
 // create/update/destroy/bulk_create chỉ administrator.

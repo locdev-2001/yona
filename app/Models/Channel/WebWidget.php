@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/models/channel/web_widget.rb (+ Channelable, FlagShihTzu).
 class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<WebWidgetFactory> */

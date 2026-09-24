@@ -32,7 +32,7 @@ class MessageFactory extends Factory
         return $this->state(['message_type' => Message::TYPE_ACTIVITY]);
     }
 
-    // Factory :message của Chatwoot tự sinh conversation cùng account.
+    // Factory :message tự sinh conversation cùng account.
     public function configure(): static
     {
         return $this->afterMaking(function (Message $message) {

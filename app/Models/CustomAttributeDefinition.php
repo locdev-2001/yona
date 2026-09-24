@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/custom_attribute_definition.rb.
 // Bỏ: đồng bộ pre-chat field của widget + invalidate cache đếm chưa đọc theo
 // filter (FilteredCountInvalidator chưa được port).
 class CustomAttributeDefinition extends Model

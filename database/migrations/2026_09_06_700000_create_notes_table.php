@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Ghi chú gắn với liên hệ (bảng `notes` của Chatwoot).
+        // Ghi chú gắn với liên hệ (bảng `notes`).
         Schema::create('notes', function (Blueprint $table) {
             $table->id();
             $table->text('content');

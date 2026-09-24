@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/reporting_events_rollup.rb — một dòng cho mỗi
+// Một dòng cho mỗi
 // (account, ngày, chiều, chỉ số).
 class ReportingEventsRollup extends Model
 {

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/data_import_error.rb — nhật ký lỗi từng
+// Nhật ký lỗi từng
 // bản ghi của một lần nhập.
 class DataImportError extends Model
 {

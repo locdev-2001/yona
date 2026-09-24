@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Mặt tiền api (§0.4): không session/CSRF — widget website nhúng trên tên
         // miền khách hàng và Platform API gọi vào đây. Tiền tố nằm trong chính
         // routes/api.php vì bản gốc đặt widget dưới /api/v1 còn Platform API
-        // dưới /platform/api/v1 (refs/chatwoot config/routes.rb).
+        // dưới /platform/api/v1.
         api: __DIR__.'/../routes/api.php',
         apiPrefix: '',
         commands: __DIR__.'/../routes/console.php',
@@ -65,7 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [SetLocale::class]);
 
         // Request mang api_access_token không có cookie phiên → miễn CSRF
-        // (token là bằng chứng chống CSRF), như API controller của Chatwoot.
+        // (token là bằng chứng chống CSRF), như API controller.
         // StartSession: không hồi sinh phiên mà request khác đã huỷ giữa chừng.
         $middleware->web(replace: [
             PreventRequestForgery::class => ValidateCsrfToken::class,

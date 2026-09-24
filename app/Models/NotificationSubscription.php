@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/notification_subscription.rb — một trình duyệt
+// Một trình duyệt
 // (hoặc thiết bị) đã đăng ký nhận thông báo đẩy của một user. Yona không có app
 // di động nên chỉ giữ loại browser_push; mã số giữ đúng bản gốc.
 class NotificationSubscription extends Model

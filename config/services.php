@@ -35,7 +35,7 @@ return [
         ],
     ],
 
-    // F2-F5 kênh ngoài — biến môi trường của Chatwoot (GlobalConfigService) đặt ở đây.
+    // F2-F5 kênh ngoài — biến môi trường (GlobalConfigService) đặt ở đây.
     'facebook' => [
         'app_id' => env('FB_APP_ID'),
         'app_secret' => env('FB_APP_SECRET'),

@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Port bảng `channel_email` của db/schema.rb (Chatwoot v4.17.1).
 return new class extends Migration
 {
     public function up(): void

@@ -6,8 +6,7 @@ use App\Models\AssignmentPolicy;
 use App\Models\AutomationRule;
 use App\Models\Inbox;
 
-// Port từ thuộc tính `Current.executed_by` của refs/chatwoot (CurrentAttributes):
-// tác nhân không phải người dùng đang thực hiện thay đổi, dùng để đặt tên chủ
+// Tác nhân không phải người dùng đang thực hiện thay đổi, dùng để đặt tên chủ
 // thể trong activity message. CE chỉ set giá trị này ở AutoAssignment.
 final class CurrentExecutedBy
 {

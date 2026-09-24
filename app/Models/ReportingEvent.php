@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/reporting_event.rb.
 class ReportingEvent extends Model
 {
     /** @use HasFactory<ReportingEventFactory> */

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Port từ refs/chatwoot/app/models/notification_setting.rb — hai cột bitmask
+// Hai cột bitmask
 // (email_flags / push_flags) sinh từ chính Notification::TYPES, đúng cách
 // EMAIL_NOTIFICATION_FLAGS/PUSH_NOTIFICATION_FLAGS của bản gốc.
 class NotificationSetting extends Model

@@ -13,7 +13,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-// Port từ refs/chatwoot/app/controllers/super_admin/accounts_controller.rb.
 class AccountsController extends ResourceController
 {
     protected function dashboard(): Dashboard

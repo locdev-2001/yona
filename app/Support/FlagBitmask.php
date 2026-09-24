@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-// Thay cho gem FlagShihTzu của Chatwoot: một cột integer chứa nhiều cờ bật/tắt.
+// Thay cho gem FlagShihTzu: một cột integer chứa nhiều cờ bật/tắt.
 // Mọi phép bit sống ở đây; model chỉ nói chuyện bằng danh sách tên cờ.
 final readonly class FlagBitmask
 {
@@ -24,7 +24,7 @@ final readonly class FlagBitmask
     }
 
     /**
-     * Bỏ qua giá trị rỗng: form của Chatwoot gửi `selected_feature_flags[]=''`
+     * Bỏ qua giá trị rỗng: form gửi `selected_feature_flags[]=''`
      * để diễn đạt "không bật cờ nào" (enable_flag if flag.present?).
      *
      * @param  iterable<mixed>|null  $names

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // Tương đương UserSessionTrackingService#update_activity! gọi từ base controller
-// của Chatwoot — làm mới last_activity_at (có throttle 5 phút trong service).
+// — làm mới last_activity_at (có throttle 5 phút trong service).
 class TrackUserSessionActivity
 {
     public function handle(Request $request, Closure $next): Response

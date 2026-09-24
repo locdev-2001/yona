@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Port từ api/v1/models/_account.json.jbuilder.
  *
- * Bỏ: `cache_keys` (chưa port), `latest_chatwoot_version`, khối billing/EE.
+ * Bỏ: `cache_keys` (chưa port), khối billing/EE.
  * Khối `custom_attributes` chỉ hiện khi có dữ liệu, đúng bản gốc.
  */
 class AccountResource extends JsonResource

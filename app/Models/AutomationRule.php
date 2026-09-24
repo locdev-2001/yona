@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Port từ refs/chatwoot/app/models/automation_rule.rb (OSS). File attachments,
-// reauthorization mail và custom attributes giữ nợ đúng biên D1/F1-E1.
+// File attachments, reauthorization mail và custom attributes giữ nợ đúng biên D1/F1-E1.
 class AutomationRule extends Model
 {
     /** @use HasFactory<AutomationRuleFactory> */

@@ -4,7 +4,6 @@ use App\Services\Integrations\Dialogflow\EventProcessor;
 use App\Services\Integrations\OpenAi\KeyValidator;
 use App\Services\Integrations\Slack\SlackEventProcessor;
 
-// Port từ refs/chatwoot/config/integration/apps.yml (bỏ nhánh enterprise).
 // Thuộc tính:
 //   id/logo/i18n_key/action/hook_type/allow_multiple_hooks/visible_properties/
 //   settings_json_schema/settings_form_schema — y như bản gốc.

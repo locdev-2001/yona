@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/widget/conversations_controller.rb.
 class ConversationsController extends WidgetController
 {
     public function index(Request $request): JsonResponse

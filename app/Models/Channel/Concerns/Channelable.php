@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/concerns/channelable.rb — phần chung của mọi
+// Phần chung của mọi
 // kênh: thuộc account, có đúng một inbox, và sinh token kiểu has_secure_token
 // (base58 24 ký tự). Thêm kênh mới = dùng trait này, không chép lại.
 trait Channelable

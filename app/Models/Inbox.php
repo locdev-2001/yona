@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/models/inbox.rb.
 // Bỏ ở B1: contact_inboxes/conversations/messages (nhóm B2-B3),
 // agent_bot/webhooks/portal (nhóm D-E),
 // FilteredCountInvalidator (nợ B8), EE overlay.

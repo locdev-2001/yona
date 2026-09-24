@@ -4,7 +4,7 @@ namespace App\Support\Integrations;
 
 use App\Models\Account;
 
-// Port từ refs/chatwoot/app/models/integrations/app.rb — một mục trong danh mục
+// Một mục trong danh mục
 // ứng dụng tích hợp. Điều kiện hiện/ẩn đọc từ config/integration/apps.php
 // (feature_flag + requires_config) nên thêm app mới không phải sửa lớp này.
 class App

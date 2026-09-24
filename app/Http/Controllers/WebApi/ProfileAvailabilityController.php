@@ -7,8 +7,7 @@ use App\Models\AccountUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Tương đương Api::V1::ProfilesController#availability + #auto_offline của
-// Chatwoot (cập nhật account_users theo account đang đứng).
+// Trạng thái sẵn sàng + tự offline của hồ sơ: cập nhật account_users theo account đang đứng.
 class ProfileAvailabilityController extends Controller
 {
     public function availability(Request $request): JsonResponse

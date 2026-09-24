@@ -2,7 +2,7 @@
 
 namespace App\Support\Integrations;
 
-// Thay cho gem JSONSchemer của Chatwoot: kiểm một giá trị theo lược đồ JSON Schema
+// Thay cho gem JSONSchemer: kiểm một giá trị theo lược đồ JSON Schema
 // khai trong config/integration/apps.php và lược đồ nội dung của dashboard app.
 // Chỉ hiện thực đúng các từ khoá mà các lược đồ đó dùng — thêm từ khoá mới thì
 // bổ sung ở đây, không rải điều kiện theo từng app.

@@ -7,8 +7,7 @@ use App\Jobs\Webhooks\TelegramEventsJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-// Port từ refs/chatwoot/app/controllers/webhooks/telegram_controller.rb.
-// Xác thực: bot_token nằm trong URL (đúng cách Chatwoot đăng ký webhook).
+// Xác thực: bot_token nằm trong URL (đúng cách bản gốc đăng ký webhook).
 class TelegramController extends Controller
 {
     public function processPayload(Request $request, string $botToken): Response

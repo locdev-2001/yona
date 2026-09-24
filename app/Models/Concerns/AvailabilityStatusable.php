@@ -4,8 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Support\OnlineStatusTracker;
 
-// Port từ refs/chatwoot/app/models/concerns/availability_statusable.rb (nhánh User;
-// Contact có availabilityStatus riêng). Trạng thái hiển thị KHÔNG phải cột
+// Trạng thái sẵn sàng của User (Contact có availabilityStatus riêng). Trạng thái hiển thị KHÔNG phải cột
 // `availability`: khi auto_offline bật (mặc định), trạng thái đi theo presence
 // realtime, không có presence = offline.
 trait AvailabilityStatusable

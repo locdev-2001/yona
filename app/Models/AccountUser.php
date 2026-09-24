@@ -35,7 +35,7 @@ class AccountUser extends Model
         self::ROLE_ADMINISTRATOR => 'administrator',
     ];
 
-    // Enum Rails nhận cả tên lẫn số — API Chatwoot gửi tên ('agent'/'online').
+    // Enum Rails nhận cả tên lẫn số — API bản gốc gửi tên ('agent'/'online').
     public static function roleFromName(string $name): int
     {
         return array_flip(self::ROLE_NAMES)[$name] ?? self::ROLE_AGENT;

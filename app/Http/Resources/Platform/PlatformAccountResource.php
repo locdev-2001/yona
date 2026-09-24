@@ -4,7 +4,6 @@ namespace App\Http\Resources\Platform;
 
 use App\Models\Account;
 
-// Port từ refs/chatwoot/app/views/platform/api/v1/models/_account.json.jbuilder.
 final class PlatformAccountResource
 {
     public static function toArray(Account $account): array

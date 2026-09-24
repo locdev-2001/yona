@@ -10,9 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Port từ refs/chatwoot/app/controllers/twilio/callback_controller.rb +
- * delivery_status_controller.rb. Chữ ký X-Twilio-Signature được kiểm tại đây
- * (bản gốc dựa vào middleware của gem twilio-ruby).
+ * Nhận tin đến và trạng thái giao tin. Chữ ký X-Twilio-Signature được kiểm tại đây
+ * (không dựa vào middleware).
  */
 class TwilioController extends Controller
 {

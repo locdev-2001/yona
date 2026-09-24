@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
-// Port từ refs/chatwoot/app/models/portal.rb (+ concern PortalConfigSchema).
 // `folders` bỏ (bảng chết trong bản gốc); logo dùng Attachment morph thay
 // ActiveStorage (quyết định #9).
 class Portal extends Model
