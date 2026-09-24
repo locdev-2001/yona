@@ -26,6 +26,7 @@ final class WidgetMessageResource
             'message_type' => $message->message_type,
             'content_type' => $message->contentTypeName(),
             'content_attributes' => $message->content_attributes ?? [],
+            'status' => $message->statusName(),
             'created_at' => $message->created_at->getTimestamp(),
             'conversation_id' => $message->conversation->display_id,
             ...self::attachments($message),
@@ -33,8 +34,13 @@ final class WidgetMessageResource
         ];
     }
 
-    /** messages/create.json.jbuilder — có inbox_id/private/source_id, không có content_type. */
-    /** @return array<string, mixed> */
+    /**
+     * messages/create.json.jbuilder — có inbox_id/private/source_id; thêm
+     * `content_type` và `status` để tin vừa gửi (sticker, "Đã gửi") hiện giống
+     * hệt lúc tải lại danh sách.
+     *
+     * @return array<string, mixed>
+     */
     public static function created(Message $message): array
     {
         return [
@@ -43,6 +49,8 @@ final class WidgetMessageResource
             'inbox_id' => $message->inbox_id,
             'conversation_id' => $message->conversation->display_id,
             'message_type' => $message->message_type,
+            'content_type' => $message->contentTypeName(),
+            'status' => $message->statusName(),
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
