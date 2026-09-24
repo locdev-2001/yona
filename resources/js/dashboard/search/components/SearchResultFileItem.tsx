@@ -1,4 +1,6 @@
 import { Link } from '@inertiajs/react';
+import { Fragment } from 'react';
+import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import { frontendURL } from 'dashboard/helper/URLHelper';
@@ -36,13 +38,27 @@ export default function SearchResultFileItem({ file, accountId, query }: SearchR
     const href = frontendURL(`accounts/${accountId}/conversations/${message.conversationId}?messageId=${file.messageId}`);
     const showThumbnail = file.fileType === 'image' && Boolean(file.thumbUrl);
 
-    const metaItems = [
+    const metaTexts = [
         `#${message.conversationId}`,
         findInbox(message.inboxId)?.name,
         searchAuthorName(message),
         createdAt ? dynamicTime(createdAt) : '',
         file.fileSize ? formatBytes(file.fileSize) : '',
     ].filter((item): item is string => Boolean(item));
+    const metaItems: ReactNode[] = metaTexts.map(item => (
+        <span key={item} className="min-w-0 truncate">
+            {item}
+        </span>
+    ));
+
+    if (message.private) {
+        metaItems.push(
+            <span key="private" className="flex items-center flex-shrink-0 gap-1 text-n-amber-11">
+                <Icon icon="i-lucide-lock-keyhole" className="flex-shrink-0 size-3.5" />
+                {t('SEARCH.PRIVATE')}
+            </span>,
+        );
+    }
 
     return (
         <CardLayout
@@ -66,18 +82,17 @@ export default function SearchResultFileItem({ file, accountId, query }: SearchR
                 >
                     <HighlightedText text={displayName} query={query} />
                 </Link>
-                <div className="flex flex-wrap items-center min-w-0 text-sm gap-x-2 gap-y-0.5 text-n-slate-11">
+                <div className="flex flex-wrap items-center min-w-0 text-sm gap-x-1.5 gap-y-0.5 text-n-slate-11">
                     {metaItems.map((item, index) => (
-                        <span key={`${index}-${item}`} className="min-w-0 truncate">
+                        <Fragment key={index}>
+                            {index > 0 ? (
+                                <span aria-hidden="true" className="flex-shrink-0 text-n-slate-10">
+                                    ·
+                                </span>
+                            ) : null}
                             {item}
-                        </span>
+                        </Fragment>
                     ))}
-                    {message.private ? (
-                        <span className="flex items-center flex-shrink-0 gap-1 text-n-amber-11">
-                            <Icon icon="i-lucide-lock-keyhole" className="flex-shrink-0 size-3.5" />
-                            {t('SEARCH.PRIVATE')}
-                        </span>
-                    ) : null}
                 </div>
             </div>
             {file.dataUrl ? (

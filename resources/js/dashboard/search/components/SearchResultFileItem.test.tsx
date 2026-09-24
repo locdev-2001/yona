@@ -77,6 +77,20 @@ describe('SearchResultFileItem', () => {
         expect(screen.getByText('#12')).toBeInTheDocument();
     });
 
+    it('ngăn các mục thông tin bằng dấu "·"', () => {
+        const { container } = render(
+            <SearchResultFileItem
+                file={buildFile({ message: { ...buildFile().message, private: true } })}
+                accountId={2}
+                query="bao"
+            />,
+        );
+        const meta = screen.getByText('#12').parentElement!;
+
+        expect(meta.textContent).toMatch(/^#12·Zalo Shop·Lan Anh·.+·20 KB·Ghi chú riêng$/);
+        expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(5);
+    });
+
     it('lấy tên từ đường dẫn khi thiếu tên tệp, không có gì thì ghi tệp không tên', () => {
         const { rerender } = render(
             <SearchResultFileItem file={buildFile({ fileName: null })} accountId={2} query="bao" />,
