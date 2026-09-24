@@ -104,12 +104,11 @@ jobs:
       - name: Build (vite + sdk)
         run: pnpm run build
 
-      # Chế độ báo cáo (không chặn) cho tới khi dọn xong tên cũ khỏi mã nguồn;
-      # khi sạch thì bỏ `--report` để hồi quy làm đỏ CI.
-      - name: Tên nền tảng cũ (nguồn + bundle, báo cáo)
+      # Chặn tên nền tảng cũ lọt lại vào mã nguồn và bundle phát ra trình duyệt.
+      - name: Tên nền tảng cũ (nguồn + bundle)
         run: |
-          pnpm run check:brand -- --report
-          pnpm run check:brand -- --build --report
+          pnpm run check:brand
+          pnpm run check:brand -- --build
 
   # Bridge Zalo chạy bằng node:test, không cần Postgres/Redis.
   bridge:
