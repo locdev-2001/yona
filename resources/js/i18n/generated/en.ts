@@ -2422,6 +2422,12 @@ const messages: Record<string, unknown> = {
                 "MESSAGE": "The message disappears on the customer's side too. This cannot be undone."
             }
         },
+        "REACTIONS": {
+            "TITLE": "Reactions",
+            "YOU": "You",
+            "TAP_TO_REMOVE": "Tap to remove",
+            "SUMMARY": "{count} reactions, tap to see who reacted"
+        },
         "REPLY_QUOTE": {
             "ORIGINAL": "Original message",
             "JUMP": "Go to original message"

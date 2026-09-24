@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { joinsNextMessage } from 'shared/helpers/messageGrouping';
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 import { t } from '../../../i18n';
 
 import { MessageProvider } from './provider';
@@ -19,6 +21,7 @@ import {
 import type { MessageOrientation, MessageVariant } from './constants';
 import MessageActions from './MessageActions';
 import MessageError from './MessageError';
+import MessageMeta from './MessageMeta';
 import ActivityBubble from './bubbles/Activity';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
@@ -50,7 +53,9 @@ interface MessageProps {
     message: ConversationMessage;
     channelType: string | null;
     inboxCapabilities?: readonly string[];
-    groupWithNext?: boolean;
+    // Vị trí trong nhóm tin liên tiếp cùng người gửi, MessageList tính bằng luật dùng chung.
+    groupPosition?: MessageGroupPosition;
+    resolveReactorName?: (by: string) => string | null;
     // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
     chatAttachments?: MessageAttachment[];
     // Tin được trả lời, MessageList tra sẵn: có = tin gốc · null = đã tra, không
@@ -116,7 +121,8 @@ export default function Message({
     message,
     channelType,
     inboxCapabilities = [],
-    groupWithNext = false,
+    groupPosition = 'single',
+    resolveReactorName,
     chatAttachments = [],
     inReplyTo,
     onRetry,
@@ -188,7 +194,8 @@ export default function Message({
         return ORIENTATION.LEFT;
     })();
 
-    const shouldGroupWithNext = status === MESSAGE_STATUS.FAILED ? false : groupWithNext;
+    const effectiveGroupPosition: MessageGroupPosition = status === MESSAGE_STATUS.FAILED ? 'single' : groupPosition;
+    const shouldGroupWithNext = joinsNextMessage(effectiveGroupPosition);
 
     const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY;
 
@@ -235,9 +242,11 @@ export default function Message({
         variant,
         orientation,
         shouldGroupWithNext,
+        groupPosition: effectiveGroupPosition,
         channelType,
         inboxCapabilities,
         onToggleReaction: onToggleReaction ? (emoji: string) => void onToggleReaction(message, emoji) : undefined,
+        resolveReactorName,
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
         onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
         onForward: onForward ? () => onForward(message) : undefined,
@@ -248,13 +257,17 @@ export default function Message({
 
     if (!shouldRenderMessage) return null;
 
+    // Trạng thái gửi và khoá ghi chú chỉ ở tin cuối nhóm; email tự vẽ dòng giờ trong khung thư.
+    const showsStatusRow = !shouldGroupWithNext && variant !== MESSAGE_VARIANTS.EMAIL;
+    const hasFooter = Boolean(contentAttributes.external_error) || isExternalEcho || showsStatusRow;
+
     return (
         <MessageProvider value={contextValue}>
             <div
                 id={`message${message.id}`}
                 data-message-id={message.id}
-                className={`flex w-full mb-2 group/message message-bubble-container ${FLEX_ORIENTATION_MAP[orientation]} ${
-                    shouldGroupWithNext ? 'group-with-next' : ''
+                className={`flex w-full group/message message-bubble-container ${FLEX_ORIENTATION_MAP[orientation]} ${
+                    shouldGroupWithNext ? 'group-with-next mb-0.5' : 'mb-3'
                 }`}
             >
                 {variant === MESSAGE_VARIANTS.ACTIVITY ? (
@@ -287,18 +300,25 @@ export default function Message({
                         >
                             <BubbleComponent />
                         </MessageActions>
-                        {contentAttributes.external_error ? (
-                            <MessageError
-                                className={`[grid-area:meta] ${FLEX_ORIENTATION_MAP[orientation]}`}
-                                onRetry={onRetry ? () => onRetry(message) : undefined}
-                            />
-                        ) : isExternalEcho ? (
+                        {hasFooter ? (
                             <div
-                                data-testid="external-echo-label"
-                                title={t('CONVERSATION.NATIVE_APP_ADVISORY')}
-                                className={`[grid-area:meta] flex mt-1 text-xs text-n-slate-11 ${FLEX_ORIENTATION_MAP[orientation]}`}
+                                className={`[grid-area:meta] flex flex-wrap items-center gap-x-1.5 ${FLEX_ORIENTATION_MAP[orientation]}`}
                             >
-                                {t('CONVERSATION.SENT_FROM_NATIVE_APP')}
+                                {contentAttributes.external_error ? (
+                                    <MessageError
+                                        className={FLEX_ORIENTATION_MAP[orientation]}
+                                        onRetry={onRetry ? () => onRetry(message) : undefined}
+                                    />
+                                ) : isExternalEcho ? (
+                                    <div
+                                        data-testid="external-echo-label"
+                                        title={t('CONVERSATION.NATIVE_APP_ADVISORY')}
+                                        className="flex mt-1 text-xs text-n-slate-11"
+                                    >
+                                        {t('CONVERSATION.SENT_FROM_NATIVE_APP')}
+                                    </div>
+                                ) : null}
+                                {showsStatusRow ? <MessageMeta showTime={false} className="mt-1 text-n-slate-11" /> : null}
                             </div>
                         ) : null}
                     </div>

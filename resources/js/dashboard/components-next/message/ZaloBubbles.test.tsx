@@ -198,7 +198,7 @@ describe('hàng biểu cảm dưới bong bóng', () => {
         const row = container.querySelector('[data-yona-reactions]');
 
         expect(row).not.toBeNull();
-        expect(row?.textContent).toBe('👍❤️');
+        expect(row?.textContent).toBe('👍❤️2');
     });
 
     it('không chèn gì khi tin chưa có biểu cảm', () => {

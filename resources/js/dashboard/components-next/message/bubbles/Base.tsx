@@ -2,14 +2,17 @@ import DOMPurify from 'dompurify';
 import type { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
+import { messageTimestamp } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
 import MessageMeta from '../MessageMeta';
+import MessageReactions from '../MessageReactions';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import { bubbleCornerClass } from '../helpers/bubbleShape';
 import { readForwardedFrom } from '../helpers/forwardedFrom';
 import { readGroupSender } from '../helpers/groupSender';
-import { groupReactions, readReactions } from '../helpers/reactions';
+import { readReactions } from '../helpers/reactions';
 
 // Port từ dashboard/components-next/message/bubbles/Base.vue — bỏ nhánh
 // CaptainGenerationDetails (EE).
@@ -26,10 +29,10 @@ const VARIANT_BASE_MAP: Record<string, string> = {
     [MESSAGE_VARIANTS.UNSUPPORTED]: 'bg-n-solid-amber/70 border border-dashed border-n-amber-12 text-n-amber-12',
 };
 
-const ORIENTATION_MAP: Record<string, string> = {
-    [ORIENTATION.LEFT]: 'left-bubble rounded-xl ltr:rounded-bl-sm rtl:rounded-br-sm',
-    [ORIENTATION.RIGHT]: 'right-bubble rounded-xl ltr:rounded-br-sm rtl:rounded-bl-sm',
-    [ORIENTATION.CENTER]: 'rounded-md',
+// Dấu nhận biết phía của bong bóng cho test và công cụ so ảnh, không mang style.
+const SIDE_MARKER_CLASS: Record<string, string> = {
+    [ORIENTATION.LEFT]: 'left-bubble',
+    [ORIENTATION.RIGHT]: 'right-bubble',
 };
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -60,21 +63,21 @@ export default function BaseBubble({
         orientation,
         replyQuote,
         shouldGroupWithNext,
+        groupPosition,
+        createdAt,
         contentAttributes,
-        onToggleReaction,
         onJumpToMessage,
     } = useMessageContext();
 
-    // MỞ RỘNG NGOÀI GỐC (Chatwoot v4.17.1 không có UI biểu cảm — `grep -rn
-    // "reactions" refs/chatwoot/app/javascript/` = 0). Zalo là kênh chính của
-    // Yona nên hàng emoji được vẽ dưới bong bóng; pixel-diff phải loại trừ
-    // `[data-yona-reactions]`.
-    const reactions = groupReactions(readReactions(contentAttributes));
+    // Viên cảm xúc đè mép dưới bong bóng; chừa chỗ bên dưới để không đè tin sau.
+    const hasReactions = readReactions(contentAttributes).length > 0;
 
     // Tin nhóm: tên người gửi thật đứng trên nội dung như app gốc của kênh (ảnh
     // của người đó nằm ở cột avatar bên trái) — không có dòng này thì mọi tin
     // trong nhóm nhìn như của cùng một người.
-    const groupSender = orientation === ORIENTATION.LEFT ? readGroupSender(contentAttributes) : null;
+    // Trong một nhóm tin liên tiếp, tên chỉ đứng ở tin đầu nhóm.
+    const startsGroup = groupPosition === 'single' || groupPosition === 'first';
+    const groupSender = orientation === ORIENTATION.LEFT && startsGroup ? readGroupSender(contentAttributes) : null;
 
     const forwardedFrom = readForwardedFrom(contentAttributes);
     const forwardedLabel = forwardedFrom?.senderName
@@ -85,15 +88,17 @@ export default function BaseBubble({
             ? t('CONVERSATION.FORWARDED.SOURCE_CONVERSATION', { id: forwardedFrom.sourceConversationId })
             : undefined;
 
-    const metaColorClass = variant === MESSAGE_VARIANTS.PRIVATE ? 'text-n-amber-12/50' : 'text-n-slate-11';
-    const emailMetaClass = variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '';
 
     const messageClass = [
         VARIANT_BASE_MAP[variant],
-        variant !== MESSAGE_VARIANTS.ACTIVITY ? ORIENTATION_MAP[orientation] : 'rounded-lg',
+        variant !== MESSAGE_VARIANTS.ACTIVITY ? bubbleCornerClass(orientation, groupPosition) : 'rounded-lg',
+        SIDE_MARKER_CLASS[orientation] ?? '',
     ].join(' ');
 
-    const shouldShowMeta = !hideMeta && !shouldGroupWithNext && variant !== MESSAGE_VARIANTS.ACTIVITY;
+    // Giờ gửi không lặp dưới từng tin: rê chuột lên bong bóng để xem, mốc thời
+    // gian nằm giữa các nhóm. Riêng email giữ dòng giờ trong khung thư.
+    const shouldShowMeta = !hideMeta && !shouldGroupWithNext && variant === MESSAGE_VARIANTS.EMAIL;
+    const sentAtTooltip = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
     const replyQuotePreview = (() => {
         if (!replyQuote) return '';
@@ -115,73 +120,57 @@ export default function BaseBubble({
 
     return (
         <div
-            className={`text-sm min-w-0 ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
-            title={title}
-            data-bubble-name={dataBubbleName}
-            onClick={onClick}
+            className={`relative min-w-0 ${variant === MESSAGE_VARIANTS.EMAIL ? 'w-full' : ''} ${hasReactions ? 'mb-4' : ''}`}
+            title={sentAtTooltip}
         >
-            {replyQuote && (
-                <button
-                    type="button"
-                    data-testid="reply-quote"
-                    className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
-                    title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
-                    disabled={replyQuote.targetId === null}
-                    onClick={jumpToRepliedMessage}
-                >
-                    {replyQuote.senderName ? (
-                        <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
-                    ) : null}
-                    <span
-                        className="block prose prose-bubble line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
-                    />
-                </button>
-            )}
-            {groupSender ? (
-                <div
-                    className="flex items-center mb-1 min-w-0"
-                    title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
-                >
-                    <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
-                </div>
-            ) : null}
-            {forwardedFrom ? (
-                <div
-                    data-testid="forwarded-label"
-                    title={forwardedTitle}
-                    className="flex items-center gap-1 mb-1 text-xs italic text-n-slate-11"
-                >
-                    <Icon icon="i-lucide-forward" className="size-3 shrink-0" />
-                    <span className="truncate">{forwardedLabel}</span>
-                </div>
-            ) : null}
-            {children}
-            {reactions.length > 0 && (
-                <div
-                    data-yona-reactions
-                    className={`flex gap-1 mt-1 text-sm leading-none ${FLEX_ORIENTATION_MAP[orientation]}`}
-                >
-                    {reactions.map(({ emoji, count, reactedBySelf }) => (
-                        <button
-                            key={emoji}
-                            type="button"
-                            disabled={!onToggleReaction}
-                            aria-pressed={reactedBySelf}
-                            className={`rounded-full px-1.5 py-0.5 inline-flex items-center gap-1 transition-colors duration-150 ${
-                                reactedBySelf ? 'bg-n-brand/20 ring-1 ring-n-brand/40' : 'bg-n-alpha-black1'
-                            } ${onToggleReaction ? 'cursor-pointer hover:bg-n-alpha-black2' : 'cursor-default'}`}
-                            onClick={() => onToggleReaction?.(emoji)}
-                        >
-                            <span>{emoji}</span>
-                            {count > 1 ? <span className="text-xs text-n-slate-11">{count}</span> : null}
-                        </button>
-                    ))}
-                </div>
-            )}
-            {shouldShowMeta && (
-                <MessageMeta className={`${FLEX_ORIENTATION_MAP[orientation]} ${emailMetaClass} ${metaColorClass} mt-2`} />
-            )}
+            <div
+                className={`text-sm min-w-0 ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
+                title={title}
+                data-bubble-name={dataBubbleName}
+                onClick={onClick}
+            >
+                {replyQuote && (
+                    <button
+                        type="button"
+                        data-testid="reply-quote"
+                        className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
+                        title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
+                        disabled={replyQuote.targetId === null}
+                        onClick={jumpToRepliedMessage}
+                    >
+                        {replyQuote.senderName ? (
+                            <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
+                        ) : null}
+                        <span
+                            className="block prose prose-bubble line-clamp-2"
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
+                        />
+                    </button>
+                )}
+                {groupSender ? (
+                    <div
+                        className="flex items-center mb-1 min-w-0"
+                        title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
+                    >
+                        <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
+                    </div>
+                ) : null}
+                {forwardedFrom ? (
+                    <div
+                        data-testid="forwarded-label"
+                        title={forwardedTitle}
+                        className="flex items-center gap-1 mb-1 text-xs italic text-n-slate-11"
+                    >
+                        <Icon icon="i-lucide-forward" className="size-3 shrink-0" />
+                        <span className="truncate">{forwardedLabel}</span>
+                    </div>
+                ) : null}
+                {children}
+                {shouldShowMeta && (
+                    <MessageMeta className={`${FLEX_ORIENTATION_MAP[orientation]} px-3 pb-3 text-n-slate-11 mt-2`} />
+                )}
+            </div>
+            <MessageReactions />
         </div>
     );
 }

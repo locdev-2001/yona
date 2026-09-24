@@ -125,7 +125,8 @@ describe('Message với sticker', () => {
             stickerMessage({ content_attributes: { reactions: [{ emoji: '❤️', by: 'agent:1', at: BASE_TIME }] } }),
         );
 
-        expect(container.querySelector('[data-bubble-name="sticker"] [data-yona-reactions]')?.textContent).toBe('❤️');
+        const sticker = container.querySelector('[data-bubble-name="sticker"]');
+        expect(sticker?.parentElement?.querySelector('[data-yona-reactions]')?.textContent).toBe('❤️');
     });
 });
 

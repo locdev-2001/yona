@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 import Message from './Message';
 import MessageList from './MessageList';
 import { SenderIdentityContext } from './SenderIdentityContext';
@@ -45,8 +46,8 @@ function message(id: number, overrides: Partial<ConversationMessage> = {}): Conv
 const withIdentity = (children: ReactNode) => (
     <SenderIdentityContext.Provider value={IDENTITY}>{children}</SenderIdentityContext.Provider>
 );
-const renderMessage = (payload: ConversationMessage, groupWithNext = false) =>
-    render(withIdentity(<Message message={payload} channelType="Channel::Zalo" groupWithNext={groupWithNext} />))
+const renderMessage = (payload: ConversationMessage, groupPosition: MessageGroupPosition = 'single') =>
+    render(withIdentity(<Message message={payload} channelType="Channel::Zalo" groupPosition={groupPosition} />))
         .container;
 const avatarCell = (scope: ParentNode) => scope.querySelector('.\\[grid-area\\:avatar\\]');
 const badgeLogo = (scope: ParentNode) => scope.querySelector('[data-testid="avatar-platform-badge"] img');
@@ -74,7 +75,7 @@ describe('avatar người gửi trên bong bóng', () => {
     });
 
     it('tin còn gộp với tin kế thì không vẽ avatar', () => {
-        const container = renderMessage(message(4), true);
+        const container = renderMessage(message(4), 'first');
 
         expect(avatarCell(container)).toBeNull();
     });

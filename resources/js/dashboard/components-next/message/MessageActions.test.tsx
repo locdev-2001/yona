@@ -457,14 +457,15 @@ describe('hàng biểu cảm dưới bong bóng', () => {
         );
 
         const row = container.querySelector('[data-yona-reactions]');
-        expect(row?.textContent).toBe('👍2❤️');
+        // Viên gộp: emoji nhiều lượt nhất đứng trước, rồi tổng số lượt.
+        expect(row?.textContent).toBe('👍❤️3');
         expect(row?.textContent).not.toContain('object');
     });
 
     it('vẫn đọc được bản ghi cũ dạng mảng emoji phẳng', () => {
         expect(groupReactions(readReactions({ reactions: ['👍', '👍', '❤️'] }))).toEqual([
-            { emoji: '👍', count: 2, reactedBySelf: false },
-            { emoji: '❤️', count: 1, reactedBySelf: false },
+            { emoji: '👍', count: 2, reactedBySelf: false, reactedBy: ['unknown', 'unknown'] },
+            { emoji: '❤️', count: 1, reactedBySelf: false, reactedBy: ['unknown'] },
         ]);
     });
 

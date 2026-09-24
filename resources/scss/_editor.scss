@@ -169,17 +169,6 @@
   @apply relative py-0 px-3 -mt-px;
 }
 
-// <style> cuối Message.vue: tin gộp nhóm bo góc nhỏ ở cạnh nối.
-.group-with-next + .message-bubble-container {
-  .left-bubble {
-    @apply ltr:rounded-tl-sm rtl:rounded-tr-sm;
-  }
-
-  .right-bubble {
-    @apply ltr:rounded-tr-sm rtl:rounded-tl-sm;
-  }
-}
-
 // <style> global cuối bubbles/Text/Index.vue (p:last-child { margin-bottom: 0 })
 // — scope vào prose-bubble thay vì thả global cả app.
 .prose-bubble p:last-child {

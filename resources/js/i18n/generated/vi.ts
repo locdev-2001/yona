@@ -2422,6 +2422,12 @@ const messages: Record<string, unknown> = {
                 "MESSAGE": "Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được."
             }
         },
+        "REACTIONS": {
+            "TITLE": "Cảm xúc",
+            "YOU": "Bạn",
+            "TAP_TO_REMOVE": "Bấm để gỡ",
+            "SUMMARY": "{count} cảm xúc, bấm để xem ai đã thả"
+        },
         "REPLY_QUOTE": {
             "ORIGINAL": "Tin nhắn gốc",
             "JUMP": "Xem tin nhắn gốc"

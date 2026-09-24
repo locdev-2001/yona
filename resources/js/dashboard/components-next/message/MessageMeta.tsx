@@ -11,7 +11,9 @@ import { useMessageContext } from './provider';
 // thì dùng status thật, kênh không khai vẫn là đồng hồ xoay như trước.
 const LEFT_YONA_STATUSES: string[] = [MESSAGE_STATUS.SENT, MESSAGE_STATUS.DELIVERED, MESSAGE_STATUS.READ];
 
-export default function MessageMeta({ className = '' }: { className?: string }) {
+// `showTime = false`: dòng dưới tin cuối nhóm chỉ còn khoá ghi chú và trạng thái
+// gửi; giờ đã có ở tooltip bong bóng và mốc thời gian giữa các nhóm.
+export default function MessageMeta({ className = '', showTime = true }: { className?: string; showTime?: boolean }) {
     const { createdAt, status, isPrivate, messageType, contentAttributes, inboxCapabilities } =
         useMessageContext();
     const inbox = { capabilities: inboxCapabilities };
@@ -41,11 +43,15 @@ export default function MessageMeta({ className = '' }: { className?: string }) 
         return MESSAGE_STATUS.PROGRESS;
     })();
 
+    if (!showTime && !isPrivate && !showStatusIndicator) return null;
+
     return (
         <div className={`text-xs flex items-center gap-1.5 ${className}`}>
-            <div className="inline">
-                <time className="inline">{readableTime}</time>
-            </div>
+            {showTime ? (
+                <div className="inline">
+                    <time className="inline">{readableTime}</time>
+                </div>
+            ) : null}
             {isPrivate ? <Icon icon="i-lucide-lock-keyhole" className="size-3" /> : null}
             {showStatusIndicator ? <MessageStatus status={statusToShow} /> : null}
         </div>

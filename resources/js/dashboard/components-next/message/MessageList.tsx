@@ -1,17 +1,22 @@
-import { forwardRef, Fragment } from 'react';
+import { forwardRef, Fragment, useMemo } from 'react';
 import type { ReactNode, UIEventHandler } from 'react';
+import { fromUnixTime, isToday } from 'date-fns';
 
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { needsTimeDivider, resolveGroupPositions } from 'shared/helpers/messageGrouping';
+import type { GroupableMessage } from 'shared/helpers/messageGrouping';
+import { messageStamp, messageTimestamp } from 'shared/helpers/timeHelper';
 
 import Message from './Message';
-import { MESSAGE_TYPES } from './constants';
+import { MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
+import { createReactorNameResolver } from './helpers/reactions';
 import { readInReplyToId } from './helpers/replyQuote';
 import { messageSenderKey } from './helpers/senderIdentity';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
-// (beforeAll/unreadBadge/after) thành props ReactNode; grouping tính trực tiếp
-// trên payload snake_case. Bỏ ở B3: retry (chưa có sendMessageWithData ở spine).
+// (beforeAll/unreadBadge/after) thành props ReactNode; gộp nhóm tin và mốc thời
+// gian theo luật dùng chung ở shared/helpers/messageGrouping. Bỏ ở B3: retry (chưa có sendMessageWithData ở spine).
 // Tin được trả lời nằm ngoài trang đang tải do nơi dựng danh sách tra riêng và
 // truyền vào qua `replyTargets`.
 
@@ -41,25 +46,20 @@ interface MessageListProps {
 
 const NO_REPLY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
 
-function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): boolean {
-    if (index === searchList.length - 1) return false;
+const STANDALONE_MESSAGE_TYPES: number[] = [MESSAGE_TYPES.TEMPLATE, MESSAGE_TYPES.ACTIVITY];
 
-    const current = searchList[index];
-    const next = searchList[index + 1];
+// Quy tin của hộp thư về dạng luật gộp nhóm dùng chung hiểu được: khác loại tin
+// (khách/nhân viên) là khác người gửi; tin lỗi, tin mẫu, tin hoạt động đứng riêng.
+function toGroupableMessage(message: ConversationMessage): GroupableMessage {
+    return {
+        senderKey: `${message.message_type}:${messageSenderKey(message) ?? ''}`,
+        createdAt: message.created_at,
+        standalone: message.status === MESSAGE_STATUS.FAILED || STANDALONE_MESSAGE_TYPES.includes(message.message_type),
+    };
+}
 
-    if (next.status === 'failed') return false;
-
-    const hasSameSender = messageSenderKey(next) === messageSenderKey(current);
-
-    const areBothTemplates =
-        next.message_type === MESSAGE_TYPES.TEMPLATE && current.message_type === MESSAGE_TYPES.TEMPLATE;
-
-    if (!hasSameSender || areBothTemplates) return false;
-
-    if (current.message_type !== next.message_type) return false;
-
-    // Cùng phút (làm tròn xuống theo 60s) mới gộp.
-    return Math.floor(next.created_at / 60) === Math.floor(current.created_at / 60);
+function timeDividerLabel(createdAt: number): string {
+    return isToday(fromUnixTime(createdAt)) ? messageStamp(createdAt) : messageTimestamp(createdAt, 'LLL d, h:mm a');
 }
 
 /**
@@ -103,20 +103,30 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     },
     ref,
 ) {
+    const groupPositions = useMemo(() => resolveGroupPositions(messages.map(toGroupableMessage)), [messages]);
+    const resolveReactorName = useMemo(() => createReactorNameResolver(messages), [messages]);
+
     return (
         <ul ref={ref} className={`px-4 bg-n-surface-1 ${className}`} onScroll={onScroll}>
             {beforeAll}
-            {/* Giữ Message là con trực tiếp của ul như DOM gốc — CSS
-                `.group-with-next + .message-bubble-container` cần chúng là sibling. */}
             {messages.map((message, index) => (
                 <Fragment key={message.id}>
                     {firstUnreadId != null && message.id === firstUnreadId && unreadBadge}
+                    {needsTimeDivider(index > 0 ? messages[index - 1].created_at : null, message.created_at) ? (
+                        <li
+                            data-testid="message-time-divider"
+                            className="list-none flex justify-center py-2 text-xs font-medium text-n-slate-11"
+                        >
+                            <time>{timeDividerLabel(message.created_at)}</time>
+                        </li>
+                    ) : null}
                     <Message
                         message={message}
                         channelType={channelType}
                         inboxCapabilities={inboxCapabilities}
                         chatAttachments={chatAttachments}
-                        groupWithNext={shouldGroupWithNext(index, messages)}
+                        groupPosition={groupPositions[index]}
+                        resolveReactorName={resolveReactorName}
                         inReplyTo={findInReplyTo(message, messages, replyTargets)}
                         onRetry={onRetry}
                         onToggleReaction={onToggleReaction}

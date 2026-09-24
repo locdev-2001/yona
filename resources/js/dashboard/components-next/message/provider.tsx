@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
 import type { MessageSender } from 'dashboard/conversation/types';
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 import type { MessageOrientation, MessageVariant } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
 import type { ReplyQuote } from './helpers/replyQuote';
@@ -29,6 +30,8 @@ export interface MessageContextValue {
     variant: MessageVariant;
     orientation: MessageOrientation;
     shouldGroupWithNext: boolean;
+    // Vị trí trong nhóm tin liên tiếp cùng người gửi (luật ở shared/helpers/messageGrouping).
+    groupPosition: MessageGroupPosition;
     channelType: string | null;
     // Năng lực của inbox đang mở (docs/channel-capabilities.md §3): bong bóng và
     // meta gate theo cái này, KHÔNG theo channelType.
@@ -36,6 +39,8 @@ export interface MessageContextValue {
     // Thả/gỡ biểu cảm — bấm lại chính emoji mình đã thả là gỡ. Không có hàm này
     // (kênh không khai `outbound_reaction`) thì hàng emoji chỉ để đọc.
     onToggleReaction?: (emoji: string) => void;
+    // Tên người thả cảm xúc phía khách; null khi dữ liệu không đủ để biết.
+    resolveReactorName?: (by: string) => string | null;
     // Thu hồi (kênh khai `outbound_recall`) hoặc xoá một chiều ở Yona — lõi tự
     // quyết theo năng lực, FE chỉ đổi nhãn.
     onDeleteMessage?: () => void;

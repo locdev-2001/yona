@@ -129,6 +129,13 @@ return [
             'MESSAGE' => 'The message disappears on the customer\'s side too. This cannot be undone.',
         ],
     ],
+    // Viên cảm xúc dưới bong bóng và danh sách ai thả gì.
+    'REACTIONS' => [
+        'TITLE' => 'Reactions',
+        'YOU' => 'You',
+        'TAP_TO_REMOVE' => 'Tap to remove',
+        'SUMMARY' => '{count} reactions, tap to see who reacted',
+    ],
     // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
     'REPLY_QUOTE' => [
         'ORIGINAL' => 'Original message',

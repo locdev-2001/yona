@@ -130,6 +130,13 @@ return [
             'MESSAGE' => 'Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được.',
         ],
     ],
+    // Viên cảm xúc dưới bong bóng và danh sách ai thả gì.
+    'REACTIONS' => [
+        'TITLE' => 'Cảm xúc',
+        'YOU' => 'Bạn',
+        'TAP_TO_REMOVE' => 'Bấm để gỡ',
+        'SUMMARY' => '{count} cảm xúc, bấm để xem ai đã thả',
+    ],
     // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
     'REPLY_QUOTE' => [
         'ORIGINAL' => 'Tin nhắn gốc',
