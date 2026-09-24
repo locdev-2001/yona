@@ -58,7 +58,7 @@ describe('hàng đầu sidebar: tìm kiếm, chuông, soạn', () => {
     });
 
     // Hàng là grid item: thiếu min-w-0 thì track lấy bề rộng tối thiểu của chữ gợi ý
-    // (không xuống dòng) nên "Tìm kiếm..." đẩy hàng tràn khỏi sidebar 200px.
+    // (không xuống dòng) nên chữ gợi ý đẩy hàng tràn khỏi sidebar 200px.
     it('hàng tìm kiếm được co theo sidebar thay vì theo chữ gợi ý', () => {
         const { container } = render(<Sidebar onCloseMobileSidebar={() => undefined} />);
         const { search } = topRowControls(container);

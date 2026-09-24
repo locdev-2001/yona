@@ -1342,7 +1342,10 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Mentions",
         "UNATTENDED_HEADING": "Unattended",
         "SEARCH": {
-            "INPUT": "Search for People, Chats, Saved Replies .."
+            "INPUT": "Search name, phone, email, message, #id",
+            "LABEL": "Search conversations in this list",
+            "CLEAR": "Clear search",
+            "NO_RESULTS": "No conversation in this list matches “{query}”."
         },
         "FILTER_ALL": "All",
         "ASSIGNEE_TYPE_TABS": {
@@ -9010,6 +9013,8 @@ const messages: Record<string, unknown> = {
     },
     "SIDEBAR": {
         "NO_ITEMS": "No items",
+        "GLOBAL_SEARCH": "Search everything...",
+        "GLOBAL_SEARCH_HINT": "Search conversations, messages, contacts and files across the workspace",
         "CURRENTLY_VIEWING_ACCOUNT": "Currently viewing:",
         "SWITCH": "Switch",
         "INBOX_VIEW": "Inbox View",

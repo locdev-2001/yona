@@ -19,8 +19,12 @@ return [
     'TAB_HEADING' => 'Conversations',
     'MENTION_HEADING' => 'Mentions',
     'UNATTENDED_HEADING' => 'Unattended',
+    // Yona: the list search box only narrows the list in view; the sidebar box searches everything.
     'SEARCH' => [
-        'INPUT' => 'Search for People, Chats, Saved Replies ..',
+        'INPUT' => 'Search name, phone, email, message, #id',
+        'LABEL' => 'Search conversations in this list',
+        'CLEAR' => 'Clear search',
+        'NO_RESULTS' => 'No conversation in this list matches “{query}”.',
     ],
     'FILTER_ALL' => 'All',
     'ASSIGNEE_TYPE_TABS' => [

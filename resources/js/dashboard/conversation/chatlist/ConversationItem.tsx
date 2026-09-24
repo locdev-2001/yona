@@ -26,7 +26,7 @@ export default function ConversationItem({
     showAssignee = false,
     conversationType = '',
 }: ConversationItemProps) {
-    const { accountId, inboxId, teamId, label, conversationId, markMessagesRead, markMessagesUnread } =
+    const { accountId, inboxId, teamId, label, conversationId, searchQuery, markMessagesRead, markMessagesUnread } =
         useConversation();
     const bulkSelection = useBulkSelection();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
@@ -91,6 +91,7 @@ export default function ConversationItem({
                 isActiveChat={isActiveChat}
                 showAssignee={showAssignee}
                 showInboxName={showInboxName}
+                highlightQuery={searchQuery}
                 onClick={onCardClick}
                 onContextMenu={openContextMenu}
                 onSelectConversation={bulkSelection?.selectConversation}

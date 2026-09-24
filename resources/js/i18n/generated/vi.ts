@@ -1342,7 +1342,10 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Nhắn đến",
         "UNATTENDED_HEADING": "Không giám sát",
         "SEARCH": {
-            "INPUT": "Tìm kiếm cho người, đoạn chat, lưu trữ trả lời .."
+            "INPUT": "Tìm tên, SĐT, email, nội dung, #id",
+            "LABEL": "Tìm hội thoại trong danh sách đang xem",
+            "CLEAR": "Xoá từ khoá",
+            "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem."
         },
         "FILTER_ALL": "Tất cả",
         "ASSIGNEE_TYPE_TABS": {
@@ -9010,6 +9013,8 @@ const messages: Record<string, unknown> = {
     },
     "SIDEBAR": {
         "NO_ITEMS": "Không có mục nào",
+        "GLOBAL_SEARCH": "Tìm mọi thứ...",
+        "GLOBAL_SEARCH_HINT": "Tìm hội thoại, tin nhắn, liên hệ, tệp trong toàn hệ thống",
         "CURRENTLY_VIEWING_ACCOUNT": "Hiện đang xem:",
         "SWITCH": "Chuyển",
         "INBOX_VIEW": "Khung nhìn hộp thư",

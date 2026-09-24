@@ -1,6 +1,7 @@
 import { t } from '../../../../i18n';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
+import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
@@ -21,6 +22,7 @@ interface MessagePreviewProps {
     showMessageType?: boolean;
     defaultEmptyMessage?: string;
     className?: string;
+    highlightQuery?: string;
 }
 
 export default function MessagePreview({
@@ -28,6 +30,7 @@ export default function MessagePreview({
     showMessageType = true,
     defaultEmptyMessage = '',
     className = '',
+    highlightQuery = '',
 }: MessagePreviewProps) {
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
@@ -60,7 +63,11 @@ export default function MessagePreview({
                     {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                 </span>
             ) : message.content ? (
-                <span>{parsedLastMessage}</span>
+                highlightQuery ? (
+                    <HighlightedText text={parsedLastMessage} query={highlightQuery} />
+                ) : (
+                    <span>{parsedLastMessage}</span>
+                )
             ) : message.attachments ? (
                 <span>
                     {attachmentIcon && showMessageType ? (

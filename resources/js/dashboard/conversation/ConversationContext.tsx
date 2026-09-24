@@ -59,6 +59,7 @@ import {
     readFocusMessageId,
     type FocusWindow,
 } from './messageFocus';
+import { keepSearchMatches, nextSearchMatches, readListSearchQuery, withListSearchQuery } from './chatlist/listSearch';
 import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
@@ -123,6 +124,9 @@ interface ConversationContextValue {
     status: ConversationStatusFilter;
     sortBy: string;
     appliedFilters: ConversationFilterCondition[] | null;
+    // Từ khoá ô tìm trong cột danh sách (đồng bộ với ?q= trên URL).
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
     selectedConversation: Conversation | null;
     messages: ConversationMessage[];
     allMessagesLoaded: boolean;
@@ -358,6 +362,9 @@ export function ConversationProvider({
     const appliedFiltersRef = useRef<ConversationFilterCondition[] | null>(null);
     appliedFiltersRef.current = appliedFilters;
     const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
+    const [searchQuery, setSearchQueryState] = useState(() => readListSearchQuery(window.location.search));
+    const setSearchQuery = useCallback((query: string) => setSearchQueryState(query.trim()), []);
+    const [searchMatchIds, setSearchMatchIds] = useState<ReadonlySet<number> | null>(null);
 
     const [allConversations, setAllConversations] = useState<Conversation[]>([]);
     const allConversationsRef = useRef<Conversation[]>([]);
@@ -401,13 +408,12 @@ export function ConversationProvider({
         [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
     );
     const conversations = useMemo(() => {
-        if (appliedFilters) {
-            return [...filteredConversations]
-                .sort((a, b) => sortComparator(a, b, SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC));
-        }
+        const visible = appliedFilters
+            ? [...filteredConversations].sort((a, b) => sortComparator(a, b, SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC))
+            : selectVisibleConversations(allConversations, viewFilters, sortBy);
 
-        return selectVisibleConversations(allConversations, viewFilters, sortBy);
-    }, [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy]);
+        return keepSearchMatches(visible, searchMatchIds);
+    }, [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy, searchMatchIds]);
     const selectedConversation = useMemo(
         () => allConversations.find((item) => item.id === conversationId) ?? null,
         [allConversations, conversationId],
@@ -423,8 +429,9 @@ export function ConversationProvider({
             teamId: teamId || undefined,
             labels: labelFilters.length ? labelFilters : undefined,
             conversationType: conversationType || undefined,
+            searchQuery: searchQuery || undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType, searchQuery],
     );
 
     const fetchPage = useCallback(
@@ -451,6 +458,7 @@ export function ConversationProvider({
                           accountId,
                           buildConversationFilterPayload(appliedFilters),
                           page,
+                          listQuery.searchQuery,
                       )
                     : await fetchConversations({ ...listQuery, page });
                 if (
@@ -459,6 +467,7 @@ export function ConversationProvider({
                 ) return;
                 const payload = response.data.payload;
                 setListMeta(response.data.meta);
+                setSearchMatchIds(previous => nextSearchMatches(previous, payload, listQuery.searchQuery, append));
                 setFilteredConversations(previous => {
                     if (!appliedFilters) return [];
                     const kept = append ? previous : [];
@@ -494,10 +503,22 @@ export function ConversationProvider({
     // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
     useEffect(() => {
         setAllConversations((previous) => previous.filter((c) => c.id === conversationIdRef.current));
+        setSearchMatchIds(previous => (previous ? new Set() : null));
         setEndReached(false);
         pageRef.current = 0;
         void fetchPage(1, false);
     }, [fetchPage]);
+
+    // ?q= theo từ khoá đang tìm, kể cả sau khi mở hội thoại khác (URL đổi) — reload
+    // vẫn về đúng danh sách đang lọc.
+    useEffect(() => {
+        if (!withConversationList) return;
+        const current = `${window.location.pathname}${window.location.search}`;
+        const next = withListSearchQuery(current, searchQuery);
+        if (next !== current) {
+            window.history.replaceState(window.history.state, '', `${next}${window.location.hash}`);
+        }
+    }, [searchQuery, page.url, withConversationList]);
 
     const loadMoreConversations = useCallback(() => {
         if (endReached || listLoading) return;
@@ -882,6 +903,7 @@ export function ConversationProvider({
                 updatedWithin: getSecondsSinceDisconnect() + DISCONNECT_DELAY_THRESHOLD,
             });
             setListMeta(response.data.meta);
+            setSearchMatchIds(previous => nextSearchMatches(previous, response.data.payload, listQuery.searchQuery, true));
             setAllConversations((current) =>
                 mergeFetchedConversations(current, response.data.payload, conversationIdRef.current),
             );
@@ -1269,6 +1291,8 @@ export function ConversationProvider({
             status,
             sortBy,
             appliedFilters,
+            searchQuery,
+            setSearchQuery,
             selectedConversation,
             messages,
             allMessagesLoaded,
@@ -1321,6 +1345,8 @@ export function ConversationProvider({
             status,
             sortBy,
             appliedFilters,
+            searchQuery,
+            setSearchQuery,
             selectedConversation,
             messages,
             allMessagesLoaded,

@@ -15,6 +15,7 @@ import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
 import CardLabels from './conversationCardComponents/CardLabels';
+import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 
@@ -55,6 +56,8 @@ interface ConversationCardProps {
     showStatus?: boolean;
     hideThumbnail?: boolean;
     compact?: boolean;
+    // Từ khoá ô tìm của danh sách: tô đoạn khớp trên tên khách và tin cuối.
+    highlightQuery?: string;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
     onSelectConversation?: (conversationId: number, inboxId: number) => void;
@@ -73,6 +76,7 @@ export default function ConversationCard({
     showStatus = false,
     hideThumbnail = false,
     compact = false,
+    highlightQuery = '',
     onClick,
     onContextMenu,
     onSelectConversation,
@@ -202,7 +206,11 @@ export default function ConversationCard({
                             hasUnread ? 'font-semibold' : 'font-medium',
                         ].join(' ')}
                     >
-                        {currentContact.name}
+                        {highlightQuery ? (
+                            <HighlightedText text={currentContact.name ?? ''} query={highlightQuery} />
+                        ) : (
+                            currentContact.name
+                        )}
                     </h4>
                     <TimeAgo
                         lastActivityTimestamp={chat.timestamp}
@@ -215,6 +223,7 @@ export default function ConversationCard({
                     <MessagePreview
                         key="message-preview"
                         message={lastMessageInChat}
+                        highlightQuery={highlightQuery}
                         className={`my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm ${messagePreviewClass}`.trim()}
                     />
                 ) : (

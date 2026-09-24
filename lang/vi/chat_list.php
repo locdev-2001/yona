@@ -21,8 +21,12 @@ return [
     'TAB_HEADING' => 'Các hội thoại',
     'MENTION_HEADING' => 'Nhắn đến',
     'UNATTENDED_HEADING' => 'Không giám sát',
+    // Ô tìm trong cột danh sách chỉ lọc danh sách đang xem; tìm mọi thứ là ô ở sidebar.
     'SEARCH' => [
-        'INPUT' => 'Tìm kiếm cho người, đoạn chat, lưu trữ trả lời ..',
+        'INPUT' => 'Tìm tên, SĐT, email, nội dung, #id',
+        'LABEL' => 'Tìm hội thoại trong danh sách đang xem',
+        'CLEAR' => 'Xoá từ khoá',
+        'NO_RESULTS' => 'Không có hội thoại nào khớp “{query}” trong danh sách đang xem.',
     ],
     'FILTER_ALL' => 'Tất cả',
     // Nhãn tab phải ngắn để ba tab vừa bề rộng mặc định của cột hội thoại

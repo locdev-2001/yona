@@ -207,18 +207,19 @@ export default function Sidebar({
                         {!isEffectivelyCollapsed ? (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
+                                title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                                 className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
                             >
                                 <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
                                 <span className="flex-grow min-w-0 truncate text-start text-n-slate-10">
-                                    {t('COMBOBOX.SEARCH_PLACEHOLDER')}
+                                    {t('SIDEBAR.GLOBAL_SEARCH')}
                                 </span>
                             </Link>
                         ) : (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
                                 className="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30"
-                                title={t('COMBOBOX.SEARCH_PLACEHOLDER')}
+                                title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                             >
                                 <span className="i-lucide-search size-4 text-n-slate-11" />
                             </Link>

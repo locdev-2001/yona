@@ -69,4 +69,22 @@ describe('thẻ hội thoại trong danh sách', () => {
             expect(name?.className).not.toMatch(/pr-16/);
         });
     });
+
+    it('đang tìm trong danh sách thì tô đoạn khớp trên tên khách và tin cuối', () => {
+        const chat = {
+            ...CONVERSATION,
+            last_non_activity_message: { id: 1, content: 'Đơn của chị Nguyên đã giao', message_type: 0, attachments: [] },
+        } as unknown as Conversation;
+
+        const { container } = render(<ConversationCard chat={chat} currentContact={CONTACT} highlightQuery="nguyen" />);
+        const marks = [...container.querySelectorAll('mark')].map(mark => mark.textContent);
+
+        expect(marks).toEqual(['Nguyen', 'Nguyên']);
+    });
+
+    it('không tìm thì không tô gì', () => {
+        const { container } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
+
+        expect(container.querySelector('mark')).toBeNull();
+    });
 });

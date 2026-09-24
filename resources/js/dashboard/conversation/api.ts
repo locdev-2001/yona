@@ -45,6 +45,8 @@ export interface FetchConversationsParams {
     labels?: string[];
     // conversationFilters.conversationType: tab Mentions/Participating/Unattended.
     conversationType?: ConversationType;
+    // Từ khoá ô tìm trong cột danh sách: chỉ thu hẹp danh sách, mọi bộ lọc khác giữ nguyên.
+    searchQuery?: string;
     updatedWithin?: number;
 }
 
@@ -69,6 +71,9 @@ function buildConversationQuery(params: Omit<FetchConversationsParams, 'page'> &
     if (params.conversationType) {
         query.set('conversation_type', params.conversationType);
     }
+    if (params.searchQuery) {
+        query.set('q', params.searchQuery);
+    }
     if (params.updatedWithin) {
         query.set('updated_within', String(params.updatedWithin));
     }
@@ -84,8 +89,11 @@ export function fetchFilteredConversations(
     accountId: number,
     payload: ConversationFilterPayload[],
     page: number,
+    searchQuery = '',
 ): Promise<ConversationListResponse> {
-    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?page=${page}`, { payload });
+    const query = new URLSearchParams({ page: String(page), ...(searchQuery ? { q: searchQuery } : {}) });
+
+    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?${query}`, { payload });
 }
 
 export function fetchConversationMeta(

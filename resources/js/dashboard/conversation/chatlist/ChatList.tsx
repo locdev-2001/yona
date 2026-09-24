@@ -30,6 +30,7 @@ import type { AssigneeTab } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
 import ChatListHeader from './ChatListHeader';
+import ChatListSearch from './ChatListSearch';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 
@@ -65,6 +66,7 @@ export default function ChatList({
         teamId,
         label,
         conversationType,
+        searchQuery,
         isOnExpandedLayout,
         setAssigneeTab,
         applyConversationFilters,
@@ -210,10 +212,16 @@ export default function ChatList({
                     onAddFolders={() => setShowSaveFilterModal(true)}
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
+                <ChatListSearch />
                 {appliedFilters === null ? (
                     <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
                 ) : null}
-                {!listLoading && !conversations.length ? (
+                {!listLoading && !conversations.length && searchQuery ? (
+                    <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
+                        {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}
+                    </p>
+                ) : null}
+                {!listLoading && !conversations.length && !searchQuery ? (
                     <div className="flex flex-col gap-2 items-center px-4 py-6 text-center">
                         <p className="mb-0 text-sm text-n-slate-11">{t(emptyHint.messageKey)}</p>
                         {emptyHint.action ? (
