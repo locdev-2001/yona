@@ -1,10 +1,7 @@
 import { useState } from 'react';
 
 import { t } from '../../../i18n';
-import { useAlert } from 'dashboard/composables/useAlert';
-import { parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
-import { getRandomColor } from 'dashboard/helper/labelColor';
-import { normalizeLabelTitle } from './validations';
+import { createLabel, newLabelValues } from './createLabel';
 import LabelForm from './LabelForm';
 import type { LabelFormValues } from './LabelForm';
 import type { Label } from './types';
@@ -18,26 +15,16 @@ interface AddLabelProps {
 }
 
 export default function AddLabel({ accountId, prefillTitle = '', onClose, onCreated }: AddLabelProps) {
-    const [initialValues] = useState<LabelFormValues>(() => ({
-        title: normalizeLabelTitle(prefillTitle),
-        description: '',
-        color: getRandomColor(),
-        show_on_sidebar: true,
-    }));
+    const [initialValues] = useState<LabelFormValues>(() => newLabelValues(prefillTitle));
     const [isCreating, setCreating] = useState(false);
 
     const addLabel = async (values: LabelFormValues) => {
         setCreating(true);
-        try {
-            const label = await postJson<Label>(`/api/v1/accounts/${accountId}/labels`, { ...values });
-            onCreated(label);
-            useAlert(t('LABEL_MGMT.ADD.API.SUCCESS_MESSAGE'));
-            onClose();
-        } catch (error) {
-            useAlert(parseApiErrorMessage(error) || t('LABEL_MGMT.ADD.API.ERROR_MESSAGE'));
-        } finally {
-            setCreating(false);
-        }
+        const label = await createLabel(accountId, values);
+        setCreating(false);
+        if (!label) return;
+        onCreated(label);
+        onClose();
     };
 
     return (

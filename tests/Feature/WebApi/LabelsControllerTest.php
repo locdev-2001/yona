@@ -4,6 +4,7 @@ use App\Jobs\Labels\RemoveAssociationsJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\Inbox;
 use App\Models\Label;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
@@ -139,6 +140,34 @@ describe('POST /api/v1/accounts/{id}/labels', function () {
             ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => '  Khách VIP  '])
             ->assertOk()
             ->assertJsonPath('title', 'Khách VIP');
+    });
+
+    it('keeps a Vietnamese title intact from quick creation to the conversation it is attached to', function () {
+        $inbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+        $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id]);
+
+        foreach (['Khách VIP', 'Chờ chuyển khoản'] as $title) {
+            $this->actingAs($this->admin)
+                ->postJson("/api/v1/accounts/{$this->account->id}/labels", [
+                    'title' => $title,
+                    'description' => '',
+                    'color' => '#3A7BD5',
+                    'show_on_sidebar' => true,
+                ])
+                ->assertOk()
+                ->assertJsonPath('title', $title);
+        }
+
+        $this->actingAs($this->admin)
+            ->postJson(
+                "/api/v1/accounts/{$this->account->id}/conversations/{$conversation->display_id}/labels",
+                ['labels' => ['Khách VIP', 'Chờ chuyển khoản']]
+            )
+            ->assertOk()
+            ->assertJsonPath('payload', ['Khách VIP', 'Chờ chuyển khoản']);
+
+        expect(Label::query()->where('account_id', $this->account->id)->pluck('title')->all())
+            ->toContain('Khách VIP', 'Chờ chuyển khoản');
     });
 
     it('rejects a title already used in the account', function () {

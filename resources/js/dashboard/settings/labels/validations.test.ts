@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     getLabelTitleErrorMessageKey,
+    isSameLabelTitle,
     normalizeLabelTitle,
     validLabelCharacters,
 } from './validations';
@@ -49,5 +50,15 @@ describe('getLabelTitleErrorMessageKey', () => {
 
     it('hợp lệ → không lỗi', () => {
         expect(getLabelTitleErrorMessageKey('vip-1')).toBe('');
+    });
+});
+
+describe('isSameLabelTitle', () => {
+    it('coi hai tên chỉ khác hoa thường hoặc khoảng trắng hai đầu là trùng', () => {
+        expect(isSameLabelTitle('Khách VIP', '  khách vip ')).toBe(true);
+    });
+
+    it('phân biệt tên khác dấu', () => {
+        expect(isSameLabelTitle('Khách VIP', 'Khach VIP')).toBe(false);
     });
 });

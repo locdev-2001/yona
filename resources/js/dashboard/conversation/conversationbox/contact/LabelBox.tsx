@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Label from 'dashboard/components/ui/Label';
+import Modal from 'dashboard/components/Modal';
 import NextButton from 'dashboard/components-next/button/Button';
+import Popover from 'dashboard/components-next/popover/Popover';
+import type { PopoverHandle } from 'dashboard/components-next/popover/Popover';
+import AddLabel from 'dashboard/settings/labels/AddLabel';
+import { createLabel, newLabelValues } from 'dashboard/settings/labels/createLabel';
 import LabelDropdown from 'shared/components/ui/label/LabelDropdown';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { fetchLabels, useLabelsList } from 'dashboard/composables/useLabelsList';
@@ -26,8 +31,9 @@ export default function LabelBox() {
 
     const accountLabels = useLabelsList(accountId);
     const [savedLabels, setSavedLabels] = useState<string[]>(savedOnServer);
-    const [showSearchDropdownLabel, setShowSearchDropdownLabel] = useState(false);
-    const labelWrapRef = useRef<HTMLDivElement>(null);
+    const [customLabelTitle, setCustomLabelTitle] = useState<string | null>(null);
+    const labelPopoverRef = useRef<PopoverHandle>(null);
+    const canCreateLabel = currentAccountUser.role === 'administrator';
 
     const serverLabelKey = savedOnServer.join(',');
     useEffect(() => {
@@ -36,31 +42,16 @@ export default function LabelBox() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId, serverLabelKey]);
 
-    const closeDropdownLabel = () => setShowSearchDropdownLabel(false);
-    const toggleLabels = () => setShowSearchDropdownLabel(current => !current);
+    const closeLabelPicker = () => labelPopoverRef.current?.hide();
 
     useKeyboardEvents({
         KeyL: {
             action: event => {
                 event.preventDefault();
-                toggleLabels();
+                labelPopoverRef.current?.toggle();
             },
-        },
-        Escape: {
-            action: () => {
-                if (showSearchDropdownLabel) closeDropdownLabel();
-            },
-            allowOnFocusedInput: true,
         },
     });
-
-    useEffect(() => {
-        const onClickAway = (event: MouseEvent) => {
-            if (!labelWrapRef.current?.contains(event.target as Node)) closeDropdownLabel();
-        };
-        document.addEventListener('click', onClickAway);
-        return () => document.removeEventListener('click', onClickAway);
-    }, []);
 
     const onUpdateLabels = (nextLabels: string[]) => {
         const previousLabels = savedLabels;
@@ -76,17 +67,52 @@ export default function LabelBox() {
     const removeLabelFromConversation = (title: string) =>
         onUpdateLabels(titlesAfterRemove(conversationLabels, title));
 
+    // Nhãn tạo từ hội thoại thì gắn luôn vào hội thoại đó.
+    const attachCreatedLabel = (title: string) => {
+        fetchLabels(accountId, { force: true });
+        addLabelToConversation(title);
+    };
+
+    const quickCreateLabel = async (title: string) => {
+        const label = await createLabel(accountId, newLabelValues(title));
+        if (label) attachCreatedLabel(label.title);
+    };
+
+    const openFullLabelForm = (title: string) => {
+        closeLabelPicker();
+        setCustomLabelTitle(title);
+    };
+
     return (
         <div className="sidebar-labels-wrap mb-0">
             <div className="w-full contact-conversation--list">
-                <div ref={labelWrapRef} className="label-wrap flex flex-wrap relative leading-6">
-                    <NextButton
-                        faded
-                        xs
-                        icon="i-lucide-plus"
-                        className="mb-0.5 ltr:mr-0.5 rtl:ml-0.5 !rounded-[4px]"
-                        label={t('CONTACT_PANEL.LABELS.CONVERSATION.ADD_BUTTON')}
-                        onClick={toggleLabels}
+                <div className="label-wrap flex flex-wrap leading-6">
+                    <Popover
+                        ref={labelPopoverRef}
+                        align="start"
+                        trigger={({ isOpen }) => (
+                            <NextButton
+                                faded
+                                xs
+                                icon="i-lucide-plus"
+                                className="mb-0.5 ltr:mr-0.5 rtl:ml-0.5 !rounded-[4px]"
+                                aria-haspopup="listbox"
+                                aria-expanded={isOpen}
+                                label={t('CONTACT_PANEL.LABELS.CONVERSATION.ADD_BUTTON')}
+                            />
+                        )}
+                        content={({ hide }) => (
+                            <LabelDropdown
+                                accountLabels={accountLabels}
+                                selectedLabels={savedLabels}
+                                allowCreation={canCreateLabel}
+                                onAdd={label => addLabelToConversation(label.title)}
+                                onRemove={removeLabelFromConversation}
+                                onCreate={quickCreateLabel}
+                                onCustomize={openFullLabelForm}
+                                onClose={hide}
+                            />
+                        )}
                     />
                     {conversationLabels.map(label => (
                         <Label
@@ -100,25 +126,20 @@ export default function LabelBox() {
                             onRemove={removeLabelFromConversation}
                         />
                     ))}
-                    <div
-                        className={`${
-                            showSearchDropdownLabel ? 'block visible' : 'hidden invisible'
-                        } border rounded-lg bg-n-alpha-3 top-6 backdrop-blur-[100px] absolute w-full shadow-lg border-n-strong dark:border-n-strong p-2 box-border z-[9999]`}
-                    >
-                        {showSearchDropdownLabel ? (
-                            <LabelDropdown
-                                accountId={accountId}
-                                accountLabels={accountLabels}
-                                selectedLabels={savedLabels}
-                                allowCreation={currentAccountUser.role === 'administrator'}
-                                onAdd={label => addLabelToConversation(label.title)}
-                                onRemove={removeLabelFromConversation}
-                                onLabelCreated={() => fetchLabels(accountId, { force: true })}
-                            />
-                        ) : null}
-                    </div>
                 </div>
             </div>
+            {canCreateLabel ? (
+                <Modal show={customLabelTitle !== null} onClose={() => setCustomLabelTitle(null)}>
+                    {customLabelTitle !== null ? (
+                        <AddLabel
+                            accountId={accountId}
+                            prefillTitle={customLabelTitle}
+                            onClose={() => setCustomLabelTitle(null)}
+                            onCreated={label => attachCreatedLabel(label.title)}
+                        />
+                    ) : null}
+                </Modal>
+            ) : null}
         </div>
     );
 }

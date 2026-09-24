@@ -1796,7 +1796,9 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Add Labels",
                 "PLACEHOLDER": "Search labels",
                 "NO_RESULT": "No labels found",
-                "CREATE_LABEL": "Create new label"
+                "CREATE_LABEL": "Create new label",
+                "CREATE_NAMED": "Create label \"{title}\"",
+                "CUSTOMIZE": "Customize"
             }
         },
         "MERGE_CONTACT": "Merge contact",

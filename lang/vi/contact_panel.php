@@ -52,6 +52,8 @@ return [
             'PLACEHOLDER' => 'Tìm nhãn',
             'NO_RESULT' => 'Không tìm thấy nhãn',
             'CREATE_LABEL' => 'Tạo mới nhãn',
+            'CREATE_NAMED' => 'Tạo nhãn "{title}"',
+            'CUSTOMIZE' => 'Tùy chỉnh',
         ],
     ],
     'MERGE_CONTACT' => 'Hợp nhất liên hệ',
