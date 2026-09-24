@@ -2,36 +2,26 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AccessTokenable;
 use Database\Factories\PlatformAppFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 // Port từ refs/chatwoot/app/models/platform_app.rb — ứng dụng gọi Platform API,
 // xác thực bằng access_token đa hình (AccessTokenable).
 class PlatformApp extends Model
 {
     /** @use HasFactory<PlatformAppFactory> */
-    use HasFactory;
+    use AccessTokenable, HasFactory;
 
     protected $fillable = ['name'];
 
     protected static function booted(): void
     {
-        static::created(function (PlatformApp $platformApp) {
-            $platformApp->accessToken()->create([]);
-        });
-
         static::deleting(function (PlatformApp $platformApp) {
             $platformApp->platformAppPermissibles()->delete();
-            $platformApp->accessToken()->delete();
         });
-    }
-
-    public function accessToken(): MorphOne
-    {
-        return $this->morphOne(AccessToken::class, 'owner');
     }
 
     public function platformAppPermissibles(): HasMany

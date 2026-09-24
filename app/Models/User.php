@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AccessTokenable;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\Reportable;
 use App\Models\Concerns\SsoAuthenticatable;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use Avatarable, HasFactory, Notifiable, Reportable, SsoAuthenticatable;
+    use AccessTokenable, Avatarable, HasFactory, Notifiable, Reportable, SsoAuthenticatable;
 
     public const AVAILABILITY_ONLINE = 0;
 
@@ -97,11 +97,6 @@ class User extends Authenticatable
             }
         });
 
-        // AccessTokenable: mỗi user có token Application API ngay khi tạo.
-        static::created(function (User $user) {
-            $user->accessToken()->create([]);
-        });
-
         // remove_macros: macro riêng chết theo tác giả, macro global ở lại
         // account với created_by rỗng.
         static::deleting(function (User $user) {
@@ -129,11 +124,6 @@ class User extends Authenticatable
     public function mfaEnabled(): bool
     {
         return (bool) $this->otp_required_for_login;
-    }
-
-    public function accessToken(): MorphOne
-    {
-        return $this->morphOne(AccessToken::class, 'owner');
     }
 
     // Tương đương User.from_email của Chatwoot (email đã chuẩn hóa lowercase khi lưu).

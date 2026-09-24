@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AccessTokenable;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\WebhookSecretable;
 use Database\Factories\AgentBotFactory;
@@ -12,7 +13,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 
 // Port từ refs/chatwoot/app/models/agent_bot.rb. Implement Authenticatable vì
@@ -21,7 +21,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 class AgentBot extends Model implements Authenticatable
 {
     /** @use HasFactory<AgentBotFactory> */
-    use Authorizable, Avatarable, HasFactory, \Illuminate\Auth\Authenticatable, WebhookSecretable;
+    use AccessTokenable, Authorizable, Avatarable, HasFactory, \Illuminate\Auth\Authenticatable, WebhookSecretable;
 
     public const TYPE_WEBHOOK = 0;
 
@@ -49,22 +49,9 @@ class AgentBot extends Model implements Authenticatable
         ];
     }
 
-    protected static function booted(): void
-    {
-        // AccessTokenable: bot có token Application API ngay khi tạo.
-        static::created(function (AgentBot $agentBot) {
-            $agentBot->accessToken()->create([]);
-        });
-    }
-
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
-    }
-
-    public function accessToken(): MorphOne
-    {
-        return $this->morphOne(AccessToken::class, 'owner');
     }
 
     public function agentBotInboxes(): HasMany

@@ -66,9 +66,11 @@ class Account extends Model
 
         // has_many :inboxes, dependent: :destroy_async — phải xóa qua model, vì
         // FK `inboxes.account_id ON DELETE CASCADE` không kích hoạt hook của Inbox
-        // và sẽ bỏ lại hàng channel_* mồ côi.
+        // và sẽ bỏ lại hàng channel_* mồ côi. Bot cũng vậy: FK cascade bỏ lại
+        // access token của bot.
         static::deleting(function (Account $account) {
             $account->inboxes()->cursor()->each(fn (Inbox $inbox) => $inbox->delete());
+            $account->agentBots()->cursor()->each(fn (AgentBot $agentBot) => $agentBot->delete());
         });
 
         static::deleted(function (Account $account) {

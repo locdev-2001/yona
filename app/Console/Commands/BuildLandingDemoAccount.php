@@ -231,13 +231,7 @@ class BuildLandingDemoAccount extends Command
             $account->delete();
         }
 
-        $agent = User::query()->where('email', self::AGENT_EMAIL)->first();
-
-        if ($agent !== null) {
-            // Access token là quan hệ đa hình, không có FK: xoá user không kéo nó theo.
-            $agent->accessToken()->delete();
-            $agent->delete();
-        }
+        User::query()->where('email', self::AGENT_EMAIL)->first()?->delete();
 
         return $accounts->count();
     }
