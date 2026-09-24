@@ -1,4 +1,4 @@
-import '@chatwoot/ninja-keys';
+import '@ext/ninja-keys';
 import './commandbar.scss';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -34,7 +34,7 @@ interface NinjaChangeDetail {
 }
 
 // Port từ routes/dashboard/commands/commandbar.vue — khung command bar (web component
-// @chatwoot/ninja-keys 1.2.3). B5: danh sách action đến từ commandBarStore (nguồn
+// @ext/ninja-keys 1.2.3). B5: danh sách action đến từ commandBarStore (nguồn
 // conversation), placeholder đổi khi đang trong nhánh snooze. Nợ B10: gợi ý snooze
 // NLP khi gõ (buildDynamicSnoozeActions + snoozeDateParser), isPaywalled,
 // ConversationResolveAttributesModal (EE), setContextMenuChatId, tracking.

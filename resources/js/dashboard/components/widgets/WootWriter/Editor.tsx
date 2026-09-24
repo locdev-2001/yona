@@ -8,11 +8,11 @@ import {
     Selection,
     buildEditor,
     buildMessageSchema,
-} from '@chatwoot/prosemirror-schema';
-import { suggestionsPlugin, triggerCharacters } from '@chatwoot/prosemirror-schema/src/mentions/plugin';
+} from '@ext/prosemirror-schema';
+import { suggestionsPlugin, triggerCharacters } from '@ext/prosemirror-schema/src/mentions/plugin';
 import type { Node as ProseMirrorNode, ResolvedPos, Schema } from 'prosemirror-model';
 import type { Plugin } from 'prosemirror-state';
-import { createTypingIndicator } from '@chatwoot/utils';
+import { createTypingIndicator } from '@ext/utils';
 
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
@@ -25,7 +25,7 @@ import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/us
 import { filesFromDataTransfer } from 'shared/helpers/FileHelper';
 
 // Port từ dashboard/components/widgets/WootWriter/Editor.vue — giữ nguyên
-// engine @chatwoot/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
+// engine @ext/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
 // B10 thêm nhánh gợi ý `/` (canned response), B11 thêm nhánh `@` (nhắc tên).
 // Vẫn bỏ: variables {{ }} (D1), macros # (D3), emoji gõ ':' , upload ảnh inline
 // (B9), copilot + công cụ Captain (EE).

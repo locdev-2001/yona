@@ -15,10 +15,10 @@
         "check:ui:self": "python3 scripts/check-ui.py --self-test"
     },
     "dependencies": {
-        "@chatwoot/ninja-keys": "1.2.3",
-        "@chatwoot/pico-search": "^0.6.2",
-        "@chatwoot/prosemirror-schema": "1.4.1",
-        "@chatwoot/utils": "0.0.57",
+        "@ext/ninja-keys": "npm:@chatwoot/ninja-keys@1.2.3",
+        "@ext/pico-search": "npm:@chatwoot/pico-search@^0.6.2",
+        "@ext/prosemirror-schema": "npm:@chatwoot/prosemirror-schema@1.4.1",
+        "@ext/utils": "npm:@chatwoot/utils@0.0.57",
         "@inertiajs/react": "^2.0.0",
         "@types/qrcode": "^1.5.6",
         "countries-and-timezones": "^3.10.0",

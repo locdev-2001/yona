@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@ext/utils';
 import { fromUnixTime } from 'date-fns';
 
 import BarChart from 'shared/components/charts/BarChart';

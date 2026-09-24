@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { picoSearch } from '@chatwoot/pico-search';
+import { picoSearch } from '@ext/pico-search';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';

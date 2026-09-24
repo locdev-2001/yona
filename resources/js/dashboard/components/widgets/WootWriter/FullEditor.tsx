@@ -8,7 +8,7 @@ import {
     buildEditor,
     fullSchema,
     imageResizeView,
-} from '@chatwoot/prosemirror-schema';
+} from '@ext/prosemirror-schema';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 import { t } from '../../../../i18n';

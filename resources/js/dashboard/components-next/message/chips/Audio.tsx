@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { downloadFile } from '@chatwoot/utils';
+import { downloadFile } from '@ext/utils';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import { emitter } from 'shared/helpers/emitter';

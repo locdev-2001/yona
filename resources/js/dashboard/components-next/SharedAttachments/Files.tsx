@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { downloadFile } from '@chatwoot/utils';
+import { downloadFile } from '@ext/utils';
 
 import FileIcon from 'dashboard/components-next/icon/FileIcon';
 import NextButton from 'dashboard/components-next/button/Button';

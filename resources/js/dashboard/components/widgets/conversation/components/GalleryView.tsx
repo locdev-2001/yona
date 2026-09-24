@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { downloadFile } from '@chatwoot/utils';
+import { downloadFile } from '@ext/utils';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import NextButton from 'dashboard/components-next/button/Button';

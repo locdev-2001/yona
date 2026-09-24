@@ -11,7 +11,7 @@ import {
     type ValueFormatter,
 } from './cartesianLayout';
 
-// Port từ @chatwoot/viz@0.1.5 src/components/cartesian/BarChart.vue.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/cartesian/BarChart.vue.
 
 export interface VizBarChartProps {
     ariaLabel?: string;

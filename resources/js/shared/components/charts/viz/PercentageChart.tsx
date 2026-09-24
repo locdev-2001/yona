@@ -5,7 +5,7 @@ import './viz.css';
 import { createPercentageLayout, type AggregateSegment } from './aggregateLayout';
 import type { Accessor, ValueFormatter } from './cartesianLayout';
 
-// Port từ @chatwoot/viz@0.1.5 src/components/percentage/PercentageChart.vue.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/percentage/PercentageChart.vue.
 
 export interface PercentageItemPayload {
     event: unknown;

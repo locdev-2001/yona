@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@ext/utils';
 import { fromUnixTime } from 'date-fns';
 
 import Icon from 'dashboard/components-next/icon/Icon';

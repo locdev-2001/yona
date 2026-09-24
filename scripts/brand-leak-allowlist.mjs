@@ -45,18 +45,13 @@ export const SOURCE_ALLOWLIST = [
     },
     {
         path: 'package.json',
-        tokens: [/^@chatwoot\//],
-        reason: 'Tên gói npm thật trên registry; đổi được chỉ khi có alias gói.',
+        tokens: [/^npm:@chatwoot\//],
+        reason: 'Tên gói npm thật trên registry, chỉ nằm trong khai báo bí danh @ext/*.',
     },
     {
         path: 'pnpm-lock.yaml',
-        tokens: [/^@chatwoot\//, /^mailto:[\w.-]+@chatwoot\.com$/],
+        tokens: [/^(npm:)?@chatwoot\//, /^mailto:[\w.-]+@chatwoot\.com$/],
         reason: 'Lockfile chép nguyên metadata gói npm thật (tên gói, email tác giả).',
-    },
-    {
-        path: /^resources\/.+\.(ts|tsx|scss)$/,
-        tokens: [/^@chatwoot\//],
-        reason: 'import từ gói npm thật; gỡ khi các gói được gọi qua alias trung tính.',
     },
     {
         path: 'app/Services/Webhooks/Trigger.php',

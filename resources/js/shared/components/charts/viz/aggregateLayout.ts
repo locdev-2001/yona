@@ -1,4 +1,4 @@
-// Port từ @chatwoot/viz@0.1.5 src/components/aggregate/aggregate-layout.js
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/aggregate/aggregate-layout.js
 // (+ percentage-layout.js chỉ đặt tên chart/namespace màu).
 
 import { accessorValue, finiteNumber, formatChartValue, seriesCssColor, type Accessor, type ValueFormatter } from './cartesianLayout';

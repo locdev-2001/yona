@@ -3,8 +3,8 @@ import {
     MessageMarkdownSerializer,
     MessageMarkdownTransformer,
     buildMessageSchema,
-} from '@chatwoot/prosemirror-schema';
-import { triggerCharacters } from '@chatwoot/prosemirror-schema/src/mentions/plugin';
+} from '@ext/prosemirror-schema';
+import { triggerCharacters } from '@ext/prosemirror-schema/src/mentions/plugin';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 import {

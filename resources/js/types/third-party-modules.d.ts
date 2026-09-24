@@ -1,5 +1,5 @@
-// Khai báo type tối thiểu cho @chatwoot/prosemirror-schema (package không có d.ts).
-declare module '@chatwoot/prosemirror-schema' {
+// Khai báo type tối thiểu cho @ext/prosemirror-schema (package không có d.ts).
+declare module '@ext/prosemirror-schema' {
     import type { Node, Schema } from 'prosemirror-model';
     import type { Plugin } from 'prosemirror-state';
 
@@ -40,7 +40,7 @@ declare module '@chatwoot/prosemirror-schema' {
     export const imageResizeView: unknown;
 }
 
-declare module '@chatwoot/utils' {
+declare module '@ext/utils' {
     export function formatNumber(value: number): string;
     export function sanitizeTextForRender(text: string | null | undefined): string;
     export function getRecipients(

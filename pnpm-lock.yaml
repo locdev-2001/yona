@@ -8,18 +8,18 @@ importers:
 
   .:
     dependencies:
-      '@chatwoot/ninja-keys':
-        specifier: 1.2.3
-        version: 1.2.3
-      '@chatwoot/pico-search':
-        specifier: ^0.6.2
-        version: 0.6.2
-      '@chatwoot/prosemirror-schema':
-        specifier: 1.4.1
-        version: 1.4.1
-      '@chatwoot/utils':
-        specifier: 0.0.57
-        version: 0.0.57
+      '@ext/ninja-keys':
+        specifier: npm:@chatwoot/ninja-keys@1.2.3
+        version: '@chatwoot/ninja-keys@1.2.3'
+      '@ext/pico-search':
+        specifier: npm:@chatwoot/pico-search@^0.6.2
+        version: '@chatwoot/pico-search@0.6.2'
+      '@ext/prosemirror-schema':
+        specifier: npm:@chatwoot/prosemirror-schema@1.4.1
+        version: '@chatwoot/prosemirror-schema@1.4.1'
+      '@ext/utils':
+        specifier: npm:@chatwoot/utils@0.0.57
+        version: '@chatwoot/utils@0.0.57'
       '@inertiajs/react':
         specifier: ^2.0.0
         version: 2.3.27(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

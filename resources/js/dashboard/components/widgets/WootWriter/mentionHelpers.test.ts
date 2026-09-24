@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MessageMarkdownSerializer, buildMessageSchema } from '@chatwoot/prosemirror-schema';
+import { MessageMarkdownSerializer, buildMessageSchema } from '@ext/prosemirror-schema';
 
 import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
 import type { TeamMeta } from 'dashboard/conversation/types';

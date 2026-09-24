@@ -1,8 +1,8 @@
 // Style của trình soạn bài viết help center:
-// - article.scss của @chatwoot/prosemirror-schema (FullEditor.vue import trong <style>).
+// - article.scss của @ext/prosemirror-schema (FullEditor.vue import trong <style>).
 // - khối <style> của FullEditor.vue và <style scoped> của ArticleEditor.vue
 //   (scoped Vue → selector thường; thanh công cụ chỉ hiện khi có vùng chọn).
-@import '@chatwoot/prosemirror-schema/src/styles/article.scss';
+@import '@ext/prosemirror-schema/src/styles/article.scss';
 
 .editor--article {
   .ProseMirror-menubar-wrapper {

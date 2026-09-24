@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createTypingIndicator } from '@chatwoot/utils';
+import { createTypingIndicator } from '@ext/utils';
 
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { checkFileSizeLimit, DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE } from 'shared/helpers/FileHelper';

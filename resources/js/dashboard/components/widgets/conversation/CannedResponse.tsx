@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import DOMPurify from 'dompurify';
-import { picoSearch } from '@chatwoot/pico-search';
+import { picoSearch } from '@ext/pico-search';
 import type { Schema } from 'prosemirror-model';
 
 import CaretAnchoredPicker from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';

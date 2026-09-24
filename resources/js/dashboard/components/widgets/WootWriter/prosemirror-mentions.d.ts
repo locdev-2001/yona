@@ -1,6 +1,6 @@
-// Khai báo type cho đường dẫn sâu @chatwoot/prosemirror-schema/src/mentions/plugin
+// Khai báo type cho đường dẫn sâu @ext/prosemirror-schema/src/mentions/plugin
 // (package không có d.ts; Editor.vue gốc cũng import thẳng file nguồn này).
-declare module '@chatwoot/prosemirror-schema/src/mentions/plugin' {
+declare module '@ext/prosemirror-schema/src/mentions/plugin' {
     import type { Plugin } from 'prosemirror-state';
     import type { EditorView } from 'prosemirror-view';
     import type { ResolvedPos } from 'prosemirror-model';

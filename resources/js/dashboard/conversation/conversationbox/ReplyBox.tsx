@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { debounce, getRecipients, trimContent } from '@chatwoot/utils';
+import { debounce, getRecipients, trimContent } from '@ext/utils';
 
 import { isTouchOnlyDevice, shortcutLabel } from 'shared/helpers/kbd';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
-import { downloadFile } from '@chatwoot/utils';
+import { downloadFile } from '@ext/utils';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import NextButton from 'dashboard/components-next/button/Button';

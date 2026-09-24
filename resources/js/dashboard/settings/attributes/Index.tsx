@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { picoSearch } from '@chatwoot/pico-search';
+import { picoSearch } from '@ext/pico-search';
 
 import Button from 'dashboard/components-next/button/Button';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';

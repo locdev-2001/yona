@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { formatNumber } from '@chatwoot/utils';
+import { formatNumber } from '@ext/utils';
 
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';

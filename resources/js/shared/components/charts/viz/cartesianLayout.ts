@@ -1,4 +1,4 @@
-// Port từ @chatwoot/viz@0.1.5 src/components/cartesian/cartesian-layout.js.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/cartesian/cartesian-layout.js.
 // Toàn bộ phép tính trục/thang đo giữ nguyên công thức để SVG khớp từng pixel.
 
 const DEFAULT_TICK_COUNT = 5;

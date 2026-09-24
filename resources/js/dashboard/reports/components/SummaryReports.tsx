@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@ext/utils';
 
 import Button from 'dashboard/components-next/button/Button';
 import Spinner from 'dashboard/components-next/spinner/Spinner';

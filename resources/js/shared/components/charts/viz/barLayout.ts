@@ -1,4 +1,4 @@
-// Port từ @chatwoot/viz@0.1.5 src/components/cartesian/bar-layout.js.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/cartesian/bar-layout.js.
 
 import {
     accessorValue,

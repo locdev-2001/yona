@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { sanitizeTextForRender } from '@chatwoot/utils';
+import { sanitizeTextForRender } from '@ext/utils';
 import { allowedCssProperties } from 'lettersanitizer';
 
 import { t } from '../../../../../i18n';

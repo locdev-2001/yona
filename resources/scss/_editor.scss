@@ -1,9 +1,9 @@
 // Style ProseMirror của editor:
-// - base.scss của @chatwoot/prosemirror-schema (giữ nguyên — các biến --space-*/--w-*
+// - base.scss của @ext/prosemirror-schema (giữ nguyên — các biến --space-*/--w-*
 //   KHÔNG được định nghĩa ở bản gốc nên fallback về initial, đừng "sửa giùm").
 // - khối <style> global của WootWriter/Editor.vue (bỏ phần copilot EE).
 // - khối <style scoped> của ReplyBox.vue (scoped Vue → class thường, không đụng tên).
-@import '@chatwoot/prosemirror-schema/src/styles/base.scss';
+@import '@ext/prosemirror-schema/src/styles/base.scss';
 
 .ProseMirror-menubar-wrapper {
   @apply flex flex-col gap-3;

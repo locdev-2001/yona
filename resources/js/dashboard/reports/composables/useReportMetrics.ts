@@ -1,4 +1,4 @@
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@ext/utils';
 
 import { reportsSelectors, useReportsState, type FetchingStatus } from '../store';
 import type { AccountSummary } from '../types';

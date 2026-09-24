@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, RefObject } from 'react';
-import { applyRotationTransform, calculateCenterOffset, debounce, normalizeToPercentage } from '@chatwoot/utils';
+import { applyRotationTransform, calculateCenterOffset, debounce, normalizeToPercentage } from '@ext/utils';
 
 // Port từ dashboard/composables/useImageZoom.js — ref Vue thành state React,
 // computed thành useMemo. Giữ nguyên hằng số và công thức gốc.

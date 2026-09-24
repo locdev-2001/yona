@@ -5,7 +5,7 @@ import type { AccountSummary } from '../types';
 
 // Port từ dashboard/composables/spec/useReportMetrics.spec.js — getter vuex
 // (useMapGetter) thay bằng truyền thẳng summary vào hàm thuần.
-vi.mock('@chatwoot/utils', () => ({ formatTime: (time: number) => `formatted_${time}` }));
+vi.mock('@ext/utils', () => ({ formatTime: (time: number) => `formatted_${time}` }));
 
 const summary = {
     avg_first_response_time: '198.6666666666667',

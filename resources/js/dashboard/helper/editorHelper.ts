@@ -2,7 +2,7 @@ import {
     MessageMarkdownSerializer,
     MessageMarkdownTransformer,
     messageSchema,
-} from '@chatwoot/prosemirror-schema';
+} from '@ext/prosemirror-schema';
 import type { Schema } from 'prosemirror-model';
 
 // Port từ dashboard/helper/editorHelper.js + constants/editor.js

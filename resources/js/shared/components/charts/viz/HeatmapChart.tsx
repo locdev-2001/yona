@@ -5,7 +5,7 @@ import './viz.css';
 import { createHeatmapLayout, type HeatmapCell, type HeatmapRow } from './heatmapLayout';
 import type { ValueFormatter } from './cartesianLayout';
 
-// Port từ @chatwoot/viz@0.1.5 src/components/heatmap/HeatmapChart.vue.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/heatmap/HeatmapChart.vue.
 
 const DEFAULT_LEVEL_COLORS = [
     'var(--cw-viz-heatmap-level-0-color, #f8f8fa)',

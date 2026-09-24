@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { picoSearch } from '@chatwoot/pico-search';
+import { picoSearch } from '@ext/pico-search';
 
 import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
 

@@ -1,4 +1,4 @@
-// Port từ @chatwoot/viz@0.1.5 src/components/heatmap/heatmap-layout.js.
+// Port từ thư viện biểu đồ viz@0.1.5 src/components/heatmap/heatmap-layout.js.
 
 import { finiteNumber, formatChartValue, type ValueFormatter } from './cartesianLayout';
 

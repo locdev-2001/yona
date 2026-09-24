@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { picoSearch } from '@chatwoot/pico-search';
+import { picoSearch } from '@ext/pico-search';
 
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';

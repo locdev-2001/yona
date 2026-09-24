@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { usePage } from '@inertiajs/react';
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@ext/utils';
 
 import Button from 'dashboard/components-next/button/Button';
 import SidePanel from 'dashboard/components-next/side-panel/SidePanel';

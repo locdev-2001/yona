@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
-import { debounce } from '@chatwoot/utils';
+import { debounce } from '@ext/utils';
 
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { readReactions } from 'dashboard/components-next/message/helpers/reactions';
