@@ -22,7 +22,11 @@ function windowClient(url: string, frameType: FakeWindowClient['frameType'] = 't
     return { url, frameType, focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockResolvedValue(null) };
 }
 
-function bootServiceWorker(openTabs: FakeWindowClient[]) {
+interface FakeServiceWorkerNavigator {
+    setAppBadge?: ReturnType<typeof vi.fn>;
+}
+
+function bootServiceWorker(openTabs: FakeWindowClient[], navigator?: FakeServiceWorkerNavigator) {
     const listeners: Record<string, Listener> = {};
     const clients = {
         matchAll: vi.fn().mockResolvedValue(openTabs),
@@ -33,6 +37,7 @@ function bootServiceWorker(openTabs: FakeWindowClient[]) {
         location: { origin: ORIGIN },
         registration: { showNotification: vi.fn().mockResolvedValue(undefined) },
         clients,
+        navigator,
         skipWaiting: vi.fn(),
         addEventListener: (type: string, listener: Listener) => {
             listeners[type] = listener;
@@ -57,24 +62,70 @@ function clickNotification(url: string | undefined) {
 describe('public/sw.js', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('hiện thông báo từ payload máy chủ gửi', async () => {
+    const PUSH_PAYLOAD = {
+        title: 'Một hội thoại (#42) vừa được giao cho bạn',
+        body: 'Lan: Shop còn size M không ạ?',
+        tag: 'conversation_1_42',
+        url: CONVERSATION_URL,
+        icon: `${ORIGIN}/logo.png`,
+        badge_count: 4,
+        data: { account_id: 1, notification_id: 7, primary_actor_type: 'Conversation', primary_actor_id: 420 },
+    };
+
+    function pushEvent(payload: Record<string, unknown>) {
+        return { data: { json: () => payload } };
+    }
+
+    it('hiện thông báo từ payload máy chủ gửi, gom theo hội thoại và mang theo data để đóng về sau', async () => {
         const { self, dispatch } = bootServiceWorker([]);
-        const payload = {
-            title: 'Một hội thoại (#42) vừa được giao cho bạn',
-            body: 'Lan: Shop còn size M không ạ?',
-            tag: 'conversation_assignment_42_7',
-            url: CONVERSATION_URL,
-            icon: `${ORIGIN}/logo.png`,
-        };
 
-        await dispatch('push', { data: { json: () => payload } });
+        await dispatch('push', pushEvent(PUSH_PAYLOAD));
 
-        expect(self.registration.showNotification).toHaveBeenCalledWith(payload.title, {
-            body: payload.body,
-            tag: payload.tag,
-            icon: payload.icon,
-            data: { url: CONVERSATION_URL },
+        expect(self.registration.showNotification).toHaveBeenCalledWith(PUSH_PAYLOAD.title, {
+            body: PUSH_PAYLOAD.body,
+            tag: PUSH_PAYLOAD.tag,
+            renotify: true,
+            icon: PUSH_PAYLOAD.icon,
+            data: {
+                account_id: 1,
+                notification_id: 7,
+                primary_actor_type: 'Conversation',
+                primary_actor_id: 420,
+                url: CONVERSATION_URL,
+            },
         });
+    });
+
+    it('đặt số trên biểu tượng app theo badge_count', async () => {
+        const navigator = { setAppBadge: vi.fn().mockResolvedValue(undefined) };
+        const { dispatch } = bootServiceWorker([], navigator);
+
+        await dispatch('push', pushEvent(PUSH_PAYLOAD));
+
+        expect(navigator.setAppBadge).toHaveBeenCalledWith(4);
+    });
+
+    it('trình duyệt không có badge hoặc badge lỗi thì vẫn hiện thông báo', async () => {
+        const { self, dispatch } = bootServiceWorker([]);
+        await expect(dispatch('push', pushEvent(PUSH_PAYLOAD))).resolves.toBeUndefined();
+        expect(self.registration.showNotification).toHaveBeenCalledOnce();
+
+        const rejectingNavigator = { setAppBadge: vi.fn().mockRejectedValue(new Error('not installed')) };
+        const second = bootServiceWorker([], rejectingNavigator);
+        await expect(second.dispatch('push', pushEvent(PUSH_PAYLOAD))).resolves.toBeUndefined();
+        expect(second.self.registration.showNotification).toHaveBeenCalledOnce();
+    });
+
+    it('payload không có tag thì không bật renotify', async () => {
+        const { self, dispatch } = bootServiceWorker([]);
+        const { tag: _tag, ...payloadWithoutTag } = PUSH_PAYLOAD;
+
+        await dispatch('push', pushEvent(payloadWithoutTag));
+
+        expect(self.registration.showNotification).toHaveBeenCalledWith(
+            PUSH_PAYLOAD.title,
+            expect.objectContaining({ tag: undefined, renotify: false }),
+        );
     });
 
     it('bấm thông báo khi đã có tab đúng hội thoại thì chỉ đưa tab đó lên', async () => {

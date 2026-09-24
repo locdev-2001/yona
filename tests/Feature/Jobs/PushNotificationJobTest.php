@@ -132,9 +132,16 @@ describe('sending', function () {
             ->and($this->browser->decrypt((string) $request->getBody()))->toBe([
                 'title' => "A conversation (#{$this->conversation->display_id}) has been assigned to you",
                 'body' => $notification->pushMessageBody(),
-                'tag' => "conversation_assignment_{$this->conversation->display_id}_{$notification->id}",
+                'tag' => "conversation_{$this->account->id}_{$this->conversation->display_id}",
                 'url' => $conversationUrl,
                 'icon' => url(config('yona.branding.logo_thumbnail')),
+                'badge_count' => 1,
+                'data' => [
+                    'account_id' => $this->account->id,
+                    'notification_id' => $notification->id,
+                    'primary_actor_type' => 'Conversation',
+                    'primary_actor_id' => $this->conversation->id,
+                ],
             ])
             ->and($notification->pushMessageBody())->toContain('Shop còn size M không ạ?');
     });
@@ -221,6 +228,64 @@ describe('sending', function () {
         assignmentNotification($this->account, $this->user, $this->conversation);
 
         expect($this->sentPushes)->toBe([]);
+    });
+
+    it('does not push a notification that was read before the job ran', function () {
+        Queue::fake();
+        $notification = assignmentNotification($this->account, $this->user, $this->conversation);
+        $notification->update(['read_at' => now()]);
+        fakePushService($this->sentPushes, 201);
+
+        app()->call([new PushNotificationJob($notification->id), 'handle']);
+
+        expect($this->sentPushes)->toBe([]);
+    });
+
+    it('badge_count counts only unread, non-snoozed notifications of the same account', function () {
+        $otherAccount = Account::factory()->create();
+        AccountUser::factory()->create(['account_id' => $otherAccount->id, 'user_id' => $this->user->id]);
+        $quietNotification = fn (array $attributes) => Notification::factory()->ofType('conversation_assignment')->createQuietly([
+            'account_id' => $this->account->id,
+            'user_id' => $this->user->id,
+            'primary_actor_id' => Conversation::factory()->create(['account_id' => $this->account->id])->id,
+            ...$attributes,
+        ]);
+        $quietNotification([]);
+        $quietNotification(['read_at' => now()]);
+        $quietNotification(['snoozed_until' => now()->addDay()]);
+        $quietNotification([
+            'account_id' => $otherAccount->id,
+            'primary_actor_id' => Conversation::factory()->create(['account_id' => $otherAccount->id])->id,
+        ]);
+        fakePushService($this->sentPushes, 201);
+
+        assignmentNotification($this->account, $this->user, $this->conversation);
+
+        expect($this->sentPushes)->toHaveCount(1)
+            ->and($this->browser->decrypt((string) sentPushRequest($this->sentPushes)->getBody())['badge_count'])->toBe(2);
+    });
+
+    it('two notifications of one conversation share the same tag', function () {
+        selectPushFlags($this->account, $this->user, ['conversation_assignment', 'assigned_conversation_new_message']);
+        fakePushService($this->sentPushes, 201, 201);
+
+        $assignment = assignmentNotification($this->account, $this->user, $this->conversation);
+        $newMessage = Notification::factory()->ofType('assigned_conversation_new_message')->create([
+            'account_id' => $this->account->id,
+            'user_id' => $this->user->id,
+            'primary_actor_id' => $this->conversation->id,
+        ]);
+
+        expect($this->sentPushes)->toHaveCount(2);
+
+        [$first, $second] = array_map(
+            fn (int $index) => $this->browser->decrypt((string) sentPushRequest($this->sentPushes, $index)->getBody()),
+            [0, 1],
+        );
+
+        expect($first['tag'])->toBe("conversation_{$this->account->id}_{$this->conversation->display_id}")
+            ->and($second['tag'])->toBe($first['tag'])
+            ->and([$first['data']['notification_id'], $second['data']['notification_id']])->toBe([$assignment->id, $newMessage->id]);
     });
 
     it('does nothing once the notification is gone', function () {

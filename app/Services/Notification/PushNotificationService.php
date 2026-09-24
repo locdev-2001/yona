@@ -2,6 +2,7 @@
 
 namespace App\Services\Notification;
 
+use App\Finders\NotificationFinder;
 use App\Models\Conversation;
 use App\Models\Notification;
 use App\Models\NotificationSubscription;
@@ -52,20 +53,40 @@ class PushNotificationService
         }
     }
 
-    // push_message của bản gốc chỉ có title/tag/url; thêm body (push_message_body,
-    // bản gốc chỉ gửi qua FCM) để thông báo trên máy nói được ai nhắn gì.
-    /** @return array{title: string, body: string, tag: string, url: string, icon: string} */
+    // tag gom mọi thông báo của một hội thoại vào một ô trong khay (cái sau thay cái
+    // trước). badge_count dùng cùng luật đếm với realtime. data mang đúng tên trường
+    // của payload realtime để trình duyệt đóng thông báo khi hội thoại được đọc.
+    /**
+     * @return array{
+     *     title: string,
+     *     body: string,
+     *     tag: string,
+     *     url: string,
+     *     icon: string,
+     *     badge_count: int,
+     *     data: array{account_id: int, notification_id: int, primary_actor_type: string, primary_actor_id: int},
+     * }
+     */
     private function pushMessage(Conversation $conversation): array
     {
+        $notification = $this->notification;
+
         return [
-            'title' => Str::limit($this->notification->pushMessageTitle(), self::TITLE_MAX_CHARACTERS, '…'),
-            'body' => Str::limit($this->notification->pushMessageBody(), self::BODY_MAX_CHARACTERS, '…'),
-            'tag' => "{$this->notification->typeName()}_{$conversation->display_id}_{$this->notification->id}",
+            'title' => Str::limit($notification->pushMessageTitle(), self::TITLE_MAX_CHARACTERS, '…'),
+            'body' => Str::limit($notification->pushMessageBody(), self::BODY_MAX_CHARACTERS, '…'),
+            'tag' => "conversation_{$conversation->account_id}_{$conversation->display_id}",
             'url' => route('inbox_conversation', [
                 'account' => $conversation->account_id,
                 'conversationId' => $conversation->display_id,
             ]),
             'icon' => url((string) config('yona.branding.logo_thumbnail')),
+            'badge_count' => (new NotificationFinder($notification->user, $notification->account))->unreadCount(),
+            'data' => [
+                'account_id' => $notification->account_id,
+                'notification_id' => $notification->id,
+                'primary_actor_type' => $notification->primary_actor_type,
+                'primary_actor_id' => $notification->primary_actor_id,
+            ],
         ];
     }
 }
