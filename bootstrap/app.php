@@ -6,6 +6,7 @@ use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentAccount;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\StartSession;
 use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\ValidateCsrfToken;
@@ -20,6 +21,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Middleware\TrustProxies as FrameworkTrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession as FrameworkStartSession;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -64,8 +66,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Request mang api_access_token không có cookie phiên → miễn CSRF
         // (token là bằng chứng chống CSRF), như API controller của Chatwoot.
+        // StartSession: không hồi sinh phiên mà request khác đã huỷ giữa chừng.
         $middleware->web(replace: [
             PreventRequestForgery::class => ValidateCsrfToken::class,
+            FrameworkStartSession::class => StartSession::class,
         ]);
 
         $middleware->alias([
