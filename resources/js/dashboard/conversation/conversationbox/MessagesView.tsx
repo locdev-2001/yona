@@ -7,6 +7,7 @@ import { collectMediaAttachments } from 'dashboard/components-next/message/helpe
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import { useTypingUsers } from 'dashboard/realtime/hooks';
 import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
+import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -16,6 +17,7 @@ import Banner from './Banner';
 import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
+import { useMessageReply } from './useMessageReply';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
@@ -30,6 +32,8 @@ import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 
 export default function MessagesView() {
     const {
+        accountId,
+        conversationId,
         selectedConversation,
         messages,
         messagesLoading,
@@ -74,6 +78,13 @@ export default function MessagesView() {
               };
           }
         | undefined;
+
+    const { replyTarget, startReply, clearReply, replyTargets } = useMessageReply({
+        accountId,
+        conversationId,
+        messages,
+        enabled: inboxSupports(inbox, 'outbound_reply_to'),
+    });
 
     const replyWindowBannerMessage = (() => {
         const additionalAttributes = inbox?.additional_attributes ?? {};
@@ -175,6 +186,8 @@ export default function MessagesView() {
                 onRetry={retryFailedMessage}
                 onToggleReaction={toggleMessageReaction}
                 onDeleteMessage={deleteConversationMessage}
+                replyTargets={replyTargets}
+                onReplyTo={startReply}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
                         {shouldShowSpinner && <Spinner className="text-n-brand" />}
@@ -208,6 +221,8 @@ export default function MessagesView() {
                     <ReplyBox
                         onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
                         onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
+                        replyTarget={replyTarget}
+                        onClearReplyTarget={clearReply}
                     />
                 </ResizableEditorWrapper>
             </div>

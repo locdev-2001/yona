@@ -112,6 +112,7 @@ return [
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
     'SENT_FROM_NATIVE_APP' => 'từ điện thoại',
     'MESSAGE_ACTIONS' => [
+        'REPLY' => 'Trả lời',
         'MORE' => 'Thêm hành động',
         'REACT' => 'Thả cảm xúc',
         'RECALL' => 'Thu hồi với mọi người',
@@ -120,6 +121,11 @@ return [
             'TITLE' => 'Thu hồi tin nhắn này với cả khách?',
             'MESSAGE' => 'Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được.',
         ],
+    ],
+    // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
+    'REPLY_QUOTE' => [
+        'ORIGINAL' => 'Tin nhắn gốc',
+        'JUMP' => 'Xem tin nhắn gốc',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Thử lại',

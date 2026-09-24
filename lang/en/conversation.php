@@ -111,6 +111,7 @@ return [
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
     'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [
+        'REPLY' => 'Reply',
         'MORE' => 'More actions',
         'REACT' => 'React',
         'RECALL' => 'Unsend for everyone',
@@ -119,6 +120,11 @@ return [
             'TITLE' => 'Unsend this message for everyone?',
             'MESSAGE' => 'The message disappears on the customer\'s side too. This cannot be undone.',
         ],
+    ],
+    // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
+    'REPLY_QUOTE' => [
+        'ORIGINAL' => 'Original message',
+        'JUMP' => 'Go to original message',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Retry sending',

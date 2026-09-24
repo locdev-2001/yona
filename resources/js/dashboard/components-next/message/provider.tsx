@@ -1,9 +1,10 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
-import type { ConversationMessage, MessageSender } from 'dashboard/conversation/types';
+import type { MessageSender } from 'dashboard/conversation/types';
 import type { MessageOrientation, MessageVariant } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
+import type { ReplyQuote } from './helpers/replyQuote';
 
 // Port từ dashboard/components-next/message/provider.js — provide/inject của Vue
 // thay bằng React context; Message.tsx là provider, bubble/meta là consumer.
@@ -23,7 +24,8 @@ export interface MessageContextValue {
     // filteredCurrentChatAttachments gốc đọc getter store; ở đây MessageList
     // truyền xuống (đã lọc còn ảnh/video/ig_reel/âm thanh) để mở gallery.
     filteredCurrentChatAttachments: MessageAttachment[];
-    inReplyTo: ConversationMessage | null;
+    // Khối trích dẫn đã tính sẵn (tin gốc hoặc ảnh chụp của nền tảng); null = không vẽ.
+    replyQuote: ReplyQuote | null;
     variant: MessageVariant;
     orientation: MessageOrientation;
     shouldGroupWithNext: boolean;
@@ -37,6 +39,9 @@ export interface MessageContextValue {
     // Thu hồi (kênh khai `outbound_recall`) hoặc xoá một chiều ở Yona — lõi tự
     // quyết theo năng lực, FE chỉ đổi nhãn.
     onDeleteMessage?: () => void;
+    // Trả lời trích dẫn chính tin này. Mỗi hành động trên thanh là một callback
+    // tuỳ chọn như vậy; cờ hiện nút nằm ở helpers/messageActions.ts.
+    onReplyTo?: () => void;
 }
 
 const MessageControl = createContext<MessageContextValue | null>(null);

@@ -2392,6 +2392,7 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
+            "REPLY": "Trả lời",
             "MORE": "Thêm hành động",
             "REACT": "Thả cảm xúc",
             "RECALL": "Thu hồi với mọi người",
@@ -2400,6 +2401,10 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Thu hồi tin nhắn này với cả khách?",
                 "MESSAGE": "Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được."
             }
+        },
+        "REPLY_QUOTE": {
+            "ORIGINAL": "Tin nhắn gốc",
+            "JUMP": "Xem tin nhắn gốc"
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Thử lại",

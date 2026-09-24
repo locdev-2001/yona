@@ -6,12 +6,13 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 import Message from './Message';
 import { MESSAGE_TYPES } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
+import { readInReplyToId } from './helpers/replyQuote';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; grouping tính trực tiếp
-// trên payload snake_case. Bỏ ở B3: retry (chưa có sendMessageWithData ở spine),
-// inboxSupportsReplyTo. `in_reply_to` tra trong danh sách đang hiển thị như gốc;
-// nhánh fetch qua API cho tin nằm ngoài trang hiện tại vẫn chưa port.
+// trên payload snake_case. Bỏ ở B3: retry (chưa có sendMessageWithData ở spine).
+// Tin được trả lời nằm ngoài trang đang tải do nơi dựng danh sách tra riêng và
+// truyền vào qua `replyTargets`.
 
 interface MessageListProps {
     messages: ConversationMessage[];
@@ -28,7 +29,12 @@ interface MessageListProps {
     onRetry?: (message: ConversationMessage) => Promise<void> | void;
     onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
+    // Tin gốc nằm ngoài danh sách đã tra: message = có, null = không tồn tại.
+    replyTargets?: ReadonlyMap<number, ConversationMessage | null>;
+    onReplyTo?: (message: ConversationMessage) => void;
 }
+
+const NO_REPLY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
 
 function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): boolean {
     if (index === searchList.length - 1) return false;
@@ -54,16 +60,20 @@ function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): 
 }
 
 /**
- * getInReplyToMessage của MessageList.vue — tin được trả lời tra trong chính danh
- * sách đang hiển thị. `content_attributes.in_reply_to` do lõi đặt
- * (Message#ensureInReplyTo), nên mọi kênh dùng chung một đường.
+ * Tin được trả lời: tra trong danh sách đang hiển thị trước, rồi tới các tin đã
+ * tra riêng. `content_attributes.in_reply_to` do lõi đặt (Message#ensureInReplyTo),
+ * nên mọi kênh dùng chung một đường. undefined = chưa biết (đang tải hoặc không trả lời).
  */
-function findInReplyTo(message: ConversationMessage, messages: ConversationMessage[]): ConversationMessage | null {
-    const inReplyToId = message.content_attributes?.in_reply_to;
+function findInReplyTo(
+    message: ConversationMessage,
+    messages: ConversationMessage[],
+    replyTargets: ReadonlyMap<number, ConversationMessage | null> = NO_REPLY_TARGETS,
+): ConversationMessage | null | undefined {
+    const inReplyToId = readInReplyToId(message.content_attributes ?? {});
 
-    if (!inReplyToId) return null;
+    if (inReplyToId === null) return undefined;
 
-    return messages.find(candidate => candidate.id === inReplyToId) ?? null;
+    return messages.find(candidate => candidate.id === inReplyToId) ?? replyTargets.get(inReplyToId);
 }
 
 const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function MessageList(
@@ -81,6 +91,8 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         onRetry,
         onToggleReaction,
         onDeleteMessage,
+        replyTargets = NO_REPLY_TARGETS,
+        onReplyTo,
     },
     ref,
 ) {
@@ -98,10 +110,11 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                         inboxCapabilities={inboxCapabilities}
                         chatAttachments={chatAttachments}
                         groupWithNext={shouldGroupWithNext(index, messages)}
-                        inReplyTo={findInReplyTo(message, messages)}
+                        inReplyTo={findInReplyTo(message, messages, replyTargets)}
                         onRetry={onRetry}
                         onToggleReaction={onToggleReaction}
                         onDeleteMessage={onDeleteMessage}
+                        onReplyTo={onReplyTo}
                     />
                 </Fragment>
             ))}

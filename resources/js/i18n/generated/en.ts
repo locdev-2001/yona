@@ -2392,6 +2392,7 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "from phone",
         "MESSAGE_ACTIONS": {
+            "REPLY": "Reply",
             "MORE": "More actions",
             "REACT": "React",
             "RECALL": "Unsend for everyone",
@@ -2400,6 +2401,10 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Unsend this message for everyone?",
                 "MESSAGE": "The message disappears on the customer's side too. This cannot be undone."
             }
+        },
+        "REPLY_QUOTE": {
+            "ORIGINAL": "Original message",
+            "JUMP": "Go to original message"
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Retry sending",

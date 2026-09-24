@@ -38,6 +38,9 @@ import { sendMessage } from '../api';
 import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import type { ConversationMessage } from '../types';
+import { buildOutgoingContentAttributes } from './outgoingContentAttributes';
+import ReplyToMessage from './ReplyToMessage';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
 import ReplyBoxBanner from './ReplyBoxBanner';
 import ReplyTopPanel from './ReplyTopPanel';
@@ -49,10 +52,11 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // file + kiểm size + preview/gỡ như gốc (fileUploadMixin.onIndirectFileUpload).
 // B9: tin CÓ tệp đi thẳng multipart qua conversation/api.ts rồi chờ kết quả —
 // xóa soạn thảo khi thành công, giữ preview + báo lỗi khi backend từ chối; tin
-// chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Bỏ: draft
-// (B10), reply-to (B10/B11), ghi âm (voice recorder), email head/quoted reply,
-// WhatsApp templates, copilot editor, canned '/' + mention @ + variables,
-// Paste đính kèm (kênh API chưa cần).
+// chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Trả lời trích
+// dẫn: MessagesView giữ tin đang trả lời, ReplyBox chỉ hiện khối "Đang trả lời"
+// và gửi kèm qua buildOutgoingContentAttributes. Bỏ: draft (B10), ghi âm (voice
+// recorder), email head/quoted reply, WhatsApp templates, copilot editor, canned
+// '/' + mention @ + variables, Paste đính kèm (kênh API chưa cần).
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
@@ -64,9 +68,17 @@ function cmdEnterShortcutLabel(): string {
 interface ReplyBoxProps {
     onToggleEditorSize?: () => void;
     onMessageSent?: () => void;
+    // Tin đang được trả lời trích dẫn (null khi kênh không khai `outbound_reply_to`).
+    replyTarget?: ConversationMessage | null;
+    onClearReplyTarget?: () => void;
 }
 
-export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBoxProps) {
+export default function ReplyBox({
+    onToggleEditorSize,
+    onMessageSent,
+    replyTarget = null,
+    onClearReplyTarget,
+}: ReplyBoxProps) {
     const {
         selectedConversation,
         conversationId,
@@ -128,6 +140,12 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
     const isEditorDisabled = !isOnPrivateNote && !canReply;
     // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
     const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
+
+    // Ghi chú riêng không mang trích dẫn và cũng không làm mất tin đang trả lời.
+    const outgoingContentAttributes = buildOutgoingContentAttributes({
+        inReplyTo: isPrivate ? null : replyTarget?.id,
+    });
+    const isReplyingToMessage = Boolean(outgoingContentAttributes?.in_reply_to);
 
     const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
     const isSignatureEnabledForInbox = !isPrivate && sendWithSignature;
@@ -314,6 +332,24 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
         setReplyType(mode);
     };
 
+    // Bấm Trả lời trên một bong bóng: đang ở Lưu ý riêng thì về Trả lời, rồi đưa
+    // con trỏ vào ô soạn. Chỉ chạy khi tin đang trả lời đổi trong CÙNG hội thoại,
+    // đổi hội thoại thì không cướp focus.
+    const replyTargetId = replyTarget?.id ?? null;
+    const lastReplyTargetRef = useRef({ conversationId, replyTargetId });
+    useEffect(() => {
+        const last = lastReplyTargetRef.current;
+        lastReplyTargetRef.current = { conversationId, replyTargetId };
+        if (last.conversationId !== conversationId || replyTargetId === null || last.replyTargetId === replyTargetId) {
+            return;
+        }
+        if (replyType === REPLY_EDITOR_MODES.NOTE && !isBotOwnedPendingConversation) {
+            setReplyMode(REPLY_EDITOR_MODES.REPLY);
+        }
+        window.requestAnimationFrame(() => editorRef.current?.focusEditorInputField());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conversationId, replyTargetId]);
+
     const clearMessage = () => {
         // clearMessage gốc: reset rồi gắn lại chữ ký nếu đang bật.
         setMessage(isSignatureActive ? appendSignature('', messageSignature, channelType) : '');
@@ -353,8 +389,10 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 content: getMessageWithQuotedEmailText(message),
                 private: isPrivate,
                 files: attachedFiles.map((attachment) => attachment.resource),
+                ...(outgoingContentAttributes ? { content_attributes: outgoingContentAttributes } : {}),
                 ...emailPayloadFields(),
             });
+            if (isReplyingToMessage) onClearReplyTarget?.();
             afterSent();
         } catch (error: unknown) {
             const body = (error as { body?: { error?: string } }).body;
@@ -381,8 +419,10 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
             sendReply({
                 content: getMessageWithQuotedEmailText(message),
                 isPrivate,
+                contentAttributes: outgoingContentAttributes,
                 ...emailPayloadFields(),
             });
+            if (isReplyingToMessage) onClearReplyTarget?.();
         }
         afterSent();
     };
@@ -452,6 +492,9 @@ export default function ReplyBox({ onToggleEditorSize, onMessageSent }: ReplyBox
                 onToggleEditorSize={toggleEditorSize}
             />
             <div className="reply-box__top">
+                {!isOnPrivateNote && replyTarget ? (
+                    <ReplyToMessage message={replyTarget} onDismiss={() => onClearReplyTarget?.()} />
+                ) : null}
                 {!isOnPrivateNote && isAnEmailChannel ? (
                     <ReplyEmailHead
                         toEmails={toEmails}

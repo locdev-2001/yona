@@ -27,6 +27,7 @@ import ZaloCallBubble from './bubbles/ZaloCall';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
+import { resolveReplyQuote } from './helpers/replyQuote';
 
 // Port từ dashboard/components-next/message/Message.vue. Payload spine giữ
 // snake_case (message_type, content_attributes…) — map sang biến camelCase tại
@@ -41,12 +42,14 @@ interface MessageProps {
     groupWithNext?: boolean;
     // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
     chatAttachments?: MessageAttachment[];
-    // Tin được trả lời — MessageList tra sẵn như getInReplyToMessage bên gốc.
+    // Tin được trả lời, MessageList tra sẵn: có = tin gốc · null = đã tra, không
+    // có · undefined = chưa biết hoặc đang tải.
     inReplyTo?: ConversationMessage | null;
     // Gửi lại tin thất bại (POST …/messages/{id}/retry) — emit `retry` của gốc.
     onRetry?: (message: ConversationMessage) => Promise<void> | void;
     onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
+    onReplyTo?: (message: ConversationMessage) => void;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -104,10 +107,11 @@ export default function Message({
     inboxCapabilities = [],
     groupWithNext = false,
     chatAttachments = [],
-    inReplyTo = null,
+    inReplyTo,
     onRetry,
     onToggleReaction,
     onDeleteMessage,
+    onReplyTo,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -225,7 +229,7 @@ export default function Message({
         contentAttributes,
         attachments,
         filteredCurrentChatAttachments: chatAttachments,
-        inReplyTo,
+        replyQuote: resolveReplyQuote(contentAttributes, inReplyTo),
         variant,
         orientation,
         shouldGroupWithNext,
@@ -233,6 +237,7 @@ export default function Message({
         inboxCapabilities,
         onToggleReaction: onToggleReaction ? (emoji: string) => void onToggleReaction(message, emoji) : undefined,
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
+        onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
     };
 
     if (!shouldRenderMessage) return null;

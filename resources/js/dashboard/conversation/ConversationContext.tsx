@@ -137,6 +137,8 @@ interface ConversationContextValue {
         cc_emails?: string;
         bcc_emails?: string;
         to_emails?: string;
+        // Dựng bằng buildOutgoingContentAttributes (trả lời trích dẫn…).
+        contentAttributes?: Record<string, unknown>;
     }) => void;
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
@@ -869,12 +871,14 @@ export function ConversationProvider({
             cc_emails: ccEmails,
             bcc_emails: bccEmails,
             to_emails: toEmails,
+            contentAttributes,
         }: {
             content: string;
             isPrivate: boolean;
             cc_emails?: string;
             bcc_emails?: string;
             to_emails?: string;
+            contentAttributes?: Record<string, unknown>;
         }) => {
             if (!conversationId || !selectedConversation) return;
 
@@ -888,7 +892,7 @@ export function ConversationProvider({
                 message_type: MESSAGE_TYPES.OUTGOING,
                 content_type: 'text',
                 status: MESSAGE_STATUS.PROGRESS,
-                content_attributes: {},
+                content_attributes: contentAttributes ?? {},
                 created_at: Math.floor(Date.now() / 1000),
                 private: isPrivate,
                 source_id: null,
@@ -906,6 +910,7 @@ export function ConversationProvider({
                 content,
                 private: isPrivate,
                 echo_id: echoId,
+                ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
                 ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
                 ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
                 ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
