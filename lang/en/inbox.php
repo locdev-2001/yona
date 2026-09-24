@@ -5,7 +5,7 @@
 
 return [
     'LIST' => [
-        'TITLE' => 'My Inbox',
+        'TITLE' => 'Notifications',
         'DISPLAY_DROPDOWN' => 'Display',
         'LOADING' => 'Fetching notifications',
         '404' => 'There are no active notifications in this group.',
@@ -76,5 +76,11 @@ return [
         'MARK_ALL_READ' => 'All notifications marked as read',
         'DELETE_ALL' => 'All notifications deleted',
         'DELETE_ALL_READ' => 'All read notifications deleted',
+    ],
+    'BELL' => [
+        'OPEN_LABEL' => 'Notifications, {count} unread',
+        'EMPTY' => 'No notifications yet',
+        'VIEW_ALL' => 'View all notifications',
+        'LAUNCHER_UNREAD' => 'You have unread notifications',
     ],
 ];
