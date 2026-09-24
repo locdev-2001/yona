@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { sanitize } from 'lettersanitizer';
 
+import { useInnerHtml } from '../../helpers/useInnerHtml';
+
 // Thay component <Letter> của gói `vue-letter` (bản gốc dùng ở bubble email).
 // vue-letter chỉ gọi `lettersanitizer.sanitize` rồi đổ vào một <div class=…>;
 // bản React gọi thẳng cùng hàm đó nên giữ nguyên HTML đầu ra.
@@ -21,6 +23,7 @@ export default function Letter({ html, text, className, allowedCssProperties }: 
         () => sanitize(html, text, { allowedCssProperties, preserveCssPriority: false }),
         [html, text, allowedCssProperties],
     );
+    const innerHtml = useInnerHtml(sanitized);
 
-    return <div className={className} dangerouslySetInnerHTML={{ __html: sanitized }} />;
+    return <div className={className} dangerouslySetInnerHTML={innerHtml} />;
 }

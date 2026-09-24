@@ -13,6 +13,7 @@ import { bubbleCornerClass } from '../helpers/bubbleShape';
 import { readForwardedFrom } from '../helpers/forwardedFrom';
 import { readGroupSender } from '../helpers/groupSender';
 import { readReactions } from '../helpers/reactions';
+import { useInnerHtml } from '../helpers/useInnerHtml';
 
 // Port từ dashboard/components-next/message/bubbles/Base.vue — bỏ nhánh
 // CaptainGenerationDetails (EE).
@@ -115,6 +116,7 @@ export default function BaseBubble({
         if (replyQuote.unavailable) return t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND');
         return t('CONVERSATION.REPLY_QUOTE.ORIGINAL');
     })();
+    const replyQuoteInnerHtml = useInnerHtml(DOMPurify.sanitize(replyQuotePreview));
 
     const jumpToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
@@ -138,7 +140,7 @@ export default function BaseBubble({
                 ) : null}
                 <span
                     className="block prose prose-bubble line-clamp-2"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
+                    dangerouslySetInnerHTML={replyQuoteInnerHtml}
                 />
             </button>
         )}
