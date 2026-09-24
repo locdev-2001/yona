@@ -38,7 +38,7 @@ class Whatsapp360DialogService extends BaseWhatsappService
     {
         return Http::withHeaders($this->apiHeaders())->post(self::API_BASE.'/messages', [
             'to' => $phoneNumber,
-            'text' => ['body' => $message->content],
+            'text' => ['body' => $message->outgoingContent()],
             'type' => 'text',
         ]);
     }
@@ -51,7 +51,7 @@ class Whatsapp360DialogService extends BaseWhatsappService
         $typeContent = ['link' => $attachment->downloadUrl()];
 
         if ($type !== 'audio') {
-            $typeContent['caption'] = $message->content;
+            $typeContent['caption'] = $message->outgoingContent();
         }
 
         return Http::withHeaders($this->apiHeaders())->post(self::API_BASE.'/messages', [

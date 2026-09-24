@@ -22,7 +22,7 @@ class SendOnTiktokService extends BaseSendOnChannelService
         try {
             $messageId = (new TiktokClient($this->channel()))->sendTextMessage(
                 (string) data_get($this->conversation()->additional_attributes, 'conversation_id'),
-                $this->message->content,
+                $this->message->outgoingContent(),
                 $this->message->content_attributes['in_reply_to_external_id'] ?? null,
             );
 

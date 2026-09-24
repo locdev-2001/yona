@@ -64,6 +64,61 @@ class OutboundMentionsBuilder
             && $this->message->inbox?->supports(Capability::OutboundMention) === true;
     }
 
+    /**
+     * Dời mục đã neo sang bản chữ gửi ra kênh (đã bỏ cú pháp markdown): lần xuất
+     * hiện thứ k của `@Tên` trong nội dung lưu ứng với lần thứ k trong bản gửi.
+     * Mục không còn tìm thấy thì bỏ, không làm hỏng tin.
+     *
+     * @param  list<array{external_id: string, name: string, offset: int, length: int}>  $mentions
+     * @return list<array{external_id: string, name: string, offset: int, length: int}>
+     */
+    public static function reanchor(array $mentions, string $storedContent, string $sentText): array
+    {
+        if ($storedContent === $sentText) {
+            return $mentions;
+        }
+
+        $reanchored = [];
+
+        foreach ($mentions as $mention) {
+            $needle = '@'.$mention['name'];
+            $occurrence = self::occurrenceIndexAt($storedContent, $needle, $mention['offset']);
+            $position = $occurrence === null ? null : self::nthOccurrence($sentText, $needle, $occurrence);
+
+            if ($position !== null) {
+                $reanchored[] = [...$mention, 'offset' => self::utf16Length(substr($sentText, 0, $position))];
+            }
+        }
+
+        return $reanchored;
+    }
+
+    private static function occurrenceIndexAt(string $content, string $needle, int $utf16Offset): ?int
+    {
+        $index = 0;
+
+        for ($position = strpos($content, $needle); $position !== false; $position = strpos($content, $needle, $position + 1)) {
+            if (self::utf16Length(substr($content, 0, $position)) === $utf16Offset) {
+                return $index;
+            }
+
+            $index++;
+        }
+
+        return null;
+    }
+
+    private static function nthOccurrence(string $content, string $needle, int $index): ?int
+    {
+        $position = strpos($content, $needle);
+
+        for ($seen = 0; $position !== false && $seen < $index; $seen++) {
+            $position = strpos($content, $needle, $position + 1);
+        }
+
+        return $position === false ? null : $position;
+    }
+
     /** @return list<array{external_id: string, name: string, offset: int, length: int}> */
     private function anchor(mixed $raw): array
     {

@@ -9,10 +9,10 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
-use App\Services\Email\MarkdownRenderer;
 use App\Services\Messages\StickerMessageBuilder;
 use App\Support\BooleanParam;
 use App\Support\EmailAddress;
+use App\Support\Messages\OutgoingText;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -122,7 +122,7 @@ class MessageBuilder
 
         $html = filled($this->params['email_html_content'] ?? null)
             ? (string) $this->params['email_html_content']
-            : MarkdownRenderer::render($normalizedContent, true);
+            : (string) OutgoingText::render($normalizedContent, $this->conversation->inbox->capabilities()->textFormat());
 
         $email['html_content'] = [...($email['html_content'] ?? []), 'full' => $html, 'reply' => $html];
         $email['text_content'] = [

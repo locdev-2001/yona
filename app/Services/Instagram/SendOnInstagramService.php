@@ -66,7 +66,7 @@ class SendOnInstagramService extends BaseSendOnChannelService
     {
         return $this->withHumanAgentTag([
             'recipient' => ['id' => $this->sourceId()],
-            'message' => ['text' => $this->message->content],
+            'message' => ['text' => $this->message->outgoingContent()],
         ]);
     }
 

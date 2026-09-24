@@ -779,3 +779,40 @@ it('bản chuyển tiếp có ảnh gửi lại tệp như cũ, không dùng chu
         ->and($payload['text'])->toBe('Mẫu này nè')
         ->and($payload['media_kind'])->toBe('image');
 });
+
+// Bộ soạn lưu markdown; Zalo chỉ hiện chữ trơn nên khách không được thấy `<…>` hay `[chữ](url)`.
+it('gửi link cho Zalo dưới dạng chữ trơn, nội dung lưu vẫn là markdown', function () {
+    fakeZaloSendBridge();
+    $markdown = "Bảng giá <https://yona.vn/bang-gia>\nđặt ở [đây](https://yona.vn/dat-hang?sp=ao_thun)";
+
+    $message = zaloOutgoing($this->conversation, $markdown);
+
+    $text = zaloSendPayloads()[0]['text'];
+
+    expect($text)->toBe("Bảng giá https://yona.vn/bang-gia\nđặt ở đây https://yona.vn/dat-hang?sp=ao_thun")
+        ->and($text)->not->toContain('<')->not->toContain('>')->not->toContain('](')
+        ->and($message->refresh()->content)->toBe($markdown);
+});
+
+it('chú thích tệp gửi Zalo cũng là chữ trơn', function () {
+    fakeZaloSendBridge();
+
+    zaloOutgoingWithFiles($this->conversation, [
+        ['path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+    ], '**Mẫu mới** xem <https://yona.vn/mau>');
+
+    expect(zaloSendPayloads()[0]['text'])->toBe('Mẫu mới xem https://yona.vn/mau');
+});
+
+it('nhắc tên sau link: vị trí tính trên chữ thật gửi đi', function () {
+    fakeZaloSendBridge();
+
+    zaloMentionReply(zaloGroupConversation($this->inbox), '<https://yona.vn/gia> **@Bình** xem giúp', [
+        'mentions' => [['external_id' => '555', 'name' => 'Bình']],
+    ]);
+
+    $payload = zaloSendPayloads()[0];
+
+    expect($payload['text'])->toBe('https://yona.vn/gia @Bình xem giúp')
+        ->and($payload['mentions'])->toBe([['uid' => '555', 'pos' => 20, 'len' => 5]]);
+});

@@ -22,7 +22,7 @@ class SendOnTwilioService extends BaseSendOnChannelService
         $params = [
             ...$channel->sendMessageFrom(),
             'To' => $this->sourceId(),
-            'Body' => $this->message->content,
+            'Body' => $this->message->outgoingContent(),
             'StatusCallback' => route('twilio.delivery_status'),
         ];
 

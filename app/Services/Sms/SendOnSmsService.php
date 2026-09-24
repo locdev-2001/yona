@@ -21,7 +21,7 @@ class SendOnSmsService extends BaseSendOnChannelService
         $body = [
             'to' => $this->sourceId(),
             'from' => $channel->phone_number,
-            'text' => $this->message->content,
+            'text' => $this->message->outgoingContent(),
             'applicationId' => $channel->provider_config['application_id'] ?? null,
         ];
 

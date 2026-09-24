@@ -51,14 +51,14 @@ class SendOnFacebookService extends BaseSendOnChannelService
     {
         $payload = $this->message->contentTypeName() === 'input_select' && filled($this->message->content_attributes['items'] ?? null)
             ? [
-                'text' => $this->message->content,
+                'text' => $this->message->outgoingContent(),
                 'quick_replies' => array_map(fn (array $item) => [
                     'content_type' => 'text',
                     'payload' => $item['title'],
                     'title' => $item['title'],
                 ], $this->message->content_attributes['items']),
             ]
-            : ['text' => $this->message->content];
+            : ['text' => $this->message->outgoingContent()];
 
         return $this->withHumanAgentTag([
             'recipient' => ['id' => $this->sourceId()],

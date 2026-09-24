@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Messages\Forwarding\MessageForwarder;
+use App\Services\Messages\OutboundMentionsBuilder;
 
 /**
  * Gửi tin ra Zalo cá nhân qua bridge. Port từ ZaloSendService của nhánh `main`,
@@ -199,17 +200,18 @@ class SendOnZaloService extends BaseSendOnChannelService
 
         $attachments = $this->sendableAttachments();
         $nativeForward = $attachments === [] ? $this->nativeForwardReference($channel) : null;
+        $text = $this->message->outgoingContent();
 
         if ($nativeForward !== null) {
-            return [$this->part([...$thread, 'text' => $this->message->content, 'forward' => $nativeForward], null)];
+            return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward], null)];
         }
 
         if ($attachments === []) {
             return [$this->part([
                 ...$thread,
-                'text' => $this->message->content,
+                'text' => $text,
                 'quote' => $this->quotePayload(),
-                'mentions' => $this->mentionsPayload($channel),
+                'mentions' => $this->mentionsPayload($channel, $text),
             ], null)];
         }
 
@@ -218,9 +220,9 @@ class SendOnZaloService extends BaseSendOnChannelService
         foreach ($attachments as $index => $attachment) {
             $parts[] = $this->part([
                 ...$thread,
-                'text' => $index === 0 ? $this->message->content : null,
+                'text' => $index === 0 ? $text : null,
                 'quote' => $index === 0 ? $this->quotePayload() : null,
-                'mentions' => $index === 0 ? $this->mentionsPayload($channel) : null,
+                'mentions' => $index === 0 ? $this->mentionsPayload($channel, $text) : null,
                 'file_url' => $this->attachmentUrl($attachment),
                 'media_kind' => $attachment->fileTypeName(),
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
@@ -501,7 +503,8 @@ class SendOnZaloService extends BaseSendOnChannelService
      *
      * @return list<array{uid: string, pos: int, len: int}>|null
      */
-    private function mentionsPayload(Zalo $channel): ?array
+    /** Vị trí nhắc tên tính trên chữ THẬT gửi đi — bản gửi đã bỏ cú pháp markdown nên có thể lệch bản lưu. */
+    private function mentionsPayload(Zalo $channel, ?string $text): ?array
     {
         $mentions = $this->message->content_attributes['mentions'] ?? null;
 
@@ -509,14 +512,13 @@ class SendOnZaloService extends BaseSendOnChannelService
             return null;
         }
 
+        $valid = array_values(array_filter($mentions, static fn ($mention) => is_array($mention)
+            && is_scalar($mention['external_id'] ?? null) && is_string($mention['name'] ?? null)
+            && is_int($mention['offset'] ?? null) && is_int($mention['length'] ?? null)));
+
         $payload = [];
 
-        foreach ($mentions as $mention) {
-            if (! is_array($mention) || ! is_scalar($mention['external_id'] ?? null)
-                || ! is_int($mention['offset'] ?? null) || ! is_int($mention['length'] ?? null)) {
-                continue;
-            }
-
+        foreach (OutboundMentionsBuilder::reanchor($valid, (string) $this->message->content, (string) $text) as $mention) {
             $payload[] = ['uid' => (string) $mention['external_id'], 'pos' => $mention['offset'], 'len' => $mention['length']];
         }
 

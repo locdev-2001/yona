@@ -42,7 +42,7 @@ class SendOnTelegramService extends BaseSendOnChannelService
 
         $body = array_filter([
             'chat_id' => $channel->chatId($this->message),
-            'text' => $this->message->content,
+            'text' => $this->message->outgoingContent(),
             'reply_markup' => $this->replyMarkup(),
             'parse_mode' => 'HTML',
             'reply_to_message_id' => $this->message->content_attributes['in_reply_to_external_id'] ?? null,

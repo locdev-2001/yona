@@ -47,7 +47,7 @@ class SendOnLineService extends BaseSendOnChannelService
     /** @return array<string, mixed> */
     private function textMessage(): array
     {
-        return ['type' => 'text', 'text' => $this->message->content];
+        return ['type' => 'text', 'text' => $this->message->outgoingContent()];
     }
 
     /** @return list<array<string, mixed>> */
@@ -85,14 +85,14 @@ class SendOnLineService extends BaseSendOnChannelService
 
         return [
             'type' => 'flex',
-            'altText' => $this->message->content,
+            'altText' => $this->message->outgoingContent(),
             'contents' => [
                 'type' => 'bubble',
                 'body' => [
                     'type' => 'box',
                     'layout' => 'vertical',
                     'contents' => [
-                        ['type' => 'text', 'text' => $this->message->content, 'wrap' => true],
+                        ['type' => 'text', 'text' => $this->message->outgoingContent(), 'wrap' => true],
                         ...$buttons,
                     ],
                 ],
