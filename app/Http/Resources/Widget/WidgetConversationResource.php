@@ -22,6 +22,8 @@ final class WidgetConversationResource
             'id' => $conversation->display_id,
             'inbox_id' => $conversation->inbox_id,
             'contact_last_seen_at' => $conversation->contact_last_seen_at?->getTimestamp() ?? 0,
+            // Mốc agent đọc hội thoại: widget suy ra "Đã xem" dưới tin của khách.
+            'agent_last_seen_at' => $conversation->agent_last_seen_at?->getTimestamp() ?? 0,
             'status' => $conversation->statusName(),
         ];
     }

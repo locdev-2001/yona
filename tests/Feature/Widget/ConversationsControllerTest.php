@@ -42,6 +42,21 @@ describe('GET /api/v1/widget/conversations', function () {
             ->assertJson(['id' => $conversation->display_id, 'status' => 'open']);
     });
 
+    it('exposes when an agent last read the conversation so the widget can show seen receipts', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        $conversation = Conversation::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'contact_id' => $session->contact->id,
+            'contact_inbox_id' => $session->contactInbox->id,
+            'agent_last_seen_at' => now()->subMinute(),
+        ]);
+
+        $this->getJson($session->url('conversations'), $session->headers())
+            ->assertOk()
+            ->assertJson(['agent_last_seen_at' => $conversation->agent_last_seen_at->getTimestamp()]);
+    });
+
     it('returns not found when the token points at an unknown source id', function () {
         $session = WidgetSession::make();
         $token = WidgetTokenService::generate(['source_id' => 'invalid source id', 'inbox_id' => $session->inbox->id]);
