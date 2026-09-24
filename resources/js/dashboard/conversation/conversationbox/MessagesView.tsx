@@ -45,6 +45,9 @@ export default function MessagesView() {
         retryFailedMessage,
         toggleMessageReaction,
         deleteConversationMessage,
+        focusedMessageId,
+        clearFocusedMessage,
+        focusMessage,
     } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
@@ -150,7 +153,6 @@ export default function MessagesView() {
     useEffect(() => setForwardingMessage(null), [conversationId]);
 
     // Đặt sau hai effect cuộn đáy ở trên: layout effect chạy theo thứ tự khai báo.
-    const { focusedMessageId, clearFocusedMessage } = useConversation();
     useFocusMessageScroll({
         focusedMessageId,
         messages,
@@ -206,6 +208,7 @@ export default function MessagesView() {
                 replyTargets={replyTargets}
                 onReplyTo={startReply}
                 onForward={setForwardingMessage}
+                onJumpToMessage={focusMessage}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
                         {shouldShowSpinner && <Spinner className="text-n-brand" />}

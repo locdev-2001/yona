@@ -62,6 +62,7 @@ interface MessageProps {
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
     onReplyTo?: (message: ConversationMessage) => void;
     onForward?: (message: ConversationMessage) => void;
+    onJumpToMessage?: (messageId: number) => void;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -121,6 +122,7 @@ export default function Message({
     onDeleteMessage,
     onReplyTo,
     onForward,
+    onJumpToMessage,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -235,6 +237,7 @@ export default function Message({
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
         onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
         onForward: onForward ? () => onForward(message) : undefined,
+        onJumpToMessage,
     };
 
     if (!shouldRenderMessage) return null;

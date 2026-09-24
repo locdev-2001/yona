@@ -35,9 +35,16 @@ function message(id: number, overrides: Partial<ConversationMessage> = {}): Conv
 const renderList = (
     messages: ConversationMessage[],
     replyTargets?: ReadonlyMap<number, ConversationMessage | null>,
+    onJumpToMessage?: (messageId: number) => void,
 ) =>
     render(
-        <MessageList messages={messages} channelType="Channel::Api" firstUnreadId={null} replyTargets={replyTargets} />,
+        <MessageList
+            messages={messages}
+            channelType="Channel::Api"
+            firstUnreadId={null}
+            replyTargets={replyTargets}
+            onJumpToMessage={onJumpToMessage}
+        />,
     ).container;
 
 const amberBubble = (container: HTMLElement, id: number) => container.querySelector(`#message${id} .bg-n-solid-amber`);
@@ -152,16 +159,29 @@ describe('MessageList khối trích dẫn ngoài trang đang tải', () => {
         expect(quoteBlock(container, 12)?.textContent).toContain('Picture message');
     });
 
-    it('bấm khối trích dẫn thì cuộn tới tin gốc đang hiển thị', () => {
-        const scrollIntoView = vi.fn();
-        const container = renderList([
-            message(10, { content: 'Gói Team 299k/tháng' }),
-            message(11, { content_attributes: { in_reply_to: 10 } }),
-        ]);
-        (container.querySelector('#message10') as HTMLElement).scrollIntoView = scrollIntoView;
+    it('bấm khối trích dẫn thì nhảy tới tin gốc đang hiển thị', () => {
+        const onJumpToMessage = vi.fn();
+        const container = renderList(
+            [message(10, { content: 'Gói Team 299k/tháng' }), message(11, { content_attributes: { in_reply_to: 10 } })],
+            undefined,
+            onJumpToMessage,
+        );
 
         fireEvent.click(quoteBlock(container, 11) as HTMLButtonElement);
 
-        expect(scrollIntoView).toHaveBeenCalledTimes(1);
+        expect(onJumpToMessage).toHaveBeenCalledExactlyOnceWith(10);
+    });
+
+    it('tin gốc chưa có trong khung chat thì bấm khối vẫn nhảy tới đúng tin', () => {
+        const onJumpToMessage = vi.fn();
+        const container = renderList(
+            [message(12, { content_attributes: { in_reply_to: 3 } })],
+            new Map([[3, message(3, { content: 'Tin rất cũ', sender: CONTACT })]]),
+            onJumpToMessage,
+        );
+
+        fireEvent.click(quoteBlock(container, 12) as HTMLButtonElement);
+
+        expect(onJumpToMessage).toHaveBeenCalledExactlyOnceWith(3);
     });
 });

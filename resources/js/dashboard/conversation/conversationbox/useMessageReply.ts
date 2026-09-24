@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { readInReplyToId } from 'dashboard/components-next/message/helpers/replyQuote';
 
-import { fetchMessages } from '../api';
+import { fetchSingleMessage, messagesRangeOf } from '../messageFocus';
 import { getReplyTarget, removeReplyTarget, setReplyTarget } from '../replyToStore';
 import type { ConversationMessage } from '../types';
 
@@ -44,16 +44,6 @@ interface PendingLookups {
 }
 
 const EMPTY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
-
-async function fetchSingleMessage(
-    accountId: number,
-    conversationId: number,
-    messageId: number,
-): Promise<ConversationMessage | null> {
-    const response = await fetchMessages(accountId, conversationId, messageId + 1, messageId);
-
-    return response.payload.find(message => message.id === messageId) ?? null;
-}
 
 export function useMessageReply({
     accountId,
@@ -103,7 +93,7 @@ export function useMessageReply({
             if (targets.has(messageId) || pending.loading.has(messageId) || pending.failed.has(messageId)) return;
 
             pending.loading.add(messageId);
-            fetchSingleMessage(accountId, conversationId, messageId).then(
+            fetchSingleMessage(messagesRangeOf(accountId, conversationId), messageId).then(
                 found => {
                     pending.loading.delete(messageId);
                     if (conversationIdRef.current !== conversationId) return;

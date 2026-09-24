@@ -56,8 +56,15 @@ export default function BaseBubble({
     onClick,
     children,
 }: BaseBubbleProps) {
-    const { variant, orientation, replyQuote, shouldGroupWithNext, contentAttributes, onToggleReaction } =
-        useMessageContext();
+    const {
+        variant,
+        orientation,
+        replyQuote,
+        shouldGroupWithNext,
+        contentAttributes,
+        onToggleReaction,
+        onJumpToMessage,
+    } = useMessageContext();
 
     // MỞ RỘNG NGOÀI GỐC (Chatwoot v4.17.1 không có UI biểu cảm — `grep -rn
     // "reactions" refs/chatwoot/app/javascript/` = 0). Zalo là kênh chính của
@@ -100,10 +107,10 @@ export default function BaseBubble({
         return t('CONVERSATION.REPLY_QUOTE.ORIGINAL');
     })();
 
-    const scrollToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
+    const jumpToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
         if (replyQuote?.targetId == null) return;
-        document.getElementById(`message${replyQuote.targetId}`)?.scrollIntoView({ behavior: 'smooth' });
+        onJumpToMessage?.(replyQuote.targetId);
     };
 
     return (
@@ -120,7 +127,7 @@ export default function BaseBubble({
                     className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
                     title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
                     disabled={replyQuote.targetId === null}
-                    onClick={scrollToRepliedMessage}
+                    onClick={jumpToRepliedMessage}
                 >
                     {replyQuote.senderName ? (
                         <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>

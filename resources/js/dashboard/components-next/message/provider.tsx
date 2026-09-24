@@ -44,6 +44,9 @@ export interface MessageContextValue {
     onReplyTo?: () => void;
     // Mở hộp chuyển tiếp tin này sang hội thoại khác.
     onForward?: () => void;
+    // Đưa khung chat tới một tin khác của hội thoại (bấm khối trích dẫn), kể cả
+    // khi tin đó chưa được tải.
+    onJumpToMessage?: (messageId: number) => void;
 }
 
 const MessageControl = createContext<MessageContextValue | null>(null);
