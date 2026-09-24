@@ -2,6 +2,8 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import Message from './Message';
+import { SenderIdentityContext } from './SenderIdentityContext';
+import type { ConversationSenderIdentity } from './SenderIdentityContext';
 import MessagePreview from 'dashboard/components-next/Conversation/ConversationCard/MessagePreview';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 
@@ -68,6 +70,45 @@ describe('tin chủ shop gửi từ điện thoại', () => {
         const container = renderMessage(failed);
 
         expect(container.querySelector('.right-bubble')?.className).toContain('bg-n-ruby-4');
+    });
+});
+
+describe('tin từ điện thoại mang danh tính tài khoản kênh', () => {
+    const ZALO = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+    const identity = (avatarUrl: string): ConversationSenderIdentity => ({
+        channelAccount: { name: 'Zalo cá nhân', avatarUrl, platform: ZALO },
+        installation: { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' },
+    });
+    const renderWithIdentity = (avatarUrl: string) =>
+        render(
+            <SenderIdentityContext.Provider value={identity(avatarUrl)}>
+                <Message message={outgoingEcho()} channelType="Channel::Zalo" />
+            </SenderIdentityContext.Provider>,
+        ).container;
+    const badge = (container: HTMLElement) => container.querySelector('[data-testid="avatar-platform-badge"]');
+    const avatarCell = (container: HTMLElement) => container.querySelector('.\\[grid-area\\:avatar\\]');
+
+    it('hộp thư có ảnh thì avatar là ảnh tài khoản kênh, kèm badge nền tảng', () => {
+        const container = renderWithIdentity('/zalo-account.jpg');
+
+        expect(container.querySelector('img')?.getAttribute('src')).toBe('/zalo-account.jpg');
+        expect(badge(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
+        expect(container.textContent).not.toContain('ƯD');
+        expect(container.textContent).not.toContain('NA');
+    });
+
+    it('hộp thư chưa có ảnh thì hiện chữ tắt tên hộp thư, vẫn có badge nền tảng', () => {
+        const container = renderWithIdentity('');
+
+        expect(avatarCell(container)?.querySelector('span[role="img"] img')).toBeNull();
+        expect(avatarCell(container)?.querySelector('span[role="img"]')?.textContent).toBe('ZC');
+        expect(badge(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
+    });
+
+    it('vẫn giữ nhãn "từ điện thoại"', () => {
+        const container = renderWithIdentity('/zalo-account.jpg');
+
+        expect(container.querySelector('[data-testid="external-echo-label"]')?.textContent).toBe('from phone');
     });
 });
 

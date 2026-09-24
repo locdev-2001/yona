@@ -9,6 +9,7 @@ import DashboardAppFrame from 'dashboard/components/widgets/DashboardApp/Frame';
 import ConversationHeader from './ConversationHeader';
 import EmptyState from './EmptyState';
 import MessagesView from './MessagesView';
+import SenderIdentityProvider from './SenderIdentityProvider';
 import SidepanelSwitch from './SidepanelSwitch';
 
 // Port từ widgets/conversation/ConversationBox.vue. Khi account có dashboard app,
@@ -55,7 +56,13 @@ export default function ConversationBox({
                 <Tabs items={tabItems} index={activeIndex} isCompact className="h-10" onChange={setActiveIndex} />
             ) : null}
             <div className="flex h-full min-h-0 m-0" style={{ display: activeIndex ? 'none' : undefined }}>
-                {currentChat ? <MessagesView /> : isInboxView ? null : <EmptyState />}
+                {currentChat ? (
+                    <SenderIdentityProvider>
+                        <MessagesView />
+                    </SenderIdentityProvider>
+                ) : isInboxView ? null : (
+                    <EmptyState />
+                )}
                 {/* slot của ConversationBox.vue: ConversationView đặt SidepanelSwitch khi có currentChat */}
                 {currentChat && isWideLayout ? <SidepanelSwitch /> : null}
             </div>
