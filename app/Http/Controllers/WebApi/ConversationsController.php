@@ -54,13 +54,15 @@ class ConversationsController extends Controller
 
     private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
 
+    // `page` (OFFSET) giữ cho client cũ; `cursor` lấy từ meta.next_cursor của trang
+    // trước. Trang theo cursor không kèm số đếm tab — số đếm ở /conversations/meta.
     public function index(Request $request, Account $account): JsonResponse
     {
         $result = $this->finder($request, $account)->perform();
 
         return response()->json([
             'data' => [
-                'meta' => $result['count'],
+                'meta' => [...($result['count'] ?? []), 'next_cursor' => $result['next_cursor']],
                 'payload' => ConversationResource::collectionFor($result['conversations']),
             ],
         ]);

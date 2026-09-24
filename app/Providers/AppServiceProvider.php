@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Database\PostgresConnection;
+use App\Finders\ConversationFinder;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
@@ -76,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerObservabilityGates();
         $this->registerRateLimiters();
+        $this->refreshConversationTabCountsOnChange();
 
         // Polymorphic type lưu đúng tên lớp Ruby của Chatwoot ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
@@ -102,6 +104,14 @@ class AppServiceProvider extends ServiceProvider
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,
         ]);
+    }
+
+    private function refreshConversationTabCountsOnChange(): void
+    {
+        $forget = fn (Conversation $conversation) => ConversationFinder::forgetTabCounts($conversation->account_id);
+
+        Conversation::saved($forget);
+        Conversation::deleted($forget);
     }
 
     private function registerRateLimiters(): void
