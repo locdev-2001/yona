@@ -7,6 +7,7 @@ import NextButton from 'dashboard/components-next/button/Button';
 import Modal from 'dashboard/components/Modal';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import { useSwipeToDismiss } from 'dashboard/composables/useSwipeToDismiss';
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
@@ -63,6 +64,7 @@ export default function GalleryView({
         onMouseLeave,
         resetZoomAndRotation,
     } = useImageZoom(imageRef);
+    const swipeToDismiss = useSwipeToDismiss(onClose);
 
     const activeFileType = activeAttachment.file_type;
     const isImage = activeFileType === ALLOWED_FILE_TYPES.IMAGE;
@@ -84,7 +86,9 @@ export default function GalleryView({
         };
     }, [activeAttachment, attachment, currentUserId]);
 
-    const fileNameFromDataUrl = useMemo(() => {
+    // Tệp không mang tên riêng thì lấy tên từ đường dẫn; tên rỗng là cố ý ẩn (vd. ảnh đại diện).
+    const displayFileName = useMemo(() => {
+        if (activeAttachment.filename != null) return activeAttachment.filename;
         const dataUrl = activeAttachment.data_url;
         if (!dataUrl) return '';
         const fileName = dataUrl.split('/').pop();
@@ -128,10 +132,10 @@ export default function GalleryView({
                 onClick={onClose}
             >
                 <header
-                    className="z-10 flex items-center justify-between w-full h-16 px-6 py-2 bg-n-background border-b border-n-weak"
+                    className="z-10 flex items-center justify-between w-full h-16 px-3 sm:px-6 py-2 bg-n-background border-b border-n-weak"
                     onClick={(event) => event.stopPropagation()}
                 >
-                    <div className="flex items-center min-w-[15rem] shrink-0">
+                    <div className="flex items-center min-w-0 flex-1 sm:flex-none sm:min-w-[15rem] sm:shrink-0">
                         {senderDetails.avatar ? (
                             <Avatar
                                 name={senderDetails.name}
@@ -143,7 +147,7 @@ export default function GalleryView({
                         ) : null}
                         <div className="flex flex-col ms-2 overflow-hidden">
                             <h3 className="text-base leading-5 m-0 font-medium">
-                                <span className="overflow-hidden text-n-slate-12 whitespace-nowrap text-ellipsis">
+                                <span className="block overflow-hidden text-n-slate-12 whitespace-nowrap text-ellipsis">
                                     {senderDetails.name}
                                 </span>
                             </h3>
@@ -153,8 +157,8 @@ export default function GalleryView({
                         </div>
                     </div>
 
-                    <div className="flex-1 mx-2 px-2 truncate text-sm font-medium text-center text-n-slate-12">
-                        <span className="truncate">{fileNameFromDataUrl}</span>
+                    <div className="hidden sm:block flex-1 mx-2 px-2 truncate text-sm font-medium text-center text-n-slate-12">
+                        <span className="truncate">{displayFileName}</span>
                     </div>
 
                     <div className="flex items-center gap-2 ms-2 shrink-0">
@@ -162,18 +166,20 @@ export default function GalleryView({
                             <>
                                 <NextButton icon="i-lucide-zoom-in" slate ghost onClick={() => onZoom(0.1)} />
                                 <NextButton icon="i-lucide-zoom-out" slate ghost onClick={() => onZoom(-0.1)} />
-                                <NextButton
-                                    icon="i-lucide-rotate-ccw"
-                                    slate
-                                    ghost
-                                    onClick={() => onRotate('counter-clockwise')}
-                                />
-                                <NextButton
-                                    icon="i-lucide-rotate-cw"
-                                    slate
-                                    ghost
-                                    onClick={() => onRotate('clockwise')}
-                                />
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <NextButton
+                                        icon="i-lucide-rotate-ccw"
+                                        slate
+                                        ghost
+                                        onClick={() => onRotate('counter-clockwise')}
+                                    />
+                                    <NextButton
+                                        icon="i-lucide-rotate-cw"
+                                        slate
+                                        ghost
+                                        onClick={() => onRotate('clockwise')}
+                                    />
+                                </div>
                             </>
                         ) : null}
                         <NextButton
@@ -188,9 +194,13 @@ export default function GalleryView({
                     </div>
                 </header>
 
-                <main className="flex items-stretch flex-1 h-full overflow-hidden">
-                    <div className="flex items-center justify-center w-16 shrink-0">
-                        {hasMoreThanOneAttachment ? (
+                <main
+                    className="flex items-stretch flex-1 h-full overflow-hidden"
+                    style={swipeToDismiss.style}
+                    {...swipeToDismiss.handlers}
+                >
+                    {hasMoreThanOneAttachment ? (
+                        <div className="flex items-center justify-center w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right"
                                 className="z-10"
@@ -203,8 +213,8 @@ export default function GalleryView({
                                     changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1);
                                 }}
                             />
-                        ) : null}
-                    </div>
+                        </div>
+                    ) : null}
 
                     <div className="flex-1 flex items-center justify-center overflow-hidden">
                         {isImage ? (
@@ -262,8 +272,8 @@ export default function GalleryView({
                         ) : null}
                     </div>
 
-                    <div className="flex items-center justify-center w-16 shrink-0">
-                        {hasMoreThanOneAttachment ? (
+                    {hasMoreThanOneAttachment ? (
+                        <div className="flex items-center justify-center w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left"
                                 className="z-10"
@@ -276,15 +286,17 @@ export default function GalleryView({
                                     changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1);
                                 }}
                             />
-                        ) : null}
-                    </div>
+                        </div>
+                    ) : null}
                 </main>
 
-                <footer className="z-10 flex items-center justify-center h-12 border-t border-n-weak">
-                    <div className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium">
-                        {`${activeIndex + 1} / ${allAttachments.length}`}
-                    </div>
-                </footer>
+                {hasMoreThanOneAttachment ? (
+                    <footer className="z-10 flex items-center justify-center h-12 border-t border-n-weak">
+                        <div className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium">
+                            {`${activeIndex + 1} / ${allAttachments.length}`}
+                        </div>
+                    </footer>
+                ) : null}
             </div>
         </Modal>
     );
