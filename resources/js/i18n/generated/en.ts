@@ -1506,7 +1506,7 @@ const messages: Record<string, unknown> = {
             "SNOOZE_NOTIFICATION": "Snooze Notification"
         },
         "COMMANDS": {
-            "GO_TO_MY_INBOX": "Go to My Inbox",
+            "GO_TO_MY_INBOX": "Go to notifications",
             "GO_TO_CONVERSATION_DASHBOARD": "Go to Conversation Dashboard",
             "GO_TO_CONTACTS_DASHBOARD": "Go to Contacts Dashboard",
             "GO_TO_CAPTAIN": "Go to Captain",
@@ -4724,7 +4724,7 @@ const messages: Record<string, unknown> = {
     },
     "INBOX": {
         "LIST": {
-            "TITLE": "My Inbox",
+            "TITLE": "Notifications",
             "DISPLAY_DROPDOWN": "Display",
             "LOADING": "Fetching notifications",
             "404": "There are no active notifications in this group.",
@@ -4795,6 +4795,12 @@ const messages: Record<string, unknown> = {
             "MARK_ALL_READ": "All notifications marked as read",
             "DELETE_ALL": "All notifications deleted",
             "DELETE_ALL_READ": "All read notifications deleted"
+        },
+        "BELL": {
+            "OPEN_LABEL": "Notifications, {count} unread",
+            "EMPTY": "No notifications yet",
+            "VIEW_ALL": "View all notifications",
+            "LAUNCHER_UNREAD": "You have unread notifications"
         }
     },
     "INBOX_MGMT": {

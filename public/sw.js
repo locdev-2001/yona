@@ -1,7 +1,9 @@
 /* globals clients */
-// Port từ refs/chatwoot/public/sw.js — service worker chỉ lo thông báo đẩy, không
-// chặn request nào (không có handler fetch). Payload do PushNotificationService
-// gửi: { title, body, tag, url, icon }.
+// Service worker chỉ lo thông báo đẩy, không chặn request nào (không có handler
+// fetch). Payload do PushNotificationService gửi:
+// { title, body, tag, url, icon, badge_count, data }. `tag` gom thông báo theo hội
+// thoại; `data` chuyển nguyên vào thông báo để tab Yona tìm và đóng đúng cái khi
+// hội thoại đã được đọc; SW không cần biết nghĩa từng trường.
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -13,14 +15,22 @@ self.addEventListener('push', event => {
     const notification = event.data ? event.data.json() : null;
     if (!notification) return;
 
-    event.waitUntil(
+    const tasks = [
         self.registration.showNotification(notification.title, {
             body: notification.body,
             tag: notification.tag,
+            // Cùng hội thoại vẫn kêu lại. Không có tag mà renotify=true thì Chrome ném TypeError.
+            renotify: Boolean(notification.tag),
             icon: notification.icon,
-            data: { url: notification.url },
+            data: { ...(notification.data || {}), url: notification.url },
         }),
-    );
+    ];
+
+    if (typeof notification.badge_count === 'number' && self.navigator && 'setAppBadge' in self.navigator) {
+        tasks.push(self.navigator.setAppBadge(notification.badge_count).catch(() => undefined));
+    }
+
+    event.waitUntil(Promise.all(tasks));
 });
 
 async function focusConversation(url) {

@@ -4,7 +4,7 @@ import { deleteJson, postJson } from './apiClient';
 // Port từ dashboard/helper/pushHelper.js: service worker + PushManager của trình
 // duyệt, đăng ký lưu ở /api/v1/notification_subscriptions.
 
-const SERVICE_WORKER_URL = '/sw.js';
+export const SERVICE_WORKER_URL = '/sw.js';
 const SUBSCRIPTIONS_URL = '/api/v1/notification_subscriptions';
 
 // window.chatwootConfig.vapidPublicKey — máy chủ (HandleInertiaRequests) chỉ gửi

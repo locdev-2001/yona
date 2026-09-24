@@ -25,7 +25,7 @@ return [
         'SNOOZE_NOTIFICATION' => 'Tạm ẩn thông báo',
     ],
     'COMMANDS' => [
-        'GO_TO_MY_INBOX' => 'Mở hộp thư của tôi',
+        'GO_TO_MY_INBOX' => 'Mở trang thông báo',
         'GO_TO_CONVERSATION_DASHBOARD' => 'Đi tới Trang tổng quan hội thoại',
         'GO_TO_CONTACTS_DASHBOARD' => 'Đi tới Trang tổng quan liên hệ',
         'GO_TO_CAPTAIN' => 'Mở Captain',

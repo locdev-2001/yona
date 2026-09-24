@@ -31,6 +31,13 @@ describe('buildMenuItems badgeCount', () => {
     const teams = [{ id: 7, name: 'Sales' }];
     const labels = [{ id: 5, title: 'billing', color: '#ff0000' }];
 
+    it('không còn mục trung tâm thông báo, mục đầu là Hội thoại', () => {
+        const items = buildMenuItems(2, inboxes, teams, labels, EMPTY_UNREAD_COUNTS);
+
+        expect(items.some(item => item.name === 'Inbox' || item.to?.endsWith('/inbox-view'))).toBe(false);
+        expect(items[0].name).toBe('Conversation');
+    });
+
     it('cờ tắt (bộ đếm rỗng) thì mọi badge = 0 như oracle', () => {
         const items = buildMenuItems(2, inboxes, teams, labels, EMPTY_UNREAD_COUNTS);
 

@@ -18,9 +18,11 @@ import {
 } from './api';
 import { INBOX_FILTER_TYPE, INBOX_SORT_BY, mergeNotifications, sortNotifications } from './helpers';
 import type { NotificationFilters, NotificationRealtimePayload, NotificationRecord, NotificationsMeta } from './types';
+import { scheduleUnreadCountRefresh } from './useUnreadCount';
 
-// Thay store/modules/notifications (Vuex) của Chatwoot: danh sách + meta + cờ UI
-// + hành động, cộng ba handler realtime. Trang inbox-view là nơi duy nhất dùng.
+// Danh sách + meta + cờ UI + hành động, cộng ba handler realtime. Trang
+// inbox-view và panel chuông cùng dùng. Số chưa đọc KHÔNG giữ ở đây: sau mỗi hành
+// động chỉ hẹn store useUnreadCount hỏi lại máy chủ (dự phòng khi realtime rớt).
 
 const RESULTS_PER_PAGE = 15;
 
@@ -58,20 +60,32 @@ export function useNotifications(): NotificationsContextValue {
     return context;
 }
 
-const EMPTY_META: NotificationsMeta = { count: 0, currentPage: 1, unreadCount: 0 };
+const EMPTY_META: NotificationsMeta = { count: 0, currentPage: 1 };
 
-export function NotificationsProvider({ children }: { children: ReactNode }) {
+export type FixedNotificationFilters = Omit<NotificationFilters, 'page'>;
+
+interface NotificationsProviderProps {
+    children: ReactNode;
+    // Bộ lọc cố định (panel chuông): không đọc, không ghi bộ lọc người dùng chọn ở trang đầy đủ.
+    fixedFilters?: FixedNotificationFilters;
+}
+
+export function NotificationsProvider({ children, fixedFilters }: NotificationsProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
 
     const [uiSettings, setUiSettings] = useState<UISettings>(auth.user?.ui_settings ?? {});
-    const savedFilter = (uiSettings.inbox_filter_by ?? {}) as { status?: string; type?: string; sort_by?: string };
+    const hasFixedFilters = Boolean(fixedFilters);
 
-    const [filters, setFilters] = useState<NotificationFilters>({
-        page: 1,
-        status: savedFilter.status ?? '',
-        type: savedFilter.type ?? '',
-        sortOrder: (savedFilter.sort_by as 'desc' | 'asc') || INBOX_SORT_BY.NEWEST,
+    const [filters, setFilters] = useState<NotificationFilters>(() => {
+        if (fixedFilters) return { page: 1, ...fixedFilters };
+        const savedFilter = (uiSettings.inbox_filter_by ?? {}) as { status?: string; type?: string; sort_by?: string };
+        return {
+            page: 1,
+            status: savedFilter.status ?? '',
+            type: savedFilter.type ?? '',
+            sortOrder: (savedFilter.sort_by as 'desc' | 'asc') || INBOX_SORT_BY.NEWEST,
+        };
     });
     const [records, setRecords] = useState<NotificationRecord[]>([]);
     const [meta, setMeta] = useState<NotificationsMeta>(EMPTY_META);
@@ -128,6 +142,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     const applyFilter = useCallback(
         (option: DisplayOption) => {
+            if (hasFixedFilters) return;
             setFilters(current => {
                 const next = { ...current, page: 1 };
                 if (option.type === INBOX_FILTER_TYPE.STATUS) next.status = option.selected ? option.key : '';
@@ -137,7 +152,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
                 return next;
             });
         },
-        [persistFilters],
+        [hasFixedFilters, persistFilters],
     );
 
     const patchRecord = useCallback((notificationId: number, patch: Partial<NotificationRecord>) => {
@@ -150,7 +165,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         async (notification: NotificationRecord) => {
             await markNotificationsRead(accountId, notification.primary_actor_type, notification.primary_actor_id);
             patchRecord(notification.id, { read_at: new Date().toISOString() });
-            setMeta(current => ({ ...current, unreadCount: Math.max(0, current.unreadCount - 1) }));
+            scheduleUnreadCountRefresh();
         },
         [accountId, patchRecord],
     );
@@ -175,7 +190,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         async (notification: NotificationRecord) => {
             await markNotificationUnread(accountId, notification.id);
             patchRecord(notification.id, { read_at: null });
-            setMeta(current => ({ ...current, unreadCount: current.unreadCount + 1 }));
+            scheduleUnreadCountRefresh();
             useAlert(t('INBOX.ALERTS.MARK_AS_UNREAD'));
         },
         [accountId, patchRecord],
@@ -185,11 +200,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         async (notification: NotificationRecord) => {
             await deleteNotificationRequest(accountId, notification.id);
             setRecords(current => current.filter(record => record.id !== notification.id));
-            setMeta(current => ({
-                ...current,
-                count: Math.max(0, current.count - 1),
-                unreadCount: notification.read_at ? current.unreadCount : Math.max(0, current.unreadCount - 1),
-            }));
+            setMeta(current => ({ ...current, count: Math.max(0, current.count - 1) }));
+            scheduleUnreadCountRefresh();
             useAlert(t('INBOX.ALERTS.DELETE'));
         },
         [accountId],
@@ -199,20 +211,22 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         await markNotificationsRead(accountId);
         const readAt = new Date().toISOString();
         setRecords(current => current.map(record => ({ ...record, read_at: record.read_at ?? readAt })));
-        setMeta(current => ({ ...current, unreadCount: 0 }));
+        scheduleUnreadCountRefresh();
         useAlert(t('INBOX.ALERTS.MARK_ALL_READ'));
     }, [accountId]);
 
     const deleteAll = useCallback(async () => {
         await deleteNotificationsRequest(accountId, 'all');
         setRecords([]);
-        setMeta(current => ({ ...current, count: 0, unreadCount: 0 }));
+        setMeta(current => ({ ...current, count: 0 }));
+        scheduleUnreadCountRefresh();
         useAlert(t('INBOX.ALERTS.DELETE_ALL'));
     }, [accountId]);
 
     const deleteAllRead = useCallback(async () => {
         await deleteNotificationsRequest(accountId, 'read');
         setRecords(current => current.filter(record => !record.read_at));
+        scheduleUnreadCountRefresh();
         useAlert(t('INBOX.ALERTS.DELETE_ALL_READ'));
     }, [accountId]);
 
@@ -220,17 +234,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         async (notificationId: number, snoozedUntil: number | null) => {
             const updated = await snoozeNotificationRequest(accountId, notificationId, snoozedUntil);
             patchRecord(notificationId, { snoozed_until: updated.snoozed_until });
+            scheduleUnreadCountRefresh();
             useAlert(t('INBOX.ALERTS.SNOOZE'));
         },
         [accountId, patchRecord],
     );
 
     const applyRealtimeCounts = useCallback((payload: NotificationRealtimePayload) => {
-        setMeta(current => ({
-            ...current,
-            unreadCount: Math.max(0, Number(payload?.unread_count ?? current.unreadCount)),
-            count: Math.max(0, Number(payload?.count ?? current.count)),
-        }));
+        setMeta(current => ({ ...current, count: Math.max(0, Number(payload?.count ?? current.count)) }));
     }, []);
 
     const upsertFromRealtime = useCallback(

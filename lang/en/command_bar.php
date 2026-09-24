@@ -23,7 +23,7 @@ return [
         'SNOOZE_NOTIFICATION' => 'Snooze Notification',
     ],
     'COMMANDS' => [
-        'GO_TO_MY_INBOX' => 'Go to My Inbox',
+        'GO_TO_MY_INBOX' => 'Go to notifications',
         'GO_TO_CONVERSATION_DASHBOARD' => 'Go to Conversation Dashboard',
         'GO_TO_CONTACTS_DASHBOARD' => 'Go to Contacts Dashboard',
         'GO_TO_CAPTAIN' => 'Go to Captain',

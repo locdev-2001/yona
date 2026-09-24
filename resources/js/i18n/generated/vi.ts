@@ -1506,7 +1506,7 @@ const messages: Record<string, unknown> = {
             "SNOOZE_NOTIFICATION": "Tạm ẩn thông báo"
         },
         "COMMANDS": {
-            "GO_TO_MY_INBOX": "Mở hộp thư của tôi",
+            "GO_TO_MY_INBOX": "Mở trang thông báo",
             "GO_TO_CONVERSATION_DASHBOARD": "Đi tới Trang tổng quan hội thoại",
             "GO_TO_CONTACTS_DASHBOARD": "Đi tới Trang tổng quan liên hệ",
             "GO_TO_CAPTAIN": "Mở Captain",
@@ -4724,7 +4724,7 @@ const messages: Record<string, unknown> = {
     },
     "INBOX": {
         "LIST": {
-            "TITLE": "Hộp thư của tôi",
+            "TITLE": "Thông báo",
             "DISPLAY_DROPDOWN": "Hiển thị",
             "LOADING": "Tải thông báo",
             "404": "Không có thông báo nào đang hoạt động trong nhóm này.",
@@ -4795,6 +4795,12 @@ const messages: Record<string, unknown> = {
             "MARK_ALL_READ": "Đã đánh dấu tất cả thông báo là đã đọc",
             "DELETE_ALL": "Đã xóa tất cả thông báo",
             "DELETE_ALL_READ": "Đã xóa mọi thông báo đã đọc"
+        },
+        "BELL": {
+            "OPEN_LABEL": "Thông báo, {count} chưa đọc",
+            "EMPTY": "Chưa có thông báo nào",
+            "VIEW_ALL": "Xem tất cả thông báo",
+            "LAUNCHER_UNREAD": "Có thông báo chưa đọc"
         }
     },
     "INBOX_MGMT": {

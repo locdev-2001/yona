@@ -1,6 +1,8 @@
 import { usePage } from '@inertiajs/react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
+import { t } from '../../../i18n';
 
 // Port từ sidebar/MobileSidebarLauncher.vue
 interface MobileSidebarLauncherProps {
@@ -14,6 +16,8 @@ export default function MobileSidebarLauncher({ isMobileSidebarOpen, onToggle }:
     // soạn tin, và đường về thanh điều hướng là nút quay lại danh sách. Màn danh
     // sách của cùng route đó vẫn cần nút để mở thanh điều hướng.
     const { conversationId } = usePage().props as { conversationId?: number | null };
+    // Chuông nằm trong ngăn kéo; chấm đỏ báo có thông báo mà không phải mở ngăn kéo.
+    const hasUnreadNotifications = useNotificationsUnreadCount() > 0;
 
     if (conversationId) return null;
 
@@ -21,10 +25,17 @@ export default function MobileSidebarLauncher({ isMobileSidebarOpen, onToggle }:
         <button
             id="mobile-sidebar-launcher"
             type="button"
+            aria-label={hasUnreadNotifications ? t('INBOX.BELL.LAUNCHER_UNREAD') : undefined}
             className="fixed bottom-4 ltr:left-4 rtl:right-4 z-50 flex md:hidden items-center justify-center size-10 rounded-full bg-n-solid-2 border border-n-weak shadow-lg text-n-slate-11"
             onClick={onToggle}
         >
             <Icon icon={isMobileSidebarOpen ? 'i-lucide-x' : 'i-lucide-menu'} className="size-5" />
+            {hasUnreadNotifications ? (
+                <span
+                    data-test-id="mobile-launcher-unread-dot"
+                    className="absolute top-1.5 ltr:right-1.5 rtl:left-1.5 size-2.5 rounded-full bg-n-ruby-9 border border-n-solid-2"
+                />
+            ) : null}
         </button>
     );
 }

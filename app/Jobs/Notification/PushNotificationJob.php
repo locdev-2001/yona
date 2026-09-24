@@ -19,7 +19,8 @@ class PushNotificationJob extends ApplicationJob
     {
         $notification = Notification::query()->find($this->notificationId);
 
-        if ($notification === null) {
+        // Đã đọc trước khi job chạy (đang mở đúng hội thoại) thì không hiện gì trên máy nữa.
+        if ($notification === null || $notification->read_at !== null) {
             return;
         }
 

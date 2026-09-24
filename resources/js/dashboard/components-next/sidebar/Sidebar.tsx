@@ -14,7 +14,7 @@ import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
-import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
+import NotificationBell from 'dashboard/notifications/components/NotificationBell';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
@@ -38,8 +38,6 @@ export default function Sidebar({
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
     const unreadCounts = useConversationUnreadCounts();
-    // Sidebar.vue dispatch `notifications/unReadCount` khi mount — huy hiệu "My Inbox".
-    const notificationsUnreadCount = useNotificationsUnreadCount();
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -128,7 +126,6 @@ export default function Sidebar({
                     teams,
                     labelsOnSidebar(accountLabels),
                     unreadCounts,
-                    notificationsUnreadCount,
                     conversationCustomViews,
                     contactCustomViews,
                 ),
@@ -141,7 +138,6 @@ export default function Sidebar({
             teams,
             accountLabels,
             unreadCounts,
-            notificationsUnreadCount,
             conversationCustomViews,
             contactCustomViews,
             role,
@@ -156,7 +152,8 @@ export default function Sidebar({
         const onClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
             if (asideRef.current?.contains(target)) return;
-            if (target.closest('#mobile-sidebar-launcher, [data-popover-content]')) return;
+            // Nền mờ của popover (panel chuông trên điện thoại) chỉ đóng popover, giữ ngăn kéo.
+            if (target.closest('#mobile-sidebar-launcher, [data-popover-content], [data-popover-backdrop]')) return;
             onCloseMobileSidebar();
         };
         document.addEventListener('mousedown', onClickOutside);
@@ -210,10 +207,10 @@ export default function Sidebar({
                         {!isEffectivelyCollapsed ? (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
-                                className="flex gap-2 items-center px-2 py-1 w-full h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
+                                className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
                             >
                                 <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
-                                <span className="flex-grow text-start text-n-slate-10">
+                                <span className="flex-grow min-w-0 truncate text-start text-n-slate-10">
                                     {t('COMBOBOX.SEARCH_PLACEHOLDER')}
                                 </span>
                             </Link>
@@ -226,6 +223,7 @@ export default function Sidebar({
                                 <span className="i-lucide-search size-4 text-n-slate-11" />
                             </Link>
                         )}
+                        <NotificationBell isCollapsed={isEffectivelyCollapsed} onNavigate={onCloseMobileSidebar} />
                         <Button
                             icon="i-lucide-pen-line"
                             color="slate"

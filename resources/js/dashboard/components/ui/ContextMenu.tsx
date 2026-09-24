@@ -59,9 +59,12 @@ export default function ContextMenu({ x, y, onClose, children }: ContextMenuProp
         onClose();
     };
 
+    // data-popover-content: menu là một lớp nổi lồng, bấm trong menu không phải
+    // "bấm ra ngoài" với Popover hay ngăn kéo sidebar đang mở bên dưới.
     return createPortal(
         <div
             ref={menuRef}
+            data-popover-content=""
             className="fixed outline-none z-[9999] cursor-pointer"
             style={{ left: `${position.left}px`, top: `${position.top}px` }}
             tabIndex={0}

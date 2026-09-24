@@ -39,8 +39,8 @@ export interface SidebarLabel {
 // composables/useCustomViews (E1); nhóm "Tagged With" vẫn rỗng (route liên hệ
 // theo nhãn chưa port).
 // badgeCount lấy từ store conversationUnreadCounts (B8) — rỗng khi account chưa
-// bật cờ `conversation_unread_counts`, đúng như oracle. Huy hiệu mục Inbox là số
-// thông báo chưa đọc (D5), không gắn cờ nào.
+// bật cờ `conversation_unread_counts`, đúng như oracle. Trung tâm thông báo không
+// còn là mục menu: mở từ chuông ở hàng đầu sidebar (NotificationBell).
 // Custom view rút gọn cho hai nhóm Folders/Segments.
 export interface SidebarCustomView {
     id: number;
@@ -53,24 +53,12 @@ export function buildMenuItems(
     teams: SidebarTeam[] = [],
     labels: SidebarLabel[] = [],
     unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
-    notificationsUnreadCount = 0,
     conversationCustomViews: SidebarCustomView[] = [],
     contactCustomViews: SidebarCustomView[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
 
     return [
-        {
-            name: 'Inbox',
-            label: t('SIDEBAR.INBOX'),
-            icon: 'i-lucide-inbox',
-            to: scoped('inbox-view'),
-            // activeOn ['inbox_view', 'inbox_view_conversation'] của bản gốc: mở một
-            // thông báo vẫn phải sáng mục này.
-            activeOn: [scoped('inbox-view')],
-            // getterKeys.count = 'notifications/getUnreadCount' của bản gốc.
-            getterKeys: { count: notificationsUnreadCount },
-        },
         {
             name: 'Conversation',
             label: t('SIDEBAR.CONVERSATIONS'),
