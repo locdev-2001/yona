@@ -474,6 +474,7 @@ describe('q', function () {
         expect($ids('xoaizz'))->toBe(collect([$byName->id, $byEmail->id, $byContent->id])->sort()->values()->all())
             ->and($ids('901234567'))->toBe([$byPhone->id])
             ->and($ids((string) $byPhone->display_id))->toContain($byPhone->id)
+            ->and($ids('#'.$byPhone->display_id))->toContain($byPhone->id)
             ->and($ids('giao chieu'))->toBe([$byContent->id]);
     });
 

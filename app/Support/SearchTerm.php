@@ -52,6 +52,12 @@ final class SearchTerm
         return $this->raw;
     }
 
+    // Giao diện hiện mã hội thoại dạng "#123" — người dùng gõ lại y như vậy.
+    public function withoutIdPrefix(): self
+    {
+        return new self(ltrim($this->raw, '#'));
+    }
+
     public function containsPattern(): string
     {
         return self::containsPatternOf($this->raw);

@@ -322,7 +322,7 @@ class SearchService
         $term = $this->searchTerm();
 
         return $matches
-            ->whereRaw(...$term->plainMatch('cast(conversations.display_id as text)'))
+            ->whereRaw(...$term->withoutIdPrefix()->plainMatch('cast(conversations.display_id as text)'))
             ->orWhereRaw(...$term->foldedMatch('contacts.name'))
             ->orWhereRaw(...$term->plainMatch('contacts.email'))
             ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
