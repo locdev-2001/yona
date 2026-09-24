@@ -41,7 +41,7 @@ return [
         ],
         'API' => [
             'SUCCESS_MESSAGE' => 'Đã thêm câu trả lời mẫu.',
-            'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
         ],
     ],
     'EDIT' => [
@@ -63,14 +63,14 @@ return [
         'BUTTON_TEXT' => 'Chỉnh sửa',
         'API' => [
             'SUCCESS_MESSAGE' => 'Đã cập nhật câu trả lời mẫu.',
-            'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
         ],
     ],
     'DELETE' => [
         'BUTTON_TEXT' => 'Xoá',
         'API' => [
             'SUCCESS_MESSAGE' => 'Đã xóa câu trả lời mẫu.',
-            'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
         ],
         'CONFIRM' => [
             'TITLE' => 'Xác nhận xoá',

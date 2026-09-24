@@ -15,7 +15,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Đã cập nhật khảo sát thành công',
-        'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
     ],
     'POWERED_BY' => 'Cung cấp bởi {installationName}',
 ];

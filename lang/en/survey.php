@@ -16,7 +16,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Survey updated successfully',
-        'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
     ],
     'POWERED_BY' => 'Powered by {installationName}',
 ];

@@ -48,14 +48,14 @@ return [
         'API' => [
             'SUCCESS_MESSAGE' => 'Nhân viên được thêm thành công',
             'EXIST_MESSAGE' => 'Email đã được sử dung, vui lòng chọn email khác.',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
     ],
     'DELETE' => [
         'BUTTON_TEXT' => 'Xoá',
         'API' => [
             'SUCCESS_MESSAGE' => 'Nhân viên được xoá thành công',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
         'CONFIRM' => [
             'TITLE' => 'Xác nhận xoá',
@@ -91,13 +91,13 @@ return [
         'CANCEL_BUTTON_TEXT' => 'Huỷ',
         'API' => [
             'SUCCESS_MESSAGE' => 'Nhân viên được cập nhật thành công',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
         'PASSWORD_RESET' => [
             'ADMIN_RESET_BUTTON' => 'Đặt lại mật khẩu',
             'ADMIN_SUCCESS_MESSAGE' => 'Một email với hướng dẫn đặt lại mật khẩu đã được gửi đến nhân viên',
             'SUCCESS_MESSAGE' => 'Đặt lại mật khẩu nhân viên thành công',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
     ],
     'SEARCH_PLACEHOLDER' => 'Tìm kiếm nhân viên...',

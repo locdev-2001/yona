@@ -34,7 +34,7 @@ return [
         'CANCEL_BUTTON_TEXT' => 'Cancel',
         'API' => [
             'SUCCESS_MESSAGE' => 'Hook deleted successfully',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
     ],
     'LIST' => [
@@ -57,7 +57,7 @@ return [
         ],
         'API' => [
             'SUCCESS_MESSAGE' => 'Integration hook added successfully',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
     ],
     'CONNECT' => [

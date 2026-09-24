@@ -13,7 +13,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Login successful',
-        'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
         'UNAUTH' => 'Username or password is incorrect. Please try again.',
     ],
     'OAUTH' => [

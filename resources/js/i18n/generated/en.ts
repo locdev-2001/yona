@@ -161,14 +161,14 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Agent added successfully",
                 "EXIST_MESSAGE": "Agent email already in use, Please try another email address",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             }
         },
         "DELETE": {
             "BUTTON_TEXT": "Delete",
             "API": {
                 "SUCCESS_MESSAGE": "Agent deleted successfully",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             },
             "CONFIRM": {
                 "TITLE": "Confirm Deletion",
@@ -204,13 +204,13 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_TEXT": "Cancel",
             "API": {
                 "SUCCESS_MESSAGE": "Agent updated successfully",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             },
             "PASSWORD_RESET": {
                 "ADMIN_RESET_BUTTON": "Reset Password",
                 "ADMIN_SUCCESS_MESSAGE": "An email with reset password instructions has been sent to the agent",
                 "SUCCESS_MESSAGE": "Agent password reset successfully",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             }
         },
         "SEARCH_PLACEHOLDER": "Search agents...",
@@ -1233,7 +1233,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "SUCCESS_MESSAGE": "Canned response added successfully.",
-                "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again."
             }
         },
         "EDIT": {
@@ -1255,14 +1255,14 @@ const messages: Record<string, unknown> = {
             "BUTTON_TEXT": "Edit",
             "API": {
                 "SUCCESS_MESSAGE": "Canned response is updated successfully.",
-                "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again."
             }
         },
         "DELETE": {
             "BUTTON_TEXT": "Delete",
             "API": {
                 "SUCCESS_MESSAGE": "Canned response deleted successfully.",
-                "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again."
             },
             "CONFIRM": {
                 "TITLE": "Confirm deletion",
@@ -3076,7 +3076,7 @@ const messages: Record<string, unknown> = {
         "API": {
             "SUCCESS_MESSAGE": "Account created successfully",
             "EXIST_MESSAGE": "Account already exists",
-            "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
         },
         "FORM": {
             "NAME": {
@@ -6495,7 +6495,7 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_TEXT": "Cancel",
             "API": {
                 "SUCCESS_MESSAGE": "Hook deleted successfully",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             }
         },
         "LIST": {
@@ -6518,7 +6518,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "SUCCESS_MESSAGE": "Integration hook added successfully",
-                "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
             }
         },
         "CONNECT": {
@@ -6686,7 +6686,7 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Edit webhook",
                 "API": {
                     "SUCCESS_MESSAGE": "Webhook configuration updated successfully",
-                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                    "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
                 }
             },
             "ADD": {
@@ -6694,14 +6694,14 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Add new webhook",
                 "API": {
                     "SUCCESS_MESSAGE": "Webhook configuration added successfully",
-                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                    "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
                 }
             },
             "DELETE": {
                 "BUTTON_TEXT": "Delete",
                 "API": {
                     "SUCCESS_MESSAGE": "Webhook deleted successfully",
-                    "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+                    "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
                 },
                 "CONFIRM": {
                     "TITLE": "Confirm Deletion",
@@ -7714,7 +7714,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Login successful",
-            "ERROR_MESSAGE": "Could not connect to Woot server. Please try again.",
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again.",
             "UNAUTH": "Username or password is incorrect. Please try again."
         },
         "OAUTH": {
@@ -8662,7 +8662,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Registration Successful",
-            "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again."
         },
         "SUBMIT": "Create account",
         "HAVE_AN_ACCOUNT": "Already have an account?",
@@ -8851,7 +8851,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Password reset link has been sent to your email.",
-            "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again."
         },
         "SUBMIT": "Submit"
     },
@@ -9022,7 +9022,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Successfully changed the password.",
-            "ERROR_MESSAGE": "Could not connect to Woot server. Please try again."
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again."
         },
         "CAPTCHA": {
             "ERROR": "Verification expired. Please solve captcha again."
@@ -9238,7 +9238,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Survey updated successfully",
-            "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
+            "ERROR_MESSAGE": "Could not connect to the server. Please try again later."
         },
         "POWERED_BY": "Powered by {installationName}"
     },

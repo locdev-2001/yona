@@ -7,7 +7,7 @@ return [
     'API' => [
         'SUCCESS_MESSAGE' => 'Account created successfully',
         'EXIST_MESSAGE' => 'Account already exists',
-        'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
     ],
     'FORM' => [
         'NAME' => [

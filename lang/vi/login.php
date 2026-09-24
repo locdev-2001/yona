@@ -15,7 +15,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Đăng nhập thành công',
-        'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
         'UNAUTH' => 'Tên đăng nhập hoặc mật khẩu không đúng. Bạn hãy thử lại.',
     ],
     'OAUTH' => [

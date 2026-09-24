@@ -39,7 +39,7 @@ return [
         ],
         'API' => [
             'SUCCESS_MESSAGE' => 'Canned response added successfully.',
-            'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
         ],
     ],
     'EDIT' => [
@@ -61,14 +61,14 @@ return [
         'BUTTON_TEXT' => 'Edit',
         'API' => [
             'SUCCESS_MESSAGE' => 'Canned response is updated successfully.',
-            'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
         ],
     ],
     'DELETE' => [
         'BUTTON_TEXT' => 'Delete',
         'API' => [
             'SUCCESS_MESSAGE' => 'Canned response deleted successfully.',
-            'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
         ],
         'CONFIRM' => [
             'TITLE' => 'Confirm deletion',

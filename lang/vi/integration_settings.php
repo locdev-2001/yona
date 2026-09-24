@@ -103,7 +103,7 @@ return [
             'TITLE' => 'Sửa webhook',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Đã cập nhật cấu hình Webhook thành công',
-                'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+                'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
             ],
         ],
         'ADD' => [
@@ -111,14 +111,14 @@ return [
             'TITLE' => 'Thêm mới webhook',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Đã thêm Webhook thành công',
-                'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+                'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
             ],
         ],
         'DELETE' => [
             'BUTTON_TEXT' => 'Xoá',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Webhook đã được xoá thành công',
-                'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+                'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
             ],
             'CONFIRM' => [
                 'TITLE' => 'Xác Nhận Xoá',

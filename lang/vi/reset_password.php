@@ -13,7 +13,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Liên kết đặt lại mật khẩu đã được gửi đến email của bạn.',
-        'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
     ],
     'SUBMIT' => 'Gửi',
 ];

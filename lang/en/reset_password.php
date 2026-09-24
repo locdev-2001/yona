@@ -11,7 +11,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Password reset link has been sent to your email.',
-        'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
     ],
     'SUBMIT' => 'Submit',
 ];

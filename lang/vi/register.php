@@ -45,7 +45,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Đăng ký thành công',
-        'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
     ],
     'SUBMIT' => 'Tạo tài khoản',
     'HAVE_AN_ACCOUNT' => 'Đã có tài khoản?',

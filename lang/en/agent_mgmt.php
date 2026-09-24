@@ -46,14 +46,14 @@ return [
         'API' => [
             'SUCCESS_MESSAGE' => 'Agent added successfully',
             'EXIST_MESSAGE' => 'Agent email already in use, Please try another email address',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
     ],
     'DELETE' => [
         'BUTTON_TEXT' => 'Delete',
         'API' => [
             'SUCCESS_MESSAGE' => 'Agent deleted successfully',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
         'CONFIRM' => [
             'TITLE' => 'Confirm Deletion',
@@ -89,13 +89,13 @@ return [
         'CANCEL_BUTTON_TEXT' => 'Cancel',
         'API' => [
             'SUCCESS_MESSAGE' => 'Agent updated successfully',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
         'PASSWORD_RESET' => [
             'ADMIN_RESET_BUTTON' => 'Reset Password',
             'ADMIN_SUCCESS_MESSAGE' => 'An email with reset password instructions has been sent to the agent',
             'SUCCESS_MESSAGE' => 'Agent password reset successfully',
-            'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+            'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
         ],
     ],
     'SEARCH_PLACEHOLDER' => 'Search agents...',

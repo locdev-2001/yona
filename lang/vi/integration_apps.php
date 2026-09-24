@@ -31,7 +31,7 @@ return [
         'CANCEL_BUTTON_TEXT' => 'Huỷ',
         'API' => [
             'SUCCESS_MESSAGE' => 'Hook đã được xoá thành công',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
     ],
     'LIST' => [
@@ -54,7 +54,7 @@ return [
         ],
         'API' => [
             'SUCCESS_MESSAGE' => 'Hook tích hợp đã được thêm thành công',
-            'ERROR_MESSAGE' => 'Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau',
+            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
     ],
     'CONNECT' => [

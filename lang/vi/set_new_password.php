@@ -16,7 +16,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Đổi mật khẩu thành công.',
-        'ERROR_MESSAGE' => 'Không kết nối được máy chủ Woot. Bạn hãy thử lại.',
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
     ],
     'CAPTCHA' => [
         'ERROR' => 'Đã hết hạn xác minh. Vui lòng giải mã captcha một lần nữa.',

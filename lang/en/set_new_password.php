@@ -14,7 +14,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Successfully changed the password.',
-        'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
     ],
     'CAPTCHA' => [
         'ERROR' => 'Verification expired. Please solve captcha again.',

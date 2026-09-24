@@ -43,7 +43,7 @@ return [
     ],
     'API' => [
         'SUCCESS_MESSAGE' => 'Registration Successful',
-        'ERROR_MESSAGE' => 'Could not connect to Woot server. Please try again.',
+        'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
     ],
     'SUBMIT' => 'Create account',
     'HAVE_AN_ACCOUNT' => 'Already have an account?',

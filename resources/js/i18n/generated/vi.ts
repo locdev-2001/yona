@@ -161,14 +161,14 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Nhân viên được thêm thành công",
                 "EXIST_MESSAGE": "Email đã được sử dung, vui lòng chọn email khác.",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             }
         },
         "DELETE": {
             "BUTTON_TEXT": "Xoá",
             "API": {
                 "SUCCESS_MESSAGE": "Nhân viên được xoá thành công",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             },
             "CONFIRM": {
                 "TITLE": "Xác nhận xoá",
@@ -204,13 +204,13 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_TEXT": "Huỷ",
             "API": {
                 "SUCCESS_MESSAGE": "Nhân viên được cập nhật thành công",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             },
             "PASSWORD_RESET": {
                 "ADMIN_RESET_BUTTON": "Đặt lại mật khẩu",
                 "ADMIN_SUCCESS_MESSAGE": "Một email với hướng dẫn đặt lại mật khẩu đã được gửi đến nhân viên",
                 "SUCCESS_MESSAGE": "Đặt lại mật khẩu nhân viên thành công",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             }
         },
         "SEARCH_PLACEHOLDER": "Tìm kiếm nhân viên...",
@@ -1233,7 +1233,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "SUCCESS_MESSAGE": "Đã thêm câu trả lời mẫu.",
-                "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
             }
         },
         "EDIT": {
@@ -1255,14 +1255,14 @@ const messages: Record<string, unknown> = {
             "BUTTON_TEXT": "Chỉnh sửa",
             "API": {
                 "SUCCESS_MESSAGE": "Đã cập nhật câu trả lời mẫu.",
-                "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
             }
         },
         "DELETE": {
             "BUTTON_TEXT": "Xoá",
             "API": {
                 "SUCCESS_MESSAGE": "Đã xóa câu trả lời mẫu.",
-                "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
             },
             "CONFIRM": {
                 "TITLE": "Xác nhận xoá",
@@ -3076,7 +3076,7 @@ const messages: Record<string, unknown> = {
         "API": {
             "SUCCESS_MESSAGE": "Tài khoản được tạo thành công",
             "EXIST_MESSAGE": "Tài khoản đã tồn tại",
-            "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
         },
         "FORM": {
             "NAME": {
@@ -6495,7 +6495,7 @@ const messages: Record<string, unknown> = {
             "CANCEL_BUTTON_TEXT": "Huỷ",
             "API": {
                 "SUCCESS_MESSAGE": "Hook đã được xoá thành công",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             }
         },
         "LIST": {
@@ -6518,7 +6518,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "SUCCESS_MESSAGE": "Hook tích hợp đã được thêm thành công",
-                "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             }
         },
         "CONNECT": {
@@ -6686,7 +6686,7 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Sửa webhook",
                 "API": {
                     "SUCCESS_MESSAGE": "Đã cập nhật cấu hình Webhook thành công",
-                    "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                    "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
                 }
             },
             "ADD": {
@@ -6694,14 +6694,14 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Thêm mới webhook",
                 "API": {
                     "SUCCESS_MESSAGE": "Đã thêm Webhook thành công",
-                    "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                    "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
                 }
             },
             "DELETE": {
                 "BUTTON_TEXT": "Xoá",
                 "API": {
                     "SUCCESS_MESSAGE": "Webhook đã được xoá thành công",
-                    "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+                    "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
                 },
                 "CONFIRM": {
                     "TITLE": "Xác Nhận Xoá",
@@ -7714,7 +7714,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Đăng nhập thành công",
-            "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại.",
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại.",
             "UNAUTH": "Tên đăng nhập hoặc mật khẩu không đúng. Bạn hãy thử lại."
         },
         "OAUTH": {
@@ -8662,7 +8662,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Đăng ký thành công",
-            "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
         },
         "SUBMIT": "Tạo tài khoản",
         "HAVE_AN_ACCOUNT": "Đã có tài khoản?",
@@ -8851,7 +8851,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Liên kết đặt lại mật khẩu đã được gửi đến email của bạn.",
-            "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
         },
         "SUBMIT": "Gửi"
     },
@@ -9022,7 +9022,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Đổi mật khẩu thành công.",
-            "ERROR_MESSAGE": "Không kết nối được máy chủ Woot. Bạn hãy thử lại."
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
         },
         "CAPTCHA": {
             "ERROR": "Đã hết hạn xác minh. Vui lòng giải mã captcha một lần nữa."
@@ -9238,7 +9238,7 @@ const messages: Record<string, unknown> = {
         },
         "API": {
             "SUCCESS_MESSAGE": "Đã cập nhật khảo sát thành công",
-            "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
         },
         "POWERED_BY": "Cung cấp bởi {installationName}"
     },

@@ -101,7 +101,7 @@ return [
             'TITLE' => 'Edit webhook',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Webhook configuration updated successfully',
-                'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+                'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
             ],
         ],
         'ADD' => [
@@ -109,14 +109,14 @@ return [
             'TITLE' => 'Add new webhook',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Webhook configuration added successfully',
-                'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+                'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
             ],
         ],
         'DELETE' => [
             'BUTTON_TEXT' => 'Delete',
             'API' => [
                 'SUCCESS_MESSAGE' => 'Webhook deleted successfully',
-                'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
+                'ERROR_MESSAGE' => 'Could not connect to the server. Please try again later.',
             ],
             'CONFIRM' => [
                 'TITLE' => 'Confirm Deletion',
