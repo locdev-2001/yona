@@ -15,6 +15,7 @@ import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
+import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
@@ -2201,6 +2202,22 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
+    const hasFile = typeof body?.file_url === 'string' && body.file_url.trim() !== '';
+    const timing = startSendTiming({
+        messageId: body?.message_id,
+        mediaKind: hasFile ? String(body?.media_kind || '').trim().toLowerCase() : body?.sticker ? 'sticker' : 'text',
+    });
+    let ok = false;
+    try {
+        const out = await sendTextOrMediaThroughZca(slot, body, timing);
+        ok = true;
+        return out;
+    } finally {
+        console.info(SEND_TIMING_LOG_TAG, JSON.stringify(timing.summary({ ok })));
+    }
+}
+
+async function sendTextOrMediaThroughZca(slot, body, timing) {
     const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions, forward } =
         body || {};
     if (!thread_id) {
@@ -2218,6 +2235,7 @@ async function bridgeSendTextOrMedia(slot, body) {
             threadId: String(thread_id),
             threadType: tt,
         });
+        timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
     }
 
@@ -2225,6 +2243,7 @@ async function bridgeSendTextOrMedia(slot, body) {
     const stickerPayload = stickerSendPayload(sticker);
     if (stickerPayload) {
         const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
+        timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
     }
 
@@ -2252,6 +2271,8 @@ async function bridgeSendTextOrMedia(slot, body) {
                 filenameHint: typeof filename === 'string' ? filename : null,
                 contentTypeHint: typeof content_type === 'string' ? content_type : null,
             });
+            timing.lap('download');
+            timing.recordBytes((await fs.stat(tmpPath)).size);
         }
         const content = buildSendMessageContent({
             text,
@@ -2261,6 +2282,7 @@ async function bridgeSendTextOrMedia(slot, body) {
             isGroup: tt === ThreadType.Group,
         });
         const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
+        timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
         await cleanupTempDownload(tmpPath);

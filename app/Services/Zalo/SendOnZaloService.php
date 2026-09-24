@@ -9,6 +9,7 @@ use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Messages\Forwarding\MessageForwarder;
 use App\Services\Messages\OutboundMentionsBuilder;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Gửi tin ra Zalo cá nhân qua bridge. Port từ ZaloSendService của nhánh `main`,
@@ -64,6 +65,12 @@ class SendOnZaloService extends BaseSendOnChannelService
 
     private const WEBCHAT_MSG_TYPE = 'webchat';
 
+    /** Một dòng log mỗi lượt gửi, đọc cùng dòng `[zalo-bridge:send-timing]` của bridge theo message_id. */
+    private const TIMING_LOG = 'zalo.send.timing';
+
+    /** @var list<array{media_kind: string, bytes: int|null, bridge_ms: int}> */
+    private array $partTimings = [];
+
     protected function channelClass(): string
     {
         return Zalo::class;
@@ -74,8 +81,11 @@ class SendOnZaloService extends BaseSendOnChannelService
         /** @var Zalo $channel */
         $channel = $this->channel();
         $monitor = app(ZaloHealthMonitor::class);
+        $queueWaitMs = $this->queueWaitMs();
+        $startedAt = hrtime(true);
 
         $failure = $this->circuitOrSessionFailure($channel, $monitor) ?? $this->sendEveryPart($channel, $monitor);
+        $this->logSendTiming($queueWaitMs, $startedAt, $failure);
 
         if ($failure !== null) {
             ChannelMessageStatus::fail($this->message, $failure);
@@ -113,7 +123,13 @@ class SendOnZaloService extends BaseSendOnChannelService
         $failure = null;
 
         foreach ($this->messageParts($channel) as $part) {
+            $callStartedAt = hrtime(true);
             $outcome = $this->callBridge($channel, $monitor, $part['payload']);
+            $this->partTimings[] = [
+                'media_kind' => (string) ($part['payload']['media_kind'] ?? 'text'),
+                'bytes' => $part['bytes'],
+                'bridge_ms' => self::elapsedMs($callStartedAt),
+            ];
             $sourceIds = [...$sourceIds, ...$outcome['source_ids']];
 
             // Ghi bí danh NGAY sau mỗi phần, trước khi gửi phần kế: echo của phần
@@ -187,6 +203,7 @@ class SendOnZaloService extends BaseSendOnChannelService
     private function messageParts(Zalo $channel): array
     {
         $thread = [
+            'message_id' => $this->message->getKey(),
             'connection_id' => $channel->connectionId(),
             'thread_id' => $channel->threadId($this->message),
             'thread_type' => $channel->threadType($this->message),
@@ -195,7 +212,7 @@ class SendOnZaloService extends BaseSendOnChannelService
         $sticker = $this->message->content_attributes['sticker'] ?? null;
 
         if (filled($sticker)) {
-            return [$this->part([...$thread, 'sticker' => $sticker], null)];
+            return [$this->part([...$thread, 'sticker' => $sticker])];
         }
 
         $attachments = $this->sendableAttachments();
@@ -203,7 +220,7 @@ class SendOnZaloService extends BaseSendOnChannelService
         $text = $this->message->outgoingContent();
 
         if ($nativeForward !== null) {
-            return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward], null)];
+            return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward])];
         }
 
         if ($attachments === []) {
@@ -212,7 +229,7 @@ class SendOnZaloService extends BaseSendOnChannelService
                 'text' => $text,
                 'quote' => $this->quotePayload(),
                 'mentions' => $this->mentionsPayload($channel, $text),
-            ], null)];
+            ])];
         }
 
         $parts = [];
@@ -228,7 +245,7 @@ class SendOnZaloService extends BaseSendOnChannelService
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
                 'filename' => $attachment->filename,
                 'content_type' => $attachment->content_type,
-            ], $attachment->filename);
+            ], $attachment);
         }
 
         return $parts;
@@ -236,14 +253,44 @@ class SendOnZaloService extends BaseSendOnChannelService
 
     /**
      * @param  array<string, mixed>  $payload
-     * @return array{payload: array<string, mixed>, filename: string|null}
+     * @return array{payload: array<string, mixed>, filename: string|null, bytes: int|null}
      */
-    private function part(array $payload, ?string $filename): array
+    private function part(array $payload, ?Attachment $attachment = null): array
     {
         return [
             'payload' => array_filter($payload, fn ($value) => $value !== null && $value !== ''),
-            'filename' => $filename,
+            'filename' => $attachment?->filename,
+            'bytes' => $attachment?->byte_size,
         ];
+    }
+
+    /**
+     * Thời gian từng chặng của một lượt gửi: chờ trong hàng đợi (từ lúc tin được
+     * lưu tới lúc job chạy), rồi mỗi lượt gọi bridge (bridge tải tệp + Zalo nhận).
+     *
+     * @param  array{code: string, message: string}|null  $failure
+     */
+    private function logSendTiming(?int $queueWaitMs, int $startedAt, ?array $failure): void
+    {
+        Log::info(self::TIMING_LOG, [
+            'message_id' => $this->message->getKey(),
+            'queue_wait_ms' => $queueWaitMs,
+            'parts' => $this->partTimings,
+            'total_ms' => self::elapsedMs($startedAt),
+            'failure' => $failure['code'] ?? null,
+        ]);
+    }
+
+    private function queueWaitMs(): ?int
+    {
+        $createdAt = $this->message->created_at;
+
+        return $createdAt === null ? null : (int) round(now()->getPreciseTimestamp(3) - $createdAt->getPreciseTimestamp(3));
+    }
+
+    private static function elapsedMs(int $sinceNanoseconds): int
+    {
+        return (int) round((hrtime(true) - $sinceNanoseconds) / 1_000_000);
     }
 
     /**

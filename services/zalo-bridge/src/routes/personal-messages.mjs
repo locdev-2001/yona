@@ -156,6 +156,7 @@ export function registerPersonalMessageRoutes(app, deps) {
         }
         try {
             const out = await bridgeSendTextOrMedia(slot, {
+                message_id: req.body?.message_id,
                 thread_id: resolved.thread_id,
                 thread_type: resolved.thread_type,
                 text: req.body?.text,

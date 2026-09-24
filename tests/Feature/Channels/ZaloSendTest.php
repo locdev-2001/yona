@@ -15,6 +15,7 @@ use App\Services\Zalo\ZaloHealthMonitor;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 
 // Gửi tin ra Zalo qua bridge giả. Founder chốt 07/09/2026: KHÔNG còn chặn tin
@@ -293,6 +294,40 @@ it('tin có tệp đã lưu được đẩy ra kênh ngay ở tier high, không 
     ]);
 
     Queue::assertPushedOn('high', SendReplyJob::class, fn (SendReplyJob $job) => $job->delay === null);
+});
+
+it('ghi một dòng log thời gian từng chặng và gửi kèm message_id để bridge nối log', function () {
+    fakeZaloSendBridge();
+    Log::spy();
+
+    $message = zaloOutgoingWithFiles($this->conversation, [
+        ['path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+        ['path' => 'zalo/b.jpg', 'filename' => 'b.jpg', 'content_type' => 'image/jpeg', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+    ]);
+
+    expect(collect(zaloSendPayloads())->pluck('message_id')->all())->toBe([$message->id, $message->id]);
+
+    Log::shouldHaveReceived('info')->once()->withArgs(fn (string $event, array $context) => $event === 'zalo.send.timing'
+        && $context['message_id'] === $message->id
+        && $context['queue_wait_ms'] === 0
+        && $context['failure'] === null
+        && is_int($context['total_ms'])
+        && collect($context['parts'])->pluck('media_kind')->all() === ['image', 'image']
+        && collect($context['parts'])->pluck('bytes')->all() === [2048, 2048]
+        && collect($context['parts'])->every(fn (array $part) => is_int($part['bridge_ms']) && $part['bridge_ms'] >= 0));
+});
+
+it('log thời gian vẫn ghi khi lượt gửi hỏng, kèm mã lỗi', function () {
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(['ok' => false, 'message' => 'not_logged_in'], 503)]);
+    Log::spy();
+
+    $message = zaloOutgoing($this->conversation);
+
+    Log::shouldHaveReceived('info')->once()->withArgs(fn (string $event, array $context) => $event === 'zalo.send.timing'
+        && $context['message_id'] === $message->id
+        && $context['failure'] === SendOnZaloService::ERROR_SESSION_LOST
+        && collect($context['parts'])->pluck('media_kind')->all() === ['text']
+        && $context['parts'][0]['bytes'] === null);
 });
 
 it('gửi tên tệp gốc và content-type thật của tệp .docx tới bridge', function () {
