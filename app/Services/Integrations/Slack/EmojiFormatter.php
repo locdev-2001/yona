@@ -2,8 +2,7 @@
 
 namespace App\Services\Integrations\Slack;
 
-// Port từ refs/chatwoot/lib/integrations/slack/emoji_formatter.rb. Bản gốc tra
-// alias qua gem `gemoji` (toàn bộ danh mục emoji Unicode); ở đây dùng bảng con
+// Không kéo cả danh mục emoji Unicode; ở đây dùng bảng con
 // các alias Slack hay dùng nhất — alias không có trong bảng giữ nguyên văn bản
 // gốc (Emoji.find_by_alias trả nil), đúng hành vi khi gặp shortcode lạ.
 class EmojiFormatter

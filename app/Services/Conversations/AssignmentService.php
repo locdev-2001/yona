@@ -7,7 +7,6 @@ use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/services/conversations/assignment_service.rb.
 final class AssignmentService
 {
     public function __construct(

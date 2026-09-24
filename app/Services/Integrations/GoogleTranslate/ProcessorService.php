@@ -8,7 +8,6 @@ use App\Services\Integrations\Google\ServiceAccountToken;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/integrations/google_translate/processor_service.rb
 // — dịch nội dung một tin nhắn theo yêu cầu (nút "Translate" trên UI). Dùng
 // bởi MessagesController::translate.
 class ProcessorService

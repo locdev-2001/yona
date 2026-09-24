@@ -5,8 +5,7 @@ namespace App\Services\Imap;
 use App\Models\Inbox;
 use Illuminate\Support\Facades\Redis;
 
-// Port từ refs/chatwoot/app/services/imap/deleted_message_tracker.rb — nhớ trong
-// 2 ngày những message-id đã xử lý rồi bị xóa, để lần quét sau không tạo lại.
+// Nhớ trong 2 ngày những message-id đã xử lý rồi bị xóa, để lần quét sau không tạo lại.
 class DeletedMessageTracker
 {
     private const TTL_SECONDS = 172800;

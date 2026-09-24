@@ -2,7 +2,6 @@
 
 namespace App\Builders\Email;
 
-// Port từ refs/chatwoot/app/builders/email/reply_to_builder.rb.
 class ReplyToBuilder extends BaseBuilder
 {
     public function build(): string

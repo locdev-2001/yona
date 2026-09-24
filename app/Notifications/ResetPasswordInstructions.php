@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-// Tương đương Devise reset_password_instructions của Chatwoot
+// Tương đương Devise reset_password_instructions
 // (template mail đầy đủ port ở D5 — email templates).
 class ResetPasswordInstructions extends Notification
 {

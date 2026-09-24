@@ -8,7 +8,6 @@ use App\Services\Integrations\Google\ServiceAccountToken;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/integrations/google_translate/detect_language_service.rb
 // — đoán ngôn ngữ hội thoại từ tin nhắn đến đầu tiên, ghi vào
 // conversation.additional_attributes['conversation_language'].
 class DetectLanguageService

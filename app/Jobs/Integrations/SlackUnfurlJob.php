@@ -9,7 +9,7 @@ use App\Services\Integrations\Slack\SlackClient;
 use App\Services\Integrations\Slack\SlackLinkUnfurlService;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/jobs/slack_unfurl_job.rb — chỉ unfurl nếu bot Slack
+// Chỉ unfurl nếu bot Slack
 // còn quyền truy cập kênh đã chia sẻ link (tránh lộ preview cho kênh riêng tư
 // mà bot không ở trong đó, hoặc kênh của account khác).
 class SlackUnfurlJob extends ApplicationJob
@@ -32,7 +32,7 @@ class SlackUnfurlJob extends ApplicationJob
     }
 
     // Lấy account_id từ link đầu tiên trong sự kiện — cùng giả định "mọi link
-    // trong sự kiện thuộc cùng một account" như bản gốc (TODO của chính Chatwoot).
+    // trong sự kiện thuộc cùng một account".
     private function resolveIntegrationHook(): ?Hook
     {
         $url = data_get($this->params, 'event.links.0.url');

@@ -5,8 +5,7 @@ namespace App\Services\Messages;
 use App\Models\Message;
 
 /**
- * Port của Messages::InReplyToMessageBuilder (refs/chatwoot/app/services/messages/
- * in_reply_to_message_builder.rb). Nối hai cách trỏ tin được trả lời về cùng một
+ * Nối hai cách trỏ tin được trả lời về cùng một
  * cặp giá trị trên `content_attributes`:
  *   - `in_reply_to` = id nội bộ (FE composer đặt khi agent bấm "Reply to")
  *   - `in_reply_to_external_id` = source_id của nền tảng (driver kênh ngoài đặt)

@@ -15,9 +15,9 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Thay cho gem Down của Chatwoot: tải một tệp từ URL của nhà cung cấp rồi trả về
+ * Thay cho gem Down: tải một tệp từ URL của nhà cung cấp rồi trả về
  * mảng thuộc tính cho Attachment. Mọi kênh dùng chung một đường tải, nên ba lớp
- * bảo vệ cũng nằm gọn ở đây — port từ refs/chatwoot/lib/safe_fetch/fetcher.rb:
+ * bảo vệ cũng nằm gọn ở đây:
  *
  *  1. URL do nhà cung cấp (hoặc client của họ) đặt phải trỏ ra mạng công cộng
  *     (`SafeHttp`, tôn trọng `ALLOW_PRIVATE_WEBHOOK_URLS`) — kể cả sau chuyển hướng.

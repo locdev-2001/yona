@@ -6,8 +6,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/listeners/participation_listener.rb — người được
-// giao hội thoại tự động trở thành participant.
+// Người được giao hội thoại tự động trở thành participant.
 class ParticipationListener extends BaseListener
 {
     public function handle(DomainEvent $event): void

@@ -9,7 +9,6 @@ use App\Models\AccountUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/builders/account_builder.rb
 class AccountBuilder
 {
     private ?Account $account = null;

@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Port từ refs/chatwoot/app/services/email/send_on_email_service.rb (+ phần
- * Base::SendOnChannelService áp dụng cho kênh email): tin outgoing của inbox
+ * Tin outgoing của inbox
  * email được gửi ra ngoài ngay, source_id giữ Message-ID để thư trả lời nối lại được.
  */
 class SendOnEmailService

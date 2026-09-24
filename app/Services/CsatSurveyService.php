@@ -9,8 +9,6 @@ use App\Models\Message;
 use App\Services\MessageTemplates\Template\CsatSurvey;
 
 /**
- * Port từ refs/chatwoot/app/services/csat_survey_service.rb.
- *
  * Điểm quyết định DUY NHẤT "có gửi khảo sát không" — listener chỉ gọi vào đây.
  * Hai nhánh mẫu WhatsApp/Twilio của bản gốc chưa port cùng kênh của chúng
  * (nhóm F); khi thêm kênh, thêm nhánh ở `perform()`, không rải điều kiện ra

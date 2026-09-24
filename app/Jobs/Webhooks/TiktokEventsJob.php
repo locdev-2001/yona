@@ -6,7 +6,6 @@ use App\Jobs\ApplicationJob;
 use App\Models\Channel\Tiktok;
 use App\Services\Tiktok\MessageService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/tiktok_events_job.rb.
 class TiktokEventsJob extends ApplicationJob
 {
     /**

@@ -9,8 +9,6 @@ use App\Exceptions\RecordInvalidException;
 use App\Services\CsatSurveyService;
 
 /**
- * Port từ refs/chatwoot/app/listeners/csat_survey_listener.rb.
- *
  * Khác bản gốc: chạy đồng bộ trong request (bản gốc qua AsyncDispatcher →
  * EventDispatcherJob) — giống mọi listener khác đã port. Vì thế phiếu trả lời
  * hỏng (điểm ngoài 1..5 do client tự chế) không được phép làm hỏng lượt cập

@@ -9,7 +9,6 @@ use App\Models\Message;
 use App\Models\TeamMember;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/services/messages/mention_service.rb.
 class MentionService
 {
     // Cú pháp mention của bản gốc: markdown link `[@Tên](mention://user/12/Tên)`.

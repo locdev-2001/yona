@@ -5,8 +5,7 @@ namespace App\Jobs\Notification;
 use App\Jobs\ApplicationJob;
 use App\Models\Notification;
 
-// Port từ refs/chatwoot/app/jobs/notification/remove_old_notification_job.rb —
-// dọn thông báo quá 1 tháng và cắt bớt phần vượt hạn mức của từng người dùng.
+// Dọn thông báo quá 1 tháng và cắt bớt phần vượt hạn mức của từng người dùng.
 class RemoveOldNotificationJob extends ApplicationJob
 {
     public const NOTIFICATION_LIMIT = 300;

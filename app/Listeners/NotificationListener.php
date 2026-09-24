@@ -11,7 +11,7 @@ use App\Services\Messages\MentionService;
 use App\Services\Messages\NewMessageNotificationService;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/listeners/notification_listener.rb — MỘT điểm quyết
+// MỘT điểm quyết
 // định: mọi sự kiện miền vào đây, rẽ nhánh theo tên event rồi đưa cho
 // NotificationBuilder. Không rải if theo từng nơi phát sinh sự kiện.
 class NotificationListener extends BaseListener

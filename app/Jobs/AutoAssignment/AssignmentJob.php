@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use Throwable;
 
-// Port từ refs/chatwoot/app/jobs/auto_assignment/assignment_job.rb + khóa
-// AUTO_ASSIGNMENT_IN_FLIGHT_KEY của lib/redis/redis_keys.rb.
+// Khóa AUTO_ASSIGNMENT_IN_FLIGHT_KEY chặn hai lượt giao cùng chạy.
 class AssignmentJob extends ApplicationJob
 {
     public const IN_FLIGHT_TTL_SECONDS = 300;

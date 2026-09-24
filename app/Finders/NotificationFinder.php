@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-// Port từ refs/chatwoot/app/finders/notification_finder.rb.
 class NotificationFinder
 {
     public const RESULTS_PER_PAGE = 15;

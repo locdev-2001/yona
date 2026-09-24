@@ -8,7 +8,6 @@ use App\Models\Message;
 use ZBateson\MailMimeParser\Message\IMessagePart;
 
 /**
- * Port từ refs/chatwoot/app/mailboxes/mailbox_helper.rb (+ inline attachment helper):
  * biến một thư đã parse thành message + contact + tệp đính kèm của hội thoại.
  * Lớp dùng trait phải có $conversation, $inbox, $processedMail và $message.
  */

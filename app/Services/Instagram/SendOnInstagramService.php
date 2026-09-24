@@ -10,7 +10,6 @@ use App\Services\Facebook\Concerns\BuildsMessengerReplyTo;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/app/services/instagram/{base_send_service,send_on_instagram_service}.rb.
 class SendOnInstagramService extends BaseSendOnChannelService
 {
     use BuildsMessengerReplyTo;

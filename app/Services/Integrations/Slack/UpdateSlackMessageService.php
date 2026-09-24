@@ -8,8 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/lib/integrations/slack/update_slack_message_service.rb —
-// khi khách trả lời một tin nhắn tương tác (select/form/CSAT/email) đã gửi ra
+// Khi khách trả lời một tin nhắn tương tác (select/form/CSAT/email) đã gửi ra
 // Slack, cập nhật LẠI đúng tin đó với câu trả lời đã chọn.
 class UpdateSlackMessageService
 {

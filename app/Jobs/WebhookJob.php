@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Services\Webhooks\Trigger;
 
-// Port từ refs/chatwoot/app/jobs/webhook_job.rb. Ba loại webhook (account, inbox
+// Ba loại webhook (account, inbox
 // API, agent bot) dùng chung một job.
 //
 // CHỮ KÝ ỔN ĐỊNH — MacrosExecutionService (D3) gọi:

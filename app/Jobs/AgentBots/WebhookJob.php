@@ -8,7 +8,7 @@ use App\Services\Webhooks\Trigger;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/app/jobs/agent_bots/webhook_job.rb: hàng đợi `high`,
+// Hàng đợi `high`,
 // thử lại 3 lần cách 3 giây với lỗi 429/500; hết lượt thì chạy nhánh xử lý
 // thất bại của Trigger (đưa hội thoại pending về open + tin hoạt động).
 class WebhookJob extends BaseWebhookJob

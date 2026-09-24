@@ -6,7 +6,7 @@ use App\Jobs\ApplicationJob;
 use App\Models\Channel\Line;
 use App\Services\Line\IncomingMessageService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/line_events_job.rb — chữ ký LINE được
+// Chữ ký LINE được
 // kiểm ở job (đúng bản gốc), nên payload thô đi kèm.
 class LineEventsJob extends ApplicationJob
 {

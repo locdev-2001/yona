@@ -4,7 +4,7 @@ namespace App\Services\Integrations\Slack;
 
 use App\Models\Integrations\Hook;
 
-// Port từ refs/chatwoot/lib/integrations/slack/channel_builder.rb — liệt kê kênh
+// Liệt kê kênh
 // Slack bot có thể thấy (public + private) và gán một kênh làm reference_id
 // của hook, tự "join" nếu kênh là public.
 class ChannelBuilder

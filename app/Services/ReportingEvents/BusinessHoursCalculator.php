@@ -8,8 +8,6 @@ use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
 /**
- * Port từ refs/chatwoot/app/helpers/reporting_event_helper.rb#business_hours.
- *
  * Bản gốc dựa vào gem `working_hours` (cấu hình toàn cục
  * `WorkingHours::Config.working_hours` rồi gọi `working_time_until`); ở đây tự
  * cộng phần giao giữa khoảng [from, to) với khung giờ làm việc từng ngày của

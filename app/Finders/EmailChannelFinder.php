@@ -6,7 +6,7 @@ use App\Models\Channel\Email;
 use App\Services\Email\MailPresenter;
 use App\Support\EmailAddress;
 
-// Port từ refs/chatwoot/app/finders/email_channel_finder.rb — tìm kênh email
+// Tìm kênh email
 // nhận thư này theo địa chỉ inbox (`email`) hoặc địa chỉ chuyển tiếp (`forward_to_email`).
 class EmailChannelFinder
 {

@@ -7,8 +7,7 @@ use App\Models\User;
 use App\Support\EmailAddress;
 use Illuminate\Support\Facades\Lang;
 
-// Port từ refs/chatwoot/app/builders/email/sender_name_builder.rb — dựng
-// header `From`/`Reply-To` dạng `Tên <email>` theo ngôn ngữ của người gửi.
+// Dựng header `From`/`Reply-To` dạng `Tên <email>` theo ngôn ngữ của người gửi.
 class SenderNameBuilder
 {
     private const TRANSLATION_KEY = 'conversations.reply.email.header.friendly_name';

@@ -10,7 +10,6 @@ use App\Models\Message;
 use App\Services\Channels\RemoteAttachmentDownloader;
 use Illuminate\Support\Carbon;
 
-// Port từ refs/chatwoot/app/services/tiktok/message_service.rb (+ messaging_helpers).
 class MessageService
 {
     /** @param array<string, mixed> $content khối `content` đã giải mã của webhook TikTok. */

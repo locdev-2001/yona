@@ -10,7 +10,7 @@ use App\Models\Notification;
 use App\Models\NotificationSetting;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/builders/notification_builder.rb — cổng DUY NHẤT
+// Cổng DUY NHẤT
 // tạo Notification: mọi nhánh của NotificationListener đều đi qua đây.
 class NotificationBuilder
 {

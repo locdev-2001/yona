@@ -6,7 +6,7 @@ use App\Models\Channel\Tiktok;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-// Port từ refs/chatwoot/app/services/tiktok/client.rb (Business Messaging API).
+// Client của TikTok Business Messaging API.
 class TiktokClient
 {
     public function __construct(private readonly Tiktok $channel) {}

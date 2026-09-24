@@ -9,8 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/lib/integrations/slack/send_on_slack_service.rb — đẩy một
-// tin nhắn Chatwoot ra kênh Slack đã kết nối, và xử lý unfurl link riêng
+// Đẩy một tin nhắn ra kênh Slack đã kết nối, và xử lý unfurl link riêng
 // (message: null khi chỉ dùng để unfurl, xem SlackLinkUnfurlService).
 class SendOnSlackService
 {

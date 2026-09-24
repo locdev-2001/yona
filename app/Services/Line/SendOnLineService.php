@@ -7,7 +7,6 @@ use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Messages\StatusUpdateService;
 
-// Port từ refs/chatwoot/app/services/line/send_on_line_service.rb.
 class SendOnLineService extends BaseSendOnChannelService
 {
     protected function channelClass(): string

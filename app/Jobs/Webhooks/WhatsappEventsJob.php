@@ -6,7 +6,6 @@ use App\Jobs\ApplicationJob;
 use App\Models\Channel\Whatsapp;
 use App\Services\Whatsapp\IncomingMessageService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/whatsapp_events_job.rb.
 class WhatsappEventsJob extends ApplicationJob
 {
     /**

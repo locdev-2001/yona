@@ -10,8 +10,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Port từ refs/chatwoot/app/services/reporting_events/backfill_service.rb —
- * dựng lại toàn bộ dòng rollup của MỘT ngày từ sự kiện thô (dùng khi rollup lệch
+ * Dựng lại toàn bộ dòng rollup của MỘT ngày từ sự kiện thô (dùng khi rollup lệch
  * hoặc khi dữ liệu có trước lúc bật rollup).
  */
 final class BackfillService

@@ -5,7 +5,6 @@ namespace App\Services\Labels;
 use App\Models\Conversation;
 use App\Models\Label;
 
-// Port từ refs/chatwoot/app/services/labels/update_service.rb.
 // Bản gốc phải viết lại từng tag trên conversation lẫn contact vì tag là bản ghi
 // riêng; ở đây đổi tên nhãn là đổi đúng một dòng `labels`, việc còn lại chỉ là
 // làm mới cache `cached_label_list` của hội thoại (contact không có cache).

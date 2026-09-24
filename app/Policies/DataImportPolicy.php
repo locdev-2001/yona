@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\AccountUser;
 use App\Models\DataImport;
 
-// Port từ refs/chatwoot/app/policies/data_import_policy.rb — chỉ quản trị viên
+// Chỉ quản trị viên
 // của chính account mới xem/tạo được lần nhập dữ liệu.
 final class DataImportPolicy
 {

@@ -9,7 +9,6 @@ use App\Notifications\ConfirmationInstructions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/builders/agent_builder.rb.
 // Bỏ: usage_limits[:agents] + reserve_email_send_capacity (billing cloud/EE).
 class AgentBuilder
 {

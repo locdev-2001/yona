@@ -20,8 +20,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/listeners/action_cable_listener.rb — gom token
-// người nghe rồi đẩy ActionCableBroadcastJob (queue critical). Chạy đồng bộ
+// Gom token người nghe rồi đẩy ActionCableBroadcastJob (queue critical). Chạy đồng bộ
 // trong request như SyncDispatcher. Laravel tự đăng ký qua event discovery
 // (handle(DomainEvent)) — KHÔNG Event::listen thêm, kẻo mỗi event bắn 2 lần.
 class ActionCableListener extends BaseListener

@@ -6,7 +6,6 @@ use App\Models\Notification;
 use App\Notifications\ConversationNotification;
 use App\Support\OnlineStatusTracker;
 
-// Port từ refs/chatwoot/app/services/notification/email_notification_service.rb
 // + phần điều kiện của AgentNotifications::ConversationNotificationsMailer.
 class EmailNotificationService
 {

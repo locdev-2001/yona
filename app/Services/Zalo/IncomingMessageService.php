@@ -200,7 +200,7 @@ class IncomingMessageService
     /**
      * Lô tin lịch sử KHÔNG phải hoạt động mới: không mở lại hội thoại đã đóng,
      * không dời mốc chờ / mốc hoạt động. Lõi không có khái niệm "tin hồi phục"
-     * (gốc Chatwoot cũng không), nên chụp trạng thái trước khi ghi rồi trả về
+     * (bản gốc cũng không), nên chụp trạng thái trước khi ghi rồi trả về
      * nguyên trạng ngay tại driver thay vì nới hợp đồng dùng chung.
      */
     private function persist(Message $message, Conversation $conversation): void
@@ -484,7 +484,7 @@ class IncomingMessageService
         return in_array($direction, ['in', 'out', 'echo'], true) ? $direction : 'in';
     }
 
-    // Sticker đi vào contract lõi của Chatwoot (`content_type` sticker) thay vì
+    // Sticker đi vào contract lõi (`content_type` sticker) thay vì
     // chỉ nằm trong content_attributes — nhờ đó bong bóng và ô xem trước hiển thị
     // như mọi kênh khác, lõi không cần biết kênh nào gửi.
     private function contentType(): int

@@ -5,7 +5,7 @@ namespace App\Mailboxes\Concerns;
 use App\Models\Message;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/mailboxes/mailbox_sanitizer.rb — Postgres không nhận
+// Postgres không nhận
 // byte NUL trong cột text, nên mọi chuỗi lấy từ thư phải qua đây trước khi lưu.
 trait MailboxSanitizer
 {

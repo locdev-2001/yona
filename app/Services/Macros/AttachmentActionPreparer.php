@@ -6,7 +6,6 @@ use App\Exceptions\MessageValidationException;
 use App\Models\Attachment;
 use App\Models\Macro;
 
-// Port từ refs/chatwoot/app/controllers/concerns/attachment_concern.rb.
 // action_params của send_attachment nhận tham chiếu tệp đã ký (lần đầu) hoặc id
 // tệp đã gắn sẵn vào macro (lần sửa sau); mọi giá trị khác là tệp không hợp lệ.
 final class AttachmentActionPreparer

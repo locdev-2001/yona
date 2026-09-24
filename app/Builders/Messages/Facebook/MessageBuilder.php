@@ -12,8 +12,7 @@ use App\Services\Facebook\MessageParser;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Port từ refs/chatwoot/app/builders/messages/facebook/message_builder.rb — tạo
- * tin đến, và tin đi khi agent trả lời thẳng từ trang Facebook (echo).
+ * Tạo tin đến, và tin đi khi agent trả lời thẳng từ trang Facebook (echo).
  */
 class MessageBuilder extends BaseMessageBuilder
 {

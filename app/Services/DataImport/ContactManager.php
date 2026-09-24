@@ -6,7 +6,6 @@ use App\Models\Account;
 use App\Models\Contact;
 use Illuminate\Database\Eloquent\Builder;
 
-// Port từ refs/chatwoot/app/services/data_import/contact_manager.rb.
 // Gộp liên hệ theo thứ tự identifier → email → phone_number; liên hệ đã có
 // được cập nhật và lưu ngay, liên hệ mới trả về ở dạng CHƯA lưu.
 class ContactManager

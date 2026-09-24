@@ -8,7 +8,7 @@ use App\Models\Message;
 use App\Services\Integrations\Slack\UpdateSlackMessageService;
 use Illuminate\Support\Facades\Cache;
 
-// Port từ refs/chatwoot/app/jobs/update_slack_message_job.rb — cùng khoá mutex
+// Cùng khoá mutex
 // với SendOnSlackJob (một kênh Slack chỉ xử lý một thao tác tại một thời điểm).
 class UpdateSlackMessageJob extends ApplicationJob
 {

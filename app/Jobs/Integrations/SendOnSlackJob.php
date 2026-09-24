@@ -8,7 +8,7 @@ use App\Models\Message;
 use App\Services\Integrations\Slack\SendOnSlackService;
 use Illuminate\Support\Facades\Cache;
 
-// Port từ refs/chatwoot/app/jobs/send_on_slack_job.rb. Mutex theo cặp
+// Mutex theo cặp
 // (conversation, kênh Slack) — tránh gửi trùng khi nhiều tin cùng hội thoại
 // được xử lý gần như đồng thời (thay Redis::Alfred::SLACK_MESSAGE_MUTEX).
 class SendOnSlackJob extends ApplicationJob

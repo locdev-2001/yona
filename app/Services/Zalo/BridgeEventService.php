@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Điều phối một sự kiện webhook của bridge về đúng dịch vụ xử lý. Port từ
  * ZaloPersonalWebhookController của nhánh `main`, bỏ toàn bộ phần bind RLS/
- * TenantScope (bản rewrite phân tách theo `account_id` như Chatwoot, không RLS).
+ * TenantScope (bản rewrite phân tách theo `account_id` như bản gốc, không RLS).
  */
 class BridgeEventService
 {

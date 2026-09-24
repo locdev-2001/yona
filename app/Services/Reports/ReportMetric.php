@@ -2,7 +2,6 @@
 
 namespace App\Services\Reports;
 
-// Port từ Data.define trong refs/chatwoot/app/services/reports/report_metric_registry.rb.
 final readonly class ReportMetric
 {
     public const AGGREGATE_COUNT = 'count';

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 
 // Port app/services/mfa/token_service.rb — token ngắn hạn nối bước "mật khẩu đúng"
 // với bước "nhập mã OTP" mà không cần tạo phiên đăng nhập ở giữa.
-// Chatwoot ký JWT bằng SECRET_KEY_BASE; ở đây dùng encrypter của Laravel (APP_KEY).
+// Bản gốc ký JWT bằng SECRET_KEY_BASE; ở đây dùng encrypter của Laravel (APP_KEY).
 class TokenService
 {
     public const TOKEN_EXPIRY_MINUTES = 5;

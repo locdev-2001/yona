@@ -11,8 +11,7 @@ use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/jobs/avatar/avatar_from_url_job.rb: tải avatar
-// từ URL rồi gắn vào model (Avatarable). Với Contact còn rate-limit 1 phút
+// Tải avatar từ URL rồi gắn vào model (Avatarable). Với Contact còn rate-limit 1 phút
 // + so hash URL (lưu trong additional_attributes) để không tải lại vô ích.
 //
 // Hai khác biệt CỐ Ý so với bản gốc (xem plans/.../reports/g1-contact-sync-notes.md):

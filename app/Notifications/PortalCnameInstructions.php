@@ -7,8 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-// Port từ refs/chatwoot/app/mailers/portal_instructions_mailer.rb —
-// hướng dẫn trỏ CNAME cho tên miền riêng của portal.
+// Hướng dẫn trỏ CNAME cho tên miền riêng của portal.
 class PortalCnameInstructions extends Notification
 {
     use Queueable;

@@ -7,7 +7,6 @@ use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Services\Instagram\MessageTextService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/instagram_events_job.rb.
 class InstagramEventsJob extends ApplicationJob
 {
     /** @param list<array<string, mixed>> $entries */

@@ -5,8 +5,6 @@ namespace App\Services\ReportingEvents;
 use App\Models\ReportingEvent;
 
 /**
- * Port từ refs/chatwoot/app/services/reporting_events/event_metric_registry.rb.
- *
  * Bản gốc có hai sổ trùng nội dung (EventMetricRegistry.EVENTS và
  * MetricRegistry.EVENT_METRICS, kèm TODO tách sổ); ở đây chỉ giữ một sổ — nơi
  * duy nhất khai báo "một sự kiện thô sinh ra những dòng rollup nào".

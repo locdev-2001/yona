@@ -8,7 +8,6 @@ use App\Models\Message;
 use App\Models\Notification;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/services/messages/new_message_notification_service.rb.
 class NewMessageNotificationService
 {
     public function __construct(private readonly Message $message) {}

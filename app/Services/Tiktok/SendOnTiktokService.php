@@ -8,7 +8,6 @@ use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Messages\StatusUpdateService;
 use Throwable;
 
-// Port từ refs/chatwoot/app/services/tiktok/send_on_tiktok_service.rb
 // (đường gửi văn bản; upload ảnh multipart chưa port — xem note).
 class SendOnTiktokService extends BaseSendOnChannelService
 {

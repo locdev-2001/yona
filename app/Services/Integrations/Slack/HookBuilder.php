@@ -5,7 +5,7 @@ namespace App\Services\Integrations\Slack;
 use App\Models\Account;
 use App\Models\Integrations\Hook;
 
-// Port từ refs/chatwoot/lib/integrations/slack/hook_builder.rb — đổi `code` OAuth
+// Đổi `code` OAuth
 // lấy access_token rồi tạo hook Slack ở trạng thái TẮT. ChannelBuilder@update sẽ
 // bật hook khi admin chọn xong kênh (list_all_channels → update).
 class HookBuilder

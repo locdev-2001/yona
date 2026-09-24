@@ -12,7 +12,7 @@ use App\Models\Integrations\Hook;
 use App\Models\Message;
 use App\Support\Integrations\EventProcessorResolver;
 
-// Port từ refs/chatwoot/app/listeners/hook_listener.rb — chuyển sự kiện tới các
+// Chuyển sự kiện tới các
 // hook tích hợp đang bật. Danh sách sự kiện app nhận đọc từ driver của app
 // (EventProcessor::supportedEvents), không phải bảng hardcode như bản gốc.
 class HookListener extends BaseListener

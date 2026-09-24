@@ -6,7 +6,6 @@ use App\Jobs\ApplicationJob;
 use App\Models\Notification;
 use App\Services\Notification\EmailNotificationService;
 
-// Port từ refs/chatwoot/app/jobs/notification/email_notification_job.rb.
 class EmailNotificationJob extends ApplicationJob
 {
     public function __construct(private readonly int $notificationId)

@@ -23,7 +23,6 @@ use Illuminate\Queue\SerializesModels;
 use RuntimeException;
 
 /**
- * Port từ refs/chatwoot/app/mailers/conversation_reply_mailer.rb (+ helper của nó):
  * bốn kiểu thư trả lời của một hội thoại. Mỗi kiểu là một static factory trả về
  * null đúng chỗ bản gốc `return unless` — chỗ gọi không phải tự đoán điều kiện.
  */

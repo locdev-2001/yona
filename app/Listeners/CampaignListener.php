@@ -7,8 +7,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Models\ContactInbox;
 
-// Port từ refs/chatwoot/app/listeners/campaign_listener.rb — widget bắn
-// `campaign.triggered` qua /api/v1/widget/events, listener dựng hội thoại.
+// Widget bắn `campaign.triggered` qua /api/v1/widget/events, listener dựng hội thoại.
 // Laravel tự đăng ký qua event discovery (handle(DomainEvent)).
 class CampaignListener extends BaseListener
 {

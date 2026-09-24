@@ -14,8 +14,7 @@ use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
 
 /**
- * Port từ refs/chatwoot/app/services/telegram/incoming_message_service.rb.
- * Chatwoot không hỗ trợ chat nhóm nên chỉ nhận chat riêng tư.
+ * Bản gốc không hỗ trợ chat nhóm nên chỉ nhận chat riêng tư.
  */
 class IncomingMessageService
 {

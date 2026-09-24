@@ -6,10 +6,9 @@ use DateTimeImmutable;
 use DateTimeZone;
 
 /**
- * Port từ refs/chatwoot/app/helpers/timezone_helper.rb#timezone_name_from_offset
  * và `ActiveSupport::TimeZone[<số>]`.
  *
- * FE chỉ gửi độ lệch giờ; Chatwoot quét danh sách vùng của ActiveSupport theo
+ * FE chỉ gửi độ lệch giờ; bản gốc quét danh sách vùng của ActiveSupport theo
  * đúng thứ tự và lấy vùng khớp ĐẦU TIÊN, nên bảng `config/rails_timezones.php`
  * phải giữ nguyên thứ tự đó thì mốc thời gian mới trùng.
  */

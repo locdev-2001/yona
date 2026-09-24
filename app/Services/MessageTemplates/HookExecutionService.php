@@ -10,8 +10,6 @@ use App\Services\MessageTemplates\Template\Greeting;
 use App\Services\MessageTemplates\Template\OutOfOffice;
 
 /**
- * Port từ refs/chatwoot/app/services/message_templates/hook_execution_service.rb.
- *
  * ĐIỂM GỌI DUY NHẤT của mọi mẫu tin tự động: `Message::created`. Thêm một mẫu
  * mới = thêm một nhánh ở `triggerTemplates()`, không rải điều kiện ra controller.
  *

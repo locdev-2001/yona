@@ -7,7 +7,7 @@ use App\Models\ReportingEvent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/services/reports/raw_data_source.rb — đọc thẳng từ
+// Đọc thẳng từ
 // bảng sự kiện thô / hội thoại / tin nhắn.
 final class RawDataSource extends DataSource
 {

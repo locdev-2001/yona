@@ -7,7 +7,7 @@ use App\Models\Account;
 use App\Models\Contact;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/actions/contact_identify_action.rb — cửa DUY NHẤT
+// Cửa DUY NHẤT
 // để một định danh gửi lên từ khách (widget) gắn vào hồ sơ: gộp hồ sơ trùng
 // theo identifier → email → phone_number rồi mới ghi thuộc tính.
 //

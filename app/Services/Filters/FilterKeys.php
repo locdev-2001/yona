@@ -3,7 +3,7 @@
 namespace App\Services\Filters;
 
 /**
- * Port từ refs/chatwoot/lib/filters/filter_keys.yml — nguồn DUY NHẤT mô tả
+ * Nguồn DUY NHẤT mô tả
  * thuộc tính chuẩn nào lọc được, kiểu dữ liệu gì và operator nào hợp lệ.
  * Thêm thuộc tính lọc mới = thêm một dòng ở đây, không sửa service.
  */

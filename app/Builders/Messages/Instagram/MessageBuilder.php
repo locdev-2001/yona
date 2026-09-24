@@ -9,7 +9,6 @@ use App\Services\Channels\IncomingConversationResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Port từ refs/chatwoot/app/builders/messages/instagram/base_message_builder.rb
  * (+ hai lớp con MessageBuilder / Messenger::MessageBuilder — khác biệt còn lại
  * là nguồn liên hệ, đã do Instagram\MessageTextService lo trước).
  */

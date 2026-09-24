@@ -9,7 +9,7 @@ use App\Models\Message;
 use App\Services\Email\ChannelMailer;
 
 /**
- * Port từ refs/chatwoot/app/jobs/conversation_reply_email_job.rb — thư tổng hợp
+ * Thư tổng hợp
  * gửi cho khách sau khi agent trả lời. Tin đến gần nhất là email thì gửi bản
  * "không tóm tắt" (giữ đúng luồng thư), còn lại gửi bản có tóm tắt hội thoại.
  */

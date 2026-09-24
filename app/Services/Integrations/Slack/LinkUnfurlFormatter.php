@@ -2,8 +2,7 @@
 
 namespace App\Services\Integrations\Slack;
 
-// Port từ refs/chatwoot/lib/integrations/slack/link_unfurl_formatter.rb — dựng
-// khối preview Slack hiện ra khi link hội thoại Chatwoot được dán vào kênh.
+// Dựng khối preview Slack hiện ra khi link hội thoại được dán vào kênh.
 // Chuỗi nhãn hardcode ở đây vì lang/en chưa có namespace `slack_unfurl` (nợ,
 // xem báo cáo f6-notes-slack.md — porting sang lang/** ngoài phạm vi agent này).
 class LinkUnfurlFormatter

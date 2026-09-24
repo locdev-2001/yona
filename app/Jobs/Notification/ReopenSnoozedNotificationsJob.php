@@ -5,8 +5,7 @@ namespace App\Jobs\Notification;
 use App\Jobs\ApplicationJob;
 use App\Models\Notification;
 
-// Port từ refs/chatwoot/app/jobs/notification/reopen_snoozed_notifications_job.rb —
-// hết hạn hoãn thì thông báo trở lại danh sách chưa đọc.
+// Hết hạn hoãn thì thông báo trở lại danh sách chưa đọc.
 class ReopenSnoozedNotificationsJob extends ApplicationJob
 {
     public const BATCH_SIZE = 100;

@@ -5,8 +5,7 @@ namespace App\Events;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Events\Dispatchable;
 
-// Port từ refs/chatwoot/lib/events/base.rb + Dispatcher.dispatch: một event
-// duy nhất mang định danh (EventType) + payload; listener rẽ nhánh theo
+// Một event duy nhất mang định danh (EventType) + payload; listener rẽ nhánh theo
 // methodName() như Wisper publish(event.method_name).
 final class DomainEvent
 {

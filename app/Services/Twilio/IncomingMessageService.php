@@ -10,7 +10,6 @@ use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
 
-// Port từ refs/chatwoot/app/services/twilio/incoming_message_service.rb.
 class IncomingMessageService
 {
     /** @param array<string, mixed> $params form-encoded của Twilio. */

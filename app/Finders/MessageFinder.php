@@ -7,7 +7,6 @@ use App\Models\Message;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-// Port từ refs/chatwoot/app/finders/message_finder.rb.
 class MessageFinder
 {
     public const MESSAGE_ID_MAX = 2147483647;

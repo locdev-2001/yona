@@ -7,7 +7,6 @@ use App\Models\Notification;
 use App\Services\Notification\PushNotificationService;
 use App\Services\Notification\WebPushGateway;
 
-// Port từ refs/chatwoot/app/jobs/notification/push_notification_job.rb.
 class PushNotificationJob extends ApplicationJob
 {
     public function __construct(private readonly int $notificationId)

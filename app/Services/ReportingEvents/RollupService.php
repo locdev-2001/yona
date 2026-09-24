@@ -8,8 +8,7 @@ use App\Models\ReportingEventsRollup;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/services/reporting_events/rollup_service.rb — mỗi sự
-// kiện thô cộng dồn vào các dòng tổng hợp theo (ngày × chiều × chỉ số).
+// Mỗi sự kiện thô cộng dồn vào các dòng tổng hợp theo (ngày × chiều × chỉ số).
 final class RollupService
 {
     public function __construct(private readonly ReportingEvent $reportingEvent) {}

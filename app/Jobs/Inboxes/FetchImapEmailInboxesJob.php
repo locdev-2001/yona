@@ -7,8 +7,7 @@ use App\Models\Account;
 use App\Models\Inbox;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/jobs/inboxes/fetch_imap_email_inboxes_job.rb —
-// cron mỗi phút: duyệt mọi inbox email đủ điều kiện và xếp job quét riêng.
+// Cron mỗi phút: duyệt mọi inbox email đủ điều kiện và xếp job quét riêng.
 class FetchImapEmailInboxesJob extends ApplicationJob
 {
     public function handle(): void

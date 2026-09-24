@@ -5,8 +5,7 @@ namespace App\Jobs\Conversations;
 use App\Jobs\ApplicationJob;
 use App\Models\Mention;
 
-// Port từ refs/chatwoot/app/jobs/conversations/user_mention_job.rb — mỗi cặp
-// (user, conversation) chỉ có một bản ghi; nhắc lại thì dời mentioned_at.
+// Mỗi cặp (user, conversation) chỉ có một bản ghi; nhắc lại thì dời mentioned_at.
 class UserMentionJob extends ApplicationJob
 {
     /** @param list<int> $mentionedUserIds */

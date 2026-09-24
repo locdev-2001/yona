@@ -9,7 +9,6 @@ use App\Support\CurrentUser;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/services/contacts/bulk_action_service.rb.
 // Ba service con của bản gốc (BulkDelete/BulkAssignLabels/BulkRemoveLabels) chỉ
 // là một vòng lặp trên cùng tập liên hệ nên gộp vào ba method riêng ở đây —
 // vẫn một điểm sửa cho mỗi hành vi.

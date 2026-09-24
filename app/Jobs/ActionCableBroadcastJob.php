@@ -7,7 +7,6 @@ use App\Events\RealtimeBroadcast;
 use App\Http\Resources\ConversationResource;
 use App\Models\Account;
 
-// Port từ refs/chatwoot/app/jobs/action_cable_broadcast_job.rb.
 class ActionCableBroadcastJob extends ApplicationJob
 {
     public const CONVERSATION_UPDATE_EVENTS = [

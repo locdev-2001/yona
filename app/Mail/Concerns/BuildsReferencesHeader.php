@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Port từ refs/chatwoot/app/mailers/references_header_builder.rb — header
- * References theo RFC 5322: References của thư đang trả lời + chính In-Reply-To
+ * Header References theo RFC 5322: References của thư đang trả lời + chính In-Reply-To
  * ở cuối, gập dòng bằng CRLF + khoảng trắng.
  */
 trait BuildsReferencesHeader

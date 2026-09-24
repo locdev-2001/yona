@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\VAPID;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/vapid_service.rb — nguồn DUY NHẤT của cặp khoá VAPID,
+// Nguồn DUY NHẤT của cặp khoá VAPID,
 // cũng là câu trả lời duy nhất cho "máy chủ này gửi được thông báo đẩy không":
 // publicKey() null (máy thiếu hỗ trợ đường cong P-256 của OpenSSL) thì giao diện
 // ẩn phần thông báo đẩy và job đẩy không gửi gì.

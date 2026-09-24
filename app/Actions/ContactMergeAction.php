@@ -12,7 +12,6 @@ use App\Models\Message;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
-// Port từ refs/chatwoot/app/actions/contact_merge_action.rb.
 // Bỏ: merge_calls (enterprise), merge_contact_notes (chưa có model Note).
 class ContactMergeAction
 {

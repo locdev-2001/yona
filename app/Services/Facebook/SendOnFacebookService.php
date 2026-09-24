@@ -8,7 +8,6 @@ use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Facebook\Concerns\BuildsMessengerReplyTo;
 
-// Port từ refs/chatwoot/app/services/facebook/send_on_facebook_service.rb.
 class SendOnFacebookService extends BaseSendOnChannelService
 {
     use BuildsMessengerReplyTo;

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Support\OnlineStatusTracker;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/services/auto_assignment/agent_assignment_service.rb.
 // allowedAgentIds = danh sách agent được phép nhận (member inbox có sức chứa,
 // giao với thành viên team…); round-robin chỉ chạy trên phần đang online.
 final class AgentAssignmentService

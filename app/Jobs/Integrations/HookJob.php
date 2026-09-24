@@ -8,7 +8,7 @@ use App\Support\Integrations\EventProcessorResolver;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/app/jobs/hook_job.rb — nhận sự kiện của một hook rồi
+// Nhận sự kiện của một hook rồi
 // giao cho driver của app xử lý. Lỗi của driver chỉ ghi log, không làm job hỏng
 // (rescue StandardError của bản gốc).
 class HookJob extends ApplicationJob

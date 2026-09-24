@@ -5,7 +5,6 @@ namespace App\Services\Twilio;
 use App\Models\Message;
 use App\Services\Channels\ChannelMessageStatus;
 
-// Port từ refs/chatwoot/app/services/twilio/delivery_status_service.rb.
 class DeliveryStatusService
 {
     /** @var array<string, string> */

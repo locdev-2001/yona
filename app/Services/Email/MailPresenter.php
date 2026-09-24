@@ -10,7 +10,7 @@ use ZBateson\MailMimeParser\MailMimeParser;
 use ZBateson\MailMimeParser\Message\IMessagePart;
 
 /**
- * Port từ refs/chatwoot/app/presenters/mail_presenter.rb — bọc một thư RFC822 đã
+ * Bọc một thư RFC822 đã
  * parse và trả về đúng những mảnh mà mailbox cần (người gửi thật, nội dung
  * text/html tách phần trích dẫn, tệp đính kèm, header dùng để nối hội thoại).
  * Đây là ĐƯỜNG PARSE DUY NHẤT: IMAP lẫn fixture .eml đều đi qua `fromRaw`.

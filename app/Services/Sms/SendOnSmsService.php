@@ -6,7 +6,6 @@ use App\Models\Channel\Sms;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 
-// Port từ refs/chatwoot/app/services/sms/send_on_sms_service.rb (+ Channel::Sms#send_message).
 class SendOnSmsService extends BaseSendOnChannelService
 {
     protected function channelClass(): string

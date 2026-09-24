@@ -7,7 +7,6 @@ use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use Illuminate\Http\Client\Response;
 
-// Port từ refs/chatwoot/app/services/telegram/send_on_telegram_service.rb
 // (+ phần send_message_on_telegram của model và SendAttachmentsService rút gọn
 // về đường media group / document theo URL).
 class SendOnTelegramService extends BaseSendOnChannelService

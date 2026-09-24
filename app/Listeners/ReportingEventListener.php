@@ -14,7 +14,7 @@ use Carbon\CarbonInterface;
 use Throwable;
 
 /**
- * Port từ refs/chatwoot/app/listeners/reporting_event_listener.rb — nơi DUY NHẤT
+ * Nơi DUY NHẤT
  * ghi `reporting_events`; mọi con số của báo cáo đọc ra từ bảng này.
  */
 class ReportingEventListener extends BaseListener

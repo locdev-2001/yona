@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/mailboxes/imap/imap_mailbox.rb — thư lấy về qua IMAP
+ * Thư lấy về qua IMAP
  * của một kênh cụ thể, nên kênh biết trước; chỉ còn việc nối thư vào đúng hội thoại.
  */
 class ImapMailbox

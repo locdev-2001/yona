@@ -13,8 +13,7 @@ use App\Services\AutomationRules\ConditionsFilterService;
 use App\Support\CurrentExecutedBy;
 use Illuminate\Database\Eloquent\Collection;
 
-// Port từ refs/chatwoot/app/listeners/automation_rule_listener.rb. Event actor
-// là AutomationRule để action tạo ra không tự kích hoạt lại chính nó.
+// Event actor là AutomationRule để action tạo ra không tự kích hoạt lại chính nó.
 class AutomationRuleListener extends BaseListener
 {
     public function handle(DomainEvent $event): void

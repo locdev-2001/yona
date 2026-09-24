@@ -6,8 +6,7 @@ use App\Models\CsatSurveyResponse;
 use App\Models\Message;
 use RuntimeException;
 
-// Port từ refs/chatwoot/app/builders/csat_surveys/response_builder.rb — biến
-// `submitted_values` của tin khảo sát thành một phiếu trả lời (chấm lại thì ghi
+// Biến `submitted_values` của tin khảo sát thành một phiếu trả lời (chấm lại thì ghi
 // đè chính phiếu đó).
 final class ResponseBuilder
 {

@@ -10,7 +10,7 @@ use App\Services\DataImport\ContactManager;
 use App\Support\Csv;
 use Illuminate\Support\Facades\Notification;
 
-// Port từ refs/chatwoot/app/jobs/data_import_job.rb — nhập liên hệ từ CSV.
+// Nhập liên hệ từ CSV.
 class DataImportJob extends ApplicationJob
 {
     private const LABELS_DELIMITER = ',';

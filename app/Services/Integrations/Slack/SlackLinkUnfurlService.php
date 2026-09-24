@@ -5,8 +5,7 @@ namespace App\Services\Integrations\Slack;
 use App\Models\Conversation;
 use App\Models\Integrations\Hook;
 
-// Port từ refs/chatwoot/lib/integrations/slack/slack_link_unfurl_service.rb — khi
-// một agent dán link hội thoại Chatwoot vào Slack, trả preview card qua chat.unfurl.
+// Khi một agent dán link hội thoại vào Slack, trả preview card qua chat.unfurl.
 class SlackLinkUnfurlService
 {
     /** @param array<string, mixed> $params */

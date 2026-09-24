@@ -8,7 +8,6 @@ use App\Models\Message;
 use App\Support\EmailAddress;
 use Illuminate\Database\Eloquent\Model;
 
-// Port từ refs/chatwoot/app/builders/email/base_builder.rb.
 abstract class BaseBuilder
 {
     public function __construct(

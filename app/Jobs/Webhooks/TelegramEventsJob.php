@@ -7,7 +7,6 @@ use App\Models\Channel\Telegram;
 use App\Services\Telegram\IncomingMessageService;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/telegram_events_job.rb.
 class TelegramEventsJob extends ApplicationJob
 {
     /** @param array<string, mixed> $params */

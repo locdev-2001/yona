@@ -7,7 +7,6 @@ use App\Models\InboxMember;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
-// Port từ refs/chatwoot/app/services/auto_assignment/round_robin_selector.rb.
 final class RoundRobinSelector
 {
     public function __construct(private readonly Inbox $inbox) {}

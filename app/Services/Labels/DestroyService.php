@@ -4,7 +4,6 @@ namespace App\Services\Labels;
 
 use App\Models\Conversation;
 
-// Port từ refs/chatwoot/app/services/labels/destroy_service.rb.
 // Xóa dòng `labels` đã cascade sạch `taggings`, nên ở đây chỉ còn việc bản gốc
 // làm bằng update_column: viết lại cached_label_list mà KHÔNG chạy hook/event.
 // Bỏ: invalidate_filtered_unread_count_conversations (B8).

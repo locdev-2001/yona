@@ -8,7 +8,6 @@ use App\Models\Inbox;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-// Port từ refs/chatwoot/app/builders/contact_inbox_builder.rb.
 // B2 mới có kênh API — nhánh sinh source_id của Email/Sms/Twilio/Whatsapp
 // (kèm vá RecordNotUnique đổi source_id cũ) port cùng driver kênh đó.
 class ContactInboxBuilder

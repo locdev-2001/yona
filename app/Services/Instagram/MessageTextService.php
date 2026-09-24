@@ -11,7 +11,6 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/services/instagram/{base_message_text,message_text,
  * webhooks_base_service}.rb — một đường cho cả kênh Instagram login trực tiếp
  * lẫn Instagram gắn qua trang Facebook (khác nhau ở nơi lấy hồ sơ người dùng).
  */

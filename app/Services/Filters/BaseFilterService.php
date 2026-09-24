@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Lõi trung tính của bộ lọc tuỳ chỉnh — port từ FilterService +
- * Filters::FilterHelper + Filters::CustomAttributeFilterHelper của Chatwoot.
+ * Filters::FilterHelper + Filters::CustomAttributeFilterHelper.
  *
  * Lớp này chỉ biết ba thứ: bảng đang lọc, bảng mô tả thuộc tính chuẩn
  * (FilterKeys) và model custom attribute tương ứng. Đặc thù của từng thực thể

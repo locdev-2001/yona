@@ -5,7 +5,6 @@ namespace App\Services\Mailbox\Strategies;
 use App\Models\Conversation;
 use App\Services\Email\MailPresenter;
 
-// Port từ refs/chatwoot/app/services/mailbox/conversation_finder_strategies/base_strategy.rb.
 abstract class BaseStrategy
 {
     // Message-ID do chính hệ thống sinh: `conversation/<uuid>/messages/<id>@domain`.

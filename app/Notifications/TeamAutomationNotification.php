@@ -9,7 +9,6 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Port từ refs/chatwoot/app/mailers/team_notifications/automation_notification_mailer.rb
  * (+ view conversation_creation.liquid): thư báo cho cả một team khi rule chạy
  * hành động `send_email_to_team`. Tiêu đề là chuỗi cứng của bản gốc, không đi
  * qua i18n.

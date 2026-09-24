@@ -4,7 +4,7 @@ namespace App\Services\Reports;
 
 use Carbon\CarbonImmutable;
 
-// Port từ refs/chatwoot/app/helpers/date_range_helper.rb — khoảng [since, until)
+// Khoảng [since, until)
 // nhận vào dưới dạng epoch giây.
 final readonly class ReportRange
 {

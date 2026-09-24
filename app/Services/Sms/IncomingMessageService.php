@@ -9,7 +9,6 @@ use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
 
-// Port từ refs/chatwoot/app/services/sms/incoming_message_service.rb.
 class IncomingMessageService
 {
     /** @param array<string, mixed> $params khối `message` của webhook Bandwidth. */
@@ -58,7 +57,7 @@ class IncomingMessageService
         $config = $this->inbox->channel->provider_config ?? [];
 
         foreach ($this->params['media'] ?? [] as $mediaUrl) {
-            // Bandwidth kèm file mô tả .smil/.xml — Chatwoot không dùng.
+            // Bandwidth kèm file mô tả .smil/.xml — bản gốc không dùng.
             if (str_ends_with($mediaUrl, '.smil') || str_ends_with($mediaUrl, '.xml')) {
                 continue;
             }

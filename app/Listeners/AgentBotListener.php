@@ -15,7 +15,7 @@ use App\Models\Message;
 use App\Services\Webhooks\Trigger;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/listeners/agent_bot_listener.rb — đẩy sự kiện tới
+// Đẩy sự kiện tới
 // bot đang phụ trách hội thoại (bot được gán) và bot đang bật của inbox.
 class AgentBotListener extends BaseListener
 {

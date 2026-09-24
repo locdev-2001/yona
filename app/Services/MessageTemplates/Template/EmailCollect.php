@@ -4,7 +4,6 @@ namespace App\Services\MessageTemplates\Template;
 
 use App\Models\Message;
 
-// Port từ refs/chatwoot/app/services/message_templates/template/email_collect.rb:
 // một tin giải thích + một ô nhập email (`input_email`) mà widget render thành form.
 final class EmailCollect extends BaseTemplate
 {

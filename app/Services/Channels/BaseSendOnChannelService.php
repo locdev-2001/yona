@@ -8,8 +8,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 
 /**
- * Port từ refs/chatwoot/app/services/base/send_on_channel_service.rb — khung chung
- * cho mọi driver gửi tin ra kênh ngoài. Driver mới chỉ cần khai `channelClass()`
+ * Khung chung cho mọi driver gửi tin ra kênh ngoài. Driver mới chỉ cần khai `channelClass()`
  * và `performReply()`; lõi (SendReplyJob) không biết kênh nào gửi bằng cách gì.
  */
 abstract class BaseSendOnChannelService

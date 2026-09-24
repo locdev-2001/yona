@@ -8,8 +8,7 @@ use App\Services\Integrations\Google\ServiceAccountToken;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-// Port từ refs/chatwoot/lib/integrations/dialogflow/processor_service.rb. Bản
-// gốc dùng gem gRPC `google-cloud-dialogflow`; chưa có SDK này trong composer
+// Bản gốc dùng gem gRPC `google-cloud-dialogflow`; chưa có SDK này trong composer
 // nên gọi thẳng REST `detectIntent` (xem f6-notes-misc.md — Khác biệt cố ý).
 class ProcessorService extends BotProcessorService
 {

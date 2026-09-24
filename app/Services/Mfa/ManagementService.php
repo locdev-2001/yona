@@ -11,7 +11,7 @@ class ManagementService
 {
     public const BACKUP_CODES_COUNT = 10;
 
-    // Chatwoot đánh dấu mã đã dùng bằng chuỗi placeholder thay vì xoá khỏi mảng,
+    // Bản gốc đánh dấu mã đã dùng bằng chuỗi placeholder thay vì xoá khỏi mảng,
     // nhờ vậy đếm được số mã còn lại.
     public const USED_BACKUP_CODE = 'XXXXXXXX';
 

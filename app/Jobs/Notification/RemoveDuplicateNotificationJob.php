@@ -5,8 +5,7 @@ namespace App\Jobs\Notification;
 use App\Jobs\ApplicationJob;
 use App\Models\Notification;
 
-// Port từ refs/chatwoot/app/jobs/notification/remove_duplicate_notification_job.rb —
-// mỗi (user, hội thoại) chỉ giữ thông báo mới nhất.
+// Mỗi (user, hội thoại) chỉ giữ thông báo mới nhất.
 class RemoveDuplicateNotificationJob extends ApplicationJob
 {
     public function __construct(private readonly int $notificationId)

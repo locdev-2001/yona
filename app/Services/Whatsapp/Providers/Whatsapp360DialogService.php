@@ -6,7 +6,6 @@ use App\Models\Message;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/app/services/whatsapp/providers/whatsapp_360_dialog_service.rb.
 class Whatsapp360DialogService extends BaseWhatsappService
 {
     private const API_BASE = 'https://waba.360dialog.io/v1';

@@ -7,7 +7,6 @@ use App\Models\Channel\Sms;
 use App\Services\Sms\DeliveryStatusService;
 use App\Services\Sms\IncomingMessageService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/sms_events_job.rb.
 class SmsEventsJob extends ApplicationJob
 {
     /** @var list<string> */

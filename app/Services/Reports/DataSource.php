@@ -2,7 +2,7 @@
 
 namespace App\Services\Reports;
 
-// Port từ refs/chatwoot/app/services/reports/data_source.rb — điểm rẽ duy nhất
+// Điểm rẽ duy nhất
 // giữa nguồn thô và (về sau) nguồn rollup.
 abstract class DataSource
 {

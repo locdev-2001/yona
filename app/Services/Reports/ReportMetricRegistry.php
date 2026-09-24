@@ -2,8 +2,7 @@
 
 namespace App\Services\Reports;
 
-// Port từ refs/chatwoot/app/services/reports/report_metric_registry.rb — sổ duy
-// nhất mô tả mọi chỉ số báo cáo công khai và cách lấy số cho nó.
+// Sổ duy nhất mô tả mọi chỉ số báo cáo công khai và cách lấy số cho nó.
 final class ReportMetricRegistry
 {
     public const CONVERSATIONS_COUNT = 'conversations_count';

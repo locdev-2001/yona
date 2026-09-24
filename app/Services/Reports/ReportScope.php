@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Gom `ReportHelper#scope` + các quan hệ `conversations/messages/reporting_events`
- * mà Chatwoot rải trên Account/Inbox/User/Label/Team về một chỗ: chiều báo cáo
+ * mà bản gốc rải trên Account/Inbox/User/Label/Team về một chỗ: chiều báo cáo
  * nào cũng chỉ nói chuyện qua ba truy vấn này, thêm chiều mới = thêm một nhánh.
  */
 final class ReportScope

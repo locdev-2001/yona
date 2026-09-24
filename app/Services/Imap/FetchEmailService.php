@@ -10,8 +10,7 @@ use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message;
 
 /**
- * Port từ refs/chatwoot/app/services/imap/{base_fetch_email_service,fetch_email_service}.rb —
- * lấy thư mới của một kênh email qua IMAP và trả về danh sách đã parse.
+ * Lấy thư mới của một kênh email qua IMAP và trả về danh sách đã parse.
  * Nhánh OAuth google/microsoft giữ nợ cho F6 (chỉ khác cách lấy mật khẩu).
  */
 class FetchEmailService

@@ -6,8 +6,7 @@ use App\Models\Channel\TwilioSms;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 
-// Port từ refs/chatwoot/app/services/twilio/send_on_twilio_service.rb (đường
-// gửi tin thường; content template CSAT chưa port — xem note).
+// Đường gửi tin thường; content template CSAT chưa có.
 class SendOnTwilioService extends BaseSendOnChannelService
 {
     protected function channelClass(): string

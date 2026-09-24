@@ -19,7 +19,7 @@ use Throwable;
 /**
  * Bước đăng ký webhook với nhà cung cấp sau khi một inbox kênh ngoài được tạo.
  *
- * Chatwoot rải các bước này vào callback của từng model kênh
+ * Bản gốc rải các bước này vào callback của từng model kênh
  * (`after_create :subscribe`, `before_save :setup_telegram_webhook`,
  * `Twilio::WebhookSetupService`, `Whatsapp::WebhookSetupService`). Ở đây lõi
  * model không nói chuyện HTTP (docs/code-standards.md §0), nên toàn bộ gom vào

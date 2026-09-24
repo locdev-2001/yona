@@ -8,7 +8,6 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/jobs/notification/delete_notification_job.rb.
 class DeleteNotificationJob extends ApplicationJob
 {
     public const TYPE_ALL = 'all';

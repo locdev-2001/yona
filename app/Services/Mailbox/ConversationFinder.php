@@ -12,8 +12,7 @@ use App\Services\Mailbox\Strategies\ReferencesStrategy;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/services/mailbox/conversation_finder.rb — bốn chiến
- * lược nối thư vào hội thoại, chạy theo đúng thứ tự; chiến lược cuối luôn dựng
+ * Bốn chiến lược nối thư vào hội thoại, chạy theo đúng thứ tự; chiến lược cuối luôn dựng
  * hội thoại mới nên chuỗi này chỉ trả null khi thư không thuộc kênh nào.
  */
 class ConversationFinder

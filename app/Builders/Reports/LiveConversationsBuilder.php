@@ -75,7 +75,7 @@ final class LiveConversationsBuilder
         if ($isAccount) {
             $metric['unassigned'] = (clone $openConversations)->unassigned()->count();
             // Bản gốc lọc `open` rồi lọc tiếp `pending` trên cùng cột status nên
-            // luôn ra 0 — giữ nguyên để số liệu khớp Chatwoot.
+            // luôn ra 0 — giữ nguyên để số liệu khớp bản gốc.
             $metric['pending'] = 0;
         }
 

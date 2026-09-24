@@ -6,7 +6,6 @@ use App\Jobs\ApplicationJob;
 use App\Services\Facebook\MessageCreator;
 use App\Services\Facebook\MessageParser;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/facebook_events_job.rb.
 class FacebookEventsJob extends ApplicationJob
 {
     /** @param array<string, mixed> $messaging */

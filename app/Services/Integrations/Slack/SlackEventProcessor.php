@@ -9,8 +9,7 @@ use App\Models\Integrations\Hook;
 use App\Models\Message;
 use App\Services\Integrations\Contracts\EventProcessor;
 
-// Port nhánh 'slack' của INTEGRATION_PROCESSORS trong refs/chatwoot/app/jobs/hook_job.rb
-// (#process_slack_integration) — driver Slack cắm vào lõi HookListener/HookJob
+// Driver Slack cắm vào lõi HookListener/HookJob
 // qua hợp đồng EventProcessor (khoá `event_processor` trong config/integration/apps.php).
 class SlackEventProcessor implements EventProcessor
 {

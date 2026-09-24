@@ -5,7 +5,6 @@ namespace App\Jobs\Labels;
 use App\Jobs\ApplicationJob;
 use App\Services\Labels\UpdateService;
 
-// Port từ refs/chatwoot/app/jobs/labels/update_job.rb.
 // Bỏ tham số old_label_title: xem App\Services\Labels\UpdateService.
 class UpdateJob extends ApplicationJob
 {

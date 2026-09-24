@@ -5,15 +5,14 @@ namespace App\Services\Facebook;
 use App\Builders\Messages\Facebook\MessageBuilder;
 use App\Models\Channel\FacebookPage;
 
-// Port từ refs/chatwoot/lib/integrations/facebook/message_creator.rb.
 class MessageCreator
 {
     public function __construct(private readonly MessageParser $response) {}
 
     public function perform(): void
     {
-        // Echo của chính tin Chatwoot vừa gửi — bỏ, nếu không sẽ nhân đôi.
-        if ($this->response->isEcho() && $this->response->isSentFromChatwootApp()) {
+        // Echo của chính tin hệ thống vừa gửi — bỏ, nếu không sẽ nhân đôi.
+        if ($this->response->isEcho() && $this->response->isSentFromOwnApp()) {
             return;
         }
 

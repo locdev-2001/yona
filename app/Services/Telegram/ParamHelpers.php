@@ -5,8 +5,7 @@ namespace App\Services\Telegram;
 use App\Services\Messages\Forwarding\MessageForwarder;
 
 /**
- * Port từ refs/chatwoot/app/services/telegram/param_helpers.rb — bóc payload
- * Telegram (message | business_message | callback_query) về cùng một hình dạng.
+ * Bóc payload Telegram (message | business_message | callback_query) về cùng một hình dạng.
  */
 trait ParamHelpers
 {

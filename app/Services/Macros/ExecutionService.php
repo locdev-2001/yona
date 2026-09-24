@@ -13,7 +13,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/app/services/macros/execution_service.rb.
 // Lớp mỏng: hành động chung đi thẳng ActionExecutor với actor = người bấm nút;
 // chỉ hai hành động mang đặc thù macro (tệp của chính macro, webhook) ở lại đây.
 final class ExecutionService

@@ -8,8 +8,7 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/integrations/bot_processor_service.rb — khung dùng
-// chung cho một hook bot tự động trả lời tin nhắn. Hiện chỉ Dialogflow cắm vào
+// Khung dùng chung cho một hook bot tự động trả lời tin nhắn. Hiện chỉ Dialogflow cắm vào
 // (app/Services/Integrations/Dialogflow/ProcessorService.php); lớp con chỉ cần
 // khai getResponse()/processResponse(), phần điều kiện chạy/không chạy nằm ở đây.
 abstract class BotProcessorService
@@ -32,7 +31,7 @@ abstract class BotProcessorService
 
             $this->processContent($message);
         } catch (Throwable $error) {
-            // ChatwootExceptionTracker của bản gốc chỉ ghi log + báo lỗi, không
+            // ExceptionTracker của bản gốc chỉ ghi log + báo lỗi, không
             // làm hỏng job gọi nó (HookJob đã tự rescue phía trên, đây thêm một
             // lớp chặn để lỗi API bên ngoài không văng ra khỏi processor).
             Log::warning($error->getMessage(), ['hook_id' => $this->hook->id, 'event' => $this->eventName]);

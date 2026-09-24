@@ -11,7 +11,6 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\Notification;
 
-// Port từ refs/chatwoot/app/listeners/base_listener.rb.
 abstract class BaseListener
 {
     /** @return array{0: Conversation, 1: Account} */

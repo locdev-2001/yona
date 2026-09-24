@@ -7,8 +7,7 @@ use App\Models\Conversation;
 use App\Models\Notification;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/services/notification/mark_conversation_read_service.rb —
-// mở hội thoại là dọn luôn thông báo chưa đọc của chính hội thoại đó.
+// Mở hội thoại là dọn luôn thông báo chưa đọc của chính hội thoại đó.
 class MarkConversationReadService
 {
     public function __construct(

@@ -7,7 +7,7 @@ namespace App\Services\Zalo;
  * hàng, nhắc hẹn, cuộc gọi, lời mời kết bạn) — cùng vai trò với RelayEventParser
  * ở nhánh sự kiện.
  *
- * Lõi Chatwoot không có content_type cho những loại này, và bảng
+ * Lõi không có content_type cho những loại này, và bảng
  * `Message::CONTENT_TYPES` là enum dùng chung với API/webhook nên không tự ý nới.
  * Bản gốc xử lý đúng tình huống đó bằng `content_attributes` + bubble riêng
  * (`Message.vue`: `contentAttributes.whatsappFlowResponse`, `contentAttributes.type === 'dyte'`,

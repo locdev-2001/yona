@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-// Port từ refs/chatwoot/app/builders/campaigns/campaign_conversation_builder.rb.
 class CampaignConversationBuilder
 {
     /**

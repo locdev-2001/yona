@@ -8,8 +8,6 @@ use App\Models\Inbox;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
 
-// Port từ refs/chatwoot/app/services/auto_assignment/rate_limiter.rb + khóa
-// ASSIGNMENT_KEY / ASSIGNMENT_KEY_PATTERN của lib/redis/redis_keys.rb.
 // Đếm số hội thoại đã giao cho một agent trong cửa sổ thời gian của chính sách.
 final class RateLimiter
 {

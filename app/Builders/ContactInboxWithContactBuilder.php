@@ -12,8 +12,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/builders/contact_inbox_with_contact_builder.rb —
-// điểm gộp định danh DUY NHẤT khi tin nhắn đổ về: dedupe theo thứ tự
+// Điểm gộp định danh DUY NHẤT khi tin nhắn đổ về: dedupe theo thứ tự
 // identifier → email → phone_number rồi mới tạo contact mới.
 // Bỏ ở B2: nhánh tái dùng contact theo source_id Instagram (đi cùng driver Instagram).
 class ContactInboxWithContactBuilder

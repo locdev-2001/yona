@@ -5,7 +5,6 @@ namespace App\Jobs\Webhooks;
 use App\Jobs\ApplicationJob;
 use App\Services\Twilio\IncomingMessageService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/twilio_events_job.rb.
 class TwilioEventsJob extends ApplicationJob
 {
     /** @param array<string, mixed> $params */

@@ -2,7 +2,6 @@
 
 namespace App\Services\MessageTemplates\Template;
 
-// Port từ refs/chatwoot/app/services/message_templates/template/greeting.rb.
 final class Greeting extends BaseTemplate
 {
     protected function messages(): array

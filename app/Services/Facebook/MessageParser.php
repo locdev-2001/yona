@@ -3,8 +3,7 @@
 namespace App\Services\Facebook;
 
 /**
- * Port từ refs/chatwoot/lib/integrations/facebook/message_parser.rb — đọc một
- * phần tử `messaging`/`standby` của webhook Messenger.
+ * Đọc một phần tử `messaging`/`standby` của webhook Messenger.
  */
 class MessageParser
 {
@@ -55,7 +54,7 @@ class MessageParser
         return $appId === null ? null : (string) $appId;
     }
 
-    public function isSentFromChatwootApp(): bool
+    public function isSentFromOwnApp(): bool
     {
         return filled($this->appId()) && $this->appId() === (string) config('services.facebook.app_id');
     }

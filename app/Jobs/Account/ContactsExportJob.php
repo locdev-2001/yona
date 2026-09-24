@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 
-// Port từ refs/chatwoot/app/jobs/account/contacts_export_job.rb.
 class ContactsExportJob extends ApplicationJob
 {
     public const LABELS_COLUMN = 'labels';

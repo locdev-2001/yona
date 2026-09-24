@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Sự kiện trạng-thái-tin của bridge (undo / reaction / seen / delivered) đi THEO
- * chính bản ghi tin, ghi vào `content_attributes` — đúng cách Chatwoot giữ
+ * chính bản ghi tin, ghi vào `content_attributes` — đúng cách bản gốc giữ
  * `external_error`, `in_reply_to_external_id`… trên cột đó thay vì bảng riêng.
  * Port từ MessageStatusService + ZaloStateEventParser của nhánh `main`.
  *

@@ -10,8 +10,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-// Port NGỮ NGHĨA từ refs/chatwoot/app/services/conversations/unread_counts/* —
-// bộ đếm badge sidebar theo inbox / nhãn / team.
+// Bộ đếm badge sidebar theo inbox / nhãn / team.
 //
 // KHÁC BIỆT CỐ Ý: bản gốc dựng sổ thành viên trong Redis (Builder/Store/Refresher/
 // Listener… 16 file) rồi cộng set; ở đây đếm thẳng bằng MỘT truy vấn SQL cho mỗi

@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-// Port từ refs/chatwoot/lib/events/types.rb — giá trị là tên event Chatwoot
+// Giá trị là tên event nghiệp vụ
 // (quyết định #6), cũng là `broadcastAs()` client Echo nhận. Bỏ CAPTAIN_* và
 // COPILOT_* (enterprise).
 enum EventType: string

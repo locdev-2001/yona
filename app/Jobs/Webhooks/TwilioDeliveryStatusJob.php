@@ -5,7 +5,6 @@ namespace App\Jobs\Webhooks;
 use App\Jobs\ApplicationJob;
 use App\Services\Twilio\DeliveryStatusService;
 
-// Port từ refs/chatwoot/app/jobs/webhooks/twilio_delivery_status_job.rb.
 class TwilioDeliveryStatusJob extends ApplicationJob
 {
     /** @param array<string, mixed> $params */

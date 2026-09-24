@@ -215,7 +215,7 @@ class QrLoginService
 
     /**
      * Chuỗi lấy từ lang/{locale}/inbox_mgmt.php — cùng nguồn với giao diện
-     * (ghi nhớ *i18n-single-source*). Placeholder theo kiểu Chatwoot `{name}` nên
+     * (ghi nhớ *i18n-single-source*). Placeholder theo kiểu bản gốc `{name}` nên
      * thay bằng strtr chứ không phải `:name` của Laravel.
      *
      * @param  array<string, string>  $replace

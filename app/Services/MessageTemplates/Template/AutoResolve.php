@@ -5,8 +5,6 @@ namespace App\Services\MessageTemplates\Template;
 use App\Jobs\Conversations\ActivityMessageJob;
 
 /**
- * Port từ refs/chatwoot/app/services/message_templates/template/auto_resolve.rb.
- *
  * Điểm gọi: `Conversations\ResolutionJob` ngay trước khi đóng hội thoại nguội.
  * Ngoài cửa sổ được phép gửi tin thì ghi một dòng hoạt động thay vì tin nhắn —
  * cùng quy ước với `CsatSurveyService`.

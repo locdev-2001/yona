@@ -9,8 +9,7 @@ use App\Models\Integrations\Hook;
 use App\Models\Message;
 use App\Models\User;
 
-// Port từ refs/chatwoot/lib/integrations/dyte/processor_service.rb — tạo
-// cuộc gọi video/voice Cloudflare RealtimeKit và cấp token tham gia cho agent.
+// Tạo cuộc gọi video/voice Cloudflare RealtimeKit và cấp token tham gia cho agent.
 // Gọi bởi WebApi\Integrations\DyteController.
 class ProcessorService
 {

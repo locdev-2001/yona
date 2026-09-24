@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Cổng DUY NHẤT tạo một lần nhập liên hệ từ CSV: tạo bản ghi, gắn tệp, xếp job.
- * Thay `after_create_commit :process_data_import` của DataImport (Chatwoot phải
+ * Thay `after_create_commit :process_data_import` của DataImport (bản gốc phải
  * chờ 1 phút cho ActiveStorage tải tệp lên cloud; ở đây tệp đã nằm trên đĩa
  * trước khi job được xếp nên không cần độ trễ).
  */

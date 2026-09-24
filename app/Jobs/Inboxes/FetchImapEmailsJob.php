@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Port từ refs/chatwoot/app/jobs/inboxes/fetch_imap_emails_job.rb — quét hộp thư
+ * Quét hộp thư
  * của một kênh. Khóa 5 phút để hai worker không quét trùng (MutexApplicationJob),
  * thư nào lỗi 3 lần liên tiếp thì bỏ qua trong 6 tiếng.
  */

@@ -23,7 +23,7 @@ use App\Models\Webhook;
 use App\Services\Webhooks\Trigger;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/listeners/webhook_listener.rb — bắn payload ra
+// Bắn payload ra
 // webhook của account (và webhook của kênh API) theo danh sách sự kiện đã đăng ký.
 class WebhookListener extends BaseListener
 {

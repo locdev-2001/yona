@@ -4,7 +4,7 @@ namespace App\Services\Email;
 
 use Html2Text\Html2Text;
 
-// Port từ refs/chatwoot/app/presenters/html_parser.rb — thay mọi <blockquote>
+// Thay mọi <blockquote>
 // (phần thư được trích dẫn lại) bằng dấu "&gt; " rồi đổi HTML sang text.
 class HtmlParser
 {

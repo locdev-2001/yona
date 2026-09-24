@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Models\AccountUser;
 use App\Models\Macro;
 
-// Port từ refs/chatwoot/app/policies/macro_policy.rb.
 // Macro global = tài sản của account (chỉ admin sửa/xóa); macro personal chỉ
 // tác giả đụng tới được.
 final class MacroPolicy

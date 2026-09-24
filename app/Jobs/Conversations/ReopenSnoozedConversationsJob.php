@@ -5,7 +5,6 @@ namespace App\Jobs\Conversations;
 use App\Jobs\ApplicationJob;
 use App\Models\Conversation;
 
-// Port từ refs/chatwoot/app/jobs/conversations/reopen_snoozed_conversations_job.rb.
 // Gốc do TriggerScheduledItemsJob gọi mỗi 5 phút (config/schedule.yml) —
 // ở đây đăng ký thẳng trong routes/console.php cùng cron.
 class ReopenSnoozedConversationsJob extends ApplicationJob

@@ -10,7 +10,6 @@ use App\Models\Conversation;
 use App\Models\User;
 use App\Support\BooleanParam;
 
-// Port từ refs/chatwoot/app/services/conversations/typing_status_manager.rb.
 class TypingStatusManager
 {
     /** @param array<string, mixed> $params */

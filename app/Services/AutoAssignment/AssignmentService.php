@@ -14,8 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/app/services/auto_assignment/assignment_service.rb —
-// phân công hàng loạt (V2) cho các hội thoại đang mở chưa có người nhận.
+// Phân công hàng loạt (V2) cho các hội thoại đang mở chưa có người nhận.
 final class AssignmentService
 {
     public function __construct(private readonly Inbox $inbox) {}

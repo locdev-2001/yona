@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Builders\Reports\DrilldownBuilder;
 use Carbon\CarbonImmutable;
 
-// Port từ refs/chatwoot/app/services/reports/drilldown_timestamp_validator.rb.
 final class DrilldownTimestampValidator
 {
     private const TIMESTAMP_PARAMS = ['bucket_timestamp', 'since', 'until'];

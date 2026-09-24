@@ -7,7 +7,6 @@ use App\Channels\CapabilitySet;
 use App\Models\Message;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/app/services/whatsapp/providers/whatsapp_cloud_service.rb
 // (đường gửi tin thường + đính kèm; sync template/CSAT/voice chưa port — xem note).
 class WhatsappCloudService extends BaseWhatsappService
 {

@@ -6,7 +6,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
-// Port từ refs/chatwoot/lib/dyte.rb — client REST của Cloudflare RealtimeKit
+// Client REST của Cloudflare RealtimeKit
 // (tên cũ Dyte). Trả mảng thô đã bóc khoá `data`, hoặc `['error' => …, 'error_code' => …]`.
 class Client
 {

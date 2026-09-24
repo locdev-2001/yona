@@ -61,7 +61,7 @@ final class ConversationTrafficReport
         ]))->timeseries();
 
         // Bản gốc dùng `Time.at` (múi giờ máy chủ) khi tách ngày/giờ, không dùng
-        // múi giờ người xem — giữ nguyên để CSV khớp Chatwoot.
+        // múi giờ người xem — giữ nguyên để CSV khớp bản gốc.
         return array_map(function (array $point) {
             $moment = CarbonImmutable::createFromTimestampUTC($point['timestamp'])->setTimezone(config('app.timezone'));
 

@@ -5,7 +5,7 @@ namespace App\Services\Channels;
 use App\Models\Message;
 
 /**
- * `message.external_error` của Chatwoot là store_accessor trên `content_attributes`
+ * `message.external_error` là store_accessor trên `content_attributes`
  * (xem app/models/message.rb) chứ không phải cột riêng. Mọi driver kênh ghi lỗi
  * gửi ra ngoài qua đây để chỉ có MỘT chỗ biết chi tiết đó.
  */

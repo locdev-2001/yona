@@ -7,7 +7,6 @@ use App\Models\Account;
 use App\Models\User;
 use App\Services\Contacts\BulkActionService;
 
-// Port từ refs/chatwoot/app/jobs/contacts/bulk_action_job.rb.
 class BulkActionJob extends ApplicationJob
 {
     /** @param array<string, mixed> $params */

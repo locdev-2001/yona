@@ -4,7 +4,7 @@ namespace App\Services\Email;
 
 use Illuminate\Support\Str;
 
-// Thay cho ChatwootMarkdownRenderer#render_message: nội dung tin nhắn là markdown,
+// Thay cho MarkdownRenderer#render_message: nội dung tin nhắn là markdown,
 // thân thư HTML cần bản render. `hardbreaks` giữ xuống dòng đơn thành <br>.
 class MarkdownRenderer
 {

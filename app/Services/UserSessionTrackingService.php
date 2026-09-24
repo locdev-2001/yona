@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\UserSession;
 use Illuminate\Http\Request;
 
-// Port app/services/user_session_tracking_service.rb. Chatwoot dùng gem `browser`
+// Bản gốc dùng gem `browser`
 // để đọc user agent; ở đây nhận diện bằng bảng mẫu tối giản đủ cho nhãn hiển thị.
 class UserSessionTrackingService
 {
@@ -23,7 +23,7 @@ class UserSessionTrackingService
         ['pattern' => '/Mac OS X ([\d_.]+)/', 'name' => 'macOS'],
         ['pattern' => '/Android ([\d.]+)/', 'name' => 'Android'],
         ['pattern' => '/(?:iPhone|iPad); CPU(?: iPhone)? OS ([\d_]+)/', 'name' => 'iOS'],
-        // Tên đúng như gem `browser` của Chatwoot trả về (đối chiếu pixel-diff).
+        // Tên đúng như gem `browser` trả về (đối chiếu pixel-diff).
         ['pattern' => '/Linux/', 'name' => 'Generic Linux'],
     ];
 

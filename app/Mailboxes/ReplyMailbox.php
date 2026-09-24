@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/mailboxes/reply_mailbox.rb — hộp thư hợp nhất: một
+ * Hộp thư hợp nhất: một
  * ConversationFinder quyết định thư nối vào hội thoại nào (hoặc mở hội thoại mới),
  * rồi cả hội thoại + message + tệp đính kèm được lưu trong MỘT transaction.
  */

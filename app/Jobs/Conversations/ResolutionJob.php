@@ -8,7 +8,6 @@ use App\Models\Conversation;
 use App\Services\MessageTemplates\Template\AutoResolve;
 use Illuminate\Database\Eloquent\Collection;
 
-// Port từ refs/chatwoot/app/jobs/conversations/resolution_job.rb.
 // Đóng hội thoại nguội của MỘT account; scheduler rải job này cho từng account.
 class ResolutionJob extends ApplicationJob
 {

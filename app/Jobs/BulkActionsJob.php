@@ -10,7 +10,6 @@ use App\Support\DateRangeHelper;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/jobs/bulk_actions_job.rb (nhánh Conversation).
 class BulkActionsJob extends ApplicationJob
 {
     public const SUPPORTED_MODEL = 'Conversation';

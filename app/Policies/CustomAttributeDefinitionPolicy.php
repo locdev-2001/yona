@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\AccountUser;
 
-// Port từ refs/chatwoot/app/policies/custom_attribute_definition_policy.rb:
 // đọc thì admin lẫn agent (tức mọi thành viên account), ghi thì chỉ admin.
 final class CustomAttributeDefinitionPolicy
 {

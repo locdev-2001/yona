@@ -8,7 +8,6 @@ use App\Models\Notification;
 use App\Models\NotificationSubscription;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/app/services/notification/push_notification_service.rb,
 // phần trình duyệt (Yona không có app di động nên bỏ FCM và push relay hub).
 class PushNotificationService
 {

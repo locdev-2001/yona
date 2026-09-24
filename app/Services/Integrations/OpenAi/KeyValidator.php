@@ -7,8 +7,7 @@ use App\Services\Integrations\Contracts\CredentialValidator;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-// Port từ refs/chatwoot/lib/integrations/openai/key_validator.rb — gọi thẳng
-// endpoint /v1/models của OpenAI để biết khoá còn dùng được không. Cắm vào
+// Gọi thẳng endpoint /v1/models của OpenAI để biết khoá còn dùng được không. Cắm vào
 // HooksController qua config/integration/apps.php khoá `openai.credential_validator`.
 class KeyValidator implements CredentialValidator
 {

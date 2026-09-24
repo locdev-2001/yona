@@ -2,8 +2,7 @@
 
 namespace App\Services\Reports;
 
-// Port từ refs/chatwoot/app/presenters/reports/time_format_presenter.rb — đổi số
-// giây thành chuỗi đọc được cho CSV; giữ tối đa hai đơn vị lớn nhất.
+// Đổi số giây thành chuỗi đọc được cho CSV; giữ tối đa hai đơn vị lớn nhất.
 final class TimeFormatPresenter
 {
     private readonly ?int $seconds;

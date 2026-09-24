@@ -4,7 +4,6 @@ namespace App\Services\MessageTemplates\Template;
 
 use App\Models\Message;
 
-// Port từ refs/chatwoot/app/services/message_templates/template/csat_survey.rb.
 // Điểm gọi: CsatSurveyService khi hội thoại chuyển sang resolved — KHÔNG đi qua
 // HookExecutionService như greeting/email-collect.
 final class CsatSurvey extends BaseTemplate

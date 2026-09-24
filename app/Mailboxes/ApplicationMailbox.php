@@ -8,7 +8,7 @@ use App\Services\Mailbox\Strategies\ReceiverUuidStrategy;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/mailboxes/application_mailbox.rb — cửa vào của mọi
+ * Cửa vào của mọi
  * thư đến: định tuyến sang ReplyMailbox khi thư thuộc một kênh đã xác minh
  * (hoặc mang địa chỉ `reply+<uuid>@`), còn lại rơi vào hộp mặc định (bỏ qua).
  */

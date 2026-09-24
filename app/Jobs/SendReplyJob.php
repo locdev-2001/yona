@@ -16,7 +16,7 @@ use App\Services\Whatsapp\SendOnWhatsappService;
 use App\Services\Zalo\SendOnZaloService;
 
 /**
- * Port từ refs/chatwoot/app/jobs/send_reply_job.rb — mọi tin vừa tạo đi qua đây,
+ * Mọi tin vừa tạo đi qua đây,
  * bảng CHANNEL_SERVICES quyết định driver nào thực sự gửi ra ngoài.
  * Thêm kênh mới = thêm MỘT dòng, không sửa Message.
  */

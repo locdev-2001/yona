@@ -5,7 +5,6 @@ namespace App\Jobs\Conversations;
 use App\Jobs\ApplicationJob;
 use App\Models\Conversation;
 
-// Port từ refs/chatwoot/app/jobs/conversations/activity_message_job.rb.
 class ActivityMessageJob extends ApplicationJob
 {
     public function __construct(

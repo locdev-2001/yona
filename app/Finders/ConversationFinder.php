@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
-// Port từ refs/chatwoot/app/finders/conversation_finder.rb.
 // Bỏ: custom view (E1).
 class ConversationFinder
 {

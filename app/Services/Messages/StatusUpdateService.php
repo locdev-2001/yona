@@ -4,7 +4,6 @@ namespace App\Services\Messages;
 
 use App\Models\Message;
 
-// Port từ refs/chatwoot/app/services/messages/status_update_service.rb.
 class StatusUpdateService
 {
     public function __construct(

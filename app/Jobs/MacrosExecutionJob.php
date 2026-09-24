@@ -6,7 +6,6 @@ use App\Models\Macro;
 use App\Models\User;
 use App\Services\Macros\ExecutionService;
 
-// Port từ refs/chatwoot/app/jobs/macros_execution_job.rb.
 class MacrosExecutionJob extends ApplicationJob
 {
     /** @param list<int|string> $conversationIds */

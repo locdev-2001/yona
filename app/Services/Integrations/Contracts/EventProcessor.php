@@ -6,7 +6,7 @@ use App\Models\Integrations\Hook;
 
 // Hợp đồng trung tính giữa lõi (HookListener/HookJob) và từng ứng dụng tích hợp.
 // Thay cho bảng INTEGRATION_PROCESSORS hardcode trong hook_job.rb và
-// supported_events_map hardcode trong hook_listener.rb của Chatwoot: mỗi app khai
+// supported_events_map hardcode trong hook_listener.rb: mỗi app khai
 // `event_processor` trong config/integration/apps.php, lõi không biết tên app nào.
 interface EventProcessor
 {

@@ -13,7 +13,7 @@ use App\Services\Filters\FilterKeys;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-// Port từ Conversations::FilterService của Chatwoot. Toàn bộ phần chung
+// Toàn bộ phần chung
 // (kiểm payload, nối and/or, custom attribute) nằm ở BaseFilterService; ở đây
 // chỉ còn phần riêng của hội thoại: phạm vi quyền, enum status/priority,
 // assignee trên hai cột và bộ đếm mine/unassigned/all.

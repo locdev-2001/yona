@@ -2,7 +2,7 @@
 
 namespace App\Services\Email;
 
-// Thay cho gem `email_reply_trimmer` của Chatwoot: cắt phần thư trích dẫn lại
+// Thay cho gem `email_reply_trimmer`: cắt phần thư trích dẫn lại
 // ở cuối để giữ đúng nội dung người ta vừa gõ.
 class EmailReplyTrimmer
 {

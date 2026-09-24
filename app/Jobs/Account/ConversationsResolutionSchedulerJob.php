@@ -6,7 +6,6 @@ use App\Jobs\ApplicationJob;
 use App\Jobs\Conversations\ResolutionJob;
 use App\Models\Account;
 
-// Port từ refs/chatwoot/app/jobs/account/conversations_resolution_scheduler_job.rb.
 // Chạy theo lịch, rải một ResolutionJob cho mỗi account có đặt auto_resolve_after.
 class ConversationsResolutionSchedulerJob extends ApplicationJob
 {

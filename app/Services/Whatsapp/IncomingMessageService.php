@@ -13,13 +13,12 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Port từ refs/chatwoot/app/services/whatsapp/incoming_message_base_service.rb
  * (+ whatsapp_cloud_service). Cả hai nhà cung cấp dùng chung một lõi; khác biệt
  * duy nhất là chỗ bóc `value` khỏi payload — đưa vào processedParams().
  */
 class IncomingMessageService
 {
-    /** @var list<string> Kiểu tin Chatwoot bỏ qua. */
+    /** @var list<string> Kiểu tin bị bỏ qua. */
     private const UNPROCESSABLE_TYPES = ['reaction', 'ephemeral', 'request_welcome'];
 
     /** @var list<string> Kiểu tin không mang tệp đính kèm. */

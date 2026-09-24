@@ -8,7 +8,7 @@ use App\Services\Filters\BaseFilterService;
 use App\Services\Filters\FilterKeys;
 use Illuminate\Database\Eloquent\Builder;
 
-// Port từ Contacts::FilterService của Chatwoot — dùng chung lõi với bộ lọc hội
+// Dùng chung lõi với bộ lọc hội
 // thoại, chỉ khác bảng, tập thuộc tính chuẩn và cách chuẩn hoá số điện thoại.
 class FilterService extends BaseFilterService
 {

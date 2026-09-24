@@ -10,7 +10,6 @@ use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
 
 /**
- * Port từ refs/chatwoot/app/services/line/incoming_message_service.rb.
  * LINE gửi nhiều event trong một webhook — duyệt lần lượt.
  */
 class IncomingMessageService
@@ -93,7 +92,7 @@ class IncomingMessageService
     {
         return match (data_get($event, 'message.type')) {
             'text' => data_get($event, 'message.text'),
-            // Chatwoot chưa hiển thị sticker: nhúng ảnh sticker bằng markdown.
+            // Bản gốc chưa hiển thị sticker: nhúng ảnh sticker bằng markdown.
             'sticker' => sprintf(
                 '![sticker-%s](%s)',
                 data_get($event, 'message.stickerId'),

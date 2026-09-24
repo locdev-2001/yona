@@ -7,15 +7,14 @@ use App\Models\Message;
 use App\Services\Channels\RemoteAttachmentDownloader;
 
 /**
- * Port từ refs/chatwoot/app/builders/messages/messenger/message_builder.rb —
- * phần xử lý đính kèm chung của Messenger và Instagram.
+ * Phần xử lý đính kèm chung của Messenger và Instagram.
  */
 abstract class BaseMessageBuilder
 {
     /** @var array<string, string> Meta gửi tên kiểu không khớp enum file_type. */
     private const FILE_TYPE_ALIASES = ['reel' => 'ig_reel', 'sticker' => 'image'];
 
-    /** @var list<string> Kiểu đính kèm Chatwoot bỏ qua. */
+    /** @var list<string> Kiểu đính kèm bị bỏ qua. */
     private const UNSUPPORTED_TYPES = ['template', 'unsupported_type', 'ephemeral'];
 
     /** @var list<string> Kiểu đính kèm cần tải tệp về. */

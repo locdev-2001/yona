@@ -6,8 +6,7 @@ use App\Models\ContactInbox;
 use App\Models\Conversation;
 
 /**
- * Khối `set_conversation` lặp nguyên văn trong mọi incoming message service của
- * Chatwoot (telegram/line/sms/twilio/tiktok…). Gom về một chỗ: đổi luật mở lại
+ * Luật tìm/mở hội thoại cho mọi incoming message service (telegram/line/sms/twilio/tiktok…). Gom về một chỗ: đổi luật mở lại
  * hội thoại chỉ sửa ở đây.
  */
 class IncomingConversationResolver

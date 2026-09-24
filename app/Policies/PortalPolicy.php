@@ -4,7 +4,7 @@ namespace App\Policies;
 
 use App\Models\AccountUser;
 
-// Port từ refs/chatwoot/app/policies/portal_policy.rb — đọc: mọi thành viên;
+// Đọc: mọi thành viên;
 // ghi: chỉ administrator.
 final class PortalPolicy
 {

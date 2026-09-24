@@ -6,7 +6,6 @@ use App\Models\Inbox;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
 
-// Port từ refs/chatwoot/app/services/auto_assignment/inbox_round_robin_service.rb
 // + khóa ROUND_ROBIN_AGENTS của lib/redis/redis_keys.rb.
 // Hàng đợi Redis là list: lấy agent ở CUỐI hàng, đẩy lại lên ĐẦU → vòng tròn.
 final class InboxRoundRobinService

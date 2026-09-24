@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-// Port từ refs/chatwoot/lib/integrations/slack/incoming_message_builder.rb +
-// lib/integrations/slack/slack_message_helper.rb (gộp một chỗ — helper chỉ
-// dùng ở đây, tách trait riêng không thêm giá trị DRY nào).
+// Dựng tin từ sự kiện Slack; phần helper gộp chung một chỗ vì chỉ dùng ở đây.
 class IncomingMessageBuilder
 {
     private const SUPPORTED_EVENT_TYPES = ['event_callback', 'url_verification'];
@@ -130,7 +128,7 @@ class IncomingMessageBuilder
         return ['challenge' => $this->params['challenge'] ?? null];
     }
 
-    // "Attached File!" là chú thích tự sinh khi Chatwoot gửi tệp ra Slack — bỏ
+    // "Attached File!" là chú thích tự sinh khi hệ thống gửi tệp ra Slack — bỏ
     // qua để tin đó không quay vòng thành một tin nhắn mới trong hội thoại.
     private function attachedFileMessage(): bool
     {
@@ -234,12 +232,12 @@ class IncomingMessageBuilder
         try {
             $slackUser = $this->slackClient()->usersInfo($slackUserId)['user'] ?? [];
             $email = data_get($slackUser, 'profile.email');
-            $chatwootUser = blank($email)
+            $matchingAgent = blank($email)
                 ? null
                 : $this->conversation()->account->users()->where('email', mb_strtolower($email))->first();
 
-            if ($chatwootUser !== null) {
-                return [$chatwootUser, null, null];
+            if ($matchingAgent !== null) {
+                return [$matchingAgent, null, null];
             }
 
             $senderName = data_get($slackUser, 'profile.display_name');

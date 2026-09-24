@@ -7,8 +7,7 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Redis;
 
 /**
- * Port từ refs/chatwoot/app/services/messages/send_email_notification_service.rb —
- * kênh Website/API: khách nhận thư tổng hợp khi agent trả lời. Khóa Redis đặt
+ * Kênh Website/API: khách nhận thư tổng hợp khi agent trả lời. Khóa Redis đặt
  * theo hội thoại để hàng đợi chậm không xếp trùng job.
  */
 class SendEmailNotificationService

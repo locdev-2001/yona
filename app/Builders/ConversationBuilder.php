@@ -5,7 +5,6 @@ namespace App\Builders;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 
-// Port từ refs/chatwoot/app/builders/conversation_builder.rb.
 class ConversationBuilder
 {
     /** @param array<string, mixed> $params */

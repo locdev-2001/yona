@@ -4,7 +4,7 @@ namespace App\Policies;
 
 use App\Models\AccountUser;
 
-// Port từ refs/chatwoot/app/policies/article_policy.rb — chỉ `index` mở cho
+// Chỉ `index` mở cho
 // mọi thành viên, còn lại administrator.
 final class ArticlePolicy
 {

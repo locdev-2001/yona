@@ -16,7 +16,6 @@ use App\Support\Messages\OutgoingText;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/app/builders/messages/message_builder.rb.
 // Bỏ: template_params (kênh WhatsApp F5).
 class MessageBuilder
 {

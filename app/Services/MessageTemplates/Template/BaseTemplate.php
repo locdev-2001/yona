@@ -36,7 +36,7 @@ abstract class BaseTemplate
                 }
             });
         } catch (Throwable $exception) {
-            // rescue StandardError + ChatwootExceptionTracker: mẫu tin hỏng không
+            // rescue StandardError + ExceptionTracker: mẫu tin hỏng không
             // được làm hỏng lượt tạo tin của khách.
             report($exception);
         }
