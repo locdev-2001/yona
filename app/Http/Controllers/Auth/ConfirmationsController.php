@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserSignInService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
 
 class ConfirmationsController extends Controller
@@ -36,8 +36,7 @@ class ConfirmationsController extends Controller
 
         $user->forceFill(['confirmation_token' => null])->save();
 
-        Auth::login($user);
-        $request->session()->regenerate();
+        app(UserSignInService::class)->signIn($request, $user);
 
         return redirect('/app');
     }

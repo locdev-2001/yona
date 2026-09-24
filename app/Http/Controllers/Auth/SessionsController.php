@@ -9,7 +9,7 @@ use App\Models\UserSession;
 use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\TokenService;
 use App\Services\UserSessionRevoker;
-use App\Services\UserSessionTrackingService;
+use App\Services\UserSignInService;
 use App\Support\CurrentUserSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -216,20 +216,7 @@ class SessionsController extends Controller
 
     private function completeLogin(Request $request, User $user): SymfonyResponse
     {
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        $user->forceFill([
-            'sign_in_count' => $user->sign_in_count + 1,
-            'last_sign_in_at' => $user->current_sign_in_at,
-            'last_sign_in_ip' => $user->current_sign_in_ip,
-            'current_sign_in_at' => now(),
-            'current_sign_in_ip' => $request->ip(),
-        ])->save();
-
-        $clientId = $request->session()->getId();
-        CurrentUserSession::remember($request, $clientId);
-        (new UserSessionTrackingService($user, $request, $clientId))->createOrUpdate();
+        app(UserSignInService::class)->signIn($request, $user);
 
         // Vượt ranh giới bundle v3.scss → app.scss: phải full-page load,
         // client-side visit sẽ giữ nguyên stylesheet auth (mất font + _base).

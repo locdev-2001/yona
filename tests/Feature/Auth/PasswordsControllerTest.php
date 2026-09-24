@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Notifications\ResetPasswordInstructions;
+use App\Support\CurrentUserSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 
@@ -64,6 +65,22 @@ describe('PUT /app/auth/password', function () {
 
         Auth::logout();
         expect(Auth::attempt(['email' => $user->email, 'password' => 'NewPassword1!']))->toBeTrue();
+    });
+
+    it('tracks the new session so it can be listed and revoked', function () {
+        $user = User::factory()->create(['sign_in_count' => 3]);
+        $token = $user->generateResetPasswordToken();
+
+        $this->putJson('/app/auth/password', [
+            'reset_password_token' => $token,
+            'password' => 'NewPassword1!',
+            'password_confirmation' => 'NewPassword1!',
+        ])->assertOk();
+
+        $trackedSession = $user->userSessions()->sole();
+        expect($trackedSession->client_id)->toBe(session(CurrentUserSession::SESSION_KEY))
+            ->and($trackedSession->client_id)->toBe(session()->getId())
+            ->and($user->refresh()->sign_in_count)->toBe(4);
     });
 
     it('rejects an invalid token', function () {
