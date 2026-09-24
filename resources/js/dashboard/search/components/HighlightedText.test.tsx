@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import HighlightedText, { SEARCH_MATCH_CLASS } from './HighlightedText';
+import { SEARCH_MATCH_CLASS } from 'dashboard/helper/searchHighlight';
+import HighlightedText from './HighlightedText';
 
 describe('HighlightedText', () => {
     it('tô nền đoạn khớp để thấy được cả trên tên vốn đã đậm vừa', () => {
