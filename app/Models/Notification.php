@@ -79,10 +79,12 @@ class Notification extends Model
             $notification->meta ??= [];
         });
 
+        // Phát notification.created trước khi dọn bản trùng: event xoá bản trùng mang số chưa
+        // đọc đã tính cả thông báo mới, tới trước thì tab đang mở hội thoại đó nháy số.
         static::created(function (Notification $notification) {
-            $notification->processDelivery();
-
             DomainEvent::dispatch(EventType::NOTIFICATION_CREATED, ['notification' => $notification]);
+
+            $notification->processDelivery();
         });
 
         static::updated(function (Notification $notification) {

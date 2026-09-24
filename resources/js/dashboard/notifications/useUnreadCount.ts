@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import { fetchUnreadCount } from './api';
-import type { NotificationRealtimePayload } from './types';
+import type { NotificationRealtimePayload, NotificationRecord } from './types';
 
 // Nguồn DUY NHẤT phía giao diện cho số thông báo chưa đọc của account đang mở:
 // chuông, chấm trên nút menu điện thoại, tiêu đề tab, badge biểu tượng app và việc
@@ -15,9 +15,12 @@ export interface UnreadCountState {
     isLoaded: boolean;
 }
 
-// read_all sinh N event, mỗi event mang số tính lúc phát và có thể tới lệch thứ tự;
-// hỏi lại máy chủ một lần sau loạt event để chốt số cuối.
+// Event realtime có thể tới lệch thứ tự; hỏi lại máy chủ một lần sau loạt event để chốt số cuối.
 export const UNREAD_COUNT_REFRESH_DELAY_MS = 800;
+// Tối đa chờ event "đã đọc" của hội thoại đang mở; quá hạn thì hỏi máy chủ.
+export const VIEWED_CONVERSATION_READ_WAIT_MS = 5000;
+
+const CONVERSATION_ACTOR_TYPE = 'Conversation';
 
 const NOTIFICATION_EVENTS = ['notification.created', 'notification.updated', 'notification.deleted'] as const;
 const EMPTY_STATE: UnreadCountState = { accountId: 0, count: 0, isLoaded: false };
@@ -29,11 +32,42 @@ let realtimeVersion = 0;
 let fetchingAccountId = 0;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 let isRealtimeAttached = false;
+// Hội thoại đang mở ở tab này: tin vào đó được đánh dấu đọc ngay khi tới, nên số máy
+// chủ gửi kèm trong lúc chờ còn tính thông báo sắp đọc. Giữ nguyên số tới khi event
+// "đã đọc" của hội thoại đó về, thay vì nháy lên rồi hạ xuống.
+let viewedConversationId = 0;
+let viewedReadWaitTimer: ReturnType<typeof setTimeout> | undefined;
 const listeners = new Set<() => void>();
 
 function setUnreadState(nextState: UnreadCountState): void {
     unreadState = nextState;
     listeners.forEach(listener => listener());
+}
+
+function isWaitingForViewedRead(): boolean {
+    return viewedReadWaitTimer !== undefined;
+}
+
+function stopWaitingForViewedRead(): void {
+    clearTimeout(viewedReadWaitTimer);
+    viewedReadWaitTimer = undefined;
+}
+
+function waitForViewedRead(): void {
+    stopWaitingForViewedRead();
+    viewedReadWaitTimer = setTimeout(() => {
+        viewedReadWaitTimer = undefined;
+        refreshNow();
+    }, VIEWED_CONVERSATION_READ_WAIT_MS);
+}
+
+function isAboutViewedConversation(payload: Partial<NotificationRealtimePayload>): boolean {
+    const notification = payload.notification as Partial<NotificationRecord> | undefined;
+    return (
+        viewedConversationId > 0 &&
+        notification?.primary_actor_type === CONVERSATION_ACTOR_TYPE &&
+        notification.primary_actor?.id === viewedConversationId
+    );
 }
 
 function refreshNow(): void {
@@ -46,6 +80,7 @@ function refreshNow(): void {
     fetchUnreadCount(accountId)
         .then(count => {
             if (unreadState.accountId !== accountId || realtimeVersion !== versionAtStart) return;
+            if (isWaitingForViewedRead()) return;
             const normalizedCount = Number(count);
             if (!Number.isFinite(normalizedCount)) return;
             setUnreadState({ accountId, count: Math.max(0, normalizedCount), isLoaded: true });
@@ -61,6 +96,18 @@ function applyRealtimePayload(payload: unknown): void {
     if (!realtimePayload || realtimePayload.account_id !== unreadState.accountId) return;
 
     realtimeVersion += 1;
+
+    if (isAboutViewedConversation(realtimePayload)) {
+        const notification = realtimePayload.notification as Partial<NotificationRecord>;
+        if (!notification.read_at && !notification.snoozed_until) {
+            waitForViewedRead();
+            return;
+        }
+        stopWaitingForViewedRead();
+    } else if (isWaitingForViewedRead()) {
+        return;
+    }
+
     const nextCount = Number(realtimePayload.unread_count);
     if (Number.isFinite(nextCount)) {
         setUnreadState({ ...unreadState, count: Math.max(0, nextCount), isLoaded: true });
@@ -96,6 +143,15 @@ export function bindUnreadCount(accountId: number): void {
     refreshNow();
 }
 
+// Hội thoại tab này đang mở, theo id hội thoại phía giao diện (0 = không mở hội thoại nào).
+export function setViewedConversation(conversationId: number): void {
+    viewedConversationId = conversationId;
+    if (!conversationId && isWaitingForViewedRead()) {
+        stopWaitingForViewedRead();
+        scheduleUnreadCountRefresh();
+    }
+}
+
 export function scheduleUnreadCountRefresh(): void {
     if (!unreadState.accountId) return;
     clearTimeout(refreshTimer);
@@ -115,6 +171,7 @@ export function subscribeUnreadCount(listener: () => void): () => void {
 export function resetUnreadCount(): void {
     clearTimeout(refreshTimer);
     refreshTimer = undefined;
+    stopWaitingForViewedRead();
     realtimeVersion += 1;
     fetchingAccountId = 0;
     detachRealtime();

@@ -11,6 +11,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import { setViewedConversation } from 'dashboard/notifications/useUnreadCount';
 import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import {
@@ -843,6 +844,13 @@ export function ConversationProvider({
     );
 
     markMessagesReadRef.current = markMessagesRead;
+
+    // Tin vào hội thoại đang mở được đánh dấu đọc ngay khi tới: báo store số chưa đọc
+    // để chuông và tiêu đề tab không nháy số của thông báo sắp đọc.
+    useEffect(() => {
+        setViewedConversation(conversationId);
+        return () => setViewedConversation(0);
+    }, [conversationId]);
 
     // actionCable.js → store: các event conversation/message của Chatwoot.
     useRealtimeEvent<MessageEventPayload>('message.created', (message) => {

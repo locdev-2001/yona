@@ -10,9 +10,12 @@ vi.mock('dashboard/helper/apiClient', () => ({
 
 import {
     UNREAD_COUNT_REFRESH_DELAY_MS,
+    VIEWED_CONVERSATION_READ_WAIT_MS,
     bindUnreadCount,
     getUnreadCountState,
     resetUnreadCount,
+    setViewedConversation,
+    subscribeUnreadCount,
     useNotificationsUnreadCount,
 } from './useUnreadCount';
 
@@ -42,6 +45,36 @@ function emitNotificationEvent(eventName: string, unreadCount: number, accountId
     act(() => emitter.emit(eventName, { notification: { id: 1 }, unread_count: unreadCount, count: 9, account_id: accountId }));
 }
 
+function emitConversationNotification(
+    eventName: string,
+    conversationId: number,
+    unreadCount: number,
+    readAt: string | null = null,
+) {
+    act(() =>
+        emitter.emit(eventName, {
+            notification: {
+                id: 40 + conversationId,
+                primary_actor_type: 'Conversation',
+                primary_actor_id: 900 + conversationId,
+                primary_actor: { id: conversationId },
+                read_at: readAt,
+            },
+            unread_count: unreadCount,
+            count: 9,
+            account_id: 2,
+        }),
+    );
+}
+
+const stopRecorders: Array<() => void> = [];
+
+function recordCounts(): number[] {
+    const seenCounts: number[] = [];
+    stopRecorders.push(subscribeUnreadCount(() => seenCounts.push(getUnreadCountState().count)));
+    return seenCounts;
+}
+
 describe('store số thông báo chưa đọc', () => {
     beforeEach(() => {
         resetUnreadCount();
@@ -51,6 +84,8 @@ describe('store số thông báo chưa đọc', () => {
     });
 
     afterEach(() => {
+        stopRecorders.splice(0).forEach(stop => stop());
+        setViewedConversation(0);
         resetUnreadCount();
         vi.useRealTimers();
     });
@@ -184,5 +219,81 @@ describe('store số thông báo chưa đọc', () => {
 
         expect(getJson).not.toHaveBeenCalled();
         expect(getUnreadCountState()).toEqual({ accountId: 0, count: 0, isLoaded: false });
+    });
+
+    describe('hội thoại đang mở ở tab này', () => {
+        const VIEWED_ID = 11;
+        const READ_AT = '2026-09-25T00:00:00Z';
+
+        beforeEach(async () => {
+            getJson.mockResolvedValue(0);
+            bindUnreadCount(2);
+            await flushPromises();
+            getJson.mockClear();
+            setViewedConversation(VIEWED_ID);
+        });
+
+        it('tin vào hội thoại đang mở không đẩy số lên rồi hạ xuống', () => {
+            const seenCounts = recordCounts();
+
+            emitConversationNotification('notification.created', VIEWED_ID, 1);
+            emitConversationNotification('notification.updated', VIEWED_ID, 0, READ_AT);
+
+            expect(seenCounts.every(count => count === 0)).toBe(true);
+            expect(getUnreadCountState().count).toBe(0);
+        });
+
+        it('event khác tới trong lúc chờ (kể cả xoá bản trùng) không làm nháy số', () => {
+            const seenCounts = recordCounts();
+
+            emitConversationNotification('notification.created', VIEWED_ID, 1);
+            emitNotificationEvent('notification.deleted', 1);
+            emitNotificationEvent('notification.updated', 1);
+            emitConversationNotification('notification.updated', VIEWED_ID, 0, READ_AT);
+
+            expect(seenCounts.every(count => count === 0)).toBe(true);
+        });
+
+        it('trong lúc chờ đọc, số hỏi được từ máy chủ không được áp', async () => {
+            getJson.mockResolvedValue(1);
+            emitNotificationEvent('notification.updated', 0);
+            emitConversationNotification('notification.created', VIEWED_ID, 1);
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(UNREAD_COUNT_REFRESH_DELAY_MS);
+            });
+
+            expect(getUnreadCountState().count).toBe(0);
+        });
+
+        it('chờ quá hạn mà không có event đã đọc thì lấy số của máy chủ', async () => {
+            getJson.mockResolvedValue(1);
+            emitConversationNotification('notification.created', VIEWED_ID, 1);
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(VIEWED_CONVERSATION_READ_WAIT_MS);
+            });
+
+            expect(getJson).toHaveBeenCalledOnce();
+            expect(getUnreadCountState().count).toBe(1);
+        });
+
+        it('rời hội thoại khi đang chờ thì hỏi lại máy chủ', async () => {
+            getJson.mockResolvedValue(1);
+            emitConversationNotification('notification.created', VIEWED_ID, 1);
+
+            setViewedConversation(0);
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(UNREAD_COUNT_REFRESH_DELAY_MS);
+            });
+
+            expect(getUnreadCountState().count).toBe(1);
+        });
+
+        it('thông báo của hội thoại khác vẫn áp số ngay', () => {
+            emitConversationNotification('notification.created', VIEWED_ID + 1, 1);
+
+            expect(getUnreadCountState().count).toBe(1);
+        });
     });
 });

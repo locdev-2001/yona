@@ -290,6 +290,26 @@ it('keeps only the latest notification per user and conversation', function () {
         ->and(Notification::query()->find($older->id))->toBeNull();
 });
 
+it('announces the new notification before removing the one it replaces', function () {
+    makeNotificationRecord([
+        'account_id' => $this->account->id,
+        'user_id' => $this->user->id,
+        'primary_actor_id' => $this->conversation->id,
+    ]);
+    $dispatchedTypes = [];
+    Event::listen(DomainEvent::class, function (DomainEvent $event) use (&$dispatchedTypes) {
+        $dispatchedTypes[] = $event->type;
+    });
+
+    makeNotificationRecord([
+        'account_id' => $this->account->id,
+        'user_id' => $this->user->id,
+        'primary_actor_id' => $this->conversation->id,
+    ]);
+
+    expect($dispatchedTypes)->toBe([EventType::NOTIFICATION_CREATED, EventType::NOTIFICATION_DELETED]);
+});
+
 it('serialises the conversation and the preview body for the realtime payload', function () {
     $notification = makeNotificationRecord([
         'account_id' => $this->account->id,
