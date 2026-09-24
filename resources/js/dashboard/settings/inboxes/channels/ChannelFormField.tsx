@@ -1,5 +1,5 @@
 // Khối `<div class="flex-shrink-0 flex-grow-0"><label>…</label></div>` lặp lại ở
-// mọi form kênh của Chatwoot (Telegram.vue, Line.vue, BandwidthSms.vue,
+// mọi form kênh (Telegram.vue, Line.vue, BandwidthSms.vue,
 // Twilio.vue, CloudWhatsapp.vue, 360DialogWhatsapp.vue). Gom về một chỗ để đổi
 // một lần là mọi kênh đổi theo.
 interface ChannelFormFieldProps {

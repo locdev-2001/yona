@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import BarChart from './BarChart';
 
-// Port từ shared/components/specs/BarChart.spec.js — bản gốc mock @chatwoot/viz;
+// Port từ shared/components/specs/BarChart.spec.js — bản trước mock thư viện biểu đồ viz;
 // ở đây chart là component React port sẵn nên kiểm thẳng trên DOM sinh ra.
 
 const data = {

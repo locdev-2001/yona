@@ -15,7 +15,7 @@ const VALID_NAVIGATION_PATHS = [
     'portals_settings_index',
 ];
 
-// Sidebar của Yona đang trỏ `portals/categories|locales|settings` (khác Chatwoot
+// Sidebar của Yona đang trỏ `portals/categories|locales|settings` (khác bản trước
 // dùng `portals/portals_categories_index`…) — nhận cả hai dạng để không lệch màn.
 const NAVIGATION_ALIASES: Record<string, string> = {
     articles: 'portals_articles_index',

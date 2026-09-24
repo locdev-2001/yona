@@ -97,7 +97,7 @@ const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.FALLBACK]: FallbackBubble,
 } as const;
 
-// Loại tin lõi Chatwoot không có content_type: driver chuẩn hoá vào
+// Loại tin lõi không có content_type: driver chuẩn hoá vào
 // content_attributes theo khoá của docs/channel-capabilities.md §2.1/§2.4 và chỗ
 // này rẽ nhánh THEO KHOÁ, không theo kênh — đúng cách bản gốc làm với
 // whatsappFlowResponse / contentAttributes.type === 'dyte' / imageType (story

@@ -18,7 +18,7 @@ function activeDateFnsLocale(): Locale {
 }
 
 // Mẫu định dạng của bản gốc viết theo thói quen tiếng Anh ("Sep 7, 10:37 PM").
-// Giữ nguyên chữ ký hàm (nơi gọi vẫn truyền mẫu như Chatwoot) nhưng đổi sang mẫu
+// Giữ nguyên chữ ký hàm (nơi gọi vẫn truyền mẫu cũ) nhưng đổi sang mẫu
 // tương đương của locale — một chỗ duy nhất, thêm ngôn ngữ chỉ cần thêm một hàng.
 // KHÁC BIỆT CỐ Ý so với gốc: gốc in ngày giờ tiếng Anh ở mọi ngôn ngữ.
 const PATTERN_BY_LOCALE: Record<string, Record<string, string>> = {

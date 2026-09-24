@@ -1,6 +1,6 @@
 // Port từ dashboard/api/contacts.js + phần action tương ứng của store contacts:
 // đọc camelize (stopPaths custom_attributes), ghi snakecase (giữ nguyên
-// custom_attributes) — đúng như actions.js của Chatwoot.
+// custom_attributes).
 import { deleteJson, getJson, postForm, postJson, putForm, putJson } from 'dashboard/helper/apiClient';
 import { camelizeKeys, snakeizeKeys } from 'dashboard/helper/transformKeys';
 import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';

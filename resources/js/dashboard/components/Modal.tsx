@@ -5,7 +5,7 @@ import Button from 'dashboard/components-next/button/Button';
 
 // Port từ dashboard/components/Modal.vue — giữ nguyên class + hành vi đóng
 // (Esc, mousedown lên backdrop rồi mouseup mới đóng). Transition modal-fade
-// của Vue không có tương đương thẳng; Chatwoot cũng không khai báo transition
+// của Vue không có tương đương thẳng, và modal không khai báo transition
 // đó trong scss, nên bỏ.
 interface ModalProps {
     show: boolean;

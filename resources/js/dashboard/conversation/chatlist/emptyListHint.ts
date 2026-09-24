@@ -1,7 +1,7 @@
 import { ASSIGNEE_TYPE } from '../constants';
 import type { AssigneeTab, ConversationListMeta } from '../types';
 
-// Lệch có chủ đích so với Chatwoot (reports/ux-deviations.md #1): cột hội thoại
+// Quyết định UX có chủ đích (docs/ux-decisions.md): cột hội thoại
 // rỗng phải nói ĐÚNG vì sao nó rỗng và chỉ ra chỗ có việc, thay vì câu chung
 // "không có hoạt động trò chuyện nào" khiến người trực tưởng inbox trống trong
 // khi khách đang chờ ở tab bên cạnh.

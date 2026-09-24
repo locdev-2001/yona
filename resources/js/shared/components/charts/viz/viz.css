@@ -1,4 +1,4 @@
-/* Port nguyên văn <style scoped> của @chatwoot/viz@0.1.5 (bar + heatmap + percentage).
+/* Port nguyên văn <style scoped> của thư viện biểu đồ viz@0.1.5 (bar + heatmap + percentage).
    Vue scoped thêm data-v-*; React không có nên bỏ, phần khai báo còn lại giữ nguyên. */
 
 .cw-viz-bar {

@@ -1,4 +1,4 @@
-// Trích wootConstants của Chatwoot (phần màn conversation dùng).
+// Hằng dùng chung của màn conversation.
 export const ASSIGNEE_TYPE = {
     ME: 'me',
     UNASSIGNED: 'unassigned',

@@ -4,7 +4,7 @@ import type { AgentMeta, ContactMeta, Conversation } from './types';
 
 // Mặt tiền API cho panel contact bên phải — gom mọi endpoint mà ContactPanel
 // dùng vào một chỗ (tương đương api/inbox/conversation.js + api/contactNotes.js
-// + api/contacts.js + api/accountActions.js của Chatwoot). Đính kèm của hội thoại
+// + api/contacts.js + api/accountActions.js). Đính kèm của hội thoại
 // nằm ở conversation/api.ts vì đó là dữ liệu mức hội thoại, không riêng panel.
 const accountUrl = (accountId: number): string => `/api/v1/accounts/${accountId}`;
 

@@ -1,6 +1,6 @@
 import type { AccountRole, SidebarMenuChild, SidebarMenuItem } from './provider';
 
-// Tương đương isAllowed/shouldShow của sidebar Chatwoot: mục khai báo
+// isAllowed/shouldShow của sidebar: mục khai báo
 // permissions chỉ hiện với role tương ứng, mục khai báo featureFlag chỉ hiện khi
 // account bật cờ đó. Nhóm cha bị lọc sạch con thì ẩn, còn nhóm vốn rỗng
 // (Folders/Teams… chờ dữ liệu) giữ nguyên như bản gốc.

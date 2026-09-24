@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildLocaleMenuItems, buildPortalArticleURL, buildPortalURL } from './portalHelper';
 
 // Port từ dashboard/helper/specs/portalHelper.spec.js.
-// Khác biệt cố ý: Yona không có `window.chatwootConfig` (helpCenterURL/hostURL);
+// Khác biệt cố ý: Yona không có biến cấu hình toàn cục (helpCenterURL/hostURL);
 // help center chạy cùng host với dashboard nên base URL là `window.location.origin`.
 describe('portalHelper', () => {
     describe('buildPortalURL', () => {

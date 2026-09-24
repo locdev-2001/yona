@@ -1,6 +1,6 @@
 // Port từ shared/components/GreetingsEditor.vue — nhánh richtext dùng
 // WootMessageEditor (ProseMirror) vào B3 như message_signature; tạm textarea
-// giữ nguyên flow lưu ([[chatwoot-port-direction]] A4 đã làm cùng cách).
+// giữ nguyên flow lưu.
 interface GreetingsEditorProps {
     value: string;
     label?: string;

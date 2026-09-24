@@ -6,7 +6,7 @@ import { putJson } from 'dashboard/helper/apiClient';
 import type { SharedPageProps } from '../../../types';
 
 // Port từ components-next/sidebar/provider.js — context + resize/collapse.
-// sidebar_width lưu vào ui_settings qua /api/v1/profile như Chatwoot.
+// sidebar_width lưu vào ui_settings qua /api/v1/profile.
 
 export const DEFAULT_WIDTH = 200;
 export const MIN_WIDTH = 56;
@@ -18,9 +18,9 @@ export type AccountRole = 'agent' | 'administrator';
 export interface SidebarMenuChild {
     name: string;
     label: string;
-    // Tương đương meta.permissions của route Chatwoot: rỗng = mọi thành viên.
+    // Quyền cần để thấy mục: rỗng = mọi thành viên.
     permissions?: AccountRole[];
-    // Tương đương meta.featureFlag của route Chatwoot: mục chỉ hiện khi account
+    // Cờ tính năng của mục: mục chỉ hiện khi account
     // bật cờ đó (accounts.feature_flags).
     featureFlag?: string;
     icon?: string | ReactNode;

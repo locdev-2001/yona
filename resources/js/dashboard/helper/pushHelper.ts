@@ -7,7 +7,7 @@ import { deleteJson, postJson } from './apiClient';
 export const SERVICE_WORKER_URL = '/sw.js';
 const SUBSCRIPTIONS_URL = '/api/v1/notification_subscriptions';
 
-// window.chatwootConfig.vapidPublicKey — máy chủ (HandleInertiaRequests) chỉ gửi
+// Khoá VAPID công khai — máy chủ (HandleInertiaRequests) chỉ gửi
 // khoá khi gửi được push.
 export function vapidPublicKeyOf(globalConfig: GlobalConfig | undefined): string | null {
     return globalConfig?.vapidPublicKey ?? null;

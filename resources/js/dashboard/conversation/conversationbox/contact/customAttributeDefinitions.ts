@@ -2,7 +2,7 @@ import { useCustomAttributesByModel } from 'dashboard/composables/useCustomAttri
 import type { AttributeModel, CustomAttributeDefinition } from 'dashboard/composables/useCustomAttributes';
 
 // Cửa duy nhất để lấy định nghĩa custom attribute cho panel hội thoại
-// (getter `attributes/getAttributesByModel` của Chatwoot).
+// (lọc định nghĩa thuộc tính theo model).
 export type { CustomAttributeDefinition };
 
 export function useCustomAttributeDefinitions(

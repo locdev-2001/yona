@@ -20,7 +20,7 @@ export const LAYOUT_QWERTY = 'QWERTY';
 export const LAYOUT_QWERTZ = 'QWERTZ';
 export const LAYOUT_AZERTY = 'AZERTY';
 
-// QWERTZ: Alt+P / Alt+L cần thêm Shift (chatwoot#9492).
+// QWERTZ: Alt+P / Alt+L cần thêm Shift.
 export const keysToModifyInQWERTZ = new Set(['Alt+KeyP', 'Alt+KeyL']);
 
 export const isEscape = (event: KeyboardEvent): boolean => event.key === 'Escape';

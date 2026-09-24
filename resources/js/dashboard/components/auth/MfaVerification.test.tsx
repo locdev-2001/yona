@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import MfaVerification from './MfaVerification';
 
-// Port từ dashboard/components/auth/MfaVerification.spec.js — Chatwoot gọi axios
+// Kiểm hành vi MfaVerification — bản Vue gọi axios
 // trong component, bản React đẩy việc gửi lên trang đăng nhập nên assert callback.
 
 function renderComponent(onVerify = vi.fn()) {

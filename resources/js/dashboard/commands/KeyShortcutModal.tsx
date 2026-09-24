@@ -35,7 +35,7 @@ export default function KeyShortcutModal({ show, onClose }: KeyShortcutModalProp
         void detectKeyboardLayout().then(setCurrentLayout);
     }, [show]);
 
-    // Bàn phím QWERTZ cần thêm Shift (chatwoot#9492).
+    // Bàn phím QWERTZ cần thêm Shift.
     const needsShiftKey = (keySet: string[]) =>
         currentLayout === LAYOUT_QWERTZ && keySet.some(key => keysToModifyInQWERTZ.has(key));
 

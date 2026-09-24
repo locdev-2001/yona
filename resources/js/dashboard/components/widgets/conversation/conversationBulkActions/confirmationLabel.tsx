@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { t } from '../../../../../i18n';
 
-// Thay `<I18nT :plural>` + slot `#n` / `#agentName` của Chatwoot: lấy chuỗi thô
+// Thay `<I18nT :plural>` + slot `#n` / `#agentName`: lấy chuỗi thô
 // (t không tham số = không nội suy), chọn nhánh số nhiều rồi bọc mỗi tham số
 // bằng <strong> đúng như slot bản gốc.
 export function confirmationLabel(key: string, count: number, values: Record<string, string> = {}): ReactNode {

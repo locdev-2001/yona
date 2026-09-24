@@ -11,7 +11,7 @@ vi.mock('./api', () => ({
 const api = await import('./api');
 const { clearSearchResults, fullSearch, getSearchState, searchByKind, PER_PAGE } = await import('./store');
 
-// Port hành vi của store/modules/conversationSearch.js (Chatwoot không có spec
+// Hành vi của store tìm kiếm hội thoại (bản trước không có spec
 // riêng) — hai bất biến ghi trong comment nguồn: khử trùng khi trang chồng lấn,
 // và hasMore đọc từ kích thước trang thô.
 const contact = (id: number) => ({ id, name: `contact-${id}` }) as never;

@@ -1,4 +1,4 @@
-// Shape payload theo jbuilder Chatwoot: _conversation partial + _message + push_event_data.
+// Shape payload của API: _conversation partial + _message + push_event_data.
 
 export interface ContactMeta {
     id: number;

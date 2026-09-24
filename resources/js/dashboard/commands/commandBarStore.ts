@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import type { CommandBarAction } from 'dashboard/helper/commandbar/actions';
 
-// Thay các composable commands/* của Chatwoot (useConversationHotKeys, useGoToCommandHotKeys…):
+// Gom các composable phím tắt (useConversationHotKeys, useGoToCommandHotKeys…) vào một store:
 // mỗi nguồn đăng ký danh sách action của mình; CommandBar (mount ở Dashboard, ngoài
 // ConversationProvider) gộp lại. B5 chỉ có nguồn conversation; B10 thêm nguồn = thêm setCommandBarActions.
 type Listener = () => void;

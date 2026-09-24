@@ -10,7 +10,7 @@ import SanitizedHtml from 'shared/components/SanitizedHtml';
 
 // Port từ settings/inbox/channels/Instagram.vue — nút đăng nhập Instagram rồi
 // nhảy sang URL uỷ quyền do server trả về. Banner giới hạn của Meta chỉ hiện
-// trên Chatwoot Cloud nên không port.
+// trên bản cloud nên không làm.
 export default function InstagramChannelForm() {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;

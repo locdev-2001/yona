@@ -35,7 +35,7 @@ export default function Code({
     script = '',
     lang = 'javascript',
     enableCodePen = false,
-    codepenTitle = 'Chatwoot Codepen',
+    codepenTitle = 'Codepen',
     className = '',
 }: CodeProps) {
     const scrubbedScript = useMemo(() => scrubScript(script), [script]);

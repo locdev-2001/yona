@@ -15,14 +15,14 @@ export class ApiError extends Error {
     }
 }
 
-// Tương đương parseAPIErrorResponse của Chatwoot (đọc message từ response lỗi).
+// Đọc message từ response lỗi của API.
 export function parseApiErrorMessage(error: unknown): string | null {
     if (error instanceof ApiError && error.body) {
         if (error.body.errors) {
             const [first] = Object.values(error.body.errors).flat();
             if (first) return first;
         }
-        // Chatwoot trả lỗi API dạng {error: "..."} (render_could_not_create_error).
+        // API trả lỗi dạng {error: "..."} (render_could_not_create_error).
         return error.body.error ?? error.body.message ?? null;
     }
     return null;

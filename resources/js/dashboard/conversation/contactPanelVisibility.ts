@@ -6,10 +6,10 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 
 // Lệnh founder 07/09/2026: panel phải (thông tin liên hệ) mở SẴN trên màn rộng —
 // người dùng không phải đi tìm nút để thấy khách là ai. Dưới ngưỡng rộng thì giữ
-// hành vi gốc Chatwoot (đóng, mở bằng nút).
+// hành vi mặc định (đóng, mở bằng nút).
 //
 // Lựa chọn của người dùng vẫn thắng mặc định và được nhớ ở `ui_settings`
-// (PUT /api/v1/profile) — cùng chỗ Chatwoot đã lưu, nên nhớ theo TÀI KHOẢN chứ
+// (PUT /api/v1/profile) — cùng chỗ các thiết lập giao diện khác, nên nhớ theo TÀI KHOẢN chứ
 // không chỉ theo trình duyệt. Chưa từng bấm thì khoá vắng mặt và mặc định theo
 // bề rộng khung nhìn.
 //

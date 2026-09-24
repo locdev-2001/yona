@@ -1,5 +1,5 @@
 export const icons = {
-  // Nhãn kênh Zalo — Chatwoot không có, Iconify (logos/ri/lucide/ph) cũng không.
+  // Nhãn kênh Zalo — Iconify (logos/ri/lucide/ph) cũng không.
   // Vẽ tay đơn sắc theo hình khối của Zalo (bong bóng vuông bo góc + chữ Z khoét
   // rỗng) để đọc được ở 16px; dùng `currentColor` như mọi icon kênh khác.
   zalo: {

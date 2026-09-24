@@ -9,7 +9,7 @@ import type { Portal } from '../types';
 
 // Port từ components-next/HelpCenter/Pages/PortalSettingsPage/PortalConfigurationSettings.vue.
 // `ssl_status` là endpoint của bản cloud (enterprise) — bản port bỏ hẳn, nên
-// khối trạng thái SSL và nút làm mới không hiển thị (isOnChatwootCloud = false).
+// khối trạng thái SSL và nút làm mới không hiển thị(bản tự host).
 interface PortalConfigurationSettingsProps {
     activePortal: Portal;
     onUpdatePortalConfiguration: (portal: Record<string, unknown>) => void;

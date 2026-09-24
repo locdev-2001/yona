@@ -9,7 +9,7 @@ import NextButton from 'dashboard/components-next/button/Button';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 
-// Port từ dashboard/components/auth/MfaVerification.vue. Chatwoot gọi thẳng
+// Bản Vue gọi thẳng
 // axios POST /auth/sign_in; ở đây trang đăng nhập giữ việc gửi (Inertia).
 const OTP = 'otp';
 const BACKUP = 'backup';

@@ -14,7 +14,7 @@ import type {
     TeamMeta,
 } from './types';
 
-// Endpoint dashboard API của Chatwoot (web_api session) — xem ConversationsController.
+// Endpoint dashboard API (web_api session) — xem ConversationsController.
 
 // Trang lấy bằng cursor chỉ mang next_cursor; số đếm tab lấy riêng ở fetchConversationMeta.
 export interface ConversationListPageMeta extends Partial<ConversationListMeta> {

@@ -1,4 +1,3 @@
-// Port từ refs/chatwoot/app/javascript/shared/constants/locales.js (v4.17.1).
 const locales: Record<string, string> = {
   af: 'Afrikaans',
   af_NA: 'Afrikaans (Namibia)',

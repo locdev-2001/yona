@@ -1,5 +1,5 @@
 // Port từ store/modules/draftMessages.js + shared/helpers/localStorage.js.
-// Bản dashboard của Chatwoot v4.17.1 giữ bản nháp trong localStorage (khóa
+// Bản dashboard trước giữ bản nháp trong localStorage (khóa
 // `draftMessages`), KHÔNG gọi `…/conversations/{id}/draft_messages` — endpoint
 // đó dành cho client khác. Bản port giữ đúng nguồn đó để hành vi trùng oracle.
 

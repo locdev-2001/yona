@@ -1,4 +1,4 @@
-// Shape contact phía client — camelCase như store Chatwoot
+// Shape contact phía client — camelCase
 // (camelcaseKeys deep, stopPaths custom_attributes).
 export interface ContactSocialProfiles {
     facebook?: string;

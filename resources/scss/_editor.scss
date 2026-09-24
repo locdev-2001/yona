@@ -1,4 +1,4 @@
-// Port style ProseMirror của editor Chatwoot:
+// Style ProseMirror của editor:
 // - base.scss của @chatwoot/prosemirror-schema (giữ nguyên — các biến --space-*/--w-*
 //   KHÔNG được định nghĩa ở bản gốc nên fallback về initial, đừng "sửa giùm").
 // - khối <style> global của WootWriter/Editor.vue (bỏ phần copilot EE).

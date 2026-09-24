@@ -26,7 +26,7 @@ import { useTeamsList } from './useTeamsList';
 
 // Port từ routes/dashboard/conversation/ConversationAction.vue — khối Assignee /
 // Team / Priority / Conversation Labels, đúng thứ tự bản gốc.
-// `useTrack` (analytics Chatwoot) không port.
+// Không gửi analytics theo dõi thao tác.
 export default function ConversationAction() {
     const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const { selectedConversation, assignAgent, assignTeam, togglePriority } = useConversation();

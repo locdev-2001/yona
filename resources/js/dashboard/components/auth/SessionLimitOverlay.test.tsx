@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import SessionLimitOverlay from './SessionLimitOverlay';
 import type { UserSessionRow } from 'dashboard/settings/profile/ActiveSessions';
 
-// Không có spec Vue tương ứng ở Chatwoot; test bám hành vi của
+// Test bám hành vi của
 // SessionLimitOverlay.vue (sắp xếp theo created_at giảm dần, khoá nút khi đang xử lý).
 function makeSession(overrides: Partial<UserSessionRow>): UserSessionRow {
     return {

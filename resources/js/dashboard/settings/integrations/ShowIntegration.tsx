@@ -23,7 +23,7 @@ import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/IntegrationHooks.vue
 // (màn của route `settings/integrations/:integration_id`). ShowIntegration.vue
-// cùng thư mục không nằm trên route nào của Chatwoot v4.17.1 nên không port.
+// cùng thư mục không nằm trên route nào nên không làm.
 interface ShowIntegrationProps {
     integrationId: string;
 }

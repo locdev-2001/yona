@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-// Thay @tanstack/vue-table của Chatwoot: mô hình bảng tối giản (không sắp xếp)
+// Thay @tanstack/vue-table: mô hình bảng tối giản (không sắp xếp)
 // — đủ cho Table.tsx/Pagination.tsx dựng đúng DOM gốc.
 // Hai chế độ phân trang, đúng như `manualPagination` của bản gốc:
 //   - tự động (mặc định): cắt trang ngay trên mảng truyền vào;

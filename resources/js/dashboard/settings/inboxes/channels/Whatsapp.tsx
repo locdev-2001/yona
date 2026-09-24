@@ -8,7 +8,7 @@ import TwilioChannelForm from './Twilio';
 
 // Port từ settings/inbox/channels/Whatsapp.vue — bước chọn nhà cung cấp rồi form
 // cấu hình. Nhánh embedded signup (chỉ chạy khi có whatsappAppId của Meta) và các
-// banner giới hạn của Chatwoot Cloud không port — xem note.
+// banner giới hạn của bản cloud không làm — xem note.
 const PROVIDER_TYPES = {
     WHATSAPP: 'whatsapp',
     TWILIO: 'twilio',

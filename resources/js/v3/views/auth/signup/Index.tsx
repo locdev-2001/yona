@@ -4,7 +4,7 @@ import AuthShell from 'v3/components/AuthShell';
 import { BrandMark } from '../../../components/BrandMark';
 
 // Port từ v3/views/auth/signup/Index.vue
-// (Testimonials chỉ hiện trên Chatwoot cloud — bỏ).
+// (Testimonials chỉ hiện trên bản cloud — bỏ).
 export default function SignupIndex() {
     return (
         <AuthShell>

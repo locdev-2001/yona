@@ -11,7 +11,7 @@ import type {
 
 // Port từ dashboard/components-next/button/Button.vue — giữ nguyên STYLE_CONFIG.
 // Shorthand boolean (solid/outline/…, blue/ruby/…, xs/sm/md/lg) giữ lại để
-// call-site đọc giống template Chatwoot.
+// call-site đọc gọn như template.
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     label?: string | number;
     variant?: ButtonVariant;

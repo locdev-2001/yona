@@ -190,7 +190,7 @@ describe('bong bóng cuộc gọi Zalo', () => {
     });
 });
 
-// MỞ RỘNG NGOÀI GỐC: Chatwoot v4.17.1 không vẽ biểu cảm. Hàng emoji mang
+// Biểu cảm là phần mở rộng riêng của Yona. Hàng emoji mang
 // `data-yona-reactions` để pixel-diff loại trừ được.
 describe('hàng biểu cảm dưới bong bóng', () => {
     it('vẽ emoji đã lưu ở content_attributes.reactions', () => {

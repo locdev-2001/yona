@@ -1,5 +1,5 @@
 // Thay cho tinycolor2 (phụ thuộc gián tiếp của @lk77/vue3-color mà ColorPicker
-// của Chatwoot dùng) — chỉ giữ đúng phần đổi hệ màu Chrome picker cần.
+// dùng) — chỉ giữ đúng phần đổi hệ màu Chrome picker cần.
 export interface RgbaColor {
     r: number;
     g: number;

@@ -1,7 +1,7 @@
 import { logout } from 'dashboard/helper/logout';
 import Button from 'dashboard/components-next/button/Button';
 
-// Placeholder cho màn /app/no-accounts của Chatwoot — UI đầy đủ vào ở A3.
+// Màn /app/no-accounts tạm thời — UI đầy đủ làm sau.
 export default function NoAccounts() {
     return (
         <main className="flex flex-col items-center justify-center w-full min-h-screen gap-4 bg-n-background">

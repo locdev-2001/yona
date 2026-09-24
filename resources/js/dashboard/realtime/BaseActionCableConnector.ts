@@ -28,7 +28,7 @@ interface PusherConnection {
 }
 
 // listenToAll của laravel-echo trả tên có namespace hoặc tiền tố "." cho event
-// ngoài namespace (`.message.created`) — cắt về đúng tên Chatwoot.
+// ngoài namespace (`.message.created`) — cắt về đúng tên event nghiệp vụ.
 export function normalizeEchoEventName(eventName: string): string {
     return eventName.startsWith('.') ? eventName.slice(1) : eventName;
 }

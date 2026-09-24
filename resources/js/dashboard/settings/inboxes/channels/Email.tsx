@@ -13,8 +13,7 @@ import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
 
 // Port từ settings/inbox/channels/Email.vue + emailChannels/ForwardToOption.vue.
-// Nhánh Microsoft/Google là OAuth (nợ F6): thẻ chỉ hiện trên bản cài tên
-// "Chatwoot" đúng như getter globalConfig/isAChatwootInstance của bản gốc.
+// Nhánh Microsoft/Google là OAuth (chưa làm): thẻ chỉ hiện khi nhà cung cấp đã bật.
 const EMAIL_PROVIDERS = {
     MICROSOFT: 'microsoft',
     GOOGLE: 'google',
@@ -122,10 +121,7 @@ export default function EmailChannelForm() {
     const { globalConfig } = usePage<DashboardPageProps>().props;
     const [provider, setProvider] = useState<EmailProvider | ''>('');
 
-    // globalConfig/isAChatwootInstance — bản cài đặt tên khác chỉ thấy nhà cung
-    // cấp đang bật (Yona: chưa có OAuth nên chỉ còn "Other providers").
-    const isAChatwootInstance = globalConfig.installationName === 'Chatwoot';
-
+    // Chỉ hiện nhà cung cấp đang bật (chưa có OAuth nên chỉ còn "Other providers").
     const providerList: ProviderCard[] = (
         [
             {
@@ -150,7 +146,7 @@ export default function EmailChannelForm() {
                 isEnabled: true,
             },
         ] as ProviderCard[]
-    ).filter(candidate => isAChatwootInstance || candidate.isEnabled);
+    ).filter(candidate => candidate.isEnabled);
 
     if (provider === EMAIL_PROVIDERS.OTHER) return <ForwardToOption />;
     if (provider) return <div />;

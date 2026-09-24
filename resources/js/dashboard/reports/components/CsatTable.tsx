@@ -12,7 +12,7 @@ import CsatTableLoader from './CsatTableLoader';
 
 // Port từ reports/components/CsatTable.vue.
 // Cột "mở rộng" (ghi chú đánh giá) là tính năng cloud/EE — không port; bản
-// self-hosted của Chatwoot cũng không hiện cột đó.
+// tự host cũng không hiện cột đó.
 
 const PAGE_SIZE = 25;
 

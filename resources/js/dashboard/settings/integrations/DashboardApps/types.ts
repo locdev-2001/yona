@@ -1,4 +1,4 @@
-// Hình dạng theo api/v1/models/_dashboard_app.json.jbuilder của Chatwoot.
+// Hình dạng bản ghi dashboard app do API trả.
 export interface DashboardApp {
     id: number;
     title: string;

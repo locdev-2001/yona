@@ -6,7 +6,7 @@ import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import Input from 'dashboard/components-next/input/Input';
 
 // Port từ components-next/HelpCenter/Pages/PortalSettingsPage/AddCustomDomainDialog.vue.
-// isValidDomain của @chatwoot/utils: tên miền có ít nhất một dấu chấm.
+// isValidDomain của thư viện tiện ích dùng chung: tên miền có ít nhất một dấu chấm.
 const DOMAIN_PATTERN = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$/;
 
 interface AddCustomDomainDialogProps {

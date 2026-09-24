@@ -104,7 +104,7 @@ import type {
     TeamMeta,
 } from './types';
 
-// Thay cụm store vuex conversations/conversationPage của Chatwoot:
+// Store hội thoại + trang hội thoại của dashboard:
 // list + counts + selected chat + messages + gửi tin (pending → sent/failed)
 // + realtime (actionCable.js → useRealtimeEvent) + reconnect (ReconnectService).
 // `allConversations` = state.allConversations gốc; `conversations` = getter đã
@@ -344,7 +344,7 @@ export function ConversationProvider({
         assignee_type?: string;
     };
 
-    // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" như Chatwoot —
+    // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" —
     // chủ shop một người mở inbox lần đầu phải thấy khách đang chờ, không phải một
     // cột trống. Người dùng đổi tab thì lựa chọn được nhớ lại.
     const [assigneeTab, setAssigneeTabState] = useState<AssigneeTab>(
@@ -860,7 +860,7 @@ export function ConversationProvider({
         return () => setViewedConversation(0);
     }, [conversationId]);
 
-    // actionCable.js → store: các event conversation/message của Chatwoot.
+    // Realtime → store: các event conversation/message.
     useRealtimeEvent<MessageEventPayload>('message.created', (message) => {
         addMessage(message);
         const lastActivityAt = message.conversation?.last_activity_at;

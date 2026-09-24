@@ -1,5 +1,4 @@
-// Port nguyên từ refs/chatwoot/tailwind.config.js (v4.17.1) — chỉ đổi `content`
-// sang cây source React của Yona. Không tự "chuẩn hóa" scale màu/token.
+// `content` trỏ cây source React của Yona. Không tự "chuẩn hóa" scale màu/token.
 const { slateDark } = require('@radix-ui/colors');
 import { colors } from './theme/colors';
 import { icons } from './theme/icons';

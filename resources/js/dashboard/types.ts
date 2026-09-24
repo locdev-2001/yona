@@ -7,7 +7,7 @@ export interface CurrentAccount {
     name: string;
     locale: string;
     status: number;
-    // enabled_features của Chatwoot: chỉ chứa feature đang bật ({tên: true}).
+    // enabled_features: chỉ chứa feature đang bật ({tên: true}).
     features: Record<string, boolean>;
 }
 

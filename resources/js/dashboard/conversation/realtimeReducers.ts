@@ -4,7 +4,7 @@ import type { ConversationType } from './constants';
 import { matchesLabels } from './labelHelpers';
 import type { AssigneeTab, ContactMeta, Conversation, ConversationMessage } from './types';
 
-// Hàm thuần port từ store conversations của Chatwoot (mutations ADD_MESSAGE /
+// Hàm thuần của store hội thoại (mutations ADD_MESSAGE /
 // UPDATE_CONVERSATION / SET_ALL_CONVERSATION, action addConversation, getters
 // getMineChats/getUnAssignedChats/getAllStatusChats + helpers applyPageFilters,
 // sortComparator). Tách khỏi provider để test không cần React.

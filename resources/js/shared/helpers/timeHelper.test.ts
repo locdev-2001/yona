@@ -88,7 +88,7 @@ describe('định dạng ngày giờ theo locale', () => {
         document.documentElement.lang = 'en';
     });
 
-    it('tiếng Anh giữ nguyên mẫu gốc Chatwoot', () => {
+    it('tiếng Anh giữ nguyên mẫu gốc', () => {
         document.documentElement.lang = 'en';
         expect(messageStamp(stamp)).toBe('10:37 PM');
         expect(messageTimestamp(stamp, 'LLL d, h:mm a')).toBe('Sep 7, 10:37 PM');

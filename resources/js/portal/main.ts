@@ -1,5 +1,5 @@
 // Port từ app/javascript/entrypoints/portal.js + portal/portalHelpers.js.
-// Chatwoot chạy Turbo + Vue; ở đây là điều hướng trang thường + React.
+// Điều hướng trang thường + React.
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 

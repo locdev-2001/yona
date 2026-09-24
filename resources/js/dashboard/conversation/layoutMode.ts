@@ -2,7 +2,7 @@ import { isSmallScreen } from 'dashboard/composables/useViewportWidth';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { LAYOUT_TYPES } from './constants';
 
-// Chatwoot gốc (ConversationView.vue) chỉ có MỘT cách vào bố cục hai-màn: người
+// Bố cục cũ (ConversationView) chỉ có MỘT cách vào bố cục hai-màn: người
 // dùng tự bấm nút ⇥ để đổi `ui_settings.conversation_display_type` sang
 // `expanded`. Ở màn hẹp, gốc vẫn dựng ba cột cạnh nhau nên danh sách 340px đè
 // lên khung chat và không mở nổi hội thoại trên điện thoại.

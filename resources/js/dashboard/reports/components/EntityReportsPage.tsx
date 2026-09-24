@@ -23,7 +23,7 @@ interface EntityReportsPageProps {
     type: EntityReportType;
     id?: number;
     // AgentReports.vue (bộ cũ) trỏ nhãn nút tải về vào `REPORT.DOWNLOAD_AGENT_REPORTS`,
-    // một key KHÔNG tồn tại — Chatwoot in nguyên key ra nút. Giữ nguyên để khớp oracle.
+    // một key KHÔNG tồn tại — nút hiện nguyên key.
     downloadLabelKey?: string;
 }
 

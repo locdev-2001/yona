@@ -23,7 +23,7 @@ import EditWebHook from './EditWebHook';
 import type { DashboardPageProps } from '../../../types';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/Webhooks/Index.vue.
-// Nhánh paywall (WebhookPaywall.vue) chỉ chạy trên Chatwoot Cloud — bản tự host
+// Nhánh paywall (WebhookPaywall.vue) chỉ chạy trên bản cloud — bản tự host
 // luôn bật webhook nên không port.
 export default function WebhooksIndex() {
     const { currentAccount } = usePage<DashboardPageProps>().props;

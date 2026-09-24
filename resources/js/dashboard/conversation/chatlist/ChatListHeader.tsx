@@ -38,7 +38,7 @@ export default function ChatListHeader({
 }: ChatListHeaderProps) {
     const { toggleConversationLayout } = useConversation();
     const hasAppliedFiltersOrActiveFolders = hasAppliedFilters || hasActiveFolders;
-    // LỆCH CÓ CHỦ ĐÍCH so với Chatwoot: pill trạng thái cạnh tiêu đề là nhãn tĩnh
+    // QUYẾT ĐỊNH UX CÓ CHỦ ĐÍCH: pill trạng thái cạnh tiêu đề là nhãn tĩnh
     // ở gốc, ở đây nó mở luôn bảng lọc trạng thái (xem reports/ux-deviations.md).
     const [isStatusFilterOpen, setStatusFilterOpen] = useState(false);
     const headerRef = useRef<HTMLDivElement>(null);

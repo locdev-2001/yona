@@ -1,5 +1,5 @@
 // Port từ vue-datepicker-next/scss (var/index/btn/icon/scrollbar) + dashboard/assets/scss/plugins/_date-picker.scss
-// của Chatwoot — chỉ phần DatePicker type="datetime" mà CustomSnoozeModal dùng.
+// của thư viện — chỉ phần DatePicker type="datetime" mà CustomSnoozeModal dùng.
 $mx-default-color: #73879c;
 $mx-primary-color: #1284e7;
 $mx-today-color: mix(#fff, $mx-primary-color, 10%);
@@ -343,7 +343,7 @@ $mx-calendar-hover-background-color: mix(#fff, $mx-primary-color, 95%);
   overflow-y: auto;
 }
 
-// Ghi đè theme của Chatwoot (plugins/_date-picker.scss)
+// Ghi đè theme date picker của dashboard
 .mx-datepicker-main {
   @apply border-0 bg-n-solid-2 rounded-xl;
 

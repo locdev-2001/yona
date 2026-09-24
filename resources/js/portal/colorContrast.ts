@@ -1,4 +1,4 @@
-// Port của shared/helpers/colorHelper.js#adjustColorForContrast. Chatwoot gọi
+// Port của shared/helpers/colorHelper.js#adjustColorForContrast. Bản trước gọi
 // color2k (toHex/mix/getLuminance/getContrast); ở đây tự tính trên hệ sRGB để
 // khỏi thêm phụ thuộc — cùng công thức WCAG và cùng phép trộn tuyến tính.
 const TARGET_CONTRAST_RATIO = 3.1;

@@ -1,4 +1,4 @@
-// Tương đương mitt (shared/helpers/mitt.js bên Chatwoot) — pub/sub tối giản.
+// Pub/sub tối giản kiểu mitt.
 type Handler = (payload: unknown) => void;
 
 const handlers = new Map<string, Set<Handler>>();

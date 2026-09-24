@@ -23,7 +23,7 @@ import type { DashboardPageProps } from '../../types';
 
 // Port từ sidebar/SidebarProfileMenu.vue
 // Khác gốc: Appearance mở submenu đổi theme trực tiếp (gốc mở ninja-keys — B10);
-// Contact support / Docs / Changelog (link chatwoot.com) bỏ theo branding;
+// Contact support / Docs / Changelog (link ra site ngoài) bỏ theo branding;
 // Keyboard shortcuts vào B10.
 // Nhãn lấy từ COLOR_SCHEME_OPTIONS (themeHelper) — chỗ này chỉ thêm icon Lucide.
 const APPEARANCE_ICONS: Record<ColorScheme, string> = {

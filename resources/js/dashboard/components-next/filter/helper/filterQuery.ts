@@ -18,7 +18,7 @@ const optionValue = (value: unknown): string | number | boolean | null => {
     return null;
 };
 
-// filterQueryGenerator.js của Chatwoot: UI giữ cả object option để hiển thị,
+// Bộ sinh truy vấn lọc: UI giữ cả object option để hiển thị,
 // API chỉ nhận id/value; connector AND/OR nằm ở mọi dòng trừ dòng cuối.
 export function buildConversationFilterPayload(
     filters: ConversationFilterCondition[],

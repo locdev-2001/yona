@@ -2,7 +2,7 @@ import { usePage } from '@inertiajs/react';
 
 import type { DashboardPageProps } from '../types';
 
-// Thay cho composable useInbox của Chatwoot (store inboxes) — danh sách inbox
+// Thay cho composable useInbox (store inboxes) — danh sách inbox
 // đã được SetCurrentAccount chia sẻ sang mọi trang dashboard.
 export interface SidebarInbox {
     id: number;

@@ -11,7 +11,7 @@ import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
 
-// Kênh Zalo cá nhân (G1). Không có màn tương ứng bên Chatwoot — bố cục bám đúng
+// Kênh Zalo cá nhân (G1). Bố cục bám đúng
 // khuôn hai bước của channels/Api.tsx + Telegram: đặt tên inbox rồi tới bước quét
 // mã QR, xong là sang bước gán nhân viên như mọi kênh khác.
 // Bước quét QR có URL riêng (ZaloConnect.tsx, settings/inboxes/new/{id}/zalo) —

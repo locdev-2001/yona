@@ -51,7 +51,7 @@ export default function Input({
 
     // Bản gốc là component Vue: `class` người gọi truyền vào rơi xuống thẻ gốc
     // (wrapper) ĐỒNG THỜI được v-bind="$attrs" gắn lên cả <input>. Giữ nguyên
-    // hành vi đó để class canh chỉnh (vd flex-1) tác động đúng như Chatwoot.
+    // hành vi đó để class canh chỉnh (vd flex-1) tác động đúng.
     const inputClasses = [
         className,
         customInputClass,

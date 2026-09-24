@@ -2,7 +2,6 @@ import { getJson, postJson } from '../helper/apiClient';
 import type { Label } from 'dashboard/settings/labels/types';
 
 // Port từ dashboard/api/labels.js + api/conversations.js#getLabels/updateLabels.
-// Contract backend: plans/260831-rewrite-chatwoot-laravel/reports/b7-notes-be.md.
 
 // Payload nhãn chỉ khai báo một chỗ (màn Settings → Labels dựng theo jbuilder gốc);
 // đổi tên ở đây để call-site không lẫn với component chip `Label`.

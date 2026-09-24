@@ -5,22 +5,22 @@ import { EmailQuoteExtractor } from './emailQuoteExtractor';
 const SAMPLE_EMAIL_HTML = `
 <p>method</p>
 <blockquote>
-<p>On Mon, Sep 29, 2025 at 5:18 PM John <a href="mailto:shivam@chatwoot.com">shivam@chatwoot.com</a> wrote:</p>
+<p>On Mon, Sep 29, 2025 at 5:18 PM John <a href="mailto:shivam@example.com">shivam@example.com</a> wrote:</p>
 <p>Hi</p>
 <blockquote>
-<p>On Mon, Sep 29, 2025 at 5:17 PM Shivam Mishra <a href="mailto:shivam@chatwoot.com">shivam@chatwoot.com</a> wrote:</p>
+<p>On Mon, Sep 29, 2025 at 5:17 PM Shivam Mishra <a href="mailto:shivam@example.com">shivam@example.com</a> wrote:</p>
 <p>Yes, it is.</p>
 <p>On Mon, Sep 29, 2025 at 5:16 PM John from Shaneforwoot &lt; shaneforwoot@gmail.com&gt; wrote:</p>
 <blockquote>
 <p>Hey</p>
-<p>On Mon, Sep 29, 2025 at 4:59 PM John shivam@chatwoot.com wrote:</p>
+<p>On Mon, Sep 29, 2025 at 4:59 PM John shivam@example.com wrote:</p>
 <p>This is another quoted quoted text reply</p>
 <p>This is nice</p>
 <p>On Mon, Sep 29, 2025 at 4:21 PM John from Shaneforwoot &lt; &gt; shaneforwoot@gmail.com&gt; wrote:</p>
-<p>Hey there, this is a reply from Chatwoot, notice the quoted text</p>
+<p>Hey there, this is a reply from Acme, notice the quoted text</p>
 <p>Hey there</p>
 <p>This is an email text, enjoy reading this</p>
-<p>-- Shivam Mishra, Chatwoot</p>
+<p>-- Shivam Mishra, Acme</p>
 </blockquote>
 </blockquote>
 </blockquote>

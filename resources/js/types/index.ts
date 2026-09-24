@@ -19,10 +19,10 @@ export interface GlobalConfig {
     termsURL: string;
     privacyURL: string;
     // App id của Meta — kênh Facebook/Instagram chỉ bật khi cấu hình (như
-    // window.chatwootConfig.fbAppId của bản gốc).
+    // biến cấu hình toàn cục fbAppId của bản trước).
     fbAppId?: string;
     fbApiVersion?: string;
-    // Khoá công khai VAPID cho Web Push (như window.chatwootConfig.vapidPublicKey
+    // Khoá công khai VAPID cho Web Push (thay biến cấu hình toàn cục vapidPublicKey
     // của bản gốc); null khi máy chủ không có khoá — giao diện ẩn phần đẩy.
     vapidPublicKey?: string | null;
 }

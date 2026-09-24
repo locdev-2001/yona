@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { LARGE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 
 // Nguồn duy nhất cho "màn hình rộng bao nhiêu" ở phía dashboard — thay cho
-// `useWindowSize()` của @vueuse mà Chatwoot dùng. Mọi quyết định bố cục theo
+// `useWindowSize()` của @vueuse. Mọi quyết định bố cục theo
 // breakpoint (cột phải, hai-màn di động) đọc từ đây để chỉ có một chỗ lắng nghe
 // `resize` và một định nghĩa ngưỡng.
 

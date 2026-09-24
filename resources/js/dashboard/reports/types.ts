@@ -1,4 +1,4 @@
-// Kiểu dữ liệu chung của nhóm báo cáo (khớp jbuilder v2 của Chatwoot).
+// Kiểu dữ liệu chung của nhóm báo cáo (khớp API báo cáo v2).
 
 export interface ReportDataPoint {
     value: number;

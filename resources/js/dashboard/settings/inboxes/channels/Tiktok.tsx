@@ -10,7 +10,7 @@ import SanitizedHtml from 'shared/components/SanitizedHtml';
 
 // Port từ settings/inbox/channels/Tiktok.vue — nút đăng nhập TikTok rồi nhảy
 // sang URL uỷ quyền do server trả về. Banner cảnh báo Bắc Mỹ chỉ hiện trên
-// Chatwoot Cloud nên không port.
+// bản cloud nên không làm.
 export default function TiktokChannelForm() {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;

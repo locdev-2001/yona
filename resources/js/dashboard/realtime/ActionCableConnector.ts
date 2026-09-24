@@ -5,7 +5,7 @@ import { realtimeStore } from './store';
 import type { PresenceUpdatePayload, RealtimeIdentity, TypingUser } from './types';
 
 // Port từ dashboard/helper/actionCable.js. Không có Vuex nên handler chỉ ghi vào
-// realtimeStore (presence/typing) rồi phát lại đúng tên event Chatwoot qua emitter —
+// realtimeStore (presence/typing) rồi phát lại đúng tên event nghiệp vụ qua emitter —
 // page (ConversationContext, notifications…) tự useRealtimeEvent(<event>) xử lý.
 // Bỏ voice_call.* / copilot.* / account.enrichment_completed (EE).
 const TYPING_TIMEOUT = 30000;

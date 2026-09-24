@@ -16,7 +16,7 @@ import SettingsSubPageHeader from '../../SettingsSubPageHeader';
 import type { Inbox } from '../types';
 
 // Port từ settings/inbox/channels/Facebook.vue — đăng nhập Meta bằng SDK rồi
-// chọn trang để tạo inbox. Banner giới hạn tạo inbox Meta chỉ có trên Chatwoot
+// chọn trang để tạo inbox. Banner giới hạn tạo inbox Meta chỉ có trên bản cloud
 // Cloud nên không port.
 export default function FacebookChannelForm() {
     const { replaceInstallationName } = useBranding();

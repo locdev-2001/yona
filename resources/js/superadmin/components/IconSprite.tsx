@@ -1,5 +1,4 @@
 // Sprite icon của console quản trị — trích từ bộ sprite bản gốc
-// (refs/chatwoot app/views/super_admin/application/_icons.html.erb).
 export default function IconSprite() {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" style={{ display: 'none' }}>

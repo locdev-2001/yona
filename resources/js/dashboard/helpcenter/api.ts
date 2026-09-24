@@ -1,7 +1,7 @@
 // Port từ dashboard/api/helpCenter/{portals,categories,articles}.js.
 // Cùng URL, cùng tên tham số; chuyển sang apiClient dùng chung của Yona.
 // Khác bản gốc: Rails tự bọc body vào khoá `portal`/`category`/`article`
-// (ParamsWrapper) nên Chatwoot gửi phẳng — Laravel không bọc, phải gửi kèm khoá.
+// (ParamsWrapper) nên bản trước gửi phẳng — Laravel không bọc, phải gửi kèm khoá.
 import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
 import { camelizeKeys } from 'dashboard/helper/transformKeys';
 import type { Article, ArticlesMeta, Category, Portal } from './types';

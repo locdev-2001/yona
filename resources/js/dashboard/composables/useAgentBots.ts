@@ -133,7 +133,7 @@ export async function fetchInboxAgentBot(accountId: number, inboxId: number): Pr
     const response = await getJson<{ agent_bot?: Partial<AgentBot> } | null>(
         `/api/v1/accounts/${accountId}/inboxes/${inboxId}/agent_bot`,
     );
-    // Inbox chưa gắn bot: cả Chatwoot lẫn Yona trả `{"agent_bot": {}}` — object rỗng
+    // Inbox chưa gắn bot: API trả `{"agent_bot": {}}` — object rỗng
     // vẫn truthy nên phải xét theo `id`.
     const bot = response?.agent_bot;
     return bot?.id ? (bot as AgentBot) : null;

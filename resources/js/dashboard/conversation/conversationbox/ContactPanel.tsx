@@ -28,7 +28,7 @@ import MacroList from '../macros/MacroList';
 // Hằng module: nếu dựng object mới mỗi lần render thì useContactDetails sẽ nạp lại vô hạn.
 const NO_CONTACT: ContactMeta = { id: 0, name: null };
 
-// Lệch có chủ đích (ux-deviations.md): Chatwoot mở mọi accordion ở trạng thái
+// Quyết định UX có chủ đích (docs/ux-decisions.md): thay vì mở mọi accordion ở trạng thái
 // đóng cho tới khi người dùng bấm. Hội thoại trước của khách là thứ cần thấy
 // ngay khi mở panel, nên mặc định mở — người dùng đóng thì ui_settings nhớ lại.
 const SECTIONS_OPEN_BY_DEFAULT: readonly string[] = ['is_previous_conv_open'];

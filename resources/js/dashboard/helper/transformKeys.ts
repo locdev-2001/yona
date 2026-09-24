@@ -1,6 +1,6 @@
 // Port từ dashboard/composables/useTransformKeys.js — chuyển key sâu giữa
 // snake_case (API Rails-shape) và camelCase (component), như camelcase-keys/
-// snakecase-keys mà store Chatwoot dùng. stopPaths: giữ nguyên con của path đó
+// snakecase-keys. stopPaths: giữ nguyên con của path đó
 // (vd custom_attributes do người dùng tự đặt tên key).
 type PlainObject = Record<string, unknown>;
 

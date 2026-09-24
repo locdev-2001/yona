@@ -5,7 +5,7 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 // khi cần. Chiều cao đã kéo được nhớ ở `ui_settings` (cùng chỗ với bề rộng thanh
 // điều hướng và lựa chọn panel phải) nên tải lại trang vẫn giữ.
 //
-// Chatwoot gốc (ResizableEditorWrapper.vue) neo cứng DEFAULT_HEIGHT = 120px và
+// Bản trước (ResizableEditorWrapper) neo cứng DEFAULT_HEIGHT = 120px và
 // MIN_HEIGHT = 80px, không tự giãn theo nội dung, không nhớ chiều cao đã kéo —
 // ở 390px ô soạn chiếm gần nửa màn hình. Lệch có chủ đích, ghi ux-deviations.md.
 //

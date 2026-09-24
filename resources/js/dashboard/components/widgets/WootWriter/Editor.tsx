@@ -351,7 +351,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                     if (isPickerOpenRef.current && event.key === 'Escape') {
                         // Escape khi bảng gợi ý đang mở = "đóng bảng", không phải
                         // "rời ô soạn". useKeyboardEvents ở tầng document blur mọi ô
-                        // nhập khi gặp Escape (parity Chatwoot) nên phải chặn phím
+                        // nhập khi gặp Escape nên phải chặn phím
                         // ngay tại ô soạn, nếu không ký tự kích hoạt kẹt lại và người
                         // dùng phải bấm chuột mới xoá được (finding UX #2).
                         event.preventDefault();
