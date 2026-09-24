@@ -334,3 +334,164 @@ test('tham số sai được báo TRƯỚC trạng thái phiên (không che lỗ
         assert.equal(noRef.body.message, 'msg_id and cli_msg_id required');
     });
 });
+
+// ── Danh mục sticker ────────────────────────────────────────────────────────
+
+const STICKER_ROUTES = [
+    '/personal-messages/stickers/search',
+    '/personal-messages/stickers/detail',
+    '/personal-messages/stickers/category',
+];
+
+function stickerDetail(id, cateId = 61900) {
+    return { id, cateId, type: 7, stickerUrl: `https://cdn.zalo.test/${id}.webp`, text: `[^${cateId}.${id}^]` };
+}
+
+function stickerSlot(calls, overrides = {}) {
+    return readySlot(calls, {
+        async searchSticker(keyword, limit) {
+            calls.push(['searchSticker', keyword, limit]);
+            return [{ type: 7, cate_id: 61900, sticker_id: 98930 }];
+        },
+        async getStickers(keyword) {
+            calls.push(['getStickers', keyword]);
+            return Array.from({ length: 15 }, (_, i) => 1000 + i);
+        },
+        async getStickersDetail(ids) {
+            calls.push(['getStickersDetail', ids]);
+            return ids.map((id) => stickerDetail(id));
+        },
+        async getStickerCategoryDetail(cateId) {
+            calls.push(['getStickerCategoryDetail', cateId]);
+            return [stickerDetail(98930, cateId), stickerDetail(98931, cateId)];
+        },
+        ...overrides,
+    });
+}
+
+test('sticker: thiếu send secret → 403 cho cả ba route', async () => {
+    await withBridge(stickerSlot, async (bridge, calls) => {
+        for (const routePath of STICKER_ROUTES) {
+            const res = await bridge.post(routePath, { connection_id: 6, keyword: 'chào', ids: [1], cate_id: 1 }, 'sai');
+            assert.equal(res.status, 403, routePath);
+        }
+        assert.equal(calls.length, 0);
+    });
+});
+
+test('sticker/search: gọi searchSticker(keyword, 30) và trả mục đủ bộ ba để gửi', async () => {
+    await withBridge(stickerSlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/stickers/search', { connection_id: 6, keyword: ' cảm ơn ' });
+
+        assert.equal(res.status, 200);
+        assert.deepEqual(res.body, {
+            ok: true,
+            stickers: [
+                {
+                    id: 98930,
+                    cate_id: 61900,
+                    type: 7,
+                    url: 'https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=98930&size=130',
+                    label: null,
+                },
+            ],
+        });
+        assert.deepEqual(calls, [['searchSticker', 'cảm ơn', 30]]);
+    });
+});
+
+test('sticker/search: searchSticker rỗng hoặc ném lỗi → gợi ý + tra chi tiết tối đa 12 mã', async () => {
+    for (const searchSticker of [
+        async () => [],
+        async () => {
+            throw Object.assign(new Error('not found'), { name: 'ZaloApiError' });
+        },
+    ]) {
+        await withBridge(
+            (calls) => stickerSlot(calls, { searchSticker }),
+            async (bridge, calls) => {
+                const res = await bridge.post('/personal-messages/stickers/search', { connection_id: 6, keyword: 'haha' });
+
+                assert.equal(res.status, 200);
+                assert.equal(res.body.stickers.length, 12);
+                assert.equal(res.body.stickers[0].url, 'https://cdn.zalo.test/1000.webp');
+                const detail = calls.find((call) => call[0] === 'getStickersDetail');
+                assert.deepEqual(detail[1], Array.from({ length: 12 }, (_, i) => 1000 + i));
+            }
+        );
+    }
+});
+
+test('sticker/search: từ khoá rỗng hoặc dài quá 50 ký tự → bad_request TRƯỚC khi kiểm phiên', async () => {
+    await withBridge(null, async (bridge) => {
+        for (const keyword of ['', '   ', 'a'.repeat(51)]) {
+            const res = await bridge.post('/personal-messages/stickers/search', { connection_id: 6, keyword });
+            assert.equal(res.status, 400);
+            assert.equal(res.body.code, 'bad_request');
+        }
+    });
+});
+
+test('sticker/detail: nhận mã hợp lệ; quá 20 mã hoặc mã không phải số → bad_request', async () => {
+    await withBridge(stickerSlot, async (bridge, calls) => {
+        const ok = await bridge.post('/personal-messages/stickers/detail', { connection_id: 6, ids: [98930] });
+        assert.equal(ok.status, 200);
+        assert.equal(ok.body.stickers[0].id, 98930);
+        assert.equal(ok.body.stickers[0].cate_id, 61900);
+        assert.deepEqual(calls[0], ['getStickersDetail', [98930]]);
+
+        const tooMany = await bridge.post('/personal-messages/stickers/detail', {
+            connection_id: 6,
+            ids: Array.from({ length: 21 }, (_, i) => i + 1),
+        });
+        assert.equal(tooMany.body.code, 'bad_request');
+
+        const notNumber = await bridge.post('/personal-messages/stickers/detail', { connection_id: 6, ids: ['abc'] });
+        assert.equal(notNumber.body.code, 'bad_request');
+        assert.equal(calls.length, 1);
+    });
+});
+
+test('sticker/category: gọi getStickerCategoryDetail với mã bộ', async () => {
+    await withBridge(stickerSlot, async (bridge, calls) => {
+        const res = await bridge.post('/personal-messages/stickers/category', { connection_id: 6, cate_id: '61900' });
+
+        assert.equal(res.status, 200);
+        assert.deepEqual(
+            res.body.stickers.map((sticker) => sticker.id),
+            [98930, 98931]
+        );
+        assert.deepEqual(calls, [['getStickerCategoryDetail', 61900]]);
+    });
+});
+
+test('sticker: slot chưa sẵn sàng → session_lost, KHÔNG gọi zca', async () => {
+    const calls = [];
+    const lost = { ...stickerSlot(calls), loginPhase: 'session_lost', sessionLostReason: 'ws_closed_1006_' };
+    const bridge = await startBridge({ slot: lost, calls });
+    try {
+        const res = await bridge.post('/personal-messages/stickers/search', { connection_id: 6, keyword: 'chào' });
+        assert.equal(res.status, 503);
+        assert.equal(res.body.code, 'session_lost');
+        assert.equal(calls.length, 0);
+    } finally {
+        bridge.server.close();
+    }
+});
+
+test('sticker: Zalo từ chối → zalo_rejected (502)', async () => {
+    const rejected = Object.assign(new Error('Invalid category'), { name: 'ZcaApiError' });
+    await withBridge(
+        (calls) =>
+            stickerSlot(calls, {
+                async getStickerCategoryDetail() {
+                    throw rejected;
+                },
+            }),
+        async (bridge) => {
+            const res = await bridge.post('/personal-messages/stickers/category', { connection_id: 6, cate_id: 1 });
+            assert.equal(res.status, 502);
+            assert.deepEqual(res.body, { ok: false, code: 'zalo_rejected', message: 'Invalid category' });
+        }
+    );
+});

@@ -13,6 +13,7 @@ import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js'
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
+import { stickerSendPayload } from './stickers.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
@@ -2209,12 +2210,8 @@ async function bridgeSendTextOrMedia(slot, body) {
     const hasFile = fileUrl !== '';
 
     // P06a — sticker: OUTBOUND có nội dung, đi đường send riêng (KHÔNG dispatcher)
-    if (sticker && sticker.id != null) {
-        const stickerPayload = {
-            id: Number(sticker.id),
-            cateId: Number(sticker.cateId ?? sticker.cate_id ?? 0),
-            type: Number(sticker.type ?? 1),
-        };
+    const stickerPayload = stickerSendPayload(sticker);
+    if (stickerPayload) {
         const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     }
