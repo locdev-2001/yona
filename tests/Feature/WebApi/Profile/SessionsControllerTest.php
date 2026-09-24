@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\UserSession;
+use Tests\Support\StoredSessions;
 
 // Port từ refs/chatwoot/spec/requests/api/v1/profile/sessions_controller_spec.rb.
 // Khác gốc: Chatwoot lọc phiên theo token devise còn hạn; Yona dùng session của
@@ -41,13 +42,15 @@ describe('GET /api/v1/profile/sessions', function () {
 });
 
 describe('DELETE /api/v1/profile/sessions/{id}', function () {
-    it('revokes another session', function () {
+    it('revokes another session and destroys it on the session store', function () {
         $user = User::factory()->create();
         $other = UserSession::factory()->for($user)->create(['client_id' => 'other-client']);
+        StoredSessions::put('other-client');
 
         $this->actingAs($user)->deleteJson("/api/v1/profile/sessions/{$other->id}")->assertOk();
 
-        expect(UserSession::query()->find($other->id))->toBeNull();
+        expect(UserSession::query()->find($other->id))->toBeNull()
+            ->and(StoredSessions::exists('other-client'))->toBeFalse();
     });
 
     it('refuses to revoke the current session', function () {
