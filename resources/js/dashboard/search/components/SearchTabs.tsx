@@ -15,9 +15,11 @@ interface SearchTabsProps {
     onTabChange: (tab: SearchTab) => void;
 }
 
+// Màn hẹp không đủ chỗ cho mọi tab: thanh tab tự cuộn ngang, không đẩy tràn cả
+// trang. Đệm p-1 (bù bằng lề âm) để viền và hiệu ứng nhấn của tab không bị khung cuộn cắt.
 export default function SearchTabs({ tabs, selectedTab, onTabChange }: SearchTabsProps) {
     return (
-        <div className="flex items-center justify-between mt-7 mb-4">
+        <div className="flex items-center -mx-1 p-1 mt-6 mb-3 overflow-x-auto no-scrollbar">
             <TabBar
                 tabs={tabs.map(tab => ({
                     label: tab.name,
@@ -25,6 +27,7 @@ export default function SearchTabs({ tabs, selectedTab, onTabChange }: SearchTab
                     count: tab.showBadge ? (tab.count ?? undefined) : undefined,
                 }))}
                 initialActiveTab={selectedTab}
+                className="shrink-0"
                 onTabChanged={tab => onTabChange(tab.value as SearchTab)}
             />
         </div>

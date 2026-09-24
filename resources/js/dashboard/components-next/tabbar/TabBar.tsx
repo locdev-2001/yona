@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 
+import { revealHorizontally } from 'shared/helpers/revealHorizontally';
+
 // Port từ dashboard/components-next/tabbar/TabBar.vue — thanh tab với
 // indicator trượt đo theo offset của nút đang active.
 export interface TabBarTab {
@@ -38,6 +40,12 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
 
         return () => observer.disconnect();
     }, [activeTab, tabs]);
+
+    // Thanh tab nằm trong khung cuộn ngang (màn hẹp): tab đang chọn luôn nằm trong tầm nhìn.
+    useEffect(() => {
+        const activeElement = tabRefs.current[activeTab];
+        if (activeElement) revealHorizontally(activeElement);
+    }, [activeTab, tabs.length]);
 
     useEffect(() => {
         const frame = requestAnimationFrame(() => setEnableTransition(true));
