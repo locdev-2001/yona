@@ -317,6 +317,39 @@ test('/personal-messages/send: chuyển nguyên mentions xuống lớp gửi', a
     }
 });
 
+test('/personal-messages/send: chuyển nguyên forward xuống lớp gửi', async () => {
+    const sent = [];
+    const app = express();
+    app.use(express.json());
+    registerPersonalMessageRoutes(app, {
+        checkSendSecret: () => true,
+        getSlot: () => ({ api: {} }),
+        resolveSlot: () => ({ api: {} }),
+        bridgeSendTextOrMedia: async (_slot, body) => {
+            sent.push(body);
+            return { source_id: 'm3', source_ids: ['m3'] };
+        },
+        ThreadType,
+        zcaReactionCode,
+    });
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise((r) => server.once('listening', r));
+    try {
+        const { port } = server.address();
+        const forward = { msg_id: '8230000000001', ts: 1788700000000 };
+        const res = await fetch(`http://127.0.0.1:${port}/personal-messages/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connection_id: 6, thread_id: '9876543210', text: 'Còn size M không?', forward }),
+        });
+        assert.equal(res.status, 200);
+        assert.deepEqual(sent[0].forward, forward);
+        assert.equal(sent[0].text, 'Còn size M không?');
+    } finally {
+        server.close();
+    }
+});
+
 test('tham số sai được báo TRƯỚC trạng thái phiên (không che lỗi caller thành session_lost)', async () => {
     await withBridge(null, async (bridge) => {
         const badIcon = await bridge.post('/personal-messages/reaction', {

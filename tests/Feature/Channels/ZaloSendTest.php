@@ -673,3 +673,109 @@ it('gửi lại tin lỗi vẫn mang nhắc tên', function () {
 
     expect(collect(zaloSendPayloads())->last()['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]]);
 });
+
+/** @param array<string, mixed> $forwardedFrom */
+function zaloForwardedOutgoing(Conversation $conversation, array $forwardedFrom, string $content = 'Còn hàng không shop?'): Message
+{
+    return $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => $content,
+        'content_attributes' => ['forwarded_from' => $forwardedFrom],
+    ]);
+}
+
+function zaloForwardSource(Conversation $conversation): Message
+{
+    $otherCustomer = Conversation::factory()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'additional_attributes' => ['thread_id' => '1111111111', 'thread_type' => 0],
+    ]);
+
+    return zaloReplyTargetWithSnapshot($otherCustomer);
+}
+
+it('chuyển tiếp tin chữ trong cùng phiên Zalo: dùng lệnh chuyển tiếp gốc, không quote/tệp, ghi source_id', function () {
+    fakeZaloSendBridge();
+    $source = zaloForwardSource($this->conversation);
+
+    $message = zaloForwardedOutgoing($this->conversation, ['origin' => 'internal', 'message_id' => $source->id, 'conversation_id' => 1]);
+
+    $payload = zaloSendPayloads()[0];
+
+    expect($payload['text'])->toBe('Còn hàng không shop?')
+        ->and($payload['thread_id'])->toBe('9876543210')
+        ->and($payload['forward'])->toBe(['msg_id' => 'msg-zalo-quoted', 'ts' => 1788714913596])
+        ->and($payload)->not->toHaveKey('quote')
+        ->and($payload)->not->toHaveKey('file_url')
+        ->and($message->refresh()->source_id)->toBe('sent-1');
+});
+
+it('không dùng chuyển tiếp gốc khi thiếu điều kiện', function (Closure $forwardedFrom) {
+    fakeZaloSendBridge();
+
+    zaloForwardedOutgoing($this->conversation, $forwardedFrom($this->conversation, $this->inbox));
+
+    $payload = collect(zaloSendPayloads())->last();
+
+    expect($payload)->not->toHaveKey('forward')
+        ->and($payload['text'])->toBe('Còn hàng không shop?');
+})->with([
+    'tin gốc ở hộp thư Zalo khác' => [function (Conversation $conversation) {
+        $otherInbox = Inbox::factory()->zalo()->create(['account_id' => $conversation->account_id]);
+        $otherConversation = Conversation::factory()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $otherInbox->id,
+            'additional_attributes' => ['thread_id' => '2222222222', 'thread_type' => 0],
+        ]);
+
+        return ['origin' => 'internal', 'message_id' => zaloReplyTargetWithSnapshot($otherConversation)->id, 'conversation_id' => 1];
+    }],
+    'tin gốc chưa có ảnh chụp zca' => [fn (Conversation $conversation) => [
+        'origin' => 'internal',
+        'message_id' => zaloOutgoing($conversation, 'Tin cũ')->id,
+        'conversation_id' => 1,
+    ]],
+    'khách chuyển tiếp trên nền tảng' => [fn () => ['origin' => 'channel', 'sender_name' => 'Nguyễn A']],
+    'tin gốc thuộc account khác' => [function () {
+        $foreignInbox = Inbox::factory()->zalo()->create();
+        $foreign = Conversation::factory()->create([
+            'account_id' => $foreignInbox->account_id,
+            'inbox_id' => $foreignInbox->id,
+            'additional_attributes' => ['thread_id' => '3333333333', 'thread_type' => 0],
+        ]);
+
+        return ['origin' => 'internal', 'message_id' => zaloReplyTargetWithSnapshot($foreign)->id, 'conversation_id' => 1];
+    }],
+]);
+
+it('bản chuyển tiếp có ảnh gửi lại tệp như cũ, không dùng chuyển tiếp gốc', function () {
+    fakeZaloSendBridge();
+    $source = zaloForwardSource($this->conversation);
+
+    $message = new Message([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'conversation_id' => $this->conversation->id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Mẫu này nè',
+        'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => $source->id, 'conversation_id' => 1]],
+    ]);
+    $message->pendingAttachments = [new Attachment([
+        'account_id' => $this->conversation->account_id,
+        'file_type' => Attachment::FILE_TYPE_IMAGE,
+        'path' => 'zalo/mau.png',
+        'filename' => 'mau.png',
+        'content_type' => 'image/png',
+        'byte_size' => 10,
+    ])];
+    $message->save();
+
+    $payload = zaloSendPayloads()[0];
+
+    expect($payload)->not->toHaveKey('forward')
+        ->and($payload['text'])->toBe('Mẫu này nè')
+        ->and($payload['media_kind'])->toBe('image');
+});

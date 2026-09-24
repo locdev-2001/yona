@@ -13,6 +13,7 @@ import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js'
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
+import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
@@ -2200,7 +2201,7 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions } =
+    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions, forward } =
         body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
@@ -2208,6 +2209,17 @@ async function bridgeSendTextOrMedia(slot, body) {
     const tt = Number(thread_type) === 1 ? ThreadType.Group : ThreadType.User;
     const fileUrl = typeof file_url === 'string' ? file_url.trim() : '';
     const hasFile = fileUrl !== '';
+
+    // Chuyển tiếp gốc chỉ cho tin chữ; bị Zalo từ chối thì tự gửi lại nội dung.
+    if (forward && !hasFile && !sticker) {
+        const sendResult = await sendForwardOrFallback(slot.api, {
+            text,
+            forward,
+            threadId: String(thread_id),
+            threadType: tt,
+        });
+        return registerAllOutboundSourceIds(slot, sendResult);
+    }
 
     // P06a — sticker: OUTBOUND có nội dung, đi đường send riêng (KHÔNG dispatcher)
     const stickerPayload = stickerSendPayload(sticker);
