@@ -385,3 +385,39 @@ describe('attachments', function () {
         Storage::disk('public')->assertMissing($attachment->path);
     });
 });
+
+describe('repliedMessage', function () {
+    it('returns the replied message of the same conversation', function () {
+        $conversation = messageConversation();
+        $original = Message::factory()->create([...messageAttributesFor($conversation), 'source_id' => 'src-1']);
+        $reply = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content_attributes' => ['in_reply_to' => $original->id],
+        ]);
+
+        expect($reply->repliedMessage()?->id)->toBe($original->id)
+            ->and($reply->content_attributes['in_reply_to_external_id'])->toBe('src-1');
+    });
+
+    it('returns null when in_reply_to points to another conversation', function () {
+        $conversation = messageConversation();
+        $foreign = Message::factory()->create(messageAttributesFor(messageConversation()));
+        $reply = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+
+        // Gán thẳng trong bộ nhớ, không qua saving — mô phỏng dữ liệu cũ chưa chuẩn hoá.
+        $reply->content_attributes = ['in_reply_to' => $foreign->id];
+
+        expect($reply->repliedMessage())->toBeNull();
+    });
+
+    it('returns null when the replied message does not exist or is not set', function () {
+        $conversation = messageConversation();
+        $reply = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+
+        expect($reply->repliedMessage())->toBeNull();
+
+        $reply->content_attributes = ['in_reply_to' => 999999];
+
+        expect($reply->repliedMessage())->toBeNull();
+    });
+});

@@ -339,3 +339,66 @@ describe('POST messages with attachments', function () {
             ->and($conversation->messages()->count())->toBe(0);
     });
 });
+
+describe('POST messages replying to a message', function () {
+    it('keeps in_reply_to and derives the external id from the replied message', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        $original = Message::factory()->create([
+            'account_id' => $account->id,
+            'inbox_id' => $inbox->id,
+            'conversation_id' => $conversation->id,
+            'source_id' => 'platform-msg-1',
+        ]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'Dạ còn ạ',
+                'content_attributes' => ['in_reply_to' => $original->id],
+            ])
+            ->assertOk()
+            ->assertJsonPath('content_attributes.in_reply_to', $original->id)
+            ->assertJsonPath('content_attributes.in_reply_to_external_id', 'platform-msg-1');
+    });
+
+    it('keeps in_reply_to sent as a JSON string next to an attachment', function () {
+        Storage::fake('public');
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        $original = Message::factory()->create([
+            'account_id' => $account->id,
+            'inbox_id' => $inbox->id,
+            'conversation_id' => $conversation->id,
+        ]);
+
+        $this->actingAs($agent)
+            ->post("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'Ảnh mẫu đây ạ',
+                'content_attributes' => json_encode(['in_reply_to' => $original->id]),
+                'attachments' => [UploadedFile::fake()->image('mau.png')],
+            ], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('content_attributes.in_reply_to', $original->id);
+    });
+
+    it('drops in_reply_to that points to a message of another conversation', function () {
+        [$account, $inbox, , $conversation] = conversationMessagesFixtures();
+        $agent = conversationMessagesAgentOf($account, $inbox);
+        [, , , $otherConversation] = conversationMessagesFixtures();
+        $foreign = Message::factory()->create([
+            'account_id' => $otherConversation->account_id,
+            'inbox_id' => $otherConversation->inbox_id,
+            'conversation_id' => $otherConversation->id,
+            'source_id' => 'foreign-1',
+        ]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'Dạ còn ạ',
+                'content_attributes' => ['in_reply_to' => $foreign->id],
+            ])
+            ->assertOk()
+            ->assertJsonPath('content_attributes.in_reply_to', null)
+            ->assertJsonPath('content_attributes.in_reply_to_external_id', null);
+    });
+});

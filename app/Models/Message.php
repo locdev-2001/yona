@@ -241,6 +241,25 @@ class Message extends Model
     }
 
     /**
+     * Tin mà tin này trả lời trích dẫn. Chỉ tra trong cùng hội thoại: `in_reply_to`
+     * do client gửi lên, trỏ sang hội thoại khác thì coi như không có. Driver kênh
+     * cần nguyên tin gốc (ảnh chụp nền tảng, Message-ID thư) đều đi qua đây.
+     */
+    public function repliedMessage(): ?self
+    {
+        $repliedId = $this->content_attributes['in_reply_to'] ?? null;
+
+        if (! is_numeric($repliedId) || $this->conversation_id === null) {
+            return null;
+        }
+
+        return self::query()
+            ->where('conversation_id', $this->conversation_id)
+            ->whereKey((int) $repliedId)
+            ->first();
+    }
+
+    /**
      * Biểu cảm theo chuẩn §2.3: `[{emoji, by, at}]` — `by` là định danh người thả
      * (`external_id` của khách, `agent:<id>` khi chính agent thả). Bản ghi cũ lưu
      * mảng emoji phẳng (không biết ai thả); nâng cấp ngay tại chỗ đọc để không cần
