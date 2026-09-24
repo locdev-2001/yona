@@ -215,11 +215,12 @@ export default function Avatar({
                 ) : null}
             </span>
 
+            {/* Nền trắng cố định ở cả giao diện tối: logo thương hiệu (và logo bản cài đặt nền trong suốt) vẽ cho nền sáng. */}
             {showPlatformBadge && platform ? (
                 <span
                     data-testid="avatar-platform-badge"
                     title={platform.name}
-                    className="absolute z-20 -bottom-0.5 -end-0.5 grid place-items-center overflow-hidden rounded-full bg-n-solid-1 ring-1 ring-n-surface-1"
+                    className="absolute z-20 -bottom-0.5 -end-0.5 grid place-items-center overflow-hidden rounded-full bg-white ring-1 ring-n-surface-1"
                     style={{ width: platformBadgeSize, height: platformBadgeSize }}
                 >
                     <PlatformLogo platform={platform} className="size-full" />
