@@ -114,6 +114,7 @@ return [
         'REPLY' => 'Reply',
         'MORE' => 'More actions',
         'REACT' => 'React',
+        'FORWARD' => 'Forward',
         'RECALL' => 'Unsend for everyone',
         'DELETE' => 'Delete',
         'RECALL_CONFIRMATION' => [
@@ -125,6 +126,28 @@ return [
     'REPLY_QUOTE' => [
         'ORIGINAL' => 'Original message',
         'JUMP' => 'Go to original message',
+    ],
+    // Hộp chọn hội thoại đích khi chuyển tiếp một tin.
+    'FORWARD' => [
+        'TITLE' => 'Forward message',
+        'SEARCH_PLACEHOLDER' => 'Search by name, phone or conversation ID',
+        'RECENT' => 'Recent conversations',
+        'EMPTY' => 'No conversations found',
+        'LOAD_FAILED' => 'Could not load conversations.',
+        'RETRY' => 'Retry',
+        'MAX_REACHED' => 'You can forward to at most {max} conversations at a time',
+        'SUBMIT_COUNT' => 'Forward ({count})',
+        'SUCCESS' => 'Forwarded to {count} conversations',
+        'OPEN' => 'Open conversation',
+        'PARTIAL' => 'Forwarded to {ok}/{total} conversations. {error}',
+        'FAILED' => 'Could not forward. {error}',
+        'REMOVE_TARGET' => 'Remove {name}',
+    ],
+    // Nhãn trên bong bóng của tin được chuyển tiếp (trong Yona hoặc từ nền tảng).
+    'FORWARDED' => [
+        'LABEL' => 'Forwarded',
+        'FROM' => 'Forwarded from {name}',
+        'SOURCE_CONVERSATION' => 'Forwarded from conversation #{id}',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Retry sending',

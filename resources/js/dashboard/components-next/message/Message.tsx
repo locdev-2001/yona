@@ -59,6 +59,7 @@ interface MessageProps {
     onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
     onReplyTo?: (message: ConversationMessage) => void;
+    onForward?: (message: ConversationMessage) => void;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -121,6 +122,7 @@ export default function Message({
     onToggleReaction,
     onDeleteMessage,
     onReplyTo,
+    onForward,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -253,6 +255,7 @@ export default function Message({
         onToggleReaction: onToggleReaction ? (emoji: string) => void onToggleReaction(message, emoji) : undefined,
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
         onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
+        onForward: onForward ? () => onForward(message) : undefined,
     };
 
     if (!shouldRenderMessage) return null;

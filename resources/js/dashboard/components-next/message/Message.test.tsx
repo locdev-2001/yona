@@ -1,8 +1,9 @@
 import { fireEvent, render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { setLocale } from '../../../i18n';
 
 vi.mock('dashboard/components/widgets/conversation/components/GalleryView', () => ({
     default: () => <div data-testid="gallery" />,
@@ -125,5 +126,39 @@ describe('Message với sticker', () => {
         );
 
         expect(container.querySelector('[data-bubble-name="sticker"] [data-yona-reactions]')?.textContent).toBe('❤️');
+    });
+});
+
+describe('nhãn tin chuyển tiếp', () => {
+    beforeAll(() => setLocale('vi'));
+    afterAll(() => setLocale('en'));
+
+    it('chuyển tiếp trong Yona: "Đã chuyển tiếp", rê chuột thấy mã hội thoại nguồn', () => {
+        const container = renderMessage(
+            message({ content_attributes: { forwarded_from: { origin: 'internal', message_id: 9, conversation_id: 45 } } }),
+        );
+
+        const label = container.querySelector('[data-testid="forwarded-label"]');
+        expect(label?.textContent).toBe('Đã chuyển tiếp');
+        expect(label?.getAttribute('title')).toContain('#45');
+    });
+
+    it('khách chuyển tiếp trên nền tảng có tên người gửi gốc', () => {
+        const container = renderMessage(
+            message({
+                message_type: 0,
+                content_attributes: { forwarded_from: { origin: 'channel', sender_name: 'Nguyễn A' } },
+            }),
+        );
+
+        const label = container.querySelector('[data-testid="forwarded-label"]');
+        expect(label?.textContent).toBe('Chuyển tiếp từ Nguyễn A');
+        expect(label?.getAttribute('title')).toBeNull();
+    });
+
+    it('tin thường không có nhãn', () => {
+        const container = renderMessage(message());
+
+        expect(container.querySelector('[data-testid="forwarded-label"]')).toBeNull();
     });
 });

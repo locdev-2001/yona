@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveMessageActions } from './messageActions';
 import type { MessageActionInput } from './messageActions';
 
-const ALL_HANDLERS = { reply: true, react: true, delete: true };
+const ALL_HANDLERS = { reply: true, react: true, delete: true, forward: true };
 
 function input(overrides: Partial<MessageActionInput> = {}): MessageActionInput {
     return {
@@ -65,5 +65,24 @@ describe('resolveMessageActions — giữ nguyên hành vi cảm xúc và xoá',
     it('recall theo outbound_recall', () => {
         expect(resolveMessageActions(input({ inboxCapabilities: ['outbound_recall'] })).recall).toBe(true);
         expect(resolveMessageActions(input()).recall).toBe(false);
+    });
+});
+
+describe('resolveMessageActions — chuyển tiếp', () => {
+    it('chuyển tiếp được tin đến và tin đi đã gửi, không phụ thuộc năng lực hộp thư nguồn', () => {
+        expect(resolveMessageActions(input({ messageType: 0, inboxCapabilities: [] })).forward).toBe(true);
+        expect(resolveMessageActions(input({ messageType: 1, status: 'delivered', inboxCapabilities: [] })).forward).toBe(true);
+    });
+
+    it.each([
+        ['ghi chú riêng', { isPrivate: true }],
+        ['tin đã xoá', { contentAttributes: { deleted: true } }],
+        ['tin đang chờ gửi (id âm)', { id: -3 }],
+        ['tin gửi lỗi', { status: 'failed' }],
+        ['tin đang gửi', { status: 'progress' }],
+        ['tin hoạt động', { messageType: 2 }],
+        ['nơi dựng không truyền handler', { handlers: { ...ALL_HANDLERS, forward: false } }],
+    ])('không chuyển tiếp được: %s', (_label, overrides) => {
+        expect(resolveMessageActions(input(overrides as Partial<MessageActionInput>)).forward).toBe(false);
     });
 });

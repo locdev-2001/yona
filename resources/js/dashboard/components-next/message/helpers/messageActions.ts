@@ -14,18 +14,22 @@ export interface MessageActionInput {
     contentAttributes: Record<string, unknown>;
     inboxCapabilities: readonly string[];
     // Nơi dựng bong bóng có truyền handler cho hành động đó hay không.
-    handlers: { reply: boolean; react: boolean; delete: boolean };
+    handlers: { reply: boolean; react: boolean; delete: boolean; forward: boolean };
 }
 
 export interface MessageActionFlags {
     reply: boolean;
     react: boolean;
     delete: boolean;
+    // Chuyển tiếp không gate theo kênh nguồn: năng lực nằm ở hộp thư đích, lõi
+    // quyết cho từng đích khi agent chọn.
+    forward: boolean;
     // Kênh thu hồi được ở cả hai đầu → nút xoá mang nhãn "thu hồi".
     recall: boolean;
 }
 
-const REPLYABLE_MESSAGE_TYPES: number[] = [MESSAGE_TYPES.INCOMING, MESSAGE_TYPES.OUTGOING];
+// Tin đã gửi xong của cuộc trò chuyện (không phải ghi chú, hoạt động, tin đang chờ).
+const CHAT_MESSAGE_TYPES: number[] = [MESSAGE_TYPES.INCOMING, MESSAGE_TYPES.OUTGOING];
 
 const UNSETTLED_STATUSES: Array<string | null> = [MESSAGE_STATUS.FAILED, MESSAGE_STATUS.PROGRESS];
 
@@ -40,18 +44,18 @@ export function resolveMessageActions({
 }: MessageActionInput): MessageActionFlags {
     const inbox = { capabilities: inboxCapabilities };
     const isDeleted = Boolean(contentAttributes.deleted);
+    const isSettledChatMessage =
+        !isDeleted &&
+        !isPrivate &&
+        id > 0 &&
+        CHAT_MESSAGE_TYPES.includes(messageType) &&
+        !UNSETTLED_STATUSES.includes(status);
 
     return {
-        reply:
-            handlers.reply &&
-            inboxSupports(inbox, 'outbound_reply_to') &&
-            !isDeleted &&
-            !isPrivate &&
-            id > 0 &&
-            REPLYABLE_MESSAGE_TYPES.includes(messageType) &&
-            !UNSETTLED_STATUSES.includes(status),
+        reply: handlers.reply && inboxSupports(inbox, 'outbound_reply_to') && isSettledChatMessage,
         react: handlers.react && inboxSupports(inbox, 'outbound_reaction') && !isDeleted,
         delete: handlers.delete && !isDeleted && messageType === MESSAGE_TYPES.OUTGOING,
+        forward: handlers.forward && isSettledChatMessage,
         recall: inboxSupports(inbox, 'outbound_recall'),
     };
 }

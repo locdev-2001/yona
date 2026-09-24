@@ -32,6 +32,7 @@ interface MessageListProps {
     // Tin gốc nằm ngoài danh sách đã tra: message = có, null = không tồn tại.
     replyTargets?: ReadonlyMap<number, ConversationMessage | null>;
     onReplyTo?: (message: ConversationMessage) => void;
+    onForward?: (message: ConversationMessage) => void;
 }
 
 const NO_REPLY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
@@ -93,6 +94,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         onDeleteMessage,
         replyTargets = NO_REPLY_TARGETS,
         onReplyTo,
+        onForward,
     },
     ref,
 ) {
@@ -115,6 +117,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                         onToggleReaction={onToggleReaction}
                         onDeleteMessage={onDeleteMessage}
                         onReplyTo={onReplyTo}
+                        onForward={onForward}
                     />
                 </Fragment>
             ))}

@@ -115,6 +115,7 @@ return [
         'REPLY' => 'Trả lời',
         'MORE' => 'Thêm hành động',
         'REACT' => 'Thả cảm xúc',
+        'FORWARD' => 'Chuyển tiếp',
         'RECALL' => 'Thu hồi với mọi người',
         'DELETE' => 'Xoá',
         'RECALL_CONFIRMATION' => [
@@ -126,6 +127,28 @@ return [
     'REPLY_QUOTE' => [
         'ORIGINAL' => 'Tin nhắn gốc',
         'JUMP' => 'Xem tin nhắn gốc',
+    ],
+    // Hộp chọn hội thoại đích khi chuyển tiếp một tin.
+    'FORWARD' => [
+        'TITLE' => 'Chuyển tiếp tin nhắn',
+        'SEARCH_PLACEHOLDER' => 'Tìm theo tên, số điện thoại hoặc mã hội thoại',
+        'RECENT' => 'Hội thoại gần đây',
+        'EMPTY' => 'Không tìm thấy hội thoại nào',
+        'LOAD_FAILED' => 'Không tải được danh sách hội thoại.',
+        'RETRY' => 'Thử lại',
+        'MAX_REACHED' => 'Mỗi lần chuyển tiếp tối đa {max} hội thoại',
+        'SUBMIT_COUNT' => 'Chuyển tiếp ({count})',
+        'SUCCESS' => 'Đã chuyển tiếp tới {count} hội thoại',
+        'OPEN' => 'Mở hội thoại',
+        'PARTIAL' => 'Đã chuyển tiếp {ok}/{total} hội thoại. {error}',
+        'FAILED' => 'Chưa chuyển tiếp được. {error}',
+        'REMOVE_TARGET' => 'Bỏ chọn {name}',
+    ],
+    // Nhãn trên bong bóng của tin được chuyển tiếp (trong Yona hoặc từ nền tảng).
+    'FORWARDED' => [
+        'LABEL' => 'Đã chuyển tiếp',
+        'FROM' => 'Chuyển tiếp từ {name}',
+        'SOURCE_CONVERSATION' => 'Chuyển tiếp từ hội thoại #{id}',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Thử lại',

@@ -13,7 +13,8 @@ import { QUICK_REACTIONS } from './helpers/reactions';
 // context menu chuột phải (chưa port). Thanh hành động hiện khi rê chuột lên tin,
 // gate theo NĂNG LỰC KÊNH (docs/channel-capabilities.md §3 FE) — không theo
 // `channel_type`; cờ từng nút tính ở helpers/messageActions.ts. Thứ tự nút cố
-// định: Trả lời → Cảm xúc → Thu hồi/Xoá. Kênh không khai gì thì không render gì.
+// định: Trả lời → Cảm xúc → Chuyển tiếp → Thu hồi/Xoá. Không còn nút nào thì
+// không render gì.
 //
 // Máy không rê chuột được (điện thoại, máy tính bảng) sẽ không bao giờ kích hoạt
 // `group-hover`, nên ở đó thanh hành động nấp sau một nút ⋯ hiện mờ sẵn cạnh bong
@@ -86,6 +87,7 @@ export default function MessageActions({ className = '' }: { className?: string 
         onToggleReaction,
         onDeleteMessage,
         onReplyTo,
+        onForward,
     } = useMessageContext();
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isConfirmingDelete, setConfirmingDelete] = useState(false);
@@ -117,6 +119,7 @@ export default function MessageActions({ className = '' }: { className?: string 
         reply: canReply,
         react: canReact,
         delete: canDelete,
+        forward: canForward,
         recall: canRecall,
     } = resolveMessageActions({
         id,
@@ -125,7 +128,12 @@ export default function MessageActions({ className = '' }: { className?: string 
         isPrivate,
         contentAttributes,
         inboxCapabilities,
-        handlers: { reply: Boolean(onReplyTo), react: Boolean(onToggleReaction), delete: Boolean(onDeleteMessage) },
+        handlers: {
+            reply: Boolean(onReplyTo),
+            react: Boolean(onToggleReaction),
+            delete: Boolean(onDeleteMessage),
+            forward: Boolean(onForward),
+        },
     });
     // Endpoint xoá là MỘT; kênh khai `outbound_recall` thì thu hồi cả hai đầu,
     // không khai thì chỉ xoá ở Yona — nhãn phải nói đúng việc sẽ xảy ra.
@@ -141,7 +149,7 @@ export default function MessageActions({ className = '' }: { className?: string 
         ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL_CONFIRMATION.MESSAGE')
         : t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.MESSAGE');
 
-    if (!canReply && !canReact && !canDelete) return null;
+    if (!canReply && !canReact && !canForward && !canDelete) return null;
 
     // Ngón tay cần vùng chạm rộng hơn con trỏ chuột (WCAG 2.2 Target Size).
     const buttonClass = `${
@@ -196,6 +204,21 @@ export default function MessageActions({ className = '' }: { className?: string 
                     onClick={() => setIsPickerOpen(open => !open)}
                 >
                     <Icon icon="i-lucide-smile-plus" className="size-[14px]" />
+                </button>
+            ) : null}
+            {areActionsVisible && canForward ? (
+                <button
+                    type="button"
+                    className={buttonClass}
+                    title={t('CONVERSATION.MESSAGE_ACTIONS.FORWARD')}
+                    aria-label={t('CONVERSATION.MESSAGE_ACTIONS.FORWARD')}
+                    onClick={() => {
+                        setIsPickerOpen(false);
+                        setBarExpanded(false);
+                        onForward?.();
+                    }}
+                >
+                    <Icon icon="i-lucide-forward" className="size-[14px]" />
                 </button>
             ) : null}
             {areActionsVisible && canDelete ? (

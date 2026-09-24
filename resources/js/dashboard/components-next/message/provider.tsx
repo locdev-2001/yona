@@ -42,6 +42,8 @@ export interface MessageContextValue {
     // Trả lời trích dẫn chính tin này. Mỗi hành động trên thanh là một callback
     // tuỳ chọn như vậy; cờ hiện nút nằm ở helpers/messageActions.ts.
     onReplyTo?: () => void;
+    // Mở hộp chuyển tiếp tin này sang hội thoại khác.
+    onForward?: () => void;
 }
 
 const MessageControl = createContext<MessageContextValue | null>(null);
