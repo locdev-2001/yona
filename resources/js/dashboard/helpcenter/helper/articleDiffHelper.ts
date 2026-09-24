@@ -2,6 +2,8 @@
 // đăng: theo từ ở tiêu đề, theo khối ở thân bài.
 import MarkdownIt from 'markdown-it';
 
+import { escapeHtml } from 'shared/helpers/escapeHtml';
+
 const commonmark = MarkdownIt('commonmark');
 
 export const rendersIdentically = (a?: string | null, b?: string | null): boolean =>
@@ -13,9 +15,6 @@ const DEL_CLASS = '!bg-n-ruby-5 !text-n-ruby-12 !line-through rounded px-0.5';
 const MAX_DIFF_TOKENS = 2000;
 
 const tokenizeWords = (value?: string | null): string[] => (value || '').match(/\S+/g) || [];
-
-const escapeHtml = (value: string): string =>
-    value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 type DiffOp<T> = { type: 'equal' | 'del' | 'ins'; item: T };
 

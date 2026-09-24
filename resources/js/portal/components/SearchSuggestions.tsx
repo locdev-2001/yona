@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { escapeHtml } from 'shared/helpers/escapeHtml';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
 import type { PortalSearchArticle } from '../types';
 
@@ -15,23 +16,21 @@ interface SearchSuggestionsProps {
     loadingPlaceholder: string;
 }
 
-function escapeHtml(value: string): string {
-    const wrapper = document.createElement('p');
-    wrapper.textContent = value;
-
-    return wrapper.innerHTML;
-}
-
 function escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// highlightContent của useMessageFormatter: bọc mọi lần khớp trong <span>.
+// highlightContent của useMessageFormatter: bọc mọi lần khớp trong <span>. Tách
+// đoạn khớp trên chữ gốc rồi mới mã hoá từng đoạn, để từ khoá không cắt ngang
+// một thực thể HTML (`&amp;`, `&#39;`).
 function highlight(content: string, searchTerm: string): string {
-    const escaped = escapeHtml(content ?? '');
-    if (!searchTerm) return escaped;
+    const text = content ?? '';
+    if (!searchTerm) return escapeHtml(text);
 
-    return escaped.replace(new RegExp(`(${escapeRegExp(searchTerm)})`, 'ig'), `<span class="${HIGHLIGHT_CLASS}">$1</span>`);
+    return text
+        .split(new RegExp(`(${escapeRegExp(searchTerm)})`, 'i'))
+        .map((part, index) => (index % 2 === 1 ? `<span class="${HIGHLIGHT_CLASS}">${escapeHtml(part)}</span>` : escapeHtml(part)))
+        .join('');
 }
 
 export default function SearchSuggestions({
