@@ -157,6 +157,7 @@ export default function ContactInfo({
                         status={contactAvailabilityStatus}
                         size={48}
                         hideOfflineStatus
+                        previewable
                     />
                 </div>
 

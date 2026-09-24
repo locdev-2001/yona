@@ -1,8 +1,20 @@
-import { fireEvent, render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import Avatar from './Avatar';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import { t } from '../../../i18n';
+
+vi.mock('dashboard/components/widgets/conversation/components/GalleryView', () => ({
+    default: ({ attachment, onClose }: { attachment: MessageAttachment; onClose: () => void }) => (
+        <div data-testid="gallery" data-src={attachment.data_url} data-name={String(attachment.sender?.name)}>
+            <button type="button" onClick={onClose}>
+                close
+            </button>
+        </div>
+    ),
+}));
 
 const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
 
@@ -69,5 +81,72 @@ describe('avatar kèm badge nền tảng', () => {
 
         expect(badgeOf(container)?.querySelector('img')).toBeNull();
         expect(badgeOf(container)?.querySelector('.i-lucide-message-circle')).not.toBeNull();
+    });
+});
+
+describe('bấm avatar có ảnh để xem ảnh lớn', () => {
+    const previewLabel = (name: string) => t('GALLERY_VIEW.VIEW_AVATAR', { name });
+
+    it('avatar có ảnh là nút mở trình xem với đúng ảnh và tên', async () => {
+        render(<Avatar name="Trang" src="/trang.png" previewable />);
+        const trigger = screen.getByRole('button', { name: previewLabel('Trang') });
+
+        expect(trigger.getAttribute('tabindex')).toBe('0');
+        expect(trigger.className).toContain('cursor-zoom-in');
+
+        fireEvent.click(trigger);
+        const gallery = await screen.findByTestId('gallery');
+
+        expect(gallery.getAttribute('data-src')).toBe('/trang.png');
+        expect(gallery.getAttribute('data-name')).toBe('Trang');
+    });
+
+    it('bấm trong trình xem không lan lên phần tử cha của avatar', async () => {
+        const onParentClick = vi.fn();
+        render(
+            <div onClick={onParentClick}>
+                <Avatar name="Trang" src="/trang.png" previewable />
+            </div>,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: previewLabel('Trang') }));
+        fireEvent.click(await screen.findByText('close'));
+
+        expect(onParentClick).not.toHaveBeenCalled();
+        expect(screen.queryByTestId('gallery')).toBeNull();
+    });
+
+    it('Enter trên avatar mở trình xem', async () => {
+        render(<Avatar name="Trang" src="/trang.png" previewable />);
+
+        fireEvent.keyDown(screen.getByRole('button', { name: previewLabel('Trang') }), { key: 'Enter' });
+
+        expect(await screen.findByTestId('gallery')).not.toBeNull();
+    });
+
+    it('avatar chữ viết tắt không bấm được', () => {
+        const { container } = render(<Avatar name="Trang" previewable />);
+        const avatar = container.querySelector('[role="img"]') as HTMLElement;
+
+        fireEvent.click(avatar);
+
+        expect(screen.queryByRole('button')).toBeNull();
+        expect(avatar.getAttribute('tabindex')).toBeNull();
+        expect(screen.queryByTestId('gallery')).toBeNull();
+    });
+
+    it('ảnh tải lỗi thì avatar thôi là nút', () => {
+        const { container } = render(<Avatar name="Trang" src="/hong.png" previewable />);
+
+        fireEvent.error(container.querySelector('img') as HTMLImageElement);
+
+        expect(screen.queryByRole('button')).toBeNull();
+    });
+
+    it('không bật previewable thì avatar có ảnh vẫn chỉ là ảnh', () => {
+        render(<Avatar name="Trang" src="/trang.png" />);
+
+        expect(screen.queryByRole('button')).toBeNull();
+        expect(screen.getByRole('img', { name: 'Trang' })).not.toBeNull();
     });
 });

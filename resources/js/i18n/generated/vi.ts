@@ -3693,7 +3693,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "GALLERY_VIEW": {
-        "ERROR_DOWNLOADING": "Không tải được tệp đính kèm. Bạn hãy thử lại"
+        "ERROR_DOWNLOADING": "Không tải được tệp đính kèm. Bạn hãy thử lại",
+        "VIEW_AVATAR": "Xem ảnh đại diện {name}"
     },
     "GENERAL": {
         "SHOWING_RESULTS": "Hiển thị {firstIndex}-{lastIndex} trong {totalCount} mục",

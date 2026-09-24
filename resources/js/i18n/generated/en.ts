@@ -3693,7 +3693,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "GALLERY_VIEW": {
-        "ERROR_DOWNLOADING": "Unable to download attachment. Please try again"
+        "ERROR_DOWNLOADING": "Unable to download attachment. Please try again",
+        "VIEW_AVATAR": "View {name}'s profile photo"
     },
     "GENERAL": {
         "SHOWING_RESULTS": "Showing {firstIndex}-{lastIndex} of {totalCount} items",

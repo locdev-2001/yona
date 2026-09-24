@@ -6,4 +6,5 @@
 
 return [
     'ERROR_DOWNLOADING' => 'Không tải được tệp đính kèm. Bạn hãy thử lại',
+    'VIEW_AVATAR' => 'Xem ảnh đại diện {name}',
 ];

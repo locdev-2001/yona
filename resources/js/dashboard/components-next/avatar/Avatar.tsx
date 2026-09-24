@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
+
+import { t } from '../../../i18n';
+
+// Trình xem ảnh chỉ nạp khi có người bấm, avatar ở danh sách dài không phải kéo theo.
+const AvatarPreview = lazy(() => import('./AvatarPreview'));
 
 // Badge nền tảng: 24px→12, 32px→14, 40px→18; avatar nhỏ hơn 20px thì badge không đọc được nên bỏ.
 const PLATFORM_BADGE_RATIO = 0.45;
@@ -24,6 +29,8 @@ interface AvatarProps {
     // Nền tảng tin/khách đến từ (hoặc chính bản cài đặt) — badge tròn ở góc dưới cuối avatar.
     platform?: ChannelPlatform | null;
     className?: string;
+    // Bấm (hoặc Enter/Space) vào avatar có ảnh thật thì mở ảnh cỡ lớn; chữ viết tắt không bấm được.
+    previewable?: boolean;
     // Slot overlay của bản gốc: thay thế lớp upload phủ trên avatar
     // (ContactsCard dùng để hiện checkbox chọn khi hover).
     overlay?: (args: { size: number }) => ReactNode;
@@ -85,11 +92,13 @@ export default function Avatar({
     hideOfflineStatus = false,
     platform = null,
     className = '',
+    previewable = false,
     overlay,
     onUpload,
     onDelete,
 }: AvatarProps) {
     const [isImageValid, setImageValid] = useState(true);
+    const [isPreviewOpen, setPreviewOpen] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -123,6 +132,27 @@ export default function Avatar({
         PLATFORM_BADGE_MAX,
     );
     const borderRadiusClass = getBorderRadiusClass(size, roundedFull);
+    const canPreview = previewable && Boolean(src) && isImageValid;
+
+    const openPreview = (event: MouseEvent | KeyboardEvent) => {
+        event.stopPropagation();
+        setPreviewOpen(true);
+    };
+
+    const previewTriggerProps = canPreview
+        ? {
+              role: 'button',
+              tabIndex: 0,
+              'aria-label': t('GALLERY_VIEW.VIEW_AVATAR', { name }).trim(),
+              'aria-haspopup': 'dialog' as const,
+              onClick: openPreview,
+              onKeyDown: (event: KeyboardEvent) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
+                  openPreview(event);
+              },
+          }
+        : { role: 'img' };
 
     const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -165,10 +195,13 @@ export default function Avatar({
             ) : null}
 
             <span
-                role="img"
+                {...previewTriggerProps}
                 className={[
                     'relative inline-flex items-center justify-center object-cover overflow-hidden font-medium outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)] dark:outline-[rgb(255_255_255_/_0.04)]',
                     borderRadiusClass,
+                    canPreview
+                        ? 'cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-n-brand'
+                        : '',
                     showColors ? 'dark:!bg-[var(--dark-bg)] dark:!text-[var(--dark-text)]' : '',
                     showDefaultAvatar ? 'bg-n-slate-3 dark:bg-n-slate-4' : '',
                 ]
@@ -225,6 +258,12 @@ export default function Avatar({
                 >
                     <PlatformLogo platform={platform} className="size-full" />
                 </span>
+            ) : null}
+
+            {canPreview && isPreviewOpen ? (
+                <Suspense fallback={null}>
+                    <AvatarPreview src={src} name={name} onClose={() => setPreviewOpen(false)} />
+                </Suspense>
             ) : null}
         </span>
     );

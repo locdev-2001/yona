@@ -288,6 +288,7 @@ export default function Message({
                                     src={senderIdentity.src}
                                     platform={senderIdentity.platform}
                                     size={24}
+                                    previewable={messageType === MESSAGE_TYPES.INCOMING}
                                 />
                             </div>
                         )}

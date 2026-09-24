@@ -108,6 +108,7 @@ export default function ConversationHeader({
                         status={contactAvailabilityStatus}
                         platform={inbox?.platform ?? null}
                         hideOfflineStatus
+                        previewable
                     />
                     <div className="flex items-center min-w-0 gap-1.5">
                         <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
@@ -143,6 +144,7 @@ export default function ConversationHeader({
                     status={contactAvailabilityStatus}
                     platform={inbox?.platform ?? null}
                     hideOfflineStatus
+                    previewable
                 />
                 <div className="flex flex-col items-start min-w-0 ms-2 overflow-hidden">
                     <div className="flex flex-row items-center max-w-full gap-1 p-0 m-0">
