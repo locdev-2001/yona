@@ -5,6 +5,7 @@ vi.mock('./apiClient', () => ({ postJson, deleteJson }));
 
 import {
     PushPermissionDeniedError,
+    PushServiceUnavailableError,
     detachPushOnLogout,
     disablePush,
     enablePush,
@@ -223,5 +224,28 @@ describe('detachPushOnLogout', () => {
         await detachPushOnLogout();
 
         expect(deleteJson).not.toHaveBeenCalled();
+    });
+});
+
+describe('enablePush khi dịch vụ đẩy của trình duyệt từ chối', () => {
+    afterEach(() => Reflect.deleteProperty(navigator, 'brave'));
+
+    it('đổi AbortError của subscribe thành lỗi dịch vụ đẩy, đánh dấu Brave', async () => {
+        const browser = installBrowserPush({ permission: 'granted' });
+        browser.pushManager.subscribe.mockRejectedValue(new DOMException('Registration failed - push service error', 'AbortError'));
+        Object.defineProperty(navigator, 'brave', { configurable: true, value: {} });
+
+        const failure = enablePush(VAPID_KEY);
+
+        await expect(failure).rejects.toBeInstanceOf(PushServiceUnavailableError);
+        await expect(failure).rejects.toMatchObject({ isBrave: true });
+        expect(postJson).not.toHaveBeenCalled();
+    });
+
+    it('giữ nguyên lỗi khác của subscribe', async () => {
+        const browser = installBrowserPush({ permission: 'granted' });
+        browser.pushManager.subscribe.mockRejectedValue(new DOMException('bad key', 'InvalidAccessError'));
+
+        await expect(enablePush(VAPID_KEY)).rejects.toMatchObject({ name: 'InvalidAccessError' });
     });
 });

@@ -179,6 +179,8 @@ return [
             ],
             'BROWSER_PERMISSION' => 'Enable push notifications for your browser so you’re able to receive them',
             'PUSH_ENABLE_FAILED' => 'Could not turn on push notifications in this browser. Please try again later.',
+            'PUSH_SERVICE_BLOCKED_BRAVE' => 'Brave has its push messaging service turned off. Open brave://settings/privacy, turn on "Use Google services for push messaging", restart Brave, then turn this on again.',
+            'PUSH_SERVICE_UNAVAILABLE' => 'This browser has no push messaging service. Turn on notifications in Chrome, Edge, Cốc Cốc or Firefox instead.',
             'PUSH_PERMISSION_DENIED' => 'Notifications are blocked for this site. Allow them in your browser’s site settings, then turn this on again.',
         ],
         'API' => [

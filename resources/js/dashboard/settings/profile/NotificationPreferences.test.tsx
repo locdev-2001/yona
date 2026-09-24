@@ -64,8 +64,14 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     Reflect.deleteProperty(navigator, 'serviceWorker');
+    Reflect.deleteProperty(navigator, 'brave');
 });
+
+// Brave và Chromium bản không kèm khoá Google có Push API, cho quyền, nhưng dịch vụ
+// đẩy từ chối đăng ký: subscribe() ném AbortError.
+const pushServiceRefusal = () => new DOMException('Registration failed - push service error', 'AbortError');
 
 describe('NotificationPreferences — thông báo đẩy', () => {
     it('ẩn cột thông báo đẩy và công tắc khi máy chủ không có khoá VAPID', () => {
@@ -133,6 +139,7 @@ describe('NotificationPreferences — thông báo đẩy', () => {
         installBrowserPush();
         postJson.mockRejectedValue(new Error('Network error'));
         withVapidKey(VAPID_KEY);
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         const toasts: string[] = [];
         const onToast = (payload: unknown) => {
             toasts.push((payload as { message: string }).message);
@@ -145,6 +152,43 @@ describe('NotificationPreferences — thông báo đẩy', () => {
 
         await waitFor(() => expect(toasts).toContain(t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.PUSH_ENABLE_FAILED')));
         expect(toggle).toHaveAttribute('aria-checked', 'false');
+        expect(consoleError).toHaveBeenCalledWith(expect.any(Error));
         emitter.off(BUS_EVENTS.SHOW_TOAST, onToast);
+    });
+
+    it('trên Brave tắt dịch vụ đẩy: hướng dẫn bật dịch vụ nằm lại dưới công tắc, bật lại được thì biến mất', async () => {
+        const browser = installBrowserPush();
+        browser.pushManager.subscribe.mockRejectedValueOnce(pushServiceRefusal());
+        Object.defineProperty(navigator, 'brave', { configurable: true, value: { isBrave: () => Promise.resolve(true) } });
+        withVapidKey(VAPID_KEY);
+
+        render(<NotificationPreferences />);
+        const toggle = screen.getByRole('switch');
+        fireEvent.click(toggle);
+
+        const hint = await screen.findByRole('alert');
+        expect(hint).toHaveTextContent(t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.PUSH_SERVICE_BLOCKED_BRAVE'));
+        expect(hint).toHaveTextContent('brave://settings/privacy');
+        expect(toggle).toHaveAttribute('aria-checked', 'false');
+        expect(postJson).not.toHaveBeenCalled();
+
+        fireEvent.click(toggle);
+
+        await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('trình duyệt khác không có dịch vụ đẩy: gợi ý dùng trình duyệt có hỗ trợ', async () => {
+        const browser = installBrowserPush();
+        browser.pushManager.subscribe.mockRejectedValue(pushServiceRefusal());
+        withVapidKey(VAPID_KEY);
+
+        render(<NotificationPreferences />);
+        fireEvent.click(screen.getByRole('switch'));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+            t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.PUSH_SERVICE_UNAVAILABLE'),
+        );
+        expect(postJson).not.toHaveBeenCalled();
     });
 });

@@ -93,6 +93,15 @@ function sendSubscriptionToServer(subscription: PushSubscription): Promise<unkno
     });
 }
 
+// Trình duyệt có Push API và đã cho quyền, nhưng dịch vụ đẩy của nó từ chối đăng
+// ký: Brave tắt dịch vụ đẩy của Google theo mặc định, Chromium bản không kèm khoá
+// Google cũng vậy. subscribe() khi đó ném AbortError.
+export class PushServiceUnavailableError extends Error {
+    constructor(readonly isBrave: boolean) {
+        super('Push service unavailable in this browser');
+    }
+}
+
 // requestPushPermissions + registerSubscription.
 export async function enablePush(vapidPublicKey: string): Promise<void> {
     const permission = hasPushPermission() ? 'granted' : await Notification.requestPermission();
@@ -101,7 +110,17 @@ export async function enablePush(vapidPublicKey: string): Promise<void> {
         throw new PushPermissionDeniedError();
     }
 
-    await sendSubscriptionToServer(await subscribe(vapidPublicKey));
+    let subscription: PushSubscription;
+    try {
+        subscription = await subscribe(vapidPublicKey);
+    } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            throw new PushServiceUnavailableError('brave' in navigator);
+        }
+        throw error;
+    }
+
+    await sendSubscriptionToServer(subscription);
 }
 
 // Bản gốc chỉ gỡ ở trình duyệt; xoá luôn bản ghi phía máy chủ để không còn đẩy

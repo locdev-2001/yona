@@ -8,6 +8,7 @@ import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { fetchNotificationSettings, updateNotificationSettings } from 'dashboard/notifications/api';
 import {
     PushPermissionDeniedError,
+    PushServiceUnavailableError,
     disablePush,
     enablePush,
     getPushSubscription,
@@ -74,6 +75,9 @@ export default function NotificationPreferences() {
 
     const [selectedFlags, setSelectedFlags] = useState<Record<DeliveryType, string[]>>({ email: [], push: [] });
     const [hasEnabledPush, setHasEnabledPush] = useState(false);
+    // Hướng dẫn dài (vd cách bật dịch vụ đẩy của Brave) không vừa một toast 2,5 giây:
+    // giữ dưới công tắc tới lần bật kế tiếp.
+    const [pushServiceHintKey, setPushServiceHintKey] = useState<string | null>(null);
 
     useEffect(() => {
         fetchNotificationSettings(accountId).then(
@@ -122,10 +126,23 @@ export default function NotificationPreferences() {
             return;
         }
 
+        setPushServiceHintKey(null);
         enablePush(vapidPublicKey).then(
             () => setHasEnabledPush(true),
             error => {
                 setHasEnabledPush(false);
+                if (error instanceof PushServiceUnavailableError) {
+                    setPushServiceHintKey(
+                        error.isBrave
+                            ? 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.PUSH_SERVICE_BLOCKED_BRAVE'
+                            : 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.PUSH_SERVICE_UNAVAILABLE',
+                    );
+                    return;
+                }
+                if (!(error instanceof PushPermissionDeniedError)) {
+                    // Lỗi chưa phân loại: để lại dấu vết cho người hỗ trợ đọc trong console.
+                    console.error(error);
+                }
                 useAlert(
                     t(
                         error instanceof PushPermissionDeniedError
@@ -223,6 +240,11 @@ export default function NotificationPreferences() {
                     </div>
                     <ToggleSwitch value={hasEnabledPush} onChange={togglePush} />
                 </div>
+            )}
+            {isPushAvailable && pushServiceHintKey && (
+                <p role="alert" className="-mt-4 px-1 text-body-main text-n-ruby-11">
+                    {t(pushServiceHintKey)}
+                </p>
             )}
         </div>
     );

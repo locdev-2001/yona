@@ -8327,6 +8327,8 @@ const messages: Record<string, unknown> = {
                 },
                 "BROWSER_PERMISSION": "Hãy cho phép trình duyệt hiện thông báo đẩy để bạn nhận được chúng",
                 "PUSH_ENABLE_FAILED": "Không bật được thông báo đẩy trên trình duyệt này. Vui lòng thử lại sau.",
+                "PUSH_SERVICE_BLOCKED_BRAVE": "Brave đang tắt dịch vụ nhận thông báo đẩy. Mở brave://settings/privacy, bật mục \"Use Google services for push messaging\", khởi động lại Brave rồi bật lại công tắc này.",
+                "PUSH_SERVICE_UNAVAILABLE": "Trình duyệt này không có dịch vụ nhận thông báo đẩy. Hãy bật thông báo trên Chrome, Edge, Cốc Cốc hoặc Firefox.",
                 "PUSH_PERMISSION_DENIED": "Trình duyệt đang chặn thông báo của trang này. Hãy cho phép thông báo trong cài đặt trang của trình duyệt rồi bật lại."
             },
             "API": {
