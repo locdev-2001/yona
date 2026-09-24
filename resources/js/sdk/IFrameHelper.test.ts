@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IFrameHelper } from './IFrameHelper';
-import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
+import { APP_FRAME_ID, FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
 import { setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
-import type { ChatwootInstance } from './types';
-
-const APP_FRAME_ID = 'chatwoot_live_chat_widget';
+import type { SdkInstance } from './types';
+import { LEGACY_EVENT_PREFIX, LEGACY_FRAME_MESSAGE_PREFIX } from '../shared/legacyContracts';
 
 const mountAppFrame = () => {
     const iframe = document.createElement('iframe');
@@ -17,14 +16,14 @@ const mountAppFrame = () => {
 };
 
 beforeEach(() => {
-    window.$chatwoot = {
+    window.$yona = {
         baseUrl: 'https://app.yona.vn',
         websiteToken: 'website-token',
         position: 'right',
         widgetStyle: 'standard',
         hideMessageBubble: false,
         isOpen: false,
-    } as ChatwootInstance;
+    } as SdkInstance;
 });
 
 afterEach(() => {
@@ -70,13 +69,13 @@ const loadedMessage = (authToken: string) => ({
 describe('getUrl', () => {
     it('dựng URL iframe từ baseUrl và websiteToken', () => {
         expect(IFrameHelper.getUrl({ baseUrl: 'https://app.yona.vn', websiteToken: 'abc123' })).toBe(
-            'https://app.yona.vn/widget?website_token=abc123',
+            'https://app.yona.vn/widget?website_token=abc123&sdk_protocol=2',
         );
     });
 
     it('giữ nguyên baseUrl có cổng và không thêm dấu / thừa', () => {
         expect(IFrameHelper.getUrl({ baseUrl: 'http://localhost:8000', websiteToken: 'abc123' })).toBe(
-            'http://localhost:8000/widget?website_token=abc123',
+            'http://localhost:8000/widget?website_token=abc123&sdk_protocol=2',
         );
     });
 });
@@ -223,7 +222,7 @@ describe('giữ phiên khách qua tải lại trang', () => {
         IFrameHelper.createFrame({ baseUrl: 'https://app.yona.vn', websiteToken: 'website-token' });
 
         expect(IFrameHelper.getAppFrame()?.src).toBe(
-            'https://app.yona.vn/widget?website_token=website-token&cw_conversation=visitor-token',
+            'https://app.yona.vn/widget?website_token=website-token&sdk_protocol=2&cw_conversation=visitor-token',
         );
     });
 
@@ -231,7 +230,7 @@ describe('giữ phiên khách qua tải lại trang', () => {
         const iframe = mountAppFrame();
         const postMessage = vi.fn();
         Object.defineProperty(iframe, 'contentWindow', { value: { postMessage }, configurable: true });
-        window.$chatwoot.isOpen = true;
+        window.$yona.isOpen = true;
         IFrameHelper.initPostMessageCommunication();
 
         postFromWidget(loadedMessage('visitor-token'));
@@ -258,9 +257,9 @@ describe('xoá phiên khách', () => {
         expect(freshFrame).not.toBe(oldFrame);
         expect(oldFrame.isConnected).toBe(false);
         expect(document.querySelectorAll(`#${APP_FRAME_ID}`)).toHaveLength(1);
-        expect(freshFrame.src).toMatch(/^https:\/\/app\.yona\.vn\/widget\?website_token=website-token&new_session=/);
+        expect(freshFrame.src).toMatch(/^https:\/\/app\.yona\.vn\/widget\?website_token=website-token&sdk_protocol=2&new_session=/);
         expect(freshFrame.src).not.toContain('cw_conversation');
-        expect(window.$chatwoot.resetTriggered).toBe(true);
+        expect(window.$yona.resetTriggered).toBe(true);
     });
 
     it('mỗi lần xoá phiên mang một mã riêng để widget chỉ xử lý mỗi lần một lần', () => {
@@ -286,4 +285,51 @@ describe('xoá phiên khách', () => {
         expect(getCookie('cw_conversation')).toBeUndefined();
         expect(newSessionIdOf(IFrameHelper.getAppFrame()!.src)).toBeTruthy();
     });
+});
+
+describe('giao thức với iframe', () => {
+    const recordWindowEvents = (names: string[]) => {
+        const received: Array<{ name: string; detail: unknown }> = [];
+        names.forEach(name =>
+            window.addEventListener(name, event => received.push({ name, detail: (event as CustomEvent).detail })),
+        );
+
+        return received;
+    };
+
+    it('iframe có id mới', () => {
+        IFrameHelper.createFrame({ baseUrl: 'https://app.yona.vn', websiteToken: 'website-token' });
+
+        expect(IFrameHelper.getAppFrame()?.id).toBe('yona_live_chat_widget');
+    });
+
+    it('nhận tin iframe gửi bằng tiền tố đời trước', () => {
+        setCookieWithDomain('cw_conversation', 'visitor-token');
+        const appFrame = mountAppFrame();
+        IFrameHelper.initPostMessageCommunication();
+
+        window.onmessage?.({
+            data: `${LEGACY_FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: RESET_SESSION_EVENT })}`,
+            origin: WIDGET_ORIGIN,
+            source: appFrame.contentWindow,
+        } as MessageEvent);
+
+        expect(getCookie('cw_conversation')).toBeUndefined();
+    });
+
+    it.each(['on-message', 'yona:on-message', `${LEGACY_EVENT_PREFIX}:on-message`])(
+        'onEvent %s bắn cả tên mới lẫn tên cũ, cùng detail',
+        eventIdentifier => {
+            const received = recordWindowEvents(['yona:on-message', `${LEGACY_EVENT_PREFIX}:on-message`]);
+            mountAppFrame();
+            IFrameHelper.initPostMessageCommunication();
+
+            postFromWidget({ event: 'onEvent', eventIdentifier, data: { id: 7 } });
+
+            expect(received).toEqual([
+                { name: 'yona:on-message', detail: { id: 7 } },
+                { name: `${LEGACY_EVENT_PREFIX}:on-message`, detail: { id: 7 } },
+            ]);
+        },
+    );
 });

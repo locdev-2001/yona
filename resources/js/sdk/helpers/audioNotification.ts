@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/shared/helpers/AudioNotificationHelper.js (phần SDK dùng).
 export const initOnEvents = ['click', 'touchstart', 'keypress', 'keydown'];
 
 // KHÁC BIỆT CỐ Ý so với bản gốc: gốc `fetch` tệp mp3 rồi decodeAudioData qua

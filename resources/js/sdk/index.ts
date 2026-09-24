@@ -1,15 +1,16 @@
-// Port: refs/chatwoot/app/javascript/entrypoints/sdk.js
-// Điểm vào bundle IIFE độc lập — API công khai `window.chatwootSDK.run({websiteToken, baseUrl})`.
+// Điểm vào bundle IIFE độc lập — API công khai `window.yonaSDK.run({websiteToken, baseUrl})`.
+// Tên toàn cục đời trước vẫn trỏ cùng object (shared/legacyContracts.ts) để mã nhúng cũ không gãy.
 import { IFrameHelper } from './IFrameHelper';
 import { getBubbleView, getDarkMode, getWidgetStyle } from './settingsHelper';
 import { computeHashForUserData, getUserCookieName, hasUserKeys, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { addClasses, removeClasses, restoreWidgetInDOM } from './DOMHelpers';
 import { SDK_SET_BUBBLE_VISIBILITY } from './constants/frameEvents';
-import type { ChatwootSettings, RunOptions, SdkUserAttributes } from './types';
+import { exposeLegacySdk, exposeLegacySdkInstance, readLegacySdkSettings } from '../shared/legacyContracts';
+import type { RunOptions, SdkSettings, SdkUserAttributes } from './types';
 
 const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
-    if (window.$chatwoot) {
+    if (window.$yona) {
         return;
     }
 
@@ -31,38 +32,39 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         restoreWidgetInDOM((event as unknown as { newDocument: Document }).newDocument.body),
     );
 
-    const chatwootSettings: ChatwootSettings = window.chatwootSettings || {};
-    let locale = chatwootSettings.locale;
-    const baseDomain = chatwootSettings.baseDomain;
+    // Trang đặt cả hai biến thì biến tên mới thắng.
+    const settings: SdkSettings = { ...(readLegacySdkSettings() as SdkSettings), ...(window.yonaSettings ?? {}) };
+    let locale = settings.locale;
+    const baseDomain = settings.baseDomain;
 
-    if (chatwootSettings.useBrowserLanguage) {
+    if (settings.useBrowserLanguage) {
         locale = window.navigator.language.replace('-', '_');
     }
 
-    window.$chatwoot = {
+    window.$yona = {
         baseUrl,
         baseDomain,
         hasLoaded: false,
-        hideMessageBubble: chatwootSettings.hideMessageBubble || false,
+        hideMessageBubble: settings.hideMessageBubble || false,
         isOpen: false,
-        position: chatwootSettings.position === 'left' ? 'left' : 'right',
+        position: settings.position === 'left' ? 'left' : 'right',
         websiteToken,
         locale,
-        useBrowserLanguage: chatwootSettings.useBrowserLanguage || false,
-        type: getBubbleView(chatwootSettings.type),
-        launcherTitle: chatwootSettings.launcherTitle || '',
-        showPopoutButton: chatwootSettings.showPopoutButton || false,
-        showUnreadMessagesDialog: chatwootSettings.showUnreadMessagesDialog ?? true,
-        widgetStyle: getWidgetStyle(chatwootSettings.widgetStyle) || 'standard',
+        useBrowserLanguage: settings.useBrowserLanguage || false,
+        type: getBubbleView(settings.type),
+        launcherTitle: settings.launcherTitle || '',
+        showPopoutButton: settings.showPopoutButton || false,
+        showUnreadMessagesDialog: settings.showUnreadMessagesDialog ?? true,
+        widgetStyle: getWidgetStyle(settings.widgetStyle) || 'standard',
         resetTriggered: false,
-        darkMode: getDarkMode(chatwootSettings.darkMode),
-        welcomeTitle: chatwootSettings.welcomeTitle || '',
-        welcomeDescription: chatwootSettings.welcomeDescription || '',
-        availableMessage: chatwootSettings.availableMessage || '',
-        unavailableMessage: chatwootSettings.unavailableMessage || '',
-        enableFileUpload: chatwootSettings.enableFileUpload,
-        enableEmojiPicker: chatwootSettings.enableEmojiPicker ?? true,
-        enableEndConversation: chatwootSettings.enableEndConversation ?? true,
+        darkMode: getDarkMode(settings.darkMode),
+        welcomeTitle: settings.welcomeTitle || '',
+        welcomeDescription: settings.welcomeDescription || '',
+        availableMessage: settings.availableMessage || '',
+        unavailableMessage: settings.unavailableMessage || '',
+        enableFileUpload: settings.enableFileUpload,
+        enableEmojiPicker: settings.enableEmojiPicker ?? true,
+        enableEndConversation: settings.enableEndConversation ?? true,
 
         toggle(state?: 'open' | 'close') {
             IFrameHelper.events.toggleBubble(state);
@@ -74,21 +76,21 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
             if (visibility === 'hide') {
                 addClasses(widgetHolder, 'woot-widget--without-bubble');
                 addClasses(widgetElm, 'woot-hidden');
-                window.$chatwoot.hideMessageBubble = true;
+                window.$yona.hideMessageBubble = true;
             } else if (visibility === 'show') {
                 removeClasses(widgetElm, 'woot-hidden');
                 removeClasses(widgetHolder, 'woot-widget--without-bubble');
-                window.$chatwoot.hideMessageBubble = false;
+                window.$yona.hideMessageBubble = false;
             }
             IFrameHelper.sendMessage(SDK_SET_BUBBLE_VISIBILITY, {
-                hideMessageBubble: window.$chatwoot.hideMessageBubble,
+                hideMessageBubble: window.$yona.hideMessageBubble,
             });
         },
 
         popoutChatWindow() {
             IFrameHelper.events.popoutChatWindow({
-                baseUrl: window.$chatwoot.baseUrl,
-                websiteToken: window.$chatwoot.websiteToken,
+                baseUrl: window.$yona.baseUrl,
+                websiteToken: window.$yona.websiteToken,
                 locale,
             });
         },
@@ -109,8 +111,8 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
                 return;
             }
 
-            window.$chatwoot.identifier = identifier;
-            window.$chatwoot.user = user;
+            window.$yona.identifier = identifier;
+            window.$yona.user = user;
             IFrameHelper.sendMessage('set-user', { identifier, user });
 
             setCookieWithDomain(userCookieName, hashToBeStored, { baseDomain });
@@ -165,7 +167,7 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         },
 
         reset() {
-            if (window.$chatwoot.isOpen) {
+            if (window.$yona.isOpen) {
                 IFrameHelper.events.toggleBubble();
             }
 
@@ -173,9 +175,13 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         },
     };
 
+    exposeLegacySdkInstance(window.$yona);
+
     IFrameHelper.createFrame({ baseUrl, websiteToken });
 };
 
-window.chatwootSDK = {
+// Gán ngay lúc nạp script: mã nhúng gọi `.run` trong onload của thẻ script.
+window.yonaSDK = {
     run: runSDK,
 };
+exposeLegacySdk(window.yonaSDK);

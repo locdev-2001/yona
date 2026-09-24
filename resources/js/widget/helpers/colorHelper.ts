@@ -1,5 +1,5 @@
-// getContrastingTextColor của @chatwoot/utils — package không có type declaration
-// cho hàm này nên port thẳng (cùng công thức, cùng ngưỡng 186).
+// Chọn màu chữ tương phản với nền (ngưỡng độ sáng 186). Thư viện tiện ích dùng chung
+// không khai type cho hàm này nên viết lại cùng công thức.
 export const getContrastingTextColor = (bgColor: string): string => {
     const color = (bgColor || '').replace('#', '');
     const red = parseInt(color.slice(0, 2), 16);

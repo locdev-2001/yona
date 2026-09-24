@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/sdk/DOMHelpers.js
 import SDK_CSS from './sdk.css?inline';
 import { IFrameHelper } from './IFrameHelper';
 

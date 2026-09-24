@@ -2,7 +2,7 @@ import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import AvailabilityContainer from './Availability';
-import { CHATWOOT_ON_START_CONVERSATION } from '../../sdk/constants/sdkEvents';
+import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
 import type { AvailableAgent } from '../types';
 
 // Port từ widget/components/TeamAvailability.vue
@@ -24,7 +24,7 @@ export default function TeamAvailability({
         if (!hasConversation) {
             IFrameHelper.sendMessage({
                 event: 'onEvent',
-                eventIdentifier: CHATWOOT_ON_START_CONVERSATION,
+                eventIdentifier: SDK_EVENTS.ON_START_CONVERSATION,
                 data: { hasConversation: false },
             });
         }

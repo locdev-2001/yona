@@ -10,58 +10,58 @@ const campaigns: WidgetCampaign[] = [
         id: 1,
         message: 'Hey, this is a campaign',
         trigger_only_during_business_hours: false,
-        trigger_rules: { url: 'https://www.chatwoot.com/pricing', time_on_page: 3 },
+        trigger_rules: { url: 'https://www.example.com/pricing', time_on_page: 3 },
     },
     {
         id: 2,
         message: 'Hey, this is a campaign',
         trigger_only_during_business_hours: false,
-        trigger_rules: { url: 'https://www.chatwoot.com/about', time_on_page: 6 },
+        trigger_rules: { url: 'https://www.example.com/about', time_on_page: 6 },
     },
 ];
 
 describe('isPatternMatchingWithURL', () => {
     it('matches valid URL patterns', () => {
-        expect(isPatternMatchingWithURL('https://chatwoot.com/pricing*', 'https://chatwoot.com/pricing/')).toBe(true);
-        expect(isPatternMatchingWithURL('https://*.chatwoot.com/pricing/', 'https://app.chatwoot.com/pricing/')).toBe(
+        expect(isPatternMatchingWithURL('https://example.com/pricing*', 'https://example.com/pricing/')).toBe(true);
+        expect(isPatternMatchingWithURL('https://*.example.com/pricing/', 'https://app.example.com/pricing/')).toBe(
             true,
         );
         expect(
             isPatternMatchingWithURL(
-                'https://{*.}?chatwoot.com/pricing?test=true',
-                'https://app.chatwoot.com/pricing/?test=true',
+                'https://{*.}?example.com/pricing?test=true',
+                'https://app.example.com/pricing/?test=true',
             ),
         ).toBe(true);
         expect(
             isPatternMatchingWithURL(
-                'https://{*.}?chatwoot.com/pricing*\\?*',
-                'https://chatwoot.com/pricing/?test=true',
+                'https://{*.}?example.com/pricing*\\?*',
+                'https://example.com/pricing/?test=true',
             ),
         ).toBe(true);
     });
 
     it('does not match a different path', () => {
-        expect(isPatternMatchingWithURL('https://chatwoot.com/pricing*', 'https://chatwoot.com/about')).toBe(false);
+        expect(isPatternMatchingWithURL('https://example.com/pricing*', 'https://example.com/about')).toBe(false);
     });
 });
 
 describe('formatCampaigns', () => {
     it('keeps only the fields the trigger rules need', () => {
         expect(formatCampaigns({ campaigns })).toStrictEqual([
-            { id: 1, timeOnPage: 3, triggerOnlyDuringBusinessHours: false, url: 'https://www.chatwoot.com/pricing' },
-            { id: 2, timeOnPage: 6, triggerOnlyDuringBusinessHours: false, url: 'https://www.chatwoot.com/about' },
+            { id: 1, timeOnPage: 3, triggerOnlyDuringBusinessHours: false, url: 'https://www.example.com/pricing' },
+            { id: 2, timeOnPage: 6, triggerOnlyDuringBusinessHours: false, url: 'https://www.example.com/about' },
         ]);
     });
 });
 
 describe('filterCampaigns', () => {
     const formatted = [
-        { id: 1, timeOnPage: 3, url: 'https://www.chatwoot.com/pricing', triggerOnlyDuringBusinessHours: false },
-        { id: 2, timeOnPage: 6, url: 'https://www.chatwoot.com/about', triggerOnlyDuringBusinessHours: false },
+        { id: 1, timeOnPage: 3, url: 'https://www.example.com/pricing', triggerOnlyDuringBusinessHours: false },
+        { id: 2, timeOnPage: 6, url: 'https://www.example.com/about', triggerOnlyDuringBusinessHours: false },
     ];
 
     it('keeps only campaigns matching the current URL', () => {
-        expect(filterCampaigns({ campaigns: formatted, currentURL: 'https://www.chatwoot.com/about/' })).toStrictEqual([
+        expect(filterCampaigns({ campaigns: formatted, currentURL: 'https://www.example.com/about/' })).toStrictEqual([
             formatted[1],
         ]);
     });
@@ -72,7 +72,7 @@ describe('filterCampaigns', () => {
         expect(
             filterCampaigns({
                 campaigns: withBusinessHours,
-                currentURL: 'https://www.chatwoot.com/about/',
+                currentURL: 'https://www.example.com/about/',
                 isInBusinessHours: true,
             }),
         ).toStrictEqual([withBusinessHours[1]]);
@@ -84,7 +84,7 @@ describe('filterCampaigns', () => {
         expect(
             filterCampaigns({
                 campaigns: withBusinessHours,
-                currentURL: 'https://www.chatwoot.com/about/',
+                currentURL: 'https://www.example.com/about/',
                 isInBusinessHours: false,
             }),
         ).toStrictEqual([]);

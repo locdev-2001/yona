@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/sdk/cookieHelpers.js
 import { removeCookie, setCookie } from './helpers/cookies';
 import type { CookieAttributes } from './helpers/cookies';
 import type { SdkUserAttributes } from './types';
@@ -28,7 +27,7 @@ const normalizeUserAttribute = (value: unknown): unknown => {
 
 export const getUserCookieName = (): string => {
     const SET_USER_COOKIE_PREFIX = 'cw_user_';
-    const { websiteToken: websiteIdentifier } = window.$chatwoot;
+    const { websiteToken: websiteIdentifier } = window.$yona;
 
     return `${SET_USER_COOKIE_PREFIX}${websiteIdentifier}`;
 };

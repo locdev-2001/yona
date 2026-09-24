@@ -20,9 +20,6 @@ import type { Inbox } from '../types';
 
 // Port từ settings/inbox/settingsPage/ConfigurationPage.vue — nhánh isAWebWidgetInbox
 // và isAPIInbox (twilio/line/email/whatsapp vào cùng kênh của chúng).
-const IDENTITY_VALIDATION_DOCS_URL =
-    'https://www.chatwoot.com/docs/product/channels/live-chat/sdk/identity-validation/';
-
 interface ConfigurationPageProps {
     inbox: Inbox;
     onInboxUpdated: (inbox: Inbox) => void;
@@ -182,15 +179,7 @@ export default function ConfigurationPage({ inbox, onInboxUpdated }: Configurati
                                 </p>
                                 <Code script={inbox.hmac_token ?? ''} />
                                 <p className="mt-1.5 text-label-small text-n-slate-11">
-                                    {t('INBOX_MGMT.SETTINGS_POPUP.HMAC_DESCRIPTION')}{' '}
-                                    <a
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        href={IDENTITY_VALIDATION_DOCS_URL}
-                                        className="text-n-blue-11 hover:underline text-label-small"
-                                    >
-                                        {t('INBOX_MGMT.SETTINGS_POPUP.IDENTITY_VALIDATION.VIEW_DOCS')}
-                                    </a>
+                                    {t('INBOX_MGMT.SETTINGS_POPUP.HMAC_DESCRIPTION')}
                                 </p>
                             </>
                         }

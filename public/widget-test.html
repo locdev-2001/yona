@@ -46,7 +46,7 @@
 
         <script>
             // Trang thử SDK nhúng. Tham số truy vấn:
-            //   sdkBase   nguồn sdk.js         (mặc định: origin của trang; đặt http://localhost:3000 để chạy SDK gốc)
+            //   sdkBase   nguồn sdk.js         (mặc định: origin của trang)
             //   base      baseUrl truyền vào run() (mặc định: sdkBase)
             //   token     websiteToken         (mặc định: widget-test-token)
             //   stub=1    tự bắn postMessage 'loaded' thay cho app trong iframe (khi app chưa sẵn sàng)
@@ -65,7 +65,7 @@
 
                 if (query.get('panel') === '0') document.body.classList.add('no-panel');
 
-                window.chatwootSettings = {
+                window.yonaSettings = {
                     position: query.get('position') === 'left' ? 'left' : 'right',
                     type: query.get('type') || 'standard',
                     widgetStyle: query.get('widgetStyle') || 'standard',
@@ -84,10 +84,10 @@
 
                 // Đo đạc cho playwright: kích thước/toạ độ/màu bong bóng và khung iframe.
                 window.__sdkTest = {
-                    settings: window.chatwootSettings,
+                    settings: window.yonaSettings,
                     stubLoaded: function () {
                         window.postMessage(
-                            'chatwoot-widget:' +
+                            'yona-widget:' +
                                 JSON.stringify({
                                     event: 'loaded',
                                     config: {
@@ -100,7 +100,7 @@
                     },
                     stubBubbleLabel: function (label) {
                         window.postMessage(
-                            'chatwoot-widget:' + JSON.stringify({ event: 'setBubbleLabel', label: label }),
+                            'yona-widget:' + JSON.stringify({ event: 'setBubbleLabel', label: label }),
                             '*'
                         );
                     },
@@ -123,27 +123,27 @@
                             };
                         };
                         return {
-                            isOpen: window.$chatwoot ? window.$chatwoot.isOpen : null,
-                            hasLoaded: window.$chatwoot ? window.$chatwoot.hasLoaded : null,
+                            isOpen: window.$yona ? window.$yona.isOpen : null,
+                            hasLoaded: window.$yona ? window.$yona.hasLoaded : null,
                             bubbleHolder: describe('.woot--bubble-holder'),
                             chatBubble: describe('.woot-widget-bubble:not(.woot--close)'),
                             closeBubble: describe('.woot-widget-bubble.woot--close'),
                             widgetHolder: describe('.woot-widget-holder'),
-                            iframe: describe('#chatwoot_live_chat_widget'),
-                            iframeSrc: (document.getElementById('chatwoot_live_chat_widget') || {}).src || null,
+                            iframe: describe('#yona_live_chat_widget'),
+                            iframeSrc: (document.getElementById('yona_live_chat_widget') || {}).src || null,
                             styleTag: !!document.getElementById('cw-widget-styles'),
                         };
                     },
                 };
 
                 [
-                    'chatwoot:ready',
-                    'chatwoot:error',
-                    'chatwoot:opened',
-                    'chatwoot:closed',
-                    'chatwoot:on-message',
-                    'chatwoot:on-start-conversation',
-                    'chatwoot:postback',
+                    'yona:ready',
+                    'yona:error',
+                    'yona:opened',
+                    'yona:closed',
+                    'yona:on-message',
+                    'yona:on-start-conversation',
+                    'yona:postback',
                 ].forEach(function (eventName) {
                     window.addEventListener(eventName, function (event) {
                         log(eventName + ' ' + JSON.stringify(event.detail || null));
@@ -157,7 +157,7 @@
                     g.async = true;
                     s.parentNode.insertBefore(g, s);
                     g.onload = function () {
-                        window.chatwootSDK.run({ websiteToken: websiteToken, baseUrl: baseUrl });
+                        window.yonaSDK.run({ websiteToken: websiteToken, baseUrl: baseUrl });
                         log('sdk loaded from ' + g.src);
                         if (isStub) {
                             window.__sdkTest.stubLoaded();

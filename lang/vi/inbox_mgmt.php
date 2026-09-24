@@ -969,7 +969,6 @@ return [
             'TITLE' => 'Xác minh danh tính',
             'DESCRIPTION' => 'Xác minh người dùng thật bằng cách sinh token an toàn. Cách này ngăn người lạ mạo danh người khác trong khung chat của bạn.',
             'SECRET_KEY' => 'Khóa bí mật',
-            'VIEW_DOCS' => 'Xem tài liệu',
             'REQUIRE_LABEL' => 'Bắt buộc xác minh danh tính cho mọi hội thoại',
             'REQUIRE_DESCRIPTION' => 'Khi bật, người dùng phải có token danh tính hợp lệ mới bắt đầu hội thoại được. Yêu cầu không có token hợp lệ sẽ bị từ chối.',
         ],
@@ -1454,7 +1453,7 @@ return [
         ],
         'BRANDING_TEXT' => 'Cung cấp bởi {installationName}',
         'SCRIPT_SETTINGS' => '
-window.chatwootSettings = {options};',
+window.yonaSettings = {options};',
     ],
     'EMAIL_PROVIDERS' => [
         'MICROSOFT' => [

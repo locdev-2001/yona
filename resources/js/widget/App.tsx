@@ -180,8 +180,8 @@ export default function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Bản gốc có sẵn window.chatwootWebChannel + authToken lúc mount; ở đây phải
-    // đợi POST /config xong (mọi endpoint khác trả 404 khi chưa có phiên khách).
+    // Cấu hình kênh + authToken chỉ có sau khi POST /config xong, nên phải đợi
+    // (mọi endpoint khác trả 404 khi chưa có phiên khách).
     useEffect(() => {
         if (!channelConfig) return;
 
@@ -352,8 +352,7 @@ const conversationSizeNow = () => Object.keys(widgetStore.getState().conversatio
 
 // App.vue#toggle-open (shouldShowMessageView): mở widget khi đang ở màn hình chủ
 // mà đã có hội thoại thì vào thẳng khung chat.
-// Bản gốc nhúng sẵn window.chatwootWebChannel vào HTML nên danh sách tin đã nạp
-// xong trước lúc khách bấm bong bóng; bản này phải POST /config trước, tin có thể
+// Widget phải POST /config trước khi nạp danh sách tin, nên tin có thể
 // về SAU sự kiện `toggle-open` — khi đó luật trên đọc phải danh sách rỗng và
 // widget kẹt ở màn hình chủ. Vì vậy luật nằm ở đúng một chỗ và được chạy lại khi
 // danh sách tin nạp xong.

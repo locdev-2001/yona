@@ -8,9 +8,8 @@ import { widgetStore } from './store/widgetStore';
 import App from './App';
 import type { ChannelConfig, WebsiteChannelConfigPayload } from './types';
 
-// Điểm vào của app widget. Bản gốc nhận cấu hình do Rails render sẵn vào
-// `window.chatwootWebChannel`; ở đây phiên khách dựng bằng POST /api/v1/widget/config
-// (c2-notes-be §Luồng dựng phiên khách) rồi map sang cùng bộ khóa camelCase.
+// Điểm vào của app widget. Phiên khách dựng bằng POST /api/v1/widget/config rồi map
+// sang bộ khóa camelCase của ChannelConfig.
 
 function toChannelConfig(payload: WebsiteChannelConfigPayload): ChannelConfig {
     return {

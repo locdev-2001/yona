@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/sdk/constants.js
 export const BUBBLE_DESIGN = ['standard', 'expanded_bubble'] as const;
 export const WIDGET_DESIGN = ['standard', 'flat'] as const;
 export const DARK_MODE = ['light', 'auto', 'dark'] as const;

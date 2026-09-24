@@ -1,7 +1,6 @@
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
-// Kiểu dữ liệu của widget — bám đúng phản hồi `/api/v1/widget/*`
-// (hợp đồng trong plans/260831-rewrite-chatwoot-laravel/reports/c2-notes-be.md).
+// Kiểu dữ liệu của widget — bám đúng phản hồi `/api/v1/widget/*`.
 
 export interface WorkingHourSlot {
     day_of_week: number;
@@ -111,7 +110,7 @@ export interface WidgetConfigResponse {
     global_config: WidgetGlobalConfig;
 }
 
-// Tương đương `window.chatwootWebChannel` của bản gốc — call-site giữ nguyên tên khóa.
+// Cấu hình kênh widget đã map sang camelCase.
 export interface ChannelConfig {
     allowMessagesAfterResolved: boolean;
     apiHost: string;

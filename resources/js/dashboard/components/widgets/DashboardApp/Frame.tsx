@@ -7,10 +7,10 @@ import { useContactDetails } from 'dashboard/conversation/conversationbox/contac
 import type { Conversation } from 'dashboard/conversation/types';
 import type { DashboardApp } from 'dashboard/settings/integrations/DashboardApps/types';
 import type { DashboardPageProps } from '../../../types';
+import { isFetchInfoRequest } from './frameProtocol';
 
-// Port từ components/widgets/DashboardApp/Frame.vue — iframe nhận `appContext`
-// qua postMessage khi tải xong, và mỗi lần trang nhúng hỏi lại
-// (`chatwoot-dashboard-app:fetch-info`).
+// Iframe nhận `appContext` qua postMessage khi tải xong, và mỗi lần trang nhúng hỏi lại
+// (DASHBOARD_APP_FETCH_INFO).
 interface DashboardAppFrameProps {
     accountId: number;
     dashboardApp: DashboardApp;
@@ -57,7 +57,7 @@ export default function DashboardAppFrame({
     useEffect(() => {
         const triggerEvent = (event: MessageEvent) => {
             if (!isVisible) return;
-            if (event.data === 'chatwoot-dashboard-app:fetch-info') postAppContext(0);
+            if (isFetchInfoRequest(event.data)) postAppContext(0);
         };
 
         window.addEventListener('message', triggerEvent);

@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/sdk/settingsHelper.js
 import { BUBBLE_DESIGN, DARK_MODE, WIDGET_DESIGN } from './constants/design';
 import type { BubbleDesign, DarkMode, WidgetDesign } from './constants/design';
 

@@ -1,7 +1,7 @@
 import { t } from '../../../i18n';
 
-// Hai computed thuần của Widget.vue tách ra để test được: chèn khối
-// `window.chatwootSettings` ngay sau `<script>` (13 ký tự đầu của đoạn nhúng)
+// Hai hàm thuần của Trình tạo widget tách ra để test được: chèn khối
+// `window.yonaSettings` ngay sau `<script>` (13 ký tự đầu của đoạn nhúng)
 // và ánh xạ reply_time sang câu "Typically replies in …".
 export interface WidgetBubbleOptions {
     position: string;

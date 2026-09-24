@@ -5,7 +5,7 @@ import { useWidgetState } from '../store/hooks';
 import { replaceRoute, WIDGET_ROUTES } from '../router';
 import { t } from '../i18n';
 import ChatEmptyState from '../components/ChatEmptyState';
-import { CHATWOOT_ON_START_CONVERSATION } from '../../sdk/constants/sdkEvents';
+import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
 
 // Không còn màn chủ riêng: vào thẳng khung chat. Chỉ dừng ở đây khi hộp thư bắt
 // điền form trước cuộc trò chuyện đầu tiên.
@@ -26,7 +26,7 @@ export default function Home() {
         replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
         IFrameHelper.sendMessage({
             event: 'onEvent',
-            eventIdentifier: CHATWOOT_ON_START_CONVERSATION,
+            eventIdentifier: SDK_EVENTS.ON_START_CONVERSATION,
             data: { hasConversation: false },
         });
     };

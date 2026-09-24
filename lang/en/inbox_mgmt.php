@@ -967,7 +967,6 @@ return [
             'TITLE' => 'Identity Validation',
             'DESCRIPTION' => 'Verify user authenticity by generating secure tokens. This prevents unauthorized users from impersonating others in your chat.',
             'SECRET_KEY' => 'Secret Key',
-            'VIEW_DOCS' => 'View documentation',
             'REQUIRE_LABEL' => 'Require identity validation for all conversations',
             'REQUIRE_DESCRIPTION' => 'When enabled, users must provide a valid identity token to start conversations. Requests without valid tokens will be rejected.',
         ],
@@ -1452,7 +1451,7 @@ return [
         ],
         'BRANDING_TEXT' => 'Powered by {installationName}',
         'SCRIPT_SETTINGS' => '
-      window.chatwootSettings = {options};',
+      window.yonaSettings = {options};',
     ],
     'EMAIL_PROVIDERS' => [
         'MICROSOFT' => [

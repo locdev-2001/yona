@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-{{-- Port từ app/views/widgets/show.html.erb — trang chạy trong iframe của SDK.
-     Khác bản gốc: cấu hình kênh KHÔNG render sẵn vào window.chatwootWebChannel,
-     app tự dựng phiên bằng POST /api/v1/widget/config (hợp đồng C2). --}}
+{{-- Trang chạy trong iframe của SDK. Cấu hình kênh KHÔNG render sẵn vào HTML,
+     app tự dựng phiên bằng POST /api/v1/widget/config. --}}
 <html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
     <head>
         <meta charset="utf-8">

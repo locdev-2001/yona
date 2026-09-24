@@ -5,10 +5,9 @@ import HeaderActions from './HeaderActions';
 import ResetSessionButton from './ResetSessionButton';
 import { IFrameHelper } from '../helpers/iframe';
 import { widgetStore } from '../store/widgetStore';
-import { FRAME_MESSAGE_PREFIX, RESET_SESSION_EVENT } from '../../sdk/constants/frameEvents';
+import { decodeFrameMessage, RESET_SESSION_EVENT } from '../../sdk/constants/frameEvents';
 import type { WidgetMessage } from '../types';
 
-const RESET_MESSAGE = `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: RESET_SESSION_EVENT })}`;
 const anyMessage = { id: 1, content: 'hello', message_type: 0, created_at: 1 } as unknown as WidgetMessage;
 
 const messagesToParent: unknown[] = [];
@@ -30,7 +29,8 @@ const openConfirmDialog = () => {
     return screen.getByRole('alertdialog', { name: 'Start a new chat?' });
 };
 
-const resetRequests = () => messagesToParent.filter(message => message === RESET_MESSAGE);
+const resetRequests = () =>
+    messagesToParent.filter(message => decodeFrameMessage(message)?.event === RESET_SESSION_EVENT);
 
 describe('nút bắt đầu cuộc trò chuyện mới', () => {
     it('hỏi xác nhận trước, chưa xoá gì khi khách mới bấm nút', () => {

@@ -11,7 +11,7 @@ import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import ChatInputWrap from './ChatInputWrap';
 import ReplyPreview from './composer/ReplyPreview';
-import { CHATWOOT_ON_START_CONVERSATION } from '../../sdk/constants/sdkEvents';
+import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
 import type { WidgetMessage, WidgetSticker } from '../types';
 
 const TRANSCRIPT_COOLDOWN_MS = 15000;
@@ -67,7 +67,7 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
         onStartNewConversation();
         IFrameHelper.sendMessage({
             event: 'onEvent',
-            eventIdentifier: CHATWOOT_ON_START_CONVERSATION,
+            eventIdentifier: SDK_EVENTS.ON_START_CONVERSATION,
             data: { hasConversation: true },
         });
     };

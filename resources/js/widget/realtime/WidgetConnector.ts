@@ -4,7 +4,7 @@ import { apiPost, buildSearch } from '../api/client';
 import { IFrameHelper, shouldTriggerMessageUpdateEvent } from '../helpers/iframe';
 import { notifyAgentMessageReceived, widgetStore } from '../store/widgetStore';
 import { createWidgetEcho } from './echo';
-import { CHATWOOT_ON_MESSAGE } from '../../sdk/constants/sdkEvents';
+import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
 import type { ConversationAttributes, WidgetMessage } from '../types';
 
 // Port từ widget/helpers/actionCable.js + shared/helpers/BaseActionCableConnector.js.
@@ -127,7 +127,7 @@ export class WidgetConnector {
         widgetStore.addOrUpdateMessage(data);
         notifyAgentMessageReceived();
 
-        IFrameHelper.sendMessage({ event: 'onEvent', eventIdentifier: CHATWOOT_ON_MESSAGE, data });
+        IFrameHelper.sendMessage({ event: 'onEvent', eventIdentifier: SDK_EVENTS.ON_MESSAGE, data });
 
         // WidgetAudioNotificationHelper: âm báo do SDK phát ở trang chủ.
         if (data.sender_type === 'User') {
@@ -139,7 +139,7 @@ export class WidgetConnector {
         if (this.isMessageInAnotherConversation(data)) return;
 
         if (shouldTriggerMessageUpdateEvent(data)) {
-            IFrameHelper.sendMessage({ event: 'onEvent', eventIdentifier: CHATWOOT_ON_MESSAGE, data });
+            IFrameHelper.sendMessage({ event: 'onEvent', eventIdentifier: SDK_EVENTS.ON_MESSAGE, data });
         }
         widgetStore.addOrUpdateMessage(data);
     };

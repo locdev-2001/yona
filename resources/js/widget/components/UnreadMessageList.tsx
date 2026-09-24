@@ -10,12 +10,12 @@ import { isWidgetColorLighter } from '../../sdk/helpers/colorHelper';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import type { MessageAttachment, MessageSender } from '../types';
+import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 
 // Port từ widget/components/UnreadMessageList.vue + UnreadMessage.vue — khung
 // bong bóng nổi ngoài widget, dùng chung cho tin chưa đọc và cho campaign
 // (khác nhau đúng ở `campaignId` và nút đóng).
 
-const BOT_AVATAR = '/assets/images/chatwoot_bot.png';
 
 export interface UnreadListMessage {
     id?: number | string;
@@ -46,7 +46,7 @@ function UnreadMessage({
 }) {
     const sender = message.sender;
     const hasSender = Boolean(sender && Object.keys(sender).length);
-    const displayImage = useInboxAvatarForBot ? inboxAvatarUrl : BOT_AVATAR;
+    const displayImage = useInboxAvatarForBot ? inboxAvatarUrl : BOT_AVATAR_URL;
     const avatarUrl = hasSender ? (sender?.avatar_url ?? '') : displayImage;
     const agentName = hasSender
         ? sender?.available_name || sender?.name || ''

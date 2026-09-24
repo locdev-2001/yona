@@ -15,7 +15,7 @@ export default defineConfig({
         cssCodeSplit: false,
         lib: {
             entry: path.resolve(import.meta.dirname, 'resources/js/sdk/index.ts'),
-            name: 'chatwootSDKBundle',
+            name: 'yonaSDKBundle',
             formats: ['iife'],
             fileName: () => 'sdk.js',
         },

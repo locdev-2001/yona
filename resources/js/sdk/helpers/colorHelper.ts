@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/shared/helpers/colorHelper.js (chỉ phần SDK dùng).
 export const isWidgetColorLighter = (color: string): boolean => {
     const hex = color.replace('#', '');
     const red = parseInt(hex.substr(0, 2), 16);

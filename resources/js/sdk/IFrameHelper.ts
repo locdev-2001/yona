@@ -1,4 +1,3 @@
-// Port: refs/chatwoot/app/javascript/sdk/IFrameHelper.js
 import { addClasses, loadCSS, removeClasses, onLocationChangeListener } from './DOMHelpers';
 import {
     body,
@@ -17,10 +16,19 @@ import {
     formatUnreadBadge,
 } from './bubbleHelpers';
 import { isWidgetColorLighter } from './helpers/colorHelper';
-import { dispatchWindowEvent } from './helpers/customEvent';
-import { CHATWOOT_ERROR, CHATWOOT_POSTBACK, CHATWOOT_READY } from './constants/sdkEvents';
+import { dispatchSdkEvent, toSdkEventKey } from './helpers/customEvent';
+import { SDK_EVENTS } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
-import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
+import {
+    APP_FRAME_ID,
+    FRAME_PROTOCOL_PARAM,
+    FRAME_PROTOCOL_VERSION,
+    NEW_SESSION_URL_PARAM,
+    RESET_SESSION_EVENT,
+    decodeFrameMessage,
+    encodeFrameMessage,
+    type FrameMessage,
+} from './constants/frameEvents';
 import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
@@ -30,7 +38,7 @@ import { popoutChatWindow } from './helpers/popoutHelper';
 const AUTH_COOKIE = 'cw_conversation';
 const CAMPAIGN_SNOOZE_COOKIE = 'cw_snooze_campaigns_till';
 
-const getWidgetOrigin = (): string => new URL(window.$chatwoot.baseUrl, window.location.href).origin;
+const getWidgetOrigin = (): string => new URL(window.$yona.baseUrl, window.location.href).origin;
 
 const updateAuthCookie = (cookieContent: string, baseDomain = ''): void =>
     setCookieWithDomain(AUTH_COOKIE, cookieContent, { baseDomain });
@@ -40,12 +48,11 @@ const updateCampaignReadStatus = (baseDomain?: string): void => {
     setCookieWithDomain(CAMPAIGN_SNOOZE_COOKIE, Number(expireBy), { expires: expireBy, baseDomain });
 };
 
-type FrameMessage = { event: string } & Record<string, unknown>;
 type FrameMessageHandler = (message: never) => void;
 
 export const IFrameHelper = {
     getUrl({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): string {
-        return `${baseUrl}/widget?website_token=${websiteToken}`;
+        return `${baseUrl}/widget?website_token=${websiteToken}&${FRAME_PROTOCOL_PARAM}=${FRAME_PROTOCOL_VERSION}`;
     },
     createFrame: ({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): void => {
         if (IFrameHelper.getAppFrame()) {
@@ -62,14 +69,14 @@ export const IFrameHelper = {
         iframe.src = widgetUrl;
         iframe.allow =
             'camera;microphone;fullscreen;display-capture;picture-in-picture;clipboard-write;';
-        iframe.id = 'chatwoot_live_chat_widget';
+        iframe.id = APP_FRAME_ID;
         iframe.style.visibility = 'hidden';
 
-        let holderClassName = `woot-widget-holder woot--hide woot-elements--${window.$chatwoot.position}`;
-        if (window.$chatwoot.hideMessageBubble) {
+        let holderClassName = `woot-widget-holder woot--hide woot-elements--${window.$yona.position}`;
+        if (window.$yona.hideMessageBubble) {
             holderClassName += ` woot-widget--without-bubble`;
         }
-        if (isFlatWidgetStyle(window.$chatwoot.widgetStyle)) {
+        if (isFlatWidgetStyle(window.$yona.widgetStyle)) {
             holderClassName += ` woot-widget-holder--flat`;
         }
 
@@ -82,13 +89,13 @@ export const IFrameHelper = {
         IFrameHelper.initWindowSizeListener();
         IFrameHelper.preventDefaultScroll();
     },
-    // Đường xoá phiên khách duy nhất, cho cả trang gọi $chatwoot.reset() lẫn khách bấm nút trong
+    // Đường xoá phiên khách duy nhất, cho cả trang gọi $yona.reset() lẫn khách bấm nút trong
     // widget: xoá cookie phiên rồi thay iframe bằng khung mới mang cờ phiên mới để widget quên cả
     // token nó tự lưu. Thay phần tử thay vì đổi src để không thêm mục lịch sử: nút Back của trang
     // không được đưa iframe về URL còn mang token cũ. Cờ mang mã riêng từng lần xoá, widget chỉ
     // dùng mỗi mã một lần.
     startNewSession: (): void => {
-        const { baseUrl, websiteToken, baseDomain } = window.$chatwoot;
+        const { baseUrl, websiteToken, baseDomain } = window.$yona;
         removeCookieWithDomain(AUTH_COOKIE, baseDomain);
         removeCookieWithDomain(getUserCookieName(), baseDomain);
 
@@ -100,17 +107,14 @@ export const IFrameHelper = {
             iframe.replaceWith(freshFrame);
         }
 
-        window.$chatwoot.resetTriggered = true;
+        window.$yona.resetTriggered = true;
     },
     getAppFrame: (): HTMLIFrameElement | null =>
-        document.getElementById('chatwoot_live_chat_widget') as HTMLIFrameElement | null,
+        document.getElementById(APP_FRAME_ID) as HTMLIFrameElement | null,
     getBubbleHolder: (): HTMLCollectionOf<Element> => document.getElementsByClassName('woot--bubble-holder'),
     sendMessage: (key: string, value: Record<string, unknown> = {}): void => {
         const element = IFrameHelper.getAppFrame();
-        element?.contentWindow?.postMessage(
-            `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: key, ...value })}`,
-            getWidgetOrigin(),
-        );
+        element?.contentWindow?.postMessage(encodeFrameMessage({ event: key, ...value }), getWidgetOrigin());
     },
     // Trang khách có thể nhúng iframe bên thứ ba (quảng cáo, plugin) gửi tin giả mang đúng tiền tố:
     // chỉ nhận tin do chính iframe widget gửi, từ đúng origin của widget.
@@ -121,14 +125,14 @@ export const IFrameHelper = {
     },
     initPostMessageCommunication: (): void => {
         window.onmessage = e => {
-            if (typeof e.data !== 'string' || e.data.indexOf(FRAME_MESSAGE_PREFIX) !== 0) {
+            const message = decodeFrameMessage(e.data);
+            if (!message) {
                 return;
             }
             if (!IFrameHelper.isMessageFromWidget(e)) {
                 console.debug('[widget] bỏ qua tin không đến từ iframe widget', e.origin);
                 return;
             }
-            const message = JSON.parse(e.data.replace(FRAME_MESSAGE_PREFIX, '')) as FrameMessage;
             const handler = (IFrameHelper.events as Record<string, FrameMessageHandler | undefined>)[message.event];
             if (typeof handler === 'function') {
                 (handler as (payload: FrameMessage) => void)(message);
@@ -159,7 +163,7 @@ export const IFrameHelper = {
     },
 
     setupAudioListeners: (): void => {
-        const { baseUrl = '' } = window.$chatwoot;
+        const { baseUrl = '' } = window.$yona;
         getAlertAudio(baseUrl, { type: 'widget', alertTone: 'ding' }).then(() =>
             initOnEvents.forEach(event => {
                 document.removeEventListener(event, IFrameHelper.setupAudioListeners, false);
@@ -169,36 +173,36 @@ export const IFrameHelper = {
 
     events: {
         loaded: (message: { config: { authToken: string; channelConfig: { widgetColor: string } } }): void => {
-            updateAuthCookie(message.config.authToken, window.$chatwoot.baseDomain);
-            window.$chatwoot.hasLoaded = true;
+            updateAuthCookie(message.config.authToken, window.$yona.baseDomain);
+            window.$yona.hasLoaded = true;
             const campaignsSnoozedTill = getCookie(CAMPAIGN_SNOOZE_COOKIE);
             IFrameHelper.sendMessage('config-set', {
-                locale: window.$chatwoot.locale,
-                position: window.$chatwoot.position,
-                hideMessageBubble: window.$chatwoot.hideMessageBubble,
-                showPopoutButton: window.$chatwoot.showPopoutButton,
-                widgetStyle: window.$chatwoot.widgetStyle,
-                darkMode: window.$chatwoot.darkMode,
-                showUnreadMessagesDialog: window.$chatwoot.showUnreadMessagesDialog,
+                locale: window.$yona.locale,
+                position: window.$yona.position,
+                hideMessageBubble: window.$yona.hideMessageBubble,
+                showPopoutButton: window.$yona.showPopoutButton,
+                widgetStyle: window.$yona.widgetStyle,
+                darkMode: window.$yona.darkMode,
+                showUnreadMessagesDialog: window.$yona.showUnreadMessagesDialog,
                 campaignsSnoozedTill,
-                welcomeTitle: window.$chatwoot.welcomeTitle,
-                welcomeDescription: window.$chatwoot.welcomeDescription,
-                availableMessage: window.$chatwoot.availableMessage,
-                unavailableMessage: window.$chatwoot.unavailableMessage,
-                enableFileUpload: window.$chatwoot.enableFileUpload,
-                enableEmojiPicker: window.$chatwoot.enableEmojiPicker,
-                enableEndConversation: window.$chatwoot.enableEndConversation,
+                welcomeTitle: window.$yona.welcomeTitle,
+                welcomeDescription: window.$yona.welcomeDescription,
+                availableMessage: window.$yona.availableMessage,
+                unavailableMessage: window.$yona.unavailableMessage,
+                enableFileUpload: window.$yona.enableFileUpload,
+                enableEmojiPicker: window.$yona.enableEmojiPicker,
+                enableEndConversation: window.$yona.enableEndConversation,
             });
             // Iframe nạp lại lúc khung chat đang mở (khách vừa bắt đầu phiên mới) phải biết mình
             // đang hiện, nếu không nó xử lý tin đến như khi khung đang đóng.
-            if (window.$chatwoot.isOpen) {
+            if (window.$yona.isOpen) {
                 IFrameHelper.sendMessage('toggle-open', { isOpen: true });
             }
             IFrameHelper.onLoad({ widgetColor: message.config.channelConfig.widgetColor });
             IFrameHelper.toggleCloseButton();
 
-            if (window.$chatwoot.user) {
-                IFrameHelper.sendMessage('set-user', window.$chatwoot.user);
+            if (window.$yona.user) {
+                IFrameHelper.sendMessage('set-user', window.$yona.user);
             }
 
             window.playAudioAlert = () => {};
@@ -207,26 +211,26 @@ export const IFrameHelper = {
                 document.addEventListener(e, IFrameHelper.setupAudioListeners, false);
             });
 
-            if (!window.$chatwoot.resetTriggered) {
-                dispatchWindowEvent({ eventName: CHATWOOT_READY });
+            if (!window.$yona.resetTriggered) {
+                dispatchSdkEvent(SDK_EVENTS.READY);
             }
         },
         error: ({ errorType, data }: { errorType: string; data: unknown }): void => {
-            dispatchWindowEvent({ eventName: CHATWOOT_ERROR, data });
+            dispatchSdkEvent(SDK_EVENTS.ERROR, data);
 
             if (errorType === SET_USER_ERROR) {
-                removeCookieWithDomain(getUserCookieName(), window.$chatwoot.baseDomain);
+                removeCookieWithDomain(getUserCookieName(), window.$yona.baseDomain);
             }
         },
-        onEvent({ eventIdentifier: eventName, data }: { eventIdentifier: string; data: unknown }): void {
-            dispatchWindowEvent({ eventName, data });
+        onEvent({ eventIdentifier, data }: { eventIdentifier: string; data: unknown }): void {
+            dispatchSdkEvent(toSdkEventKey(eventIdentifier), data);
         },
         setBubbleLabel(message: { label: string }): void {
-            setBubbleText(window.$chatwoot.launcherTitle || message.label);
+            setBubbleText(window.$yona.launcherTitle || message.label);
         },
 
         setAuthCookie({ data: { widgetAuthToken } }: { data: { widgetAuthToken: string } }): void {
-            updateAuthCookie(widgetAuthToken, window.$chatwoot.baseDomain);
+            updateAuthCookie(widgetAuthToken, window.$yona.baseDomain);
         },
 
         [RESET_SESSION_EVENT](): void {
@@ -234,11 +238,11 @@ export const IFrameHelper = {
         },
 
         setCampaignReadOn(): void {
-            updateCampaignReadStatus(window.$chatwoot.baseDomain);
+            updateCampaignReadStatus(window.$yona.baseDomain);
         },
 
         postback(data: unknown): void {
-            dispatchWindowEvent({ eventName: CHATWOOT_POSTBACK, data });
+            dispatchSdkEvent(SDK_EVENTS.POSTBACK, data);
         },
 
         toggleBubble: (state?: unknown): void => {
@@ -262,7 +266,7 @@ export const IFrameHelper = {
             locale?: string;
         }): void => {
             const cwCookie = getCookie(AUTH_COOKIE);
-            window.$chatwoot.toggle('close');
+            window.$yona.toggle('close');
             popoutChatWindow(baseUrl, websiteToken, locale, cwCookie);
         },
 
@@ -293,7 +297,7 @@ export const IFrameHelper = {
 
         resetUnreadMode: (): void => removeUnreadClass(),
         handleNotificationDot: (event: { unreadMessageCount: number }): void => {
-            if (window.$chatwoot.hideMessageBubble) {
+            if (window.$yona.hideMessageBubble) {
                 return;
             }
 
@@ -326,18 +330,18 @@ export const IFrameHelper = {
         if (!iframe) return;
 
         iframe.style.visibility = '';
-        iframe.setAttribute('id', `chatwoot_live_chat_widget`);
+        iframe.setAttribute('id', APP_FRAME_ID);
 
         if (IFrameHelper.getBubbleHolder().length) {
             return;
         }
-        createBubbleHolder(window.$chatwoot.hideMessageBubble);
+        createBubbleHolder(window.$yona.hideMessageBubble);
         onLocationChangeListener();
 
         let className = 'woot-widget-bubble';
-        let closeBtnClassName = `woot-elements--${window.$chatwoot.position} woot-widget-bubble woot--close woot--hide`;
+        let closeBtnClassName = `woot-elements--${window.$yona.position} woot-widget-bubble woot--close woot--hide`;
 
-        if (isFlatWidgetStyle(window.$chatwoot.widgetStyle)) {
+        if (isFlatWidgetStyle(window.$yona.widgetStyle)) {
             className += ' woot-widget-bubble--flat';
             closeBtnClassName += ' woot-widget-bubble--flat';
         }

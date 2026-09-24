@@ -5901,7 +5901,6 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Identity Validation",
                 "DESCRIPTION": "Verify user authenticity by generating secure tokens. This prevents unauthorized users from impersonating others in your chat.",
                 "SECRET_KEY": "Secret Key",
-                "VIEW_DOCS": "View documentation",
                 "REQUIRE_LABEL": "Require identity validation for all conversations",
                 "REQUIRE_DESCRIPTION": "When enabled, users must provide a valid identity token to start conversations. Requests without valid tokens will be rejected."
             },
@@ -6385,7 +6384,7 @@ const messages: Record<string, unknown> = {
                 "AGENT_MESSAGE": "Hello"
             },
             "BRANDING_TEXT": "Powered by {installationName}",
-            "SCRIPT_SETTINGS": "\n      window.chatwootSettings = {options};"
+            "SCRIPT_SETTINGS": "\n      window.yonaSettings = {options};"
         },
         "EMAIL_PROVIDERS": {
             "MICROSOFT": {

@@ -67,12 +67,12 @@ it('không nhúng widget chat của Yona và không cho lập chỉ mục trang 
         ->assertNotFound()
         ->assertSee('<meta name="robots" content="noindex, follow">', escape: false)
         ->assertDontSee('rel="canonical"', escape: false)
-        ->assertDontSee('chatwootSDK', escape: false);
+        ->assertDontSee('yonaSDK', escape: false);
 });
 
 it('vẫn nhúng widget chat của Yona trên trang chủ', function () {
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('chatwootSDK', escape: false)
+        ->assertSee('yonaSDK', escape: false)
         ->assertSee('rel="canonical"', escape: false);
 });

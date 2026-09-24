@@ -11,7 +11,7 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { currentAccount: { id: 3 } } }),
 }));
 
-const WIDGET_SCRIPT = '<script>window.chatwootSDK.run({websiteToken:"abc"})</script>';
+const WIDGET_SCRIPT = '<script>window.yonaSDK.run({websiteToken:"abc"})</script>';
 
 const inboxOfType = (channelType: string): Inbox =>
     ({
@@ -33,7 +33,7 @@ describe('ConfigurationPage — khối đoạn mã nhúng', () => {
         const headings = screen.getAllByText(/Đoạn mã nhúng|Tên miền được phép/);
         expect(headings[0]).toHaveTextContent('Đoạn mã nhúng');
         expect(screen.getByText(/Dán đoạn mã này ngay trước thẻ/)).toBeInTheDocument();
-        expect(document.querySelector('code')?.textContent).toContain('chatwootSDK');
+        expect(document.querySelector('code')?.textContent).toContain('yonaSDK');
         expect(screen.getByText('Tuỳ chỉnh giao diện widget')).toHaveAttribute(
             'href',
             '/app/accounts/3/settings/inboxes/85',

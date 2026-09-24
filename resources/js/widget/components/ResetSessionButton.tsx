@@ -11,7 +11,7 @@ import { RESET_SESSION_EVENT } from '../../sdk/constants/frameEvents';
 const DIALOG_BUTTON_CLASS = 'h-11 px-4 rounded text-sm font-medium leading-5 active:scale-[0.97]';
 
 // Khách chủ động bỏ phiên hiện tại. Widget không tự xoá gì: SDK giữ đường xoá phiên duy nhất
-// (cookie trang chủ + dựng lại iframe với cờ phiên mới), dùng chung với $chatwoot.reset().
+// (cookie trang chủ + dựng lại iframe với cờ phiên mới), dùng chung với $yona.reset().
 export default function ResetSessionButton() {
     const [isConfirming, setConfirming] = useState(false);
     const widgetColor = useWidgetState(state => state.appConfig.widgetColor);

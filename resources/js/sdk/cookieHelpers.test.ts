@@ -11,13 +11,13 @@ import {
     setCookieWithDomain,
 } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
-import type { ChatwootInstance } from './types';
+import type { SdkInstance } from './types';
 
-const stubChatwoot = (overrides: Partial<ChatwootInstance> = {}) => {
-    window.$chatwoot = { websiteToken: '123456', ...overrides } as ChatwootInstance;
+const stubSdkInstance = (overrides: Partial<SdkInstance> = {}) => {
+    window.$yona = { websiteToken: '123456', ...overrides } as SdkInstance;
 };
 
-beforeEach(() => stubChatwoot());
+beforeEach(() => stubSdkInstance());
 
 afterEach(() => {
     document.cookie.split('; ').forEach(entry => {
@@ -39,14 +39,14 @@ describe('getUserString', () => {
                 user: {
                     name: 'Pranav',
                     email: 'pranav@example.com',
-                    avatar_url: 'https://images.chatwoot.com/placeholder',
+                    avatar_url: 'https://images.example.com/placeholder',
                     identifier_hash: '12345',
                 },
                 identifier: '12345',
             }),
         ).toBe(
             JSON.stringify([
-                ['avatar_url', 'https://images.chatwoot.com/placeholder'],
+                ['avatar_url', 'https://images.example.com/placeholder'],
                 ['email', 'pranav@example.com'],
                 ['name', 'Pranav'],
                 ['identifier_hash', '12345'],
@@ -58,11 +58,11 @@ describe('getUserString', () => {
     it('điền chuỗi rỗng cho khóa thiếu', () => {
         expect(
             getUserString({
-                user: { email: 'pranav@example.com', avatar_url: 'https://images.chatwoot.com/placeholder' },
+                user: { email: 'pranav@example.com', avatar_url: 'https://images.example.com/placeholder' },
             }),
         ).toBe(
             JSON.stringify([
-                ['avatar_url', 'https://images.chatwoot.com/placeholder'],
+                ['avatar_url', 'https://images.example.com/placeholder'],
                 ['email', 'pranav@example.com'],
                 ['name', ''],
                 ['identifier_hash', ''],
@@ -73,7 +73,7 @@ describe('getUserString', () => {
 });
 
 describe('fnv1a128', () => {
-    // Vector chuẩn lấy nguyên từ refs/chatwoot/app/javascript/sdk/specs/cookieHelpers.spec.js
+    // Vector chuẩn của FNV-1a 128 bit.
     it.each([
         ['', '6c62272e07bb014262b821756295c58d'],
         ['h', 'd228cb69681a8caf78912b704e4a80c7'],
@@ -97,17 +97,17 @@ describe('computeHashForUserData', () => {
                 user: {
                     name: 'Pranav',
                     email: 'pranav@example.com',
-                    avatar_url: 'https://images.chatwoot.com/placeholder',
+                    avatar_url: 'https://images.example.com/placeholder',
                     identifier_hash: '12345',
                 },
             },
-            '73b97d28ad386b211c8eed2143752b6e',
+            '22927f9fd49174ac2c5fb8780fcf46af',
         ],
         [
             { identifier: 42, user: { name: 'Jöhn 🌈', email: '🦄@example.com' } },
             'ca2a97a04c3bcafc20d9cdeac1e5b3f4',
         ],
-    ])('băm dữ liệu người dùng đúng như bản gốc', (userData, expectedHash) => {
+    ])('băm dữ liệu người dùng thành chuỗi cố định', (userData, expectedHash) => {
         expect(computeHashForUserData(userData)).toBe(expectedHash);
     });
 

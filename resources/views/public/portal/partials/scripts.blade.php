@@ -96,8 +96,8 @@ html.light {
 </script>
 @if ($portal->channelWebWidget && ! $isPlainLayout)
 <script>
-  window.chatwootSettings = window.chatwootSettings || {};
-  window.chatwootSettings.locale = @json($locale);
+  window.yonaSettings = window.yonaSettings || {};
+  window.yonaSettings.locale = @json($locale);
 </script>
 {!! $portal->channelWebWidget->web_widget_script !!}
 @endif

@@ -1,4 +1,5 @@
-// Port: refs/chatwoot/app/javascript/widget/helpers/{popoutHelper,urlParamsHelper}.js
+import { FRAME_PROTOCOL_PARAM, FRAME_PROTOCOL_VERSION } from '../constants/frameEvents';
+
 export const buildPopoutURL = ({
     origin,
     conversationCookie,
@@ -14,6 +15,7 @@ export const buildPopoutURL = ({
     popoutUrl.searchParams.append('cw_conversation', String(conversationCookie));
     popoutUrl.searchParams.append('website_token', websiteToken);
     popoutUrl.searchParams.append('locale', String(locale));
+    popoutUrl.searchParams.append(FRAME_PROTOCOL_PARAM, FRAME_PROTOCOL_VERSION);
 
     return popoutUrl.toString();
 };

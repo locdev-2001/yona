@@ -2,8 +2,8 @@ import type { BubbleDesign, DarkMode, WidgetDesign } from './constants/design';
 
 export type SdkUserAttributes = Record<string, unknown>;
 
-// Tuỳ chọn trang khách hàng đặt vào `window.chatwootSettings` trước khi gọi run().
-export type ChatwootSettings = {
+// Tuỳ chọn trang khách hàng đặt vào `window.yonaSettings` trước khi gọi run().
+export type SdkSettings = {
     locale?: string;
     baseDomain?: string;
     useBrowserLanguage?: boolean;
@@ -24,8 +24,8 @@ export type ChatwootSettings = {
     enableEndConversation?: boolean;
 };
 
-// API công khai — trang khách hàng cũ gọi đúng những tên này, không được đổi.
-export type ChatwootInstance = {
+// API công khai — trang khách hàng gọi đúng những tên này, không được đổi.
+export type SdkInstance = {
     baseUrl: string;
     baseDomain?: string;
     hasLoaded: boolean;
@@ -70,9 +70,9 @@ export type RunOptions = { baseUrl: string; websiteToken: string };
 
 declare global {
     interface Window {
-        $chatwoot: ChatwootInstance;
-        chatwootSettings?: ChatwootSettings;
-        chatwootSDK: { run: (options: RunOptions) => void };
+        $yona: SdkInstance;
+        yonaSettings?: SdkSettings;
+        yonaSDK: { run: (options: RunOptions) => void };
         playAudioAlert?: () => void;
         Turbolinks?: unknown;
     }

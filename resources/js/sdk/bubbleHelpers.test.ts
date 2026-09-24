@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { bubbleSVG, createBubbleIcon } from './bubbleHelpers';
 import { isWidgetColorLighter } from './helpers/colorHelper';
-import type { ChatwootInstance } from './types';
+import type { SdkInstance } from './types';
 
-const stubChatwoot = (overrides: Partial<ChatwootInstance>) => {
-    window.$chatwoot = { position: 'right', type: 'standard', ...overrides } as ChatwootInstance;
+const stubSdkInstance = (overrides: Partial<SdkInstance>) => {
+    window.$yona = { position: 'right', type: 'standard', ...overrides } as SdkInstance;
 };
 
-beforeEach(() => stubChatwoot({}));
+beforeEach(() => stubSdkInstance({}));
 
 describe('createBubbleIcon', () => {
     it('gắn lớp vị trí phải cho bong bóng', () => {
@@ -23,7 +23,7 @@ describe('createBubbleIcon', () => {
     });
 
     it('gắn lớp vị trí trái khi position = left', () => {
-        stubChatwoot({ position: 'left' });
+        stubSdkInstance({ position: 'left' });
 
         const target = createBubbleIcon({
             className: 'woot-widget-bubble',
@@ -35,7 +35,7 @@ describe('createBubbleIcon', () => {
     });
 
     it('thêm lớp expanded và ô chữ khi type = expanded_bubble', () => {
-        stubChatwoot({ type: 'expanded_bubble' });
+        stubSdkInstance({ type: 'expanded_bubble' });
 
         const target = createBubbleIcon({
             className: 'woot-widget-bubble',

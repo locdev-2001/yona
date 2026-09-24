@@ -167,7 +167,7 @@ export default function Widget({
                             script={widgetScript}
                             lang="html"
                             className="!text-start"
-                            codepenTitle={`${websiteName} - Chatwoot Widget Test`}
+                            codepenTitle={`${websiteName} - Widget Test`}
                             enableCodePen
                         />
                     </div>

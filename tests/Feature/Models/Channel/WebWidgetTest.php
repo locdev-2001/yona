@@ -123,6 +123,8 @@ it('renders the embed script with the website token and the app url', function (
         ->and($script)->toContain('var BASE_URL="'.config('app.url').'";')
         ->and($script)->toContain("websiteToken: '{$widget->website_token}',")
         ->and($script)->toContain('g.src=BASE_URL+"/packs/js/sdk.js";')
+        ->and($script)->toContain('window.yonaSDK.run({')
+        ->and(substr_count($script, 'SDK.run('))->toBe(1)
         ->and($script)->toEndWith("    </script>\n    ");
 });
 

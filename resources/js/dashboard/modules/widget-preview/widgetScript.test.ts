@@ -11,7 +11,7 @@ const WEB_WIDGET_SCRIPT = `
     `;
 
 describe('buildWidgetScript', () => {
-    it('chèn window.chatwootSettings ngay sau thẻ <script>', () => {
+    it('chèn window.yonaSettings ngay sau thẻ <script>', () => {
         const script = buildWidgetScript(WEB_WIDGET_SCRIPT, {
             position: 'left',
             type: 'expanded_bubble',
@@ -19,7 +19,7 @@ describe('buildWidgetScript', () => {
         });
 
         expect(script).toContain(
-            '<script>\n      window.chatwootSettings = {"position":"left","type":"expanded_bubble","launcherTitle":"Chat with us"};',
+            '<script>\n      window.yonaSettings = {"position":"left","type":"expanded_bubble","launcherTitle":"Chat with us"};',
         );
         expect(script.endsWith(WEB_WIDGET_SCRIPT.substring(13))).toBe(true);
     });

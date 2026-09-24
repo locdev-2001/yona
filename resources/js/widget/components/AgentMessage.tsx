@@ -15,6 +15,7 @@ import CustomerSatisfaction from './template/CustomerSatisfaction';
 import EmailInput from './template/EmailInput';
 import UserMessage from './UserMessage';
 import type { WidgetMessage } from '../types';
+import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 
 // Tin của agent/bot. Tin thường (chữ, ảnh, tệp, sticker, thẻ) đi chung khung với
 // tin của khách; tin mẫu có khung riêng (khảo sát, xin email, biểu mẫu) giữ bong bóng cũ.
@@ -22,7 +23,6 @@ const TEMPLATE_CONTENT_TYPES = ['input_csat', 'input_email', 'input_select', 'fo
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
 // Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
-const BOT_AVATAR = '/assets/images/chatwoot_bot.png';
 
 function AgentMessageBubble({
     content,
@@ -86,7 +86,7 @@ function useAgentIdentity(message: WidgetMessage) {
             ? channelConfig?.websiteName
             : t('UNREAD_VIEW.BOT');
 
-    const botImage = useInboxAvatarForBot ? channelConfig?.avatarUrl : BOT_AVATAR;
+    const botImage = useInboxAvatarForBot ? channelConfig?.avatarUrl : BOT_AVATAR_URL;
     const avatarUrl =
         message.message_type === MESSAGE_TYPE.TEMPLATE
             ? botImage

@@ -8,6 +8,7 @@ import { dynamicTime } from 'shared/helpers/timeHelper';
 
 import { t } from '../../../../i18n';
 import type { ContactNote } from '../../panelApi';
+import { BOT_AVATAR_URL } from 'shared/constants/avatars';
 
 // Port từ components-next/Contacts/ContactsSidebar/components/ContactNoteItem.vue.
 // Ngưỡng gập: ~4 dòng (14px × 1.625 × 4) như bản gốc.
@@ -45,7 +46,7 @@ export default function ContactNoteItem({
                 <div className="flex items-center gap-1.5 min-w-0">
                     <Avatar
                         name={note.user?.name || 'Bot'}
-                        src={note.user?.name ? note.user?.thumbnail : '/assets/images/chatwoot_bot.png'}
+                        src={note.user?.name ? note.user?.thumbnail : BOT_AVATAR_URL}
                         size={16}
                         roundedFull
                     />
