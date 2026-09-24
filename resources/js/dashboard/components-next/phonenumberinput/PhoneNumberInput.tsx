@@ -8,6 +8,7 @@ import Input from 'dashboard/components-next/input/Input';
 import Button from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { composePhoneNumber, isTypedPhoneNumberValid } from './phoneNumberValue';
 
 // Port từ dashboard/components-next/phonenumberinput/PhoneNumberInput.vue.
 interface PhoneNumberInputProps {
@@ -35,8 +36,12 @@ export default function PhoneNumberInput({
     const [phoneNumber, setPhoneNumber] = useState('');
     const [isDirty, setDirty] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
+    // Giá trị vừa phát ra từ chính ô này — không tách ngược lại kẻo xoá mất cách
+    // người dùng đang gõ (khoảng trắng, số 0 đầu).
+    const lastEmittedRef = useRef<string | null>(null);
 
     useEffect(() => {
+        if (value === lastEmittedRef.current) return;
         const parsed = value ? parsePhoneNumber(value) : undefined;
         if (parsed) {
             if (parsed.country) setActiveCountryCode(parsed.country);
@@ -56,9 +61,8 @@ export default function PhoneNumberInput({
         return () => document.removeEventListener('mousedown', handleClickAway);
     }, [showDropdown]);
 
-    const isPhoneNumberInvalid = phoneNumber !== '' && (phoneNumber.length < 2 || !/^\d+$/.test(phoneNumber));
-    const isDialCodeInvalid = !countries.some(country => country.dial_code === activeDialCode);
-    const hasError = isPhoneNumberInvalid || isDialCodeInvalid;
+    const isPhoneNumberInvalid = !isTypedPhoneNumberValid(phoneNumber);
+    const hasError = isPhoneNumberInvalid;
 
     const activeCountry = activeCountryCode
         ? countries.find(country => country.id === activeCountryCode)
@@ -73,16 +77,19 @@ export default function PhoneNumberInput({
         action: 'phoneNumberInput',
     }));
 
+    // Chưa chọn được mã nước thì gửi nguyên số — máy chủ hiểu theo quốc gia mặc định.
     const emitPhoneNumber = (dialCode: string, newNumber: string) => {
-        onChange(newNumber ? `${dialCode}${newNumber}` : '');
+        const isKnownDialCode = countries.some(country => country.dial_code === dialCode);
+        const composed = composePhoneNumber(isKnownDialCode ? dialCode : null, newNumber);
+        lastEmittedRef.current = composed;
+        onChange(composed);
     };
 
     const handleNumberInput = (newNumber: string) => {
         setPhoneNumber(newNumber);
         setDirty(true);
 
-        const invalid = newNumber !== '' && (newNumber.length < 2 || !/^\d+$/.test(newNumber));
-        if (!invalid && !isDialCodeInvalid) {
+        if (isTypedPhoneNumberValid(newNumber)) {
             emitPhoneNumber(activeDialCode, newNumber);
         }
     };
@@ -104,13 +111,7 @@ export default function PhoneNumberInput({
           ? ERROR_OUTLINE
           : `${FOCUS_OUTLINE} outline-n-weak dark:outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6`;
 
-    const phoneNumberError = !isDirty
-        ? ''
-        : isDialCodeInvalid
-          ? t('PHONE_INPUT.DIAL_CODE_ERROR')
-          : isPhoneNumberInvalid
-            ? t('PHONE_INPUT.ERROR')
-            : '';
+    const phoneNumberError = isDirty && isPhoneNumberInvalid ? t('PHONE_INPUT.ERROR') : '';
 
     return (
         <div>

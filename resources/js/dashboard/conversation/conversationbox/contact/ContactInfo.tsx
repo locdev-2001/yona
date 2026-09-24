@@ -91,11 +91,15 @@ export default function ContactInfo({
                 ? { additional_attributes: { ...additionalAttributes, company_name: value } }
                 : { [field]: value };
         try {
-            await patchJson(`/api/v1/accounts/${accountId}/contacts/${contact.id}`, payload);
+            const response = await patchJson<{ payload?: Partial<FullContact> }>(
+                `/api/v1/accounts/${accountId}/contacts/${contact.id}`,
+                payload,
+            );
+            // Máy chủ chuẩn hoá (vd 0912… → +84912…): hiện đúng giá trị đã lưu.
             setContact(current =>
                 field === 'company_name'
                     ? { ...current, additional_attributes: { ...additionalAttributes, company_name: value } }
-                    : { ...current, [field]: value },
+                    : { ...current, [field]: response?.payload?.[field] ?? value },
             );
             useAlert(t('CONTACT_FORM.SUCCESS_MESSAGE'));
         } catch (error) {

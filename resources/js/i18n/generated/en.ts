@@ -8269,7 +8269,7 @@ const messages: Record<string, unknown> = {
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Search country",
-        "ERROR": "Phone number should be empty or in E.164 format",
+        "ERROR": "Phone number can only contain digits, optionally starting with +",
         "DIAL_CODE_ERROR": "Please select a dial code from the list"
     },
     "PROFILE_SETTINGS": {
