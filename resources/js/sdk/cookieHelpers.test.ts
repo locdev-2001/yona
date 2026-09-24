@@ -6,6 +6,8 @@ import {
     getUserCookieName,
     getUserString,
     hasUserKeys,
+    removeCookieWithDomain,
+    sdkCookieAttributes,
     setCookieWithDomain,
 } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
@@ -161,5 +163,113 @@ describe('setCookieWithDomain', () => {
         setCookieWithDomain('cw_payload', { value: 'x' });
 
         expect(getCookie('cw_payload')).toBe(JSON.stringify({ value: 'x' }));
+    });
+});
+
+// Ghi lại từng chuỗi gán vào document.cookie (vẫn chuyển tiếp cho kho cookie thật của jsdom).
+const recordCookieWrites = (targetDocument: Document): string[] => {
+    const writes: string[] = [];
+    const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(targetDocument), 'cookie')!;
+    Object.defineProperty(targetDocument, 'cookie', {
+        configurable: true,
+        get: () => descriptor.get!.call(targetDocument),
+        set: (value: string) => {
+            writes.push(value);
+            descriptor.set!.call(targetDocument, value);
+        },
+    });
+
+    return writes;
+};
+
+const attributesOf = (cookieString: string): string[] =>
+    cookieString
+        .split('; ')
+        .slice(1)
+        .filter(part => !part.startsWith('expires='))
+        .sort();
+
+const isExpired = (cookieString: string): boolean => {
+    const expires = cookieString.split('; ').find(part => part.startsWith('expires='));
+
+    return Boolean(expires) && new Date(expires!.slice('expires='.length)).getTime() < Date.now();
+};
+
+describe('sdkCookieAttributes', () => {
+    it('trang HTTPS: SameSite=None, Secure, Partitioned để ghi được cả trong iframe khác site', () => {
+        expect(sdkCookieAttributes('.shop.vn', 'https:')).toEqual({
+            domain: '.shop.vn',
+            sameSite: 'None',
+            secure: true,
+            partitioned: true,
+        });
+    });
+
+    it('trang HTTP: giữ Lax, không Secure (cookie Secure không ghi được trên HTTP)', () => {
+        expect(sdkCookieAttributes('.shop.vn', 'http:')).toEqual({ domain: '.shop.vn', sameSite: 'Lax' });
+    });
+});
+
+describe('ghi và xoá cookie trên trang HTTP', () => {
+    it('xoá cookie bằng đúng bộ thuộc tính lúc ghi, kể cả domain', () => {
+        const writes = recordCookieWrites(document);
+
+        setCookieWithDomain('cw_conversation', 'token', { baseDomain: 'localhost' });
+        removeCookieWithDomain('cw_conversation', 'localhost');
+        delete (document as { cookie?: string }).cookie;
+
+        const [written, removed] = writes;
+        expect(attributesOf(written)).toEqual(['domain=localhost', 'path=/', 'sameSite=Lax']);
+        expect(attributesOf(removed)).toEqual(attributesOf(written));
+        expect(isExpired(removed)).toBe(true);
+        expect(getCookie('cw_conversation')).toBeUndefined();
+    });
+});
+
+describe('ghi và xoá cookie trên trang HTTPS', () => {
+    // Môi trường jsdom của vitest để lộ bản JSDOM ở globalThis.jsdom: đổi URL sang HTTPS để
+    // window.location.protocol và kho cookie cùng chạy như trên trang thật.
+    const jsdomInstance = (globalThis as unknown as { jsdom: { reconfigure(options: { url: string }): void } })
+        .jsdom;
+    let writes: string[];
+
+    beforeEach(() => {
+        jsdomInstance.reconfigure({ url: 'https://shop.example/' });
+        writes = recordCookieWrites(document);
+    });
+
+    afterEach(() => {
+        delete (document as { cookie?: string }).cookie;
+        jsdomInstance.reconfigure({ url: 'http://localhost/' });
+    });
+
+    it('ghi SameSite=None; Secure; Partitioned và đọc lại được', () => {
+        setCookieWithDomain('cw_conversation', 'token');
+
+        const written = writes[writes.length - 1];
+        expect(attributesOf(written)).toEqual(['partitioned', 'path=/', 'sameSite=None', 'secure']);
+        expect(getCookie('cw_conversation')).toBe('token');
+    });
+
+    it('xoá bằng đúng bộ thuộc tính lúc ghi', () => {
+        setCookieWithDomain('cw_conversation', 'token');
+        const written = writes[writes.length - 1];
+        writes.length = 0;
+
+        removeCookieWithDomain('cw_conversation');
+
+        const removed = writes.find(write => write.includes('partitioned'))!;
+        expect(attributesOf(removed)).toEqual(attributesOf(written));
+        expect(isExpired(removed)).toBe(true);
+        expect(getCookie('cw_conversation')).toBeUndefined();
+    });
+
+    it('xoá bản cookie cũ không Partitioned trước khi ghi, để không còn hai cookie cùng tên', () => {
+        setCookieWithDomain('cw_conversation', 'token', { baseDomain: 'shop.example' });
+
+        const [legacyRemoval, written] = writes;
+        expect(attributesOf(legacyRemoval)).toEqual(['domain=shop.example', 'path=/']);
+        expect(isExpired(legacyRemoval)).toBe(true);
+        expect(attributesOf(written)).toContain('partitioned');
     });
 });

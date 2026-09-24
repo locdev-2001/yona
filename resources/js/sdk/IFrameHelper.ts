@@ -20,8 +20,8 @@ import { dispatchWindowEvent } from './helpers/customEvent';
 import { CHATWOOT_ERROR, CHATWOOT_POSTBACK, CHATWOOT_READY } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
 import { FRAME_MESSAGE_PREFIX } from './constants/frameEvents';
-import { getUserCookieName, setCookieWithDomain } from './cookieHelpers';
-import { getCookie, removeCookie } from './helpers/cookies';
+import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
+import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
 import { isFlatWidgetStyle } from './settingsHelper';
 import { popoutChatWindow } from './helpers/popoutHelper';
@@ -176,7 +176,7 @@ export const IFrameHelper = {
             dispatchWindowEvent({ eventName: CHATWOOT_ERROR, data });
 
             if (errorType === SET_USER_ERROR) {
-                removeCookie(getUserCookieName());
+                removeCookieWithDomain(getUserCookieName(), window.$chatwoot.baseDomain);
             }
         },
         onEvent({ eventIdentifier: eventName, data }: { eventIdentifier: string; data: unknown }): void {

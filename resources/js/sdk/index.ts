@@ -2,8 +2,14 @@
 // Điểm vào bundle IIFE độc lập — API công khai `window.chatwootSDK.run({websiteToken, baseUrl})`.
 import { IFrameHelper } from './IFrameHelper';
 import { getBubbleView, getDarkMode, getWidgetStyle } from './settingsHelper';
-import { computeHashForUserData, getUserCookieName, hasUserKeys, setCookieWithDomain } from './cookieHelpers';
-import { getCookie, removeCookie } from './helpers/cookies';
+import {
+    computeHashForUserData,
+    getUserCookieName,
+    hasUserKeys,
+    removeCookieWithDomain,
+    setCookieWithDomain,
+} from './cookieHelpers';
+import { getCookie } from './helpers/cookies';
 import { addClasses, removeClasses, restoreWidgetInDOM } from './DOMHelpers';
 import { SDK_SET_BUBBLE_VISIBILITY } from './constants/frameEvents';
 import type { ChatwootSettings, RunOptions, SdkUserAttributes } from './types';
@@ -169,8 +175,8 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
                 IFrameHelper.events.toggleBubble();
             }
 
-            removeCookie('cw_conversation');
-            removeCookie(getUserCookieName());
+            removeCookieWithDomain('cw_conversation', baseDomain);
+            removeCookieWithDomain(getUserCookieName(), baseDomain);
 
             const iframe = IFrameHelper.getAppFrame();
             if (iframe) {

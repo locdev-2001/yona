@@ -8,6 +8,7 @@ export type CookieAttributes = {
     domain?: string;
     secure?: boolean;
     sameSite?: string;
+    partitioned?: boolean;
 };
 
 const encodeCookieValue = (value: string): string =>

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IFrameHelper } from './IFrameHelper';
 import { FRAME_MESSAGE_PREFIX } from './constants/frameEvents';
+import { setCookieWithDomain } from './cookieHelpers';
+import { getCookie } from './helpers/cookies';
 import type { ChatwootInstance } from './types';
 
 const APP_FRAME_ID = 'chatwoot_live_chat_widget';
@@ -27,8 +29,19 @@ beforeEach(() => {
 
 afterEach(() => {
     document.getElementById(APP_FRAME_ID)?.remove();
+    document.getElementById('cw-widget-holder')?.remove();
+    document.cookie = 'cw_conversation=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.onmessage = null;
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+});
+
+const postFromWidget = (payload: Record<string, unknown>) =>
+    window.onmessage?.({ data: `${FRAME_MESSAGE_PREFIX}${JSON.stringify(payload)}` } as MessageEvent);
+
+const loadedMessage = (authToken: string) => ({
+    event: 'loaded',
+    config: { authToken, channelConfig: { widgetColor: '#1f93ff' } },
 });
 
 describe('getUrl', () => {
@@ -112,5 +125,31 @@ describe('setFrameHeightToFitContent', () => {
         IFrameHelper.setFrameHeightToFitContent(320, false);
 
         expect(iframe.getAttribute('style')).toBe('height: 100% !important');
+    });
+});
+
+describe('giữ phiên khách qua tải lại trang', () => {
+    beforeEach(() => {
+        vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+        // Dựng bong bóng và theo dõi đổi URL không thuộc phạm vi các test này.
+        vi.spyOn(IFrameHelper, 'onLoad').mockImplementation(() => {});
+    });
+
+    it('widget báo loaded thì SDK ghi token vào cookie cw_conversation', () => {
+        IFrameHelper.initPostMessageCommunication();
+
+        postFromWidget(loadedMessage('visitor-token'));
+
+        expect(getCookie('cw_conversation')).toBe('visitor-token');
+    });
+
+    it('có cookie phiên thì URL iframe mang token để widget nhận lại đúng khách', () => {
+        setCookieWithDomain('cw_conversation', 'visitor-token');
+
+        IFrameHelper.createFrame({ baseUrl: 'https://app.yona.vn', websiteToken: 'website-token' });
+
+        expect(IFrameHelper.getAppFrame()?.src).toBe(
+            'https://app.yona.vn/widget?website_token=website-token&cw_conversation=visitor-token',
+        );
     });
 });

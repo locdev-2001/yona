@@ -1,5 +1,5 @@
 // Port: refs/chatwoot/app/javascript/sdk/cookieHelpers.js
-import { setCookie } from './helpers/cookies';
+import { removeCookie, setCookie } from './helpers/cookies';
 import type { CookieAttributes } from './helpers/cookies';
 import type { SdkUserAttributes } from './types';
 
@@ -70,18 +70,36 @@ export const computeHashForUserData = (userData: { identifier?: string | number;
 export const hasUserKeys = (user: SdkUserAttributes): boolean =>
     REQUIRED_USER_KEYS.reduce((acc, key) => acc || !!user[key], false);
 
+// Bộ thuộc tính dùng chung cho mọi cookie SDK ghi lẫn xoá: xoá chỉ có tác dụng khi khớp đúng
+// thuộc tính lúc ghi. Trang HTTPS ghi SameSite=None; Secure; Partitioned để cookie vẫn ghi được
+// khi mã nhúng nằm trong iframe khác site (khối HTML của site builder); trang HTTP không có
+// Secure nên giữ Lax.
+export const sdkCookieAttributes = (baseDomain?: string, protocol = window.location.protocol): CookieAttributes =>
+    protocol === 'https:'
+        ? { domain: baseDomain, sameSite: 'None', secure: true, partitioned: true }
+        : { domain: baseDomain, sameSite: 'Lax' };
+
+// Cookie ghi trước khi có Partitioned nằm ở kho không phân vùng. Không xoá bản đó thì trình
+// duyệt giữ hai cookie cùng tên và SDK có thể đọc nhầm phiên cũ.
+const removeUnpartitionedCopy = (name: string, attributes: CookieAttributes): void => {
+    if (attributes.partitioned) removeCookie(name, { domain: attributes.domain });
+};
+
 export const setCookieWithDomain = (
     name: string,
     value: string | number | object,
     { expires = 365, baseDomain = undefined }: { expires?: number | Date; baseDomain?: string } = {},
 ): void => {
-    const cookieOptions: CookieAttributes = {
-        expires,
-        sameSite: 'Lax',
-        domain: baseDomain,
-    };
-
+    const attributes = sdkCookieAttributes(baseDomain);
     const cookieValue = typeof value === 'object' ? JSON.stringify(value) : value;
 
-    setCookie(name, cookieValue, cookieOptions);
+    removeUnpartitionedCopy(name, attributes);
+    setCookie(name, cookieValue, { ...attributes, expires });
+};
+
+export const removeCookieWithDomain = (name: string, baseDomain?: string): void => {
+    const attributes = sdkCookieAttributes(baseDomain);
+
+    removeUnpartitionedCopy(name, attributes);
+    removeCookie(name, attributes);
 };
