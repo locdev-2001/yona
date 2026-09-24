@@ -114,13 +114,10 @@ dùng.
 | sự kiện `yona:ready`, `yona:error`, `yona:opened`, `yona:closed`, `yona:on-message`, `yona:on-start-conversation`, `yona:postback` | SDK bắn cả hai tên, cùng `detail`, tên mới trước |
 | postMessage `yona-widget:<json>` | hai phía nhận cả tiền tố đời trước; SDK mới gửi `sdk_protocol=2` trên URL iframe để iframe biết nói tiền tố nào (SDK cũ đang mở trên tab khách vẫn chạy) |
 | id iframe `yona_live_chat_widget` | không alias được id |
-| app nhúng dashboard gửi `yona-dashboard-app:fetch-info` | `Frame.tsx` nhận cả tên đời trước |
+| app nhúng dashboard gửi `yona-dashboard-app:fetch-info` | `DashboardApp/frameProtocol.ts` nhận cả tên đời trước |
 | header webhook `X-Yona-Delivery`, `X-Yona-Timestamp`, `X-Yona-Signature` (`sha256=` HMAC của `"{timestamp}.{body}"`) | gửi song song bộ header tiền tố đời trước, cùng giá trị |
 
 - Tên đời trước phía frontend gom **một chỗ**: `resources/js/shared/legacyContracts.ts`;
   phía máy chủ: hằng tiền tố header trong `app/Services/Webhooks/Trigger.php`.
 - Lớp CSS `woot-*`, `#cw-widget-holder`, cookie `cw_*` cũng là contract với
   website khách — giữ nguyên.
-
-> Trạng thái 25/09/2026: việc đổi sang tên chính ở bảng trên đang triển khai.
-> Trước khi xong, SDK và webhook vẫn chỉ phát tên đời trước.
