@@ -65,8 +65,8 @@ class ConversationReplyMail extends Mailable
             return null;
         }
 
-        $recap = $conversation->messages()->chat()->where('id', '<', $lastQueuedId)
-            ->orderByDesc('id')->limit(10)->get()->reverse();
+        $recap = $conversation->messagesNewestFirst()->chat()->where('id', '<', $lastQueuedId)
+            ->limit(10)->get()->reverse();
         $new = $conversation->messages()->chat()->where('id', '>=', $lastQueuedId)->get();
 
         $messages = $recap->concat($new)->filter(fn (Message $m) => $m->isEmailReplySummarizable())->values();
@@ -335,7 +335,7 @@ class ConversationReplyMail extends Mailable
     {
         $repliedEmailId = data_get($this->message?->repliedMessage()?->content_attributes, 'email.message_id');
         $messageId = filled($repliedEmailId) ? $repliedEmailId : data_get(
-            $this->conversation->messages()->incoming()->orderByDesc('id')->first()?->content_attributes,
+            $this->conversation->messagesNewestFirst()->incoming()->first()?->content_attributes,
             'email.message_id'
         );
 
@@ -398,16 +398,16 @@ class ConversationReplyMail extends Mailable
     private static function conversationAlreadyViewed(Conversation $conversation): bool
     {
         $lastSeen = $conversation->contact_last_seen_at;
-        $lastOutgoing = $conversation->messages()->chat()
+        $lastOutgoing = $conversation->messagesNewestFirst()->chat()
             ->where('message_type', '!=', Message::TYPE_INCOMING)
-            ->orderByDesc('id')->first();
+            ->first();
 
         return $lastSeen !== null && $lastOutgoing !== null && $lastSeen->greaterThan($lastOutgoing->created_at);
     }
 
     private function currentMessage(): ?Message
     {
-        return $this->message ?? $this->conversation->messages()->outgoing()->orderByDesc('id')->first();
+        return $this->message ?? $this->conversation->messagesNewestFirst()->outgoing()->first();
     }
 
     private function account(): Account

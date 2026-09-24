@@ -359,6 +359,17 @@ class Conversation extends Model
         return $this->hasMany(Message::class)->orderBy('created_at');
     }
 
+    /**
+     * Tin mới nhất đứng trước. `latest()`/`orderByDesc()` nối sau `messages()` chỉ
+     * thành khoá sắp xếp phụ sau `created_at` tăng dần, nên vẫn ra tin cũ nhất.
+     *
+     * @return HasMany<Message, $this>
+     */
+    public function messagesNewestFirst(): HasMany
+    {
+        return $this->messages()->reorder('created_at', 'desc')->orderByDesc('id');
+    }
+
     public function conversationParticipants(): HasMany
     {
         return $this->hasMany(ConversationParticipant::class);
@@ -468,7 +479,7 @@ class Conversation extends Model
             return true;
         }
 
-        $lastIncoming = $this->messages()->where('message_type', Message::TYPE_INCOMING)->latest('created_at')->first();
+        $lastIncoming = $this->messagesNewestFirst()->incoming()->first();
 
         if ($lastIncoming === null) {
             return false;
@@ -519,10 +530,9 @@ class Conversation extends Model
 
     public function lastNonActivityMessage(): ?Message
     {
-        return $this->messages()
+        return $this->messagesNewestFirst()
             ->where('account_id', $this->account_id)
             ->where('message_type', '!=', Message::TYPE_ACTIVITY)
-            ->reorder('created_at', 'desc')
             ->first();
     }
 
@@ -904,11 +914,10 @@ class Conversation extends Model
     // và tin cuối đã chuẩn hoá nội dung cho bên ngoài.
     public function webhookData(): array
     {
-        $lastChatMessage = $this->messages()
+        $lastChatMessage = $this->messagesNewestFirst()
             ->where('account_id', $this->account_id)
             ->chat()
-            ->get()
-            ->last();
+            ->first();
 
         return [
             ...ConversationResource::pushEventData($this),

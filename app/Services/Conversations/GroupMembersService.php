@@ -42,9 +42,8 @@ class GroupMembersService
     /** @return array<string, array{external_id: string, name: string, avatar: string|null}> */
     private function recentSenders(Conversation $conversation): array
     {
-        $messages = $conversation->messages()
-            ->where('message_type', Message::TYPE_INCOMING)
-            ->orderByDesc('id')
+        $messages = $conversation->messagesNewestFirst()
+            ->incoming()
             ->limit(self::RECENT_MESSAGES_SCANNED)
             ->get(['id', 'content_attributes']);
 

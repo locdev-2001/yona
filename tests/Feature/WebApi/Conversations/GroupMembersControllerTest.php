@@ -107,6 +107,42 @@ it('nhóm: người vừa nhắn đứng đầu, rồi danh bạ theo tên, bỏ
         && $request->hasHeader('X-Bridge-UI-Secret'));
 });
 
+it('người nhắn gần nhất đứng đầu, theo thứ tự thời gian lùi dần', function () {
+    fakeGroupMembersBridge([]);
+    groupIncomingFrom($this->group, '101', 'Lê Đức');
+    groupIncomingFrom($this->group, '202', 'Trần Thị An');
+    groupIncomingFrom($this->group, '303', 'Nguyễn Văn Bình');
+
+    $this->actingAs($this->agent)->getJson(groupMembersUrl($this->account, $this->group))
+        ->assertOk()
+        ->assertJsonPath('payload.*.name', ['Nguyễn Văn Bình', 'Trần Thị An', 'Lê Đức']);
+});
+
+it('nhóm hơn 300 tin đến vẫn gợi ý người vừa nhắn, người chỉ nhắn từ rất lâu trôi khỏi danh sách', function () {
+    fakeGroupMembersBridge([]);
+    $startedAt = now()->subDay();
+    $incomingAt = fn (string $externalId, string $name, DateTimeInterface $at) => [
+        'account_id' => $this->group->account_id,
+        'inbox_id' => $this->group->inbox_id,
+        'conversation_id' => $this->group->id,
+        'message_type' => Message::TYPE_INCOMING,
+        'content' => "tin của {$name}",
+        'content_attributes' => json_encode(['sender' => ['external_id' => $externalId, 'name' => $name, 'avatar' => null]]),
+        'created_at' => $at,
+        'updated_at' => $at,
+    ];
+
+    Message::query()->insert([
+        $incomingAt('101', 'Lê Đức', $startedAt),
+        ...collect(range(1, 300))->map(fn (int $minute) => $incomingAt('202', 'Trần Thị An', $startedAt->copy()->addMinutes($minute)))->all(),
+        $incomingAt('303', 'Nguyễn Văn Bình', now()),
+    ]);
+
+    $this->actingAs($this->agent)->getJson(groupMembersUrl($this->account, $this->group))
+        ->assertOk()
+        ->assertJsonPath('payload.*.name', ['Nguyễn Văn Bình', 'Trần Thị An']);
+});
+
 it('gọi lần hai trong mười phút thì dùng lại danh bạ đã lấy', function () {
     fakeGroupMembersBridge([['id' => '101', 'name' => 'An', 'avatar' => null]]);
 
