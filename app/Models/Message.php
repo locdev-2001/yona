@@ -243,6 +243,12 @@ class Message extends Model
         return ($this->content_attributes['deleted'] ?? false) === true;
     }
 
+    /** Agent chuyển tiếp trong Yona, hoặc khách chuyển tiếp trên nền tảng (`content_attributes.forwarded_from`). */
+    public function isForwarded(): bool
+    {
+        return is_array($this->content_attributes['forwarded_from'] ?? null);
+    }
+
     /**
      * Tin mà tin này trả lời trích dẫn. Chỉ tra trong cùng hội thoại: `in_reply_to`
      * do client gửi lên, trỏ sang hội thoại khác thì coi như không có. Driver kênh
@@ -505,10 +511,12 @@ class Message extends Model
     }
 
     // Liquidable#process_liquid_in_content: chỉ tin agent gửi ra và tin mẫu mới
-    // được tham chiếu biến — tin của khách giữ nguyên văn.
+    // được tham chiếu biến — tin của khách giữ nguyên văn. Tin chuyển tiếp mang
+    // nguyên văn một tin đã có, nên chuỗi `{{…}}` trong đó không phải biến.
     private function renderContentVariables(): void
     {
-        if (blank($this->content) || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
+        if (blank($this->content) || $this->isForwarded()
+            || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
             return;
         }
 

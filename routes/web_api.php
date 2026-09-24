@@ -23,6 +23,7 @@ use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
 use App\Http\Controllers\WebApi\Conversations\DraftMessagesController;
 use App\Http\Controllers\WebApi\Conversations\GroupMembersController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
+use App\Http\Controllers\WebApi\Conversations\MessageForwardsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
 use App\Http\Controllers\WebApi\Conversations\StickersController;
@@ -173,6 +174,11 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'storeReaction'])
             ->whereNumber(['conversationId', 'messageId']);
         Route::delete('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'destroyReaction'])
+            ->whereNumber(['conversationId', 'messageId']);
+        // Chuyển tiếp một tin sang hội thoại khác: danh sách đích (kèm lý do không nhận được) và lệnh chuyển.
+        Route::get('/conversations/{conversationId}/messages/{messageId}/forward_targets', [MessageForwardsController::class, 'targets'])
+            ->whereNumber(['conversationId', 'messageId']);
+        Route::post('/conversations/{conversationId}/messages/{messageId}/forward', [MessageForwardsController::class, 'store'])
             ->whereNumber(['conversationId', 'messageId']);
         Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}', [ConversationsController::class, 'update'])->whereNumber('conversationId');

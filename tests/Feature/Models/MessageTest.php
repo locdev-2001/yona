@@ -421,3 +421,37 @@ describe('repliedMessage', function () {
         expect($reply->repliedMessage())->toBeNull();
     });
 });
+
+describe('forwarded messages', function () {
+    it('isForwarded chỉ đúng khi forwarded_from là object', function () {
+        $conversation = messageConversation();
+        $forwarded = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => 1, 'conversation_id' => 2]],
+        ]);
+        $plain = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+        $plain->content_attributes = ['forwarded_from' => 'giả'];
+
+        expect($forwarded->isForwarded())->toBeTrue()
+            ->and($plain->isForwarded())->toBeFalse()
+            ->and(Message::factory()->outgoing()->create(messageAttributesFor($conversation))->isForwarded())->toBeFalse();
+    });
+
+    it('tin đi mang dấu chuyển tiếp giữ nguyên văn chuỗi Liquid, tin thường vẫn render', function () {
+        $conversation = messageConversation();
+        $conversation->contact->update(['name' => 'Chị Lan']);
+
+        $forwarded = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content' => 'Chào {{contact.name}}',
+            'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => 1, 'conversation_id' => 2]],
+        ]);
+        $plain = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content' => 'Chào {{contact.name}}',
+        ]);
+
+        expect($forwarded->content)->toBe('Chào {{contact.name}}')
+            ->and($plain->content)->toBe('Chào Chị Lan');
+    });
+});

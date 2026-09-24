@@ -402,3 +402,22 @@ describe('POST messages replying to a message', function () {
             ->assertJsonPath('content_attributes.in_reply_to_external_id', null);
     });
 });
+
+describe('POST messages with a forged forwarded_from', function () {
+    it('bỏ forwarded_from do client gửi lên và vẫn render Liquid như tin thường', function () {
+        [$account, $inbox, $contact, $conversation] = conversationMessagesFixtures();
+        $contact->update(['name' => 'Chị Lan']);
+        $agent = conversationMessagesAgentOf($account, $inbox);
+
+        $response = $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+                'content' => 'Chào {{contact.name}}',
+                'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => 1, 'conversation_id' => 2]],
+            ])
+            ->assertOk();
+
+        expect($response->json('content_attributes'))->not->toHaveKey('forwarded_from')
+            ->and($response->json('content'))->toBe('Chào Chị Lan')
+            ->and($conversation->messages()->firstOrFail()->isForwarded())->toBeFalse();
+    });
+});

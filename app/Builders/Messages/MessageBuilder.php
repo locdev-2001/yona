@@ -22,9 +22,9 @@ class MessageBuilder
 {
     /**
      * Khoá `content_attributes` chỉ máy chủ được ghi: client gửi lên thì bị bỏ, để
-     * không ai giả được payload đi thẳng ra kênh.
+     * không ai giả được payload đi thẳng ra kênh hay dấu chuyển tiếp.
      */
-    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker'];
+    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from'];
 
     private ?Message $message = null;
 
@@ -33,13 +33,18 @@ class MessageBuilder
      * qua builder cho luồng đó và tạo message trực tiếp; ở đây giữ một đường
      * tạo tin duy nhất nên cửa vào phải tự khai quyền tạo tin `incoming`.
      *
+     * $trustedContentAttributes: khoá do chính code máy chủ ghi (vd dấu chuyển
+     * tiếp), không bao giờ lấy từ request.
+     *
      * @param  array<string, mixed>  $params
+     * @param  array<string, mixed>  $trustedContentAttributes
      */
     public function __construct(
         private readonly User|AgentBot|null $user,
         private readonly Conversation $conversation,
         private readonly array $params,
         private readonly bool $incomingAllowed = false,
+        private readonly array $trustedContentAttributes = [],
     ) {}
 
     public function perform(): Message
@@ -50,6 +55,8 @@ class MessageBuilder
 
         // Sticker dựng tin trước khi lưu tệp: bị từ chối thì không để lại tệp mồ côi.
         (new StickerMessageBuilder($this->message, $this->conversation->inbox, $this->params))->perform();
+        // Sau mọi bước dựng lại content_attributes (sticker) để khoá tin cậy không bị xoá mất.
+        $this->applyTrustedContentAttributes();
 
         // Rails validate cả attachments rồi mới save! — dựng + kiểm trước khi
         // tin tồn tại để tệp hỏng không đẻ ra tin rỗng.
@@ -61,6 +68,15 @@ class MessageBuilder
         $this->message->save();
 
         return $this->message;
+    }
+
+    private function applyTrustedContentAttributes(): void
+    {
+        if ($this->trustedContentAttributes === []) {
+            return;
+        }
+
+        $this->message->content_attributes = [...$this->message->content_attributes ?? [], ...$this->trustedContentAttributes];
     }
 
     /**

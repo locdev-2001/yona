@@ -3471,6 +3471,24 @@ const messages: Record<string, unknown> = {
             "with_attachments": "A sticker is sent on its own, without attachments.",
             "missing_sticker_id": "Pick a sticker to send."
         },
+        "forward": {
+            "not_forwardable": "This type of message cannot be forwarded yet.",
+            "attachment_unavailable": "The file :filename is no longer on the server, so it cannot be forwarded.",
+            "capability_not_supported": "The :inbox inbox cannot send :items.",
+            "sticker_unavailable": "The :inbox inbox cannot send this sticker.",
+            "reply_window_closed": "The reply window for this conversation has closed.",
+            "target_not_found": "Conversation not found or you do not have access to it.",
+            "no_targets": "Choose at least one conversation.",
+            "too_many_targets": "You can forward to at most :max conversations at a time.",
+            "capabilities": {
+                "outbound_text": "text messages",
+                "outbound_image": "images",
+                "outbound_video": "videos",
+                "outbound_audio": "audio",
+                "outbound_file": "files",
+                "outbound_sticker": "stickers"
+            }
+        },
         "custom_attribute_definition": {
             "attribute_key_format": "must only contain letters, numbers, underscores, hyphens, and dots",
             "key_conflict": "The provided key is not allowed as it might conflict with default attributes."
