@@ -14,9 +14,11 @@ final class UserResource
     public static function pushEventData(User $user, ?Account $account = null): array
     {
         $account ??= request()->attributes->get('currentAccount');
-        $membership = $account === null
-            ? null
-            : $user->accountUsers()->where('account_id', $account->id)->first();
+        $membership = match (true) {
+            $account === null => null,
+            $user->relationLoaded('accountUsers') => $user->accountUsers->firstWhere('account_id', $account->id),
+            default => $user->accountUsers()->where('account_id', $account->id)->first(),
+        };
 
         return [
             'id' => $user->id,

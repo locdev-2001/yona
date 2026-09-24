@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -81,6 +82,9 @@ class Conversation extends Model
     // hook `updated` bắn event + activity giống previous_changes[:label_list] của gốc.
     /** @var array{0: array<int, string>, 1: array<int, string>}|null */
     private ?array $labelListChange = null;
+
+    // Số tin chưa đọc nạp sẵn cho cả trang danh sách, tránh đếm lại từng hội thoại.
+    private ?int $preloadedUnreadIncomingMessagesCount = null;
 
     // Default DB chưa có trên model mới tạo — set sẵn cho hook/serializer.
     protected $attributes = [
@@ -370,6 +374,24 @@ class Conversation extends Model
         return $this->messages()->reorder('created_at', 'desc')->orderByDesc('id');
     }
 
+    // Cùng thứ tự với messagesNewestFirst, nạp sẵn được cho cả trang danh sách.
+    /** @return HasOne<Message, $this> */
+    public function latestMessage(): HasOne
+    {
+        return $this->hasOne(Message::class)->ofMany(['created_at' => 'max', 'id' => 'max'])->chaperone('conversation');
+    }
+
+    /** @return HasOne<Message, $this> */
+    public function latestNonActivityMessage(): HasOne
+    {
+        return $this->hasOne(Message::class)
+            ->ofMany(
+                ['created_at' => 'max', 'id' => 'max'],
+                fn (Builder $query) => $query->where('messages.message_type', '!=', Message::TYPE_ACTIVITY),
+            )
+            ->chaperone('conversation');
+    }
+
     public function conversationParticipants(): HasMany
     {
         return $this->hasMany(ConversationParticipant::class);
@@ -517,7 +539,40 @@ class Conversation extends Model
 
     public function unreadIncomingMessagesCount(): int
     {
-        return min(self::UNREAD_INCOMING_MESSAGES_LIMIT, $this->unreadIncomingMessagesQuery()->count());
+        return $this->preloadedUnreadIncomingMessagesCount
+            ?? min(self::UNREAD_INCOMING_MESSAGES_LIMIT, $this->unreadIncomingMessagesQuery()->count());
+    }
+
+    /**
+     * Một truy vấn đếm tin chưa đọc cho cả trang, cùng luật với
+     * unreadIncomingMessagesQuery: tin đến sau lần agent xem cuối.
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    public static function preloadUnreadIncomingMessagesCounts(Collection $conversations): void
+    {
+        if ($conversations->isEmpty()) {
+            return;
+        }
+
+        $countsByConversation = DB::table('messages')
+            ->join('conversations', 'conversations.id', '=', 'messages.conversation_id')
+            ->whereIn('messages.conversation_id', $conversations->modelKeys())
+            ->whereColumn('messages.account_id', 'conversations.account_id')
+            ->where('messages.message_type', Message::TYPE_INCOMING)
+            ->where(fn ($unread) => $unread
+                ->whereNull('conversations.agent_last_seen_at')
+                ->orWhereColumn('messages.created_at', '>', 'conversations.agent_last_seen_at'))
+            ->groupBy('messages.conversation_id')
+            ->selectRaw('messages.conversation_id, COUNT(*) AS unread_count')
+            ->pluck('unread_count', 'conversation_id');
+
+        foreach ($conversations as $conversation) {
+            $conversation->preloadedUnreadIncomingMessagesCount = min(
+                self::UNREAD_INCOMING_MESSAGES_LIMIT,
+                (int) ($countsByConversation[$conversation->id] ?? 0),
+            );
+        }
     }
 
     /** @return HasMany<Message, $this> */

@@ -3,7 +3,11 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
+use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,13 +17,81 @@ class ConversationResource extends JsonResource
 {
     use SerializesAttributeMaps;
 
+    // Quan hệ thẻ hội thoại cần — nạp một lần cho cả trang thay vì từng thẻ.
+    private const CARD_RELATIONS = [
+        'account',
+        'inbox',
+        'assignee.avatar',
+        'assignee.accountUsers',
+        'assigneeAgentBot',
+        'contact.avatar',
+        'team',
+        'contactInbox',
+        'latestMessage.attachments',
+        'latestNonActivityMessage.attachments',
+    ];
+
+    // Người gửi tin cuối: agent cần vai trò trong account, khách cần ảnh đại diện.
+    private const MESSAGE_SENDER_RELATIONS = [
+        User::class => ['accountUsers', 'avatar'],
+        Contact::class => ['avatar'],
+    ];
+
+    /** @var list<int>|null Nhóm người xem là thành viên, nạp sẵn khi dựng cả trang. */
+    private ?array $viewerTeamIds = null;
+
     /** @param iterable<Conversation> $conversations */
     public static function collectionFor(iterable $conversations): array
     {
-        return collect($conversations)
-            ->map(fn (Conversation $conversation) => (new self($conversation))->toArray(request()))
+        $conversations = new EloquentCollection(collect($conversations)->values()->all());
+        self::preloadCards($conversations);
+        $viewerTeamIds = self::viewerTeamIds($conversations);
+
+        return $conversations
+            ->map(function (Conversation $conversation) use ($viewerTeamIds) {
+                $resource = new self($conversation);
+                $resource->viewerTeamIds = $viewerTeamIds;
+
+                return $resource->toArray(request());
+            })
             ->values()
             ->all();
+    }
+
+    /** @param EloquentCollection<int, Conversation> $conversations */
+    private static function preloadCards(EloquentCollection $conversations): void
+    {
+        $withSenderRelations = fn (MorphTo $sender) => $sender->morphWith(self::MESSAGE_SENDER_RELATIONS);
+        $conversations->loadMissing([
+            ...self::CARD_RELATIONS,
+            'latestMessage.sender' => $withSenderRelations,
+            'latestNonActivityMessage.sender' => $withSenderRelations,
+        ]);
+        Conversation::preloadUnreadIncomingMessagesCounts($conversations);
+
+        foreach ($conversations as $conversation) {
+            $conversation->contact?->setRelation('account', $conversation->account);
+
+            foreach ([$conversation->latestMessage, $conversation->latestNonActivityMessage] as $message) {
+                $message?->setRelation('account', $conversation->account)->setRelation('inbox', $conversation->inbox);
+            }
+        }
+    }
+
+    /**
+     * @param  EloquentCollection<int, Conversation>  $conversations
+     * @return list<int>
+     */
+    private static function viewerTeamIds(EloquentCollection $conversations): array
+    {
+        $viewer = request()->user();
+        $teamIds = $conversations->pluck('team_id')->filter()->unique()->values();
+
+        if (! $viewer instanceof User || $teamIds->isEmpty()) {
+            return [];
+        }
+
+        return $viewer->teams()->whereIn('teams.id', $teamIds)->pluck('teams.id')->map(fn ($id) => (int) $id)->all();
     }
 
     public function toArray(Request $request): array
@@ -27,11 +99,13 @@ class ConversationResource extends JsonResource
         /** @var Conversation $conversation */
         $conversation = $this->resource;
 
-        $lastMessage = $conversation->messages()
-            ->where('account_id', $conversation->account_id)
-            ->reorder('created_at', 'desc')
-            ->first();
-        $lastNonActivityMessage = $conversation->lastNonActivityMessage();
+        // Ngoài danh sách (sự kiện realtime) luôn đọc mới, không giữ tin cuối cũ trên model.
+        $lastMessage = $conversation->relationLoaded('latestMessage')
+            ? $conversation->latestMessage
+            : $conversation->latestMessage()->first();
+        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
+            ? $conversation->latestNonActivityMessage
+            : $conversation->latestNonActivityMessage()->first();
 
         return [
             'meta' => $this->meta($conversation),
@@ -113,7 +187,9 @@ class ConversationResource extends JsonResource
                 'icon' => $conversation->team->icon,
                 'icon_color' => $conversation->team->icon_color,
                 'account_id' => $conversation->team->account_id,
-                'is_member' => $conversation->team->members()->whereKey(request()->user()?->id)->exists(),
+                'is_member' => $this->viewerTeamIds !== null
+                    ? in_array($conversation->team->id, $this->viewerTeamIds, true)
+                    : $conversation->team->members()->whereKey(request()->user()?->id)->exists(),
             ];
         }
 
