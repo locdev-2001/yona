@@ -15,11 +15,25 @@ import type {
 
 // Endpoint dashboard API của Chatwoot (web_api session) — xem ConversationsController.
 
+// Trang lấy bằng cursor chỉ mang next_cursor; số đếm tab lấy riêng ở fetchConversationMeta.
+export interface ConversationListPageMeta extends Partial<ConversationListMeta> {
+    next_cursor?: string | null;
+}
+
 interface ConversationListResponse {
     data: {
-        meta: ConversationListMeta;
+        meta: ConversationListPageMeta;
         payload: Conversation[];
     };
+}
+
+export function tabCountsOf(meta: ConversationListPageMeta): ConversationListMeta | null {
+    const { mine_count, assigned_count, unassigned_count, all_count } = meta;
+    if (mine_count === undefined || assigned_count === undefined || unassigned_count === undefined || all_count === undefined) {
+        return null;
+    }
+
+    return { mine_count, assigned_count, unassigned_count, all_count };
 }
 
 interface MessagesResponse {
@@ -37,7 +51,9 @@ export interface FetchConversationsParams {
     accountId: number;
     assigneeType: string;
     status: string;
-    page: number;
+    // `cursor` (meta.next_cursor của trang trước) thắng `page` khi có cả hai.
+    page?: number;
+    cursor?: string;
     sortBy: string;
     inboxId?: number;
     teamId?: number;
@@ -51,14 +67,16 @@ export interface FetchConversationsParams {
 }
 
 // conversationFilters của ChatList.vue — cùng một bộ tham số cho danh sách và
-// bộ đếm, nên chỉ dựng ở một chỗ (`page`/`updated_within` chỉ danh sách mới có).
-function buildConversationQuery(params: Omit<FetchConversationsParams, 'page'> & { page?: number }): string {
+// bộ đếm, nên chỉ dựng ở một chỗ (`page`/`cursor`/`updated_within` chỉ danh sách mới có).
+function buildConversationQuery(params: FetchConversationsParams): string {
     const query = new URLSearchParams({
         assignee_type: params.assigneeType,
         status: params.status,
         sort_by: params.sortBy,
     });
-    if (params.page) {
+    if (params.cursor) {
+        query.set('cursor', params.cursor);
+    } else if (params.page) {
         query.set('page', String(params.page));
     }
     if (params.inboxId) {
@@ -97,7 +115,7 @@ export function fetchFilteredConversations(
 }
 
 export function fetchConversationMeta(
-    params: Omit<FetchConversationsParams, 'page'>,
+    params: Omit<FetchConversationsParams, 'page' | 'cursor'>,
 ): Promise<{ meta: ConversationListMeta }> {
     return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${buildConversationQuery(params)}`);
 }

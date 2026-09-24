@@ -28,6 +28,7 @@ import {
     fetchConversationAttachments,
     fetchConversationMeta,
     fetchConversations,
+    tabCountsOf,
     fetchFilteredConversations,
     fetchMessages,
     markMessagesRead as markMessagesReadRequest,
@@ -376,6 +377,9 @@ export function ConversationProvider({
     const [listLoading, setListLoading] = useState(true);
     const [endReached, setEndReached] = useState(false);
     const pageRef = useRef(0);
+    // Con trỏ trang kế của danh sách thường; null thì cuộn tiếp bằng `page`
+    // (bộ lọc nâng cao, sort theo biểu thức).
+    const nextCursorRef = useRef<string | null>(null);
     const listRequestVersionRef = useRef(0);
     const fetchPageRef = useRef<(page: number, append: boolean) => Promise<void>>(async () => undefined);
     const conversationIdRef = useRef(conversationId);
@@ -454,6 +458,7 @@ export function ConversationProvider({
                 if (appliedFilters && statusRequestQueuesRef.current.size > 0) {
                     await Promise.allSettled([...statusRequestQueuesRef.current.values()]);
                 }
+                const cursor = !appliedFilters && append ? nextCursorRef.current : null;
                 const response = appliedFilters
                     ? await fetchFilteredConversations(
                           accountId,
@@ -461,13 +466,15 @@ export function ConversationProvider({
                           page,
                           listQuery.searchQuery,
                       )
-                    : await fetchConversations({ ...listQuery, page });
+                    : await fetchConversations({ ...listQuery, ...(cursor ? { cursor } : { page }) });
                 if (
                     listRequestVersionRef.current !== requestVersion
                     || appliedFilters !== appliedFiltersRef.current
                 ) return;
                 const payload = response.data.payload;
-                setListMeta(response.data.meta);
+                const tabCounts = tabCountsOf(response.data.meta);
+                if (tabCounts) setListMeta(tabCounts);
+                nextCursorRef.current = response.data.meta.next_cursor ?? null;
                 setSearchMatchIds(previous => nextSearchMatches(previous, payload, listQuery.searchQuery, append));
                 setFilteredConversations(previous => {
                     if (!appliedFilters) return [];
@@ -485,7 +492,7 @@ export function ConversationProvider({
                     return [...kept, ...payload.filter((c) => !known.has(c.id))];
                 });
                 pageRef.current = page;
-                if (payload.length < CONVERSATIONS_PER_PAGE) {
+                if (payload.length < CONVERSATIONS_PER_PAGE || (cursor && !nextCursorRef.current)) {
                     setEndReached(true);
                 }
             } catch {
@@ -507,6 +514,7 @@ export function ConversationProvider({
         setSearchMatchIds(previous => (previous ? new Set() : null));
         setEndReached(false);
         pageRef.current = 0;
+        nextCursorRef.current = null;
         void fetchPage(1, false);
     }, [fetchPage]);
 
@@ -910,7 +918,8 @@ export function ConversationProvider({
                 page: 1,
                 updatedWithin: getSecondsSinceDisconnect() + DISCONNECT_DELAY_THRESHOLD,
             });
-            setListMeta(response.data.meta);
+            const tabCounts = tabCountsOf(response.data.meta);
+            if (tabCounts) setListMeta(tabCounts);
             setSearchMatchIds(previous => nextSearchMatches(previous, response.data.payload, listQuery.searchQuery, true));
             setAllConversations((current) =>
                 mergeFetchedConversations(current, response.data.payload, conversationIdRef.current),
