@@ -2433,6 +2433,7 @@ const messages: Record<string, unknown> = {
         "RATING_TITLE": "Đánh giá",
         "FEEDBACK_TITLE": "Phản hồi",
         "REPLY_MESSAGE_NOT_FOUND": "Không tìm thấy tin nhắn",
+        "JUMP_TO_MESSAGE_NOT_FOUND": "Tin nhắn này không còn trong hội thoại",
         "CAPTAIN_GENERATION": {
             "TITLE": "Câu trả lời này được tạo ra thế nào?",
             "GENERATED_BY": "Do Captain tạo",

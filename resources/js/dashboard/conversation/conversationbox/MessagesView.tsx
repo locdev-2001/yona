@@ -11,6 +11,7 @@ import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
 import ReplyBox from './ReplyBox';
@@ -130,6 +131,16 @@ export default function MessagesView() {
         if (!panel || lastMessageId === null || scrolledConversationRef.current !== currentChat.id) return;
         panel.scrollTop = panel.scrollHeight;
     }, [lastMessageId, currentChat.id]);
+
+    // Đặt sau hai effect cuộn đáy ở trên: layout effect chạy theo thứ tự khai báo.
+    const { focusedMessageId, clearFocusedMessage } = useConversation();
+    useFocusMessageScroll({
+        focusedMessageId,
+        messages,
+        conversationId: currentChat.id,
+        scrolledConversationRef,
+        onDone: clearFocusedMessage,
+    });
 
     const handleScroll = (event: UIEvent<HTMLUListElement>) => {
         const panel = event.currentTarget;

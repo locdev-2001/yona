@@ -49,6 +49,13 @@ import {
     snoozedUntilForStatus,
 } from './lifecycleReducers';
 import { hasExpandedLayoutPreference, isOnExpandedLayout as computeExpandedLayout } from './layoutMode';
+import {
+    loadFocusWindow,
+    mergeMessagesChronologically,
+    messagesRangeOf,
+    readFocusMessageId,
+    type FocusWindow,
+} from './messageFocus';
 import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
@@ -117,6 +124,11 @@ interface ConversationContextValue {
     messages: ConversationMessage[];
     allMessagesLoaded: boolean;
     messagesLoading: boolean;
+    // Tin khung chat cần cuộn tới và tô nền (liên kết ?messageId= hoặc focusMessage).
+    focusedMessageId: number | null;
+    clearFocusedMessage: () => void;
+    // Một đường cho mọi lối "nhảy tới tin": nạp đủ khoảng tới tin đó rồi cuộn tới.
+    focusMessage: (messageId: number) => Promise<void>;
     // attachments/getSelectedChatAttachments của store gốc — accordion Attachments.
     attachments: MessageAttachment[];
     attachmentsLoaded: boolean;
@@ -285,7 +297,8 @@ export function ConversationProvider({
     withConversationList = true,
     children,
 }: ProviderProps) {
-    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
+    const page = usePage<DashboardPageProps>();
+    const { auth, currentAccount } = page.props;
     const accountId = currentAccount.id;
     const user = auth.user!;
     const currentUserId = user.id;
@@ -364,6 +377,9 @@ export function ConversationProvider({
     messagesRef.current = messages;
     const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
     const [messagesLoading, setMessagesLoading] = useState(false);
+    const [focusedMessageId, setFocusedMessageId] = useState<number | null>(null);
+    const clearFocusedMessage = useCallback(() => setFocusedMessageId(null), []);
+    const requestedFocusId = readFocusMessageId(page.url ? new URL(page.url, window.location.origin).search : window.location.search);
     // fetchAllAttachments của MessagesView.vue: nạp theo hội thoại đang mở, không
     // theo accordion — mở panel là đã có sẵn dữ liệu như bản gốc.
     const [attachments, setAttachments] = useState<MessageAttachment[]>([]);
@@ -539,10 +555,39 @@ export function ConversationProvider({
         if (appliedFiltersRef.current) void fetchPageRef.current(1, false);
     }, []);
 
+    // Lõi chung của nhánh URL ?messageId= và focusMessage: nạp đủ khoảng tới tin
+    // đích trên danh sách cho trước (lỗi mạng coi như không thấy), rồi đánh dấu tin.
+    const loadFocus = useCallback(
+        (loaded: ConversationMessage[], targetId: number): Promise<FocusWindow> =>
+            loadFocusWindow(loaded, targetId, messagesRangeOf(accountId, conversationId)).catch(() => ({
+                messages: loaded,
+                found: false,
+            })),
+        [accountId, conversationId],
+    );
+    const markFocus = useCallback((targetId: number, found: boolean) => {
+        setFocusedMessageId(found ? targetId : null);
+        if (!found) useAlert(t('CONVERSATION.JUMP_TO_MESSAGE_NOT_FOUND'));
+    }, []);
+
+    const focusMessage = useCallback(
+        async (targetId: number) => {
+            const loaded = messagesRef.current;
+            const focus = await loadFocus(loaded, targetId);
+            if (conversationIdRef.current !== conversationId) return;
+            if (focus.messages !== loaded) {
+                setMessages((current) => mergeMessagesChronologically(current, focus.messages));
+            }
+            markFocus(targetId, focus.found);
+        },
+        [conversationId, loadFocus, markFocus],
+    );
+
     // Chọn conversation theo display_id trên URL: chưa có trong allConversations
     // thì fetch rồi đưa vào (getConversation gốc commit UPDATE_CONVERSATION).
     useEffect(() => {
         let cancelled = false;
+        setFocusedMessageId(null);
 
         if (!conversationId) {
             setMessages([]);
@@ -561,12 +606,18 @@ export function ConversationProvider({
         setAllMessagesLoaded(false);
         setMessagesLoading(true);
         fetchMessages(accountId, conversationId).then(
-            (response) => {
+            async (response) => {
                 if (cancelled) return;
-                setMessages(response.payload);
-                if (response.payload.length < 20) {
+                const latest = response.payload;
+                const focus = requestedFocusId ? await loadFocus(latest, requestedFocusId) : null;
+                if (cancelled) return;
+                setMessages(focus?.messages ?? latest);
+                if (latest.length < 20) {
                     setAllMessagesLoaded(true);
                 }
+                if (requestedFocusId && focus) markFocus(requestedFocusId, focus.found);
+                // Chỉ tắt trạng thái đang tải khi đã có đủ khoảng tới tin đích — khung
+                // chat không kịp cuộn xuống đáy rồi mới nhảy.
                 setMessagesLoading(false);
                 // setActiveChat gốc phát SCROLL_TO_MESSAGE sau khi nạp xong tin →
                 // onScrollToMessage cuộn + makeMessagesRead.
@@ -580,9 +631,10 @@ export function ConversationProvider({
         return () => {
             cancelled = true;
         };
-        // allConversations cố tình không nằm trong deps: chỉ nạp lại khi đổi conversation.
+        // allConversations cố tình không nằm trong deps: chỉ nạp lại khi đổi conversation
+        // hoặc đổi tin cần mở tới trên URL.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accountId, conversationId]);
+    }, [accountId, conversationId, requestedFocusId]);
 
     // fetchAllAttachments: lỗi vẫn commit danh sách rỗng để accordion thoát spinner.
     useEffect(() => {
@@ -1189,6 +1241,9 @@ export function ConversationProvider({
             messages,
             allMessagesLoaded,
             messagesLoading,
+            focusedMessageId,
+            clearFocusedMessage,
+            focusMessage,
             attachments,
             attachmentsLoaded,
             uiSettings,
@@ -1237,6 +1292,9 @@ export function ConversationProvider({
             messages,
             allMessagesLoaded,
             messagesLoading,
+            focusedMessageId,
+            clearFocusedMessage,
+            focusMessage,
             attachments,
             attachmentsLoaded,
             uiSettings,
