@@ -14,6 +14,9 @@ require_prod_env PROD_DEPLOY_SSH_HOST PROD_DEPLOY_SSH_PORT PROD_DEPLOY_SSH_USER 
 
 [[ $# -ge 1 ]] || { sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 
+# Bọc từng tham số để shell phía server không diễn giải `;`, `$( )`, `|`… — với key root thường, lệnh chạy qua shell.
+remote_command="yona-deploy-gate $(printf '%q ' "$@")"
+
 exec ssh -p "$PROD_DEPLOY_SSH_PORT" -i "${PROD_DEPLOY_SSH_KEY/#\~/$HOME}" \
   -o IdentitiesOnly=yes -o BatchMode=yes -o ServerAliveInterval=30 \
-  "$PROD_DEPLOY_SSH_USER@$PROD_DEPLOY_SSH_HOST" "yona-deploy-gate $*"
+  "$PROD_DEPLOY_SSH_USER@$PROD_DEPLOY_SSH_HOST" "$remote_command"
