@@ -110,7 +110,8 @@ run_deploy() {
 
   install -d -m 750 "$LOG_DIR"
   local log; log="$LOG_DIR/$(date +%Y%m%d-%H%M%S).log"
-  ls -1t "$LOG_DIR"/*.log 2>/dev/null | tail -n +$((KEEP_LOGS + 1)) | xargs -r rm -f
+  # Lần deploy đầu thư mục log còn trống: ls thoát 2, pipefail + errexit sẽ dừng cổng mà không in gì.
+  { ls -1t "$LOG_DIR"/*.log 2>/dev/null || true; } | tail -n +$((KEEP_LOGS + 1)) | xargs -r rm -f
 
   show_plan | tee "$log"
   local needs_backup=0
