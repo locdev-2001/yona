@@ -132,4 +132,22 @@ describe('ConversationWrap', () => {
         expect(container.querySelectorAll('.yona-cards .w-\\[190px\\]')).toHaveLength(2);
         expect(screen.getAllByRole('link', { name: 'Xem chi tiết' })).toHaveLength(2);
     });
+
+    it('đang đọc phía trên thì tin agent mới không kéo xuống đáy, hiện nút "Tin nhắn mới" để nhảy xuống', () => {
+        load([agentMessage(1, BASE), visitorMessage(2, BASE + 30)]);
+        const { container } = render(<ConversationWrap />);
+        const scroller = container.querySelector('.conversation--container') as HTMLDivElement;
+        Object.defineProperty(scroller, 'scrollHeight', { configurable: true, value: 2000 });
+        Object.defineProperty(scroller, 'clientHeight', { configurable: true, value: 500 });
+        scroller.scrollTo = vi.fn();
+        scroller.scrollTop = 200;
+        fireEvent.scroll(scroller);
+
+        act(() => widgetStore.addOrUpdateMessage(agentMessage(3, BASE + 400)));
+
+        expect(scroller.scrollTop).toBe(200);
+        fireEvent.click(screen.getByRole('button', { name: 'New messages' }));
+        expect(scroller.scrollTo).toHaveBeenCalledWith({ top: 2000, behavior: 'smooth' });
+        expect(screen.queryByRole('button', { name: 'New messages' })).not.toBeInTheDocument();
+    });
 });
