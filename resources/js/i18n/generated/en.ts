@@ -2420,7 +2420,7 @@ const messages: Record<string, unknown> = {
             "RETRY": "Retry",
             "MAX_REACHED": "You can forward to at most {max} conversations at a time",
             "SUBMIT_COUNT": "Forward ({count})",
-            "SUCCESS": "Forwarded to {count} conversations",
+            "SUCCESS": "Forwarded to {count} conversation | Forwarded to {count} conversations",
             "OPEN": "Open conversation",
             "PARTIAL": "Forwarded to {ok}/{total} conversations. {error}",
             "FAILED": "Could not forward. {error}",

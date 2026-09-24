@@ -168,6 +168,16 @@ it('đích Api có cửa sổ trả lời đã hết → reply_window_closed', f
         ->toBe(ForwardBlock::REPLY_WINDOW_CLOSED);
 });
 
+it('đích Api có tin cũ ngoài cửa sổ nhưng khách vừa nhắn lại thì vẫn chuyển tiếp được', function () {
+    $apiInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+    $apiInbox->channel->update(['additional_attributes' => ['agent_reply_time_window' => 1]]);
+    $target = forwardReqConversation($this->account, $apiInbox);
+    forwardReqMessage($target)->forceFill(['created_at' => now()->subHours(3)])->save();
+    forwardReqMessage($target)->forceFill(['created_at' => now()->subMinutes(5)])->save();
+
+    expect(ForwardRequirements::check(forwardReqMessage($this->source), $target->fresh(), 'vi'))->toBeNull();
+});
+
 it('sticker Zalo sang Telegram thiếu năng lực; sang Zalo mà danh mục không đọc được → sticker_unavailable', function () {
     $sticker = forwardReqMessage($this->source, [
         'content' => null,

@@ -178,6 +178,26 @@ it('threads the reply to the quoted email instead of the latest incoming one', f
         ->and($headers->references)->toBe(['<root@example.com>', '<old-1@example.com>']);
 });
 
+it('threads an unquoted reply to the newest incoming email', function () {
+    $conversation = emailConversation();
+    foreach (['old-1@example.com', 'latest-2@example.com'] as $messageId) {
+        $conversation->messages()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'message_type' => Message::TYPE_INCOMING,
+            'content' => $messageId,
+            'content_type' => Message::CONTENT_TYPES['incoming_email'],
+            'source_id' => $messageId,
+            'content_attributes' => ['email' => ['message_id' => $messageId]],
+        ]);
+    }
+
+    $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'reply']))->perform();
+    $headers = ConversationReplyMail::emailReply($message->fresh())->headers();
+
+    expect($headers->text['In-Reply-To'])->toBe('<latest-2@example.com>');
+});
+
 it('falls back to a conversation level in reply to when no incoming email exists', function () {
     $conversation = emailConversation();
     $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'reply']))->perform();
@@ -201,6 +221,50 @@ it('builds the summary mail for non email channels', function () {
         ->and($mail->messages->pluck('id')->all())->toBe([$message->id]);
 });
 
+it('recaps the ten newest chat messages before the queued reply', function () {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    $conversation = Conversation::factory()->create();
+    $earlierIds = collect(range(12, 1))->map(fn (int $minutesAgo) => Message::factory()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'created_at' => now()->subMinutes($minutesAgo),
+    ])->id);
+    $reply = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'Hello']))->perform();
+
+    $mail = ConversationReplyMail::replyWithSummary($conversation->fresh(), $reply->id);
+
+    expect($mail->messages->pluck('id')->all())->toBe([...$earlierIds->slice(2)->values()->all(), $reply->id]);
+});
+
+it('sends the summary mail when the contact only saw an earlier reply', function () {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    $conversation = Conversation::factory()->create();
+    Message::factory()->outgoing()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'created_at' => now()->subMinutes(10),
+    ]);
+    $conversation->update(['contact_last_seen_at' => now()->subMinutes(5)]);
+    $reply = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'Hello again']))->perform();
+
+    expect(ConversationReplyMail::replyWithSummary($conversation->fresh(), $reply->id))->not->toBeNull();
+});
+
+it('signs the summary mail with the agent who replied last', function () {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    $conversation = emailConversation();
+    $firstAgent = User::factory()->create(['name' => 'Agent Alpha']);
+    $lastAgent = User::factory()->create(['name' => 'Agent Omega']);
+    $firstReply = (new MessageBuilder($firstAgent, $conversation, ['content' => 'first']))->perform();
+    (new MessageBuilder($lastAgent, $conversation, ['content' => 'second']))->perform();
+
+    $from = ConversationReplyMail::replyWithoutSummary($conversation->fresh(), $firstReply->id)->envelope()->from;
+
+    expect($from->name)->toContain('Agent Omega')->not->toContain('Agent Alpha');
+});
+
 it('skips the summary mail when the contact already saw the reply', function () {
     config(['mail.smtp_address' => 'smtp.acme.test']);
     $conversation = Conversation::factory()->create();
@@ -221,6 +285,26 @@ it('sends the summary mail without recap when the last incoming message is an em
         'content' => 'first',
         'content_type' => Message::CONTENT_TYPES['incoming_email'],
     ]);
+    $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'Hello']))->perform();
+
+    (new ConversationReplyEmailJob($conversation->fresh(), $message->id))->handle();
+
+    Mail::assertSent(ConversationReplyMail::class, fn (ConversationReplyMail $mail) => $mail->action === ConversationReplyMail::ACTION_REPLY_WITHOUT_SUMMARY);
+});
+
+it('picks the mail kind from the newest incoming message, not the first one', function () {
+    Mail::fake();
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    $conversation = emailConversation();
+    $incoming = fn (int $contentType, DateTimeInterface $at) => Message::factory()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'content_type' => $contentType,
+        'created_at' => $at,
+    ]);
+    $incoming(Message::CONTENT_TYPES['text'], now()->subHour());
+    $incoming(Message::CONTENT_TYPES['incoming_email'], now()->subMinute());
     $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'Hello']))->perform();
 
     (new ConversationReplyEmailJob($conversation->fresh(), $message->id))->handle();

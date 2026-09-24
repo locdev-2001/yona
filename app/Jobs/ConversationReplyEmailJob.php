@@ -26,7 +26,7 @@ class ConversationReplyEmailJob extends ApplicationJob
             return;
         }
 
-        $lastIncoming = $this->conversation->messages()->incoming()->orderByDesc('id')->first();
+        $lastIncoming = $this->conversation->messagesNewestFirst()->incoming()->first();
 
         $mailable = $lastIncoming?->content_type === Message::CONTENT_TYPES['incoming_email']
             ? ConversationReplyMail::replyWithoutSummary($this->conversation, $this->lastQueuedId)

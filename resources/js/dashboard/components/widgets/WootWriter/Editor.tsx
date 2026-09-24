@@ -161,6 +161,9 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const editorRootRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const schemaRef = useRef<Schema | null>(null);
+    // Đổi ngữ cảnh thì EditorView bị dựng lại; ô soạn đang có con trỏ thì view
+    // mới phải nhận lại con trỏ, nếu không focus rơi về <body>.
+    const refocusRebuiltViewRef = useRef(false);
 
     const [showCannedMenu, setShowCannedMenu] = useState(false);
     const [cannedSearchKey, setCannedSearchKey] = useState('');
@@ -353,8 +356,13 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         });
 
         viewRef.current = view;
+        if (refocusRebuiltViewRef.current) {
+            refocusRebuiltViewRef.current = false;
+            focusEditorInputField();
+        }
 
         return () => {
+            refocusRebuiltViewRef.current = view.hasFocus();
             typingIndicatorRef.current.stop();
             viewRef.current = null;
             view.destroy();
@@ -363,12 +371,15 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editorId, isPrivate, channelType, placeholder]);
 
-    // Đồng bộ value từ ngoài vào (clear sau khi gửi, gắn/gỡ chữ ký).
+    // Đồng bộ value từ ngoài vào (clear sau khi gửi, gắn/gỡ chữ ký, nạp bản nháp).
+    // State mới đặt con trỏ về đầu; đang gõ thì giữ con trỏ ở cuối để gõ tiếp.
     useEffect(() => {
         const view = viewRef.current;
         if (!view) return;
         if (value !== contentFromEditor()) {
+            const hadFocus = view.hasFocus();
             view.updateState(createState(value));
+            if (hadFocus) focusEditorInputField();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value]);

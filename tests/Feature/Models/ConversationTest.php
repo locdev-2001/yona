@@ -11,6 +11,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Queue;
 
 // Port từ spec/models/conversation_spec.rb.
@@ -262,6 +263,88 @@ describe('can_reply on api channel', function () {
         ]);
 
         expect($conversation->canReply())->toBeTrue();
+    });
+
+    it('judges the window by the newest incoming message, not the oldest', function () {
+        $base = conversationBase();
+        $base[1]->channel->update(['additional_attributes' => ['agent_reply_time_window' => 1]]);
+        $conversation = conversationIn($base);
+        $incomingAt = fn (DateTimeInterface $at) => Message::factory()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'conversation_id' => $conversation->id,
+            'message_type' => Message::TYPE_INCOMING,
+            'created_at' => $at,
+        ]);
+
+        $incomingAt(now()->subHours(3));
+        $incomingAt(now()->subMinutes(5));
+        expect($conversation->canReply())->toBeTrue();
+
+        $closed = conversationIn($base);
+        Message::factory()->create([
+            'account_id' => $closed->account_id,
+            'inbox_id' => $closed->inbox_id,
+            'conversation_id' => $closed->id,
+            'message_type' => Message::TYPE_INCOMING,
+            'created_at' => now()->subHours(3),
+        ]);
+        expect($closed->canReply())->toBeFalse();
+    });
+});
+
+describe('messagesNewestFirst', function () {
+    it('orders by message time newest first, breaking ties by id, even when ids arrived out of time order', function () {
+        $conversation = Conversation::factory()->create();
+        $at = fn (DateTimeInterface $time) => Message::factory()->create([
+            'account_id' => $conversation->account_id,
+            'inbox_id' => $conversation->inbox_id,
+            'conversation_id' => $conversation->id,
+            'created_at' => $time,
+        ])->id;
+
+        $sameMoment = now()->subMinute();
+        $newest = $at(now());
+        $tieFirst = $at($sameMoment);
+        $tieSecond = $at($sameMoment);
+        $backfilledOldest = $at(now()->subDay());
+
+        expect($conversation->messagesNewestFirst()->pluck('id')->all())
+            ->toBe([$newest, $tieSecond, $tieFirst, $backfilledOldest]);
+    });
+
+    it('app code never chains a descending order straight onto messages()', function () {
+        $offenders = [];
+
+        foreach (File::allFiles(app_path()) as $file) {
+            $source = $file->getContents();
+            preg_match_all('/([\w$>\-?()]*)->messages\(\)/', $source, $calls, PREG_OFFSET_CAPTURE);
+
+            foreach ($calls[0] as $index => [$call, $offset]) {
+                if (preg_match('/inbox|bot/i', $calls[1][$index][0]) === 1) {
+                    continue;
+                }
+
+                $chain = '';
+                $depth = 0;
+                for ($position = $offset + strlen($call); $position < strlen($source); $position++) {
+                    $character = $source[$position];
+                    $depth += match ($character) {
+                        '(' => 1, ')' => -1, default => 0
+                    };
+                    if ($depth < 0 || ($depth === 0 && in_array($character, [';', ','], true))) {
+                        break;
+                    }
+                    $chain .= $character;
+                }
+
+                if (preg_match('/->(latest|orderByDesc)\(|->orderBy\([^)]*desc/i', $chain) === 1 && ! str_contains($chain, '->reorder(')) {
+                    $offenders[] = $file->getRelativePathname().':'.(substr_count(substr($source, 0, $offset), "\n") + 1);
+                }
+            }
+        }
+
+        expect($offenders)->toBe([], 'messages() đã sắp created_at tăng dần; lấy tin mới nhất phải qua messagesNewestFirst()');
     });
 });
 
