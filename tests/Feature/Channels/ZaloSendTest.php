@@ -285,6 +285,16 @@ it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', fun
         ->and($message->status)->not->toBe(Message::STATUSES['failed']);
 });
 
+it('tin có tệp đã lưu được đẩy ra kênh ngay ở tier high, không đứng chờ trễ cố định', function () {
+    Queue::fake();
+
+    zaloOutgoingWithFiles($this->conversation, [
+        ['path' => 'zalo/anh.jpg', 'filename' => 'anh.jpg', 'content_type' => 'image/jpeg', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+    ]);
+
+    Queue::assertPushedOn('high', SendReplyJob::class, fn (SendReplyJob $job) => $job->delay === null);
+});
+
 it('gửi tên tệp gốc và content-type thật của tệp .docx tới bridge', function () {
     fakeZaloSendBridge();
 

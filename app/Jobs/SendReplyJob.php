@@ -38,7 +38,12 @@ class SendReplyJob extends ApplicationJob
         'Channel::Zalo' => SendOnZaloService::class,
     ];
 
-    public function __construct(public readonly Message $message) {}
+    // Tier high: người gửi đang nhìn bong bóng chờ tick, không xếp sau
+    // thông báo/phân công ở tier default.
+    public function __construct(public readonly Message $message)
+    {
+        $this->onQueue('high');
+    }
 
     public function handle(): void
     {

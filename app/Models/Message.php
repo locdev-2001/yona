@@ -406,18 +406,11 @@ class Message extends Model
 
     // MessageFilterHelpers#conversation_transcriptable? / #email_reply_summarizable?
     // Message#send_reply — đẩy tin ra kênh ngoài; SendReplyJob chọn driver.
+    // Gửi ngay, không trễ: tệp đính kèm đã nằm trên đĩa từ lúc builder dựng tin,
+    // trước khi tin được lưu — không còn gì phải chờ.
     private function sendReply(): void
     {
-        $job = new SendReplyJob($this);
-
-        // FIXME của bản gốc: chờ vài giây cho tệp đính kèm lưu xong trước khi gửi.
-        // Đính kèm chỉ trỏ ảnh ngoài (sticker) không có tệp nào phải chờ.
-        $carriesStoredFile = collect([...$this->pendingAttachments, ...$this->attachments])
-            ->contains(fn (Attachment $attachment) => $attachment->hasFile());
-
-        $carriesStoredFile
-            ? dispatch($job)->delay(now()->addSeconds(2))
-            : dispatch($job);
+        dispatch(new SendReplyJob($this));
     }
 
     public function isConversationTranscriptable(): bool
