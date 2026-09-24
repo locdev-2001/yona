@@ -57,6 +57,15 @@ describe('hàng đầu sidebar: tìm kiếm, chuông, soạn', () => {
         expect(search?.className).not.toContain('flex-shrink-0');
     });
 
+    // Hàng là grid item: thiếu min-w-0 thì track lấy bề rộng tối thiểu của chữ gợi ý
+    // (không xuống dòng) nên "Tìm kiếm..." đẩy hàng tràn khỏi sidebar 200px.
+    it('hàng tìm kiếm được co theo sidebar thay vì theo chữ gợi ý', () => {
+        const { container } = render(<Sidebar onCloseMobileSidebar={() => undefined} />);
+        const { search } = topRowControls(container);
+
+        expect(search?.parentElement?.className).toContain('min-w-0');
+    });
+
     it('sidebar thu gọn: chuông và nút soạn cùng cỡ 32×32, không co', () => {
         pageProps.auth.user.ui_settings = { sidebar_width: 56 };
 

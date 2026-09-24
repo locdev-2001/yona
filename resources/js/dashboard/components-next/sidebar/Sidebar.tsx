@@ -203,7 +203,7 @@ export default function Sidebar({
                             </>
                         )}
                     </div>
-                    <div className={`flex gap-2 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
+                    <div className={`flex gap-2 min-w-0 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
                         {!isEffectivelyCollapsed ? (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
