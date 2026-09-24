@@ -174,17 +174,31 @@ export default function GalleryView({
                     <div className="flex items-center gap-2 ms-2 shrink-0">
                         {isImage ? (
                             <>
-                                <NextButton icon="i-lucide-zoom-in" slate ghost onClick={() => onZoom(0.1)} />
-                                <NextButton icon="i-lucide-zoom-out" slate ghost onClick={() => onZoom(-0.1)} />
+                                <NextButton
+                                    icon="i-lucide-zoom-in"
+                                    aria-label={t('GALLERY_VIEW.ZOOM_IN')}
+                                    slate
+                                    ghost
+                                    onClick={() => onZoom(0.1)}
+                                />
+                                <NextButton
+                                    icon="i-lucide-zoom-out"
+                                    aria-label={t('GALLERY_VIEW.ZOOM_OUT')}
+                                    slate
+                                    ghost
+                                    onClick={() => onZoom(-0.1)}
+                                />
                                 <div className="hidden sm:flex items-center gap-2">
                                     <NextButton
                                         icon="i-lucide-rotate-ccw"
+                                        aria-label={t('GALLERY_VIEW.ROTATE_LEFT')}
                                         slate
                                         ghost
                                         onClick={() => onRotate('counter-clockwise')}
                                     />
                                     <NextButton
                                         icon="i-lucide-rotate-cw"
+                                        aria-label={t('GALLERY_VIEW.ROTATE_RIGHT')}
                                         slate
                                         ghost
                                         onClick={() => onRotate('clockwise')}
@@ -194,13 +208,14 @@ export default function GalleryView({
                         ) : null}
                         <NextButton
                             icon="i-lucide-download"
+                            aria-label={t('GALLERY_VIEW.DOWNLOAD')}
                             slate
                             ghost
                             isLoading={isDownloading}
                             disabled={isDownloading}
                             onClick={onClickDownload}
                         />
-                        <NextButton icon="i-lucide-x" slate ghost onClick={onClose} />
+                        <NextButton icon="i-lucide-x" aria-label={t('GALLERY_VIEW.CLOSE')} slate ghost onClick={onClose} />
                     </div>
                 </header>
 
@@ -213,6 +228,7 @@ export default function GalleryView({
                         <div className="absolute inset-y-0 z-10 flex items-center justify-center w-12 ltr:left-0 rtl:right-0 sm:static sm:w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right"
+                                aria-label={t('GALLERY_VIEW.PREVIOUS')}
                                 className="z-10"
                                 blue
                                 faded
@@ -286,6 +302,7 @@ export default function GalleryView({
                         <div className="absolute inset-y-0 z-10 flex items-center justify-center w-12 ltr:right-0 rtl:left-0 sm:static sm:w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left"
+                                aria-label={t('GALLERY_VIEW.NEXT')}
                                 className="z-10"
                                 blue
                                 faded

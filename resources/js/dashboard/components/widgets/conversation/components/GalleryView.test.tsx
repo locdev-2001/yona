@@ -50,4 +50,14 @@ describe('trình xem ảnh của một tin nhiều ảnh', () => {
         fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
         expect(onClose).toHaveBeenCalled();
     });
+
+    it('mọi nút chỉ có icon đều có nhãn cho trình đọc màn hình', () => {
+        render(<GalleryView attachment={albumOfSeven[2]} allAttachments={albumOfSeven} onClose={vi.fn()} />);
+
+        const unlabeledButtons = screen
+            .getAllByRole('button')
+            .filter(button => !button.textContent?.trim() && !button.getAttribute('aria-label'));
+
+        expect(unlabeledButtons).toHaveLength(0);
+    });
 });
