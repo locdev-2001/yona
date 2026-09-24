@@ -46,6 +46,12 @@ class ConversationsController extends Controller
 {
     private const ATTACHMENT_RESULTS_PER_PAGE = 15;
 
+    private const LINK_MESSAGES_PER_PAGE = 20;
+
+    // Tin có thể chứa liên kết; giao diện tách từng liên kết bằng đúng bộ linkify
+    // của khung chat, nên ở đây chỉ cần lọc thô cho gọn trang.
+    private const LINK_CANDIDATE_PATTERN = '(https?://|www\.)';
+
     private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
 
     public function index(Request $request, Account $account): JsonResponse
@@ -94,17 +100,45 @@ class ConversationsController extends Controller
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
 
+        $kindFileTypes = Attachment::SHARED_KIND_FILE_TYPES[$request->query('kind')] ?? null;
+
         $attachments = Attachment::query()
             ->whereMorphedTo('attachable', Message::class)
             ->whereIn('attachable_id', $conversation->messages()->select('id'))
+            ->when($kindFileTypes !== null, fn ($query) => $query->whereIn('file_type', $kindFileTypes))
             ->with('attachable')
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(self::ATTACHMENT_RESULTS_PER_PAGE, ['*'], 'page', (int) $request->query('page', '1'));
 
         return response()->json([
             'meta' => ['total_count' => $attachments->total()],
             'payload' => collect($attachments->items())
-                ->map(fn (Attachment $attachment) => $attachment->apiData())
+                ->map(fn (Attachment $attachment) => [...$attachment->apiData(), 'filename' => $attachment->displayName()])
+                ->values()
+                ->all(),
+        ]);
+    }
+
+    // Mục "Liên kết" ở panel hội thoại: tin có liên kết, mới trước, theo trang —
+    // không phụ thuộc phần tin khung chat đã tải.
+    public function links(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+
+        $messages = $conversation->messagesNewestFirst()
+            ->where('message_type', '!=', Message::TYPE_ACTIVITY)
+            ->where('content', '~*', self::LINK_CANDIDATE_PATTERN)
+            ->simplePaginate(self::LINK_MESSAGES_PER_PAGE, ['id', 'content', 'created_at'], 'page', (int) $request->query('page', '1'));
+
+        return response()->json([
+            'meta' => ['has_more' => $messages->hasMorePages()],
+            'payload' => collect($messages->items())
+                ->map(fn (Message $message) => [
+                    'message_id' => $message->id,
+                    'content' => $message->content,
+                    'created_at' => $message->created_at?->timestamp,
+                ])
                 ->values()
                 ->all(),
         ]);

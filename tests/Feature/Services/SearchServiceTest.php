@@ -804,3 +804,61 @@ describe('relevance ranking', function () {
         expect(searchResultIds(' - ', 'Message'))->toBe([$newer->id, $this->message->id]);
     });
 });
+
+describe('search within one conversation', function () {
+    beforeEach(function () {
+        $this->otherConversation = Conversation::factory()->create([
+            'account_id' => $this->account->id,
+            'inbox_id' => $this->inbox->id,
+            'contact_id' => $this->harry->id,
+        ]);
+    });
+
+    it('keeps only messages of that conversation, newest first rather than by relevance', function () {
+        $olderPhrase = searchTestMessage(['content' => 'Báo giá tháng 9', 'created_at' => now()->subDays(2)]);
+        $newerPartial = searchTestMessage(['content' => 'Bao giao hang', 'created_at' => now()->subDay()]);
+        searchTestMessage(['conversation_id' => $this->otherConversation->id, 'content' => 'Báo giá khác']);
+
+        $scope = ['conversation_id' => $this->conversation->display_id];
+
+        expect(searchResultIds('bao gia', 'Message', $scope))->toBe([$newerPartial->id, $olderPhrase->id])
+            ->and(e2Search(['q' => 'bao gia', ...$scope], 'Message')->matchedMessageIds())
+            ->toBe([$newerPartial->id, $olderPhrase->id]);
+    });
+
+    it('scopes file search to that conversation', function () {
+        $here = searchTestFile(searchTestMessage(), ['filename' => 'bao-gia.pdf']);
+        searchTestFile(searchTestMessage(['conversation_id' => $this->otherConversation->id]), ['filename' => 'bao-gia-khac.pdf']);
+
+        expect(searchResultIds('bao gia', 'Attachment', ['conversation_id' => $this->conversation->display_id]))
+            ->toBe([$here->id]);
+    });
+
+    it('still applies inbox permission: a conversation in an inbox the agent cannot see returns nothing', function () {
+        $hiddenInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+        $hidden = Conversation::factory()->create([
+            'account_id' => $this->account->id,
+            'inbox_id' => $hiddenInbox->id,
+            'contact_id' => $this->harry->id,
+        ]);
+        searchTestMessage(['inbox_id' => $hiddenInbox->id, 'conversation_id' => $hidden->id, 'content' => 'Báo giá bí mật']);
+
+        expect(e2Search(['q' => 'bao gia', 'conversation_id' => $hidden->display_id], 'Message')->matchedMessageIds())
+            ->toBe([]);
+    });
+
+    it('does not reach a conversation of another account with the same display id', function () {
+        $otherAccount = Account::factory()->create();
+        $otherInbox = Inbox::factory()->create(['account_id' => $otherAccount->id]);
+        $foreign = Conversation::factory()->create(['account_id' => $otherAccount->id, 'inbox_id' => $otherInbox->id]);
+        Message::factory()->create([
+            'account_id' => $otherAccount->id,
+            'inbox_id' => $otherInbox->id,
+            'conversation_id' => $foreign->id,
+            'content' => 'Harry Potter',
+        ]);
+
+        expect(e2Search(['q' => 'harry', 'conversation_id' => $foreign->display_id], 'Message')->matchedMessageIds())
+            ->each->not->toBe(Message::query()->where('conversation_id', $foreign->id)->value('id'));
+    });
+});

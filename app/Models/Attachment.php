@@ -98,6 +98,13 @@ class Attachment extends Model
     // chữ khác nên không nằm trong danh sách này.
     public const SEARCHABLE_FILE_TYPES = [...self::FILE_BEARING_TYPES, self::FILE_TYPE_FALLBACK];
 
+    // Nhóm của khối "Ảnh/video · Tệp" ở panel hội thoại — cùng cách chia với
+    // MEDIA_TYPES của giao diện (components-next/message/constants.ts).
+    public const SHARED_KIND_FILE_TYPES = [
+        'media' => [self::FILE_TYPE_IMAGE, self::FILE_TYPE_VIDEO, self::FILE_TYPE_AUDIO, self::FILE_TYPE_IG_REEL],
+        'files' => [self::FILE_TYPE_FILE],
+    ];
+
     // displayName() viết bằng SQL, trùng biểu thức index index_attachments_on_folded_display_name.
     public const DISPLAY_NAME_SQL = "COALESCE(NULLIF(attachments.filename, ''), attachments.fallback_title)";
 

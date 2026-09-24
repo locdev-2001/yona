@@ -52,6 +52,18 @@ class SearchController extends Controller
         return $this->payload(['messages' => MessageResource::collectionFor($result['messages'])]);
     }
 
+    // Thanh tìm trong hội thoại đang mở: id mọi tin khớp, mới trước. Người không
+    // xem được hội thoại thì dừng ở đây như mọi màn hội thoại khác.
+    public function conversationMessages(Request $request, Account $account, int $conversationId): JsonResponse
+    {
+        $this->fetchConversationForUser($request, $account, $conversationId);
+
+        $params = [...$request->query(), 'conversation_id' => $conversationId];
+        $messageIds = (new SearchService($request->user(), $account, $params, 'Message'))->matchedMessageIds();
+
+        return $this->payload(['message_ids' => $messageIds]);
+    }
+
     public function files(Request $request, Account $account): JsonResponse
     {
         $result = $this->search($request, $account, 'Attachment');

@@ -38,6 +38,10 @@ class SearchService
 
     private const MAIL_SUBJECT_SQL = "conversations.additional_attributes ->> 'mail_subject'";
 
+    // Thanh tìm trong một hội thoại đếm và nhảy qua từng tin khớp: đủ id cho hội
+    // thoại dài mà không kéo cả bản ghi.
+    public const CONVERSATION_MATCH_LIMIT = 1000;
+
     // Quan hệ MessageResource đọc tới — dùng chung cho tab Tin nhắn và tin của tab Tệp.
     private const MESSAGE_RESULT_RELATIONS = ['conversation.contactInbox', 'sender', 'attachments', 'account', 'inbox'];
 
@@ -123,22 +127,30 @@ class SearchService
             ->get();
     }
 
+    // Trong một hội thoại, tin khớp xếp theo thời gian (mới trước) như đọc lại
+    // cuộc trò chuyện; tìm chung thì theo mức liên quan trước.
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {
-        $term = $this->searchTerm();
+        $query = $this->matchedMessages();
 
-        // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các
-        // trang liền nhau đảo chỗ và trùng bản ghi.
-        return $term->orderByRelevance(
-            $this->filteredMessages()->whereRaw(...$term->foldedMatch('messages.content')),
-            'messages.content',
-        )
+        if (! $this->scopedToConversation()) {
+            $query = $this->searchTerm()->orderByRelevance($query, 'messages.content');
+        }
+
+        return $this->newestFirst($query)
             ->with(self::MESSAGE_RESULT_RELATIONS)
-            ->orderByDesc('messages.created_at')
-            ->orderByDesc('messages.id')
             ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
             ->get();
+    }
+
+    /** @return list<int> */
+    public function matchedMessageIds(): array
+    {
+        return $this->newestFirst($this->matchedMessages())
+            ->limit(self::CONVERSATION_MATCH_LIMIT)
+            ->pluck('messages.id')
+            ->all();
     }
 
     // Mỗi tệp khớp là một kết quả (một tin ba tệp khớp ra ba dòng). Phạm vi, quyền
@@ -228,7 +240,56 @@ class SearchService
     /** @return Builder<Message> */
     private function filteredMessages(): Builder
     {
-        return $this->applyMessageFilters($this->messageBaseQuery());
+        return $this->applyConversationFilter($this->applyMessageFilters($this->messageBaseQuery()));
+    }
+
+    /** @return Builder<Message> */
+    private function matchedMessages(): Builder
+    {
+        return $this->filteredMessages()->whereRaw(...$this->searchTerm()->foldedMatch('messages.content'));
+    }
+
+    // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các trang liền
+    // nhau đảo chỗ và trùng bản ghi.
+    /**
+     * @param  Builder<Message>  $query
+     * @return Builder<Message>
+     */
+    private function newestFirst(Builder $query): Builder
+    {
+        return $query->orderByDesc('messages.created_at')->orderByDesc('messages.id');
+    }
+
+    private function scopedToConversation(): bool
+    {
+        return $this->conversationDisplayId() !== null;
+    }
+
+    private function conversationDisplayId(): ?int
+    {
+        $displayId = $this->params['conversation_id'] ?? null;
+
+        return is_numeric($displayId) && (int) $displayId > 0 ? (int) $displayId : null;
+    }
+
+    // Chỉ thu hẹp phạm vi: tin vẫn phải qua lớp quyền theo hộp thư của
+    // messageBaseQuery, nên hội thoại ở hộp thư không được phép ra rỗng.
+    /**
+     * @param  Builder<Message>  $query
+     * @return Builder<Message>
+     */
+    private function applyConversationFilter(Builder $query): Builder
+    {
+        $displayId = $this->conversationDisplayId();
+
+        if ($displayId === null) {
+            return $query;
+        }
+
+        return $query->whereIn('messages.conversation_id', Conversation::query()
+            ->select('conversations.id')
+            ->where('conversations.account_id', $this->currentAccount->id)
+            ->where('conversations.display_id', $displayId));
     }
 
     // Tin trong nhóm của hội thoại đang xét mà người gửi thật khớp từ khoá.

@@ -150,6 +150,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
             ->whereNumber(['contactId', 'noteId']);
         Route::get('/contacts/{contactId}/conversations', [ContactConversationsController::class, 'index'])->whereNumber('contactId');
         Route::get('/conversations/{conversationId}/attachments', [ConversationsController::class, 'attachments'])->whereNumber('conversationId');
+        Route::get('/conversations/{conversationId}/links', [ConversationsController::class, 'links'])->whereNumber('conversationId');
         Route::get('/contacts/{contactId}/labels', [ContactLabelsController::class, 'index'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/labels', [ContactLabelsController::class, 'create'])->whereNumber('contactId');
 
@@ -357,6 +358,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/search/messages', [SearchController::class, 'messages']);
         Route::get('/search/contacts', [SearchController::class, 'contacts']);
         Route::get('/search/files', [SearchController::class, 'files']);
+        Route::get('/conversations/{conversationId}/search/messages', [SearchController::class, 'conversationMessages'])->whereNumber('conversationId');
         Route::get('/search/articles', [SearchController::class, 'articles']);
 
         // D2 báo cáo CSAT (csat_survey_responses_controller.rb).
