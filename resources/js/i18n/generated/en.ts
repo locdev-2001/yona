@@ -9013,7 +9013,7 @@ const messages: Record<string, unknown> = {
     },
     "SIDEBAR": {
         "NO_ITEMS": "No items",
-        "GLOBAL_SEARCH": "Search everything...",
+        "GLOBAL_SEARCH": "Search all",
         "GLOBAL_SEARCH_HINT": "Search conversations, messages, contacts and files across the workspace",
         "CURRENTLY_VIEWING_ACCOUNT": "Currently viewing:",
         "SWITCH": "Switch",
