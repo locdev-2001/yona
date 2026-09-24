@@ -79,6 +79,32 @@ class IncomingMessageService
 
     private const GROUP_THREAD_KEYS = ['id', 'name', 'avatar'];
 
+    private const REPLY_PREVIEW_MAX_LENGTH = 500;
+
+    /** Loại tin Zalo của tin được trích dẫn → `attachment_type` trung tính của lõi. */
+    private const QUOTE_ATTACHMENT_TYPES = [
+        'chat.photo' => 'image',
+        'chat.gif' => 'image',
+        'chat.video.msg' => 'video',
+        'chat.voice' => 'audio',
+        'share.file' => 'file',
+        'chat.location.new' => 'location',
+        'chat.location' => 'location',
+    ];
+
+    /**
+     * Trích dẫn thật của zca chỉ mang mã số `cliMsgType` (không có `msgType`) —
+     * cùng bảng quy đổi với `getClientMessageType` của zca-js.
+     */
+    private const QUOTE_ATTACHMENT_TYPES_BY_CLIENT_TYPE = [
+        32 => 'image',
+        49 => 'image',
+        44 => 'video',
+        31 => 'audio',
+        46 => 'file',
+        43 => 'location',
+    ];
+
     /** Nhóm là một "người" trên kênh: hồ sơ mang tên + ảnh nhóm, đánh dấu bằng khoá này. */
     private const THREAD_KIND_ATTRIBUTE = 'zalo_thread_type';
 
@@ -561,6 +587,12 @@ class IncomingMessageService
             if ($quotedSourceId !== null) {
                 $attributes['in_reply_to_external_id'] = $quotedSourceId;
             }
+
+            $preview = self::replyPreview(is_array($quote) ? $quote : []);
+
+            if ($preview !== []) {
+                $attributes['in_reply_to_preview'] = $preview;
+            }
         }
 
         if ($this->direction() !== 'in') {
@@ -704,6 +736,28 @@ class IncomingMessageService
         }
 
         return null;
+    }
+
+    /**
+     * Ảnh chụp tin được trích dẫn theo khoá trung tính `in_reply_to_preview` — bong
+     * bóng dùng khi tin gốc không có trong Yona (gửi trước khi kết nối) hoặc chưa
+     * tải. `quote` thô vẫn giữ để tương thích, nhưng lõi và giao diện không đọc nó.
+     *
+     * @param  array<string, mixed>  $quote
+     * @return array{content?: string, sender_name?: string, attachment_type?: string}
+     */
+    private static function replyPreview(array $quote): array
+    {
+        $content = is_string($quote['text'] ?? null) ? trim($quote['text']) : '';
+        $senderName = $quote['sender_name'] ?? data_get($quote, 'sender.name');
+
+        return array_filter([
+            'content' => $content === '' ? null : mb_substr($content, 0, self::REPLY_PREVIEW_MAX_LENGTH),
+            'sender_name' => is_string($senderName) && trim($senderName) !== '' ? trim($senderName) : null,
+            'attachment_type' => self::QUOTE_ATTACHMENT_TYPES[$quote['msg_type'] ?? '']
+                ?? self::QUOTE_ATTACHMENT_TYPES_BY_CLIENT_TYPE[(int) ($quote['cli_msg_type'] ?? 0)]
+                ?? null,
+        ], fn ($value) => $value !== null);
     }
 
     /** @return list<Attachment> */

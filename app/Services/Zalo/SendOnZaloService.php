@@ -58,6 +58,10 @@ class SendOnZaloService extends BaseSendOnChannelService
     /** SendMessageQuote của zca — thiếu trường nhận dạng thì gửi không trích dẫn. */
     private const QUOTE_REQUIRED_FIELDS = ['msgId', 'cliMsgId', 'uidFrom', 'msgType', 'ts', 'content'];
 
+    private const UNQUOTABLE_MSG_TYPES = ['group.poll'];
+
+    private const WEBCHAT_MSG_TYPE = 'webchat';
+
     protected function channelClass(): string
     {
         return Zalo::class;
@@ -405,18 +409,7 @@ class SendOnZaloService extends BaseSendOnChannelService
      */
     private function quotePayload(): ?array
     {
-        $quotedId = $this->message->content_attributes['in_reply_to'] ?? null;
-
-        if (blank($quotedId)) {
-            return null;
-        }
-
-        $quoted = Message::query()
-            ->where('conversation_id', $this->message->conversation_id)
-            ->whereKey($quotedId)
-            ->first();
-
-        $snapshot = $quoted?->content_attributes['zca_message'] ?? null;
+        $snapshot = $this->message->repliedMessage()?->content_attributes['zca_message'] ?? null;
 
         if (! is_array($snapshot) || blank($snapshot['msgId'] ?? null)) {
             return null;
@@ -428,11 +421,33 @@ class SendOnZaloService extends BaseSendOnChannelService
             }
         }
 
+        if (! self::isQuotableByZca($snapshot)) {
+            return null;
+        }
+
         return [
             ...array_intersect_key($snapshot, array_flip(self::QUOTE_REQUIRED_FIELDS)),
             'ttl' => $snapshot['ttl'] ?? 0,
             'propertyExt' => $snapshot['propertyExt'] ?? null,
         ];
+    }
+
+    /**
+     * zca ném lỗi (và làm hỏng CẢ tin trả lời) với hai loại trích dẫn: bình chọn
+     * nhóm, và `webchat` mà nội dung không phải chuỗi (node_modules/zca-js/dist/
+     * apis/sendMessage.js). Gặp thì gửi không trích dẫn.
+     *
+     * @param  array<string, mixed>  $snapshot
+     */
+    private static function isQuotableByZca(array $snapshot): bool
+    {
+        $msgType = $snapshot['msgType'] ?? null;
+
+        if (in_array($msgType, self::UNQUOTABLE_MSG_TYPES, true)) {
+            return false;
+        }
+
+        return ! ($msgType === self::WEBCHAT_MSG_TYPE && ! is_string($snapshot['content'] ?? null));
     }
 
     private function countProactiveMessage(Zalo $channel): void

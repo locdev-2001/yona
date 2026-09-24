@@ -467,3 +467,102 @@ describe('POST …/messages/{message}/retry', function () {
             ->assertUnauthorized();
     });
 });
+
+// ── Trả lời trích dẫn: part nào mang quote, loại quote zca không nhận ──
+
+/** @param array<string, mixed> $snapshotOverrides */
+function zaloReplyTargetWithSnapshot(Conversation $conversation, array $snapshotOverrides = [], int $messageType = Message::TYPE_INCOMING): Message
+{
+    return $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => $messageType,
+        'content' => 'Còn hàng không shop?',
+        'source_id' => 'msg-zalo-quoted',
+        'content_attributes' => ['zca_message' => [
+            'msgId' => 'msg-zalo-quoted',
+            'cliMsgId' => '1788714913519',
+            'msgType' => 'webchat',
+            'uidFrom' => '9876543210',
+            'content' => 'Còn hàng không shop?',
+            'ts' => '1788714913596',
+            'ttl' => 0,
+            ...$snapshotOverrides,
+        ]],
+    ]);
+}
+
+it('chỉ gắn quote vào phần đầu khi trả lời kèm nhiều tệp', function () {
+    fakeZaloSendBridge();
+    $quoted = zaloReplyTargetWithSnapshot($this->conversation);
+
+    $message = new Message([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'conversation_id' => $this->conversation->id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Mẫu đây ạ',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+    $message->pendingAttachments = [
+        new Attachment(['account_id' => $this->conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+        new Attachment(['account_id' => $this->conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/b.png', 'filename' => 'b.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+    ];
+    $message->save();
+
+    $payloads = zaloSendPayloads();
+
+    expect($payloads)->toHaveCount(2)
+        ->and($payloads[0]['text'])->toBe('Mẫu đây ạ')
+        ->and($payloads[0]['quote']['msgId'])->toBe('msg-zalo-quoted')
+        ->and($payloads[1])->not->toHaveKey('quote');
+});
+
+it('gửi không trích dẫn khi tin gốc là bình chọn nhóm', function () {
+    fakeZaloSendBridge();
+    $quoted = zaloReplyTargetWithSnapshot($this->conversation, ['msgType' => 'group.poll']);
+
+    $reply = $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ em chọn phương án 2',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    expect(zaloSendPayloads())->toHaveCount(1)
+        ->and(zaloSendPayloads()[0])->not->toHaveKey('quote')
+        ->and($reply->refresh()->status)->not->toBe(Message::STATUSES['failed']);
+});
+
+it('gửi không trích dẫn khi tin gốc webchat có nội dung không phải chuỗi', function () {
+    fakeZaloSendBridge();
+    $quoted = zaloReplyTargetWithSnapshot($this->conversation, ['content' => ['title' => 'Liên kết', 'href' => 'https://yona.vn']]);
+
+    $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ vâng',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    expect(zaloSendPayloads()[0])->not->toHaveKey('quote');
+});
+
+it('trích dẫn được chính tin shop đã gửi sau khi echo bổ sung ảnh chụp zca', function () {
+    fakeZaloSendBridge();
+    $quoted = zaloReplyTargetWithSnapshot($this->conversation, ['cliMsgId' => '1788714999999'], Message::TYPE_OUTGOING);
+
+    $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Em nhắc lại giá nhé',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    $replyPayload = collect(zaloSendPayloads())->last();
+
+    expect($replyPayload['quote']['cliMsgId'])->toBe('1788714999999');
+});

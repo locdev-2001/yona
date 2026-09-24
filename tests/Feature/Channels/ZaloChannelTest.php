@@ -1045,3 +1045,62 @@ it('tin nhắc hẹn tới giờ về cùng thẻ nhắc hẹn với tin lúc t�
     expect($message->content_attributes['reminder']['title'])->toBe('Hẹn gọi tư vấn gói Team')
         ->and($message->content)->toBe('Hẹn gọi tư vấn gói Team');
 });
+
+it('giữ ảnh chụp trích dẫn khi tin gốc không có trong Yona', function () {
+    zaloWebhook(zaloPayload('zalo/real/quote', $this->channel))->assertOk();
+
+    $reply = Message::query()->where('source_id', '8230000000011')->firstOrFail();
+
+    expect($reply->content_attributes['in_reply_to'] ?? null)->toBeNull()
+        ->and($reply->content_attributes['in_reply_to_preview'])->toBe([
+            'content' => 'Chào shop, còn hàng không?',
+            'sender_name' => 'Chủ Shop',
+        ]);
+});
+
+it('vừa nối được tin gốc vừa giữ ảnh chụp trích dẫn', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
+    $conversation = Conversation::query()->latest('id')->first();
+    $quoted = zaloOutgoingWithSourceId($conversation, '1788714913519');
+
+    zaloWebhook(zaloPayload('zalo_inbound_quote', $this->channel))->assertOk();
+
+    $reply = Message::query()->where('source_id', 'msg-zalo-quote-1')->firstOrFail();
+
+    expect($reply->content_attributes['in_reply_to'])->toBe($quoted->id)
+        ->and($reply->content_attributes['in_reply_to_preview'])->toBe([
+            'content' => 'Dạ có ạ. Gói Team 299k/tháng',
+            'sender_name' => 'Nguyễn Phước Lộc',
+        ]);
+});
+
+it('ghi loại đính kèm khi khách trích dẫn một ảnh không kèm chữ', function (array $quote) {
+    zaloWebhook(zaloPayload('zalo/real/quote', $this->channel, ['quote' => $quote]))->assertOk();
+
+    $reply = Message::query()->where('source_id', '8230000000011')->firstOrFail();
+
+    expect($reply->content_attributes['in_reply_to_preview'])->toBe([
+        'sender_name' => 'Chủ Shop',
+        'attachment_type' => 'image',
+    ]);
+})->with([
+    'theo msg_type' => [['msg_id' => '8230000000001', 'sender_name' => 'Chủ Shop', 'msg_type' => 'chat.photo']],
+    'theo cli_msg_type của zca' => [['msg_id' => '8230000000001', 'sender_name' => 'Chủ Shop', 'cli_msg_type' => 32]],
+]);
+
+it('cắt nội dung trích dẫn quá dài và bỏ khoá khi không còn gì để hiện', function () {
+    zaloWebhook(zaloPayload('zalo/real/quote', $this->channel, [
+        'quote' => ['msg_id' => '8230000000001', 'text' => str_repeat('a', 600)],
+    ]))->assertOk();
+    $long = Message::query()->where('source_id', '8230000000011')->firstOrFail();
+
+    zaloWebhook(zaloPayload('zalo/real/quote', $this->channel, [
+        'source_id' => '8230000000012',
+        'listener_data' => ['msgId' => '8230000000012'],
+        'quote' => ['msg_id' => '8230000000001', 'msg_type' => 'webchat'],
+    ]))->assertOk();
+    $empty = Message::query()->where('source_id', '8230000000012')->firstOrFail();
+
+    expect(mb_strlen($long->content_attributes['in_reply_to_preview']['content']))->toBe(500)
+        ->and($empty->content_attributes)->not->toHaveKey('in_reply_to_preview');
+});

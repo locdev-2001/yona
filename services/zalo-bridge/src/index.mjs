@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { zcaReactionCode } from './reaction-icons.mjs';
+import { buildSendMessageContent } from './send-content.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
@@ -2241,16 +2242,8 @@ async function bridgeSendTextOrMedia(slot, body) {
                 filenameHint: typeof filename === 'string' ? filename : null,
                 contentTypeHint: typeof content_type === 'string' ? content_type : null,
             });
-            const cap = text != null && String(text).trim() !== '' ? String(text) : '';
-            const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            return registerAllOutboundSourceIds(slot, sendResult);
         }
-        // P06a — quote: object platform_meta.zca_message từ Laravel (msgId/cliMsgId/
-        // uidFrom/msgType/ts/content/ttl/propertyExt — SendMessageQuote shape)
-        const content = { msg: String(text) };
-        if (quote && typeof quote === 'object' && quote.msgId != null) {
-            content.quote = quote;
-        }
+        const content = buildSendMessageContent({ text, quote, attachmentPath: tmpPath });
         const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
