@@ -175,7 +175,7 @@ describe('ForwardMessageDialog', () => {
         expect(forwardSpy).toHaveBeenCalledWith(1, 4, 9, [45]);
         expect(onClose).toHaveBeenCalledTimes(1);
         expect(alertSpy).toHaveBeenCalledWith(
-            t('CONVERSATION.FORWARD.SUCCESS', { count: 1 }),
+            'Forwarded to 1 conversation',
             expect.objectContaining({ message: t('CONVERSATION.FORWARD.OPEN') }),
         );
 
@@ -196,7 +196,7 @@ describe('ForwardMessageDialog', () => {
         await act(async () => submitDialog());
 
         expect(forwardSpy).toHaveBeenCalledWith(1, 4, 9, [45, 46]);
-        expect(alertSpy).toHaveBeenCalledWith(t('CONVERSATION.FORWARD.SUCCESS', { count: 2 }), undefined);
+        expect(alertSpy).toHaveBeenCalledWith('Forwarded to 2 conversations', undefined);
     });
 
     it('một phần thành công: đóng hộp, toast nêu số và lỗi đầu tiên', async () => {
