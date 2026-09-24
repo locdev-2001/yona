@@ -40,7 +40,6 @@ export async function fetchNotifications({
         meta: {
             count: response.data.meta.count,
             currentPage: response.data.meta.current_page,
-            unreadCount: response.data.meta.unread_count,
         },
     };
 }

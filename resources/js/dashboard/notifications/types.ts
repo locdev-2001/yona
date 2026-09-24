@@ -28,10 +28,10 @@ export interface NotificationRecord {
     meta: { last_snoozed_at?: string | null } | null;
 }
 
+// Số chưa đọc không nằm ở đây: nguồn duy nhất là store useUnreadCount.
 export interface NotificationsMeta {
     count: number;
     currentPage: number;
-    unreadCount: number;
 }
 
 export interface NotificationFilters {
@@ -46,4 +46,5 @@ export interface NotificationRealtimePayload {
     notification: NotificationRecord | { id: number };
     unread_count: number;
     count: number;
+    account_id: number;
 }
