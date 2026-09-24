@@ -695,6 +695,7 @@ Lưu ý vận hành:
 - **Hộp thư nhận lead** của trang `/dat-lich-demo` — xem ngay dưới.
 - **Kiểm máy chủ gửi được thông báo đẩy** — xem ngay dưới (không có bí mật phải điền).
 - **OAuth client cho nút "Tiếp tục với Google"** — xem ngay dưới. Chưa làm thì nút ẩn, không hỏng gì.
+- **Dọn access token mồ côi** — một lần, sau lần deploy đầu có lệnh `access-tokens:prune-orphans`. Xem ngay dưới.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
 
@@ -841,6 +842,26 @@ trước khi sửa:
 ```bash
 grep -rl '/84/' /www/server/panel/vhost/nginx/*.conf
 ```
+
+### Dọn access token mồ côi
+
+Token API của user, bot và platform app giờ bị xoá cùng lúc với chủ của nó. Token
+của những chủ đã bị xoá **trước** bản này vẫn nằm lại trong `access_tokens`. Không
+dùng được (không còn chủ thì API trả 401) nhưng vẫn là bí mật của người đã rời hệ
+thống, nên dọn một lần:
+
+```bash
+cd /www/wwwroot/yona.vn
+# Đếm trước theo loại chủ, không xoá gì
+php artisan access-tokens:prune-orphans --dry-run
+# Xoá thật
+php artisan access-tokens:prune-orphans
+# Chạy lại phải ra 0
+php artisan access-tokens:prune-orphans --dry-run
+```
+
+Lệnh chỉ xoá token mà bản ghi chủ không còn; loại chủ không nhận ra thì bỏ qua và
+in cảnh báo. Chạy lại bao nhiêu lần cũng được.
 
 ---
 
