@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -243,6 +244,6 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::SessionReauth,
             Capability::SessionDisconnect,
             Capability::Health,
-        );
+        )->withTextFormat(TextFormat::Plain);
     }
 }

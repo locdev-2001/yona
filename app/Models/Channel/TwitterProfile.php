@@ -6,6 +6,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwitterProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -63,6 +64,6 @@ class TwitterProfile extends Model implements DeclaresCapabilities, DeclaresPlat
      */
     public function capabilities(): CapabilitySet
     {
-        return CapabilitySet::none();
+        return CapabilitySet::none()->withTextFormat(TextFormat::Plain);
     }
 }

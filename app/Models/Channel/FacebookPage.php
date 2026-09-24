@@ -8,6 +8,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
@@ -89,6 +90,6 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatfo
             Capability::ThreadingContinuous,
             Capability::SessionOauth,
             Capability::SessionReauth,
-        );
+        )->withTextFormat(TextFormat::Plain);
     }
 }

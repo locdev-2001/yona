@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwilioSmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -116,7 +117,7 @@ class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
             Capability::SessionToken,
-        );
+        )->withTextFormat(TextFormat::Plain);
 
         if ($this->isSms()) {
             return $shared;
@@ -132,6 +133,6 @@ class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::OutboundVideo,
             Capability::OutboundAudio,
             Capability::OutboundFile,
-        ));
+        )->withTextFormat(TextFormat::WhatsApp));
     }
 }

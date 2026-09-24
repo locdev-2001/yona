@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\EmailFactory;
@@ -148,6 +149,6 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ThreadingContinuous,
             Capability::SessionToken,
             Capability::SessionReauth,
-        );
+        )->withTextFormat(TextFormat::Html);
     }
 }

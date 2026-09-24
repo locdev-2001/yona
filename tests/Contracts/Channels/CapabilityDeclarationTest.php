@@ -3,6 +3,7 @@
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\TextFormat;
 use App\Http\Resources\InboxResource;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -54,6 +55,39 @@ it('ma trận khai báo khớp snapshot đã chốt', function () {
         'Ma trận năng lực đổi. Nếu đổi có chủ đích: cập nhật docs/channel-capabilities.md §4 rồi chạy '
         .'UPDATE_CAPABILITY_SNAPSHOT=1 php artisan test tests/Contracts/Channels/CapabilityDeclarationTest.php',
     );
+});
+
+// Kênh khai sai định dạng chữ thì khách thấy cú pháp markdown lạ (`<https://…>`, `[chữ](url)`).
+it('mỗi kênh khai đúng định dạng chữ nó hiển thị được', function () {
+    $formats = [];
+
+    foreach (ChannelCatalog::variants() as $type => $channel) {
+        $formats[$type] = $channel->capabilities()->textFormat();
+    }
+
+    expect($formats)->toBe([
+        'Channel::Api' => TextFormat::Markdown,
+        'Channel::Email' => TextFormat::Html,
+        'Channel::FacebookPage' => TextFormat::Plain,
+        'Channel::Instagram' => TextFormat::Plain,
+        'Channel::Line' => TextFormat::Plain,
+        'Channel::Sms' => TextFormat::Plain,
+        'Channel::Telegram' => TextFormat::TelegramHtml,
+        'Channel::Tiktok' => TextFormat::Plain,
+        'Channel::TwilioSms' => TextFormat::Plain,
+        'Channel::TwilioSms (medium=whatsapp)' => TextFormat::WhatsApp,
+        'Channel::TwitterProfile' => TextFormat::Plain,
+        'Channel::WebWidget' => TextFormat::Markdown,
+        'Channel::Whatsapp' => TextFormat::WhatsApp,
+        'Channel::Whatsapp (provider=whatsapp_cloud)' => TextFormat::WhatsApp,
+        'Channel::Zalo' => TextFormat::Plain,
+    ]);
+});
+
+it('kênh chưa khai định dạng chữ coi là chữ trơn', function () {
+    expect(CapabilitySet::none()->textFormat())->toBe(TextFormat::Plain)
+        ->and(CapabilitySet::none()->withTextFormat(TextFormat::Markdown)->merge(CapabilitySet::none())->textFormat())
+        ->toBe(TextFormat::Markdown);
 });
 
 it('danh sách năng lực phía FE khớp enum PHP', function () {

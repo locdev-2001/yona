@@ -13,6 +13,9 @@ final class CapabilitySet
     /** @var list<Capability> */
     private readonly array $capabilities;
 
+    /** Null = kênh chưa khai, coi là chữ trơn (an toàn: khách không thấy cú pháp lạ). */
+    private ?TextFormat $declaredTextFormat = null;
+
     private function __construct(Capability ...$capabilities)
     {
         $unique = [];
@@ -54,9 +57,25 @@ final class CapabilitySet
         return $this->capabilities;
     }
 
+    public function withTextFormat(TextFormat $format): self
+    {
+        $copy = new self(...$this->capabilities);
+        $copy->declaredTextFormat = $format;
+
+        return $copy;
+    }
+
+    public function textFormat(): TextFormat
+    {
+        return $this->declaredTextFormat ?? TextFormat::Plain;
+    }
+
     public function merge(self $other): self
     {
-        return new self(...$this->capabilities, ...$other->capabilities);
+        $merged = new self(...$this->capabilities, ...$other->capabilities);
+        $merged->declaredTextFormat = $other->declaredTextFormat ?? $this->declaredTextFormat;
+
+        return $merged;
     }
 
     public function isEmpty(): bool

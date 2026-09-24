@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
 use App\Support\WidgetEmbedScript;
@@ -176,6 +177,6 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
-        );
+        )->withTextFormat(TextFormat::Markdown);
     }
 }

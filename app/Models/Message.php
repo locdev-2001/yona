@@ -13,6 +13,7 @@ use App\Services\MessageTemplates\HookExecutionService;
 use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
 use App\Support\MessageDrops;
+use App\Support\Messages\OutgoingText;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -361,6 +362,15 @@ class Message extends Model
         if ($currentCount >= $limit) {
             throw new MessageValidationException('Attachments exceeded maximum allowed');
         }
+    }
+
+    /**
+     * Nội dung gửi ra kênh, đúng định dạng chữ kênh khai. Mọi driver gửi đi đọc
+     * qua đây thay vì `content`; bản lưu và hộp thư vẫn là markdown.
+     */
+    public function outgoingContent(): ?string
+    {
+        return OutgoingText::render($this->content, $this->inbox->capabilities()->textFormat());
     }
 
     public function contentTypeName(): string

@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -96,6 +97,6 @@ class Api extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
-        );
+        )->withTextFormat(TextFormat::Markdown);
     }
 }

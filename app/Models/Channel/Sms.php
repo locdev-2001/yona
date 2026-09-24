@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\SmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,6 +68,6 @@ class Sms extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
             Capability::SessionToken,
-        );
+        )->withTextFormat(TextFormat::Plain);
     }
 }
