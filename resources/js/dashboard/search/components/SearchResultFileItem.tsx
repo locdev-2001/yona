@@ -62,7 +62,7 @@ export default function SearchResultFileItem({ file, accountId, query }: SearchR
             <div className="flex flex-col flex-1 min-w-0 gap-1">
                 <Link
                     href={href}
-                    className="min-w-0 truncate text-sm font-medium text-n-slate-12 after:absolute after:inset-0 after:rounded-xl"
+                    className="block min-w-0 truncate text-sm font-medium text-n-slate-12 after:absolute after:inset-0 after:rounded-xl"
                 >
                     <HighlightedText text={displayName} query={query} />
                 </Link>
