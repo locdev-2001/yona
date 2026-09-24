@@ -1,16 +1,14 @@
-# Yona (rewrite/chatwoot-laravel) — dev shortcuts.
+# Yona — dev shortcuts.
 # Yêu cầu PHP 8.4 + Postgres + Redis local. DB dev = yona_rw, test = yona_rw_test.
 
 PHP      := php
 ARTISAN  := $(PHP) artisan
 COMPOSER := composer
 PSQL     := psql -h 127.0.0.1 -U postgres
-ORACLE   := $(HOME)/www/chatwoot-oracle/oracle.sh
-PIXEL    := $(HOME)/www/pixel-diff
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev serve worker reverb migrate seed test format stan check build i18n i18n-check tinker \
-	up down status oracle oracle-down oracle-status diff
+	up down status
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -73,8 +71,7 @@ APP_PORT := $(if $(APP_PORT),$(APP_PORT),8610)
 REVERB_PORT ?= $(shell sed -n 's/^REVERB_SERVER_PORT=//p' .env 2>/dev/null | head -1)
 REVERB_PORT := $(if $(REVERB_PORT),$(REVERB_PORT),8611)
 
-up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona serve + queue worker + reverb chạy nền (cổng theo .env)
-	$(ORACLE) up
+up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + reverb chạy nền (cổng theo .env)
 	@if curl -sf -o /dev/null http://localhost:$(APP_PORT); then \
 		echo "yona: đã chạy sẵn trên :$(APP_PORT)"; \
 	else \
@@ -99,13 +96,13 @@ up: ## Bật cả môi trường sau khi mở máy: oracle (podman :3000) + yona
 	fi
 	@$(MAKE) --no-print-directory status
 
-worker: ## Queue worker foreground (dev): đủ tier theo phân tầng Chatwoot
+worker: ## Queue worker foreground (dev): đủ tier theo config/queue_tiers.php
 	$(ARTISAN) queue:listen --queue=$(QUEUE_TIERS) --tries=1
 
-reverb: ## Reverb websocket server foreground (cổng theo .env) — thay ActionCable
+reverb: ## Reverb websocket server foreground (cổng theo .env)
 	$(ARTISAN) reverb:start --debug
 
-down: ## Tắt yona serve + worker + reverb + oracle
+down: ## Tắt yona serve + worker + reverb
 	@pkill -f 'artisan serve' && echo "yona: đã tắt" || echo "yona: không có process nào"
 	@if [ -f storage/logs/worker.pid ]; then \
 		{ kill $$(cat storage/logs/worker.pid) 2>/dev/null && echo "worker: đã tắt"; } || echo "worker: không có process nào"; \
@@ -115,23 +112,8 @@ down: ## Tắt yona serve + worker + reverb + oracle
 		{ kill $$(cat storage/logs/reverb.pid) 2>/dev/null && echo "reverb: đã tắt"; } || echo "reverb: không có process nào"; \
 		rm -f storage/logs/reverb.pid; \
 	else echo "reverb: không có process nào"; fi
-	$(ORACLE) down
 
-status: ## Kiểm tra oracle + yona + reverb + worker + container podman (cổng theo .env)
-	@printf 'oracle  :3000  '; curl -sf -o /dev/null http://localhost:3000 && echo OK || echo TẮT
+status: ## Kiểm tra yona + reverb + worker (cổng theo .env)
 	@printf 'yona    :$(APP_PORT)  '; curl -sf -o /dev/null http://localhost:$(APP_PORT) && echo OK || echo TẮT
 	@printf 'worker         '; { [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; } && echo OK || echo TẮT
 	@printf 'reverb  :$(REVERB_PORT)  '; curl -sf -o /dev/null http://localhost:$(REVERB_PORT)/up && echo OK || echo TẮT
-	@podman ps --format '  podman: {{.Names}} ({{.Status}})' 2>/dev/null || true
-
-oracle: ## Bật oracle Chatwoot (podman)
-	$(ORACLE) up
-
-oracle-down: ## Tắt oracle
-	$(ORACLE) down
-
-oracle-status: ## Trạng thái oracle
-	$(ORACLE) status
-
-diff: ## Pixel-diff oracle vs yona: make diff PAGE='/app/login' (trang auth: PAGE='/app/accounts/{id}/dashboard')
-	cd $(PIXEL) && node compare.mjs '$(PAGE)'

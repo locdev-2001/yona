@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, rewrite/chatwoot-laravel]
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
