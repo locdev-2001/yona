@@ -119,3 +119,21 @@ export function highlightSegments(text: string, query: string): HighlightSegment
 
     return segments;
 }
+
+export const EXCERPT_LEADING_CHARS = 16;
+
+/**
+ * Đoạn trích bắt đầu ngay trước chỗ khớp đầu tiên, mở bằng "…" khi đã cắt phần
+ * đầu — để dòng bị cắt vẫn thấy từ khoá. Cắt ở đầu một từ, không cắt giữa từ.
+ */
+export function excerptAroundFirstMatch(text: string, query: string, leadingChars = EXCERPT_LEADING_CHARS): string {
+    const [firstMatch] = searchMatchRanges(text, query);
+
+    if (!firstMatch || firstMatch[0] <= leadingChars) return text;
+
+    const matchStart = firstMatch[0];
+    const wordBreak = text.slice(matchStart - leadingChars, matchStart).search(WHITESPACE);
+    const start = wordBreak === -1 ? matchStart : matchStart - leadingChars + wordBreak;
+
+    return `…${text.slice(start).trimStart()}`;
+}

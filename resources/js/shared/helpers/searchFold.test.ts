@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import cases from './searchFold.cases.json';
-import { foldedSearchWords, foldSearchText, highlightSegments } from './searchFold';
+import { excerptAroundFirstMatch, foldedSearchWords, foldSearchText, highlightSegments } from './searchFold';
 
 describe('foldSearchText', () => {
     it.each(cases)('fold "$input"', ({ input, folded }) => {
@@ -94,5 +94,26 @@ describe('foldedSearchWords', () => {
     it('tách từ khoá đã fold theo khoảng trắng, bỏ từ trùng', () => {
         expect(foldedSearchWords('  Bảng-giá   SỈ bang ')).toEqual(['bang', 'gia', 'si']);
         expect(foldedSearchWords(' -_./ ')).toEqual([]);
+    });
+});
+
+describe('excerptAroundFirstMatch', () => {
+    const message = 'Chào chị, em gửi lại chị bảng giá sỉ tháng 10 nhé';
+
+    it('mở bằng "…" và bắt đầu ở đầu một từ ngay trước chỗ khớp đầu tiên', () => {
+        const excerpt = excerptAroundFirstMatch(message, 'thang 10 bang gia');
+
+        expect(excerpt).toBe('…em gửi lại chị bảng giá sỉ tháng 10 nhé');
+        expect(highlightSegments(excerpt, 'bang gia').some(segment => segment.match && segment.text === 'bảng giá')).toBe(true);
+    });
+
+    it('giữ nguyên tin khi chỗ khớp đã nằm gần đầu hoặc không có chỗ khớp', () => {
+        expect(excerptAroundFirstMatch(message, 'chao')).toBe(message);
+        expect(excerptAroundFirstMatch(message, 'khong co')).toBe(message);
+        expect(excerptAroundFirstMatch(message, '')).toBe(message);
+    });
+
+    it('không cắt giữa từ khi phía trước chỗ khớp là một chuỗi liền', () => {
+        expect(excerptAroundFirstMatch('https://shop.example.vn/san-pham/bao-gia', 'bao gia')).toBe('…bao-gia');
     });
 });

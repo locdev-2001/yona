@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 
 import { t } from '../../../i18n';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
+import { excerptAroundFirstMatch } from 'shared/helpers/searchFold';
 import { useExpandableContent } from '../useExpandableContent';
 import type { SearchMessage } from '../types';
 import HighlightedText from './HighlightedText';
@@ -28,6 +29,9 @@ export default function MessageContent({ author = '', message, searchTerm = '' }
     const { contentElement, showReadMore, showReadLess, toggleExpanded } = useExpandableContent();
 
     const authorText = author ? `${author} ${t('SEARCH.WROTE')} ` : '';
+    const plainText = getPlainText(resolveContent(message));
+    // Thu gọn thì bắt đầu ngay trước từ khoá, để phần bị cắt không nuốt mất nó.
+    const visibleText = showReadMore ? excerptAroundFirstMatch(plainText, searchTerm) : plainText;
 
     const toggle = (expanded: boolean) => (event: MouseEvent) => {
         event.preventDefault();
@@ -37,17 +41,15 @@ export default function MessageContent({ author = '', message, searchTerm = '' }
     return (
         <div
             ref={contentElement}
-            className={`break-words grid items-center text-n-slate-11 text-sm leading-relaxed ${
-                showReadMore ? 'grid-cols-[1fr_auto]' : 'grid-cols-1'
+            className={`break-words grid text-n-slate-11 text-sm leading-relaxed ${
+                showReadMore ? 'grid-cols-[1fr_auto] items-end' : 'grid-cols-1 items-center'
             }`}
         >
-            <div className={`min-w-0 ${showReadMore ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}`}>
+            {/* Thu gọn còn đúng hai dòng — bằng ngưỡng mặc định của useExpandableContent. Một
+                dòng thì trên điện thoại tên người gửi dài đã chiếm gần hết, từ khoá rơi mất. */}
+            <div className={`min-w-0 ${showReadMore ? 'line-clamp-2' : ''}`}>
                 {authorText ? <span className="text-n-slate-11 font-medium leading-4">{authorText}</span> : null}
-                <HighlightedText
-                    className="message-content text-n-slate-12"
-                    text={getPlainText(resolveContent(message))}
-                    query={searchTerm}
-                />
+                <HighlightedText className="message-content text-n-slate-12" text={visibleText} query={searchTerm} />
                 {showReadLess ? (
                     <button
                         type="button"
