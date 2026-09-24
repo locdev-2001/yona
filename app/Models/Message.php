@@ -8,6 +8,7 @@ use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Jobs\SendReplyJob;
 use App\Services\Messages\InReplyToMessageBuilder;
+use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\MessageTemplates\HookExecutionService;
 use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
@@ -141,6 +142,8 @@ class Message extends Model
             $message->content_type ??= self::CONTENT_TYPES['text'];
             $message->preventMessageFlooding();
             $message->renderContentVariables();
+            // Neo sau Liquid: biến đổi độ dài nội dung thì vị trí nhắc tên mới đúng.
+            (new OutboundMentionsBuilder($message))->perform();
         });
 
         static::saving(function (Message $message) {
