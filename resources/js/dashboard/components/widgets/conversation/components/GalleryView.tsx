@@ -26,6 +26,14 @@ const ALLOWED_FILE_TYPES = {
 
 const ALLOWED_FILE_TYPE_LIST: string[] = Object.values(ALLOWED_FILE_TYPES);
 
+// Mở đúng mục được bấm (tin nhiều ảnh có nhiều mục cùng message_id).
+function initialGalleryIndex(attachment: MessageAttachment, allAttachments: MessageAttachment[]): number {
+    const byAttachment = allAttachments.findIndex((item) => item.id === attachment.id);
+    if (byAttachment >= 0) return byAttachment;
+    const byMessage = allAttachments.findIndex((item) => item.message_id === attachment.message_id);
+    return byMessage > 0 ? byMessage : 0;
+}
+
 interface GalleryViewProps {
     attachment: MessageAttachment;
     allAttachments: MessageAttachment[];
@@ -46,10 +54,7 @@ export default function GalleryView({
 
     const imageRef = useRef<HTMLImageElement>(null);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [activeIndex, setActiveIndex] = useState(() => {
-        const index = allAttachments.findIndex((item) => item.message_id === attachment.message_id);
-        return index > 0 ? index : 0;
-    });
+    const [activeIndex, setActiveIndex] = useState(() => initialGalleryIndex(attachment, allAttachments));
     const [activeAttachment, setActiveAttachment] = useState<MessageAttachment>(attachment);
 
     const {
@@ -64,7 +69,6 @@ export default function GalleryView({
         onMouseLeave,
         resetZoomAndRotation,
     } = useImageZoom(imageRef);
-    const swipeToDismiss = useSwipeToDismiss(onClose);
 
     const activeFileType = activeAttachment.file_type;
     const isImage = activeFileType === ALLOWED_FILE_TYPES.IMAGE;
@@ -119,11 +123,17 @@ export default function GalleryView({
         }
     };
 
+    const showPrevious = () => changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1);
+    const showNext = () => changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1);
+
     useKeyboardEvents({
         Escape: { action: onClose, allowOnFocusedInput: true },
-        ArrowLeft: { action: () => changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1) },
-        ArrowRight: { action: () => changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1) },
+        ArrowLeft: { action: showPrevious },
+        ArrowRight: { action: showNext },
     });
+    const swipeToDismiss = useSwipeToDismiss(onClose, (direction) =>
+        direction === 'next' ? showNext() : showPrevious(),
+    );
 
     return (
         <Modal show fullWidth showCloseButton={false} onClose={onClose}>
@@ -195,12 +205,12 @@ export default function GalleryView({
                 </header>
 
                 <main
-                    className="flex items-stretch flex-1 h-full overflow-hidden"
+                    className="relative flex items-stretch flex-1 h-full overflow-hidden"
                     style={swipeToDismiss.style}
                     {...swipeToDismiss.handlers}
                 >
                     {hasMoreThanOneAttachment ? (
-                        <div className="flex items-center justify-center w-16 shrink-0">
+                        <div className="absolute inset-y-0 z-10 flex items-center justify-center w-12 ltr:left-0 rtl:right-0 sm:static sm:w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right"
                                 className="z-10"
@@ -210,7 +220,7 @@ export default function GalleryView({
                                 disabled={activeIndex === 0}
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    changeAttachment(allAttachments[activeIndex - 1], activeIndex - 1);
+                                    showPrevious();
                                 }}
                             />
                         </div>
@@ -228,7 +238,7 @@ export default function GalleryView({
                             >
                                 <img
                                     ref={imageRef}
-                                    key={activeAttachment.message_id}
+                                    key={activeAttachment.id}
                                     src={activeAttachment.data_url ?? ''}
                                     style={imageStyle}
                                     className="max-h-full max-w-full object-contain duration-100 ease-in-out transform select-none"
@@ -249,7 +259,7 @@ export default function GalleryView({
 
                         {isVideo ? (
                             <video
-                                key={activeAttachment.message_id}
+                                key={activeAttachment.id}
                                 src={activeAttachment.data_url ?? ''}
                                 controls
                                 playsInline
@@ -261,7 +271,7 @@ export default function GalleryView({
 
                         {isAudio ? (
                             <audio
-                                key={activeAttachment.message_id}
+                                key={activeAttachment.id}
                                 controls
                                 autoPlay={autoPlay}
                                 className="w-full max-w-md"
@@ -273,7 +283,7 @@ export default function GalleryView({
                     </div>
 
                     {hasMoreThanOneAttachment ? (
-                        <div className="flex items-center justify-center w-16 shrink-0">
+                        <div className="absolute inset-y-0 z-10 flex items-center justify-center w-12 ltr:right-0 rtl:left-0 sm:static sm:w-16 shrink-0">
                             <NextButton
                                 icon="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left"
                                 className="z-10"
@@ -283,7 +293,7 @@ export default function GalleryView({
                                 disabled={activeIndex === allAttachments.length - 1}
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    changeAttachment(allAttachments[activeIndex + 1], activeIndex + 1);
+                                    showNext();
                                 }}
                             />
                         </div>
@@ -292,7 +302,10 @@ export default function GalleryView({
 
                 {hasMoreThanOneAttachment ? (
                     <footer className="z-10 flex items-center justify-center h-12 border-t border-n-weak">
-                        <div className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium">
+                        <div
+                            data-testid="gallery-position"
+                            className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium tabular-nums"
+                        >
                             {`${activeIndex + 1} / ${allAttachments.length}`}
                         </div>
                     </footer>

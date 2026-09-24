@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import type { TouchEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SWIPE_DISMISS_DISTANCE_PX, useSwipeToDismiss } from './useSwipeToDismiss';
+import { SWIPE_DISMISS_DISTANCE_PX, SWIPE_NAVIGATE_DISTANCE_PX, useSwipeToDismiss } from './useSwipeToDismiss';
 
 const touchAt = (points: Array<[number, number]>) =>
     ({ touches: points.map(([clientX, clientY]) => ({ clientX, clientY })) }) as unknown as TouchEvent;
@@ -57,5 +57,36 @@ describe('vuốt xuống để đóng', () => {
         act(() => result.current.handlers.onTouchEnd());
 
         expect(onDismiss).not.toHaveBeenCalled();
+    });
+});
+
+describe('vuốt ngang để chuyển mục', () => {
+    function swipeHorizontally(onSwipeHorizontal: (direction: string) => void, from: [number, number], to: [number, number]) {
+        const onDismiss = vi.fn();
+        const { result } = renderHook(() => useSwipeToDismiss(onDismiss, onSwipeHorizontal));
+        act(() => result.current.handlers.onTouchStart(touchAt([from])));
+        act(() => result.current.handlers.onTouchMove(touchAt([to])));
+        act(() => result.current.handlers.onTouchEnd());
+
+        return onDismiss;
+    }
+
+    it('vuốt sang trái xem mục sau, sang phải xem mục trước, không đóng', () => {
+        const onSwipeHorizontal = vi.fn();
+
+        const onDismiss = swipeHorizontally(onSwipeHorizontal, [200, 100], [200 - SWIPE_NAVIGATE_DISTANCE_PX - 10, 110]);
+        swipeHorizontally(onSwipeHorizontal, [100, 100], [100 + SWIPE_NAVIGATE_DISTANCE_PX + 10, 95]);
+
+        expect(onSwipeHorizontal.mock.calls).toStrictEqual([['next'], ['previous']]);
+        expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('vuốt ngang ngắn hoặc chủ yếu theo chiều dọc thì không chuyển', () => {
+        const onSwipeHorizontal = vi.fn();
+
+        swipeHorizontally(onSwipeHorizontal, [200, 100], [200 - SWIPE_NAVIGATE_DISTANCE_PX + 10, 100]);
+        swipeHorizontally(onSwipeHorizontal, [200, 100], [140, 300]);
+
+        expect(onSwipeHorizontal).not.toHaveBeenCalled();
     });
 });
