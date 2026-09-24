@@ -31,11 +31,13 @@ export default function NotificationBell({ isCollapsed, onNavigate }: Notificati
     return (
         <Popover
             align="start"
-            trigger={() => (
+            trigger={({ isOpen }) => (
                 <button
                     type="button"
                     data-test-id="notification-bell"
                     aria-label={label}
+                    aria-haspopup="dialog"
+                    aria-expanded={isOpen}
                     title={label}
                     className={`${TRIGGER_BASE_CLASS} ${isCollapsed ? 'size-8' : 'h-7 w-8'}`}
                 >
