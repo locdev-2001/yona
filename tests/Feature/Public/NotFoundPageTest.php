@@ -63,8 +63,6 @@ it('dịch trang 404 theo ngôn ngữ đang dùng', function () {
 // Trang 404 cũng là trang lỗi của Help Center và link khảo sát của tenant: khách
 // của tenant không được thấy khung chat của Yona, và bot không được lập chỉ mục nó.
 it('không nhúng widget chat của Yona và không cho lập chỉ mục trang 404', function () {
-    config(['yona.landing_widget.token' => 'token-widget-landing']);
-
     $this->get('/duong-dan-khong-ton-tai')
         ->assertNotFound()
         ->assertSee('<meta name="robots" content="noindex, follow">', escape: false)
@@ -73,8 +71,6 @@ it('không nhúng widget chat của Yona và không cho lập chỉ mục trang 
 });
 
 it('vẫn nhúng widget chat của Yona trên trang chủ', function () {
-    config(['yona.landing_widget.token' => 'token-widget-landing']);
-
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('chatwootSDK', escape: false)

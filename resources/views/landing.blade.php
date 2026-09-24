@@ -43,14 +43,14 @@
     </head>
     <body data-page="{{ $landingConfig['page'] }}">
         <div id="app"></div>
-        {{-- Widget chat của chính Yona — mọi trang công khai, chỉ khi cài đặt này có
-             LANDING_WIDGET_TOKEN (config yona.landing_widget). Không nhúng vào
-             partials.analytics vì partial đó dùng chung cho dashboard/superadmin/survey.
-             Trang 404 thì không: nó cũng là trang lỗi của Help Center và link khảo sát
-             của tenant, khách của tenant không nên thấy khung chat của Yona. --}}
-        @php($landingWidget = config('yona.landing_widget'))
-        @if ($landingConfig['page'] !== 'not_found' && filled($landingWidget['token']))
-        {!! \App\Support\WidgetEmbedScript::render($landingWidget['base_url'], $landingWidget['token']) !!}
+        {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
+             khai, không nhúng vào partials.analytics vì partial đó dùng chung cho
+             dashboard/superadmin/survey. Trang 404 thì không: nó cũng là trang lỗi
+             của Help Center và link khảo sát của tenant, khách của tenant không
+             nên thấy khung chat của Yona. Landing chạy ở máy dev không tạo được dữ
+             liệu production khi hộp thư này đặt Tên miền được phép là yona.vn. --}}
+        @if ($landingConfig['page'] !== 'not_found')
+        {!! \App\Support\WidgetEmbedScript::render('https://yona.vn', 'NgH6pmjf9Eseb1UzomLNCDXP') !!}
         @endif
     </body>
 </html>
