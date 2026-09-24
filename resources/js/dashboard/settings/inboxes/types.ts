@@ -1,4 +1,5 @@
 import type { WorkingHourPayload } from './helpers/businessHour';
+import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
 // Shape trả về từ InboxResource (api/v1/models/_inbox.json.jbuilder).
 export interface Inbox {
@@ -26,6 +27,8 @@ export interface Inbox {
     // Năng lực kênh (docs/channel-capabilities.md §3) — giao diện gate theo đây,
     // không theo `channel_type`.
     capabilities?: readonly string[] | null;
+    // Nền tảng kênh tự khai (logo + tên thương hiệu).
+    platform?: ChannelPlatform | null;
     // Key kênh khác (null với kênh API) — giữ shape như bản gốc.
     website_url?: string | null;
     email?: string | null;

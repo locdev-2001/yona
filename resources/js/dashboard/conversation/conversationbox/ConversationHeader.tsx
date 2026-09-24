@@ -22,8 +22,8 @@ import SidepanelSwitch from './SidepanelSwitch';
 // dụng WebWidget — C3). BackButton hiện ở expanded layout.
 //
 // Lệch có chủ đích (founder 08/09/2026, ux-deviations.md): dưới ngưỡng ba cột
-// (LARGE_SCREEN_BREAKPOINT) mũ khung chat gom về MỘT dòng thay vì hai — tên +
-// icon kênh cùng dòng, hành động thu thành nút icon, mã hội thoại nhường chỗ.
+// (LARGE_SCREEN_BREAKPOINT) mũ khung chat gom về MỘT dòng thay vì hai — nền tảng
+// nằm ở badge của avatar, hành động thu thành nút icon, mã hội thoại nhường chỗ.
 // Từ 1280px trở lên giữ nguyên bản gốc từng pixel.
 export default function ConversationHeader({
     className = '',
@@ -75,15 +75,13 @@ export default function ConversationHeader({
                         src={currentContact.thumbnail}
                         size={32}
                         status={contactAvailabilityStatus}
+                        platform={inbox?.platform ?? null}
                         hideOfflineStatus
                     />
                     <div className="flex items-center min-w-0 gap-1.5">
                         <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
                             {currentContact.name}
                         </span>
-                        {inbox ? (
-                            <ChannelIcon inbox={inbox} className="size-4 flex-shrink-0 text-n-slate-11" />
-                        ) : null}
                         {isSnoozed ? (
                             <span title={snoozedDisplayText} className="i-lucide-alarm-clock size-4 flex-shrink-0 text-n-amber-10" />
                         ) : null}
@@ -111,6 +109,7 @@ export default function ConversationHeader({
                     src={currentContact.thumbnail}
                     size={32}
                     status={contactAvailabilityStatus}
+                    platform={inbox?.platform ?? null}
                     hideOfflineStatus
                 />
                 <div className="flex flex-col items-start min-w-0 ms-2 overflow-hidden">

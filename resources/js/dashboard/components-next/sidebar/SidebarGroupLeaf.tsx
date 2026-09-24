@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/react';
 import { t } from '../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 import SidebarUnreadBadge from './SidebarUnreadBadge';
 
 // Port từ sidebar/SidebarGroupLeaf.vue — tree-line connector giữ nguyên chuỗi class
@@ -34,7 +35,7 @@ export function SidebarChannelLeafContent({
 }: {
     label: string;
     badgeCount?: number;
-    inbox: { channel_type: string; name?: string; reauthorization_required?: boolean };
+    inbox: ChannelIconInbox & { reauthorization_required?: boolean };
 }) {
     return (
         <>

@@ -5,6 +5,7 @@ import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
+import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge';
@@ -44,7 +45,7 @@ interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
     assignee?: Partial<AgentMeta>;
-    inbox?: { name: string; channel_type: string; reauthorization_required?: boolean };
+    inbox?: ChannelIconInbox & { name: string; reauthorization_required?: boolean };
     selected?: boolean;
     isActiveChat?: boolean;
     showAssignee?: boolean;
@@ -133,6 +134,7 @@ export default function ConversationCard({
                         src={currentContact.thumbnail}
                         size={32}
                         status={contactAvailabilityStatus}
+                        platform={inbox.platform ?? null}
                         className={!showInboxName ? 'mt-4' : 'mt-8'}
                         hideOfflineStatus
                         overlay={({ size }) =>
