@@ -15,8 +15,11 @@ export const sendMessageToParent = (message: Record<string, unknown>): void => {
 export const IFrameHelper = {
     isIFrame: (): boolean => window.self !== window.top,
     sendMessage: sendMessageToParent,
+    // Chỉ trang nhúng widget (SDK) được điều khiển widget, không phải frame khác cùng trang.
     isAValidEvent: (event: MessageEvent): boolean =>
-        typeof event.data === 'string' && event.data.indexOf(FRAME_MESSAGE_PREFIX) === 0,
+        event.source === window.parent &&
+        typeof event.data === 'string' &&
+        event.data.indexOf(FRAME_MESSAGE_PREFIX) === 0,
     getMessage: (event: MessageEvent): FrameMessage =>
         JSON.parse((event.data as string).replace(FRAME_MESSAGE_PREFIX, '')),
 };
