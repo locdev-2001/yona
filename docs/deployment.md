@@ -555,6 +555,48 @@ số phá cache, lệch nhau là cảnh báo.
 /www/server/nginx/sbin/nginx -t && /etc/init.d/nginx reload
 ```
 
+### IP thật của khách sau Cloudflare
+
+Cloudflare ─▶ Nginx ─FastCGI─▶ PHP-FPM: `REMOTE_ADDR` mà PHP thấy là IP edge của
+Cloudflare. Chưa cấu hình gì thì mọi khách sau cùng một edge chung một IP: khoá
+đăng nhập (5 lần sai theo email + IP) và giới hạn form đặt demo chặn nhầm người
+thật, danh sách phiên đăng nhập và `current_sign_in_ip` ghi IP của Cloudflare.
+
+**Chọn một cách: trusted proxies phía Laravel.** Không bật `real_ip`
+(`set_real_ip_from`, `real_ip_header`) trong vhost, để dải IP tin cậy chỉ nằm ở
+một chỗ là `config/trustedproxy.php`.
+
+- Request có `REMOTE_ADDR` thuộc dải Cloudflare trong `proxies`: `ip()` lấy từ
+  `CF-Connecting-IP`; thiếu header đó thì lấy phần tử cuối chưa tin cậy của
+  `X-Forwarded-For`.
+- Request từ nguồn khác (gọi thẳng IP origin, `127.0.0.1`): header IP bị bỏ qua,
+  `ip()` là `REMOTE_ADDR`. Header giả không vượt được khoá đăng nhập.
+- Chỉ tin IP. Host và scheme vẫn do nginx quyết (`X-Forwarded-Host`,
+  `X-Forwarded-Proto` bị bỏ qua), nên header giả không đổi được link app sinh ra.
+- Mạng không bao giờ được gọi trong request: dải IP ghi sẵn trong file.
+
+Cập nhật dải IP (Cloudflare hiếm khi đổi; kiểm mỗi quý hoặc khi Cloudflare báo):
+
+```bash
+# Trên máy dev, KHÔNG chạy trên server (deploy.sh dừng khi working tree bẩn)
+php artisan trusted-proxies:refresh   # tải ips-v4 + ips-v6, nguồn lỗi thì không ghi gì
+git diff config/trustedproxy.php
+git commit -m "chore(proxy): cập nhật dải IP Cloudflare" config/trustedproxy.php
+# rồi deploy.sh như thường (bước optimize cache lại config)
+```
+
+Thiếu một dải edge mới thì khách đi qua edge đó bị ghi IP của Cloudflare như cũ,
+không có gì sập.
+
+**Nghiệm thu sau deploy:**
+
+1. Mở `https://www.cloudflare.com/cdn-cgi/trace` trên chính máy đang thử, ghi lại
+   dòng `ip=` (IP công cộng của mình).
+2. Đăng nhập `https://yona.vn`, vào Hồ sơ → **Phiên đăng nhập**. Phiên hiện tại
+   phải hiện đúng IP ở bước 1, không phải IP thuộc dải trong
+   `config/trustedproxy.php` (104.16.x, 172.64.x, 162.158.x, 2606:4700:…).
+3. Phiên tạo trước lần deploy này vẫn giữ IP cũ; chỉ phiên mới mới đúng.
+
 ---
 
 ## 8. Supervisor và cron — `deploy.sh` tự dựng
@@ -1127,6 +1169,7 @@ xoá file). Qua CLI: `php artisan pail`.
 | Lượt xem bài Help Center đứng yên dù có người đọc | Rule ảnh tĩnh của aaPanel nuốt pixel `/hc/.../articles/*.png`, thiếu `location ^~ /hc/` — mục 7 |
 | Nhân viên bị đăng xuất sau khoảng 2 giờ không thao tác | `.env` production còn `SESSION_LIFETIME=120` → `43200` rồi chạy `deploy.sh` (mục 5, Phiên đăng nhập) |
 | Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
+| Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
 
 ### Rollback
