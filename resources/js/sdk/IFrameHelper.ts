@@ -29,6 +29,8 @@ import { popoutChatWindow } from './helpers/popoutHelper';
 const AUTH_COOKIE = 'cw_conversation';
 const CAMPAIGN_SNOOZE_COOKIE = 'cw_snooze_campaigns_till';
 
+const getWidgetOrigin = (): string => new URL(window.$chatwoot.baseUrl, window.location.href).origin;
+
 const updateAuthCookie = (cookieContent: string, baseDomain = ''): void =>
     setCookieWithDomain(AUTH_COOKIE, cookieContent, { baseDomain });
 
@@ -106,12 +108,23 @@ export const IFrameHelper = {
         const element = IFrameHelper.getAppFrame();
         element?.contentWindow?.postMessage(
             `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: key, ...value })}`,
-            '*',
+            getWidgetOrigin(),
         );
+    },
+    // Trang khách có thể nhúng iframe bên thứ ba (quảng cáo, plugin) gửi tin giả mang đúng tiền tố:
+    // chỉ nhận tin do chính iframe widget gửi, từ đúng origin của widget.
+    isMessageFromWidget: (event: MessageEvent): boolean => {
+        const widgetWindow = IFrameHelper.getAppFrame()?.contentWindow;
+
+        return Boolean(widgetWindow) && event.source === widgetWindow && event.origin === getWidgetOrigin();
     },
     initPostMessageCommunication: (): void => {
         window.onmessage = e => {
             if (typeof e.data !== 'string' || e.data.indexOf(FRAME_MESSAGE_PREFIX) !== 0) {
+                return;
+            }
+            if (!IFrameHelper.isMessageFromWidget(e)) {
+                console.debug('[widget] bỏ qua tin không đến từ iframe widget', e.origin);
                 return;
             }
             const message = JSON.parse(e.data.replace(FRAME_MESSAGE_PREFIX, '')) as FrameMessage;

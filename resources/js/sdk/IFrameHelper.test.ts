@@ -30,14 +30,37 @@ beforeEach(() => {
 afterEach(() => {
     document.getElementById(APP_FRAME_ID)?.remove();
     document.getElementById('cw-widget-holder')?.remove();
+    document.getElementById('quang-cao-ben-thu-ba')?.remove();
     document.cookie = 'cw_conversation=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.onmessage = null;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
 });
 
-const postFromWidget = (payload: Record<string, unknown>) =>
-    window.onmessage?.({ data: `${FRAME_MESSAGE_PREFIX}${JSON.stringify(payload)}` } as MessageEvent);
+const WIDGET_ORIGIN = 'https://app.yona.vn';
+
+const frameMessage = (payload: Record<string, unknown>) => `${FRAME_MESSAGE_PREFIX}${JSON.stringify(payload)}`;
+
+const postFromWidget = (payload: Record<string, unknown>) => {
+    const appFrame = IFrameHelper.getAppFrame() ?? mountAppFrame();
+
+    window.onmessage?.({
+        data: frameMessage(payload),
+        origin: WIDGET_ORIGIN,
+        source: appFrame.contentWindow,
+    } as MessageEvent);
+};
+
+const postFrom = (source: MessageEventSource | null, origin: string, payload: Record<string, unknown>) =>
+    window.onmessage?.({ data: frameMessage(payload), origin, source } as MessageEvent);
+
+const mountStrangerFrame = () => {
+    const stranger = document.createElement('iframe');
+    stranger.id = 'quang-cao-ben-thu-ba';
+    document.body.appendChild(stranger);
+
+    return stranger;
+};
 
 const loadedMessage = (authToken: string) => ({
     event: 'loaded',
@@ -59,7 +82,7 @@ describe('getUrl', () => {
 });
 
 describe('sendMessage', () => {
-    it('gửi chuỗi có tiền tố chatwoot-widget: và payload JSON phẳng', () => {
+    it('gửi chuỗi có tiền tố và payload JSON phẳng, chỉ tới đúng origin của widget', () => {
         const iframe = mountAppFrame();
         const postMessage = vi.fn();
         Object.defineProperty(iframe, 'contentWindow', { value: { postMessage }, configurable: true });
@@ -68,7 +91,7 @@ describe('sendMessage', () => {
 
         expect(postMessage).toHaveBeenCalledWith(
             `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: 'set-label', label: 'vip' })}`,
-            '*',
+            WIDGET_ORIGIN,
         );
     });
 
@@ -82,9 +105,7 @@ describe('initPostMessageCommunication', () => {
         const handler = vi.spyOn(IFrameHelper.events, 'updateIframeHeight').mockImplementation(() => {});
         IFrameHelper.initPostMessageCommunication();
 
-        window.onmessage?.({
-            data: `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: 'updateIframeHeight', extraHeight: 42, isFixedHeight: true })}`,
-        } as MessageEvent);
+        postFromWidget({ event: 'updateIframeHeight', extraHeight: 42, isFixedHeight: true });
 
         expect(handler).toHaveBeenCalledWith({ event: 'updateIframeHeight', extraHeight: 42, isFixedHeight: true });
     });
@@ -102,11 +123,64 @@ describe('initPostMessageCommunication', () => {
     it('bỏ qua tên sự kiện không có handler', () => {
         IFrameHelper.initPostMessageCommunication();
 
-        expect(() =>
-            window.onmessage?.({
-                data: `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: 'khong-ton-tai' })}`,
-            } as MessageEvent),
-        ).not.toThrow();
+        expect(() => postFromWidget({ event: 'khong-ton-tai' })).not.toThrow();
+    });
+});
+
+describe('chỉ nhận tin từ chính iframe widget', () => {
+    beforeEach(() => {
+        vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+        vi.spyOn(IFrameHelper, 'onLoad').mockImplementation(() => {});
+        vi.spyOn(console, 'debug').mockImplementation(() => {});
+        setCookieWithDomain('cw_conversation', 'visitor-token');
+        mountAppFrame();
+        IFrameHelper.initPostMessageCommunication();
+    });
+
+    const setAuthCookieMessage = (widgetAuthToken: string) => ({ event: 'setAuthCookie', data: { widgetAuthToken } });
+    const forgedAuthCookie = setAuthCookieMessage('attacker-token');
+
+    it('iframe lạ trên trang khách gửi setAuthCookie giả thì cookie phiên không đổi', () => {
+        const stranger = mountStrangerFrame();
+
+        postFrom(stranger.contentWindow, 'https://ads.example.com', forgedAuthCookie);
+        postFrom(stranger.contentWindow, 'https://ads.example.com', loadedMessage('attacker-token'));
+
+        expect(getCookie('cw_conversation')).toBe('visitor-token');
+    });
+
+    it('frame lạ mạo đúng origin của widget vẫn bị bỏ qua vì không phải iframe widget', () => {
+        const stranger = mountStrangerFrame();
+
+        postFrom(stranger.contentWindow, WIDGET_ORIGIN, forgedAuthCookie);
+
+        expect(getCookie('cw_conversation')).toBe('visitor-token');
+    });
+
+    it('iframe widget đã bị điều hướng sang origin khác thì tin của nó bị bỏ qua', () => {
+        postFrom(IFrameHelper.getAppFrame()!.contentWindow, 'https://ads.example.com', forgedAuthCookie);
+
+        expect(getCookie('cw_conversation')).toBe('visitor-token');
+    });
+
+    it('frame lạ không điều khiển được widget: không mở khung, không xoá phiên', () => {
+        const toggleBubble = vi.spyOn(IFrameHelper.events, 'toggleBubble');
+        const stranger = mountStrangerFrame();
+        const appFrame = IFrameHelper.getAppFrame();
+
+        postFrom(stranger.contentWindow, 'https://ads.example.com', { event: 'toggleBubble' });
+        postFrom(stranger.contentWindow, 'https://ads.example.com', { event: RESET_SESSION_EVENT });
+        postFrom(window, window.location.origin, { event: RESET_SESSION_EVENT });
+
+        expect(toggleBubble).not.toHaveBeenCalled();
+        expect(IFrameHelper.getAppFrame()).toBe(appFrame);
+        expect(getCookie('cw_conversation')).toBe('visitor-token');
+    });
+
+    it('tin đúng từ iframe widget vẫn ghi cookie phiên', () => {
+        postFromWidget(setAuthCookieMessage('rotated-visitor-token'));
+
+        expect(getCookie('cw_conversation')).toBe('rotated-visitor-token');
     });
 });
 
@@ -164,7 +238,7 @@ describe('giữ phiên khách qua tải lại trang', () => {
 
         expect(postMessage).toHaveBeenCalledWith(
             `${FRAME_MESSAGE_PREFIX}${JSON.stringify({ event: 'toggle-open', isOpen: true })}`,
-            '*',
+            WIDGET_ORIGIN,
         );
     });
 });
