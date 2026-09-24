@@ -1,5 +1,7 @@
 import { getJson, postJson } from 'dashboard/helper/apiClient';
 
+import type { ChannelPlatform } from 'shared/constants/channelPlatform';
+
 import type { ConversationMessage } from './types';
 
 // Hợp đồng của GET …/messages/{id}/forward_targets và POST …/messages/{id}/forward.
@@ -9,8 +11,8 @@ export interface ForwardTarget {
     id: number;
     status: string;
     last_activity_at: number | null;
-    // channel_type chỉ dùng để chọn icon kênh.
-    inbox: { id: number; channel_id?: number; name: string; channel_type: string };
+    // platform (kênh tự khai) để vẽ logo nền tảng; thiếu thì icon theo channel_type.
+    inbox: { id: number; channel_id?: number; name: string; channel_type: string; platform?: ChannelPlatform | null };
     contact: { id?: number; name?: string | null; thumbnail?: string; phone_number?: string | null };
     forwardable: boolean;
     code: string | null;

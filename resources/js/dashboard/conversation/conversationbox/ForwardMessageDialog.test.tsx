@@ -98,6 +98,19 @@ describe('ForwardMessageDialog', () => {
         expect(fetchTargetsSpy).toHaveBeenCalledWith(1, 4, 9, '');
     });
 
+    it('hộp thư đích có nền tảng thì dòng hiện logo nền tảng, không có thì icon theo loại kênh', async () => {
+        const zaloPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+        fetchTargetsSpy.mockResolvedValue({
+            max_targets: 10,
+            payload: [target(45, 'Chị Lan', { inbox: { ...LAN.inbox, platform: zaloPlatform } }), BINH],
+        });
+        renderDialog();
+
+        await waitFor(() => expect(row(45)).not.toBeNull());
+        expect(row(45).querySelector('img[data-platform="zalo"]')?.getAttribute('src')).toBe(zaloPlatform.logo_url);
+        expect(row(46).querySelector('img[data-platform]')).toBeNull();
+    });
+
     it('dòng không nhận được: checkbox tắt, hiện lý do của máy chủ', async () => {
         renderDialog();
 
