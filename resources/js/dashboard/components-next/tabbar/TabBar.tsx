@@ -23,28 +23,27 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
     const [indicatorStyle, setIndicatorStyle] = useState<{ left?: string; width?: string }>({});
     const [enableTransition, setEnableTransition] = useState(false);
 
+    // Bất kỳ tab nào đổi độ rộng (vd số đếm nạp về sau làm nhãn dài ra) đều làm tab đang
+    // chọn xê dịch: đo lại indicator và cuộn lại để khung cuộn ngang (màn hẹp) không cắt nó.
     useEffect(() => {
         const activeElement = tabRefs.current[activeTab];
         if (!activeElement) return undefined;
 
-        const updateIndicator = () => {
+        const syncActiveTab = () => {
             setIndicatorStyle({
                 left: `${activeElement.offsetLeft}px`,
                 width: `${activeElement.offsetWidth}px`,
             });
+            revealHorizontally(activeElement);
         };
 
-        updateIndicator();
-        const observer = new ResizeObserver(updateIndicator);
-        observer.observe(activeElement);
+        syncActiveTab();
+        const observer = new ResizeObserver(syncActiveTab);
+        tabRefs.current.slice(0, tabs.length).forEach(tabElement => {
+            if (tabElement) observer.observe(tabElement);
+        });
 
         return () => observer.disconnect();
-    }, [activeTab, tabs]);
-
-    // Thanh tab nằm trong khung cuộn ngang (màn hẹp): tab đang chọn luôn nằm trong tầm nhìn.
-    useEffect(() => {
-        const activeElement = tabRefs.current[activeTab];
-        if (activeElement) revealHorizontally(activeElement);
     }, [activeTab, tabs.length]);
 
     useEffect(() => {
