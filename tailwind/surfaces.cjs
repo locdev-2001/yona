@@ -53,6 +53,7 @@ module.exports = {
             './resources/js/dashboard/components-next/icon/Icon.tsx',
             './resources/js/dashboard/components-next/spinner/Spinner.tsx',
             './resources/js/dashboard/components/auth/**/*.{ts,tsx}',
+            './resources/js/dashboard/composables/useAlert.ts',
             './resources/views/app.blade.php',
         ],
     },
