@@ -11,7 +11,10 @@ use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
 use App\Support\WidgetEmbedScript;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterval;
 use Database\Factories\Channel\WebWidgetFactory;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -152,6 +155,22 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         return Attribute::get(fn (): string => WidgetEmbedScript::render((string) config('app.url'), (string) $this->website_token));
     }
 
+    /**
+     * Hạn khách tự thu hồi tin của mình. Mỗi nền tảng tự đặt hạn thu hồi riêng
+     * nên con số là chính sách của kênh, nằm cạnh bộ năng lực của kênh.
+     */
+    private const RECALL_WINDOW_SECONDS = 300;
+
+    public function recallWindow(): CarbonInterval
+    {
+        return CarbonInterval::seconds(self::RECALL_WINDOW_SECONDS);
+    }
+
+    public function withinRecallWindow(DateTimeInterface $sentAt): bool
+    {
+        return CarbonImmutable::instance($sentAt)->add($this->recallWindow())->isFuture();
+    }
+
     /** Widget web: danh tính là token khách, hồ sơ đến từ form trước chat. */
     public function capabilities(): CapabilitySet
     {
@@ -169,9 +188,11 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::OutboundAudio,
             Capability::OutboundFile,
             Capability::OutboundReplyTo,
+            Capability::OutboundRecall,
             Capability::OutboundTyping,
             Capability::EventDelivered,
             Capability::EventSeen,
+            Capability::EventRecall,
             Capability::EventTyping,
             Capability::ProfilePhone,
             Capability::ProfileEmail,

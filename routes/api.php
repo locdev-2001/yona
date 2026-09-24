@@ -56,6 +56,7 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::get('/messages', [MessagesController::class, 'index']);
             Route::post('/messages', [MessagesController::class, 'store']);
             Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
+            Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
             Route::post('/conversations', [ConversationsController::class, 'store']);

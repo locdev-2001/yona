@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Widget;
 
 use App\Actions\ContactIdentifyAction;
 use App\Builders\Messages\MessageBuilder;
+use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Resources\Widget\WidgetMessageResource;
@@ -87,6 +88,35 @@ class MessagesController extends WidgetController
         $contact = $this->contact($request);
 
         return response()->json($contact === null ? [] : ['contact' => $contact->attributesToArray()]);
+    }
+
+    /**
+     * Khách tự thu hồi tin của mình. Hạn thu hồi là chính sách của kênh, việc xoá
+     * đi chung Message::markDeleted với đường agent xoá để hai bên thấy cùng dấu vết.
+     */
+    public function destroy(Request $request, int $messageId): JsonResponse
+    {
+        $message = $this->fetchVisitorMessage($request, $messageId);
+        $rejectionCode = $this->recallRejectionCode($request, $message);
+
+        if ($rejectionCode !== null) {
+            return response()->json(['error' => __("errors.widget_recall.{$rejectionCode}"), 'code' => $rejectionCode], 422);
+        }
+
+        $message->markDeleted($this->account($request)->locale);
+
+        return response()->json(WidgetMessageResource::listItem($message->fresh()));
+    }
+
+    private function recallRejectionCode(Request $request, Message $message): ?string
+    {
+        return match (true) {
+            ! $this->inbox($request)->supports(Capability::EventRecall) => 'capability_not_supported',
+            ! $message->isIncoming() => 'not_own_message',
+            $message->isDeleted() => 'already_recalled',
+            ! $this->channel($request)->withinRecallWindow($message->created_at) => 'recall_window_expired',
+            default => null,
+        };
     }
 
     // prevent_reply_to_resolved_conversation — ẩn ô soạn tin ở FE không chặn
