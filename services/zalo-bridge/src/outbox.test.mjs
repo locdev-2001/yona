@@ -174,9 +174,11 @@ test('mock 401 → KHÔNG dead-letter, stats().authBlocked === true (H-3)', asyn
 });
 
 test('seq collision: 2 enqueue ép cùng counter → không đè file (H-1)', async () => {
-    // Không cần fetch thật — chỉ test file creation
-    const { outbox, dir, base } = await makeOutbox(() =>
-        Promise.resolve({ ok: false, status: 503, text: async () => '' })
+    // Chỉ test việc tạo file. Tắt drain nền do enqueue kích: nó ghi lại file khi nhận 503
+    // đúng lúc cleanup đang xoá thư mục → ENOTEMPTY chập chờn.
+    const { outbox, dir, base } = await makeOutbox(
+        () => Promise.resolve({ ok: false, status: 503, text: async () => '' }),
+        { kickOnEnqueue: false },
     );
 
     // Enqueue nhiều lần
