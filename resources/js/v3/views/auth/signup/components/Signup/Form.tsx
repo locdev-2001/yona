@@ -7,12 +7,13 @@ import type { SharedPageProps } from '../../../../../../types';
 import { t } from '../../../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import FormInput from 'v3/components/Form/Input';
+import OAuthButtons from 'v3/components/OAuthButtons';
 import NextButton from 'dashboard/components-next/button/Button';
 import PasswordRequirements from './PasswordRequirements';
 
 // Port từ v3/views/auth/signup/components/Signup/Form.vue
-// Bỏ hCaptcha + Google OAuth (chưa có ở A2); business-email validator của
-// Chatwoot cloud thay bằng validate email thường (SME VN dùng gmail phổ biến).
+// Bỏ hCaptcha; business-email validator của bản cloud thay bằng validate email
+// thường (SME VN dùng gmail phổ biến).
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=[\]{}|'"/\\.,`<>:;?~]/;
@@ -32,8 +33,12 @@ function getCredentialsFromEmail(email: string) {
 const isValidPassword = (value: string) =>
     /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value) && SPECIAL_CHAR_REGEX.test(value);
 
+interface SignupPageProps extends SharedPageProps {
+    oauthProviders?: string[];
+}
+
 export default function SignupForm() {
-    const { globalConfig } = usePage<SharedPageProps>().props;
+    const { globalConfig, oauthProviders } = usePage<SignupPageProps>().props;
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [touched, setTouched] = useState({ email: false, password: false });
     const [isPasswordFocused, setPasswordFocused] = useState(false);
@@ -74,6 +79,7 @@ export default function SignupForm() {
 
     return (
         <div className="flex-1">
+            <OAuthButtons providers={oauthProviders} />
             <form className="space-y-3" onSubmit={submit}>
                 <FormInput
                     value={credentials.email}

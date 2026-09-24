@@ -61,3 +61,20 @@ it('revokes the session whose latest activity is the oldest', function () {
         ->and(StoredSessions::exists('never-active'))->toBeFalse()
         ->and(UserSession::query()->whereKey([$recent->id, $older->id])->count())->toBe(2);
 });
+
+it('makes room only once the session limit is reached', function () {
+    config(['yona.max_user_sessions' => 2]);
+    $user = User::factory()->create();
+    $oldest = UserSession::factory()->for($user)->create(['last_activity_at' => now()->subDay()]);
+
+    app(UserSessionRevoker::class)->makeRoomFor($user);
+    expect($user->userSessions()->count())->toBe(1);
+
+    UserSession::factory()->for($user)->create(['last_activity_at' => now()->subHour()]);
+    expect(app(UserSessionRevoker::class)->limitReached($user))->toBeTrue();
+
+    app(UserSessionRevoker::class)->makeRoomFor($user);
+
+    expect($user->userSessions()->count())->toBe(1)
+        ->and(UserSession::query()->find($oldest->id))->toBeNull();
+});

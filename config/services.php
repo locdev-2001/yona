@@ -66,6 +66,15 @@ return [
         'environment' => env('TWITTER_ENVIRONMENT', ''),
     ],
 
+    // Đăng nhập / đăng ký bằng Google cho người dùng. Thiếu client_id hoặc
+    // client_secret thì nút Google không hiện và hai route OAuth trả 404.
+    // `redirect` tương đối được ghép với host của request đang chạy.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI') ?: '/app/auth/oauth/google/callback',
+    ],
+
     // Analytics không cookie của chính Yona. Script và sự kiện đi qua đường dẫn
     // first-party `proxy_path` trên domain app (routes/api.php) để trình chặn quảng
     // cáo không chặn theo domain/mẫu URL của nhà cung cấp. `host` hoặc `script_path`

@@ -14,4 +14,9 @@ return [
         'user_exists' => 'Địa chỉ email này đã có người dùng.',
         'failed' => 'Chưa tạo được tài khoản. Bạn hãy thử lại.',
     ],
+    'oauth' => [
+        'failed' => 'Chưa đăng nhập được. Bạn hãy thử lại.',
+        'unverified_email' => 'Email này chưa được nhà cung cấp xác minh nên không dùng để đăng nhập được.',
+        'not_allowed' => 'Tài khoản này không đăng nhập theo cách này được. Bạn hãy đăng nhập bằng mật khẩu.',
+    ],
 ];

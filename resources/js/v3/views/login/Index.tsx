@@ -7,6 +7,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useBranding } from 'shared/composables/useBranding';
 import FormInput from 'v3/components/Form/Input';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
+import OAuthButtons from 'v3/components/OAuthButtons';
 import NextButton from 'dashboard/components-next/button/Button';
 import MfaVerification from 'dashboard/components/auth/MfaVerification';
 import SessionLimitOverlay from 'dashboard/components/auth/SessionLimitOverlay';
@@ -19,9 +20,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // với App\Support\SessionExpiryResponses::PAGE_EXPIRED_ERROR.
 const PAGE_EXPIRED_ERROR = 'page_expired';
 
-// Port từ v3/views/login/Index.vue (Google OAuth + SAML chưa port — xem bảng
-// trace A1). Chatwoot nhận 206/409 từ axios; Yona là Inertia nên hai trạng thái
-// "cần OTP" và "chạm trần phiên" về qua prop của chính trang này.
+// Port từ v3/views/login/Index.vue (SAML chưa port — xem bảng trace A1). Hai
+// trạng thái "cần OTP" và "chạm trần phiên" về qua prop của chính trang này.
 interface LoginPageProps extends SharedPageProps {
     mfaRequired?: boolean;
     mfaToken?: string;
@@ -31,6 +31,8 @@ interface LoginPageProps extends SharedPageProps {
     // Link SSO (Platform API / impersonate) mở đúng trang này kèm hai giá trị đó.
     email?: string | null;
     ssoAuthToken?: string | null;
+    // Nhà cung cấp OAuth đã cấu hình; lỗi của lượt quay về nằm ở errors.oauth.
+    oauthProviders?: string[];
 }
 
 export default function LoginIndex() {
@@ -43,6 +45,7 @@ export default function LoginIndex() {
         sessions,
         email: ssoEmail,
         ssoAuthToken,
+        oauthProviders,
     } = usePage<LoginPageProps>().props;
     const { replaceInstallationName } = useBranding();
 
@@ -158,6 +161,7 @@ export default function LoginIndex() {
                             </a>
                         </p>
                     </div>
+                    <OAuthButtons providers={oauthProviders} error={errors?.oauth} />
                     <form className="space-y-5" onSubmit={submitFormLogin}>
                         <FormInput
                             value={credentials.email}

@@ -743,6 +743,11 @@ const messages: Record<string, unknown> = {
             "invalid_email": "Bạn hãy nhập địa chỉ email hợp lệ.",
             "user_exists": "Địa chỉ email này đã có người dùng.",
             "failed": "Chưa tạo được tài khoản. Bạn hãy thử lại."
+        },
+        "oauth": {
+            "failed": "Chưa đăng nhập được. Bạn hãy thử lại.",
+            "unverified_email": "Email này chưa được nhà cung cấp xác minh nên không dùng để đăng nhập được.",
+            "not_allowed": "Tài khoản này không đăng nhập theo cách này được. Bạn hãy đăng nhập bằng mật khẩu."
         }
     },
     "AUTO_ASSIGNMENT": {
@@ -7663,6 +7668,7 @@ const messages: Record<string, unknown> = {
         },
         "OAUTH": {
             "GOOGLE_LOGIN": "Đăng nhập bằng Google",
+            "GOOGLE_CONTINUE": "Tiếp tục với Google",
             "BUSINESS_ACCOUNTS_ONLY": "Bạn hãy dùng email công ty để đăng nhập",
             "NO_ACCOUNT_FOUND": "Chúng tôi không tìm thấy tài khoản nào cho địa chỉ email của bạn."
         },

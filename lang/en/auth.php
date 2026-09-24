@@ -13,4 +13,10 @@ return [
         'failed' => 'Could not create the account. Please try again.',
     ],
 
+    'oauth' => [
+        'failed' => 'Could not sign you in. Please try again.',
+        'unverified_email' => 'This email address has not been verified by the provider, so it cannot be used to sign in.',
+        'not_allowed' => 'This account cannot sign in this way. Please sign in with your password.',
+    ],
+
 ];

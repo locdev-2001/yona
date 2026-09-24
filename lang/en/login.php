@@ -20,6 +20,7 @@ return [
     ],
     'OAUTH' => [
         'GOOGLE_LOGIN' => 'Login with Google',
+        'GOOGLE_CONTINUE' => 'Continue with Google',
         'BUSINESS_ACCOUNTS_ONLY' => 'Please use your company email address to login',
         'NO_ACCOUNT_FOUND' => 'We couldn\'t find an account for your email address.',
     ],

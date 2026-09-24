@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\CompletesSignIn;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserSessionResource;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\TokenService;
+use App\Services\OAuth\OAuthProviders;
 use App\Services\UserSessionRevoker;
-use App\Services\UserSignInService;
 use App\Support\CurrentUserSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,13 +23,27 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SessionsController extends Controller
 {
+    use CompletesSignIn;
+
+    // Lối đăng nhập khác (nhà cung cấp OAuth) đã qua bước một với tài khoản bật
+    // 2FA: flash mfa_token vào khoá này rồi chuyển về trang đăng nhập nhập mã.
+    public const PENDING_MFA_TOKEN = 'pending_mfa_token';
+
     private const LOGIN_PAGE = 'v3/views/login/Index';
+
+    public function __construct(private readonly OAuthProviders $oauthProviders) {}
 
     // Link SSO của Platform API / "Impersonate user" trỏ vào chính trang đăng
     // nhập kèm ?email=&sso_auth_token= (như bản gốc); trang tự POST lại đây.
     public function create(Request $request): Response
     {
-        return Inertia::render(self::LOGIN_PAGE, [
+        $pendingMfaToken = $request->session()->get(self::PENDING_MFA_TOKEN);
+
+        if (is_string($pendingMfaToken) && $pendingMfaToken !== '') {
+            return $this->renderMfaStep($pendingMfaToken);
+        }
+
+        return $this->renderLoginPage([
             'email' => $request->query('email'),
             'ssoAuthToken' => $request->query('sso_auth_token'),
         ]);
@@ -159,20 +174,27 @@ class SessionsController extends Controller
             return $this->renderMfaStep($token, __('errors.mfa.invalid_code'));
         }
 
-        // Sau khi qua 2FA thì không hỏi lại người dùng nữa: tự bỏ phiên cũ nhất.
-        if ($this->sessionsLimitReached($user)) {
-            app(UserSessionRevoker::class)->revokeOldest($user);
-        }
+        app(UserSessionRevoker::class)->makeRoomFor($user);
 
         return $this->completeLogin($request, $user);
     }
 
     private function renderMfaStep(string $mfaToken, ?string $error = null): Response
     {
-        return Inertia::render(self::LOGIN_PAGE, [
+        return $this->renderLoginPage([
             'mfaRequired' => true,
             'mfaToken' => $mfaToken,
             'mfaError' => $error,
+        ]);
+    }
+
+    // Mọi trạng thái của trang đăng nhập đều mang danh sách nhà cung cấp OAuth
+    // để form hiện lại đủ nút khi người dùng quay lại từ bước OTP / chọn phiên.
+    private function renderLoginPage(array $props): Response
+    {
+        return Inertia::render(self::LOGIN_PAGE, [
+            ...$props,
+            'oauthProviders' => $this->oauthProviders->configuredNames(),
         ]);
     }
 
@@ -194,7 +216,7 @@ class SessionsController extends Controller
             return null;
         }
 
-        if (! $this->sessionsLimitReached($user)) {
+        if (! app(UserSessionRevoker::class)->limitReached($user)) {
             return null;
         }
 
@@ -203,23 +225,9 @@ class SessionsController extends Controller
             ->get()
             ->map(fn (UserSession $session) => (new UserSessionResource($session))->toArray($request));
 
-        return Inertia::render(self::LOGIN_PAGE, [
+        return $this->renderLoginPage([
             'sessionsLimitReached' => true,
             'sessions' => $sessions,
         ]);
-    }
-
-    private function sessionsLimitReached(User $user): bool
-    {
-        return $user->userSessions()->count() >= (int) config('yona.max_user_sessions');
-    }
-
-    private function completeLogin(Request $request, User $user): SymfonyResponse
-    {
-        app(UserSignInService::class)->signIn($request, $user);
-
-        // Vượt ranh giới bundle v3.scss → app.scss: phải full-page load,
-        // client-side visit sẽ giữ nguyên stylesheet auth (mất font + _base).
-        return Inertia::location(session()->pull('url.intended', '/app'));
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Builders\AccountBuilder;
 use App\Exceptions\Account\InvalidEmail;
 use App\Exceptions\Account\UserExists;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AccountSignUpService;
+use App\Services\OAuth\OAuthProviders;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,12 +16,14 @@ use Inertia\Response;
 
 class RegistrationsController extends Controller
 {
-    public function create(): Response
+    public function create(OAuthProviders $oauthProviders): Response
     {
-        return Inertia::render('v3/views/auth/signup/Index');
+        return Inertia::render('v3/views/auth/signup/Index', [
+            'oauthProviders' => $oauthProviders->configuredNames(),
+        ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AccountSignUpService $signUp): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -30,17 +33,16 @@ class RegistrationsController extends Controller
         ]);
 
         try {
-            [$user] = (new AccountBuilder(
-                accountName: $credentials['account_name'] ?? null,
+            $user = $signUp->signUp(
                 email: $credentials['email'],
+                password: $credentials['password'],
+                accountName: $credentials['account_name'] ?? null,
                 userFullName: $credentials['user_full_name'] ?? null,
-                userPassword: $credentials['password'],
-            ))->perform();
+                emailVerified: false,
+            );
         } catch (InvalidEmail|UserExists $exception) {
             throw ValidationException::withMessages(['email' => $exception->getMessage()]);
         }
-
-        $user->sendConfirmationInstructions();
 
         return redirect('/app/auth/verify-email')->with('signup_email', $user->email);
     }

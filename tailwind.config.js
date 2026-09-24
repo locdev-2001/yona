@@ -267,6 +267,8 @@ const tailwindConfig = {
           // i-teenyicons-* như bản gốc; thiếu bộ này thì các nút đó hiện trống.
           'teenyicons',
           'fluent',
+          // Logo thương hiệu (nút "Tiếp tục với Google" ở trang auth).
+          'simple-icons',
         ]),
       },
     }),

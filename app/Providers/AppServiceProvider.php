@@ -41,6 +41,11 @@ class AppServiceProvider extends ServiceProvider
     // Đủ cho một văn phòng nhiều nhân viên chung một IP NAT (mỗi trang ~2 sự kiện).
     private const ANALYTICS_EVENTS_PER_MINUTE = 300;
 
+    // Mỗi lần đăng nhập bằng OAuth tốn hai request (đi + về): đủ cho khoảng 15
+    // người chung một IP văn phòng vào cùng phút, vẫn chặn việc bắn liên tục vào
+    // lượt đổi mã lấy token.
+    public const OAUTH_SIGN_IN_REQUESTS_PER_MINUTE = 30;
+
     /**
      * Register any application services.
      */
@@ -97,6 +102,11 @@ class AppServiceProvider extends ServiceProvider
             'analytics-proxy',
             fn (Request $request) => Limit::perMinute(self::ANALYTICS_EVENTS_PER_MINUTE)
                 ->by(app(PlausibleProxy::class)->clientIp($request)),
+        );
+
+        RateLimiter::for(
+            'oauth-sign-in',
+            fn (Request $request) => Limit::perMinute(self::OAUTH_SIGN_IN_REQUESTS_PER_MINUTE)->by($request->ip()),
         );
     }
 

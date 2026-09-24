@@ -743,6 +743,11 @@ const messages: Record<string, unknown> = {
             "invalid_email": "Please enter a valid email address.",
             "user_exists": "A user with this email address already exists.",
             "failed": "Could not create the account. Please try again."
+        },
+        "oauth": {
+            "failed": "Could not sign you in. Please try again.",
+            "unverified_email": "This email address has not been verified by the provider, so it cannot be used to sign in.",
+            "not_allowed": "This account cannot sign in this way. Please sign in with your password."
         }
     },
     "AUTO_ASSIGNMENT": {
@@ -7663,6 +7668,7 @@ const messages: Record<string, unknown> = {
         },
         "OAUTH": {
             "GOOGLE_LOGIN": "Login with Google",
+            "GOOGLE_CONTINUE": "Continue with Google",
             "BUSINESS_ACCOUNTS_ONLY": "Please use your company email address to login",
             "NO_ACCOUNT_FOUND": "We couldn't find an account for your email address."
         },

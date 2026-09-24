@@ -32,6 +32,8 @@ class User extends Authenticatable
     // 30 giây trước/sau; otphp bắt buộc leeway < chu kỳ 30s nên lấy 29.
     public const OTP_LEEWAY_SECONDS = 29;
 
+    private const RANDOM_PASSWORD_LENGTH = 32;
+
     protected $attributes = [
         'provider' => 'email',
         'availability' => self::AVAILABILITY_ONLINE,
@@ -164,6 +166,13 @@ class User extends Authenticatable
             'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/',
             'regex:/[!@#$%^&*()_+\-=\[\]{}|\'"\/\\\\.,`<>:;?~]/',
         ];
+    }
+
+    // Mật khẩu ngẫu nhiên cho tài khoản không đặt mật khẩu (đăng nhập bằng nhà
+    // cung cấp OAuth); chủ tài khoản muốn dùng mật khẩu thì qua "Quên mật khẩu".
+    public static function randomPassword(): string
+    {
+        return Str::password(self::RANDOM_PASSWORD_LENGTH);
     }
 
     public function accounts(): BelongsToMany

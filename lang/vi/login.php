@@ -22,6 +22,7 @@ return [
     ],
     'OAUTH' => [
         'GOOGLE_LOGIN' => 'Đăng nhập bằng Google',
+        'GOOGLE_CONTINUE' => 'Tiếp tục với Google',
         'BUSINESS_ACCOUNTS_ONLY' => 'Bạn hãy dùng email công ty để đăng nhập',
         'NO_ACCOUNT_FOUND' => 'Chúng tôi không tìm thấy tài khoản nào cho địa chỉ email của bạn.',
     ],

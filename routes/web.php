@@ -7,6 +7,7 @@ use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\App\TeamsSettingsController;
 use App\Http\Controllers\AttachmentsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
+use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
@@ -117,6 +118,12 @@ Route::middleware('guest')->group(function () {
     })->name('verify_email');
     Route::post('/app/auth/verify-email/resend', [RegistrationsController::class, 'resendConfirmation'])
         ->middleware('throttle:5,1')->name('resend_confirmation');
+
+    // Đăng nhập / đăng ký bằng nhà cung cấp OAuth (Google). Nhà cung cấp chưa cấu hình → 404.
+    Route::middleware('throttle:oauth-sign-in')->group(function () {
+        Route::get('/app/auth/oauth/{provider}', [OAuthController::class, 'redirect'])->name('oauth.redirect');
+        Route::get('/app/auth/oauth/{provider}/callback', [OAuthController::class, 'callback'])->name('oauth.callback');
+    });
 });
 
 Route::get('/app/auth/confirmation', [ConfirmationsController::class, 'show'])->name('confirmation');
