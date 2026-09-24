@@ -49,3 +49,43 @@ test('nhánh tệp với text null/undefined → msg rỗng', () => {
     });
     assert.deepEqual(buildSendMessageContent({ attachmentPath: '/tmp/a.png' }), { msg: '', attachments: ['/tmp/a.png'] });
 });
+
+const MENTIONS = [{ uid: '555', pos: 0, len: 5 }];
+
+test('nhóm: tin chữ mang nhắc tên đã lọc theo chữ', () => {
+    assert.deepEqual(
+        buildSendMessageContent({
+            text: '@Bình xem giúp',
+            mentions: [...MENTIONS, { uid: '9', pos: 40, len: 3 }],
+            isGroup: true,
+        }),
+        { msg: '@Bình xem giúp', mentions: MENTIONS },
+    );
+});
+
+test('chat 1-1 hoặc không có mục hợp lệ thì không gắn mentions', () => {
+    assert.deepEqual(buildSendMessageContent({ text: '@Bình xem giúp', mentions: MENTIONS }), { msg: '@Bình xem giúp' });
+    assert.deepEqual(buildSendMessageContent({ text: '@Bình', mentions: [{ uid: '', pos: 0, len: 5 }], isGroup: true }), {
+        msg: '@Bình',
+    });
+});
+
+test('nhóm: tệp + chú thích + trích dẫn + nhắc tên → giữ cả bốn', () => {
+    assert.deepEqual(
+        buildSendMessageContent({
+            text: '@Bình ảnh đơn đây',
+            quote: QUOTE,
+            attachmentPath: '/tmp/zbr-3.jpg',
+            mentions: MENTIONS,
+            isGroup: true,
+        }),
+        { msg: '@Bình ảnh đơn đây', attachments: ['/tmp/zbr-3.jpg'], quote: QUOTE, mentions: MENTIONS },
+    );
+});
+
+test('nhóm: tệp không chú thích thì bỏ nhắc tên (không có chữ để bám)', () => {
+    assert.deepEqual(
+        buildSendMessageContent({ text: '', attachmentPath: '/tmp/zbr-4.pdf', mentions: MENTIONS, isGroup: true }),
+        { msg: '', attachments: ['/tmp/zbr-4.pdf'] },
+    );
+});

@@ -276,6 +276,7 @@
         "outbound_file",
         "outbound_sticker",
         "outbound_reply_to",
+        "outbound_mention",
         "outbound_reaction",
         "outbound_recall",
         "outbound_typing",

@@ -5,6 +5,7 @@ namespace Tests\Contracts\Channels;
 use Tests\Contracts\Channels\Contracts\ChannelContract;
 use Tests\Contracts\Channels\Contracts\EventSeenContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
+use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
 use Tests\Contracts\Channels\Contracts\ReplyToContract;
 use Tests\Contracts\Channels\Harness\ChannelHarness;
@@ -22,6 +23,7 @@ final class ChannelContractRunner
         InboundImageContract::class,
         OutboundAttachmentsContract::class,
         ReplyToContract::class,
+        MentionContract::class,
         EventSeenContract::class,
     ];
 

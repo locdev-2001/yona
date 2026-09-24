@@ -176,8 +176,8 @@ class SendOnZaloService extends BaseSendOnChannelService
 
     /**
      * Một phần = một lượt gọi bridge. Sticker đi riêng; tin có đính kèm thì mỗi
-     * tệp một phần, chú thích + trích dẫn bám vào tệp đầu tiên (zca gộp caption
-     * vào chính tin đính kèm).
+     * tệp một phần, chú thích + trích dẫn + nhắc tên bám vào tệp đầu tiên (zca gộp
+     * caption vào chính tin đính kèm).
      *
      * @return list<array{payload: array<string, mixed>, filename: string|null}>
      */
@@ -198,7 +198,12 @@ class SendOnZaloService extends BaseSendOnChannelService
         $attachments = $this->sendableAttachments();
 
         if ($attachments === []) {
-            return [$this->part([...$thread, 'text' => $this->message->content, 'quote' => $this->quotePayload()], null)];
+            return [$this->part([
+                ...$thread,
+                'text' => $this->message->content,
+                'quote' => $this->quotePayload(),
+                'mentions' => $this->mentionsPayload($channel),
+            ], null)];
         }
 
         $parts = [];
@@ -208,6 +213,7 @@ class SendOnZaloService extends BaseSendOnChannelService
                 ...$thread,
                 'text' => $index === 0 ? $this->message->content : null,
                 'quote' => $index === 0 ? $this->quotePayload() : null,
+                'mentions' => $index === 0 ? $this->mentionsPayload($channel) : null,
                 'file_url' => $this->attachmentUrl($attachment),
                 'media_kind' => $attachment->fileTypeName(),
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
@@ -448,6 +454,35 @@ class SendOnZaloService extends BaseSendOnChannelService
         }
 
         return ! ($msgType === self::WEBCHAT_MSG_TYPE && ! is_string($snapshot['content'] ?? null));
+    }
+
+    /**
+     * Nhắc tên chỉ có nghĩa trong nhóm (zca bỏ qua ở chat 1-1). Lõi đã neo
+     * `content_attributes.mentions` theo nội dung cuối, đơn vị UTF-16 — đúng đơn vị
+     * `pos`/`len` của zca, nên chỉ đổi tên khoá.
+     *
+     * @return list<array{uid: string, pos: int, len: int}>|null
+     */
+    private function mentionsPayload(Zalo $channel): ?array
+    {
+        $mentions = $this->message->content_attributes['mentions'] ?? null;
+
+        if (! $channel->isGroupThread($this->message->conversation) || ! is_array($mentions)) {
+            return null;
+        }
+
+        $payload = [];
+
+        foreach ($mentions as $mention) {
+            if (! is_array($mention) || ! is_scalar($mention['external_id'] ?? null)
+                || ! is_int($mention['offset'] ?? null) || ! is_int($mention['length'] ?? null)) {
+                continue;
+            }
+
+            $payload[] = ['uid' => (string) $mention['external_id'], 'pos' => $mention['offset'], 'len' => $mention['length']];
+        }
+
+        return $payload === [] ? null : $payload;
     }
 
     private function countProactiveMessage(Zalo $channel): void

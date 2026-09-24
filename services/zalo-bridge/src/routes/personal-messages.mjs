@@ -156,6 +156,7 @@ export function registerPersonalMessageRoutes(app, deps) {
                 content_type: req.body?.content_type,
                 quote: req.body?.quote,
                 sticker: req.body?.sticker,
+                mentions: req.body?.mentions,
             });
             return res.json({
                 ok: true,

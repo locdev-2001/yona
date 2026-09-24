@@ -2199,7 +2199,8 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker } = body || {};
+    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions } =
+        body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
@@ -2243,7 +2244,13 @@ async function bridgeSendTextOrMedia(slot, body) {
                 contentTypeHint: typeof content_type === 'string' ? content_type : null,
             });
         }
-        const content = buildSendMessageContent({ text, quote, attachmentPath: tmpPath });
+        const content = buildSendMessageContent({
+            text,
+            quote,
+            attachmentPath: tmpPath,
+            mentions,
+            isGroup: tt === ThreadType.Group,
+        });
         const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {

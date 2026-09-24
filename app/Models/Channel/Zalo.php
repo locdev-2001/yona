@@ -184,11 +184,12 @@ class Zalo extends Model implements DeclaresCapabilities
 
     /**
      * Zalo cá nhân — khai theo trạng thái driver hôm nay (App\Services\Zalo\*).
-     * Chưa khai: outbound_location/contact_card/mention/edit/read_receipt (chưa có
-     * đường thực thi), event_edit/event_presence (Zalo không phát), profile_phone
-     * (chỉ có khi khách gửi danh thiếp của chính mình).
+     * Chưa khai: outbound_location/contact_card/edit/read_receipt (chưa có đường
+     * thực thi), event_edit/event_presence (Zalo không phát), profile_phone (chỉ
+     * có khi khách gửi danh thiếp của chính mình).
      * outbound_reply_to: trả lời chỉ gồm tệp (không chú thích) thì Zalo gửi tệp
      * không kèm trích dẫn — giới hạn của nền tảng, tin vẫn đi bình thường.
+     * outbound_mention: chỉ có tác dụng trong nhóm; chat 1-1 gửi như chữ thường.
      */
     public function capabilities(): CapabilitySet
     {
@@ -214,6 +215,7 @@ class Zalo extends Model implements DeclaresCapabilities
             Capability::OutboundFile,
             Capability::OutboundSticker,
             Capability::OutboundReplyTo,
+            Capability::OutboundMention,
             Capability::OutboundReaction,
             Capability::OutboundRecall,
             Capability::OutboundTyping,

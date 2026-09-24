@@ -566,3 +566,110 @@ it('trích dẫn được chính tin shop đã gửi sau khi echo bổ sung ản
 
     expect($replyPayload['quote']['cliMsgId'])->toBe('1788714999999');
 });
+
+// ── Nhắc tên thành viên nhóm: lõi đã neo offset UTF-16, driver đổi sang uid/pos/len ──
+
+function zaloGroupConversation(Inbox $inbox): Conversation
+{
+    return Conversation::factory()->create([
+        'account_id' => $inbox->account_id,
+        'inbox_id' => $inbox->id,
+        'additional_attributes' => ['thread_id' => 'g1', 'thread_type' => Zalo::THREAD_TYPE_GROUP],
+    ]);
+}
+
+/** @param array<string, mixed> $contentAttributes */
+function zaloMentionReply(Conversation $conversation, string $content, array $contentAttributes): Message
+{
+    return $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => $content,
+        'content_attributes' => $contentAttributes,
+    ]);
+}
+
+it('gửi nhắc tên trong nhóm thành uid/pos/len và giữ nguyên chữ', function () {
+    fakeZaloSendBridge();
+
+    zaloMentionReply(zaloGroupConversation($this->inbox), '@Bình kiểm tra giúp đơn 123', [
+        'mentions' => [['external_id' => '555', 'name' => 'Bình']],
+    ]);
+
+    $payload = zaloSendPayloads()[0];
+
+    expect($payload['thread_type'])->toBe(1)
+        ->and($payload['text'])->toBe('@Bình kiểm tra giúp đơn 123')
+        ->and($payload['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]]);
+});
+
+it('chat 1-1 không gửi nhắc tên dù client API có gửi mentions', function () {
+    fakeZaloSendBridge();
+
+    zaloMentionReply($this->conversation, '@Bình ơi', ['mentions' => [['external_id' => '555', 'name' => 'Bình']]]);
+
+    expect(zaloSendPayloads()[0])->not->toHaveKey('mentions');
+});
+
+it('tin có hai tệp: chỉ phần đầu mang chú thích và nhắc tên', function () {
+    fakeZaloSendBridge();
+    $conversation = zaloGroupConversation($this->inbox);
+
+    $message = new Message([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => '@Bình ảnh đơn đây',
+        'content_attributes' => ['mentions' => [['external_id' => '555', 'name' => 'Bình', 'offset' => 0]]],
+    ]);
+    $message->pendingAttachments = [
+        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/b.png', 'filename' => 'b.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+    ];
+    $message->save();
+
+    $payloads = zaloSendPayloads();
+
+    expect($payloads)->toHaveCount(2)
+        ->and($payloads[0]['text'])->toBe('@Bình ảnh đơn đây')
+        ->and($payloads[0]['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]])
+        ->and($payloads[1])->not->toHaveKey('mentions')
+        ->and($payloads[1])->not->toHaveKey('text');
+});
+
+it('trả lời trích dẫn kèm nhắc tên: phần chữ mang cả quote lẫn mentions', function () {
+    fakeZaloSendBridge();
+    $conversation = zaloGroupConversation($this->inbox);
+    $quoted = zaloReplyTargetWithSnapshot($conversation);
+
+    zaloMentionReply($conversation, 'Nhờ @An xem giúp', [
+        'in_reply_to' => $quoted->id,
+        'mentions' => [['external_id' => '777', 'name' => 'An', 'offset' => 4]],
+    ]);
+
+    $payload = collect(zaloSendPayloads())->last();
+
+    expect($payload['quote']['msgId'])->toBe('msg-zalo-quoted')
+        ->and($payload['mentions'])->toBe([['uid' => '777', 'pos' => 4, 'len' => 3]]);
+});
+
+it('gửi lại tin lỗi vẫn mang nhắc tên', function () {
+    fakeZaloSendBridge();
+    $this->channel->markState(Zalo::STATE_SESSION_LOST, 'not_logged_in');
+    $conversation = zaloGroupConversation($this->inbox);
+    $message = zaloMentionReply($conversation, '@Bình xem giúp', ['mentions' => [['external_id' => '555', 'name' => 'Bình']]]);
+    expect($message->refresh()->status)->toBe(Message::STATUSES['failed'])
+        ->and(zaloSendPayloads())->toBe([]);
+
+    $agent = zaloRetryAgent($this->inbox);
+    $account = Account::find($this->inbox->account_id);
+    $this->channel->markState(Zalo::STATE_CONNECTED);
+
+    $this->actingAs($agent)
+        ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages/{$message->id}/retry")
+        ->assertOk();
+
+    expect(collect(zaloSendPayloads())->last()['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]]);
+});

@@ -37,6 +37,7 @@ final class ZaloHarness implements ChannelHarness
         Capability::InboundContactCard->value => 'business_card',
         Capability::InboundBankCard->value => 'bank_card',
         Capability::InboundReminder->value => 'reminder_created',
+        Capability::GroupThreads->value => 'group_text',
     ];
 
     private ?Conversation $conversation = null;
