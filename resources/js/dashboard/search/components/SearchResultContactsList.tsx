@@ -43,6 +43,7 @@ export default function SearchResultContactsList({
                                 accountId={accountId}
                                 thumbnail={contact.thumbnail}
                                 updatedAt={contact.lastActivityAt}
+                                query={query}
                             />
                         </li>
                     ))}

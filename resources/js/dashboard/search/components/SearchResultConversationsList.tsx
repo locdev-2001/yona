@@ -47,6 +47,8 @@ export default function SearchResultConversationsList({
                                     emailSubject={
                                         (conversation.additionalAttributes?.mail_subject as string | undefined) ?? ''
                                     }
+                                    matchedMemberName={conversation.matchedMemberName}
+                                    query={query}
                                 />
                             </li>
                         );

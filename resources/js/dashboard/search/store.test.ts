@@ -4,6 +4,7 @@ vi.mock('./api', () => ({
     searchContacts: vi.fn(),
     searchConversations: vi.fn(),
     searchMessages: vi.fn(),
+    searchFiles: vi.fn(),
     searchArticles: vi.fn(),
 }));
 
@@ -21,6 +22,7 @@ beforeEach(() => {
     vi.mocked(api.searchContacts).mockResolvedValue([]);
     vi.mocked(api.searchConversations).mockResolvedValue([]);
     vi.mocked(api.searchMessages).mockResolvedValue([]);
+    vi.mocked(api.searchFiles).mockResolvedValue([]);
     vi.mocked(api.searchArticles).mockResolvedValue([]);
 });
 
@@ -67,24 +69,39 @@ describe('searchByKind', () => {
 });
 
 describe('fullSearch', () => {
-    it('queries all four collections and marks the search completed', async () => {
+    it('queries every collection, files included, and marks the search completed', async () => {
         await fullSearch(7, { q: 'bảo hành', page: 1 });
 
         expect(api.searchContacts).toHaveBeenCalledWith(7, { q: 'bảo hành', page: 1 });
         expect(api.searchConversations).toHaveBeenCalledWith(7, { q: 'bảo hành', page: 1 });
         expect(api.searchMessages).toHaveBeenCalledWith(7, { q: 'bảo hành', page: 1 });
+        expect(api.searchFiles).toHaveBeenCalledWith(7, { q: 'bảo hành', page: 1 });
         expect(api.searchArticles).toHaveBeenCalledWith(7, { q: 'bảo hành', page: 1 });
         expect(getSearchState().uiFlags).toMatchObject({ isFetching: false, isSearchCompleted: true });
+    });
+
+    it('keeps a page of files and knows when more may follow', async () => {
+        vi.mocked(api.searchFiles).mockResolvedValue(
+            Array.from({ length: PER_PAGE }, (_unused, index) => ({ id: index + 1 }) as never),
+        );
+
+        await fullSearch(7, { q: 'bao gia', page: 1 });
+
+        expect(getSearchState().fileRecords).toHaveLength(PER_PAGE);
+        expect(getSearchState().uiFlags.file.hasMore).toBe(true);
     });
 });
 
 describe('clearSearchResults', () => {
     it('empties every collection', async () => {
         vi.mocked(api.searchContacts).mockResolvedValue([contact(1)]);
+        vi.mocked(api.searchFiles).mockResolvedValue([{ id: 9 } as never]);
         await searchByKind('contacts', 1, { q: 'a', page: 1 });
+        await searchByKind('files', 1, { q: 'a', page: 1 });
 
         clearSearchResults();
 
         expect(getSearchState().contactRecords).toEqual([]);
+        expect(getSearchState().fileRecords).toEqual([]);
     });
 });

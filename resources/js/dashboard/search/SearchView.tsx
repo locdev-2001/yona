@@ -10,9 +10,19 @@ import SearchTabs, { type SearchTabConfig } from './components/SearchTabs';
 import SearchResultArticlesList from './components/SearchResultArticlesList';
 import SearchResultContactsList from './components/SearchResultContactsList';
 import SearchResultConversationsList from './components/SearchResultConversationsList';
+import SearchResultFilesList from './components/SearchResultFilesList';
 import SearchResultMessagesList from './components/SearchResultMessagesList';
 import { generateURLParams, parseURLParams } from './helpers/searchHelper';
-import { clearSearchResults, fullSearch, searchByKind, useSearchState, type SearchRecordKind } from './store';
+import {
+    clearSearchResults,
+    fullSearch,
+    searchByKind,
+    searchFlagsOf,
+    searchRecordsOf,
+    SEARCH_RECORD_KINDS,
+    useSearchState,
+    type SearchRecordKind,
+} from './store';
 import type { SearchFilterState, SearchTab } from './types';
 import type { DashboardPageProps } from '../types';
 
@@ -23,7 +33,8 @@ import type { DashboardPageProps } from '../types';
 const ALL_TAB: SearchTab = 'all';
 const PREVIEW_COUNT = 5;
 
-const TAB_KEYS: SearchTab[] = ['all', 'contacts', 'conversations', 'messages', 'articles'];
+const firstPages = () =>
+    Object.fromEntries(SEARCH_RECORD_KINDS.map(kind => [kind, 1])) as Record<SearchRecordKind, number>;
 
 export default function SearchView({ tab }: { tab?: string | null }) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
@@ -39,50 +50,40 @@ export default function SearchView({ tab }: { tab?: string | null }) {
             isAdvancedSearchEnabled,
         ),
     );
-    const pages = useRef<Record<Exclude<SearchTab, 'all'>, number>>({
-        contacts: 1,
-        conversations: 1,
-        messages: 1,
-        articles: 1,
-    });
+    const pages = useRef(firstPages());
 
-    const { contactRecords, conversationRecords, messageRecords, articleRecords, uiFlags } = useSearchState();
+    const searchState = useSearchState();
+    const { contactRecords, conversationRecords, messageRecords, fileRecords, articleRecords, uiFlags } = searchState;
 
     const isSelectedTabAll = selectedTab === ALL_TAB;
+    const selectedKind = isSelectedTabAll ? null : (selectedTab as SearchRecordKind);
     const sliceIfAllTab = <T,>(items: T[]) => (isSelectedTabAll ? items.slice(0, PREVIEW_COUNT) : items);
+    const isKindVisible = (kind: SearchRecordKind) => kind !== 'articles' || isHelpCenterEnabled;
 
     const contacts = sliceIfAllTab(contactRecords);
     const conversations = sliceIfAllTab(conversationRecords);
     const messages = sliceIfAllTab(messageRecords);
+    const files = sliceIfAllTab(fileRecords);
     const articles = sliceIfAllTab(articleRecords);
 
     const tabs: SearchTabConfig[] = useMemo(
-        () =>
-            TAB_KEYS.filter(key => key !== 'articles' || isHelpCenterEnabled).map(key => ({
-                key,
-                name: t(`SEARCH.TABS.${key.toUpperCase()}`),
-                count:
-                    key === ALL_TAB
-                        ? null
-                        : {
-                              contacts: contactRecords.length,
-                              conversations: conversationRecords.length,
-                              messages: messageRecords.length,
-                              articles: articleRecords.length,
-                          }[key as Exclude<SearchTab, 'all'>],
-                showBadge: key !== ALL_TAB,
+        () => [
+            { key: ALL_TAB, name: t('SEARCH.TABS.ALL'), count: null, showBadge: false },
+            ...SEARCH_RECORD_KINDS.filter(isKindVisible).map(kind => ({
+                key: kind,
+                name: t(`SEARCH.TABS.${kind.toUpperCase()}`),
+                count: searchRecordsOf(searchState, kind).length,
+                showBadge: true,
             })),
-        [
-            isHelpCenterEnabled,
-            contactRecords.length,
-            conversationRecords.length,
-            messageRecords.length,
-            articleRecords.length,
         ],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [isHelpCenterEnabled, searchState],
     );
 
-    const totalSearchResultsCount =
-        contacts.length + conversations.length + messages.length + (isHelpCenterEnabled ? articles.length : 0);
+    const totalSearchResultsCount = SEARCH_RECORD_KINDS.filter(isKindVisible).reduce(
+        (total, kind) => total + sliceIfAllTab(searchRecordsOf(searchState, kind)).length,
+        0,
+    );
 
     const activeTabIndex = Math.max(
         0,
@@ -90,11 +91,7 @@ export default function SearchView({ tab }: { tab?: string | null }) {
     );
 
     const isFetchingAny =
-        uiFlags.isFetching ||
-        uiFlags.contact.isFetching ||
-        uiFlags.message.isFetching ||
-        uiFlags.conversation.isFetching ||
-        uiFlags.article.isFetching;
+        uiFlags.isFetching || SEARCH_RECORD_KINDS.some(kind => searchFlagsOf(searchState, kind).isFetching);
 
     const showEmptySearchResults =
         totalSearchResultsCount === 0 && uiFlags.isSearchCompleted && isSelectedTabAll && !isFetchingAny && !!query;
@@ -104,44 +101,28 @@ export default function SearchView({ tab }: { tab?: string | null }) {
         isFetchingAny ||
         (!isSelectedTabAll && !!query && !isFetchingAny);
 
-    const hasMoreByTab: Record<Exclude<SearchTab, 'all'>, boolean | undefined> = {
-        contacts: uiFlags.contact.hasMore,
-        conversations: uiFlags.conversation.hasMore,
-        messages: uiFlags.message.hasMore,
-        articles: uiFlags.article.hasMore,
-    };
-    const recordsByTab: Record<Exclude<SearchTab, 'all'>, unknown[]> = {
-        contacts: contactRecords,
-        conversations: conversationRecords,
-        messages: messageRecords,
-        articles: articleRecords,
-    };
-
     const showLoadMore =
         !!query &&
         !isFetchingAny &&
-        !isSelectedTabAll &&
-        recordsByTab[selectedTab as Exclude<SearchTab, 'all'>]?.length > 0 &&
-        Boolean(hasMoreByTab[selectedTab as Exclude<SearchTab, 'all'>]);
+        selectedKind !== null &&
+        searchRecordsOf(searchState, selectedKind).length > 0 &&
+        Boolean(searchFlagsOf(searchState, selectedKind).hasMore);
 
-    const showViewMore = (kind: Exclude<SearchTab, 'all'>) =>
-        recordsByTab[kind].length > PREVIEW_COUNT && isSelectedTabAll;
+    const showViewMore = (kind: SearchRecordKind) =>
+        searchRecordsOf(searchState, kind).length > PREVIEW_COUNT && isSelectedTabAll;
 
-    // Chỉ đính kèm bộ lọc khi advanced_search bật; from/inboxId chỉ dành cho tin nhắn.
+    // Chỉ đính kèm bộ lọc khi advanced_search bật. Luôn gửi đủ bộ lọc đang chọn;
+    // api.ts quyết định loại kết quả nào dùng bộ lọc theo tin.
     const buildSearchPayload = useCallback(
-        (
-            base: { q: string; page: number },
-            searchType: string = 'message',
-            activeFilters: SearchFilterState = filters,
-        ) => {
+        (base: { q: string; page: number }, activeFilters: SearchFilterState = filters) => {
             if (!isAdvancedSearchEnabled) return base;
 
             return {
                 ...base,
                 ...(activeFilters.dateRange.from ? { since: activeFilters.dateRange.from } : {}),
                 ...(activeFilters.dateRange.to ? { until: activeFilters.dateRange.to } : {}),
-                ...(searchType === 'message' && activeFilters.from ? { from: activeFilters.from } : {}),
-                ...(searchType === 'message' && activeFilters.in ? { inboxId: activeFilters.in } : {}),
+                ...(activeFilters.from ? { from: activeFilters.from } : {}),
+                ...(activeFilters.in ? { inboxId: activeFilters.in } : {}),
             };
         },
         [filters, isAdvancedSearchEnabled],
@@ -165,12 +146,12 @@ export default function SearchView({ tab }: { tab?: string | null }) {
     const runSearch = useCallback(
         (nextQuery: string, nextFilters: SearchFilterState = filters) => {
             setQuery(nextQuery);
-            pages.current = { contacts: 1, conversations: 1, messages: 1, articles: 1 };
+            pages.current = firstPages();
             clearSearchResults();
             updateURL(nextQuery, selectedTab, nextFilters);
             if (!nextQuery) return;
 
-            void fullSearch(accountId, buildSearchPayload({ q: nextQuery, page: 1 }, 'message', nextFilters));
+            void fullSearch(accountId, buildSearchPayload({ q: nextQuery, page: 1 }, nextFilters));
         },
         [accountId, buildSearchPayload, filters, selectedTab, updateURL],
     );
@@ -186,15 +167,11 @@ export default function SearchView({ tab }: { tab?: string | null }) {
     }, []);
 
     const loadMore = async () => {
-        if (uiFlags.isFetching || isSelectedTabAll) return;
+        if (uiFlags.isFetching || selectedKind === null) return;
 
-        const kind = selectedTab as Exclude<SearchTab, 'all'>;
+        const kind = selectedKind;
         pages.current[kind] += 1;
-        const success = await searchByKind(
-            kind as SearchRecordKind,
-            accountId,
-            buildSearchPayload({ q: query, page: pages.current[kind] }, kind),
-        );
+        const success = await searchByKind(kind, accountId, buildSearchPayload({ q: query, page: pages.current[kind] }));
         // Lỗi thì lùi lại để lần thử sau lấy đúng trang chưa nạp được.
         if (!success) pages.current[kind] -= 1;
     };
@@ -204,7 +181,7 @@ export default function SearchView({ tab }: { tab?: string | null }) {
         updateURL(query, nextTab, filters);
     };
 
-    const viewMoreButton = (kind: Exclude<SearchTab, 'all'>) =>
+    const viewMoreButton = (kind: SearchRecordKind) =>
         showViewMore(kind) ? (
             <Button
                 label={t('SEARCH.VIEW_MORE')}
@@ -217,7 +194,7 @@ export default function SearchView({ tab }: { tab?: string | null }) {
         ) : null;
 
     const sectionClass = isSelectedTabAll ? 'mt-4' : 'mt-0.5';
-    const showKind = (kind: Exclude<SearchTab, 'all'>) => selectedTab === kind || isSelectedTabAll;
+    const showKind = (kind: SearchRecordKind) => selectedTab === kind || isSelectedTabAll;
 
     return (
         <Dashboard>
@@ -263,17 +240,17 @@ export default function SearchView({ tab }: { tab?: string | null }) {
                             {showResultsSection ? (
                                 <div>
                                     <div className="flex flex-col justify-center">
-                                        {showKind('contacts') ? (
-                                            <SearchResultContactsList
-                                                isFetching={uiFlags.contact.isFetching}
-                                                contacts={contacts}
+                                        {showKind('conversations') ? (
+                                            <SearchResultConversationsList
+                                                isFetching={uiFlags.conversation.isFetching}
+                                                conversations={conversations}
                                                 accountId={accountId}
                                                 query={query}
                                                 showTitle={isSelectedTabAll}
                                                 className="mt-0.5"
                                             />
                                         ) : null}
-                                        {viewMoreButton('contacts')}
+                                        {viewMoreButton('conversations')}
                                     </div>
 
                                     <div className="flex flex-col justify-center">
@@ -291,17 +268,31 @@ export default function SearchView({ tab }: { tab?: string | null }) {
                                     </div>
 
                                     <div className="flex flex-col justify-center">
-                                        {showKind('conversations') ? (
-                                            <SearchResultConversationsList
-                                                isFetching={uiFlags.conversation.isFetching}
-                                                conversations={conversations}
+                                        {showKind('contacts') ? (
+                                            <SearchResultContactsList
+                                                isFetching={uiFlags.contact.isFetching}
+                                                contacts={contacts}
                                                 accountId={accountId}
                                                 query={query}
                                                 showTitle={isSelectedTabAll}
                                                 className={sectionClass}
                                             />
                                         ) : null}
-                                        {viewMoreButton('conversations')}
+                                        {viewMoreButton('contacts')}
+                                    </div>
+
+                                    <div className="flex flex-col justify-center">
+                                        {showKind('files') ? (
+                                            <SearchResultFilesList
+                                                isFetching={uiFlags.file.isFetching}
+                                                files={files}
+                                                accountId={accountId}
+                                                query={query}
+                                                showTitle={isSelectedTabAll}
+                                                className={sectionClass}
+                                            />
+                                        ) : null}
+                                        {viewMoreButton('files')}
                                     </div>
 
                                     {isHelpCenterEnabled ? (

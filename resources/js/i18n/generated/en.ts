@@ -8723,12 +8723,14 @@ const messages: Record<string, unknown> = {
             "CONTACTS": "Contacts",
             "CONVERSATIONS": "Conversations",
             "MESSAGES": "Messages",
+            "FILES": "Files",
             "ARTICLES": "Articles"
         },
         "SECTION": {
             "CONTACTS": "Contacts",
             "CONVERSATIONS": "Conversations",
             "MESSAGES": "Messages",
+            "FILES": "Files",
             "ARTICLES": "Articles"
         },
         "VIEW_MORE": "View more",
@@ -8742,7 +8744,7 @@ const messages: Record<string, unknown> = {
         "RECENT_SEARCHES": "Recent searches",
         "CLEAR_ALL": "Clear all",
         "MOST_RECENT": "Most recent",
-        "EMPTY_STATE_DEFAULT": "Search by conversation id, email, phone number, messages for better search results. ",
+        "EMPTY_STATE_DEFAULT": "Search by customer name, group name, phone number, conversation ID, message text or file name.",
         "BOT_LABEL": "Bot",
         "READ_MORE": "Read more",
         "READ_LESS": "Read less",
@@ -8751,6 +8753,9 @@ const messages: Record<string, unknown> = {
         "EMAIL": "Email",
         "EMAIL_SUBJECT": "Subject",
         "PRIVATE": "Private note",
+        "MATCHED_MEMBER": "Member",
+        "OPEN_FILE": "Open file",
+        "UNTITLED_FILE": "Untitled file",
         "TRANSCRIPT": "Transcript",
         "CREATED_AT": "created {time}",
         "UPDATED_AT": "updated {time}",

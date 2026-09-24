@@ -1,4 +1,5 @@
 import { t } from '../../../i18n';
+import { searchAuthorName } from '../helpers/searchAuthor';
 import MessageContent from './MessageContent';
 import SearchResultMessageItem from './SearchResultMessageItem';
 import SearchResultSection from './SearchResultSection';
@@ -45,7 +46,7 @@ export default function SearchResultMessagesList({
                                 attachments={message.attachments}
                             >
                                 <MessageContent
-                                    author={message.sender?.name || t('SEARCH.BOT_LABEL')}
+                                    author={searchAuthorName(message) || t('SEARCH.BOT_LABEL')}
                                     message={message}
                                     searchTerm={query}
                                 />

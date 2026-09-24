@@ -7,6 +7,7 @@ import countries from 'shared/constants/countries';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import CardLayout from 'dashboard/components-next/CardLayout';
 import Flag from 'dashboard/components-next/flag/Flag';
+import HighlightedText from './HighlightedText';
 
 // Port từ dashboard/modules/search/components/SearchResultContactItem.vue.
 interface SearchResultContactItemProps {
@@ -18,6 +19,7 @@ interface SearchResultContactItemProps {
     accountId: number;
     additionalAttributes?: Record<string, unknown> | null;
     updatedAt?: number | null;
+    query?: string;
 }
 
 const countriesMap = countries.reduce<Record<string, { id: string; name: string }>>((acc, country) => {
@@ -35,6 +37,7 @@ export default function SearchResultContactItem({
     accountId,
     additionalAttributes,
     updatedAt,
+    query = '',
 }: SearchResultContactItemProps) {
     const attributes = (additionalAttributes ?? {}) as { country?: string; country_code?: string; city?: string };
     const activeCountry =
@@ -64,7 +67,9 @@ export default function SearchResultContactItem({
                 <Avatar name={name} src={thumbnail} size={24} roundedFull className="mt-1 flex-shrink-0" />
                 <div className="min-w-0 flex flex-col items-start gap-1.5 w-full">
                     <div className="flex items-center min-w-0 justify-between gap-2 w-full">
-                        <h5 className="text-sm font-medium truncate min-w-0 text-n-slate-12 py-1">{name}</h5>
+                        <h5 className="text-sm font-medium truncate min-w-0 text-n-slate-12 py-1">
+                            <HighlightedText text={name} query={query} />
+                        </h5>
                         {updatedAtTime ? (
                             <span className="text-sm font-normal min-w-0 truncate text-n-slate-11">
                                 {t('SEARCH.UPDATED_AT', { time: updatedAtTime })}
@@ -74,13 +79,13 @@ export default function SearchResultContactItem({
                     <div className="grid items-center gap-3 m-0 text-sm overflow-hidden min-w-0 grid-cols-[minmax(0,max-content)_auto_minmax(0,max-content)_auto_minmax(0,max-content)]">
                         {email ? (
                             <span className="truncate text-n-slate-11 min-w-0" title={email}>
-                                {email}
+                                <HighlightedText text={email} query={query} />
                             </span>
                         ) : null}
                         {email && phone ? <div className="w-px h-3 bg-n-slate-6 rounded" /> : null}
                         {phone ? (
                             <span className="truncate text-n-slate-11 min-w-0" title={phone}>
-                                {phone}
+                                <HighlightedText text={phone} query={query} />
                             </span>
                         ) : null}
                         {(email || phone) && countryDetails ? <div className="w-px h-3 bg-n-slate-6 rounded" /> : null}
