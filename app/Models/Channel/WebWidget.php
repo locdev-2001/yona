@@ -149,6 +149,69 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         );
     }
 
+    /**
+     * Header Content-Security-Policy giới hạn trang nào được nhúng widget, dựng từ
+     * "Tên miền được phép". null = không giới hạn: chưa khai tên miền (giữ widget
+     * khách đã nhúng), hoặc đã bật cờ WebView và request đến từ app di động — WebView
+     * nạp trang từ file:// hay origin "null", không khớp được tên miền nào.
+     */
+    public function frameAncestorsPolicy(?string $requestOrigin): ?string
+    {
+        if (blank($this->allowed_domains)) {
+            return null;
+        }
+
+        if ($this->featureEnabled('allow_mobile_webview') && self::isNonWebOrigin($requestOrigin)) {
+            return null;
+        }
+
+        $sources = collect(preg_split('/[\s,]+/', (string) $this->allowed_domains))
+            ->map(fn (string $domain): ?string => self::frameAncestorSource($domain))
+            ->filter()
+            ->unique();
+
+        return implode(' ', ['frame-ancestors', "'self'", ...$sources]);
+    }
+
+    private static function isNonWebOrigin(?string $origin): bool
+    {
+        return blank($origin) || $origin === 'null' || str_starts_with($origin, 'file://');
+    }
+
+    /**
+     * Một tên miền người dùng nhập → nguồn hợp lệ của frame-ancestors. Bỏ đường dẫn
+     * thừa, giữ scheme http(s) và cổng, hỗ trợ `*.domain`. Giá trị không phải tên
+     * miền bị bỏ qua để không chèn được chỉ thị CSP khác vào header.
+     */
+    private static function frameAncestorSource(string $domain): ?string
+    {
+        if (preg_match('~^(?:(https?)://)?([^/?#]+)~', strtolower(trim($domain)), $parts) !== 1) {
+            return null;
+        }
+
+        [, $scheme, $hostWithPort] = $parts;
+        $hostWithPort = self::toAsciiHost($hostWithPort);
+
+        if (preg_match('/^(\*|(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)*(:(\d{1,5}|\*))?)$/', $hostWithPort) !== 1) {
+            return null;
+        }
+
+        return $scheme === '' ? $hostWithPort : "{$scheme}://{$hostWithPort}";
+    }
+
+    // Tên miền tiếng Việt có dấu phải ở dạng punycode mới khớp được trong CSP.
+    private static function toAsciiHost(string $hostWithPort): string
+    {
+        if (preg_match('/^[\x20-\x7e]*$/', $hostWithPort) === 1 || ! function_exists('idn_to_ascii')) {
+            return $hostWithPort;
+        }
+
+        [$host, $port] = array_pad(explode(':', $hostWithPort, 2), 2, null);
+        $asciiHost = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+
+        return $asciiHost === false ? $hostWithPort : $asciiHost.($port === null ? '' : ":{$port}");
+    }
+
     // web_widget_script — BASE_URL lấy từ config('app.url') thay cho ENV FRONTEND_URL.
     protected function webWidgetScript(): Attribute
     {

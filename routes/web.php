@@ -31,6 +31,7 @@ use App\Http\Controllers\SuperAdmin\PlatformAppsController as SuperAdminPlatform
 use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsController;
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
+use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\SuperAdminInertia;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
@@ -89,7 +90,7 @@ Route::get('/site.webmanifest', fn () => response()->json([
 
 // Trang widget chạy trong iframe của SDK (`/widget?website_token=...`) — không
 // dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.
-Route::get('/widget', fn () => view('widget'))->name('widget');
+Route::get('/widget', fn () => view('widget'))->middleware(RestrictWidgetEmbedding::class)->name('widget');
 
 // Trang khảo sát CSAT công khai (`/survey/responses/{uuid}`) — khách chấm điểm
 // ngoài widget; dữ liệu đi qua mặt tiền public API, trang chỉ nhúng cấu hình
