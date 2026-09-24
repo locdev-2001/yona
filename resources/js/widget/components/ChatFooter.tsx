@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { emitter } from 'shared/helpers/emitter';
 
 import { sendEmailTranscript } from '../api/widget';
@@ -11,32 +10,11 @@ import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import ChatInputWrap from './ChatInputWrap';
+import ReplyPreview from './composer/ReplyPreview';
 import { CHATWOOT_ON_START_CONVERSATION } from '../../sdk/constants/sdkEvents';
-import type { AttachmentPayload, WidgetMessage } from '../types';
+import type { WidgetMessage, WidgetSticker } from '../types';
 
-// Port từ widget/components/ChatFooter.vue + FooterReplyTo.vue.
 const TRANSCRIPT_COOLDOWN_MS = 15000;
-
-function FooterReplyTo({ inReplyTo, onDismiss }: { inReplyTo: WidgetMessage; onDismiss: () => void }) {
-    const attachmentLabel = inReplyTo?.attachments?.length
-        ? t(`ATTACHMENTS.${inReplyTo.attachments[0].file_type}.CONTENT`)
-        : '';
-
-    return (
-        <div className="mb-2.5 rounded-[7px] bg-n-slate-3 px-2 py-1.5 text-sm text-n-slate-11 flex items-center gap-2">
-            <div className="items-center flex-grow truncate">
-                <strong>{t('FOOTER_REPLY_TO.REPLY_TO')}</strong> {inReplyTo.content || attachmentLabel}
-            </div>
-            <button
-                type="button"
-                className="items-end flex-shrink-0 p-1 rounded-md hover:bg-n-slate-5"
-                onClick={onDismiss}
-            >
-                <FluentIcon icon="dismiss" size="12" />
-            </button>
-        </div>
-    );
-}
 
 export default function ChatFooter({ onStartNewConversation }: { onStartNewConversation: () => void }) {
     const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
@@ -65,15 +43,24 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
     const hideReplyBox = !allowMessagesAfterResolved && conversationStatus === 'resolved';
     const hasReplyTo = Boolean(inReplyTo && (inReplyTo.content || inReplyTo.attachments));
 
+    const replyToId = inReplyTo ? inReplyTo.id : null;
+
     const handleSendMessage = async (content: string) => {
-        await widgetStore.sendMessage({ content, replyTo: inReplyTo ? inReplyTo.id : null });
         setInReplyTo(null);
+        await widgetStore.sendMessage({ content, replyTo: replyToId });
         if (conversationSize === 0) await widgetStore.getConversationAttributes();
     };
 
-    const handleSendAttachment = async (attachment: AttachmentPayload) => {
-        await widgetStore.sendAttachment({ attachment, replyTo: inReplyTo ? inReplyTo.id : null });
+    const handleSendFiles = async (files: File[], caption: string) => {
         setInReplyTo(null);
+        await widgetStore.sendAttachments({ files, caption, replyTo: replyToId });
+        if (conversationSize === 0) await widgetStore.getConversationAttributes();
+    };
+
+    const handleSendSticker = async (sticker: WidgetSticker) => {
+        setInReplyTo(null);
+        await widgetStore.sendSticker({ stickerId: sticker.id, replyTo: replyToId });
+        if (conversationSize === 0) await widgetStore.getConversationAttributes();
     };
 
     const startNewConversation = () => {
@@ -129,16 +116,18 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
 
     return (
         <footer
-            className={`relative z-50 mb-1 px-5 ${!isWidgetStyleFlat ? 'rounded-lg' : ''} ${
-                hasReplyTo
-                    ? 'pt-2.5 shadow-[0px_-20px_20px_1px_rgba(0,_0,_0,_0.05)] dark:shadow-[0px_-20px_20px_1px_rgba(0,_0,_0,_0.15)] rounded-t-none'
-                    : ''
+            className={`relative z-50 border-t border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] ${
+                !isWidgetStyleFlat ? 'rounded-b-lg' : ''
             }`.trim()}
         >
             {hasReplyTo ? (
-                <FooterReplyTo inReplyTo={inReplyTo as WidgetMessage} onDismiss={() => setInReplyTo(null)} />
+                <ReplyPreview message={inReplyTo as WidgetMessage} onDismiss={() => setInReplyTo(null)} />
             ) : null}
-            <ChatInputWrap onSendMessage={handleSendMessage} onSendAttachment={handleSendAttachment} />
+            <ChatInputWrap
+                onSendMessage={handleSendMessage}
+                onSendFiles={handleSendFiles}
+                onSendSticker={handleSendSticker}
+            />
         </footer>
     );
 }

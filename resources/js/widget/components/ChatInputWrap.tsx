@@ -2,53 +2,57 @@ import { useEffect, useRef, useState } from 'react';
 import { createTypingIndicator } from '@chatwoot/utils';
 
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
-import Spinner from 'shared/components/Spinner';
 import { checkFileSizeLimit, DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE } from 'shared/helpers/FileHelper';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 
-import { TYPING_INDICATOR_IDLE_TIME, WIDGET_BUS_EVENTS } from '../helpers/constants';
+import { TYPING_INDICATOR_IDLE_TIME } from '../helpers/constants';
 import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
-import EmojiPicker from './EmojiPicker';
-import type { AttachmentPayload } from '../types';
+import AttachMenu from './composer/AttachMenu';
+import AttachmentTray from './composer/AttachmentTray';
+import StickerPanel from './composer/StickerPanel';
+import { readComposerDraft, writeComposerDraft } from './composer/composerStorage';
+import type { WidgetSticker } from '../types';
 
-// Port từ widget/components/ChatInputWrap.vue + ChatAttachment.vue +
-// ChatSendButton.vue + shared/components/ResizableTextArea.vue (phần widget dùng).
-// Bản gốc upload qua ActiveStorage DirectUpload khi bật direct uploads; ở đây tệp
-// đi thẳng trong multipart của POST /messages (backend gộp 2 bước — c2-notes-be §DirectUploads).
+type ComposerPanel = 'attach-menu' | 'stickers' | null;
 
 interface ChatInputWrapProps {
-    onSendMessage: (content: string) => void;
-    onSendAttachment: (attachment: AttachmentPayload) => void;
+    onSendMessage: (content: string) => void | Promise<void>;
+    onSendFiles: (files: File[], caption: string) => void | Promise<void>;
+    onSendSticker: (sticker: WidgetSticker) => void | Promise<void>;
 }
 
-export default function ChatInputWrap({ onSendMessage, onSendAttachment }: ChatInputWrapProps) {
-    const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
+const ACTION_BUTTON_CLASS =
+    'flex flex-shrink-0 items-center justify-center rounded-full size-11 text-[var(--yona-chat-ink-soft)] hover:text-[var(--yona-chat-ink)]';
+
+// Ô nhập dạng viên thuốc với ba hành động: "+" (ảnh/tệp), sticker/emoji, gửi.
+// Tệp chọn vào khay trước, gửi thành MỘT tin kèm chú thích.
+export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticker }: ChatInputWrapProps) {
     const isWidgetOpen = useWidgetState(state => state.appConfig.isWidgetOpen);
     const shouldShowFilePicker = useWidgetState(state => state.appConfig.enableFileUpload);
     const shouldShowEmojiPicker = useWidgetState(state => state.appConfig.enableEmojiPicker);
     const enabledFeatures = useWidgetState(state => state.channelConfig?.enabledFeatures);
+    const stickers = useWidgetState(state => state.messagingPolicy.stickers);
     const maximumFileUploadSize = useWidgetState(
         state => state.globalConfig.MAXIMUM_FILE_UPLOAD_SIZE ?? DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE,
     );
 
-    const [userInput, setUserInput] = useState('');
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [isFocused, setFocused] = useState(false);
-    const [isUploading, setUploading] = useState(false);
+    const [userInput, setUserInput] = useState(readComposerDraft);
+    const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+    const [openPanel, setOpenPanel] = useState<ComposerPanel>(null);
 
     const textarea = useRef<HTMLTextAreaElement>(null);
+    const imageInput = useRef<HTMLInputElement>(null);
     const fileInput = useRef<HTMLInputElement>(null);
-    const emojiWrap = useRef<HTMLDivElement>(null);
 
     const hasAttachmentsEnabled = Boolean(enabledFeatures?.includes('attachments'));
     const hasEmojiPickerEnabled = Boolean(enabledFeatures?.includes('emoji_picker'));
-    // useAttachments: cờ của SDK thắng cấu hình inbox khi được đặt tường minh.
+    // Cờ của SDK thắng cấu hình hộp thư khi được đặt tường minh.
     const canHandleAttachments = shouldShowFilePicker !== undefined ? shouldShowFilePicker : hasAttachmentsEnabled;
+    const canPickReactions = (shouldShowEmojiPicker ?? true) && (hasEmojiPickerEnabled || stickers.length > 0);
 
-    const showAttachment = canHandleAttachments && userInput.length === 0;
-    const showSendButton = userInput.length > 0;
+    const hasContent = userInput.trim().length > 0 || pendingFiles.length > 0;
 
     const typingIndicator = useRef(
         createTypingIndicator(
@@ -60,171 +64,190 @@ export default function ChatInputWrap({ onSendMessage, onSendAttachment }: ChatI
 
     const focusInput = () => textarea.current?.focus();
 
-    // ResizableTextArea gốc focus ngay khi mount nếu ô đang rỗng; ChatInputWrap
-    // focus thêm mỗi lần widget được mở.
-    useEffect(() => {
-        focusInput();
-    }, []);
-
     useEffect(() => {
         if (isWidgetOpen) focusInput();
     }, [isWidgetOpen]);
 
-    // ResizableTextArea: chiều cao bám nội dung (min 2rem như prop rows=1).
+    useEffect(() => {
+        writeComposerDraft(userInput);
+    }, [userInput]);
+
     useEffect(() => {
         const element = textarea.current;
         if (!element) return;
         element.style.height = 'auto';
-        element.style.height = userInput ? `${element.scrollHeight}px` : '';
+        element.style.height = userInput ? `${Math.min(element.scrollHeight, 120)}px` : '';
     }, [userInput]);
 
-    const handleButtonClick = () => {
-        if (userInput && userInput.trim()) {
-            onSendMessage(userInput);
+    const addFiles = (files: File[]) => {
+        const acceptedFiles = files.filter(file => checkFileSizeLimit(file, maximumFileUploadSize));
+        if (acceptedFiles.length < files.length) {
+            widgetStore.showBanner({
+                message: t('FILE_SIZE_LIMIT', { MAXIMUM_FILE_UPLOAD_SIZE: maximumFileUploadSize }),
+                type: 'error',
+            });
         }
-        setUserInput('');
+        if (acceptedFiles.length) setPendingFiles(current => [...current, ...acceptedFiles]);
         focusInput();
     };
 
-    // Bản gốc bắt keypress ở document để Enter gửi tin dù con trỏ ở đâu.
-    useEffect(() => {
-        const handleEnterKeyPress = (event: KeyboardEvent) => {
-            if (event.keyCode === 13 && !event.shiftKey) {
-                event.preventDefault();
-                handleButtonClick();
-            }
-        };
-        document.addEventListener('keypress', handleEnterKeyPress);
-        return () => document.removeEventListener('keypress', handleEnterKeyPress);
-    });
+    const sendComposer = () => {
+        const caption = userInput.trim();
+        if (pendingFiles.length) {
+            void onSendFiles(pendingFiles, caption);
+            setPendingFiles([]);
+        } else if (caption) {
+            void onSendMessage(userInput);
+        } else {
+            return;
+        }
+        setUserInput('');
+        setOpenPanel(null);
+        focusInput();
+    };
 
-    // Dán ảnh từ clipboard → gửi như tệp đính kèm.
     useEffect(() => {
         const handleClipboardPaste = (event: ClipboardEvent) => {
             if (!canHandleAttachments) return;
-            Array.from(event.clipboardData?.items ?? []).forEach(item => {
-                if (item.kind !== 'file') return;
-                event.preventDefault();
-                const file = item.getAsFile();
-                if (file) void uploadFile(file);
-            });
+            const pastedFiles = Array.from(event.clipboardData?.items ?? [])
+                .filter(item => item.kind === 'file')
+                .map(item => item.getAsFile())
+                .filter((file): file is File => Boolean(file));
+            if (!pastedFiles.length) return;
+            event.preventDefault();
+            addFiles(pastedFiles);
         };
         document.addEventListener('paste', handleClipboardPaste);
         return () => document.removeEventListener('paste', handleClipboardPaste);
     });
 
-    const uploadFile = async (file: File) => {
-        setUploading(true);
-        try {
-            if (checkFileSizeLimit(file, maximumFileUploadSize)) {
-                await onSendAttachment({
-                    file,
-                    thumbUrl: window.URL.createObjectURL(file),
-                    fileType: file.type.includes('image') ? 'image' : 'file',
-                });
-            } else {
-                widgetStore.showBanner({
-                    message: t('FILE_SIZE_LIMIT', { MAXIMUM_FILE_UPLOAD_SIZE: maximumFileUploadSize }),
-                    type: 'error',
-                });
-            }
-        } finally {
-            setUploading(false);
-        }
+    const togglePanel = (panel: Exclude<ComposerPanel, null>) =>
+        setOpenPanel(current => (current === panel ? null : panel));
+
+    const readPickedFiles = (input: HTMLInputElement) => {
+        addFiles(Array.from(input.files ?? []));
+        input.value = '';
     };
-
-    const hideEmojiPicker = () => setShowEmojiPicker(false);
-
-    useEffect(() => {
-        if (!showEmojiPicker) return undefined;
-        const onClickAway = (event: globalThis.MouseEvent) => {
-            if (!emojiWrap.current?.contains(event.target as Node)) hideEmojiPicker();
-        };
-        document.addEventListener('click', onClickAway);
-        return () => document.removeEventListener('click', onClickAway);
-    }, [showEmojiPicker]);
 
     return (
         <div
-            className={`items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background !shadow-[0_0_0_1px,0_0_2px_3px] shadow-sm ${
-                isFocused ? '!shadow-[var(--widget-color,#2781f6)]' : '!shadow-n-strong dark:!shadow-n-strong'
-            }`}
+            className="relative"
             onKeyDown={event => {
-                if (event.key === 'Escape') hideEmojiPicker();
+                if (event.key === 'Escape' && openPanel) {
+                    event.stopPropagation();
+                    setOpenPanel(null);
+                }
             }}
         >
-            <textarea
-                id="chat-input"
-                ref={textarea}
-                rows={1}
-                value={userInput}
-                aria-label={t('CHAT_PLACEHOLDER')}
-                placeholder={t('CHAT_PLACEHOLDER')}
-                className="user-message-input reset-base"
-                onChange={event => setUserInput(event.target.value)}
-                onKeyUp={() => typingIndicator.current.start()}
-                onFocus={() => setFocused(true)}
-                onBlur={() => {
-                    typingIndicator.current.stop();
-                    setFocused(false);
-                }}
-            />
-            <div className="relative flex items-center ltr:pl-2 rtl:pr-2" ref={emojiWrap}>
-                {showAttachment ? (
-                    <>
+            {pendingFiles.length ? (
+                <AttachmentTray
+                    files={pendingFiles}
+                    onRemove={fileIndex => setPendingFiles(current => current.filter((_, index) => index !== fileIndex))}
+                    onAddMore={() => imageInput.current?.click()}
+                />
+            ) : null}
+            <div className="relative flex items-end gap-1 px-2 py-2">
+                {canHandleAttachments ? (
+                    <div className="relative">
                         <button
                             type="button"
-                            className="min-h-8 min-w-8 flex items-center justify-center text-n-slate-12"
-                            onClick={() => fileInput.current?.click()}
+                            aria-label={t('COMPOSER.ADD')}
+                            title={t('COMPOSER.ADD')}
+                            aria-expanded={openPanel === 'attach-menu'}
+                            className={ACTION_BUTTON_CLASS}
+                            onClick={() => togglePanel('attach-menu')}
                         >
-                            {isUploading ? <Spinner size="small" /> : <FluentIcon icon="attach" />}
+                            <span className="i-lucide-plus size-[22px]" />
                         </button>
+                        {openPanel === 'attach-menu' ? (
+                            <AttachMenu
+                                maximumFileSizeMb={maximumFileUploadSize}
+                                onPickImages={() => imageInput.current?.click()}
+                                onPickFiles={() => fileInput.current?.click()}
+                                onClose={() => setOpenPanel(null)}
+                            />
+                        ) : null}
                         {/* reset-base: né rule `input:not(.reset-base)` của widget.scss — nó ép display:block. */}
+                        <input
+                            ref={imageInput}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            data-testid="composer-image-input"
+                            className="reset-base hidden"
+                            onChange={event => readPickedFiles(event.target)}
+                        />
                         <input
                             ref={fileInput}
                             type="file"
+                            multiple
                             accept={ALLOWED_FILE_TYPES}
+                            data-testid="composer-file-input"
                             className="reset-base hidden"
-                            onChange={event => {
-                                const file = event.target.files?.[0];
-                                if (file) void uploadFile(file);
-                                event.target.value = '';
-                            }}
+                            onChange={event => readPickedFiles(event.target)}
                         />
-                    </>
+                    </div>
                 ) : null}
-                {shouldShowEmojiPicker && hasEmojiPickerEnabled ? (
-                    <button
-                        type="button"
-                        className="flex items-center justify-center min-h-8 min-w-8"
-                        aria-label={t('EMOJI.ARIA_LABEL')}
-                        onClick={() => setShowEmojiPicker(open => !open)}
-                    >
-                        <FluentIcon
-                            icon="emoji"
-                            className={`transition-all duration-150 ${
-                                showEmojiPicker ? 'text-n-brand' : 'text-n-slate-12'
-                            }`}
-                        />
-                    </button>
-                ) : null}
-                {shouldShowEmojiPicker && showEmojiPicker ? (
-                    <EmojiPicker
-                        className="!bottom-full end-0 mb-2 max-w-[calc(100vw-3rem)]"
-                        onSelect={emoji => setUserInput(current => `${current}${emoji} `)}
+                <div className="flex items-end flex-1 min-w-0 min-h-11 rounded-3xl bg-[var(--yona-chat-field)] ps-4 pe-1">
+                    <textarea
+                        id="chat-input"
+                        ref={textarea}
+                        rows={1}
+                        value={userInput}
+                        aria-label={t('CHAT_PLACEHOLDER')}
+                        placeholder={pendingFiles.length ? t('COMPOSER.CAPTION_PLACEHOLDER') : t('CHAT_PLACEHOLDER')}
+                        className="user-message-input reset-base flex-1 min-w-0 self-center !bg-transparent !py-2.5 text-[15px] leading-5 text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)]"
+                        onChange={event => setUserInput(event.target.value)}
+                        onKeyDown={event => {
+                            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                                event.preventDefault();
+                                sendComposer();
+                            }
+                        }}
+                        onKeyUp={() => typingIndicator.current.start()}
+                        onBlur={() => typingIndicator.current.stop()}
                     />
-                ) : null}
-                {showSendButton ? (
-                    <button
-                        type="submit"
-                        className="min-h-8 min-w-8 flex items-center justify-center ml-1"
-                        style={{ color: widgetColor }}
-                        onClick={handleButtonClick}
-                    >
-                        <FluentIcon icon="send" />
-                    </button>
-                ) : null}
+                    {canPickReactions ? (
+                        <button
+                            type="button"
+                            aria-label={t('COMPOSER.STICKER')}
+                            title={t('COMPOSER.STICKER')}
+                            aria-expanded={openPanel === 'stickers'}
+                            className={`${ACTION_BUTTON_CLASS} ${openPanel === 'stickers' ? '!text-[var(--yona-chat-accent)]' : ''}`}
+                            onClick={() => togglePanel('stickers')}
+                        >
+                            <span className="i-lucide-smile size-[22px]" />
+                        </button>
+                    ) : null}
+                </div>
+                <button
+                    type="submit"
+                    aria-label={t('COMPOSER.SEND')}
+                    title={t('COMPOSER.SEND')}
+                    disabled={!hasContent}
+                    data-state={hasContent ? 'ready' : 'idle'}
+                    className={`flex flex-shrink-0 items-center justify-center rounded-full size-11 transition-colors ${
+                        hasContent
+                            ? 'bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]'
+                            : 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-chat-on-accent)] cursor-default'
+                    }`}
+                    onClick={sendComposer}
+                >
+                    <FluentIcon icon="send" size="20" />
+                </button>
             </div>
+            {openPanel === 'stickers' ? (
+                <StickerPanel
+                    stickers={stickers}
+                    onSelectEmoji={emoji => {
+                        setUserInput(current => `${current}${emoji}`);
+                    }}
+                    onSelectSticker={sticker => {
+                        setOpenPanel(null);
+                        void onSendSticker(sticker);
+                    }}
+                />
+            ) : null}
         </div>
     );
 }
