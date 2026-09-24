@@ -44,6 +44,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Phiên console quản trị
+    |--------------------------------------------------------------------------
+    |
+    | Guard `super_admin` dùng chung cookie phiên với nhân viên (SESSION_LIFETIME
+    | dài 30 ngày) nhưng tự hết hạn sau ngần ấy phút không thao tác trong vùng
+    | /super_admin, /horizon, /pulse, /log-viewer.
+    |
+    */
+
+    'super_admin_idle_minutes' => (int) env('SUPER_ADMIN_IDLE_MINUTES', 120),
+
+    /*
+    |--------------------------------------------------------------------------
     | Blocked email domains
     |--------------------------------------------------------------------------
     |

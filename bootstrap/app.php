@@ -2,13 +2,16 @@
 
 use App\Http\Middleware\AuthenticateApiAccessToken;
 use App\Http\Middleware\EnsureAccountRole;
+use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentAccount;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\ValidateCsrfToken;
 use App\Support\SessionExpiryResponses;
+use App\Support\SuperAdminArea;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -41,7 +44,14 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             HandleInertiaRequests::class,
             TrackUserSessionActivity::class,
+            ExpireIdleSuperAdminSession::class,
         ]);
+        // Phải hết hạn guard super_admin TRƯỚC khi `auth:super_admin` của route
+        // kiểm tra, nếu không request đầu tiên sau khi quá hạn vẫn lọt qua.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: ExpireIdleSuperAdminSession::class,
+        );
 
         // Widget/Platform API cũng phải nói đúng ngôn ngữ của tài khoản.
         $middleware->api(append: [SetLocale::class]);
@@ -62,9 +72,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Dashboard vận hành của gói ngoài (/horizon, /pulse, /log-viewer) cũng
         // chạy trên guard super_admin, nên guest phải về đúng màn đăng nhập đó.
         $middleware->redirectGuestsTo(
-            fn (Request $request) => $request->is('super_admin', 'super_admin/*', 'horizon', 'horizon/*', 'pulse', 'pulse/*', 'log-viewer', 'log-viewer/*')
-                ? '/super_admin/sign_in'
-                : '/app/login',
+            fn (Request $request) => SuperAdminArea::matches($request) ? '/super_admin/sign_in' : '/app/login',
         );
         $middleware->redirectUsersTo(
             fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin' : '/app',

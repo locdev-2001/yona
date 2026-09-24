@@ -32,7 +32,9 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // Thời hạn trượt, tính từ lần thao tác cuối: mỗi request ghi lại phiên và
+    // gia hạn cookie. 30 ngày để nhân viên gập máy qua đêm vẫn vào thẳng hộp thư.
+    'lifetime' => (int) env('SESSION_LIFETIME', 43200),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
