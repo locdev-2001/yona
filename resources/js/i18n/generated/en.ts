@@ -3528,6 +3528,12 @@ const messages: Record<string, unknown> = {
             "with_attachments": "A sticker is sent on its own, without attachments.",
             "missing_sticker_id": "Pick a sticker to send."
         },
+        "widget_recall": {
+            "capability_not_supported": "This channel does not support unsending messages.",
+            "not_own_message": "You can only unsend your own messages.",
+            "already_recalled": "This message was already unsent.",
+            "recall_window_expired": "The time limit for unsending this message has passed."
+        },
         "forward": {
             "not_forwardable": "This type of message cannot be forwarded yet.",
             "attachment_unavailable": "The file :filename is no longer on the server, so it cannot be forwarded.",
@@ -9596,6 +9602,103 @@ const messages: Record<string, unknown> = {
         },
         "FOOTER_REPLY_TO": {
             "REPLY_TO": "Replying to:"
+        },
+        "MESSAGE_ACTIONS": {
+            "REPLY": "Reply",
+            "MORE": "More actions",
+            "RECALL": "Unsend",
+            "COPY": "Copy text"
+        },
+        "RECALL": {
+            "CONFIRM_TITLE": "Unsend this message?",
+            "CONFIRM_BODY": "The message will be removed for both sides. You can only unsend within {minutes} minutes of sending.",
+            "CANCEL": "Cancel",
+            "CONFIRM": "Unsend",
+            "BY_YOU": "You unsent a message",
+            "BY_THEM": "This message was unsent",
+            "EXPIRED": "The time limit for unsending has passed.",
+            "FAILED": "Could not unsend the message. Please try again."
+        },
+        "REPLY": {
+            "REPLYING_TO": "Replying to {name}",
+            "YOU": "You",
+            "CANCEL": "Cancel reply",
+            "JUMP_TO_ORIGINAL": "View original message",
+            "ORIGINAL_UNAVAILABLE": "Original message is no longer available"
+        },
+        "DELIVERY": {
+            "SENT": "Sent",
+            "DELIVERED": "Delivered",
+            "SEEN": "Seen",
+            "SENDING": "Sending…",
+            "FAILED": "Not sent"
+        },
+        "COMPOSER": {
+            "ADD": "Add photo or file",
+            "STICKER": "Stickers and emoji",
+            "SEND": "Send",
+            "CAPTION_PLACEHOLDER": "Add a caption…",
+            "ATTACH_IMAGE": "Photos",
+            "ATTACH_IMAGE_HINT": "You can pick more than one",
+            "ATTACH_FILE": "Files",
+            "ATTACH_FILE_HINT": "Up to {size} per file",
+            "SELECTED_COUNT": "{count} photo selected | {count} photos selected",
+            "REMOVE_ATTACHMENT": "Remove",
+            "ADD_MORE": "Add more"
+        },
+        "STICKER_PANEL": {
+            "TAB_STICKER": "Stickers",
+            "TAB_EMOJI": "Emoji",
+            "TAB_RECENT": "Recent",
+            "RECENT_EMPTY": "Nothing here yet.",
+            "STICKER_ALT": "Sticker"
+        },
+        "ATTACHMENT_STATE": {
+            "UPLOADING": "Sending {count} photo… | Sending {count} photos…",
+            "UPLOADING_FILE": "Sending file…",
+            "UPLOAD_FAILED_TITLE": "Could not send the photo",
+            "UPLOAD_FAILED_FILE_TITLE": "Could not send the file",
+            "UPLOAD_FAILED_SIZE": "File is over {size}",
+            "UPLOAD_FAILED_NETWORK": "Connection is unstable, please try again.",
+            "RETRY": "Try again",
+            "PHOTO_COUNT": "{count} photo | {count} photos",
+            "VIEW_ALL": "View all {count}"
+        },
+        "EMPTY_STATE": {
+            "TITLE": "Hi there!",
+            "BODY": "Send {name} a message about anything. You can attach photos, files or stickers."
+        },
+        "HEADER": {
+            "ONLINE": "Online",
+            "AWAY": "Away",
+            "CLOSE": "Close chat window"
+        },
+        "OUT_OF_HOURS": {
+            "TITLE": "We are outside support hours",
+            "BODY": "Leave a message and we will reply when we open again.",
+            "EMAIL_PLACEHOLDER": "Email to receive our reply",
+            "CTA": "Leave a message"
+        },
+        "CONVERSATION_END": {
+            "TITLE": "This conversation has ended",
+            "RATE_PROMPT": "How was your conversation?",
+            "POOR": "Poor",
+            "OKAY": "Okay",
+            "GREAT": "Great",
+            "FEEDBACK_PLACEHOLDER": "Any extra feedback (optional)",
+            "SUBMIT": "Send rating",
+            "THANKS": "Thanks for your rating!"
+        },
+        "LAUNCHER": {
+            "OPEN": "Open chat",
+            "CLOSE": "Minimize chat",
+            "UNREAD": "{count} unread message | {count} unread messages"
+        },
+        "NEW_MESSAGES": "New messages",
+        "CARD": {
+            "CTA_FALLBACK": "View details",
+            "PREVIOUS": "Previous card",
+            "NEXT": "Next card"
         }
     }
 };

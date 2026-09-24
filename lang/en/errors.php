@@ -86,6 +86,12 @@ return [
         'with_attachments' => 'A sticker is sent on its own, without attachments.',
         'missing_sticker_id' => 'Pick a sticker to send.',
     ],
+    'widget_recall' => [
+        'capability_not_supported' => 'This channel does not support unsending messages.',
+        'not_own_message' => 'You can only unsend your own messages.',
+        'already_recalled' => 'This message was already unsent.',
+        'recall_window_expired' => 'The time limit for unsending this message has passed.',
+    ],
     'forward' => [
         'not_forwardable' => 'This type of message cannot be forwarded yet.',
         'attachment_unavailable' => 'The file :filename is no longer on the server, so it cannot be forwarded.',

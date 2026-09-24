@@ -3528,6 +3528,12 @@ const messages: Record<string, unknown> = {
             "with_attachments": "Sticker được gửi riêng, không kèm tệp.",
             "missing_sticker_id": "Bạn chọn một sticker để gửi nhé."
         },
+        "widget_recall": {
+            "capability_not_supported": "Kênh này chưa cho thu hồi tin nhắn.",
+            "not_own_message": "Bạn chỉ thu hồi được tin nhắn của chính mình.",
+            "already_recalled": "Tin nhắn này đã được thu hồi.",
+            "recall_window_expired": "Đã quá hạn thu hồi tin nhắn này."
+        },
         "forward": {
             "not_forwardable": "Loại tin này chưa chuyển tiếp được.",
             "attachment_unavailable": "Tệp :filename không còn trên máy chủ nên không chuyển tiếp được.",
@@ -9596,6 +9602,103 @@ const messages: Record<string, unknown> = {
         },
         "FOOTER_REPLY_TO": {
             "REPLY_TO": "Đang trả lời:"
+        },
+        "MESSAGE_ACTIONS": {
+            "REPLY": "Trả lời",
+            "MORE": "Thêm",
+            "RECALL": "Thu hồi",
+            "COPY": "Sao chép"
+        },
+        "RECALL": {
+            "CONFIRM_TITLE": "Thu hồi tin nhắn này?",
+            "CONFIRM_BODY": "Tin nhắn sẽ bị xoá với cả hai bên. Chỉ thu hồi được trong {minutes} phút sau khi gửi.",
+            "CANCEL": "Huỷ",
+            "CONFIRM": "Thu hồi",
+            "BY_YOU": "Bạn đã thu hồi một tin nhắn",
+            "BY_THEM": "Tin nhắn đã bị thu hồi",
+            "EXPIRED": "Đã quá hạn thu hồi tin nhắn này.",
+            "FAILED": "Không thu hồi được tin nhắn. Bạn thử lại nhé."
+        },
+        "REPLY": {
+            "REPLYING_TO": "Đang trả lời {name}",
+            "YOU": "Bạn",
+            "CANCEL": "Bỏ trả lời",
+            "JUMP_TO_ORIGINAL": "Xem tin gốc",
+            "ORIGINAL_UNAVAILABLE": "Tin gốc không còn"
+        },
+        "DELIVERY": {
+            "SENT": "Đã gửi",
+            "DELIVERED": "Đã nhận",
+            "SEEN": "Đã xem",
+            "SENDING": "Đang gửi…",
+            "FAILED": "Chưa gửi được"
+        },
+        "COMPOSER": {
+            "ADD": "Gửi ảnh hoặc tệp",
+            "STICKER": "Sticker và emoji",
+            "SEND": "Gửi",
+            "CAPTION_PLACEHOLDER": "Thêm chú thích…",
+            "ATTACH_IMAGE": "Ảnh",
+            "ATTACH_IMAGE_HINT": "Chọn được nhiều ảnh",
+            "ATTACH_FILE": "Tệp",
+            "ATTACH_FILE_HINT": "Tối đa {size} mỗi tệp",
+            "SELECTED_COUNT": "{count} ảnh đã chọn",
+            "REMOVE_ATTACHMENT": "Bỏ",
+            "ADD_MORE": "Thêm nữa"
+        },
+        "STICKER_PANEL": {
+            "TAB_STICKER": "Sticker",
+            "TAB_EMOJI": "Emoji",
+            "TAB_RECENT": "Gần đây",
+            "RECENT_EMPTY": "Chưa có gì ở đây.",
+            "STICKER_ALT": "Sticker"
+        },
+        "ATTACHMENT_STATE": {
+            "UPLOADING": "Đang gửi {count} ảnh…",
+            "UPLOADING_FILE": "Đang gửi tệp…",
+            "UPLOAD_FAILED_TITLE": "Không gửi được ảnh",
+            "UPLOAD_FAILED_FILE_TITLE": "Không gửi được tệp",
+            "UPLOAD_FAILED_SIZE": "Tệp vượt {size}",
+            "UPLOAD_FAILED_NETWORK": "Mạng chập chờn, bạn thử lại nhé.",
+            "RETRY": "Thử lại",
+            "PHOTO_COUNT": "{count} ảnh",
+            "VIEW_ALL": "Xem cả {count} ảnh"
+        },
+        "EMPTY_STATE": {
+            "TITLE": "Chào bạn!",
+            "BODY": "Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh, tệp hoặc sticker."
+        },
+        "HEADER": {
+            "ONLINE": "Đang trực tuyến",
+            "AWAY": "Đang vắng mặt",
+            "CLOSE": "Đóng cửa sổ trò chuyện"
+        },
+        "OUT_OF_HOURS": {
+            "TITLE": "Hiện ngoài giờ hỗ trợ",
+            "BODY": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.",
+            "EMAIL_PLACEHOLDER": "Email để nhận trả lời",
+            "CTA": "Để lại tin nhắn"
+        },
+        "CONVERSATION_END": {
+            "TITLE": "Cuộc trò chuyện đã kết thúc",
+            "RATE_PROMPT": "Bạn thấy cuộc trò chuyện thế nào?",
+            "POOR": "Kém",
+            "OKAY": "Ổn",
+            "GREAT": "Tuyệt",
+            "FEEDBACK_PLACEHOLDER": "Góp ý thêm (không bắt buộc)",
+            "SUBMIT": "Gửi đánh giá",
+            "THANKS": "Cảm ơn bạn đã đánh giá!"
+        },
+        "LAUNCHER": {
+            "OPEN": "Mở trò chuyện",
+            "CLOSE": "Thu nhỏ trò chuyện",
+            "UNREAD": "{count} tin nhắn chưa đọc"
+        },
+        "NEW_MESSAGES": "Tin nhắn mới",
+        "CARD": {
+            "CTA_FALLBACK": "Xem chi tiết",
+            "PREVIOUS": "Thẻ trước",
+            "NEXT": "Thẻ sau"
         }
     }
 };

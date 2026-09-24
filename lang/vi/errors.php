@@ -86,6 +86,12 @@ return [
         'with_attachments' => 'Sticker được gửi riêng, không kèm tệp.',
         'missing_sticker_id' => 'Bạn chọn một sticker để gửi nhé.',
     ],
+    'widget_recall' => [
+        'capability_not_supported' => 'Kênh này chưa cho thu hồi tin nhắn.',
+        'not_own_message' => 'Bạn chỉ thu hồi được tin nhắn của chính mình.',
+        'already_recalled' => 'Tin nhắn này đã được thu hồi.',
+        'recall_window_expired' => 'Đã quá hạn thu hồi tin nhắn này.',
+    ],
     'forward' => [
         'not_forwardable' => 'Loại tin này chưa chuyển tiếp được.',
         'attachment_unavailable' => 'Tệp :filename không còn trên máy chủ nên không chuyển tiếp được.',
