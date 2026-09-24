@@ -203,7 +203,7 @@ export default function Sidebar({
                             </>
                         )}
                     </div>
-                    <div className={`flex gap-2 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
+                    <div className={`flex gap-2 min-w-0 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
                         {!isEffectivelyCollapsed ? (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
@@ -229,7 +229,7 @@ export default function Sidebar({
                             color="slate"
                             size="sm"
                             disabled
-                            className={`dark:hover:!bg-n-slate-9/30 ${
+                            className={`flex-shrink-0 dark:hover:!bg-n-slate-9/30 ${
                                 isEffectivelyCollapsed
                                     ? '!size-8 !outline-n-weak !text-n-slate-11'
                                     : '!h-7 !outline-n-weak !text-n-slate-11'

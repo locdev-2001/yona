@@ -10,6 +10,7 @@ import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
 import CommandBar from 'dashboard/commands/CommandBar';
 import { refreshPushSubscription, vapidPublicKeyOf } from 'dashboard/helper/pushHelper';
 import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
+import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
 import type { DashboardPageProps } from './types';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
@@ -52,6 +53,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
             </main>
             <SnackbarContainer />
             <RealtimeProvider />
+            <UnreadTitleSync />
         </div>
     );
 }

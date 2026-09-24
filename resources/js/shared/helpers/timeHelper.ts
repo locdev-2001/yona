@@ -1,12 +1,13 @@
 import { format, formatDistanceToNow, fromUnixTime, isSameYear } from 'date-fns';
 import { enUS, vi } from 'date-fns/locale';
-import type { Locale } from 'date-fns';
+import type { FormatDistanceToken, Locale } from 'date-fns';
+
+import { t } from '../../i18n';
 
 // Port từ shared/helpers/timeHelper.js (các hàm màn contacts + conversation cần).
 
 // Ngôn ngữ của date-fns cho mọi chuỗi thời gian đọc thành câu. Locale của lần
-// render do máy chủ quyết và in ra ở thẻ <html lang> — cùng nguồn mà i18n dùng,
-// đọc thẳng ở đây để widget/portal không phải kéo theo bundle chuỗi dịch.
+// render do máy chủ quyết và in ra ở thẻ <html lang> — cùng nguồn mà i18n dùng.
 const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, vi };
 
 function activeDateFnsLocale(): Locale {
@@ -68,44 +69,43 @@ export function dateFormat(time: number, df = 'MMM d, yyyy'): string {
     return formatInLocale(time, df);
 }
 
-// Dạng rút gọn (1m/1h/3d) bám gốc nên giữ nguyên ở mọi ngôn ngữ. Các hàm rút gọn
-// đều cắt chuỗi tiếng Anh, vì vậy chúng dựng chuỗi từ đây chứ không qua
-// `dynamicTime` — hàm đó đã dịch theo locale.
-export function distanceToNowInEnglish(time: number): string {
-    return formatDistanceToNow(fromUnixTime(time), { addSuffix: true });
+// Mốc rút gọn cho cột thời gian hẹp: date-fns làm tròn khoảng cách thành token
+// (xMinutes, aboutXHours…), đơn vị ngắn lấy từ lang/{locale}/time_ago.php.
+const SHORT_UNIT_BY_TOKEN: Record<FormatDistanceToken, string> = {
+    lessThanXSeconds: 'NOW',
+    xSeconds: 'NOW',
+    halfAMinute: 'NOW',
+    lessThanXMinutes: 'NOW',
+    xMinutes: 'MINUTES',
+    aboutXHours: 'HOURS',
+    xHours: 'HOURS',
+    xDays: 'DAYS',
+    aboutXWeeks: 'WEEKS',
+    xWeeks: 'WEEKS',
+    aboutXMonths: 'MONTHS',
+    xMonths: 'MONTHS',
+    aboutXYears: 'YEARS',
+    xYears: 'YEARS',
+    overXYears: 'YEARS',
+    almostXYears: 'YEARS',
+};
+
+function shortDistanceLocale(withAgo: boolean): Locale {
+    return {
+        ...enUS,
+        formatDistance: (token, count) => {
+            const unit = SHORT_UNIT_BY_TOKEN[token];
+            if (unit === 'NOW') return t('TIME_AGO.SHORT.NOW');
+
+            const distance = t(`TIME_AGO.SHORT.${unit}`, { count });
+            return withAgo ? t('TIME_AGO.SHORT.AGO', { time: distance }) : distance;
+        },
+    };
 }
 
-// Rút gọn chuỗi formatDistanceToNow thành 1m/1h/1d/1mo/1y như bản gốc.
-export function shortTimestamp(time: string | number, withAgo = false): string {
-    if (typeof time === 'number') {
-        return shortTimestamp(distanceToNowInEnglish(time), withAgo);
-    }
-
-    const suffix = withAgo ? ' ago' : '';
-    const timeMappings: Record<string, string> = {
-        'less than a minute ago': 'now',
-        'in less than a minute': 'now',
-        'a minute ago': `1m${suffix}`,
-        'an hour ago': `1h${suffix}`,
-        'a day ago': `1d${suffix}`,
-        'a month ago': `1mo${suffix}`,
-        'a year ago': `1y${suffix}`,
-    };
-    if (timeMappings[time]) {
-        return timeMappings[time];
-    }
-    return time
-        .replace(/about|over|almost|/g, '')
-        .replace(' minute ago', `m${suffix}`)
-        .replace(' minutes ago', `m${suffix}`)
-        .replace(' hour ago', `h${suffix}`)
-        .replace(' hours ago', `h${suffix}`)
-        .replace(' day ago', `d${suffix}`)
-        .replace(' days ago', `d${suffix}`)
-        .replace(' month ago', `mo${suffix}`)
-        .replace(' months ago', `mo${suffix}`)
-        .replace(' year ago', `y${suffix}`)
-        .replace(' years ago', `y${suffix}`);
+// Nhận cả mốc quá khứ lẫn tương lai (hạn tạm ẩn); không kèm "trước" thì chỉ là độ dài.
+export function shortTimestamp(time: number, withAgo = false): string {
+    return formatDistanceToNow(fromUnixTime(time), { locale: shortDistanceLocale(withAgo) });
 }
 
 // formatDuration: mm:ss, thêm hh khi đủ giờ; giá trị rỗng/âm trả chuỗi rỗng.

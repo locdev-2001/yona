@@ -6,7 +6,7 @@ import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 type TrayPredicate = (data: TrayNotificationData) => boolean;
 
 const tray = vi.hoisted(() => ({
-    applyUnreadTitle: vi.fn(),
+    formatUnreadCount: (count: number) => (count > 99 ? '99+' : String(count)),
     setAppBadgeCount: vi.fn(async () => undefined),
     closeTrayNotifications: vi.fn(async (_predicate: (data: Record<string, unknown>) => boolean) => undefined),
 }));
@@ -18,18 +18,7 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock('./api', () => api);
 
-const navigateListeners = vi.hoisted(() => new Set<() => void>());
-vi.mock('@inertiajs/react', () => ({
-    router: {
-        on: (eventName: string, listener: () => void) => {
-            if (eventName !== 'navigate') return () => undefined;
-            navigateListeners.add(listener);
-            return () => navigateListeners.delete(listener);
-        },
-    },
-}));
-
-import { bindUnreadIndicators, clearUnreadIndicators } from './unreadIndicators';
+import { bindUnreadIndicators, clearUnreadIndicators, withUnreadTitlePrefix } from './unreadIndicators';
 
 const ACCOUNT_ID = 2;
 
@@ -75,42 +64,41 @@ describe('chỉ báo chưa đọc ngoài app', () => {
         await clearUnreadIndicators();
     });
 
-    it('số đã nạp thì đổi tiêu đề tab và badge; về 0 thì đóng thông báo của đúng account', async () => {
+    it('số đã nạp thì đổi tiền tố tiêu đề tab và badge; về 0 thì đóng thông báo của đúng account', async () => {
         api.fetchNotifications.mockResolvedValue({ payload: [unreadNotification(77)], meta: { count: 1, currentPage: 1 } });
         await bindLoaded(3);
 
-        expect(tray.applyUnreadTitle).toHaveBeenLastCalledWith(3);
+        expect(withUnreadTitlePrefix('Yona')).toBe('(3) Yona');
         expect(tray.setAppBadgeCount).toHaveBeenLastCalledWith(3);
         tray.closeTrayNotifications.mockClear();
 
         emitNotification('notification.updated', { id: 1, read_at: null }, 0);
 
-        expect(tray.applyUnreadTitle).toHaveBeenLastCalledWith(0);
+        expect(withUnreadTitlePrefix('Yona')).toBe('Yona');
         expect(tray.setAppBadgeCount).toHaveBeenLastCalledWith(0);
         const closeAccount = closePredicates()[0];
         expect(closeAccount(trayData())).toBe(true);
         expect(closeAccount(trayData({ account_id: 9 }))).toBe(false);
     });
 
-    it('Dashboard dựng lại khi đổi trang thì áp lại tiêu đề và badge, không đóng khay lần nữa', async () => {
+    it('Dashboard dựng lại khi đổi trang thì áp lại badge, không đóng khay lần nữa', async () => {
         await bindLoaded(0);
         vi.clearAllMocks();
 
         bindUnreadIndicators(ACCOUNT_ID);
         await flushPromises();
 
-        expect(tray.applyUnreadTitle).toHaveBeenCalledWith(0);
         expect(tray.setAppBadgeCount).toHaveBeenCalledWith(0);
         expect(tray.closeTrayNotifications).not.toHaveBeenCalled();
         expect(api.fetchUnreadCount).not.toHaveBeenCalled();
     });
 
-    it('chưa nạp xong số thì không đụng tiêu đề và không đóng khay', () => {
+    it('chưa nạp xong số thì tiêu đề không có tiền tố, không đụng badge và khay', () => {
         api.fetchUnreadCount.mockReturnValue(new Promise(() => undefined));
 
         bindUnreadIndicators(ACCOUNT_ID);
 
-        expect(tray.applyUnreadTitle).not.toHaveBeenCalled();
+        expect(withUnreadTitlePrefix('Yona')).toBe('Yona');
         expect(tray.setAppBadgeCount).not.toHaveBeenCalled();
         expect(tray.closeTrayNotifications).not.toHaveBeenCalled();
     });
@@ -214,13 +202,10 @@ describe('chỉ báo chưa đọc ngoài app', () => {
         await expect(bindLoaded(2)).resolves.toBeUndefined();
     });
 
-    it('đổi trang thì áp lại số lên tiêu đề tab', async () => {
-        await bindLoaded(4);
-        tray.applyUnreadTitle.mockClear();
+    it('tiền tố tiêu đề: quá 99 thì hiện 99+', async () => {
+        await bindLoaded(120);
 
-        navigateListeners.forEach(listener => listener());
-
-        expect(tray.applyUnreadTitle).toHaveBeenCalledWith(4);
+        expect(withUnreadTitlePrefix('Cài đặt — Yona')).toBe('(99+) Cài đặt — Yona');
     });
 
     it('đăng xuất: bỏ số ở tiêu đề, xoá badge, đóng mọi thông báo trong khay, thôi nghe event', async () => {
@@ -229,12 +214,11 @@ describe('chỉ báo chưa đọc ngoài app', () => {
 
         await clearUnreadIndicators();
 
-        expect(tray.applyUnreadTitle).toHaveBeenCalledWith(0);
+        expect(withUnreadTitlePrefix('Yona')).toBe('Yona');
         expect(tray.setAppBadgeCount).toHaveBeenCalledWith(0);
         const closeEverything = lastClosePredicate();
         expect(closeEverything(trayData({ account_id: 9 }))).toBe(true);
         expect(closeEverything({})).toBe(true);
-        expect(navigateListeners.size).toBe(0);
 
         vi.clearAllMocks();
         emitNotification('notification.deleted', { id: 5 }, 0);

@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 
+import { documentTitle } from './documentTitle';
 import { setColorTheme } from './dashboard/helper/themeHelper';
 
 const osDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -21,7 +22,7 @@ const pages = import.meta.glob([
 ]);
 
 createInertiaApp({
-    title: title => (title ? `${title} — Yona` : 'Yona'),
+    title: documentTitle,
     resolve: name => {
         const importPage = pages[`./${name}.tsx`];
         if (!importPage) {

@@ -16,7 +16,7 @@ const BELL_FILTERS: FixedNotificationFilters = {
 };
 
 const TRIGGER_BASE_CLASS =
-    'relative flex items-center justify-center rounded-lg outline outline-1 outline-n-weak bg-n-button-color text-n-slate-11 transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30';
+    'relative flex flex-shrink-0 items-center justify-center rounded-lg outline outline-1 outline-n-weak bg-n-button-color text-n-slate-11 transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30';
 
 interface NotificationBellProps {
     isCollapsed: boolean;

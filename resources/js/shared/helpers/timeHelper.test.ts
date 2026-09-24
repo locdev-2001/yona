@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { setLocale } from '../../i18n';
 import { dynamicTime, formatDuration, formatInLocale, messageStamp, messageTimestamp, shortTimestamp } from './timeHelper';
 
 describe('formatDuration', () => {
@@ -43,22 +44,39 @@ describe('dynamicTime', () => {
 });
 
 describe('shortTimestamp', () => {
+    const secondsFromNow = (seconds: number) => Math.floor(Date.now() / 1000) + seconds;
+
     afterEach(() => {
-        document.documentElement.lang = 'en';
+        setLocale('en');
     });
 
-    it('rút gọn chuỗi tiếng Anh như bản gốc', () => {
-        expect(shortTimestamp('an hour ago')).toBe('1h');
-        expect(shortTimestamp('an hour ago', true)).toBe('1h ago');
-        expect(shortTimestamp('less than a minute ago')).toBe('now');
-        // Gốc bỏ chữ "about" nhưng để lại khoảng trắng — giữ nguyên quirk đó.
-        expect(shortTimestamp('about 3 hours ago')).toBe(' 3h');
+    it('tiếng Anh giữ đơn vị một chữ', () => {
+        expect(shortTimestamp(secondsFromNow(-10))).toBe('now');
+        expect(shortTimestamp(secondsFromNow(-3 * 60))).toBe('3m');
+        expect(shortTimestamp(secondsFromNow(-3 * 3600))).toBe('3h');
+        expect(shortTimestamp(secondsFromNow(-86400), true)).toBe('1d ago');
+        expect(shortTimestamp(secondsFromNow(-60 * 86400))).toBe('2mo');
+        expect(shortTimestamp(secondsFromNow(-400 * 86400))).toBe('1y');
     });
 
-    it('giữ dạng rút gọn kể cả khi giao diện đang chạy tiếng Việt', () => {
-        document.documentElement.lang = 'vi';
-        expect(shortTimestamp(Math.floor(Date.now() / 1000) - 3600)).toBe(' 1h');
-        expect(shortTimestamp(Math.floor(Date.now() / 1000) - 86400, true)).toBe('1d ago');
+    it('tiếng Việt viết ngắn tự nhiên, không lộ chữ tiếng Anh', () => {
+        setLocale('vi');
+
+        expect(shortTimestamp(secondsFromNow(-10))).toBe('vừa xong');
+        expect(shortTimestamp(secondsFromNow(-10), true)).toBe('vừa xong');
+        expect(shortTimestamp(secondsFromNow(-26 * 60))).toBe('26 phút');
+        expect(shortTimestamp(secondsFromNow(-2 * 3600))).toBe('2 giờ');
+        expect(shortTimestamp(secondsFromNow(-5 * 86400))).toBe('5 ngày');
+        expect(shortTimestamp(secondsFromNow(-60 * 86400))).toBe('2 tháng');
+        expect(shortTimestamp(secondsFromNow(-400 * 86400))).toBe('1 năm');
+        expect(shortTimestamp(secondsFromNow(-3 * 3600), true)).toBe('3 giờ trước');
+    });
+
+    it('mốc tương lai (hạn tạm ẩn) chỉ là độ dài, không kèm chữ "trước"', () => {
+        expect(shortTimestamp(secondsFromNow(3 * 86400))).toBe('3d');
+
+        setLocale('vi');
+        expect(shortTimestamp(secondsFromNow(2 * 3600))).toBe('2 giờ');
     });
 });
 

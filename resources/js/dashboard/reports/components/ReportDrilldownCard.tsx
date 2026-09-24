@@ -13,7 +13,7 @@ import type { DrilldownRecord } from '../types';
 // Port từ reports/components/ReportDrilldownCard.vue
 
 const formatTimestamp = (timestamp?: number) => (timestamp ? formatInLocale(fromUnixTime(timestamp), 'dd MMM yyyy, h:mm a') : '');
-const compactTimestamp = (timestamp?: number) => (timestamp ? shortTimestamp(timestamp).trim() : '');
+const compactTimestamp = (timestamp?: number) => (timestamp ? shortTimestamp(timestamp) : '');
 
 export default function ReportDrilldownCard({ record }: { record: DrilldownRecord }) {
     const { currentAccount } = usePage<DashboardPageProps>().props;

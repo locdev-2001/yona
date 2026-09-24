@@ -1,6 +1,4 @@
-import { router } from '@inertiajs/react';
-
-import { applyUnreadTitle, closeTrayNotifications, setAppBadgeCount } from 'dashboard/helper/notificationTray';
+import { closeTrayNotifications, formatUnreadCount, setAppBadgeCount } from 'dashboard/helper/notificationTray';
 import type { TrayNotificationData } from 'dashboard/helper/notificationTray';
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import { fetchNotifications } from './api';
@@ -9,7 +7,8 @@ import { bindUnreadCount, getUnreadCountState, resetUnreadCount, subscribeUnread
 
 // Chỉ báo chưa đọc ngoài app (tiêu đề tab, badge biểu tượng app, thông báo trong
 // khay hệ điều hành) đi theo store số chưa đọc. Đây là nơi quyết định khi nào đổi
-// và đóng; chạm trình duyệt thì qua helper/notificationTray.
+// và đóng; chạm trình duyệt thì qua helper/notificationTray. Riêng <title> do head
+// manager của Inertia ghi, qua title callback gọi withUnreadTitlePrefix.
 
 type IndicatorPayload = Partial<NotificationRealtimePayload> & {
     notification?: { id?: number; primary_actor_type?: string; primary_actor_id?: number; read_at?: string | null; snoozed_until?: string | null };
@@ -37,11 +36,15 @@ async function reconcileTray(accountId: number): Promise<void> {
     }
 }
 
-function applyTitleAndBadge(): void {
+export function withUnreadTitlePrefix(title: string): string {
+    const { count } = getUnreadCountState();
+    return count > 0 ? `(${formatUnreadCount(count)}) ${title}` : title;
+}
+
+function applyBadge(): void {
     const { count, isLoaded } = getUnreadCountState();
     if (!isLoaded) return;
 
-    applyUnreadTitle(count);
     void setAppBadgeCount(count);
 }
 
@@ -50,7 +53,7 @@ function onUnreadCountChange(): void {
     // Trước khi nạp xong số vẫn là 0 mặc định: đóng khay lúc này là đóng nhầm cả.
     if (!isLoaded) return;
 
-    applyTitleAndBadge();
+    applyBadge();
 
     if (count === 0) {
         void closeTrayNotifications(data => data.account_id === accountId);
@@ -90,15 +93,12 @@ function attachIndicatorsOnce(): void {
     if (detachIndicators) return;
 
     const unsubscribeCount = subscribeUnreadCount(onUnreadCountChange);
-    // Head manager của Inertia có thể đặt lại <title> khi đổi trang.
-    const unsubscribeNavigate = router.on('navigate', applyTitleAndBadge);
     emitter.on('notification.updated', closeReadConversation);
     emitter.on('notification.deleted', closeDeletedNotification);
     emitter.on(BUS_EVENTS.WEBSOCKET_RECONNECT_COMPLETED, reconcileAfterReconnect);
 
     detachIndicators = () => {
         unsubscribeCount();
-        unsubscribeNavigate();
         emitter.off('notification.updated', closeReadConversation);
         emitter.off('notification.deleted', closeDeletedNotification);
         emitter.off(BUS_EVENTS.WEBSOCKET_RECONNECT_COMPLETED, reconcileAfterReconnect);
@@ -109,7 +109,7 @@ export function bindUnreadIndicators(accountId: number): void {
     if (!accountId) return;
     attachIndicatorsOnce();
     bindUnreadCount(accountId);
-    applyTitleAndBadge();
+    applyBadge();
 }
 
 // Đăng xuất trên máy dùng chung: thông báo trong khay có trích tin khách.
@@ -119,6 +119,5 @@ export async function clearUnreadIndicators(): Promise<void> {
     reconciledAccountIds.clear();
     resetUnreadCount();
 
-    applyUnreadTitle(0);
     await Promise.all([setAppBadgeCount(0), closeTrayNotifications(() => true)]);
 }

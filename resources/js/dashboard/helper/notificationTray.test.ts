@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { applyUnreadTitle, closeTrayNotifications, formatUnreadTitle, setAppBadgeCount } from './notificationTray';
+import { closeTrayNotifications, formatUnreadCount, setAppBadgeCount } from './notificationTray';
 
 const STUBBED_NAVIGATOR_KEYS = ['serviceWorker', 'setAppBadge', 'clearAppBadge'] as const;
 
@@ -16,41 +16,12 @@ afterEach(() => {
     STUBBED_NAVIGATOR_KEYS.forEach(key => {
         delete (navigator as unknown as Record<string, unknown>)[key];
     });
-    document.title = '';
 });
 
-describe('formatUnreadTitle', () => {
-    it('thêm số chưa đọc vào đầu tiêu đề', () => {
-        expect(formatUnreadTitle('Yona', 3)).toBe('(3) Yona');
-    });
-
-    it('về 0 thì bỏ tiền tố', () => {
-        expect(formatUnreadTitle('(3) Yona', 0)).toBe('Yona');
-    });
-
+describe('formatUnreadCount', () => {
     it('quá 99 thì hiện 99+', () => {
-        expect(formatUnreadTitle('(3) Yona', 120)).toBe('(99+) Yona');
-        expect(formatUnreadTitle('(99+) Yona', 5)).toBe('(5) Yona');
-    });
-
-    it('không nhân đôi tiền tố', () => {
-        expect(formatUnreadTitle(formatUnreadTitle('Yona', 2), 2)).toBe('(2) Yona');
-    });
-
-    it('giữ nguyên tiêu đề có số ở giữa', () => {
-        expect(formatUnreadTitle('Hội thoại (12)', 1)).toBe('(1) Hội thoại (12)');
-    });
-});
-
-describe('applyUnreadTitle', () => {
-    it('đổi document.title theo số chưa đọc', () => {
-        document.title = 'Yona';
-
-        applyUnreadTitle(4);
-        expect(document.title).toBe('(4) Yona');
-
-        applyUnreadTitle(0);
-        expect(document.title).toBe('Yona');
+        expect(formatUnreadCount(99)).toBe('99');
+        expect(formatUnreadCount(120)).toBe('99+');
     });
 });
 

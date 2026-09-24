@@ -9364,6 +9364,18 @@ const messages: Record<string, unknown> = {
             "NOT_AVAILABLE": "Không có thông tin tác giả"
         }
     },
+    "TIME_AGO": {
+        "SHORT": {
+            "NOW": "vừa xong",
+            "MINUTES": "{count} phút",
+            "HOURS": "{count} giờ",
+            "DAYS": "{count} ngày",
+            "WEEKS": "{count} tuần",
+            "MONTHS": "{count} tháng",
+            "YEARS": "{count} năm",
+            "AGO": "{time} trước"
+        }
+    },
     "TIME_UNITS": {
         "days": "{1} :count ngày|[2,*] :count ngày",
         "hours": "{1} :count giờ|[2,*] :count giờ",
