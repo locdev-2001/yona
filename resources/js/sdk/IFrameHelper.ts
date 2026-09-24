@@ -19,7 +19,7 @@ import { isWidgetColorLighter } from './helpers/colorHelper';
 import { dispatchWindowEvent } from './helpers/customEvent';
 import { CHATWOOT_ERROR, CHATWOOT_POSTBACK, CHATWOOT_READY } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
-import { FRAME_MESSAGE_PREFIX } from './constants/frameEvents';
+import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM } from './constants/frameEvents';
 import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
@@ -78,6 +78,26 @@ export const IFrameHelper = {
         IFrameHelper.initPostMessageCommunication();
         IFrameHelper.initWindowSizeListener();
         IFrameHelper.preventDefaultScroll();
+    },
+    // Đường xoá phiên khách duy nhất, cho cả trang gọi $chatwoot.reset() lẫn khách bấm nút trong
+    // widget: xoá cookie phiên rồi thay iframe bằng khung mới mang cờ phiên mới để widget quên cả
+    // token nó tự lưu. Thay phần tử thay vì đổi src để không thêm mục lịch sử: nút Back của trang
+    // không được đưa iframe về URL còn mang token cũ. Cờ mang mã riêng từng lần xoá, widget chỉ
+    // dùng mỗi mã một lần.
+    startNewSession: (): void => {
+        const { baseUrl, websiteToken, baseDomain } = window.$chatwoot;
+        removeCookieWithDomain(AUTH_COOKIE, baseDomain);
+        removeCookieWithDomain(getUserCookieName(), baseDomain);
+
+        const iframe = IFrameHelper.getAppFrame();
+        if (iframe) {
+            const resetId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+            const freshFrame = iframe.cloneNode(false) as HTMLIFrameElement;
+            freshFrame.src = `${IFrameHelper.getUrl({ baseUrl, websiteToken })}&${NEW_SESSION_URL_PARAM}=${resetId}`;
+            iframe.replaceWith(freshFrame);
+        }
+
+        window.$chatwoot.resetTriggered = true;
     },
     getAppFrame: (): HTMLIFrameElement | null =>
         document.getElementById('chatwoot_live_chat_widget') as HTMLIFrameElement | null,

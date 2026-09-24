@@ -6,8 +6,53 @@ let authToken = '';
 let websiteToken = '';
 let locale = '';
 
+// Token phiên khách còn được lưu ở localStorage của chính iframe widget (khoá theo website_token):
+// trang chủ không ghi được cookie của SDK (mã nhúng nằm trong iframe khác site, trình duyệt chặn
+// cookie) thì tải lại trang vẫn nhận lại đúng khách. `resetId` là mã lần xoá phiên đã xử lý.
+interface StoredVisitorSession {
+    authToken?: string;
+    resetId?: string;
+}
+
+const visitorSessionKey = (): string => `widget_session:${websiteToken}`;
+
+const readStoredSession = (): StoredVisitorSession => {
+    if (!websiteToken) return {};
+    try {
+        return (JSON.parse(window.localStorage.getItem(visitorSessionKey()) ?? '{}') as StoredVisitorSession) ?? {};
+    } catch {
+        return {};
+    }
+};
+
+const writeStoredSession = (session: StoredVisitorSession): void => {
+    if (!websiteToken) return;
+    try {
+        window.localStorage.setItem(visitorSessionKey(), JSON.stringify(session));
+    } catch {
+        // Trình duyệt chặn bộ nhớ của iframe: phiên chỉ còn dựa vào cookie của SDK.
+    }
+};
+
 export const setAuthToken = (token: string): void => {
     authToken = token;
+    writeStoredSession({ ...readStoredSession(), authToken: token });
+};
+
+// Token lúc widget khởi động: token SDK gắn vào URL (cookie trang chủ) trước, rồi tới token widget
+// tự lưu. Cờ phiên mới từ SDK làm widget quên token đã lưu, mỗi mã cờ chỉ dùng một lần: iframe nạp
+// lại đúng URL đó (trang chuyển bằng Turbo, lịch sử trình duyệt) không được xoá phiên vừa tạo.
+export const restoreAuthToken = ({ tokenFromUrl, resetId }: { tokenFromUrl: string; resetId: string }): void => {
+    const storedSession = readStoredSession();
+    authToken = '';
+
+    if (resetId && storedSession.resetId !== resetId) {
+        writeStoredSession({ resetId });
+        return;
+    }
+
+    const token = tokenFromUrl || storedSession.authToken;
+    if (token) setAuthToken(token);
 };
 
 export const getAuthToken = (): string => authToken;

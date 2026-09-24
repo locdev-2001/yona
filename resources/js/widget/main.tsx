@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 
 import { fetchConfig } from './api/widget';
-import { setAuthToken, setLocale, setWebsiteToken } from './api/client';
-import { getConversationCookie, getLocale, getWebsiteToken } from './helpers/urlParams';
+import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
+import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
@@ -51,10 +51,8 @@ async function bootstrap() {
     const search = window.location.search;
     setWebsiteToken(getWebsiteToken(search));
 
-    // Token phiên cũ do SDK gắn vào URL iframe — gửi ngay ở /config để nhận lại
-    // đúng khách, không đẻ hồ sơ mới.
-    const existingToken = getConversationCookie(search);
-    if (existingToken) setAuthToken(existingToken);
+    // Token phiên cũ gửi ngay ở /config để nhận lại đúng khách, không đẻ hồ sơ mới.
+    restoreAuthToken({ tokenFromUrl: getConversationCookie(search), resetId: getNewSessionResetId(search) });
 
     const localeFromUrl = getLocale(search);
     if (localeFromUrl) setLocale(localeFromUrl);

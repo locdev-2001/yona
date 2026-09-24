@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IFrameHelper } from './IFrameHelper';
-import { FRAME_MESSAGE_PREFIX } from './constants/frameEvents';
+import { FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM } from './constants/frameEvents';
 import { setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import type { ChatwootInstance } from './types';
@@ -151,5 +151,39 @@ describe('giữ phiên khách qua tải lại trang', () => {
         expect(IFrameHelper.getAppFrame()?.src).toBe(
             'https://app.yona.vn/widget?website_token=website-token&cw_conversation=visitor-token',
         );
+    });
+});
+
+describe('xoá phiên khách', () => {
+    const newSessionIdOf = (src: string) => new URL(src).searchParams.get(NEW_SESSION_URL_PARAM);
+
+    it('xoá cookie phiên rồi dựng lại iframe mang cờ phiên mới, không mang token cũ', () => {
+        setCookieWithDomain('cw_conversation', 'visitor-token');
+        const oldFrame = mountAppFrame();
+        oldFrame.src = 'https://app.yona.vn/widget?website_token=website-token&cw_conversation=visitor-token';
+
+        IFrameHelper.startNewSession();
+
+        const freshFrame = IFrameHelper.getAppFrame()!;
+        expect(getCookie('cw_conversation')).toBeUndefined();
+        expect(freshFrame).not.toBe(oldFrame);
+        expect(oldFrame.isConnected).toBe(false);
+        expect(document.querySelectorAll(`#${APP_FRAME_ID}`)).toHaveLength(1);
+        expect(freshFrame.src).toMatch(/^https:\/\/app\.yona\.vn\/widget\?website_token=website-token&new_session=/);
+        expect(freshFrame.src).not.toContain('cw_conversation');
+        expect(window.$chatwoot.resetTriggered).toBe(true);
+    });
+
+    it('mỗi lần xoá phiên mang một mã riêng để widget chỉ xử lý mỗi lần một lần', () => {
+        mountAppFrame();
+
+        IFrameHelper.startNewSession();
+        const firstId = newSessionIdOf(IFrameHelper.getAppFrame()!.src);
+        IFrameHelper.startNewSession();
+        const secondId = newSessionIdOf(IFrameHelper.getAppFrame()!.src);
+
+        expect(firstId).toBeTruthy();
+        expect(secondId).toBeTruthy();
+        expect(secondId).not.toBe(firstId);
     });
 });
