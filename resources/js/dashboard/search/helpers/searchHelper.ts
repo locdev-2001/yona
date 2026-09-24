@@ -12,6 +12,9 @@ export const DATE_RANGE_TYPES = {
     BETWEEN: 'between',
 } as const;
 
+// Máy chủ kẹp mốc since về đúng số tháng này (SearchService::MESSAGE_LOOKBACK_MONTHS).
+export const SEARCH_LOOKBACK_MONTHS = 12;
+
 export const EMPTY_FILTERS: SearchFilterState = {
     from: null,
     in: null,

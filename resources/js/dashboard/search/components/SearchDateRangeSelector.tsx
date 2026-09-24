@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
-import { endOfDay, format, fromUnixTime, getUnixTime, startOfDay, subDays } from 'date-fns';
+import { endOfDay, format, fromUnixTime, getUnixTime, startOfDay, subDays, subMonths } from 'date-fns';
 
 import { t } from '../../../i18n';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import Button from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
-import { DATE_RANGE_TYPES } from '../helpers/searchHelper';
+import { DATE_RANGE_TYPES, SEARCH_LOOKBACK_MONTHS } from '../helpers/searchHelper';
 import type { SearchDateRange } from '../types';
 
 // Port từ dashboard/modules/search/components/SearchDateRangeSelector.vue.
@@ -34,7 +34,7 @@ export default function SearchDateRangeSelector({ value, className = '', onChang
 
     useClickAway(container, () => setShowDropdown(false));
 
-    const minDate = format(subDays(new Date(), 90), 'yyyy-MM-dd');
+    const minDate = format(subMonths(new Date(), SEARCH_LOOKBACK_MONTHS), 'yyyy-MM-dd');
     const maxDate = format(new Date(), 'yyyy-MM-dd');
     const hasCustomDates = Boolean(customFrom && customTo);
 

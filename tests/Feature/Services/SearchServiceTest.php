@@ -301,8 +301,8 @@ describe('message search', function () {
             expect($ids)->toBe([$this->recentMessage->id]);
         });
 
-        it('silently caps since to ninety days ago', function () {
-            $ids = e2Search(['q' => 'wizard', 'since' => now()->subDays(200)->timestamp], 'Message')
+        it('silently caps since to the search lookback', function () {
+            $ids = e2Search(['q' => 'wizard', 'since' => now()->subMonths(SearchService::MESSAGE_LOOKBACK_MONTHS + 6)->timestamp], 'Message')
                 ->perform()['messages']->pluck('id')->all();
 
             expect($ids)->toContain($this->oldMessage->id);
@@ -349,25 +349,25 @@ describe('conversation search', function () {
         expect($ids)->toContain($newConversation->id);
     });
 
-    it('caps the since filter to ninety days ago when advanced_search is on', function () {
+    it('caps the since filter to the search lookback when advanced_search is on', function () {
         $this->account->forceFill(['feature_flags' => ['advanced_search' => true]])->save();
-        $oldConversation = Conversation::factory()->create([
+        $beyondLookback = Conversation::factory()->create([
             'account_id' => $this->account->id,
             'inbox_id' => $this->inbox->id,
             'contact_id' => $this->harry->id,
-            'last_activity_at' => now()->subDays(100),
+            'last_activity_at' => now()->subMonths(SearchService::MESSAGE_LOOKBACK_MONTHS)->subDays(30),
         ]);
-        $recentConversation = Conversation::factory()->create([
+        $withinLookback = Conversation::factory()->create([
             'account_id' => $this->account->id,
             'inbox_id' => $this->inbox->id,
             'contact_id' => $this->harry->id,
-            'last_activity_at' => now()->subDay(),
+            'last_activity_at' => now()->subDays(200),
         ]);
 
-        $ids = e2Search(['q' => 'Harry', 'since' => now()->subDays(100)->timestamp], 'Conversation')
+        $ids = e2Search(['q' => 'Harry', 'since' => now()->subMonths(SearchService::MESSAGE_LOOKBACK_MONTHS * 2)->timestamp], 'Conversation')
             ->perform()['conversations']->pluck('id')->all();
 
-        expect($ids)->toContain($recentConversation->id)->and($ids)->not->toContain($oldConversation->id);
+        expect($ids)->toContain($withinLookback->id)->and($ids)->not->toContain($beyondLookback->id);
     });
 });
 

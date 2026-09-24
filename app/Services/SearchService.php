@@ -22,11 +22,12 @@ class SearchService
 {
     public const RESULTS_PER_PAGE = 15;
 
-    // Giới hạn khoảng thời gian của bộ lọc nâng cao (since/until).
+    // Mốc until của bộ lọc nâng cao không vượt quá bấy nhiêu ngày tới.
     public const TIME_RANGE_LIMIT_DAYS = 90;
 
-    // Tin nhắn và tệp chỉ tìm trong 12 tháng gần nhất: đủ để tra lại báo giá,
-    // chuyển khoản cũ mà vẫn giữ truy vấn gọn.
+    // Tìm kiếm chỉ nhìn lại 12 tháng — tin nhắn, tệp và mốc since của bộ lọc nâng
+    // cao dùng chung một mốc: đủ để tra lại báo giá, chuyển khoản cũ mà vẫn giữ
+    // truy vấn gọn.
     public const MESSAGE_LOOKBACK_MONTHS = 12;
 
     // Người gửi thật của tin nhóm (khoá chuẩn của năng lực group_threads). Kênh
@@ -350,11 +351,11 @@ class SearchService
         return $query;
     }
 
-    // Yêu cầu quá xa bị kẹp im lặng về mốc 90 ngày, không báo lỗi.
+    // Yêu cầu xa hơn mốc tìm kiếm bị kẹp im lặng về mốc đó, không báo lỗi.
     private function capSinceTime(mixed $since): Carbon
     {
         $requested = Carbon::createFromTimestamp((int) $since);
-        $maxLookback = Carbon::now()->subDays(self::TIME_RANGE_LIMIT_DAYS);
+        $maxLookback = Carbon::now()->subMonths(self::MESSAGE_LOOKBACK_MONTHS);
 
         return $requested->greaterThan($maxLookback) ? $requested : $maxLookback;
     }
