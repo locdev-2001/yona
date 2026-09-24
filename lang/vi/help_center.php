@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/help_center.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'TITLE' => 'Trung tâm trợ giúp',
@@ -430,7 +428,7 @@ return [
             'SLUG' => [
                 'LABEL' => 'Đường dẫn',
                 'PLACEHOLDER' => 'Danh mục slug cho url',
-                'HELP_TEXT' => 'app.chatwoot.com/hc/my-portal/en-US/categories/my-slug',
+                'HELP_TEXT' => 'yona.vn/hc/my-portal/en-US/categories/my-slug',
                 'ERROR' => 'Phải có Slug',
             ],
             'DESCRIPTION' => [
@@ -461,7 +459,7 @@ return [
             'SLUG' => [
                 'LABEL' => 'Đường dẫn',
                 'PLACEHOLDER' => 'Danh mục slug cho url',
-                'HELP_TEXT' => 'app.chatwoot.com/hc/my-portal/en-US/categories/my-slug',
+                'HELP_TEXT' => 'yona.vn/hc/my-portal/en-US/categories/my-slug',
                 'ERROR' => 'Phải có Slug',
             ],
             'DESCRIPTION' => [
@@ -698,7 +696,7 @@ return [
                     'LABEL' => 'Đường dẫn',
                     'PLACEHOLDER' => 'Danh mục slug cho url',
                     'ERROR' => 'Phải có Slug',
-                    'HELP_TEXT' => 'app.chatwoot.com/hc/{portalSlug}/{localeCode}/categories/{categorySlug}',
+                    'HELP_TEXT' => 'yona.vn/hc/{portalSlug}/{localeCode}/categories/{categorySlug}',
                 ],
                 'DESCRIPTION' => [
                     'LABEL' => 'Mô tả',
@@ -858,7 +856,7 @@ return [
         'CONFIRM_BUTTON_LABEL' => 'Tạo',
         'NAME' => [
             'LABEL' => 'Tên',
-            'PLACEHOLDER' => 'Hướng dẫn sử dụng | Chatwoot',
+            'PLACEHOLDER' => 'Hướng dẫn sử dụng | Công ty ABC',
             'MESSAGE' => 'Hãy chọn tên cho cổng trợ giúp của bạn.',
             'ERROR' => 'Tên bắt buộc có',
         ],
@@ -932,7 +930,7 @@ return [
                 ],
                 'DNS_CONFIGURATION_DIALOG' => [
                     'HEADER' => 'Cấu hình DNS',
-                    'DESCRIPTION' => 'Đăng nhập vào tài khoản ở nhà cung cấp DNS của bạn và thêm bản ghi CNAME cho tên miền con, trỏ tới chatwoot.help',
+                    'DESCRIPTION' => 'Đăng nhập vào tài khoản ở nhà cung cấp DNS của bạn và thêm bản ghi CNAME bên dưới cho tên miền con.',
                     'COPY' => 'Đã chép CNAME',
                     'SEND_INSTRUCTIONS' => [
                         'HEADER' => 'Gửi hướng dẫn',
@@ -981,7 +979,7 @@ return [
             'HEADER' => 'Tích hợp',
             'DESCRIPTION' => 'Kết nối các công cụ mở rộng khả năng của trung tâm trợ giúp.',
             'LIVE_CHAT' => [
-                'TITLE' => 'Chat trực tuyến với Chatwoot',
+                'TITLE' => 'Chat trực tuyến với {installationName}',
                 'DESCRIPTION' => 'Hiện widget chat trực tuyến trên trung tâm trợ giúp để khách hỏi ngay trong lúc đọc.',
                 'PLACEHOLDER' => 'Chọn widget chat trực tuyến',
                 'NONE_OPTION' => 'Không dùng widget',

@@ -1,8 +1,6 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/automation.json.
-// D1 chỉ hiển thị những action đã có seam trong rewrite; các action external
-// được giữ lại ở trace để D3/D4/F1 nối sau.
+// Chỉ hiển thị những action đã nối vào lõi; action gọi dịch vụ ngoài thêm sau.
 return [
     'system_name' => 'Automation System',
     'HEADER' => 'Automation',

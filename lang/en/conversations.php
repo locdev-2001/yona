@@ -1,8 +1,6 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 config/locales/en.yml — khóa conversations.activity
-// (chuỗi activity message do backend sinh). Chỉ nhánh status/priority/mute;
-// label (B7), SLA (EE), automation (D1) port sau.
+// Chuỗi activity message do backend sinh (nhánh status/priority/mute).
 
 return [
     'activity' => [

@@ -1,9 +1,7 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 app/javascript/survey/i18n/locale/en.json — chuỗi của
-// trang khảo sát công khai `/survey/responses/{uuid}`.
-// `POWERED_BY` nằm ở gốc bundle survey của bản gốc; ở đây gom vào namespace
-// SURVEY vì mỗi file lang là một namespace (§17).
+// Chuỗi của trang khảo sát công khai `/survey/responses/{uuid}`; `POWERED_BY`
+// cũng nằm trong namespace SURVEY vì mỗi file lang là một namespace.
 
 return [
     'DESCRIPTION' => 'Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.',
@@ -20,5 +18,5 @@ return [
         'SUCCESS_MESSAGE' => 'Survey updated successfully',
         'ERROR_MESSAGE' => 'Could not connect to Woot Server, Please try again later',
     ],
-    'POWERED_BY' => 'Powered by Chatwoot',
+    'POWERED_BY' => 'Powered by {installationName}',
 ];

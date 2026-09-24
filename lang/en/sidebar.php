@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace SIDEBAR.
-
 return [
     'NO_ITEMS' => 'No items',
     // Yona: the sidebar box searches everything, unlike the conversation list search box.

@@ -1,14 +1,12 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/signup.json — namespace REGISTER.
-
 return [
     'TRY_WOOT' => 'Create an account',
-    'GET_STARTED' => 'Get started with Chatwoot',
+    'GET_STARTED' => 'Get started with {installationName}',
     'TITLE' => 'Register',
     'TESTIMONIAL_HEADER' => 'All it takes is one step to move forward',
     'TESTIMONIAL_CONTENT' => 'You\'re one step away from engaging your customers, retaining them and finding new ones.',
-    'TERMS_ACCEPT' => 'By creating an account, you agree to our <a href="https://www.chatwoot.com/terms">T & C</a> and <a href="https://www.chatwoot.com/privacy-policy">Privacy policy</a>',
+    'TERMS_ACCEPT' => 'By creating an account, you agree to our <a href="{termsURL}">T & C</a> and <a href="{privacyURL}">Privacy policy</a>',
     'OAUTH' => [
         'GOOGLE_SIGNUP' => 'Sign up with Google',
     ],

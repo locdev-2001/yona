@@ -1,9 +1,6 @@
 <?php
 
-// Port từ khối `super_admin:` trong refs/chatwoot/config/locales/en.yml (phần
-// CE — bỏ `captain_model_overrides` là enterprise). Console quản trị của bản
-// gốc chỉ có tiếng Anh (gem Administrate không đa ngữ), nên đây là nguồn duy
-// nhất cho các chuỗi phía máy chủ của khu /super_admin.
+// Nguồn duy nhất cho các chuỗi phía máy chủ của khu /super_admin.
 return [
     'account_suspension' => [
         'categories' => [

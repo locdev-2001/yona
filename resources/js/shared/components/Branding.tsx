@@ -1,6 +1,8 @@
-// Port từ shared/components/Branding.vue + useBranding — dùng chung cho widget
-// và trang khảo sát công khai; hai nơi lấy `globalConfig` từ hai nguồn khác nhau
-// nên cấu hình được truyền vào chứ không đọc store ở đây.
+import { fillInstallationName } from '../../i18n';
+
+// Nhãn "Powered by" dùng chung cho widget và trang khảo sát công khai; hai nơi
+// lấy `globalConfig` từ hai nguồn khác nhau nên cấu hình được truyền vào chứ
+// không đọc store ở đây.
 export interface BrandingConfig {
     LOGO_THUMBNAIL?: string;
     BRAND_NAME?: string;
@@ -10,7 +12,7 @@ export interface BrandingConfig {
 
 interface BrandingProps {
     globalConfig: BrandingConfig;
-    // Chuỗi "Powered by Chatwoot" của chính bundle gọi vào (widget / survey).
+    // Chuỗi "Powered by {installationName}" của chính bundle gọi vào (widget / survey).
     poweredByLabel: string;
     referrerHost?: string;
     disableBranding?: boolean;
@@ -40,8 +42,7 @@ export default function Branding({
         }
     })();
 
-    // replaceInstallationName: "Powered by Chatwoot" → tên cài đặt thật.
-    const label = poweredByLabel.replace(/Chatwoot/g, globalConfig.INSTALLATION_NAME ?? globalConfig.BRAND_NAME);
+    const label = fillInstallationName(poweredByLabel, globalConfig.INSTALLATION_NAME ?? globalConfig.BRAND_NAME);
 
     return (
         <div className="px-0 py-3 flex justify-center">

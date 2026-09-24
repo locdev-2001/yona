@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace MERGE_CONTACTS.
-
 return [
     'TITLE' => 'Merge contacts',
     'DESCRIPTION' => 'Merge contacts to combine two profiles into one, including all attributes and conversations. In case of conflict, the Primary contact’s attributes will take precedence.',

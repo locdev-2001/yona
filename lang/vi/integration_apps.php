@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/integration_apps.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'FETCHING' => 'Đang lấy Tích hợp',
@@ -74,18 +72,18 @@ return [
     ],
     'dyte' => [
         'name' => 'Dyte',
-        'short_description' => 'Gọi video/thoại với khách hàng ngay trong Chatwoot.',
-        'description' => 'Dyte is a product that integrates audio and video functionalities into your application. With this integration, your agents can start video/voice calls with your customers directly from Chatwoot.',
+        'short_description' => 'Gọi video/thoại với khách hàng ngay trong {installationName}.',
+        'description' => 'Cloudflare RealtimeKit cho phép nhân viên gọi video/thoại với khách hàng ngay trong {installationName}.',
         'meeting_name' => '{agent_name} đã bắt đầu một cuộc họp',
     ],
     'slack' => [
         'name' => 'Slack',
         'short_description' => 'Nhận thông báo và trả lời hội thoại ngay trong Slack.',
-        'description' => 'Nối Chatwoot với Slack để cả đội cùng nắm thông tin. Kết nối này cho phép bạn nhận thông báo hội thoại mới và trả lời ngay trong giao diện Slack.',
+        'description' => 'Nối {installationName} với Slack để cả đội cùng nắm thông tin. Kết nối này cho phép bạn nhận thông báo hội thoại mới và trả lời ngay trong giao diện Slack.',
     ],
     'webhooks' => [
         'name' => 'Webhook',
-        'description' => 'Sự kiện webhook báo tức thời mọi hoạt động trong tài khoản Chatwoot của bạn. Bạn đăng ký những sự kiện mình cần, Chatwoot sẽ gửi HTTP callback kèm nội dung cập nhật.',
+        'description' => 'Sự kiện webhook báo tức thời mọi hoạt động trong tài khoản {installationName} của bạn. Bạn đăng ký những sự kiện mình cần, {installationName} sẽ gửi HTTP callback kèm nội dung cập nhật.',
     ],
     'dialogflow' => [
         'name' => 'Dialogflow',

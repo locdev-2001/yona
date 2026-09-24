@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/advancedFilters.json — namespace FILTER.
-
 return [
     'TITLE' => 'Filter conversations',
     'SUBTITLE' => 'Add your filters below and hit \'Apply filters\' to cut through the chat clutter.',

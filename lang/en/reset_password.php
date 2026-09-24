@@ -1,10 +1,8 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/resetPassword.json — namespace RESET_PASSWORD.
-
 return [
     'TITLE' => 'Reset password',
-    'DESCRIPTION' => 'Enter the email address you use to log in to Chatwoot to get the password reset instructions.',
+    'DESCRIPTION' => 'Enter the email address you use to log in to {installationName} to get the password reset instructions.',
     'GO_BACK_TO_LOGIN' => 'If you want to go back to the login page,',
     'EMAIL' => [
         'LABEL' => 'Email',

@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/agentBots.json — namespace AGENT_BOTS.
-
 return [
     'HEADER' => 'Bots',
     'LOADING_EDITOR' => 'Loading editor...',

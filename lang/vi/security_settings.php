@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/security_settings.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'TITLE' => 'Bảo mật',
@@ -35,7 +33,7 @@ MIIC...',
         'SP_ENTITY_ID' => [
             'LABEL' => 'SP Entity ID',
             'HELP' => 'Mã định danh riêng của ứng dụng này với vai trò nhà cung cấp dịch vụ (tự sinh).',
-            'TOOLTIP' => 'Mã định danh riêng của Chatwoot với vai trò nhà cung cấp dịch vụ — cấu hình giá trị này trong IdP của bạn',
+            'TOOLTIP' => 'Mã định danh riêng của {installationName} với vai trò nhà cung cấp dịch vụ — cấu hình giá trị này trong IdP của bạn',
         ],
         'IDP_ENTITY_ID' => [
             'LABEL' => 'Entity ID của nhà cung cấp danh tính',

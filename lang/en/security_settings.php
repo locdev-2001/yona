@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace SECURITY_SETTINGS.
-
 return [
     'TITLE' => 'Security',
     'DESCRIPTION' => 'Manage your account security settings.',
@@ -33,7 +31,7 @@ MIIC...',
         'SP_ENTITY_ID' => [
             'LABEL' => 'SP Entity ID',
             'HELP' => 'Unique identifier for this application as a service provider (auto-generated).',
-            'TOOLTIP' => 'Unique identifier for Chatwoot as the Service Provider - Configure this in your IdP settings',
+            'TOOLTIP' => 'Unique identifier for {installationName} as the Service Provider - Configure this in your IdP settings',
         ],
         'IDP_ENTITY_ID' => [
             'LABEL' => 'Identity Provider Entity ID',

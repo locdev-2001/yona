@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
-import CustomBrandPolicyWrapper from 'dashboard/components/CustomBrandPolicyWrapper';
 import BackButton from 'dashboard/components/widgets/BackButton';
 import { getHelpUrlForFeature } from 'dashboard/helper/featureHelper';
 
@@ -53,22 +52,17 @@ export default function BaseSettingsHeader({
                                 {description}
                             </p>
                         ) : null}
-                        <CustomBrandPolicyWrapper showOnCustomBrandedInstance={false}>
-                            {helpURL && linkText ? (
-                                <a
-                                    href={helpURL}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="items-center hidden gap-1 text-sm font-medium sm:inline-flex w-fit text-n-blue-11 hover:underline mb-2"
-                                >
-                                    {linkText}
-                                    <Icon
-                                        icon="i-lucide-chevron-right"
-                                        className="flex-shrink-0 text-n-blue-11 size-4"
-                                    />
-                                </a>
-                            ) : null}
-                        </CustomBrandPolicyWrapper>
+                        {helpURL && linkText ? (
+                            <a
+                                href={helpURL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="items-center hidden gap-1 text-sm font-medium sm:inline-flex w-fit text-n-blue-11 hover:underline mb-2"
+                            >
+                                {linkText}
+                                <Icon icon="i-lucide-chevron-right" className="flex-shrink-0 text-n-blue-11 size-4" />
+                            </a>
+                        ) : null}
                     </div>
                 ) : null}
             </div>

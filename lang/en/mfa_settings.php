@@ -1,7 +1,7 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/mfa.json — namespace MFA_SETTINGS
-// (mfa.json gốc chứa hai namespace, tách hai file theo quy ước một file = một namespace).
+// Namespace MFA_SETTINGS; phần nhập mã lúc đăng nhập ở mfa_verification.php
+// (một file = một namespace).
 
 return [
     'TITLE' => 'Two-Factor Authentication',

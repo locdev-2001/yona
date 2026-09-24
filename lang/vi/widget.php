@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/widget.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'COMPONENTS' => [
@@ -70,7 +68,7 @@ return [
     'BUBBLE' => [
         'LABEL' => 'Trò chuyện với chúng tôi',
     ],
-    'POWERED_BY' => 'Cung cấp bởi Chatwoot',
+    'POWERED_BY' => 'Cung cấp bởi {installationName}',
     'EMAIL_PLACEHOLDER' => 'Vui lòng nhập email',
     'CHAT_PLACEHOLDER' => 'Gõ tin nhắn của bạn',
     'TODAY' => 'Hôm nay',

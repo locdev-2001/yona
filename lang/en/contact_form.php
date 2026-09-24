@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace CONTACT_FORM.
-
 return [
     'FORM' => [
         'SUBMIT' => 'Submit',

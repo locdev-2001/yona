@@ -1,7 +1,6 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/inbox.json — namespace INBOX
-// (trung tâm thông báo "My Inbox"). Bỏ nhánh REAUTHORIZE (kênh WhatsApp, nhóm F).
+// Namespace INBOX (trung tâm thông báo "My Inbox").
 
 return [
     'LIST' => [

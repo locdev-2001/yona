@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace CONVERSATION_PARTICIPANTS.
-
 return [
     'SIDEBAR_MENU_TITLE' => 'Participating',
     'SIDEBAR_TITLE' => 'Conversation participants',

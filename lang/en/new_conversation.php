@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace NEW_CONVERSATION.
-
 return [
     'BUTTON_LABEL' => 'Start conversation',
     'TITLE' => 'New conversation',

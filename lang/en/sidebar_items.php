@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace SIDEBAR_ITEMS.
-
 return [
     'CHANGE_AVAILABILITY_STATUS' => 'Change',
     'CHANGE_ACCOUNTS' => 'Switch account',

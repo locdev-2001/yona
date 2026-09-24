@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/generalSettings.json — namespace COMMAND_BAR.
-
 return [
     'SEARCH_PLACEHOLDER' => 'Search or jump to',
     'SNOOZE_PLACEHOLDER' => 'Type a time e.g. tomorrow, 2 hours, next friday, jan 15...',

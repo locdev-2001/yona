@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/cannedMgmt.json — namespace CANNED_MGMT.
-
 return [
     'HEADER' => 'Canned Responses',
     'LEARN_MORE' => 'Learn more about canned responses',

@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/onboarding_inbox_setup.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'GREETING' => 'Cùng thiết lập vài thứ nào',
@@ -13,7 +11,7 @@ return [
     'WHATSAPP_CONNECTED' => 'Đã kết nối WhatsApp',
     'FACEBOOK_CONNECTED' => 'Đã kết nối Facebook',
     'META_RESTRICTION' => [
-        'MESSAGE' => 'Tạm thời chưa thiết lập được hộp thư Facebook, Instagram và WhatsApp do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+        'MESSAGE' => 'Tạm thời chưa thiết lập được hộp thư Facebook, Instagram và WhatsApp do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
         'STATUS_LINK' => 'Xem cập nhật tình trạng',
     ],
     'CREATED_FOR_YOU' => [

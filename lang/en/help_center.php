@@ -1,7 +1,6 @@
 <?php
 
-// Port từ refs/chatwoot/app/javascript/dashboard/i18n/locale/en/helpCenter.json (v4.17.1).
-// Namespace HELP_CENTER; giữ nguyên key và chuỗi gốc (kể cả nhánh số nhiều `a | b`).
+// Namespace HELP_CENTER (có nhánh số nhiều `a | b`).
 return [
     'TITLE' => 'Help Center',
     'NEW_PAGE' => [
@@ -428,7 +427,7 @@ return [
             'SLUG' => [
                 'LABEL' => 'Slug',
                 'PLACEHOLDER' => 'Category slug for urls',
-                'HELP_TEXT' => 'app.chatwoot.com/hc/my-portal/en-US/categories/my-slug',
+                'HELP_TEXT' => 'yona.vn/hc/my-portal/en-US/categories/my-slug',
                 'ERROR' => 'Slug is required',
             ],
             'DESCRIPTION' => [
@@ -459,7 +458,7 @@ return [
             'SLUG' => [
                 'LABEL' => 'Slug',
                 'PLACEHOLDER' => 'Category slug for urls',
-                'HELP_TEXT' => 'app.chatwoot.com/hc/my-portal/en-US/categories/my-slug',
+                'HELP_TEXT' => 'yona.vn/hc/my-portal/en-US/categories/my-slug',
                 'ERROR' => 'Slug is required',
             ],
             'DESCRIPTION' => [
@@ -696,7 +695,7 @@ return [
                     'LABEL' => 'Slug',
                     'PLACEHOLDER' => 'Category slug for urls',
                     'ERROR' => 'Slug is required',
-                    'HELP_TEXT' => 'app.chatwoot.com/hc/{portalSlug}/{localeCode}/categories/{categorySlug}',
+                    'HELP_TEXT' => 'yona.vn/hc/{portalSlug}/{localeCode}/categories/{categorySlug}',
                 ],
                 'DESCRIPTION' => [
                     'LABEL' => 'Description',
@@ -856,7 +855,7 @@ return [
         'CONFIRM_BUTTON_LABEL' => 'Create',
         'NAME' => [
             'LABEL' => 'Name',
-            'PLACEHOLDER' => 'User Guide | Chatwoot',
+            'PLACEHOLDER' => 'User Guide | Acme',
             'MESSAGE' => 'Choose an name for your portal.',
             'ERROR' => 'Name is required',
         ],
@@ -930,7 +929,7 @@ return [
                 ],
                 'DNS_CONFIGURATION_DIALOG' => [
                     'HEADER' => 'DNS configuration',
-                    'DESCRIPTION' => 'Log in to the account you have with your DNS provider, and add a CNAME record for subdomain pointing to chatwoot.help',
+                    'DESCRIPTION' => 'Log in to your DNS provider and add the CNAME record below for your subdomain.',
                     'COPY' => 'Successfully copied CNAME',
                     'SEND_INSTRUCTIONS' => [
                         'HEADER' => 'Send instructions',
@@ -979,7 +978,7 @@ return [
             'HEADER' => 'Integrations',
             'DESCRIPTION' => 'Connect tools that extend what your help center can do.',
             'LIVE_CHAT' => [
-                'TITLE' => 'Live chat with Chatwoot',
+                'TITLE' => 'Live chat with {installationName}',
                 'DESCRIPTION' => 'Show a live chat widget on your help center so visitors can reach you while they read.',
                 'PLACEHOLDER' => 'Select live chat widget',
                 'NONE_OPTION' => 'No widget',

@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace DATA_IMPORTS.
-
 return [
     'HEADER' => 'Data',
     'DESCRIPTION' => 'Bring your existing contacts and past conversations into this account from another support tool. Each import runs in the background, so you can keep working while it finishes, track its progress, and review anything that was skipped along the way.',

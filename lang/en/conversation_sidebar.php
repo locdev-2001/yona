@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace CONVERSATION_SIDEBAR.
-
 return [
     'ASSIGNEE_LABEL' => 'Assigned Agent',
     'SELF_ASSIGN' => 'Assign to me',

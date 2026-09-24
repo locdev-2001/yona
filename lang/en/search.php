@@ -1,6 +1,5 @@
 <?php
 
-// Port từ dashboard/i18n/locale/en/search.json — giữ nguyên key của Chatwoot.
 return [
     'TABS' => [
         'ALL' => 'All results',

@@ -1,7 +1,6 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 config/locales/en.yml — khóa `notifications`
-// (tiêu đề/nội dung xem trước do backend sinh cho thông báo và push).
+// Tiêu đề/nội dung xem trước do backend sinh cho thông báo và push.
 
 return [
     'notification_title' => [

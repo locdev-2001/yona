@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/teamsSettings.json — namespace TEAMS_SETTINGS.
-
 return [
     'NEW_TEAM' => 'Create new team',
     'HEADER' => 'Teams',

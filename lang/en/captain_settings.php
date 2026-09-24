@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace CAPTAIN_SETTINGS.
-
 return [
     'TITLE' => 'Captain Settings',
     'DESCRIPTION' => 'Configure your AI models and features for Captain. Captain follows a credit based billing, you will be charged credits for every action Captain takes based on the model selected.',

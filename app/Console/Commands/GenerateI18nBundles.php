@@ -12,7 +12,7 @@ use Symfony\Component\Finder\SplFileInfo;
 /**
  * Sinh bundle frontend từ lang/{locale}/*.php — nguồn chân lý duy nhất cho mọi chuỗi giao diện.
  *
- * Mỗi file lang/en/<name>.php là một namespace Chatwoot: strtoupper(<name>) (conversation.php → CONVERSATION).
+ * Mỗi file lang/en/<name>.php là một namespace: strtoupper(<name>) (conversation.php → CONVERSATION).
  * Chuỗi được chép nguyên văn (placeholder `{name}`), chỉ kiểm tra cấu trúc và độ phủ key giữa các locale.
  */
 class GenerateI18nBundles extends Command

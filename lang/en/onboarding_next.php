@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/onboarding.json — namespace ONBOARDING_NEXT.
-
 return [
     'GREETING' => 'Hello {name}!',
     'SUBTITLE' => 'Please review the following details',

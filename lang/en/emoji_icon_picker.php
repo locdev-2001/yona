@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/emojiIconPicker.json — namespace EMOJI_ICON_PICKER.
-
 return [
     'TABS' => [
         'ICONS' => 'Icons',

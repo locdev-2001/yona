@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace CONVERSATION_CUSTOM_ATTRIBUTES.
-
 return [
     'ADD_BUTTON_TEXT' => 'Create attribute',
     'NO_RECORDS_FOUND' => 'No attributes found',

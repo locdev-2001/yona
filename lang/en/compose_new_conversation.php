@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace COMPOSE_NEW_CONVERSATION.
-
 return [
     'CONTACT_SEARCH' => [
         'ERROR_MESSAGE' => 'We couldn’t complete the search. Please try again.',

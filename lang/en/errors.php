@@ -37,7 +37,7 @@ return [
         'invalid_token' => 'Invalid or expired MFA token',
         'invalid_credentials' => 'Invalid credentials or verification code',
     ],
-    // Chatwoot đặt ở `profile_settings.sessions` — chuyển vào đây để không đụng
+    // Đặt ở đây thay vì `profile_settings.sessions` để không đụng
     // namespace PROFILE_SETTINGS của bundle FE (lang/en/profile_settings.php).
     'sessions' => [
         'cannot_revoke_current' => 'You cannot revoke the current session.',

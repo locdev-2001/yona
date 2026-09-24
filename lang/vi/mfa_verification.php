@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/mfa_verification.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'TITLE' => 'Xác thực hai lớp',
@@ -24,7 +22,7 @@ return [
         'BACKUP_TITLE' => 'Dùng mã dự phòng',
         'BACKUP_DESC' => 'Nếu không mở được ứng dụng xác thực, bạn có thể dùng một trong các mã dự phòng đã lưu khi thiết lập xác thực hai lớp. Mỗi mã chỉ dùng được một lần.',
         'CONTACT_TITLE' => 'Cần trợ giúp thêm?',
-        'CONTACT_DESC_CLOUD' => 'Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ bộ phận hỗ trợ của Chatwoot.',
+        'CONTACT_DESC_CLOUD' => 'Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ bộ phận hỗ trợ của {installationName}.',
         'CONTACT_DESC_SELF_HOSTED' => 'Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ quản trị viên của bạn.',
     ],
     'VERIFICATION_FAILED' => 'Xác minh thất bại. Bạn hãy thử lại.',

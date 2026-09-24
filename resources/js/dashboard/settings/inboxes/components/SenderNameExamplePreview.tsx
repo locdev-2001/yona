@@ -17,7 +17,7 @@ export default function SenderNameExamplePreview({
     isWebsiteChannel = false,
     onUpdate,
 }: SenderNameExamplePreviewProps) {
-    const { replaceInstallationName } = useBranding();
+    const { installationName } = useBranding();
 
     const senderNameKeyOptions = [
         {
@@ -26,7 +26,7 @@ export default function SenderNameExamplePreview({
             content: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.SUBTITLE'),
             preview: {
                 senderName: 'Smith',
-                businessName: replaceInstallationName('Chatwoot'),
+                businessName: installationName,
                 email: '<support@yourbusiness.com>',
             },
         },
@@ -36,7 +36,7 @@ export default function SenderNameExamplePreview({
             content: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.PROFESSIONAL.SUBTITLE'),
             preview: {
                 senderName: '',
-                businessName: replaceInstallationName('Chatwoot'),
+                businessName: installationName,
                 email: '<support@yourbusiness.com>',
             },
         },

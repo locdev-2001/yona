@@ -37,26 +37,35 @@ function pluralize(message: string, count: number): string {
     return count === 0 ? choices[0] : count === 1 ? choices[1] : choices[2];
 }
 
-// vue-i18n coi `@` là ký tự đặc biệt (linked message) nên chuỗi gốc Chatwoot bọc
-// nó trong literal: `example{'@'}companyname.com`. Bản port không có cú pháp
-// liên kết đó, nhưng vẫn phải trả literal về ký tự thật — nếu không placeholder
-// email hiện nguyên dấu ngoặc trước mặt người dùng.
+// Chuỗi lang bọc `@` trong literal kiểu vue-i18n: `example{'@'}companyname.com`.
+// Không có cú pháp linked message, nhưng vẫn phải trả literal về ký tự thật —
+// nếu không placeholder email hiện nguyên dấu ngoặc trước mặt người dùng.
 function unescapeLiterals(message: string): string {
     return message.replace(/\{'([^']*)'\}/g, '$1');
 }
 
-// Chuỗi gốc Chatwoot dùng chính chữ "Chatwoot" làm chỗ trống cho tên cài đặt;
-// bản gốc thay nó ở từng nơi gọi (useBranding.replaceInstallationName), nên màn
-// nào quên gọi là tên "Chatwoot" lọt thẳng ra trước mặt người dùng. Thay ở đây,
-// một lần, cho mọi mặt tiền. Tên đọc từ <html data-installation-name> — cùng
-// đường mà locale đã đi, nên widget/portal/survey không phải nạp thêm gì.
-function installationName(): string {
-    if (typeof document === 'undefined') return 'Yona';
+// Chuỗi nói về chính sản phẩm viết `{installationName}` trong lang; t() tự điền
+// cho mọi mặt tiền nên nơi gọi không phải truyền. Phía PHP cùng tên tham số ở
+// App\Translation\Translator::INSTALLATION_NAME_PARAM.
+export const INSTALLATION_NAME_PARAM = 'installationName';
 
-    return document.documentElement.dataset.installationName || 'Yona';
+const DEFAULT_INSTALLATION_NAME = 'Yona';
+const INSTALLATION_NAME_PLACEHOLDER = `{${INSTALLATION_NAME_PARAM}}`;
+
+// Tên đọc từ <html data-installation-name> — cùng đường mà locale đã đi, nên
+// widget/portal/survey không phải nạp thêm gì.
+function installationName(): string {
+    if (typeof document === 'undefined') return DEFAULT_INSTALLATION_NAME;
+
+    return document.documentElement.dataset.installationName || DEFAULT_INSTALLATION_NAME;
 }
 
-// Tương đương $t của vue-i18n bên Chatwoot: tra key lồng nhau + nội suy {param}.
+// Cho chuỗi không đi qua t() (mô tả tích hợp từ API, nhãn truyền vào component).
+export function fillInstallationName(text: string, name: string = installationName()): string {
+    return text.split(INSTALLATION_NAME_PLACEHOLDER).join(name);
+}
+
+// Tra key lồng nhau + nội suy {param}.
 export function t(key: string, params?: Record<string, string | number>): string {
     const lookup = (source: Record<string, unknown>): unknown =>
         key
@@ -72,17 +81,14 @@ export function t(key: string, params?: Record<string, string | number>): string
 
     if (typeof value !== 'string') return key;
 
-    let result = value;
-    // vue-i18n chọn nhánh số nhiều theo `n`; Chatwoot nhiều chỗ truyền `count`.
+    // Nhánh số nhiều chọn theo `n`; nhiều chỗ gọi truyền `count`.
     const pluralCount = typeof params?.n === 'number' ? params.n : typeof params?.count === 'number' ? params.count : undefined;
-    // vue-i18n: message có `|` LUÔN là message số nhiều; `$t(key)` không kèm số
-    // trả nhánh đầu (số ít), không trả nguyên chuỗi kèm dấu gạch đứng.
-    result = pluralize(result, pluralCount ?? 1);
-    if (params) {
-        result = result.replace(/\{(\w+)\}/g, (match, name: string) =>
-            name in params ? String(params[name]) : match,
-        );
-    }
+    // Message có `|` LUÔN là message số nhiều; gọi không kèm số trả nhánh đầu
+    // (số ít), không trả nguyên chuỗi kèm dấu gạch đứng.
+    const replacements: Record<string, string | number> = { [INSTALLATION_NAME_PARAM]: installationName(), ...params };
+    const result = pluralize(value, pluralCount ?? 1).replace(/\{(\w+)\}/g, (match, name: string) =>
+        name in replacements ? String(replacements[name]) : match,
+    );
 
-    return unescapeLiterals(result).replace(/Chatwoot/g, installationName());
+    return unescapeLiterals(result);
 }

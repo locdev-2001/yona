@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/conversation.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'REFERRAL' => [
@@ -57,7 +55,7 @@ return [
     'TWILIO_WHATSAPP_CAN_REPLY' => 'Bạn chỉ có thể phản hồi hội thoại này bằng tin nhắn mẫu vì',
     'TWILIO_WHATSAPP_24_HOURS_WINDOW' => 'Giới hạn thời lượng tin nhắn 24 giờ',
     'OLD_INSTAGRAM_INBOX_REPLY_BANNER' => 'Tài khoản Instagram này đã chuyển sang hộp thư kênh Instagram mới. Mọi tin nhắn mới sẽ hiện ở đó. Bạn không gửi được tin từ hội thoại này nữa.',
-    'INSTAGRAM_RESTRICTION_BANNER' => 'Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+    'INSTAGRAM_RESTRICTION_BANNER' => 'Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
     'INSTAGRAM_RESTRICTION_STATUS_LINK' => 'Xem cập nhật tình trạng',
     'REPLYING_TO' => 'Bạn đang trả lời:',
     'REMOVE_SELECTION' => 'Xóa lựa chọn',
@@ -76,7 +74,7 @@ return [
         'REMINDER' => '{sender} đã tạo một nhắc hẹn',
         'FRIEND_REQUEST' => '{sender} đã gửi lời mời kết bạn',
     ],
-    // Mở rộng của Yona: Zalo có loại tin lõi Chatwoot không có (danh thiếp, thẻ
+    // Mở rộng của Yona: Zalo có loại tin mà lõi chung không có (danh thiếp, thẻ
     // ngân hàng, nhắc hẹn, cuộc gọi).
     'ZALO' => [
         'BUSINESS_CARD' => [
@@ -485,7 +483,7 @@ return [
     'SENT_VIA_PLATFORM' => 'qua {platform}',
     'BOT' => 'Bot',
     'NATIVE_APP' => 'Ứng dụng gốc',
-    'NATIVE_APP_ADVISORY' => 'Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ Chatwoot để giữ cửa sổ nhắn tin.',
+    'NATIVE_APP_ADVISORY' => 'Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ {installationName} để giữ cửa sổ nhắn tin.',
     'SEND_FAILED' => 'Không thể gửi tin nhắn! Thử lại',
     'TRY_AGAIN' => 'thử lại',
     'ASSIGNMENT' => [

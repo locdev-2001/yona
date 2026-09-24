@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/chatlist.json — namespace CHAT_LIST.
-
 return [
     'LOADING' => 'Fetching conversations',
     'LOAD_MORE_CONVERSATIONS' => 'Load more conversations',

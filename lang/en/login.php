@@ -1,9 +1,7 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/login.json — namespace LOGIN.
-
 return [
-    'TITLE' => 'Login to Chatwoot',
+    'TITLE' => 'Login to {installationName}',
     'EMAIL' => [
         'LABEL' => 'Email',
         'PLACEHOLDER' => 'example@companyname.com',

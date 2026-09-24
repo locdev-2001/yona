@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace ONBOARDING.
-
 return [
     'TITLE' => 'Hey 👋, Welcome to {installationName}!',
     'DESCRIPTION' => 'Thanks for signing up. We want you to get the most out of {installationName}. Here are a few things you can do in {installationName} to make the experience delightful.',

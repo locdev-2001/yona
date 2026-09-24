@@ -2359,7 +2359,7 @@ const messages: Record<string, unknown> = {
         "TWILIO_WHATSAPP_CAN_REPLY": "Bạn chỉ có thể phản hồi hội thoại này bằng tin nhắn mẫu vì",
         "TWILIO_WHATSAPP_24_HOURS_WINDOW": "Giới hạn thời lượng tin nhắn 24 giờ",
         "OLD_INSTAGRAM_INBOX_REPLY_BANNER": "Tài khoản Instagram này đã chuyển sang hộp thư kênh Instagram mới. Mọi tin nhắn mới sẽ hiện ở đó. Bạn không gửi được tin từ hội thoại này nữa.",
-        "INSTAGRAM_RESTRICTION_BANNER": "Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+        "INSTAGRAM_RESTRICTION_BANNER": "Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
         "INSTAGRAM_RESTRICTION_STATUS_LINK": "Xem cập nhật tình trạng",
         "REPLYING_TO": "Bạn đang trả lời:",
         "REMOVE_SELECTION": "Xóa lựa chọn",
@@ -2774,7 +2774,7 @@ const messages: Record<string, unknown> = {
         "SENT_VIA_PLATFORM": "qua {platform}",
         "BOT": "Bot",
         "NATIVE_APP": "Ứng dụng gốc",
-        "NATIVE_APP_ADVISORY": "Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ Chatwoot để giữ cửa sổ nhắn tin.",
+        "NATIVE_APP_ADVISORY": "Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ {installationName} để giữ cửa sổ nhắn tin.",
         "SEND_FAILED": "Không thể gửi tin nhắn! Thử lại",
         "TRY_AGAIN": "thử lại",
         "ASSIGNMENT": {
@@ -3065,7 +3065,7 @@ const messages: Record<string, unknown> = {
         "TRY_THESE_PROMPTS": "Thử các gợi ý sau"
     },
     "CREATE_ACCOUNT": {
-        "NO_ACCOUNT_WARNING": "Ồ ồ! Chúng tôi không thể tìm thấy bất kỳ tài khoản Chatwoot nào. Vui lòng tạo một tài khoản mới để tiếp tục.",
+        "NO_ACCOUNT_WARNING": "Ồ ồ! Chúng tôi không thể tìm thấy bất kỳ tài khoản {installationName} nào. Vui lòng tạo một tài khoản mới để tiếp tục.",
         "NEW_ACCOUNT": "Tạo mới tài khoản",
         "SELECTOR_SUBTITLE": "Tạo mới một tài khoản",
         "API": {
@@ -4168,7 +4168,7 @@ const messages: Record<string, unknown> = {
                 "SLUG": {
                     "LABEL": "Đường dẫn",
                     "PLACEHOLDER": "Danh mục slug cho url",
-                    "HELP_TEXT": "app.chatwoot.com/hc/my-portal/en-US/categories/my-slug",
+                    "HELP_TEXT": "yona.vn/hc/my-portal/en-US/categories/my-slug",
                     "ERROR": "Phải có Slug"
                 },
                 "DESCRIPTION": {
@@ -4199,7 +4199,7 @@ const messages: Record<string, unknown> = {
                 "SLUG": {
                     "LABEL": "Đường dẫn",
                     "PLACEHOLDER": "Danh mục slug cho url",
-                    "HELP_TEXT": "app.chatwoot.com/hc/my-portal/en-US/categories/my-slug",
+                    "HELP_TEXT": "yona.vn/hc/my-portal/en-US/categories/my-slug",
                     "ERROR": "Phải có Slug"
                 },
                 "DESCRIPTION": {
@@ -4436,7 +4436,7 @@ const messages: Record<string, unknown> = {
                         "LABEL": "Đường dẫn",
                         "PLACEHOLDER": "Danh mục slug cho url",
                         "ERROR": "Phải có Slug",
-                        "HELP_TEXT": "app.chatwoot.com/hc/{portalSlug}/{localeCode}/categories/{categorySlug}"
+                        "HELP_TEXT": "yona.vn/hc/{portalSlug}/{localeCode}/categories/{categorySlug}"
                     },
                     "DESCRIPTION": {
                         "LABEL": "Mô tả",
@@ -4596,7 +4596,7 @@ const messages: Record<string, unknown> = {
             "CONFIRM_BUTTON_LABEL": "Tạo",
             "NAME": {
                 "LABEL": "Tên",
-                "PLACEHOLDER": "Hướng dẫn sử dụng | Chatwoot",
+                "PLACEHOLDER": "Hướng dẫn sử dụng | Công ty ABC",
                 "MESSAGE": "Hãy chọn tên cho cổng trợ giúp của bạn.",
                 "ERROR": "Tên bắt buộc có"
             },
@@ -4670,7 +4670,7 @@ const messages: Record<string, unknown> = {
                     },
                     "DNS_CONFIGURATION_DIALOG": {
                         "HEADER": "Cấu hình DNS",
-                        "DESCRIPTION": "Đăng nhập vào tài khoản ở nhà cung cấp DNS của bạn và thêm bản ghi CNAME cho tên miền con, trỏ tới chatwoot.help",
+                        "DESCRIPTION": "Đăng nhập vào tài khoản ở nhà cung cấp DNS của bạn và thêm bản ghi CNAME bên dưới cho tên miền con.",
                         "COPY": "Đã chép CNAME",
                         "SEND_INSTRUCTIONS": {
                             "HEADER": "Gửi hướng dẫn",
@@ -4719,7 +4719,7 @@ const messages: Record<string, unknown> = {
                 "HEADER": "Tích hợp",
                 "DESCRIPTION": "Kết nối các công cụ mở rộng khả năng của trung tâm trợ giúp.",
                 "LIVE_CHAT": {
-                    "TITLE": "Chat trực tuyến với Chatwoot",
+                    "TITLE": "Chat trực tuyến với {installationName}",
                     "DESCRIPTION": "Hiện widget chat trực tuyến trên trung tâm trợ giúp để khách hỏi ngay trong lúc đọc.",
                     "PLACEHOLDER": "Chọn widget chat trực tuyến",
                     "NONE_OPTION": "Không dùng widget"
@@ -4943,7 +4943,7 @@ const messages: Record<string, unknown> = {
         "CREATE_FLOW": {
             "CHANNEL": {
                 "TITLE": "Chọn kênh",
-                "BODY": "Chọn nhà cung cấp bạn muốn tích hợp với Chatwoot."
+                "BODY": "Chọn nhà cung cấp bạn muốn tích hợp với {installationName}."
             },
             "INBOX": {
                 "TITLE": "Tạo Hộp thư",
@@ -4969,7 +4969,7 @@ const messages: Record<string, unknown> = {
                 "PLACEHOLDER": "Nhập tên trang web của bạn (ví dụ: Acme Inc)"
             },
             "FB": {
-                "HELP": "Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. Chatwoot không bao giờ có thể truy cập tin nhắn riêng tư của bạn.",
+                "HELP": "Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. {installationName} không bao giờ có thể truy cập tin nhắn riêng tư của bạn.",
                 "CHOOSE_PAGE": "Chọn trang",
                 "CHOOSE_PLACEHOLDER": "Chọn một trang từ danh sách",
                 "INBOX_NAME": "Tên hộp thư",
@@ -4977,7 +4977,7 @@ const messages: Record<string, unknown> = {
                 "PICK_NAME": "Đặt tên cho hộp thư của bạn",
                 "PICK_A_VALUE": "Chọn một giá trị",
                 "CREATE_INBOX": "Tạo Hộp thư",
-                "RESTRICTED_WARNING": "Tạm thời chưa tạo được hộp thư Facebook do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+                "RESTRICTED_WARNING": "Tạm thời chưa tạo được hộp thư Facebook do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
                 "STATUS_LINK": "Xem cập nhật tình trạng"
             },
             "INSTAGRAM": {
@@ -4988,8 +4988,8 @@ const messages: Record<string, unknown> = {
                 "ERROR_AUTH": "Có lỗi khi kết nối Instagram, bạn hãy thử lại",
                 "NEW_INBOX_SUGGESTION": "Tài khoản Instagram này trước đây thuộc một hộp thư khác và vừa được chuyển sang đây. Mọi tin nhắn mới sẽ hiện ở đây. Hộp thư cũ sẽ không gửi hay nhận tin cho tài khoản này nữa.",
                 "DUPLICATE_INBOX_BANNER": "Tài khoản Instagram này đã chuyển sang hộp thư kênh Instagram mới. Bạn không thể gửi/nhận tin nhắn Instagram từ hộp thư này nữa.",
-                "RESTRICTED_WARNING": "Tạm thời chưa tạo được hộp thư Instagram do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
-                "SETTINGS_RESTRICTED_WARNING": "Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+                "RESTRICTED_WARNING": "Tạm thời chưa tạo được hộp thư Instagram do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+                "SETTINGS_RESTRICTED_WARNING": "Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
                 "STATUS_LINK": "Xem cập nhật tình trạng"
             },
             "TIKTOK": {
@@ -5256,17 +5256,17 @@ const messages: Record<string, unknown> = {
                     "MANUAL_LINK_TEXT": "cài đặt thủ công",
                     "ACCESS_REQUEST": {
                         "TITLE": "Cài đặt nhanh với Meta",
-                        "DESCRIPTION": "Kết nối số mới hoặc số sẵn có trong ứng dụng WhatsApp Business mà không cần cấu hình thủ công. Để xin dùng tùy chọn này, hãy cho đội ngũ của chúng tôi biết doanh nghiệp bạn làm gì, bạn sẽ dùng WhatsApp thế nào và tài khoản Chatwoot nào cần được mở.",
+                        "DESCRIPTION": "Kết nối số mới hoặc số sẵn có trong ứng dụng WhatsApp Business mà không cần cấu hình thủ công. Để xin dùng tùy chọn này, hãy cho đội ngũ của chúng tôi biết doanh nghiệp bạn làm gì, bạn sẽ dùng WhatsApp thế nào và tài khoản {installationName} nào cần được mở.",
                         "FOOTNOTE": "Chúng tôi sẽ xem xét yêu cầu và báo lại xem có bật được tùy chọn này không. Bạn cũng có thể tiếp tục cài đặt thủ công bên dưới.",
                         "BUTTON": "Gửi yêu cầu"
                     },
-                    "RESTRICTED_WARNING": "Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Bạn có thể cài đặt thủ công cho các số Cloud API đủ điều kiện. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+                    "RESTRICTED_WARNING": "Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Bạn có thể cài đặt thủ công cho các số Cloud API đủ điều kiện. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
                     "STATUS_LINK": "Xem cập nhật tình trạng",
                     "CALLING_ENABLE_FAILED": "Hộp thư WhatsApp của bạn đã sẵn sàng, nhưng chưa bật được cuộc gọi thoại — số này chưa đăng ký WhatsApp Business Calling API. Hãy liên hệ Meta hoặc nhà cung cấp giải pháp WhatsApp Business để đăng ký, rồi bật cuộc gọi trong phần cài đặt Cuộc gọi của hộp thư."
                 },
                 "API": {
                     "ERROR_MESSAGE": "Chúng tôi không thể lưu kênh WhatsApp",
-                    "MANUAL_RESTRICTION_WARNING": "Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Cài đặt thủ công chỉ chạy với số đã kết nối WhatsApp Cloud API. Luồng này chưa hỗ trợ số đang dùng chung với ứng dụng WhatsApp Business. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất. Cảm ơn bạn đã kiên nhẫn.",
+                    "MANUAL_RESTRICTION_WARNING": "Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Cài đặt thủ công chỉ chạy với số đã kết nối WhatsApp Cloud API. Luồng này chưa hỗ trợ số đang dùng chung với ứng dụng WhatsApp Business. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất. Cảm ơn bạn đã kiên nhẫn.",
                     "STATUS_LINK": "Xem cập nhật tình trạng"
                 }
             },
@@ -5425,7 +5425,7 @@ const messages: Record<string, unknown> = {
             },
             "AUTH": {
                 "TITLE": "Chọn kênh",
-                "DESC": "Chatwoot hỗ trợ các tiện ích trò chuyện trực tiếp, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.",
+                "DESC": "{installationName} hỗ trợ các tiện ích trò chuyện trực tiếp, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.",
                 "TITLE_NEXT": "Hoàn tất thiết lập",
                 "TITLE_FINISH": "Xong rồi!",
                 "CHANNEL": {
@@ -5491,11 +5491,11 @@ const messages: Record<string, unknown> = {
             },
             "DETAILS": {
                 "TITLE": "Chi tiết Hộp thư",
-                "DESC": "Từ menu thả xuống bên dưới, chọn Trang Facebook bạn muốn kết nối với Chatwoot. Bạn cũng có thể đặt tên tùy chỉnh cho hộp thư của mình để nhận dạng tốt hơn."
+                "DESC": "Từ menu thả xuống bên dưới, chọn Trang Facebook bạn muốn kết nối với {installationName}. Bạn cũng có thể đặt tên tùy chỉnh cho hộp thư của mình để nhận dạng tốt hơn."
             },
             "FINISH": {
                 "TITLE": "Đúng rồi!",
-                "DESC": "Bạn đã tích hợp thành công Trang Facebook của mình với Chatwoot. Lần tới khi khách hàng nhắn tin cho Trang của bạn, hội thoại sẽ tự động xuất hiện trong hộp thư của bạn.<br>Chúng tôi cũng đang cung cấp cho bạn tập lệnh widget mà bạn có thể dễ dàng thêm vào trang web của mình. Khi điều này xuất hiện trên trang web của bạn, khách hàng có thể nhắn tin cho bạn ngay từ trang web của bạn mà không cần sự trợ giúp của bất kỳ công cụ bên ngoài nào và hội thoại sẽ xuất hiện ngay tại đây, trên Chatwoot.<br>Cool, huh? Well :)"
+                "DESC": "Bạn đã tích hợp thành công Trang Facebook của mình với {installationName}. Lần tới khi khách hàng nhắn tin cho Trang của bạn, hội thoại sẽ tự động xuất hiện trong hộp thư của bạn.<br>Chúng tôi cũng đang cung cấp cho bạn tập lệnh widget mà bạn có thể dễ dàng thêm vào trang web của mình. Khi điều này xuất hiện trên trang web của bạn, khách hàng có thể nhắn tin cho bạn ngay từ trang web của bạn mà không cần sự trợ giúp của bất kỳ công cụ bên ngoài nào và hội thoại sẽ xuất hiện ngay tại đây, trên {installationName}.<br>Cool, huh? Well :)"
             },
             "EMAIL_PROVIDER": {
                 "TITLE": "Chọn nhà cung cấp email",
@@ -5936,7 +5936,7 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_TITLE": "Thêm Business Management Token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_TITLE": "Thay Business Management Token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_CONFIGURED": "Đã cấu hình business management token",
-            "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER": "Cung cấp một token có quyền truy cập tài khoản WhatsApp Business này khi Chatwoot không lấy được mẫu tin nhắn. Chatwoot chỉ dùng token này để đồng bộ mẫu tin.",
+            "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER": "Cung cấp một token có quyền truy cập tài khoản WhatsApp Business này khi {installationName} không lấy được mẫu tin nhắn. {installationName} chỉ dùng token này để đồng bộ mẫu tin.",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_PLACEHOLDER": "Nhập business management token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_BUTTON": "Thêm",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_BUTTON": "Thay",
@@ -6011,7 +6011,7 @@ const messages: Record<string, unknown> = {
                     "INBOX": "Hộp thư",
                     "PHONE_NUMBER": "Số điện thoại",
                     "NOT_ENTERED": "Chưa nhập",
-                    "VERIFY_NOTICE": "Chatwoot sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.",
+                    "VERIFY_NOTICE": "{installationName} sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.",
                     "BACK": "Trở về",
                     "CANCEL": "Huỷ",
                     "CONTINUE": "Tiếp tục",
@@ -6033,7 +6033,7 @@ const messages: Record<string, unknown> = {
                     },
                     "REVIEW_MIGRATION": {
                         "TITLE": "Xem lại phần chuyển đổi",
-                        "DESCRIPTION": "Xác nhận thông tin kết nối trước khi kết nối lại hộp thư này. Chatwoot sẽ xác minh token, WABA và số điện thoại với Meta trước khi áp dụng thay đổi."
+                        "DESCRIPTION": "Xác nhận thông tin kết nối trước khi kết nối lại hộp thư này. {installationName} sẽ xác minh token, WABA và số điện thoại với Meta trước khi áp dụng thay đổi."
                     }
                 }
             },
@@ -6376,7 +6376,7 @@ const messages: Record<string, unknown> = {
                 "USER_MESSAGE": "Xin chào",
                 "AGENT_MESSAGE": "Xin chào"
             },
-            "BRANDING_TEXT": "Cung cấp bởi Chatwoot",
+            "BRANDING_TEXT": "Cung cấp bởi {installationName}",
             "SCRIPT_SETTINGS": "\nwindow.chatwootSettings = {options};"
         },
         "EMAIL_PROVIDERS": {
@@ -6529,18 +6529,18 @@ const messages: Record<string, unknown> = {
         },
         "dyte": {
             "name": "Dyte",
-            "short_description": "Gọi video/thoại với khách hàng ngay trong Chatwoot.",
-            "description": "Dyte is a product that integrates audio and video functionalities into your application. With this integration, your agents can start video/voice calls with your customers directly from Chatwoot.",
+            "short_description": "Gọi video/thoại với khách hàng ngay trong {installationName}.",
+            "description": "Cloudflare RealtimeKit cho phép nhân viên gọi video/thoại với khách hàng ngay trong {installationName}.",
             "meeting_name": "{agent_name} đã bắt đầu một cuộc họp"
         },
         "slack": {
             "name": "Slack",
             "short_description": "Nhận thông báo và trả lời hội thoại ngay trong Slack.",
-            "description": "Nối Chatwoot với Slack để cả đội cùng nắm thông tin. Kết nối này cho phép bạn nhận thông báo hội thoại mới và trả lời ngay trong giao diện Slack."
+            "description": "Nối {installationName} với Slack để cả đội cùng nắm thông tin. Kết nối này cho phép bạn nhận thông báo hội thoại mới và trả lời ngay trong giao diện Slack."
         },
         "webhooks": {
             "name": "Webhook",
-            "description": "Sự kiện webhook báo tức thời mọi hoạt động trong tài khoản Chatwoot của bạn. Bạn đăng ký những sự kiện mình cần, Chatwoot sẽ gửi HTTP callback kèm nội dung cập nhật."
+            "description": "Sự kiện webhook báo tức thời mọi hoạt động trong tài khoản {installationName} của bạn. Bạn đăng ký những sự kiện mình cần, {installationName} sẽ gửi HTTP callback kèm nội dung cập nhật."
         },
         "dialogflow": {
             "name": "Dialogflow",
@@ -6596,7 +6596,7 @@ const messages: Record<string, unknown> = {
             "ERROR": "Có lỗi khi kết nối Shopify. Bạn hãy thử lại hoặc liên hệ hỗ trợ nếu vẫn không được."
         },
         "HEADER": "Tích hợp",
-        "DESCRIPTION": "Chatwoot kết nối với nhiều công cụ và dịch vụ để đội của bạn làm việc hiệu quả hơn. Xem danh sách bên dưới để cấu hình ứng dụng bạn thích.",
+        "DESCRIPTION": "{installationName} kết nối với nhiều công cụ và dịch vụ để đội của bạn làm việc hiệu quả hơn. Xem danh sách bên dưới để cấu hình ứng dụng bạn thích.",
         "LEARN_MORE": "Tìm hiểu thêm về kết nối",
         "LOADING": "Đang tải danh sách kết nối",
         "SEARCH_PLACEHOLDER": "Tìm kết nối...",
@@ -6612,7 +6612,7 @@ const messages: Record<string, unknown> = {
             "LEARN_MORE": "Tìm hiểu thêm về webhook",
             "PAYWALL": {
                 "TITLE": "Webhook có ở các gói trả phí",
-                "AVAILABLE_ON": "Dùng webhook để nhận sự kiện tức thời từ tài khoản Chatwoot của bạn.",
+                "AVAILABLE_ON": "Dùng webhook để nhận sự kiện tức thời từ tài khoản {installationName} của bạn.",
                 "UPGRADE_PROMPT": "Hãy nâng cấp lên gói Startups, Business hoặc Enterprise để dùng webhook.",
                 "UPGRADE_NOW": "Nâng cấp ngay",
                 "CANCEL_ANYTIME": "Bạn có thể đổi hoặc hủy gói bất cứ lúc nào."
@@ -6630,7 +6630,7 @@ const messages: Record<string, unknown> = {
             "NO_RESULTS": "Không tìm thấy webhook nào khớp",
             "FORM": {
                 "CANCEL": "Huỷ",
-                "DESC": "Webhook events cung cấp cho bạn thông tin thời gian thực về những gì đang xảy ra trong tài khoản Chatwoot của bạn. Vui lòng nhập một URL hợp lệ để định cấu hình một cuộc gọi lại.",
+                "DESC": "Webhook events cung cấp cho bạn thông tin thời gian thực về những gì đang xảy ra trong tài khoản {installationName} của bạn. Vui lòng nhập một URL hợp lệ để định cấu hình một cuộc gọi lại.",
                 "SUBSCRIPTIONS": {
                     "LABEL": "Các sự kiện",
                     "EVENTS": {
@@ -6665,7 +6665,7 @@ const messages: Record<string, unknown> = {
             "HEADER_BTN_TXT": "Thêm mới webhook",
             "LOADING": "Đang tải về các webhooks",
             "SEARCH_404": "Không có kết quả nào được tìm thấy",
-            "SIDEBAR_TXT": "<p><b>Webhooks</b> </p> <p>Webhook là các lệnh gọi lại HTTP có thể được xác định cho mọi tài khoản. Chúng được kích hoạt bởi các sự kiện như tạo tin nhắn trong Chatwoot. Bạn có thể tạo nhiều webhook cho tài khoản này. <br /><br /> Để tạo một <b>webhook</b>, click vào <b>Tạo mới</b>. Bạn cũng có thể xóa bất kỳ webhook hiện có nào bằng cách nhấp vào nút Xóa.</p>",
+            "SIDEBAR_TXT": "<p><b>Webhooks</b> </p> <p>Webhook là các lệnh gọi lại HTTP có thể được xác định cho mọi tài khoản. Chúng được kích hoạt bởi các sự kiện như tạo tin nhắn trong {installationName}. Bạn có thể tạo nhiều webhook cho tài khoản này. <br /><br /> Để tạo một <b>webhook</b>, click vào <b>Tạo mới</b>. Bạn cũng có thể xóa bất kỳ webhook hiện có nào bằng cách nhấp vào nút Xóa.</p>",
             "LIST": {
                 "404": "Không có webhook nào được định cấu hình cho tài khoản này.",
                 "TITLE": "Quản lý webhooks",
@@ -6713,14 +6713,14 @@ const messages: Record<string, unknown> = {
             },
             "HELP_TEXT": {
                 "TITLE": "Dùng tích hợp Slack",
-                "BODY": "Với kết nối này, mọi hội thoại đến sẽ được đồng bộ sang kênh ***{selectedChannelName}*** trong workspace Slack của bạn. Bạn có thể xử lý toàn bộ hội thoại khách hàng ngay trong kênh đó và không bỏ sót tin nào.\n\nCác tính năng chính của kết nối này:\n\n**Trả lời hội thoại ngay trong Slack:** để trả lời một hội thoại trong kênh Slack ***{selectedChannelName}***, chỉ cần gõ nội dung và gửi dưới dạng thread. Chatwoot sẽ gửi nội dung đó tới khách hàng. Đơn giản vậy thôi!\n\n **Tạo ghi chú riêng:** nếu muốn tạo ghi chú riêng thay vì trả lời, hãy bắt đầu tin nhắn bằng ***`note:`***. Nội dung sẽ được giữ riêng và khách không nhìn thấy.\n\n**Gắn với hồ sơ nhân viên:** nếu người trả lời trên Slack có hồ sơ nhân viên trong Chatwoot dùng cùng email, câu trả lời sẽ tự gắn với hồ sơ đó. Nhờ vậy bạn dễ theo dõi ai đã nói gì và lúc nào. Ngược lại, nếu người trả lời không có hồ sơ nhân viên tương ứng, khách sẽ thấy câu trả lời đến từ hồ sơ bot.",
+                "BODY": "Với kết nối này, mọi hội thoại đến sẽ được đồng bộ sang kênh ***{selectedChannelName}*** trong workspace Slack của bạn. Bạn có thể xử lý toàn bộ hội thoại khách hàng ngay trong kênh đó và không bỏ sót tin nào.\n\nCác tính năng chính của kết nối này:\n\n**Trả lời hội thoại ngay trong Slack:** để trả lời một hội thoại trong kênh Slack ***{selectedChannelName}***, chỉ cần gõ nội dung và gửi dưới dạng thread. {installationName} sẽ gửi nội dung đó tới khách hàng. Đơn giản vậy thôi!\n\n **Tạo ghi chú riêng:** nếu muốn tạo ghi chú riêng thay vì trả lời, hãy bắt đầu tin nhắn bằng ***`note:`***. Nội dung sẽ được giữ riêng và khách không nhìn thấy.\n\n**Gắn với hồ sơ nhân viên:** nếu người trả lời trên Slack có hồ sơ nhân viên trong {installationName} dùng cùng email, câu trả lời sẽ tự gắn với hồ sơ đó. Nhờ vậy bạn dễ theo dõi ai đã nói gì và lúc nào. Ngược lại, nếu người trả lời không có hồ sơ nhân viên tương ứng, khách sẽ thấy câu trả lời đến từ hồ sơ bot.",
                 "SELECTED": "đã chọn"
             },
             "SELECT_CHANNEL": {
                 "OPTION_LABEL": "Chọn một kênh",
                 "UPDATE": "Cập nhật",
                 "BUTTON_TEXT": "Kết nối kênh",
-                "DESCRIPTION": "Workspace Slack của bạn đã liên kết với Chatwoot. Tuy nhiên kết nối đang tắt. Để bật kết nối và gắn một kênh với Chatwoot, hãy bấm nút bên dưới.\n\n**Lưu ý:** nếu bạn định kết nối một kênh riêng tư, hãy thêm ứng dụng Chatwoot vào kênh Slack đó trước khi làm bước này.",
+                "DESCRIPTION": "Workspace Slack của bạn đã liên kết với {installationName}. Tuy nhiên kết nối đang tắt. Để bật kết nối và gắn một kênh với {installationName}, hãy bấm nút bên dưới.\n\n**Lưu ý:** nếu bạn định kết nối một kênh riêng tư, hãy thêm ứng dụng {installationName} vào kênh Slack đó trước khi làm bước này.",
                 "ATTENTION_REQUIRED": "Cần bạn xử lý",
                 "EXPIRED": "Kết nối Slack của bạn đã hết hạn. Để tiếp tục nhận tin nhắn trên Slack, hãy xóa kết nối rồi kết nối lại workspace."
             },
@@ -6822,7 +6822,7 @@ const messages: Record<string, unknown> = {
         "DASHBOARD_APPS": {
             "TITLE": "Ứng dụng bảng điều khiển",
             "HEADER_BTN_TXT": "Thêm mới một Ứng dụng bảng điều khiển",
-            "SIDEBAR_TXT": "<p> <b> Ứng dụng trên bảng điều khiển</b> </p> <p>Ứng dụng bảng điều khiển cho phép nhúng ứng dụng vào trang bảng điều khiển để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó vào bên trong trang điều khiển để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ. </p> <p> Khi bạn nhúng ứng dụng của mình bằng điều khiển, ứng dụng của bạn sẽ lấy bối cảnh của hội thoại và liên hệ dưới dạng sự kiện cửa sổ. Triển khai trình nghe cho sự kiện thông báo trên trang của bạn để nhận ngữ cảnh. </p> <p> Để thêm ứng dụng trang điều khiển mới, hãy nhấp vào nút 'Thêm ứng dụng bảng điều khiển mới'. </p>",
+            "SIDEBAR_TXT": "<p> <b> Ứng dụng trên bảng điều khiển</b> </p> <p>Ứng dụng bảng điều khiển cho phép nhúng ứng dụng vào bảng điều khiển {installationName} để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó vào bên trong trang điều khiển để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ. </p> <p> Khi bạn nhúng ứng dụng của mình vào {installationName}, ứng dụng của bạn sẽ lấy bối cảnh của hội thoại và liên hệ dưới dạng sự kiện cửa sổ. Triển khai trình nghe cho sự kiện thông báo trên trang của bạn để nhận ngữ cảnh. </p> <p> Để thêm ứng dụng trang điều khiển mới, hãy nhấp vào nút 'Thêm ứng dụng bảng điều khiển mới'. </p>",
             "DESCRIPTION": "Ứng dụng bảng điều khiển cho phép các tổ chức nhúng một ứng dụng bên trong trang điều khiển để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ.",
             "LEARN_MORE": "Tìm hiểu thêm về Dashboard Apps",
             "COUNT": "{n} dashboard app | {n} dashboard app",
@@ -7695,7 +7695,7 @@ const messages: Record<string, unknown> = {
         }
     },
     "LOGIN": {
-        "TITLE": "Đăng nhập Chatwoot",
+        "TITLE": "Đăng nhập {installationName}",
         "EMAIL": {
             "LABEL": "Email",
             "PLACEHOLDER": "example{'@'}companyname.com",
@@ -7996,7 +7996,7 @@ const messages: Record<string, unknown> = {
             "BACKUP_TITLE": "Dùng mã dự phòng",
             "BACKUP_DESC": "Nếu không mở được ứng dụng xác thực, bạn có thể dùng một trong các mã dự phòng đã lưu khi thiết lập xác thực hai lớp. Mỗi mã chỉ dùng được một lần.",
             "CONTACT_TITLE": "Cần trợ giúp thêm?",
-            "CONTACT_DESC_CLOUD": "Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ bộ phận hỗ trợ của Chatwoot.",
+            "CONTACT_DESC_CLOUD": "Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ bộ phận hỗ trợ của {installationName}.",
             "CONTACT_DESC_SELF_HOSTED": "Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ quản trị viên của bạn."
         },
         "VERIFICATION_FAILED": "Xác minh thất bại. Bạn hãy thử lại."
@@ -8103,7 +8103,7 @@ const messages: Record<string, unknown> = {
         "WHATSAPP_CONNECTED": "Đã kết nối WhatsApp",
         "FACEBOOK_CONNECTED": "Đã kết nối Facebook",
         "META_RESTRICTION": {
-            "MESSAGE": "Tạm thời chưa thiết lập được hộp thư Facebook, Instagram và WhatsApp do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
+            "MESSAGE": "Tạm thời chưa thiết lập được hộp thư Facebook, Instagram và WhatsApp do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.",
             "STATUS_LINK": "Xem cập nhật tình trạng"
         },
         "CREATED_FOR_YOU": {
@@ -8319,7 +8319,7 @@ const messages: Record<string, unknown> = {
             },
             "INTERFACE_SECTION": {
                 "TITLE": "Giao diện",
-                "NOTE": "Tùy chỉnh giao diện bảng điều khiển Chatwoot của bạn.",
+                "NOTE": "Tùy chỉnh giao diện bảng điều khiển {installationName} của bạn.",
                 "FONT_SIZE": {
                     "TITLE": "Cỡ chữ",
                     "NOTE": "Chỉnh cỡ chữ trên toàn bảng điều khiển theo ý bạn.",
@@ -8614,11 +8614,11 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Tạo tài khoản",
-        "GET_STARTED": "Bắt đầu với Chatwoot",
+        "GET_STARTED": "Bắt đầu với {installationName}",
         "TITLE": "Đăng kí",
         "TESTIMONIAL_HEADER": "Tất cả chỉ cần một bước để tiến về phía trước",
         "TESTIMONIAL_CONTENT": "Bạn chỉ còn một bước nữa là có thể thu hút khách hàng của mình, giữ chân họ và tìm kiếm những khách hàng mới.",
-        "TERMS_ACCEPT": "Khi tạo tài khoản, bạn đồng ý với <a href=\"https://www.chatwoot.com/terms\">Điều khoản</a> và <a href=\"https://www.chatwoot.com/privacy-policy\">Chính sách riêng tư</a> của chúng tôi",
+        "TERMS_ACCEPT": "Khi tạo tài khoản, bạn đồng ý với <a href=\"{termsURL}\">Điều khoản</a> và <a href=\"{privacyURL}\">Chính sách riêng tư</a> của chúng tôi",
         "OAUTH": {
             "GOOGLE_SIGNUP": "Đăng ký bằng Google"
         },
@@ -8835,7 +8835,7 @@ const messages: Record<string, unknown> = {
     },
     "RESET_PASSWORD": {
         "TITLE": "Đặt lại mật khẩu",
-        "DESCRIPTION": "Nhập địa chỉ email bạn dùng để đăng nhập Chatwoot, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
+        "DESCRIPTION": "Nhập địa chỉ email bạn dùng để đăng nhập {installationName}, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.",
         "GO_BACK_TO_LOGIN": "Nếu bạn muốn quay lại trang đăng nhập,",
         "EMAIL": {
             "LABEL": "Thư điện tử",
@@ -8949,7 +8949,7 @@ const messages: Record<string, unknown> = {
             "SP_ENTITY_ID": {
                 "LABEL": "SP Entity ID",
                 "HELP": "Mã định danh riêng của ứng dụng này với vai trò nhà cung cấp dịch vụ (tự sinh).",
-                "TOOLTIP": "Mã định danh riêng của Chatwoot với vai trò nhà cung cấp dịch vụ — cấu hình giá trị này trong IdP của bạn"
+                "TOOLTIP": "Mã định danh riêng của {installationName} với vai trò nhà cung cấp dịch vụ — cấu hình giá trị này trong IdP của bạn"
             },
             "IDP_ENTITY_ID": {
                 "LABEL": "Entity ID của nhà cung cấp danh tính",
@@ -9233,7 +9233,7 @@ const messages: Record<string, unknown> = {
             "SUCCESS_MESSAGE": "Đã cập nhật khảo sát thành công",
             "ERROR_MESSAGE": "Không thể kết nối với Máy chủ Woot, Vui lòng thử lại sau"
         },
-        "POWERED_BY": "Cung cấp bởi Chatwoot"
+        "POWERED_BY": "Cung cấp bởi {installationName}"
     },
     "SWITCH": {
         "TOGGLE": "Bật/tắt"
@@ -9522,7 +9522,7 @@ const messages: Record<string, unknown> = {
         "BUBBLE": {
             "LABEL": "Trò chuyện với chúng tôi"
         },
-        "POWERED_BY": "Cung cấp bởi Chatwoot",
+        "POWERED_BY": "Cung cấp bởi {installationName}",
         "EMAIL_PLACEHOLDER": "Vui lòng nhập email",
         "CHAT_PLACEHOLDER": "Gõ tin nhắn của bạn",
         "TODAY": "Hôm nay",

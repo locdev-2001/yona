@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/profile_settings.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'LINK' => 'Cài đặt hồ sơ',
@@ -42,7 +40,7 @@ return [
         ],
         'INTERFACE_SECTION' => [
             'TITLE' => 'Giao diện',
-            'NOTE' => 'Tùy chỉnh giao diện bảng điều khiển Chatwoot của bạn.',
+            'NOTE' => 'Tùy chỉnh giao diện bảng điều khiển {installationName} của bạn.',
             'FONT_SIZE' => [
                 'TITLE' => 'Cỡ chữ',
                 'NOTE' => 'Chỉnh cỡ chữ trên toàn bảng điều khiển theo ý bạn.',

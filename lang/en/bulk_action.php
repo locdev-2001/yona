@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/bulkActions.json — namespace BULK_ACTION.
-
 return [
     'CONVERSATIONS_SELECTED' => '{conversationCount} selected',
     'NONE' => 'None',

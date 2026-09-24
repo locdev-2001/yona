@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace CUSTOM_ATTRIBUTES.
-
 return [
     'BUTTON' => 'Add custom attribute',
     'COPY_SUCCESSFUL' => 'Copied to clipboard successfully',

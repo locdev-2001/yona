@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace CONVERSATION.
-
 return [
     'REFERRAL' => [
         'AD_LABEL' => 'Ad',
@@ -55,7 +53,7 @@ return [
     'TWILIO_WHATSAPP_CAN_REPLY' => 'You can only reply to this conversation using a template message due to',
     'TWILIO_WHATSAPP_24_HOURS_WINDOW' => '24 hour message window restriction',
     'OLD_INSTAGRAM_INBOX_REPLY_BANNER' => 'This Instagram account was migrated to the new Instagram channel inbox. All new messages will show up there. You won’t be able to send messages from this conversation anymore.',
-    'INSTAGRAM_RESTRICTION_BANNER' => 'Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with Chatwoot. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.',
+    'INSTAGRAM_RESTRICTION_BANNER' => 'Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with {installationName}. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.',
     'INSTAGRAM_RESTRICTION_STATUS_LINK' => 'View status updates',
     'REPLYING_TO' => 'You are replying to:',
     'REMOVE_SELECTION' => 'Remove Selection',
@@ -74,7 +72,7 @@ return [
         'REMINDER' => '{sender} has created a reminder',
         'FRIEND_REQUEST' => '{sender} has sent a friend request',
     ],
-    // Mở rộng của Yona: Zalo có loại tin lõi Chatwoot không có (danh thiếp, thẻ
+    // Mở rộng của Yona: Zalo có loại tin mà lõi chung không có (danh thiếp, thẻ
     // ngân hàng, nhắc hẹn, cuộc gọi). Chuỗi gom vào một chỗ để đổi kênh không phải
     // đi tìm khắp component.
     'ZALO' => [
@@ -484,7 +482,7 @@ return [
     'SENT_VIA_PLATFORM' => 'via {platform}',
     'BOT' => 'Bot',
     'NATIVE_APP' => 'Native app',
-    'NATIVE_APP_ADVISORY' => 'This message was sent from the native app. Reply from Chatwoot to maintain the message window.',
+    'NATIVE_APP_ADVISORY' => 'This message was sent from the native app. Reply from {installationName} to maintain the message window.',
     'SEND_FAILED' => 'Couldn\'t send message! Try again',
     'TRY_AGAIN' => 'retry',
     'ASSIGNMENT' => [

@@ -122,9 +122,10 @@ export default function SignupForm() {
             <p
                 className="text-sm mt-5 mb-0 text-n-slate-11 [&>a]:text-n-blue-10 [&>a]:font-medium [&>a]:hover:text-n-blue-11"
                 dangerouslySetInnerHTML={{
-                    __html: t('REGISTER.TERMS_ACCEPT')
-                        .replace('https://www.chatwoot.com/terms', globalConfig.termsURL)
-                        .replace('https://www.chatwoot.com/privacy-policy', globalConfig.privacyURL),
+                    __html: t('REGISTER.TERMS_ACCEPT', {
+                        termsURL: globalConfig.termsURL,
+                        privacyURL: globalConfig.privacyURL,
+                    }),
                 }}
             />
         </div>

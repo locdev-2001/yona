@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/conversation.json — namespace EMAIL_TRANSCRIPT.
-
 return [
     'TITLE' => 'Send conversation transcript',
     'DESC' => 'Send a copy of the conversation transcript to the specified email address',

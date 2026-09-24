@@ -1,8 +1,7 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/campaign.json — namespace CAMPAIGN.
-// Chỉ port khối LIVE_CHAT + CONFIRM_DELETE (tab Live chat, tính năng C4);
-// khối SMS/WHATSAPP đi cùng kênh của chúng (E4/F5).
+// Chỉ có khối LIVE_CHAT + CONFIRM_DELETE (tab Live chat); khối SMS/WHATSAPP
+// đi cùng kênh của chúng.
 
 return [
     'LIVE_CHAT' => [

@@ -1,7 +1,6 @@
 <?php
 
-// Port từ dashboard/i18n/locale/en/report.json (khối REPORT) — giữ nguyên key Chatwoot.
-// Bỏ GROUP_BY_*_OPTIONS: danh sách chỉ số nguyên, code dùng constants.ts thay thế.
+// Không có GROUP_BY_*_OPTIONS: danh sách chỉ số nguyên, code dùng constants.ts.
 return [
     'HEADER' => 'Conversations',
     'LOADING_CHART' => 'Loading chart data...',

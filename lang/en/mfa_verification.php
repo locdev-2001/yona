@@ -1,7 +1,7 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/mfa.json — namespace MFA_VERIFICATION
-// (mfa.json gốc chứa hai namespace, tách hai file theo quy ước một file = một namespace).
+// Namespace MFA_VERIFICATION; phần cài đặt 2FA ở mfa_settings.php
+// (một file = một namespace).
 
 return [
     'TITLE' => 'Two-Factor Authentication',
@@ -23,7 +23,7 @@ return [
         'BACKUP_TITLE' => 'Using a Backup Code',
         'BACKUP_DESC' => 'If you don\'t have access to your authenticator app, you can use one of the backup codes you saved when setting up 2FA. Each code can only be used once.',
         'CONTACT_TITLE' => 'Need More Help?',
-        'CONTACT_DESC_CLOUD' => 'If you\'ve lost access to both your authenticator app and backup codes, please reach out to Chatwoot support for assistance.',
+        'CONTACT_DESC_CLOUD' => 'If you\'ve lost access to both your authenticator app and backup codes, please reach out to {installationName} support for assistance.',
         'CONTACT_DESC_SELF_HOSTED' => 'If you\'ve lost access to both your authenticator app and backup codes, please contact your administrator for assistance.',
     ],
     'VERIFICATION_FAILED' => 'Verification failed. Please try again.',

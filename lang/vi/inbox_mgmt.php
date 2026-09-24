@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/inbox_mgmt.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'HEADER' => 'Hộp thư',
@@ -21,7 +19,7 @@ return [
     'CREATE_FLOW' => [
         'CHANNEL' => [
             'TITLE' => 'Chọn kênh',
-            'BODY' => 'Chọn nhà cung cấp bạn muốn tích hợp với Chatwoot.',
+            'BODY' => 'Chọn nhà cung cấp bạn muốn tích hợp với {installationName}.',
         ],
         'INBOX' => [
             'TITLE' => 'Tạo Hộp thư',
@@ -47,7 +45,7 @@ return [
             'PLACEHOLDER' => 'Nhập tên trang web của bạn (ví dụ: Acme Inc)',
         ],
         'FB' => [
-            'HELP' => 'Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. Chatwoot không bao giờ có thể truy cập tin nhắn riêng tư của bạn.',
+            'HELP' => 'Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. {installationName} không bao giờ có thể truy cập tin nhắn riêng tư của bạn.',
             'CHOOSE_PAGE' => 'Chọn trang',
             'CHOOSE_PLACEHOLDER' => 'Chọn một trang từ danh sách',
             'INBOX_NAME' => 'Tên hộp thư',
@@ -55,7 +53,7 @@ return [
             'PICK_NAME' => 'Đặt tên cho hộp thư của bạn',
             'PICK_A_VALUE' => 'Chọn một giá trị',
             'CREATE_INBOX' => 'Tạo Hộp thư',
-            'RESTRICTED_WARNING' => 'Tạm thời chưa tạo được hộp thư Facebook do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+            'RESTRICTED_WARNING' => 'Tạm thời chưa tạo được hộp thư Facebook do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
             'STATUS_LINK' => 'Xem cập nhật tình trạng',
         ],
         'INSTAGRAM' => [
@@ -66,8 +64,8 @@ return [
             'ERROR_AUTH' => 'Có lỗi khi kết nối Instagram, bạn hãy thử lại',
             'NEW_INBOX_SUGGESTION' => 'Tài khoản Instagram này trước đây thuộc một hộp thư khác và vừa được chuyển sang đây. Mọi tin nhắn mới sẽ hiện ở đây. Hộp thư cũ sẽ không gửi hay nhận tin cho tài khoản này nữa.',
             'DUPLICATE_INBOX_BANNER' => 'Tài khoản Instagram này đã chuyển sang hộp thư kênh Instagram mới. Bạn không thể gửi/nhận tin nhắn Instagram từ hộp thư này nữa.',
-            'RESTRICTED_WARNING' => 'Tạm thời chưa tạo được hộp thư Instagram do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
-            'SETTINGS_RESTRICTED_WARNING' => 'Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+            'RESTRICTED_WARNING' => 'Tạm thời chưa tạo được hộp thư Instagram do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+            'SETTINGS_RESTRICTED_WARNING' => 'Nhắn tin Instagram đang bị ảnh hưởng bởi sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Một số tin nhắn hoặc thao tác có thể chậm hoặc không dùng được. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
             'STATUS_LINK' => 'Xem cập nhật tình trạng',
         ],
         'TIKTOK' => [
@@ -334,17 +332,17 @@ return [
                 'MANUAL_LINK_TEXT' => 'cài đặt thủ công',
                 'ACCESS_REQUEST' => [
                     'TITLE' => 'Cài đặt nhanh với Meta',
-                    'DESCRIPTION' => 'Kết nối số mới hoặc số sẵn có trong ứng dụng WhatsApp Business mà không cần cấu hình thủ công. Để xin dùng tùy chọn này, hãy cho đội ngũ của chúng tôi biết doanh nghiệp bạn làm gì, bạn sẽ dùng WhatsApp thế nào và tài khoản Chatwoot nào cần được mở.',
+                    'DESCRIPTION' => 'Kết nối số mới hoặc số sẵn có trong ứng dụng WhatsApp Business mà không cần cấu hình thủ công. Để xin dùng tùy chọn này, hãy cho đội ngũ của chúng tôi biết doanh nghiệp bạn làm gì, bạn sẽ dùng WhatsApp thế nào và tài khoản {installationName} nào cần được mở.',
                     'FOOTNOTE' => 'Chúng tôi sẽ xem xét yêu cầu và báo lại xem có bật được tùy chọn này không. Bạn cũng có thể tiếp tục cài đặt thủ công bên dưới.',
                     'BUTTON' => 'Gửi yêu cầu',
                 ],
-                'RESTRICTED_WARNING' => 'Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Bạn có thể cài đặt thủ công cho các số Cloud API đủ điều kiện. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
+                'RESTRICTED_WARNING' => 'Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Bạn có thể cài đặt thủ công cho các số Cloud API đủ điều kiện. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất.',
                 'STATUS_LINK' => 'Xem cập nhật tình trạng',
                 'CALLING_ENABLE_FAILED' => 'Hộp thư WhatsApp của bạn đã sẵn sàng, nhưng chưa bật được cuộc gọi thoại — số này chưa đăng ký WhatsApp Business Calling API. Hãy liên hệ Meta hoặc nhà cung cấp giải pháp WhatsApp Business để đăng ký, rồi bật cuộc gọi trong phần cài đặt Cuộc gọi của hộp thư.',
             ],
             'API' => [
                 'ERROR_MESSAGE' => 'Chúng tôi không thể lưu kênh WhatsApp',
-                'MANUAL_RESTRICTION_WARNING' => 'Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của Chatwoot. Cài đặt thủ công chỉ chạy với số đã kết nối WhatsApp Cloud API. Luồng này chưa hỗ trợ số đang dùng chung với ứng dụng WhatsApp Business. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất. Cảm ơn bạn đã kiên nhẫn.',
+                'MANUAL_RESTRICTION_WARNING' => 'Tạm thời chưa dùng được WhatsApp Embedded Signup do sự cố ở tầng API phía Meta, không phải lỗi của {installationName}. Cài đặt thủ công chỉ chạy với số đã kết nối WhatsApp Cloud API. Luồng này chưa hỗ trợ số đang dùng chung với ứng dụng WhatsApp Business. Chúng tôi đang phối hợp chặt với Meta để xử lý sớm nhất. Cảm ơn bạn đã kiên nhẫn.',
                 'STATUS_LINK' => 'Xem cập nhật tình trạng',
             ],
         ],
@@ -503,7 +501,7 @@ return [
         ],
         'AUTH' => [
             'TITLE' => 'Chọn kênh',
-            'DESC' => 'Chatwoot hỗ trợ các tiện ích trò chuyện trực tiếp, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.',
+            'DESC' => '{installationName} hỗ trợ các tiện ích trò chuyện trực tiếp, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.',
             'TITLE_NEXT' => 'Hoàn tất thiết lập',
             'TITLE_FINISH' => 'Xong rồi!',
             'CHANNEL' => [
@@ -569,11 +567,11 @@ return [
         ],
         'DETAILS' => [
             'TITLE' => 'Chi tiết Hộp thư',
-            'DESC' => 'Từ menu thả xuống bên dưới, chọn Trang Facebook bạn muốn kết nối với Chatwoot. Bạn cũng có thể đặt tên tùy chỉnh cho hộp thư của mình để nhận dạng tốt hơn.',
+            'DESC' => 'Từ menu thả xuống bên dưới, chọn Trang Facebook bạn muốn kết nối với {installationName}. Bạn cũng có thể đặt tên tùy chỉnh cho hộp thư của mình để nhận dạng tốt hơn.',
         ],
         'FINISH' => [
             'TITLE' => 'Đúng rồi!',
-            'DESC' => 'Bạn đã tích hợp thành công Trang Facebook của mình với Chatwoot. Lần tới khi khách hàng nhắn tin cho Trang của bạn, hội thoại sẽ tự động xuất hiện trong hộp thư của bạn.<br>Chúng tôi cũng đang cung cấp cho bạn tập lệnh widget mà bạn có thể dễ dàng thêm vào trang web của mình. Khi điều này xuất hiện trên trang web của bạn, khách hàng có thể nhắn tin cho bạn ngay từ trang web của bạn mà không cần sự trợ giúp của bất kỳ công cụ bên ngoài nào và hội thoại sẽ xuất hiện ngay tại đây, trên Chatwoot.<br>Cool, huh? Well :)',
+            'DESC' => 'Bạn đã tích hợp thành công Trang Facebook của mình với {installationName}. Lần tới khi khách hàng nhắn tin cho Trang của bạn, hội thoại sẽ tự động xuất hiện trong hộp thư của bạn.<br>Chúng tôi cũng đang cung cấp cho bạn tập lệnh widget mà bạn có thể dễ dàng thêm vào trang web của mình. Khi điều này xuất hiện trên trang web của bạn, khách hàng có thể nhắn tin cho bạn ngay từ trang web của bạn mà không cần sự trợ giúp của bất kỳ công cụ bên ngoài nào và hội thoại sẽ xuất hiện ngay tại đây, trên {installationName}.<br>Cool, huh? Well :)',
         ],
         'EMAIL_PROVIDER' => [
             'TITLE' => 'Chọn nhà cung cấp email',
@@ -1014,7 +1012,7 @@ return [
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_TITLE' => 'Thêm Business Management Token',
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_TITLE' => 'Thay Business Management Token',
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_CONFIGURED' => 'Đã cấu hình business management token',
-        'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER' => 'Cung cấp một token có quyền truy cập tài khoản WhatsApp Business này khi Chatwoot không lấy được mẫu tin nhắn. Chatwoot chỉ dùng token này để đồng bộ mẫu tin.',
+        'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER' => 'Cung cấp một token có quyền truy cập tài khoản WhatsApp Business này khi {installationName} không lấy được mẫu tin nhắn. {installationName} chỉ dùng token này để đồng bộ mẫu tin.',
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_PLACEHOLDER' => 'Nhập business management token',
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_BUTTON' => 'Thêm',
         'WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_BUTTON' => 'Thay',
@@ -1089,7 +1087,7 @@ return [
                 'INBOX' => 'Hộp thư',
                 'PHONE_NUMBER' => 'Số điện thoại',
                 'NOT_ENTERED' => 'Chưa nhập',
-                'VERIFY_NOTICE' => 'Chatwoot sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.',
+                'VERIFY_NOTICE' => '{installationName} sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.',
                 'BACK' => 'Trở về',
                 'CANCEL' => 'Huỷ',
                 'CONTINUE' => 'Tiếp tục',
@@ -1111,7 +1109,7 @@ return [
                 ],
                 'REVIEW_MIGRATION' => [
                     'TITLE' => 'Xem lại phần chuyển đổi',
-                    'DESCRIPTION' => 'Xác nhận thông tin kết nối trước khi kết nối lại hộp thư này. Chatwoot sẽ xác minh token, WABA và số điện thoại với Meta trước khi áp dụng thay đổi.',
+                    'DESCRIPTION' => 'Xác nhận thông tin kết nối trước khi kết nối lại hộp thư này. {installationName} sẽ xác minh token, WABA và số điện thoại với Meta trước khi áp dụng thay đổi.',
                 ],
             ],
         ],
@@ -1454,7 +1452,7 @@ return [
             'USER_MESSAGE' => 'Xin chào',
             'AGENT_MESSAGE' => 'Xin chào',
         ],
-        'BRANDING_TEXT' => 'Cung cấp bởi Chatwoot',
+        'BRANDING_TEXT' => 'Cung cấp bởi {installationName}',
         'SCRIPT_SETTINGS' => '
 window.chatwootSettings = {options};',
     ],

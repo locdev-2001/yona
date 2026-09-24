@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/setNewPassword.json — namespace SET_NEW_PASSWORD.
-
 return [
     'TITLE' => 'Set new password',
     'PASSWORD' => [

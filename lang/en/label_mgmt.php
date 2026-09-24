@@ -1,8 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/labelsMgmt.json — namespace LABEL_MGMT.
-// Nhánh SUGGESTIONS (gợi ý nhãn bằng Captain) là EE nên không port.
-
 return [
     'HEADER' => 'Labels',
     'HEADER_BTN_TXT' => 'Add label',

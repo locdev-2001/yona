@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/components.json — namespace SLASH_COMMANDS.
-
 return [
     'HEADING_1' => 'Heading 1',
     'HEADING_2' => 'Heading 2',

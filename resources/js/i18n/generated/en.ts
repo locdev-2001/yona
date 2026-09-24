@@ -2359,7 +2359,7 @@ const messages: Record<string, unknown> = {
         "TWILIO_WHATSAPP_CAN_REPLY": "You can only reply to this conversation using a template message due to",
         "TWILIO_WHATSAPP_24_HOURS_WINDOW": "24 hour message window restriction",
         "OLD_INSTAGRAM_INBOX_REPLY_BANNER": "This Instagram account was migrated to the new Instagram channel inbox. All new messages will show up there. You won’t be able to send messages from this conversation anymore.",
-        "INSTAGRAM_RESTRICTION_BANNER": "Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with Chatwoot. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.",
+        "INSTAGRAM_RESTRICTION_BANNER": "Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with {installationName}. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.",
         "INSTAGRAM_RESTRICTION_STATUS_LINK": "View status updates",
         "REPLYING_TO": "You are replying to:",
         "REMOVE_SELECTION": "Remove Selection",
@@ -2774,7 +2774,7 @@ const messages: Record<string, unknown> = {
         "SENT_VIA_PLATFORM": "via {platform}",
         "BOT": "Bot",
         "NATIVE_APP": "Native app",
-        "NATIVE_APP_ADVISORY": "This message was sent from the native app. Reply from Chatwoot to maintain the message window.",
+        "NATIVE_APP_ADVISORY": "This message was sent from the native app. Reply from {installationName} to maintain the message window.",
         "SEND_FAILED": "Couldn't send message! Try again",
         "TRY_AGAIN": "retry",
         "ASSIGNMENT": {
@@ -3065,7 +3065,7 @@ const messages: Record<string, unknown> = {
         "TRY_THESE_PROMPTS": "Try these prompts"
     },
     "CREATE_ACCOUNT": {
-        "NO_ACCOUNT_WARNING": "Uh oh! We could not find any Chatwoot accounts. Please create a new account to continue.",
+        "NO_ACCOUNT_WARNING": "Uh oh! We could not find any {installationName} accounts. Please create a new account to continue.",
         "NEW_ACCOUNT": "New Account",
         "SELECTOR_SUBTITLE": "Create a new account",
         "API": {
@@ -4168,7 +4168,7 @@ const messages: Record<string, unknown> = {
                 "SLUG": {
                     "LABEL": "Slug",
                     "PLACEHOLDER": "Category slug for urls",
-                    "HELP_TEXT": "app.chatwoot.com/hc/my-portal/en-US/categories/my-slug",
+                    "HELP_TEXT": "yona.vn/hc/my-portal/en-US/categories/my-slug",
                     "ERROR": "Slug is required"
                 },
                 "DESCRIPTION": {
@@ -4199,7 +4199,7 @@ const messages: Record<string, unknown> = {
                 "SLUG": {
                     "LABEL": "Slug",
                     "PLACEHOLDER": "Category slug for urls",
-                    "HELP_TEXT": "app.chatwoot.com/hc/my-portal/en-US/categories/my-slug",
+                    "HELP_TEXT": "yona.vn/hc/my-portal/en-US/categories/my-slug",
                     "ERROR": "Slug is required"
                 },
                 "DESCRIPTION": {
@@ -4436,7 +4436,7 @@ const messages: Record<string, unknown> = {
                         "LABEL": "Slug",
                         "PLACEHOLDER": "Category slug for urls",
                         "ERROR": "Slug is required",
-                        "HELP_TEXT": "app.chatwoot.com/hc/{portalSlug}/{localeCode}/categories/{categorySlug}"
+                        "HELP_TEXT": "yona.vn/hc/{portalSlug}/{localeCode}/categories/{categorySlug}"
                     },
                     "DESCRIPTION": {
                         "LABEL": "Description",
@@ -4596,7 +4596,7 @@ const messages: Record<string, unknown> = {
             "CONFIRM_BUTTON_LABEL": "Create",
             "NAME": {
                 "LABEL": "Name",
-                "PLACEHOLDER": "User Guide | Chatwoot",
+                "PLACEHOLDER": "User Guide | Acme",
                 "MESSAGE": "Choose an name for your portal.",
                 "ERROR": "Name is required"
             },
@@ -4670,7 +4670,7 @@ const messages: Record<string, unknown> = {
                     },
                     "DNS_CONFIGURATION_DIALOG": {
                         "HEADER": "DNS configuration",
-                        "DESCRIPTION": "Log in to the account you have with your DNS provider, and add a CNAME record for subdomain pointing to chatwoot.help",
+                        "DESCRIPTION": "Log in to your DNS provider and add the CNAME record below for your subdomain.",
                         "COPY": "Successfully copied CNAME",
                         "SEND_INSTRUCTIONS": {
                             "HEADER": "Send instructions",
@@ -4719,7 +4719,7 @@ const messages: Record<string, unknown> = {
                 "HEADER": "Integrations",
                 "DESCRIPTION": "Connect tools that extend what your help center can do.",
                 "LIVE_CHAT": {
-                    "TITLE": "Live chat with Chatwoot",
+                    "TITLE": "Live chat with {installationName}",
                     "DESCRIPTION": "Show a live chat widget on your help center so visitors can reach you while they read.",
                     "PLACEHOLDER": "Select live chat widget",
                     "NONE_OPTION": "No widget"
@@ -4943,7 +4943,7 @@ const messages: Record<string, unknown> = {
         "CREATE_FLOW": {
             "CHANNEL": {
                 "TITLE": "Choose Channel",
-                "BODY": "Choose the provider you want to integrate with Chatwoot."
+                "BODY": "Choose the provider you want to integrate with {installationName}."
             },
             "INBOX": {
                 "TITLE": "Create Inbox",
@@ -4969,7 +4969,7 @@ const messages: Record<string, unknown> = {
                 "PLACEHOLDER": "Enter your website name (eg: Acme Inc)"
             },
             "FB": {
-                "HELP": "PS: By signing in, we only get access to your Page's messages. Your private messages can never be accessed by Chatwoot.",
+                "HELP": "PS: By signing in, we only get access to your Page's messages. Your private messages can never be accessed by {installationName}.",
                 "CHOOSE_PAGE": "Choose Page",
                 "CHOOSE_PLACEHOLDER": "Select a page from the list",
                 "INBOX_NAME": "Inbox Name",
@@ -4977,7 +4977,7 @@ const messages: Record<string, unknown> = {
                 "PICK_NAME": "Pick a Name for your Inbox",
                 "PICK_A_VALUE": "Pick a value",
                 "CREATE_INBOX": "Create Inbox",
-                "RESTRICTED_WARNING": "Facebook inbox creation is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. We’re working closely with Meta to resolve it as quickly as possible.",
+                "RESTRICTED_WARNING": "Facebook inbox creation is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. We’re working closely with Meta to resolve it as quickly as possible.",
                 "STATUS_LINK": "View status updates"
             },
             "INSTAGRAM": {
@@ -4988,8 +4988,8 @@ const messages: Record<string, unknown> = {
                 "ERROR_AUTH": "There was an error connecting to Instagram, please try again",
                 "NEW_INBOX_SUGGESTION": "This Instagram account was previously linked to a different inbox and has now been migrated here. All new messages will appear here. The old inbox will no longer be able to send or receive messages for this account.",
                 "DUPLICATE_INBOX_BANNER": "This Instagram account was migrated to the new Instagram channel inbox. You won’t be able to send/receive Instagram messages from this inbox anymore.",
-                "RESTRICTED_WARNING": "Instagram inbox creation is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. We’re working closely with Meta to resolve it as quickly as possible.",
-                "SETTINGS_RESTRICTED_WARNING": "Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with Chatwoot. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.",
+                "RESTRICTED_WARNING": "Instagram inbox creation is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. We’re working closely with Meta to resolve it as quickly as possible.",
+                "SETTINGS_RESTRICTED_WARNING": "Instagram messaging is currently affected by an API-level issue on Meta’s side, not a problem with {installationName}. Some messages or actions may be delayed or unavailable. We’re working closely with Meta to resolve it as quickly as possible.",
                 "STATUS_LINK": "View status updates"
             },
             "TIKTOK": {
@@ -5256,17 +5256,17 @@ const messages: Record<string, unknown> = {
                     "MANUAL_LINK_TEXT": "manual setup flow",
                     "ACCESS_REQUEST": {
                         "TITLE": "Quick setup with Meta",
-                        "DESCRIPTION": "Connect a new number or an existing number from the WhatsApp Business app without manual configuration. To request this option, tell our team what your business does, how you’ll use WhatsApp, and which Chatwoot account needs access.",
+                        "DESCRIPTION": "Connect a new number or an existing number from the WhatsApp Business app without manual configuration. To request this option, tell our team what your business does, how you’ll use WhatsApp, and which {installationName} account needs access.",
                         "FOOTNOTE": "We’ll review your request and let you know if this option can be enabled. You can also continue with manual setup below.",
                         "BUTTON": "Request access"
                     },
-                    "RESTRICTED_WARNING": "WhatsApp Embedded Signup is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. You can use manual setup for eligible Cloud API numbers. We’re working closely with Meta to resolve it as quickly as possible.",
+                    "RESTRICTED_WARNING": "WhatsApp Embedded Signup is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. You can use manual setup for eligible Cloud API numbers. We’re working closely with Meta to resolve it as quickly as possible.",
                     "STATUS_LINK": "View status updates",
                     "CALLING_ENABLE_FAILED": "Your WhatsApp inbox is ready, but voice calling couldn't be turned on — this number isn't enrolled in the WhatsApp Business Calling API yet. Reach out to Meta or your WhatsApp Business Solution Provider to onboard it, then turn calling on from the inbox's Calls settings."
                 },
                 "API": {
                     "ERROR_MESSAGE": "We were not able to save the WhatsApp channel",
-                    "MANUAL_RESTRICTION_WARNING": "WhatsApp Embedded Signup is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. Manual setup works only for numbers already connected to WhatsApp Cloud API. Numbers using WhatsApp Business app coexistence are not supported in this flow yet. We’re working closely with Meta to resolve the issue as quickly as possible. Thanks for your patience.",
+                    "MANUAL_RESTRICTION_WARNING": "WhatsApp Embedded Signup is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. Manual setup works only for numbers already connected to WhatsApp Cloud API. Numbers using WhatsApp Business app coexistence are not supported in this flow yet. We’re working closely with Meta to resolve the issue as quickly as possible. Thanks for your patience.",
                     "STATUS_LINK": "View status updates"
                 }
             },
@@ -5425,7 +5425,7 @@ const messages: Record<string, unknown> = {
             },
             "AUTH": {
                 "TITLE": "Choose a channel",
-                "DESC": "Chatwoot supports live-chat widgets, Facebook Messenger, WhatsApp, Emails, etc., as channels. If you want to build a custom channel, you can create it using the API channel. To get started, choose one of the channels below.",
+                "DESC": "{installationName} supports live-chat widgets, Facebook Messenger, WhatsApp, Emails, etc., as channels. If you want to build a custom channel, you can create it using the API channel. To get started, choose one of the channels below.",
                 "TITLE_NEXT": "Complete the setup",
                 "TITLE_FINISH": "Voilà!",
                 "CHANNEL": {
@@ -5491,11 +5491,11 @@ const messages: Record<string, unknown> = {
             },
             "DETAILS": {
                 "TITLE": "Inbox Details",
-                "DESC": "From the dropdown below, select the Facebook Page you want to connect to Chatwoot. You can also give a custom name to your inbox for better identification."
+                "DESC": "From the dropdown below, select the Facebook Page you want to connect to {installationName}. You can also give a custom name to your inbox for better identification."
             },
             "FINISH": {
                 "TITLE": "Nailed It!",
-                "DESC": "You have successfully finished integrating your Facebook Page with Chatwoot. Next time a customer messages your Page, the conversation will automatically appear on your inbox.<br>We are also providing you with a widget script that you can easily add to your website. Once this is live on your website, customers can message you right from your website without the help of any external tool and the conversation will appear right here, on Chatwoot.<br>Cool, huh? Well, we sure try to be :)"
+                "DESC": "You have successfully finished integrating your Facebook Page with {installationName}. Next time a customer messages your Page, the conversation will automatically appear on your inbox.<br>We are also providing you with a widget script that you can easily add to your website. Once this is live on your website, customers can message you right from your website without the help of any external tool and the conversation will appear right here, on {installationName}.<br>Cool, huh? Well, we sure try to be :)"
             },
             "EMAIL_PROVIDER": {
                 "TITLE": "Select your email provider",
@@ -5936,7 +5936,7 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_TITLE": "Add Business Management Token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_TITLE": "Replace Business Management Token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_CONFIGURED": "Business management token configured",
-            "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER": "Provide a token with access to this WhatsApp Business Account when Chatwoot cannot retrieve its message templates. Chatwoot uses this token only for template synchronization.",
+            "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_SUBHEADER": "Provide a token with access to this WhatsApp Business Account when {installationName} cannot retrieve its message templates. {installationName} uses this token only for template synchronization.",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_UPDATE_PLACEHOLDER": "Enter the business management token",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_ADD_BUTTON": "Add",
             "WHATSAPP_BUSINESS_MANAGEMENT_TOKEN_REPLACE_BUTTON": "Replace",
@@ -6011,7 +6011,7 @@ const messages: Record<string, unknown> = {
                     "INBOX": "Inbox",
                     "PHONE_NUMBER": "Phone number",
                     "NOT_ENTERED": "Not entered",
-                    "VERIFY_NOTICE": "Chatwoot will verify these credentials with Meta before applying any changes. If verification fails, the current configuration is left untouched.",
+                    "VERIFY_NOTICE": "{installationName} will verify these credentials with Meta before applying any changes. If verification fails, the current configuration is left untouched.",
                     "BACK": "Back",
                     "CANCEL": "Cancel",
                     "CONTINUE": "Continue",
@@ -6033,7 +6033,7 @@ const messages: Record<string, unknown> = {
                     },
                     "REVIEW_MIGRATION": {
                         "TITLE": "Review migration",
-                        "DESCRIPTION": "Confirm the connection details before reconnecting this inbox. Chatwoot will verify the token, WABA, and phone number with Meta before applying changes."
+                        "DESCRIPTION": "Confirm the connection details before reconnecting this inbox. {installationName} will verify the token, WABA, and phone number with Meta before applying changes."
                     }
                 }
             },
@@ -6376,7 +6376,7 @@ const messages: Record<string, unknown> = {
                 "USER_MESSAGE": "Hi",
                 "AGENT_MESSAGE": "Hello"
             },
-            "BRANDING_TEXT": "Powered by Chatwoot",
+            "BRANDING_TEXT": "Powered by {installationName}",
             "SCRIPT_SETTINGS": "\n      window.chatwootSettings = {options};"
         },
         "EMAIL_PROVIDERS": {
@@ -6529,18 +6529,18 @@ const messages: Record<string, unknown> = {
         },
         "dyte": {
             "name": "Cloudflare RealtimeKit",
-            "short_description": "Start video/voice calls with customers directly from Chatwoot.",
-            "description": "Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot.",
+            "short_description": "Start video/voice calls with customers directly from {installationName}.",
+            "description": "Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from {installationName}.",
             "meeting_name": ":agent_name has started a meeting"
         },
         "slack": {
             "name": "Slack",
             "short_description": "Receive notifications and respond to conversations directly in Slack.",
-            "description": "Integrate Chatwoot with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface."
+            "description": "Integrate {installationName} with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface."
         },
         "webhooks": {
             "name": "Webhooks",
-            "description": "Webhook events provide real-time updates about activities in your Chatwoot account. You can subscribe to your preferred events, and Chatwoot will send you HTTP callbacks with the updates."
+            "description": "Webhook events provide real-time updates about activities in your {installationName} account. You can subscribe to your preferred events, and {installationName} will send you HTTP callbacks with the updates."
         },
         "dialogflow": {
             "name": "Dialogflow",
@@ -6596,7 +6596,7 @@ const messages: Record<string, unknown> = {
             "ERROR": "There was an error connecting to Shopify. Please try again or contact support if the issue persists."
         },
         "HEADER": "Integrations",
-        "DESCRIPTION": "Chatwoot integrates with multiple tools and services to improve your team's efficiency. Explore the list below to configure your favorite apps.",
+        "DESCRIPTION": "{installationName} integrates with multiple tools and services to improve your team's efficiency. Explore the list below to configure your favorite apps.",
         "LEARN_MORE": "Learn more about integrations",
         "LOADING": "Fetching integrations",
         "SEARCH_PLACEHOLDER": "Search integrations...",
@@ -6612,7 +6612,7 @@ const messages: Record<string, unknown> = {
             "LEARN_MORE": "Learn more about webhooks",
             "PAYWALL": {
                 "TITLE": "Webhooks are available on paid plans",
-                "AVAILABLE_ON": "Use webhooks to receive real-time events from your Chatwoot account.",
+                "AVAILABLE_ON": "Use webhooks to receive real-time events from your {installationName} account.",
                 "UPGRADE_PROMPT": "Upgrade to the Startups, Business, or Enterprise plan to use webhooks.",
                 "UPGRADE_NOW": "Upgrade now",
                 "CANCEL_ANYTIME": "Change or cancel your plan anytime."
@@ -6630,7 +6630,7 @@ const messages: Record<string, unknown> = {
             "NO_RESULTS": "No webhooks found matching your search",
             "FORM": {
                 "CANCEL": "Cancel",
-                "DESC": "Webhook events provide you the realtime information about what's happening in your Chatwoot account. Please enter a valid URL to configure a callback.",
+                "DESC": "Webhook events provide you the realtime information about what's happening in your {installationName} account. Please enter a valid URL to configure a callback.",
                 "SUBSCRIPTIONS": {
                     "LABEL": "Events",
                     "EVENTS": {
@@ -6665,7 +6665,7 @@ const messages: Record<string, unknown> = {
             "HEADER_BTN_TXT": "Add new webhook",
             "LOADING": "Fetching attached webhooks",
             "SEARCH_404": "There are no items matching this query",
-            "SIDEBAR_TXT": "<p><b>Webhooks</b> </p> <p>Webhooks are HTTP callbacks which can be defined for every account. They are triggered by events like message creation in Chatwoot. You can create more than one webhook for this account. <br /><br /> For creating a <b>webhook</b>, click on the <b>Add new webhook</b> button. You can also remove any existing webhook by clicking on the Delete button.</p>",
+            "SIDEBAR_TXT": "<p><b>Webhooks</b> </p> <p>Webhooks are HTTP callbacks which can be defined for every account. They are triggered by events like message creation in {installationName}. You can create more than one webhook for this account. <br /><br /> For creating a <b>webhook</b>, click on the <b>Add new webhook</b> button. You can also remove any existing webhook by clicking on the Delete button.</p>",
             "LIST": {
                 "404": "There are no webhooks configured for this account.",
                 "TITLE": "Manage webhooks",
@@ -6713,14 +6713,14 @@ const messages: Record<string, unknown> = {
             },
             "HELP_TEXT": {
                 "TITLE": "How to use the Slack Integration?",
-                "BODY": "With this integration, all of your incoming conversations will be synced to the ***{selectedChannelName}*** channel in your Slack workspace. You can manage all your customer conversations right within the channel and never miss a message.\n\nHere are the main features of the integration:\n\n**Respond to conversations from within Slack:** To respond to a conversation in the ***{selectedChannelName}*** Slack channel, simply type out your message and send it as a thread. This will create a response back to the customer through Chatwoot. It's that simple!\n\n **Create private notes:** If you want to create private notes instead of replies, start your message with ***`note:`***. This ensures that your message is kept private and won't be visible to the customer.\n\n**Associate an agent profile:** If the person who replied on Slack has an agent profile in Chatwoot under the same email, the replies will be associated with that agent profile automatically. This means you can easily track who said what and when. On the other hand, when the replier doesn't have an associated agent profile, the replies will appear from the bot profile to the customer.",
+                "BODY": "With this integration, all of your incoming conversations will be synced to the ***{selectedChannelName}*** channel in your Slack workspace. You can manage all your customer conversations right within the channel and never miss a message.\n\nHere are the main features of the integration:\n\n**Respond to conversations from within Slack:** To respond to a conversation in the ***{selectedChannelName}*** Slack channel, simply type out your message and send it as a thread. This will create a response back to the customer through {installationName}. It's that simple!\n\n **Create private notes:** If you want to create private notes instead of replies, start your message with ***`note:`***. This ensures that your message is kept private and won't be visible to the customer.\n\n**Associate an agent profile:** If the person who replied on Slack has an agent profile in {installationName} under the same email, the replies will be associated with that agent profile automatically. This means you can easily track who said what and when. On the other hand, when the replier doesn't have an associated agent profile, the replies will appear from the bot profile to the customer.",
                 "SELECTED": "selected"
             },
             "SELECT_CHANNEL": {
                 "OPTION_LABEL": "Select a channel",
                 "UPDATE": "Update",
                 "BUTTON_TEXT": "Connect channel",
-                "DESCRIPTION": "Your Slack workspace is now linked with Chatwoot. However, the integration is currently inactive. To activate the integration and connect a channel to Chatwoot, please click the button below.\n\n**Note:** If you are attempting to connect a private channel, add the Chatwoot app to the Slack channel before proceeding with this step.",
+                "DESCRIPTION": "Your Slack workspace is now linked with {installationName}. However, the integration is currently inactive. To activate the integration and connect a channel to {installationName}, please click the button below.\n\n**Note:** If you are attempting to connect a private channel, add the {installationName} app to the Slack channel before proceeding with this step.",
                 "ATTENTION_REQUIRED": "Attention required",
                 "EXPIRED": "Your Slack integration has expired. To continue receiving messages on Slack, please delete the integration and connect your workspace again."
             },
@@ -6822,7 +6822,7 @@ const messages: Record<string, unknown> = {
         "DASHBOARD_APPS": {
             "TITLE": "Dashboard Apps",
             "HEADER_BTN_TXT": "Add a new dashboard app",
-            "SIDEBAR_TXT": "<p><b>Dashboard Apps</b></p><p>Dashboard Apps allow organizations to embed an application inside the Chatwoot dashboard to provide the context for customer support agents. This feature allows you to create an application independently and embed that inside the dashboard to provide user information, their orders, or their previous payment history.</p><p>When you embed your application using the dashboard in Chatwoot, your application will get the context of the conversation and contact as a window event. Implement a listener for the message event on your page to receive the context.</p><p>To add a new dashboard app, click on the button 'Add a new dashboard app'.</p>",
+            "SIDEBAR_TXT": "<p><b>Dashboard Apps</b></p><p>Dashboard Apps allow organizations to embed an application inside the {installationName} dashboard to provide the context for customer support agents. This feature allows you to create an application independently and embed that inside the dashboard to provide user information, their orders, or their previous payment history.</p><p>When you embed your application using the dashboard in {installationName}, your application will get the context of the conversation and contact as a window event. Implement a listener for the message event on your page to receive the context.</p><p>To add a new dashboard app, click on the button 'Add a new dashboard app'.</p>",
             "DESCRIPTION": "Dashboard Apps allow organizations to embed an application inside the dashboard to provide the context for customer support agents. This feature allows you to create an application independently and embed that to provide user information, their orders, or their previous payment history.",
             "LEARN_MORE": "Learn more about Dashboard Apps",
             "COUNT": "{n} dashboard app | {n} dashboard apps",
@@ -7695,7 +7695,7 @@ const messages: Record<string, unknown> = {
         }
     },
     "LOGIN": {
-        "TITLE": "Login to Chatwoot",
+        "TITLE": "Login to {installationName}",
         "EMAIL": {
             "LABEL": "Email",
             "PLACEHOLDER": "example@companyname.com",
@@ -7996,7 +7996,7 @@ const messages: Record<string, unknown> = {
             "BACKUP_TITLE": "Using a Backup Code",
             "BACKUP_DESC": "If you don't have access to your authenticator app, you can use one of the backup codes you saved when setting up 2FA. Each code can only be used once.",
             "CONTACT_TITLE": "Need More Help?",
-            "CONTACT_DESC_CLOUD": "If you've lost access to both your authenticator app and backup codes, please reach out to Chatwoot support for assistance.",
+            "CONTACT_DESC_CLOUD": "If you've lost access to both your authenticator app and backup codes, please reach out to {installationName} support for assistance.",
             "CONTACT_DESC_SELF_HOSTED": "If you've lost access to both your authenticator app and backup codes, please contact your administrator for assistance."
         },
         "VERIFICATION_FAILED": "Verification failed. Please try again."
@@ -8103,7 +8103,7 @@ const messages: Record<string, unknown> = {
         "WHATSAPP_CONNECTED": "WhatsApp connected successfully",
         "FACEBOOK_CONNECTED": "Facebook connected successfully",
         "META_RESTRICTION": {
-            "MESSAGE": "Inbox setup for Facebook, Instagram, and WhatsApp is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. We’re working closely with Meta to resolve it as quickly as possible.",
+            "MESSAGE": "Inbox setup for Facebook, Instagram, and WhatsApp is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. We’re working closely with Meta to resolve it as quickly as possible.",
             "STATUS_LINK": "View status updates"
         },
         "CREATED_FOR_YOU": {
@@ -8319,7 +8319,7 @@ const messages: Record<string, unknown> = {
             },
             "INTERFACE_SECTION": {
                 "TITLE": "Interface",
-                "NOTE": "Customize the look and feel of your Chatwoot dashboard.",
+                "NOTE": "Customize the look and feel of your {installationName} dashboard.",
                 "FONT_SIZE": {
                     "TITLE": "Font size",
                     "NOTE": "Adjust the text size across the dashboard based on your preference.",
@@ -8614,11 +8614,11 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Create an account",
-        "GET_STARTED": "Get started with Chatwoot",
+        "GET_STARTED": "Get started with {installationName}",
         "TITLE": "Register",
         "TESTIMONIAL_HEADER": "All it takes is one step to move forward",
         "TESTIMONIAL_CONTENT": "You're one step away from engaging your customers, retaining them and finding new ones.",
-        "TERMS_ACCEPT": "By creating an account, you agree to our <a href=\"https://www.chatwoot.com/terms\">T & C</a> and <a href=\"https://www.chatwoot.com/privacy-policy\">Privacy policy</a>",
+        "TERMS_ACCEPT": "By creating an account, you agree to our <a href=\"{termsURL}\">T & C</a> and <a href=\"{privacyURL}\">Privacy policy</a>",
         "OAUTH": {
             "GOOGLE_SIGNUP": "Sign up with Google"
         },
@@ -8835,7 +8835,7 @@ const messages: Record<string, unknown> = {
     },
     "RESET_PASSWORD": {
         "TITLE": "Reset password",
-        "DESCRIPTION": "Enter the email address you use to log in to Chatwoot to get the password reset instructions.",
+        "DESCRIPTION": "Enter the email address you use to log in to {installationName} to get the password reset instructions.",
         "GO_BACK_TO_LOGIN": "If you want to go back to the login page,",
         "EMAIL": {
             "LABEL": "Email",
@@ -8949,7 +8949,7 @@ const messages: Record<string, unknown> = {
             "SP_ENTITY_ID": {
                 "LABEL": "SP Entity ID",
                 "HELP": "Unique identifier for this application as a service provider (auto-generated).",
-                "TOOLTIP": "Unique identifier for Chatwoot as the Service Provider - Configure this in your IdP settings"
+                "TOOLTIP": "Unique identifier for {installationName} as the Service Provider - Configure this in your IdP settings"
             },
             "IDP_ENTITY_ID": {
                 "LABEL": "Identity Provider Entity ID",
@@ -9233,7 +9233,7 @@ const messages: Record<string, unknown> = {
             "SUCCESS_MESSAGE": "Survey updated successfully",
             "ERROR_MESSAGE": "Could not connect to Woot Server, Please try again later"
         },
-        "POWERED_BY": "Powered by Chatwoot"
+        "POWERED_BY": "Powered by {installationName}"
     },
     "SWITCH": {
         "TOGGLE": "Toggle switch"
@@ -9522,7 +9522,7 @@ const messages: Record<string, unknown> = {
         "BUBBLE": {
             "LABEL": "Chat with us"
         },
-        "POWERED_BY": "Powered by Chatwoot",
+        "POWERED_BY": "Powered by {installationName}",
         "EMAIL_PLACEHOLDER": "Please enter your email",
         "CHAT_PLACEHOLDER": "Type your message",
         "TODAY": "Today",

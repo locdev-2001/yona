@@ -1,6 +1,5 @@
 <?php
 
-// Port từ dashboard/i18n/locale/en/macros.json — giữ nguyên key của Chatwoot.
 return [
     'HEADER' => 'Macros',
     'DESCRIPTION' => 'A macro is a set of saved actions that help customer service agents easily complete tasks. The agents can define a set of actions like tagging a conversation with a label, sending an email transcript, updating a custom attribute, etc., and they can run these actions in a single click.',

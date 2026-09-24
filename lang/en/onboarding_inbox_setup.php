@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/onboarding.json — namespace ONBOARDING_INBOX_SETUP.
-
 return [
     'GREETING' => 'Let\'s set up a few things',
     'SUBTITLE' => 'This will give you head-start in your workspace',
@@ -11,7 +9,7 @@ return [
     'WHATSAPP_CONNECTED' => 'WhatsApp connected successfully',
     'FACEBOOK_CONNECTED' => 'Facebook connected successfully',
     'META_RESTRICTION' => [
-        'MESSAGE' => 'Inbox setup for Facebook, Instagram, and WhatsApp is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with Chatwoot. We’re working closely with Meta to resolve it as quickly as possible.',
+        'MESSAGE' => 'Inbox setup for Facebook, Instagram, and WhatsApp is temporarily unavailable due to an API-level issue on Meta’s side, not a problem with {installationName}. We’re working closely with Meta to resolve it as quickly as possible.',
         'STATUS_LINK' => 'View status updates',
     ],
     'CREATED_FOR_YOU' => [

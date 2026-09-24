@@ -1,8 +1,6 @@
 <?php
 
 // Bản dịch tiếng Việt của lang/en/integration_settings.php.
-// Nguồn: bản dịch `vi` của Chatwoot v4.17.1 (dashboard/widget/survey + config/locales/vi.yml);
-// khóa Chatwoot chưa dịch và khóa riêng Yona được dịch mới trong đợt G3.
 
 return [
     'SHOPIFY' => [
@@ -22,7 +20,7 @@ return [
         'ERROR' => 'Có lỗi khi kết nối Shopify. Bạn hãy thử lại hoặc liên hệ hỗ trợ nếu vẫn không được.',
     ],
     'HEADER' => 'Tích hợp',
-    'DESCRIPTION' => 'Chatwoot kết nối với nhiều công cụ và dịch vụ để đội của bạn làm việc hiệu quả hơn. Xem danh sách bên dưới để cấu hình ứng dụng bạn thích.',
+    'DESCRIPTION' => '{installationName} kết nối với nhiều công cụ và dịch vụ để đội của bạn làm việc hiệu quả hơn. Xem danh sách bên dưới để cấu hình ứng dụng bạn thích.',
     'LEARN_MORE' => 'Tìm hiểu thêm về kết nối',
     'LOADING' => 'Đang tải danh sách kết nối',
     'SEARCH_PLACEHOLDER' => 'Tìm kết nối...',
@@ -38,7 +36,7 @@ return [
         'LEARN_MORE' => 'Tìm hiểu thêm về webhook',
         'PAYWALL' => [
             'TITLE' => 'Webhook có ở các gói trả phí',
-            'AVAILABLE_ON' => 'Dùng webhook để nhận sự kiện tức thời từ tài khoản Chatwoot của bạn.',
+            'AVAILABLE_ON' => 'Dùng webhook để nhận sự kiện tức thời từ tài khoản {installationName} của bạn.',
             'UPGRADE_PROMPT' => 'Hãy nâng cấp lên gói Startups, Business hoặc Enterprise để dùng webhook.',
             'UPGRADE_NOW' => 'Nâng cấp ngay',
             'CANCEL_ANYTIME' => 'Bạn có thể đổi hoặc hủy gói bất cứ lúc nào.',
@@ -56,7 +54,7 @@ return [
         'NO_RESULTS' => 'Không tìm thấy webhook nào khớp',
         'FORM' => [
             'CANCEL' => 'Huỷ',
-            'DESC' => 'Webhook events cung cấp cho bạn thông tin thời gian thực về những gì đang xảy ra trong tài khoản Chatwoot của bạn. Vui lòng nhập một URL hợp lệ để định cấu hình một cuộc gọi lại.',
+            'DESC' => 'Webhook events cung cấp cho bạn thông tin thời gian thực về những gì đang xảy ra trong tài khoản {installationName} của bạn. Vui lòng nhập một URL hợp lệ để định cấu hình một cuộc gọi lại.',
             'SUBSCRIPTIONS' => [
                 'LABEL' => 'Các sự kiện',
                 'EVENTS' => [
@@ -91,7 +89,7 @@ return [
         'HEADER_BTN_TXT' => 'Thêm mới webhook',
         'LOADING' => 'Đang tải về các webhooks',
         'SEARCH_404' => 'Không có kết quả nào được tìm thấy',
-        'SIDEBAR_TXT' => '<p><b>Webhooks</b> </p> <p>Webhook là các lệnh gọi lại HTTP có thể được xác định cho mọi tài khoản. Chúng được kích hoạt bởi các sự kiện như tạo tin nhắn trong Chatwoot. Bạn có thể tạo nhiều webhook cho tài khoản này. <br /><br /> Để tạo một <b>webhook</b>, click vào <b>Tạo mới</b>. Bạn cũng có thể xóa bất kỳ webhook hiện có nào bằng cách nhấp vào nút Xóa.</p>',
+        'SIDEBAR_TXT' => '<p><b>Webhooks</b> </p> <p>Webhook là các lệnh gọi lại HTTP có thể được xác định cho mọi tài khoản. Chúng được kích hoạt bởi các sự kiện như tạo tin nhắn trong {installationName}. Bạn có thể tạo nhiều webhook cho tài khoản này. <br /><br /> Để tạo một <b>webhook</b>, click vào <b>Tạo mới</b>. Bạn cũng có thể xóa bất kỳ webhook hiện có nào bằng cách nhấp vào nút Xóa.</p>',
         'LIST' => [
             '404' => 'Không có webhook nào được định cấu hình cho tài khoản này.',
             'TITLE' => 'Quản lý webhooks',
@@ -143,20 +141,20 @@ return [
 
 Các tính năng chính của kết nối này:
 
-**Trả lời hội thoại ngay trong Slack:** để trả lời một hội thoại trong kênh Slack ***{selectedChannelName}***, chỉ cần gõ nội dung và gửi dưới dạng thread. Chatwoot sẽ gửi nội dung đó tới khách hàng. Đơn giản vậy thôi!
+**Trả lời hội thoại ngay trong Slack:** để trả lời một hội thoại trong kênh Slack ***{selectedChannelName}***, chỉ cần gõ nội dung và gửi dưới dạng thread. {installationName} sẽ gửi nội dung đó tới khách hàng. Đơn giản vậy thôi!
 
  **Tạo ghi chú riêng:** nếu muốn tạo ghi chú riêng thay vì trả lời, hãy bắt đầu tin nhắn bằng ***`note:`***. Nội dung sẽ được giữ riêng và khách không nhìn thấy.
 
-**Gắn với hồ sơ nhân viên:** nếu người trả lời trên Slack có hồ sơ nhân viên trong Chatwoot dùng cùng email, câu trả lời sẽ tự gắn với hồ sơ đó. Nhờ vậy bạn dễ theo dõi ai đã nói gì và lúc nào. Ngược lại, nếu người trả lời không có hồ sơ nhân viên tương ứng, khách sẽ thấy câu trả lời đến từ hồ sơ bot.',
+**Gắn với hồ sơ nhân viên:** nếu người trả lời trên Slack có hồ sơ nhân viên trong {installationName} dùng cùng email, câu trả lời sẽ tự gắn với hồ sơ đó. Nhờ vậy bạn dễ theo dõi ai đã nói gì và lúc nào. Ngược lại, nếu người trả lời không có hồ sơ nhân viên tương ứng, khách sẽ thấy câu trả lời đến từ hồ sơ bot.',
             'SELECTED' => 'đã chọn',
         ],
         'SELECT_CHANNEL' => [
             'OPTION_LABEL' => 'Chọn một kênh',
             'UPDATE' => 'Cập nhật',
             'BUTTON_TEXT' => 'Kết nối kênh',
-            'DESCRIPTION' => 'Workspace Slack của bạn đã liên kết với Chatwoot. Tuy nhiên kết nối đang tắt. Để bật kết nối và gắn một kênh với Chatwoot, hãy bấm nút bên dưới.
+            'DESCRIPTION' => 'Workspace Slack của bạn đã liên kết với {installationName}. Tuy nhiên kết nối đang tắt. Để bật kết nối và gắn một kênh với {installationName}, hãy bấm nút bên dưới.
 
-**Lưu ý:** nếu bạn định kết nối một kênh riêng tư, hãy thêm ứng dụng Chatwoot vào kênh Slack đó trước khi làm bước này.',
+**Lưu ý:** nếu bạn định kết nối một kênh riêng tư, hãy thêm ứng dụng {installationName} vào kênh Slack đó trước khi làm bước này.',
             'ATTENTION_REQUIRED' => 'Cần bạn xử lý',
             'EXPIRED' => 'Kết nối Slack của bạn đã hết hạn. Để tiếp tục nhận tin nhắn trên Slack, hãy xóa kết nối rồi kết nối lại workspace.',
         ],
@@ -258,7 +256,7 @@ Các tính năng chính của kết nối này:
     'DASHBOARD_APPS' => [
         'TITLE' => 'Ứng dụng bảng điều khiển',
         'HEADER_BTN_TXT' => 'Thêm mới một Ứng dụng bảng điều khiển',
-        'SIDEBAR_TXT' => '<p> <b> Ứng dụng trên bảng điều khiển</b> </p> <p>Ứng dụng bảng điều khiển cho phép nhúng ứng dụng vào trang bảng điều khiển để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó vào bên trong trang điều khiển để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ. </p> <p> Khi bạn nhúng ứng dụng của mình bằng điều khiển, ứng dụng của bạn sẽ lấy bối cảnh của hội thoại và liên hệ dưới dạng sự kiện cửa sổ. Triển khai trình nghe cho sự kiện thông báo trên trang của bạn để nhận ngữ cảnh. </p> <p> Để thêm ứng dụng trang điều khiển mới, hãy nhấp vào nút \'Thêm ứng dụng bảng điều khiển mới\'. </p>',
+        'SIDEBAR_TXT' => '<p> <b> Ứng dụng trên bảng điều khiển</b> </p> <p>Ứng dụng bảng điều khiển cho phép nhúng ứng dụng vào bảng điều khiển {installationName} để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó vào bên trong trang điều khiển để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ. </p> <p> Khi bạn nhúng ứng dụng của mình vào {installationName}, ứng dụng của bạn sẽ lấy bối cảnh của hội thoại và liên hệ dưới dạng sự kiện cửa sổ. Triển khai trình nghe cho sự kiện thông báo trên trang của bạn để nhận ngữ cảnh. </p> <p> Để thêm ứng dụng trang điều khiển mới, hãy nhấp vào nút \'Thêm ứng dụng bảng điều khiển mới\'. </p>',
         'DESCRIPTION' => 'Ứng dụng bảng điều khiển cho phép các tổ chức nhúng một ứng dụng bên trong trang điều khiển để cung cấp ngữ cảnh cho các nhân viên hỗ trợ khách hàng. Tính năng này cho phép bạn tạo ứng dụng một cách độc lập và nhúng ứng dụng đó để cung cấp thông tin người dùng, đơn đặt hàng hoặc lịch sử thanh toán trước đó của họ.',
         'LEARN_MORE' => 'Tìm hiểu thêm về Dashboard Apps',
         'COUNT' => '{n} dashboard app | {n} dashboard app',

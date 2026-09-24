@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace PROFILE_SETTINGS.
-
 return [
     'LINK' => 'Profile Settings',
     'TITLE' => 'Profile Settings',
@@ -40,7 +38,7 @@ return [
         ],
         'INTERFACE_SECTION' => [
             'TITLE' => 'Interface',
-            'NOTE' => 'Customize the look and feel of your Chatwoot dashboard.',
+            'NOTE' => 'Customize the look and feel of your {installationName} dashboard.',
             'FONT_SIZE' => [
                 'TITLE' => 'Font size',
                 'NOTE' => 'Adjust the text size across the dashboard based on your preference.',

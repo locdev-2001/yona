@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/agentMgmt.json — namespace AGENT_MGMT.
-
 return [
     'HEADER' => 'Agents',
     'HEADER_BTN_TXT' => 'Add Agent',

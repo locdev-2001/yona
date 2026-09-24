@@ -1,7 +1,6 @@
 <?php
 
-// Port từ khối `public_portal` của refs/chatwoot/config/locales/en.yml (v4.17.1).
-// Đây là chuỗi của trang help center CÔNG KHAI (Blade render phía server), khác
+// Chuỗi của trang help center CÔNG KHAI (Blade render phía server), khác
 // với lang/en/help_center.php dành cho màn quản trị.
 return [
     'search' => [

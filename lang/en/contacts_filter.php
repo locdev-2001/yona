@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contactFilters.json — namespace CONTACTS_FILTER.
-
 return [
     'TITLE' => 'Filter Contacts',
     'SUBTITLE' => "Add filters below and hit 'Submit' to filter contacts.",

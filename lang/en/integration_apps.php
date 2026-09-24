@@ -1,10 +1,10 @@
 <?php
 
-// Hai nguồn cùng chảy về namespace INTEGRATION_APPS của Chatwoot, gộp trong một file:
-//  - KHOÁ VIẾT HOA: dashboard/i18n/locale/en/integrationApps.json — chữ trên giao diện.
-//  - khoá viết thường theo id ứng dụng: config/locales/en.yml khối `integration_apps`
-//    — tên/mô tả từng ứng dụng, backend đọc qua __('integration_apps.<id>.name').
-// webhooks và dashboard_apps không có short_description ở bản gốc.
+// Hai nhóm khoá trong cùng namespace INTEGRATION_APPS:
+//  - KHOÁ VIẾT HOA: chữ trên giao diện.
+//  - khoá viết thường theo id ứng dụng: tên/mô tả từng ứng dụng, backend đọc qua
+//    __('integration_apps.<id>.name').
+// webhooks và dashboard_apps không có short_description.
 return [
     'FETCHING' => 'Fetching Integrations',
     'NO_HOOK_CONFIGURED' => 'There are no {integrationId} integrations configured in this account.',
@@ -75,18 +75,18 @@ return [
     ],
     'dyte' => [
         'name' => 'Cloudflare RealtimeKit',
-        'short_description' => 'Start video/voice calls with customers directly from Chatwoot.',
-        'description' => 'Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from Chatwoot.',
+        'short_description' => 'Start video/voice calls with customers directly from {installationName}.',
+        'description' => 'Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from {installationName}.',
         'meeting_name' => ':agent_name has started a meeting',
     ],
     'slack' => [
         'name' => 'Slack',
         'short_description' => 'Receive notifications and respond to conversations directly in Slack.',
-        'description' => "Integrate Chatwoot with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface.",
+        'description' => "Integrate {installationName} with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface.",
     ],
     'webhooks' => [
         'name' => 'Webhooks',
-        'description' => 'Webhook events provide real-time updates about activities in your Chatwoot account. You can subscribe to your preferred events, and Chatwoot will send you HTTP callbacks with the updates.',
+        'description' => 'Webhook events provide real-time updates about activities in your {installationName} account. You can subscribe to your preferred events, and {installationName} will send you HTTP callbacks with the updates.',
     ],
     'dialogflow' => [
         'name' => 'Dialogflow',

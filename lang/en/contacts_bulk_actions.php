@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/contact.json — namespace CONTACTS_BULK_ACTIONS.
-
 return [
     'ASSIGN_LABELS' => 'Assign Labels',
     'REMOVE_LABELS' => 'Remove Labels',

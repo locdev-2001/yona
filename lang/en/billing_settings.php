@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/settings.json — namespace BILLING_SETTINGS.
-
 return [
     'TITLE' => 'Billing',
     'DESCRIPTION' => 'Manage your subscription here, upgrade your plan and get more for your team.',

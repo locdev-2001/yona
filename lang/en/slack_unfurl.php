@@ -1,7 +1,6 @@
 <?php
 
-// Port từ config/locales/en.yml khối `slack_unfurl:` — nhãn của thẻ xem trước
-// hội thoại mà Slack hiện khi bắt gặp link Chatwoot.
+// Nhãn của thẻ xem trước hội thoại mà Slack hiện khi bắt gặp link hội thoại.
 
 return [
     'fields' => [

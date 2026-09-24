@@ -1,7 +1,5 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 dashboard/i18n/locale/en/attributesMgmt.json — namespace ATTRIBUTES_MGMT.
-
 return [
     'HEADER' => 'Custom Attributes',
     'HEADER_BTN_TXT' => 'Add Custom Attribute',

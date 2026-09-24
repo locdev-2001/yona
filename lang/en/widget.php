@@ -1,10 +1,8 @@
 <?php
 
-// Nguồn: Chatwoot v4.17.1 app/javascript/widget/i18n/locale/en.json.
-// Toàn bộ chuỗi của app widget nằm dưới namespace WIDGET vì bản gốc để chúng ở
-// gốc bundle riêng của widget — gộp thẳng vào namespace dashboard sẽ đè lên các
-// khóa trùng tên nhưng khác nội dung (THUMBNAIL.AUTHOR.NOT_AVAILABLE,
-// COMPONENTS.FILE_BUBBLE, EMAIL_TRANSCRIPT...).
+// Toàn bộ chuỗi của app widget nằm dưới namespace WIDGET — gộp thẳng vào
+// namespace dashboard sẽ đè lên các khóa trùng tên nhưng khác nội dung
+// (THUMBNAIL.AUTHOR.NOT_AVAILABLE, COMPONENTS.FILE_BUBBLE, EMAIL_TRANSCRIPT...).
 
 return [
     'COMPONENTS' => [
@@ -72,7 +70,7 @@ return [
     'BUBBLE' => [
         'LABEL' => 'Chat with us',
     ],
-    'POWERED_BY' => 'Powered by Chatwoot',
+    'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Please enter your email',
     'CHAT_PLACEHOLDER' => 'Type your message',
     'TODAY' => 'Today',
