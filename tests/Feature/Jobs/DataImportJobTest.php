@@ -236,3 +236,19 @@ it('imports 95 of 100 rows and writes a failed records file holding the 5 bad ro
         ->and(substr_count(rtrim($failedRecords, "\n"), "\n"))->toBe(5)
         ->and($failedRecords)->toContain('Email Invalid email');
 });
+
+it('quy số Việt Nam trong CSV về E.164 và gộp vào hồ sơ đã có cùng số', function () {
+    $existing = Contact::query()->create(['account_id' => $this->account->id, 'phone_number' => '+84912345678']);
+
+    $dataImport = e3Import($this->account, [
+        ['id', 'name', 'email', 'phone_number'],
+        ['1', 'Khách cũ', '', '912345678'],
+        ['2', 'Khách mới', '', '0987 654 321'],
+    ]);
+
+    (new DataImportJob($dataImport))->handle();
+
+    expect($this->account->contacts()->count())->toBe(2)
+        ->and($existing->refresh()->name)->toBe('Khách cũ')
+        ->and($this->account->contacts()->where('phone_number', '+84987654321')->exists())->toBeTrue();
+});

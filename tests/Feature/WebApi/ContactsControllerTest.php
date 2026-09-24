@@ -381,11 +381,44 @@ describe('POST /api/v1/accounts/{id}/contacts', function () {
         $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
 
         $response = $this->actingAs($admin)
-            ->postJson("/api/v1/accounts/{$account->id}/contacts", ['phone_number' => '123456789'])
+            ->postJson("/api/v1/accounts/{$account->id}/contacts", ['phone_number' => 'khong-phai-so'])
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Phone number should be in e164 format');
+            ->assertJsonPath('message', __('errors.contacts.phone_number_invalid'));
 
         expect($response->json('attributes'))->toContain('phone_number');
+    });
+
+    it('báo lỗi số điện thoại bằng tiếng Việt khi giao diện tiếng Việt', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        app()->setLocale('vi');
+
+        expect(__('errors.contacts.phone_number_invalid'))->toStartWith('Số điện thoại không hợp lệ');
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/contacts", ['phone_number' => '09x12345678'])
+            ->assertStatus(422)
+            ->assertJsonPath('attributes', ['phone_number']);
+    });
+
+    it('lưu số Việt Nam gõ không mã nước ở dạng E.164', function (string $typed) {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/contacts", ['name' => 'Khách', 'phone_number' => $typed])
+            ->assertOk()
+            ->assertJsonPath('payload.contact.phone_number', '+84912345678');
+    })->with(['0912345678', '84912345678', '+84912345678', '912345678', '0912 345 678']);
+
+    it('giữ nguyên số nước ngoài có mã nước', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/contacts", ['phone_number' => '+1 202 555 0123'])
+            ->assertOk()
+            ->assertJsonPath('payload.contact.phone_number', '+12025550123');
     });
 
     it('creates the contact inbox when inbox id is passed', function () {
@@ -458,6 +491,32 @@ describe('PATCH /api/v1/accounts/{id}/contacts/{contactId}', function () {
             ->assertStatus(422);
 
         expect($response->json('attributes'))->toContain('email');
+    });
+
+    it('sửa số điện thoại bằng số không mã nước thì lưu và trả về dạng E.164', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $contact = Contact::factory()->create(['account_id' => $account->id]);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/contacts/{$contact->id}", ['phone_number' => '0912345678'])
+            ->assertOk()
+            ->assertJsonPath('payload.phone_number', '+84912345678');
+
+        expect($contact->refresh()->phone_number)->toBe('+84912345678');
+    });
+
+    it('chặn trùng khi cùng một số gõ theo kiểu khác', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $contact = Contact::factory()->create(['account_id' => $account->id]);
+        Contact::factory()->create(['account_id' => $account->id, 'phone_number' => '+84912345678']);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/contacts/{$contact->id}", ['phone_number' => '0912 345 678'])
+            ->assertStatus(422);
+
+        expect($response->json('attributes'))->toContain('phone_number');
     });
 
     it('prevents updating with an existing phone number', function () {

@@ -39,7 +39,7 @@ class ContactManager
         $contact->account_id = $this->account->id;
 
         if ($this->presence($row, 'phone_number') !== null) {
-            $contact->phone_number = self::formatPhoneNumber($row['phone_number']);
+            $contact->phone_number = $row['phone_number'];
         }
 
         return $contact;
@@ -82,7 +82,7 @@ class ContactManager
 
         return $phoneNumber === null
             ? null
-            : $this->contacts()->where('phone_number', self::formatPhoneNumber($phoneNumber))->first();
+            : $this->contacts()->wherePhoneNumber($phoneNumber)->first();
     }
 
     /** @param array<string, string> $row */
@@ -95,7 +95,7 @@ class ContactManager
         }
 
         if ($this->presence($row, 'phone_number') !== null) {
-            $contact->phone_number = self::formatPhoneNumber($row['phone_number']);
+            $contact->phone_number = $row['phone_number'];
         }
 
         $this->updateContactAttributes($row, $contact);
@@ -127,11 +127,6 @@ class ContactManager
             ...($contact->custom_attributes ?? []),
             ...collect($row)->except(['identifier', 'email', 'name', 'phone_number'])->all(),
         ];
-    }
-
-    public static function formatPhoneNumber(string $phoneNumber): string
-    {
-        return str_starts_with($phoneNumber, '+') ? $phoneNumber : '+'.$phoneNumber;
     }
 
     /** @param array<string, string> $row */

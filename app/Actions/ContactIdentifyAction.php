@@ -116,7 +116,7 @@ class ContactIdentifyAction
         }
 
         return $this->existingPhoneNumberContact ??= $this->account()->contacts()
-            ->where('phone_number', $this->params['phone_number'])
+            ->wherePhoneNumber((string) $this->params['phone_number'])
             ->first();
     }
 

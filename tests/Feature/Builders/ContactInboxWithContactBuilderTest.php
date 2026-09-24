@@ -216,3 +216,15 @@ it('does not refresh the contact when the contact inbox already exists for the s
         ->and($contact->email)->toBe('xyc@example.com');
     Queue::assertNotPushed(AvatarFromUrlJob::class);
 });
+
+it('tìm thấy hồ sơ đã có khi số điện thoại gửi đến viết kiểu nội địa', function () {
+    [$account, $inbox] = builderFixtures();
+    $existing = Contact::factory()->create(['account_id' => $account->id, 'phone_number' => '+84912345678']);
+
+    $contactInbox = (new ContactInboxWithContactBuilder($inbox, [
+        'name' => 'Khách',
+        'phone_number' => '0912345678',
+    ], 'nguon-sdt-noi-dia'))->perform();
+
+    expect($contactInbox->contact_id)->toBe($existing->id);
+});

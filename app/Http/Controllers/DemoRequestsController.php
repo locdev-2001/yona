@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Marketing\DemoRequestIntake;
 use App\Support\LandingPayload;
-use App\Support\VietnamPhone;
+use App\Support\PhoneNumber;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +42,7 @@ class DemoRequestsController extends Controller
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $phone = VietnamPhone::normalize($data['phone']);
+        $phone = PhoneNumber::normalize($data['phone']);
 
         if ($phone === null) {
             return back()->withInput()->withErrors(['phone' => trans('landing.demo.form.phone_invalid')]);

@@ -43,6 +43,7 @@ return [
         'cannot_revoke_current' => 'Bạn không thể thu hồi phiên đang dùng.',
     ],
     'contacts' => [
+        'phone_number_invalid' => 'Số điện thoại không hợp lệ. Nhập số trong nước như 0912 345 678, hoặc số nước ngoài kèm mã nước như +1 202 555 0123.',
         'import' => [
             'failed' => 'Chưa chọn tệp',
         ],

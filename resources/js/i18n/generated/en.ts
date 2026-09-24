@@ -3490,6 +3490,7 @@ const messages: Record<string, unknown> = {
             "cannot_revoke_current": "You cannot revoke the current session."
         },
         "contacts": {
+            "phone_number_invalid": "Phone number is invalid. Enter a local number like 0912 345 678, or an international number with its country code like +1 202 555 0123.",
             "import": {
                 "failed": "File is blank"
             },

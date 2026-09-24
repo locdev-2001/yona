@@ -161,4 +161,23 @@ return [
         ['name' => 'Tiếng Việt', 'iso_639_1_code' => 'vi'],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Số điện thoại
+    |--------------------------------------------------------------------------
+    |
+    | App\Support\PhoneNumber hiểu số gõ không kèm `+` theo quốc gia mặc định.
+    | Thêm quốc gia = thêm một dòng `countries`: mã nước, tiền tố gọi trong
+    | nước, và các độ dài hợp lệ của số sau mã nước.
+    |
+    */
+
+    'phone_numbers' => [
+        'default_country' => env('PHONE_DEFAULT_COUNTRY', 'VN'),
+        'countries' => [
+            // Di động 9 số (912 345 678), cố định 10 số (28 3812 3456).
+            'VN' => ['calling_code' => '84', 'trunk_prefix' => '0', 'national_number_lengths' => [9, 10]],
+        ],
+    ],
+
 ];

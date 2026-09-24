@@ -128,6 +128,6 @@ class ContactInboxWithContactBuilder
     {
         return blank($phoneNumber)
             ? null
-            : $this->account()->contacts()->where('phone_number', $phoneNumber)->first();
+            : $this->account()->contacts()->wherePhoneNumber($phoneNumber)->first();
     }
 }

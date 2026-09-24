@@ -10,8 +10,10 @@ use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\SelfValidating;
 use App\Support\OnlineStatusTracker;
+use App\Support\PhoneNumber;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,7 +42,7 @@ class Contact extends Model
         self::TYPE_CUSTOMER => 2,
     ];
 
-    public const PHONE_NUMBER_REGEX = '/^\+[1-9]\d{1,14}$/';
+    public const PHONE_NUMBER_REGEX = PhoneNumber::E164_REGEX;
 
     // Devise.email_regexp — cố ý lỏng hơn rule email của Laravel để khớp bản gốc.
     public const EMAIL_REGEX = '/^[^@\s]+@[^@\s]+$/';
@@ -76,6 +78,22 @@ class Contact extends Model
             'last_activity_at' => 'datetime',
             'blocked' => 'boolean',
         ];
+    }
+
+    // Mọi đường ghi (form, sidebar, API, nhập CSV, kênh) đi qua đây nên cùng một
+    // số luôn lưu cùng một chuỗi. Không quy đổi được thì giữ nguyên để
+    // validationErrors()/discardInvalidAttrs() xử lý như đầu vào sai.
+    protected function phoneNumber(): Attribute
+    {
+        return Attribute::set(fn (mixed $value) => is_string($value) && $value !== ''
+            ? (PhoneNumber::normalize($value) ?? $value)
+            : $value);
+    }
+
+    // Tra hồ sơ theo số điện thoại (khoá chống trùng) bằng đúng quy tắc lúc ghi.
+    public function scopeWherePhoneNumber(Builder $query, string $phoneNumber): Builder
+    {
+        return $query->where('phone_number', PhoneNumber::normalize($phoneNumber) ?? $phoneNumber);
     }
 
     protected static function booted(): void
@@ -174,8 +192,8 @@ class Contact extends Model
             $errors['email'][] = 'Email has already been taken';
         }
 
-        if (filled($this->phone_number) && ! preg_match(self::PHONE_NUMBER_REGEX, (string) $this->phone_number)) {
-            $errors['phone_number'][] = 'Phone number should be in e164 format';
+        if ($this->hasInvalidPhoneNumber()) {
+            $errors['phone_number'][] = __('errors.contacts.phone_number_invalid');
         }
 
         if (filled($this->phone_number) && $this->attributeTaken('phone_number', $this->phone_number)) {
@@ -193,6 +211,11 @@ class Contact extends Model
     public function validationMessages(): array
     {
         return collect($this->validationErrors())->flatten()->values()->all();
+    }
+
+    private function hasInvalidPhoneNumber(): bool
+    {
+        return filled($this->phone_number) && ! preg_match(self::PHONE_NUMBER_REGEX, (string) $this->phone_number);
     }
 
     private function attributeTaken(string $column, mixed $value): bool
@@ -214,7 +237,7 @@ class Contact extends Model
     // vì làm hỏng cả lần ghi.
     public function discardInvalidAttrs(): void
     {
-        if (filled($this->phone_number) && ! preg_match(self::PHONE_NUMBER_REGEX, (string) $this->phone_number)) {
+        if ($this->hasInvalidPhoneNumber()) {
             $this->phone_number = $this->getOriginal('phone_number');
         }
 

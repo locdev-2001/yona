@@ -18,6 +18,7 @@ use App\Services\Channels\RemoteAttachmentDownloader;
 use App\Services\Conversations\GroupMembersService;
 use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\Zalo\Exception\EchoAwaitingSourceIdException;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Carbon;
 
 /**
@@ -42,9 +43,6 @@ class IncomingMessageService
     private const STICKER_KIND = 'sticker';
 
     private const LOCATION_KIND = 'location';
-
-    /** Số Zalo trả về là số nội địa Việt Nam, còn lõi chỉ nhận E.164. */
-    private const VIETNAM_DIALING_CODE = '84';
 
     /**
      * Trạng thái hội thoại mà lô tin lịch sử không được phép đổi: tin cũ kéo về
@@ -471,29 +469,11 @@ class IncomingMessageService
         return self::toE164($this->params['user']['phone'] ?? ($cardIsSelf ? $card['phone'] ?? null : null));
     }
 
-    /**
-     * `Contact::PHONE_NUMBER_REGEX` chỉ nhận E.164; Zalo trả số nội địa
-     * (`0901234567`, `84901234567`). Không quy đổi thì `discardInvalidAttrs()`
-     * nuốt số một cách im lặng. Đặc thù thị trường Việt sống ở driver Zalo.
-     */
+    // Zalo trả số nội địa (`0901234567`, `84901234567`). Số trần không rõ tiền
+    // tố thì bỏ chứ không đoán mã nước — đoán sai là gộp nhầm hồ sơ.
     private static function toE164(mixed $phone): ?string
     {
-        if (blank($phone)) {
-            return null;
-        }
-
-        $digits = (string) preg_replace('/[^\d+]/', '', (string) $phone);
-
-        $e164 = match (true) {
-            str_starts_with($digits, '+') => $digits,
-            str_starts_with($digits, '00') => '+'.substr($digits, 2),
-            str_starts_with($digits, '0') => '+'.self::VIETNAM_DIALING_CODE.substr($digits, 1),
-            str_starts_with($digits, self::VIETNAM_DIALING_CODE) => '+'.$digits,
-            // Số trần không rõ mã quốc gia: đoán mã là bịa định danh — bỏ.
-            default => '',
-        };
-
-        return preg_match(Contact::PHONE_NUMBER_REGEX, $e164) === 1 ? $e164 : null;
+        return is_scalar($phone) ? PhoneNumber::normalize((string) $phone, acceptBareNationalNumber: false) : null;
     }
 
     private function direction(): string
