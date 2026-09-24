@@ -6,7 +6,8 @@
 // một dòng. Thêm mục mới chỉ khi tên cũ là contract bên ngoài hoặc nghĩa vụ pháp lý —
 // chữ khách thấy, comment, tên biến thì phải SỬA, không allowlist.
 
-export const LEGACY_BRAND_PATTERN = /chatwoot|chwt\.app/i;
+// `woot` là một từ trong câu (vd "máy chủ Woot"); lớp CSS `woot-*`, bảng màu `woot:`, tệp `woot.scss` và định danh ghép không tính.
+export const LEGACY_BRAND_PATTERN = /chatwoot|chwt\.app|(?<![\w./-])woot(?=[\s,;!?]|\.(?!\w)|$)/i;
 
 export const ANY_TOKEN = Symbol('ANY_TOKEN');
 
