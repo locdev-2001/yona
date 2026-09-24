@@ -276,6 +276,22 @@ export function deleteMessage(
     return deleteJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`);
 }
 
+/**
+ * Dịch nội dung một tin sang ngôn ngữ đích. Tin đã có bản dịch sẵn thì máy chủ
+ * trả thân rỗng — bản dịch khi đó nằm ở `content_attributes.translations`.
+ */
+export function translateMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+    targetLanguage: string,
+): Promise<{ content?: string | null } | null> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/translate`,
+        { target_language: targetLanguage },
+    );
+}
+
 export interface ToggleStatusResponse {
     meta: Record<string, never>;
     payload: {

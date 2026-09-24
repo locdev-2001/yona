@@ -13,9 +13,11 @@ interface AddCannedProps {
     accountId: number;
     onClose: () => void;
     onCreated: (record: CannedResponse) => void;
+    // Tạo từ một tin nhắn trong hộp thư: nội dung điền sẵn bằng tin đó.
+    initialContent?: string;
 }
 
-export default function AddCanned({ accountId, onClose, onCreated }: AddCannedProps) {
+export default function AddCanned({ accountId, onClose, onCreated, initialContent = '' }: AddCannedProps) {
     const [isCreating, setCreating] = useState(false);
 
     const addCannedResponse = async (values: CannedFormValues) => {
@@ -42,7 +44,7 @@ export default function AddCanned({ accountId, onClose, onCreated }: AddCannedPr
             contentPlaceholder={t('CANNED_MGMT.ADD.FORM.CONTENT.PLACEHOLDER')}
             cancelLabel={t('CANNED_MGMT.ADD.CANCEL_BUTTON_TEXT')}
             submitLabel={t('CANNED_MGMT.ADD.FORM.SUBMIT')}
-            initialValues={{ short_code: '', content: '' }}
+            initialValues={{ short_code: '', content: initialContent }}
             isSubmitting={isCreating}
             onSubmit={values => void addCannedResponse(values)}
             onClose={onClose}

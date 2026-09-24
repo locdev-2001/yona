@@ -5,6 +5,9 @@ import { usePage } from '@inertiajs/react';
 import MessageList from 'dashboard/components-next/message/MessageList';
 import { collectMediaAttachments } from 'dashboard/components-next/message/helpers/attachments';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Modal from 'dashboard/components/Modal';
+import { findIntegrationApp, useIntegrationApps } from 'dashboard/composables/useIntegrationApps';
+import AddCanned from 'dashboard/settings/canned/AddCanned';
 import { useTypingUsers } from 'dashboard/realtime/hooks';
 import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
@@ -17,6 +20,7 @@ import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
+import MessageTranslationDialog from './MessageTranslationDialog';
 import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
@@ -59,6 +63,10 @@ export default function MessagesView() {
     const [topBannerHeight, setTopBannerHeight] = useState(0);
     const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
     const [forwardingMessage, setForwardingMessage] = useState<ConversationMessage | null>(null);
+    const [cannedSourceMessage, setCannedSourceMessage] = useState<ConversationMessage | null>(null);
+    const [translatingMessage, setTranslatingMessage] = useState<ConversationMessage | null>(null);
+    const { apps: integrationApps } = useIntegrationApps(accountId);
+    const isTranslationEnabled = Boolean(findIntegrationApp(integrationApps, 'google_translate')?.enabled);
     // Giữ vị trí scroll sau khi prepend tin cũ: đo scrollHeight trước/sau như bản gốc.
     const scrollRestoreRef = useRef<{ heightBeforeLoad: number; scrollTopBeforeLoad: number } | null>(null);
     const scrolledConversationRef = useRef<number | null>(null);
@@ -150,7 +158,11 @@ export default function MessagesView() {
     }, [lastMessageId, currentChat.id]);
 
     // Hộp chuyển tiếp gắn với tin của hội thoại đang mở.
-    useEffect(() => setForwardingMessage(null), [conversationId]);
+    useEffect(() => {
+        setForwardingMessage(null);
+        setCannedSourceMessage(null);
+        setTranslatingMessage(null);
+    }, [conversationId]);
 
     // Đặt sau hai effect cuộn đáy ở trên: layout effect chạy theo thứ tự khai báo.
     useFocusMessageScroll({
@@ -208,6 +220,8 @@ export default function MessagesView() {
                 replyTargets={replyTargets}
                 onReplyTo={startReply}
                 onForward={setForwardingMessage}
+                onCreateCannedResponse={setCannedSourceMessage}
+                onTranslate={isTranslationEnabled ? setTranslatingMessage : undefined}
                 onJumpToMessage={focusMessage}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
@@ -247,6 +261,24 @@ export default function MessagesView() {
                     />
                 </ResizableEditorWrapper>
             </div>
+            <Modal show={cannedSourceMessage !== null} onClose={() => setCannedSourceMessage(null)}>
+                {cannedSourceMessage && (
+                    <AddCanned
+                        accountId={accountId}
+                        initialContent={cannedSourceMessage.content ?? ''}
+                        onCreated={() => undefined}
+                        onClose={() => setCannedSourceMessage(null)}
+                    />
+                )}
+            </Modal>
+            {translatingMessage && (
+                <MessageTranslationDialog
+                    accountId={accountId}
+                    conversationId={conversationId}
+                    message={translatingMessage}
+                    onClose={() => setTranslatingMessage(null)}
+                />
+            )}
             {forwardingMessage && (
                 <ForwardMessageDialog
                     accountId={accountId}
