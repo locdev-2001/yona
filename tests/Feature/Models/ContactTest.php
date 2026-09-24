@@ -153,3 +153,29 @@ describe('dispatch events', function () {
             && $event->data['contact_data'] == [...ContactResource::pushEventData($contact), 'account_id' => $contact->account_id]);
     });
 });
+
+it('báo trùng số điện thoại, email, định danh theo ngôn ngữ đang dùng', function () {
+    $account = Account::factory()->create();
+    Contact::factory()->create([
+        'account_id' => $account->id,
+        'phone_number' => '+84901234567',
+        'email' => 'lan@example.com',
+        'identifier' => 'lan-01',
+    ]);
+    $duplicate = Contact::factory()->make([
+        'account_id' => $account->id,
+        'phone_number' => '+84901234567',
+        'email' => 'lan@example.com',
+        'identifier' => 'lan-01',
+    ]);
+
+    app()->setLocale('vi');
+    expect($duplicate->validationMessages())->toBe([
+        'Email này đã thuộc về một liên hệ khác',
+        'Số điện thoại này đã thuộc về một liên hệ khác',
+        'Mã định danh này đã thuộc về một liên hệ khác',
+    ]);
+
+    app()->setLocale('en');
+    expect($duplicate->validationMessages())->toContain('Phone number has already been taken');
+});

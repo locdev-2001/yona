@@ -1,6 +1,7 @@
 import { t } from '../../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
+import { deletedMessageLabel } from 'dashboard/components-next/message/helpers/deletedMessage';
 import { MESSAGE_TYPES } from 'dashboard/conversation/constants';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 
@@ -39,7 +40,7 @@ export default function MessagePreview({
     // Năng lực `friend_request`: thẻ hội thoại nói rõ đây là lời mời, không phải
     // tin thường — lời nhắn kèm theo (nếu có) đã nằm trong bong bóng.
     const isFriendRequest = Boolean(contentAttributes?.friend_request);
-    const parsedLastMessage = getPlainText(subject || message.content);
+    const parsedLastMessage = deletedMessageLabel(contentAttributes) ?? getPlainText(subject || message.content);
     const fileType = String(message.attachments?.[0]?.file_type ?? '');
     const attachmentIcon = ATTACHMENT_ICONS[fileType];
     const isMessageSticker = message.content_type === 'sticker';

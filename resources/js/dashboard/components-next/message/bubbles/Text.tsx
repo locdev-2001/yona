@@ -8,6 +8,7 @@ import { groupAttachmentChips } from '../helpers/attachments';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS } from '../constants';
 import { emphasizeMentions, readGroupMentions } from '../helpers/groupSender';
+import { deletedMessageLabel } from '../helpers/deletedMessage';
 
 // Port từ bubbles/Text/Index.vue — bỏ TranslationToggle (EE) và
 // submittedEmail (template email, F1).
@@ -36,8 +37,9 @@ export default function TextBubble() {
     }
 
     const isEmpty = !content && !attachments?.length;
-    // Nhắc tên trong nhóm phải nổi lên như ở app gốc của kênh.
-    const displayContent = content ? emphasizeMentions(content, readGroupMentions(contentAttributes)) : content;
+    const displayContent =
+        deletedMessageLabel(contentAttributes) ??
+        (content ? emphasizeMentions(content, readGroupMentions(contentAttributes)) : content);
 
     return (
         <BaseBubble className="px-4 py-3" dataBubbleName="text">

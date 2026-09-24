@@ -1,4 +1,5 @@
 import { t } from '../../../../i18n';
+import { deletedMessageLabel } from 'dashboard/components-next/message/helpers/deletedMessage';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import HighlightedText from 'dashboard/search/components/HighlightedText';
@@ -38,7 +39,8 @@ export default function MessagePreview({
     const isMessageSticker = message.content_type === 'sticker';
 
     const emailSubject = (message.content_attributes as { email?: { subject?: string } } | null)?.email?.subject;
-    const parsedLastMessage = getPlainText(emailSubject || message.content);
+    const parsedLastMessage =
+        deletedMessageLabel(message.content_attributes) ?? getPlainText(emailSubject || message.content);
 
     const [firstAttachment] = message.attachments ?? [];
     const lastMessageFileType = (firstAttachment as { file_type?: string } | undefined)?.file_type ?? '';

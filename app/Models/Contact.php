@@ -189,7 +189,7 @@ class Contact extends Model
         }
 
         if ($email !== null && $this->attributeTaken('email', $email)) {
-            $errors['email'][] = 'Email has already been taken';
+            $errors['email'][] = __('errors.contacts.email_taken');
         }
 
         if ($this->hasInvalidPhoneNumber()) {
@@ -197,11 +197,11 @@ class Contact extends Model
         }
 
         if (filled($this->phone_number) && $this->attributeTaken('phone_number', $this->phone_number)) {
-            $errors['phone_number'][] = 'Phone number has already been taken';
+            $errors['phone_number'][] = __('errors.contacts.phone_number_taken');
         }
 
         if (filled($this->identifier) && $this->attributeTaken('identifier', $this->identifier)) {
-            $errors['identifier'][] = 'Identifier has already been taken';
+            $errors['identifier'][] = __('errors.contacts.identifier_taken');
         }
 
         return $errors;

@@ -63,6 +63,7 @@ return [
     'UNKNOWN_FILE_TYPE' => 'Tập tin chưa xác định',
     'SAVE_CONTACT' => 'Lưu liên hệ',
     'NO_CONTENT' => 'Không có nội dung để hiển thị',
+    'MESSAGE_DELETED' => 'Tin nhắn đã bị xoá',
     'SHARED_ATTACHMENT' => [
         'CONTACT' => '{sender} đã chia sẻ một liên hệ',
         'LOCATION' => '{sender} đã chia sẻ một vị trí',

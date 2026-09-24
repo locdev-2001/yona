@@ -2371,6 +2371,7 @@ const messages: Record<string, unknown> = {
         "UNKNOWN_FILE_TYPE": "Tập tin chưa xác định",
         "SAVE_CONTACT": "Lưu liên hệ",
         "NO_CONTENT": "Không có nội dung để hiển thị",
+        "MESSAGE_DELETED": "Tin nhắn đã bị xoá",
         "SHARED_ATTACHMENT": {
             "CONTACT": "{sender} đã chia sẻ một liên hệ",
             "LOCATION": "{sender} đã chia sẻ một vị trí",
@@ -3503,6 +3504,9 @@ const messages: Record<string, unknown> = {
         },
         "contacts": {
             "phone_number_invalid": "Số điện thoại không hợp lệ. Nhập số trong nước như 0912 345 678, hoặc số nước ngoài kèm mã nước như +1 202 555 0123.",
+            "email_taken": "Email này đã thuộc về một liên hệ khác",
+            "phone_number_taken": "Số điện thoại này đã thuộc về một liên hệ khác",
+            "identifier_taken": "Mã định danh này đã thuộc về một liên hệ khác",
             "import": {
                 "failed": "Chưa chọn tệp"
             },

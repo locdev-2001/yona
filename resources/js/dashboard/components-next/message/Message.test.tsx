@@ -163,3 +163,17 @@ describe('nhãn tin chuyển tiếp', () => {
         expect(container.querySelector('[data-testid="forwarded-label"]')).toBeNull();
     });
 });
+
+describe('Tin đã xoá', () => {
+    beforeAll(() => setLocale('vi'));
+    afterAll(() => setLocale('en'));
+
+    it('hiện theo ngôn ngữ người xem dù server lưu chuỗi ngôn ngữ khác', () => {
+        const container = renderMessage(
+            message({ content: 'This message was deleted', content_attributes: { deleted: true } }),
+        );
+
+        expect(container.textContent).toContain('Tin nhắn đã bị xoá');
+        expect(container.textContent).not.toContain('This message was deleted');
+    });
+});

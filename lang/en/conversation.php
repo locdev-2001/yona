@@ -61,6 +61,7 @@ return [
     'UNKNOWN_FILE_TYPE' => 'Unknown File',
     'SAVE_CONTACT' => 'Save Contact',
     'NO_CONTENT' => 'No content to display',
+    'MESSAGE_DELETED' => 'This message was deleted',
     'SHARED_ATTACHMENT' => [
         'CONTACT' => '{sender} has shared a contact',
         'LOCATION' => '{sender} has shared a location',

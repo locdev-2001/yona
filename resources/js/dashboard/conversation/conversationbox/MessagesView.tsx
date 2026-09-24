@@ -244,7 +244,7 @@ export default function MessagesView() {
                             <img
                                 className="w-6 ltr:ml-2 rtl:mr-2"
                                 src="/assets/images/dashboard/typing.gif"
-                                alt="Someone is typing"
+                                alt=""
                             />
                         </div>
                     </div>

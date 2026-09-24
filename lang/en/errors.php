@@ -44,6 +44,9 @@ return [
     ],
     'contacts' => [
         'phone_number_invalid' => 'Phone number is invalid. Enter a local number like 0912 345 678, or an international number with its country code like +1 202 555 0123.',
+        'email_taken' => 'Email has already been taken',
+        'phone_number_taken' => 'Phone number has already been taken',
+        'identifier_taken' => 'Identifier has already been taken',
         'import' => [
             'failed' => 'File is blank',
         ],
