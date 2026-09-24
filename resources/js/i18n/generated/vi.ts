@@ -9692,7 +9692,8 @@ const messages: Record<string, unknown> = {
         "HEADER": {
             "ONLINE": "Đang trực tuyến",
             "AWAY": "Đang vắng mặt",
-            "CLOSE": "Đóng cửa sổ trò chuyện"
+            "CLOSE": "Đóng cửa sổ trò chuyện",
+            "BACK": "Quay lại"
         },
         "OUT_OF_HOURS": {
             "TITLE": "Hiện ngoài giờ hỗ trợ",

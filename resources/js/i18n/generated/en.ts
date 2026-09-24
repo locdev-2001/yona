@@ -9692,7 +9692,8 @@ const messages: Record<string, unknown> = {
         "HEADER": {
             "ONLINE": "Online",
             "AWAY": "Away",
-            "CLOSE": "Close chat window"
+            "CLOSE": "Close chat window",
+            "BACK": "Back"
         },
         "OUT_OF_HOURS": {
             "TITLE": "We are outside support hours",

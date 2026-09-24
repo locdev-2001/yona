@@ -1,39 +1,48 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
+import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
 import { replaceRoute, WIDGET_ROUTES } from '../router';
-import TeamAvailability from '../components/TeamAvailability';
+import { t } from '../i18n';
+import ChatEmptyState from '../components/ChatEmptyState';
+import { CHATWOOT_ON_START_CONVERSATION } from '../../sdk/constants/sdkEvents';
 
-// Port từ widget/views/Home.vue (ArticleContainer của help center thuộc nhóm D).
+// Không còn màn chủ riêng: vào thẳng khung chat. Chỉ dừng ở đây khi hộp thư bắt
+// điền form trước cuộc trò chuyện đầu tiên.
 export default function Home() {
-    const agents = useWidgetState(state => state.agents);
+    const hasChannelConfig = useWidgetState(state => Boolean(state.channelConfig));
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
-    const channelConfig = useWidgetState(state => state.channelConfig);
+    const preChatFormEnabled = useWidgetState(state => Boolean(state.channelConfig?.preChatFormEnabled));
 
-    const availableAgents = useMemo(
-        () => agents.filter(agent => agent.availability_status === 'online'),
-        [agents],
-    );
+    const needsPreChatForm = preChatFormEnabled && !conversationSize;
 
-    // Home.vue chỉ xét cờ bật form (KHÔNG dùng shouldShowPreChatForm) — form không
-    // có trường nào bật vẫn hiện ô nhập tin nhắn, đúng bản gốc.
-    const preChatFormEnabled = Boolean(channelConfig?.preChatFormEnabled);
+    useEffect(() => {
+        if (hasChannelConfig && !needsPreChatForm) replaceRoute(WIDGET_ROUTES.MESSAGES);
+    }, [hasChannelConfig, needsPreChatForm]);
+
+    if (!needsPreChatForm) return null;
 
     const startConversation = () => {
-        if (preChatFormEnabled && !conversationSize) {
-            replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
-            return;
-        }
-        replaceRoute(WIDGET_ROUTES.MESSAGES);
+        replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
+        IFrameHelper.sendMessage({
+            event: 'onEvent',
+            eventIdentifier: CHATWOOT_ON_START_CONVERSATION,
+            data: { hasConversation: false },
+        });
     };
 
     return (
-        <div className="z-50 flex flex-col justify-end flex-1 w-full p-4 gap-4">
-            <TeamAvailability
-                availableAgents={availableAgents}
-                hasConversation={Boolean(conversationSize)}
-                onStartConversation={startConversation}
-            />
+        <div className="flex flex-col flex-1 bg-[var(--yona-chat-surface)]">
+            <ChatEmptyState />
+            <div className="p-4 bg-[var(--yona-chat-panel)] border-t border-[var(--yona-chat-line)]">
+                <button
+                    type="button"
+                    className="w-full min-h-11 rounded-full font-medium bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]"
+                    onClick={startConversation}
+                >
+                    {t('START_CONVERSATION')}
+                </button>
+            </div>
         </div>
     );
 }

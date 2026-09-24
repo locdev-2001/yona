@@ -9,9 +9,8 @@ import { getAuthToken } from '../api/client';
 import { t } from '../i18n';
 import { SignOutIcon } from './icons';
 import ResetSessionButton from './ResetSessionButton';
+import { HEADER_ACTION_CLASS } from './headerActionClass';
 
-// Port từ widget/components/HeaderActions.vue (bỏ nhánh React Native WebView —
-// app RN không thuộc phạm vi nhóm C).
 export default function HeaderActions({
     showPopoutButton = false,
     showEndConversationButton = true,
@@ -47,29 +46,36 @@ export default function HeaderActions({
     };
 
     return (
-        <div className="actions flex items-center gap-3">
+        <div className="actions flex items-center flex-shrink-0">
             {canLeaveConversation && canUserEndConversation && hasEndConversationEnabled && showEndConversationButton ? (
                 <button
                     type="button"
-                    className="button transparent compact"
+                    className={HEADER_ACTION_CLASS}
                     title={t('END_CONVERSATION')}
+                    aria-label={t('END_CONVERSATION')}
                     onClick={() => void widgetStore.resolveConversation()}
                 >
-                    <SignOutIcon size="22" className="text-n-slate-12" />
+                    <SignOutIcon size="20" />
                 </button>
             ) : null}
             {isIframe && hasConversationHistory ? <ResetSessionButton /> : null}
             {showPopoutButton ? (
                 <button
                     type="button"
-                    className="button transparent compact new-window--button"
+                    className={`${HEADER_ACTION_CLASS} new-window--button`}
                     onClick={popoutWindow}
                 >
-                    <FluentIcon icon="open" size="22" className="text-n-slate-12" />
+                    <FluentIcon icon="open" size="20" />
                 </button>
             ) : null}
-            <button type="button" className="button transparent compact close-button" onClick={closeWindow}>
-                <FluentIcon icon="dismiss" size="24" className="text-n-slate-12" />
+            <button
+                type="button"
+                aria-label={t('HEADER.CLOSE')}
+                title={t('HEADER.CLOSE')}
+                className={`${HEADER_ACTION_CLASS} close-button`}
+                onClick={closeWindow}
+            >
+                <span className="i-lucide-chevron-down size-6" />
             </button>
         </div>
     );

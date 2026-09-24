@@ -237,6 +237,7 @@ return [
         'ONLINE' => 'Online',
         'AWAY' => 'Away',
         'CLOSE' => 'Close chat window',
+        'BACK' => 'Back',
     ],
     'OUT_OF_HOURS' => [
         'TITLE' => 'We are outside support hours',

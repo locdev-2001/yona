@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isToday, isYesterday } from 'date-fns';
 
 import Spinner from 'shared/components/Spinner';
@@ -12,6 +12,8 @@ import AgentMessage from './AgentMessage';
 import MessageMeta from './message/MessageMeta';
 import UserMessage from './UserMessage';
 import type { PositionedMessage, WidgetMessage } from '../types';
+
+const NEAR_BOTTOM_THRESHOLD_PX = 80;
 
 // Luồng tin: ngăn cách ngày, rồi các nhóm tin liên tiếp cùng người gửi; mốc giờ
 // và trạng thái chỉ đứng dưới tin cuối mỗi nhóm.
@@ -94,6 +96,8 @@ export default function ConversationWrap() {
     const containerRef = useRef<HTMLDivElement>(null);
     const previousScrollHeight = useRef(0);
     const previousConversationSize = useRef(0);
+    const isReadingNearBottom = useRef(true);
+    const [hasNewMessagesBelow, setHasNewMessagesBelow] = useState(false);
 
     const messages = useMemo(() => Object.values(conversations), [conversations]);
     const messagesByDay = useMemo(() => groupMessagesByDate(messages), [messages]);
@@ -108,7 +112,14 @@ export default function ConversationWrap() {
         if (!container) return;
         if (previousConversationSize.current === messages.length) return;
 
+        const isLoadingOlderMessages = previousScrollHeight.current > 0;
+        const isOwnLatestMessage = lastMessage?.message_type === MESSAGE_TYPE.INCOMING;
         previousConversationSize.current = messages.length;
+        // Khách đang đọc tin cũ phía trên: không giật xuống đáy, chỉ báo có tin mới.
+        if (!isLoadingOlderMessages && !isReadingNearBottom.current && !isOwnLatestMessage) {
+            setHasNewMessagesBelow(true);
+            return;
+        }
         container.scrollTop = container.scrollHeight - previousScrollHeight.current;
         previousScrollHeight.current = 0;
     }, [messages.length]);
@@ -117,9 +128,19 @@ export default function ConversationWrap() {
         previousScrollHeight.current = 0;
     }, [allMessagesLoaded]);
 
+    const scrollToLatest = () => {
+        const container = containerRef.current;
+        if (!container) return;
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        setHasNewMessagesBelow(false);
+    };
+
     const handleScroll = () => {
         const container = containerRef.current;
         if (!container) return;
+        isReadingNearBottom.current =
+            container.scrollHeight - container.scrollTop - container.clientHeight < NEAR_BOTTOM_THRESHOLD_PX;
+        if (isReadingNearBottom.current && hasNewMessagesBelow) setHasNewMessagesBelow(false);
         if (isFetchingList || allMessagesLoaded || !messages.length) return;
 
         if (container.scrollTop < 100) {
@@ -150,6 +171,18 @@ export default function ConversationWrap() {
                 ))}
                 {showStatusIndicator ? <AgentTypingBubble /> : null}
             </div>
+            {hasNewMessagesBelow ? (
+                <div className="sticky bottom-3 flex justify-center pointer-events-none">
+                    <button
+                        type="button"
+                        className="pointer-events-auto inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full text-sm font-medium bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)] shadow-[var(--yona-chat-shadow-pop)]"
+                        onClick={scrollToLatest}
+                    >
+                        {t('NEW_MESSAGES')}
+                        <span aria-hidden="true" className="i-lucide-arrow-down size-4" />
+                    </button>
+                </div>
+            ) : null}
         </div>
     );
 }

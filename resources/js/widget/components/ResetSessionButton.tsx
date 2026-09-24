@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { getContrastingTextColor } from '../helpers/colorHelper';
 import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
+import { HEADER_ACTION_CLASS } from './headerActionClass';
 import { t } from '../i18n';
 import { RESET_SESSION_EVENT } from '../../sdk/constants/frameEvents';
 
@@ -26,12 +27,12 @@ export default function ResetSessionButton() {
         <>
             <button
                 type="button"
-                className="button transparent compact flex items-center justify-center"
+                className={HEADER_ACTION_CLASS}
                 title={t('RESET_SESSION.BUTTON')}
                 aria-label={t('RESET_SESSION.BUTTON')}
                 onClick={() => setConfirming(true)}
             >
-                <span className="i-lucide-rotate-ccw size-5 text-n-slate-12" />
+                <span className="i-lucide-rotate-ccw size-5" />
             </button>
             {isConfirming
                 ? createPortal(
