@@ -4,7 +4,8 @@ import type { ConversationMessage } from './types';
 // Mở hội thoại tại đúng một tin (liên kết `?messageId=` từ tìm kiếm, Media của
 // liên hệ, báo cáo; hoặc bấm vào tin được trích dẫn). Tin đích có thể nằm ngoài
 // trang đang tải: nạp nốt khoảng từ tin đích tới tin cũ nhất đang có bằng chính
-// API danh sách tin, để cuộn lên xuống vẫn liền mạch.
+// API danh sách tin, để cuộn lên xuống vẫn liền mạch. Kèm một trang tin ngay trước
+// tin đích để có ngữ cảnh phía trên và cuộn được tin đích vào giữa khung.
 
 export const FOCUS_MESSAGE_PARAM = 'messageId';
 
@@ -15,7 +16,14 @@ export const MESSAGES_BETWEEN_LIMIT = 1000;
 // (vẫn tới được tin đích): hội thoại dài vậy hiếm, nạp hết thì quá nặng.
 export const FOCUS_WINDOW_MAX_PAGES = 5;
 
-export type MessagesRangeFetcher = (before: number, after: number) => Promise<ConversationMessage[]>;
+// Bằng một trang tin phía máy chủ (trang mới nhất, trang `before`).
+export const MESSAGES_PAGE_SIZE = 20;
+
+// Ít hơn chừng này tin phía trên tin đích thì nạp thêm một trang tin cũ hơn.
+export const FOCUS_CONTEXT_BEFORE = 10;
+
+// Không có `after`: một trang tin ngay trước `before`.
+export type MessagesRangeFetcher = (before: number, after?: number) => Promise<ConversationMessage[]>;
 
 export interface FocusWindow {
     messages: ConversationMessage[];
@@ -54,36 +62,66 @@ export function mergeMessagesChronologically(
     return [...byId.values()].sort((a, b) => a.created_at - b.created_at || a.id - b.id);
 }
 
+async function fetchRangeUpTo(
+    fetchRange: MessagesRangeFetcher,
+    oldestLoadedId: number,
+    targetId: number,
+): Promise<ConversationMessage[]> {
+    const fetched: ConversationMessage[] = [];
+    let cursor = targetId;
+
+    for (let page = 0; page < FOCUS_WINDOW_MAX_PAGES; page++) {
+        const batch = await fetchRange(oldestLoadedId, cursor);
+        fetched.push(...batch);
+        if (batch.length < MESSAGES_BETWEEN_LIMIT) break;
+        cursor = Math.max(...batch.map(message => message.id)) + 1;
+    }
+
+    return fetched;
+}
+
+// Ngữ cảnh chỉ để đọc cho dễ: nạp hỏng thì vẫn mở tại tin đích như thường.
+function fetchContextBefore(fetchRange: MessagesRangeFetcher, beforeId: number): Promise<ConversationMessage[]> {
+    return fetchRange(beforeId).catch(() => []);
+}
+
+function focusWindowOf(messages: ConversationMessage[], targetId: number): FocusWindow {
+    return { messages, found: messages.some(message => message.id === targetId) };
+}
+
 export async function loadFocusWindow(
     loaded: ConversationMessage[],
     targetId: number,
     fetchRange: MessagesRangeFetcher,
 ): Promise<FocusWindow> {
-    if (loaded.some(message => message.id === targetId)) {
-        return { messages: loaded, found: true };
-    }
-
     const persistedIds = loaded.map(message => message.id).filter(id => id > 0);
     const oldestLoadedId = persistedIds.length ? Math.min(...persistedIds) : Number.POSITIVE_INFINITY;
-    const fetched: ConversationMessage[] = [];
+    const targetIndex = loaded.findIndex(message => message.id === targetId);
 
-    if (Number.isFinite(oldestLoadedId) && targetId < oldestLoadedId) {
-        let cursor = targetId;
-        for (let page = 0; page < FOCUS_WINDOW_MAX_PAGES; page++) {
-            const batch = await fetchRange(oldestLoadedId, cursor);
-            fetched.push(...batch);
-            if (batch.length < MESSAGES_BETWEEN_LIMIT) break;
-            cursor = Math.max(...batch.map(message => message.id)) + 1;
+    if (targetIndex !== -1) {
+        // Chưa tới một trang thì đã là toàn bộ hội thoại, không còn gì cũ hơn để nạp.
+        if (targetIndex >= FOCUS_CONTEXT_BEFORE || persistedIds.length < MESSAGES_PAGE_SIZE) {
+            return { messages: loaded, found: true };
         }
-    } else {
-        // Id lớn hơn tin cũ nhất mà không có trong trang: tin nhập về sau (lịch
-        // sử kéo từ kênh) mang id mới nhưng thời điểm cũ — chỉ lấy đúng tin đó.
-        // Chưa có tin nào thì cũng chỉ còn cách tra đúng tin đích.
-        const single = await fetchSingleMessage(fetchRange, targetId);
-        if (single) fetched.push(single);
+
+        return focusWindowOf(mergeMessagesChronologically(loaded, await fetchContextBefore(fetchRange, oldestLoadedId)), targetId);
     }
 
-    const messages = mergeMessagesChronologically(loaded, fetched);
+    if (Number.isFinite(oldestLoadedId) && targetId < oldestLoadedId) {
+        const [range, context] = await Promise.all([
+            fetchRangeUpTo(fetchRange, oldestLoadedId, targetId),
+            fetchContextBefore(fetchRange, targetId),
+        ]);
+        const focus = focusWindowOf(mergeMessagesChronologically(loaded, range), targetId);
 
-    return { messages, found: messages.some(message => message.id === targetId) };
+        // Tin đích không thuộc hội thoại thì trang "trước tin đích" cũng chẳng là ngữ cảnh của gì.
+        return focus.found ? focusWindowOf(mergeMessagesChronologically(focus.messages, context), targetId) : focus;
+    }
+
+    // Id lớn hơn tin cũ nhất mà không có trong trang: tin nhập về sau (lịch sử kéo
+    // từ kênh) mang id mới nhưng thời điểm cũ — chỉ lấy đúng tin đó. Chưa có tin nào
+    // thì cũng chỉ còn cách tra đúng tin đích.
+    const single = await fetchSingleMessage(fetchRange, targetId);
+
+    return focusWindowOf(mergeMessagesChronologically(loaded, single ? [single] : []), targetId);
 }
