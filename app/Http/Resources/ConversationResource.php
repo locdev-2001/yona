@@ -124,9 +124,9 @@ class ConversationResource extends JsonResource
             'muted' => $conversation->isMuted(),
             'snoozed_until' => $conversation->snoozed_until?->toISOString(),
             'status' => $conversation->statusName(),
-            'created_at' => $conversation->created_at->getTimestamp(),
+            'created_at' => $conversation->created_at?->getTimestamp() ?? 0,
             'updated_at' => (float) $conversation->updated_at->format('U.u'),
-            'timestamp' => $conversation->last_activity_at->getTimestamp(),
+            'timestamp' => $conversation->last_activity_at?->getTimestamp() ?? 0,
             'first_reply_created_at' => $conversation->first_reply_created_at?->getTimestamp() ?? 0,
             'unread_count' => $conversation->unreadIncomingMessagesCount(),
             'last_non_activity_message' => $lastNonActivityMessage === null
