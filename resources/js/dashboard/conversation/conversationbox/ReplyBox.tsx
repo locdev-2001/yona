@@ -41,6 +41,7 @@ import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useGroupMembers } from '../groupMembersApi';
+import { canPickSticker, fetchStickers } from '../stickerApi';
 import type { ConversationMessage } from '../types';
 import { buildOutgoingContentAttributes } from './outgoingContentAttributes';
 import ReplyToMessage from './ReplyToMessage';
@@ -48,6 +49,7 @@ import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
 import ReplyBoxBanner from './ReplyBoxBanner';
 import ReplyTopPanel from './ReplyTopPanel';
 import ReplyBottomPanel from './ReplyBottomPanel';
+import type { ReplyStickerPicker } from './ReplyBottomPanel';
 
 // Port từ dashboard/components/widgets/conversation/ReplyBox.vue — rút về kênh
 // Channel::Api (B3): isWithinMessagingWindow luôn true (can_reply || isAPIInbox),
@@ -59,7 +61,8 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // dẫn: MessagesView giữ tin đang trả lời, ReplyBox chỉ hiện khối "Đang trả lời"
 // và gửi kèm qua buildOutgoingContentAttributes. Nhắc tên thành viên nhóm: kênh
 // khai `outbound_mention` thì `@` ở chế độ Trả lời gợi ý thành viên, link mention
-// đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Bỏ: draft (B10), ghi
+// đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Sticker: kênh khai
+// `outbound_sticker` thì có bảng chọn, chọn là gửi ngay. Bỏ: draft (B10), ghi
 // âm (voice recorder), email head/quoted reply, WhatsApp templates, copilot editor,
 // variables, Paste đính kèm (kênh API chưa cần).
 
@@ -90,6 +93,7 @@ export default function ReplyBox({
         accountId,
         messages,
         sendReply,
+        sendSticker,
         uiSettings,
         updateUISettings,
         toggleTypingStatus,
@@ -151,6 +155,16 @@ export default function ReplyBox({
         accountId,
         conversationId,
         inboxSupports(inbox, 'outbound_mention'),
+    );
+
+    // Sticker đi thẳng, không đụng bản nháp đang gõ hay tin đang trả lời.
+    const canSendSticker = canPickSticker(inbox, { isOnPrivateNote, isEditorDisabled });
+    const stickerPicker = useMemo<ReplyStickerPicker | null>(
+        () =>
+            canSendSticker
+                ? { loadStickers: params => fetchStickers(accountId, conversationId, params), onSelect: sendSticker }
+                : null,
+        [canSendSticker, accountId, conversationId, sendSticker],
     );
 
     const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
@@ -582,6 +596,7 @@ export default function ReplyBox({
                 onFileUpload={onFileUpload}
                 onToggleSignature={toggleMessageSignature}
                 onSelectEmoji={insertEmoji}
+                stickerPicker={stickerPicker}
             />
         </div>
     </>

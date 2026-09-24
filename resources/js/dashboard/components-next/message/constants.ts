@@ -50,7 +50,8 @@ export const NON_FILE_TYPES: string[] = [
     ATTACHMENT_TYPES.CONTACT,
 ];
 
-// CONTENT_TYPES của constants.js gốc — hiện chỉ dùng nhánh incoming_email (F1).
+// CONTENT_TYPES của constants.js gốc — những loại có bong bóng riêng.
 export const CONTENT_TYPES = {
     INCOMING_EMAIL: 'incoming_email',
+    STICKER: 'sticker',
 } as const;

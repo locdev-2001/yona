@@ -7,7 +7,15 @@ import { t } from '../../../i18n';
 
 import { MessageProvider } from './provider';
 import type { MessageContextValue } from './provider';
-import { CONTENT_TYPES, MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
+import {
+    ATTACHMENT_TYPES,
+    CONTENT_TYPES,
+    MESSAGE_STATUS,
+    MESSAGE_TYPES,
+    MESSAGE_VARIANTS,
+    ORIENTATION,
+    SENDER_TYPES,
+} from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
 import MessageActions from './MessageActions';
 import MessageError from './MessageError';
@@ -17,6 +25,7 @@ import FallbackBubble from './bubbles/Fallback';
 import LinkPreviewBubble from './bubbles/LinkPreview';
 import FileBubble from './bubbles/File';
 import ImageBubble from './bubbles/Image';
+import StickerBubble from './bubbles/Sticker';
 import EmailBubble from './bubbles/Email/Index';
 import TextBubble from './bubbles/Text';
 import VideoBubble from './bubbles/Video';
@@ -179,13 +188,19 @@ export default function Message({
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
     const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
+    // Sticker có ảnh đính kèm (contract lõi) lên bong bóng sticker; sticker chỉ
+    // có markdown trong content vẫn đi bong bóng chữ.
+    const isStickerWithImage =
+        contentType === CONTENT_TYPES.STICKER && attachments[0]?.file_type === ATTACHMENT_TYPES.IMAGE;
     // componentToRender của Message.vue: kênh email (tin công khai) và tin
     // content_type = incoming_email luôn lên bubble email trước mọi nhánh khác;
     // các bubble đọc content_attributes đứng trước nhánh theo đính kèm.
     const BubbleComponent =
         (isEmailInbox && !isPrivate && isEmailMessageType) || contentType === CONTENT_TYPES.INCOMING_EMAIL
             ? EmailBubble
-            : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
+            : isStickerWithImage
+              ? StickerBubble
+              : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
 
     const shouldRenderMessage = Boolean(
         attachments.length > 0 ||

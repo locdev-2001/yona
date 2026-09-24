@@ -68,10 +68,10 @@ export default function MessagePreview({
                         <Icon icon="i-lucide-user-plus" className="size-3.5" />
                         {t('CHAT_LIST.FRIEND_REQUEST')}
                     </span>
-                ) : message.content && isMessageSticker ? (
+                ) : isMessageSticker ? (
                     <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
-                        <Icon icon="i-lucide-image" className="size-3.5" />
-                        {t('CHAT_LIST.ATTACHMENTS.image.CONTENT')}
+                        <Icon icon="i-ph-sticker" className="size-3.5" />
+                        {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                     </span>
                 ) : message.content ? (
                     parsedLastMessage

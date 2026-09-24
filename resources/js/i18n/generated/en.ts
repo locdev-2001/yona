@@ -1437,6 +1437,9 @@ const messages: Record<string, unknown> = {
             },
             "embed": {
                 "CONTENT": "Embedded content"
+            },
+            "sticker": {
+                "CONTENT": "Sticker"
             }
         },
         "CHAT_SORT_BY_FILTER": {
@@ -2646,6 +2649,7 @@ const messages: Record<string, unknown> = {
             "DISMISS_REPLY": "Dismiss reply",
             "REPLYING_TO": "Replying to:",
             "TIP_EMOJI_ICON": "Show emoji selector",
+            "TIP_STICKER_ICON": "Send a sticker",
             "TIP_ATTACH_ICON": "Attach files",
             "TIP_AUDIORECORDER_ICON": "Record audio",
             "TIP_AUDIORECORDER_PERMISSION": "Allow access to audio",
@@ -2685,6 +2689,18 @@ const messages: Record<string, unknown> = {
                 "COLLAPSE": "Collapse preview",
                 "EXPAND": "Expand preview"
             }
+        },
+        "STICKER_PICKER": {
+            "SEARCH_PLACEHOLDER": "Search stickers",
+            "SUGGESTED_KEYWORDS": "thanks,hello,ok,haha,love,sad,sorry,congrats",
+            "RECENT": "Recent",
+            "PACK": "Sticker pack",
+            "STICKER": "Sticker",
+            "EMPTY_RECENT": "No recent stickers yet. Type a keyword or pick a suggestion to search.",
+            "EMPTY_PACK": "This pack has no stickers yet.",
+            "NO_RESULTS": "No stickers found for “{query}”.",
+            "LOAD_FAILED": "Could not load stickers, please try again.",
+            "RETRY": "Try again"
         },
         "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
         "CHANGE_STATUS": "Conversation status changed",

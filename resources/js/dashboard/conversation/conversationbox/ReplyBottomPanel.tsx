@@ -4,6 +4,9 @@ import type { ChangeEvent } from 'react';
 import NextButton from 'dashboard/components-next/button/Button';
 import EmojiIconPicker from 'dashboard/components-next/emoji-icon-picker/EmojiIconPicker';
 import type { PickerSelection } from 'dashboard/components-next/emoji-icon-picker/EmojiIconPicker';
+import Popover from 'dashboard/components-next/popover/Popover';
+import StickerPicker from 'dashboard/components-next/sticker-picker/StickerPicker';
+import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 import { t } from '../../../i18n';
 
@@ -14,6 +17,12 @@ import { t } from '../../../i18n';
 // showFileUpload API inbox, ẩn khi private note), VideoCallButton
 // (integrations), WhatsApp/Content templates (F5), quoted reply + insert
 // article (email/help center). EmojiIconPicker dùng bản portal của A6.
+// Khung soạn tự quyết nguồn dữ liệu và việc gửi; panel chỉ vẽ nút + bảng chọn.
+export interface ReplyStickerPicker {
+    loadStickers: (params: StickerBrowseParams) => Promise<StickerBrowseResult>;
+    onSelect: (sticker: StickerItem) => void;
+}
+
 interface ReplyBottomPanelProps {
     isNote: boolean;
     isOnPrivateNote: boolean;
@@ -30,6 +39,8 @@ interface ReplyBottomPanelProps {
     onFileUpload: (file: File) => void;
     onToggleSignature: () => void;
     onSelectEmoji: (emoji: string) => void;
+    // null = kênh không gửi được sticker hoặc đang ở Lưu ý riêng: không có nút.
+    stickerPicker?: ReplyStickerPicker | null;
 }
 
 export default function ReplyBottomPanel({
@@ -48,6 +59,7 @@ export default function ReplyBottomPanel({
     onFileUpload,
     onToggleSignature,
     onSelectEmoji,
+    stickerPicker = null,
 }: ReplyBottomPanelProps) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const emojiButtonRef = useRef<HTMLDivElement>(null);
@@ -84,13 +96,37 @@ export default function ReplyBottomPanel({
                     <div ref={emojiButtonRef} className="flex">
                         <NextButton
                             title={t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')}
-                            icon="i-ph-smiley-sticker"
+                            icon="i-ph-smiley"
                             slate
                             faded
                             sm
                             onClick={() => setShowEmojiPicker(open => !open)}
                         />
                     </div>
+                ) : null}
+                {stickerPicker && !isEditorDisabled ? (
+                    <Popover
+                        align="start"
+                        trigger={() => (
+                            <NextButton
+                                type="button"
+                                title={t('CONVERSATION.REPLYBOX.TIP_STICKER_ICON')}
+                                icon="i-ph-sticker"
+                                slate
+                                faded
+                                sm
+                            />
+                        )}
+                        content={({ hide }) => (
+                            <StickerPicker
+                                loadStickers={stickerPicker.loadStickers}
+                                onSelect={sticker => {
+                                    hide();
+                                    stickerPicker.onSelect(sticker);
+                                }}
+                            />
+                        )}
+                    />
                 ) : null}
                 {showAttachButton ? (
                     <>

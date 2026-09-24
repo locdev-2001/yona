@@ -1437,6 +1437,9 @@ const messages: Record<string, unknown> = {
             },
             "embed": {
                 "CONTENT": "Nội dung nhúng"
+            },
+            "sticker": {
+                "CONTENT": "Sticker"
             }
         },
         "CHAT_SORT_BY_FILTER": {
@@ -2646,6 +2649,7 @@ const messages: Record<string, unknown> = {
             "DISMISS_REPLY": "Bỏ trả lời",
             "REPLYING_TO": "Đang trả lời:",
             "TIP_EMOJI_ICON": "Hiển thị chọn emoji",
+            "TIP_STICKER_ICON": "Gửi sticker",
             "TIP_ATTACH_ICON": "Đính kèm tệp",
             "TIP_AUDIORECORDER_ICON": "Ghi âm thanh",
             "TIP_AUDIORECORDER_PERMISSION": "Cho phép truy cập ghi âm",
@@ -2685,6 +2689,18 @@ const messages: Record<string, unknown> = {
                 "COLLAPSE": "Thu gọn xem trước",
                 "EXPAND": "Mở rộng xem trước"
             }
+        },
+        "STICKER_PICKER": {
+            "SEARCH_PLACEHOLDER": "Tìm sticker",
+            "SUGGESTED_KEYWORDS": "cảm ơn,chào,ok,haha,yêu,buồn,xin lỗi,chúc mừng",
+            "RECENT": "Gần đây",
+            "PACK": "Bộ sticker",
+            "STICKER": "Sticker",
+            "EMPTY_RECENT": "Chưa có sticker nào gần đây. Gõ từ khoá hoặc chọn một gợi ý để tìm.",
+            "EMPTY_PACK": "Bộ này chưa có sticker nào.",
+            "NO_RESULTS": "Không tìm thấy sticker cho “{query}”.",
+            "LOAD_FAILED": "Chưa tải được sticker, bạn thử lại nhé.",
+            "RETRY": "Thử lại"
         },
         "VISIBLE_TO_AGENTS": "Lưu ý riêng: Chỉ hiển thị với bạn và nhóm của bạn",
         "CHANGE_STATUS": "Trạng thái hội thoại đã thay đổi",

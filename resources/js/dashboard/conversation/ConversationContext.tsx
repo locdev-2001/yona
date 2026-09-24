@@ -42,6 +42,8 @@ import {
     toggleTyping,
     unmuteConversation as unmuteConversationRequest,
 } from './api';
+import type { SendMessagePayload } from './api';
+import type { StickerItem } from './stickerApi';
 import {
     applyConversationMuted,
     applyConversationPriority,
@@ -140,6 +142,8 @@ interface ConversationContextValue {
         // Dựng bằng buildOutgoingContentAttributes (trả lời trích dẫn…).
         contentAttributes?: Record<string, unknown>;
     }) => void;
+    // Sticker đi một mình: không nội dung, không trích dẫn; máy chủ tự dựng tin từ mã.
+    sendSticker: (sticker: StickerItem) => void;
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
     deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
@@ -863,7 +867,55 @@ export function ConversationProvider({
     );
 
     // createPendingMessageAndSend: chèn tin pending (status progress) rồi thay bằng
-    // bản server trả về; lỗi → đánh dấu failed như bản gốc.
+    // bản server trả về; lỗi → đánh dấu failed như bản gốc. Mọi kiểu tin agent gửi
+    // từ khung soạn (chữ, sticker) đi qua đây — chỉ khác phần vá lên tin pending.
+    const sendWithPendingMessage = useCallback(
+        (payload: Omit<SendMessagePayload, 'echo_id' | 'files'>, pendingPatch: Partial<ConversationMessage> = {}) => {
+            if (!conversationId || !selectedConversation) return;
+
+            pendingEchoCounter += 1;
+            const echoId = `${Date.now()}-${pendingEchoCounter}`;
+            const pending: ConversationMessage = {
+                id: -pendingEchoCounter,
+                content: payload.content ?? null,
+                inbox_id: selectedConversation.inbox_id,
+                conversation_id: conversationId,
+                message_type: MESSAGE_TYPES.OUTGOING,
+                content_type: 'text',
+                status: MESSAGE_STATUS.PROGRESS,
+                content_attributes: payload.content_attributes ?? {},
+                created_at: Math.floor(Date.now() / 1000),
+                private: payload.private,
+                source_id: null,
+                echo_id: echoId,
+                sender: {
+                    id: currentUserId,
+                    name: user.name,
+                    type: 'user',
+                    thumbnail: user.avatar_url ?? '',
+                },
+                ...pendingPatch,
+            };
+            setMessages((current) => [...current, pending]);
+
+            sendMessage(accountId, conversationId, { ...payload, echo_id: echoId }).then(
+                (message) => {
+                    addMessage(message);
+                },
+                (error: unknown) => {
+                    setMessages((current) =>
+                        current.map((item) =>
+                            item.echo_id === echoId ? { ...item, status: MESSAGE_STATUS.FAILED } : item,
+                        ),
+                    );
+                    const body = (error as { body?: { error?: string } }).body;
+                    useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+                },
+            );
+        },
+        [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
+    );
+
     const sendReply = useCallback(
         ({
             content,
@@ -880,56 +932,31 @@ export function ConversationProvider({
             to_emails?: string;
             contentAttributes?: Record<string, unknown>;
         }) => {
-            if (!conversationId || !selectedConversation) return;
-
-            pendingEchoCounter += 1;
-            const echoId = `${Date.now()}-${pendingEchoCounter}`;
-            const pending: ConversationMessage = {
-                id: -pendingEchoCounter,
-                content,
-                inbox_id: selectedConversation.inbox_id,
-                conversation_id: conversationId,
-                message_type: MESSAGE_TYPES.OUTGOING,
-                content_type: 'text',
-                status: MESSAGE_STATUS.PROGRESS,
-                content_attributes: contentAttributes ?? {},
-                created_at: Math.floor(Date.now() / 1000),
-                private: isPrivate,
-                source_id: null,
-                echo_id: echoId,
-                sender: {
-                    id: currentUserId,
-                    name: user.name,
-                    type: 'user',
-                    thumbnail: user.avatar_url ?? '',
-                },
-            };
-            setMessages((current) => [...current, pending]);
-
-            sendMessage(accountId, conversationId, {
+            sendWithPendingMessage({
                 content,
                 private: isPrivate,
-                echo_id: echoId,
                 ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
                 ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
                 ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
                 ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
-            }).then(
-                (message) => {
-                    addMessage(message);
-                },
-                (error: unknown) => {
-                    setMessages((current) =>
-                        current.map((item) =>
-                            item.echo_id === echoId ? { ...item, status: MESSAGE_STATUS.FAILED } : item,
-                        ),
-                    );
-                    const body = (error as { body?: { error?: string } }).body;
-                    useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+            });
+        },
+        [sendWithPendingMessage],
+    );
+
+    // Tin pending mang sẵn ảnh sticker để bong bóng hiện ngay, cùng hình dạng máy
+    // chủ sẽ trả (content_type sticker + một đính kèm ảnh).
+    const sendSticker = useCallback(
+        (sticker: StickerItem) => {
+            sendWithPendingMessage(
+                { private: false, content_type: 'sticker', sticker_id: sticker.id },
+                {
+                    content_type: 'sticker',
+                    attachments: [{ id: -1, file_type: 'image', data_url: sticker.image_url, thumb_url: sticker.image_url }],
                 },
             );
         },
-        [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
+        [sendWithPendingMessage],
     );
 
     // Gửi lại tin thất bại. Tin quay về qua chính đường ADD_MESSAGE nên trạng
@@ -1208,6 +1235,7 @@ export function ConversationProvider({
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            sendSticker,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
@@ -1256,6 +1284,7 @@ export function ConversationProvider({
             loadMoreConversations,
             fetchPreviousMessages,
             sendReply,
+            sendSticker,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
