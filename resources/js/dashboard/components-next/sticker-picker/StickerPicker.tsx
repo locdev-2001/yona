@@ -5,6 +5,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { isTouchOnlyDevice } from 'shared/helpers/kbd';
 import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
 import { t } from '../../../i18n';
 
@@ -108,7 +109,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
     })();
 
     return (
-        <div data-testid="sticker-picker" className="flex flex-col w-[22rem] max-w-full max-h-[26rem] text-n-slate-12">
+        <div data-testid="sticker-picker" className="flex flex-col w-full md:w-[22rem] max-h-[26rem] text-n-slate-12">
             <div className="px-2 pt-2 pb-1.5">
                 <Input
                     value={searchText}
@@ -117,7 +118,8 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                     placeholder={t('CONVERSATION.STICKER_PICKER.SEARCH_PLACEHOLDER')}
                     aria-label={t('CONVERSATION.STICKER_PICKER.SEARCH_PLACEHOLDER')}
                     customInputClass="!ps-8"
-                    autoFocus
+                    // Điện thoại: bật bàn phím ngay sẽ che mất lưới "Gần đây".
+                    autoFocus={!isTouchOnlyDevice()}
                     onChange={event => changeSearch(event.target.value)}
                     prefix={
                         <Icon
