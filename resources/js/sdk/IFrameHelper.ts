@@ -11,8 +11,9 @@ import {
     onClickChatBubble,
     onBubbleClick,
     setBubbleText,
-    addUnreadClass,
     removeUnreadClass,
+    showUnreadPreview,
+    hideUnreadPreview,
     formatUnreadBadge,
 } from './bubbleHelpers';
 import { isWidgetColorLighter } from './helpers/colorHelper';
@@ -246,10 +247,11 @@ export const IFrameHelper = {
         },
 
         toggleBubble: (state?: unknown): void => {
+            const requestedState = typeof state === 'string' ? state : (state as { state?: unknown } | undefined)?.state;
             const bubbleState: { toggleValue?: boolean } = {};
-            if (state === 'open') {
+            if (requestedState === 'open') {
                 bubbleState.toggleValue = true;
-            } else if (state === 'close') {
+            } else if (requestedState === 'close') {
                 bubbleState.toggleValue = false;
             }
 
@@ -290,12 +292,9 @@ export const IFrameHelper = {
             IFrameHelper.setFrameHeightToFitContent(extraHeight, isFixedHeight);
         },
 
-        setUnreadMode: (): void => {
-            addUnreadClass();
-            onBubbleClick({ toggleValue: true });
-        },
+        setUnreadMode: (): void => showUnreadPreview(),
 
-        resetUnreadMode: (): void => removeUnreadClass(),
+        resetUnreadMode: (): void => hideUnreadPreview(),
         handleNotificationDot: (event: { unreadMessageCount: number }): void => {
             if (window.$yona.hideMessageBubble) {
                 return;

@@ -67,6 +67,10 @@ export default function App() {
         setIframeHeight(false);
     };
 
+    const openChatWindow = () => {
+        if (isIFrame) IFrameHelper.sendMessage({ event: 'toggleBubble', state: 'open' });
+    };
+
     // App.vue#registerListeners — SDK ↔ iframe.
     useEffect(() => {
         if (!isIFrame) return undefined;
@@ -158,6 +162,7 @@ export default function App() {
                     widgetStore.patchAppConfig({ isWidgetOpen: isOpen });
 
                     const activeRoute = currentRoute();
+                    if (isOpen && leaveUnreadViewRoute()) unsetUnreadView();
                     showMessagesWhenConversationExists();
                     if (!isOpen && UNREAD_OR_CAMPAIGN_ROUTES.includes(activeRoute)) {
                         void widgetStore.setUserLastSeen();
@@ -207,15 +212,24 @@ export default function App() {
             setUnreadView();
         };
         const onUnreadClick = () => {
+            openChatWindow();
             replaceRoute(WIDGET_ROUTES.MESSAGES);
             unsetUnreadView();
+        };
+        // Đóng khung xem trước không phải đọc tin: không ghi đã xem, badge ở lại.
+        const onUnreadViewClose = () => {
+            leaveUnreadViewRoute();
+            unsetUnreadView();
+            widgetStore.resetCampaign();
         };
 
         emitter.on(WIDGET_BUS_EVENTS.ON_AGENT_MESSAGE_RECEIVED, onAgentMessage);
         emitter.on(WIDGET_BUS_EVENTS.ON_UNREAD_MESSAGE_CLICK, onUnreadClick);
+        emitter.on(WIDGET_BUS_EVENTS.ON_UNREAD_VIEW_CLOSE, onUnreadViewClose);
         return () => {
             emitter.off(WIDGET_BUS_EVENTS.ON_AGENT_MESSAGE_RECEIVED, onAgentMessage);
             emitter.off(WIDGET_BUS_EVENTS.ON_UNREAD_MESSAGE_CLICK, onUnreadClick);
+            emitter.off(WIDGET_BUS_EVENTS.ON_UNREAD_VIEW_CLOSE, onUnreadViewClose);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -223,6 +237,7 @@ export default function App() {
     // App.vue#registerCampaignEvents
     useEffect(() => {
         const onCampaignClick = () => {
+            openChatWindow();
             const campaign = widgetStore.getState().activeCampaign;
             if (shouldShowPreChatForm()) {
                 replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
@@ -349,6 +364,14 @@ export default function App() {
 }
 
 const conversationSizeNow = () => Object.keys(widgetStore.getState().conversations).length;
+
+// Khung xem trước tin mới/campaign chỉ sống khi khung chat đóng: mở khung chat thật
+// hay đóng khung xem trước đều đưa widget về màn hình chủ.
+export const leaveUnreadViewRoute = (): boolean => {
+    if (!UNREAD_OR_CAMPAIGN_ROUTES.includes(currentRoute())) return false;
+    replaceRoute(WIDGET_ROUTES.HOME);
+    return true;
+};
 
 // App.vue#toggle-open (shouldShowMessageView): mở widget khi đang ở màn hình chủ
 // mà đã có hội thoại thì vào thẳng khung chat.

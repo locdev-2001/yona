@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 
+import { emitter } from 'shared/helpers/emitter';
+
 import UnreadMessageList from '../components/UnreadMessageList';
-import { IFrameHelper } from '../helpers/iframe';
+import { WIDGET_BUS_EVENTS } from '../helpers/constants';
 import { getUnreadMessageCount, getUnreadTextMessages } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 
@@ -20,7 +22,7 @@ export default function UnreadMessages() {
         <UnreadMessageList
             messages={unreadMessages}
             unreadMessageCount={getUnreadMessageCount(messages, userLastSeenAt)}
-            onClose={() => IFrameHelper.sendMessage({ event: 'toggleBubble' })}
+            onClose={() => emitter.emit(WIDGET_BUS_EVENTS.ON_UNREAD_VIEW_CLOSE)}
         />
     );
 }

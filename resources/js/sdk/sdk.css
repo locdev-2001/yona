@@ -329,9 +329,9 @@
     height: auto;
     right: 0;
     width: auto;
-    bottom: 0;
+    bottom: 94px;
     top: auto;
-    max-height: 100vh;
+    max-height: calc(100vh - 94px);
     padding: 0 8px;
   }
 

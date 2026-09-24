@@ -14,7 +14,7 @@ export default function Campaigns() {
     const closeFullView = () => {
         if (!IFrameHelper.isIFrame()) return;
         IFrameHelper.sendMessage({ event: 'setCampaignReadOn' });
-        IFrameHelper.sendMessage({ event: 'toggleBubble' });
+        emitter.emit(WIDGET_BUS_EVENTS.ON_UNREAD_VIEW_CLOSE);
         emitter.emit(WIDGET_BUS_EVENTS.SNOOZE_CAMPAIGNS);
     };
 

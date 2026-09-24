@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IFrameHelper } from './IFrameHelper';
+import { chatBubble, closeBubble, onBubbleClick, widgetHolder } from './bubbleHelpers';
 import { APP_FRAME_ID, FRAME_MESSAGE_PREFIX, NEW_SESSION_URL_PARAM, RESET_SESSION_EVENT } from './constants/frameEvents';
 import { setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
@@ -332,4 +333,73 @@ describe('giao thức với iframe', () => {
             ]);
         },
     );
+});
+
+describe('khung xem trước tin mới giữ launcher đóng và badge số chưa đọc', () => {
+    const isHidden = (element: HTMLElement) => element.classList.contains('woot--hide');
+
+    beforeEach(() => {
+        widgetHolder.className = 'woot-widget-holder woot--hide';
+        chatBubble.className = 'woot-widget-bubble';
+        closeBubble.className = 'woot-widget-bubble woot--close woot--hide';
+        delete chatBubble.dataset.unreadCount;
+        document.body.append(widgetHolder, chatBubble, closeBubble);
+        IFrameHelper.initPostMessageCommunication();
+    });
+
+    afterEach(() => {
+        chatBubble.remove();
+        closeBubble.remove();
+    });
+
+    const agentSendsTwoMessagesWhileClosed = () => {
+        postFromWidget({ event: 'setUnreadMode' });
+        postFromWidget({ event: 'handleNotificationDot', unreadMessageCount: 2 });
+    };
+
+    it('hiện khung xem trước mà launcher vẫn là bong bóng mang badge đúng số', () => {
+        agentSendsTwoMessagesWhileClosed();
+
+        expect(isHidden(widgetHolder)).toBe(false);
+        expect(widgetHolder.classList.contains('has-unread-view')).toBe(true);
+        expect(window.$yona.isOpen).toBe(false);
+        expect(isHidden(chatBubble)).toBe(false);
+        expect(isHidden(closeBubble)).toBe(true);
+        expect(chatBubble.dataset.unreadCount).toBe('2');
+        expect(chatBubble.classList.contains('unread-notification')).toBe(true);
+    });
+
+    it('đóng khung xem trước thì khung ẩn còn badge ở lại trên bong bóng', () => {
+        agentSendsTwoMessagesWhileClosed();
+
+        postFromWidget({ event: 'resetUnreadMode' });
+
+        expect(isHidden(widgetHolder)).toBe(true);
+        expect(widgetHolder.classList.contains('has-unread-view')).toBe(false);
+        expect(isHidden(chatBubble)).toBe(false);
+        expect(chatBubble.dataset.unreadCount).toBe('2');
+    });
+
+    it('bấm bong bóng lúc khung xem trước đang hiện thì mở khung chat thật với launcher mũi tên', () => {
+        agentSendsTwoMessagesWhileClosed();
+
+        onBubbleClick();
+        postFromWidget({ event: 'resetUnreadMode' });
+
+        expect(window.$yona.isOpen).toBe(true);
+        expect(isHidden(widgetHolder)).toBe(false);
+        expect(isHidden(chatBubble)).toBe(true);
+        expect(isHidden(closeBubble)).toBe(false);
+    });
+
+    it('widget xin mở khung chat từ khung xem trước thì mở đúng, không lật trạng thái', () => {
+        agentSendsTwoMessagesWhileClosed();
+
+        postFromWidget({ event: 'toggleBubble', state: 'open' });
+        postFromWidget({ event: 'toggleBubble', state: 'open' });
+
+        expect(window.$yona.isOpen).toBe(true);
+        expect(isHidden(widgetHolder)).toBe(false);
+        expect(isHidden(closeBubble)).toBe(false);
+    });
 });

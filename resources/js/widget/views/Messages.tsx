@@ -4,6 +4,7 @@ import ChatEmptyState from '../components/ChatEmptyState';
 import ChatFooter from '../components/ChatFooter';
 import { useInboxAvailability } from '../components/Availability';
 import OutOfHoursNotice from '../components/OutOfHoursNotice';
+import { IFrameHelper } from '../helpers/iframe';
 import ConversationWrap from '../components/ConversationWrap';
 import { replaceRoute, WIDGET_ROUTES } from '../router';
 import { useWidgetState } from '../store/hooks';
@@ -16,9 +17,14 @@ export default function Messages() {
     const { isInWorkingHours } = useInboxAvailability(agents.filter(agent => agent.availability_status === 'online'));
     const isOutOfHours = workingHoursEnabled && !isInWorkingHours;
 
+    // Màn hội thoại vẫn được dựng sau màn hình chủ khi khung chat đang đóng; chỉ ghi
+    // đã xem khi khách thật sự thấy khung chat, để badge số chưa đọc còn nguyên.
+    const isWidgetOpen = useWidgetState(state => state.appConfig.isWidgetOpen);
+    const isSeenByVisitor = isWidgetOpen || !IFrameHelper.isIFrame();
+
     useEffect(() => {
-        void widgetStore.setUserLastSeen();
-    }, []);
+        if (isSeenByVisitor) void widgetStore.setUserLastSeen();
+    }, [isSeenByVisitor]);
 
     return (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-b-lg bg-[var(--yona-chat-surface)]">

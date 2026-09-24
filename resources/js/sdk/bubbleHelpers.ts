@@ -1,4 +1,4 @@
-import { addClasses, removeClasses, toggleClass } from './DOMHelpers';
+import { addClasses, removeClasses } from './DOMHelpers';
 import { IFrameHelper } from './IFrameHelper';
 import { isExpandedView } from './settingsHelper';
 import { SDK_EVENTS } from './constants/sdkEvents';
@@ -95,9 +95,11 @@ export const onBubbleClick = (props: { toggleValue?: boolean } = {}): void => {
     const newIsOpen = toggleValue === undefined ? !isOpen : toggleValue;
     window.$yona.isOpen = newIsOpen;
 
-    toggleClass(chatBubble, 'woot--hide');
-    toggleClass(closeBubble, 'woot--hide');
-    toggleClass(widgetHolder, 'woot--hide');
+    // Đặt lớp theo trạng thái đích, không lật: khung xem trước tin mới làm khung
+    // widget hiện ra trong khi launcher vẫn đóng.
+    chatBubble.classList.toggle('woot--hide', newIsOpen);
+    closeBubble.classList.toggle('woot--hide', !newIsOpen);
+    widgetHolder.classList.toggle('woot--hide', !newIsOpen);
 
     handleBubbleToggle(newIsOpen);
 };
@@ -112,4 +114,16 @@ export const addUnreadClass = (): void => {
 
 export const removeUnreadClass = (): void => {
     removeClasses(document.querySelector('.woot-widget-holder'), 'has-unread-view');
+};
+
+// Khung xem trước tin mới không phải trạng thái mở: launcher giữ bong bóng và badge
+// số chưa đọc, khách chưa mở khung chat thật thì tin vẫn là chưa đọc.
+export const showUnreadPreview = (): void => {
+    addUnreadClass();
+    removeClasses(widgetHolder, 'woot--hide');
+};
+
+export const hideUnreadPreview = (): void => {
+    removeUnreadClass();
+    if (!window.$yona.isOpen) addClasses(widgetHolder, 'woot--hide');
 };
