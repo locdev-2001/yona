@@ -9033,7 +9033,7 @@ const messages: Record<string, unknown> = {
     },
     "SIDEBAR": {
         "NO_ITEMS": "Không có mục nào",
-        "GLOBAL_SEARCH": "Tìm mọi thứ",
+        "GLOBAL_SEARCH": "Tìm kiếm",
         "GLOBAL_SEARCH_HINT": "Tìm hội thoại, tin nhắn, liên hệ, tệp trong toàn hệ thống",
         "CURRENTLY_VIEWING_ACCOUNT": "Hiện đang xem:",
         "SWITCH": "Chuyển",
