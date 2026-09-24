@@ -17,7 +17,9 @@ import { createTypingIndicator } from '@chatwoot/utils';
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import TagAgents from './TagAgents';
-import type { MentionRecord } from './mentionHelpers';
+import TagGroupMembers from './TagGroupMembers';
+import { MEMBER_MENTION_TYPE, filterGroupMembers } from './groupMemberMentions';
+import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
 
@@ -45,6 +47,8 @@ interface EditorProps {
     enableCannedResponses?: boolean;
     /** Khối bảng gợi ý không được che khi bung lên trên (thanh tab của ô soạn). */
     pickerBoundaryRef?: React.RefObject<HTMLElement | null>;
+    /** Thành viên nhóm để nhắc tên khi trả lời (rỗng = `@` không mở bảng nào). */
+    groupMembers?: GroupMember[];
     onChange: (value: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -59,6 +63,14 @@ interface SuggestionRange {
     from: number;
     to: number;
 }
+
+interface MentionTarget {
+    id: string | number;
+    displayName: string;
+    type: string;
+}
+
+const NO_GROUP_MEMBERS: GroupMember[] = [];
 
 interface SuggestionArgs {
     view: EditorView;
@@ -130,6 +142,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         enableSuggestions = true,
         enableCannedResponses = true,
         pickerBoundaryRef,
+        groupMembers = NO_GROUP_MEMBERS,
         onChange,
         onFocus,
         onBlur,
@@ -367,11 +380,14 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const shouldShowCannedResponses = enableCannedResponses && showCannedMenu && !isPrivate;
     // shouldShowUserMentions gốc: chỉ hiện khi đang soạn ghi chú riêng.
     const shouldShowUserMentions = showUserMentions && isPrivate;
+    const memberItems = useMemo(() => filterGroupMembers(groupMembers, mentionSearchKey), [groupMembers, mentionSearchKey]);
+    // Chỉ mở khi có người để chọn: bảng rỗng vẫn nuốt Enter và agent không gửi được tin.
+    const shouldShowMemberMentions = showUserMentions && !isPrivate && memberItems.length > 0;
 
     // Bảng gợi ý đang mở thì phím điều hướng/chọn thuộc về nó, không thuộc ô soạn:
     // Enter chọn mục chứ không gửi tin hay xuống dòng, mũi tên chạy trong danh sách
     // chứ không dời con trỏ (dời con trỏ sẽ đóng bảng giữa chừng).
-    isPickerOpenRef.current = shouldShowCannedResponses || shouldShowUserMentions;
+    isPickerOpenRef.current = shouldShowCannedResponses || shouldShowUserMentions || shouldShowMemberMentions;
 
     useEffect(() => {
         onToggleCannedMenu?.(shouldShowCannedResponses);
@@ -429,16 +445,16 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     };
 
     // insertSpecialContent('mention', …) + nodeCreators.mention — node `mention` do
-    // MessageMarkdownSerializer đổi thành `[@Tên](mention://user/{id}/{Tên})`, đúng
-    // cú pháp messages/mention_service.rb bóc ra.
-    const insertMention = (record: MentionRecord) => {
+    // MessageMarkdownSerializer đổi thành `[@Tên](mention://{type}/{id}/{Tên})`:
+    // `user|team` cho MentionService của ghi chú riêng, `member` cho thành viên nhóm.
+    const insertMention = (target: MentionTarget) => {
         const view = viewRef.current;
         if (!view || !suggestionRange) return;
 
         const node = view.state.schema.nodes.mention.create({
-            userId: record.id,
-            userFullName: record.displayName,
-            mentionType: record.type,
+            userId: target.id,
+            userFullName: target.displayName,
+            mentionType: target.type,
         });
 
         insertAtCursor(view, node, suggestionRange.from, suggestionRange.to);
@@ -456,6 +472,19 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                     caretPosition={caretPosition}
                     searchKey={mentionSearchKey}
                     onSelectAgent={insertMention}
+                    onClose={dismissUserMentions}
+                    onRemoveTrigger={removeSuggestionTrigger}
+                />
+            ) : null}
+            {shouldShowMemberMentions ? (
+                <TagGroupMembers
+                    caretPosition={caretPosition}
+                    searchKey={mentionSearchKey}
+                    members={memberItems}
+                    boundaryElement={pickerBoundaryRef?.current ?? null}
+                    onSelect={member =>
+                        insertMention({ id: member.external_id, displayName: member.name, type: MEMBER_MENTION_TYPE })
+                    }
                     onClose={dismissUserMentions}
                     onRemoveTrigger={removeSuggestionTrigger}
                 />

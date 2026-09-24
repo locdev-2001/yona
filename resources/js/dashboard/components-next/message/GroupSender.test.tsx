@@ -92,3 +92,21 @@ describe('tô đậm nhắc tên', () => {
         expect(emphasizeMentions('không nhắc ai', [])).toBe('không nhắc ai');
     });
 });
+
+describe('tin agent gửi có nhắc tên thành viên', () => {
+    it('bong bóng bên phải tô đậm @Tên từ content_attributes.mentions', () => {
+        const outgoing: ConversationMessage = {
+            ...incoming(
+                { mentions: [{ external_id: '555', name: 'Bình', offset: 0, length: 5 }] },
+                '@Bình kiểm tra giúp đơn 123',
+            ),
+            message_type: 1,
+            sender: { id: 3, name: 'Lộc', type: 'user', thumbnail: '' },
+            sender_id: 3,
+            sender_type: 'User',
+        };
+        const container = renderMessage(outgoing);
+
+        expect(container.querySelector('strong')?.textContent).toBe('@Bình');
+    });
+});

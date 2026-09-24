@@ -2546,6 +2546,9 @@ const messages: Record<string, unknown> = {
                 "ENABLED": "Enabled",
                 "DISABLED": "Disabled",
                 "YOU_ARE_A_MEMBER": "You are a member of this team"
+            },
+            "GROUP_MEMBER": {
+                "TITLE": "Group members"
             }
         },
         "CUSTOM_SNOOZE": {

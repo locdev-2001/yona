@@ -2546,6 +2546,9 @@ const messages: Record<string, unknown> = {
                 "ENABLED": "Đang bật",
                 "DISABLED": "Đang tắt",
                 "YOU_ARE_A_MEMBER": "Bạn là thành viên của nhóm này"
+            },
+            "GROUP_MEMBER": {
+                "TITLE": "Thành viên nhóm"
             }
         },
         "CUSTOM_SNOOZE": {

@@ -21,6 +21,8 @@ import {
 import ReplyEmailHead from 'dashboard/components/widgets/conversation/ReplyEmailHead';
 import QuotedEmailPreview from 'dashboard/components/widgets/conversation/QuotedEmailPreview';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { extractMemberMentions } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
+import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import {
     AGENT_BOT_ASSIGNEE_TYPE,
     MESSAGE_MAX_LENGTH,
@@ -38,6 +40,7 @@ import { sendMessage } from '../api';
 import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { useGroupMembers } from '../groupMembersApi';
 import type { ConversationMessage } from '../types';
 import { buildOutgoingContentAttributes } from './outgoingContentAttributes';
 import ReplyToMessage from './ReplyToMessage';
@@ -54,9 +57,11 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 // xóa soạn thảo khi thành công, giữ preview + báo lỗi khi backend từ chối; tin
 // chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Trả lời trích
 // dẫn: MessagesView giữ tin đang trả lời, ReplyBox chỉ hiện khối "Đang trả lời"
-// và gửi kèm qua buildOutgoingContentAttributes. Bỏ: draft (B10), ghi âm (voice
-// recorder), email head/quoted reply, WhatsApp templates, copilot editor, canned
-// '/' + mention @ + variables, Paste đính kèm (kênh API chưa cần).
+// và gửi kèm qua buildOutgoingContentAttributes. Nhắc tên thành viên nhóm: kênh
+// khai `outbound_mention` thì `@` ở chế độ Trả lời gợi ý thành viên, link mention
+// đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Bỏ: draft (B10), ghi
+// âm (voice recorder), email head/quoted reply, WhatsApp templates, copilot editor,
+// variables, Paste đính kèm (kênh API chưa cần).
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
@@ -99,8 +104,8 @@ export default function ReplyBox({
     // channelType gốc lấy từ getter inboxes/getInbox(inbox_id). Danh sách inbox
     // chia sẻ qua Inertia chỉ có id/name/channel_type, nên kênh email nạp thêm
     // bản đầy đủ (email + forward_to_email) để dựng danh sách người nhận.
-    const channelType =
-        inboxes.find(item => item.id === selectedConversation?.inbox_id)?.channel_type ?? DEFAULT_CHANNEL_TYPE;
+    const inbox = inboxes.find(item => item.id === selectedConversation?.inbox_id);
+    const channelType = inbox?.channel_type ?? DEFAULT_CHANNEL_TYPE;
     const isAnEmailChannel = channelType === INBOX_TYPES.EMAIL;
     const [emailInbox, setEmailInbox] = useState<Inbox | null>(null);
 
@@ -141,11 +146,12 @@ export default function ReplyBox({
     // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
     const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
 
-    // Ghi chú riêng không mang trích dẫn và cũng không làm mất tin đang trả lời.
-    const outgoingContentAttributes = buildOutgoingContentAttributes({
-        inReplyTo: isPrivate ? null : replyTarget?.id,
-    });
-    const isReplyingToMessage = Boolean(outgoingContentAttributes?.in_reply_to);
+    // Editor chỉ mở bảng thành viên ở chế độ Trả lời; nạp sẵn để đổi tab không phải chờ.
+    const { members: groupMembers } = useGroupMembers(
+        accountId,
+        conversationId,
+        inboxSupports(inbox, 'outbound_mention'),
+    );
 
     const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
     const isSignatureEnabledForInbox = !isPrivate && sendWithSignature;
@@ -380,16 +386,34 @@ export default function ReplyBox({
         },
     });
 
+    // Một chỗ dựng nội dung + content_attributes cho cả hai đường gửi. Ghi chú
+    // riêng giữ nguyên markdown (nhắc tên nhân viên) và không mang trích dẫn, cũng
+    // không làm mất tin đang trả lời.
+    const buildOutgoingPayload = () => {
+        const { content, mentions } = isPrivate ? { content: message, mentions: [] } : extractMemberMentions(message);
+        const contentAttributes = buildOutgoingContentAttributes({
+            inReplyTo: isPrivate ? null : replyTarget?.id,
+            mentions,
+        });
+
+        return {
+            content: getMessageWithQuotedEmailText(content),
+            contentAttributes,
+            isReplyingToMessage: Boolean(contentAttributes?.in_reply_to),
+        };
+    };
+
     // getMessagePayload gốc gom `files` vào cùng một tin (kênh API không tách
     // chữ và tệp như Instagram/TikTok/WhatsApp).
     const sendReplyWithAttachments = async () => {
         setIsUploading(true);
         try {
+            const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
             await sendMessage(accountId, conversationId, {
-                content: getMessageWithQuotedEmailText(message),
+                content,
                 private: isPrivate,
                 files: attachedFiles.map((attachment) => attachment.resource),
-                ...(outgoingContentAttributes ? { content_attributes: outgoingContentAttributes } : {}),
+                ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
                 ...emailPayloadFields(),
             });
             if (isReplyingToMessage) onClearReplyTarget?.();
@@ -416,10 +440,11 @@ export default function ReplyBox({
             return;
         }
         if (!isMessageEmpty) {
+            const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
             sendReply({
-                content: getMessageWithQuotedEmailText(message),
+                content,
                 isPrivate,
-                contentAttributes: outgoingContentAttributes,
+                contentAttributes,
                 ...emailPayloadFields(),
             });
             if (isReplyingToMessage) onClearReplyTarget?.();
@@ -518,6 +543,7 @@ export default function ReplyBox({
                     isPrivate={isOnPrivateNote}
                     channelType={channelType}
                     uiSettings={uiSettings}
+                    groupMembers={groupMembers}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
