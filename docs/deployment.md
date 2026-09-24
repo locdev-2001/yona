@@ -478,7 +478,7 @@ Vì vậy gỡ `error_page 404` là bắt buộc, không chỉ tắt intercept: 
 bước kiểm của `deploy.sh` không phân biệt được ảnh hỏng với ảnh lành.
 
 URL phải kết thúc bằng tên tệp gốc vì giao diện đọc tên hiển thị của tệp từ
-chính đoạn cuối URL, như Chatwoot. Nên sửa ở nginx:
+chính đoạn cuối URL. Nên sửa ở nginx:
 `location ^~ /attachments/` (đã có trong `laravel-runtime.conf`). Khớp tiền tố
 `^~` làm nginx dừng tìm regex, nên rule ảnh không còn chạm tới đường dẫn này.
 

@@ -1,13 +1,13 @@
 # Yona
 
 > ## ⚠️ ĐỌC TRƯỚC MỌI THỨ KHÁC
-> **Codebase = bản viết lại 100% Chatwoot v4.17.1 sang Laravel + Inertia/React**, đã merge vào `main` 08/09/2026. Làm thẳng trên `main`. Mốc quay lại: tag `main-truoc-rewrite`.
-> - **Nguồn chuẩn kiến trúc + việc kế tiếp:** `plans/260831-rewrite-chatwoot-laravel/plan.md`. Năng lực kênh khai DUY NHẤT ở `app/Channels/CapabilitySet.php` + `DeclaresCapabilities`. Triển khai production: `docs/deployment.md`.
+> **Yona chạy Laravel 13 + Inertia/React 19 trên `main`.** Làm thẳng trên `main`. Mốc quay lại: tag `main-truoc-rewrite`.
+> - **Nguồn chuẩn kiến trúc:** `docs/system-architecture.md`. Năng lực kênh khai DUY NHẤT ở `app/Channels/CapabilitySet.php` + `DeclaresCapabilities`. Triển khai production: `docs/deployment.md`.
 > - **Việc đang mở theo dõi ở Công việc của dash.yona.vn** qua MCP `yona-dash` (skill `yona-issues`), không phải trong file này và không tạo GitHub issue nữa: `list_tasks` với `tag: "P0"`.
-> - Nguồn Ruby/Vue để đối chiếu: `refs/chatwoot` — **CẤM** mở `refs/chatwoot/enterprise/`.
+> - Thư mục `refs/` (không theo dõi trong git) chứa mã tham khảo bên ngoài: chỉ đọc lấy ý tưởng, **CẤM** mở mọi thư mục `enterprise/` trong đó (giấy phép thương mại). Code, comment, copy, commit, task không nhắc tên nguồn; nghĩa vụ giấy phép nằm ở `THIRD_PARTY_NOTICES.md`.
 > - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
-> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng trace Ruby↔PHP khi port, nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
-> - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev lấy từ `.env`: app **8610**, Reverb **8611**, Zalo bridge **8612**; oracle Chatwoot podman :3000.
+> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng đối chiếu hành vi khi dựng tính năng từ mã tham khảo trong `refs/` (ghi ở báo cáo, không vào code), nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
+> - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev lấy từ `.env`: app **8610**, Reverb **8611**, Zalo bridge **8612**.
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
 **Repo:** github.com/locflamedia/yona · **Domain:** yona.vn · **Team:** bootstrapped, 3 dev
@@ -18,7 +18,7 @@
 
 ## Sản phẩm hôm nay thực sự là gì (20/09/2026)
 
-Production chạy tại https://yona.vn. 40/40 tính năng Chatwoot đã port, tiếng Việt đầy đủ, ~2.2k Pest + ~800 vitest xanh.
+Production chạy tại https://yona.vn. Tiếng Việt đầy đủ, ~2.2k Pest + ~800 vitest xanh.
 
 **Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · thông báo đẩy trình duyệt (Web Push, VAPID tự sinh) · 2FA, RBAC, Platform API, Super Admin.
 
@@ -55,7 +55,7 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 - **Gate hạn mức đã gỡ hoàn toàn** (25/07/2026) — dùng không giới hạn, chỉ thống kê. Đừng tự dựng lại gate khi chưa có lệnh.
 - **Luôn nhận inbound** — để không mất lead.
 - **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ là nguồn làm giàu dữ liệu.
-- Lệch Chatwoot có chủ đích phải ghi `plans/260831-rewrite-chatwoot-laravel/reports/ux-deviations.md`.
+- Quyết định UX có chủ đích (khác cách làm quen thuộc của loại sản phẩm này) phải ghi `docs/ux-decisions.md`.
 
 ## Nhánh mới = worktree mới (bắt buộc với mọi phiên AI)
 
@@ -97,7 +97,6 @@ Technical founder & kỹ sư phần mềm. Nền tảng PHP/Laravel, Vue/Next.js
 | **Liên hệ nháp** | Người lạ nhắn lần đầu, chưa xác nhận nhu cầu |
 | **Conversation metering** | Đếm hội thoại theo từng kênh — quyết định cho gói cước sau này; **chưa có trong code** (bỏ khi viết lại), không chặn, không tính tiền |
 | **Zalo cá nhân** | Kênh chính hiện tại, không phải OA |
-| **Oracle** | Bản Chatwoot gốc chạy podman :3000 để đối chiếu pixel |
 | ~~Lead / Pipeline / Entitlements~~ | **Chưa tồn tại trong code.** Là dự định, không phải hiện trạng |
 
 ## Preferences

@@ -6,15 +6,17 @@ chat về một inbox, biến hội thoại thành khách hàng, tự động h�
 Codebase hiện tại là **bản viết lại toàn bộ trên Laravel + Inertia/React**, đã
 merge vào `main` (08/09/2026). Mốc quay lại bản cũ: tag `main-truoc-rewrite`.
 
-- Quyết định kiến trúc, trạng thái, việc kế tiếp → kế hoạch mới nhất trong `plans/`
+- Quyết định kiến trúc → [docs/system-architecture.md](docs/system-architecture.md)
+- Quyết định UX có chủ đích → [docs/ux-decisions.md](docs/ux-decisions.md)
+- Việc đang mở → Công việc của dash.yona.vn
 - Triển khai production → [docs/deployment.md](docs/deployment.md)
 
 ---
 
 ## Trạng thái (20/09/2026)
 
-Production đang chạy tại **https://yona.vn**. 40/40 tính năng Chatwoot đã port,
-tiếng Việt đầy đủ, ~2.2k test Pest + ~800 test vitest xanh.
+Production đang chạy tại **https://yona.vn**. Tiếng Việt đầy đủ, ~2.2k test Pest
++ ~800 test vitest xanh.
 
 Nhưng **khách lạ chưa tự đi hết được từ trang chủ tới hộp thư**. Bốn nút chặn,
 theo đúng thứ tự khách gặp:
