@@ -93,6 +93,14 @@ class Attachment extends Model
         self::FILE_TYPE_IMAGE, self::FILE_TYPE_AUDIO, self::FILE_TYPE_VIDEO, self::FILE_TYPE_FILE,
     ];
 
+    // Loại tìm được theo tên tệp: loại mang tệp, cộng tệp chưa tải về được (tên
+    // nằm ở fallback_title). Location/contact card cũng dùng fallback_title cho
+    // chữ khác nên không nằm trong danh sách này.
+    public const SEARCHABLE_FILE_TYPES = [...self::FILE_BEARING_TYPES, self::FILE_TYPE_FALLBACK];
+
+    // displayName() viết bằng SQL, trùng biểu thức index index_attachments_on_folded_display_name.
+    public const DISPLAY_NAME_SQL = "COALESCE(NULLIF(attachments.filename, ''), attachments.fallback_title)";
+
     protected $fillable = [
         'account_id',
         'role',
@@ -462,6 +470,13 @@ class Attachment extends Model
     public function messageId(): ?int
     {
         return $this->attachable_type === 'Message' ? $this->attachable_id : null;
+    }
+
+    // Tên tệp người dùng thấy: tên gốc, hoặc tên kênh báo về khi chưa tải được tệp.
+    // Cùng luật với DISPLAY_NAME_SQL.
+    public function displayName(): ?string
+    {
+        return ($this->filename ?? '') !== '' ? $this->filename : $this->fallback_title;
     }
 
     // _attachment.json.jbuilder = push_event_data + created_at của message

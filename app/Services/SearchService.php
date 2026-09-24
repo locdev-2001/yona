@@ -4,32 +4,46 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
-// Port từ app/services/search_service.rb.
-// Bỏ nhánh Elasticsearch/Searchkick (advanced_search + OPENSEARCH_URL, chỉ
-// chạy trên bản enterprise) — còn lại đúng hai đường GIN và ILIKE của CE.
-// Articles: trả rỗng tới khi có Help Center (E4).
+// Tìm hội thoại, tin nhắn, liên hệ và tệp của một account theo từ khoá. Chữ người
+// đọc (tên, nội dung, tiêu đề thư, tên tệp) khớp không dấu qua SearchTerm; email,
+// số điện thoại, mã khớp nguyên văn. Articles: trả rỗng tới khi có Help Center.
 class SearchService
 {
     public const RESULTS_PER_PAGE = 15;
 
-    // Limits::MESSAGE_SEARCH_TIME_RANGE_LIMIT_DAYS.
+    // Giới hạn khoảng thời gian của bộ lọc nâng cao (since/until).
     public const TIME_RANGE_LIMIT_DAYS = 90;
 
-    // message_base_query: chỉ tìm trong 3 tháng gần nhất.
-    private const MESSAGE_LOOKBACK_MONTHS = 3;
+    // Tin nhắn và tệp chỉ tìm trong 12 tháng gần nhất: đủ để tra lại báo giá,
+    // chuyển khoản cũ mà vẫn giữ truy vấn gọn.
+    public const MESSAGE_LOOKBACK_MONTHS = 12;
+
+    // Người gửi thật của tin nhóm (khoá chuẩn của năng lực group_threads). Kênh
+    // không có tin nhóm thì khoá này vắng, không bao giờ khớp.
+    public const GROUP_SENDER_NAME_SQL = "messages.content_attributes #>> '{sender,name}'";
+
+    private const MAIL_SUBJECT_SQL = "conversations.additional_attributes ->> 'mail_subject'";
+
+    // Quan hệ MessageResource đọc tới — dùng chung cho tab Tin nhắn và tin của tab Tệp.
+    private const MESSAGE_RESULT_RELATIONS = ['conversation.contactInbox', 'sender', 'attachments', 'account', 'inbox'];
 
     /** @var array<int>|null */
     private ?array $accessableInboxIds = null;
 
     private ?AccountUser $accountUser = null;
+
+    private ?SearchTerm $searchTerm = null;
 
     /** @param array<string, mixed> $params */
     public function __construct(
@@ -46,11 +60,13 @@ class SearchService
             'Message' => ['messages' => $this->filterMessages()],
             'Conversation' => ['conversations' => $this->filterConversations()],
             'Contact' => ['contacts' => $this->filterContacts()],
+            'Attachment' => ['files' => $this->filterFiles()],
             'Article' => ['articles' => $this->filterArticles()],
             default => [
-                'contacts' => $this->filterContacts(),
-                'messages' => $this->filterMessages(),
                 'conversations' => $this->filterConversations(),
+                'messages' => $this->filterMessages(),
+                'contacts' => $this->filterContacts(),
+                'files' => $this->filterFiles(),
                 'articles' => $this->filterArticles(),
             ],
         };
@@ -66,19 +82,31 @@ class SearchService
     /** @return Collection<int, Conversation> */
     public function filterConversations(): Collection
     {
+        $term = $this->searchTerm();
+
         $query = Conversation::query()
             ->select('conversations.*')
+            // Tên thành viên nhóm khớp gần nhất — cho giao diện biết vì sao nhóm này ra.
+            ->selectSub(
+                $this->groupMemberMatch()
+                    ->selectRaw(self::GROUP_SENDER_NAME_SQL)
+                    ->reorder()
+                    ->orderByDesc('messages.created_at')
+                    ->limit(1),
+                'matched_member_name',
+            )
             ->where('conversations.account_id', $this->currentAccount->id)
             ->whereIn('conversations.inbox_id', $this->accessableInboxIds())
             ->join('contacts', 'conversations.contact_id', '=', 'contacts.id')
-            // Rails bọc whereRaw trong ngoặc; Laravel thì không — phải tự bọc,
-            // nếu không OR sẽ nuốt luôn điều kiện account_id/inbox_id.
-            ->whereRaw(
-                '(cast(conversations.display_id as text) ILIKE ? OR contacts.name ILIKE ?'
-                .' OR contacts.email ILIKE ? OR contacts.phone_number ILIKE ?'
-                .' OR contacts.identifier ILIKE ?)',
-                array_fill(0, 5, $this->likePattern()),
-            );
+            // Bọc ngoặc: nếu không, OR nuốt luôn điều kiện account_id/inbox_id.
+            ->where(fn (Builder $matches) => $matches
+                ->whereRaw(...$term->plainMatch('cast(conversations.display_id as text)'))
+                ->orWhereRaw(...$term->foldedMatch('contacts.name'))
+                ->orWhereRaw(...$term->plainMatch('contacts.email'))
+                ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
+                ->orWhereRaw(...$term->plainMatch('contacts.identifier'))
+                ->orWhereRaw(...$term->foldedMatch(self::MAIL_SUBJECT_SQL))
+                ->orWhereExists($this->groupMemberMatch()));
 
         if ($this->advancedSearchEnabled()) {
             $query = $this->applyTimeFilter($query, 'conversations.last_activity_at');
@@ -93,30 +121,29 @@ class SearchService
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {
-        return $this->useGinSearch() ? $this->filterMessagesWithGin() : $this->filterMessagesWithLike();
+        return $this->orderedMessagePage(
+            $this->filteredMessages()->whereRaw(...$this->searchTerm()->foldedMatch('messages.content')),
+        );
     }
 
-    /** @return Collection<int, Message> */
-    public function filterMessagesWithGin(): Collection
+    // Mỗi tệp khớp là một kết quả (một tin ba tệp khớp ra ba dòng). Phạm vi, quyền
+    // và bộ lọc nâng cao đi theo đúng tin chứa tệp.
+    /** @return Collection<int, Attachment> */
+    public function filterFiles(): Collection
     {
-        $query = $this->applyMessageFilters($this->messageBaseQuery());
-
-        if ($this->searchQuery() !== '') {
-            // Toán tử @@ + to_tsquery để dùng được index GIN; nối các từ bằng
-            // <-> nên khớp cả cụm theo đúng thứ tự (giống bản gốc).
-            $query->whereRaw('content @@ to_tsquery(?)', [implode(' <-> ', preg_split('/\s+/', $this->searchQuery()) ?: [])]);
-        }
-
-        return $this->orderedMessagePage($query);
-    }
-
-    /** @return Collection<int, Message> */
-    public function filterMessagesWithLike(): Collection
-    {
-        $query = $this->applyMessageFilters($this->messageBaseQuery())
-            ->whereRaw('messages.content ILIKE ?', [$this->likePattern()]);
-
-        return $this->orderedMessagePage($query);
+        return Attachment::query()
+            ->select('attachments.*')
+            ->whereMorphedTo('attachable', Message::class)
+            ->whereIn('attachments.attachable_id', $this->filteredMessages()->select('messages.id'))
+            ->whereIn('attachments.file_type', Attachment::SEARCHABLE_FILE_TYPES)
+            ->whereRaw(...$this->searchTerm()->foldedMatch(Attachment::DISPLAY_NAME_SQL))
+            ->with(['attachable' => fn (MorphTo $morph) => $morph->morphWith([
+                Message::class => self::MESSAGE_RESULT_RELATIONS,
+            ])])
+            ->orderByDesc('attachments.created_at')
+            ->orderByDesc('attachments.id')
+            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
+            ->get();
     }
 
     /** @return Builder<Message> */
@@ -136,13 +163,15 @@ class SearchService
     /** @return Collection<int, Contact> */
     public function filterContacts(): Collection
     {
+        $term = $this->searchTerm();
+
         $query = Contact::query()
             ->where('contacts.account_id', $this->currentAccount->id)
-            ->whereRaw(
-                '(contacts.name ILIKE ? OR contacts.email ILIKE ?'
-                .' OR contacts.phone_number ILIKE ? OR contacts.identifier ILIKE ?)',
-                array_fill(0, 4, $this->likePattern()),
-            );
+            ->where(fn (Builder $matches) => $matches
+                ->whereRaw(...$term->foldedMatch('contacts.name'))
+                ->orWhereRaw(...$term->plainMatch('contacts.email'))
+                ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
+                ->orWhereRaw(...$term->plainMatch('contacts.identifier')));
 
         if ($this->advancedSearchEnabled()) {
             $query = $this->applyTimeFilter($query, 'contacts.last_activity_at');
@@ -161,11 +190,6 @@ class SearchService
         return [];
     }
 
-    public function useGinSearch(): bool
-    {
-        return $this->currentAccount->featureEnabled('search_with_gin');
-    }
-
     /** @return array<int, int> */
     private function accessableInboxIds(): array
     {
@@ -175,14 +199,24 @@ class SearchService
             ->all();
     }
 
-    private function searchQuery(): string
+    private function searchTerm(): SearchTerm
     {
-        return trim((string) ($this->params['q'] ?? ''));
+        return $this->searchTerm ??= SearchTerm::fromParams($this->params);
     }
 
-    private function likePattern(): string
+    /** @return Builder<Message> */
+    private function filteredMessages(): Builder
     {
-        return '%'.$this->searchQuery().'%';
+        return $this->applyMessageFilters($this->messageBaseQuery());
+    }
+
+    // Tin trong nhóm của hội thoại đang xét mà người gửi thật khớp từ khoá.
+    /** @return Builder<Message> */
+    private function groupMemberMatch(): Builder
+    {
+        return Message::query()
+            ->whereColumn('messages.conversation_id', 'conversations.id')
+            ->whereRaw(...$this->searchTerm()->foldedMatch(self::GROUP_SENDER_NAME_SQL));
     }
 
     private function currentPage(): int
@@ -203,7 +237,7 @@ class SearchService
     {
         // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các
         // trang liền nhau đảo chỗ và trùng bản ghi.
-        return $query->with(['conversation.contactInbox', 'sender', 'attachments', 'account', 'inbox'])
+        return $query->with(self::MESSAGE_RESULT_RELATIONS)
             ->reorder()
             ->orderByDesc('messages.created_at')
             ->orderByDesc('messages.id')

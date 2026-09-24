@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\Search\SearchContactResource;
 use App\Http\Resources\Search\SearchConversationResource;
+use App\Http\Resources\Search\SearchFileResource;
 use App\Models\Account;
 use App\Services\SearchService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,7 @@ class SearchController extends Controller
             'conversations' => SearchConversationResource::collectionFor($result['conversations']),
             'contacts' => SearchContactResource::collectionFor($result['contacts']),
             'messages' => MessageResource::collectionFor($result['messages']),
+            'files' => SearchFileResource::collectionFor($result['files']),
             'articles' => $result['articles'],
         ]);
     }
@@ -48,6 +50,13 @@ class SearchController extends Controller
         $result = $this->search($request, $account, 'Message');
 
         return $this->payload(['messages' => MessageResource::collectionFor($result['messages'])]);
+    }
+
+    public function files(Request $request, Account $account): JsonResponse
+    {
+        $result = $this->search($request, $account, 'Attachment');
+
+        return $this->payload(['files' => SearchFileResource::collectionFor($result['files'])]);
     }
 
     public function articles(Request $request, Account $account): JsonResponse
