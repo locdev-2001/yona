@@ -24,6 +24,82 @@ export function foldedSearchWords(query: string): string[] {
     return [...new Set(foldSearchText(query).split(WHITESPACE).filter(Boolean))];
 }
 
+/**
+ * Mức liên quan của một chuỗi đã khớp, số nhỏ đứng trước: cả cụm từ khoá liền nhau,
+ * mỗi từ đứng trọn → đủ các từ đứng trọn nhưng rời nhau hoặc đảo thứ tự → còn lại
+ * (có từ chỉ là một phần của từ dài hơn). Cùng luật với SearchTerm::orderByRelevance
+ * của máy chủ — hai bên kiểm chung bằng `searchRelevance.cases.json`.
+ */
+export const SEARCH_RELEVANCE = {
+    exactPhrase: 0,
+    wholeWords: 1,
+    partialWords: 2,
+} as const;
+
+export type SearchRelevance = (typeof SEARCH_RELEVANCE)[keyof typeof SEARCH_RELEVANCE];
+
+const REGEXP_SYNTAX = /[.*+?^${}()|[\]\\]/g;
+const PHRASE_WORD_GAP = '\\s+';
+
+interface CompiledSearchQuery {
+    words: string[];
+    phrase: RegExp;
+    wholeWords: RegExp[];
+}
+
+// Một từ "đứng trọn" khi hai bên không dính chữ hay số.
+function wholeWordPattern(escapedWords: string): RegExp {
+    return new RegExp(`(?<![\\p{L}\\p{N}])${escapedWords}(?![\\p{L}\\p{N}])`, 'u');
+}
+
+function compileSearchQuery(query: string): CompiledSearchQuery | null {
+    const words = foldedSearchWords(query);
+
+    if (words.length === 0) return null;
+
+    const escapedWords = words.map(word => word.replace(REGEXP_SYNTAX, '\\$&'));
+
+    return {
+        words,
+        phrase: wholeWordPattern(escapedWords.join(PHRASE_WORD_GAP)),
+        wholeWords: escapedWords.map(wholeWordPattern),
+    };
+}
+
+// Chuỗi thiếu một từ thì null — máy chủ đã không trả dòng đó (SearchTerm::foldedMatch).
+function relevanceOfFolded(folded: string, query: CompiledSearchQuery): SearchRelevance | null {
+    if (!query.words.every(word => folded.includes(word))) return null;
+    if (query.phrase.test(folded)) return SEARCH_RELEVANCE.exactPhrase;
+
+    return query.wholeWords.every(pattern => pattern.test(folded))
+        ? SEARCH_RELEVANCE.wholeWords
+        : SEARCH_RELEVANCE.partialWords;
+}
+
+/** Mức liên quan của `text` với từ khoá; null khi `text` không chứa đủ mọi từ hoặc từ khoá rỗng. */
+export function searchRelevance(text: string, query: string): SearchRelevance | null {
+    const compiled = compileSearchQuery(query);
+
+    return compiled ? relevanceOfFolded(foldSearchText(text), compiled) : null;
+}
+
+/**
+ * Tìm trên danh sách đã có sẵn ở giao diện theo đúng luật của máy chủ: giữ mục chứa
+ * đủ mọi từ (không dấu, không cần liền nhau hay đúng thứ tự), xếp theo mức liên quan,
+ * cùng mức giữ thứ tự đầu vào. Từ khoá không còn từ nào thì trả nguyên danh sách.
+ */
+export function searchByRelevance<T>(items: readonly T[], query: string, textOf: (item: T) => string): T[] {
+    const compiled = compileSearchQuery(query);
+
+    if (!compiled) return [...items];
+
+    return items
+        .map((item, position) => ({ item, position, relevance: relevanceOfFolded(foldSearchText(textOf(item)), compiled) }))
+        .filter((entry): entry is { item: T; position: number; relevance: SearchRelevance } => entry.relevance !== null)
+        .sort((left, right) => left.relevance - right.relevance || left.position - right.position)
+        .map(entry => entry.item);
+}
+
 export interface HighlightSegment {
     text: string;
     match: boolean;

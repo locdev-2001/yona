@@ -24,6 +24,23 @@ function searchFoldCases(): array
         ->all();
 }
 
+// Luật xếp hạng liên quan cũng có hai bản: SQL của SearchTerm và searchFold.ts
+// cho danh sách tìm ngay ở giao diện. Hai bên đọc chung một file ca kiểm.
+function searchRelevanceCases(): array
+{
+    $cases = json_decode(
+        (string) file_get_contents(dirname(__DIR__, 3).'/resources/js/shared/helpers/searchRelevance.cases.json'),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    return collect($cases)
+        ->mapWithKeys(fn (array $case) => [
+            json_encode("{$case['query']} → {$case['text']}", JSON_UNESCAPED_UNICODE) => [$case['text'], $case['query'], $case['relevance']],
+        ])
+        ->all();
+}
+
 function foldedSearchIndexes(): array
 {
     return array_column(foldedSearchColumns(), 2);
@@ -48,6 +65,23 @@ function explainedPlan(string $sql, array $bindings): string
 it('folds every shared case exactly like the frontend helper', function (string $input, string $folded) {
     expect(DB::selectOne('SELECT search_fold(?) AS folded', [$input])->folded)->toBe($folded);
 })->with(searchFoldCases());
+
+it('matches and ranks every shared relevance case exactly like the frontend helper', function (string $text, string $query, ?int $relevance) {
+    $term = new SearchTerm($query);
+    [$condition, $matchBindings] = $term->foldedMatch('sample.subject');
+    [$rankSql, $rankBindings] = $term->relevanceRank('sample.subject');
+
+    $row = DB::selectOne(
+        "SELECT {$condition} AS matched, {$rankSql} AS relevance FROM (SELECT CAST(? AS text) AS subject) AS sample",
+        [...$matchBindings, ...$rankBindings, $text],
+    );
+
+    expect($row->matched)->toBe($relevance !== null);
+
+    if ($relevance !== null) {
+        expect($row->relevance)->toBe($relevance);
+    }
+})->with(searchRelevanceCases());
 
 it('keeps NULL as NULL', function () {
     expect(DB::selectOne('SELECT search_fold(NULL) AS folded')->folded)->toBeNull();

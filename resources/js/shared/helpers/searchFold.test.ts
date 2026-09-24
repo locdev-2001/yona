@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import cases from './searchFold.cases.json';
-import { excerptAroundFirstMatch, foldedSearchWords, foldSearchText, highlightSegments } from './searchFold';
+import relevanceCases from './searchRelevance.cases.json';
+import {
+    SEARCH_RELEVANCE,
+    excerptAroundFirstMatch,
+    foldedSearchWords,
+    foldSearchText,
+    highlightSegments,
+    searchByRelevance,
+    searchRelevance,
+} from './searchFold';
 
 describe('foldSearchText', () => {
     it.each(cases)('fold "$input"', ({ input, folded }) => {
@@ -115,5 +124,46 @@ describe('excerptAroundFirstMatch', () => {
 
     it('không cắt giữa từ khi phía trước chỗ khớp là một chuỗi liền', () => {
         expect(excerptAroundFirstMatch('https://shop.example.vn/san-pham/bao-gia', 'bao gia')).toBe('…bao-gia');
+    });
+});
+
+describe('searchRelevance', () => {
+    it.each(relevanceCases)('"$query" trên "$text" → $relevance', ({ text, query, relevance }) => {
+        expect(searchRelevance(text, query)).toBe(relevance);
+    });
+
+    it('từ khoá rỗng thì không xếp hạng', () => {
+        expect(searchRelevance('Bình An', '  ')).toBeNull();
+    });
+});
+
+describe('searchByRelevance', () => {
+    const names = ['Anh Bình', 'Nguyễn Văn Bình', 'Lê Đức', 'Bình An', 'Lan Anh', 'An Bình Dương', 'Trần Thị An'];
+    const search = (query: string) => searchByRelevance(names, query, name => name);
+
+    it('nhiều từ: giữ mục chứa đủ mọi từ, cụm liền > đủ từ trọn > còn lại ("an" trong "Anh", "Văn")', () => {
+        expect(search('an binh')).toEqual(['An Bình Dương', 'Bình An', 'Anh Bình', 'Nguyễn Văn Bình']);
+    });
+
+    it('đảo thứ tự từ vẫn khớp cùng tập, cụm liền theo đúng thứ tự gõ đứng đầu', () => {
+        expect(search('binh an')).toEqual(['Bình An', 'An Bình Dương', 'Anh Bình', 'Nguyễn Văn Bình']);
+    });
+
+    it('không dấu, không phân biệt hoa thường, gõ có dấu cũng như không', () => {
+        expect(search('BÌNH AN')).toEqual(search('binh an'));
+        expect(search('dương')).toEqual(['An Bình Dương']);
+    });
+
+    it('cùng mức giữ thứ tự đầu vào', () => {
+        expect(search('an')).toEqual(['Bình An', 'An Bình Dương', 'Trần Thị An', 'Anh Bình', 'Nguyễn Văn Bình', 'Lan Anh']);
+        expect(searchRelevance('Bình An', 'an')).toBe(SEARCH_RELEVANCE.exactPhrase);
+        expect(searchRelevance('Anh Bình', 'an')).toBe(SEARCH_RELEVANCE.partialWords);
+    });
+
+    it('từ khoá rỗng trả nguyên danh sách, không phải chính mảng đầu vào', () => {
+        const result = search(' - ');
+
+        expect(result).toEqual(names);
+        expect(result).not.toBe(names);
     });
 });

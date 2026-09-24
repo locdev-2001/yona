@@ -86,10 +86,23 @@ final class SearchTerm
      */
     public function orderByRelevance(Builder $query, string ...$columnSqls): Builder
     {
+        $relevance = $this->relevanceRank(...$columnSqls);
+
+        return $relevance === null ? $query : $query->orderByRaw(...$relevance);
+    }
+
+    /**
+     * Biểu thức SQL ra mức liên quan (số nguyên) của orderByRelevance. Giao diện
+     * xếp theo cùng luật ở searchFold.ts; hai bên kiểm chung searchRelevance.cases.json.
+     *
+     * @return array{0: string, 1: list<string>}|null
+     */
+    public function relevanceRank(string ...$columnSqls): ?array
+    {
         $words = $this->foldedWords();
 
         if ($words === [] || $columnSqls === []) {
-            return $query;
+            return null;
         }
 
         $escapedWords = array_map(preg_quote(...), $words);
@@ -110,7 +123,7 @@ final class SearchTerm
 
         $rankSql = count($ranks) === 1 ? $ranks[0] : 'LEAST('.implode(', ', $ranks).')';
 
-        return $query->orderByRaw($rankSql, $bindings);
+        return [$rankSql, $bindings];
     }
 
     /**
