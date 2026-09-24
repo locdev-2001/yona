@@ -694,6 +694,7 @@ Lưu ý vận hành:
 - **Timezone của PHP** — xem ngay dưới.
 - **Hộp thư nhận lead** của trang `/dat-lich-demo` — xem ngay dưới.
 - **Kiểm máy chủ gửi được thông báo đẩy** — xem ngay dưới (không có bí mật phải điền).
+- **OAuth client cho nút "Tiếp tục với Google"** — xem ngay dưới. Chưa làm thì nút ẩn, không hỏng gì.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
 
@@ -754,6 +755,64 @@ Nghiệm thu: Cài đặt hồ sơ → Tùy chọn thông báo → bật "cho ph
 thông báo đẩy", tick cột "Thông báo đẩy" cho "Một hội thoại được giao cho bạn",
 nhờ người khác giao một hội thoại → hệ điều hành hiện thông báo, bấm vào mở đúng
 hội thoại.
+
+### Đăng nhập và đăng ký bằng Google
+
+Nút "Tiếp tục với Google" ở `/app/login` và `/app/auth/signup` chỉ hiện khi `.env`
+có **cả hai** `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`; thiếu một trong hai thì
+nút ẩn và `/app/auth/oauth/google*` trả 404. Chỉ dành cho người dùng dashboard,
+console `/super_admin` vẫn đăng nhập bằng mật khẩu.
+
+Hành vi đã chốt: email Google phải được Google xác minh; email trùng tài khoản có
+sẵn thì vào đúng tài khoản đó; email mới thì tạo tài khoản qua đúng đường đăng ký
+thường (tên hiển thị Google làm tên người dùng và tên account, không gửi thư xác
+nhận vì Google đã xác minh); tài khoản bật 2FA vẫn phải nhập mã.
+
+Tạo OAuth client trên Google Cloud, **đứng tên Yona** (project của công ty, không
+dùng project cá nhân):
+
+1. Vào `https://console.cloud.google.com`, tạo hoặc chọn project của Yona.
+2. **Google Auth Platform → Branding**: tên ứng dụng `Yona`, email hỗ trợ, trang chủ
+   `https://yona.vn`, chính sách riêng tư `https://yona.vn/chinh-sach-rieng-tu`,
+   điều khoản `https://yona.vn/dieu-khoan`, Authorized domain `yona.vn`.
+3. **Audience**: User type **External**, rồi bấm **Publish app** để sang *In
+   production*. Để ở *Testing* thì chỉ những email trong danh sách test user đăng
+   nhập được. Ba scope dưới đây không nhạy cảm nên không phải qua thẩm định của
+   Google; muốn hiện logo Yona trên màn đồng ý thì Google sẽ yêu cầu xác minh thương hiệu.
+4. **Data Access → Add or remove scopes**: `openid`, `.../auth/userinfo.email`,
+   `.../auth/userinfo.profile`. Ứng dụng không xin gì thêm.
+5. **Clients → Create client → Web application**, tên `Yona web`.
+   **Authorized redirect URIs** thêm đúng một dòng:
+
+   ```text
+   https://yona.vn/app/auth/oauth/google/callback
+   ```
+
+   Máy dev muốn thử thật thì thêm `http://localhost:8610/app/auth/oauth/google/callback`
+   (Google cho phép `http://localhost`). Authorized JavaScript origins để trống được:
+   luồng đổi mã chạy ở máy chủ.
+6. Chép Client ID và Client secret vào `.env` production:
+
+```bash
+cd /www/wwwroot/yona.vn
+# .env dựng từ .env.example cũ chưa có ba dòng này: thêm dòng trống trước khi sed.
+for key in GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI; do
+  grep -q "^$key=" .env || echo "$key=" >> .env
+done
+sed -i 's|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=<client id>|' .env
+sed -i 's|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=<client secret>|' .env
+sed -i 's|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://yona.vn/app/auth/oauth/google/callback|' .env
+php artisan config:clear
+```
+
+`GOOGLE_REDIRECT_URI` phải khớp **từng ký tự** với dòng đã khai ở bước 5 (https, không
+có `/` cuối). Bỏ trống thì app tự ghép theo host của request, sau CDN có thể ra
+`http://` và Google báo `redirect_uri_mismatch`, nên production đặt rõ.
+
+Nghiệm thu: mở `https://yona.vn/app/login` ở cửa sổ ẩn danh → bấm "Tiếp tục với
+Google" → chọn một tài khoản Google đã có tài khoản Yona → vào thẳng dashboard, và
+Hồ sơ → Phiên đăng nhập có thêm một dòng. **Không thử bằng email chưa có tài
+khoản trên production**: lượt đó tạo account thật.
 
 ### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
 
