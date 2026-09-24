@@ -7,7 +7,7 @@ import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import AttachmentsPreview from 'dashboard/components/widgets/AttachmentsPreview';
-import type { PendingAttachment } from 'dashboard/components/widgets/AttachmentsPreview';
+import type { PendingAttachment, UploadProgress } from 'dashboard/components/widgets/AttachmentsPreview';
 import { appendSignature, removeSignature } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, quotedReplyFlagKey, signatureFlagKey } from 'dashboard/composables/useUISettings';
 import { getJson } from 'dashboard/helper/apiClient';
@@ -131,6 +131,7 @@ export default function ReplyBox({
     const [isFocused, setIsFocused] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
     const editorRef = useRef<EditorHandle>(null);
     // Bảng gợi ý `/` bung lên trên phải dừng ở mép khối soạn, không che thanh tab
@@ -422,15 +423,21 @@ export default function ReplyBox({
     // chữ và tệp như Instagram/TikTok/WhatsApp).
     const sendReplyWithAttachments = async () => {
         setIsUploading(true);
+        setUploadProgress({ loadedBytes: 0, totalBytes: 0 });
         try {
             const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
-            await sendMessage(accountId, conversationId, {
-                content,
-                private: isPrivate,
-                files: attachedFiles.map((attachment) => attachment.resource),
-                ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
-                ...emailPayloadFields(),
-            });
+            await sendMessage(
+                accountId,
+                conversationId,
+                {
+                    content,
+                    private: isPrivate,
+                    files: attachedFiles.map((attachment) => attachment.resource),
+                    ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
+                    ...emailPayloadFields(),
+                },
+                { onUploadProgress: (loadedBytes, totalBytes) => setUploadProgress({ loadedBytes, totalBytes }) },
+            );
             if (isReplyingToMessage) onClearReplyTarget?.();
             afterSent();
         } catch (error: unknown) {
@@ -438,6 +445,7 @@ export default function ReplyBox({
             useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
         } finally {
             setIsUploading(false);
+            setUploadProgress(null);
         }
     };
 
@@ -587,7 +595,12 @@ export default function ReplyBox({
                 ) : null}
                 {hasAttachments ? (
                     <div className="bg-transparent py-0 mb-2">
-                        <AttachmentsPreview className="mt-2" attachments={attachedFiles} onRemoveAttachment={setAttachedFiles} />
+                        <AttachmentsPreview
+                            className="mt-2"
+                            attachments={attachedFiles}
+                            uploadProgress={uploadProgress}
+                            onRemoveAttachment={setAttachedFiles}
+                        />
                     </div>
                 ) : null}
                 {isSignatureEnabledForInbox && !isSignatureAvailable ? (

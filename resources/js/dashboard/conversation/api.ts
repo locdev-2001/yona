@@ -1,6 +1,7 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import { deleteJson, getJson, postForm, postJson } from '../helper/apiClient';
+import type { RequestOptions } from '../helper/apiClient';
 import type { ConversationType } from './constants';
 import type {
     AgentMeta,
@@ -289,12 +290,13 @@ export function sendMessage(
     accountId: number,
     conversationId: number,
     payload: SendMessagePayload,
+    options?: RequestOptions,
 ): Promise<ConversationMessage> {
     const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages`;
     const { files, ...jsonPayload } = payload;
 
     if (files && files.length) {
-        return postForm(url, buildCreateForm(payload));
+        return postForm(url, buildCreateForm(payload), options);
     }
 
     return postJson(url, { ...jsonPayload });

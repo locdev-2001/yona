@@ -28,20 +28,63 @@ export function parseApiErrorMessage(error: unknown): string | null {
     return null;
 }
 
-async function request<T>(url: string, method: string, body?: BodyInit, contentType?: string): Promise<T> {
-    const response = await sendWithSessionRecovery(() =>
-        fetch(url, {
-            method,
-            headers: {
-                ...(contentType ? { 'Content-Type': contentType } : {}),
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': xsrfToken(),
-            },
-            credentials: 'same-origin',
-            body,
-        }),
-    );
+export type UploadProgressHandler = (loadedBytes: number, totalBytes: number) => void;
+
+export interface RequestOptions {
+    onUploadProgress?: UploadProgressHandler;
+}
+
+const NULL_BODY_STATUSES = [101, 204, 205, 304];
+
+// fetch chưa báo được tiến trình gửi lên: yêu cầu cần tiến trình đi qua XHR và
+// trả về Response như fetch để phần xử lý phiên/lỗi phía sau dùng chung.
+function sendWithUploadProgress(
+    url: string,
+    method: string,
+    headers: Record<string, string>,
+    body: BodyInit | undefined,
+    onUploadProgress: UploadProgressHandler,
+): Promise<Response> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.withCredentials = true;
+        Object.entries(headers).forEach(([name, value]) => xhr.setRequestHeader(name, value));
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) onUploadProgress(event.loaded, event.total);
+        };
+        xhr.onload = () =>
+            resolve(
+                new Response(NULL_BODY_STATUSES.includes(xhr.status) ? null : xhr.responseText, {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                }),
+            );
+        xhr.onerror = () => reject(new TypeError('Network request failed'));
+        xhr.onabort = () => reject(new DOMException('Aborted', 'AbortError'));
+        xhr.send((body ?? null) as XMLHttpRequestBodyInit | null);
+    });
+}
+
+async function request<T>(
+    url: string,
+    method: string,
+    body?: BodyInit,
+    contentType?: string,
+    options: RequestOptions = {},
+): Promise<T> {
+    const headers: Record<string, string> = {
+        ...(contentType ? { 'Content-Type': contentType } : {}),
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+    };
+    const { onUploadProgress } = options;
+    const response = await sendWithSessionRecovery(() => {
+        const headersWithToken = { ...headers, 'X-XSRF-TOKEN': xsrfToken() };
+        return onUploadProgress
+            ? sendWithUploadProgress(url, method, headersWithToken, body, onUploadProgress)
+            : fetch(url, { method, headers: headersWithToken, credentials: 'same-origin', body });
+    });
 
     if (!response.ok) {
         throw new ApiError(response.status, await response.json().catch(() => null));
@@ -75,8 +118,8 @@ export function deleteJson<T = unknown>(url: string, body?: Record<string, unkno
         : request<T>(url, 'DELETE');
 }
 
-export function postForm<T = unknown>(url: string, form: FormData): Promise<T> {
-    return request<T>(url, 'POST', form);
+export function postForm<T = unknown>(url: string, form: FormData, options?: RequestOptions): Promise<T> {
+    return request<T>(url, 'POST', form, undefined, options);
 }
 
 // Multipart (upload file) — Laravel chỉ đọc _method từ POST nên spoof PUT.
