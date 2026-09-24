@@ -141,6 +141,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Khung chat trên bề mặt công khai
+    |--------------------------------------------------------------------------
+    |
+    | Widget chat của chính Yona gắn trên landing: `token` là website_token của
+    | một hộp thư website trong account Yona. Để trống thì không nhúng, để máy
+    | dev và staging không tạo hội thoại thật trong account production.
+    | `base_url` để trống thì là APP_URL: widget nói chuyện với chính bản cài đặt
+    | đang phục vụ trang.
+    |
+    */
+
+    'landing_widget' => [
+        'base_url' => rtrim((string) (env('LANDING_WIDGET_BASE_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+        'token' => env('LANDING_WIDGET_TOKEN') ?: null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Widget
     |--------------------------------------------------------------------------
     |

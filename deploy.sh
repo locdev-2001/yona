@@ -336,12 +336,12 @@ validate_environment() {
         validate_zalo_environment
     fi
 
-    warn_session_and_analytics_settings
+    warn_optional_settings
 }
 
 # Chỉ cảnh báo: cấu hình sai ở đây không làm hỏng bản deploy, nhưng làm nhân viên
-# bị đăng xuất sớm hoặc analytics im lặng (docs/deployment.md mục 5).
-warn_session_and_analytics_settings() {
+# bị đăng xuất sớm, analytics im lặng hoặc landing mất khung chat (docs/deployment.md mục 5).
+warn_optional_settings() {
     local session_lifetime session_redis_db cache_redis_db
 
     session_lifetime="$(env_value SESSION_LIFETIME)"
@@ -360,6 +360,10 @@ warn_session_and_analytics_settings() {
 
     if [[ -z "$(env_value PLAUSIBLE_HOST)" || -z "$(env_value PLAUSIBLE_SCRIPT_PATH)" ]]; then
         warn 'PLAUSIBLE_HOST hoặc PLAUSIBLE_SCRIPT_PATH trống: trang không gắn analytics.'
+    fi
+
+    if [[ -z "$(env_value LANDING_WIDGET_TOKEN)" ]]; then
+        warn 'LANDING_WIDGET_TOKEN trống: landing không gắn khung chat của Yona (giá trị ở docs/deployment.md mục 5).'
     fi
 }
 

@@ -43,27 +43,14 @@
     </head>
     <body data-page="{{ $landingConfig['page'] }}">
         <div id="app"></div>
-        {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
-             khai, không nhúng vào partials.analytics vì partial đó dùng chung cho
-             dashboard/superadmin/survey. Trang 404 thì không: nó cũng là trang lỗi
-             của Help Center và link khảo sát của tenant, khách của tenant không
-             nên thấy khung chat của Yona. --}}
-        @if ($landingConfig['page'] !== 'not_found')
-        <script>
-            (function(d,t) {
-                var BASE_URL="https://yona.vn";
-                var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-                g.src=BASE_URL+"/packs/js/sdk.js";
-                g.async = true;
-                s.parentNode.insertBefore(g,s);
-                g.onload=function(){
-                    window.chatwootSDK.run({
-                        websiteToken: 'NgH6pmjf9Eseb1UzomLNCDXP',
-                        baseUrl: BASE_URL
-                    })
-                }
-            })(document,"script");
-        </script>
+        {{-- Widget chat của chính Yona — mọi trang công khai, chỉ khi cài đặt này có
+             LANDING_WIDGET_TOKEN (config yona.landing_widget). Không nhúng vào
+             partials.analytics vì partial đó dùng chung cho dashboard/superadmin/survey.
+             Trang 404 thì không: nó cũng là trang lỗi của Help Center và link khảo sát
+             của tenant, khách của tenant không nên thấy khung chat của Yona. --}}
+        @php($landingWidget = config('yona.landing_widget'))
+        @if ($landingConfig['page'] !== 'not_found' && filled($landingWidget['token']))
+        {!! \App\Support\WidgetEmbedScript::render($landingWidget['base_url'], $landingWidget['token']) !!}
         @endif
     </body>
 </html>

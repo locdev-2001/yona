@@ -191,6 +191,11 @@ YONA_LEAD_INBOX_ID=
 YONA_HOTLINE=
 YONA_ZALO_CONTACT_URL=
 
+# Khung chat của Yona trên landing. Đặt TRƯỚC khi deploy bản đọc biến này, thiếu
+# thì deploy.sh chỉ cảnh báo (xem "Khung chat trên landing" ngay dưới).
+LANDING_WIDGET_TOKEN=NgH6pmjf9Eseb1UzomLNCDXP
+LANDING_WIDGET_BASE_URL=
+
 ALLOW_PRIVATE_WEBHOOK_URLS=false
 
 # Không bắt buộc, sai thì deploy.sh chỉ cảnh báo (xem "Phiên đăng nhập" và "Analytics" ngay dưới).
@@ -319,6 +324,27 @@ hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 - Mỗi sự kiện chiếm một worker PHP-FPM khoảng một lần gọi HTTPS ra ngoài (timeout
   5 giây, giới hạn 300 sự kiện/phút mỗi IP). Nếu thành nút nghẽn thì chuyển sang
   `location` nginx với **cùng đường dẫn công khai**, trang không phải đổi gì.
+
+### Khung chat trên landing
+
+- Mọi trang công khai (trừ trang 404) nhúng widget chat của chính Yona khi
+  `LANDING_WIDGET_TOKEN` có giá trị. Trống thì không nhúng: máy dev và staging
+  không còn tạo hội thoại, liên hệ thật trong account Yona trên production.
+- **Production phải đặt `LANDING_WIDGET_TOKEN=NgH6pmjf9Eseb1UzomLNCDXP` trước khi
+  deploy bản đầu tiên đọc biến này.** Đây là `website_token` của hộp thư website
+  trong account Yona, trước đây ghi cứng trong `resources/views/landing.blade.php`.
+  Token này công khai (nằm sẵn trong HTML trang chủ), không phải bí mật. Quên đặt
+  thì landing mất khung chat mà không báo lỗi gì; `deploy.sh` cảnh báo khi biến trống.
+- `LANDING_WIDGET_BASE_URL` để trống = `APP_URL`. Chỉ đặt khi landing và hộp thư
+  nhận chat nằm ở hai bản cài đặt khác nhau.
+- Đổi hộp thư nhận chat: lấy `website_token` mới ở Cài đặt → Hộp thư → hộp thư
+  website → Cấu hình, sửa `.env` rồi chạy lại `deploy.sh` (config đã được cache).
+- Kiểm tra sau deploy:
+
+  ```bash
+  curl -s https://yona.vn/ | grep -c "websiteToken: 'NgH6pmjf9Eseb1UzomLNCDXP'"
+  # mong đợi: 1
+  ```
 
 ---
 
