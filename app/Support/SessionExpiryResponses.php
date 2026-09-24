@@ -17,8 +17,6 @@ final class SessionExpiryResponses
 
     private const CSRF_TOKEN_MISMATCH_STATUS = 419;
 
-    private const FALLBACK_LOGIN_PATH = '/app/login';
-
     public static function withoutPageExpiredScreen(Response $response): Response
     {
         if ($response->getStatusCode() !== self::CSRF_TOKEN_MISMATCH_STATUS) {
@@ -35,11 +33,12 @@ final class SessionExpiryResponses
     // url.intended để đăng nhập xong quay về đúng trang đang mở.
     public static function fullPageLoginForInertia(AuthenticationException $exception, Request $request): ?Response
     {
-        if (! $request->header('X-Inertia')) {
+        // Trang đăng nhập đích lấy từ redirectGuestsTo (bootstrap/app.php).
+        $loginPath = $exception->redirectTo($request);
+
+        if (! $request->header('X-Inertia') || $loginPath === null) {
             return null;
         }
-
-        $loginPath = $exception->redirectTo($request) ?? self::FALLBACK_LOGIN_PATH;
 
         return Inertia::location(redirect()->guest($loginPath));
     }
