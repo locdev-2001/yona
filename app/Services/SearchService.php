@@ -89,9 +89,7 @@ class SearchService
     /** @return Collection<int, Conversation> */
     public function filterConversations(): Collection
     {
-        $term = $this->searchTerm();
-
-        $query = Conversation::query()
+        $query = $this->accessibleConversations()
             ->select('conversations.*')
             // Tên thành viên nhóm khớp gần nhất — cho giao diện biết vì sao nhóm này ra.
             ->selectSub(
@@ -102,29 +100,39 @@ class SearchService
                     ->limit(1),
                 'matched_member_name',
             )
-            ->where('conversations.account_id', $this->currentAccount->id)
-            ->whereIn('conversations.inbox_id', $this->accessableInboxIds())
-            ->join('contacts', 'conversations.contact_id', '=', 'contacts.id')
             // Bọc ngoặc: nếu không, OR nuốt luôn điều kiện account_id/inbox_id.
-            ->where(fn (Builder $matches) => $matches
-                ->whereRaw(...$term->plainMatch('cast(conversations.display_id as text)'))
-                ->orWhereRaw(...$term->foldedMatch('contacts.name'))
-                ->orWhereRaw(...$term->plainMatch('contacts.email'))
-                ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
-                ->orWhereRaw(...$term->plainMatch('contacts.identifier'))
-                ->orWhereRaw(...$term->foldedMatch(self::MAIL_SUBJECT_SQL))
-                ->orWhereExists($this->groupMemberMatch()));
+            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches));
 
         if ($this->advancedSearchEnabled()) {
             $query = $this->applyTimeFilter($query, 'conversations.last_activity_at');
         }
 
-        return $term->orderByRelevance($query, 'contacts.name', self::MAIL_SUBJECT_SQL)
+        return $this->searchTerm()->orderByRelevance($query, 'contacts.name', self::MAIL_SUBJECT_SQL)
             ->with(['contact', 'inbox', 'assignee.accountUsers'])
             ->orderByDesc('conversations.created_at')
             ->orderByDesc('conversations.id')
             ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
             ->get();
+    }
+
+    /**
+     * Id hội thoại khớp từ khoá cho ô tìm lọc tại chỗ trong danh sách hội thoại:
+     * cùng luật khớp của filterConversations, cộng hội thoại có tin khớp nội dung
+     * (cùng luật và mốc nhìn lại của filterMessages). Chỉ trả tập id — bên gọi giữ
+     * nguyên hộp thư, tab, trạng thái, bộ lọc và thứ tự của danh sách đang xem.
+     *
+     * @return Builder<Conversation>
+     */
+    public function matchingConversationIds(): Builder
+    {
+        $term = $this->searchTerm();
+
+        return $this->accessibleConversations()
+            ->select('conversations.id')
+            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches)
+                ->orWhereExists($this->messageBaseQuery()
+                    ->whereColumn('messages.conversation_id', 'conversations.id')
+                    ->whereRaw(...$term->foldedMatch('messages.content'))));
     }
 
     // Trong một hội thoại, tin khớp xếp theo thời gian (mới trước) như đọc lại
@@ -290,6 +298,37 @@ class SearchService
             ->select('conversations.id')
             ->where('conversations.account_id', $this->currentAccount->id)
             ->where('conversations.display_id', $displayId));
+    }
+
+    // Hội thoại của account trong các hộp thư người tìm được xem, đã nối contacts
+    // để luật khớp đọc được thông tin khách.
+    /** @return Builder<Conversation> */
+    private function accessibleConversations(): Builder
+    {
+        return Conversation::query()
+            ->where('conversations.account_id', $this->currentAccount->id)
+            ->whereIn('conversations.inbox_id', $this->accessableInboxIds())
+            ->join('contacts', 'conversations.contact_id', '=', 'contacts.id');
+    }
+
+    // Luật khớp của một hội thoại (truy vấn đã nối contacts): mã, tên/email/SĐT/mã
+    // định danh của khách, tiêu đề thư, người gửi thật trong nhóm.
+    /**
+     * @param  Builder<Conversation>  $matches
+     * @return Builder<Conversation>
+     */
+    private function whereConversationMatches(Builder $matches): Builder
+    {
+        $term = $this->searchTerm();
+
+        return $matches
+            ->whereRaw(...$term->plainMatch('cast(conversations.display_id as text)'))
+            ->orWhereRaw(...$term->foldedMatch('contacts.name'))
+            ->orWhereRaw(...$term->plainMatch('contacts.email'))
+            ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
+            ->orWhereRaw(...$term->plainMatch('contacts.identifier'))
+            ->orWhereRaw(...$term->foldedMatch(self::MAIL_SUBJECT_SQL))
+            ->orWhereExists($this->groupMemberMatch());
     }
 
     // Tin trong nhóm của hội thoại đang xét mà người gửi thật khớp từ khoá.

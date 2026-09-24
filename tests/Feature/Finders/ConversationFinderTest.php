@@ -14,7 +14,7 @@ use App\Models\Team;
 use App\Models\User;
 
 // Port từ spec/finders/conversation_finder_spec.rb.
-// Bỏ: q search (E2), custom view (E1). Case agent bot thay bằng ghi thẳng
+// Bỏ: custom view (E1). Case agent bot thay bằng ghi thẳng
 // assignee_agent_bot_id (bảng agent_bots chưa port).
 
 function conversationFinderFixtures(): array
@@ -439,5 +439,89 @@ describe('conversation_type', function () {
 
         expect($metaResult['count'])->toBe($fullResult['count'])
             ->and($metaResult['count']['all_count'])->toBe(4);
+    });
+});
+
+describe('q', function () {
+    function searchableConversation(array $fixtures, array $contactAttributes, array $conversationAttributes = []): Conversation
+    {
+        $contact = Contact::factory()->create(['account_id' => $fixtures['account']->id, ...$contactAttributes]);
+
+        return Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+            'contact_id' => $contact->id,
+            ...$conversationAttributes,
+        ]);
+    }
+
+    it('keeps only conversations matching contact name, phone, email, id or message content', function () {
+        $fixtures = conversationFinderFixtures();
+        $byName = searchableConversation($fixtures, ['name' => 'Nguyễn Thị Xoàizz']);
+        $byPhone = searchableConversation($fixtures, ['name' => 'Khách A', 'phone_number' => '+84901234567']);
+        $byEmail = searchableConversation($fixtures, ['name' => 'Khách B', 'email' => 'xoaizz.shop@example.com']);
+        $byContent = searchableConversation($fixtures, ['name' => 'Khách C']);
+        Message::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['inbox']->id,
+            'conversation_id' => $byContent->id,
+            'content' => 'Chị Xoàizz ơi, đơn này giao chiều nay nhé',
+        ]);
+
+        $ids = fn (string $q) => conversationFinderFor($fixtures, ['status' => 'all', 'q' => $q])
+            ->perform()['conversations']->pluck('id')->sort()->values()->all();
+
+        expect($ids('xoaizz'))->toBe(collect([$byName->id, $byEmail->id, $byContent->id])->sort()->values()->all())
+            ->and($ids('901234567'))->toBe([$byPhone->id])
+            ->and($ids((string) $byPhone->display_id))->toContain($byPhone->id)
+            ->and($ids('giao chieu'))->toBe([$byContent->id]);
+    });
+
+    it('keeps the status, assignee tab and inbox filters of the list and counts only matches', function () {
+        $fixtures = conversationFinderFixtures();
+        $mineOpen = searchableConversation($fixtures, ['name' => 'Xoàizz mở'], ['assignee_id' => $fixtures['userOne']->id]);
+        searchableConversation($fixtures, ['name' => 'Xoàizz đã xong'], [
+            'assignee_id' => $fixtures['userOne']->id,
+            'status' => Conversation::STATUS_RESOLVED,
+        ]);
+        $unassignedOpen = searchableConversation($fixtures, ['name' => 'Xoàizz chưa gán']);
+
+        $params = ['status' => 'open', 'assignee_type' => 'me', 'inbox_id' => $fixtures['inbox']->id, 'q' => 'xoaizz'];
+        $result = conversationFinderFor($fixtures, $params)->perform();
+        $meta = conversationFinderFor($fixtures, $params)->performMetaOnly();
+
+        expect($result['conversations']->pluck('id')->all())->toBe([$mineOpen->id])
+            ->and($result['count'])->toBe([
+                'mine_count' => 1,
+                'assigned_count' => 1,
+                'unassigned_count' => 1,
+                'all_count' => 2,
+            ])
+            ->and($meta['count'])->toBe($result['count'])
+            ->and($unassignedOpen->id)->not->toBe($mineOpen->id);
+    });
+
+    it('never returns matches from inboxes the agent cannot see', function () {
+        $fixtures = conversationFinderFixtures();
+        $contact = Contact::factory()->create(['account_id' => $fixtures['account']->id, 'name' => 'Xoàizz bí mật']);
+        Conversation::factory()->create([
+            'account_id' => $fixtures['account']->id,
+            'inbox_id' => $fixtures['restrictedInbox']->id,
+            'contact_id' => $contact->id,
+        ]);
+
+        $result = conversationFinderFor($fixtures, ['status' => 'all', 'q' => 'xoaizz'])->perform();
+
+        expect($result['conversations'])->toHaveCount(0)
+            ->and($result['count']['all_count'])->toBe(0);
+    });
+
+    it('ignores a blank query', function () {
+        $fixtures = conversationFinderFixtures();
+
+        $withBlank = conversationFinderFor($fixtures, ['status' => 'all', 'q' => '   '])->perform();
+        $without = conversationFinderFor($fixtures, ['status' => 'all'])->perform();
+
+        expect($withBlank['count'])->toBe($without['count']);
     });
 });

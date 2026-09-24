@@ -39,7 +39,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 // Port từ Api::V1::Accounts::ConversationsController của Chatwoot.
-// Bỏ: search (E2), transcript (F1),
+// Bỏ: transcript (F1),
 // destroy (đi cùng DeleteService các nhóm sau),
 // bot_handoff (AgentBot chưa port).
 class ConversationsController extends Controller
@@ -82,6 +82,7 @@ class ConversationsController extends Controller
                 $accountUser,
                 $validated['payload'],
                 (int) $request->query('page', '1'),
+                is_string($request->query('q')) ? $request->query('q') : null,
             ))->perform();
         } catch (CustomFilterException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);

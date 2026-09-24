@@ -8,11 +8,12 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Mention;
 use App\Models\User;
+use App\Services\SearchService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 // Port từ refs/chatwoot/app/finders/conversation_finder.rb.
-// Bỏ: custom view (E1), q search (E2).
+// Bỏ: custom view (E1).
 class ConversationFinder
 {
     public const RESULTS_PER_PAGE = 25;
@@ -94,6 +95,26 @@ class ConversationFinder
         $this->filterByTeam();
         $this->filterByLabels();
         $this->filterBySourceId();
+        self::filterBySearchQuery($this->conversations, $this->currentUser, $this->currentAccount, $this->params['q'] ?? null);
+    }
+
+    /**
+     * Ô tìm trong cột danh sách hội thoại: chỉ giữ hội thoại khớp từ khoá theo luật
+     * và phân quyền của SearchService, mọi bộ lọc khác của danh sách giữ nguyên.
+     * Dùng chung cho danh sách thường và danh sách lọc nâng cao.
+     *
+     * @param  Builder<Conversation>  $conversations
+     */
+    public static function filterBySearchQuery(Builder $conversations, User $user, Account $account, mixed $query): void
+    {
+        if (! is_string($query) || trim($query) === '') {
+            return;
+        }
+
+        $conversations->whereIn(
+            'conversations.id',
+            (new SearchService($user, $account, ['q' => $query], 'Conversation'))->matchingConversationIds(),
+        );
     }
 
     private function findAllConversations(): void

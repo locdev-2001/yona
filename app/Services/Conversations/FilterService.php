@@ -26,6 +26,7 @@ class FilterService extends BaseFilterService
         private readonly AccountUser $accountUser,
         array $payload,
         private readonly int $page = 1,
+        private readonly ?string $searchQuery = null,
     ) {
         parent::__construct($account, $payload);
     }
@@ -35,6 +36,7 @@ class FilterService extends BaseFilterService
     {
         $conversations = $this->baseRelation();
         $this->applyPayload($conversations);
+        ConversationFinder::filterBySearchQuery($conversations, $this->user, $this->account, $this->searchQuery);
 
         $page = max(1, $this->page);
 

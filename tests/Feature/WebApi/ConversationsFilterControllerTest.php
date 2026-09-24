@@ -154,3 +154,29 @@ describe('POST /api/v1/accounts/{id}/conversations/filter', function () {
         )->assertUnprocessable();
     });
 });
+
+describe('q on the conversation list', function () {
+    it('narrows the list and the advanced filter to conversations matching the query', function () {
+        $account = Account::factory()->create();
+        $inbox = Inbox::factory()->create(['account_id' => $account->id]);
+        $admin = filterApiUser($account);
+        $matching = filterApiConversation($account, $inbox, ['status' => Conversation::STATUS_OPEN]);
+        $matching->contact->update(['name' => 'Trần Văn Bìnhzz']);
+        filterApiConversation($account, $inbox, ['status' => Conversation::STATUS_OPEN]);
+        $matchingSnoozed = filterApiConversation($account, $inbox, ['status' => Conversation::STATUS_SNOOZED]);
+        $matchingSnoozed->contact->update(['name' => 'Bìnhzz An']);
+
+        $list = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations?status=open&q=binhzz")
+            ->assertOk();
+        $filtered = $this->actingAs($admin)->postJson(
+            "/api/v1/accounts/{$account->id}/conversations/filter?q=binhzz",
+            ['payload' => [filterPayload('status', 'equal_to', ['snoozed'])]],
+        )->assertOk();
+
+        expect(collect($list->json('data.payload'))->pluck('id')->all())->toBe([$matching->display_id])
+            ->and($list->json('data.meta.all_count'))->toBe(1)
+            ->and(collect($filtered->json('data.payload'))->pluck('id')->all())->toBe([$matchingSnoozed->display_id])
+            ->and($filtered->json('data.meta.all_count'))->toBe(1);
+    });
+});
