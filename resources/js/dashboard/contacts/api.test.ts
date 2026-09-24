@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+    deleteContactAvatar,
     exportContacts,
     fetchActiveContacts,
     fetchContactAttachments,
@@ -35,6 +36,19 @@ describe('#fetchActiveContacts', () => {
         expect(lastCall()[0]).toBe(
             '/api/v1/accounts/2/contacts/active?include_contact_inboxes=false&page=3&sort=-name',
         );
+    });
+});
+
+describe('#deleteContactAvatar', () => {
+    it('DELETE /contacts/{id}/avatar và trả liên hệ đã xoá ảnh', async () => {
+        fetchMock.mockResolvedValueOnce(jsonResponse({ payload: { id: 5, name: 'Lan', thumbnail: '', phone_number: null } }));
+
+        const contact = await deleteContactAvatar(2, 5);
+
+        const [url, init] = lastCall();
+        expect(url).toBe('/api/v1/accounts/2/contacts/5/avatar');
+        expect(init.method).toBe('DELETE');
+        expect(contact).toEqual({ id: 5, name: 'Lan', thumbnail: '', phoneNumber: null });
     });
 });
 

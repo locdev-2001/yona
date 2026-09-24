@@ -14,6 +14,7 @@ import ContactNotes from 'dashboard/components-next/Contacts/ContactsSidebar/Con
 import ContactMedia from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMedia';
 import ContactMerge from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMerge';
 import { fetchContact, updateContact } from 'dashboard/contacts/api';
+import { mergeContactUpdate, useContactUpdates } from 'dashboard/contacts/contactUpdates';
 import type { Contact } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
 
@@ -54,6 +55,8 @@ export default function ContactShow() {
             active = false;
         };
     }, [accountId, contactId]);
+
+    useContactUpdates(update => setSelectedContact(current => current && mergeContactUpdate(current, update)));
 
     const tabs = CONTACT_TABS_OPTIONS.map(tab => ({
         label: t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),

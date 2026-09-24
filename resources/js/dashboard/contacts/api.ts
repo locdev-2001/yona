@@ -117,9 +117,11 @@ export function deleteContact(accountId: number, contactId: number): Promise<unk
     return deleteJson(`${contactsUrl(accountId)}/${contactId}`);
 }
 
-// ContactAPI.destroyAvatar
-export function deleteContactAvatar(accountId: number, contactId: number): Promise<unknown> {
-    return deleteJson(`${contactsUrl(accountId)}/${contactId}/avatar`);
+// ContactAPI.destroyAvatar — trả liên hệ đã xoá ảnh.
+export async function deleteContactAvatar(accountId: number, contactId: number): Promise<Contact> {
+    const response = await deleteJson<{ payload: Record<string, unknown> }>(`${contactsUrl(accountId)}/${contactId}/avatar`);
+
+    return toClientContact(response.payload);
 }
 
 // ContactAPI.filter — POST /contacts/filter (segment + bộ lọc liên hệ)

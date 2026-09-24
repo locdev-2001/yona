@@ -11,6 +11,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import {
     DISCONNECT_DELAY_THRESHOLD,
@@ -75,7 +76,6 @@ import {
     shouldAddConversationToList,
     sortComparator,
 } from './realtimeReducers';
-import type { ContactUpdatedPayload } from './realtimeReducers';
 import {
     ASSIGNEE_TAB_VALUES,
     ASSIGNEE_TYPE,
@@ -91,6 +91,7 @@ import type { ConversationType } from './constants';
 import type {
     AgentMeta,
     AssigneeTab,
+    ContactMeta,
     Conversation,
     ConversationListMeta,
     ConversationMessage,
@@ -856,8 +857,7 @@ export function ConversationProvider({
     });
     // onContactUpdate → contacts/updateContact: card, header và panel liên hệ
     // (useContactDetails theo meta.sender) cùng đổi, không cần tải lại trang.
-    useRealtimeEvent<ContactUpdatedPayload>('contact.updated', (contact) => {
-        if (!contact?.id) return;
+    useContactUpdatedEvent<ContactMeta>((contact) => {
         setAllConversations((current) => applyContactUpdate(current, contact));
         setFilteredConversations((current) => applyContactUpdate(current, contact));
     });

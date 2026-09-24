@@ -24,6 +24,7 @@ import {
 import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
+import { mergeContactUpdateIntoList, useContactUpdates } from 'dashboard/contacts/contactUpdates';
 import type { Contact, ContactsMeta } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
 
@@ -325,6 +326,8 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
     const handleContactUpdated = (updated: Contact) => {
         setContacts(current => current.map(contact => (contact.id === updated.id ? updated : contact)));
     };
+
+    useContactUpdates(update => setContacts(current => mergeContactUpdateIntoList(current, update)));
 
     return (
         <Dashboard>

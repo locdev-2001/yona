@@ -34,13 +34,11 @@ export default function ContactDetails({
     const contactDataRef = useRef<Record<string, unknown>>({ ...selectedContact });
     const [isFormInvalid, setFormInvalid] = useState(false);
     const [isUpdating, setUpdating] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState('');
-    const [isAvatarDeleted, setAvatarDeleted] = useState(false);
 
     const createdAt = selectedContact.createdAt ? dynamicTime(selectedContact.createdAt) : '';
     const lastActivityAt = selectedContact.lastActivityAt ? dynamicTime(selectedContact.lastActivityAt) : '';
-
-    const avatarSrc = avatarUrl || (isAvatarDeleted ? '' : selectedContact.thumbnail);
+    // Ảnh đọc thẳng từ liên hệ đang hiển thị để ảnh đổi ở máy khác (contact.updated) cũng hiện ra.
+    const avatarSrc = selectedContact.thumbnail || '';
 
     const handleFormUpdate = (updatedData: ContactFormState) => {
         contactDataRef.current = { ...contactDataRef.current, ...updatedData };
@@ -60,11 +58,9 @@ export default function ContactDetails({
         }
     };
 
-    const handleAvatarUpload = async ({ file, url }: { file: File; url: string | null }) => {
+    const handleAvatarUpload = async ({ file }: { file: File }) => {
         try {
             const updated = await updateContactAvatar(currentAccount.id, selectedContact.id, file);
-            setAvatarUrl(url ?? '');
-            setAvatarDeleted(false);
             onContactUpdated(updated);
             useAlert(t('CONTACTS_LAYOUT.DETAILS.AVATAR.UPLOAD.SUCCESS_MESSAGE'));
         } catch {
@@ -74,9 +70,8 @@ export default function ContactDetails({
 
     const handleAvatarDelete = async () => {
         try {
-            await deleteContactAvatar(currentAccount.id, selectedContact.id);
-            setAvatarUrl('');
-            setAvatarDeleted(true);
+            const updated = await deleteContactAvatar(currentAccount.id, selectedContact.id);
+            onContactUpdated(updated);
             useAlert(t('CONTACTS_LAYOUT.DETAILS.AVATAR.DELETE.SUCCESS_MESSAGE'));
         } catch {
             useAlert(t('CONTACTS_LAYOUT.DETAILS.AVATAR.DELETE.ERROR_MESSAGE'));
@@ -87,7 +82,7 @@ export default function ContactDetails({
         <div className="flex flex-col items-start gap-8 pb-6">
             <div className="flex flex-col items-start gap-3">
                 <Avatar
-                    src={avatarSrc || ''}
+                    src={avatarSrc}
                     name={selectedContact.name || ''}
                     size={72}
                     allowUpload

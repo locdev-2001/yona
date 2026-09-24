@@ -119,7 +119,7 @@ describe('applyConversationUpdate', () => {
 describe('applyContactUpdate', () => {
     const contactOf = (conversation: Conversation) => conversation.meta.sender;
 
-    it('đổi avatar + tên ở mọi hội thoại cùng khách, giữ trường payload không mang, bỏ phong bì broadcast', () => {
+    it('đổi avatar + tên ở mọi hội thoại cùng khách, giữ trường payload không mang', () => {
         const zalo = buildConversation({
             id: 4,
             meta: {
@@ -136,8 +136,6 @@ describe('applyContactUpdate', () => {
             id: 3,
             name: 'Lan',
             thumbnail: 'https://yona.test/avatar.png',
-            account_id: 2,
-            performer: { id: 7, name: 'Agent', type: 'user' },
         });
 
         expect(result.map(contactOf)).toEqual([
