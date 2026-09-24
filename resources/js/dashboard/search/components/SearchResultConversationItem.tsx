@@ -8,6 +8,7 @@ import { dynamicTime } from 'shared/helpers/timeHelper';
 import CardLayout from 'dashboard/components-next/CardLayout';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { SearchInbox } from '../types';
+import HighlightedText from './HighlightedText';
 
 // Port từ dashboard/modules/search/components/SearchResultConversationItem.vue.
 interface SearchResultConversationItemProps {
@@ -19,6 +20,9 @@ interface SearchResultConversationItemProps {
     createdAt?: number | null;
     messageId?: number;
     emailSubject?: string;
+    // Thành viên nhóm khớp từ khoá — lý do nhóm này nằm trong kết quả.
+    matchedMemberName?: string | null;
+    query?: string;
     children?: ReactNode;
 }
 
@@ -31,6 +35,8 @@ export default function SearchResultConversationItem({
     createdAt,
     messageId,
     emailSubject = '',
+    matchedMemberName = null,
+    query = '',
     children,
 }: SearchResultConversationItemProps) {
     const inboxName = (inbox as SearchInbox)?.name;
@@ -40,8 +46,9 @@ export default function SearchResultConversationItem({
 
     const visibleInfoItems = [
         { label: 'SEARCH.FROM', value: name },
-        { label: 'SEARCH.EMAIL', value: email },
+        { label: 'SEARCH.EMAIL', value: email ?? '' },
         { label: 'SEARCH.EMAIL_SUBJECT', value: emailSubject },
+        { label: 'SEARCH.MATCHED_MEMBER', value: matchedMemberName ?? '' },
     ].filter(item => Boolean(item.value));
 
     const href = frontendURL(
@@ -83,7 +90,8 @@ export default function SearchResultConversationItem({
                                 <span className="text-sm leading-4 font-normal text-n-slate-11">
                                     {`${t(item.label)}:`}
                                 </span>
-                                {` ${item.value}`}
+                                {' '}
+                                <HighlightedText text={item.value} query={query} />
                             </h5>
                             {index < visibleInfoItems.length - 1 ? <div className="w-px h-3 bg-n-strong" /> : null}
                         </div>

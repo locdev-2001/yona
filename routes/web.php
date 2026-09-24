@@ -416,7 +416,7 @@ Route::middleware('auth')->group(function () {
         // E2 search.routes.js.
         Route::get('/search/{tab?}', fn (Account $account, ?string $tab = null) => Inertia::render('dashboard/search/SearchView', [
             'tab' => $tab,
-        ]))->where('tab', 'conversations|messages|contacts|articles')->name('search');
+        ]))->where('tab', 'conversations|messages|contacts|files|articles')->name('search');
 
         // Trang con chưa port (nhóm B→F): giữ đúng URL Chatwoot, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])

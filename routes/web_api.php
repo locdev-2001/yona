@@ -356,6 +356,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/search/conversations', [SearchController::class, 'conversations']);
         Route::get('/search/messages', [SearchController::class, 'messages']);
         Route::get('/search/contacts', [SearchController::class, 'contacts']);
+        Route::get('/search/files', [SearchController::class, 'files']);
         Route::get('/search/articles', [SearchController::class, 'articles']);
 
         // D2 báo cáo CSAT (csat_survey_responses_controller.rb).

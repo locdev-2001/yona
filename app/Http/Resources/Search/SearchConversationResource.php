@@ -51,6 +51,8 @@ class SearchConversationResource extends JsonResource
                 ? (new SearchAgentResource($conversation->assignee, $conversation->account_id))->toArray($request)
                 : new \stdClass,
             ...($this->withAdditionalAttributes ? ['additional_attributes' => self::attributeMap($conversation->additional_attributes)] : []),
+            // Tên thành viên nhóm khớp từ khoá; null khi hội thoại ra vì lý do khác.
+            'matched_member_name' => $conversation->getAttribute('matched_member_name'),
         ];
     }
 }

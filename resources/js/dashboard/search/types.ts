@@ -1,4 +1,5 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import type { SearchRecordKind } from './store';
 
 // Kiểu bản ghi trả về từ /api/v1/accounts/{id}/search* (đã camelize ở api.ts).
 export interface SearchContact {
@@ -36,6 +37,8 @@ export interface SearchConversation {
     inbox: SearchInbox | Record<string, never>;
     agent: SearchAgent | Record<string, never>;
     additionalAttributes?: Record<string, unknown> | null;
+    // Tên thành viên nhóm khớp từ khoá; null khi hội thoại ra vì lý do khác.
+    matchedMemberName?: string | null;
 }
 
 export interface SearchMessage {
@@ -46,9 +49,25 @@ export interface SearchMessage {
     private: boolean;
     createdAt: number;
     contentType?: string;
-    contentAttributes?: { email?: { subject?: string } } | null;
+    contentAttributes?: Record<string, unknown> | null;
     sender?: { name?: string } | null;
     attachments?: MessageAttachment[];
+}
+
+// Một tệp khớp từ khoá, kèm tin chứa nó.
+export interface SearchFile {
+    id: number;
+    messageId: number;
+    fileType: string;
+    extension?: string | null;
+    contentType?: string | null;
+    dataUrl: string | null;
+    thumbUrl?: string;
+    fileSize?: number | null;
+    fallbackTitle?: string | null;
+    fileName: string | null;
+    createdAt: number | null;
+    message: SearchMessage;
 }
 
 export interface SearchArticle {
@@ -65,7 +84,7 @@ export interface SearchArticle {
     updatedAt: number;
 }
 
-export type SearchTab = 'all' | 'contacts' | 'conversations' | 'messages' | 'articles';
+export type SearchTab = 'all' | SearchRecordKind;
 
 export interface SearchDateRange {
     type: string | null;

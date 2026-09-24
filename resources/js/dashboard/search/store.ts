@@ -4,17 +4,21 @@ import {
     searchArticles,
     searchContacts,
     searchConversations,
+    searchFiles,
     searchMessages,
     type SearchParams,
 } from './api';
-import type { SearchArticle, SearchContact, SearchConversation, SearchMessage } from './types';
+import type { SearchArticle, SearchContact, SearchConversation, SearchFile, SearchMessage } from './types';
 
 // Port từ dashboard/store/modules/conversationSearch.js — module vuex đổi thành
 // một ô nhớ cấp module + useSyncExternalStore (cùng lối reports/store.ts).
 
 export const PER_PAGE = 15;
 
-export type SearchRecordKind = 'contacts' | 'conversations' | 'messages' | 'articles';
+// Mọi loại kết quả, theo đúng thứ tự hiển thị. Thêm một loại mới chỉ sửa store.
+export const SEARCH_RECORD_KINDS = ['conversations', 'messages', 'contacts', 'files', 'articles'] as const;
+
+export type SearchRecordKind = (typeof SEARCH_RECORD_KINDS)[number];
 
 interface KindFlags {
     isFetching: boolean;
@@ -27,6 +31,7 @@ export interface SearchUiFlags {
     contact: KindFlags;
     conversation: KindFlags;
     message: KindFlags;
+    file: KindFlags;
     article: KindFlags;
 }
 
@@ -34,29 +39,54 @@ interface SearchState {
     contactRecords: SearchContact[];
     conversationRecords: SearchConversation[];
     messageRecords: SearchMessage[];
+    fileRecords: SearchFile[];
     articleRecords: SearchArticle[];
     uiFlags: SearchUiFlags;
 }
 
-const FLAG_KEY: Record<SearchRecordKind, keyof Pick<SearchUiFlags, 'contact' | 'conversation' | 'message' | 'article'>> =
-    {
-        contacts: 'contact',
-        conversations: 'conversation',
-        messages: 'message',
-        articles: 'article',
-    };
+const FLAG_KEY = {
+    contacts: 'contact',
+    conversations: 'conversation',
+    messages: 'message',
+    files: 'file',
+    articles: 'article',
+} as const satisfies Record<SearchRecordKind, keyof SearchUiFlags>;
 
-const initialState = (): SearchState => ({
+const RECORD_KEY = {
+    contacts: 'contactRecords',
+    conversations: 'conversationRecords',
+    messages: 'messageRecords',
+    files: 'fileRecords',
+    articles: 'articleRecords',
+} as const satisfies Record<SearchRecordKind, keyof SearchState>;
+
+const FETCHER = {
+    contacts: searchContacts,
+    conversations: searchConversations,
+    messages: searchMessages,
+    files: searchFiles,
+    articles: searchArticles,
+} as const satisfies Record<SearchRecordKind, (accountId: number, params: SearchParams) => Promise<{ id: number }[]>>;
+
+type RecordsState = Pick<SearchState, (typeof RECORD_KEY)[SearchRecordKind]>;
+
+const emptyRecords = (): RecordsState => ({
     contactRecords: [],
     conversationRecords: [],
     messageRecords: [],
+    fileRecords: [],
     articleRecords: [],
+});
+
+const initialState = (): SearchState => ({
+    ...emptyRecords(),
     uiFlags: {
         isFetching: false,
         isSearchCompleted: false,
         contact: { isFetching: false },
         conversation: { isFetching: false },
         message: { isFetching: false },
+        file: { isFetching: false },
         article: { isFetching: false },
     },
 });
@@ -85,26 +115,20 @@ function appendUniqueRecords<T extends { id: number }>(existing: T[], incoming: 
     return [...existing, ...incoming.filter(record => !existingIds.has(record.id))];
 }
 
-const RECORD_KEY = {
-    contacts: 'contactRecords',
-    conversations: 'conversationRecords',
-    messages: 'messageRecords',
-    articles: 'articleRecords',
-} as const;
-
-const FETCHER = {
-    contacts: searchContacts,
-    conversations: searchConversations,
-    messages: searchMessages,
-    articles: searchArticles,
-} as const;
-
 export function clearSearchResults(): void {
-    setState({ contactRecords: [], conversationRecords: [], messageRecords: [], articleRecords: [] });
+    setState(emptyRecords());
 }
 
-// contactSearch/conversationSearch/messageSearch/articleSearch — một đường duy
-// nhất, trả false khi lỗi để caller lùi lại bộ đếm trang.
+export function searchRecordsOf(searchState: SearchState, kind: SearchRecordKind): { id: number }[] {
+    return searchState[RECORD_KEY[kind]];
+}
+
+export function searchFlagsOf(searchState: SearchState, kind: SearchRecordKind): KindFlags {
+    return searchState.uiFlags[FLAG_KEY[kind]];
+}
+
+// Một đường duy nhất cho mọi loại kết quả, trả false khi lỗi để caller lùi lại
+// bộ đếm trang.
 export async function searchByKind(
     kind: SearchRecordKind,
     accountId: number,
@@ -130,9 +154,7 @@ export async function searchByKind(
 export async function fullSearch(accountId: number, params: SearchParams): Promise<void> {
     setState({ uiFlags: { ...state.uiFlags, isFetching: true, isSearchCompleted: false } });
     try {
-        await Promise.all(
-            (Object.keys(RECORD_KEY) as SearchRecordKind[]).map(kind => searchByKind(kind, accountId, params)),
-        );
+        await Promise.all(SEARCH_RECORD_KINDS.map(kind => searchByKind(kind, accountId, params)));
     } finally {
         setState({ uiFlags: { ...state.uiFlags, isFetching: false, isSearchCompleted: true } });
     }

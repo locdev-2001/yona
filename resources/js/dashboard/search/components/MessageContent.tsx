@@ -4,6 +4,7 @@ import { t } from '../../../i18n';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
 import { useExpandableContent } from '../useExpandableContent';
 import type { SearchMessage } from '../types';
+import HighlightedText from './HighlightedText';
 
 // Port từ dashboard/modules/search/components/MessageContent.vue.
 interface MessageContentProps {
@@ -12,19 +13,12 @@ interface MessageContentProps {
     searchTerm?: string;
 }
 
-function escapeHtml(html: string): string {
-    const wrapper = document.createElement('p');
-    wrapper.textContent = html;
-
-    return wrapper.innerHTML;
-}
-
 // Tìm trên nội dung, tiêu đề email, hoặc lời thoại của tệp âm thanh.
 function resolveContent(message: SearchMessage): string {
     if (message.content) return message.content;
 
-    const subject = message.contentAttributes?.email?.subject;
-    if (subject) return subject;
+    const email = message.contentAttributes?.email as { subject?: string } | undefined;
+    if (email?.subject) return email.subject;
 
     // Lời thoại (transcribed_text) là tính năng EE, payload đính kèm chưa có.
     return '';
@@ -32,16 +26,6 @@ function resolveContent(message: SearchMessage): string {
 
 export default function MessageContent({ author = '', message, searchTerm = '' }: MessageContentProps) {
     const { contentElement, showReadMore, showReadLess, toggleExpanded } = useExpandableContent();
-
-    // getPlainText giải markdown thành chữ thuần, escapeHtml mã hoá nó — nhờ đó
-    // <span> tô sáng bên dưới là thẻ thật duy nhất trong chuỗi.
-    const escapedText = escapeHtml(getPlainText(resolveContent(message)));
-    const highlightedContent = searchTerm
-        ? escapedText.replace(
-              new RegExp(`(${escapeHtml(searchTerm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig'),
-              '<span class="searchkey--highlight">$1</span>',
-          )
-        : escapedText;
 
     const authorText = author ? `${author} ${t('SEARCH.WROTE')} ` : '';
 
@@ -59,9 +43,10 @@ export default function MessageContent({ author = '', message, searchTerm = '' }
         >
             <div className={`min-w-0 ${showReadMore ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}`}>
                 {authorText ? <span className="text-n-slate-11 font-medium leading-4">{authorText}</span> : null}
-                <span
-                    className="message-content [&_p]:inline [&_p]:m-0 [&_br]:hidden text-n-slate-12 [&_.searchkey--highlight]:text-n-slate-12 [&_.searchkey--highlight]:font-semibold"
-                    dangerouslySetInnerHTML={{ __html: highlightedContent }}
+                <HighlightedText
+                    className="message-content text-n-slate-12"
+                    text={getPlainText(resolveContent(message))}
+                    query={searchTerm}
                 />
                 {showReadLess ? (
                     <button

@@ -13,6 +13,7 @@ import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import type { ConversationMessage } from '../types';
+import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
@@ -147,6 +148,16 @@ export default function MessagesView() {
 
     // Hộp chuyển tiếp gắn với tin của hội thoại đang mở.
     useEffect(() => setForwardingMessage(null), [conversationId]);
+
+    // Đặt sau hai effect cuộn đáy ở trên: layout effect chạy theo thứ tự khai báo.
+    const { focusedMessageId, clearFocusedMessage } = useConversation();
+    useFocusMessageScroll({
+        focusedMessageId,
+        messages,
+        conversationId: currentChat.id,
+        scrolledConversationRef,
+        onDone: clearFocusedMessage,
+    });
 
     const handleScroll = (event: UIEvent<HTMLUListElement>) => {
         const panel = event.currentTarget;

@@ -2463,6 +2463,7 @@ const messages: Record<string, unknown> = {
         "RATING_TITLE": "Đánh giá",
         "FEEDBACK_TITLE": "Phản hồi",
         "REPLY_MESSAGE_NOT_FOUND": "Không tìm thấy tin nhắn",
+        "JUMP_TO_MESSAGE_NOT_FOUND": "Tin nhắn này không còn trong hội thoại",
         "CAPTAIN_GENERATION": {
             "TITLE": "Câu trả lời này được tạo ra thế nào?",
             "GENERATED_BY": "Do Captain tạo",
@@ -8803,12 +8804,14 @@ const messages: Record<string, unknown> = {
             "CONTACTS": "Danh bạ",
             "CONVERSATIONS": "Các hội thoại",
             "MESSAGES": "Tin nhắn",
+            "FILES": "Tệp",
             "ARTICLES": "Bài viết"
         },
         "SECTION": {
             "CONTACTS": "Danh bạ",
             "CONVERSATIONS": "Các hội thoại",
             "MESSAGES": "Tin nhắn",
+            "FILES": "Tệp",
             "ARTICLES": "Bài viết"
         },
         "VIEW_MORE": "Xem thêm",
@@ -8822,7 +8825,7 @@ const messages: Record<string, unknown> = {
         "RECENT_SEARCHES": "Tìm kiếm gần đây",
         "CLEAR_ALL": "Xóa tất cả",
         "MOST_RECENT": "Gần đây nhất",
-        "EMPTY_STATE_DEFAULT": "Tìm theo ID hội thoại, email, số điện thoại hoặc nội dung tin nhắn để có kết quả tốt hơn. ",
+        "EMPTY_STATE_DEFAULT": "Tìm theo tên khách, tên nhóm, số điện thoại, mã hội thoại, nội dung tin nhắn hoặc tên tệp. Gõ có dấu hay không dấu đều được.",
         "BOT_LABEL": "Bot",
         "READ_MORE": "Xem thêm",
         "READ_LESS": "Thu gọn",
@@ -8831,6 +8834,9 @@ const messages: Record<string, unknown> = {
         "EMAIL": "Email",
         "EMAIL_SUBJECT": "Chủ đề",
         "PRIVATE": "Ghi chú riêng",
+        "MATCHED_MEMBER": "Thành viên",
+        "OPEN_FILE": "Mở tệp",
+        "UNTITLED_FILE": "Tệp không tên",
         "TRANSCRIPT": "Bản ghi hội thoại",
         "CREATED_AT": "tạo {time}",
         "UPDATED_AT": "cập nhật {time}",
