@@ -1,8 +1,8 @@
 import { SERVICE_WORKER_URL } from './pushHelper';
 
 // Chỗ duy nhất chạm API trình duyệt cho chỉ báo chưa đọc ngoài app: thông báo
-// trong khay hệ điều hành, số trên biểu tượng app đã cài, tiền tố số ở tiêu đề
-// tab. Trình duyệt thiếu API hoặc từ chối thì bỏ qua, không bao giờ ném.
+// trong khay hệ điều hành và số trên biểu tượng app đã cài. Trình duyệt thiếu API
+// hoặc từ chối thì bỏ qua, không bao giờ ném.
 
 // Trường `data` mà public/sw.js gắn vào thông báo, lấy từ payload đẩy của máy chủ.
 export interface TrayNotificationData {
@@ -13,7 +13,6 @@ export interface TrayNotificationData {
     primary_actor_id?: number;
 }
 
-const UNREAD_TITLE_PREFIX = /^\(\d+\+?\)\s/;
 const MAX_DISPLAYED_UNREAD_COUNT = 99;
 
 // Một cách viết số chưa đọc cho mọi chỉ báo (chuông, tiêu đề tab).
@@ -50,18 +49,4 @@ export async function setAppBadgeCount(count: number): Promise<void> {
     } catch {
         // Tab thường (chưa cài app) hoặc người dùng chặn badge.
     }
-}
-
-export function formatUnreadTitle(title: string, count: number): string {
-    const baseTitle = title.replace(UNREAD_TITLE_PREFIX, '');
-    if (count <= 0) return baseTitle;
-
-    return `(${formatUnreadCount(count)}) ${baseTitle}`;
-}
-
-export function applyUnreadTitle(count: number): void {
-    if (typeof document === 'undefined') return;
-
-    const nextTitle = formatUnreadTitle(document.title, count);
-    if (nextTitle !== document.title) document.title = nextTitle;
 }
