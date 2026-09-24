@@ -10,6 +10,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Email\MarkdownRenderer;
+use App\Services\Messages\StickerMessageBuilder;
 use App\Support\BooleanParam;
 use App\Support\EmailAddress;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +20,12 @@ use Illuminate\Support\Facades\Storage;
 // Bỏ: template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
+    /**
+     * Khoá `content_attributes` chỉ máy chủ được ghi: client gửi lên thì bị bỏ, để
+     * không ai giả được payload đi thẳng ra kênh.
+     */
+    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker'];
+
     private ?Message $message = null;
 
     /**
@@ -41,9 +48,12 @@ class MessageBuilder
         $this->message->echoId = isset($this->params['echo_id']) ? (string) $this->params['echo_id'] : null;
         $this->message->sender()->associate($this->sender());
 
+        // Sticker dựng tin trước khi lưu tệp: bị từ chối thì không để lại tệp mồ côi.
+        (new StickerMessageBuilder($this->message, $this->conversation->inbox, $this->params))->perform();
+
         // Rails validate cả attachments rồi mới save! — dựng + kiểm trước khi
         // tin tồn tại để tệp hỏng không đẻ ra tin rỗng.
-        $this->message->pendingAttachments = $this->buildAttachments();
+        $this->message->pendingAttachments = [...$this->message->pendingAttachments, ...$this->buildAttachments()];
 
         $this->processEmails();
         $this->processEmailContent();
@@ -243,7 +253,8 @@ class MessageBuilder
     }
 
     /**
-     * Chuỗi JSON → array; array giữ nguyên; kiểu khác → rỗng (y bản gốc).
+     * Chuỗi JSON → array; array giữ nguyên; kiểu khác → rỗng (y bản gốc). Khoá do
+     * máy chủ sở hữu bị bỏ khỏi input.
      *
      * @return array<string, mixed>
      */
@@ -252,11 +263,13 @@ class MessageBuilder
         $contentAttributes = $this->params['content_attributes'] ?? [];
 
         if (is_string($contentAttributes)) {
-            $decoded = json_decode($contentAttributes, true);
-
-            return is_array($decoded) ? $decoded : [];
+            $contentAttributes = json_decode($contentAttributes, true);
         }
 
-        return is_array($contentAttributes) ? $contentAttributes : [];
+        if (! is_array($contentAttributes)) {
+            return [];
+        }
+
+        return array_diff_key($contentAttributes, array_flip(self::SERVER_OWNED_CONTENT_ATTRIBUTES));
     }
 }

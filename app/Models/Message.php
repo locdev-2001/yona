@@ -395,9 +395,13 @@ class Message extends Model
         $job = new SendReplyJob($this);
 
         // FIXME của bản gốc: chờ vài giây cho tệp đính kèm lưu xong trước khi gửi.
-        $this->pendingAttachments === [] && $this->attachments->isEmpty()
-            ? dispatch($job)
-            : dispatch($job)->delay(now()->addSeconds(2));
+        // Đính kèm chỉ trỏ ảnh ngoài (sticker) không có tệp nào phải chờ.
+        $carriesStoredFile = collect([...$this->pendingAttachments, ...$this->attachments])
+            ->contains(fn (Attachment $attachment) => $attachment->hasFile());
+
+        $carriesStoredFile
+            ? dispatch($job)->delay(now()->addSeconds(2))
+            : dispatch($job);
     }
 
     public function isConversationTranscriptable(): bool

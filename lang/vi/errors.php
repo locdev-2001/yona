@@ -75,6 +75,17 @@ return [
             'unknown' => 'Thao tác này chưa sang được Zalo (:detail).',
         ],
     ],
+    // Bảng chọn sticker và tin sticker (App\Services\Channels\Stickers). Lỗi phía
+    // kênh dùng lại câu của từng kênh; ở đây chỉ là luật chung của lõi.
+    'stickers' => [
+        'capability_not_supported' => 'Kênh này chưa gửi được sticker.',
+        'not_found' => 'Không tìm thấy sticker này, bạn chọn sticker khác giúp mình nhé.',
+        'bad_request' => 'Chưa tìm được sticker với từ khoá này, bạn thử từ khoá khác nhé.',
+        'private_note' => 'Không gửi sticker trong ghi chú riêng được.',
+        'outgoing_only' => 'Sticker chỉ gửi được trong tin trả lời khách.',
+        'with_attachments' => 'Sticker được gửi riêng, không kèm tệp.',
+        'missing_sticker_id' => 'Bạn chọn một sticker để gửi nhé.',
+    ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'chỉ được chứa chữ cái, chữ số, dấu gạch dưới, dấu gạch nối và dấu chấm',
         'key_conflict' => 'Khóa này không dùng được vì có thể trùng với thuộc tính mặc định.',

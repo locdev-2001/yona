@@ -109,6 +109,36 @@ class ZaloBridgeClient
     }
 
     /**
+     * Danh mục sticker: `{ok, stickers: [{id, cate_id, type, url, label}]}`. Địa chỉ
+     * ảnh do bridge dựng — PHP không chép lại mẫu URL của Zalo.
+     */
+    public function searchStickers(Zalo $channel, string $keyword, int $limit): ?Response
+    {
+        return $this->post('/personal-messages/stickers/search', [
+            'connection_id' => $channel->connectionId(),
+            'keyword' => $keyword,
+            'limit' => $limit,
+        ], $this->sendSecretHeader());
+    }
+
+    /** @param list<int> $stickerIds */
+    public function stickerDetails(Zalo $channel, array $stickerIds): ?Response
+    {
+        return $this->post('/personal-messages/stickers/detail', [
+            'connection_id' => $channel->connectionId(),
+            'ids' => $stickerIds,
+        ], $this->sendSecretHeader());
+    }
+
+    public function stickerCategory(Zalo $channel, int $categoryId): ?Response
+    {
+        return $this->post('/personal-messages/stickers/category', [
+            'connection_id' => $channel->connectionId(),
+            'cate_id' => $categoryId,
+        ], $this->sendSecretHeader());
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      * @param  array<string, string>  $headers
      */

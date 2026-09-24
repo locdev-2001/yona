@@ -129,7 +129,27 @@ final class ZaloHarness implements ChannelHarness
         Http::fake([
             'cdn.zalo.test/*' => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
             '*/personal-messages/send' => Http::response(['ok' => true, 'source_id' => 'contract-sent-'.uniqid()]),
+            '*/personal-messages/stickers/*' => Http::response(['ok' => true, 'stickers' => [$this->catalogSticker()]]),
             '*' => Http::response(['ok' => true]),
         ]);
+    }
+
+    /**
+     * Danh mục sticker trả đúng sticker của bộ vàng — bộ ghi ở `catId` như payload
+     * thật, bridge đổi sang `cate_id` khi trả danh mục.
+     *
+     * @return array<string, mixed>
+     */
+    private function catalogSticker(): array
+    {
+        $sticker = ChannelFixture::load(self::REAL.'sticker')['sticker'];
+
+        return [
+            'id' => $sticker['id'],
+            'cate_id' => $sticker['catId'],
+            'type' => $sticker['type'],
+            'url' => $sticker['url'],
+            'label' => null,
+        ];
     }
 }

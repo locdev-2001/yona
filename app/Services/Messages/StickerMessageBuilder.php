@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Services\Messages;
+
+use App\Exceptions\MessageValidationException;
+use App\Models\Attachment;
+use App\Models\Inbox;
+use App\Models\Message;
+use App\Services\Channels\Stickers\StickerCatalogException;
+use App\Services\Channels\Stickers\StickerLibrary;
+
+/**
+ * Tin `content_type: sticker` do agent gửi: client chỉ đưa `sticker_id`, máy chủ
+ * tra danh mục của kênh rồi tự dựng tin theo đúng hình dạng sticker nhận về —
+ * `content` rỗng, `content_attributes.sticker` là payload của driver, một đính
+ * kèm ảnh trỏ `external_url`. Nhờ vậy bong bóng, ô xem trước, realtime và webhook
+ * dùng lại contract sẵn có.
+ *
+ * Sticker đi một mình: không ghi chú riêng, không kèm tệp, không trích dẫn.
+ */
+final class StickerMessageBuilder
+{
+    /** @param array<string, mixed> $params */
+    public function __construct(
+        private readonly Message $message,
+        private readonly Inbox $inbox,
+        private readonly array $params,
+    ) {}
+
+    public function perform(): void
+    {
+        if ($this->message->content_type !== Message::CONTENT_TYPES['sticker']) {
+            return;
+        }
+
+        $this->guardStandalone();
+
+        try {
+            $sticker = app(StickerLibrary::class)->resolve($this->inbox, $this->stickerId());
+        } catch (StickerCatalogException $exception) {
+            throw new MessageValidationException($exception->getMessage());
+        }
+
+        $this->message->content = null;
+        $this->message->content_attributes = ['sticker' => $sticker->payload];
+        $this->message->pendingAttachments = [new Attachment([
+            'account_id' => $this->inbox->account_id,
+            'file_type' => Attachment::FILE_TYPE_IMAGE,
+            'external_url' => $sticker->imageUrl,
+        ])];
+    }
+
+    private function guardStandalone(): void
+    {
+        if ($this->message->private) {
+            $this->reject('private_note');
+        }
+
+        if ($this->message->message_type !== Message::TYPE_OUTGOING) {
+            $this->reject('outgoing_only');
+        }
+
+        if (filled($this->params['attachments'] ?? null)) {
+            $this->reject('with_attachments');
+        }
+    }
+
+    private function stickerId(): string
+    {
+        $stickerId = $this->params['sticker_id'] ?? null;
+        $stickerId = is_scalar($stickerId) ? trim((string) $stickerId) : '';
+
+        if ($stickerId === '') {
+            $this->reject('missing_sticker_id');
+        }
+
+        return $stickerId;
+    }
+
+    private function reject(string $reason): never
+    {
+        throw new MessageValidationException(__("errors.stickers.{$reason}", [], $this->inbox->account->locale));
+    }
+}

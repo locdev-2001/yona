@@ -25,6 +25,7 @@ use App\Http\Controllers\WebApi\Conversations\GroupMembersController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
+use App\Http\Controllers\WebApi\Conversations\StickersController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Http\Controllers\WebApi\CsatSurveyResponsesController;
 use App\Http\Controllers\WebApi\CustomAttributeDefinitionsController;
@@ -192,6 +193,10 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/conversations/{conversationId}/participants', [ParticipantsController::class, 'destroy'])->whereNumber('conversationId');
         // Thành viên hội thoại nhóm trên kênh (không phải nhân viên) — nguồn nhắc tên khi trả lời.
         Route::get('/conversations/{conversationId}/group_members', [GroupMembersController::class, 'index'])->whereNumber('conversationId');
+        // Bảng chọn sticker của khung soạn; tìm kiếm là lời gọi ra nền tảng nên chặn nhịp theo người dùng.
+        Route::get('/conversations/{conversationId}/stickers', [StickersController::class, 'index'])
+            ->whereNumber('conversationId')
+            ->middleware('throttle:60,1');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
         // resource :draft_messages (singular) — mot ban nhap moi conversation.

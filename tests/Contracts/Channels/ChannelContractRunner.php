@@ -7,6 +7,7 @@ use Tests\Contracts\Channels\Contracts\EventSeenContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
 use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
+use Tests\Contracts\Channels\Contracts\OutboundStickerContract;
 use Tests\Contracts\Channels\Contracts\ReplyToContract;
 use Tests\Contracts\Channels\Harness\ChannelHarness;
 
@@ -25,6 +26,7 @@ final class ChannelContractRunner
         ReplyToContract::class,
         MentionContract::class,
         EventSeenContract::class,
+        OutboundStickerContract::class,
     ];
 
     /** @return list<string> tên các contract đã chạy, để test khẳng định không chạy rỗng. */

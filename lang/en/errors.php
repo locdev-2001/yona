@@ -75,6 +75,17 @@ return [
             'unknown' => 'This action did not go through to Zalo (:detail).',
         ],
     ],
+    // Bảng chọn sticker và tin sticker (App\Services\Channels\Stickers). Lỗi phía
+    // kênh dùng lại câu của từng kênh; ở đây chỉ là luật chung của lõi.
+    'stickers' => [
+        'capability_not_supported' => 'This channel cannot send stickers.',
+        'not_found' => 'This sticker could not be found, please pick another one.',
+        'bad_request' => 'That sticker search could not be understood, please try another keyword.',
+        'private_note' => 'Stickers cannot be added to a private note.',
+        'outgoing_only' => 'Stickers can only be sent as a reply.',
+        'with_attachments' => 'A sticker is sent on its own, without attachments.',
+        'missing_sticker_id' => 'Pick a sticker to send.',
+    ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'must only contain letters, numbers, underscores, hyphens, and dots',
         'key_conflict' => 'The provided key is not allowed as it might conflict with default attributes.',
