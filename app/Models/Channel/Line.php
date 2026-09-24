@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\LineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/line.rb. Gem line-bot-sdk được thay
 // bằng App\Services\Line\LineClient (Http facade).
-class Line extends Model implements DeclaresCapabilities
+class Line extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<LineFactory> */
     use Channelable, HasFactory;
@@ -36,6 +38,11 @@ class Line extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'LINE';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('line', 'LINE');
     }
 
     public static function channelRules(): array

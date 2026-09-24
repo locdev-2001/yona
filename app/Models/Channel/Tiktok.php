@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\TiktokFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/tiktok.rb.
-class Tiktok extends Model implements DeclaresCapabilities
+class Tiktok extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<TiktokFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -39,6 +41,11 @@ class Tiktok extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Tiktok';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('tiktok', 'TikTok');
     }
 
     public static function channelRules(): array

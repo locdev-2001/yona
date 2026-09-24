@@ -2693,6 +2693,7 @@ const messages: Record<string, unknown> = {
         "FILE_TYPE_NOT_SUPPORTED": "Hội thoại này không hỗ trợ loại tệp {fileName}",
         "MESSAGE_ERROR": "Không thể gửi tin nhắn này, vui lòng thử lại sau",
         "SENT_BY": "Gửi bởi:",
+        "SENT_VIA_PLATFORM": "qua {platform}",
         "BOT": "Bot",
         "NATIVE_APP": "Ứng dụng gốc",
         "NATIVE_APP_ADVISORY": "Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ Chatwoot để giữ cửa sổ nhắn tin.",

@@ -5,7 +5,9 @@ namespace App\Models\Channel;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
@@ -15,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/facebook_page.rb. Subscribe/unsubscribe
 // (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
-class FacebookPage extends Model implements DeclaresCapabilities
+class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<FacebookPageFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -39,6 +41,11 @@ class FacebookPage extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Facebook';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('messenger', 'Messenger');
     }
 
     public static function channelRules(): array

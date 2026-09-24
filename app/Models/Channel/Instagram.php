@@ -5,7 +5,9 @@ namespace App\Models\Channel;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\ContactInbox;
@@ -14,7 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/instagram.rb (Instagram login trực tiếp).
-class Instagram extends Model implements DeclaresCapabilities
+class Instagram extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<InstagramFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -36,6 +38,11 @@ class Instagram extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Instagram';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('instagram', 'Instagram');
     }
 
     public static function channelRules(): array

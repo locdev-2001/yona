@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\EmailFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/email.rb (+ Channelable, Reauthorizable).
-class Email extends Model implements DeclaresCapabilities
+class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -90,6 +92,16 @@ class Email extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Email';
+    }
+
+    /** Một model, ba nhà cung cấp: logo theo hộp thư thật (Gmail/Outlook) chứ không theo loại kênh. */
+    public function platform(): ChannelPlatform
+    {
+        return match (true) {
+            $this->isMicrosoft() => ChannelPlatform::of('outlook', 'Outlook'),
+            $this->isGoogle() || $this->isLegacyGoogle() => ChannelPlatform::of('gmail', 'Gmail'),
+            default => ChannelPlatform::of('email', 'Email'),
+        };
     }
 
     public static function channelRules(): array

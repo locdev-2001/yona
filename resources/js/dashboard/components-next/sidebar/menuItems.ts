@@ -6,6 +6,7 @@ import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
 import type { SidebarUnreadCounts } from './useConversationUnreadCounts';
+import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
 // Inbox rút gọn share từ SetCurrentAccount cho nhóm Channels.
 export interface SidebarInbox {
@@ -15,6 +16,7 @@ export interface SidebarInbox {
     // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
     // quyền, …) — cảnh báo icon cạnh mục Channels như bản gốc ChannelLeaf.vue.
     reauthorization_required?: boolean;
+    platform?: ChannelPlatform | null;
 }
 
 // Team của user (teams/getMyTeams) cho nhóm Teams.

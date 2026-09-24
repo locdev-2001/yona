@@ -2,13 +2,13 @@ import type { MouseEvent } from 'react';
 import { router } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import Icon from 'dashboard/components-next/icon/Icon';
+import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import CardMessagePreview from './CardMessagePreview';
 import CardMessagePreviewWithMeta from './CardMessagePreviewWithMeta';
 import CardPriorityIcon from './CardPriorityIcon';
 import type { AccountLabel } from './CardLabels';
-import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { shortTimestamp } from 'shared/helpers/timeHelper';
 import type { Conversation, ContactMeta } from 'dashboard/conversation/types';
@@ -19,7 +19,7 @@ import type { Conversation, ContactMeta } from 'dashboard/conversation/types';
 interface ConversationCardProps {
     conversation: Conversation;
     contact?: Partial<ContactMeta> | null;
-    stateInbox?: { name?: string; channel_type?: string } | null;
+    stateInbox?: ChannelIconInbox | null;
     accountLabels: AccountLabel[];
     accountId: number;
     className?: string;
@@ -33,7 +33,6 @@ export default function ConversationCard({
     accountId,
     className = '',
 }: ConversationCardProps) {
-    const inboxIcon = getInboxIconByType(stateInbox?.channel_type ?? '', 'fill');
     const lastActivityAt = conversation.timestamp ? shortTimestamp(conversation.timestamp) : '';
     const labelSet = new Set(conversation.labels ?? []);
     const hasVisibleLabels = (accountLabels ?? []).some(({ title }) => labelSet.has(title));
@@ -66,12 +65,11 @@ export default function ConversationCard({
                     <h4 className="text-base font-medium truncate text-n-slate-12">{contact?.name}</h4>
                     <div className="flex items-center gap-2">
                         <CardPriorityIcon priority={conversation.priority || null} />
-                        <div
-                            title={stateInbox?.name}
-                            className="flex items-center justify-center flex-shrink-0 rounded-full bg-n-alpha-2 size-5"
-                        >
-                            <Icon icon={inboxIcon} className="flex-shrink-0 text-n-slate-11 size-3" />
-                        </div>
+                        {stateInbox ? (
+                            <div className="flex items-center justify-center flex-shrink-0 rounded-full bg-n-alpha-2 size-5">
+                                <ChannelIcon inbox={stateInbox} className="flex-shrink-0 text-n-slate-11 size-3" />
+                            </div>
+                        ) : null}
                         <span className="text-sm text-n-slate-10">{lastActivityAt}</span>
                     </div>
                 </div>

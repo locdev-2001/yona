@@ -36,4 +36,28 @@ describe('icon kênh', () => {
 
         expect(container.querySelector('span')?.getAttribute('title')).toBe('Zalo shop chính');
     });
+
+    describe('hộp thư mang nền tảng do kênh tự khai', () => {
+        const zaloInbox = {
+            channel_type: INBOX_TYPES.ZALO,
+            name: 'Zalo shop chính',
+            platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' },
+        };
+
+        it('vẽ logo màu của nền tảng thay icon đơn sắc', () => {
+            const { container } = render(<ChannelIcon inbox={zaloInbox} />);
+
+            expect(container.querySelector('img[data-platform="zalo"]')?.getAttribute('src')).toBe(
+                '/brand-assets/platforms/zalo.svg',
+            );
+            expect(container.querySelector('.i-woot-zalo')).toBeNull();
+        });
+
+        it('vẫn lấy tên hộp thư làm tooltip', () => {
+            const { container } = render(<ChannelIcon inbox={zaloInbox} />);
+
+            expect(container.querySelector('span')?.getAttribute('title')).toBe('Zalo shop chính');
+            expect(container.querySelector('img')?.hasAttribute('title')).toBe(false);
+        });
+    });
 });

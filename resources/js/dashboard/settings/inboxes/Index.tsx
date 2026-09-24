@@ -75,7 +75,13 @@ export default function InboxesIndex() {
             <div className="flex items-center gap-4">
                 {inbox.avatar_url ? (
                     <div className="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">
-                        <Avatar src={inbox.avatar_url} name={inbox.name} size={24} roundedFull />
+                        <Avatar
+                            src={inbox.avatar_url}
+                            name={inbox.name}
+                            size={24}
+                            roundedFull
+                            platform={inbox.platform ?? null}
+                        />
                     </div>
                 ) : (
                     <div className="size-10 justify-center bg-n-alpha-3 rounded-xl ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">

@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Message;
 use Database\Factories\Channel\TelegramFactory;
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/telegram.rb. Phần gọi Bot API nằm ở
 // App\Services\Telegram\TelegramClient (lõi model không nói chuyện HTTP).
-class Telegram extends Model implements DeclaresCapabilities
+class Telegram extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<TelegramFactory> */
     use Channelable, HasFactory;
@@ -55,6 +57,11 @@ class Telegram extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Telegram';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('telegram', 'Telegram');
     }
 
     public static function channelRules(): array

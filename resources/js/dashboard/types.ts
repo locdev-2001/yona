@@ -1,4 +1,5 @@
 import type { SharedPageProps } from '../types';
+import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 import type { AvailabilityStatus } from './constants/globals';
 
 export interface CurrentAccount {
@@ -35,6 +36,9 @@ export interface DashboardPageProps extends SharedPageProps {
         // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
         // quyền, …) — điều khiển icon cảnh báo sidebar + banner khung chat.
         reauthorization_required?: boolean;
+        // Ảnh tài khoản kênh ('' khi chưa có) — tin gửi từ điện thoại mang ảnh này.
+        avatar_url?: string;
+        platform?: ChannelPlatform | null;
     }[];
     // Nhóm Teams trên sidebar — chỉ team user là member (teams/getMyTeams).
     teams?: { id: number; name: string }[];

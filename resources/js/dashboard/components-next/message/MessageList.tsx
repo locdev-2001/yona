@@ -6,6 +6,7 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 import Message from './Message';
 import { MESSAGE_TYPES } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
+import { messageSenderKey } from './helpers/senderIdentity';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; grouping tính trực tiếp
@@ -38,9 +39,7 @@ function shouldGroupWithNext(index: number, searchList: ConversationMessage[]): 
 
     if (next.status === 'failed') return false;
 
-    const nextSenderId = next.sender_id ?? next.sender?.id;
-    const currentSenderId = current.sender_id ?? current.sender?.id;
-    const hasSameSender = nextSenderId === currentSenderId;
+    const hasSameSender = messageSenderKey(next) === messageSenderKey(current);
 
     const areBothTemplates =
         next.message_type === MESSAGE_TYPES.TEMPLATE && current.message_type === MESSAGE_TYPES.TEMPLATE;

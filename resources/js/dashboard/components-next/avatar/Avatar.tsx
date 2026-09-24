@@ -2,9 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
+import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
-// Port từ dashboard/components-next/avatar/Avatar.vue
-// (prop `inbox`/ChannelIcon chưa port — vào ở B1).
+// Badge nền tảng: 24px→12, 32px→14, 40px→18; avatar nhỏ hơn 20px thì badge không đọc được nên bỏ.
+const PLATFORM_BADGE_RATIO = 0.45;
+const PLATFORM_BADGE_MIN = 12;
+const PLATFORM_BADGE_MAX = 20;
+const PLATFORM_BADGE_MIN_AVATAR = 20;
+
+// Port từ dashboard/components-next/avatar/Avatar.vue.
 interface AvatarProps {
     src?: string;
     name: string;
@@ -14,6 +21,8 @@ interface AvatarProps {
     status?: 'online' | 'busy' | 'offline' | null;
     iconName?: string | null;
     hideOfflineStatus?: boolean;
+    // Nền tảng tin/khách đến từ (hoặc chính bản cài đặt) — badge tròn ở góc dưới cuối avatar.
+    platform?: ChannelPlatform | null;
     className?: string;
     // Slot overlay của bản gốc: thay thế lớp upload phủ trên avatar
     // (ContactsCard dùng để hiện checkbox chọn khi hover).
@@ -74,6 +83,7 @@ export default function Avatar({
     status = null,
     iconName = null,
     hideOfflineStatus = false,
+    platform = null,
     className = '',
     overlay,
     onUpload,
@@ -107,6 +117,11 @@ export default function Avatar({
             : { ...AVATAR_COLORS.default, darkBg: AVATAR_COLORS.default.bg, darkText: AVATAR_COLORS.default.text };
 
     const badgeSize = Math.max(size * 0.35, 8);
+    const showPlatformBadge = Boolean(platform) && size >= PLATFORM_BADGE_MIN_AVATAR;
+    const platformBadgeSize = Math.min(
+        Math.max(Math.round(size * PLATFORM_BADGE_RATIO), PLATFORM_BADGE_MIN),
+        PLATFORM_BADGE_MAX,
+    );
     const borderRadiusClass = getBorderRadiusClass(size, roundedFull);
 
     const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +148,8 @@ export default function Avatar({
                     style={{
                         width: badgeSize,
                         height: badgeSize,
-                        top: size - badgeSize / 1.1,
+                        // Badge nền tảng giữ góc dưới, chấm trạng thái nhường lên góc trên.
+                        top: showPlatformBadge ? 0 : size - badgeSize / 1.1,
                         left: size - badgeSize / 1.1,
                     }}
                 />
@@ -198,6 +214,18 @@ export default function Avatar({
                     </div>
                 ) : null}
             </span>
+
+            {/* Nền trắng cố định ở cả giao diện tối: logo thương hiệu (và logo bản cài đặt nền trong suốt) vẽ cho nền sáng. */}
+            {showPlatformBadge && platform ? (
+                <span
+                    data-testid="avatar-platform-badge"
+                    title={platform.name}
+                    className="absolute z-20 -bottom-0.5 -end-0.5 grid place-items-center overflow-hidden rounded-full bg-white ring-1 ring-n-surface-1"
+                    style={{ width: platformBadgeSize, height: platformBadgeSize }}
+                >
+                    <PlatformLogo platform={platform} className="size-full" />
+                </span>
+            ) : null}
         </span>
     );
 }

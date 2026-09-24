@@ -27,6 +27,8 @@ import ZaloCallBubble from './bubbles/ZaloCall';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
+import { BOT_SENDER_TYPES, resolveMessageSender } from './helpers/senderIdentity';
+import { useSenderIdentityContext } from './SenderIdentityContext';
 
 // Port từ dashboard/components-next/message/Message.vue. Payload spine giữ
 // snake_case (message_type, content_attributes…) — map sang biến camelCase tại
@@ -56,18 +58,14 @@ const FLEX_ORIENTATION_MAP: Record<string, string> = {
 };
 
 const GRID_CLASS_MAP: Record<string, string> = {
-    [ORIENTATION.LEFT]: 'grid grid-cols-1fr',
+    [ORIENTATION.LEFT]: 'grid grid-cols-[24px_1fr]',
     [ORIENTATION.RIGHT]: 'grid grid-cols-[1fr_24px]',
 };
 
 const GRID_TEMPLATE_MAP: Record<string, string> = {
-    [ORIENTATION.LEFT]: '"bubble" "meta"',
+    [ORIENTATION.LEFT]: '"avatar bubble" "spacer meta"',
     [ORIENTATION.RIGHT]: '"bubble avatar" "meta spacer"',
 };
-
-// [AGENT_BOT, CAPTAIN_ASSISTANT] của Message.vue — sender nào cũng đứng bên
-// phải như tin của agent, và lấy avatar theo avatar_url.
-const BOT_SENDER_TYPES: string[] = [SENDER_TYPES.AGENT_BOT, SENDER_TYPES.CAPTAIN_ASSISTANT];
 
 const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.TEXT]: TextBubble,
@@ -171,7 +169,7 @@ export default function Message({
 
     const shouldGroupWithNext = status === MESSAGE_STATUS.FAILED ? false : groupWithNext;
 
-    const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY && orientation !== ORIENTATION.LEFT;
+    const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY;
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
     const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
@@ -191,26 +189,7 @@ export default function Message({
             contentAttributes.external_error,
     );
 
-    const avatarInfo = (() => {
-        // Gốc lấy tên + avatar của inbox ở đây; bản port chưa truyền inbox vào
-        // Message nên dùng nhãn chung của kênh, chữ "từ điện thoại" nói phần còn lại.
-        if (isExternalEcho) return { name: t('CONVERSATION.NATIVE_APP'), src: '' };
-        if (!sender) {
-            const { senderName, senderAvatarUrl } = additionalAttributes;
-            if (senderName) return { name: senderName, src: senderAvatarUrl ?? '' };
-            return { name: t('CONVERSATION.BOT'), src: '' };
-        }
-        // Bot dùng avatar_url (avatar riêng hoặc avatar inbox), người dùng dùng thumbnail.
-        if (sender.type && BOT_SENDER_TYPES.includes(sender.type)) {
-            return { name: sender.name ?? '', src: sender.avatar_url ?? '' };
-        }
-        return { name: sender.name ?? '', src: sender.thumbnail ?? '' };
-    })();
-
-    const avatarTooltip = (() => {
-        if (isExternalEcho) return t('CONVERSATION.NATIVE_APP_ADVISORY');
-        return avatarInfo.name === '' ? '' : `${t('CONVERSATION.SENT_BY')} ${avatarInfo.name}`;
-    })();
+    const senderIdentity = resolveMessageSender(message, useSenderIdentityContext());
 
     const contextValue: MessageContextValue = {
         id: message.id,
@@ -258,8 +237,13 @@ export default function Message({
                         style={{ gridTemplateAreas: GRID_TEMPLATE_MAP[orientation] } as CSSProperties}
                     >
                         {!shouldGroupWithNext && shouldShowAvatar && (
-                            <div title={avatarTooltip} className="[grid-area:avatar] flex items-end">
-                                <Avatar name={avatarInfo.name} src={avatarInfo.src} size={24} />
+                            <div title={senderIdentity.tooltip} className="[grid-area:avatar] flex items-end">
+                                <Avatar
+                                    name={senderIdentity.name}
+                                    src={senderIdentity.src}
+                                    platform={senderIdentity.platform}
+                                    size={24}
+                                />
                             </div>
                         )}
                         <div

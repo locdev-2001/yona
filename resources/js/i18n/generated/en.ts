@@ -2693,6 +2693,7 @@ const messages: Record<string, unknown> = {
         "FILE_TYPE_NOT_SUPPORTED": "This {fileName} file type is not supported in this conversation",
         "MESSAGE_ERROR": "Unable to send this message, please try again later",
         "SENT_BY": "Sent by:",
+        "SENT_VIA_PLATFORM": "via {platform}",
         "BOT": "Bot",
         "NATIVE_APP": "Native app",
         "NATIVE_APP_ADVISORY": "This message was sent from the native app. Reply from Chatwoot to maintain the message window.",

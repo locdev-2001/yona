@@ -1,8 +1,9 @@
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
+import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 
 // Port từ dashboard/components/widgets/InboxName.vue
 interface InboxNameProps {
-    inbox: { name: string; channel_type: string };
+    inbox: ChannelIconInbox & { name: string };
     className?: string;
 }
 

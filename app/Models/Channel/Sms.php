@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\SmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/sms.rb (nhà cung cấp Bandwidth).
 // Phần gọi API nằm ở App\Services\Sms\BandwidthClient.
-class Sms extends Model implements DeclaresCapabilities
+class Sms extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<SmsFactory> */
     use Channelable, HasFactory;
@@ -34,6 +36,11 @@ class Sms extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Sms';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('sms', 'SMS');
     }
 
     public static function channelRules(): array
