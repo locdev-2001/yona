@@ -4,8 +4,11 @@ import {
     DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE,
     checkFileSizeLimit,
     fileSizeInMegaBytes,
+    filesFromDataTransfer,
     formatBytes,
+    isFileTypeAccepted,
 } from './FileHelper';
+import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 
 describe('formatBytes', () => {
     it.each([
@@ -42,5 +45,29 @@ describe('checkFileSizeLimit', () => {
 describe('fileSizeInMegaBytes', () => {
     it('quy đổi byte sang MB', () => {
         expect(fileSizeInMegaBytes(1024 * 1024)).toBe(1);
+    });
+});
+
+describe('isFileTypeAccepted', () => {
+    it.each([
+        ['image.png', 'image/png', true],
+        ['chuyen-khoan.jpg', 'image/jpeg', true],
+        ['bao-gia.pdf', 'application/pdf', true],
+        ['don-hang.XLSX', '', true],
+        ['nen.rar', 'application/vnd.rar', true],
+        ['cai-dat.exe', 'application/x-msdownload', false],
+        ['script.sh', 'application/x-sh', false],
+    ])('%s (%s) → %s theo danh sách của nút đính kèm', (name, type, accepted) => {
+        expect(isFileTypeAccepted({ name, type }, ALLOWED_FILE_TYPES)).toBe(accepted);
+    });
+});
+
+describe('filesFromDataTransfer', () => {
+    it('chỉ lấy tệp có nội dung, không có dữ liệu thì rỗng', () => {
+        const screenshot = new File(['png'], 'image.png', { type: 'image/png' });
+        const empty = new File([], 'rong.txt', { type: 'text/plain' });
+
+        expect(filesFromDataTransfer({ files: [screenshot, empty] } as unknown as DataTransfer)).toEqual([screenshot]);
+        expect(filesFromDataTransfer(null)).toEqual([]);
     });
 });

@@ -22,6 +22,7 @@ import { MEMBER_MENTION_TYPE, filterGroupMembers } from './groupMemberMentions';
 import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
+import { filesFromDataTransfer } from 'shared/helpers/FileHelper';
 
 // Port từ dashboard/components/widgets/WootWriter/Editor.vue — giữ nguyên
 // engine @chatwoot/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
@@ -57,6 +58,8 @@ interface EditorProps {
     onTypingOff?: () => void;
     onToggleCannedMenu?: (isOpen: boolean) => void;
     onToggleUserMention?: (isOpen: boolean) => void;
+    /** Có thì tệp dán (Ctrl+V) hoặc thả vào ô soạn được chuyển thành tệp đính kèm thay vì chèn vào chữ. */
+    onAttachFiles?: (files: File[]) => void;
 }
 
 interface SuggestionRange {
@@ -151,6 +154,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onTypingOff,
         onToggleCannedMenu,
         onToggleUserMention,
+        onAttachFiles,
     },
     ref,
 ) {
@@ -172,8 +176,8 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const [suggestionRange, setSuggestionRange] = useState<SuggestionRange | null>(null);
 
     // Callback mới nhất — tránh phải dựng lại EditorView theo mỗi render.
-    const callbacksRef = useRef({ onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings });
-    callbacksRef.current = { onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, disabled, uiSettings };
+    const callbacksRef = useRef({ onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, onAttachFiles, disabled, uiSettings });
+    callbacksRef.current = { onChange, onFocus, onBlur, onSend, onTypingOn, onTypingOff, onAttachFiles, disabled, uiSettings };
 
     // Plugin gợi ý được dựng lại mỗi lần createState chạy nên phải đọc cờ qua ref.
     const suggestionFlagsRef = useRef({ isPrivate, enableCannedResponses });
@@ -294,8 +298,20 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     useEffect(() => {
         if (!editorHostRef.current) return undefined;
 
+        const attachTransferredFiles = (data: DataTransfer | null, event: Event): boolean => {
+            const { disabled: isDisabled, onAttachFiles: attachFiles } = callbacksRef.current;
+            const files = filesFromDataTransfer(data);
+            if (isDisabled || !attachFiles || files.length === 0) return false;
+
+            event.preventDefault();
+            attachFiles(files);
+            return true;
+        };
+
         const view = new EditorView(editorHostRef.current, {
             state: createState(value),
+            handlePaste: (_view, event) => attachTransferredFiles(event.clipboardData, event),
+            handleDrop: (_view, event) => attachTransferredFiles(event.dataTransfer, event),
             editable: () => !callbacksRef.current.disabled,
             attributes: { class: 'resizable-editor-body' },
             dispatchTransaction: (tx) => {

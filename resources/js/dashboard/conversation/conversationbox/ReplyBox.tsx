@@ -29,7 +29,8 @@ import {
     MESSAGE_TYPES,
     STATUS_TYPE,
 } from 'dashboard/conversation/constants';
-import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit } from 'shared/helpers/FileHelper';
+import { DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE, checkFileSizeLimit, isFileTypeAccepted } from 'shared/helpers/FileHelper';
+import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { openCommandBar } from 'dashboard/commands/commandBarStore';
@@ -64,7 +65,7 @@ import type { ReplyStickerPicker } from './ReplyBottomPanel';
 // đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Sticker: kênh khai
 // `outbound_sticker` thì có bảng chọn, chọn là gửi ngay. Bỏ: draft (B10), ghi
 // âm (voice recorder), email head/quoted reply, WhatsApp templates, copilot editor,
-// variables, Paste đính kèm (kênh API chưa cần).
+// variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
@@ -511,6 +512,17 @@ export default function ReplyBox({
         };
     };
 
+    // Dán hoặc thả tệp vào ô soạn: cùng luật loại tệp với nút kẹp giấy (ALLOWED_FILE_TYPES).
+    const onAttachFiles = (files: File[]) => {
+        files.forEach((file) => {
+            if (isFileTypeAccepted(file, ALLOWED_FILE_TYPES)) {
+                onFileUpload(file);
+            } else {
+                useAlert(t('CONVERSATION.FILE_TYPE_NOT_SUPPORTED', { fileName: file.name }));
+            }
+        });
+    };
+
     return (
         <>
             <ReplyBoxBanner message={message} isOnPrivateNote={isOnPrivateNote} />
@@ -564,6 +576,7 @@ export default function ReplyBox({
                     onSend={onSendReply}
                     onTypingOn={() => toggleTyping('on')}
                     onTypingOff={() => toggleTyping('off')}
+                    onAttachFiles={onAttachFiles}
                 />
                 {shouldShowQuotedPreview ? (
                     <QuotedEmailPreview
