@@ -75,3 +75,23 @@ it('gửi tin đi qua Business Messaging API', function () {
     expect($outgoing->fresh()->source_id)->toBe('msg-out')
         ->and($outgoing->fresh()->status)->toBe(Message::STATUSES['delivered']);
 });
+
+it('trả lời trích dẫn bằng referenced_message_info', function () {
+    Http::fake([
+        'business-api.tiktok.com/*' => Http::response(['data' => ['message' => ['message_id' => 'msg-out']]]),
+    ]);
+    tiktokPost(ChannelFixture::load('tiktok_receive'));
+    $quoted = Message::query()->latest('id')->first();
+    $conversation = $quoted->conversation;
+
+    $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ còn ạ',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/business/message/send/')
+        && $request['referenced_message_info'] === ['referenced_message_id' => $quoted->source_id]);
+});

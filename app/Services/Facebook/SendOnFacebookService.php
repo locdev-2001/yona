@@ -6,10 +6,13 @@ use App\Models\Attachment;
 use App\Models\Channel\FacebookPage;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
+use App\Services\Facebook\Concerns\BuildsMessengerReplyTo;
 
 // Port từ refs/chatwoot/app/services/facebook/send_on_facebook_service.rb.
 class SendOnFacebookService extends BaseSendOnChannelService
 {
+    use BuildsMessengerReplyTo;
+
     protected function channelClass(): string
     {
         return FacebookPage::class;
@@ -17,12 +20,13 @@ class SendOnFacebookService extends BaseSendOnChannelService
 
     protected function performReply(): void
     {
-        if (filled($this->message->content)) {
-            $this->deliver($this->textMessageParams());
-        }
+        $payloads = [
+            ...(filled($this->message->content) ? [$this->textMessageParams()] : []),
+            ...$this->message->attachments->map(fn (Attachment $attachment) => $this->attachmentMessageParams($attachment))->all(),
+        ];
 
-        foreach ($this->message->attachments as $attachment) {
-            $this->deliver($this->attachmentMessageParams($attachment));
+        foreach ($this->withMessengerReplyToOnFirst($payloads) as $payload) {
+            $this->deliver($payload);
         }
     }
 

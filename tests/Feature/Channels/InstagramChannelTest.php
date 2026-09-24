@@ -86,3 +86,25 @@ it('gửi tin đi qua Instagram Messaging API', function () {
 
     expect($outgoing->fresh()->source_id)->toBe('mid.ig.out');
 });
+
+it('trả lời trích dẫn trên Instagram bằng reply_to.mid ở cấp gốc body', function () {
+    Http::fake([
+        'graph.instagram.com/*/messages*' => Http::response(['message_id' => 'mid.ig.out']),
+        'graph.instagram.com/*' => Http::response(['id' => 'ig-user-id', 'name' => 'Khách IG', 'username' => 'khach_ig']),
+    ]);
+    instagramPost(ChannelFixture::load('instagram_messaging'));
+    $quoted = Message::query()->latest('id')->first();
+    $conversation = $quoted->conversation;
+
+    $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ còn ạ',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'instagram-business-id/messages')
+        && $request['reply_to'] === ['mid' => 'mid.instagram.1']
+        && $request['message'] === ['text' => 'Dạ còn ạ']);
+});

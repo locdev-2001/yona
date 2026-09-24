@@ -2,6 +2,7 @@
 
 namespace App\Services\Whatsapp\Providers;
 
+use App\Channels\CapabilitySet;
 use App\Models\Channel\Whatsapp;
 use App\Models\Message;
 use App\Services\Channels\ChannelMessageStatus;
@@ -11,6 +12,11 @@ use Illuminate\Support\Facades\Log;
 abstract class BaseWhatsappService implements WhatsappProvider
 {
     public function __construct(protected readonly Whatsapp $channel) {}
+
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::none();
+    }
 
     // Whatsapp::Providers::BaseService#process_response — API trả 200 kèm khối error.
     protected function processResponse(Response $response, Message $message): ?string

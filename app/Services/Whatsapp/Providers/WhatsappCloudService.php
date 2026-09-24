@@ -2,6 +2,8 @@
 
 namespace App\Services\Whatsapp\Providers;
 
+use App\Channels\Capability;
+use App\Channels\CapabilitySet;
 use App\Models\Message;
 use Illuminate\Support\Facades\Http;
 
@@ -14,6 +16,11 @@ class WhatsappCloudService extends BaseWhatsappService
         return $message->attachments()->exists()
             ? $this->sendAttachmentMessage($phoneNumber, $message)
             : $this->sendTextMessage($phoneNumber, $message);
+    }
+
+    public function capabilities(): CapabilitySet
+    {
+        return CapabilitySet::of(Capability::OutboundReplyTo);
     }
 
     public function mediaUrl(string $mediaId): string
@@ -35,6 +42,7 @@ class WhatsappCloudService extends BaseWhatsappService
         $response = Http::withHeaders($this->apiHeaders())->post($this->phoneIdPath().'/messages', [
             'messaging_product' => 'whatsapp',
             'to' => $phoneNumber,
+            ...self::replyContext($message),
             'text' => ['body' => $message->content],
             'type' => 'text',
         ]);
@@ -60,11 +68,25 @@ class WhatsappCloudService extends BaseWhatsappService
         $response = Http::withHeaders($this->apiHeaders())->post($this->phoneIdPath('v24.0').'/messages', [
             'messaging_product' => 'whatsapp',
             'to' => $phoneNumber,
+            ...self::replyContext($message),
             'type' => $type,
             $type => $typeContent,
         ]);
 
         return $this->processResponse($response, $message);
+    }
+
+    /**
+     * Trả lời trích dẫn: Cloud API nhận `context.message_id` = wamid của tin gốc,
+     * lõi đã đặt ở `content_attributes.in_reply_to_external_id`.
+     *
+     * @return array{context?: array{message_id: string}}
+     */
+    private static function replyContext(Message $message): array
+    {
+        $repliedWamid = $message->content_attributes['in_reply_to_external_id'] ?? null;
+
+        return filled($repliedWamid) ? ['context' => ['message_id' => (string) $repliedWamid]] : [];
     }
 
     private function apiBasePath(): string
