@@ -179,6 +179,8 @@ class Zalo extends Model implements DeclaresCapabilities
      * Chưa khai: outbound_location/contact_card/mention/edit/read_receipt (chưa có
      * đường thực thi), event_edit/event_presence (Zalo không phát), profile_phone
      * (chỉ có khi khách gửi danh thiếp của chính mình).
+     * outbound_reply_to: trả lời chỉ gồm tệp (không chú thích) thì Zalo gửi tệp
+     * không kèm trích dẫn — giới hạn của nền tảng, tin vẫn đi bình thường.
      */
     public function capabilities(): CapabilitySet
     {
