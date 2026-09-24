@@ -66,4 +66,18 @@ return [
         'environment' => env('TWITTER_ENVIRONMENT', ''),
     ],
 
+    // Analytics không cookie của chính Yona. Script và sự kiện đi qua đường dẫn
+    // first-party `proxy_path` trên domain app (routes/api.php) để trình chặn quảng
+    // cáo không chặn theo domain/mẫu URL của nhà cung cấp. `host` hoặc `script_path`
+    // trống = tắt analytics (máy dev).
+    'plausible' => [
+        'host' => env('PLAUSIBLE_HOST'),
+        'script_path' => env('PLAUSIBLE_SCRIPT_PATH'),
+        'proxy_path' => env('PLAUSIBLE_PROXY_PATH') ?: '/yv',
+        // Header chứa IP thật của khách khi app đứng sau CDN (CF-Connecting-IP với
+        // Cloudflare); trống = IP kết nối tới app.
+        'client_ip_header' => env('PLAUSIBLE_CLIENT_IP_HEADER'),
+        'script_ttl' => (int) env('PLAUSIBLE_SCRIPT_TTL', 21600),
+    ],
+
 ];
