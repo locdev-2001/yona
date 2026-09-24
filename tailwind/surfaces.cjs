@@ -10,6 +10,7 @@ module.exports = {
             './resources/js/sdk/**/*.{ts,tsx}',
             './resources/js/dashboard/components-next/avatar/Avatar.tsx',
             './resources/js/dashboard/components-next/icon/Icon.tsx',
+            './resources/js/dashboard/components-next/icon/PlatformLogo.tsx',
             './resources/views/widget.blade.php',
         ],
     },
