@@ -9,6 +9,72 @@
 @import 'widget-fonts';
 @import 'next-colors';
 
+// Token thiết kế của khung chat — nguồn DUY NHẤT; component chỉ dùng tên biến,
+// không viết mã màu. Giá trị sáng theo design "Yona Chat Widget"; giá trị tối suy
+// từ thang màu chung của dự án. Màu nhấn lấy widgetColor của tenant.
+:root {
+  --yona-chat-surface: #f7f7f8;
+  --yona-chat-panel: #ffffff;
+  --yona-chat-field: #f2f3f5;
+  --yona-chat-ink: #17181a;
+  --yona-chat-ink-soft: #5b6068;
+  --yona-chat-ink-muted: #6b7076;
+  --yona-chat-line: rgba(0, 0, 0, 0.06);
+  --yona-chat-line-strong: rgba(0, 0, 0, 0.18);
+  --yona-chat-accent: var(--widget-color, #1b6fcc);
+  --yona-chat-on-accent: #ffffff;
+  --yona-chat-online: #1e7f4e;
+  --yona-chat-online-dot: #22c55e;
+  --yona-chat-danger: #c0392b;
+  --yona-chat-danger-bg: #fff3f2;
+  --yona-chat-danger-line: #f6d2ce;
+  --yona-chat-radius-bubble: 16px;
+  --yona-chat-radius-tail: 5px;
+  --yona-chat-radius-stack: 6px;
+  // Nền đặc tương phản (bong bóng khách, ô +N, chấm carousel đang chọn) tách khỏi
+  // màu chữ vì hai vai đảo chiều ở chế độ tối.
+  --yona-chat-solid: #17181a;
+  --yona-chat-on-solid: #ffffff;
+  --yona-chat-on-solid-soft: rgba(255, 255, 255, 0.72);
+  --yona-chat-quote-own: rgba(255, 255, 255, 0.1);
+  --yona-chat-quote-line-own: #6fa8e8;
+  --yona-chat-quote-name-own: #a8cbf2;
+  --yona-chat-dot: #c4c8ce;
+  --yona-chat-progress-track: rgba(255, 255, 255, 0.6);
+  --yona-chat-scrim: rgba(23, 24, 26, 0.9);
+  --yona-chat-scrim-soft: rgba(23, 24, 26, 0.3);
+  --yona-chat-on-scrim: #ffffff;
+  --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.dark {
+  --yona-chat-surface: rgb(var(--slate-1));
+  --yona-chat-panel: rgb(var(--slate-2));
+  --yona-chat-field: rgb(var(--slate-4));
+  --yona-chat-ink: rgb(var(--slate-12));
+  --yona-chat-ink-soft: rgb(var(--slate-11));
+  --yona-chat-ink-muted: rgb(var(--slate-10));
+  --yona-chat-line: rgba(255, 255, 255, 0.09);
+  --yona-chat-line-strong: rgba(255, 255, 255, 0.22);
+  --yona-chat-online: rgb(var(--teal-11));
+  --yona-chat-online-dot: rgb(var(--teal-10));
+  --yona-chat-danger: rgb(var(--ruby-11));
+  --yona-chat-danger-bg: rgb(var(--ruby-2));
+  --yona-chat-danger-line: rgb(var(--ruby-6));
+  --yona-chat-solid: rgb(var(--slate-5));
+  --yona-chat-on-solid: rgb(var(--slate-12));
+  --yona-chat-on-solid-soft: rgb(var(--slate-11));
+  --yona-chat-quote-own: rgba(255, 255, 255, 0.08);
+  --yona-chat-dot: rgb(var(--slate-8));
+  --yona-chat-progress-track: rgba(255, 255, 255, 0.25);
+}
+
+// Tin gốc vừa được nhảy tới từ khối trích dẫn nháy nền trong chốc lát.
+.yona-chat-highlight {
+  background: var(--yona-chat-field);
+  transition: background-color 0.3s ease;
+}
+
 // Bản gốc KHÔNG ép Inter cho body widget (khác dashboard) — chữ chạy bằng
 // font hệ thống của tailwind; ép Inter vào đây làm lệch pixel với oracle.
 html,

@@ -1,83 +1,69 @@
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
-
-import { getContrastingTextColor } from '../helpers/colorHelper';
 import { t } from '../i18n';
+import { DocumentIcon, DownloadIcon } from './message/icons';
+import type { MessageAttachment } from '../types';
 
-// Port từ widget/components/{ImageBubble,VideoBubble,FileBubble}.vue —
-// ba bong bóng đính kèm, cùng markup/class của bản gốc.
+// Bong bóng đính kèm không phải ảnh (ảnh đi qua lưới ảnh).
 
-interface ImageBubbleProps {
-    url: string;
-    thumb: string;
-    readableTime: string;
-    onError: () => void;
-}
-
-export function ImageBubble({ url, thumb, readableTime, onError }: ImageBubbleProps) {
+export function VideoBubble({ url, onError }: { url: string; onError?: () => void }) {
     return (
-        <a href={url} target="_blank" rel="noreferrer noopener nofollow" className="image">
-            <div className="wrap">
-                <img src={thumb} alt="Picture message" onError={onError} />
-                <span className="time">{readableTime}</span>
-            </div>
-        </a>
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video className="block h-auto w-full max-w-[250px] rounded-[12px]" src={url} controls onError={onError} />
     );
 }
 
-interface VideoBubbleProps {
-    url: string;
-    readableTime: string;
-    onError: () => void;
+export function AudioBubble({ url }: { url: string }) {
+    return (
+        <audio controls className="h-10 max-w-[250px]">
+            <source src={url} />
+        </audio>
+    );
 }
 
-export function VideoBubble({ url, readableTime, onError }: VideoBubbleProps) {
+const readableFileSize = (bytes?: number): string => {
+    if (!bytes) return '';
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const fileNameOf = (url: string): string => {
+    try {
+        return decodeURIComponent(url.substring(url.lastIndexOf('/') + 1).split('?')[0]);
+    } catch {
+        return url;
+    }
+};
+
+// Thẻ tệp gọn một dòng: tên + kích cỡ + nút tải riêng.
+export function FileBubble({ attachment, isInProgress = false }: { attachment: MessageAttachment; isInProgress?: boolean }) {
+    const url = attachment.data_url ?? '';
+    const title = isInProgress ? t('COMPONENTS.FILE_BUBBLE.UPLOADING') : fileNameOf(url);
+    const size = readableFileSize(attachment.file_size);
+
     return (
-        <div className="relative block max-w-full">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-            <video className="w-full max-w-[250px] h-auto" src={url} controls onError={onError} />
-            <span className="absolute text-xs text-white dark:text-white right-3 bottom-1 whitespace-nowrap">
-                {readableTime}
+        <div className="yona-file-bubble flex max-w-[240px] items-center gap-[10px] rounded-[12px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] py-2 pe-2 ps-[10px]">
+            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[8px] bg-[var(--yona-chat-field)] text-[var(--yona-chat-ink-soft)]">
+                <DocumentIcon />
             </span>
-        </div>
-    );
-}
-
-interface FileBubbleProps {
-    url: string;
-    isInProgress?: boolean;
-    widgetColor?: string;
-    isUserBubble?: boolean;
-}
-
-export function FileBubble({ url, isInProgress = false, widgetColor = '', isUserBubble = false }: FileBubbleProps) {
-    const fileName = url.substring(url.lastIndexOf('/') + 1);
-    const title = isInProgress ? t('COMPONENTS.FILE_BUBBLE.UPLOADING') : decodeURI(fileName);
-    const textColor = isUserBubble && widgetColor ? getContrastingTextColor(widgetColor) : undefined;
-
-    return (
-        <div className="file flex flex-row items-center p-3 cursor-pointer">
-            <div className="icon-wrap" style={{ color: textColor }}>
-                <FluentIcon icon="document" size="28" />
-            </div>
-            <div className="ltr:pr-1 rtl:pl-1">
-                <div
-                    className={`m-0 font-medium text-sm ${isUserBubble ? '' : 'text-n-slate-12'}`}
-                    style={{ color: textColor }}
-                >
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12.5px] font-medium leading-[1.35] text-[var(--yona-chat-ink)]">
                     {title}
-                </div>
-                <div className="leading-none mb-1">
-                    <a
-                        className="download"
-                        rel="noreferrer noopener nofollow"
-                        target="_blank"
-                        style={{ color: textColor }}
-                        href={url}
-                    >
-                        {t('COMPONENTS.FILE_BUBBLE.DOWNLOAD')}
-                    </a>
-                </div>
-            </div>
+                </span>
+                {size ? (
+                    <span className="block text-[11px] leading-[1.3] text-[var(--yona-chat-ink-muted)]">{size}</span>
+                ) : null}
+            </span>
+            {!isInProgress && url ? (
+                <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer noopener nofollow"
+                    aria-label={t('COMPONENTS.FILE_BUBBLE.DOWNLOAD')}
+                    title={t('COMPONENTS.FILE_BUBBLE.DOWNLOAD')}
+                    className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[var(--yona-chat-ink-soft)]"
+                >
+                    <DownloadIcon />
+                </a>
+            ) : null}
         </div>
     );
 }

@@ -1,0 +1,111 @@
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import DOMPurify from 'dompurify';
+
+import MessageFormatter from 'shared/helpers/MessageFormatter';
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
+
+import { isDeletedMessage } from '../../helpers/messageHelpers';
+import { AudioBubble, FileBubble, VideoBubble } from '../bubbles';
+import { bubbleRadius, partPosition } from './bubbleShape';
+import DeletedBubble from './DeletedBubble';
+import ImageGrid from './ImageGrid';
+import QuotedReply from './QuotedReply';
+import StickerBubble from './StickerBubble';
+import type { MessageAttachment, WidgetMessage } from '../../types';
+
+function TextBubble({
+    content,
+    replyTo,
+    isOwn,
+    position,
+}: {
+    content: string;
+    replyTo: WidgetMessage | null;
+    isOwn: boolean;
+    position: MessageGroupPosition;
+}) {
+    const tone = isOwn
+        ? 'bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)]'
+        : 'border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] text-[var(--yona-chat-ink)]';
+    const spacing = replyTo ? 'flex flex-col gap-[7px] p-[6px] pb-[10px]' : 'px-[13px] py-[9px]';
+
+    return (
+        <div className={`yona-text-bubble max-w-full text-[13.5px] leading-[1.5] ${tone} ${spacing}`} style={bubbleRadius(isOwn, position)}>
+            {replyTo ? <QuotedReply replyTo={replyTo} isOwn={isOwn} /> : null}
+            {content ? (
+                <div
+                    className={`message-content break-words [&_a]:underline ${replyTo ? 'px-[7px]' : ''}`}
+                    dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
+                    }}
+                />
+            ) : null}
+        </div>
+    );
+}
+
+function OtherAttachment({ attachment, isInProgress }: { attachment: MessageAttachment; isInProgress: boolean }) {
+    const [hasMediaError, setMediaError] = useState(false);
+    const url = attachment.data_url ?? '';
+
+    if (attachment.file_type === 'video' && !hasMediaError) {
+        return <VideoBubble url={url} onError={() => setMediaError(true)} />;
+    }
+    if (attachment.file_type === 'audio') return <AudioBubble url={url} />;
+
+    return <FileBubble attachment={attachment} isInProgress={isInProgress} />;
+}
+
+interface MessageBodyProps {
+    message: WidgetMessage;
+    replyTo: WidgetMessage | null;
+    isOwn: boolean;
+    position: MessageGroupPosition;
+}
+
+// Thân một tin, dùng chung cho tin của khách và của agent: khối chữ (kèm trích
+// dẫn), lưới ảnh, tệp; tin thu hồi thành bong bóng nét đứt, sticker đứng trần.
+export default function MessageBody({ message, replyTo, isOwn, position }: MessageBodyProps) {
+    const [hasImageError, setImageError] = useState(false);
+
+    useEffect(() => setImageError(false), [message.attachments]);
+
+    if (isDeletedMessage(message)) return <DeletedBubble isOwn={isOwn} position={position} />;
+    if (message.content_type === 'sticker') return <StickerBubble message={message} />;
+
+    const attachments = message.attachments ?? [];
+    const images = hasImageError ? [] : attachments.filter(attachment => attachment.file_type === 'image');
+    const others = attachments.filter(attachment => !images.includes(attachment));
+    const isInProgress = message.status === 'in_progress';
+    const content = message.content ?? '';
+
+    const parts: ((partPositionValue: MessageGroupPosition) => ReactNode)[] = [];
+    if (content || replyTo) {
+        parts.push(partPositionValue => (
+            <TextBubble key="text" content={content} replyTo={replyTo} isOwn={isOwn} position={partPositionValue} />
+        ));
+    }
+    if (images.length) {
+        parts.push(partPositionValue => (
+            <ImageGrid
+                key="images"
+                images={images}
+                isOwn={isOwn}
+                position={partPositionValue}
+                onImageError={() => setImageError(true)}
+            />
+        ));
+    }
+    others.forEach((attachment, index) => {
+        parts.push(() => (
+            <OtherAttachment
+                key={attachment.id ?? attachment.data_url ?? `file-${index}`}
+                attachment={attachment}
+                isInProgress={isInProgress}
+            />
+        ));
+    });
+
+    return <>{parts.map((renderPart, index) => renderPart(partPosition(position, index, parts.length)))}</>;
+}

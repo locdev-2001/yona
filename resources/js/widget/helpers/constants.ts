@@ -41,3 +41,14 @@ export const AGENT_TYPING_TIMEOUT = 30000;
 export const CAMPAIGN_CACHE_KEY_PREFIX = 'chatwoot_campaigns_';
 export const CAMPAIGN_CACHE_EXPIRY = 60 * 60 * 1000;
 export const CAMPAIGN_SNOOZE_DURATION = 60 * 60 * 1000;
+
+// Tin có khung riêng không gom nhóm với tin khác: mỗi tin tự đứng một khối.
+export const STANDALONE_CONTENT_TYPES: readonly string[] = [
+    'input_csat',
+    'input_email',
+    'input_select',
+    'form',
+    'article',
+    'cards',
+    'integrations',
+];

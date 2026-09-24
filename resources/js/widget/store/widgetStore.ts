@@ -1,5 +1,5 @@
 import * as api from '../api/widget';
-import { getWebsiteToken, setAuthToken } from '../api/client';
+import { getWebsiteToken, setAuthToken, WidgetApiError } from '../api/client';
 import {
     AGENT_TYPING_TIMEOUT,
     CAMPAIGN_CACHE_EXPIRY,
@@ -15,14 +15,16 @@ import { IFrameHelper } from '../helpers/iframe';
 import {
     createTemporaryMessage,
     findUndeliveredMessage,
-    getNonDeletedMessages,
     getUnreadMessageCount,
 } from '../helpers/messageHelpers';
+import { t } from '../i18n';
 import type {
     AppConfig,
     AvailableAgent,
     ChannelConfig,
+    ChannelMessagingPolicy,
     ConversationAttributes,
+    MessageAttachment,
     WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
@@ -60,6 +62,8 @@ export interface WidgetState {
     campaigns: WidgetCampaign[];
     activeCampaign: WidgetCampaign | null;
     campaignsFetched: boolean;
+    messagingPolicy: ChannelMessagingPolicy;
+    agentLastSeenAt: number;
 }
 
 const DEFAULT_APP_CONFIG: AppConfig = {
@@ -98,6 +102,9 @@ let state: WidgetState = {
     campaigns: [],
     activeCampaign: null,
     campaignsFetched: false,
+    // Hạn 0 = chưa biết chính sách của kênh, chưa hiện mục thu hồi.
+    messagingPolicy: { recallWindowSeconds: 0, stickers: [] },
+    agentLastSeenAt: 0,
 };
 
 type Listener = () => void;
@@ -120,6 +127,86 @@ const pendingMetadata = () =>
     hasPendingMetadata()
         ? { customAttributes: state.pendingCustomAttributes, labels: state.pendingLabels }
         : {};
+
+
+const previewUrlOf = (file: File): string =>
+    typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
+
+const attachmentPreviewOf = (file: File): MessageAttachment => {
+    const previewUrl = previewUrlOf(file);
+    return {
+        thumb_url: previewUrl,
+        data_url: previewUrl,
+        file_type: file.type.startsWith('image/') ? 'image' : 'file',
+        file_size: file.size,
+        status: 'in_progress',
+        progress: 0,
+    };
+};
+
+// Một yêu cầu chở nhiều tệp nên chỉ có tổng số byte đã tải; quy về từng tệp theo
+// thứ tự gửi: tệp trước đầy rồi tệp sau mới chạy.
+export const splitProgressAcrossFiles = (loadedBytes: number, fileSizes: number[]): number[] => {
+    let remainingBytes = loadedBytes;
+    return fileSizes.map(size => {
+        if (size <= 0) return 100;
+        const consumedBytes = Math.max(0, Math.min(size, remainingBytes));
+        remainingBytes -= consumedBytes;
+        return Math.round((consumedBytes / size) * 100);
+    });
+};
+
+function patchMessage(messageId: number | string, patch: (message: WidgetMessage) => WidgetMessage): void {
+    const message = state.conversations[messageId];
+    if (!message) return;
+    setState({ conversations: { ...state.conversations, [messageId]: patch(message) } });
+}
+
+function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMessage): void {
+    const conversations = { ...state.conversations };
+    delete conversations[temporaryId];
+    setState({ conversations });
+    pushMessageToConversation(message);
+}
+
+async function sendAttachmentMessage({
+    files,
+    previews,
+    caption,
+    replyTo,
+    onProgress,
+}: {
+    files: (File | string)[];
+    previews: MessageAttachment[];
+    caption: string;
+    replyTo: number | string | null;
+    onProgress?: (fileIndex: number, percent: number) => void;
+}): Promise<void> {
+    const temporaryMessage = createTemporaryMessage({ content: caption || undefined, attachments: previews, replyTo });
+    const metadata = pendingMetadata();
+    pushMessageToConversation(temporaryMessage);
+
+    const fileSizes = previews.map(preview => preview.file_size ?? 0);
+    const reportProgress = (loadedBytes: number) => {
+        const percents = splitProgressAcrossFiles(loadedBytes, fileSizes);
+        percents.forEach((percent, fileIndex) => onProgress?.(fileIndex, percent));
+        patchMessage(temporaryMessage.id, message => ({
+            ...message,
+            attachments: message.attachments?.map((attachment, index) => ({
+                ...attachment,
+                progress: percents[index] ?? attachment.progress,
+            })),
+        }));
+    };
+
+    try {
+        const data = await api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress);
+        if (hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
+        replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
+    } catch {
+        pushMessageToConversation({ ...temporaryMessage, status: 'failed' });
+    }
+}
 
 // conversation/mutations.js#pushMessageToConversation
 function pushMessageToConversation(message: WidgetMessage): void {
@@ -178,6 +265,10 @@ export const widgetStore = {
         setState({ appConfig: { ...state.appConfig, ...patch } });
     },
 
+    setMessagingPolicy(messagingPolicy: ChannelMessagingPolicy): void {
+        setState({ messagingPolicy });
+    },
+
     setWidgetColor(widgetColor: string): void {
         setState({ appConfig: { ...state.appConfig, widgetColor } });
     },
@@ -217,7 +308,7 @@ export const widgetStore = {
         try {
             setState({ uiFlags: { ...state.uiFlags, isFetchingList: true } });
             const { payload, meta } = await api.fetchMessages({ before });
-            const messages = getNonDeletedMessages({ messages: payload ?? [] });
+            const messages = payload ?? [];
             const conversations = { ...state.conversations };
             messages.forEach(message => {
                 conversations[message.id] = message;
@@ -240,7 +331,7 @@ export const widgetStore = {
     async syncLatestMessages(): Promise<void> {
         try {
             const { payload, meta } = await api.fetchMessages({ after: state.lastMessageId ?? undefined });
-            const messages = getNonDeletedMessages({ messages: payload ?? [] });
+            const messages = payload ?? [];
             const missing = messages.filter(message => state.conversations[message.id] === undefined);
             if (!missing.length) return;
 
@@ -280,6 +371,7 @@ export const widgetStore = {
         }
     },
 
+    // Đường một tệp cũ của ô nhập: cùng một đường với nhiều tệp, mảng một phần tử.
     async sendAttachment({
         attachment,
         replyTo = null,
@@ -287,38 +379,62 @@ export const widgetStore = {
         attachment: { file: File | string; thumbUrl: string; fileType: string };
         replyTo?: number | string | null;
     }): Promise<void> {
+        const preview =
+            typeof attachment.file === 'string'
+                ? { thumb_url: attachment.thumbUrl, data_url: attachment.thumbUrl, file_type: attachment.fileType, status: 'in_progress' }
+                : attachmentPreviewOf(attachment.file);
+        await sendAttachmentMessage({ files: [attachment.file], previews: [preview], caption: '', replyTo });
+    },
+
+    // Nhiều tệp gộp thành MỘT tin kèm chú thích; tiến trình báo theo từng tệp.
+    async sendAttachments({
+        files,
+        caption = '',
+        replyTo = null,
+        onProgress,
+    }: {
+        files: File[];
+        caption?: string;
+        replyTo?: number | string | null;
+        onProgress?: (fileIndex: number, percent: number) => void;
+    }): Promise<void> {
+        if (!files.length) return;
+        await sendAttachmentMessage({ files, previews: files.map(attachmentPreviewOf), caption, replyTo, onProgress });
+    },
+
+    async sendSticker({ stickerId, replyTo = null }: { stickerId: string; replyTo?: number | string | null }): Promise<void> {
         const temporaryMessage = createTemporaryMessage({
-            attachments: [
-                {
-                    thumb_url: attachment.thumbUrl,
-                    data_url: attachment.thumbUrl,
-                    file_type: attachment.fileType,
-                    status: 'in_progress',
-                },
-            ],
+            contentType: 'sticker',
+            contentAttributes: { sticker: stickerId },
             replyTo,
         });
-        const metadata = pendingMetadata();
         pushMessageToConversation(temporaryMessage);
         try {
-            const data = await api.sendAttachment({ file: attachment.file, replyTo }, metadata);
-            if (hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
-            const conversations = { ...state.conversations };
-            delete conversations[temporaryMessage.id];
-            setState({ conversations });
-            pushMessageToConversation({ ...data, status: 'sent' });
+            const data = await api.sendSticker(stickerId, replyTo);
+            replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
         } catch {
             pushMessageToConversation({ ...temporaryMessage, status: 'failed' });
         }
     },
 
-    addOrUpdateMessage(message: WidgetMessage): void {
-        if (message.content_attributes?.deleted) {
-            const conversations = { ...state.conversations };
-            delete conversations[message.id];
-            setState({ conversations });
-            return;
+    // Máy chủ quyết định được thu hồi hay không; thành công thì đánh dấu tại chỗ để
+    // bong bóng nét đứt hiện ngay, không đợi realtime.
+    async recallMessage(messageId: number | string): Promise<void> {
+        try {
+            await api.recallMessage(messageId);
+            patchMessage(messageId, message => ({ ...message, content_attributes: { deleted: true }, attachments: [] }));
+        } catch (error) {
+            const code = error instanceof WidgetApiError ? (error.body as { code?: string } | null)?.code : undefined;
+            widgetStore.showBanner({
+                message: code === 'recall_window_expired' ? t('RECALL.EXPIRED') : t('RECALL.FAILED'),
+                type: 'error',
+            });
+            throw error;
         }
+    },
+
+    // Tin bị thu hồi ở lại danh sách thành bong bóng nét đứt cho cả hai bên.
+    addOrUpdateMessage(message: WidgetMessage): void {
         pushMessageToConversation(message);
     },
 
@@ -381,6 +497,7 @@ export const widgetStore = {
             setState({
                 conversationAttributes: { id: data?.id ?? '', status: data?.status ?? '' },
                 meta: { userLastSeenAt: data?.contact_last_seen_at ?? state.meta.userLastSeenAt },
+                agentLastSeenAt: data?.agent_last_seen_at ?? state.agentLastSeenAt,
             });
         } catch {
             // Bỏ qua như bản gốc.
@@ -671,6 +788,13 @@ export const widgetStore = {
         }
     },
 };
+
+api.onConfigLoaded(({ website_channel_config: channelPayload }) => {
+    widgetStore.setMessagingPolicy({
+        recallWindowSeconds: channelPayload.recall_window ?? 0,
+        stickers: channelPayload.stickers ?? [],
+    });
+});
 
 // Getter dùng nhiều chỗ — giữ tên như getters của bản gốc.
 export const selectMessages = (widgetState: WidgetState): WidgetMessage[] =>

@@ -1,3 +1,5 @@
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
+
 // Kiểu dữ liệu của widget — bám đúng phản hồi `/api/v1/widget/*`
 // (hợp đồng trong plans/260831-rewrite-chatwoot-laravel/reports/c2-notes-be.md).
 
@@ -46,6 +48,14 @@ export interface PreChatFormOptions {
     pre_chat_fields?: PreChatField[];
 }
 
+// Một sticker trong danh mục của kênh (`/config` → `stickers`).
+export interface WidgetSticker {
+    id: string;
+    image_url: string;
+    pack_id: string | null;
+    label: string | null;
+}
+
 export interface WebsiteChannelConfigPayload {
     allow_messages_after_resolved: boolean;
     api_host: string;
@@ -60,7 +70,10 @@ export interface WebsiteChannelConfigPayload {
     portal: unknown;
     pre_chat_form_enabled: boolean;
     pre_chat_form_options: PreChatFormOptions;
+    // Hạn thu hồi tin của khách (giây) — chính sách của kênh, máy chủ thực thi.
+    recall_window?: number;
     reply_time: string;
+    stickers?: WidgetSticker[];
     timezone: string;
     utc_off_set: string;
     website_name: string;
@@ -130,7 +143,28 @@ export interface MessageAttachment {
     data_url?: string;
     thumb_url?: string;
     status?: string;
+    file_size?: number;
+    // Chỉ có ở tệp đang tải lên: phần trăm đã tải để vẽ tiến trình trong ô.
+    progress?: number;
 }
+
+// `content_attributes.items` của tin `cards`.
+export interface CardAction {
+    type: 'link' | 'postback';
+    text: string;
+    uri?: string;
+    payload?: string;
+}
+
+export interface CardItem {
+    title: string;
+    description?: string;
+    media_url?: string;
+    actions?: CardAction[];
+}
+
+// Sticker đã lưu: máy chủ tra danh mục và ghi lại ảnh; tin tạm phía khách chỉ có mã.
+export type MessageSticker = string | { id?: string | number; url?: string; thumbnail?: string };
 
 export interface MessageSender {
     id?: number;
@@ -151,16 +185,18 @@ export interface WidgetMessage {
         in_reply_to?: number;
         submitted_email?: string;
         submitted_values?: unknown;
+        sticker?: MessageSticker;
+        items?: CardItem[];
     };
     created_at: number;
     conversation_id?: number;
     attachments?: MessageAttachment[];
     sender?: MessageSender;
     additional_attributes?: { sender_name?: string; sender_avatar_url?: string };
-    status?: 'in_progress' | 'sent' | 'failed';
+    // 'in_progress' là trạng thái tạm phía widget; còn lại do máy chủ trả.
+    status?: 'in_progress' | 'sent' | 'delivered' | 'read' | 'failed';
     replyTo?: number | string | null;
     meta?: { error?: string };
-    showAvatar?: boolean;
 }
 
 // Bản ghi campaign của `GET /api/v1/widget/campaigns` (`id` = display_id).
@@ -218,7 +254,19 @@ export interface AttachmentPayload {
     fileType: string;
 }
 
-export interface GroupedMessages {
+export interface PositionedMessage {
+    message: WidgetMessage;
+    position: MessageGroupPosition;
+}
+
+// Tin trong một ngày, đã gom thành các nhóm liên tiếp cùng người gửi.
+export interface MessagesOfDay {
     date: string;
-    messages: WidgetMessage[];
+    groups: PositionedMessage[][];
+}
+
+// Chính sách nhắn tin của kênh mà `/config` báo về.
+export interface ChannelMessagingPolicy {
+    recallWindowSeconds: number;
+    stickers: WidgetSticker[];
 }

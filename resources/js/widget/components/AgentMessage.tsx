@@ -1,27 +1,24 @@
-import { useEffect, useState } from 'react';
 import DOMPurify from 'dompurify';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
-import { messageStamp } from 'shared/helpers/timeHelper';
-import { emitter } from 'shared/helpers/emitter';
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
-import { MESSAGE_TYPE, WIDGET_BUS_EVENTS } from '../helpers/constants';
-import { isASubmittedFormMessage } from '../helpers/messageHelpers';
+import { MESSAGE_TYPE } from '../helpers/constants';
+import { isASubmittedFormMessage, isDeletedMessage } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
-import { FileBubble, ImageBubble, VideoBubble } from './bubbles';
+import CardsCarousel from './message/CardsCarousel';
+import MessageRow from './message/MessageRow';
+import { messageElementId } from './message/QuotedReply';
 import CustomerSatisfaction from './template/CustomerSatisfaction';
 import EmailInput from './template/EmailInput';
-import MessageReplyButton from './MessageReplyButton';
-import ReplyToChip from './ReplyToChip';
 import UserMessage from './UserMessage';
 import type { WidgetMessage } from '../types';
 
-// Port từ widget/components/AgentMessage.vue + AgentMessageBubble.vue.
-// C3 thêm nhánh `input_email` (bong bóng bot xin email), C5 thêm `input_csat`
-// (bong bóng khảo sát). Các content_type còn lại của bot (cards/form/
-// input_select/article/integrations) chưa port — đi cùng nhóm D (help center).
+// Tin của agent/bot. Tin thường (chữ, ảnh, tệp, sticker, thẻ) đi chung khung với
+// tin của khách; tin mẫu có khung riêng (khảo sát, xin email, biểu mẫu) giữ bong bóng cũ.
+const TEMPLATE_CONTENT_TYPES = ['input_csat', 'input_email', 'input_select', 'form', 'article', 'integrations'];
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
 // Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
@@ -73,21 +70,37 @@ function AgentMessageBubble({
 interface AgentMessageProps {
     message: WidgetMessage;
     replyTo?: WidgetMessage | null;
+    position?: MessageGroupPosition;
+    showAvatar?: boolean;
 }
 
-export default function AgentMessage({ message, replyTo = null }: AgentMessageProps) {
+function useAgentIdentity(message: WidgetMessage) {
     const channelConfig = useWidgetState(state => state.channelConfig);
-    const [hasImageError, setImageError] = useState(false);
-    const [hasVideoError, setVideoError] = useState(false);
+    const useInboxAvatarForBot = Boolean(channelConfig?.enabledFeatures.includes('use_inbox_avatar_for_bot'));
 
-    useEffect(() => {
-        setImageError(false);
-        setVideoError(false);
-    }, [message]);
+    const name = message.sender
+        ? message.sender.available_name || message.sender.name
+        : message.additional_attributes?.sender_name
+          ? message.additional_attributes.sender_name
+          : useInboxAvatarForBot
+            ? channelConfig?.websiteName
+            : t('UNREAD_VIEW.BOT');
 
+    const botImage = useInboxAvatarForBot ? channelConfig?.avatarUrl : BOT_AVATAR;
+    const avatarUrl =
+        message.message_type === MESSAGE_TYPE.TEMPLATE
+            ? botImage
+            : message.sender
+              ? message.sender.avatar_url
+              : message.additional_attributes?.sender_avatar_url || botImage;
+
+    return { name: name ?? '', avatarUrl };
+}
+
+function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; showAvatar: boolean }) {
+    const agent = useAgentIdentity(message);
     const contentAttributes = message.content_attributes ?? {};
     const contentType = message.content_type ?? '';
-    const useInboxAvatarForBot = Boolean(channelConfig?.enabledFeatures.includes('use_inbox_avatar_for_bot'));
 
     const shouldDisplayAgentMessage =
         contentType === 'input_select' && contentAttributes.submitted_values && !message.content
@@ -100,25 +113,6 @@ export default function AgentMessage({ message, replyTo = null }: AgentMessagePr
     );
 
     const isASubmittedForm = isASubmittedFormMessage(message);
-    const hasAttachments = Boolean(message.attachments && message.attachments.length > 0);
-    const readableTime = messageStamp(message.created_at, 'LLL d yyyy, h:mm a');
-    const hasReplyTo = Boolean(replyTo && (replyTo.content || replyTo.attachments));
-
-    const agentName = message.sender
-        ? message.sender.available_name || message.sender.name
-        : message.additional_attributes?.sender_name
-          ? message.additional_attributes.sender_name
-          : useInboxAvatarForBot
-            ? channelConfig?.websiteName
-            : t('UNREAD_VIEW.BOT');
-
-    const displayImage = useInboxAvatarForBot ? channelConfig?.avatarUrl : BOT_AVATAR;
-    const avatarUrl =
-        message.message_type === MESSAGE_TYPE.TEMPLATE
-            ? displayImage
-            : message.sender
-              ? message.sender.avatar_url
-              : message.additional_attributes?.sender_avatar_url || displayImage;
 
     const responseMessage = contentAttributes.submitted_email
         ? { content: String(contentAttributes.submitted_email) }
@@ -139,87 +133,42 @@ export default function AgentMessage({ message, replyTo = null }: AgentMessagePr
           }))
         : [];
 
-    const toggleReply = () => emitter.emit(WIDGET_BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, message);
-
     return (
         <div
             className={`agent-message-wrap group ${hasRecordedResponse || isASubmittedForm ? 'has-response' : ''}`.trim()}
-            id={`cwmsg-${message.id}`}
+            id={messageElementId(message.id)}
         >
             {!isASubmittedForm ? (
                 <div className="agent-message">
                     <div className="avatar-wrap">
                         <div className="user-thumbnail-box">
-                            {message.showAvatar || hasRecordedResponse ? (
-                                <Avatar src={avatarUrl} size={24} name={agentName ?? ''} roundedFull />
+                            {showAvatar || hasRecordedResponse ? (
+                                <Avatar src={agent.avatarUrl} size={24} name={agent.name} roundedFull />
                             ) : null}
                         </div>
                     </div>
                     <div className="message-wrap">
-                        {hasReplyTo ? (
-                            <div className="flex mt-2 mb-1 text-xs">
-                                <ReplyToChip replyTo={replyTo as WidgetMessage} />
-                            </div>
-                        ) : null}
-                        <div className="flex w-full gap-1">
-                            <div className="space-y-2">
-                                {shouldDisplayAgentMessage ? (
-                                    <AgentMessageBubble
-                                        content={message.content ?? ''}
-                                        contentType={contentType}
-                                        messageId={message.id}
-                                        messageContentAttributes={contentAttributes}
-                                    />
-                                ) : null}
-                                {hasAttachments ? (
-                                    <div
-                                        className={`space-y-2 chat-bubble has-attachment agent bg-n-background dark:bg-n-solid-3 ${
-                                            shouldDisplayAgentMessage ? 'has-text' : ''
-                                        }`.trim()}
-                                    >
-                                        {message.attachments?.map(attachment => (
-                                            <div key={attachment.id ?? attachment.data_url}>
-                                                {attachment.file_type === 'image' && !hasImageError ? (
-                                                    <ImageBubble
-                                                        url={attachment.data_url ?? ''}
-                                                        thumb={attachment.data_url ?? ''}
-                                                        readableTime={readableTime}
-                                                        onError={() => setImageError(true)}
-                                                    />
-                                                ) : attachment.file_type === 'video' && !hasVideoError ? (
-                                                    <VideoBubble
-                                                        url={attachment.data_url ?? ''}
-                                                        readableTime={readableTime}
-                                                        onError={() => setVideoError(true)}
-                                                    />
-                                                ) : attachment.file_type === 'audio' ? (
-                                                    <audio controls className="h-10 dark:invert">
-                                                        <source src={attachment.data_url} />
-                                                    </audio>
-                                                ) : (
-                                                    <FileBubble url={attachment.data_url ?? ''} />
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-                            </div>
-                            <div className="flex flex-col justify-end">
-                                <MessageReplyButton
-                                    className="transition-opacity delay-75 opacity-0 group-hover:opacity-100 sm:opacity-0"
-                                    onClick={toggleReply}
-                                />
-                            </div>
-                        </div>
-                        {message.showAvatar || hasRecordedResponse ? (
-                            <p className="agent-name text-n-slate-11">{agentName}</p>
+                        {shouldDisplayAgentMessage ? (
+                            <AgentMessageBubble
+                                content={message.content ?? ''}
+                                contentType={contentType}
+                                messageId={message.id}
+                                messageContentAttributes={contentAttributes}
+                            />
                         ) : null}
                     </div>
                 </div>
             ) : null}
 
             {hasRecordedResponse ? (
-                <UserMessage message={{ ...responseMessage, id: `${message.id}-response`, message_type: MESSAGE_TYPE.INCOMING, created_at: message.created_at }} />
+                <UserMessage
+                    message={{
+                        ...responseMessage,
+                        id: `${message.id}-response`,
+                        message_type: MESSAGE_TYPE.INCOMING,
+                        created_at: message.created_at,
+                    }}
+                />
             ) : null}
             {isASubmittedForm
                 ? submittedFormValues.map(submittedValue => (
@@ -235,5 +184,31 @@ export default function AgentMessage({ message, replyTo = null }: AgentMessagePr
                   ))
                 : null}
         </div>
+    );
+}
+
+export default function AgentMessage({
+    message,
+    replyTo = null,
+    position = 'single',
+    showAvatar = true,
+}: AgentMessageProps) {
+    const agent = useAgentIdentity(message);
+    const contentType = message.content_type ?? '';
+
+    if (!isDeletedMessage(message) && (TEMPLATE_CONTENT_TYPES.includes(contentType) || isASubmittedFormMessage(message))) {
+        return <TemplateMessage message={message} showAvatar={showAvatar} />;
+    }
+
+    const cardItems = contentType === 'cards' && !isDeletedMessage(message) ? (message.content_attributes?.items ?? []) : [];
+    const avatar = showAvatar ? <Avatar src={agent.avatarUrl} size={26} name={agent.name} roundedFull /> : null;
+
+    return (
+        <>
+            {message.content || message.attachments?.length || isDeletedMessage(message) || contentType === 'sticker' ? (
+                <MessageRow message={message} replyTo={replyTo} isOwn={false} position={position} avatar={avatar} />
+            ) : null}
+            {cardItems.length ? <CardsCarousel items={cardItems} /> : null}
+        </>
     );
 }

@@ -1,5 +1,6 @@
-import { apiDelete, apiGet, apiPatch, apiPost, apiPostForm, buildSearch } from './client';
-import { buildSendAttachmentFormData, buildSendMessagePayload } from '../helpers/messageHelpers';
+import { apiDelete, apiGet, apiPatch, apiPost, buildSearch } from './client';
+import { postFormWithProgress } from './upload';
+import { buildSendAttachmentsFormData, buildSendMessagePayload } from '../helpers/messageHelpers';
 import type {
     AvailableAgent,
     ConversationAttributes,
@@ -21,11 +22,25 @@ const eventParams = () => ({
     referer: referrerUrl(),
 });
 
-export const fetchConfig = (): Promise<WidgetConfigResponse> =>
-    apiPost<WidgetConfigResponse>(`${BASE}/config${buildSearch()}`);
+type ConfigListener = (config: WidgetConfigResponse) => void;
+const configListeners = new Set<ConfigListener>();
+
+// Tầng trên nghe cấu hình vừa tải (vd. chính sách nhắn tin của kênh) mà không
+// phải chen vào luồng khởi động của app.
+export const onConfigLoaded = (listener: ConfigListener): (() => void) => {
+    configListeners.add(listener);
+    return () => configListeners.delete(listener);
+};
+
+export const fetchConfig = async (): Promise<WidgetConfigResponse> => {
+    const config = await apiPost<WidgetConfigResponse>(`${BASE}/config${buildSearch()}`);
+    configListeners.forEach(listener => listener(config));
+    return config;
+};
 
 export const fetchConversationAttributes = (): Promise<Partial<ConversationAttributes> & {
     contact_last_seen_at?: number;
+    agent_last_seen_at?: number;
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);
 
 // endPoints.js#createConversation — tin đầu tiên đi kèm ngay trong yêu cầu tạo.
@@ -70,14 +85,33 @@ export const sendMessage = (
         buildSendMessagePayload({ content, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
     );
 
-export const sendAttachment = (
-    { file, replyTo = null }: { file: File | string; replyTo?: number | string | null },
+// Một hoặc nhiều tệp trong CÙNG một tin, kèm chú thích và tin được trả lời.
+export const sendAttachments = (
+    { files, caption = '', replyTo = null }: { files: (File | string)[]; caption?: string; replyTo?: number | string | null },
     { customAttributes, labels }: { customAttributes?: Record<string, unknown>; labels?: string[] } = {},
+    onUploadProgress?: (loadedBytes: number, totalBytes: number) => void,
 ): Promise<WidgetMessage> =>
-    apiPostForm(
+    postFormWithProgress(
         `${BASE}/messages${buildSearch()}`,
-        buildSendAttachmentFormData({ file, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
+        buildSendAttachmentsFormData({ files, caption, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
+        onUploadProgress,
     );
+
+// Sticker gửi MÃ trong danh mục của kênh; máy chủ tự tra ảnh, không nhận URL.
+export const sendSticker = (stickerId: string, replyTo: number | string | null = null): Promise<WidgetMessage> =>
+    apiPost(`${BASE}/messages${buildSearch()}`, {
+        message: {
+            content_type: 'sticker',
+            content_attributes: { sticker: stickerId },
+            reply_to: replyTo,
+            timestamp: new Date().toString(),
+            referer_url: referrerUrl(),
+        },
+    });
+
+// Khách thu hồi tin của chính mình; điều kiện do máy chủ thực thi (422 kèm `code`).
+export const recallMessage = (messageId: number | string): Promise<void> =>
+    apiDelete(`${BASE}/messages/${messageId}${buildSearch()}`);
 
 export const updateMessage = ({
     messageId,

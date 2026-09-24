@@ -9,19 +9,24 @@ import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import AgentMessage from './AgentMessage';
+import MessageMeta from './message/MessageMeta';
 import UserMessage from './UserMessage';
-import type { WidgetMessage } from '../types';
+import type { PositionedMessage, WidgetMessage } from '../types';
 
-// Port từ widget/components/ConversationWrap.vue + ChatMessage.vue +
-// AgentTypingBubble.vue + shared/components/DateSeparator.vue.
+// Luồng tin: ngăn cách ngày, rồi các nhóm tin liên tiếp cùng người gửi; mốc giờ
+// và trạng thái chỉ đứng dưới tin cuối mỗi nhóm.
 
 function DateSeparator({ date }: { date: string }) {
     const dateValue = new Date(date);
     const label = isToday(dateValue) ? t('TODAY') : isYesterday(dateValue) ? t('YESTERDAY') : date;
 
     return (
-        <div className="text-sm text-n-slate-11 h-[50px] leading-[50px] relative text-center w-full before:content-[''] before:h-px before:absolute before:top-6 before:w-[calc((100%-120px)/2)] before:bg-n-slate-4 before:dark:bg-n-slate-6 before:left-0 after:content-[''] after:h-px after:absolute after:top-6 after:w-[calc((100%-120px)/2)] after:bg-n-slate-4 after:dark:bg-n-slate-6 after:right-0">
-            {label}
+        <div className="yona-date-separator my-2 flex items-center gap-[10px]" role="separator">
+            <span className="h-px flex-1 bg-[var(--yona-chat-line-strong)] opacity-50" />
+            <span className="whitespace-nowrap text-[10.5px] font-medium leading-none text-[var(--yona-chat-ink-muted)]">
+                {label}
+            </span>
+            <span className="h-px flex-1 bg-[var(--yona-chat-line-strong)] opacity-50" />
         </div>
     );
 }
@@ -45,14 +50,36 @@ function AgentTypingBubble() {
     );
 }
 
-function ChatMessage({ message, allMessages }: { message: WidgetMessage; allMessages: Record<string, WidgetMessage> }) {
-    const inReplyTo = message.content_attributes?.in_reply_to;
-    const replyTo = inReplyTo ? (allMessages[inReplyTo] ?? null) : null;
+function MessageGroup({
+    messages,
+    allMessages,
+}: {
+    messages: PositionedMessage[];
+    allMessages: Record<string, WidgetMessage>;
+}) {
+    const lastMessage = messages[messages.length - 1].message;
+    const isOwn = lastMessage.message_type === MESSAGE_TYPE.INCOMING;
 
-    return message.message_type === MESSAGE_TYPE.INCOMING ? (
-        <UserMessage message={message} replyTo={replyTo} />
-    ) : (
-        <AgentMessage message={message} replyTo={replyTo} />
+    return (
+        <div className={`yona-msg-group mb-[10px] flex flex-col gap-[2px] ${isOwn ? 'items-stretch' : ''}`}>
+            {messages.map(({ message, position }, index) => {
+                const inReplyTo = message.content_attributes?.in_reply_to;
+                const replyTo = inReplyTo ? (allMessages[inReplyTo] ?? null) : null;
+
+                return message.message_type === MESSAGE_TYPE.INCOMING ? (
+                    <UserMessage key={message.id} message={message} replyTo={replyTo} position={position} />
+                ) : (
+                    <AgentMessage
+                        key={message.id}
+                        message={message}
+                        replyTo={replyTo}
+                        position={position}
+                        showAvatar={index === messages.length - 1}
+                    />
+                );
+            })}
+            <MessageMeta message={lastMessage} isOwn={isOwn} />
+        </div>
     );
 }
 
@@ -69,7 +96,7 @@ export default function ConversationWrap() {
     const previousConversationSize = useRef(0);
 
     const messages = useMemo(() => Object.values(conversations), [conversations]);
-    const groupedMessages = useMemo(() => groupMessagesByDate(messages), [messages]);
+    const messagesByDay = useMemo(() => groupMessagesByDate(messages), [messages]);
 
     const lastMessage = messages[messages.length - 1];
     const showStatusIndicator =
@@ -113,11 +140,11 @@ export default function ConversationWrap() {
                         <Spinner size="" />
                     </div>
                 ) : null}
-                {groupedMessages.map(group => (
-                    <div key={group.date} className="messages-wrap">
-                        <DateSeparator date={group.date} />
-                        {group.messages.map(message => (
-                            <ChatMessage key={message.id} message={message} allMessages={conversations} />
+                {messagesByDay.map(day => (
+                    <div key={day.date} className="messages-wrap">
+                        <DateSeparator date={day.date} />
+                        {day.groups.map(group => (
+                            <MessageGroup key={group[0].message.id} messages={group} allMessages={conversations} />
                         ))}
                     </div>
                 ))}

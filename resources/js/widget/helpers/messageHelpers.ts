@@ -1,8 +1,11 @@
 import { format, fromUnixTime } from 'date-fns';
 
-import { MESSAGE_TYPE } from './constants';
+import { joinsPreviousMessage, resolveGroupPositions } from 'shared/helpers/messageGrouping';
+import type { GroupableMessage } from 'shared/helpers/messageGrouping';
+
+import { MESSAGE_TYPE, STANDALONE_CONTENT_TYPES } from './constants';
 import { getUuid, groupBy } from './utils';
-import type { GroupedMessages, MessageAttachment, WidgetMessage } from '../types';
+import type { MessageAttachment, MessagesOfDay, PositionedMessage, WidgetMessage } from '../types';
 
 // Port từ widget/store/modules/conversation/helpers.js + getters.js (phần thuần)
 // và shared/helpers/DateHelper.js#formatUnixDate.
@@ -17,10 +20,14 @@ export const isASubmittedFormMessage = (message: Pick<WidgetMessage, 'content_ty
 export const createTemporaryMessage = ({
     attachments,
     content,
+    contentType,
+    contentAttributes,
     replyTo,
 }: {
     attachments?: MessageAttachment[];
     content?: string;
+    contentType?: string;
+    contentAttributes?: WidgetMessage['content_attributes'];
     replyTo?: number | string | null;
 }): WidgetMessage => ({
     id: getUuid(),
@@ -30,34 +37,37 @@ export const createTemporaryMessage = ({
     replyTo,
     created_at: new Date().getTime() / 1000,
     message_type: MESSAGE_TYPE.INCOMING,
+    ...(contentType ? { content_type: contentType } : {}),
+    ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
 });
 
-const getSenderName = (message: WidgetMessage) => (message.sender ? message.sender.name : '');
+// Quy tin widget về dạng của luật gộp nhóm dùng chung: cùng chiều tin + cùng người
+// gửi; tin có khung riêng (khảo sát, biểu mẫu, carousel…) luôn đứng một mình.
+const toGroupableMessage = (message: WidgetMessage): GroupableMessage => ({
+    senderKey: `${message.message_type}:${message.sender?.id ?? message.sender?.name ?? ''}`,
+    createdAt: message.created_at,
+    standalone: isASubmittedFormMessage(message) || STANDALONE_CONTENT_TYPES.includes(message.content_type ?? ''),
+});
 
-const shouldShowAvatar = (message: WidgetMessage, nextMessage: WidgetMessage) =>
-    getSenderName(message) !== getSenderName(nextMessage) ||
-    message.message_type !== nextMessage.message_type ||
-    isASubmittedFormMessage(nextMessage);
+const splitIntoGroups = (messages: WidgetMessage[]): PositionedMessage[][] => {
+    const positions = resolveGroupPositions(messages.map(toGroupableMessage));
 
-export const groupConversationBySender = (conversationsForADate: WidgetMessage[]): WidgetMessage[] =>
-    conversationsForADate.map((message, index) => {
-        const isLastMessage = index === conversationsForADate.length - 1;
-        let showAvatar: boolean;
-        if (isASubmittedFormMessage(message)) {
-            showAvatar = false;
-        } else if (isLastMessage) {
-            showAvatar = true;
+    return messages.reduce<PositionedMessage[][]>((groups, message, index) => {
+        const position = positions[index];
+        if (joinsPreviousMessage(position) && groups.length) {
+            groups[groups.length - 1].push({ message, position });
         } else {
-            showAvatar = shouldShowAvatar(message, conversationsForADate[index + 1]);
+            groups.push([{ message, position }]);
         }
-        return { showAvatar, ...message };
-    });
+        return groups;
+    }, []);
+};
 
-export const groupMessagesByDate = (messages: WidgetMessage[]): GroupedMessages[] => {
+export const groupMessagesByDate = (messages: WidgetMessage[]): MessagesOfDay[] => {
     const messagesGroupedByDate = groupBy(messages, message => formatUnixDate(message.created_at));
     return Object.keys(messagesGroupedByDate).map(date => ({
         date,
-        messages: groupConversationBySender(messagesGroupedByDate[date]),
+        groups: splitIntoGroups(messagesGroupedByDate[date]),
     }));
 };
 
@@ -67,8 +77,32 @@ export const findUndeliveredMessage = (
 ): WidgetMessage[] =>
     Object.values(messageInbox).filter(message => message.content === content && message.status === 'in_progress');
 
-export const getNonDeletedMessages = ({ messages }: { messages: WidgetMessage[] }): WidgetMessage[] =>
-    messages.filter(item => !(item.content_attributes && item.content_attributes.deleted));
+// Tin đã thu hồi vẫn nằm trong danh sách để hiện bong bóng nét đứt cho cả hai bên.
+export const isDeletedMessage = (message: Pick<WidgetMessage, 'content_attributes'>): boolean =>
+    Boolean(message?.content_attributes?.deleted);
+
+// Chỉ để ẩn/hiện mục "Thu hồi"; máy chủ vẫn là nơi quyết định cuối cùng.
+export const canRecallMessage = (
+    message: WidgetMessage,
+    recallWindowSeconds: number,
+    nowSeconds = Date.now() / 1000,
+): boolean =>
+    message.message_type === MESSAGE_TYPE.INCOMING &&
+    typeof message.id === 'number' &&
+    !isDeletedMessage(message) &&
+    message.status !== 'in_progress' &&
+    message.status !== 'failed' &&
+    nowSeconds - message.created_at < recallWindowSeconds;
+
+export type DeliveryStatus = 'sending' | 'failed' | 'sent' | 'delivered' | 'seen';
+
+// Trạng thái hiện dưới tin của khách: agent đọc hội thoại sau lúc tin gửi = Đã xem.
+export const deliveryStatusOf = (message: WidgetMessage, agentLastSeenAt = 0): DeliveryStatus => {
+    if (message.status === 'in_progress') return 'sending';
+    if (message.status === 'failed') return 'failed';
+    if (message.status === 'read' || (agentLastSeenAt > 0 && message.created_at <= agentLastSeenAt)) return 'seen';
+    return message.status === 'delivered' ? 'delivered' : 'sent';
+};
 
 export const getUnreadMessageCount = (messages: WidgetMessage[], userLastSeenAt?: number): number =>
     messages.filter(chat => {
@@ -117,16 +151,19 @@ export const buildSendMessagePayload = ({
     return payload;
 };
 
-// endPoints.sendAttachment: multipart, khóa `message[attachments][]` như bản gốc.
-export const buildSendAttachmentFormData = ({
-    file,
+// Nhiều tệp đi trong CÙNG một tin: khoá `message[attachments][]`, chú thích ở
+// `message[content]`. Đường một tệp là trường hợp một phần tử của đường này.
+export const buildSendAttachmentsFormData = ({
+    files,
+    caption = '',
     replyTo = null,
     referrerURL = '',
     customAttributes,
     labels,
     timestamp = new Date().toString(),
 }: {
-    file: File | string;
+    files: (File | string)[];
+    caption?: string;
     replyTo?: number | string | null;
     referrerURL?: string;
     customAttributes?: Record<string, unknown>;
@@ -134,10 +171,15 @@ export const buildSendAttachmentFormData = ({
     timestamp?: string;
 }): FormData => {
     const formData = new FormData();
-    if (typeof file === 'string') {
-        formData.append('message[attachments][]', file);
-    } else {
-        formData.append('message[attachments][]', file, file.name);
+    files.forEach(file => {
+        if (typeof file === 'string') {
+            formData.append('message[attachments][]', file);
+        } else {
+            formData.append('message[attachments][]', file, file.name);
+        }
+    });
+    if (caption) {
+        formData.append('message[content]', caption);
     }
     formData.append('message[referer_url]', referrerURL);
     formData.append('message[timestamp]', timestamp);
@@ -154,3 +196,15 @@ export const buildSendAttachmentFormData = ({
     }
     return formData;
 };
+
+export const buildSendAttachmentFormData = ({
+    file,
+    ...rest
+}: {
+    file: File | string;
+    replyTo?: number | string | null;
+    referrerURL?: string;
+    customAttributes?: Record<string, unknown>;
+    labels?: string[];
+    timestamp?: string;
+}): FormData => buildSendAttachmentsFormData({ files: [file], ...rest });

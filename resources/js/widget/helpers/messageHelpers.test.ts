@@ -3,14 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { MESSAGE_TYPE } from './constants';
 import {
     buildSendAttachmentFormData,
+    buildSendAttachmentsFormData,
     buildSendMessagePayload,
+    canRecallMessage,
     createTemporaryMessage,
+    deliveryStatusOf,
     findUndeliveredMessage,
-    getNonDeletedMessages,
     getUnreadMessageCount,
     getUnreadTextMessages,
-    groupConversationBySender,
     groupMessagesByDate,
+    isDeletedMessage,
 } from './messageHelpers';
 import type { WidgetMessage } from '../types';
 
@@ -53,55 +55,91 @@ describe('createTemporaryMessage', () => {
     });
 });
 
-describe('getNonDeletedMessages', () => {
-    it('bỏ tin đã xoá', () => {
-        const messages = [
-            message({ id: 1, content_attributes: {} }),
-            message({ id: 2, content_attributes: { deleted: true } }),
-            message({ id: 3, content_attributes: {} }),
-        ];
-
-        expect(getNonDeletedMessages({ messages }).map(item => item.id)).toStrictEqual([1, 3]);
+describe('isDeletedMessage', () => {
+    it('nhận ra tin đã thu hồi để vẽ bong bóng nét đứt thay vì bỏ khỏi danh sách', () => {
+        expect(isDeletedMessage(message({ content_attributes: { deleted: true } }))).toBe(true);
+        expect(isDeletedMessage(message({ content_attributes: {} }))).toBe(false);
+        expect(isDeletedMessage(message({}))).toBe(false);
     });
 });
 
-describe('groupConversationBySender', () => {
-    it('chỉ hiện avatar ở tin cuối của mỗi người gửi', () => {
-        const grouped = groupConversationBySender([
-            message({ id: 1, message_type: MESSAGE_TYPE.OUTGOING, sender: { name: 'John' } }),
-            message({ id: 2, message_type: MESSAGE_TYPE.OUTGOING, sender: { name: 'John' } }),
-            message({ id: 3, message_type: MESSAGE_TYPE.INCOMING }),
-        ]);
+describe('canRecallMessage', () => {
+    const now = 1758000000;
+    const own = (overrides: Partial<WidgetMessage> = {}) =>
+        message({ id: 10, message_type: MESSAGE_TYPE.INCOMING, status: 'sent', created_at: now - 60, ...overrides });
 
-        expect(grouped.map(item => item.showAvatar)).toStrictEqual([false, true, true]);
+    it('cho thu hồi tin của khách còn trong hạn của kênh', () => {
+        expect(canRecallMessage(own(), 300, now)).toBe(true);
     });
 
-    it('không hiện avatar cho tin form đã gửi', () => {
-        const grouped = groupConversationBySender([
-            message({
-                id: 1,
-                message_type: MESSAGE_TYPE.TEMPLATE,
-                content_type: 'form',
-                content_attributes: { submitted_values: [{ name: 'email', value: 'a@b.c' }] },
-            }),
-        ]);
+    it('không cho khi quá hạn hoặc kênh không cho thu hồi (hạn 0)', () => {
+        expect(canRecallMessage(own({ created_at: now - 300 }), 300, now)).toBe(false);
+        expect(canRecallMessage(own(), 0, now)).toBe(false);
+    });
 
-        expect(grouped[0].showAvatar).toBe(false);
+    it('không cho với tin agent, tin đã thu hồi, tin đang gửi hoặc gửi hỏng', () => {
+        expect(canRecallMessage(own({ message_type: MESSAGE_TYPE.OUTGOING }), 300, now)).toBe(false);
+        expect(canRecallMessage(own({ content_attributes: { deleted: true } }), 300, now)).toBe(false);
+        expect(canRecallMessage(own({ id: 'tam-uuid', status: 'in_progress' }), 300, now)).toBe(false);
+        expect(canRecallMessage(own({ status: 'failed' }), 300, now)).toBe(false);
     });
 });
 
 describe('groupMessagesByDate', () => {
-    it('gom tin theo ngày và đánh dấu avatar trong từng ngày', () => {
+    const agent = { id: 5, name: 'John' };
+
+    it('chia theo ngày, trong ngày gom tin liên tiếp cùng người gửi dưới 2 phút', () => {
         // 1758000000 = 16/09/2025, 1758100000 = 17/09/2025 (giờ UTC).
-        const groups = groupMessagesByDate([
-            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: { name: 'John' } }),
-            message({ id: 2, created_at: 1758100000, message_type: MESSAGE_TYPE.INCOMING }),
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 2, created_at: 1758000030, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 3, created_at: 1758000040, message_type: MESSAGE_TYPE.INCOMING }),
+            message({ id: 4, created_at: 1758000400, message_type: MESSAGE_TYPE.INCOMING }),
+            message({ id: 5, created_at: 1758100000, message_type: MESSAGE_TYPE.INCOMING }),
         ]);
 
-        expect(groups).toHaveLength(2);
-        expect(groups[0].messages).toHaveLength(1);
-        expect(groups[1].messages).toHaveLength(1);
-        expect(groups.every(group => group.messages.every(item => item.showAvatar))).toBe(true);
+        expect(days).toHaveLength(2);
+        expect(days[0].groups.map(group => group.map(item => item.message.id))).toStrictEqual([[1, 2], [3], [4]]);
+        expect(days[1].groups.map(group => group.map(item => item.message.id))).toStrictEqual([[5]]);
+    });
+
+    it('tin có khung riêng (carousel, khảo sát, biểu mẫu đã gửi) luôn đứng riêng', () => {
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({
+                id: 2,
+                created_at: 1758000010,
+                message_type: MESSAGE_TYPE.OUTGOING,
+                sender: agent,
+                content_type: 'cards',
+            }),
+            message({ id: 3, created_at: 1758000020, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+        ]);
+
+        expect(days[0].groups.map(group => group.map(item => item.message.id))).toStrictEqual([[1], [2], [3]]);
+    });
+
+    it('hai agent khác nhau không chung nhóm', () => {
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 2, created_at: 1758000010, message_type: MESSAGE_TYPE.OUTGOING, sender: { id: 6, name: 'An' } }),
+        ]);
+
+        expect(days[0].groups).toHaveLength(2);
+    });
+
+    it('mỗi tin mang vị trí trong nhóm theo luật dùng chung', () => {
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 2, created_at: 1758000030, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 3, created_at: 1758000060, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
+            message({ id: 4, created_at: 1758000070, message_type: MESSAGE_TYPE.INCOMING }),
+        ]);
+
+        expect(days[0].groups.map(group => group.map(item => item.position))).toStrictEqual([
+            ['first', 'middle', 'last'],
+            ['single'],
+        ]);
     });
 });
 
@@ -188,5 +226,47 @@ describe('buildSendAttachmentFormData', () => {
 
         expect(formData.get('message[attachments][]')).toBe('signed-id-123');
         expect(formData.get('message[reply_to]')).toBeNull();
+    });
+});
+
+describe('buildSendAttachmentsFormData', () => {
+    it('nhiều tệp trong một tin kèm chú thích và tin được trả lời', () => {
+        const first = new File(['1'], 'a.png', { type: 'image/png' });
+        const second = new File(['2'], 'b.jpg', { type: 'image/jpeg' });
+        const formData = buildSendAttachmentsFormData({ files: [first, second], caption: 'Hai mẫu', replyTo: 9 });
+
+        expect((formData.getAll('message[attachments][]') as File[]).map(file => file.name)).toStrictEqual([
+            'a.png',
+            'b.jpg',
+        ]);
+        expect(formData.get('message[content]')).toBe('Hai mẫu');
+        expect(formData.get('message[reply_to]')).toBe('9');
+    });
+
+    it('đường một tệp cho ra đúng payload của mảng một phần tử', () => {
+        const file = new File(['1'], 'a.png', { type: 'image/png' });
+        const params = { replyTo: 3, referrerURL: 'https://khach.vn', timestamp: 'Tue Sep 16 2025' };
+        const single = buildSendAttachmentFormData({ file, ...params });
+        const many = buildSendAttachmentsFormData({ files: [file], ...params });
+
+        expect([...single.entries()]).toStrictEqual([...many.entries()]);
+        expect(single.get('message[content]')).toBeNull();
+    });
+});
+
+describe('deliveryStatusOf', () => {
+    const sent = message({ id: 1, status: 'sent', created_at: 1758000000 });
+
+    it('Đã xem khi agent đọc hội thoại sau lúc tin gửi', () => {
+        expect(deliveryStatusOf(sent, 1758000100)).toBe('seen');
+        expect(deliveryStatusOf(sent, 1757999999)).toBe('sent');
+        expect(deliveryStatusOf(sent, 0)).toBe('sent');
+    });
+
+    it('giữ trạng thái đang gửi, gửi hỏng và trạng thái kênh báo về', () => {
+        expect(deliveryStatusOf(message({ status: 'in_progress' }), 1758000100)).toBe('sending');
+        expect(deliveryStatusOf(message({ status: 'failed' }), 1758000100)).toBe('failed');
+        expect(deliveryStatusOf(message({ status: 'delivered', created_at: 1758000000 }))).toBe('delivered');
+        expect(deliveryStatusOf(message({ status: 'read' }))).toBe('seen');
     });
 });
