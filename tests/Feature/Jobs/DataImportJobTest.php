@@ -12,8 +12,6 @@ use App\Support\RoleAttachment;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/spec/jobs/data_import_job_spec.rb.
-
 function e3Import(Account $account, array $rows): DataImport
 {
     $csv = collect($rows)->map(fn (array $row) => implode(',', array_map(

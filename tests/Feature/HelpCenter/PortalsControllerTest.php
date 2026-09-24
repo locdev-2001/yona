@@ -70,11 +70,11 @@ it('rejects portal creation by an agent', function () {
 
 it('creates a portal and keeps only the host of the custom domain', function () {
     $payload = $this->actingAs($this->admin)->postJson($this->url, [
-        'portal' => ['name' => 'test_portal', 'slug' => 'test_kbase', 'custom_domain' => 'https://support.chatwoot.dev'],
+        'portal' => ['name' => 'test_portal', 'slug' => 'test_kbase', 'custom_domain' => 'https://support.example.dev'],
     ])->assertOk()->json();
 
     expect($payload['name'])->toBe('test_portal')
-        ->and($payload['custom_domain'])->toBe('support.chatwoot.dev');
+        ->and($payload['custom_domain'])->toBe('support.example.dev');
 });
 
 it('creates a portal without a custom domain', function () {

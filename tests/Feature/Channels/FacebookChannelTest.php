@@ -13,7 +13,7 @@ use Tests\Feature\Channels\ChannelFixture;
 beforeEach(function () {
     config()->set('services.facebook.app_secret', 'fb-secret');
     config()->set('services.facebook.verify_token', 'fb-verify');
-    config()->set('services.facebook.app_id', 'chatwoot-app');
+    config()->set('services.facebook.app_id', 'yona-app');
     $this->inbox = Inbox::factory()->facebookPage()->create();
     $this->inbox->channel->update(['page_id' => 'page-id']);
 });
@@ -55,11 +55,11 @@ it('tạo liên hệ, hội thoại và tin đến từ Messenger', function () 
         ->and($message->conversation->contactInbox->source_id)->toBe('sender-psid');
 });
 
-it('bỏ echo của chính tin Chatwoot vừa gửi', function () {
+it('bỏ echo của chính tin hệ thống vừa gửi', function () {
     Http::fake(['graph.facebook.com/*' => Http::response([])]);
     $payload = ChannelFixture::load('facebook_messaging');
     $payload['entry'][0]['messaging'][0]['message']['is_echo'] = true;
-    $payload['entry'][0]['messaging'][0]['message']['app_id'] = 'chatwoot-app';
+    $payload['entry'][0]['messaging'][0]['message']['app_id'] = 'yona-app';
     $payload['entry'][0]['messaging'][0]['sender']['id'] = 'page-id';
     $payload['entry'][0]['messaging'][0]['recipient']['id'] = 'sender-psid';
 

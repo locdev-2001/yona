@@ -9,9 +9,7 @@ use App\Models\User;
 use App\Services\Channels\ChannelSetupService;
 use Illuminate\Support\Facades\Http;
 
-// Port từ hai callback của Chatwoot (Channel::Telegram#setup_telegram_webhook,
-// Channel::FacebookPage#subscribe) + Twilio::WebhookSetupService /
-// Whatsapp::WebhookSetupService, nay gom vào ChannelSetupService.
+// Các bước đăng ký webhook của Telegram, Facebook, Twilio, WhatsApp gom vào ChannelSetupService.
 
 function administratorOf(Account $account): User
 {

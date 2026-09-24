@@ -172,10 +172,10 @@ describe('validate referer url', function () {
 
     it('keeps a valid referer url', function () {
         $conversation = Conversation::factory()->create([
-            'additional_attributes' => ['referer' => 'https://www.chatwoot.com/'],
+            'additional_attributes' => ['referer' => 'https://www.example.com/'],
         ]);
 
-        expect($conversation->additional_attributes['referer'])->toBe('https://www.chatwoot.com/');
+        expect($conversation->additional_attributes['referer'])->toBe('https://www.example.com/');
     });
 });
 

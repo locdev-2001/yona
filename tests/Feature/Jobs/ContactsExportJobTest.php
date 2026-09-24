@@ -12,8 +12,6 @@ use App\Support\RoleAttachment;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/spec/jobs/account/contacts_export_job_spec.rb.
-
 function e3ExportedCsv(Account $account): string
 {
     $contents = (string) RoleAttachment::contents($account, ContactsExportJob::ROLE_CONTACTS_EXPORT);

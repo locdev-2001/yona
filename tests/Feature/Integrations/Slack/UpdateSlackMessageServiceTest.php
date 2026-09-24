@@ -122,7 +122,7 @@ it('bỏ qua khi chưa có câu trả lời nào', function () {
     Http::assertNothingSent();
 });
 
-it('bỏ qua khi tin không xuất phát từ Chatwoot', function () {
+it('bỏ qua khi tin không xuất phát từ hệ thống', function () {
     Http::fake();
 
     $message = makeInteractiveMessage([

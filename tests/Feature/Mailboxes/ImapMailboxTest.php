@@ -39,7 +39,7 @@ it('creates contact, conversation and message from a fetched mail', function () 
     expect($conversation)->not->toBeNull()
         ->and($conversation->additional_attributes['source'])->toBe('email')
         ->and($conversation->additional_attributes['auto_reply'])->toBeFalse()
-        ->and($conversation->contact->email)->toBe('sony@chatwoot.com')
+        ->and($conversation->contact->email)->toBe('sony@example.com')
         ->and($conversation->messages()->count())->toBe(1)
         ->and($conversation->messages()->first()->content_type)->toBe(Message::CONTENT_TYPES['incoming_email']);
 });

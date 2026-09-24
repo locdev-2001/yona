@@ -35,7 +35,7 @@ it('adds the mail as a reply when the receiver carries the conversation uuid', f
     expect($message->content)->toBe("Let's talk about these images:")
         ->and($message->content_type)->toBe(Message::CONTENT_TYPES['incoming_email'])
         ->and($message->message_type)->toBe(Message::TYPE_INCOMING)
-        ->and($message->source_id)->toBe('0CB459E0-0336-41DA-BC88-E6E28C697DDB@chatwoot.com')
+        ->and($message->source_id)->toBe('0CB459E0-0336-41DA-BC88-E6E28C697DDB@example.com')
         ->and($message->attachments)->toHaveCount(2)
         ->and(array_keys($message->content_attributes['email']))->toBe([
             'bcc', 'cc', 'content_type', 'date', 'from', 'headers', 'html_content', 'in_reply_to',
@@ -85,7 +85,7 @@ it('opens a new conversation when the mail lands on the channel address', functi
     expect($conversation)->not->toBeNull()
         ->and($conversation->additional_attributes['source'])->toBe('email')
         ->and($conversation->additional_attributes['mail_subject'])->toBe("Discussion: Let's debate these attachments")
-        ->and($conversation->contact->email)->toBe('sony@chatwoot.com')
+        ->and($conversation->contact->email)->toBe('sony@example.com')
         ->and($conversation->messages()->count())->toBe(1);
 });
 
@@ -113,7 +113,7 @@ it('ignores a mail that belongs to no channel', function () {
 });
 
 it('ignores notification mails sent by the installation itself', function () {
-    config(['mail.sender_email' => 'sony@chatwoot.com']);
+    config(['mail.sender_email' => 'sony@example.com']);
     $channel = Email::factory()->create(['account_id' => $this->account->id, 'email' => 'care@example.com']);
     Inbox::factory()->create([
         'account_id' => $this->account->id,
@@ -133,16 +133,16 @@ it('reuses the existing contact of the inbox', function () {
         'channel_id' => $channel->id,
         'channel_type' => 'Channel::Email',
     ]);
-    $contact = Contact::factory()->create(['account_id' => $this->account->id, 'email' => 'sony@chatwoot.com']);
+    $contact = Contact::factory()->create(['account_id' => $this->account->id, 'email' => 'sony@example.com']);
     ContactInbox::factory()->create([
         'contact_id' => $contact->id,
         'inbox_id' => $inbox->id,
-        'source_id' => 'sony@chatwoot.com',
+        'source_id' => 'sony@example.com',
     ]);
 
     deliver('support.eml');
 
-    expect(Contact::query()->where('email', 'sony@chatwoot.com')->count())->toBe(1)
+    expect(Contact::query()->where('email', 'sony@example.com')->count())->toBe(1)
         ->and(Conversation::query()->first()->contact_id)->toBe($contact->id);
 });
 
@@ -166,7 +166,7 @@ it('accepts a to header that the parser can still salvage', function () {
     $mail = MailPresenter::fromRaw(file_get_contents(base_path('tests/Fixtures/emails/mail_with_invalid_to.eml')));
 
     expect(ApplicationMailbox::validToAddress($mail))->toBeTrue()
-        ->and($mail->to())->toBe(['vishnu@chatwoot.com']);
+        ->and($mail->to())->toBe(['vishnu@example.com']);
 });
 
 it('skips a bcc only mail for accounts on the skip list', function () {

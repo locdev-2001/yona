@@ -6,7 +6,6 @@ use App\Models\PlatformApp;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/spec/controllers/platform/api/v1/agent_bots_controller_spec.rb.
 beforeEach(function () {
     $this->platformApp = PlatformApp::factory()->create();
     $this->headers = ['api_access_token' => $this->platformApp->accessToken->token];

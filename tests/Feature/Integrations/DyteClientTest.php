@@ -3,7 +3,6 @@
 use App\Services\Integrations\Dyte\Client;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/spec/lib/dyte_spec.rb.
 it('báo lỗi khi thiếu account_id, app_id hoặc api_token', function () {
     expect(fn () => new Client(null, null, null))->toThrow(InvalidArgumentException::class);
 });

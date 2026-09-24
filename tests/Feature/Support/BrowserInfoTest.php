@@ -3,7 +3,7 @@
 use App\Support\BrowserInfo;
 use Illuminate\Http\Request;
 
-// Thay gem `browser` của Chatwoot — bộ khóa phải khớp panel hội thoại.
+// Thay gem `browser` — bộ khóa phải khớp panel hội thoại.
 
 function browserRequest(?string $userAgent = null, ?string $acceptLanguage = null): Request
 {

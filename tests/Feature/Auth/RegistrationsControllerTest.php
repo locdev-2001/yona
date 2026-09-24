@@ -7,8 +7,7 @@ use App\Notifications\ConfirmationInstructions;
 use App\Support\CurrentUserSession;
 use Illuminate\Support\Facades\Notification;
 
-// Port từ refs/chatwoot/spec/controllers/api/v1/accounts_controller_spec.rb (create)
-// — đổi devise_token_auth JSON API sang flow session/Inertia.
+// Đăng ký tài khoản qua flow session/Inertia.
 
 it('serves the signup page to guests', function () {
     config(['inertia.ssr.enabled' => false]);

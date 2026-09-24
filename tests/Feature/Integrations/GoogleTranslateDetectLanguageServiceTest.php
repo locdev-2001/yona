@@ -6,7 +6,6 @@ use App\Models\Message;
 use App\Services\Integrations\GoogleTranslate\DetectLanguageService;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/spec/lib/integrations/google_translate/detect_language_service_spec.rb.
 function googleTranslateCredentials(): array
 {
     static $privateKey = null;

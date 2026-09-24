@@ -6,7 +6,7 @@ use App\Support\CurrentUserSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 
-// Viết từ source DeviseOverrides::PasswordsController của Chatwoot
+// Viết từ source DeviseOverrides::PasswordsController
 // (spec gốc chỉ có bản enterprise — không mở). Hành vi chốt: #update đặt
 // mật khẩu qua reset token, XÁC NHẬN luôn user chưa confirm (accept invite),
 // xóa token và đăng nhập; #create luôn trả 200 để không lộ email tồn tại.

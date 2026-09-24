@@ -9,8 +9,7 @@ use App\Services\Integrations\Dyte\ProcessorService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/lib/integrations/dyte/processor_service.rb — không có
-// spec riêng ở bản gốc (chỉ có spec cho lib/dyte.rb + controller). Test qua
+// Không có spec riêng ở bản gốc (chỉ có spec cho lib/dyte.rb + controller). Test qua
 // hai luồng chính: tạo cuộc gọi, cấp token tham gia.
 beforeEach(function () {
     $this->account = Account::factory()->create();

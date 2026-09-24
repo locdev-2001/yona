@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Testing\TestResponse;
 use OTPHP\TOTP;
 
-// Port từ refs/chatwoot/spec/controllers/devise_overrides/sessions_controller_spec.rb
-// (phần MFA + giới hạn phiên). Chatwoot trả JSON 206/409; Yona là Inertia nên
+// (phần MFA + giới hạn phiên). Bản gốc trả JSON 206/409; Yona là Inertia nên
 // cùng thông tin đó về qua prop của trang đăng nhập.
 
 // Trang đăng nhập là Inertia: thiếu header này thì Inertia::location trả 302.

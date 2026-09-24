@@ -8,7 +8,6 @@ use App\Models\Message;
 use App\Services\Integrations\GoogleTranslate\ProcessorService;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/lib/integrations/google_translate/processor_service.rb
 // — không có spec riêng ở bản gốc (test qua messages_controller_spec#translate,
 // xem tests/Feature/Integrations/MessageTranslateTest.php).
 function googleTranslateProcessorCredentials(): array

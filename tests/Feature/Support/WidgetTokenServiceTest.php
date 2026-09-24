@@ -3,8 +3,6 @@
 use App\Support\Jwt;
 use App\Support\WidgetTokenService;
 
-// Port từ refs/chatwoot/app/services/{base_token_service,widget/token_service}.rb.
-
 it('round trips the payload it was given', function () {
     $token = WidgetTokenService::generate(['source_id' => 'abc', 'inbox_id' => 7]);
 

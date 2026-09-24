@@ -9,8 +9,6 @@ use App\Models\Conversation;
 use App\Models\Notification;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/jobs/notification/*.rb.
-
 function notificationForJob(Account $account, User $user, array $attributes = []): Notification
 {
     $conversation = Conversation::factory()->create(['account_id' => $account->id]);

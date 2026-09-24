@@ -6,7 +6,7 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 
-// Port từ AccessTokenAuthHelper: bot dùng header api_access_token và chỉ vào
+// Bot dùng header api_access_token và chỉ vào
 // được nhóm endpoint hội thoại/tin nhắn được phép.
 
 beforeEach(function () {

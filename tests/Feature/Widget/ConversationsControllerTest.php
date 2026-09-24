@@ -19,7 +19,7 @@ function widgetConversationParams(): array
     return [
         'contact' => [
             'name' => 'contact-name',
-            'email' => 'contact-email@chatwoot.com',
+            'email' => 'contact-email@example.com',
             'phone_number' => '+919745313456',
         ],
         'message' => ['content' => 'This is a test message'],
@@ -78,7 +78,7 @@ describe('POST /api/v1/widget/conversations', function () {
         $response = $this->postJson($session->url('conversations'), widgetConversationParams(), $session->headers())->assertOk();
 
         expect($response->json('id'))->not->toBeNull();
-        expect($response->json('contact.email'))->toBe('contact-email@chatwoot.com');
+        expect($response->json('contact.email'))->toBe('contact-email@example.com');
         expect($response->json('contact.phone_number'))->toBe('+919745313456');
         expect($response->json('contact.name'))->toBe('contact-name');
     });
@@ -110,7 +110,7 @@ describe('POST /api/v1/widget/conversations', function () {
         $session = WidgetSession::make(contactAttributes: ['email' => null]);
         $existing = Contact::factory()->create([
             'account_id' => $session->account->id,
-            'email' => 'contact-email@chatwoot.com',
+            'email' => 'contact-email@example.com',
         ]);
 
         $response = $this->postJson($session->url('conversations'), widgetConversationParams(), $session->headers())->assertOk();
@@ -128,7 +128,7 @@ describe('POST /api/v1/widget/conversations', function () {
         $this->postJson($session->url('conversations'), [
             'contact' => [
                 'name' => 'contact-name',
-                'email' => 'contact-email@chatwoot.com',
+                'email' => 'contact-email@example.com',
                 'custom_attributes' => ['cpf' => '123.456.789-09'],
             ],
             'message' => ['content' => 'This is a test message'],
@@ -141,14 +141,14 @@ describe('POST /api/v1/widget/conversations', function () {
         $session = WidgetSession::make(contactAttributes: ['email' => null]);
         $existing = Contact::factory()->create([
             'account_id' => $session->account->id,
-            'email' => 'contact-email@chatwoot.com',
+            'email' => 'contact-email@example.com',
             'custom_attributes' => ['cpf' => 'old-value'],
         ]);
 
         $this->postJson($session->url('conversations'), [
             'contact' => [
                 'name' => 'contact-name',
-                'email' => 'contact-email@chatwoot.com',
+                'email' => 'contact-email@example.com',
                 'custom_attributes' => ['cpf' => '123.456.789-09'],
             ],
             'message' => ['content' => 'This is a test message'],
@@ -300,11 +300,11 @@ describe('conversation custom attributes', function () {
 
         $this->postJson(
             $session->url('conversations/set_custom_attributes'),
-            ['custom_attributes' => ['product_name' => 'Chatwoot']],
+            ['custom_attributes' => ['product_name' => 'Paperlayer']],
             $session->headers()
         )->assertNoContent();
 
-        expect($conversation->fresh()->custom_attributes)->toMatchArray(['product_name' => 'Chatwoot']);
+        expect($conversation->fresh()->custom_attributes)->toMatchArray(['product_name' => 'Paperlayer']);
 
         $this->postJson(
             $session->url('conversations/destroy_custom_attributes'),

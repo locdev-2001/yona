@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Channels;
 
-// Nạp payload webhook thật đã port từ spec/ của Chatwoot.
+// Nạp payload webhook mẫu của nhà cung cấp.
 class ChannelFixture
 {
     /** @return array<string, mixed> */

@@ -120,7 +120,7 @@ describe('POST /api/v1/accounts/{id}/labels', function () {
 
     // Khác bản gốc: middleware TrimStrings của Laravel cắt khoảng trắng hai đầu
     // TRƯỚC khi validate, nên title kết thúc bằng xuống dòng được nhận và lưu
-    // dạng đã cắt (Chatwoot trả 422 nhờ neo \z).
+    // dạng đã cắt (bản gốc trả 422 nhờ neo \z).
     it('trims surrounding whitespace before saving the title', function () {
         $this->actingAs($this->admin)
             ->postJson("/api/v1/accounts/{$this->account->id}/labels", ['title' => '  Hello World!  '])

@@ -145,7 +145,7 @@ describe('perform', function () {
     });
 });
 
-// Chatwoot lưu created_at với micro-giây (timestamp(6)); nhiều tin cùng giây
+// Bản gốc lưu created_at với micro-giây (timestamp(6)); nhiều tin cùng giây
 // (API burst, bot, import) phải giữ đúng thứ tự tạo — equivalence với
 // `default_scope { order(created_at: :asc) }` của Message gốc.
 describe('ordering within the same second', function () {

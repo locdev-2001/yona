@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
-// Port từ refs/chatwoot/spec/controllers/super_admin/*_controller_spec.rb —
-// các màn Administrate của console quản trị.
+// Các màn Administrate của console quản trị.
 beforeEach(function () {
     $this->superAdmin = SuperAdmin::factory()->create();
     $this->actingAs($this->superAdmin, 'super_admin');

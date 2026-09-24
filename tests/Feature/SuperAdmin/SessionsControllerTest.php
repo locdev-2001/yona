@@ -3,7 +3,6 @@
 use App\Models\SuperAdmin;
 use App\Models\User;
 
-// Port từ refs/chatwoot/spec/controllers/super_admin/devise/sessions_controller_spec.rb.
 it('chặn khu quản trị khi chưa đăng nhập', function () {
     $this->get('/super_admin')->assertRedirect('/super_admin/sign_in');
 });

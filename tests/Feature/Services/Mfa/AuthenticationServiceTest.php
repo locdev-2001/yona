@@ -5,8 +5,6 @@ use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\ManagementService;
 use OTPHP\TOTP;
 
-// Port từ refs/chatwoot/spec/services/mfa/authentication_service_spec.rb.
-
 beforeEach(function () {
     $this->user = User::factory()->withMfa()->create();
     $this->otp = fn (): string => TOTP::createFromSecret($this->user->otp_secret)->now();

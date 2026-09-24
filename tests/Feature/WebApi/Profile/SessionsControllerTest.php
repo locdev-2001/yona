@@ -4,8 +4,7 @@ use App\Models\User;
 use App\Models\UserSession;
 use Tests\Support\StoredSessions;
 
-// Port từ refs/chatwoot/spec/requests/api/v1/profile/sessions_controller_spec.rb.
-// Khác gốc: Chatwoot lọc phiên theo token devise còn hạn; Yona dùng session của
+// Khác gốc: bản gốc lọc phiên theo token devise còn hạn; Yona dùng session của
 // Laravel — mỗi dòng user_sessions ứng với một phiên còn sống nên không cần lọc.
 
 describe('GET /api/v1/profile/sessions', function () {

@@ -5,7 +5,7 @@ use App\Models\AccountUser;
 use App\Models\User;
 
 // Test khung Current context (SetCurrentAccount) + web_api availability —
-// tương đương hành vi scoping account của Chatwoot (Current.account).
+// tương đương hành vi scoping account (Current.account).
 
 describe('account scoping', function () {
     it('returns 404 for accounts the user is not a member of', function () {

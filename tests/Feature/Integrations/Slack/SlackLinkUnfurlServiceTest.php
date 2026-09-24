@@ -33,7 +33,7 @@ it('không gửi gì khi sự kiện không có link nào', function () {
 it('không unfurl khi account trong url không khớp account của hook', function () {
     Http::fake();
 
-    $params = ['event' => ['links' => [['url' => 'https://qa.chatwoot.com/app/accounts/999999/conversations/1']]]];
+    $params = ['event' => ['links' => [['url' => 'https://qa.example.com/app/accounts/999999/conversations/1']]]];
     (new SlackLinkUnfurlService($params, $this->hook))->perform();
 
     Http::assertNothingSent();
@@ -42,7 +42,7 @@ it('không unfurl khi account trong url không khớp account của hook', funct
 it('không unfurl khi hội thoại không thuộc account của hook', function () {
     Http::fake();
 
-    $params = ['event' => ['links' => [['url' => "https://qa.chatwoot.com/app/accounts/{$this->hook->account_id}/conversations/999999"]]]];
+    $params = ['event' => ['links' => [['url' => "https://qa.example.com/app/accounts/{$this->hook->account_id}/conversations/999999"]]]];
     (new SlackLinkUnfurlService($params, $this->hook))->perform();
 
     Http::assertNothingSent();
@@ -51,7 +51,7 @@ it('không unfurl khi hội thoại không thuộc account của hook', function
 it('gửi POST chat.unfurl với preview đúng khi link hợp lệ', function () {
     Http::fake(['https://slack.com/api/chat.unfurl' => Http::response(['ok' => true])]);
 
-    $url = "https://qa.chatwoot.com/app/accounts/{$this->hook->account_id}/conversations/{$this->conversation->display_id}";
+    $url = "https://qa.example.com/app/accounts/{$this->hook->account_id}/conversations/{$this->conversation->display_id}";
     $params = [
         'event' => [
             'unfurl_id' => 'unfurl-1',

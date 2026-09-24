@@ -5,8 +5,6 @@ use App\Models\Account;
 use App\Models\PlatformApp;
 use App\Models\PlatformAppPermissible;
 
-// Port từ refs/chatwoot/spec/models/platform_app_spec.rb +
-// platform_app_permissible_spec.rb.
 it('sinh access token ngay khi tạo', function () {
     $platformApp = PlatformApp::factory()->create();
 

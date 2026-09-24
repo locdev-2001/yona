@@ -2,7 +2,7 @@
 
 use App\Support\PlainTextContent;
 
-// Thay cho CommonMarker + String#truncate_words của Chatwoot (spec/models/notification_spec.rb
+// Thay cho CommonMarker + String#truncate_words (spec/models/notification_spec.rb
 // kiểm gián tiếp qua push_message_body).
 
 it('turns markdown links into their label', function () {

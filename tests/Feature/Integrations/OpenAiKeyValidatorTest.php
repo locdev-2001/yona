@@ -5,7 +5,6 @@ use App\Services\Integrations\OpenAi\KeyValidator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/spec/lib/integrations/openai/key_validator_spec.rb.
 it('chấp nhận khoá OpenAI hợp lệ', function () {
     Http::fake(['https://api.openai.com/v1/models' => Http::response([], 200)]);
 

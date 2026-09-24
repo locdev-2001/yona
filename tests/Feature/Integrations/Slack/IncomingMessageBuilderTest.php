@@ -19,7 +19,7 @@ function slackMessageEvent(array $overrides = []): array
     return array_replace_recursive([
         'client_msg_id' => 'ffc6e64e-6f0c-4a3d-b594-faa6b44e48ab',
         'type' => 'message',
-        'text' => 'this is test <https://chatwoot.com> Hey <@U019KT237LP|Sojan> Test again',
+        'text' => 'this is test <https://example.com> Hey <@U019KT237LP|Sojan> Test again',
         'user' => 'ULYPAKE5S',
         'ts' => '1588623033.006000',
         'thread_ts' => '1588623023.005900',
@@ -79,7 +79,7 @@ it('tạo tin outgoing với nội dung đã gỡ định dạng Slack', functio
 
     expect($response)->toBe(['status' => 'success']);
     $message = $this->conversation->messages()->latest('id')->first();
-    expect($message->content)->toBe('this is test https://chatwoot.com Hey @Sojan Test again')
+    expect($message->content)->toBe('this is test https://example.com Hey @Sojan Test again')
         ->and($message->private)->toBeFalse();
 });
 
@@ -122,7 +122,7 @@ it('bỏ qua khi thiếu user', function () {
     expect($this->conversation->messages()->count())->toBe($count);
 });
 
-it('bỏ qua postback tự sinh khi Chatwoot gửi tệp ra Slack ("Attached File!")', function () {
+it('bỏ qua postback tự sinh khi hệ thống gửi tệp ra Slack ("Attached File!")', function () {
     $count = $this->conversation->messages()->count();
     $payload = slackCallbackPayload(['text' => 'Attached File!', 'files' => [['mimetype' => 'image/png']]]);
 
@@ -135,14 +135,14 @@ it('lưu tệp đính kèm khi event có files', function () {
     Storage::fake('public');
     Http::fake([
         'https://slack.com/api/users.info*' => Http::response(['ok' => true, 'user' => ['profile' => ['email' => null]]]),
-        'https://chatwoot-assets.local/*' => Http::response('fake-binary-content', 200),
+        'https://assets.example.test/*' => Http::response('fake-binary-content', 200),
     ]);
 
     $payload = slackCallbackPayload([
         'blocks' => null,
         'files' => [[
             'mimetype' => 'image/png',
-            'url_private' => 'https://chatwoot-assets.local/sample.png',
+            'url_private' => 'https://assets.example.test/sample.png',
             'name' => 'sample.png',
             'filetype' => 'png',
         ]],
@@ -170,7 +170,7 @@ it('gọi SlackUnfurlJob khi sự kiện là link_shared', function () {
     Queue::assertPushed(SlackUnfurlJob::class, fn ($job) => $job->params === $payload);
 });
 
-it('gán người gửi là agent Chatwoot khi email Slack khớp', function () {
+it('gán người gửi là agent khi email Slack khớp', function () {
     $agent = User::factory()->create(['email' => 'agent@example.com']);
     AccountUser::factory()->create(['account_id' => $this->account->id, 'user_id' => $agent->id]);
 

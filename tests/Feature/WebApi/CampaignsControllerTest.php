@@ -19,7 +19,7 @@ function campaignAccountUser(Account $account, int $role): User
 
 beforeEach(function () {
     $this->account = Account::factory()->create();
-    // Factory :inbox của Chatwoot mặc định là kênh Website; ở yona phải khai rõ.
+    // Factory :inbox mặc định là kênh Website; ở yona phải khai rõ.
     $this->inbox = Inbox::factory()->webWidget()->create(['account_id' => $this->account->id]);
     $this->campaign = Campaign::factory()->create([
         'account_id' => $this->account->id,

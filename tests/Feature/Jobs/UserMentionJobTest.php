@@ -9,8 +9,6 @@ use App\Models\Mention;
 use App\Models\Message;
 use App\Models\User;
 
-// Port từ Conversations::UserMentionJob (Chatwoot không có spec riêng cho job này).
-
 beforeEach(function () {
     $this->account = Account::factory()->create();
     $this->inbox = Inbox::factory()->create(['account_id' => $this->account->id]);

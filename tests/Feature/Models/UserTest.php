@@ -2,8 +2,6 @@
 
 use App\Models\User;
 
-// Port từ refs/chatwoot/spec/models/user_spec.rb (phần pubsub_token + email).
-
 describe('pubsub_token', function () {
     it('is generated on create', function () {
         $user = User::factory()->create();

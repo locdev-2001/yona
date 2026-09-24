@@ -4,8 +4,6 @@ use App\Models\User;
 use App\Services\Mfa\ManagementService;
 use OTPHP\TOTP;
 
-// Port từ refs/chatwoot/spec/requests/api/v1/profile/mfa_controller_spec.rb.
-
 function currentOtp(User $user): string
 {
     return TOTP::createFromSecret($user->refresh()->otp_secret)->now();

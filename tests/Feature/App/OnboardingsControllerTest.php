@@ -4,7 +4,6 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/controllers/api/v1/accounts/onboardings_controller.rb
 // (complete_account_details). Khác gốc: website không bắt buộc — gốc chỉ đòi nó ở
 // client để tạo inbox web-widget cho bước inbox_setup, bước mà bản này không chạy.
 

@@ -4,8 +4,7 @@ use App\Models\User;
 use App\Services\Mfa\TokenService;
 use Illuminate\Support\Facades\Crypt;
 
-// Port từ refs/chatwoot/spec/services/mfa/token_service_spec.rb (JWT ký bằng
-// secret_key_base → encrypter APP_KEY của Laravel).
+// JWT ký bằng encrypter APP_KEY của Laravel.
 
 it('round trips a token back to its user', function () {
     $user = User::factory()->create();

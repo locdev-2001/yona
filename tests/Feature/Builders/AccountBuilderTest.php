@@ -7,8 +7,6 @@ use App\Models\AccountUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-// Port từ refs/chatwoot/spec/builders/account_builder_spec.rb
-
 function makeAccountBuilder(): AccountBuilder
 {
     return new AccountBuilder(

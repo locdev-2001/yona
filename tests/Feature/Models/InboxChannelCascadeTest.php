@@ -5,8 +5,7 @@ use App\Models\Channel;
 use App\Models\Inbox;
 use Illuminate\Support\Facades\Http;
 
-// `belongs_to :channel, dependent: :destroy` của refs/chatwoot/app/models/inbox.rb:
-// xóa inbox phải kéo theo hàng channel_*, nếu không hàng mồ côi giữ ràng buộc unique
+// Xóa inbox phải kéo theo hàng channel_*, nếu không hàng mồ côi giữ ràng buộc unique
 // (email, phone_number, bot_token…) và không tạo lại inbox cùng định danh được.
 
 /** @return array<string, array{0: string, 1: class-string, 2: list<string>}> */

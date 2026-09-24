@@ -7,8 +7,6 @@ use App\Models\Message;
 use App\Services\Integrations\Slack\SlackEventProcessor;
 use Illuminate\Support\Facades\Queue;
 
-// Port nhánh 'slack' của refs/chatwoot/app/jobs/hook_job.rb (#process_slack_integration).
-
 it('khai đúng 2 sự kiện được hỗ trợ', function () {
     expect((new SlackEventProcessor)->supportedEvents())->toBe(['message.created', 'message.updated']);
 });

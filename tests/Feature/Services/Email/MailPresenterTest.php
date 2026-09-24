@@ -2,8 +2,7 @@
 
 use App\Services\Email\MailPresenter;
 
-// Port từ spec/presenters/mail_presenter_spec.rb — dùng chính fixture .eml của
-// Chatwoot (đã chép sang tests/Fixtures/emails).
+// Dùng các fixture .eml trong tests/Fixtures/emails.
 
 function fixtureMail(string $name): MailPresenter
 {
@@ -14,9 +13,9 @@ it('parses subject, sender and message id', function () {
     $mail = fixtureMail('reply.eml');
 
     expect($mail->subject())->toBe("Discussion: Let's debate these attachments")
-        ->and($mail->messageId())->toBe('0CB459E0-0336-41DA-BC88-E6E28C697DDB@chatwoot.com')
-        ->and($mail->from())->toBe(['sony@chatwoot.com'])
-        ->and($mail->originalSender())->toBe('sony@chatwoot.com')
+        ->and($mail->messageId())->toBe('0CB459E0-0336-41DA-BC88-E6E28C697DDB@example.com')
+        ->and($mail->from())->toBe(['sony@example.com'])
+        ->and($mail->originalSender())->toBe('sony@example.com')
         ->and($mail->senderName())->toBe('Sony Mathew')
         ->and($mail->to())->toBe(['reply+6bdc3f4d-0bec-4515-a284-5d916fdde489@example.com']);
 });
@@ -55,7 +54,7 @@ it('detects auto replies from both headers', function () {
 });
 
 it('recognises notification emails sent by the installation itself', function () {
-    config(['mail.sender_email' => 'sony@chatwoot.com']);
+    config(['mail.sender_email' => 'sony@example.com']);
 
     expect(fixtureMail('reply.eml')->isNotificationEmailFromSelf())->toBeTrue();
 

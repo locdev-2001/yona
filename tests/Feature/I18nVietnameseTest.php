@@ -108,7 +108,7 @@ it('thực sự dịch sang tiếng Việt chứ không chép lại tiếng Anh'
         ARRAY_FILTER_USE_BOTH,
     );
 
-    // Ngưỡng: bản dịch Chatwoot vi để nguyên một số thuật ngữ; chặn hồi quy dịch sót hàng loạt.
+    // Ngưỡng: bản dịch vi gốc để nguyên một số thuật ngữ; chặn hồi quy dịch sót hàng loạt.
     expect(count($translatable))->toBeLessThan(count($english) * 0.05);
 });
 

@@ -34,7 +34,7 @@ it('unfurl khi bot còn quyền truy cập kênh', function () {
             'channel' => 'G01354F6A6Q',
             'unfurl_id' => 'unfurl-1',
             'source' => 'conversations_history',
-            'links' => [['url' => "https://qa.chatwoot.com/app/accounts/{$account->id}/conversations/{$conversation->display_id}"]],
+            'links' => [['url' => "https://qa.example.com/app/accounts/{$account->id}/conversations/{$conversation->display_id}"]],
         ],
     ];
 
@@ -54,7 +54,7 @@ it('không unfurl khi link thuộc account khác', function () {
         'event' => [
             'type' => 'link_shared',
             'channel' => 'X',
-            'links' => [['url' => "https://qa.chatwoot.com/app/accounts/{$anotherAccount->id}/conversations/1"]],
+            'links' => [['url' => "https://qa.example.com/app/accounts/{$anotherAccount->id}/conversations/1"]],
         ],
     ];
 
@@ -73,7 +73,7 @@ it('không unfurl khi bot không còn ở trong kênh (conversations.members tr�
         'event' => [
             'type' => 'link_shared',
             'channel' => 'GDF4F6A6Q',
-            'links' => [['url' => "https://qa.chatwoot.com/app/accounts/{$account->id}/conversations/1"]],
+            'links' => [['url' => "https://qa.example.com/app/accounts/{$account->id}/conversations/1"]],
         ],
     ];
 

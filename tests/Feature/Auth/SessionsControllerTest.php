@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\UserSession;
 use Tests\Support\StoredSessions;
 
-// Port từ refs/chatwoot/spec/controllers/devise/session_controller_spec.rb
 // (đổi devise_token_auth JSON API sang session auth Laravel/Inertia; phần
 // sso_auth_token + permissions/accounts chưa port — xem bảng trace A1).
 

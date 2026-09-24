@@ -4,8 +4,6 @@ use App\Models\User;
 use App\Models\UserSession;
 use Illuminate\Database\UniqueConstraintViolationException;
 
-// Port từ refs/chatwoot/spec/models/user_session_spec.rb.
-
 it('belongs to a user', function () {
     $session = UserSession::factory()->create();
 

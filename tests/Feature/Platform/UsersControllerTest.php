@@ -5,7 +5,6 @@ use App\Models\AccountUser;
 use App\Models\PlatformApp;
 use App\Models\User;
 
-// Port từ refs/chatwoot/spec/controllers/platform/api/v1/users_controller_spec.rb.
 beforeEach(function () {
     $this->platformApp = PlatformApp::factory()->create();
     $this->headers = ['api_access_token' => $this->platformApp->accessToken->token];

@@ -6,9 +6,6 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\User;
 
-// Port từ refs/chatwoot/app/listeners/participation_listener.rb (Chatwoot không
-// có spec riêng cho listener này).
-
 beforeEach(function () {
     $this->account = Account::factory()->create();
     $this->inbox = Inbox::factory()->create(['account_id' => $this->account->id]);

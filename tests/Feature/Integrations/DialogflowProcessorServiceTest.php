@@ -9,7 +9,6 @@ use App\Models\Message;
 use App\Services\Integrations\Dialogflow\ProcessorService;
 use Illuminate\Support\Facades\Http;
 
-// Port từ refs/chatwoot/spec/lib/integrations/dialogflow/processor_service_spec.rb.
 // Bản gốc dùng gRPC mock; ở đây fake HTTP REST (token OAuth + detectIntent —
 // xem note "Khác biệt cố ý" trong f6-notes-misc.md).
 

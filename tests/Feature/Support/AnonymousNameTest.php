@@ -84,7 +84,7 @@ it('cung cấp đủ tên dễ thương cho cả hai locale, không trùng nghĩ
 
 // Avatar chữ cái của FE (components-next/avatar/Avatar.tsx#getInitials) tách theo khoảng
 // trắng và lấy 2 chữ đầu, nên "Gấu mèo ẩn danh" ra "GM" chứ không phải "G" — giữ nguyên
-// hành vi gốc của Chatwoot, chỉ khoá lại để không ai đổi tên thành dạng gây chữ tắt vô nghĩa.
+// hành vi gốc, chỉ khoá lại để không ai đổi tên thành dạng gây chữ tắt vô nghĩa.
 it('tên mới luôn bắt đầu bằng chữ cái để avatar chữ cái có nghĩa', function () {
     $account = Account::factory()->create(['locale' => 'vi']);
 
