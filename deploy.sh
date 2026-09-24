@@ -24,7 +24,8 @@
 #   DEPLOY_FORCE_REBUILD=0           1 = cài lại dependency và build FE dù không
 #                                      có file nào đổi giữa hai revision.
 #   DEPLOY_HEALTHCHECK=1             Check APP_URL/up after deployment, then warn
-#                                      when the CDN or nginx hides Laravel's responses.
+#                                      when the CDN or nginx hides Laravel's responses
+#                                      or the first-party analytics script is missing.
 #   DEPLOY_HEALTH_URL=https://...    Override the health-check URL.
 #   DEPLOY_DRY_RUN=1                 Print mutating commands without running them.
 #   DEPLOY_ALLOW_ROOT=1              Root is the chosen aaPanel deploy user.
@@ -333,6 +334,45 @@ validate_environment() {
 
     if zalo_bridge_enabled; then
         validate_zalo_environment
+    fi
+
+    warn_session_and_analytics_settings
+}
+
+# Chỉ cảnh báo: cấu hình sai ở đây không làm hỏng bản deploy, nhưng làm nhân viên
+# bị đăng xuất sớm hoặc analytics im lặng (docs/deployment.md mục 5).
+warn_session_and_analytics_settings() {
+    local session_lifetime session_redis_db cache_redis_db
+
+    session_lifetime="$(env_value SESSION_LIFETIME)"
+    if [[ "$session_lifetime" =~ ^[0-9]+$ ]] && (( session_lifetime < 1440 )); then
+        warn "SESSION_LIFETIME=$session_lifetime phút: nhân viên bị đăng xuất sau chừng ấy phút không thao tác (mặc định 43200 = 30 ngày)."
+    fi
+
+    # optimize:clear ở mỗi lần deploy flush cả DB Redis của cache; phiên nằm chung
+    # DB đó thì mọi người bị đăng xuất sau mỗi lần deploy.
+    session_redis_db="$(redis_database_of_connection "$(env_value SESSION_CONNECTION)" default)"
+    cache_redis_db="$(redis_database_of_connection "$(env_value REDIS_CACHE_CONNECTION)" cache)"
+    if [[ "$session_redis_db" == "$cache_redis_db" ]]; then
+        warn "Phiên đăng nhập và cache cùng nằm ở Redis DB $session_redis_db: mỗi lần deploy sẽ đăng xuất mọi người."
+        warn '  Đặt REDIS_DB khác REDIS_CACHE_DB và để trống SESSION_CONNECTION.'
+    fi
+
+    if [[ -z "$(env_value PLAUSIBLE_HOST)" || -z "$(env_value PLAUSIBLE_SCRIPT_PATH)" ]]; then
+        warn 'PLAUSIBLE_HOST hoặc PLAUSIBLE_SCRIPT_PATH trống: trang không gắn analytics.'
+    fi
+}
+
+# Số DB Redis của một kết nối trong config/database.php (<tên kết nối> <mặc định>).
+redis_database_of_connection() {
+    local connection="${1:-$2}" database
+
+    if [[ "$connection" == 'cache' ]]; then
+        database="$(env_value REDIS_CACHE_DB)"
+        printf '%s' "${database:-1}"
+    else
+        database="$(env_value REDIS_DB)"
+        printf '%s' "${database:-0}"
     fi
 }
 
@@ -1117,6 +1157,33 @@ verify_nginx_passes_laravel_errors() {
     fi
 }
 
+# Script analytics đi qua route Laravel first-party (routes/api.php). Route đó cố ý
+# không có đuôi .js, nhưng upstream sai host/đường dẫn hay rule nginx lạ vẫn làm trang
+# mất analytics mà /up không thấy. Chỉ cảnh báo.
+verify_analytics_proxy() {
+    local app_url proxy_path script_url status_and_type
+    is_enabled "$DEPLOY_HEALTHCHECK" || return 0
+    [[ -n "$(env_value PLAUSIBLE_HOST)" ]] || return 0
+
+    app_url="$(env_value APP_URL)"
+    [[ -n "$app_url" ]] || return 0
+    proxy_path="$(env_value PLAUSIBLE_PROXY_PATH)"
+    script_url="${app_url%/}${proxy_path:-/yv}/s"
+
+    if is_enabled "$DEPLOY_DRY_RUN"; then
+        print_command curl --silent --max-time 10 "$script_url"
+        return 0
+    fi
+
+    status_and_type="$(curl --silent --max-time 10 -A 'yona-deploy/1.0 (verify-analytics)' \
+        -o /dev/null -w '%{http_code} %{content_type}' "$script_url" 2>/dev/null)" || status_and_type=''
+
+    [[ "${status_and_type,,}" == '200 application/javascript'* ]] && return 0
+
+    warn "Script analytics first-party không trả JavaScript: $script_url (${status_and_type:-không kết nối được})"
+    warn '  Kiểm PLAUSIBLE_HOST, PLAUSIBLE_SCRIPT_PATH: docs/deployment.md mục 5, đoạn Analytics.'
+}
+
 # Route Laravel có URL kết thúc bằng đuôi ảnh (<url> <tiền tố location> <hậu quả>):
 # rule regex ảnh tĩnh của aaPanel trả 404 của nginx trước khi request tới PHP.
 warn_if_static_rule_swallows() {
@@ -1200,6 +1267,7 @@ main() {
     step 'health check'   health_check
     step 'cdn sdk.js'     verify_cdn_fresh
     step 'nginx 404'      verify_nginx_passes_laravel_errors
+    step 'analytics'      verify_analytics_proxy
 
     NEW_REVISION="$(git rev-parse --short HEAD)"
     duration="$(( $(date +%s) - STARTED_AT ))"
