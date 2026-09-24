@@ -55,12 +55,15 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
     const showDivider = (index: number) =>
         (index > activeTab && index < tabs.length - 1) || (index < activeTab - 1 && index > -1);
 
+    // Chiều cao chỉ đặt ở khung: màn nhỏ cao 44px cho vừa ngón tay, từ md về 32px;
+    // indicator và nút giãn theo khung. Tab chưa chọn chỉ thu nhỏ từ md để màn nhỏ
+    // giữ trọn vùng chạm 44px (transform thu nhỏ cả vùng nhận chạm).
     return (
         <div
-            className={`relative flex items-center h-8 rounded-lg bg-n-alpha-1 dark:bg-n-solid-1 w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
+            className={`relative flex items-center h-11 md:h-8 rounded-lg bg-n-alpha-1 dark:bg-n-solid-1 w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
         >
             <div
-                className={`absolute rounded-lg bg-n-solid-active shadow-sm pointer-events-none h-8 outline-1 outline outline-n-container inset-y-0 ${enableTransition ? 'transition-all duration-300 ease-out' : ''}`.trim()}
+                className={`absolute rounded-lg bg-n-solid-active shadow-sm pointer-events-none outline-1 outline outline-n-container inset-y-0 ${enableTransition ? 'transition-all duration-300 ease-out' : ''}`.trim()}
                 style={indicatorStyle}
             />
 
@@ -73,8 +76,8 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
                             tabRefs.current[index] = el;
                         }}
                         type="button"
-                        className={`relative z-10 px-4 truncate py-1.5 text-sm border-0 outline-1 outline-transparent rounded-lg transition-all duration-200 ease-out hover:text-n-brand active:scale-[1.02] ${
-                            activeTab === index ? 'text-n-blue-11 scale-100' : 'text-n-slate-10 scale-[0.98]'
+                        className={`relative z-10 h-full px-4 truncate text-sm border-0 outline-1 outline-transparent rounded-lg transition-all duration-200 ease-out hover:text-n-brand active:scale-[1.02] ${
+                            activeTab === index ? 'text-n-blue-11 scale-100' : 'text-n-slate-10 md:scale-[0.98]'
                         }`}
                         onClick={() => onTabChanged(tabs[index])}
                     >

@@ -82,4 +82,13 @@ describe('TabBar', () => {
         expect(revealHorizontally).toHaveBeenCalledWith(activeTab);
     });
 
+    it('thanh tab cao 44px trên màn nhỏ để dễ chạm, về 32px từ màn md', () => {
+        const { container } = render(<TabBar tabs={TABS_WITH_COUNTS} onTabChanged={vi.fn()} />);
+        const tabBar = container.firstElementChild!;
+
+        expect(tabBar.className).toMatch(/(^|\s)h-11(\s|$)/);
+        expect(tabBar.className).toMatch(/(^|\s)md:h-8(\s|$)/);
+        screen.getAllByRole('button').forEach(tab => expect(tab.className).toMatch(/(^|\s)h-full(\s|$)/));
+        screen.getAllByRole('button').forEach(tab => expect(tab.className).not.toMatch(/(^|\s)scale-\[0\.98\]/));
+    });
 });
