@@ -16,6 +16,11 @@ export const chatBubble = document.createElement('button');
 export const closeBubble = document.createElement('button');
 export const notificationBubble = document.createElement('span');
 
+const UNREAD_BADGE_LIMIT = 9;
+
+export const formatUnreadBadge = (unreadCount: number): string =>
+    unreadCount > UNREAD_BADGE_LIMIT ? `${UNREAD_BADGE_LIMIT}+` : String(unreadCount);
+
 export const setBubbleText = (bubbleText: string): void => {
     if (isExpandedView(window.$chatwoot.type)) {
         const textNode = document.getElementById('woot-widget--expanded__text');

@@ -77,21 +77,31 @@
   margin: 16px !important;
 }
 
-.woot-widget-bubble.woot-widget-bubble--flat.woot--close::before,
-.woot-widget-bubble.woot-widget-bubble--flat.woot--close::after {
-  left: 28px;
-  top: 16px;
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close::before {
+  left: 21.5px;
+  top: 21px;
 }
 
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close::after {
+  left: 31.5px;
+  top: 21px;
+}
+
+/* Badge đỏ mang số tin chưa đọc (widget gửi qua handleNotificationDot). */
 .woot-widget-bubble.unread-notification::after {
-  content: '';
+  content: attr(data-unread-count);
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #ff4040;
-  border-radius: 100%;
-  top: 0px;
-  right: 0px;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: #e5484d;
+  color: #ffffff;
+  font: 600 11px/16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-align: center;
+  border-radius: 10px;
+  top: -2px;
+  right: -2px;
   border: 2px solid #ffffff;
   transition: background 0.2s ease;
 }
@@ -176,16 +186,17 @@
   opacity: 1;
 }
 
+/* Khi mở, nút launcher là mũi tên xuống (thu nhỏ), không phải dấu X. */
 .woot--close::before,
 .woot--close::after {
   background-color: #fff;
+  border-radius: 2px;
   content: ' ';
   display: inline;
-  height: 24px;
-  left: 32px;
+  height: 14px;
   position: absolute;
-  top: 20px;
-  width: 2px;
+  top: 25px;
+  width: 3px;
 }
 
 .woot-widget-bubble-color--lighter.woot--close::before,
@@ -194,11 +205,13 @@
 }
 
 .woot--close::before {
-  transform: rotate(45deg);
+  left: 25.5px;
+  transform: rotate(-45deg);
 }
 
 .woot--close::after {
-  transform: rotate(-45deg);
+  left: 35.5px;
+  transform: rotate(45deg);
 }
 
 .woot--hide {

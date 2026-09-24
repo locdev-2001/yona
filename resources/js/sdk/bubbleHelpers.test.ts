@@ -72,3 +72,12 @@ describe('isWidgetColorLighter', () => {
         expect(isWidgetColorLighter('#f2f3f7')).toBe(true);
     });
 });
+
+describe('formatUnreadBadge', () => {
+    it('hiện đúng số tới 9, từ 10 tin thành 9+', async () => {
+        const { formatUnreadBadge } = await import('./bubbleHelpers');
+        expect(formatUnreadBadge(1)).toBe('1');
+        expect(formatUnreadBadge(9)).toBe('9');
+        expect(formatUnreadBadge(12)).toBe('9+');
+    });
+});

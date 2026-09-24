@@ -14,6 +14,7 @@ import {
     setBubbleText,
     addUnreadClass,
     removeUnreadClass,
+    formatUnreadBadge,
 } from './bubbleHelpers';
 import { isWidgetColorLighter } from './helpers/colorHelper';
 import { dispatchWindowEvent } from './helpers/customEvent';
@@ -299,9 +300,11 @@ export const IFrameHelper = {
             const bubbleElement = document.querySelector('.woot-widget-bubble');
             if (!bubbleElement) return;
 
-            if (event.unreadMessageCount > 0 && !bubbleElement.classList.contains('unread-notification')) {
+            if (event.unreadMessageCount > 0) {
+                (bubbleElement as HTMLElement).dataset.unreadCount = formatUnreadBadge(event.unreadMessageCount);
                 addClasses(bubbleElement, 'unread-notification');
-            } else if (event.unreadMessageCount === 0) {
+            } else {
+                delete (bubbleElement as HTMLElement).dataset.unreadCount;
                 removeClasses(bubbleElement, 'unread-notification');
             }
         },
