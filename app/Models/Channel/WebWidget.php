@@ -9,6 +9,7 @@ use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
+use App\Support\WidgetEmbedScript;
 use Database\Factories\Channel\WebWidgetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -144,33 +145,10 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         );
     }
 
-    // web_widget_script — giữ nguyên từng dòng/thụt lề của bản gốc; BASE_URL lấy
-    // từ config('app.url') thay cho ENV FRONTEND_URL.
+    // web_widget_script — BASE_URL lấy từ config('app.url') thay cho ENV FRONTEND_URL.
     protected function webWidgetScript(): Attribute
     {
-        return Attribute::get(function (): string {
-            $baseUrl = (string) config('app.url');
-
-            return implode("\n", [
-                '',
-                '    <script>',
-                '      (function(d,t) {',
-                '        var BASE_URL="'.$baseUrl.'";',
-                '        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];',
-                '        g.src=BASE_URL+"/packs/js/sdk.js";',
-                '        g.async = true;',
-                '        s.parentNode.insertBefore(g,s);',
-                '        g.onload=function(){',
-                '          window.chatwootSDK.run({',
-                "            websiteToken: '{$this->website_token}',",
-                '            baseUrl: BASE_URL',
-                '          })',
-                '        }',
-                '      })(document,"script");',
-                '    </script>',
-                '    ',
-            ]);
-        });
+        return Attribute::get(fn (): string => WidgetEmbedScript::render((string) config('app.url'), (string) $this->website_token));
     }
 
     /** Widget web: danh tính là token khách, hồ sơ đến từ form trước chat. */
