@@ -51,6 +51,15 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Tab **Cài đặt** · dưới Trình tạo widget | Một dòng phụ "Lấy mã nhúng ở tab Cấu hình." | Người đang ở Trình tạo widget cần biết mã nhúng nằm đâu | 07/09/2026 |
 | Trình tạo widget · nút chuyển (locale `vi`) | "Mã nhúng" thay "Kịch bản" | "Kịch bản" bị hiểu là kịch bản chatbot, không ai bấm | 07/09/2026 |
 | Widget · phiên khách | Nút "Bắt đầu cuộc trò chuyện mới" cho khách tự xoá phiên (xác nhận trước), đi chung đường với `reset()` của SDK. Phiên lưu hai lớp: cookie trang HTTPS `SameSite=None; Secure; Partitioned` + token trong localStorage của iframe | Giữ phiên tới khi khách chủ động xoá, kể cả khi mã nhúng nằm trong iframe khác site | 25/09/2026 |
+| Widget · màu nhấn | Màu nhấn của khung chat (nút gửi, link, CTA, chấm carousel, vạch trả lời) lấy `widgetColor` của hộp thư qua token `--yona-chat-accent`, không cứng `#1B6FCC` của design; bong bóng khách giữ gần đen `#17181A` đúng design | Màu widget là thứ tenant cấu hình được và đang chạy; bong bóng khách tách khỏi màu nhấn để đọc được trên mọi màu thương hiệu | 25/09/2026 |
+| Widget · chữ | Be Vietnam Pro tự host, chỉ 3 nét 300/400/500 có trong repo (600/700 do trình duyệt tổng hợp); không gọi dịch vụ font bên ngoài | Widget nhúng vào site khách, không được thêm request bên thứ ba | 25/09/2026 |
+| Widget · một màn chat | Bỏ màn chủ: mở widget vào thẳng khung chat, luồng trống là "Chào bạn!" + mô tả; chỉ dừng ở màn trống có nút "Bắt đầu" khi hộp thư bắt điền form trước hội thoại đầu tiên. Ngoài giờ (hộp thư bật giờ làm việc) màn trống thành khối đồng hồ + ô email + "Để lại tin nhắn" (lưu email vào liên hệ) | Màn chủ cũ trống 60% chiều cao, nút duy nhất bị đẩy xuống đáy | 25/09/2026 |
+| Widget · header | Nút đóng chỉ hiện trên điện thoại (máy tính đóng bằng launcher, như trước) và là mũi tên xuống; vùng bấm mọi nút header 44×44 | Đóng widget là thu nhỏ, không phải huỷ; cùng biểu tượng với launcher khi mở | 25/09/2026 |
+| Widget · sticker | Tab Sticker chỉ hiện khi kênh có danh mục (`yona.widget_stickers`); chưa có kho upload sticker cho tenant nên mặc định panel mở ở tab Emoji | Không bày tab rỗng | 25/09/2026 |
+| Widget · menu "Thêm" của tin | Ngoài Thu hồi có thêm "Sao chép" | Khách cần chép lại mã đơn, địa chỉ agent gửi | 25/09/2026 |
+| Widget · avatar agent | Không hiện tên agent dưới avatar ở tin cuối nhóm | Khung 360px hẹp; tên đã có ở header | 25/09/2026 |
+| Widget · lưới 3 ảnh | Tin 3 ảnh: hai ảnh hàng trên, ảnh thứ ba trải hết hàng dưới (design để ô trống) | Không để ô trống vô nghĩa trong bong bóng | 25/09/2026 |
+| Widget · khay đính kèm | Ảnh dán từ clipboard vào khay trước (không gửi ngay) để thêm chú thích; nhiều tệp gửi thành MỘT tin | Cùng một luồng với chọn ảnh từ menu "+" | 25/09/2026 |
 
 ## Trang công khai, đăng nhập, onboarding
 
