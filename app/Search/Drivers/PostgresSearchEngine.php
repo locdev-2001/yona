@@ -52,6 +52,16 @@ final class PostgresSearchEngine implements SearchEngine
                     ->whereRaw(...$term->foldedMatch('messages.content'))));
     }
 
+    // Chỉ mục chính là các bảng — không có gì để đồng bộ.
+    public function keepsSeparateIndex(): bool
+    {
+        return false;
+    }
+
+    public function index(SearchTarget $target, array $ids): void {}
+
+    public function remove(SearchTarget $target, array $ids): void {}
+
     private function conversationHits(SearchQuery $query): SearchHits
     {
         $term = $this->term($query);
@@ -110,9 +120,8 @@ final class PostgresSearchEngine implements SearchEngine
         $term = $this->term($query);
 
         $matches = Attachment::query()
-            ->whereMorphedTo('attachable', Message::class)
+            ->searchDocuments()
             ->whereIn('attachments.attachable_id', $this->messages($query)->select('messages.id'))
-            ->whereIn('attachments.file_type', Attachment::SEARCHABLE_FILE_TYPES)
             ->whereRaw(...$term->foldedMatch(Attachment::DISPLAY_NAME_SQL));
 
         return $term->orderByRelevance($matches, Attachment::DISPLAY_NAME_SQL)

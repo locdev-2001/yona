@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Http\Resources\ContactResource;
 use App\Models\Concerns\Avatarable;
+use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\SelfValidating;
 use App\Support\OnlineStatusTracker;
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */
-    use Avatarable, HasFactory, Labelable, SelfValidating;
+    use Avatarable, HasFactory, IndexedForSearch, Labelable, SelfValidating;
 
     public const TYPE_VISITOR = 'visitor';
 

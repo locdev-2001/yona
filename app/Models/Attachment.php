@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Exceptions\MessageValidationException;
+use App\Models\Concerns\IndexedForSearch;
 use App\Support\FileUploadLimit;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\UploadedFile;
@@ -16,6 +18,8 @@ use Illuminate\Support\Str;
 // và attachable morph thay `belongs_to :message` (bảng dùng chung với avatar A4).
 class Attachment extends Model
 {
+    use IndexedForSearch;
+
     public const FILE_TYPE_IMAGE = 0;
 
     public const FILE_TYPE_AUDIO = 1;
@@ -154,6 +158,23 @@ class Attachment extends Model
     public function attachable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    // Tài liệu tìm kiếm "tệp": tệp đính kèm tin nhắn thuộc loại tìm được theo tên.
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeSearchDocuments(Builder $query): Builder
+    {
+        return $query->whereMorphedTo('attachable', Message::class)
+            ->whereIn('attachments.file_type', self::SEARCHABLE_FILE_TYPES);
+    }
+
+    public function isSearchDocument(): bool
+    {
+        return $this->attachable_type === (new Message)->getMorphClass()
+            && in_array($this->file_type, self::SEARCHABLE_FILE_TYPES);
     }
 
     // FileTypeHelper#file_type — suy loại xem trước từ content-type.

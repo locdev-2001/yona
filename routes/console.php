@@ -6,8 +6,10 @@ use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
 use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
+use App\Jobs\Search\ProcessSearchOutboxJob;
 use App\Jobs\Zalo\ZaloHealthSweepJob;
 use App\Models\UserSession;
+use App\Search\SearchOutbox;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -29,6 +31,9 @@ Schedule::job(new FetchImapEmailInboxesJob)->cron('*/1 * * * *');
 // G1 Zalo: nhịp tim Laravel ↔ zalo-bridge. Không có nó, bridge chết là DB vẫn báo
 // "connected" và chủ shop không thấy gì (zalo-deep-audit 6.5).
 Schedule::job(new ZaloHealthSweepJob)->cron('*/1 * * * *')->withoutOverlapping();
+// Outbox tìm kiếm đã xếp job ngay sau mỗi lần ghi; lịch này vét phần xếp hàng lỗi
+// hoặc job hết lượt thử. Engine không giữ chỉ mục riêng thì không chạy.
+Schedule::job(new ProcessSearchOutboxJob)->everyMinute()->when(fn () => app(SearchOutbox::class)->enabled());
 
 // Horizon chỉ vẽ được biểu đồ thông lượng/thời gian chờ nếu có ai chụp ảnh
 // hàng đợi định kỳ; không có dòng này thì tab Metrics trống.

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Livewire\Pulse\SearchOutboxCard;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
@@ -38,6 +39,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use Laravel\Horizon\Horizon;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -76,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerObservabilityGates();
+        Livewire::component('pulse.search-outbox', SearchOutboxCard::class);
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
 

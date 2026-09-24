@@ -75,6 +75,15 @@ function fakeSearchEngine(array $idsByTarget): void
         {
             return $this->idsByTarget[SearchTarget::Conversations->value] ?? [];
         }
+
+        public function keepsSeparateIndex(): bool
+        {
+            return false;
+        }
+
+        public function index(SearchTarget $target, array $ids): void {}
+
+        public function remove(SearchTarget $target, array $ids): void {}
     });
 }
 

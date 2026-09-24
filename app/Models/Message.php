@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Jobs\SendReplyJob;
+use App\Models\Concerns\IndexedForSearch;
 use App\Services\Messages\InReplyToMessageBuilder;
 use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\MessageTemplates\HookExecutionService;
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\DB;
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
-    use HasFactory;
+    use HasFactory, IndexedForSearch;
 
     public const TYPE_INCOMING = 0;
 

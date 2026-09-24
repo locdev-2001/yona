@@ -10,6 +10,7 @@ use App\Http\Resources\MessageResource;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
 use App\Models\Concerns\AutoAssignmentHandler;
+use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\Reportable;
 use App\Support\CurrentContact;
@@ -31,7 +32,7 @@ use Illuminate\Support\Str;
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, Labelable, Reportable;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Reportable;
 
     public const STATUS_OPEN = 0;
 
