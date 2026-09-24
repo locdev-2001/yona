@@ -7,6 +7,7 @@ use App\Builders\ContactInboxBuilder;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Attachment;
+use App\Models\Channel\Zalo;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
@@ -14,6 +15,8 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
+use App\Services\Conversations\GroupMembersService;
+use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\Zalo\Exception\EchoAwaitingSourceIdException;
 use Illuminate\Support\Carbon;
 
@@ -66,16 +69,13 @@ class IncomingMessageService
     // Thứ tự tra URL ảnh sticker trong payload bridge (zca-js đặt nhiều tên).
     private const STICKER_URL_KEYS = ['stickerUrl', 'url', 'thumbnail', 'stickerSpriteUrl'];
 
-    /** `thread_type` của Zalo: 0 = chat 1-1, 1 = nhóm. */
-    private const THREAD_TYPE_GROUP = 1;
-
     /**
      * Khoá chuẩn hoá của năng lực `group_threads` (docs/channel-capabilities.md
      * §2.4) — lõi và bong bóng đọc đúng chừng này, không mang tên riêng của Zalo.
      */
-    private const GROUP_SENDER_KEYS = ['external_id', 'name', 'avatar'];
+    private const GROUP_SENDER_KEYS = GroupMembersService::MEMBER_KEYS;
 
-    private const GROUP_MENTION_KEYS = ['external_id', 'name', 'offset', 'length'];
+    private const GROUP_MENTION_KEYS = OutboundMentionsBuilder::KEYS;
 
     private const GROUP_THREAD_KEYS = ['id', 'name', 'avatar'];
 
@@ -650,7 +650,7 @@ class IncomingMessageService
 
     private function isGroupThread(): bool
     {
-        return (int) ($this->params['thread_type'] ?? 0) === self::THREAD_TYPE_GROUP;
+        return (int) ($this->params['thread_type'] ?? 0) === Zalo::THREAD_TYPE_GROUP;
     }
 
     /**

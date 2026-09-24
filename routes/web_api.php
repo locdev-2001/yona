@@ -21,6 +21,7 @@ use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
 use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
 use App\Http\Controllers\WebApi\Conversations\DraftMessagesController;
+use App\Http\Controllers\WebApi\Conversations\GroupMembersController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\Conversations\ParticipantsController;
@@ -189,6 +190,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/participants', [ParticipantsController::class, 'store'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}/participants', [ParticipantsController::class, 'update'])->whereNumber('conversationId');
         Route::delete('/conversations/{conversationId}/participants', [ParticipantsController::class, 'destroy'])->whereNumber('conversationId');
+        // Thành viên hội thoại nhóm trên kênh (không phải nhân viên) — nguồn nhắc tên khi trả lời.
+        Route::get('/conversations/{conversationId}/group_members', [GroupMembersController::class, 'index'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
         // resource :draft_messages (singular) — mot ban nhap moi conversation.

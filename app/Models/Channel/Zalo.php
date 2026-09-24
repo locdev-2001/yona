@@ -36,6 +36,9 @@ class Zalo extends Model implements DeclaresCapabilities
     /** Chủ hộp thư chủ động ngắt kết nối (hoặc đổi tài khoản) — khác hẳn mất phiên ngoài ý muốn. */
     public const STATE_DISCONNECTED = 'disconnected';
 
+    /** Giá trị `thread_type` của luồng nhóm (0 = chat 1-1). */
+    public const THREAD_TYPE_GROUP = 1;
+
     /** @var list<string> */
     public const EDITABLE_ATTRS = [];
 
@@ -152,6 +155,11 @@ class Zalo extends Model implements DeclaresCapabilities
     public function threadTypeOf(Conversation $conversation): int
     {
         return (int) ($conversation->additional_attributes['thread_type'] ?? 0);
+    }
+
+    public function isGroupThread(Conversation $conversation): bool
+    {
+        return $this->threadTypeOf($conversation) === self::THREAD_TYPE_GROUP;
     }
 
     /** Trạng thái phiên do webhook `bridge_session` của bridge đẩy về. */

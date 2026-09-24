@@ -3,6 +3,7 @@
 namespace App\Services\Channels;
 
 use App\Models\Inbox;
+use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
 
 /**
@@ -16,9 +17,21 @@ class ChannelActionRegistry
         'Channel::Zalo' => ZaloOutboundActions::class,
     ];
 
+    /** @var array<string, class-string<ChannelGroupMembers>> */
+    private const GROUP_MEMBER_DRIVERS = [
+        'Channel::Zalo' => ZaloGroupMembers::class,
+    ];
+
     public static function for(Inbox $inbox): ?ChannelOutboundActions
     {
         $driver = self::DRIVERS[$inbox->channel_type] ?? null;
+
+        return $driver === null ? null : app($driver);
+    }
+
+    public static function groupMembersFor(Inbox $inbox): ?ChannelGroupMembers
+    {
+        $driver = self::GROUP_MEMBER_DRIVERS[$inbox->channel_type] ?? null;
 
         return $driver === null ? null : app($driver);
     }

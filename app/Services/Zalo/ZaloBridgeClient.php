@@ -59,6 +59,20 @@ class ZaloBridgeClient
         return $this->post('/auth/logout', ['connection_id' => $channel->connectionId()], $this->uiSecretHeader());
     }
 
+    /**
+     * Danh bạ thành viên một nhóm: `{ok, members: [{id, name, avatar, role}]}`.
+     * `lite` bỏ lượt tra hồ sơ từng người ở bridge — tên trong danh sách nhóm đã đủ
+     * để nhắc tên, còn nhóm đông thì lượt tra đó vượt thời gian chờ.
+     */
+    public function groupMembers(Zalo $channel, string $groupId): ?Response
+    {
+        return $this->get('/ui/group-members', [
+            'connection_id' => $channel->connectionId(),
+            'group_id' => $groupId,
+            'lite' => 1,
+        ], $this->uiSecretHeader(), (int) config('zalo.bridge.members_timeout'));
+    }
+
     /** @param array<string, mixed> $payload */
     public function sendMessage(array $payload, bool $hasMedia = false): ?Response
     {
@@ -116,12 +130,12 @@ class ZaloBridgeClient
      * @param  array<string, mixed>  $query
      * @param  array<string, string>  $headers
      */
-    private function get(string $path, array $query, array $headers): ?Response
+    private function get(string $path, array $query, array $headers, ?int $timeout = null): ?Response
     {
         try {
             return Http::asJson()
                 ->withHeaders($headers)
-                ->timeout((int) config('zalo.bridge.timeout'))
+                ->timeout($timeout ?? (int) config('zalo.bridge.timeout'))
                 ->get($this->url($path), $query);
         } catch (ConnectionException $e) {
             $this->logUnreachable('GET', $path, $e);
