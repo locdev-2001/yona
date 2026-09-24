@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\ConversationActions\ActionExecutor;
 use App\Support\CurrentUser;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 // Port từ refs/chatwoot/app/services/macros/execution_service.rb.
@@ -55,20 +56,46 @@ final class ExecutionService
         };
     }
 
-    /** @param list<mixed> $fileIds */
+    /**
+     * Tin gửi đi mang bản sao tệp: thu hồi/xoá tin dọn tệp theo `path`, dùng
+     * chung đường dẫn thì mất luôn tệp của macro cho các lần chạy sau.
+     *
+     * @param  list<mixed>  $fileIds
+     */
     private function sendAttachment(array $fileIds): void
     {
-        $references = $this->macro->files
-            ->filter(fn (Attachment $file) => in_array((int) $file->id, array_map('intval', $fileIds), true))
-            ->map(fn (Attachment $file) => $file->signedReference())
+        $selectedIds = array_map('intval', $fileIds);
+        $copies = $this->macro->files
+            ->filter(fn (Attachment $file) => in_array((int) $file->id, $selectedIds, true))
+            ->map(fn (Attachment $file) => $this->copyForSending($file))
+            ->filter()
             ->values()
             ->all();
 
-        if ($references === []) {
+        if ($copies === []) {
             return;
         }
 
-        $this->executor()->execute('send_attachment', $references);
+        try {
+            $this->executor()->execute('send_attachment', array_map(Attachment::signUpload(...), $copies));
+        } finally {
+            Attachment::discardUnattachedCopies($copies);
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function copyForSending(Attachment $file): ?array
+    {
+        $copy = $file->copyStoredFile();
+
+        if ($copy === null) {
+            Log::warning('macro.attachment.missing_file', [
+                'macro_id' => $this->macro->id,
+                'attachment_id' => $file->id,
+            ]);
+        }
+
+        return $copy;
     }
 
     /** @param list<mixed> $params */

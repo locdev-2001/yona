@@ -294,13 +294,6 @@ class Attachment extends Model
         return Crypt::encryptString(json_encode($attributes));
     }
 
-    // Tham chiếu đã ký tới chính tệp này — cho phép gửi lại một tệp đã lưu
-    // (vd tệp của macro) qua MessageBuilder mà không tải lên lần nữa.
-    public function signedReference(): string
-    {
-        return self::signUpload($this->storedFileAttributes());
-    }
-
     /**
      * Sao tệp sang một đường dẫn mới và trả thuộc tính cho bản ghi đính kèm độc
      * lập: hook `deleted` xoá tệp theo `path`, nên dùng chung đường dẫn thì thu
@@ -321,6 +314,30 @@ class Attachment extends Model
         }
 
         return [...$this->storedFileAttributes(), 'path' => $copyPath];
+    }
+
+    /**
+     * Dọn bản sao từ copyStoredFile() chưa gắn vào đính kèm nào (tin không được
+     * tạo, hoặc lỗi nổ sau khi tin đã lưu): bản đã gắn thì giữ, còn lại xoá.
+     *
+     * @param  list<array<string, mixed>>  $copies
+     */
+    public static function discardUnattachedCopies(array $copies): void
+    {
+        if ($copies === []) {
+            return;
+        }
+
+        $attachedPaths = self::query()
+            ->whereIn('path', array_column($copies, 'path'))
+            ->pluck('path')
+            ->all();
+
+        foreach ($copies as $copy) {
+            if (! in_array($copy['path'], $attachedPaths, true)) {
+                Storage::disk($copy['disk'])->delete($copy['path']);
+            }
+        }
     }
 
     /** @return array<string, mixed> */

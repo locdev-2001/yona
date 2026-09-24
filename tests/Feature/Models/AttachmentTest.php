@@ -411,21 +411,17 @@ describe('copyStoredFile', function () {
             ->and($missingOnDisk->copyStoredFile())->toBeNull();
     });
 
-    it('signedReference vẫn giải ra đúng thuộc tính tệp gốc', function () {
+    it('discardUnattachedCopies giữ bản sao đã gắn vào đính kèm, xoá bản chưa ai dùng', function () {
         $message = attachmentMessage();
-        $original = attachmentWithFile($message, UploadedFile::fake()->image('anh.png', 20, 10));
+        $original = attachmentWithFile($message, UploadedFile::fake()->create('bao-gia.pdf', 12, 'application/pdf'));
+        $attachedCopy = $original->copyStoredFile();
+        $orphanCopy = $original->copyStoredFile();
+        $message->attachments()->create($attachedCopy);
 
-        $resolved = Attachment::resolveSignedUpload($original->signedReference(), $message->account_id);
+        Attachment::discardUnattachedCopies([$attachedCopy, $orphanCopy]);
 
-        expect($resolved)->toBe([
-            'account_id' => $original->account_id,
-            'file_type' => $original->file_type,
-            'disk' => 'public',
-            'path' => $original->path,
-            'filename' => 'anh.png',
-            'content_type' => $original->content_type,
-            'byte_size' => $original->byte_size,
-            'meta' => ['width' => 20, 'height' => 10],
-        ]);
+        Storage::disk('public')->assertExists($attachedCopy['path']);
+        Storage::disk('public')->assertMissing($orphanCopy['path']);
+        Storage::disk('public')->assertExists($original->path);
     });
 });

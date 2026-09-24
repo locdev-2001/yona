@@ -12,6 +12,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\Macros\ExecutionService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -34,6 +35,11 @@ function d3Execute(array $actions): void
     test()->macro->update(['actions' => $actions]);
 
     (new ExecutionService(test()->macro->fresh(), test()->conversation->fresh(), test()->user))->perform();
+}
+
+function d3LastMessage(): Message
+{
+    return Message::query()->where('conversation_id', test()->conversation->id)->orderByDesc('id')->firstOrFail();
 }
 
 it('assigns the acting user for the self agent id', function () {
@@ -99,6 +105,83 @@ it('sends the macro own files as an attachment message', function () {
         ->and($message->attachments)->toHaveCount(1)
         ->and($message->attachments->first()->filename)->toBe('avatar.png')
         ->and($message->sender_id)->toBe($this->user->id);
+});
+
+it('sends a copy of the macro file so recalling or deleting the message keeps the macro file', function () {
+    Storage::fake('public');
+    $file = $this->macro->files()->create(
+        Attachment::storeUpload(UploadedFile::fake()->create('bang-gia.pdf', 12, 'application/pdf'), $this->account->id)
+    );
+    $sendFile = [['action_name' => 'send_attachment', 'action_params' => [$file->id]]];
+
+    d3Execute($sendFile);
+    $recalled = d3LastMessage();
+    $recalledPath = $recalled->attachments->first()->path;
+
+    expect($recalledPath)->not->toBe($file->path);
+
+    $recalled->markDeleted();
+
+    Storage::disk('public')->assertMissing($recalledPath);
+    Storage::disk('public')->assertExists($file->path);
+
+    d3Execute($sendFile);
+    $deleted = d3LastMessage();
+
+    expect($deleted->id)->not->toBe($recalled->id)
+        ->and($deleted->attachments)->toHaveCount(1)
+        ->and($deleted->attachments->first()->filename)->toBe('bang-gia.pdf');
+    Storage::disk('public')->assertExists($deleted->attachments->first()->path);
+
+    $deleted->delete();
+
+    Storage::disk('public')->assertExists($file->path);
+
+    d3Execute($sendFile);
+
+    expect(d3LastMessage()->id)->toBeGreaterThan($deleted->id)
+        ->and(d3LastMessage()->attachments)->toHaveCount(1);
+});
+
+it('skips a macro file missing on disk and still sends the rest', function () {
+    Storage::fake('public');
+    Log::spy();
+    $team = Team::factory()->create(['account_id' => $this->account->id]);
+    $lost = $this->macro->files()->create(
+        Attachment::storeUpload(UploadedFile::fake()->create('mat.pdf', 4, 'application/pdf'), $this->account->id)
+    );
+    $kept = $this->macro->files()->create(
+        Attachment::storeUpload(UploadedFile::fake()->image('con.png'), $this->account->id)
+    );
+    Storage::disk('public')->delete($lost->path);
+
+    d3Execute([
+        ['action_name' => 'send_attachment', 'action_params' => [$lost->id]],
+        ['action_name' => 'send_attachment', 'action_params' => [$kept->id]],
+        ['action_name' => 'assign_team', 'action_params' => [$team->id]],
+    ]);
+
+    $withFiles = Message::query()->where('conversation_id', $this->conversation->id)->has('attachments')->with('attachments')->get();
+
+    expect($withFiles)->toHaveCount(1)
+        ->and($withFiles->first()->attachments->pluck('filename')->all())->toBe(['con.png'])
+        ->and($this->conversation->fresh()->team_id)->toBe($team->id);
+    Log::shouldHaveReceived('warning')->with('macro.attachment.missing_file', Mockery::on(
+        fn (array $context) => $context['attachment_id'] === $lost->id
+    ))->once();
+});
+
+it('leaves no copied file behind when no attachment message is sent', function () {
+    Storage::fake('public');
+    $this->conversation->update(['additional_attributes' => ['type' => 'tweet']]);
+    $file = $this->macro->files()->create(
+        Attachment::storeUpload(UploadedFile::fake()->image('avatar.png'), $this->account->id)
+    );
+
+    d3Execute([['action_name' => 'send_attachment', 'action_params' => [$file->id]]]);
+
+    expect(Message::query()->where('conversation_id', $this->conversation->id)->count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles())->toBe([$file->path]);
 });
 
 it('ignores send_attachment when the macro has no matching file', function () {

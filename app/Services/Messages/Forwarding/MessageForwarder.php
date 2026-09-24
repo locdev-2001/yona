@@ -10,7 +10,6 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\ChannelActionRegistry;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -63,11 +62,11 @@ final class MessageForwarder
                 ],
             ]))->perform();
         } catch (MessageValidationException $exception) {
-            $this->discardOrphanedCopies($copiedFiles);
+            Attachment::discardUnattachedCopies($copiedFiles);
 
             throw new ForwardException(new ForwardBlock(ForwardBlock::MESSAGE_INVALID, $exception->getMessage()));
         } catch (Throwable $exception) {
-            $this->discardOrphanedCopies($copiedFiles);
+            Attachment::discardUnattachedCopies($copiedFiles);
 
             throw $exception;
         }
@@ -81,29 +80,5 @@ final class MessageForwarder
             ?? throw new ForwardException(ForwardBlock::translated(ForwardBlock::STICKER_UNAVAILABLE, $source->account->locale, [
                 'inbox' => (string) $target->inbox->name,
             ]));
-    }
-
-    /**
-     * Lỗi có thể nổ SAU khi tin đã lưu (vd lượt gửi đồng bộ ra kênh): tệp đã gắn
-     * vào đính kèm thật thì giữ, chỉ dọn bản sao chưa ai dùng.
-     *
-     * @param  list<array<string, mixed>>  $copiedFiles
-     */
-    private function discardOrphanedCopies(array $copiedFiles): void
-    {
-        if ($copiedFiles === []) {
-            return;
-        }
-
-        $attachedPaths = Attachment::query()
-            ->whereIn('path', array_column($copiedFiles, 'path'))
-            ->pluck('path')
-            ->all();
-
-        foreach ($copiedFiles as $copy) {
-            if (! in_array($copy['path'], $attachedPaths, true)) {
-                Storage::disk($copy['disk'])->delete($copy['path']);
-            }
-        }
     }
 }
