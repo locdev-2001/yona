@@ -86,6 +86,7 @@ class InboxResource extends JsonResource
             // Năng lực kênh cho FE (docs/channel-capabilities.md §3) — thêm khoá mới ở
             // cuối khối lõi, không đụng thứ tự khoá đã có của partial gốc.
             'capabilities' => $inbox->capabilities()->values(),
+            'platform' => $inbox->platform()->toArray(),
             ...$this->sharedChannelAttributes($channel),
             ...$this->webWidgetAttributes($inbox),
             ...$this->apiChannelAttributes($inbox),

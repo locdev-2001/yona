@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\OutOfOffisable;
 use App\Models\Concerns\Reportable;
@@ -258,6 +260,14 @@ class Inbox extends Model
     public function supports(Capability $capability): bool
     {
         return $this->capabilities()->has($capability);
+    }
+
+    /** Cửa DUY NHẤT để lõi và UI hỏi hộp thư thuộc nền tảng nào. Kênh chưa khai = unknown, không nổ. */
+    public function platform(): ChannelPlatform
+    {
+        $channel = $this->channel;
+
+        return $channel instanceof DeclaresPlatform ? $channel->platform() : ChannelPlatform::unknown();
     }
 
     public function isApi(): bool

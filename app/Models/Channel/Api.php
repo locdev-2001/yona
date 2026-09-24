@@ -4,14 +4,16 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/api.rb (+ Channelable, WebhookSecretable).
-class Api extends Model implements DeclaresCapabilities
+class Api extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<ApiFactory> */
     use Channelable, HasFactory;
@@ -48,6 +50,11 @@ class Api extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'API';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('api', 'API');
     }
 
     public static function channelRules(): array

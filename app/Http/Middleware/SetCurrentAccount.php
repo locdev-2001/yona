@@ -70,14 +70,17 @@ class SetCurrentAccount
                 ->orderByRaw('lower(name) ASC')
                 // `channel` nạp kèm (morphTo gom theo loại kênh, không N+1) để lộ
                 // `capabilities` — FE gate tính năng theo năng lực, không theo
-                // channel_type (docs/channel-capabilities.md §3).
-                ->with('channel')
+                // channel_type (docs/channel-capabilities.md §3). `avatar` nạp kèm
+                // cho danh tính tài khoản kênh (tin gửi từ điện thoại mang ảnh này).
+                ->with(['channel', 'avatar'])
                 ->get(['id', 'name', 'channel_type', 'channel_id'])
                 ->map(fn ($inbox) => [
                     'id' => $inbox->id,
                     'name' => $inbox->name,
                     'channel_type' => $inbox->channel_type,
                     'capabilities' => $inbox->capabilities()->values(),
+                    'avatar_url' => $inbox->avatarUrl(),
+                    'platform' => $inbox->platform()->toArray(),
                     // Icon cảnh báo mất phiên trên sidebar Kênh + thẻ hội thoại
                     // (ChannelLeaf.vue của gốc đọc `inbox.reauthorization_required`).
                     'reauthorization_required' => $inbox->reauthorizationRequired(),

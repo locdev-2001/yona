@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/whatsapp.rb. Mỗi nhà cung cấp là một
 // driver riêng (providerService), lõi kênh không biết chi tiết Cloud/360Dialog.
-class Whatsapp extends Model implements DeclaresCapabilities
+class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<WhatsappFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -74,6 +76,11 @@ class Whatsapp extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Whatsapp';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('whatsapp', 'WhatsApp');
     }
 
     public static function channelRules(): array

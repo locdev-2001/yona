@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * `id` của bản ghi này chính là `connection_id` mà bridge dùng làm khóa slot.
  */
-class Zalo extends Model implements DeclaresCapabilities
+class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<ZaloFactory> */
     use Channelable, HasFactory;
@@ -65,6 +67,11 @@ class Zalo extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Zalo';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('zalo', 'Zalo');
     }
 
     /**

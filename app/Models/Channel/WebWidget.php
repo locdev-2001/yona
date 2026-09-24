@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
 use Database\Factories\Channel\WebWidgetFactory;
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/web_widget.rb (+ Channelable, FlagShihTzu).
-class WebWidget extends Model implements DeclaresCapabilities
+class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<WebWidgetFactory> */
     use Channelable, HasFactory;
@@ -99,6 +101,11 @@ class WebWidget extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Website';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('website', 'Website');
     }
 
     // FlagShihTzu sinh sẵn `attachments?`, `end_conversation?`… cho mỗi cờ.

@@ -3,7 +3,9 @@
 namespace App\Models\Channel;
 
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwitterProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/twitter_profile.rb — CHỈ khung (đăng ký
 // kênh + CRC webhook). Gem Twitty và luồng gửi/nhận DM chưa port, xem note F2-F5.
-class TwitterProfile extends Model implements DeclaresCapabilities
+class TwitterProfile extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<TwitterProfileFactory> */
     use Channelable, HasFactory;
@@ -39,6 +41,11 @@ class TwitterProfile extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return 'Twitter';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('x', 'X');
     }
 
     public static function channelRules(): array

@@ -4,7 +4,9 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresPlatform;
 use App\Models\Channel\Concerns\Channelable;
 use Database\Factories\Channel\TwilioSmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Port từ refs/chatwoot/app/models/channel/twilio_sms.rb — một model phục vụ hai
 // medium (SMS và WhatsApp qua Twilio). Gem twilio-ruby thay bằng App\Services\Twilio\TwilioClient.
-class TwilioSms extends Model implements DeclaresCapabilities
+class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<TwilioSmsFactory> */
     use Channelable, HasFactory;
@@ -53,6 +55,11 @@ class TwilioSms extends Model implements DeclaresCapabilities
     public function name(): string
     {
         return $this->isSms() ? 'Twilio SMS' : 'Whatsapp';
+    }
+
+    public function platform(): ChannelPlatform
+    {
+        return $this->isSms() ? ChannelPlatform::of('sms', 'SMS') : ChannelPlatform::of('whatsapp', 'WhatsApp');
     }
 
     public static function channelRules(): array
