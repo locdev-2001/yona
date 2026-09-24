@@ -4,16 +4,18 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\UserSession;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Session\SessionManager;
 
-// Chatwoot xoá token trong `users.tokens` để thu hồi một phiên; Yona dùng session
-// của Laravel nên thu hồi = xoá bản ghi phiên ở store + dòng user_sessions.
-// Điểm sửa duy nhất cho mọi lối thu hồi (profile, giới hạn phiên khi đăng nhập).
+// Thu hồi một phiên = hủy bản ghi phiên trên store đang dùng (database, redis…)
+// + xoá dòng user_sessions. Điểm sửa duy nhất cho mọi lối thu hồi (Hồ sơ →
+// Phiên đăng nhập, màn chạm trần phiên lúc đăng nhập).
 class UserSessionRevoker
 {
+    public function __construct(private readonly SessionManager $sessions) {}
+
     public function revoke(UserSession $session): void
     {
-        $this->forgetStoredSession($session->client_id);
+        $this->sessions->driver()->getHandler()->destroy($session->client_id);
         $session->delete();
     }
 
@@ -22,7 +24,7 @@ class UserSessionRevoker
         $user->userSessions()->get()->each(fn (UserSession $session) => $this->revoke($session));
     }
 
-    // Bỏ phiên cũ nhất theo hoạt động gần nhất (Chatwoot: evict_oldest_session).
+    // Bỏ phiên có hoạt động gần nhất cũ nhất.
     public function revokeOldest(User $user): void
     {
         $oldest = $user->userSessions()
@@ -32,17 +34,5 @@ class UserSessionRevoker
         if ($oldest) {
             $this->revoke($oldest);
         }
-    }
-
-    private function forgetStoredSession(string $clientId): void
-    {
-        if (config('session.driver') !== 'database') {
-            return;
-        }
-
-        DB::connection(config('session.connection'))
-            ->table(config('session.table', 'sessions'))
-            ->where('id', $clientId)
-            ->delete();
     }
 }

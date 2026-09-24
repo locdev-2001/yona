@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use App\Support\CurrentUserSession;
 use Illuminate\Support\Facades\Notification;
 
 // Port từ refs/chatwoot/spec/controllers/api/v1/accounts_controller_spec.rb (create)
@@ -96,6 +97,15 @@ describe('GET /app/auth/confirmation', function () {
 
         $this->get('/app')->assertRedirect("/app/accounts/{$account->id}/dashboard");
         $this->get("/app/accounts/{$account->id}/dashboard")->assertRedirect("/app/accounts/{$account->id}/onboarding");
+    });
+
+    it('tracks the session opened by the confirmation link', function () {
+        $user = User::factory()->unconfirmed()->create(['confirmation_token' => 'confirm-me']);
+
+        $this->get('/app/auth/confirmation?confirmation_token=confirm-me')->assertRedirect('/app');
+
+        $this->assertAuthenticatedAs($user);
+        expect($user->userSessions()->sole()->client_id)->toBe(session(CurrentUserSession::SESSION_KEY));
     });
 
     it('redirects to login with an invalid token', function () {

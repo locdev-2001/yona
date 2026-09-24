@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Database\Factories\UserSessionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class UserSession extends Model
 {
     /** @use HasFactory<UserSessionFactory> */
-    use HasFactory;
+    use HasFactory, MassPrunable;
 
     public const ACTIVITY_THROTTLE_MINUTES = 5;
 
@@ -48,6 +50,20 @@ class UserSession extends Model
     public function isCurrent(?string $activeClientId): bool
     {
         return $activeClientId !== null && $this->client_id === $activeClientId;
+    }
+
+    // Phiên trên store đã hết hạn thì dòng này chỉ còn chiếm chỗ trong trần số
+    // phiên. Cộng thêm nhịp ghi hoạt động vì last_activity_at có thể trễ đúng
+    // chừng ấy so với lần thao tác thật.
+    /** @return Builder<self> */
+    public function prunable(): Builder
+    {
+        $idleMinutes = (int) config('session.lifetime') + self::ACTIVITY_THROTTLE_MINUTES;
+
+        return static::query()->whereRaw(
+            'COALESCE(last_activity_at, created_at) < ?',
+            [now()->subMinutes($idleMinutes)],
+        );
     }
 
     public function shouldUpdateActivity(): bool

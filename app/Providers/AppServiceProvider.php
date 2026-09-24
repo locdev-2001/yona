@@ -24,16 +24,23 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\PlatformApp;
 use App\Models\User;
+use App\Services\Analytics\PlausibleProxy;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Horizon\Horizon;
 
 class AppServiceProvider extends ServiceProvider
 {
+    // Đủ cho một văn phòng nhiều nhân viên chung một IP NAT (mỗi trang ~2 sự kiện).
+    private const ANALYTICS_EVENTS_PER_MINUTE = 300;
+
     /**
      * Register any application services.
      */
@@ -53,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerObservabilityGates();
+        $this->registerRateLimiters();
 
         // Polymorphic type lưu đúng tên lớp Ruby của Chatwoot ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
@@ -79,6 +87,17 @@ class AppServiceProvider extends ServiceProvider
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,
         ]);
+    }
+
+    private function registerRateLimiters(): void
+    {
+        // Băm theo IP khách đã giải qua header CDN: IP kết nối có thể là IP edge
+        // của Cloudflare, gộp nhiều khách vào chung một hạn mức.
+        RateLimiter::for(
+            'analytics-proxy',
+            fn (Request $request) => Limit::perMinute(self::ANALYTICS_EVENTS_PER_MINUTE)
+                ->by(app(PlausibleProxy::class)->clientIp($request)),
+        );
     }
 
     /**

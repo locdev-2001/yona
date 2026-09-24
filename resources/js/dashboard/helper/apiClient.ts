@@ -1,3 +1,5 @@
+import { sendWithSessionRecovery } from './sessionRecovery';
+
 // Client JSON tối giản cho web_api (session + CSRF cookie của Laravel).
 export function xsrfToken(): string {
     const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
@@ -27,17 +29,19 @@ export function parseApiErrorMessage(error: unknown): string | null {
 }
 
 async function request<T>(url: string, method: string, body?: BodyInit, contentType?: string): Promise<T> {
-    const response = await fetch(url, {
-        method,
-        headers: {
-            ...(contentType ? { 'Content-Type': contentType } : {}),
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-XSRF-TOKEN': xsrfToken(),
-        },
-        credentials: 'same-origin',
-        body,
-    });
+    const response = await sendWithSessionRecovery(() =>
+        fetch(url, {
+            method,
+            headers: {
+                ...(contentType ? { 'Content-Type': contentType } : {}),
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+            credentials: 'same-origin',
+            body,
+        }),
+    );
 
     if (!response.ok) {
         throw new ApiError(response.status, await response.json().catch(() => null));
@@ -83,15 +87,17 @@ export function putForm<T = unknown>(url: string, form: FormData): Promise<T> {
 
 // Endpoint trả CSV (báo cáo tải về) — giữ nguyên văn bản, không parse JSON.
 export async function getText(url: string): Promise<string> {
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            Accept: 'text/csv, text/plain, */*',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-XSRF-TOKEN': xsrfToken(),
-        },
-        credentials: 'same-origin',
-    });
+    const response = await sendWithSessionRecovery(() =>
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                Accept: 'text/csv, text/plain, */*',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+            credentials: 'same-origin',
+        }),
+    );
 
     if (!response.ok) {
         throw new ApiError(response.status, null);

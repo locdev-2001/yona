@@ -14,6 +14,7 @@ use App\Http\Controllers\Platform\Api\V1\AccountsController as PlatformAccountsC
 use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccountUsersController;
 use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
 use App\Http\Controllers\Platform\Api\V1\UsersController as PlatformUsersController;
+use App\Http\Controllers\Public\AnalyticsProxyController;
 use App\Http\Controllers\Widget\BroadcastingAuthController;
 use App\Http\Controllers\Widget\CampaignsController;
 use App\Http\Controllers\Widget\ConfigsController;
@@ -135,3 +136,14 @@ Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'delive
 Route::post('/webhooks/zalo', ZaloWebhooksController::class)
     ->middleware(VerifyZaloBridgeSecret::class);
 // G1 Zalo webhook — END
+
+// Analytics first-party: script và sự kiện đi qua chính domain app để trình chặn quảng
+// cáo không chặn theo domain/mẫu URL của nhà cung cấp. Nhóm `api`: không session, không
+// cookie, không CSRF. Không đuôi .js: rule tĩnh của nginx aaPanel sẽ nuốt URL đó
+// (docs/deployment.md mục 7).
+Route::prefix(config('services.plausible.proxy_path'))->group(function () {
+    Route::get('/s', [AnalyticsProxyController::class, 'script'])->name('analytics.script');
+    Route::post('/e', [AnalyticsProxyController::class, 'event'])
+        ->middleware('throttle:analytics-proxy')
+        ->name('analytics.event');
+});

@@ -192,6 +192,17 @@ YONA_HOTLINE=
 YONA_ZALO_CONTACT_URL=
 
 ALLOW_PRIVATE_WEBHOOK_URLS=false
+
+# Không bắt buộc, sai thì deploy.sh chỉ cảnh báo (xem "Phiên đăng nhập" và "Analytics" ngay dưới).
+SESSION_LIFETIME=43200
+SUPER_ADMIN_IDLE_MINUTES=120
+REDIS_DB=0
+REDIS_CACHE_DB=1
+
+PLAUSIBLE_HOST=https://analytics.beru.io.vn
+PLAUSIBLE_SCRIPT_PATH=/js/pa-wQjZXdJtBNUwcu_YEDiIb.js
+PLAUSIBLE_PROXY_PATH=/yv
+PLAUSIBLE_CLIENT_IP_HEADER=CF-Connecting-IP
 ```
 
 > **`REVERB_INTERNAL_*` không phải thứ trang trí.** `REVERB_HOST` là tên miền
@@ -226,6 +237,88 @@ sed -i "s/^ZALO_BRIDGE_UI_SECRET=$/ZALO_BRIDGE_UI_SECRET=$(openssl rand -hex 32)
 
 Biến `VITE_*` được nướng vào bundle lúc build, nên đổi chúng thì phải build lại
 (chạy `deploy.sh`), không chỉ `optimize:clear`.
+
+### Phiên đăng nhập
+
+- Nhân viên giữ đăng nhập **30 ngày tính từ lần thao tác cuối**
+  (`SESSION_LIFETIME=43200` phút, trượt: mỗi request gia hạn phiên và cookie).
+  Còn `120` là ai không thao tác quá 2 giờ (gập máy qua đêm) sẽ bị đăng xuất.
+- Console `/super_admin` (cùng `/horizon`, `/pulse`, `/log-viewer`) dùng chung
+  cookie phiên nhưng tự đăng xuất sau `SUPER_ADMIN_IDLE_MINUTES` không thao tác
+  trong vùng quản trị. Phiên nhân viên trên cùng trình duyệt không bị ảnh hưởng.
+- Phiên nằm ở Redis DB `REDIS_DB` (kết nối `default`), cache ở `REDIS_CACHE_DB`.
+  **Hai số phải khác nhau** và `SESSION_CONNECTION` để trống: `deploy.sh` chạy
+  `optimize:clear`, lệnh này flush cả DB của cache, nên phiên nằm chung DB là mỗi
+  lần deploy đăng xuất mọi người. `deploy.sh` cảnh báo khi hai số trùng.
+- Thu hồi một thiết bị (Hồ sơ → Phiên đăng nhập, hoặc màn chọn phiên khi chạm
+  trần `MAX_USER_SESSIONS`) xoá key phiên trên Redis và dòng `user_sessions`, nên
+  thiết bị đó văng ra ở request kế tiếp. Dòng `user_sessions` của phiên hết hạn tự
+  nhiên được `model:prune` dọn lúc 03:10 mỗi ngày (scheduler, mục 8).
+- Redis nên bật lưu đĩa (`appendonly yes` hoặc `save`). Không bật thì restart
+  Redis hay reboot máy là đăng xuất tất cả. Có đặt `maxmemory` thì dùng
+  `maxmemory-policy volatile-lru` (key phiên luôn có TTL). Đây là thao tác hạ tầng,
+  hỏi founder trước khi đổi.
+- Deploy bản này không đá ai: key phiên cũ giữ TTL 2 giờ tới request kế tiếp rồi
+  được ghi lại với TTL mới. Không đổi `SESSION_COOKIE`, `APP_KEY`.
+
+**Việc cho người có quyền máy chủ, làm trước khi đổi `SESSION_LIFETIME`** (chỉ đọc,
+ghi kết quả vào task trên dash):
+
+```bash
+cd /www/wwwroot/yona.vn
+grep -E '^(SESSION_|REDIS_DB|REDIS_CACHE_DB|REDIS_CACHE_CONNECTION)' .env
+redis-cli CONFIG GET maxmemory
+redis-cli CONFIG GET maxmemory-policy
+redis-cli CONFIG GET save
+redis-cli CONFIG GET appendonly
+redis-cli INFO memory | grep used_memory_human
+redis-cli INFO keyspace
+# Key phiên nằm ở DB REDIS_DB (mặc định 0), tên = REDIS_PREFIX + CACHE_PREFIX + id phiên
+# (mặc định "<app>-database-<app>-cache-<id>"); Horizon cùng DB nhưng tiền tố khác.
+redis-cli -n 0 --scan --pattern '*cache-*' | head -5
+redis-cli -n 0 --scan --pattern '*cache-*' | wc -l
+redis-cli -n 0 MEMORY USAGE '<một key phiên mẫu>'
+```
+
+Ước lượng sau 30 ngày = số key phiên hiện tại × 360 (30 ngày / 2 giờ; con số trần
+vì bot ghé landing cũng tạo phiên) × dung lượng trung bình một key. Dưới khoảng
+300 MB và máy còn RAM thì giữ 30 ngày, đặt `maxmemory` + `volatile-lru`; lớn hơn thì
+hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
+
+### Analytics
+
+- Script và sự kiện Plausible đi qua **chính domain app**: `GET /yv/s` (script) và
+  `POST /yv/e` (sự kiện), route Laravel trong `routes/api.php` (nhóm `api`: không
+  session, không cookie, không CSRF). Trình chặn quảng cáo không chặn được vì không
+  còn domain analytics bên thứ ba hay mẫu `/api/event`, `pa-*.js` trong trang.
+- Không cần `location` nginx. Đường dẫn cố ý không có đuôi `.js` để rule tĩnh
+  `location ~ .*\.(js|css)?$` của aaPanel không nuốt nó.
+- `PLAUSIBLE_HOST` hoặc `PLAUSIBLE_SCRIPT_PATH` trống = trang không gắn analytics và
+  hai route trả 404. `PLAUSIBLE_PROXY_PATH` đổi được nếu một danh sách chặn bắt
+  được `/yv`.
+- `PLAUSIBLE_CLIENT_IP_HEADER=CF-Connecting-IP` **bắt buộc** khi app đứng sau
+  Cloudflare. Máy chủ gửi IP khách sang Plausible bằng header `X-Plausible-IP`;
+  thiếu biến này thì IP gửi đi là IP edge Cloudflare, mọi khách gộp thành một
+  hoặc bị Plausible loại vì IP máy chủ.
+- Đổi biến `PLAUSIBLE_*` thì chạy lại `deploy.sh` (hoặc `php artisan optimize`)
+  vì config và route đã được cache.
+- Kiểm tra sau deploy (`deploy.sh` tự kiểm `/yv/s` khi `DEPLOY_HEALTHCHECK=1`):
+
+  ```bash
+  curl -sI https://yona.vn/yv/s
+  # mong đợi: 200, content-type: application/javascript, KHÔNG có set-cookie
+  ```
+
+  Sự kiện thì kiểm trên trình duyệt thật (DevTools → Network, lọc `yv`): `e` trả
+  **202** và response **không** có header `x-plausible-dropped`. Có header đó nghĩa
+  là Plausible nhận nhưng loại sự kiện (thường do IP khách sai → xem
+  `PLAUSIBLE_CLIENT_IP_HEADER`). Không bắn sự kiện thử bằng `curl` lên production:
+  nó thành lượt xem thật.
+- yona.vn không gửi `Content-Security-Policy`. Nếu sau này thêm CSP thì `'self'`
+  đã phủ cả `script-src` lẫn `connect-src` cho analytics.
+- Mỗi sự kiện chiếm một worker PHP-FPM khoảng một lần gọi HTTPS ra ngoài (timeout
+  5 giây, giới hạn 300 sự kiện/phút mỗi IP). Nếu thành nút nghẽn thì chuyển sang
+  `location` nginx với **cùng đường dẫn công khai**, trang không phải đổi gì.
 
 ---
 
@@ -952,6 +1045,9 @@ xoá file). Qua CLI: `php artisan pail`.
 | Link lạ ra trang trắng chữ `nginx`, API lỗi trả HTML thay vì JSON | Vhost đang đè 404 của Laravel (`error_page 404` + `fastcgi_intercept_errors on`) — mục 7 |
 | Ảnh trong hộp thư báo "Ảnh này không còn nữa." nhưng `/storage/...` vẫn mở được | Rule ảnh tĩnh của aaPanel nuốt URL `/attachments/.../*.jpg`, thiếu `location ^~ /attachments/` — mục 7 |
 | Lượt xem bài Help Center đứng yên dù có người đọc | Rule ảnh tĩnh của aaPanel nuốt pixel `/hc/.../articles/*.png`, thiếu `location ^~ /hc/` — mục 7 |
+| Nhân viên bị đăng xuất sau khoảng 2 giờ không thao tác | `.env` production còn `SESSION_LIFETIME=120` → `43200` rồi chạy `deploy.sh` (mục 5, Phiên đăng nhập) |
+| Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
+| Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
 
 ### Rollback
 

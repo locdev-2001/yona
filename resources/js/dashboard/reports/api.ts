@@ -1,4 +1,5 @@
 import { getJson, getText } from 'dashboard/helper/apiClient';
+import { sendWithSessionRecovery } from 'dashboard/helper/sessionRecovery';
 import type { AgentConversationMetric, ConversationMetric, DrilldownMeta, DrilldownRecord, ReportDataPoint, TeamConversationMetric } from './types';
 
 // Port từ dashboard/api/{reports,liveReports,summaryReports}.js — cùng đường dẫn
@@ -80,11 +81,13 @@ export function getDrilldown(
         per_page: perPage,
     })}`;
 
-    return fetch(url, {
-        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        credentials: 'same-origin',
-        signal,
-    }).then(response => {
+    return sendWithSessionRecovery(() =>
+        fetch(url, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            signal,
+        }),
+    ).then(response => {
         if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         return response.json() as Promise<{ meta: DrilldownMeta; payload: DrilldownRecord[] }>;
     });

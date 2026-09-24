@@ -3,6 +3,8 @@
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
+use App\Models\UserSession;
+use Tests\Support\StoredSessions;
 
 // Port từ refs/chatwoot/spec/controllers/devise/session_controller_spec.rb
 // (đổi devise_token_auth JSON API sang session auth Laravel/Inertia; phần
@@ -120,6 +122,38 @@ describe('POST /app/logout', function () {
 
         $this->actingAs($user)->post('/app/logout')->assertRedirect('/app/login');
         $this->assertGuest();
+    });
+
+    it('signs out only this device and keeps the other device signed in', function () {
+        $user = User::factory()->create();
+        $otherDevice = UserSession::factory()->for($user)->create(['client_id' => 'other-device']);
+        StoredSessions::put('other-device');
+        $this->post('/app/login', ['email' => $user->email, 'password' => 'Password1!']);
+
+        $this->post('/app/logout')->assertRedirect('/app/login');
+
+        $this->assertGuest();
+        expect($user->userSessions()->pluck('id')->all())->toBe([$otherDevice->id])
+            ->and(StoredSessions::exists('other-device'))->toBeTrue();
+    });
+});
+
+describe('POST /app/login when the session limit is reached', function () {
+    it('destroys the chosen session on the session store before signing in', function () {
+        $user = User::factory()->create();
+        UserSession::factory()->count(config('yona.max_user_sessions'))->for($user)->create();
+        $chosen = $user->userSessions()->first();
+        StoredSessions::put($chosen->client_id);
+
+        $this->post('/app/login', [
+            'email' => $user->email,
+            'password' => 'Password1!',
+            'revoke_session_id' => $chosen->id,
+        ])->assertRedirect('/app');
+
+        $this->assertAuthenticatedAs($user);
+        expect(UserSession::query()->find($chosen->id))->toBeNull()
+            ->and(StoredSessions::exists($chosen->client_id))->toBeFalse();
     });
 });
 

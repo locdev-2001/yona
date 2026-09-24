@@ -2,7 +2,7 @@
 // Cùng URL, cùng tên tham số; chuyển sang apiClient dùng chung của Yona.
 // Khác bản gốc: Rails tự bọc body vào khoá `portal`/`category`/`article`
 // (ParamsWrapper) nên Chatwoot gửi phẳng — Laravel không bọc, phải gửi kèm khoá.
-import { ApiError, deleteJson, getJson, patchJson, postJson, xsrfToken } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
 import { camelizeKeys } from 'dashboard/helper/transformKeys';
 import type { Article, ArticlesMeta, Category, Portal } from './types';
 
@@ -19,29 +19,6 @@ function wrapPortal(portal: Record<string, unknown>): Record<string, unknown> {
     });
 
     return body;
-}
-
-// DELETE kèm body (bulk delete) — apiClient dùng chung chưa hỗ trợ.
-async function deleteWithBody<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-XSRF-TOKEN': xsrfToken(),
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-        throw new ApiError(response.status, await response.json().catch(() => null));
-    }
-
-    const raw = await response.text();
-
-    return (raw ? JSON.parse(raw) : null) as T;
 }
 
 export const portalsApi = {
@@ -140,5 +117,5 @@ export const articlesApi = {
             category_id: categoryId,
         }),
     bulkDelete: (accountId: number, portalSlug: string, articleIds: number[]) =>
-        deleteWithBody(`${base(accountId)}/${portalSlug}/articles/bulk_actions/delete_articles`, { ids: articleIds }),
+        deleteJson(`${base(accountId)}/${portalSlug}/articles/bulk_actions/delete_articles`, { ids: articleIds }),
 };
