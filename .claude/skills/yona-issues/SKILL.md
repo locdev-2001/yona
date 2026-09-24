@@ -21,7 +21,7 @@ Chưa thấy tool `mcp__yona-dash__*` trong phiên → báo founder chạy `clau
 | Tool | Dùng khi |
 |---|---|
 | `get_task_options` | **gọi đầu phiên**: id trạng thái, ưu tiên, nhân sự, dự án + mốc, thẻ đang có, loại bản ghi gắn được, trường tuỳ chỉnh, đuôi file cho phép |
-| `list_tasks` | tra việc đang mở, lọc `tag` (vd `P0`), `search`, `statuses`; mặc định bỏ việc đã xong |
+| `list_tasks` | tra việc đang mở, lọc `tag` (vd `bugs`, `module:inbox`), `search`, `statuses`; mặc định bỏ việc đã xong |
 | `get_task` | đọc đủ mọi trường, bình luận, checklist, danh sách file trước khi sửa hay bổ sung |
 | `find_related_records` | tìm id dự án/khách hàng/lead/hợp đồng/ticket… để điền `related` |
 | `create_task` | ghi việc mới với đầy đủ trường (xem mục dưới) |
@@ -37,7 +37,7 @@ Chưa thấy tool `mcp__yona-dash__*` trong phiên → báo founder chạy `clau
 
 1. **Một công việc = một việc sửa được.** Phát hiện 5 lỗi thì 5 công việc, đừng gom thành "linh tinh". Ngoại lệ: checklist trang/tài liệu thì một công việc có checklist.
 2. **Bằng chứng đo được, không suy đoán.** Mỗi việc phải trả lời: khách thấy gì · đo/tái hiện ra sao · vì sao chặn · sửa gì. Có số đo (`423px trong khung 390px`), đường dẫn mã (`file.tsx:75`), mã HTTP, hoặc kết quả lệnh thì dán vào.
-3. **Tiếng Việt.** Tiêu đề bắt đầu bằng mức độ: `P0 · <câu tả đúng triệu chứng khách gặp>`.
+3. **Tiếng Việt.** Tiêu đề là câu tả đúng triệu chứng khách gặp; không ghi mức độ vào tiêu đề — mức độ nằm ở trường `priority`.
 4. **Không dán đường dẫn máy cá nhân** (`.playwright-mcp/...`, `/home/...`) vào mô tả — người khác không mở được.
 5. **Luôn gán người làm** là founder (nhân sự "Nguyen Robert"), trừ khi founder chỉ định người khác. Tên người → id: tra `get_task_options.staff` (tên, email), khớp cả khi gọi tắt ("Lộc", "anh Robert") hay theo email. Khớp nhiều người hoặc không khớp ai thì liệt kê danh sách và hỏi lại — không đoán, không gán đại.
 6. **Nối việc liên quan** bằng `task #<id>` (id công việc trên dash, không phải số `#` issue GitHub nằm trong tên việc đồng bộ) kèm link `url` mà tool trả về; nếu việc này chặn/bị chặn bởi việc kia thì nói rõ bằng câu, không chỉ liệt kê số.
@@ -48,11 +48,11 @@ Người đọc việc phải hiểu và bắt tay làm được mà không cầ
 
 | Trường | Điền gì |
 |---|---|
-| `name` | `P0 · <triệu chứng khách gặp>` |
+| `name` | `<triệu chứng khách gặp>` |
 | `description` | khung mô tả bên dưới, đủ bốn phần |
-| `priority` | theo mức độ (bảng dưới) |
+| `priority` | theo bảng ưu tiên dưới — nơi DUY NHẤT ghi mức độ |
 | `status` | "Chưa bắt đầu" với lỗi mới |
-| `tags` | đủ ba trục: mức độ, loại việc, vùng; thẻ chưa có sẽ tự tạo — cần trục mới thì cứ gắn |
+| `tags` | đủ hai trục: loại việc + vùng (bảng dưới); không gắn thẻ mức độ |
 | `assignee_ids` | founder, hoặc người founder chỉ định |
 | `follower_ids` | người cần biết (người báo lỗi, người phụ trách vùng liên quan) |
 | `startdate`, `duedate` | ngày bắt đầu là hôm nay; hạn khi founder nêu hoặc việc có mốc rõ (ngày ra mắt, hạn hợp đồng) |
@@ -64,23 +64,23 @@ Người đọc việc phải hiểu và bắt tay làm được mà không cầ
 
 Tạo xong thì **đính kèm bằng chứng ngay** (mục Ảnh và tài liệu), rồi `get_task` đọc lại một lượt để chắc không sót trường nào.
 
-## Mức độ, ưu tiên, thẻ — luôn đủ ba
+## Ưu tiên và thẻ
 
-| Mức độ (thẻ + tiền tố tiêu đề) | Ưu tiên (`priority`) |
+Mức độ chỉ ghi bằng trường `priority` của hệ thống (id lấy từ `get_task_options`, không nhớ số). **Không** gắn thẻ `P0`/`P1`/… và không ghi mức độ vào tiêu đề.
+
+| Ưu tiên (`priority`) | Khi nào |
 |---|---|
-| `P0` chặn khách | Cấp bách |
-| `P1` phải xong trước khi bán rộng | Cao |
-| `P2` nợ chất lượng | Bình thường |
-| `P3` để đó | Thấp |
+| Cấp bách | chặn khách: khách lạ không đi tiếp được, hoặc giao diện nói sai sự thật với khách |
+| Cao | phải xong trước khi bán rộng; lỗi xấu nhưng vẫn dùng được |
+| Bình thường | nợ chất lượng |
+| Thấp | để đó |
+
+Thẻ luôn đủ hai trục:
 
 | Trục | Thẻ |
 |---|---|
-| Loại việc | `type:fix` `type:feat` `type:docs` `type:chore` — việc trong code<br>`ops` hạ tầng vận hành · `legal` pháp lý tuân thủ · `gtm` bán hàng, giá, khách |
-| Vùng | `module:inbox` `module:platform` `module:marketing` `module:billing` `module:sales` `module:support` |
-
-Id của ưu tiên lấy từ `get_task_options`, không nhớ số.
-
-`P0` nghĩa hẹp: **khách lạ không đi tiếp được**, hoặc giao diện đang nói sai sự thật với khách. Lỗi xấu nhưng vẫn dùng được là `P1`.
+| Loại việc (chọn một) | `feature` tính năng mới · `bugs` lỗi · `optimize` cải thiện cái đang chạy được (hiệu năng, trải nghiệm, cấu hình) |
+| Vùng | `module:<tên module>` theo module chức năng (`module:inbox`, `module:platform`, `module:marketing`, `module:billing`, `module:sales`, `module:support`…); việc thuần giao diện thì gắn `ux ui` thay cho/bên cạnh module |
 
 ## Cột kanban
 
