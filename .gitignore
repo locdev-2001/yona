@@ -27,7 +27,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /refs
-/plans/**/reports/tool-results
+/plans/
 __pycache__/
 .claude/hooks/.logs/
 .playwright-mcp/
