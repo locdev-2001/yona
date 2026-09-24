@@ -9,8 +9,10 @@ use App\Models\PlatformApp;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/spec/controllers/super_admin/*_controller_spec.rb —
 // các màn Administrate của console quản trị.
@@ -121,6 +123,23 @@ it('gửi lại thư xác nhận cho user chưa xác nhận', function () {
 
     Notification::assertSentTo($user, ConfirmationInstructions::class);
 });
+
+it('xoá ảnh đại diện user và bot từ console thì lưu lại record chủ', function (string $modelClass, string $resourcePath) {
+    Storage::fake('public');
+    $owner = $modelClass::factory()->create();
+    $owner->replaceAvatar(UploadedFile::fake()->image('avatar.png'));
+    $updatedAtBeforeRemoval = $owner->refresh()->updated_at;
+    $this->travel(1)->minutes();
+
+    $this->delete("/super_admin/{$resourcePath}/{$owner->id}/avatar")->assertRedirect();
+
+    $owner->refresh();
+    expect($owner->avatar)->toBeNull()
+        ->and($owner->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
+})->with([
+    'user' => [User::class, 'users'],
+    'bot' => [AgentBot::class, 'agent_bots'],
+]);
 
 it('tạo platform app kèm access token và xem lại token', function () {
     $this->post('/super_admin/platform_apps', ['platform_app' => ['name' => 'App tích hợp']])

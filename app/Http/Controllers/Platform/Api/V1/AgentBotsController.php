@@ -70,7 +70,7 @@ class AgentBotsController extends PlatformController
             return $denied;
         }
 
-        $agentBot->avatar?->delete();
+        $agentBot->removeAvatar();
 
         return response()->json(PlatformAgentBotResource::toArray($agentBot->fresh()));
     }

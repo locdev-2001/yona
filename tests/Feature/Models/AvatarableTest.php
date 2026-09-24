@@ -2,7 +2,10 @@
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Models\AgentBot;
 use App\Models\Contact;
+use App\Models\Inbox;
+use App\Models\User;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,3 +44,41 @@ it('record còn thay đổi chờ ghi thì không lưu giữa chừng, lần sav
         && $event->data['changed_attributes']['name'] === ['Khách cũ', 'Khách mới']
         && $event->data['contact']->avatarUrl() !== '');
 });
+
+it('xoá avatar thì hook cập nhật chạy, sự kiện mang thumbnail rỗng', function () {
+    $this->contact->replaceAvatarFromContents(avatarPngBytes(), 'avatar.png', 'image/png');
+    $path = $this->contact->avatar->path;
+    Event::fake([DomainEvent::class]);
+
+    $this->contact->removeAvatar();
+
+    Event::assertDispatchedTimes(DomainEvent::class, 1);
+    Event::assertDispatched(DomainEvent::class, fn (DomainEvent $event) => $event->type === EventType::CONTACT_UPDATED
+        && $event->data['contact']->is($this->contact)
+        && $event->data['contact']->avatarUrl() === '');
+    expect($this->contact->refresh()->avatar)->toBeNull();
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('xoá khi chưa có avatar thì không lưu lại và không phát sự kiện', function () {
+    $this->contact->removeAvatar();
+
+    Event::assertNotDispatched(DomainEvent::class);
+});
+
+it('xoá avatar của model không phải Contact cũng lưu lại record chủ như chiều gắn', function (string $modelClass) {
+    $owner = $modelClass::factory()->create();
+    $owner->replaceAvatarFromContents(avatarPngBytes(), 'avatar.png', 'image/png');
+    $updatedAtBeforeRemoval = $owner->refresh()->updated_at;
+    $this->travel(1)->minutes();
+
+    $owner->removeAvatar();
+
+    $owner->refresh();
+    expect($owner->avatar)->toBeNull()
+        ->and($owner->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
+})->with([
+    'hồ sơ nhân viên' => [User::class],
+    'bot' => [AgentBot::class],
+    'hộp thư' => [Inbox::class],
+]);

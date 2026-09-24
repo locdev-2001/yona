@@ -190,7 +190,7 @@ class InboxesController extends Controller
     {
         $this->authorizeAdministrator($request);
 
-        $this->fetchInbox($request, $account, $inboxId)->avatar?->delete();
+        $this->fetchInbox($request, $account, $inboxId)->removeAvatar();
 
         return response()->json(null, 200);
     }

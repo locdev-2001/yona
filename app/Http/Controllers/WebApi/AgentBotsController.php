@@ -63,8 +63,7 @@ class AgentBotsController extends Controller
     {
         $this->authorizeAdministrator($request);
         $agentBot = $this->fetchOwnedAgentBot($account, $agentBotId);
-        $agentBot->avatar?->delete();
-        $agentBot->unsetRelation('avatar');
+        $agentBot->removeAvatar();
 
         return response()->json($this->resource($request, $account, $agentBot));
     }

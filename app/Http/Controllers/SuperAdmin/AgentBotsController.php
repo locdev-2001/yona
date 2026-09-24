@@ -30,7 +30,7 @@ class AgentBotsController extends ResourceController
 
     public function destroyAvatar(int $id): RedirectResponse
     {
-        $this->findRecord($id)->avatar?->delete();
+        $this->findRecord($id)->removeAvatar();
 
         return back();
     }

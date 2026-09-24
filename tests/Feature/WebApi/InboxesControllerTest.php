@@ -501,12 +501,16 @@ describe('DELETE /api/v1/accounts/{id}/inboxes/{inboxId}/avatar', function () {
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
         $inbox = apiInboxFor($account);
         $inbox->replaceAvatar(UploadedFile::fake()->image('avatar.png'));
+        $updatedAtBeforeRemoval = $inbox->refresh()->updated_at;
+        $this->travel(1)->minutes();
 
         $this->actingAs($admin)
             ->deleteJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}/avatar")
             ->assertOk();
 
-        expect($inbox->refresh()->avatar)->toBeNull();
+        $inbox->refresh();
+        expect($inbox->avatar)->toBeNull()
+            ->and($inbox->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
     });
 
     it('returns unauthorized for agent user', function () {

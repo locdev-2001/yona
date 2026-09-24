@@ -6,6 +6,8 @@ use App\Models\AgentBot;
 use App\Models\AgentBotInbox;
 use App\Models\Inbox;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->account = Account::factory()->create();
@@ -139,4 +141,21 @@ it('đọc và gán agent bot cho inbox', function () {
         ->assertOk();
 
     expect(AgentBotInbox::query()->where('inbox_id', $inbox->id)->exists())->toBeFalse();
+});
+
+it('xoá ảnh đại diện bot thì lưu lại bot và trả bot không còn ảnh', function () {
+    Storage::fake('public');
+    $bot = AgentBot::factory()->create(['account_id' => $this->account->id]);
+    $bot->replaceAvatar(UploadedFile::fake()->image('avatar.png'));
+    $updatedAtBeforeRemoval = $bot->refresh()->updated_at;
+    $this->travel(1)->minutes();
+
+    $this->actingAs($this->admin)
+        ->deleteJson("/api/v1/accounts/{$this->account->id}/agent_bots/{$bot->id}/avatar")
+        ->assertOk()
+        ->assertJsonPath('thumbnail', '');
+
+    $bot->refresh();
+    expect($bot->avatar)->toBeNull()
+        ->and($bot->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
 });

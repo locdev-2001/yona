@@ -25,6 +25,16 @@ trait Avatarable
         return $this->avatar?->url() ?? '';
     }
 
+    public function removeAvatar(): void
+    {
+        if ($this->avatar === null) {
+            return;
+        }
+
+        $this->avatar->delete();
+        $this->saveOwnerAfterAvatarChange();
+    }
+
     public function replaceAvatar(UploadedFile $file): void
     {
         $this->storeAvatarAttachment(
@@ -79,16 +89,17 @@ trait Avatarable
             'disk' => 'public',
         ]);
 
-        $this->unsetRelation('avatar');
         $this->saveOwnerAfterAvatarChange();
     }
 
-    // avatar.attach của Rails lưu lại record chủ khi nó không còn thay đổi chờ
-    // ghi, nên hook cập nhật chạy và người đang xem nhận ảnh mới (Contact phát
-    // contact.updated). Eloquent bỏ qua hook khi không cột nào đổi nên phải chạm
-    // updated_at; còn thay đổi chờ ghi thì lần save của nơi gọi sẽ chạy hook.
+    // Gắn và xoá ảnh cùng lưu lại record chủ để hook cập nhật chạy và người
+    // đang xem nhận ảnh mới hoặc ảnh rỗng (Contact phát contact.updated).
+    // Eloquent bỏ qua hook khi không cột nào đổi nên phải chạm updated_at; còn
+    // thay đổi chờ ghi thì lần save của nơi gọi sẽ chạy hook.
     private function saveOwnerAfterAvatarChange(): void
     {
+        $this->unsetRelation('avatar');
+
         if (! $this->isDirty()) {
             $this->touch();
         }

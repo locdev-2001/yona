@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ActionCableBroadcastJob;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -607,6 +608,26 @@ describe('DELETE /api/v1/accounts/{id}/contacts/{contactId}/avatar', function ()
             ->assertOk();
 
         expect($contact->refresh()->avatar)->toBeNull();
+    });
+
+    it('báo contact.updated với thumbnail rỗng cho người đang xem và trả liên hệ đã xoá ảnh', function () {
+        Storage::fake('public');
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $contact = Contact::factory()->create(['account_id' => $account->id]);
+        $contact->replaceAvatar(UploadedFile::fake()->image('avatar.png'));
+        Queue::fake();
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/accounts/{$account->id}/contacts/{$contact->id}/avatar")
+            ->assertOk()
+            ->assertJsonPath('payload.id', $contact->id)
+            ->assertJsonPath('payload.thumbnail', '');
+
+        Queue::assertPushed(ActionCableBroadcastJob::class, fn (ActionCableBroadcastJob $job) => $job->eventName === 'contact.updated'
+            && $job->members === ["account_{$account->id}"]
+            && $job->data['id'] === $contact->id
+            && $job->data['thumbnail'] === '');
     });
 });
 

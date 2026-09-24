@@ -285,9 +285,13 @@ class ContactsController extends Controller
 
     public function destroyAvatar(Request $request, Account $account, int $contactId): JsonResponse
     {
-        $this->fetchContact($account, $contactId)->avatar?->delete();
+        $contact = $this->fetchContact($account, $contactId);
+        $contact->removeAvatar();
 
-        return response()->json(null, 200);
+        // avatar.json.jbuilder: payload là liên hệ không kèm contact_inboxes.
+        return response()->json([
+            'payload' => (new ContactResource($contact))->toArray($request),
+        ]);
     }
 
     // fetch_contacts: eager load + phân trang, meta {count, current_page}.

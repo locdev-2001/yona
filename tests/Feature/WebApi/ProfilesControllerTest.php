@@ -191,11 +191,14 @@ describe('DELETE /api/v1/profile/avatar', function () {
             'avatar' => UploadedFile::fake()->image('avatar.png'),
         ], ['Accept' => 'application/json'])->assertOk();
         $path = $user->refresh()->avatar->path;
+        $updatedAtBeforeRemoval = $user->updated_at;
+        $this->travel(1)->minutes();
 
         $response = $this->actingAs($user)->deleteJson('/api/v1/profile/avatar')->assertOk();
 
         expect($response->json('avatar_url'))->toBe('')
-            ->and($user->refresh()->avatar)->toBeNull();
+            ->and($user->refresh()->avatar)->toBeNull()
+            ->and($user->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
         Storage::disk('public')->assertMissing($path);
     });
 });

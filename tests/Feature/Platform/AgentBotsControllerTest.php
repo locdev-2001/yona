@@ -3,6 +3,8 @@
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\PlatformApp;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 // Port từ refs/chatwoot/spec/controllers/platform/api/v1/agent_bots_controller_spec.rb.
 beforeEach(function () {
@@ -49,6 +51,23 @@ it('cập nhật và xoá bot', function () {
     $this->deleteJson("/platform/api/v1/agent_bots/{$bot->id}", [], $this->headers)->assertOk();
 
     expect(AgentBot::query()->find($bot->id))->toBeNull();
+});
+
+it('xoá ảnh đại diện bot thì lưu lại bot', function () {
+    Storage::fake('public');
+    $bot = AgentBot::factory()->create();
+    $this->platformApp->permit($bot);
+    $bot->replaceAvatar(UploadedFile::fake()->image('avatar.png'));
+    $updatedAtBeforeRemoval = $bot->refresh()->updated_at;
+    $this->travel(1)->minutes();
+
+    $this->deleteJson("/platform/api/v1/agent_bots/{$bot->id}/avatar", [], $this->headers)
+        ->assertOk()
+        ->assertJsonPath('id', $bot->id);
+
+    $bot->refresh();
+    expect($bot->avatar)->toBeNull()
+        ->and($bot->updated_at->greaterThan($updatedAtBeforeRemoval))->toBeTrue();
 });
 
 it('chặn bot không được cấp quyền', function () {

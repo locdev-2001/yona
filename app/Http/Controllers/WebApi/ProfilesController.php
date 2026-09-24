@@ -78,7 +78,7 @@ class ProfilesController extends Controller
     public function destroyAvatar(Request $request): JsonResponse
     {
         $user = $request->user();
-        $user->avatar?->delete();
+        $user->removeAvatar();
 
         return response()->json($this->profilePayload($user->refresh()));
     }
