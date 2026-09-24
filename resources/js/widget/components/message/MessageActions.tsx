@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { canRecallMessage } from '../../helpers/messageHelpers';
 import { useWidgetState } from '../../store/hooks';
@@ -31,8 +32,10 @@ function RecallConfirm({
     onCancel: () => void;
     onConfirm: () => void;
 }) {
-    return (
-        <div className="fixed inset-0 z-30 bg-[var(--yona-chat-scrim-soft)]" onClick={onCancel}>
+    // Vẽ ra body: khung luồng tin và ô nhập là hai lớp xếp chồng riêng, hộp thoại
+    // nằm trong luồng tin sẽ bị ô nhập đè lên.
+    return createPortal(
+        <div className="fixed inset-0 z-50 bg-[var(--yona-chat-scrim-soft)]" onClick={onCancel}>
             <div
                 role="alertdialog"
                 aria-modal="true"
@@ -65,7 +68,8 @@ function RecallConfirm({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }
 
@@ -82,12 +86,17 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
     const recallWindowSeconds = useWidgetState(state => state.messagingPolicy.recallWindowSeconds);
     const [isMenuOpen, setMenuOpen] = useState(false);
     const [isConfirmOpen, setConfirmOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
+    // Chỉ đóng khi bấm ra ngoài: chính cú bấm mở menu vẫn đang lan lên document.
     useEffect(() => {
         if (!isMenuOpen) return undefined;
-        const closeMenu = () => setMenuOpen(false);
-        document.addEventListener('click', closeMenu);
-        return () => document.removeEventListener('click', closeMenu);
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            if (event.target instanceof Node && containerRef.current?.contains(event.target)) return;
+            setMenuOpen(false);
+        };
+        document.addEventListener('click', closeOnOutsideClick);
+        return () => document.removeEventListener('click', closeOnOutsideClick);
     }, [isMenuOpen]);
 
     const showRecall = isOwn && canRecallMessage(message, recallWindowSeconds);
@@ -107,7 +116,12 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
     };
 
     return (
-        <div className={`yona-msg-actions relative flex flex-none items-center gap-[2px] ${className}`}>
+        <div
+            ref={containerRef}
+            className={`yona-msg-actions relative flex flex-none items-center gap-[2px] ${className} ${
+                isMenuOpen || isConfirmOpen ? '!opacity-100' : ''
+            }`}
+        >
             <RoundButton label={t('MESSAGE_ACTIONS.REPLY')} onClick={onReply}>
                 <ReplyIcon />
             </RoundButton>

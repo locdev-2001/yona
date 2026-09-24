@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { t } from '../../i18n';
 import { CloseIcon } from './icons';
@@ -28,8 +29,8 @@ export default function ImageLightbox({
 
     const current = images[Math.min(currentIndex, images.length - 1)];
 
-    return (
-        <div role="dialog" aria-modal="true" className="fixed inset-0 z-40 flex flex-col bg-[var(--yona-chat-scrim)]">
+    return createPortal(
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex flex-col bg-[var(--yona-chat-scrim)]">
             <div className="flex items-center justify-between px-4 py-2 text-[12px] text-[var(--yona-chat-on-scrim)]">
                 <span>{`${currentIndex + 1}/${images.length}`}</span>
                 <button
@@ -58,6 +59,7 @@ export default function ImageLightbox({
                     ))}
                 </div>
             ) : null}
-        </div>
+        </div>,
+        document.body,
     );
 }
