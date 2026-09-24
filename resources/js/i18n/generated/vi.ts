@@ -1438,6 +1438,9 @@ const messages: Record<string, unknown> = {
             },
             "embed": {
                 "CONTENT": "Nội dung nhúng"
+            },
+            "sticker": {
+                "CONTENT": "Sticker"
             }
         },
         "CHAT_SORT_BY_FILTER": {
@@ -2393,14 +2396,40 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
+            "REPLY": "Trả lời",
             "MORE": "Thêm hành động",
             "REACT": "Thả cảm xúc",
+            "FORWARD": "Chuyển tiếp",
             "RECALL": "Thu hồi với mọi người",
             "DELETE": "Xoá",
             "RECALL_CONFIRMATION": {
                 "TITLE": "Thu hồi tin nhắn này với cả khách?",
                 "MESSAGE": "Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được."
             }
+        },
+        "REPLY_QUOTE": {
+            "ORIGINAL": "Tin nhắn gốc",
+            "JUMP": "Xem tin nhắn gốc"
+        },
+        "FORWARD": {
+            "TITLE": "Chuyển tiếp tin nhắn",
+            "SEARCH_PLACEHOLDER": "Tìm theo tên, số điện thoại hoặc mã hội thoại",
+            "RECENT": "Hội thoại gần đây",
+            "EMPTY": "Không tìm thấy hội thoại nào",
+            "LOAD_FAILED": "Không tải được danh sách hội thoại.",
+            "RETRY": "Thử lại",
+            "MAX_REACHED": "Mỗi lần chuyển tiếp tối đa {max} hội thoại",
+            "SUBMIT_COUNT": "Chuyển tiếp ({count})",
+            "SUCCESS": "Đã chuyển tiếp tới {count} hội thoại",
+            "OPEN": "Mở hội thoại",
+            "PARTIAL": "Đã chuyển tiếp {ok}/{total} hội thoại. {error}",
+            "FAILED": "Chưa chuyển tiếp được. {error}",
+            "REMOVE_TARGET": "Bỏ chọn {name}"
+        },
+        "FORWARDED": {
+            "LABEL": "Đã chuyển tiếp",
+            "FROM": "Chuyển tiếp từ {name}",
+            "SOURCE_CONVERSATION": "Chuyển tiếp từ hội thoại #{id}"
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Thử lại",
@@ -2542,6 +2571,9 @@ const messages: Record<string, unknown> = {
                 "ENABLED": "Đang bật",
                 "DISABLED": "Đang tắt",
                 "YOU_ARE_A_MEMBER": "Bạn là thành viên của nhóm này"
+            },
+            "GROUP_MEMBER": {
+                "TITLE": "Thành viên nhóm"
             }
         },
         "CUSTOM_SNOOZE": {
@@ -2639,6 +2671,7 @@ const messages: Record<string, unknown> = {
             "DISMISS_REPLY": "Bỏ trả lời",
             "REPLYING_TO": "Đang trả lời:",
             "TIP_EMOJI_ICON": "Hiển thị chọn emoji",
+            "TIP_STICKER_ICON": "Gửi sticker",
             "TIP_ATTACH_ICON": "Đính kèm tệp",
             "TIP_AUDIORECORDER_ICON": "Ghi âm thanh",
             "TIP_AUDIORECORDER_PERMISSION": "Cho phép truy cập ghi âm",
@@ -2678,6 +2711,18 @@ const messages: Record<string, unknown> = {
                 "COLLAPSE": "Thu gọn xem trước",
                 "EXPAND": "Mở rộng xem trước"
             }
+        },
+        "STICKER_PICKER": {
+            "SEARCH_PLACEHOLDER": "Tìm sticker",
+            "SUGGESTED_KEYWORDS": "cảm ơn,chào,ok,haha,yêu,buồn,xin lỗi,chúc mừng",
+            "RECENT": "Gần đây",
+            "PACK": "Bộ sticker",
+            "STICKER": "Sticker",
+            "EMPTY_RECENT": "Chưa có sticker nào gần đây. Gõ từ khoá hoặc chọn một gợi ý để tìm.",
+            "EMPTY_PACK": "Bộ này chưa có sticker nào.",
+            "NO_RESULTS": "Không tìm thấy sticker cho “{query}”.",
+            "LOAD_FAILED": "Chưa tải được sticker, bạn thử lại nhé.",
+            "RETRY": "Thử lại"
         },
         "VISIBLE_TO_AGENTS": "Lưu ý riêng: Chỉ hiển thị với bạn và nhóm của bạn",
         "CHANGE_STATUS": "Trạng thái hội thoại đã thay đổi",
@@ -3438,6 +3483,33 @@ const messages: Record<string, unknown> = {
                 "missing_source_id": "Tin này chưa sang tới Zalo nên chưa đổi được ở đó.",
                 "emoji_not_supported": "Zalo không có biểu cảm này.",
                 "unknown": "Thao tác này chưa sang được Zalo (:detail)."
+            }
+        },
+        "stickers": {
+            "capability_not_supported": "Kênh này chưa gửi được sticker.",
+            "not_found": "Không tìm thấy sticker này, bạn chọn sticker khác giúp mình nhé.",
+            "bad_request": "Chưa tìm được sticker với từ khoá này, bạn thử từ khoá khác nhé.",
+            "private_note": "Không gửi sticker trong ghi chú riêng được.",
+            "outgoing_only": "Sticker chỉ gửi được trong tin trả lời khách.",
+            "with_attachments": "Sticker được gửi riêng, không kèm tệp.",
+            "missing_sticker_id": "Bạn chọn một sticker để gửi nhé."
+        },
+        "forward": {
+            "not_forwardable": "Loại tin này chưa chuyển tiếp được.",
+            "attachment_unavailable": "Tệp :filename không còn trên máy chủ nên không chuyển tiếp được.",
+            "capability_not_supported": "Hộp thư :inbox không gửi được :items.",
+            "sticker_unavailable": "Hộp thư :inbox không gửi được sticker này.",
+            "reply_window_closed": "Hội thoại này đã hết thời gian được phép trả lời.",
+            "target_not_found": "Không tìm thấy hội thoại hoặc bạn không có quyền.",
+            "no_targets": "Chọn ít nhất một hội thoại.",
+            "too_many_targets": "Mỗi lần chuyển tiếp tối đa :max hội thoại.",
+            "capabilities": {
+                "outbound_text": "tin chữ",
+                "outbound_image": "ảnh",
+                "outbound_video": "video",
+                "outbound_audio": "âm thanh",
+                "outbound_file": "tệp",
+                "outbound_sticker": "sticker"
             }
         },
         "custom_attribute_definition": {

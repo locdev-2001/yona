@@ -877,6 +877,9 @@ export function registerUiActionsRoutes(app, deps) {
             return res.status(503).json({ ok: false, message: 'not_logged_in' });
         }
         const debug = String(req.query?.debug || '').trim() === '1';
+        // lite: bỏ lượt getUserInfo từng người bên dưới — tên trong danh sách nhóm đủ
+        // để nhắc tên, còn nhóm đông thì gọi tuần tự từng người vượt thời gian chờ.
+        const lite = String(req.query?.lite || '').trim() === '1';
         try {
             const gi = await slot.api.getGroupInfo(groupId);
             const map = gi?.gridInfoMap && typeof gi.gridInfoMap === 'object' ? gi.gridInfoMap : {};
@@ -1020,7 +1023,7 @@ export function registerUiActionsRoutes(app, deps) {
                 if (!row) return null;
                 return { name: pickName(row) || null, avatar: pickAvatar(row) || null };
             };
-            for (const id of memberIds) {
+            for (const id of lite ? [] : memberIds) {
                 const base = byId.get(String(id)) || { id: String(id), name: null, avatar: null };
                 if (base.name && base.avatar) continue;
                 try {

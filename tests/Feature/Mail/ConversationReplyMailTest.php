@@ -154,6 +154,30 @@ it('threads the reply with message id, in reply to and references headers', func
         ->and($headers->references)->toBe(['<root@example.com>', '<incoming-1@example.com>']);
 });
 
+it('threads the reply to the quoted email instead of the latest incoming one', function () {
+    $conversation = emailConversation();
+    $incomingEmail = fn (string $messageId, array $references) => $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_INCOMING,
+        'content' => $messageId,
+        'content_type' => Message::CONTENT_TYPES['incoming_email'],
+        'source_id' => $messageId,
+        'content_attributes' => ['email' => ['message_id' => $messageId, 'references' => $references]],
+    ]);
+    $quoted = $incomingEmail('old-1@example.com', ['root@example.com']);
+    $incomingEmail('latest-2@example.com', ['root@example.com', 'old-1@example.com']);
+
+    $message = (new MessageBuilder(User::factory()->create(), $conversation, [
+        'content' => 'reply to the old one',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]))->perform();
+    $headers = ConversationReplyMail::emailReply($message->fresh())->headers();
+
+    expect($headers->text['In-Reply-To'])->toBe('<old-1@example.com>')
+        ->and($headers->references)->toBe(['<root@example.com>', '<old-1@example.com>']);
+});
+
 it('falls back to a conversation level in reply to when no incoming email exists', function () {
     $conversation = emailConversation();
     $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'reply']))->perform();

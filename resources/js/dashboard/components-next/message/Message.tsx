@@ -7,7 +7,15 @@ import { t } from '../../../i18n';
 
 import { MessageProvider } from './provider';
 import type { MessageContextValue } from './provider';
-import { CONTENT_TYPES, MESSAGE_STATUS, MESSAGE_TYPES, MESSAGE_VARIANTS, ORIENTATION, SENDER_TYPES } from './constants';
+import {
+    ATTACHMENT_TYPES,
+    CONTENT_TYPES,
+    MESSAGE_STATUS,
+    MESSAGE_TYPES,
+    MESSAGE_VARIANTS,
+    ORIENTATION,
+    SENDER_TYPES,
+} from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
 import MessageActions from './MessageActions';
 import MessageError from './MessageError';
@@ -17,6 +25,7 @@ import FallbackBubble from './bubbles/Fallback';
 import LinkPreviewBubble from './bubbles/LinkPreview';
 import FileBubble from './bubbles/File';
 import ImageBubble from './bubbles/Image';
+import StickerBubble from './bubbles/Sticker';
 import EmailBubble from './bubbles/Email/Index';
 import TextBubble from './bubbles/Text';
 import VideoBubble from './bubbles/Video';
@@ -27,6 +36,7 @@ import ZaloCallBubble from './bubbles/ZaloCall';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
+import { resolveReplyQuote } from './helpers/replyQuote';
 import { BOT_SENDER_TYPES, resolveMessageSender } from './helpers/senderIdentity';
 import { useSenderIdentityContext } from './SenderIdentityContext';
 
@@ -43,12 +53,15 @@ interface MessageProps {
     groupWithNext?: boolean;
     // filteredCurrentChatAttachments của provider.js gốc (đọc getter store).
     chatAttachments?: MessageAttachment[];
-    // Tin được trả lời — MessageList tra sẵn như getInReplyToMessage bên gốc.
+    // Tin được trả lời, MessageList tra sẵn: có = tin gốc · null = đã tra, không
+    // có · undefined = chưa biết hoặc đang tải.
     inReplyTo?: ConversationMessage | null;
     // Gửi lại tin thất bại (POST …/messages/{id}/retry) — emit `retry` của gốc.
     onRetry?: (message: ConversationMessage) => Promise<void> | void;
     onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
+    onReplyTo?: (message: ConversationMessage) => void;
+    onForward?: (message: ConversationMessage) => void;
 }
 
 const FLEX_ORIENTATION_MAP: Record<string, string> = {
@@ -102,10 +115,12 @@ export default function Message({
     inboxCapabilities = [],
     groupWithNext = false,
     chatAttachments = [],
-    inReplyTo = null,
+    inReplyTo,
     onRetry,
     onToggleReaction,
     onDeleteMessage,
+    onReplyTo,
+    onForward,
 }: MessageProps) {
     const messageType = message.message_type;
     const status = message.status;
@@ -173,13 +188,19 @@ export default function Message({
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
     const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
+    // Sticker có ảnh đính kèm (contract lõi) lên bong bóng sticker; sticker chỉ
+    // có markdown trong content vẫn đi bong bóng chữ.
+    const isStickerWithImage =
+        contentType === CONTENT_TYPES.STICKER && attachments[0]?.file_type === ATTACHMENT_TYPES.IMAGE;
     // componentToRender của Message.vue: kênh email (tin công khai) và tin
     // content_type = incoming_email luôn lên bubble email trước mọi nhánh khác;
     // các bubble đọc content_attributes đứng trước nhánh theo đính kèm.
     const BubbleComponent =
         (isEmailInbox && !isPrivate && isEmailMessageType) || contentType === CONTENT_TYPES.INCOMING_EMAIL
             ? EmailBubble
-            : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
+            : isStickerWithImage
+              ? StickerBubble
+              : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
 
     const shouldRenderMessage = Boolean(
         attachments.length > 0 ||
@@ -204,7 +225,7 @@ export default function Message({
         contentAttributes,
         attachments,
         filteredCurrentChatAttachments: chatAttachments,
-        inReplyTo,
+        replyQuote: resolveReplyQuote(contentAttributes, inReplyTo),
         variant,
         orientation,
         shouldGroupWithNext,
@@ -212,6 +233,8 @@ export default function Message({
         inboxCapabilities,
         onToggleReaction: onToggleReaction ? (emoji: string) => void onToggleReaction(message, emoji) : undefined,
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
+        onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
+        onForward: onForward ? () => onForward(message) : undefined,
     };
 
     if (!shouldRenderMessage) return null;

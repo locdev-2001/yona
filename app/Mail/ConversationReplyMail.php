@@ -329,9 +329,12 @@ class ConversationReplyMail extends Mailable
         return 'conversation/'.$this->conversation->uuid.'/messages/'.$lastMessage?->id.'@'.$this->channelEmailDomain();
     }
 
+    // Agent trả lời trích dẫn một thư cụ thể thì nối luồng vào đúng thư đó, không
+    // phải thư đến mới nhất.
     private function inReplyToEmail(): string
     {
-        $messageId = data_get(
+        $repliedEmailId = data_get($this->message?->repliedMessage()?->content_attributes, 'email.message_id');
+        $messageId = filled($repliedEmailId) ? $repliedEmailId : data_get(
             $this->conversation->messages()->incoming()->orderByDesc('id')->first()?->content_attributes,
             'email.message_id'
         );

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use Illuminate\Support\Facades\Http;
@@ -87,4 +88,60 @@ it('gửi tin đi qua Graph API và lưu source_id', function () {
         && $request['message'] === ['text' => 'Chào bạn']);
 
     expect($outgoing->fresh()->source_id)->toBe('mid.out');
+});
+
+it('trả lời trích dẫn bằng reply_to.mid ở cấp gốc body, chỉ lượt gửi đầu mang', function () {
+    Http::fake([
+        'graph.facebook.com/*/me/messages' => Http::response(['message_id' => 'mid.out']),
+        'graph.facebook.com/*' => Http::response(['first_name' => 'Nguyễn', 'last_name' => 'An']),
+    ]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $quoted = Message::query()->latest('id')->first();
+    $conversation = $quoted->conversation;
+
+    $reply = new Message([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ còn ạ',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+    $reply->pendingAttachments = [new Attachment([
+        'account_id' => $conversation->account_id,
+        'file_type' => Attachment::FILE_TYPE_IMAGE,
+        'path' => 'fb/mau.png',
+        'filename' => 'mau.png',
+        'content_type' => 'image/png',
+        'byte_size' => 10,
+    ])];
+    $reply->save();
+
+    $sends = collect(Http::recorded())
+        ->map(fn (array $pair) => $pair[0])
+        ->filter(fn ($request) => str_contains($request->url(), '/me/messages'))
+        ->values();
+
+    expect($sends)->toHaveCount(2)
+        ->and($sends[0]['reply_to'])->toBe(['mid' => 'mid.facebook.1'])
+        ->and($sends[0]['message'])->toBe(['text' => 'Dạ còn ạ'])
+        ->and($sends[1]->data())->not->toHaveKey('reply_to');
+});
+
+it('tin không trả lời trích dẫn thì không gửi reply_to', function () {
+    Http::fake([
+        'graph.facebook.com/*/me/messages' => Http::response(['message_id' => 'mid.out']),
+        'graph.facebook.com/*' => Http::response(['first_name' => 'Nguyễn', 'last_name' => 'An']),
+    ]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $conversation = Message::query()->latest('id')->first()->conversation;
+
+    $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/me/messages') && ! isset($request['reply_to']));
 });

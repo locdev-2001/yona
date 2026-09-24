@@ -75,6 +75,35 @@ return [
             'unknown' => 'Thao tác này chưa sang được Zalo (:detail).',
         ],
     ],
+    // Bảng chọn sticker và tin sticker (App\Services\Channels\Stickers). Lỗi phía
+    // kênh dùng lại câu của từng kênh; ở đây chỉ là luật chung của lõi.
+    'stickers' => [
+        'capability_not_supported' => 'Kênh này chưa gửi được sticker.',
+        'not_found' => 'Không tìm thấy sticker này, bạn chọn sticker khác giúp mình nhé.',
+        'bad_request' => 'Chưa tìm được sticker với từ khoá này, bạn thử từ khoá khác nhé.',
+        'private_note' => 'Không gửi sticker trong ghi chú riêng được.',
+        'outgoing_only' => 'Sticker chỉ gửi được trong tin trả lời khách.',
+        'with_attachments' => 'Sticker được gửi riêng, không kèm tệp.',
+        'missing_sticker_id' => 'Bạn chọn một sticker để gửi nhé.',
+    ],
+    'forward' => [
+        'not_forwardable' => 'Loại tin này chưa chuyển tiếp được.',
+        'attachment_unavailable' => 'Tệp :filename không còn trên máy chủ nên không chuyển tiếp được.',
+        'capability_not_supported' => 'Hộp thư :inbox không gửi được :items.',
+        'sticker_unavailable' => 'Hộp thư :inbox không gửi được sticker này.',
+        'reply_window_closed' => 'Hội thoại này đã hết thời gian được phép trả lời.',
+        'target_not_found' => 'Không tìm thấy hội thoại hoặc bạn không có quyền.',
+        'no_targets' => 'Chọn ít nhất một hội thoại.',
+        'too_many_targets' => 'Mỗi lần chuyển tiếp tối đa :max hội thoại.',
+        'capabilities' => [
+            'outbound_text' => 'tin chữ',
+            'outbound_image' => 'ảnh',
+            'outbound_video' => 'video',
+            'outbound_audio' => 'âm thanh',
+            'outbound_file' => 'tệp',
+            'outbound_sticker' => 'sticker',
+        ],
+    ],
     'custom_attribute_definition' => [
         'attribute_key_format' => 'chỉ được chứa chữ cái, chữ số, dấu gạch dưới, dấu gạch nối và dấu chấm',
         'key_conflict' => 'Khóa này không dùng được vì có thể trùng với thuộc tính mặc định.',

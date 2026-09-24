@@ -7,15 +7,19 @@ import { collectMediaAttachments } from 'dashboard/components-next/message/helpe
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import { useTypingUsers } from 'dashboard/realtime/hooks';
 import { getTypingUsersText } from 'dashboard/helper/conversationHelper';
+import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import type { ConversationMessage } from '../types';
 import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
+import ForwardMessageDialog from './ForwardMessageDialog';
 import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
+import { useMessageReply } from './useMessageReply';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
@@ -30,6 +34,8 @@ import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 
 export default function MessagesView() {
     const {
+        accountId,
+        conversationId,
         selectedConversation,
         messages,
         messagesLoading,
@@ -48,6 +54,7 @@ export default function MessagesView() {
     const [containerHeight, setContainerHeight] = useState(0);
     const [topBannerHeight, setTopBannerHeight] = useState(0);
     const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
+    const [forwardingMessage, setForwardingMessage] = useState<ConversationMessage | null>(null);
     // Giữ vị trí scroll sau khi prepend tin cũ: đo scrollHeight trước/sau như bản gốc.
     const scrollRestoreRef = useRef<{ heightBeforeLoad: number; scrollTopBeforeLoad: number } | null>(null);
     const scrolledConversationRef = useRef<number | null>(null);
@@ -74,6 +81,13 @@ export default function MessagesView() {
               };
           }
         | undefined;
+
+    const { replyTarget, startReply, clearReply, replyTargets } = useMessageReply({
+        accountId,
+        conversationId,
+        messages,
+        enabled: inboxSupports(inbox, 'outbound_reply_to'),
+    });
 
     const replyWindowBannerMessage = (() => {
         const additionalAttributes = inbox?.additional_attributes ?? {};
@@ -131,6 +145,9 @@ export default function MessagesView() {
         panel.scrollTop = panel.scrollHeight;
     }, [lastMessageId, currentChat.id]);
 
+    // Hộp chuyển tiếp gắn với tin của hội thoại đang mở.
+    useEffect(() => setForwardingMessage(null), [conversationId]);
+
     const handleScroll = (event: UIEvent<HTMLUListElement>) => {
         const panel = event.currentTarget;
         if (panel.scrollTop >= 100 || isLoadingPrevious || messagesLoading || allMessagesLoaded) return;
@@ -175,6 +192,9 @@ export default function MessagesView() {
                 onRetry={retryFailedMessage}
                 onToggleReaction={toggleMessageReaction}
                 onDeleteMessage={deleteConversationMessage}
+                replyTargets={replyTargets}
+                onReplyTo={startReply}
+                onForward={setForwardingMessage}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
                         {shouldShowSpinner && <Spinner className="text-n-brand" />}
@@ -208,9 +228,19 @@ export default function MessagesView() {
                     <ReplyBox
                         onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
                         onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
+                        replyTarget={replyTarget}
+                        onClearReplyTarget={clearReply}
                     />
                 </ResizableEditorWrapper>
             </div>
+            {forwardingMessage && (
+                <ForwardMessageDialog
+                    accountId={accountId}
+                    conversationId={conversationId}
+                    message={forwardingMessage}
+                    onClose={() => setForwardingMessage(null)}
+                />
+            )}
         </div>
     );
 }

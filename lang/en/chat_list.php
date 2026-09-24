@@ -122,6 +122,9 @@ return [
         'embed' => [
             'CONTENT' => 'Embedded content',
         ],
+        'sticker' => [
+            'CONTENT' => 'Sticker',
+        ],
     ],
     'CHAT_SORT_BY_FILTER' => [
         'TITLE' => 'Sort conversation',

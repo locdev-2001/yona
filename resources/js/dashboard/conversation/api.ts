@@ -166,10 +166,13 @@ export function toggleTyping(
 }
 
 export interface SendMessagePayload {
-    content: string;
+    content?: string;
     private: boolean;
     echo_id?: string;
     content_attributes?: Record<string, unknown>;
+    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm.
+    content_type?: 'sticker';
+    sticker_id?: string;
     files?: File[];
     // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).
     cc_emails?: string;

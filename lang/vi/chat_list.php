@@ -126,6 +126,9 @@ return [
         'embed' => [
             'CONTENT' => 'Nội dung nhúng',
         ],
+        'sticker' => [
+            'CONTENT' => 'Sticker',
+        ],
     ],
     'CHAT_SORT_BY_FILTER' => [
         'TITLE' => 'Sắp xếp hội thoại',

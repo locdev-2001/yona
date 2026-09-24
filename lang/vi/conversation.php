@@ -112,14 +112,43 @@ return [
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
     'SENT_FROM_NATIVE_APP' => 'từ điện thoại',
     'MESSAGE_ACTIONS' => [
+        'REPLY' => 'Trả lời',
         'MORE' => 'Thêm hành động',
         'REACT' => 'Thả cảm xúc',
+        'FORWARD' => 'Chuyển tiếp',
         'RECALL' => 'Thu hồi với mọi người',
         'DELETE' => 'Xoá',
         'RECALL_CONFIRMATION' => [
             'TITLE' => 'Thu hồi tin nhắn này với cả khách?',
             'MESSAGE' => 'Tin nhắn sẽ biến mất ở cả phía khách và không khôi phục lại được.',
         ],
+    ],
+    // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
+    'REPLY_QUOTE' => [
+        'ORIGINAL' => 'Tin nhắn gốc',
+        'JUMP' => 'Xem tin nhắn gốc',
+    ],
+    // Hộp chọn hội thoại đích khi chuyển tiếp một tin.
+    'FORWARD' => [
+        'TITLE' => 'Chuyển tiếp tin nhắn',
+        'SEARCH_PLACEHOLDER' => 'Tìm theo tên, số điện thoại hoặc mã hội thoại',
+        'RECENT' => 'Hội thoại gần đây',
+        'EMPTY' => 'Không tìm thấy hội thoại nào',
+        'LOAD_FAILED' => 'Không tải được danh sách hội thoại.',
+        'RETRY' => 'Thử lại',
+        'MAX_REACHED' => 'Mỗi lần chuyển tiếp tối đa {max} hội thoại',
+        'SUBMIT_COUNT' => 'Chuyển tiếp ({count})',
+        'SUCCESS' => 'Đã chuyển tiếp tới {count} hội thoại',
+        'OPEN' => 'Mở hội thoại',
+        'PARTIAL' => 'Đã chuyển tiếp {ok}/{total} hội thoại. {error}',
+        'FAILED' => 'Chưa chuyển tiếp được. {error}',
+        'REMOVE_TARGET' => 'Bỏ chọn {name}',
+    ],
+    // Nhãn trên bong bóng của tin được chuyển tiếp (trong Yona hoặc từ nền tảng).
+    'FORWARDED' => [
+        'LABEL' => 'Đã chuyển tiếp',
+        'FROM' => 'Chuyển tiếp từ {name}',
+        'SOURCE_CONVERSATION' => 'Chuyển tiếp từ hội thoại #{id}',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Thử lại',
@@ -262,6 +291,9 @@ return [
             'DISABLED' => 'Đang tắt',
             'YOU_ARE_A_MEMBER' => 'Bạn là thành viên của nhóm này',
         ],
+        'GROUP_MEMBER' => [
+            'TITLE' => 'Thành viên nhóm',
+        ],
     ],
     'CUSTOM_SNOOZE' => [
         'TITLE' => 'Tạm dừng đến khi',
@@ -358,6 +390,7 @@ return [
         'DISMISS_REPLY' => 'Bỏ trả lời',
         'REPLYING_TO' => 'Đang trả lời:',
         'TIP_EMOJI_ICON' => 'Hiển thị chọn emoji',
+        'TIP_STICKER_ICON' => 'Gửi sticker',
         'TIP_ATTACH_ICON' => 'Đính kèm tệp',
         'TIP_AUDIORECORDER_ICON' => 'Ghi âm thanh',
         'TIP_AUDIORECORDER_PERMISSION' => 'Cho phép truy cập ghi âm',
@@ -397,6 +430,19 @@ return [
             'COLLAPSE' => 'Thu gọn xem trước',
             'EXPAND' => 'Mở rộng xem trước',
         ],
+    ],
+    // Bảng chọn sticker trong khung soạn (chỉ hiện với kênh gửi được sticker).
+    'STICKER_PICKER' => [
+        'SEARCH_PLACEHOLDER' => 'Tìm sticker',
+        'SUGGESTED_KEYWORDS' => 'cảm ơn,chào,ok,haha,yêu,buồn,xin lỗi,chúc mừng',
+        'RECENT' => 'Gần đây',
+        'PACK' => 'Bộ sticker',
+        'STICKER' => 'Sticker',
+        'EMPTY_RECENT' => 'Chưa có sticker nào gần đây. Gõ từ khoá hoặc chọn một gợi ý để tìm.',
+        'EMPTY_PACK' => 'Bộ này chưa có sticker nào.',
+        'NO_RESULTS' => 'Không tìm thấy sticker cho “{query}”.',
+        'LOAD_FAILED' => 'Chưa tải được sticker, bạn thử lại nhé.',
+        'RETRY' => 'Thử lại',
     ],
     'VISIBLE_TO_AGENTS' => 'Lưu ý riêng: Chỉ hiển thị với bạn và nhóm của bạn',
     'CHANGE_STATUS' => 'Trạng thái hội thoại đã thay đổi',

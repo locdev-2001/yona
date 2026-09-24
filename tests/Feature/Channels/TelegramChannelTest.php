@@ -168,3 +168,39 @@ it('lưu bot_token dạng mã hóa + cột băm để webhook vẫn tra được
 
     expect(Message::query()->latest('id')->first())->not->toBeNull();
 });
+
+/** @param array<string, mixed> $forwardKeys */
+function receiveTelegramForward(Telegram $channel, array $forwardKeys): Message
+{
+    $payload = ChannelFixture::load('telegram_text');
+    $payload['message'] = [...$payload['message'], ...$forwardKeys];
+
+    (new TelegramEventsJob(['bot_token' => $channel->bot_token, 'telegram' => $payload]))->handle();
+
+    return Message::query()->latest('id')->firstOrFail();
+}
+
+it('tin khách chuyển tiếp mang forwarded_from trung tính kèm tên người gửi gốc', function (array $forwardKeys, ?string $senderName) {
+    fakeTelegramApi();
+
+    $message = receiveTelegramForward($this->channel, $forwardKeys);
+
+    expect($message->content_attributes['forwarded_from'])->toBe(array_filter(['origin' => 'channel', 'sender_name' => $senderName]))
+        ->and($message->isForwarded())->toBeTrue();
+})->with([
+    'forward_origin user' => [['forward_origin' => ['type' => 'user', 'date' => 1, 'sender_user' => ['id' => 7, 'first_name' => 'Nguyễn', 'last_name' => 'An']]], 'Nguyễn An'],
+    'forward_origin hidden_user' => [['forward_origin' => ['type' => 'hidden_user', 'date' => 1, 'sender_user_name' => 'Người giấu tên']], 'Người giấu tên'],
+    'forward_origin channel' => [['forward_origin' => ['type' => 'channel', 'date' => 1, 'chat' => ['id' => -100, 'title' => 'Kênh Sỉ Lẻ'], 'message_id' => 5]], 'Kênh Sỉ Lẻ'],
+    'forward_origin chat' => [['forward_origin' => ['type' => 'chat', 'date' => 1, 'sender_chat' => ['id' => -200, 'title' => 'Nhóm Khách Quen']]], 'Nhóm Khách Quen'],
+    'kiểu cũ forward_from' => [['forward_from' => ['id' => 7, 'first_name' => 'Bình']], 'Bình'],
+    'kiểu cũ forward_sender_name' => [['forward_sender_name' => 'Ẩn danh'], 'Ẩn danh'],
+    'không có tên' => [['forward_origin' => ['type' => 'hidden_user', 'date' => 1]], null],
+]);
+
+it('tin thường không có forwarded_from', function () {
+    fakeTelegramApi();
+
+    $message = receiveTelegramForward($this->channel, []);
+
+    expect($message->content_attributes)->not->toHaveKey('forwarded_from');
+});

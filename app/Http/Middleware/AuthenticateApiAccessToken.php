@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
 use App\Http\Controllers\WebApi\Conversations\LabelsController as ConversationLabelsController;
+use App\Http\Controllers\WebApi\Conversations\MessageForwardsController;
 use App\Http\Controllers\WebApi\Conversations\MessagesController;
 use App\Http\Controllers\WebApi\ConversationsController;
 use App\Models\AccessToken;
@@ -27,6 +28,7 @@ class AuthenticateApiAccessToken implements AuthenticatesRequests
     private const BOT_ACCESSIBLE_ROUTES = [
         ConversationsController::class => ['show', 'store', 'update', 'toggleStatus', 'toggleTypingStatus', 'togglePriority'],
         MessagesController::class => ['store'],
+        MessageForwardsController::class => ['store'],
         AssignmentsController::class => ['create'],
         ConversationLabelsController::class => ['index', 'create'],
     ];

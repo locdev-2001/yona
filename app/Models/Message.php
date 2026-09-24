@@ -8,6 +8,7 @@ use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Jobs\SendReplyJob;
 use App\Services\Messages\InReplyToMessageBuilder;
+use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\MessageTemplates\HookExecutionService;
 use App\Support\CurrentExecutedBy;
 use App\Support\LiquidTemplate;
@@ -141,6 +142,8 @@ class Message extends Model
             $message->content_type ??= self::CONTENT_TYPES['text'];
             $message->preventMessageFlooding();
             $message->renderContentVariables();
+            // Neo sau Liquid: biến đổi độ dài nội dung thì vị trí nhắc tên mới đúng.
+            (new OutboundMentionsBuilder($message))->perform();
         });
 
         static::saving(function (Message $message) {
@@ -238,6 +241,31 @@ class Message extends Model
     public function isDeleted(): bool
     {
         return ($this->content_attributes['deleted'] ?? false) === true;
+    }
+
+    /** Agent chuyển tiếp trong Yona, hoặc khách chuyển tiếp trên nền tảng (`content_attributes.forwarded_from`). */
+    public function isForwarded(): bool
+    {
+        return is_array($this->content_attributes['forwarded_from'] ?? null);
+    }
+
+    /**
+     * Tin mà tin này trả lời trích dẫn. Chỉ tra trong cùng hội thoại: `in_reply_to`
+     * do client gửi lên, trỏ sang hội thoại khác thì coi như không có. Driver kênh
+     * cần nguyên tin gốc (ảnh chụp nền tảng, Message-ID thư) đều đi qua đây.
+     */
+    public function repliedMessage(): ?self
+    {
+        $repliedId = $this->content_attributes['in_reply_to'] ?? null;
+
+        if (! is_numeric($repliedId) || $this->conversation_id === null) {
+            return null;
+        }
+
+        return self::query()
+            ->where('conversation_id', $this->conversation_id)
+            ->whereKey((int) $repliedId)
+            ->first();
     }
 
     /**
@@ -373,9 +401,13 @@ class Message extends Model
         $job = new SendReplyJob($this);
 
         // FIXME của bản gốc: chờ vài giây cho tệp đính kèm lưu xong trước khi gửi.
-        $this->pendingAttachments === [] && $this->attachments->isEmpty()
-            ? dispatch($job)
-            : dispatch($job)->delay(now()->addSeconds(2));
+        // Đính kèm chỉ trỏ ảnh ngoài (sticker) không có tệp nào phải chờ.
+        $carriesStoredFile = collect([...$this->pendingAttachments, ...$this->attachments])
+            ->contains(fn (Attachment $attachment) => $attachment->hasFile());
+
+        $carriesStoredFile
+            ? dispatch($job)->delay(now()->addSeconds(2))
+            : dispatch($job);
     }
 
     public function isConversationTranscriptable(): bool
@@ -479,10 +511,12 @@ class Message extends Model
     }
 
     // Liquidable#process_liquid_in_content: chỉ tin agent gửi ra và tin mẫu mới
-    // được tham chiếu biến — tin của khách giữ nguyên văn.
+    // được tham chiếu biến — tin của khách giữ nguyên văn. Tin chuyển tiếp mang
+    // nguyên văn một tin đã có, nên chuỗi `{{…}}` trong đó không phải biến.
     private function renderContentVariables(): void
     {
-        if (blank($this->content) || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
+        if (blank($this->content) || $this->isForwarded()
+            || ! in_array($this->message_type, [self::TYPE_OUTGOING, self::TYPE_TEMPLATE], true)) {
             return;
         }
 

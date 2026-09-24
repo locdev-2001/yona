@@ -10,6 +10,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Email\MarkdownRenderer;
+use App\Services\Messages\StickerMessageBuilder;
 use App\Support\BooleanParam;
 use App\Support\EmailAddress;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +20,12 @@ use Illuminate\Support\Facades\Storage;
 // Bỏ: template_params (kênh WhatsApp F5).
 class MessageBuilder
 {
+    /**
+     * Khoá `content_attributes` chỉ máy chủ được ghi: client gửi lên thì bị bỏ, để
+     * không ai giả được payload đi thẳng ra kênh hay dấu chuyển tiếp.
+     */
+    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from'];
+
     private ?Message $message = null;
 
     /**
@@ -26,13 +33,18 @@ class MessageBuilder
      * qua builder cho luồng đó và tạo message trực tiếp; ở đây giữ một đường
      * tạo tin duy nhất nên cửa vào phải tự khai quyền tạo tin `incoming`.
      *
+     * $trustedContentAttributes: khoá do chính code máy chủ ghi (vd dấu chuyển
+     * tiếp), không bao giờ lấy từ request.
+     *
      * @param  array<string, mixed>  $params
+     * @param  array<string, mixed>  $trustedContentAttributes
      */
     public function __construct(
         private readonly User|AgentBot|null $user,
         private readonly Conversation $conversation,
         private readonly array $params,
         private readonly bool $incomingAllowed = false,
+        private readonly array $trustedContentAttributes = [],
     ) {}
 
     public function perform(): Message
@@ -41,9 +53,14 @@ class MessageBuilder
         $this->message->echoId = isset($this->params['echo_id']) ? (string) $this->params['echo_id'] : null;
         $this->message->sender()->associate($this->sender());
 
+        // Sticker dựng tin trước khi lưu tệp: bị từ chối thì không để lại tệp mồ côi.
+        (new StickerMessageBuilder($this->message, $this->conversation->inbox, $this->params))->perform();
+        // Sau mọi bước dựng lại content_attributes (sticker) để khoá tin cậy không bị xoá mất.
+        $this->applyTrustedContentAttributes();
+
         // Rails validate cả attachments rồi mới save! — dựng + kiểm trước khi
         // tin tồn tại để tệp hỏng không đẻ ra tin rỗng.
-        $this->message->pendingAttachments = $this->buildAttachments();
+        $this->message->pendingAttachments = [...$this->message->pendingAttachments, ...$this->buildAttachments()];
 
         $this->processEmails();
         $this->processEmailContent();
@@ -51,6 +68,15 @@ class MessageBuilder
         $this->message->save();
 
         return $this->message;
+    }
+
+    private function applyTrustedContentAttributes(): void
+    {
+        if ($this->trustedContentAttributes === []) {
+            return;
+        }
+
+        $this->message->content_attributes = [...$this->message->content_attributes ?? [], ...$this->trustedContentAttributes];
     }
 
     /**
@@ -243,7 +269,8 @@ class MessageBuilder
     }
 
     /**
-     * Chuỗi JSON → array; array giữ nguyên; kiểu khác → rỗng (y bản gốc).
+     * Chuỗi JSON → array; array giữ nguyên; kiểu khác → rỗng (y bản gốc). Khoá do
+     * máy chủ sở hữu bị bỏ khỏi input.
      *
      * @return array<string, mixed>
      */
@@ -252,11 +279,13 @@ class MessageBuilder
         $contentAttributes = $this->params['content_attributes'] ?? [];
 
         if (is_string($contentAttributes)) {
-            $decoded = json_decode($contentAttributes, true);
-
-            return is_array($decoded) ? $decoded : [];
+            $contentAttributes = json_decode($contentAttributes, true);
         }
 
-        return is_array($contentAttributes) ? $contentAttributes : [];
+        if (! is_array($contentAttributes)) {
+            return [];
+        }
+
+        return array_diff_key($contentAttributes, array_flip(self::SERVER_OWNED_CONTENT_ATTRIBUTES));
     }
 }

@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import MessageList from './MessageList';
 import type { ConversationMessage } from 'dashboard/conversation/types';
@@ -32,8 +32,13 @@ function message(id: number, overrides: Partial<ConversationMessage> = {}): Conv
     };
 }
 
-const renderList = (messages: ConversationMessage[]) =>
-    render(<MessageList messages={messages} channelType="Channel::Api" firstUnreadId={null} />).container;
+const renderList = (
+    messages: ConversationMessage[],
+    replyTargets?: ReadonlyMap<number, ConversationMessage | null>,
+) =>
+    render(
+        <MessageList messages={messages} channelType="Channel::Api" firstUnreadId={null} replyTargets={replyTargets} />,
+    ).container;
 
 const amberBubble = (container: HTMLElement, id: number) => container.querySelector(`#message${id} .bg-n-solid-amber`);
 const lockIcon = (container: HTMLElement, id: number) => container.querySelector(`#message${id} .i-lucide-lock-keyhole`);
@@ -97,5 +102,66 @@ describe('MessageList in_reply_to', () => {
         const container = renderList([message(12, { content_attributes: { in_reply_to: 999 } })]);
 
         expect(container.querySelector('#message12 .line-clamp-2')).toBeNull();
+    });
+});
+
+describe('MessageList khối trích dẫn ngoài trang đang tải', () => {
+    const quoteBlock = (container: HTMLElement, id: number) =>
+        container.querySelector(`#message${id} [data-testid="reply-quote"]`) as HTMLButtonElement | null;
+
+    it('tin gốc đã tra riêng thì vẫn hiện khối trích dẫn, bấm được', () => {
+        const container = renderList(
+            [message(12, { content_attributes: { in_reply_to: 3 } })],
+            new Map([[3, message(3, { content: 'Tin rất cũ', sender: CONTACT })]]),
+        );
+
+        expect(quoteBlock(container, 12)?.textContent).toContain('Tin rất cũ');
+        expect(quoteBlock(container, 12)?.textContent).toContain('Trang Nguyen');
+        expect(quoteBlock(container, 12)?.disabled).toBe(false);
+    });
+
+    it('tra xong mà tin gốc không còn thì báo không tìm thấy', () => {
+        const container = renderList(
+            [message(12, { content_attributes: { in_reply_to: 3 } })],
+            new Map([[3, null]]),
+        );
+
+        expect(quoteBlock(container, 12)?.textContent).toContain('Message not available');
+        expect(quoteBlock(container, 12)?.disabled).toBe(true);
+    });
+
+    it('có ảnh chụp của nền tảng thì hiện nội dung đó, khối không bấm được', () => {
+        const container = renderList([
+            message(12, {
+                content_attributes: {
+                    in_reply_to_preview: { content: 'Chào shop, còn hàng không?', sender_name: 'Chủ Shop' },
+                },
+            }),
+        ]);
+
+        expect(quoteBlock(container, 12)?.textContent).toContain('Chào shop, còn hàng không?');
+        expect(quoteBlock(container, 12)?.textContent).toContain('Chủ Shop');
+        expect(quoteBlock(container, 12)?.disabled).toBe(true);
+    });
+
+    it('ảnh chụp chỉ có loại đính kèm thì hiện nhãn loại', () => {
+        const container = renderList([
+            message(12, { content_attributes: { in_reply_to_preview: { attachment_type: 'image' } } }),
+        ]);
+
+        expect(quoteBlock(container, 12)?.textContent).toContain('Picture message');
+    });
+
+    it('bấm khối trích dẫn thì cuộn tới tin gốc đang hiển thị', () => {
+        const scrollIntoView = vi.fn();
+        const container = renderList([
+            message(10, { content: 'Gói Team 299k/tháng' }),
+            message(11, { content_attributes: { in_reply_to: 10 } }),
+        ]);
+        (container.querySelector('#message10') as HTMLElement).scrollIntoView = scrollIntoView;
+
+        fireEvent.click(quoteBlock(container, 11) as HTMLButtonElement);
+
+        expect(scrollIntoView).toHaveBeenCalledTimes(1);
     });
 });

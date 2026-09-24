@@ -1,5 +1,6 @@
 import { t } from '../../../../i18n';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
+import Icon from 'dashboard/components-next/icon/Icon';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
@@ -53,10 +54,10 @@ export default function MessagePreview({
                     <FluentIcon size={16} className={typeIconClass} icon="info" />
                 ) : null
             ) : null}
-            {message.content && isMessageSticker ? (
+            {isMessageSticker ? (
                 <span>
-                    <FluentIcon size={16} className="-mt-0.5 align-middle inline-block text-n-slate-11" icon="image" />{' '}
-                    {t('CHAT_LIST.ATTACHMENTS.image.CONTENT')}
+                    <Icon icon="i-ph-sticker" className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
+                    {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                 </span>
             ) : message.content ? (
                 <span>{parsedLastMessage}</span>

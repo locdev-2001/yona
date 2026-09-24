@@ -283,7 +283,35 @@ class Attachment extends Model
     // (vd tệp của macro) qua MessageBuilder mà không tải lên lần nữa.
     public function signedReference(): string
     {
-        return self::signUpload([
+        return self::signUpload($this->storedFileAttributes());
+    }
+
+    /**
+     * Sao tệp sang một đường dẫn mới và trả thuộc tính cho bản ghi đính kèm độc
+     * lập: hook `deleted` xoá tệp theo `path`, nên dùng chung đường dẫn thì thu
+     * hồi tin gốc sẽ làm mất luôn tệp của bản sao. Null khi không còn tệp để sao.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function copyStoredFile(): ?array
+    {
+        if (! $this->hasFile()) {
+            return null;
+        }
+
+        $copyPath = self::storagePathFor($this->filename ?? basename((string) $this->path), $this->account_id);
+
+        if (! Storage::disk($this->disk)->copy((string) $this->path, $copyPath)) {
+            return null;
+        }
+
+        return [...$this->storedFileAttributes(), 'path' => $copyPath];
+    }
+
+    /** @return array<string, mixed> */
+    private function storedFileAttributes(): array
+    {
+        return [
             'account_id' => $this->account_id,
             'file_type' => $this->file_type,
             'disk' => $this->disk,
@@ -292,7 +320,7 @@ class Attachment extends Model
             'content_type' => $this->content_type,
             'byte_size' => $this->byte_size,
             'meta' => $this->meta ?? [],
-        ]);
+        ];
     }
 
     /** @return array<string, mixed> */

@@ -4,8 +4,11 @@ namespace Tests\Contracts\Channels;
 
 use Tests\Contracts\Channels\Contracts\ChannelContract;
 use Tests\Contracts\Channels\Contracts\EventSeenContract;
+use Tests\Contracts\Channels\Contracts\InboundForwardContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
+use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
+use Tests\Contracts\Channels\Contracts\OutboundStickerContract;
 use Tests\Contracts\Channels\Contracts\ReplyToContract;
 use Tests\Contracts\Channels\Harness\ChannelHarness;
 
@@ -22,7 +25,10 @@ final class ChannelContractRunner
         InboundImageContract::class,
         OutboundAttachmentsContract::class,
         ReplyToContract::class,
+        MentionContract::class,
         EventSeenContract::class,
+        OutboundStickerContract::class,
+        InboundForwardContract::class,
     ];
 
     /** @return list<string> tên các contract đã chạy, để test khẳng định không chạy rỗng. */

@@ -1,17 +1,19 @@
 import DOMPurify from 'dompurify';
-import type { MouseEventHandler, ReactNode } from 'react';
+import type { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
 import MessageMeta from '../MessageMeta';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import { readForwardedFrom } from '../helpers/forwardedFrom';
 import { readGroupSender } from '../helpers/groupSender';
 import { groupReactions, readReactions } from '../helpers/reactions';
 
 // Port từ dashboard/components-next/message/bubbles/Base.vue — bỏ nhánh
-// CaptainGenerationDetails (EE). inReplyTo hiếm ở B3 nhưng giữ điều kiện.
+// CaptainGenerationDetails (EE).
 
 const VARIANT_BASE_MAP: Record<string, string> = {
     [MESSAGE_VARIANTS.AGENT]: 'bg-n-solid-blue text-n-slate-12',
@@ -54,7 +56,7 @@ export default function BaseBubble({
     onClick,
     children,
 }: BaseBubbleProps) {
-    const { variant, orientation, inReplyTo, shouldGroupWithNext, contentAttributes, onToggleReaction } =
+    const { variant, orientation, replyQuote, shouldGroupWithNext, contentAttributes, onToggleReaction } =
         useMessageContext();
 
     // MỞ RỘNG NGOÀI GỐC (Chatwoot v4.17.1 không có UI biểu cảm — `grep -rn
@@ -67,6 +69,15 @@ export default function BaseBubble({
     // dòng này thì mọi tin trong nhóm nhìn như của cùng một người.
     const groupSender = orientation === ORIENTATION.LEFT ? readGroupSender(contentAttributes) : null;
 
+    const forwardedFrom = readForwardedFrom(contentAttributes);
+    const forwardedLabel = forwardedFrom?.senderName
+        ? t('CONVERSATION.FORWARDED.FROM', { name: forwardedFrom.senderName })
+        : t('CONVERSATION.FORWARDED.LABEL');
+    const forwardedTitle =
+        forwardedFrom?.sourceConversationId != null
+            ? t('CONVERSATION.FORWARDED.SOURCE_CONVERSATION', { id: forwardedFrom.sourceConversationId })
+            : undefined;
+
     const metaColorClass = variant === MESSAGE_VARIANTS.PRIVATE ? 'text-n-amber-12/50' : 'text-n-slate-11';
     const emailMetaClass = variant === MESSAGE_VARIANTS.EMAIL ? 'px-3 pb-3' : '';
 
@@ -77,20 +88,22 @@ export default function BaseBubble({
 
     const shouldShowMeta = !hideMeta && !shouldGroupWithNext && variant !== MESSAGE_VARIANTS.ACTIVITY;
 
-    const replyToPreview = (() => {
-        if (!inReplyTo) return '';
-        if (inReplyTo.content) return new MessageFormatter(inReplyTo.content).formattedMessage;
-        const attachments = inReplyTo.attachments ?? [];
-        if (attachments.length) {
-            const fileType = attachments[0].file_type as string;
-            return t(`CHAT_LIST.ATTACHMENTS.${fileType}.CONTENT`);
+    const replyQuotePreview = (() => {
+        if (!replyQuote) return '';
+        if (replyQuote.content) return new MessageFormatter(replyQuote.content).formattedMessage;
+        if (replyQuote.attachmentType) {
+            const attachmentKey = `CHAT_LIST.ATTACHMENTS.${replyQuote.attachmentType}.CONTENT`;
+            const attachmentLabel = t(attachmentKey);
+            if (attachmentLabel !== attachmentKey) return attachmentLabel;
         }
-        return t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND');
+        if (replyQuote.unavailable) return t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND');
+        return t('CONVERSATION.REPLY_QUOTE.ORIGINAL');
     })();
 
-    const scrollToMessage = () => {
-        if (!inReplyTo) return;
-        document.getElementById(`message${inReplyTo.id}`)?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        if (replyQuote?.targetId == null) return;
+        document.getElementById(`message${replyQuote.targetId}`)?.scrollIntoView({ behavior: 'smooth' });
     };
 
     return (
@@ -100,16 +113,23 @@ export default function BaseBubble({
             data-bubble-name={dataBubbleName}
             onClick={onClick}
         >
-            {inReplyTo && (
-                <div
-                    className="p-2 -mx-1 mb-2 rounded-lg cursor-pointer bg-n-alpha-black1"
-                    onClick={scrollToMessage}
+            {replyQuote && (
+                <button
+                    type="button"
+                    data-testid="reply-quote"
+                    className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
+                    title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
+                    disabled={replyQuote.targetId === null}
+                    onClick={scrollToRepliedMessage}
                 >
-                    <div
-                        className="prose prose-bubble line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyToPreview) }}
+                    {replyQuote.senderName ? (
+                        <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
+                    ) : null}
+                    <span
+                        className="block prose prose-bubble line-clamp-2"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
                     />
-                </div>
+                </button>
             )}
             {groupSender ? (
                 <div
@@ -118,6 +138,16 @@ export default function BaseBubble({
                 >
                     <Avatar name={groupSender.name} src={groupSender.avatar} size={16} />
                     <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
+                </div>
+            ) : null}
+            {forwardedFrom ? (
+                <div
+                    data-testid="forwarded-label"
+                    title={forwardedTitle}
+                    className="flex items-center gap-1 mb-1 text-xs italic text-n-slate-11"
+                >
+                    <Icon icon="i-lucide-forward" className="size-3 shrink-0" />
+                    <span className="truncate">{forwardedLabel}</span>
                 </div>
             ) : null}
             {children}

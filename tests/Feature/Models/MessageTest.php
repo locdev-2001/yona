@@ -385,3 +385,73 @@ describe('attachments', function () {
         Storage::disk('public')->assertMissing($attachment->path);
     });
 });
+
+describe('repliedMessage', function () {
+    it('returns the replied message of the same conversation', function () {
+        $conversation = messageConversation();
+        $original = Message::factory()->create([...messageAttributesFor($conversation), 'source_id' => 'src-1']);
+        $reply = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content_attributes' => ['in_reply_to' => $original->id],
+        ]);
+
+        expect($reply->repliedMessage()?->id)->toBe($original->id)
+            ->and($reply->content_attributes['in_reply_to_external_id'])->toBe('src-1');
+    });
+
+    it('returns null when in_reply_to points to another conversation', function () {
+        $conversation = messageConversation();
+        $foreign = Message::factory()->create(messageAttributesFor(messageConversation()));
+        $reply = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+
+        // Gán thẳng trong bộ nhớ, không qua saving — mô phỏng dữ liệu cũ chưa chuẩn hoá.
+        $reply->content_attributes = ['in_reply_to' => $foreign->id];
+
+        expect($reply->repliedMessage())->toBeNull();
+    });
+
+    it('returns null when the replied message does not exist or is not set', function () {
+        $conversation = messageConversation();
+        $reply = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+
+        expect($reply->repliedMessage())->toBeNull();
+
+        $reply->content_attributes = ['in_reply_to' => 999999];
+
+        expect($reply->repliedMessage())->toBeNull();
+    });
+});
+
+describe('forwarded messages', function () {
+    it('isForwarded chỉ đúng khi forwarded_from là object', function () {
+        $conversation = messageConversation();
+        $forwarded = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => 1, 'conversation_id' => 2]],
+        ]);
+        $plain = Message::factory()->outgoing()->create(messageAttributesFor($conversation));
+        $plain->content_attributes = ['forwarded_from' => 'giả'];
+
+        expect($forwarded->isForwarded())->toBeTrue()
+            ->and($plain->isForwarded())->toBeFalse()
+            ->and(Message::factory()->outgoing()->create(messageAttributesFor($conversation))->isForwarded())->toBeFalse();
+    });
+
+    it('tin đi mang dấu chuyển tiếp giữ nguyên văn chuỗi Liquid, tin thường vẫn render', function () {
+        $conversation = messageConversation();
+        $conversation->contact->update(['name' => 'Chị Lan']);
+
+        $forwarded = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content' => 'Chào {{contact.name}}',
+            'content_attributes' => ['forwarded_from' => ['origin' => 'internal', 'message_id' => 1, 'conversation_id' => 2]],
+        ]);
+        $plain = Message::factory()->outgoing()->create([
+            ...messageAttributesFor($conversation),
+            'content' => 'Chào {{contact.name}}',
+        ]);
+
+        expect($forwarded->content)->toBe('Chào {{contact.name}}')
+            ->and($plain->content)->toBe('Chào Chị Lan');
+    });
+});

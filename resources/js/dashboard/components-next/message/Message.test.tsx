@@ -1,8 +1,13 @@
-import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { setLocale } from '../../../i18n';
+
+vi.mock('dashboard/components/widgets/conversation/components/GalleryView', () => ({
+    default: () => <div data-testid="gallery" />,
+}));
 
 // Tin của agent bot (message_type outgoing, sender.type = agent_bot) phải đứng
 // bên phải như tin agent và dùng bong bóng variant `bot` — Message.vue gốc.
@@ -68,5 +73,92 @@ describe('Message với sender là agent bot', () => {
         );
 
         expect(bubbleWrapper(container)?.className).toContain('justify-start');
+    });
+});
+
+describe('Message với sticker', () => {
+    const STICKER_URL = 'https://cdn.zalo.test/98930.webp';
+    const stickerMessage = (overrides: Partial<ConversationMessage> = {}) =>
+        message({
+            message_type: 0,
+            content: null,
+            content_type: 'sticker',
+            attachments: [{ id: 9, file_type: 'image', data_url: STICKER_URL, thumb_url: '' }],
+            sender: { id: 3, name: 'Khách A', type: 'contact' as const, thumbnail: '' },
+            sender_type: 'Contact',
+            sender_id: 3,
+            ...overrides,
+        });
+
+    it('hiện như sticker: không khung, không nút tải về, bấm không mở thư viện ảnh', () => {
+        const container = renderMessage(stickerMessage());
+        const bubble = container.querySelector('[data-bubble-name="sticker"]');
+
+        expect(bubble).not.toBeNull();
+        expect(bubble?.className).toContain('!bg-transparent');
+        expect(bubble?.querySelector('img')?.getAttribute('src')).toBe(STICKER_URL);
+        expect(container.querySelector('.i-lucide-download')).toBeNull();
+
+        fireEvent.click(bubble!);
+        expect(document.querySelector('[data-testid="gallery"]')).toBeNull();
+    });
+
+    it('ảnh thường vẫn mở thư viện ảnh khi bấm (đối chứng)', () => {
+        const container = renderMessage(stickerMessage({ content_type: 'text' }));
+
+        fireEvent.click(container.querySelector('[data-bubble-name="image"]')!);
+
+        expect(document.querySelector('[data-testid="gallery"]')).not.toBeNull();
+    });
+
+    it('sticker chỉ có markdown trong nội dung (không đính kèm) vẫn đi bong bóng chữ', () => {
+        const container = renderMessage(
+            stickerMessage({ content: '![sticker-52002734](https://stickershop.line-scdn.net/s.png)', attachments: [] }),
+        );
+
+        expect(container.querySelector('[data-bubble-name="sticker"]')).toBeNull();
+        expect(container.querySelector('[data-bubble-name="text"]')).not.toBeNull();
+    });
+
+    it('biểu cảm vẫn hiện dưới sticker', () => {
+        const container = renderMessage(
+            stickerMessage({ content_attributes: { reactions: [{ emoji: '❤️', by: 'agent:1', at: BASE_TIME }] } }),
+        );
+
+        expect(container.querySelector('[data-bubble-name="sticker"] [data-yona-reactions]')?.textContent).toBe('❤️');
+    });
+});
+
+describe('nhãn tin chuyển tiếp', () => {
+    beforeAll(() => setLocale('vi'));
+    afterAll(() => setLocale('en'));
+
+    it('chuyển tiếp trong Yona: "Đã chuyển tiếp", rê chuột thấy mã hội thoại nguồn', () => {
+        const container = renderMessage(
+            message({ content_attributes: { forwarded_from: { origin: 'internal', message_id: 9, conversation_id: 45 } } }),
+        );
+
+        const label = container.querySelector('[data-testid="forwarded-label"]');
+        expect(label?.textContent).toBe('Đã chuyển tiếp');
+        expect(label?.getAttribute('title')).toContain('#45');
+    });
+
+    it('khách chuyển tiếp trên nền tảng có tên người gửi gốc', () => {
+        const container = renderMessage(
+            message({
+                message_type: 0,
+                content_attributes: { forwarded_from: { origin: 'channel', sender_name: 'Nguyễn A' } },
+            }),
+        );
+
+        const label = container.querySelector('[data-testid="forwarded-label"]');
+        expect(label?.textContent).toBe('Chuyển tiếp từ Nguyễn A');
+        expect(label?.getAttribute('title')).toBeNull();
+    });
+
+    it('tin thường không có nhãn', () => {
+        const container = renderMessage(message());
+
+        expect(container.querySelector('[data-testid="forwarded-label"]')).toBeNull();
     });
 });

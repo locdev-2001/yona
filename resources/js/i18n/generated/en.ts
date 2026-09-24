@@ -1438,6 +1438,9 @@ const messages: Record<string, unknown> = {
             },
             "embed": {
                 "CONTENT": "Embedded content"
+            },
+            "sticker": {
+                "CONTENT": "Sticker"
             }
         },
         "CHAT_SORT_BY_FILTER": {
@@ -2393,14 +2396,40 @@ const messages: Record<string, unknown> = {
         },
         "SENT_FROM_NATIVE_APP": "from phone",
         "MESSAGE_ACTIONS": {
+            "REPLY": "Reply",
             "MORE": "More actions",
             "REACT": "React",
+            "FORWARD": "Forward",
             "RECALL": "Unsend for everyone",
             "DELETE": "Delete",
             "RECALL_CONFIRMATION": {
                 "TITLE": "Unsend this message for everyone?",
                 "MESSAGE": "The message disappears on the customer's side too. This cannot be undone."
             }
+        },
+        "REPLY_QUOTE": {
+            "ORIGINAL": "Original message",
+            "JUMP": "Go to original message"
+        },
+        "FORWARD": {
+            "TITLE": "Forward message",
+            "SEARCH_PLACEHOLDER": "Search by name, phone or conversation ID",
+            "RECENT": "Recent conversations",
+            "EMPTY": "No conversations found",
+            "LOAD_FAILED": "Could not load conversations.",
+            "RETRY": "Retry",
+            "MAX_REACHED": "You can forward to at most {max} conversations at a time",
+            "SUBMIT_COUNT": "Forward ({count})",
+            "SUCCESS": "Forwarded to {count} conversations",
+            "OPEN": "Open conversation",
+            "PARTIAL": "Forwarded to {ok}/{total} conversations. {error}",
+            "FAILED": "Could not forward. {error}",
+            "REMOVE_TARGET": "Remove {name}"
+        },
+        "FORWARDED": {
+            "LABEL": "Forwarded",
+            "FROM": "Forwarded from {name}",
+            "SOURCE_CONVERSATION": "Forwarded from conversation #{id}"
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Retry sending",
@@ -2542,6 +2571,9 @@ const messages: Record<string, unknown> = {
                 "ENABLED": "Enabled",
                 "DISABLED": "Disabled",
                 "YOU_ARE_A_MEMBER": "You are a member of this team"
+            },
+            "GROUP_MEMBER": {
+                "TITLE": "Group members"
             }
         },
         "CUSTOM_SNOOZE": {
@@ -2639,6 +2671,7 @@ const messages: Record<string, unknown> = {
             "DISMISS_REPLY": "Dismiss reply",
             "REPLYING_TO": "Replying to:",
             "TIP_EMOJI_ICON": "Show emoji selector",
+            "TIP_STICKER_ICON": "Send a sticker",
             "TIP_ATTACH_ICON": "Attach files",
             "TIP_AUDIORECORDER_ICON": "Record audio",
             "TIP_AUDIORECORDER_PERMISSION": "Allow access to audio",
@@ -2678,6 +2711,18 @@ const messages: Record<string, unknown> = {
                 "COLLAPSE": "Collapse preview",
                 "EXPAND": "Expand preview"
             }
+        },
+        "STICKER_PICKER": {
+            "SEARCH_PLACEHOLDER": "Search stickers",
+            "SUGGESTED_KEYWORDS": "thanks,hello,ok,haha,love,sad,sorry,congrats",
+            "RECENT": "Recent",
+            "PACK": "Sticker pack",
+            "STICKER": "Sticker",
+            "EMPTY_RECENT": "No recent stickers yet. Type a keyword or pick a suggestion to search.",
+            "EMPTY_PACK": "This pack has no stickers yet.",
+            "NO_RESULTS": "No stickers found for “{query}”.",
+            "LOAD_FAILED": "Could not load stickers, please try again.",
+            "RETRY": "Try again"
         },
         "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
         "CHANGE_STATUS": "Conversation status changed",
@@ -3438,6 +3483,33 @@ const messages: Record<string, unknown> = {
                 "missing_source_id": "This message has not reached Zalo yet, so it cannot be changed there.",
                 "emoji_not_supported": "Zalo does not have this reaction.",
                 "unknown": "This action did not go through to Zalo (:detail)."
+            }
+        },
+        "stickers": {
+            "capability_not_supported": "This channel cannot send stickers.",
+            "not_found": "This sticker could not be found, please pick another one.",
+            "bad_request": "That sticker search could not be understood, please try another keyword.",
+            "private_note": "Stickers cannot be added to a private note.",
+            "outgoing_only": "Stickers can only be sent as a reply.",
+            "with_attachments": "A sticker is sent on its own, without attachments.",
+            "missing_sticker_id": "Pick a sticker to send."
+        },
+        "forward": {
+            "not_forwardable": "This type of message cannot be forwarded yet.",
+            "attachment_unavailable": "The file :filename is no longer on the server, so it cannot be forwarded.",
+            "capability_not_supported": "The :inbox inbox cannot send :items.",
+            "sticker_unavailable": "The :inbox inbox cannot send this sticker.",
+            "reply_window_closed": "The reply window for this conversation has closed.",
+            "target_not_found": "Conversation not found or you do not have access to it.",
+            "no_targets": "Choose at least one conversation.",
+            "too_many_targets": "You can forward to at most :max conversations at a time.",
+            "capabilities": {
+                "outbound_text": "text messages",
+                "outbound_image": "images",
+                "outbound_video": "videos",
+                "outbound_audio": "audio",
+                "outbound_file": "files",
+                "outbound_sticker": "stickers"
             }
         },
         "custom_attribute_definition": {

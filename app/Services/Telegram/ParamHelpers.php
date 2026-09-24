@@ -2,12 +2,16 @@
 
 namespace App\Services\Telegram;
 
+use App\Services\Messages\Forwarding\MessageForwarder;
+
 /**
  * Port từ refs/chatwoot/app/services/telegram/param_helpers.rb — bóc payload
  * Telegram (message | business_message | callback_query) về cùng một hình dạng.
  */
 trait ParamHelpers
 {
+    private const FORWARDED_SENDER_NAME_MAX = 255;
+
     /** @return array<string, mixed> */
     protected function baseObject(): array
     {
@@ -96,7 +100,47 @@ trait ParamHelpers
     protected function contentAttributes(): array
     {
         $replyTo = data_get($this->params, 'message.reply_to_message.message_id');
+        $forwardedFrom = $this->forwardedFrom();
 
-        return $replyTo ? ['in_reply_to_external_id' => $replyTo] : [];
+        return array_filter([
+            'in_reply_to_external_id' => $replyTo ?: null,
+            'forwarded_from' => $forwardedFrom,
+        ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Tin khách chuyển tiếp từ nơi khác (docs `inbound_forward`). Bot API ≥ 7.0 ghi
+     * `forward_origin`; bản cũ ghi `forward_from` / `forward_sender_name` /
+     * `forward_from_chat`. Tên người gửi gốc là tuỳ chọn.
+     *
+     * @return array{origin: string, sender_name?: string}|null
+     */
+    private function forwardedFrom(): ?array
+    {
+        $message = (array) data_get($this->params, 'message', []);
+        $origin = $message['forward_origin'] ?? null;
+
+        if (is_array($origin)) {
+            $senderName = match ($origin['type'] ?? null) {
+                'user' => trim(data_get($origin, 'sender_user.first_name', '').' '.data_get($origin, 'sender_user.last_name', '')),
+                'hidden_user' => $origin['sender_user_name'] ?? null,
+                'chat' => data_get($origin, 'sender_chat.title'),
+                'channel' => data_get($origin, 'chat.title'),
+                default => null,
+            };
+        } elseif (isset($message['forward_from']) || isset($message['forward_sender_name']) || isset($message['forward_from_chat'])) {
+            $senderName = isset($message['forward_from'])
+                ? trim(data_get($message, 'forward_from.first_name', '').' '.data_get($message, 'forward_from.last_name', ''))
+                : ($message['forward_sender_name'] ?? data_get($message, 'forward_from_chat.title'));
+        } else {
+            return null;
+        }
+
+        $senderName = is_string($senderName) ? mb_substr(trim($senderName), 0, self::FORWARDED_SENDER_NAME_MAX) : '';
+
+        return array_filter(
+            ['origin' => MessageForwarder::ORIGIN_CHANNEL, 'sender_name' => $senderName],
+            fn (string $value) => $value !== '',
+        );
     }
 }

@@ -65,6 +65,7 @@ class Tiktok extends Model implements DeclaresCapabilities, DeclaresPlatform
         return CapabilitySet::of(
             Capability::InboundText,
             Capability::OutboundText,
+            Capability::OutboundReplyTo,
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::IdentityStableId,

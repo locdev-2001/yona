@@ -59,6 +59,20 @@ class ZaloBridgeClient
         return $this->post('/auth/logout', ['connection_id' => $channel->connectionId()], $this->uiSecretHeader());
     }
 
+    /**
+     * Danh bạ thành viên một nhóm: `{ok, members: [{id, name, avatar, role}]}`.
+     * `lite` bỏ lượt tra hồ sơ từng người ở bridge — tên trong danh sách nhóm đã đủ
+     * để nhắc tên, còn nhóm đông thì lượt tra đó vượt thời gian chờ.
+     */
+    public function groupMembers(Zalo $channel, string $groupId): ?Response
+    {
+        return $this->get('/ui/group-members', [
+            'connection_id' => $channel->connectionId(),
+            'group_id' => $groupId,
+            'lite' => 1,
+        ], $this->uiSecretHeader(), (int) config('zalo.bridge.members_timeout'));
+    }
+
     /** @param array<string, mixed> $payload */
     public function sendMessage(array $payload, bool $hasMedia = false): ?Response
     {
@@ -95,6 +109,36 @@ class ZaloBridgeClient
     }
 
     /**
+     * Danh mục sticker: `{ok, stickers: [{id, cate_id, type, url, label}]}`. Địa chỉ
+     * ảnh do bridge dựng — PHP không chép lại mẫu URL của Zalo.
+     */
+    public function searchStickers(Zalo $channel, string $keyword, int $limit): ?Response
+    {
+        return $this->post('/personal-messages/stickers/search', [
+            'connection_id' => $channel->connectionId(),
+            'keyword' => $keyword,
+            'limit' => $limit,
+        ], $this->sendSecretHeader());
+    }
+
+    /** @param list<int> $stickerIds */
+    public function stickerDetails(Zalo $channel, array $stickerIds): ?Response
+    {
+        return $this->post('/personal-messages/stickers/detail', [
+            'connection_id' => $channel->connectionId(),
+            'ids' => $stickerIds,
+        ], $this->sendSecretHeader());
+    }
+
+    public function stickerCategory(Zalo $channel, int $categoryId): ?Response
+    {
+        return $this->post('/personal-messages/stickers/category', [
+            'connection_id' => $channel->connectionId(),
+            'cate_id' => $categoryId,
+        ], $this->sendSecretHeader());
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      * @param  array<string, string>  $headers
      */
@@ -116,12 +160,12 @@ class ZaloBridgeClient
      * @param  array<string, mixed>  $query
      * @param  array<string, string>  $headers
      */
-    private function get(string $path, array $query, array $headers): ?Response
+    private function get(string $path, array $query, array $headers, ?int $timeout = null): ?Response
     {
         try {
             return Http::asJson()
                 ->withHeaders($headers)
-                ->timeout((int) config('zalo.bridge.timeout'))
+                ->timeout($timeout ?? (int) config('zalo.bridge.timeout'))
                 ->get($this->url($path), $query);
         } catch (ConnectionException $e) {
             $this->logUnreachable('GET', $path, $e);

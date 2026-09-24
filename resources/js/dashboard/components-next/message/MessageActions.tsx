@@ -3,16 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
-import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
-import { MESSAGE_TYPES, ORIENTATION } from './constants';
+import { ORIENTATION } from './constants';
+import { resolveMessageActions } from './helpers/messageActions';
 import { QUICK_REACTIONS } from './helpers/reactions';
 
 // MỞ RỘNG NGOÀI GỐC: Chatwoot v4.17.1 không có UI biểu cảm và đặt "Xoá" trong
 // context menu chuột phải (chưa port). Thanh hành động hiện khi rê chuột lên tin,
 // gate theo NĂNG LỰC KÊNH (docs/channel-capabilities.md §3 FE) — không theo
-// `channel_type`. Kênh không khai gì thì không render gì.
+// `channel_type`; cờ từng nút tính ở helpers/messageActions.ts. Thứ tự nút cố
+// định: Trả lời → Cảm xúc → Chuyển tiếp → Thu hồi/Xoá. Không còn nút nào thì
+// không render gì.
 //
 // Máy không rê chuột được (điện thoại, máy tính bảng) sẽ không bao giờ kích hoạt
 // `group-hover`, nên ở đó thanh hành động nấp sau một nút ⋯ hiện mờ sẵn cạnh bong
@@ -74,8 +76,19 @@ function ConfirmDialog({
 }
 
 export default function MessageActions({ className = '' }: { className?: string }) {
-    const { messageType, contentAttributes, inboxCapabilities, orientation, onToggleReaction, onDeleteMessage } =
-        useMessageContext();
+    const {
+        id,
+        messageType,
+        status,
+        isPrivate,
+        contentAttributes,
+        inboxCapabilities,
+        orientation,
+        onToggleReaction,
+        onDeleteMessage,
+        onReplyTo,
+        onForward,
+    } = useMessageContext();
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isConfirmingDelete, setConfirmingDelete] = useState(false);
     const [isBarExpanded, setBarExpanded] = useState(false);
@@ -102,14 +115,28 @@ export default function MessageActions({ className = '' }: { className?: string 
         if (!isHoverlessPointer) setBarExpanded(false);
     }, [isHoverlessPointer]);
 
-    const inbox = { capabilities: inboxCapabilities };
-    const isDeleted = Boolean(contentAttributes.deleted);
-    const canReact = Boolean(onToggleReaction) && inboxSupports(inbox, 'outbound_reaction') && !isDeleted;
+    const {
+        reply: canReply,
+        react: canReact,
+        delete: canDelete,
+        forward: canForward,
+        recall: canRecall,
+    } = resolveMessageActions({
+        id,
+        messageType,
+        status,
+        isPrivate,
+        contentAttributes,
+        inboxCapabilities,
+        handlers: {
+            reply: Boolean(onReplyTo),
+            react: Boolean(onToggleReaction),
+            delete: Boolean(onDeleteMessage),
+            forward: Boolean(onForward),
+        },
+    });
     // Endpoint xoá là MỘT; kênh khai `outbound_recall` thì thu hồi cả hai đầu,
     // không khai thì chỉ xoá ở Yona — nhãn phải nói đúng việc sẽ xảy ra.
-    const canDelete =
-        Boolean(onDeleteMessage) && !isDeleted && messageType === MESSAGE_TYPES.OUTGOING;
-    const canRecall = inboxSupports(inbox, 'outbound_recall');
     const deleteLabel = canRecall
         ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL')
         : t('CONVERSATION.MESSAGE_ACTIONS.DELETE');
@@ -122,7 +149,7 @@ export default function MessageActions({ className = '' }: { className?: string 
         ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL_CONFIRMATION.MESSAGE')
         : t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.MESSAGE');
 
-    if (!canReact && !canDelete) return null;
+    if (!canReply && !canReact && !canForward && !canDelete) return null;
 
     // Ngón tay cần vùng chạm rộng hơn con trỏ chuột (WCAG 2.2 Target Size).
     const buttonClass = `${
@@ -152,6 +179,21 @@ export default function MessageActions({ className = '' }: { className?: string 
                     <Icon icon="i-lucide-ellipsis" className="size-[14px]" />
                 </button>
             ) : null}
+            {areActionsVisible && canReply ? (
+                <button
+                    type="button"
+                    className={buttonClass}
+                    title={t('CONVERSATION.MESSAGE_ACTIONS.REPLY')}
+                    aria-label={t('CONVERSATION.MESSAGE_ACTIONS.REPLY')}
+                    onClick={() => {
+                        setIsPickerOpen(false);
+                        setBarExpanded(false);
+                        onReplyTo?.();
+                    }}
+                >
+                    <Icon icon="i-lucide-reply" className="size-[14px]" />
+                </button>
+            ) : null}
             {areActionsVisible && canReact ? (
                 <button
                     type="button"
@@ -162,6 +204,21 @@ export default function MessageActions({ className = '' }: { className?: string 
                     onClick={() => setIsPickerOpen(open => !open)}
                 >
                     <Icon icon="i-lucide-smile-plus" className="size-[14px]" />
+                </button>
+            ) : null}
+            {areActionsVisible && canForward ? (
+                <button
+                    type="button"
+                    className={buttonClass}
+                    title={t('CONVERSATION.MESSAGE_ACTIONS.FORWARD')}
+                    aria-label={t('CONVERSATION.MESSAGE_ACTIONS.FORWARD')}
+                    onClick={() => {
+                        setIsPickerOpen(false);
+                        setBarExpanded(false);
+                        onForward?.();
+                    }}
+                >
+                    <Icon icon="i-lucide-forward" className="size-[14px]" />
                 </button>
             ) : null}
             {areActionsVisible && canDelete ? (

@@ -1,3 +1,12 @@
+import {
+    categoryCatalog,
+    detailCatalog,
+    parseCategoryInput,
+    parseDetailInput,
+    parseSearchInput,
+    searchCatalog,
+} from '../stickers.mjs';
+
 function recipientTypeToThreadType(rt) {
     if (rt == null || rt === '') {
         return null;
@@ -156,6 +165,8 @@ export function registerPersonalMessageRoutes(app, deps) {
                 content_type: req.body?.content_type,
                 quote: req.body?.quote,
                 sticker: req.body?.sticker,
+                mentions: req.body?.mentions,
+                forward: req.body?.forward,
             });
             return res.json({
                 ok: true,
@@ -351,4 +362,41 @@ export function registerPersonalMessageRoutes(app, deps) {
             return failWith(res, code, e?.message || e);
         }
     });
+
+    // ── Danh mục sticker ────────────────────────────────────────────────────
+    // Chỉ đọc nhưng vẫn là lời gọi API không chính thức từ tài khoản Zalo của
+    // khách, nên đi cùng cửa send secret như các cửa ra khác.
+
+    function stickerRoute(routePath, parseInput, run) {
+        app.post(routePath, async (req, res) => {
+            if (!checkSendSecret(req, res)) {
+                return;
+            }
+            const connectionId = connectionIdOrFail(req, res);
+            if (!connectionId) {
+                return;
+            }
+            const input = parseInput(req.body || {});
+            if (input.error) {
+                return failWith(res, 'bad_request', input.error);
+            }
+            const slot = readySlotOrFail(res, connectionId);
+            if (!slot) {
+                return;
+            }
+            try {
+                return res.json({ ok: true, stickers: await run(slot.api, input) });
+            } catch (e) {
+                const code = classifyZcaError(e);
+                if (code === 'unknown') {
+                    console.error(routePath, e);
+                }
+                return failWith(res, code, e?.message || e);
+            }
+        });
+    }
+
+    stickerRoute('/personal-messages/stickers/search', parseSearchInput, searchCatalog);
+    stickerRoute('/personal-messages/stickers/detail', parseDetailInput, detailCatalog);
+    stickerRoute('/personal-messages/stickers/category', parseCategoryInput, categoryCatalog);
 }

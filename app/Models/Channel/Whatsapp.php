@@ -110,10 +110,13 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
         return $this->providerService()->apiHeaders();
     }
 
-    /** WhatsApp Cloud/360dialog: reaction đến bị bỏ qua ở IncomingMessageService (nợ có tên). */
+    /**
+     * WhatsApp Cloud/360dialog: reaction đến bị bỏ qua ở IncomingMessageService (nợ có tên).
+     * Năng lực chỉ một nhà cung cấp làm được do chính driver nhà cung cấp khai.
+     */
     public function capabilities(): CapabilitySet
     {
-        return CapabilitySet::of(
+        $shared = CapabilitySet::of(
             Capability::InboundText,
             Capability::InboundImage,
             Capability::InboundGif,
@@ -138,5 +141,7 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::SessionToken,
             Capability::SessionReauth,
         );
+
+        return $shared->merge($this->providerService()->capabilities());
     }
 }

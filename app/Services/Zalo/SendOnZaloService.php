@@ -7,6 +7,7 @@ use App\Models\Channel\Zalo;
 use App\Models\Message;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
+use App\Services\Messages\Forwarding\MessageForwarder;
 
 /**
  * Gửi tin ra Zalo cá nhân qua bridge. Port từ ZaloSendService của nhánh `main`,
@@ -57,6 +58,10 @@ class SendOnZaloService extends BaseSendOnChannelService
 
     /** SendMessageQuote của zca — thiếu trường nhận dạng thì gửi không trích dẫn. */
     private const QUOTE_REQUIRED_FIELDS = ['msgId', 'cliMsgId', 'uidFrom', 'msgType', 'ts', 'content'];
+
+    private const UNQUOTABLE_MSG_TYPES = ['group.poll'];
+
+    private const WEBCHAT_MSG_TYPE = 'webchat';
 
     protected function channelClass(): string
     {
@@ -171,9 +176,10 @@ class SendOnZaloService extends BaseSendOnChannelService
     }
 
     /**
-     * Một phần = một lượt gọi bridge. Sticker đi riêng; tin có đính kèm thì mỗi
-     * tệp một phần, chú thích + trích dẫn bám vào tệp đầu tiên (zca gộp caption
-     * vào chính tin đính kèm).
+     * Một phần = một lượt gọi bridge. Sticker đi riêng; tin chữ chuyển tiếp trong
+     * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì mỗi tệp một phần, chú
+     * thích + trích dẫn + nhắc tên bám vào tệp đầu tiên (zca gộp caption vào chính
+     * tin đính kèm).
      *
      * @return list<array{payload: array<string, mixed>, filename: string|null}>
      */
@@ -192,9 +198,19 @@ class SendOnZaloService extends BaseSendOnChannelService
         }
 
         $attachments = $this->sendableAttachments();
+        $nativeForward = $attachments === [] ? $this->nativeForwardReference($channel) : null;
+
+        if ($nativeForward !== null) {
+            return [$this->part([...$thread, 'text' => $this->message->content, 'forward' => $nativeForward], null)];
+        }
 
         if ($attachments === []) {
-            return [$this->part([...$thread, 'text' => $this->message->content, 'quote' => $this->quotePayload()], null)];
+            return [$this->part([
+                ...$thread,
+                'text' => $this->message->content,
+                'quote' => $this->quotePayload(),
+                'mentions' => $this->mentionsPayload($channel),
+            ], null)];
         }
 
         $parts = [];
@@ -204,6 +220,7 @@ class SendOnZaloService extends BaseSendOnChannelService
                 ...$thread,
                 'text' => $index === 0 ? $this->message->content : null,
                 'quote' => $index === 0 ? $this->quotePayload() : null,
+                'mentions' => $index === 0 ? $this->mentionsPayload($channel) : null,
                 'file_url' => $this->attachmentUrl($attachment),
                 'media_kind' => $attachment->fileTypeName(),
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
@@ -405,18 +422,7 @@ class SendOnZaloService extends BaseSendOnChannelService
      */
     private function quotePayload(): ?array
     {
-        $quotedId = $this->message->content_attributes['in_reply_to'] ?? null;
-
-        if (blank($quotedId)) {
-            return null;
-        }
-
-        $quoted = Message::query()
-            ->where('conversation_id', $this->message->conversation_id)
-            ->whereKey($quotedId)
-            ->first();
-
-        $snapshot = $quoted?->content_attributes['zca_message'] ?? null;
+        $snapshot = $this->message->repliedMessage()?->content_attributes['zca_message'] ?? null;
 
         if (! is_array($snapshot) || blank($snapshot['msgId'] ?? null)) {
             return null;
@@ -428,11 +434,93 @@ class SendOnZaloService extends BaseSendOnChannelService
             }
         }
 
+        if (! self::isQuotableByZca($snapshot)) {
+            return null;
+        }
+
         return [
             ...array_intersect_key($snapshot, array_flip(self::QUOTE_REQUIRED_FIELDS)),
             'ttl' => $snapshot['ttl'] ?? 0,
             'propertyExt' => $snapshot['propertyExt'] ?? null,
         ];
+    }
+
+    /**
+     * zca ném lỗi (và làm hỏng CẢ tin trả lời) với hai loại trích dẫn: bình chọn
+     * nhóm, và `webchat` mà nội dung không phải chuỗi (node_modules/zca-js/dist/
+     * apis/sendMessage.js). Gặp thì gửi không trích dẫn.
+     *
+     * @param  array<string, mixed>  $snapshot
+     */
+    private static function isQuotableByZca(array $snapshot): bool
+    {
+        $msgType = $snapshot['msgType'] ?? null;
+
+        if (in_array($msgType, self::UNQUOTABLE_MSG_TYPES, true)) {
+            return false;
+        }
+
+        return ! ($msgType === self::WEBCHAT_MSG_TYPE && ! is_string($snapshot['content'] ?? null));
+    }
+
+    /**
+     * Chuyển tiếp gốc của Zalo: tin chữ chuyển tiếp trong Yona từ một tin nằm trong
+     * CHÍNH phiên Zalo này thì gửi bằng lệnh chuyển tiếp để khách thấy nhãn chuyển
+     * tiếp như trên app. zca chỉ chuyển tiếp được chữ; thiếu bất kỳ điều kiện nào
+     * thì null → gửi lại nội dung như tin thường (bridge cũng tự rơi về khi Zalo từ chối).
+     *
+     * @return array{msg_id: string, ts: int}|null
+     */
+    private function nativeForwardReference(Zalo $channel): ?array
+    {
+        $forwardedFrom = $this->message->content_attributes['forwarded_from'] ?? null;
+
+        if (! is_array($forwardedFrom) || ($forwardedFrom['origin'] ?? null) !== MessageForwarder::ORIGIN_INTERNAL
+            || ! is_int($forwardedFrom['message_id'] ?? null) || blank($this->message->content)) {
+            return null;
+        }
+
+        $source = Message::query()
+            ->where('account_id', $this->message->account_id)
+            ->find($forwardedFrom['message_id']);
+        $sourceChannel = $source?->inbox?->channel;
+        $snapshot = $source?->content_attributes['zca_message'] ?? null;
+
+        if (! $sourceChannel instanceof Zalo || $sourceChannel->connectionId() !== $channel->connectionId()
+            || ! is_array($snapshot) || blank($snapshot['msgId'] ?? null) || ! is_numeric($snapshot['ts'] ?? null)) {
+            return null;
+        }
+
+        return ['msg_id' => (string) $snapshot['msgId'], 'ts' => (int) $snapshot['ts']];
+    }
+
+    /**
+     * Nhắc tên chỉ có nghĩa trong nhóm (zca bỏ qua ở chat 1-1). Lõi đã neo
+     * `content_attributes.mentions` theo nội dung cuối, đơn vị UTF-16 — đúng đơn vị
+     * `pos`/`len` của zca, nên chỉ đổi tên khoá.
+     *
+     * @return list<array{uid: string, pos: int, len: int}>|null
+     */
+    private function mentionsPayload(Zalo $channel): ?array
+    {
+        $mentions = $this->message->content_attributes['mentions'] ?? null;
+
+        if (! $channel->isGroupThread($this->message->conversation) || ! is_array($mentions)) {
+            return null;
+        }
+
+        $payload = [];
+
+        foreach ($mentions as $mention) {
+            if (! is_array($mention) || ! is_scalar($mention['external_id'] ?? null)
+                || ! is_int($mention['offset'] ?? null) || ! is_int($mention['length'] ?? null)) {
+                continue;
+            }
+
+            $payload[] = ['uid' => (string) $mention['external_id'], 'pos' => $mention['offset'], 'len' => $mention['length']];
+        }
+
+        return $payload === [] ? null : $payload;
     }
 
     private function countProactiveMessage(Zalo $channel): void

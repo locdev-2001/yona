@@ -12,6 +12,9 @@ import sharp from 'sharp';
 import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js';
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { zcaReactionCode } from './reaction-icons.mjs';
+import { buildSendMessageContent } from './send-content.mjs';
+import { sendForwardOrFallback } from './forward-content.mjs';
+import { stickerSendPayload } from './stickers.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
@@ -2198,7 +2201,8 @@ function checkSendSecret(req, res) {
 }
 
 async function bridgeSendTextOrMedia(slot, body) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker } = body || {};
+    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions, forward } =
+        body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
@@ -2206,13 +2210,20 @@ async function bridgeSendTextOrMedia(slot, body) {
     const fileUrl = typeof file_url === 'string' ? file_url.trim() : '';
     const hasFile = fileUrl !== '';
 
+    // Chuyển tiếp gốc chỉ cho tin chữ; bị Zalo từ chối thì tự gửi lại nội dung.
+    if (forward && !hasFile && !sticker) {
+        const sendResult = await sendForwardOrFallback(slot.api, {
+            text,
+            forward,
+            threadId: String(thread_id),
+            threadType: tt,
+        });
+        return registerAllOutboundSourceIds(slot, sendResult);
+    }
+
     // P06a — sticker: OUTBOUND có nội dung, đi đường send riêng (KHÔNG dispatcher)
-    if (sticker && sticker.id != null) {
-        const stickerPayload = {
-            id: Number(sticker.id),
-            cateId: Number(sticker.cateId ?? sticker.cate_id ?? 0),
-            type: Number(sticker.type ?? 1),
-        };
+    const stickerPayload = stickerSendPayload(sticker);
+    if (stickerPayload) {
         const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     }
@@ -2241,16 +2252,14 @@ async function bridgeSendTextOrMedia(slot, body) {
                 filenameHint: typeof filename === 'string' ? filename : null,
                 contentTypeHint: typeof content_type === 'string' ? content_type : null,
             });
-            const cap = text != null && String(text).trim() !== '' ? String(text) : '';
-            const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            return registerAllOutboundSourceIds(slot, sendResult);
         }
-        // P06a — quote: object platform_meta.zca_message từ Laravel (msgId/cliMsgId/
-        // uidFrom/msgType/ts/content/ttl/propertyExt — SendMessageQuote shape)
-        const content = { msg: String(text) };
-        if (quote && typeof quote === 'object' && quote.msgId != null) {
-            content.quote = quote;
-        }
+        const content = buildSendMessageContent({
+            text,
+            quote,
+            attachmentPath: tmpPath,
+            mentions,
+            isGroup: tt === ThreadType.Group,
+        });
         const sendResult = await slot.api.sendMessage(content, String(thread_id), tt);
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {

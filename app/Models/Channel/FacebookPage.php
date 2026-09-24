@@ -82,6 +82,7 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatfo
             Capability::OutboundVideo,
             Capability::OutboundAudio,
             Capability::OutboundFile,
+            Capability::OutboundReplyTo,
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::IdentityStableId,

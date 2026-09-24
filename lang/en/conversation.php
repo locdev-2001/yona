@@ -111,14 +111,43 @@ return [
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
     'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [
+        'REPLY' => 'Reply',
         'MORE' => 'More actions',
         'REACT' => 'React',
+        'FORWARD' => 'Forward',
         'RECALL' => 'Unsend for everyone',
         'DELETE' => 'Delete',
         'RECALL_CONFIRMATION' => [
             'TITLE' => 'Unsend this message for everyone?',
             'MESSAGE' => 'The message disappears on the customer\'s side too. This cannot be undone.',
         ],
+    ],
+    // Khối trích dẫn trên bong bóng khi tin là câu trả lời cho một tin khác.
+    'REPLY_QUOTE' => [
+        'ORIGINAL' => 'Original message',
+        'JUMP' => 'Go to original message',
+    ],
+    // Hộp chọn hội thoại đích khi chuyển tiếp một tin.
+    'FORWARD' => [
+        'TITLE' => 'Forward message',
+        'SEARCH_PLACEHOLDER' => 'Search by name, phone or conversation ID',
+        'RECENT' => 'Recent conversations',
+        'EMPTY' => 'No conversations found',
+        'LOAD_FAILED' => 'Could not load conversations.',
+        'RETRY' => 'Retry',
+        'MAX_REACHED' => 'You can forward to at most {max} conversations at a time',
+        'SUBMIT_COUNT' => 'Forward ({count})',
+        'SUCCESS' => 'Forwarded to {count} conversations',
+        'OPEN' => 'Open conversation',
+        'PARTIAL' => 'Forwarded to {ok}/{total} conversations. {error}',
+        'FAILED' => 'Could not forward. {error}',
+        'REMOVE_TARGET' => 'Remove {name}',
+    ],
+    // Nhãn trên bong bóng của tin được chuyển tiếp (trong Yona hoặc từ nền tảng).
+    'FORWARDED' => [
+        'LABEL' => 'Forwarded',
+        'FROM' => 'Forwarded from {name}',
+        'SOURCE_CONVERSATION' => 'Forwarded from conversation #{id}',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Retry sending',
@@ -261,6 +290,9 @@ return [
             'DISABLED' => 'Disabled',
             'YOU_ARE_A_MEMBER' => 'You are a member of this team',
         ],
+        'GROUP_MEMBER' => [
+            'TITLE' => 'Group members',
+        ],
     ],
     'CUSTOM_SNOOZE' => [
         'TITLE' => 'Snooze until',
@@ -357,6 +389,7 @@ return [
         'DISMISS_REPLY' => 'Dismiss reply',
         'REPLYING_TO' => 'Replying to:',
         'TIP_EMOJI_ICON' => 'Show emoji selector',
+        'TIP_STICKER_ICON' => 'Send a sticker',
         'TIP_ATTACH_ICON' => 'Attach files',
         'TIP_AUDIORECORDER_ICON' => 'Record audio',
         'TIP_AUDIORECORDER_PERMISSION' => 'Allow access to audio',
@@ -396,6 +429,19 @@ return [
             'COLLAPSE' => 'Collapse preview',
             'EXPAND' => 'Expand preview',
         ],
+    ],
+    // Bảng chọn sticker trong khung soạn (chỉ hiện với kênh gửi được sticker).
+    'STICKER_PICKER' => [
+        'SEARCH_PLACEHOLDER' => 'Search stickers',
+        'SUGGESTED_KEYWORDS' => 'thanks,hello,ok,haha,love,sad,sorry,congrats',
+        'RECENT' => 'Recent',
+        'PACK' => 'Sticker pack',
+        'STICKER' => 'Sticker',
+        'EMPTY_RECENT' => 'No recent stickers yet. Type a keyword or pick a suggestion to search.',
+        'EMPTY_PACK' => 'This pack has no stickers yet.',
+        'NO_RESULTS' => 'No stickers found for “{query}”.',
+        'LOAD_FAILED' => 'Could not load stickers, please try again.',
+        'RETRY' => 'Try again',
     ],
     'VISIBLE_TO_AGENTS' => 'Private Note: Only visible to you and your team',
     'CHANGE_STATUS' => 'Conversation status changed',

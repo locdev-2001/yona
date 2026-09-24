@@ -2,6 +2,7 @@
 
 namespace App\Services\Whatsapp\Providers;
 
+use App\Channels\CapabilitySet;
 use App\Models\Message;
 
 /**
@@ -17,4 +18,7 @@ interface WhatsappProvider
 
     /** @return array<string, string> */
     public function apiHeaders(): array;
+
+    /** Năng lực riêng của nhà cung cấp, cộng thêm vào bộ chung của kênh WhatsApp. */
+    public function capabilities(): CapabilitySet;
 }

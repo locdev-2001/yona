@@ -6,12 +6,15 @@ use App\Models\Attachment;
 use App\Models\Channel\Instagram;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
+use App\Services\Facebook\Concerns\BuildsMessengerReplyTo;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 // Port từ refs/chatwoot/app/services/instagram/{base_send_service,send_on_instagram_service}.rb.
 class SendOnInstagramService extends BaseSendOnChannelService
 {
+    use BuildsMessengerReplyTo;
+
     protected function channelClass(): string
     {
         return Instagram::class;
@@ -19,12 +22,13 @@ class SendOnInstagramService extends BaseSendOnChannelService
 
     protected function performReply(): void
     {
-        foreach ($this->message->attachments as $attachment) {
-            $this->send($this->attachmentParams($attachment));
-        }
+        $payloads = [
+            ...$this->message->attachments->map(fn (Attachment $attachment) => $this->attachmentParams($attachment))->all(),
+            ...(filled($this->message->content) ? [$this->messageParams()] : []),
+        ];
 
-        if (filled($this->message->content)) {
-            $this->send($this->messageParams());
+        foreach ($this->withMessengerReplyToOnFirst($payloads) as $payload) {
+            $this->send($payload);
         }
     }
 

@@ -21,15 +21,6 @@ class ZaloOutboundActions implements ChannelOutboundActions
 
     public const ERROR_EMOJI_NOT_SUPPORTED = 'emoji_not_supported';
 
-    public const ERROR_BRIDGE_UNREACHABLE = 'bridge_unreachable';
-
-    public const ERROR_SECRET_MISMATCH = 'secret_mismatch';
-
-    public const ERROR_UNKNOWN = 'unknown';
-
-    /** Mã bridge trả về nguyên văn được giữ nguyên; chỉ mã lạ mới quy về `unknown`. */
-    private const BRIDGE_CODES = ['session_lost', 'zalo_rejected', 'bad_request', 'unknown'];
-
     /** Zalo hiện "đang soạn tin" vài giây rồi tự tắt — bắn dày hơn mức này là phí. */
     private const TYPING_THROTTLE_SECONDS = 5;
 
@@ -116,50 +107,20 @@ class ZaloOutboundActions implements ChannelOutboundActions
     /** @return array{ok: bool, code?: string, message?: string} */
     private function outcome(Message $message, ?Response $response): array
     {
-        if ($response === null) {
-            return $this->failure(self::ERROR_BRIDGE_UNREACHABLE, $message);
-        }
+        $outcome = ZaloBridgeOutcome::fromResponse($response, $this->locale($message));
 
-        $body = is_array($response->json()) ? $response->json() : [];
-
-        if ($response->successful() && ($body['ok'] ?? false) === true) {
-            return ['ok' => true];
-        }
-
-        $detail = (string) ($body['message'] ?? $body['error'] ?? 'HTTP '.$response->status());
-
-        return $this->failure($this->classify($response->status(), $body), $message, $detail);
+        return $outcome['ok'] ? ['ok' => true] : $outcome;
     }
 
-    /**
-     * 503/403 của bridge là kiểm tra send secret (cùng cửa với /personal-messages/send),
-     * lỗi cấu hình phía mình — tuyệt đối không hiểu thành mất phiên Zalo.
-     *
-     * @param  array<string, mixed>  $body
-     */
-    private function classify(int $status, array $body): string
+    /** @return array{ok: false, code: string, message: string} */
+    private function failure(string $code, Message $message): array
     {
-        $code = (string) ($body['code'] ?? '');
-
-        if (in_array($code, self::BRIDGE_CODES, true)) {
-            return $code;
-        }
-
-        if ($status === 503 || $status === 403) {
-            return self::ERROR_SECRET_MISMATCH;
-        }
-
-        return self::ERROR_UNKNOWN;
+        return ZaloBridgeOutcome::failure($code, $this->locale($message));
     }
 
-    /** @return array{ok: bool, code: string, message: string} */
-    private function failure(string $code, Message $message, ?string $detail = null): array
+    private function locale(Message $message): ?string
     {
-        return [
-            'ok' => false,
-            'code' => $code,
-            'message' => __("errors.zalo.action.{$code}", ['detail' => (string) $detail], $message->inbox->account->locale),
-        ];
+        return $message->inbox->account->locale;
     }
 
     private function channel(Conversation $conversation): Zalo

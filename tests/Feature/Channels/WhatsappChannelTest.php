@@ -1,5 +1,6 @@
 <?php
 
+use App\Channels\Capability;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
@@ -111,4 +112,33 @@ it('đổi nhà cung cấp là đổi driver, không đụng lõi kênh', functi
 
     expect($this->channel->fresh()->providerService())
         ->toBeInstanceOf(Whatsapp360DialogService::class);
+});
+
+it('trả lời trích dẫn qua Cloud API bằng context.message_id', function () {
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.OUT']]]),
+    ]);
+    whatsappPost(ChannelFixture::load('whatsapp_cloud_text'));
+    $quoted = Message::query()->latest('id')->first();
+    $conversation = $quoted->conversation;
+
+    $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Dạ còn ạ',
+        'content_attributes' => ['in_reply_to' => $quoted->id],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/messages')
+        && $request['context'] === ['message_id' => $quoted->source_id]
+        && $request['text'] === ['body' => 'Dạ còn ạ']);
+});
+
+it('chỉ nhà cung cấp Cloud khai năng lực trả lời trích dẫn', function () {
+    expect($this->channel->fresh()->capabilities()->has(Capability::OutboundReplyTo))->toBeTrue();
+
+    $this->channel->update(['provider' => 'default', 'provider_config' => ['api_key' => '360-key']]);
+
+    expect($this->channel->fresh()->capabilities()->has(Capability::OutboundReplyTo))->toBeFalse();
 });

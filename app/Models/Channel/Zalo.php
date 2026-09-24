@@ -38,6 +38,9 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
     /** Chủ hộp thư chủ động ngắt kết nối (hoặc đổi tài khoản) — khác hẳn mất phiên ngoài ý muốn. */
     public const STATE_DISCONNECTED = 'disconnected';
 
+    /** Giá trị `thread_type` của luồng nhóm (0 = chat 1-1). */
+    public const THREAD_TYPE_GROUP = 1;
+
     /** @var list<string> */
     public const EDITABLE_ATTRS = [];
 
@@ -161,6 +164,11 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
         return (int) ($conversation->additional_attributes['thread_type'] ?? 0);
     }
 
+    public function isGroupThread(Conversation $conversation): bool
+    {
+        return $this->threadTypeOf($conversation) === self::THREAD_TYPE_GROUP;
+    }
+
     /** Trạng thái phiên do webhook `bridge_session` của bridge đẩy về. */
     public function markState(string $state, ?string $reason = null): void
     {
@@ -183,9 +191,12 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
 
     /**
      * Zalo cá nhân — khai theo trạng thái driver hôm nay (App\Services\Zalo\*).
-     * Chưa khai: outbound_location/contact_card/mention/edit/read_receipt (chưa có
-     * đường thực thi), event_edit/event_presence (Zalo không phát), profile_phone
-     * (chỉ có khi khách gửi danh thiếp của chính mình).
+     * Chưa khai: outbound_location/contact_card/edit/read_receipt (chưa có đường
+     * thực thi), event_edit/event_presence (Zalo không phát), profile_phone (chỉ
+     * có khi khách gửi danh thiếp của chính mình).
+     * outbound_reply_to: trả lời chỉ gồm tệp (không chú thích) thì Zalo gửi tệp
+     * không kèm trích dẫn — giới hạn của nền tảng, tin vẫn đi bình thường.
+     * outbound_mention: chỉ có tác dụng trong nhóm; chat 1-1 gửi như chữ thường.
      */
     public function capabilities(): CapabilitySet
     {
@@ -211,6 +222,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::OutboundFile,
             Capability::OutboundSticker,
             Capability::OutboundReplyTo,
+            Capability::OutboundMention,
             Capability::OutboundReaction,
             Capability::OutboundRecall,
             Capability::OutboundTyping,

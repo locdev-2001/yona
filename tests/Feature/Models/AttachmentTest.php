@@ -371,3 +371,61 @@ describe('file deletion', function () {
         Storage::disk('public')->assertMissing($path);
     });
 });
+
+describe('copyStoredFile', function () {
+    it('sao tệp sang đường dẫn mới, giữ thuộc tính; xoá bản gốc thì bản sao còn', function () {
+        $message = attachmentMessage();
+        $original = attachmentWithFile($message, UploadedFile::fake()->create('bao-gia.pdf', 12, 'application/pdf'));
+
+        $copy = $original->copyStoredFile();
+
+        expect($copy['path'])->not->toBe($original->path)
+            ->and($copy['path'])->toEndWith('.pdf')
+            ->and($copy['filename'])->toBe('bao-gia.pdf')
+            ->and($copy['content_type'])->toBe('application/pdf')
+            ->and($copy['byte_size'])->toBe($original->byte_size)
+            ->and($copy['file_type'])->toBe(Attachment::FILE_TYPE_FILE)
+            ->and($copy['account_id'])->toBe($original->account_id);
+
+        $original->delete();
+
+        Storage::disk('public')->assertMissing($original->path);
+        Storage::disk('public')->assertExists($copy['path']);
+    });
+
+    it('trả null khi không còn tệp để sao', function () {
+        $message = attachmentMessage();
+        $external = $message->attachments()->create([
+            'account_id' => $message->account_id,
+            'file_type' => Attachment::FILE_TYPE_IMAGE,
+            'external_url' => 'https://cdn.example.test/a.png',
+        ]);
+        $missingOnDisk = new Attachment([
+            'account_id' => $message->account_id,
+            'file_type' => Attachment::FILE_TYPE_IMAGE,
+            'path' => 'attachments/khong-ton-tai.png',
+            'filename' => 'khong-ton-tai.png',
+        ]);
+
+        expect($external->copyStoredFile())->toBeNull()
+            ->and($missingOnDisk->copyStoredFile())->toBeNull();
+    });
+
+    it('signedReference vẫn giải ra đúng thuộc tính tệp gốc', function () {
+        $message = attachmentMessage();
+        $original = attachmentWithFile($message, UploadedFile::fake()->image('anh.png', 20, 10));
+
+        $resolved = Attachment::resolveSignedUpload($original->signedReference(), $message->account_id);
+
+        expect($resolved)->toBe([
+            'account_id' => $original->account_id,
+            'file_type' => $original->file_type,
+            'disk' => 'public',
+            'path' => $original->path,
+            'filename' => 'anh.png',
+            'content_type' => $original->content_type,
+            'byte_size' => $original->byte_size,
+            'meta' => ['width' => 20, 'height' => 10],
+        ]);
+    });
+});

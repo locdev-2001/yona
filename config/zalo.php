@@ -16,6 +16,9 @@ return [
         // (zalo-deep-audit 6.9).
         'promote_timeout' => 30,
         'media_timeout' => 120,
+        // Liệt kê thành viên nhóm lần đầu (chưa có cache) phải chờ Zalo trả danh
+        // sách theo lô 50 người — nhóm đông cần hơn mức 10s mặc định.
+        'members_timeout' => 30,
     ],
 
     // Quyết định founder 07/09/2026: KHÔNG chặn tin chủ động nữa — cửa sổ giờ
