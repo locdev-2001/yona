@@ -4,6 +4,7 @@ namespace Tests\Contracts\Channels;
 
 use Tests\Contracts\Channels\Contracts\ChannelContract;
 use Tests\Contracts\Channels\Contracts\EventSeenContract;
+use Tests\Contracts\Channels\Contracts\InboundForwardContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
 use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
@@ -27,6 +28,7 @@ final class ChannelContractRunner
         MentionContract::class,
         EventSeenContract::class,
         OutboundStickerContract::class,
+        InboundForwardContract::class,
     ];
 
     /** @return list<string> tên các contract đã chạy, để test khẳng định không chạy rỗng. */

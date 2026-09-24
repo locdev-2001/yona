@@ -108,6 +108,7 @@ class Telegram extends Model implements DeclaresCapabilities
             Capability::InboundLocation,
             Capability::InboundContactCard,
             Capability::InboundCaption,
+            Capability::InboundForward,
             Capability::OutboundText,
             Capability::OutboundImage,
             Capability::OutboundVideo,

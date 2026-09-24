@@ -19,6 +19,7 @@ final class TelegramHarness implements ChannelHarness
     private const INBOUND_FIXTURES = [
         Capability::InboundText->value => 'telegram_text',
         Capability::InboundImage->value => 'telegram_photo',
+        Capability::InboundForward->value => 'telegram_forward',
     ];
 
     private ?Conversation $conversation = null;

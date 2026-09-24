@@ -127,6 +127,7 @@
         "inbound_location",
         "inbound_contact_card",
         "inbound_caption",
+        "inbound_forward",
         "outbound_text",
         "outbound_image",
         "outbound_video",
