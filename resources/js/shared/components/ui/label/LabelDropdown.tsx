@@ -39,7 +39,11 @@ export default function LabelDropdown({
     const listRef = useRef<HTMLUListElement>(null);
     const optionIdPrefix = useId();
 
-    useEffect(() => searchbarRef.current?.focus(), []);
+    // Khung nổi chỉ hiện sau khi đo xong vị trí; focus ở khung hình kế tiếp mới ăn.
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => searchbarRef.current?.focus());
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     const newTitle = normalizeLabelTitle(search);
     const canCreateNewTitle =
