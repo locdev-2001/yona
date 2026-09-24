@@ -101,3 +101,68 @@ export function collectMediaAttachments(messages: ConversationMessage[]): Messag
             }));
     });
 }
+
+/** Tên tệp để hiện: tên gốc nếu API trả, không thì đoạn cuối của đường dẫn tệp. */
+export function attachmentFileName(attachment: MessageAttachment): string {
+    if (attachment.filename) return attachment.filename;
+
+    const lastSegment = (attachment.data_url ?? '').split(/[?#]/)[0].split('/').pop() ?? '';
+    try {
+        return decodeURIComponent(lastSegment);
+    } catch {
+        return lastSegment;
+    }
+}
+
+/** Phần mở rộng viết thường, dùng chọn icon theo loại tệp. */
+export function attachmentExtension(attachment: MessageAttachment): string {
+    const fileName = attachmentFileName(attachment);
+    const dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex > 0) return fileName.slice(dotIndex + 1).toLowerCase();
+
+    return (attachment.extension ?? '').replace(/^\./, '').toLowerCase();
+}
+
+/**
+ * Danh sách trình xem đi qua khi mở một ảnh/video trong tin: tin nhiều mục thì
+ * lướt đúng các mục của tin (đếm "3/7"); tin một mục duyệt cả hội thoại. Mục
+ * của tin lấy bản đã gom ở hội thoại (có người gửi, thời điểm) khi có.
+ */
+export function resolveGalleryItems(
+    messageMedia: MessageAttachment[],
+    conversationMedia: MessageAttachment[],
+    opened: MessageAttachment,
+): MessageAttachment[] {
+    if (messageMedia.length > 1) {
+        return messageMedia.map((item) => conversationMedia.find((known) => known.id === item.id) ?? item);
+    }
+
+    return conversationMedia.some((item) => item.id === opened.id) ? conversationMedia : messageMedia;
+}
+
+const SINGLE_MEDIA_MAX_WIDTH = 288;
+const SINGLE_MEDIA_MAX_HEIGHT = 320;
+const SINGLE_MEDIA_MIN_WIDTH = 128;
+const SINGLE_MEDIA_FALLBACK = { width: 240, height: 180 };
+
+export interface MediaFrame {
+    width: number;
+    aspectRatio: string;
+}
+
+/**
+ * Khung của một ảnh/video đứng riêng: giữ tỉ lệ thật, không vượt khung tối đa,
+ * không hẹp quá mức (ảnh quá dọc thì cắt giữa). Chưa biết kích thước thì dùng
+ * khung 4:3 để giữ chỗ.
+ */
+export function singleMediaFrame(width?: number | null, height?: number | null): MediaFrame {
+    const hasSize = Boolean(width && height && width > 0 && height > 0);
+    const sourceWidth = hasSize ? Number(width) : SINGLE_MEDIA_FALLBACK.width;
+    const sourceHeight = hasSize ? Number(height) : SINGLE_MEDIA_FALLBACK.height;
+
+    const fittedWidth = Math.min(SINGLE_MEDIA_MAX_WIDTH, sourceWidth, (SINGLE_MEDIA_MAX_HEIGHT * sourceWidth) / sourceHeight);
+    const frameWidth = Math.round(Math.max(SINGLE_MEDIA_MIN_WIDTH, fittedWidth));
+    const frameHeight = Math.min(SINGLE_MEDIA_MAX_HEIGHT, Math.round((frameWidth * sourceHeight) / sourceWidth));
+
+    return { width: frameWidth, aspectRatio: `${frameWidth} / ${Math.max(1, frameHeight)}` };
+}

@@ -27,5 +27,9 @@ return [
     'MEDIA' => [
         'IMAGE_UNAVAILABLE' => 'Ảnh này không còn nữa.',
         'LOADING_FAILED' => 'Tải thất bại',
+        'OPEN_IMAGE' => 'Xem ảnh',
+        'OPEN_VIDEO' => 'Xem video',
+        'ATTACHMENTS_COUNT' => '{count} tệp',
+        'REMOVE_ATTACHMENT' => 'Bỏ tệp này',
     ],
 ];

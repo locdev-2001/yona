@@ -7,6 +7,8 @@ import {
     filesFromDataTransfer,
     formatBytes,
     isFileTypeAccepted,
+    splitFileNameForMiddleTruncation,
+    uploadProgressByFile,
 } from './FileHelper';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 
@@ -69,5 +71,45 @@ describe('filesFromDataTransfer', () => {
 
         expect(filesFromDataTransfer({ files: [screenshot, empty] } as unknown as DataTransfer)).toEqual([screenshot]);
         expect(filesFromDataTransfer(null)).toEqual([]);
+    });
+});
+
+describe('splitFileNameForMiddleTruncation', () => {
+    it('giữ vài ký tự cuối và phần mở rộng ở đuôi', () => {
+        expect(splitFileNameForMiddleTruncation('bao-gia-thang-9-khach-le-final.pdf')).toStrictEqual({
+            head: 'bao-gia-thang-9-khach-le-f',
+            tail: 'inal.pdf',
+        });
+    });
+
+    it('tên ngắn hơn phần giữ lại thì nằm trọn ở đuôi', () => {
+        expect(splitFileNameForMiddleTruncation('a.txt')).toStrictEqual({ head: '', tail: 'a.txt' });
+    });
+
+    it('không có phần mở rộng hợp lệ thì chỉ giữ ký tự cuối', () => {
+        expect(splitFileNameForMiddleTruncation('README')).toStrictEqual({ head: 'RE', tail: 'ADME' });
+        expect(splitFileNameForMiddleTruncation('.env')).toStrictEqual({ head: '', tail: '.env' });
+        expect(splitFileNameForMiddleTruncation('ban.sao.khong-phai-duoi-tep')).toStrictEqual({
+            head: 'ban.sao.khong-phai-duoi',
+            tail: '-tep',
+        });
+    });
+});
+
+describe('uploadProgressByFile', () => {
+    it('tệp đi trước đầy trước, tệp sau bắt đầu khi tệp trước xong', () => {
+        expect(uploadProgressByFile(0, 400, [100, 300])).toStrictEqual([0, 0]);
+        expect(uploadProgressByFile(50, 400, [100, 300])).toStrictEqual([0.5, 0]);
+        expect(uploadProgressByFile(250, 400, [100, 300])).toStrictEqual([1, 0.5]);
+        expect(uploadProgressByFile(400, 400, [100, 300])).toStrictEqual([1, 1]);
+    });
+
+    it('phần đầu multipart (ranh giới, trường chữ) được chia đều theo tỉ lệ', () => {
+        expect(uploadProgressByFile(250, 500, [100, 300])).toStrictEqual([1, 1 / 3]);
+    });
+
+    it('chưa biết tổng thì mọi tệp là 0', () => {
+        expect(uploadProgressByFile(10, 0, [100])).toStrictEqual([0]);
+        expect(uploadProgressByFile(10, 10, [])).toStrictEqual([]);
     });
 });

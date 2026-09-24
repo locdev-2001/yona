@@ -3,6 +3,8 @@ import { t } from '../../../../i18n';
 import BaseBubble from './Base';
 import FormattedContent from './FormattedContent';
 import AttachmentChips from '../chips/AttachmentChips';
+import MediaBubble from './Media';
+import { groupAttachmentChips } from '../helpers/attachments';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS } from '../constants';
 import { emphasizeMentions, readGroupMentions } from '../helpers/groupSender';
@@ -27,6 +29,10 @@ export default function TextBubble() {
                 </span>
             </BaseBubble>
         );
+    }
+
+    if (groupAttachmentChips(attachments).media.length) {
+        return <MediaBubble dataBubbleName="text" />;
     }
 
     const isEmpty = !content && !attachments?.length;

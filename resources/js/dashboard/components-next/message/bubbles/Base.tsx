@@ -46,6 +46,9 @@ interface BaseBubbleProps {
     className?: string;
     title?: string;
     dataBubbleName?: string;
+    // Nội dung sát viền (lưới ảnh): phần đầu (trích dẫn, người gửi, chuyển tiếp)
+    // tự có đệm và không nới bề ngang bong bóng.
+    flush?: boolean;
     onClick?: MouseEventHandler<HTMLDivElement>;
     children: ReactNode;
 }
@@ -55,6 +58,7 @@ export default function BaseBubble({
     className = '',
     title,
     dataBubbleName,
+    flush = false,
     onClick,
     children,
 }: BaseBubbleProps) {
@@ -118,6 +122,48 @@ export default function BaseBubble({
         onJumpToMessage?.(replyQuote.targetId);
     };
 
+    const header = (
+        <>
+        {replyQuote && (
+            <button
+                type="button"
+                data-testid="reply-quote"
+                className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
+                title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
+                disabled={replyQuote.targetId === null}
+                onClick={jumpToRepliedMessage}
+            >
+                {replyQuote.senderName ? (
+                    <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
+                ) : null}
+                <span
+                    className="block prose prose-bubble line-clamp-2"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
+                />
+            </button>
+        )}
+        {groupSender ? (
+            <div
+                className="flex items-center mb-1 min-w-0"
+                title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
+            >
+                <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
+            </div>
+        ) : null}
+        {forwardedFrom ? (
+            <div
+                data-testid="forwarded-label"
+                title={forwardedTitle}
+                className="flex items-center gap-1 mb-1 text-xs italic text-n-slate-11"
+            >
+                <Icon icon="i-lucide-forward" className="size-3 shrink-0" />
+                <span className="truncate">{forwardedLabel}</span>
+            </div>
+        ) : null}
+        </>
+    );
+    const hasHeader = Boolean(replyQuote || groupSender || forwardedFrom);
+
     return (
         <div
             className={`relative min-w-0 ${variant === MESSAGE_VARIANTS.EMAIL ? 'w-full' : ''} ${hasReactions ? 'mb-4' : ''}`}
@@ -129,42 +175,7 @@ export default function BaseBubble({
                 data-bubble-name={dataBubbleName}
                 onClick={onClick}
             >
-                {replyQuote && (
-                    <button
-                        type="button"
-                        data-testid="reply-quote"
-                        className="block w-[calc(100%+0.5rem)] p-2 -mx-1 mb-2 rounded-lg text-start bg-n-alpha-black1 cursor-pointer disabled:cursor-default"
-                        title={t('CONVERSATION.REPLY_QUOTE.JUMP')}
-                        disabled={replyQuote.targetId === null}
-                        onClick={jumpToRepliedMessage}
-                    >
-                        {replyQuote.senderName ? (
-                            <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
-                        ) : null}
-                        <span
-                            className="block prose prose-bubble line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replyQuotePreview) }}
-                        />
-                    </button>
-                )}
-                {groupSender ? (
-                    <div
-                        className="flex items-center mb-1 min-w-0"
-                        title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
-                    >
-                        <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
-                    </div>
-                ) : null}
-                {forwardedFrom ? (
-                    <div
-                        data-testid="forwarded-label"
-                        title={forwardedTitle}
-                        className="flex items-center gap-1 mb-1 text-xs italic text-n-slate-11"
-                    >
-                        <Icon icon="i-lucide-forward" className="size-3 shrink-0" />
-                        <span className="truncate">{forwardedLabel}</span>
-                    </div>
-                ) : null}
+                {flush ? (hasHeader ? <div className="w-0 min-w-full px-3 pt-2">{header}</div> : null) : header}
                 {children}
                 {shouldShowMeta && (
                     <MessageMeta className={`${FLEX_ORIENTATION_MAP[orientation]} px-3 pb-3 text-n-slate-11 mt-2`} />

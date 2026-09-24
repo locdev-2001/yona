@@ -1611,7 +1611,11 @@ const messages: Record<string, unknown> = {
         },
         "MEDIA": {
             "IMAGE_UNAVAILABLE": "This image is no longer available.",
-            "LOADING_FAILED": "Loading failed"
+            "LOADING_FAILED": "Loading failed",
+            "OPEN_IMAGE": "View image",
+            "OPEN_VIDEO": "View video",
+            "ATTACHMENTS_COUNT": "{count} file | {count} files",
+            "REMOVE_ATTACHMENT": "Remove this file"
         }
     },
     "COMPOSE_NEW_CONVERSATION": {

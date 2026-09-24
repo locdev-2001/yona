@@ -106,7 +106,7 @@ describe('Message với sticker', () => {
     it('ảnh thường vẫn mở thư viện ảnh khi bấm (đối chứng)', () => {
         const container = renderMessage(stickerMessage({ content_type: 'text' }));
 
-        fireEvent.click(container.querySelector('[data-bubble-name="image"]')!);
+        fireEvent.click(container.querySelector('[data-bubble-name="image"] [data-media-tile]')!);
 
         expect(document.querySelector('[data-testid="gallery"]')).not.toBeNull();
     });

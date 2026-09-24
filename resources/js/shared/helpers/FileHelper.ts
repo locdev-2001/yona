@@ -37,3 +37,42 @@ export const isFileTypeAccepted = (file: { name: string; type: string }, accept:
             return mimeType === pattern;
         });
 };
+
+const MAX_VISIBLE_EXTENSION_LENGTH = 8;
+
+/**
+ * Tách tên tệp để cắt ở giữa: `head` co lại theo bề ngang, `tail` (vài ký tự
+ * cuối của tên + phần mở rộng) luôn hiện đủ để người xem biết loại tệp.
+ */
+export const splitFileNameForMiddleTruncation = (
+    fileName: string,
+    keptTailChars = 4,
+): { head: string; tail: string } => {
+    const dotIndex = fileName.lastIndexOf('.');
+    const hasExtension = dotIndex > 0 && fileName.length - dotIndex - 1 <= MAX_VISIBLE_EXTENSION_LENGTH;
+    const baseName = hasExtension ? fileName.slice(0, dotIndex) : fileName;
+    const extension = hasExtension ? fileName.slice(dotIndex) : '';
+    const tailStart = Math.max(0, baseName.length - keptTailChars);
+
+    return { head: baseName.slice(0, tailStart), tail: `${baseName.slice(tailStart)}${extension}` };
+};
+
+/**
+ * Một yêu cầu multipart gửi các tệp nối tiếp theo thứ tự đính kèm, nên tỉ lệ
+ * đã tải của từng tệp suy ra được từ tổng số byte đã gửi. Trả tỉ lệ 0–1.
+ */
+export const uploadProgressByFile = (loadedBytes: number, totalBytes: number, fileSizes: number[]): number[] => {
+    const allFileBytes = fileSizes.reduce((sum, size) => sum + size, 0);
+    if (totalBytes <= 0 || allFileBytes <= 0) return fileSizes.map(() => 0);
+
+    const loadedFileBytes = Math.min(1, Math.max(0, loadedBytes / totalBytes)) * allFileBytes;
+    let fileStart = 0;
+
+    return fileSizes.map(size => {
+        const start = fileStart;
+        fileStart += size;
+        if (size <= 0) return loadedFileBytes >= start ? 1 : 0;
+
+        return Math.min(1, Math.max(0, (loadedFileBytes - start) / size));
+    });
+};

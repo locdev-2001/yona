@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import type { ConversationMessage } from 'dashboard/conversation/types';
 
-import { BUBBLE_NAMES, collectMediaAttachments, groupAttachmentChips, resolveBubbleName } from './attachments';
+import {
+    BUBBLE_NAMES,
+    attachmentExtension,
+    attachmentFileName,
+    collectMediaAttachments,
+    groupAttachmentChips,
+    resolveBubbleName,
+    resolveGalleryItems,
+    singleMediaFrame,
+} from './attachments';
 import type { MessageAttachment } from './attachments';
 
 const attachment = (overrides: Partial<MessageAttachment> & { id: number; file_type: string }): MessageAttachment => ({
@@ -105,5 +114,71 @@ describe('collectMediaAttachments', () => {
 
         expect(collected).toHaveLength(1);
         expect(collected[0]).toMatchObject({ id: 1, message_id: 10, created_at: 1_756_000_000, sender });
+    });
+});
+
+describe('attachmentFileName / attachmentExtension', () => {
+    it('lấy tên gốc khi có, không thì đoạn cuối đường dẫn đã giải mã', () => {
+        expect(attachmentFileName(attachment({ id: 1, file_type: 'file', filename: 'Báo giá.pdf' }))).toBe('Báo giá.pdf');
+        expect(
+            attachmentFileName(attachment({ id: 2, file_type: 'file', data_url: 'https://cdn.test/a/B%C3%A1o%20gi%C3%A1.PDF?x=1' })),
+        ).toBe('Báo giá.PDF');
+        expect(
+            attachmentExtension(attachment({ id: 2, file_type: 'file', data_url: 'https://cdn.test/a/B%C3%A1o%20gi%C3%A1.PDF?x=1' })),
+        ).toBe('pdf');
+    });
+
+    it('tên không có đuôi thì dùng extension của API', () => {
+        expect(attachmentExtension(attachment({ id: 3, file_type: 'file', data_url: 'https://cdn.test/blob', extension: 'XLSX' }))).toBe(
+            'xlsx',
+        );
+    });
+});
+
+describe('resolveGalleryItems', () => {
+    const conversationMedia = [1, 2, 3, 4].map((id) =>
+        attachment({ id, file_type: 'image', created_at: 1_756_000_000 + id, sender: { name: 'Khách' } }),
+    );
+
+    it('tin nhiều ảnh: lướt đúng các ảnh của tin, lấy bản có người gửi từ hội thoại', () => {
+        const messageMedia = [attachment({ id: 2, file_type: 'image' }), attachment({ id: 3, file_type: 'video' })];
+        const items = resolveGalleryItems(messageMedia, conversationMedia, messageMedia[1]);
+
+        expect(items.map((item) => item.id)).toStrictEqual([2, 3]);
+        expect(items[0].sender).toStrictEqual({ name: 'Khách' });
+    });
+
+    it('tin một ảnh: duyệt cả hội thoại như trước', () => {
+        const opened = attachment({ id: 4, file_type: 'image' });
+
+        expect(resolveGalleryItems([opened], conversationMedia, opened)).toBe(conversationMedia);
+    });
+
+    it('ảnh chưa gửi xong (không có trong hội thoại) chỉ mở chính nó', () => {
+        const pending = attachment({ id: 99, file_type: 'image' });
+
+        expect(resolveGalleryItems([pending], conversationMedia, pending)).toStrictEqual([pending]);
+    });
+});
+
+describe('singleMediaFrame', () => {
+    it('ảnh ngang lớn thu về bề ngang tối đa, giữ tỉ lệ', () => {
+        expect(singleMediaFrame(1600, 900)).toStrictEqual({ width: 288, aspectRatio: '288 / 162' });
+    });
+
+    it('ảnh dọc bị chặn theo chiều cao tối đa', () => {
+        expect(singleMediaFrame(900, 1600)).toStrictEqual({ width: 180, aspectRatio: '180 / 320' });
+    });
+
+    it('ảnh rất dọc không hẹp hơn mức tối thiểu, chiều cao vẫn trong khung', () => {
+        expect(singleMediaFrame(100, 2000)).toStrictEqual({ width: 128, aspectRatio: '128 / 320' });
+    });
+
+    it('ảnh nhỏ giữ đúng kích thước thật', () => {
+        expect(singleMediaFrame(200, 150)).toStrictEqual({ width: 200, aspectRatio: '200 / 150' });
+    });
+
+    it('chưa biết kích thước thì giữ chỗ 4:3', () => {
+        expect(singleMediaFrame(null, null)).toStrictEqual({ width: 240, aspectRatio: '240 / 180' });
     });
 });
