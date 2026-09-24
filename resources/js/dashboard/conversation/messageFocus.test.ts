@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+    FOCUS_CONTEXT_BEFORE,
     FOCUS_WINDOW_MAX_PAGES,
     loadFocusWindow,
     mergeMessagesChronologically,
@@ -55,29 +56,78 @@ describe('mergeMessagesChronologically', () => {
 });
 
 describe('loadFocusWindow', () => {
-    it('không gọi mạng khi tin đích đã có', async () => {
+    it('không gọi mạng khi tin đích đã có đủ tin ngữ cảnh phía trên', async () => {
         const fetchRange = vi.fn<MessagesRangeFetcher>();
         const loaded = range(80, 99);
 
-        const result = await loadFocusWindow(loaded, 85, fetchRange);
+        const result = await loadFocusWindow(loaded, 80 + FOCUS_CONTEXT_BEFORE, fetchRange);
 
         expect(fetchRange).not.toHaveBeenCalled();
         expect(result).toEqual({ messages: loaded, found: true });
     });
 
-    it('nạp khoảng từ tin đích tới tin cũ nhất đang có rồi gộp đúng thứ tự', async () => {
+    it('nạp thêm một trang tin cũ hơn khi tin đích đã có nhưng nằm sát đầu trang', async () => {
         const fetchRange = vi.fn<MessagesRangeFetcher>().mockResolvedValue(range(60, 79));
+
+        const result = await loadFocusWindow(range(80, 99), 82, fetchRange);
+
+        expect(fetchRange).toHaveBeenCalledExactlyOnceWith(80);
+        expect(result.found).toBe(true);
+        expect(result.messages.map(item => item.id)).toEqual(range(60, 99).map(item => item.id));
+    });
+
+    it('vẫn mở tại tin đích khi nạp trang ngữ cảnh hỏng', async () => {
+        const fetchRange = vi.fn<MessagesRangeFetcher>().mockImplementation(async (_before, after) => {
+            if (after === undefined) throw new Error('mạng chập chờn');
+            return range(60, 79);
+        });
+
+        const loadedTarget = await loadFocusWindow(range(80, 99), 82, fetchRange);
+        const olderTarget = await loadFocusWindow(range(80, 99), 60, fetchRange);
+
+        expect(loadedTarget).toEqual({ messages: range(80, 99), found: true });
+        expect(olderTarget.found).toBe(true);
+        expect(olderTarget.messages.map(item => item.id)).toEqual(range(60, 99).map(item => item.id));
+    });
+
+    it('không nạp thêm khi các tin đang có chưa đủ một trang, tức là đã hết hội thoại', async () => {
+        const fetchRange = vi.fn<MessagesRangeFetcher>();
+        const loaded = range(80, 90);
+
+        const result = await loadFocusWindow(loaded, 81, fetchRange);
+
+        expect(fetchRange).not.toHaveBeenCalled();
+        expect(result).toEqual({ messages: loaded, found: true });
+    });
+
+    it('nạp khoảng từ tin đích tới tin cũ nhất đang có cùng một trang tin ngay trước tin đích', async () => {
+        const fetchRange = vi.fn<MessagesRangeFetcher>().mockImplementation(async (_before, after) =>
+            after === undefined ? range(40, 59) : range(60, 79),
+        );
 
         const result = await loadFocusWindow(range(80, 99), 60, fetchRange);
 
-        expect(fetchRange).toHaveBeenCalledExactlyOnceWith(80, 60);
+        expect(fetchRange.mock.calls).toEqual([[80, 60], [60]]);
         expect(result.found).toBe(true);
+        expect(result.messages.map(item => item.id)).toEqual(range(40, 99).map(item => item.id));
+        expect(result.messages.findIndex(item => item.id === 60)).toBeGreaterThanOrEqual(FOCUS_CONTEXT_BEFORE);
+    });
+
+    it('bỏ trang ngữ cảnh khi tin đích cũ hơn mà không thuộc hội thoại', async () => {
+        const fetchRange = vi.fn<MessagesRangeFetcher>().mockImplementation(async (_before, after) =>
+            after === undefined ? range(30, 49) : range(60, 79),
+        );
+
+        const result = await loadFocusWindow(range(80, 99), 50, fetchRange);
+
+        expect(result.found).toBe(false);
         expect(result.messages.map(item => item.id)).toEqual(range(60, 99).map(item => item.id));
     });
 
     it('nạp tiếp khi trang đầy và dừng sau số trang tối đa', async () => {
         let nextId = 1;
-        const fetchRange = vi.fn<MessagesRangeFetcher>().mockImplementation(async () => {
+        const fetchRange = vi.fn<MessagesRangeFetcher>().mockImplementation(async (_before, after) => {
+            if (after === undefined) return [];
             const page = range(nextId, nextId + MESSAGES_BETWEEN_LIMIT - 1);
             nextId += MESSAGES_BETWEEN_LIMIT;
             return page;
@@ -85,14 +135,14 @@ describe('loadFocusWindow', () => {
 
         const result = await loadFocusWindow(range(90000, 90019), 1, fetchRange);
 
-        expect(fetchRange).toHaveBeenCalledTimes(FOCUS_WINDOW_MAX_PAGES);
-        expect(fetchRange.mock.calls.map(([before, after]) => [before, after])).toEqual([
+        expect(fetchRange.mock.calls.filter(([, after]) => after !== undefined)).toEqual([
             [90000, 1],
             [90000, 1001],
             [90000, 2001],
             [90000, 3001],
             [90000, 4001],
         ]);
+        expect(fetchRange.mock.calls.filter(([, after]) => after !== undefined)).toHaveLength(FOCUS_WINDOW_MAX_PAGES);
         expect(result.found).toBe(true);
     });
 

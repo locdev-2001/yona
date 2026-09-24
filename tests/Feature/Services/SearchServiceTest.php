@@ -149,27 +149,33 @@ describe('message search', function () {
         expect($ids)->toBe([$message2->id, $this->message->id]);
     });
 
-    // Đường mới (bỏ dấu) với từ khoá ASCII phải ra đúng tập và đúng thứ tự như
-    // đường ILIKE cũ, trên dữ liệu trộn: nội dung NULL, trùng created_at, hoa/thường.
-    it('returns exactly what the plain ILIKE search returned for ASCII queries', function () {
+    // Đường mới (bỏ dấu, theo từng từ) với từ khoá ASCII một từ phải ra đúng tập và
+    // đúng thứ tự như đường ILIKE cũ, trên dữ liệu trộn: nội dung NULL, trùng
+    // created_at, hoa/thường. Nhiều từ thì nới ra: mọi tin cụm liền nhau từng ra vẫn ra.
+    it('returns exactly what the plain ILIKE search returned for single-word ASCII queries', function () {
         $sameMoment = now()->subHour();
         searchTestMessage(['content' => null]);
         searchTestMessage(['content' => 'Order SHIPPED today', 'created_at' => $sameMoment]);
         searchTestMessage(['content' => 'second order shipped', 'created_at' => $sameMoment]);
         searchTestMessage(['content' => 'ORDER cancelled', 'created_at' => now()->subDays(3)]);
+        searchTestMessage(['content' => 'shipped, then order lost', 'created_at' => now()->subDays(4)]);
         searchTestMessage(['content' => 'nothing relevant']);
 
-        foreach (['order', 'SHIPPED', 'der sh', 'Harry', 'zzz'] as $query) {
-            $legacyIds = Message::query()
-                ->where('account_id', $this->account->id)
-                ->where('created_at', '>=', now()->subMonths(SearchService::MESSAGE_LOOKBACK_MONTHS))
-                ->whereRaw('content ILIKE ?', ["%{$query}%"])
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->pluck('id')
-                ->all();
+        $legacyIds = fn (string $query) => Message::query()
+            ->where('account_id', $this->account->id)
+            ->where('created_at', '>=', now()->subMonths(SearchService::MESSAGE_LOOKBACK_MONTHS))
+            ->whereRaw('content ILIKE ?', ["%{$query}%"])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->pluck('id')
+            ->all();
 
-            expect(searchResultIds($query, 'Message'))->toBe($legacyIds);
+        foreach (['order', 'SHIPPED', 'Harry', 'zzz'] as $query) {
+            expect(searchResultIds($query, 'Message'))->toBe($legacyIds($query));
+        }
+
+        foreach (['der sh', 'order shipped', 'Harry Potter'] as $query) {
+            expect(searchResultIds($query, 'Message'))->toContain(...$legacyIds($query));
         }
     });
 
@@ -435,13 +441,67 @@ describe('accent-insensitive matching', function () {
 });
 
 describe('LIKE wildcards in the query', function () {
-    it('treats percent and underscore as literal characters', function () {
+    it('treats percent as a literal character', function () {
         $discount = searchTestMessage(['content' => 'giảm 50% hôm nay']);
         searchTestMessage(['content' => '500 đơn đã giao']);
-        searchTestMessage(['content' => 'mã axb']);
 
-        expect(searchResultIds('50%', 'Message'))->toBe([$discount->id])
-            ->and(searchResultIds('a_b', 'Message'))->toBe([]);
+        expect(searchResultIds('50%', 'Message'))->toBe([$discount->id]);
+    });
+
+    // Chữ người đọc coi _ là dấu ngăn cách từ; trường khớp nguyên văn thì _ vẫn là
+    // chữ, không phải ký tự đại diện "một ký tự bất kỳ" của LIKE.
+    it('keeps underscore literal in exact fields', function () {
+        $underscore = Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Kim', 'email' => 'x_y@shop.test']);
+        Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Kim', 'email' => 'xzy@shop.test']);
+
+        expect(searchResultIds('x_y@', 'Contact'))->toBe([$underscore->id]);
+    });
+});
+
+describe('word matching', function () {
+    it('finds a message holding every word even when they are apart or reordered', function (string $query) {
+        $priceList = searchTestMessage(['content' => 'Gửi shop bảng giá sỉ tháng 10']);
+        searchTestMessage(['content' => 'Bảng giá lẻ tháng 9']);
+
+        expect(searchResultIds($query, 'Message'))->toBe([$priceList->id]);
+    })->with(['bang gia thang 10', 'gia thang 10', 'thang 10 bang gia', 'Bảng   GIÁ sỉ']);
+
+    it('finds nothing when one of the words is missing', function () {
+        searchTestMessage(['content' => 'Gửi shop bảng giá sỉ tháng 10']);
+
+        expect(searchResultIds('bang gia thang 11', 'Message'))->toBe([]);
+    });
+
+    it('finds a file whose name joins words with hyphens, underscores, dots or slashes', function (string $query) {
+        $file = searchTestFile($this->message, ['filename' => 'bao-gia_thang-9.pdf']);
+        searchTestFile($this->message, ['filename' => 'hop-dong_thang-9.pdf']);
+
+        expect(searchResultIds($query, 'Attachment'))->toBe([$file->id]);
+    })->with(['bao gia thang 9', 'thang 9 bao gia', 'bao-gia', 'Báo giá tháng 9', 'bao_gia.thang/9']);
+
+    it('finds a contact by name words in any order', function () {
+        $duc = Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Nguyễn Văn Đức', 'email' => 'duc@shop.test']);
+
+        expect(searchResultIds('duc nguyen', 'Contact'))->toBe([$duc->id]);
+    });
+
+    it('still matches email, phone number and conversation id verbatim', function () {
+        $contact = Contact::factory()->create([
+            'account_id' => $this->account->id,
+            'name' => 'Kim',
+            'email' => 'lan.anh@shop-si.test',
+            'phone_number' => '+84901234567',
+        ]);
+        $conversation = Conversation::factory()->create([
+            'account_id' => $this->account->id,
+            'inbox_id' => $this->inbox->id,
+            'contact_id' => $contact->id,
+        ]);
+
+        expect(searchResultIds('lan.anh@shop-si', 'Contact'))->toBe([$contact->id])
+            ->and(searchResultIds('+8490123', 'Contact'))->toBe([$contact->id])
+            ->and(searchResultIds('lan.anh@shop-si.test', 'Conversation'))->toBe([$conversation->id])
+            ->and(searchResultIds((string) $conversation->display_id, 'Conversation'))->toContain($conversation->id);
     });
 });
 

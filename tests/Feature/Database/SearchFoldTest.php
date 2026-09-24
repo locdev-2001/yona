@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Account;
 use App\Models\Attachment;
+use App\Models\Contact;
 use App\Services\SearchService;
 use App\Support\SearchTerm;
 use Illuminate\Support\Facades\DB;
@@ -70,3 +72,35 @@ it('lets the search expression use its folded trigram index', function (string $
     'contact name' => ['contacts', 'contacts.name', 'index_contacts_on_folded_name'],
     'file name' => ['attachments', Attachment::DISPLAY_NAME_SQL, 'index_attachments_on_folded_display_name'],
 ]);
+
+it('splits the folded query into distinct words', function (string $query, array $words) {
+    expect((new SearchTerm($query))->foldedWords())->toBe($words);
+})->with([
+    'accents and separators' => [' Bảng-giá_SỈ  bang ', ['bang', 'gia', 'si']],
+    'file name' => ['bao-gia_thang-9.pdf', ['bao', 'gia', 'thang', '9', 'pdf']],
+    'only separators' => [' -_./ ', []],
+    'empty' => ['', []],
+]);
+
+it('requires every word on the same folded column', function () {
+    [$condition, $bindings] = (new SearchTerm('gia bao-gia 50%'))->foldedMatch('messages.content');
+
+    expect($condition)->toBe('(search_fold(messages.content) LIKE ? AND search_fold(messages.content) LIKE ? AND search_fold(messages.content) LIKE ?)')
+        ->and($bindings)->toBe(['%gia%', '%bao%', '%50\\%%']);
+});
+
+it('does not filter the column when the query has no word left', function () {
+    expect((new SearchTerm(' - '))->foldedMatch('contacts.name'))->toBe(['(search_fold(contacts.name) LIKE ?)', ['%%']]);
+});
+
+// Index biểu thức phải được dựng theo đúng thân hàm hiện tại: tắt seqscan thì chỉ
+// còn đường qua index, và đường đó vẫn phải ra tệp tên nối bằng gạch.
+it('finds separator-joined names through the folded index', function () {
+    $account = Account::factory()->create();
+    Contact::factory()->create(['account_id' => $account->id, 'name' => 'bao-gia_thang-9.pdf']);
+    Contact::factory()->create(['account_id' => $account->id, 'name' => 'hop-dong.pdf']);
+    DB::statement('SET LOCAL enable_seqscan = off');
+    [$condition, $bindings] = (new SearchTerm('thang 9 bao gia'))->foldedMatch('contacts.name');
+
+    expect(DB::table('contacts')->whereRaw($condition, $bindings)->pluck('name')->all())->toBe(['bao-gia_thang-9.pdf']);
+});

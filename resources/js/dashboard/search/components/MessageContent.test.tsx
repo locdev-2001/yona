@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { setLocale } from '../../../i18n';
 import type { SearchMessage } from '../types';
@@ -31,6 +31,34 @@ describe('MessageContent', () => {
         const { container } = render(<MessageContent message={buildMessage()} searchTerm="bao gia" />);
 
         expect(container.querySelector('mark')?.textContent).toBe('báo giá');
+    });
+
+    describe('tin dài bị thu gọn một dòng', () => {
+        const longMessage = buildMessage({
+            content: 'Chào chị, hôm qua em đã gửi mẫu áo thun cổ tròn, hôm nay em gửi lại chị bảng giá sỉ tháng 10 nhé',
+        });
+
+        afterEach(() => vi.restoreAllMocks());
+
+        it('bắt đầu đoạn trích ngay trước từ khoá, mở bằng "…", bấm Xem thêm thì hiện đủ', () => {
+            vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(120);
+            const { container } = render(<MessageContent message={longMessage} searchTerm="bang gia thang 10" />);
+            const content = container.querySelector('.message-content')!;
+
+            expect(content.textContent?.trim()).toBe('…em gửi lại chị bảng giá sỉ tháng 10 nhé');
+            expect(container.querySelector('mark')?.textContent).toBe('bảng giá');
+            expect(content.parentElement!.className).toContain('line-clamp-2');
+
+            fireEvent.click(screen.getByRole('button', { name: 'Xem thêm' }));
+
+            expect(container.querySelector('.message-content')!.textContent?.trim()).toBe(longMessage.content);
+        });
+
+        it('không cắt khi tin vừa một dòng', () => {
+            const { container } = render(<MessageContent message={longMessage} searchTerm="bang gia" />);
+
+            expect(container.querySelector('.message-content')!.textContent?.trim()).toBe(longMessage.content);
+        });
     });
 
     it('hiện nội dung có thẻ HTML thành chữ, không dựng thẻ', () => {

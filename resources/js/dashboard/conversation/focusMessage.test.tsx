@@ -54,7 +54,8 @@ function deferred<T>() {
     return { promise, resolve };
 }
 
-// Máy chủ giả: 20 tin mới nhất là 80..99, khoảng before/after trả đúng tin thuộc hội thoại (1..99).
+// Máy chủ giả: 20 tin mới nhất là 80..99, khoảng before/after trả đúng tin thuộc hội
+// thoại (1..99), chỉ có before thì trả một trang 20 tin ngay trước đó.
 let olderRange = deferred<unknown>();
 
 function routeGet(url: string): Promise<unknown> {
@@ -63,7 +64,7 @@ function routeGet(url: string): Promise<unknown> {
         if (!query.has('before')) return Promise.resolve({ payload: range(80, 99), meta: {} });
 
         const before = Number(query.get('before'));
-        const after = Number(query.get('after'));
+        const after = query.has('after') ? Number(query.get('after')) : before - 20;
         const payload = range(Math.max(after, 1), Math.min(before - 1, 99));
 
         return before === 80 ? olderRange.promise.then(() => ({ payload, meta: {} })) : Promise.resolve({ payload, meta: {} });
@@ -114,7 +115,9 @@ describe('mở hội thoại tại một tin', () => {
 
         await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
         expect(screen.getByTestId('focused').textContent).toBe('60');
-        expect(screen.getByTestId('ids').textContent).toBe(range(60, 99).map(item => item.id).join(','));
+        // Kèm một trang tin ngay trước tin đích làm ngữ cảnh phía trên.
+        expect(getJson).toHaveBeenCalledWith(expect.stringMatching(/\/messages\?before=60$/));
+        expect(screen.getByTestId('ids').textContent).toBe(range(40, 99).map(item => item.id).join(','));
         expect(useAlert).not.toHaveBeenCalled();
     });
 
@@ -147,6 +150,6 @@ describe('mở hội thoại tại một tin', () => {
 
         await waitFor(() => expect(screen.getByTestId('focused').textContent).toBe('70'));
         expect(getJson).toHaveBeenCalledWith(expect.stringContaining('/messages?before=80&after=70'));
-        expect(screen.getByTestId('ids').textContent).toBe(range(70, 99).map(item => item.id).join(','));
+        expect(screen.getByTestId('ids').textContent).toBe(range(50, 99).map(item => item.id).join(','));
     });
 });
