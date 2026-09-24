@@ -39,7 +39,7 @@ function RemoveButton({ fileName, disabled, onClick, className }: { fileName: st
             title={t('COMPONENTS.MEDIA.REMOVE_ATTACHMENT')}
             aria-label={`${t('COMPONENTS.MEDIA.REMOVE_ATTACHMENT')}: ${fileName}`}
             disabled={disabled}
-            className={`grid place-content-center shrink-0 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${className}`}
+            className={`grid p-0 place-content-center shrink-0 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${className}`}
             onClick={onClick}
         >
             <Icon icon="i-lucide-x" className="size-3.5" />
@@ -92,7 +92,7 @@ export default function AttachmentsPreview({
                                 <>
                                     <video src={attachment.thumb} muted playsInline preload="metadata" className="object-cover size-full" />
                                     <span className="absolute inset-0 grid pointer-events-none place-content-center">
-                                        <span className="grid rounded-full size-6 place-content-center bg-black/55">
+                                        <span className="grid rounded-full size-6 place-content-center bg-n-black/50">
                                             <Icon icon="i-lucide-play" className="text-white size-3 ms-px" />
                                         </span>
                                     </span>
@@ -103,7 +103,7 @@ export default function AttachmentsPreview({
                             <RemoveButton
                                 fileName={attachment.resource.name}
                                 disabled={isUploading}
-                                className="absolute size-5 top-1 ltr:right-1 rtl:left-1 bg-black/60 text-white hover:bg-black/80"
+                                className="absolute size-5 top-1 ltr:right-1 rtl:left-1 bg-n-black/60 text-white hover:bg-n-black/80"
                                 onClick={() => removeAt(index)}
                             />
                             {progress !== null ? (
@@ -112,7 +112,7 @@ export default function AttachmentsPreview({
                                     aria-valuemin={0}
                                     aria-valuemax={100}
                                     aria-valuenow={Math.round(progress * 100)}
-                                    className="absolute inset-x-1 bottom-1 h-1 overflow-hidden rounded-full bg-black/40"
+                                    className="absolute inset-x-1 bottom-1 h-1 overflow-hidden rounded-full bg-n-black/40"
                                 >
                                     <div className="h-full bg-white transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
                                 </div>

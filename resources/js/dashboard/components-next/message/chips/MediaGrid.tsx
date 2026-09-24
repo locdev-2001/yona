@@ -89,14 +89,14 @@ function VideoTileContent({ attachment, onNaturalSize }: Pick<MediaTileProps, 'a
                 onError={() => setHasError(true)}
             />
             <span className="absolute inset-0 grid pointer-events-none place-content-center">
-                <span className="grid rounded-full shadow-md size-10 place-content-center bg-black/55 backdrop-blur-sm">
+                <span className="grid rounded-full shadow-md size-10 place-content-center bg-n-black/50 backdrop-blur-sm">
                     <Icon icon="i-lucide-play" className="text-white ms-0.5 size-5" />
                 </span>
             </span>
             {durationSeconds !== null ? (
                 <span
                     data-video-duration
-                    className="absolute px-1.5 py-0.5 text-xs font-medium text-white rounded-md pointer-events-none bottom-1.5 ltr:right-1.5 rtl:left-1.5 tabular-nums bg-black/55"
+                    className="absolute px-1.5 py-0.5 text-xs font-medium text-white rounded-md pointer-events-none bottom-1.5 ltr:right-1.5 rtl:left-1.5 tabular-nums bg-n-black/50"
                 >
                     {formatDuration(durationSeconds)}
                 </span>
@@ -116,7 +116,7 @@ function MediaTile({ attachment, className = '', style, hiddenCount, onOpen, onN
             type="button"
             data-media-tile={isVideo ? 'video' : 'image'}
             aria-label={isVideo ? t('COMPONENTS.MEDIA.OPEN_VIDEO') : t('COMPONENTS.MEDIA.OPEN_IMAGE')}
-            className={`relative block overflow-hidden cursor-pointer bg-n-alpha-2 focus-visible:outline-2 focus-visible:outline-n-brand focus-visible:-outline-offset-2 ${className}`}
+            className={`relative block p-0 m-0 overflow-hidden cursor-pointer bg-n-alpha-2 focus-visible:outline-2 focus-visible:outline-n-brand focus-visible:-outline-offset-2 ${className}`}
             style={style}
             onClick={(event) => {
                 event.stopPropagation();
@@ -131,7 +131,7 @@ function MediaTile({ attachment, className = '', style, hiddenCount, onOpen, onN
             {hiddenCount ? (
                 <span
                     data-media-overflow
-                    className="absolute inset-0 grid text-2xl font-semibold text-white place-content-center bg-black/55"
+                    className="absolute inset-0 grid text-2xl font-semibold text-white place-content-center bg-n-black/50"
                 >
                     +{hiddenCount}
                 </span>
