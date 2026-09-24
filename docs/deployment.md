@@ -27,7 +27,7 @@ quy trình deploy hằng ngày.
 
 ```text
 Internet ──443──▶ Nginx ──▶ public/index.php ──▶ PHP-FPM 8.4
-                    └──▶ /app, /apps ──▶ Reverb :8611 (WebSocket)
+                    └──▶ /app/<REVERB_APP_KEY>, /apps ──▶ Reverb :REVERB_SERVER_PORT (WebSocket)
 Laravel ──▶ Redis ──▶ Horizon (supervisor) ──▶ worker theo tier
 Laravel ◀─▶ Zalo bridge :8612 ──▶ Zalo
 ```
@@ -207,6 +207,8 @@ ALLOW_PRIVATE_WEBHOOK_URLS=false
 > `REVERB_INTERNAL_PORT` (Laravel gọi vào) và `proxy_pass` trong vhost Nginx
 > (trình duyệt nối vào). Lệch một chỗ là realtime chết câm — giao diện vẫn chạy,
 > chỉ không có tin mới. Con số cụ thể không quan trọng, khớp nhau mới quan trọng.
+> Mẫu trong tài liệu này dùng `8611`; `yona.vn` hiện chạy `8080` (kiểm 24/09/2026:
+> `.env` production và cả hai `proxy_pass` trong `laravel-runtime.conf` đều là 8080).
 
 Sinh secret mà không ghi giá trị cố định vào Git:
 
@@ -307,12 +309,15 @@ location ^~ /hc/ {
     try_files $uri $uri/ /index.php?$query_string;
 }
 
-location ^~ /app {
+# WebSocket của Reverb chiếm đúng MỘT path /app/<REVERB_APP_KEY>; phần còn lại
+# của /app là dashboard Laravel. Đừng dùng `location ^~ /app`: nó đẩy cả
+# dashboard sang Reverb. Thay <REVERB_APP_KEY> bằng giá trị trong .env.
+location = /app/<REVERB_APP_KEY> {
     proxy_pass http://127.0.0.1:8611;
     proxy_http_version 1.1;
-    proxy_set_header Host $host;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
