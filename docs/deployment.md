@@ -882,6 +882,94 @@ in cảnh báo. Chạy lại bao nhiêu lần cũng được.
 ---
 
 
+### Tìm kiếm bằng Meilisearch (tuỳ chọn)
+
+Mặc định tìm thẳng trong PostgreSQL (`SEARCH_DRIVER=pgsql`), không cần gì thêm.
+Meilisearch cho tìm tương đối có xếp hạng (cụm liền, khớp đúng lên đầu, gõ không
+dấu vẫn ra chữ có dấu kể cả `đ`). Quyền xem vẫn do Yona nạp lại từ PostgreSQL:
+Meilisearch chỉ trả id.
+
+**Cài** (bản ổn định mới nhất, đã chạy thử 1.54.0), chỉ nghe mạng nội bộ:
+
+```bash
+curl -L https://install.meilisearch.com | sh && sudo mv meilisearch /usr/local/bin/
+sudo useradd --system --home /var/lib/meilisearch meilisearch
+sudo mkdir -p /var/lib/meilisearch/{data,snapshots} && sudo chown -R meilisearch: /var/lib/meilisearch
+openssl rand -hex 32   # master key, chỉ ghi vào EnvironmentFile dưới đây và .env của Yona
+```
+
+`/etc/meilisearch.env` (chmod 600, chủ `meilisearch`):
+
+```ini
+MEILI_ENV=production
+MEILI_MASTER_KEY=<master key>
+MEILI_HTTP_ADDR=127.0.0.1:7700
+MEILI_DB_PATH=/var/lib/meilisearch/data
+MEILI_SNAPSHOT_DIR=/var/lib/meilisearch/snapshots
+MEILI_SCHEDULE_SNAPSHOT=86400
+MEILI_NO_ANALYTICS=true
+```
+
+`/etc/systemd/system/meilisearch.service`:
+
+```ini
+[Unit]
+Description=Meilisearch
+After=network.target
+
+[Service]
+User=meilisearch
+EnvironmentFile=/etc/meilisearch.env
+ExecStart=/usr/local/bin/meilisearch
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now meilisearch
+curl -s 127.0.0.1:7700/health   # {"status":"available"}
+```
+
+Không mở cổng 7700 ra Internet, không qua nginx. Chạy trên máy khác thì chỉ nghe
+IP mạng nội bộ và chặn tường lửa cho riêng máy app.
+
+**Key.** Yona ghi tài liệu và cấu hình bằng master key; mọi lượt tìm dùng key chỉ có
+quyền `search` (Meilisearch tự tạo "Default Search API Key"). Không key nào ra trình duyệt.
+
+```bash
+curl -s 127.0.0.1:7700/keys -H "Authorization: Bearer <master key>" \
+  | python3 -c "import json,sys; print([k['key'] for k in json.load(sys.stdin)['results'] if k['actions']==['search']][0])"
+```
+
+`.env` của Yona:
+
+```dotenv
+SEARCH_DRIVER=meilisearch
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=<master key>
+MEILISEARCH_SEARCH_KEY=<key chỉ search>
+```
+
+**Bật lần đầu** (sau `deploy.sh` để cache config lấy biến mới):
+
+```bash
+php artisan search:sync-settings   # tạo 4 chỉ mục, trường tìm/lọc, rankingRules
+php artisan search:reindex         # dựng lại từ PostgreSQL theo lô, chạy được khi đang nhận tin
+```
+
+Sau đó mọi thay đổi đi qua bảng `search_outbox` (job hàng đợi `low`, lịch mỗi phút
+vét lại). Thẻ "Search outbox" trên Pulse hiện số dòng tồn và tuổi dòng cũ nhất: tồn
+lâu nghĩa là Meilisearch không tới được hoặc worker `low` không chạy.
+
+**Vận hành.** Đổi cấu hình chỉ mục trong code thì chạy lại `search:sync-settings`.
+Mất dữ liệu Meilisearch không mất gì của khách: khôi phục snapshot mới nhất
+(`meilisearch --import-snapshot <tệp>`) hoặc xoá thư mục data rồi `search:reindex`.
+Theo dõi dung lượng `/var/lib/meilisearch` (đo thử: ~1,3 GB cho mỗi 1 triệu tin
+ngắn). Quay về PostgreSQL: `SEARCH_DRIVER=pgsql` rồi `php artisan config:cache`;
+job outbox tự bỏ các dòng còn tồn.
+
 ## 10. Deploy
 
 Dry-run (in ra lệnh sẽ chạy, không đổi gì):
