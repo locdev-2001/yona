@@ -12,24 +12,15 @@
 # (mẫu ở .env.example, dựng phía server ở references/prod-db-setup.md).
 set -euo pipefail
 
-ENV_FILE=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)/.env
 SOCKET=${XDG_RUNTIME_DIR:-/tmp}/yona-prod-db.sock
 
 usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 die() { echo "LỖI: $*" >&2; exit 1; }
 
-[[ -f $ENV_FILE ]] || die "không thấy $ENV_FILE"
-
-# Chỉ nạp nhóm PROD_DB_* — không source cả .env của Laravel (giá trị có dấu cách, ký tự đặc biệt).
-while IFS= read -r line; do
-  name=${line%%=*} value=${line#*=}
-  value=${value%\"}; value=${value#\"}; value=${value%\'}; value=${value#\'}
-  [[ -z ${!name:-} ]] && export "$name=$value"
-done < <(grep -E '^PROD_DB_[A-Z_]+=' "$ENV_FILE")
-
-for required in PROD_DB_SSH_HOST PROD_DB_SSH_PORT PROD_DB_SSH_USER PROD_DB_SSH_KEY PROD_DB_NAME PROD_DB_USER PROD_DB_PASSWORD; do
-  [[ -n ${!required:-} ]] || die "thiếu $required trong $ENV_FILE — xem .claude/skills/yona-issues/references/prod-db-setup.md"
-done
+cd "$(dirname "$0")"
+# shellcheck source=../../../../scripts/lib/prod-env.sh
+source "$(git rev-parse --show-toplevel)/scripts/lib/prod-env.sh"
+require_prod_env PROD_DB_SSH_HOST PROD_DB_SSH_PORT PROD_DB_SSH_USER PROD_DB_SSH_KEY PROD_DB_NAME PROD_DB_USER PROD_DB_PASSWORD
 
 MAX_ROWS=${PROD_DB_MAX_ROWS:-500}
 REMOTE_PORT=${PROD_DB_PORT:-5432}
