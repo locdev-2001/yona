@@ -24,6 +24,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\PlatformApp;
 use App\Models\User;
+use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use Laravel\Horizon\Horizon;
 
 class AppServiceProvider extends ServiceProvider
@@ -57,6 +59,14 @@ class AppServiceProvider extends ServiceProvider
             'pgsql',
             fn ($pdo, string $database, string $prefix, array $config) => new PostgresConnection($pdo, $database, $prefix, $config),
         );
+
+        $this->app->bind(SearchEngine::class, function ($app): SearchEngine {
+            $driver = (string) config('search.driver');
+            $engineClass = config("search.drivers.{$driver}")
+                ?? throw new InvalidArgumentException("Engine tìm kiếm [{$driver}] chưa đăng ký trong config/search.php.");
+
+            return $app->make($engineClass);
+        });
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use App\Search\SearchTarget;
 use App\Services\SearchService;
 
 // Port từ spec/services/search_service_spec.rb.
@@ -379,27 +380,25 @@ describe('conversation search', function () {
     });
 });
 
-describe('message base query inbox scoping', function () {
+describe('message search inbox scoping', function () {
     it('does not filter by inbox for an administrator', function () {
         $this->accountUser->update(['role' => AccountUser::ROLE_ADMINISTRATOR]);
         Inbox::factory()->create(['account_id' => $this->account->id]);
 
-        expect(e2Search(['q' => 'test'], 'Message')->messageBaseQuery()->toSql())->not->toContain('inbox_id');
+        expect(e2Search(['q' => 'test'], 'Message')->searchQuery(SearchTarget::Messages)->inboxIds)->toBeNull();
     });
 
     it('filters by accessible inbox when the agent has limited access', function () {
         Inbox::factory()->create(['account_id' => $this->account->id]);
 
-        $sql = e2Search(['q' => 'test'], 'Message')->messageBaseQuery()->toSql();
-
-        expect($sql)->toContain('created_at')->and($sql)->toContain('inbox_id');
+        expect(e2Search(['q' => 'test'], 'Message')->searchQuery(SearchTarget::Messages)->inboxIds)->toBe([$this->inbox->id]);
     });
 
     it('skips inbox filtering when the agent can access every inbox', function () {
         $otherInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
         $this->user->inboxes()->attach($otherInbox->id);
 
-        expect(e2Search(['q' => 'test'], 'Message')->messageBaseQuery()->toSql())->not->toContain('inbox_id');
+        expect(e2Search(['q' => 'test'], 'Message')->searchQuery(SearchTarget::Messages)->inboxIds)->toBeNull();
     });
 });
 

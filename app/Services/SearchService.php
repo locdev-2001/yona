@@ -9,17 +9,24 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Search\SearchEngine;
+use App\Search\SearchHits;
+use App\Search\SearchQuery;
+use App\Search\SearchTarget;
 use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
-// Tìm hội thoại, tin nhắn, liên hệ và tệp của một account theo từ khoá. Chữ người
-// đọc (tên, nội dung, tiêu đề thư, tên tệp) khớp không dấu qua SearchTerm; email,
-// số điện thoại, mã khớp nguyên văn. Mỗi loại xếp theo mức liên quan của chữ người
-// đọc (SearchTerm::orderByRelevance) rồi mới tới mới hơn trước, id cuối cùng để
-// các trang không chồng nhau. Articles: trả rỗng tới khi có Help Center.
+// Tìm hội thoại, tin nhắn, liên hệ và tệp của một account theo từ khoá. Engine
+// (config/search.php) chỉ trả id đã xếp hạng; lớp này là chỗ duy nhất quyết phạm
+// vi và quyền: dựng SearchQuery với hộp thư người tìm được xem, rồi nạp lại theo
+// id từ PostgreSQL dưới đúng điều kiện account + hộp thư đó, giữ thứ tự của engine
+// và bỏ id không còn hoặc không được xem. Trang có thể ngắn hơn khi engine trả id
+// đã mất quyền — không bù bằng truy vấn thêm. Articles: trả rỗng tới khi có Help
+// Center.
 class SearchService
 {
     public const RESULTS_PER_PAGE = 15;
@@ -31,12 +38,6 @@ class SearchService
     // cao dùng chung một mốc: đủ để tra lại báo giá, chuyển khoản cũ mà vẫn giữ
     // truy vấn gọn.
     public const MESSAGE_LOOKBACK_MONTHS = 12;
-
-    // Người gửi thật của tin nhóm (khoá chuẩn của năng lực group_threads). Kênh
-    // không có tin nhóm thì khoá này vắng, không bao giờ khớp.
-    public const GROUP_SENDER_NAME_SQL = "messages.content_attributes #>> '{sender,name}'";
-
-    private const MAIL_SUBJECT_SQL = "conversations.additional_attributes ->> 'mail_subject'";
 
     // Thanh tìm trong một hội thoại đếm và nhảy qua từng tin khớp: đủ id cho hội
     // thoại dài mà không kéo cả bản ghi.
@@ -50,7 +51,7 @@ class SearchService
 
     private ?AccountUser $accountUser = null;
 
-    private ?SearchTerm $searchTerm = null;
+    private ?SearchEngine $engine = null;
 
     /** @param array<string, mixed> $params */
     public function __construct(
@@ -89,139 +90,65 @@ class SearchService
     /** @return Collection<int, Conversation> */
     public function filterConversations(): Collection
     {
-        $query = $this->accessibleConversations()
-            ->select('conversations.*')
-            // Tên thành viên nhóm khớp gần nhất — cho giao diện biết vì sao nhóm này ra.
-            ->selectSub(
-                $this->groupMemberMatch()
-                    ->selectRaw(self::GROUP_SENDER_NAME_SQL)
-                    ->reorder()
-                    ->orderByDesc('messages.created_at')
-                    ->limit(1),
-                'matched_member_name',
-            )
-            // Bọc ngoặc: nếu không, OR nuốt luôn điều kiện account_id/inbox_id.
-            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches));
+        $hits = $this->hits($this->searchQuery(SearchTarget::Conversations));
+        $conversations = $this->reload(SearchTarget::Conversations, $hits, ['contact', 'inbox', 'assignee.accountUsers']);
 
-        if ($this->advancedSearchEnabled()) {
-            $query = $this->applyTimeFilter($query, 'conversations.last_activity_at');
+        // Ghi như cột đã đọc từ DB (không bẩn) — chỉ để hiển thị, không bao giờ lưu.
+        foreach ($conversations as $conversation) {
+            $conversation->setRawAttributes([
+                ...$conversation->getAttributes(),
+                SearchHits::MATCHED_MEMBER_NAME => $hits->annotation($conversation->id, SearchHits::MATCHED_MEMBER_NAME),
+            ], sync: true);
         }
 
-        return $this->searchTerm()->orderByRelevance($query, 'contacts.name', self::MAIL_SUBJECT_SQL)
-            ->with(['contact', 'inbox', 'assignee.accountUsers'])
-            ->orderByDesc('conversations.created_at')
-            ->orderByDesc('conversations.id')
-            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
-            ->get();
+        return $conversations;
     }
 
     /**
      * Id hội thoại khớp từ khoá cho ô tìm lọc tại chỗ trong danh sách hội thoại:
-     * cùng luật khớp của filterConversations, cộng hội thoại có tin khớp nội dung
-     * (cùng luật và mốc nhìn lại của filterMessages). Chỉ trả tập id — bên gọi giữ
-     * nguyên hộp thư, tab, trạng thái, bộ lọc và thứ tự của danh sách đang xem.
+     * khớp thông tin hội thoại hoặc nội dung tin (cùng mốc nhìn lại của tab Tin
+     * nhắn). Chỉ trả tập id — bên gọi giữ nguyên hộp thư, tab, trạng thái, bộ lọc
+     * và thứ tự của danh sách đang xem.
      *
      * @return Builder<Conversation>
      */
     public function matchingConversationIds(): Builder
     {
-        $term = $this->searchTerm();
-
-        return $this->accessibleConversations()
+        return $this->permitted(SearchTarget::Conversations)
             ->select('conversations.id')
-            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches)
-                ->orWhereExists($this->messageBaseQuery()
-                    ->whereColumn('messages.conversation_id', 'conversations.id')
-                    ->whereRaw(...$term->foldedMatch('messages.content'))));
+            ->whereIn('conversations.id', $this->engine()->matchingConversationIds($this->searchQuery(SearchTarget::Conversations)));
     }
 
-    // Trong một hội thoại, tin khớp xếp theo thời gian (mới trước) như đọc lại
-    // cuộc trò chuyện; tìm chung thì theo mức liên quan trước.
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {
-        $query = $this->matchedMessages();
-
-        if (! $this->scopedToConversation()) {
-            $query = $this->searchTerm()->orderByRelevance($query, 'messages.content');
-        }
-
-        return $this->newestFirst($query)
-            ->with(self::MESSAGE_RESULT_RELATIONS)
-            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
-            ->get();
+        return $this->reload(SearchTarget::Messages, $this->hits($this->searchQuery(SearchTarget::Messages)), self::MESSAGE_RESULT_RELATIONS);
     }
 
     /** @return list<int> */
     public function matchedMessageIds(): array
     {
-        return $this->newestFirst($this->matchedMessages())
-            ->limit(self::CONVERSATION_MATCH_LIMIT)
+        $hits = $this->hits($this->searchQuery(SearchTarget::Messages, page: 1, perPage: self::CONVERSATION_MATCH_LIMIT));
+        $permittedIds = array_flip($this->permitted(SearchTarget::Messages)
+            ->whereKey($hits->ids)
             ->pluck('messages.id')
-            ->all();
+            ->all());
+
+        return array_values(array_filter($hits->ids, fn (int $id) => isset($permittedIds[$id])));
     }
 
-    // Mỗi tệp khớp là một kết quả (một tin ba tệp khớp ra ba dòng). Phạm vi, quyền
-    // và bộ lọc nâng cao đi theo đúng tin chứa tệp.
     /** @return Collection<int, Attachment> */
     public function filterFiles(): Collection
     {
-        $term = $this->searchTerm();
-
-        $query = Attachment::query()
-            ->select('attachments.*')
-            ->whereMorphedTo('attachable', Message::class)
-            ->whereIn('attachments.attachable_id', $this->filteredMessages()->select('messages.id'))
-            ->whereIn('attachments.file_type', Attachment::SEARCHABLE_FILE_TYPES)
-            ->whereRaw(...$term->foldedMatch(Attachment::DISPLAY_NAME_SQL));
-
-        return $term->orderByRelevance($query, Attachment::DISPLAY_NAME_SQL)
-            ->with(['attachable' => fn (MorphTo $morph) => $morph->morphWith([
-                Message::class => self::MESSAGE_RESULT_RELATIONS,
-            ])])
-            ->orderByDesc('attachments.created_at')
-            ->orderByDesc('attachments.id')
-            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
-            ->get();
-    }
-
-    /** @return Builder<Message> */
-    public function messageBaseQuery(): Builder
-    {
-        $query = Message::query()
-            ->where('messages.account_id', $this->currentAccount->id)
-            ->where('messages.created_at', '>=', Carbon::now()->subMonths(self::MESSAGE_LOOKBACK_MONTHS));
-
-        if (! $this->shouldSkipInboxFiltering()) {
-            $query->whereIn('messages.inbox_id', $this->accessableInboxIds());
-        }
-
-        return $query;
+        return $this->reload(SearchTarget::Files, $this->hits($this->searchQuery(SearchTarget::Files)), [
+            'attachable' => fn (MorphTo $morph) => $morph->morphWith([Message::class => self::MESSAGE_RESULT_RELATIONS]),
+        ]);
     }
 
     /** @return Collection<int, Contact> */
     public function filterContacts(): Collection
     {
-        $term = $this->searchTerm();
-
-        $query = Contact::query()
-            ->where('contacts.account_id', $this->currentAccount->id)
-            ->where(fn (Builder $matches) => $matches
-                ->whereRaw(...$term->foldedMatch('contacts.name'))
-                ->orWhereRaw(...$term->plainMatch('contacts.email'))
-                ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
-                ->orWhereRaw(...$term->plainMatch('contacts.identifier')));
-
-        if ($this->advancedSearchEnabled()) {
-            $query = $this->applyTimeFilter($query, 'contacts.last_activity_at');
-        }
-
-        return $term->orderByRelevance($query, 'contacts.name')
-            ->resolvedContacts($this->currentAccount->featureEnabled('crm_v2'))
-            ->orderOnLastActivityAt('desc')
-            ->orderByDesc('contacts.id')
-            ->forPage($this->currentPage(), self::RESULTS_PER_PAGE)
-            ->get();
+        return $this->reload(SearchTarget::Contacts, $this->hits($this->searchQuery(SearchTarget::Contacts)), []);
     }
 
     // Help Center chưa port (E4) — giữ khoá `articles` để shape payload không đổi.
@@ -229,6 +156,116 @@ class SearchService
     public function filterArticles(): array
     {
         return [];
+    }
+
+    /**
+     * Phạm vi một lượt tìm gửi xuống engine. Hộp thư: hội thoại luôn theo hộp thư
+     * người tìm được xem; tin và tệp bỏ lọc hộp thư khi người tìm xem được mọi hộp
+     * thư, bộ lọc nâng cao thu hẹp về đúng một hộp thư được phép.
+     */
+    public function searchQuery(SearchTarget $target, ?int $page = null, int $perPage = self::RESULTS_PER_PAGE): SearchQuery
+    {
+        $advanced = $this->advancedSearchEnabled();
+        $messageBound = $target->isMessageBound();
+        [$senderType, $senderId] = $advanced && $messageBound ? $this->parseFromParam($this->params['from'] ?? null) : [null, null];
+
+        return new SearchQuery(
+            target: $target,
+            accountId: $this->currentAccount->id,
+            keyword: SearchTerm::fromParams($this->params)->raw(),
+            lookbackStart: $this->lookbackStart(),
+            page: $page ?? $this->currentPage(),
+            perPage: $perPage,
+            inboxIds: $messageBound ? $this->messageInboxFilter($advanced) : $this->accessableInboxIds(),
+            conversationId: $messageBound ? $this->scopedConversationId() : null,
+            senderType: $senderType,
+            senderId: $senderId,
+            since: $advanced ? $this->capSinceTime($this->params['since'] ?? null) : null,
+            until: $advanced ? $this->capUntilTime($this->params['until'] ?? null) : null,
+            leadContactsOnly: $this->currentAccount->featureEnabled('crm_v2'),
+        );
+    }
+
+    private function hits(SearchQuery $query): SearchHits
+    {
+        // Hỏi một hội thoại không có trong account: không có gì để tìm.
+        if ($query->target->isMessageBound() && $query->conversationId === null && $this->conversationDisplayId() !== null) {
+            return SearchHits::none();
+        }
+
+        return $this->engine()->search($query);
+    }
+
+    /**
+     * Nạp lại bản ghi theo id engine trả, dưới đúng điều kiện quyền, giữ thứ tự
+     * engine; id không còn hoặc không được xem thì rơi ra.
+     *
+     * @param  array<array-key, mixed>  $relations
+     * @return Collection<int, Model>
+     */
+    private function reload(SearchTarget $target, SearchHits $hits, array $relations): Collection
+    {
+        if ($hits->ids === []) {
+            return new Collection;
+        }
+
+        $positions = array_flip($hits->ids);
+
+        return $this->permitted($target)
+            ->whereKey($hits->ids)
+            ->with($relations)
+            ->get()
+            ->sortBy(fn (Model $model) => $positions[$model->getKey()])
+            ->values();
+    }
+
+    /**
+     * Điều kiện quyền duy nhất của tìm kiếm: bản ghi thuộc account và (với hội
+     * thoại, tin, tệp) nằm trong hộp thư người tìm được xem.
+     *
+     * @return Builder<Model>
+     */
+    private function permitted(SearchTarget $target): Builder
+    {
+        return match ($target) {
+            SearchTarget::Conversations => Conversation::query()
+                ->where('conversations.account_id', $this->currentAccount->id)
+                ->whereIn('conversations.inbox_id', $this->accessableInboxIds()),
+            SearchTarget::Messages => $this->permittedMessages(),
+            SearchTarget::Contacts => Contact::query()->where('contacts.account_id', $this->currentAccount->id),
+            SearchTarget::Files => Attachment::query()
+                ->whereMorphedTo('attachable', Message::class)
+                ->whereIn('attachments.attachable_id', $this->permittedMessages()->select('messages.id')),
+        };
+    }
+
+    /** @return Builder<Message> */
+    private function permittedMessages(): Builder
+    {
+        $messages = Message::query()->where('messages.account_id', $this->currentAccount->id);
+
+        if (! $this->shouldSkipInboxFiltering()) {
+            $messages->whereIn('messages.inbox_id', $this->accessableInboxIds());
+        }
+
+        return $messages;
+    }
+
+    /** @return list<int>|null */
+    private function messageInboxFilter(bool $advanced): ?array
+    {
+        $inboxId = $advanced ? (int) ($this->params['inbox_id'] ?? 0) : 0;
+
+        if ($inboxId !== 0 && $this->validateInboxAccess($inboxId)) {
+            return [$inboxId];
+        }
+
+        return $this->shouldSkipInboxFiltering() ? null : array_values($this->accessableInboxIds());
+    }
+
+    private function engine(): SearchEngine
+    {
+        return $this->engine ??= app(SearchEngine::class);
     }
 
     /** @return array<int, int> */
@@ -240,39 +277,6 @@ class SearchService
             ->all();
     }
 
-    private function searchTerm(): SearchTerm
-    {
-        return $this->searchTerm ??= SearchTerm::fromParams($this->params);
-    }
-
-    /** @return Builder<Message> */
-    private function filteredMessages(): Builder
-    {
-        return $this->applyConversationFilter($this->applyMessageFilters($this->messageBaseQuery()));
-    }
-
-    /** @return Builder<Message> */
-    private function matchedMessages(): Builder
-    {
-        return $this->filteredMessages()->whereRaw(...$this->searchTerm()->foldedMatch('messages.content'));
-    }
-
-    // created_at đơn lẻ không duy nhất — thiếu id làm tie-break thì các trang liền
-    // nhau đảo chỗ và trùng bản ghi.
-    /**
-     * @param  Builder<Message>  $query
-     * @return Builder<Message>
-     */
-    private function newestFirst(Builder $query): Builder
-    {
-        return $query->orderByDesc('messages.created_at')->orderByDesc('messages.id');
-    }
-
-    private function scopedToConversation(): bool
-    {
-        return $this->conversationDisplayId() !== null;
-    }
-
     private function conversationDisplayId(): ?int
     {
         $displayId = $this->params['conversation_id'] ?? null;
@@ -280,64 +284,22 @@ class SearchService
         return is_numeric($displayId) && (int) $displayId > 0 ? (int) $displayId : null;
     }
 
-    // Chỉ thu hẹp phạm vi: tin vẫn phải qua lớp quyền theo hộp thư của
-    // messageBaseQuery, nên hội thoại ở hộp thư không được phép ra rỗng.
-    /**
-     * @param  Builder<Message>  $query
-     * @return Builder<Message>
-     */
-    private function applyConversationFilter(Builder $query): Builder
+    // Chỉ thu hẹp phạm vi: tin vẫn phải qua lớp quyền theo hộp thư, nên hội thoại
+    // ở hộp thư không được phép ra rỗng.
+    private function scopedConversationId(): ?int
     {
         $displayId = $this->conversationDisplayId();
 
         if ($displayId === null) {
-            return $query;
+            return null;
         }
 
-        return $query->whereIn('messages.conversation_id', Conversation::query()
-            ->select('conversations.id')
+        $conversationId = Conversation::query()
             ->where('conversations.account_id', $this->currentAccount->id)
-            ->where('conversations.display_id', $displayId));
-    }
+            ->where('conversations.display_id', $displayId)
+            ->value('conversations.id');
 
-    // Hội thoại của account trong các hộp thư người tìm được xem, đã nối contacts
-    // để luật khớp đọc được thông tin khách.
-    /** @return Builder<Conversation> */
-    private function accessibleConversations(): Builder
-    {
-        return Conversation::query()
-            ->where('conversations.account_id', $this->currentAccount->id)
-            ->whereIn('conversations.inbox_id', $this->accessableInboxIds())
-            ->join('contacts', 'conversations.contact_id', '=', 'contacts.id');
-    }
-
-    // Luật khớp của một hội thoại (truy vấn đã nối contacts): mã, tên/email/SĐT/mã
-    // định danh của khách, tiêu đề thư, người gửi thật trong nhóm.
-    /**
-     * @param  Builder<Conversation>  $matches
-     * @return Builder<Conversation>
-     */
-    private function whereConversationMatches(Builder $matches): Builder
-    {
-        $term = $this->searchTerm();
-
-        return $matches
-            ->whereRaw(...$term->withoutIdPrefix()->plainMatch('cast(conversations.display_id as text)'))
-            ->orWhereRaw(...$term->foldedMatch('contacts.name'))
-            ->orWhereRaw(...$term->plainMatch('contacts.email'))
-            ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
-            ->orWhereRaw(...$term->plainMatch('contacts.identifier'))
-            ->orWhereRaw(...$term->foldedMatch(self::MAIL_SUBJECT_SQL))
-            ->orWhereExists($this->groupMemberMatch());
-    }
-
-    // Tin trong nhóm của hội thoại đang xét mà người gửi thật khớp từ khoá.
-    /** @return Builder<Message> */
-    private function groupMemberMatch(): Builder
-    {
-        return Message::query()
-            ->whereColumn('messages.conversation_id', 'conversations.id')
-            ->whereRaw(...$this->searchTerm()->foldedMatch(self::GROUP_SENDER_NAME_SQL));
+        return $conversationId === null ? null : (int) $conversationId;
     }
 
     private function currentPage(): int
@@ -348,37 +310,6 @@ class SearchService
     private function advancedSearchEnabled(): bool
     {
         return $this->currentAccount->featureEnabled('advanced_search');
-    }
-
-    /**
-     * @param  Builder<Message>  $query
-     * @return Builder<Message>
-     */
-    private function applyMessageFilters(Builder $query): Builder
-    {
-        if (! $this->advancedSearchEnabled()) {
-            return $query;
-        }
-
-        $query = $this->applyTimeFilter($query, 'messages.created_at');
-        $query = $this->applySenderFilter($query);
-
-        return $this->applyInboxIdFilter($query);
-    }
-
-    /**
-     * @param  Builder<Message>  $query
-     * @return Builder<Message>
-     */
-    private function applySenderFilter(Builder $query): Builder
-    {
-        [$senderType, $senderId] = $this->parseFromParam($this->params['from'] ?? null);
-
-        if ($senderType === null || $senderId === null) {
-            return $query;
-        }
-
-        return $query->where('messages.sender_type', $senderType)->where('messages.sender_id', $senderId);
     }
 
     /** @return array{0: ?string, 1: ?int} */
@@ -392,21 +323,6 @@ class SearchService
 
         // sender_type lưu tên lớp Ruby ('User'/'Contact') qua morphMap.
         return [$type === 'agent' ? 'User' : 'Contact', (int) $id];
-    }
-
-    /**
-     * @param  Builder<Message>  $query
-     * @return Builder<Message>
-     */
-    private function applyInboxIdFilter(Builder $query): Builder
-    {
-        $inboxId = (int) ($this->params['inbox_id'] ?? 0);
-
-        if ($inboxId === 0 || ! $this->validateInboxAccess($inboxId)) {
-            return $query;
-        }
-
-        return $query->where('messages.inbox_id', $inboxId);
     }
 
     private function validateInboxAccess(int $inboxId): bool
@@ -429,43 +345,30 @@ class SearchService
         return $accessable === $all;
     }
 
-    /**
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @return Builder<TModel>
-     */
-    private function applyTimeFilter(Builder $query, string $column): Builder
+    private function lookbackStart(): Carbon
     {
-        $since = $this->params['since'] ?? null;
-        $until = $this->params['until'] ?? null;
-
-        if ($since === null && $until === null) {
-            return $query;
-        }
-
-        if ($since !== null && $since !== '') {
-            $query->where($column, '>=', $this->capSinceTime($since));
-        }
-
-        if ($until !== null && $until !== '') {
-            $query->where($column, '<=', $this->capUntilTime($until));
-        }
-
-        return $query;
+        return Carbon::now()->subMonths(self::MESSAGE_LOOKBACK_MONTHS);
     }
 
     // Yêu cầu xa hơn mốc tìm kiếm bị kẹp im lặng về mốc đó, không báo lỗi.
-    private function capSinceTime(mixed $since): Carbon
+    private function capSinceTime(mixed $since): ?Carbon
     {
+        if ($since === null || $since === '') {
+            return null;
+        }
+
         $requested = Carbon::createFromTimestamp((int) $since);
-        $maxLookback = Carbon::now()->subMonths(self::MESSAGE_LOOKBACK_MONTHS);
+        $maxLookback = $this->lookbackStart();
 
         return $requested->greaterThan($maxLookback) ? $requested : $maxLookback;
     }
 
-    private function capUntilTime(mixed $until): Carbon
+    private function capUntilTime(mixed $until): ?Carbon
     {
+        if ($until === null || $until === '') {
+            return null;
+        }
+
         $requested = Carbon::createFromTimestamp((int) $until);
         $maxFuture = Carbon::now()->addDays(self::TIME_RANGE_LIMIT_DAYS);
 

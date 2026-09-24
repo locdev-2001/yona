@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Message;
+use App\Search\Drivers\PostgresSearchEngine;
 use App\Services\SearchService;
 use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Model;
@@ -51,7 +52,7 @@ function foldedSearchColumns(): array
 {
     return [
         'message content' => [Message::class, 'messages.content', 'index_messages_on_folded_content'],
-        'group member name' => [Message::class, SearchService::GROUP_SENDER_NAME_SQL, 'index_messages_on_folded_group_sender_name'],
+        'group member name' => [Message::class, PostgresSearchEngine::GROUP_SENDER_NAME_SQL, 'index_messages_on_folded_group_sender_name'],
         'contact name' => [Contact::class, 'contacts.name', 'index_contacts_on_folded_name'],
         'file name' => [Attachment::class, Attachment::DISPLAY_NAME_SQL, 'index_attachments_on_folded_display_name'],
     ];
