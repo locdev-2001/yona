@@ -7,6 +7,7 @@ use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
 use App\Jobs\Zalo\ZaloHealthSweepJob;
+use App\Models\UserSession;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -35,3 +36,6 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 // Pulse ghi thẳng vào PostgreSQL dùng chung — dọn bản ghi quá hạn mỗi giờ để
 // bảng pulse_* không phình ra cạnh dữ liệu khách.
 Schedule::command('pulse:trim')->hourly();
+// Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
+// chạm trần số phiên dù người dùng không còn phiên nào sống.
+Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
