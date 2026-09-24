@@ -2,7 +2,6 @@ import DOMPurify from 'dompurify';
 import type { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
-import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
 import MessageMeta from '../MessageMeta';
@@ -72,8 +71,9 @@ export default function BaseBubble({
     // `[data-yona-reactions]`.
     const reactions = groupReactions(readReactions(contentAttributes));
 
-    // Tin nhóm: người gửi thật đứng trên nội dung như app gốc của kênh — không có
-    // dòng này thì mọi tin trong nhóm nhìn như của cùng một người.
+    // Tin nhóm: tên người gửi thật đứng trên nội dung như app gốc của kênh (ảnh
+    // của người đó nằm ở cột avatar bên trái) — không có dòng này thì mọi tin
+    // trong nhóm nhìn như của cùng một người.
     const groupSender = orientation === ORIENTATION.LEFT ? readGroupSender(contentAttributes) : null;
 
     const forwardedFrom = readForwardedFrom(contentAttributes);
@@ -140,10 +140,9 @@ export default function BaseBubble({
             )}
             {groupSender ? (
                 <div
-                    className="flex items-center gap-1.5 mb-1 min-w-0"
+                    className="flex items-center mb-1 min-w-0"
                     title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
                 >
-                    <Avatar name={groupSender.name} src={groupSender.avatar} size={16} />
                     <span className="text-xs font-medium truncate text-n-slate-11">{groupSender.name}</span>
                 </div>
             ) : null}
