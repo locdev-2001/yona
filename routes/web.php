@@ -174,6 +174,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/labels/list', fn (Account $account) => Inertia::render('dashboard/settings/labels/Index'))
                 ->name('settings_labels_list');
 
+            // Chuyển khoản (Cài đặt / Tài khoản / Chuyển khoản): quản trị viên cấu
+            // hình tài khoản nhận tiền + mã QR VietQR.
+            Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
+                ->name('settings_payment_accounts');
+
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
             Route::get('/settings/teams/new', [TeamsSettingsController::class, 'create'])->name('settings_teams_new');
