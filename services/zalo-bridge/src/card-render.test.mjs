@@ -65,3 +65,14 @@ test('renderCardPng: ảnh sản phẩm tải hỏng (host không tồn tại) v
 
     assert.equal(png.subarray(0, 8).toString('hex'), PNG_MAGIC);
 });
+
+test('ảnh sản phẩm trỏ vào địa chỉ nội bộ không được tải (chặn SSRF)', async () => {
+    const { fetchImageDataUri, isPrivateAddress } = await import('./card-render/media.mjs');
+
+    for (const address of ['127.0.0.1', '10.0.0.5', '172.16.3.4', '192.168.1.1', '169.254.169.254', '::1', 'fd00::1', '::ffff:127.0.0.1']) {
+        assert.equal(isPrivateAddress(address), true, address);
+    }
+    assert.equal(isPrivateAddress('203.162.4.1'), false);
+    assert.equal(await fetchImageDataUri('http://169.254.169.254/latest/meta-data/'), null);
+    assert.equal(await fetchImageDataUri('http://127.0.0.1:8612/health'), null);
+});
