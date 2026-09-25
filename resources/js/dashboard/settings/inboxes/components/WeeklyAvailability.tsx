@@ -9,8 +9,14 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor';
-import BusinessDay from './BusinessDay';
-import { defaultTimeSlot, timeSlotParse, timeSlotTransform, timeZoneSelection } from '../helpers/businessHour';
+import BusinessDay, { BUSINESS_DAY_GRID } from './BusinessDay';
+import {
+    defaultTimeSlot,
+    mondayFirst,
+    timeSlotParse,
+    timeSlotTransform,
+    timeZoneSelection,
+} from '../helpers/businessHour';
 import type { TimeSlot } from '../helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
@@ -18,7 +24,8 @@ import type { Inbox } from '../types';
 
 // Port từ settings/inbox/components/WeeklyAvailability.vue.
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Khóa của lang/{locale}/days_of_week.php theo day_of_week của API (0 = Chủ nhật).
+const DAY_NAME_KEYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
 interface WeeklyAvailabilityProps {
     inbox: Inbox;
@@ -120,38 +127,29 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
 
             <form className="flex flex-col" onSubmit={updateInbox}>
                 {isBusinessHoursEnabled ? (
-                    <div className="mt-2">
-                        <div className="w-full">
-                            <table className="min-w-full table-auto outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
-                                <thead>
-                                    <tr className="border-b border-n-weak">
-                                        <th className="py-3 ltr:pl-4 ltr:pr-3 rtl:pl-3 rtl:pr-4 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.DAY')}
-                                        </th>
-                                        <th className="py-3 ltr:pr-3 rtl:pl-3 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.AVAILABILITY')}
-                                        </th>
-                                        <th className="py-3 ltr:pr-3 rtl:pl-3 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.HOURS')}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-n-weak">
-                                    {timeSlots.map(timeSlot => (
-                                        <BusinessDay
-                                            key={timeSlot.day}
-                                            dayName={DAY_NAMES[timeSlot.day]}
-                                            timeSlot={timeSlot}
-                                            onUpdate={slot =>
-                                                setTimeSlots(slots =>
-                                                    slots.map(item => (item.day === timeSlot.day ? slot : item)),
-                                                )
-                                            }
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
+                    <div className="mt-2 outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
+                        <div
+                            className={`hidden md:grid ${BUSINESS_DAY_GRID} gap-x-3 px-4 py-3 border-b border-n-weak text-heading-3 text-n-slate-12`}
+                            aria-hidden="true"
+                        >
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.DAY')}</span>
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.AVAILABILITY')}</span>
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.HOURS')}</span>
                         </div>
+                        <ul className="list-none m-0 p-0 divide-y divide-n-weak">
+                            {mondayFirst(timeSlots).map(timeSlot => (
+                                <BusinessDay
+                                    key={timeSlot.day}
+                                    dayName={t(`DAYS_OF_WEEK.${DAY_NAME_KEYS[timeSlot.day]}`)}
+                                    timeSlot={timeSlot}
+                                    onUpdate={slot =>
+                                        setTimeSlots(slots =>
+                                            slots.map(item => (item.day === timeSlot.day ? slot : item)),
+                                        )
+                                    }
+                                />
+                            ))}
+                        </ul>
                     </div>
                 ) : null}
                 <div className="w-full flex justify-end items-center py-4 mt-2">

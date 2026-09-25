@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
     generateTimeSlots,
     getTime,
+    mondayFirst,
+    timeSlotLabel,
     timeSlotParse,
     timeSlotTransform,
     timeZoneOptions,
@@ -176,5 +178,25 @@ describe('timeZoneSelection', () => {
         expect(selected).toBe('Pacific/Kiritimati');
         expect(options[0]).toStrictEqual({ label: 'Pacific/Kiritimati', value: 'Pacific/Kiritimati' });
         expect(options).toHaveLength(timeZoneOptions().length + 1);
+    });
+});
+
+describe('timeSlotLabel', () => {
+    it('hiện mốc giờ theo 24 giờ', () => {
+        expect(['12:00 AM', '09:30 AM', '12:00 PM', '05:00 PM', '11:59 PM'].map(timeSlotLabel)).toStrictEqual([
+            '00:00',
+            '09:30',
+            '12:00',
+            '17:00',
+            '23:59',
+        ]);
+    });
+});
+
+describe('mondayFirst', () => {
+    it('xếp thứ hai lên đầu, chủ nhật xuống cuối mà không đổi số ngày', () => {
+        const slots = [0, 1, 2, 3, 4, 5, 6].map(day => ({ day, from: '', to: '', valid: false }));
+
+        expect(mondayFirst(slots).map(slot => slot.day)).toStrictEqual([1, 2, 3, 4, 5, 6, 0]);
     });
 });

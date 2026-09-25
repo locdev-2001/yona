@@ -6223,24 +6223,31 @@ const messages: Record<string, unknown> = {
             }
         },
         "BUSINESS_HOURS": {
-            "TITLE": "Đặt tính khả dụng của bạn",
-            "SUBTITLE": "Đặt tính khả dụng của bạn trên tiện ích trò chuyện trực tiếp",
-            "WEEKLY_TITLE": "Đặt giờ hàng tuần của bạn",
-            "TIMEZONE_LABEL": "Chọn múi giờ",
-            "UPDATE": "Cập nhật tuỳ chỉnh giờ làm việc",
-            "TOGGLE_AVAILABILITY": "Kích hoạt tính khả dụng của doanh nghiệp cho hộp thư này",
-            "UNAVAILABLE_MESSAGE_LABEL": "Thông báo không có sẵn cho khách truy cập",
-            "TOGGLE_HELP": "Bật giờ làm việc sẽ hiện khung giờ phục vụ trên widget chat kể cả khi mọi nhân viên đang ngoại tuyến. Ngoài khung giờ đó, khách sẽ thấy một lời nhắn và biểu mẫu trước chat.",
+            "TITLE": "Giờ làm việc",
+            "SUBTITLE": "Đặt khung giờ phục vụ khách của hộp thư này",
+            "WEEKLY_TITLE": "Lịch làm việc trong tuần",
+            "TIMEZONE_LABEL": "Múi giờ",
+            "UPDATE": "Lưu giờ làm việc",
+            "TOGGLE_AVAILABILITY": "Bật giờ làm việc cho hộp thư này",
+            "UNAVAILABLE_MESSAGE_LABEL": "Tin nhắn tự động gửi khách nhắn tới ngoài giờ làm việc",
+            "TOGGLE_HELP": "Khách nhắn tới ngoài khung giờ làm việc sẽ nhận tin nhắn ngoài giờ bên dưới. Widget trên website cũng báo cho khách biết đang ngoài giờ.",
             "DAY": {
                 "DAY": "Ngày",
-                "AVAILABILITY": "Khả dụng",
-                "HOURS": "Khung giờ",
-                "ENABLE": "Kích hoạt tính khả dụng cho hôm nay",
-                "UNAVAILABLE": "Không có sẵn",
-                "VALIDATION_ERROR": "Giờ bắt đầu nên trước giờ đóng cửa.",
-                "CHOOSE": "Chọn"
+                "AVAILABILITY": "Giờ làm việc",
+                "HOURS": "Tổng giờ",
+                "ENABLE": "Làm việc ngày này",
+                "UNAVAILABLE": "Nghỉ",
+                "VALIDATION_ERROR": "Giờ bắt đầu phải trước giờ kết thúc.",
+                "CHOOSE": "Chọn",
+                "FROM": "Giờ bắt đầu {day}",
+                "TO": "Giờ kết thúc {day}"
             },
-            "ALL_DAY": "Cả ngày"
+            "ALL_DAY": "Cả ngày",
+            "TOTAL": {
+                "HOURS": "{hours} giờ",
+                "HOURS_MINUTES": "{hours} giờ {minutes} phút",
+                "MINUTES": "{minutes} phút"
+            }
         },
         "IMAP": {
             "TITLE": "IMAP",

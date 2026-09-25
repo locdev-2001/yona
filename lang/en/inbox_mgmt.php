@@ -1288,7 +1288,7 @@ return [
         'UPDATE' => 'Update business hours settings',
         'TOGGLE_AVAILABILITY' => 'Enable business availability for this inbox',
         'UNAVAILABLE_MESSAGE_LABEL' => 'Unavailable message for visitors',
-        'TOGGLE_HELP' => 'Enabling business availability will show the available hours on live chat widget even if all the agents are offline. Outside available hours visitors can be warned with a message and a pre-chat form.',
+        'TOGGLE_HELP' => 'Visitors who write outside business hours receive the unavailable message below. The website widget also tells them you are away.',
         'DAY' => [
             'DAY' => 'Day',
             'AVAILABILITY' => 'Availability',
@@ -1297,8 +1297,15 @@ return [
             'UNAVAILABLE' => 'Unavailable',
             'VALIDATION_ERROR' => 'Starting time should be before closing time.',
             'CHOOSE' => 'Choose',
+            'FROM' => 'Opening time on {day}',
+            'TO' => 'Closing time on {day}',
         ],
         'ALL_DAY' => 'All-Day',
+        'TOTAL' => [
+            'HOURS' => '{hours}h',
+            'HOURS_MINUTES' => '{hours}h {minutes}m',
+            'MINUTES' => '{minutes}m',
+        ],
     ],
     'IMAP' => [
         'TITLE' => 'IMAP',

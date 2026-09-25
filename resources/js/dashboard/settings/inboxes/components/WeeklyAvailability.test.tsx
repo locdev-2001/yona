@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setLocale } from '../../../../i18n';
@@ -59,5 +59,40 @@ describe('WeeklyAvailability — lưu mà không đổi gì', () => {
         expect((await saveWithoutChanges(inboxWith({ timezone: 'Pacific/Kiritimati' }))).timezone).toBe(
             'Pacific/Kiritimati',
         );
+    });
+});
+
+describe('WeeklyAvailability — lịch tuần', () => {
+    beforeEach(() => setLocale('vi'));
+
+    const weekday = (day: number) => ({
+        day_of_week: day,
+        closed_all_day: day === 0,
+        open_hour: day === 0 ? null : 9,
+        open_minutes: day === 0 ? null : 0,
+        close_hour: day === 0 ? null : 17,
+        close_minutes: day === 0 ? null : 30,
+        open_all_day: false,
+    });
+
+    it('hiện tên ngày tiếng Việt, thứ hai đầu tuần, giờ 24h', () => {
+        render(
+            <WeeklyAvailability
+                inbox={inboxWith({ working_hours_enabled: true, working_hours: [0, 1, 2, 3, 4, 5, 6].map(weekday) })}
+                uiSettings={{}}
+                onInboxUpdated={() => undefined}
+            />,
+        );
+
+        const days = screen.getAllByRole('listitem');
+        const dayNames = days.map(day => within(day).getAllByRole('checkbox')[0].closest('label')?.textContent);
+        expect(dayNames).toStrictEqual(['Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy', 'Chủ nhật']);
+
+        const monday = days[0];
+        expect(within(monday).getByRole('combobox', { name: 'Giờ bắt đầu Thứ hai' })).toHaveDisplayValue('09:00');
+        expect(within(monday).getByRole('combobox', { name: 'Giờ kết thúc Thứ hai' })).toHaveDisplayValue('17:30');
+        expect(within(monday).getByText('8 giờ 30 phút')).toBeInTheDocument();
+        expect(within(days[6]).getByText('Nghỉ')).toBeInTheDocument();
+        expect(document.body.textContent).not.toMatch(/\b(AM|PM)\b|Sunday|Monday/);
     });
 });

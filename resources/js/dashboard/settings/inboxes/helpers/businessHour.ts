@@ -1,4 +1,4 @@
-import { getHours, getMinutes, parse } from 'date-fns';
+import { format, getHours, getMinutes, parse } from 'date-fns';
 
 import { matchTimezone } from 'shared/helpers/timezoneAliases';
 import timeZoneData from './timezones.json';
@@ -61,6 +61,13 @@ export const generateTimeSlots = (step = 15): string[] => {
 
     return slots;
 };
+
+// Giá trị mốc giờ trong form vẫn là chuỗi 12h ('09:00 AM'), chỉ chữ hiện ra là 24h ('09:00').
+export const timeSlotLabel = (slot: string): string => format(parse(slot, 'hh:mm a', new Date()), 'HH:mm');
+
+// Thứ hai đứng đầu tuần như lịch Việt Nam; `day` vẫn theo API (0 = Chủ nhật).
+export const mondayFirst = (slots: TimeSlot[]): TimeSlot[] =>
+    [...slots].sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7));
 
 export const getTime = (hour: number, minute: number): string => {
     const meridian = hour > 11 ? 'PM' : 'AM';
