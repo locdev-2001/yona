@@ -9,7 +9,6 @@ beforeEach(function () {
     config([
         'services.alert_telegram.bot_token' => 'test-token',
         'services.alert_telegram.chat_id' => '999',
-        'database_backup.keep_days' => 14,
     ]);
 });
 
@@ -18,7 +17,7 @@ afterEach(function () {
 });
 
 it('tạo file pg_dump cục bộ và cảnh báo "chưa có bản ngoài server" khi thiếu BACKUP_DISK', function () {
-    config(['database_backup.offsite_disk' => null]);
+    config(['filesystems.backup_disk' => null]);
 
     $this->artisan('db:backup')
         ->expectsOutputToContain('chưa có bản ngoài server')
@@ -31,7 +30,7 @@ it('tạo file pg_dump cục bộ và cảnh báo "chưa có bản ngoài server
 
 it('đẩy bản sao lưu lên disk ngoài server khi có cấu hình BACKUP_DISK', function () {
     Storage::fake('backup_offsite');
-    config(['database_backup.offsite_disk' => 'backup_offsite']);
+    config(['filesystems.backup_disk' => 'backup_offsite']);
 
     $this->artisan('db:backup')->assertSuccessful();
 
@@ -39,9 +38,9 @@ it('đẩy bản sao lưu lên disk ngoài server khi có cấu hình BACKUP_DIS
     Storage::disk('backup_offsite')->assertExists('backups/'.basename($dumps[0]));
 });
 
-it('dọn bản sao lưu cục bộ và ngoài server cũ hơn BACKUP_KEEP_DAYS', function () {
+it('dọn bản sao lưu cục bộ và ngoài server cũ hơn 14 ngày (BackupDatabase::KEEP_DAYS)', function () {
     Storage::fake('backup_offsite');
-    config(['database_backup.offsite_disk' => 'backup_offsite', 'database_backup.keep_days' => 1]);
+    config(['filesystems.backup_disk' => 'backup_offsite']);
 
     File::ensureDirectoryExists(storage_path('app/backups'));
     $staleLocal = storage_path('app/backups/db-20200101-000000.dump');
@@ -61,7 +60,7 @@ it('dọn bản sao lưu cục bộ và ngoài server cũ hơn BACKUP_KEEP_DAYS'
 
 it('kèm tar.gz đính kèm khách hàng khi dùng --with-files', function () {
     Storage::fake('backup_offsite');
-    config(['database_backup.offsite_disk' => 'backup_offsite']);
+    config(['filesystems.backup_disk' => 'backup_offsite']);
 
     File::ensureDirectoryExists(storage_path('app/public/attachment-drill'));
     File::put(storage_path('app/public/attachment-drill/sample.txt'), 'nội dung mẫu');

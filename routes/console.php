@@ -45,24 +45,22 @@ Schedule::command('pulse:trim')->hourly();
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
 
-// Sao lưu database mỗi ngày; Chủ nhật thêm bản kèm tệp đính kèm (chạy cả hai vì
-// db:backup luôn dump DB, --with-files chỉ thêm phần tar.gz — chấp nhận dump DB
-// trùng vào Chủ nhật để tránh phải tách một biến thể "chỉ tệp"). onOneServer
-// đón trước ngày có nhiều server hơn một; withoutOverlapping vì pg_dump/tar có
-// thể chạy lâu hơn 1 ngày nếu đĩa chậm.
+// Một bản backup mỗi ngày — Chủ nhật kèm thêm tệp đính kèm thay vì chạy cả hai
+// biến thể (db:backup luôn dump DB nên chạy hai lần cùng ngày là dump trùng).
 Schedule::command('db:backup')
     ->dailyAt('02:00')
     ->timezone('Asia/Ho_Chi_Minh')
+    ->when(fn () => ! now()->isSunday())
     ->withoutOverlapping()
     ->onOneServer();
 Schedule::command('db:backup', ['--with-files'])
-    ->weeklyOn(0, '03:00')
+    ->dailyAt('02:00')
     ->timezone('Asia/Ho_Chi_Minh')
+    ->when(fn () => now()->isSunday())
     ->withoutOverlapping()
     ->onOneServer();
 
-// Horizon/Reverb/zalo-bridge chết và failed_jobs tăng bất thường — cảnh báo
-// khi ĐỔI trạng thái, không phải mỗi phút (App\Console\Commands\MonitorCheck).
+// Cảnh báo khi Horizon/Reverb/zalo-bridge đổi trạng thái, không phải mỗi phút.
 Schedule::command('monitor:check')
     ->everyMinute()
     ->withoutOverlapping()

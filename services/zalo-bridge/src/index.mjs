@@ -47,8 +47,8 @@ import { maskUid, rawPayloadLogEnabled, rawPayloadLogWarning, shortToken } from 
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { safeEqual } from './secret-compare.mjs';
 import { copySessionFile, ensureSessionDir, hardenSessionStore, readSessionFile, writeSessionFile } from './session-store-fs.mjs';
-import { loadSessionKeys } from './session-crypto.mjs';
-import { countActiveSlots, resolveMaxSessions, sessionCapExceeded } from './session-cap.mjs';
+import { decryptWithFallback, isEncryptedEnvelope, loadSessionKeys } from './session-crypto.mjs';
+import { MAX_SESSIONS, countActiveSlots, sessionCapExceeded } from './session-cap.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
     buildFriendRequestPayload,
@@ -85,9 +85,6 @@ const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
-// Một process giữ phiên Zalo của MỌI tenant trong RAM — hạn mức chặn một khách
-// spam mở QR kéo sập process cho khách khác. Xem session-cap.mjs.
-const BRIDGE_MAX_SESSIONS = resolveMaxSessions();
 
 // Tier 1 outbox — khởi tạo sớm, start() gọi sau bootRestoreAllSessions()
 const outbox = createOutbox({
@@ -2340,12 +2337,10 @@ function buildExpress() {
             outbox: outbox.stats(),
             // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
             relay_counters: relayEventCounters,
-            // Hạn mức phiên đồng thời của CẢ process (không riêng slot này) + rss
-            // để founder tự đo RAM/phiên khi có tài khoản thật quét QR — xem
-            // session-cap.mjs và mục "Chia tải" ở docs/deployment.md.
+            // Hạn mức phiên đồng thời của CẢ process (không riêng slot này) — xem session-cap.mjs.
             bridge: {
                 active_sessions: countActiveSlots(slots),
-                max_sessions: BRIDGE_MAX_SESSIONS,
+                max_sessions: MAX_SESSIONS,
                 rss_bytes: process.memoryUsage().rss,
             },
             // Lô 1: đo sức khoẻ process — rớt/nối lại, handler ném lỗi, frame hỏng.
@@ -2393,15 +2388,13 @@ function buildExpress() {
         if (!LARAVEL_WEBHOOK_URL) {
             return res.status(400).json({ ok: false, message: 'bridge_missing_laravel_webhook_url' });
         }
-        // Điểm DUY NHẤT tạo một phiên Zalo THẬT MỚI (các nhánh phía trên đều tái
-        // dùng slot đã có, không tốn thêm hạn mức) — chặn ở đây trước khi gọi
-        // zalo.loginQR() và tốn tài nguyên.
-        if (sessionCapExceeded(slots, BRIDGE_MAX_SESSIONS)) {
+        // Điểm duy nhất tạo phiên Zalo THẬT MỚI — chặn hạn mức ở đây trước khi loginQR().
+        if (sessionCapExceeded(slots, MAX_SESSIONS)) {
             return res.status(429).json({
                 ok: false,
                 code: 'session_cap_reached',
                 message: 'session_cap_reached',
-                max_sessions: BRIDGE_MAX_SESSIONS,
+                max_sessions: MAX_SESSIONS,
             });
         }
 
@@ -2680,6 +2673,73 @@ async function cleanupStaleQrSessionFiles() {
     }
 }
 
+/**
+ * BRIDGE_SESSION_KEY sai định dạng, THIẾU ở production, hoặc không giải mã
+ * được tệp phiên đã mã hoá đang có trên đĩa đều chặn boot — không âm thầm
+ * chạy tiếp rồi để `tryLoginWithSavedSession` báo từng phiên một là
+ * `session_lost` (khách phải quét lại QR dù cookie vẫn còn sống, chỉ là bridge
+ * không đọc được).
+ */
+async function verifySessionStoreOrExit() {
+    let keys;
+    try {
+        keys = loadSessionKeys();
+    } catch (e) {
+        console.error(`[bridge] FATAL: ${e.message}. Refusing to start.`);
+        process.exit(1);
+    }
+
+    if (!keys.current && process.env.NODE_ENV === 'production') {
+        console.error(
+            '[bridge] FATAL: thieu BRIDGE_SESSION_KEY trong production — tu choi boot de khong ghi phien Zalo ' +
+            '(toan quyen tai khoan khach) PLAINTEXT xuong dia. Dat BRIDGE_SESSION_KEY (openssl rand -base64 32) roi restart.'
+        );
+        process.exit(1);
+    }
+
+    if (!keys.current && !keys.previous) {
+        return;
+    }
+
+    let files = [];
+    try {
+        files = readdirSync(SESSIONS_DIR);
+    } catch {
+        return;
+    }
+
+    const undecryptable = [];
+    for (const file of files) {
+        if (!/^(c\d+|qt_[0-9a-f]+)\.json$/.test(file)) {
+            continue;
+        }
+        const filePath = path.join(SESSIONS_DIR, file);
+        let parsed;
+        try {
+            parsed = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        } catch {
+            continue;
+        }
+        if (!isEncryptedEnvelope(parsed)) {
+            continue;
+        }
+        try {
+            decryptWithFallback(parsed, keys);
+        } catch {
+            undecryptable.push(file);
+        }
+    }
+
+    if (undecryptable.length > 0) {
+        console.error(
+            `[bridge] FATAL: ${undecryptable.length} tep phien da ma hoa khong giai ma duoc voi BRIDGE_SESSION_KEY ` +
+            `hien tai (${undecryptable.join(', ')}). Tu choi boot thay vi danh dau moi tenant session_lost — kiem tra ` +
+            'lai BRIDGE_SESSION_KEY/BRIDGE_SESSION_KEY_PREVIOUS truoc khi restart.'
+        );
+        process.exit(1);
+    }
+}
+
 async function boot() {
     // 1.2: chốt chặn cuối — một exception lạc không được giết process đang giữ
     // phiên Zalo của MỌI tenant. Cài TRƯỚC mọi thứ khác.
@@ -2699,22 +2759,7 @@ async function boot() {
         }
     }
 
-    // BRIDGE_SESSION_KEY SAI ĐỊNH DẠNG chặn boot ngay (lỗi cấu hình rõ ràng,
-    // mọi NODE_ENV) — nhưng THIẾU khoá ở production chỉ cảnh báo rồi chạy tiếp:
-    // chặn hẳn ở đây sẽ phá deploy production trước khi founder kịp đặt khoá.
-    // deploy.sh/docs/deployment.md phải nói rõ khoá là bắt buộc trên thực tế.
-    try {
-        const { current } = loadSessionKeys();
-        if (!current && process.env.NODE_ENV === 'production') {
-            console.warn(
-                '[bridge] CANH BAO: BRIDGE_SESSION_KEY chua duoc dat — phien Zalo dang ghi PLAINTEXT xuong dia. ' +
-                'Dat BRIDGE_SESSION_KEY (openssl rand -base64 32) trong .env cua bridge roi restart de bat ma hoa at-rest.'
-            );
-        }
-    } catch (e) {
-        console.error(`[bridge] FATAL: ${e.message}. Refusing to start.`);
-        process.exit(1);
-    }
+    await verifySessionStoreOrExit();
 
     // 8.1: tệp phiên do bản bridge cũ ghi ra vẫn 664 — siết về 600 trước khi dùng.
     const hardened = await hardenSessionStore(SESSIONS_DIR);

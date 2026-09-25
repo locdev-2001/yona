@@ -6,6 +6,7 @@ use App\Services\Zalo\ZaloBridgeClient;
 use App\Services\Zalo\ZaloHealthMonitor;
 use App\Services\Zalo\ZaloProfileSync;
 use App\Support\Alerts\OpsAlerter;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -46,6 +47,35 @@ it('cảnh báo khi một kênh Zalo mất phiên đăng nhập, chỉ kèm id k
             && str_contains($text, 'mất phiên đăng nhập')
             && ! str_contains($text, $channel->phone ?? '__no_phone__');
     });
+});
+
+it('bridge chết (bridge_down) hạ trạng thái nhiều kênh nhưng không gửi một alert mỗi kênh — monitor:check đã báo', function () {
+    $channels = Zalo::factory()->count(3)->create(['state' => Zalo::STATE_CONNECTED]);
+
+    Http::fake(function ($request) {
+        if (str_contains((string) $request->url(), 'telegram.org')) {
+            return Http::response(['ok' => true]);
+        }
+
+        throw new ConnectionException('refused');
+    });
+
+    foreach ($channels as $channel) {
+        for ($i = 0; $i < ZaloHealthSweepJob::FAILURE_THRESHOLD; $i++) {
+            (new ZaloHealthSweepJob($channel->id))->handle(
+                app(ZaloBridgeClient::class),
+                app(ZaloHealthMonitor::class),
+                app(ZaloProfileSync::class),
+                app(OpsAlerter::class),
+            );
+        }
+    }
+
+    foreach ($channels as $channel) {
+        expect($channel->refresh()->state)->toBe(Zalo::STATE_SESSION_LOST);
+    }
+
+    Http::assertNotSent(fn ($request) => str_contains((string) $request->url(), 'telegram.org'));
 });
 
 it('không cảnh báo khi kênh vẫn kết nối bình thường', function () {

@@ -1,23 +1,16 @@
 import crypto from 'node:crypto';
 
 /**
- * Mã hoá at-rest cho kho phiên (`.sessions/`) — thiết kế lấy từ
- * `docs/zalo-bridge/deployment.md` (mục "Mã hoá at-rest", bản trước khi viết lại):
- * cookie trong `.sessions/` là toàn quyền tài khoản Zalo cá nhân của khách, quyền
- * tệp 0600 chỉ chặn user khác trên máy, không chặn backup/ảnh đĩa bị lộ.
- *
- * `BRIDGE_SESSION_KEY` = 32 byte, base64 hoặc hex (`openssl rand -base64 32`).
- * Định dạng tệp mã hoá: `{v:1, iv, tag, data}` (AES-256-GCM, mỗi trường base64).
- * Thiếu trường `v` ⇒ tệp bản cũ (plaintext) — đọc thẳng, gọi nơi khác ghi đè lại
- * dạng đã mã hoá (tự di trú, xem `session-store-fs.mjs`).
- *
- * `BRIDGE_SESSION_KEY_PREVIOUS` (tuỳ chọn) chỉ dùng để GIẢI MÃ khi xoay khoá —
- * không bao giờ dùng để mã hoá tệp mới.
+ * Mã hoá at-rest AES-256-GCM cho kho phiên (`.sessions/`). `BRIDGE_SESSION_KEY`
+ * = 32 byte base64 hoặc hex. Định dạng tệp: `{v:1, iv, tag, data}`, mỗi trường
+ * base64; thiếu trường `v` ⇒ tệp bản cũ (plaintext), xem `session-store-fs.mjs`.
+ * `BRIDGE_SESSION_KEY_PREVIOUS` (tuỳ chọn) chỉ dùng để GIẢI MÃ khi xoay khoá.
  */
 
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32;
 const IV_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
 export const SESSION_FORMAT_VERSION = 1;
 
 /**
@@ -101,7 +94,10 @@ function decryptSessionPayload(envelope, key) {
     const iv = Buffer.from(envelope.iv, 'base64');
     const tag = Buffer.from(envelope.tag, 'base64');
     const data = Buffer.from(envelope.data, 'base64');
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    if (tag.length !== AUTH_TAG_LENGTH) {
+        throw new Error(`auth tag phai dai ${AUTH_TAG_LENGTH} byte, nhan duoc ${tag.length}`);
+    }
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
 }
@@ -111,16 +107,23 @@ function decryptSessionPayload(envelope, key) {
  * `BRIDGE_SESSION_KEY_PREVIOUS`). Sai khoá hoặc dữ liệu bị chỉnh sửa (auth tag
  * GCM không khớp) đều rơi vào đây — không phân biệt được hai trường hợp, và
  * không cần phân biệt: cả hai đều nghĩa là "không đọc được, phải quét QR lại".
+ *
+ * Trả kèm `usedKey` ('current'|'previous') để caller biết có cần ghi đè lại
+ * bằng khoá hiện tại hay không (giải mã được bằng khoá CŨ nghĩa là tệp trên
+ * đĩa vẫn đang mã hoá bằng khoá cũ, chưa xoay).
  */
 export function decryptWithFallback(envelope, { current, previous } = {}) {
-    const attempts = [current, previous].filter(Boolean);
+    const attempts = [
+        { key: current, usedKey: 'current' },
+        { key: previous, usedKey: 'previous' },
+    ].filter((attempt) => attempt.key);
     if (attempts.length === 0) {
         throw new Error('khong co BRIDGE_SESSION_KEY de giai ma phien da ma hoa');
     }
     let lastError = null;
-    for (const key of attempts) {
+    for (const { key, usedKey } of attempts) {
         try {
-            return decryptSessionPayload(envelope, key);
+            return { plaintext: decryptSessionPayload(envelope, key), usedKey };
         } catch (error) {
             lastError = error;
         }

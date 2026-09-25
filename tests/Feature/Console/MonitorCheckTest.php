@@ -2,9 +2,7 @@
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
 function fakeHorizonRunning(bool $running): void
@@ -65,7 +63,6 @@ beforeEach(function () {
         'services.alert_telegram.bot_token' => 'test-token',
         'services.alert_telegram.chat_id' => '999',
     ]);
-    DB::table('failed_jobs')->truncate();
     Cache::flush();
 
     // Trạng thái mặc định "khoẻ" cho các kiểm tra không phải trọng tâm của
@@ -129,44 +126,4 @@ it('cảnh báo khi zalo-bridge không phản hồi, rồi cảnh báo phục h�
     ]);
     $this->artisan('monitor:check')->assertSuccessful();
     Http::assertSent(fn ($r) => telegramAlertContains($r, 'zalo-bridge không phản hồi'));
-});
-
-function insertFailedJob(): void
-{
-    DB::table('failed_jobs')->insert([
-        'uuid' => (string) Str::uuid(),
-        'connection' => 'redis',
-        'queue' => 'default',
-        'payload' => '{}',
-        'exception' => 'x',
-        'failed_at' => now(),
-    ]);
-}
-
-it('cảnh báo khi failed_jobs tăng, im lặng khi vẫn tiếp tục tăng, rồi báo khi hết tăng', function () {
-    $this->artisan('monitor:check')->assertSuccessful(); // baseline: 0 dòng
-
-    insertFailedJob();
-    $this->artisan('monitor:check')->assertSuccessful();
-    Http::assertSent(fn ($r) => telegramAlertContains($r, 'failed_jobs đang tăng'));
-
-    // Vẫn đang tăng tiếp (thêm dòng mới) — đã báo "đang tăng" rồi, không báo
-    // lại lần thứ hai trong khi vẫn ở trạng thái xấu.
-    Http::fake([
-        (string) config('zalo.bridge.url').'*' => Http::response('ok', 200),
-        'api.telegram.org/*' => Http::response(['ok' => true]),
-    ]);
-    insertFailedJob();
-    $this->artisan('monitor:check')->assertSuccessful();
-    expect(anyTelegramAlertSent())->toBeFalse();
-
-    // Dừng tăng (không thêm dòng mới, nhưng backlog 2 dòng vẫn còn đó) — vẫn
-    // đáng báo "hết tăng" vì cơn bão đã dừng, dù chưa ai dọn xong (xem docblock
-    // MonitorCheck::checkFailedJobsGrowth).
-    Http::fake([
-        (string) config('zalo.bridge.url').'*' => Http::response('ok', 200),
-        'api.telegram.org/*' => Http::response(['ok' => true]),
-    ]);
-    $this->artisan('monitor:check')->assertSuccessful();
-    Http::assertSent(fn ($r) => telegramAlertContains($r, 'failed_jobs hết tăng'));
 });

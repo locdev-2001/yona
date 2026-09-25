@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Support\Alerts\OpsAlerter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use Throwable;
@@ -24,7 +23,7 @@ class MonitorCheck extends Command
 {
     protected $signature = 'monitor:check';
 
-    protected $description = 'Kiểm tra Horizon, Reverb, zalo-bridge, failed_jobs mỗi phút và cảnh báo khi đổi trạng thái';
+    protected $description = 'Kiểm tra Horizon, Reverb, zalo-bridge mỗi phút và cảnh báo khi đổi trạng thái';
 
     public function __construct(private readonly OpsAlerter $alerter)
     {
@@ -36,7 +35,6 @@ class MonitorCheck extends Command
         $this->checkHorizon();
         $this->checkReverb();
         $this->checkZaloBridge();
-        $this->checkFailedJobsGrowth();
 
         return self::SUCCESS;
     }
@@ -54,12 +52,6 @@ class MonitorCheck extends Command
 
     private function horizonIsRunning(): bool
     {
-        // Lặp lại đúng logic của horizon:status
-        // (vendor/laravel/horizon/src/Console/StatusCommand.php) nhưng tự hỏi
-        // container mỗi lần thay vì gọi qua Artisan::call(): command Artisan
-        // được Symfony Console giữ instance dùng lại giữa các lần gọi trong
-        // cùng tiến trình, nên dependency tiêm qua constructor của nó (repository)
-        // đông cứng lại ở lần đầu — sai với ý đồ "hỏi lại trạng thái mỗi phút".
         try {
             $masters = app(MasterSupervisorRepository::class)->all();
         } catch (Throwable) {
@@ -120,32 +112,6 @@ class MonitorCheck extends Command
         } catch (Throwable) {
             return false;
         }
-    }
-
-    /**
-     * "Tăng" nghĩa là số dòng failed_jobs lớn hơn lần kiểm tra trước — job vẫn
-     * đang lỗi liên tục. Không đếm giá trị tuyệt đối vì backlog cũ đã biết
-     * không cần báo lại mỗi phút.
-     *
-     * "Hết tăng" chỉ có nghĩa cơn bão đã dừng lại, KHÔNG phải failed_jobs đã về
-     * 0 — số dòng tồn đọng vẫn cần người vào /horizon xử lý tay. Coi việc dừng
-     * tăng là đáng báo (không đợi về 0) vì storm 128 lượt trôi 2 ngày không ai
-     * biết vẫn còn hại ngay cả khi nó đã tự dừng.
-     */
-    private function checkFailedJobsGrowth(): void
-    {
-        $current = (int) DB::table('failed_jobs')->count();
-        $previous = (int) Cache::get('monitor:failed-jobs-count', $current);
-        Cache::put('monitor:failed-jobs-count', $current, now()->addDays(7));
-
-        $healthy = $current <= $previous;
-
-        $this->reportTransition(
-            'failed-jobs-growth',
-            $healthy,
-            "failed_jobs đang tăng: {$previous} → {$current}.",
-            "failed_jobs hết tăng, đang dừng ở {$current}.",
-        );
     }
 
     private function reportTransition(string $check, bool $healthy, string $downMessage, string $upMessage): void

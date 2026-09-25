@@ -79,14 +79,12 @@ return [
     // first-party `proxy_path` trên domain app (routes/api.php) để trình chặn quảng
     // cáo không chặn theo domain/mẫu URL của nhà cung cấp. `host` hoặc `script_path`
     // trống = tắt analytics (máy dev).
-    // Cảnh báo vận hành (job lỗi, Horizon/Reverb/zalo-bridge chết, restore drill
-    // hỏng) — App\Support\Alerts\OpsAlerter. Thiếu bot token/chat id = rơi về
-    // ghi log, không chặn ứng dụng chạy.
+    // Cảnh báo vận hành (job lỗi, Horizon/Reverb/zalo-bridge chết) —
+    // App\Support\Alerts\OpsAlerter. Thiếu bot token/chat id = rơi về ghi log,
+    // không chặn ứng dụng chạy.
     'alert_telegram' => [
         'bot_token' => env('ALERT_TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('ALERT_TELEGRAM_CHAT_ID'),
-        // Chỉ đổi khi kiểm thử cục bộ trỏ vào server giả lập; production để mặc định.
-        'base_url' => env('ALERT_TELEGRAM_BASE_URL', 'https://api.telegram.org'),
     ],
 
     'plausible' => [

@@ -134,8 +134,6 @@ test('tệp bản cũ chưa mã hoá vẫn đọc được, và được ghi đ�
         const first = await readSessionFile(file);
         assert.equal(first, plaintext);
 
-        // di trú là fire-and-forget trong readSessionFile — đợi tick để ghi xong.
-        await new Promise((resolve) => setTimeout(resolve, 20));
         const migrated = JSON.parse(await fs.readFile(file, 'utf8'));
         assert.equal(migrated.v, 1);
         assert.equal(await readSessionFile(file), plaintext);
@@ -155,7 +153,7 @@ test('không có BRIDGE_SESSION_KEY: hành vi như cũ, ghi/đọc plaintext', a
     });
 });
 
-test('xoay khoá: mã hoá bằng khoá cũ vẫn đọc được qua BRIDGE_SESSION_KEY_PREVIOUS', async () => {
+test('xoay khoá: mã hoá bằng khoá cũ vẫn đọc được qua BRIDGE_SESSION_KEY_PREVIOUS, và tệp trên đĩa được ghi đè lại bằng khoá mới ngay lần đọc đó', async () => {
     const dir = await tempStore();
     const file = path.join(dir, 'c4.json');
     const plaintext = JSON.stringify({ cookie: 'rotate-me' });
@@ -165,6 +163,12 @@ test('xoay khoá: mã hoá bằng khoá cũ vẫn đọc được qua BRIDGE_SES
     });
 
     await withEnv({ BRIDGE_SESSION_KEY: KEY_B, BRIDGE_SESSION_KEY_PREVIOUS: KEY_A }, async () => {
+        assert.equal(await readSessionFile(file), plaintext);
+    });
+
+    // Sau khi PREVIOUS bị bỏ (hết chu kỳ xoay khoá), tệp phải đọc được CHỈ bằng
+    // khoá mới — chứng minh nó đã được re-encrypt trên đĩa, không còn kẹt ở khoá cũ.
+    await withEnv({ BRIDGE_SESSION_KEY: KEY_B }, async () => {
         assert.equal(await readSessionFile(file), plaintext);
     });
 });

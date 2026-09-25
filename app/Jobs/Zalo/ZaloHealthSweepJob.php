@@ -102,8 +102,12 @@ class ZaloHealthSweepJob extends ApplicationJob
         $monitor->recordError($channel->connectionId(), 'session_lost');
         $channel->markState(Zalo::STATE_SESSION_LOST, $reason);
 
-        // Chỉ id kênh + mã lý do (vd 'bridge_down', 'session_lost') — không có
-        // tên/số điện thoại khách hàng nào đi kèm.
+        // 'bridge_down' ảnh hưởng MỌI kênh cùng lúc — monitor:check đã báo bridge chết
+        // (docs/deployment.md mục 13), một alert riêng mỗi kênh ở đây chỉ là bão trùng lặp.
+        if ($reason === 'bridge_down') {
+            return;
+        }
+
         $alerter->send(
             "zalo-session-lost:{$channel->connectionId()}",
             "Kênh Zalo #{$channel->connectionId()} mất phiên đăng nhập (lý do: {$reason}) — cần đăng nhập lại bằng QR.",

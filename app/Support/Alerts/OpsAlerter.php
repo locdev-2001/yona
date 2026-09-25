@@ -25,19 +25,33 @@ class OpsAlerter
 {
     private const THROTTLE_SECONDS = 900;
 
+    private const TELEGRAM_BASE_URL = 'https://api.telegram.org';
+
+    /** Không bao giờ ném lỗi ra ngoài — một alert hỏng không được phép làm hỏng luồng đang gọi nó (vd JobFailed listener). */
     public function send(string $signature, string $message): void
+    {
+        try {
+            $this->attemptSend($signature, $message);
+        } catch (Throwable $e) {
+            Log::error('[ALERT] OpsAlerter::send thất bại: '.$e->getMessage());
+        }
+    }
+
+    private function attemptSend(string $signature, string $message): void
     {
         $throttleKey = "ops-alert:throttle:{$signature}";
         $suppressedKey = "ops-alert:suppressed:{$signature}";
 
-        if (Cache::has($throttleKey)) {
+        // Cache::add tự atomic (set-if-absent) — has()+put() riêng lẻ có race khi
+        // nhiều worker cùng lỗi một lúc, tất cả đều pass has() rồi đều gửi.
+        if (! Cache::add($throttleKey, true, self::THROTTLE_SECONDS)) {
+            Cache::add($suppressedKey, 0, self::THROTTLE_SECONDS * 4);
             Cache::increment($suppressedKey);
 
             return;
         }
 
         $suppressed = (int) Cache::pull($suppressedKey, 0);
-        Cache::put($throttleKey, true, self::THROTTLE_SECONDS);
 
         if ($suppressed > 0) {
             $message .= " (đã gộp thêm {$suppressed} lần lặp lại trong 15 phút trước)";
@@ -57,18 +71,18 @@ class OpsAlerter
             return;
         }
 
-        $baseUrl = rtrim((string) config('services.alert_telegram.base_url', 'https://api.telegram.org'), '/');
-
         try {
             Http::asForm()
-                ->timeout(10)
-                ->post("{$baseUrl}/bot{$token}/sendMessage", [
+                ->timeout(3)
+                ->post(self::TELEGRAM_BASE_URL."/bot{$token}/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => $message,
                 ])
                 ->throw();
         } catch (Throwable $e) {
-            Log::error('[ALERT] Gửi Telegram thất bại, rơi về log: '.$e->getMessage());
+            // Guzzle nối " for <uri>" vào message khi timeout/connect lỗi, và URI chứa
+            // token bot (/bot{token}/sendMessage) — không bao giờ để token lọt vào log.
+            Log::error('[ALERT] Gửi Telegram thất bại, rơi về log: '.str_replace($token, '***', $e->getMessage()));
             Log::warning('[ALERT] '.$message);
         }
     }

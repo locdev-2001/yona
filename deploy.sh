@@ -236,6 +236,8 @@ validate_zalo_environment() {
         || fail 'BRIDGE_HTTP_HOST phải là 127.0.0.1 trên production.'
     [[ "$(bridge_env_value LARAVEL_WEBHOOK_URL)" == https://* ]] \
         || fail 'LARAVEL_WEBHOOK_URL của bridge phải dùng HTTPS.'
+    [[ -n "$(bridge_env_value BRIDGE_SESSION_KEY)" ]] \
+        || fail 'Thiếu BRIDGE_SESSION_KEY trong services/zalo-bridge/.env — bridge sẽ từ chối boot vì phiên Zalo sẽ ghi PLAINTEXT xuống đĩa.'
 }
 
 require_command() {
@@ -631,9 +633,6 @@ postgres_query() {
     fi
 }
 
-# `migrate:status --pending=1` trả đúng mã thoát 1 khi còn migration chưa chạy
-# (vendor/laravel/framework .../Console/Migrations/StatusCommand.php), không
-# phải suy luận từ chuỗi "Pending" — bền hơn khi đổi ngôn ngữ/format output.
 migrations_pending() {
     if is_enabled "$DEPLOY_DRY_RUN"; then
         return 1

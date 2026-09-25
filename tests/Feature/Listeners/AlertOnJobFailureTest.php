@@ -12,6 +12,16 @@ class AlwaysFailingTestJob extends ApplicationJob
     }
 }
 
+class UniqueMessageFailingTestJob extends ApplicationJob
+{
+    public function handle(): void
+    {
+        // Mỗi lần ném một message khác nhau (mang id) — mô phỏng lỗi thật kiểu
+        // "No query results for model ... 123" mà mỗi bản ghi một id riêng.
+        throw new RuntimeException('No query results for model ... '.random_int(1, 1_000_000));
+    }
+}
+
 beforeEach(function () {
     config([
         'services.alert_telegram.bot_token' => 'test-token',
@@ -46,6 +56,20 @@ it('gộp nhiều lần job cùng loại lỗi hẳn thành đúng 1 cảnh báo
     for ($i = 0; $i < 5; $i++) {
         try {
             dispatch(new AlwaysFailingTestJob);
+        } catch (RuntimeException) {
+            // Mong đợi.
+        }
+    }
+
+    Http::assertSentCount(1);
+});
+
+it('gộp theo lớp job + lớp exception dù nội dung message khác nhau mỗi lần (mang id/timestamp)', function () {
+    Http::fake(['api.telegram.org/*' => Http::response(['ok' => true])]);
+
+    for ($i = 0; $i < 5; $i++) {
+        try {
+            dispatch(new UniqueMessageFailingTestJob);
         } catch (RuntimeException) {
             // Mong đợi.
         }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\Alerts\OpsAlerter;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -52,4 +53,26 @@ it('vẫn ghi log khi gọi Telegram lỗi', function () {
 
     Log::shouldHaveReceived('error')->once();
     Log::shouldHaveReceived('warning')->once()->with('[ALERT] telegram lỗi');
+});
+
+it('không bao giờ để bot token lọt vào log kể cả khi Guzzle nối token vào message lỗi', function () {
+    // Guzzle nối " for <uri>" vào ConnectException/RequestException, và URI ở đây
+    // là /bottest-token/sendMessage — mô phỏng đúng dạng message đó.
+    Http::fake(function () {
+        throw new RuntimeException('cURL error 28: Connection timed out for https://api.telegram.org/bottest-token/sendMessage');
+    });
+    Log::spy();
+
+    app(OpsAlerter::class)->send('signature-d', 'timeout');
+
+    Log::shouldHaveReceived('error')->once()->withArgs(fn (string $message) => ! str_contains($message, 'test-token') && str_contains($message, '***'));
+});
+
+it('send() không bao giờ ném lỗi ra ngoài dù Cache hỏng', function () {
+    Cache::shouldReceive('add')->andThrow(new RuntimeException('redis down'));
+    Log::spy();
+
+    app(OpsAlerter::class)->send('signature-e', 'cache hỏng');
+
+    Log::shouldHaveReceived('error')->once();
 });

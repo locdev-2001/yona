@@ -56,7 +56,9 @@ test('mã hoá rồi giải mã trả đúng bản gốc (roundtrip)', () => {
     const envelope = JSON.parse(encryptSessionPayload(plaintext, key));
 
     assert.ok(isEncryptedEnvelope(envelope));
-    assert.equal(decryptWithFallback(envelope, { current: key }), plaintext);
+    const result = decryptWithFallback(envelope, { current: key });
+    assert.equal(result.plaintext, plaintext);
+    assert.equal(result.usedKey, 'current');
 });
 
 test('isEncryptedEnvelope trả false cho JSON phẳng của tệp cookie bản cũ', () => {
@@ -71,7 +73,9 @@ test('decryptWithFallback thử khoá cũ khi khoá hiện tại sai (xoay khoá
     const plaintext = 'du-lieu-bi-mat';
     const envelope = JSON.parse(encryptSessionPayload(plaintext, keyA));
 
-    assert.equal(decryptWithFallback(envelope, { current: keyB, previous: keyA }), plaintext);
+    const result = decryptWithFallback(envelope, { current: keyB, previous: keyA });
+    assert.equal(result.plaintext, plaintext);
+    assert.equal(result.usedKey, 'previous');
 });
 
 test('decryptWithFallback ném lỗi khi sai khoá và không có khoá cũ', () => {
@@ -95,4 +99,12 @@ test('decryptWithFallback ném lỗi khi auth tag bị chỉnh sửa (dữ liệ
     envelope.tag = Buffer.alloc(16, 0xaa).toString('base64');
 
     assert.throws(() => decryptWithFallback(envelope, { current: key }));
+});
+
+test('decryptWithFallback từ chối auth tag bị cắt ngắn thay vì chấp nhận', () => {
+    const key = parseSessionKey(KEY_A_B64);
+    const envelope = JSON.parse(encryptSessionPayload('data', key));
+    envelope.tag = Buffer.from(envelope.tag, 'base64').subarray(0, 8).toString('base64');
+
+    assert.throws(() => decryptWithFallback(envelope, { current: key }), /auth tag/);
 });

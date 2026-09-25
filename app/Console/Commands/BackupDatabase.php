@@ -7,9 +7,9 @@ use App\Support\Postgres\PostgresBinaries;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -26,6 +26,8 @@ class BackupDatabase extends Command
     protected $signature = 'db:backup {--with-files : Kèm tar.gz đính kèm khách hàng (storage/app/public)}';
 
     protected $description = 'Sao lưu database (pg_dump -Fc), tuỳ chọn kèm tệp đính kèm, rồi dọn bản cũ';
+
+    private const KEEP_DAYS = 14;
 
     public function __construct(private readonly OpsAlerter $alerter)
     {
@@ -73,7 +75,9 @@ class BackupDatabase extends Command
         $path = "{$directory}/db-{$timestamp}.dump";
         $config = config('database.connections.'.config('database.default'));
 
-        $process = new Process([
+        $env = filled($config['password'] ?? null) ? ['PGPASSWORD' => $config['password']] : [];
+
+        $result = Process::timeout(3600)->env($env)->run([
             PostgresBinaries::resolve('pg_dump'),
             '-Fc',
             '-h', (string) $config['host'],
@@ -82,21 +86,16 @@ class BackupDatabase extends Command
             '-f', $path,
             (string) $config['database'],
         ]);
-        $process->setTimeout(3600);
-
-        if (filled($config['password'] ?? null)) {
-            $process->setEnv(['PGPASSWORD' => $config['password']]);
-        }
-
-        $process->run();
 
         // pg_dump tạo file ngay khi mở `-f`, kể cả khi xác thực thất bại sau đó —
         // để lại file 0 byte trông như một bản sao lưu hợp lệ nếu không dọn.
-        if (! $process->isSuccessful() || ! is_file($path) || filesize($path) === 0) {
+        if ($result->failed() || ! is_file($path) || filesize($path) === 0) {
             File::delete($path);
 
-            throw new RuntimeException('pg_dump: '.(trim($process->getErrorOutput()) ?: 'pg_dump thất bại không rõ lý do'));
+            throw new RuntimeException('pg_dump: '.(trim($result->errorOutput()) ?: 'pg_dump thất bại không rõ lý do'));
         }
+
+        chmod($path, 0600);
 
         return $path;
     }
@@ -110,22 +109,22 @@ class BackupDatabase extends Command
             throw new RuntimeException("Không có thư mục đính kèm: {$source}");
         }
 
-        $process = new Process(['tar', '-czf', $path, '-C', $source, '.']);
-        $process->setTimeout(3600);
-        $process->run();
+        $result = Process::timeout(3600)->run(['tar', '-czf', $path, '-C', $source, '.']);
 
-        if (! $process->isSuccessful() || ! is_file($path)) {
+        if ($result->failed() || ! is_file($path)) {
             File::delete($path);
 
-            throw new RuntimeException('tar: '.(trim($process->getErrorOutput()) ?: 'nén tệp đính kèm thất bại không rõ lý do'));
+            throw new RuntimeException('tar: '.(trim($result->errorOutput()) ?: 'nén tệp đính kèm thất bại không rõ lý do'));
         }
+
+        chmod($path, 0600);
 
         return $path;
     }
 
     private function copyOffsite(string $localPath): void
     {
-        $disk = (string) config('database_backup.offsite_disk');
+        $disk = (string) config('filesystems.backup_disk');
 
         if ($disk === '') {
             $this->warn('BACKUP_DISK chưa cấu hình — bản sao lưu này chưa có bản ngoài server.');
@@ -153,8 +152,7 @@ class BackupDatabase extends Command
 
     private function rotate(string $directory, string $pattern): void
     {
-        $keepDays = (int) config('database_backup.keep_days', 14);
-        $cutoff = Carbon::now()->subDays($keepDays);
+        $cutoff = Carbon::now()->subDays(self::KEEP_DAYS);
 
         foreach (File::glob("{$directory}/{$pattern}") as $file) {
             if (Carbon::createFromTimestamp(File::lastModified($file))->lt($cutoff)) {
@@ -162,7 +160,7 @@ class BackupDatabase extends Command
             }
         }
 
-        $disk = (string) config('database_backup.offsite_disk');
+        $disk = (string) config('filesystems.backup_disk');
         if ($disk === '') {
             return;
         }
