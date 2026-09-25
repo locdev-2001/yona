@@ -1314,7 +1314,7 @@ return [
         'NOTE_TEXT' => 'Để bật chế độ SMTP, xin hãy cấu hình IMAP.',
         'UPDATE' => 'Cập nhật chi tiết IMAP',
         'TOGGLE_AVAILABILITY' => 'Kích hoạt cấu hình IMAP cho hộp thư này',
-        'TOGGLE_HELP' => 'Bật IMAP giúp người dùng nhận được email',
+        'TOGGLE_HELP' => 'Bật IMAP để thư khách gửi vào hộp mail của bạn về hộp thư này.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'Tuỳ chỉnh IMAP được cập nhật thành công',
             'ERROR_MESSAGE' => 'Không thể cập nhật tuỳ chỉnh IMAP',
@@ -1343,11 +1343,11 @@ return [
         'SUBTITLE' => 'Cấp quyền lại cho tài khoản MICROSOFT của bạn',
     ],
     'SMTP' => [
-        'TITLE' => 'STMP',
+        'TITLE' => 'SMTP',
         'SUBTITLE' => 'Đặt chi tiết SMTP',
         'UPDATE' => 'Cập nhật tuỳ chỉnh SMTP',
         'TOGGLE_AVAILABILITY' => 'Kích hoạt cấu hình SMTP cho hộp thư này',
-        'TOGGLE_HELP' => 'Kích hoạt SMTP sẽ giúp cho người dùng gửi email',
+        'TOGGLE_HELP' => 'Bật SMTP để thư trả lời khách được gửi bằng hộp mail của bạn.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'Tuỳ chỉnh SMTP được cập nhật thành công',
             'ERROR_MESSAGE' => 'Không thể cập nhật tuỳ chỉnh SMTP',
@@ -1375,7 +1375,7 @@ return [
         'ENCRYPTION' => 'Mã hóa',
         'SSL_TLS' => 'SSL/TLS',
         'START_TLS' => 'STARTTLS',
-        'OPEN_SSL_VERIFY_MODE' => 'Mở Chế độ xác minh SSL',
+        'OPEN_SSL_VERIFY_MODE' => 'Chế độ xác minh chứng chỉ SSL',
         'AUTH_MECHANISM' => 'Xác minh',
     ],
     'NOTE' => 'Ghi chú: ',

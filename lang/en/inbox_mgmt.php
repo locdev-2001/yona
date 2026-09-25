@@ -1312,7 +1312,7 @@ return [
         'NOTE_TEXT' => 'To enable SMTP, please configure IMAP.',
         'UPDATE' => 'Update IMAP settings',
         'TOGGLE_AVAILABILITY' => 'Enable IMAP configuration for this inbox',
-        'TOGGLE_HELP' => 'Enabling IMAP will help the user to receive email',
+        'TOGGLE_HELP' => 'Enable IMAP so emails customers send to your mailbox arrive in this inbox.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'IMAP settings updated successfully',
             'ERROR_MESSAGE' => 'Unable to update IMAP settings',
@@ -1345,7 +1345,7 @@ return [
         'SUBTITLE' => 'Set your SMTP details',
         'UPDATE' => 'Update SMTP settings',
         'TOGGLE_AVAILABILITY' => 'Enable SMTP configuration for this inbox',
-        'TOGGLE_HELP' => 'Enabling SMTP will help the user to send email',
+        'TOGGLE_HELP' => 'Enable SMTP so replies to customers are sent from your mailbox.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'SMTP settings updated successfully',
             'ERROR_MESSAGE' => 'Unable to update SMTP settings',
@@ -1373,7 +1373,7 @@ return [
         'ENCRYPTION' => 'Encryption',
         'SSL_TLS' => 'SSL/TLS',
         'START_TLS' => 'STARTTLS',
-        'OPEN_SSL_VERIFY_MODE' => 'Open SSL Verify Mode',
+        'OPEN_SSL_VERIFY_MODE' => 'SSL certificate verification mode',
         'AUTH_MECHANISM' => 'Authentication',
     ],
     'NOTE' => 'Note: ',
