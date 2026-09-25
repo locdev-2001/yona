@@ -18,12 +18,18 @@ final class ChoiceCallbackService
         private readonly SubmissionService $submissions,
     ) {}
 
-    /** Trả về tin incoming đã tạo, hoặc null khi payload không hợp lệ/đã trả lời/khác tenant. */
-    public function resolve(int $messageId, ?string $value, ?int $index, int $accountId): ?Message
+    /**
+     * Trả về tin incoming đã tạo, hoặc null khi payload không hợp lệ/đã trả lời/không phải
+     * tin gửi cho chính người bấm. Payload do client gửi lên (Telegram callback_data giả được
+     * từ client tự viết) nên phải khớp cả hộp thư lẫn người nhận của hội thoại, không chỉ tenant.
+     */
+    public function resolve(int $messageId, ?string $value, ?int $index, int $inboxId, string $senderSourceId): ?Message
     {
-        $message = Message::find($messageId);
+        $message = Message::with('conversation.contactInbox')->find($messageId);
 
-        if ($message === null || $message->account_id !== $accountId) {
+        if ($message === null
+            || $message->inbox_id !== $inboxId
+            || $message->conversation?->contactInbox?->source_id !== $senderSourceId) {
             return null;
         }
 

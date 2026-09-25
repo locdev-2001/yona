@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Messaging\Delivery\DeliveryLevel;
 use App\Messaging\Structured\InvalidStructuredPayload;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Message;
@@ -74,7 +75,10 @@ class ChoiceReplyResolver extends BaseListener
         return ((int) $stripped) - 1;
     }
 
-    /** Tin outgoing/template gần nhất còn lựa chọn chưa trả lời, trong 24 giờ. */
+    /**
+     * Tin outgoing/template gần nhất còn lựa chọn chưa trả lời, trong 24 giờ, và đã thực sự
+     * tới khách dưới dạng danh sách đánh số — khách không thấy số thì "2" chỉ là chữ.
+     */
     private function latestUnansweredChoice(Message $incoming): ?Message
     {
         $contentTypes = array_map(
@@ -91,7 +95,8 @@ class ChoiceReplyResolver extends BaseListener
             ->get();
 
         return $candidates->first(function (Message $candidate): bool {
-            if (filled($candidate->content_attributes['submitted_values'] ?? null)) {
+            if (($candidate->content_attributes['delivery'] ?? null) !== DeliveryLevel::TextNumbered->value
+                || filled($candidate->content_attributes['submitted_values'] ?? null)) {
                 return false;
             }
 

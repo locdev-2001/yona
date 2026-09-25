@@ -38,32 +38,20 @@ class MessageCreator
 
     // Khách bấm chip do DeliveryPlanner vẽ (Renderers\FacebookRenderer): map thẳng về tin gốc
     // qua SubmissionService thay vì tạo tin đến mang payload thô. Payload không phải của
-    // chúng ta (vd bot flow khác) thì để rơi xuống luồng tạo tin bình thường.
+    // chúng ta, hoặc câu hỏi đã được trả lời rồi, thì để rơi xuống luồng tạo tin bình thường
+    // để chữ khách bấm vẫn tới nhân viên.
     private function handleQuickReply(): bool
     {
-        $payload = $this->response->quickReplyPayload();
+        $parsed = ChoiceToken::parseFacebook((string) $this->response->quickReplyPayload());
+        $senderId = $this->response->senderId();
 
-        if ($payload === null) {
+        if ($parsed === null || $senderId === null) {
             return false;
         }
 
-        $parsed = ChoiceToken::parseFacebook($payload);
-
-        if ($parsed === null) {
-            return false;
-        }
-
-        $pageId = $this->response->recipientId();
-
-        FacebookPage::query()->where('page_id', $pageId)->get()
-            ->each(function (FacebookPage $page) use ($parsed) {
-                if ($page->inbox === null) {
-                    return;
-                }
-
-                app(ChoiceCallbackService::class)->resolve($parsed['message_id'], $parsed['value'], null, $page->account_id);
-            });
-
-        return true;
+        return FacebookPage::query()->where('page_id', $this->response->recipientId())->get()
+            ->filter(fn (FacebookPage $page) => $page->inbox !== null)
+            ->contains(fn (FacebookPage $page) => app(ChoiceCallbackService::class)
+                ->resolve($parsed['message_id'], $parsed['value'], null, $page->inbox->id, $senderId) !== null);
     }
 }

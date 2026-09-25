@@ -102,7 +102,8 @@ class IncomingMessageService
             messageId: $parsed['message_id'],
             value: $parsed['value'] ?? null,
             index: $parsed['index'] ?? null,
-            accountId: $this->inbox->account_id,
+            inboxId: $this->inbox->id,
+            senderSourceId: (string) data_get($this->params, 'callback_query.from.id'),
         );
     }
 

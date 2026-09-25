@@ -23,13 +23,15 @@ function resolverConversation(): Conversation
     ]);
 }
 
-function askChoice(Conversation $conversation, array $items, ?Carbon $createdAt = null): Message
+function askChoice(Conversation $conversation, array $items, ?Carbon $createdAt = null, string $delivery = 'text_numbered'): Message
 {
     $message = (new MessageBuilder(User::factory()->create(), $conversation, [
         'content' => 'Bạn muốn nhận hàng khi nào ạ?',
         'content_type' => 'input_select',
         'content_attributes' => ['items' => $items],
     ]))->perform();
+    // Mức gửi do DeliveryPlanner ghi khi tin ra kênh; ở đây giả như kênh chỉ nhận chữ.
+    $message->update(['content_attributes' => [...$message->content_attributes, 'delivery' => $delivery]]);
 
     if ($createdAt !== null) {
         // created_at không nằm trong $fillable — update() mass-assign sẽ lặng lẽ bỏ qua.
@@ -130,4 +132,13 @@ it('tin đã có lựa chọn trả lời rồi thì tin cũ hơn liền trướ
     customerReplies($conversation, '1');
 
     expect($first->fresh()->content_attributes['submitted_values'])->toBe([['title' => 'A', 'value' => 'a']]);
+});
+
+it('khách chưa từng thấy danh sách đánh số (kênh có chip gốc) thì "1" vẫn là chữ tự do', function () {
+    $conversation = resolverConversation();
+    $question = askChoice($conversation, [['title' => 'A', 'value' => 'a']], delivery: 'native');
+
+    customerReplies($conversation, '1');
+
+    expect($question->fresh()->content_attributes)->not->toHaveKey('submitted_values');
 });

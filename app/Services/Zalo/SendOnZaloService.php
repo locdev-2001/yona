@@ -2,6 +2,7 @@
 
 namespace App\Services\Zalo;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Message;
@@ -217,7 +218,9 @@ class SendOnZaloService extends BaseSendOnChannelService
 
         $attachments = $this->sendableAttachments();
         $nativeForward = $attachments === [] ? $this->nativeForwardReference($channel) : null;
-        $text = $this->message->outgoingContent();
+        // Zalo cá nhân không có chip/nút: tin có lựa chọn hạ xuống chữ kèm danh sách đánh số.
+        $text = app(DeliveryPlanner::class)->plan($this->message, $channel->capabilities())->plainText()
+            ?? $this->message->outgoingContent();
 
         if ($nativeForward !== null) {
             return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward])];
