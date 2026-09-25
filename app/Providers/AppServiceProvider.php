@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
@@ -164,7 +165,8 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerObservabilityGates(): void
     {
-        $isSuperAdmin = fn (?Authenticatable $user = null) => Auth::guard('super_admin')->check();
+        $isSuperAdmin = fn (?Authenticatable $user = null) => ($superAdmin = Auth::guard('super_admin')->user()) !== null
+            && EnsureSuperAdminMfaEnrolled::satisfied($superAdmin);
 
         foreach (['viewPulse', 'viewLogViewer'] as $ability) {
             Gate::define($ability, $isSuperAdmin);
@@ -178,7 +180,7 @@ class AppServiceProvider extends ServiceProvider
         // lần rollback về commit chưa có nó) vendor chưa có Horizon. Gọi thẳng
         // là mọi lệnh artisan chết theo, kể cả lệnh đang dựng lại vendor.
         if (class_exists(Horizon::class)) {
-            Horizon::auth(fn () => Auth::guard('super_admin')->check());
+            Horizon::auth(fn () => $isSuperAdmin());
         }
 
         // Xoá file log từ giao diện web: không. Log là thứ duy nhất dựng lại

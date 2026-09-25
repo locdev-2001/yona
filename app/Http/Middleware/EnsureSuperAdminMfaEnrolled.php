@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,16 +15,19 @@ class EnsureSuperAdminMfaEnrolled
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! config('yona.super_admin_require_mfa')) {
-            return $next($request);
-        }
-
         $superAdmin = Auth::guard('super_admin')->user();
 
-        if ($superAdmin === null || $superAdmin->mfaEnabled()) {
+        if ($superAdmin === null || self::satisfied($superAdmin)) {
             return $next($request);
         }
 
         return redirect()->route('super_admin.mfa.setup');
+    }
+
+    // Dùng chung cho gate của /horizon, /pulse, /log-viewer: các dashboard này do
+    // gói ngoài đăng ký route nên không đi qua middleware này.
+    public static function satisfied(Authenticatable $superAdmin): bool
+    {
+        return ! config('yona.super_admin_require_mfa') || $superAdmin->mfaEnabled();
     }
 }

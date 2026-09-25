@@ -19,10 +19,18 @@ it('không cho agent thường vào dù đã đăng nhập', function (string $p
         ->assertRedirect('/super_admin/sign_in');
 })->with($dashboards);
 
-it('cho super admin vào', function (string $path) {
-    $this->actingAs(SuperAdmin::factory()->create(), 'super_admin')
+it('cho super admin đã bật 2FA vào', function (string $path) {
+    $this->actingAs(SuperAdmin::factory()->withMfa()->create(), 'super_admin')
         ->get($path)
         ->assertOk();
+})->with($dashboards);
+
+it('chặn super admin chưa bật 2FA khi bắt buộc 2FA', function (string $path) {
+    config(['yona.super_admin_require_mfa' => true]);
+
+    $this->actingAs(SuperAdmin::factory()->create(), 'super_admin')
+        ->get($path)
+        ->assertForbidden();
 })->with($dashboards);
 
 it('không cho xoá file log qua giao diện', function () {
