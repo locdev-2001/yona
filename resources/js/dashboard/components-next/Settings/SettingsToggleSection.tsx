@@ -36,7 +36,7 @@ export default function SettingsToggleSection({
                     {hideToggle ? (
                         <div className="size-2" />
                     ) : (
-                        <Switch value={value} onChange={next => onChange?.(next)} />
+                        <Switch value={value} ariaLabel={header} onChange={next => onChange?.(next)} />
                     )}
                 </div>
                 {description ? <span className="text-body-main text-n-slate-11 px-4">{description}</span> : null}

@@ -3,10 +3,12 @@ import { t } from '../../../i18n';
 // Port từ dashboard/components-next/switch/Switch.vue
 interface SwitchProps {
     value: boolean;
+    // Tên đọc cho trình đọc màn hình; mặc định là "Bật/tắt" chung.
+    ariaLabel?: string;
     onChange: (value: boolean) => void;
 }
 
-export default function Switch({ value, onChange }: SwitchProps) {
+export default function Switch({ value, ariaLabel = '', onChange }: SwitchProps) {
     return (
         <button
             type="button"
@@ -17,7 +19,7 @@ export default function Switch({ value, onChange }: SwitchProps) {
             aria-checked={value}
             onClick={() => onChange(!value)}
         >
-            <span className="sr-only">{t('SWITCH.TOGGLE')}</span>
+            <span className="sr-only">{ariaLabel || t('SWITCH.TOGGLE')}</span>
             <span
                 className={`absolute top-1/2 ltr:left-0.5 rtl:right-0.5 -translate-y-1/2 transition-transform duration-[350ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                     value
