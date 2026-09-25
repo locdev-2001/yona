@@ -21,6 +21,13 @@ describe('stylesheet của widget', () => {
         expect(inputRule).toContain('overflow-y: hidden');
     });
 
+    it('ô nhập trên màn cảm ứng có chữ 16px để iOS không tự phóng to trang', () => {
+        const touchRule = widgetScss.slice(widgetScss.indexOf('.yona-touch-field {'));
+
+        expect(touchRule.slice(0, touchRule.indexOf('}'))).toContain('font-size: 16px');
+        expect(ruleBody('.user-message-input')).not.toMatch(/text-\[\d/);
+    });
+
     it('vùng tin nhắn cuộn được mà không có thanh cuộn hệ điều hành', () => {
         const containerRule = ruleBody('.conversation--container');
 

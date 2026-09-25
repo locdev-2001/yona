@@ -89,7 +89,7 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
                         rows={2}
                         aria-label={t('CONVERSATION_END.FEEDBACK_PLACEHOLDER')}
                         placeholder={t('CONVERSATION_END.FEEDBACK_PLACEHOLDER')}
-                        className="reset-base w-full min-h-[52px] resize-none rounded-xl border border-[var(--yona-chat-line-field)] bg-transparent px-[13px] py-3 text-[12.5px] leading-[1.4] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)]"
+                        className="reset-base w-full min-h-[52px] resize-none rounded-xl border border-[var(--yona-chat-line-field)] bg-transparent px-[13px] py-3 yona-touch-field text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)]"
                         onChange={event => setFeedback(event.target.value)}
                     />
                     {hasSubmitFailed ? (

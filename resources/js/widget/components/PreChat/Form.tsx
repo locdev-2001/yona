@@ -33,7 +33,7 @@ const MESSAGE_FIELD: PreChatField = {
 // qua getValidation.
 const MESSAGE_FIELD_RULES: ValidationRule[] = ['required'];
 
-const INPUT_CLASS = 'mt-1 rounded w-full py-2 px-3';
+const INPUT_CLASS = 'mt-1 rounded w-full py-2 px-3 yona-touch-field';
 const LABEL_CLASS = 'formkit-label text-sm font-medium text-n-slate-12';
 
 // `validation-messages` của bản gốc.

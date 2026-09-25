@@ -59,7 +59,7 @@ export default function EmailInput({ messageId, messageContentAttributes }: Emai
                     aria-label={t('EMAIL_PLACEHOLDER')}
                     aria-invalid={showsError}
                     placeholder={t('EMAIL_PLACEHOLDER')}
-                    className="reset-base min-w-0 flex-1 border-none bg-transparent py-[7px] text-[13.5px] leading-[18px] text-[var(--yona-chat-ink)] outline-none placeholder:text-[var(--yona-chat-ink-muted)]"
+                    className="reset-base min-w-0 flex-1 border-none bg-transparent py-[7px] yona-touch-field text-[var(--yona-chat-ink)] outline-none placeholder:text-[var(--yona-chat-ink-muted)]"
                     onChange={event => {
                         setEmail(event.target.value);
                         setTouched(true);

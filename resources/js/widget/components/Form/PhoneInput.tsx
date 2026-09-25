@@ -145,7 +145,7 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
                             value={searchCountry}
                             type="text"
                             placeholder={t('PRE_CHAT_FORM.FIELDS.PHONE_NUMBER.DROPDOWN_SEARCH')}
-                            className="w-full h-8 !ring-0 px-3 py-2 mt-1 mb-1 text-sm rounded bg-n-alpha-black2"
+                            className="w-full h-8 !ring-0 px-3 py-2 mt-1 mb-1 yona-touch-field rounded bg-n-alpha-black2"
                             onChange={event => setSearchCountry(event.target.value)}
                         />
                     </div>

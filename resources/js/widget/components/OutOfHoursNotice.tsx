@@ -116,7 +116,7 @@ export default function OutOfHoursNotice() {
                             aria-invalid={hasInvalidEmail}
                             aria-describedby={hasInvalidEmail ? errorId : undefined}
                             placeholder={t('OUT_OF_HOURS.EMAIL_PLACEHOLDER')}
-                            className="reset-base w-full min-h-11 px-3 py-[11px] text-[13px] rounded-[11px] bg-[var(--yona-chat-field)] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)] aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-[var(--yona-chat-danger)]"
+                            className="reset-base w-full min-h-11 px-3 py-[11px] yona-touch-field rounded-[11px] bg-[var(--yona-chat-field)] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)] aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-[var(--yona-chat-danger)]"
                             onChange={event => {
                                 setEmail(event.target.value);
                                 setInvalidEmail(false);

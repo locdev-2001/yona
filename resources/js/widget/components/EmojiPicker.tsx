@@ -33,7 +33,7 @@ export default function EmojiPicker({ onSelect }: { onSelect: (emoji: string) =>
                     value={emojiSearch}
                     aria-label={t('EMOJI_ICON_PICKER.SEARCH_EMOJI')}
                     placeholder={t('EMOJI_ICON_PICKER.SEARCH_EMOJI')}
-                    className="reset-base block w-full h-9 rounded-[11px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-field)] ps-9 pe-3 text-[13px] leading-[18px] text-[var(--yona-chat-ink)] outline-none placeholder:text-[var(--yona-chat-ink-muted)] focus:border-[var(--yona-chat-accent)]"
+                    className="reset-base block w-full h-9 rounded-[11px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-field)] ps-9 pe-3 yona-touch-field text-[var(--yona-chat-ink)] outline-none placeholder:text-[var(--yona-chat-ink-muted)] focus:border-[var(--yona-chat-accent)]"
                     onChange={event => setEmojiSearch(event.target.value)}
                 />
             </div>
