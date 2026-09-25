@@ -670,13 +670,19 @@ export const widgetStore = {
     },
 
     // mutationHelpers.updatePresence: agent vắng trong map = offline.
+    // Bản đồ trực của cả account: cập nhật thành viên hộp thư lẫn nhân viên phụ trách.
     updateAgentsPresence(users: Record<string, string> | undefined): void {
         const presence = users ?? {};
+        const statusOf = (agentId: number) => presence[String(agentId)] ?? 'offline';
+        const { assignee } = state.conversationAttributes;
         setState({
-            agents: state.agents.map(agent => ({
-                ...agent,
-                availability_status: presence[String(agent.id)] ?? 'offline',
-            })),
+            agents: state.agents.map(agent => ({ ...agent, availability_status: statusOf(agent.id) })),
+            conversationAttributes: assignee
+                ? {
+                      ...state.conversationAttributes,
+                      assignee: { ...assignee, availability_status: statusOf(assignee.id) },
+                  }
+                : state.conversationAttributes,
         });
     },
 

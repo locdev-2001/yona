@@ -29,7 +29,13 @@ export function ChatHeader({
     const assignee = useWidgetState(state => state.conversationAttributes.assignee ?? null);
     // Cùng một luật trực tuyến (trong giờ làm việc + có người trực) cho hộp thư lẫn nhân viên phụ trách,
     // để header không báo "đang hoạt động" khi màn ngoài giờ đang nói hẹn trả lời sau.
-    const agentsOnDuty = assignee ? availableAgents.filter(agent => agent.id === assignee.id) : availableAgents;
+    // Trạng thái trực của nhân viên phụ trách đi kèm hội thoại (không tra danh sách thành
+    // viên hộp thư, vì người được gán có thể không nằm trong đó).
+    const agentsOnDuty = assignee
+        ? assignee.availability_status === 'online'
+            ? [{ id: assignee.id, name: assignee.name, avatar_url: assignee.avatar_url }]
+            : []
+        : availableAgents;
     const { isOnline, inboxConfig } = useInboxAvailability(agentsOnDuty);
     const availableMessage = useWidgetState(state => state.appConfig.availableMessage);
     const unavailableMessage = useWidgetState(state => state.appConfig.unavailableMessage);

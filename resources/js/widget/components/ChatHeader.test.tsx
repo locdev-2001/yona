@@ -81,7 +81,11 @@ describe('header theo hộp thư hay theo nhân viên', () => {
     });
 
     it('đã có nhân viên nhận: tên và chữ tắt của nhân viên, đang hoạt động theo presence của người đó', async () => {
-        await loadConversation({ id: 3, status: 'open', assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '' } });
+        await loadConversation({
+            id: 3,
+            status: 'open',
+            assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '', availability_status: 'online' },
+        });
 
         renderHeader();
 
@@ -93,11 +97,36 @@ describe('header theo hộp thư hay theo nhân viên', () => {
     it('nhân viên phụ trách không trực tuyến thì báo vắng mặt dù hộp thư còn người khác', async () => {
         const otherAgent = { ...agentRobert, id: 9, name: 'Lan' };
         await loadConversation(
-            { id: 3, status: 'open', assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '' } },
+            { id: 3, status: 'open', assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '', availability_status: 'offline' } },
             [{ ...agentRobert, availability_status: 'offline' }, otherAgent],
         );
 
         renderHeader();
+
+        expect(screen.getByTestId('header-status').textContent).toBe('Away');
+    });
+
+    it('nhân viên phụ trách không là thành viên hộp thư vẫn hiện đang hoạt động theo trạng thái đi kèm hội thoại', async () => {
+        await loadConversation(
+            { id: 3, status: 'open', assignee: { id: 21, name: 'Minh Trần', avatar_url: '', availability_status: 'online' } },
+            [],
+        );
+
+        renderHeader();
+
+        expect(screen.getByTestId('header-title').textContent).toBe('Minh Trần');
+        expect(screen.getByTestId('header-status').textContent).toBe('Active now');
+    });
+
+    it('presence của account đổi thì trạng thái nhân viên phụ trách đổi theo, không cần tải lại hội thoại', async () => {
+        await loadConversation(
+            { id: 3, status: 'open', assignee: { id: 21, name: 'Minh Trần', avatar_url: '', availability_status: 'online' } },
+            [],
+        );
+        renderHeader();
+        expect(screen.getByTestId('header-status').textContent).toBe('Active now');
+
+        act(() => widgetStore.updateAgentsPresence({}));
 
         expect(screen.getByTestId('header-status').textContent).toBe('Away');
     });
@@ -108,7 +137,11 @@ describe('header theo hộp thư hay theo nhân viên', () => {
             timezone: 'UTC',
             workingHours: [0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => ({ dayOfWeek, closedAllDay: true })),
         } as unknown as Partial<ChannelConfig>);
-        await loadConversation({ id: 3, status: 'open', assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '' } });
+        await loadConversation({
+            id: 3,
+            status: 'open',
+            assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '', availability_status: 'online' },
+        });
 
         renderHeader();
 
