@@ -171,6 +171,11 @@ class Account extends Model
         return $this->hasMany(Campaign::class);
     }
 
+    public function widgetUpdates(): HasMany
+    {
+        return $this->hasMany(WidgetUpdate::class);
+    }
+
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);

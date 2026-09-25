@@ -292,6 +292,13 @@ export function buildMenuItems(
                     to: scoped('settings/labels/list'),
                 },
                 {
+                    name: 'Settings Widget Updates',
+                    permissions: ['administrator'],
+                    label: t('SIDEBAR.WIDGET_UPDATES'),
+                    icon: 'i-lucide-newspaper',
+                    to: scoped('settings/widget-updates'),
+                },
+                {
                     name: 'Settings Custom Attributes',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),
