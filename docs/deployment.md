@@ -125,7 +125,9 @@ sudo -u postgres /www/server/pgsql/bin/psql -d postgres -v ON_ERROR_STOP=1 -c "R
 `yona_app` là owner của database nên migration tự tạo/sửa được bảng; không cần
 `ALTER DEFAULT PRIVILEGES`.
 
-Backup khi bạn thấy cần (script không tự dump):
+Sao lưu tự động hằng ngày qua `php artisan db:backup` (lịch ở
+`routes/console.php`, `deploy.sh` cũng tự chạy trước khi migrate — mục 13, Sao
+lưu và phục hồi). Backup tay khi cần thêm:
 
 ```bash
 sudo -u postgres /www/server/pgsql/bin/pg_dump -Fc yona > /www/backup/yona-$(date +%F-%H%M).dump
@@ -773,7 +775,7 @@ Cả ba **chặn sau guard `super_admin`** (`auth:super_admin`), khách lạ b�
 Lưu ý vận hành:
 
 - **Horizon chỉ hiển thị, không cảnh báo.** Worker chết vẫn phải có thứ khác báo
-  (issue #38).
+  (mục 13, Sao lưu và phục hồi ghi lại lý do sao lưu tự động ra đời từ đây).
 - `horizon:snapshot` chạy 5 phút/lần qua scheduler; thiếu nó thì tab Metrics
   trống.
 - **Pulse ghi thẳng vào PostgreSQL dùng chung với dữ liệu khách.** Recorder bắn
@@ -1349,6 +1351,53 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 Đọc qua giao diện: `/log-viewer` (chỉ super admin, chỉ `storage/logs`, không cho
 xoá file). Qua CLI: `php artisan pail`.
 
+### Sao lưu và phục hồi
+
+`php artisan db:backup` chạy `pg_dump -Fc` (mật khẩu qua biến môi trường
+`PGPASSWORD` của tiến trình con, không bao giờ trên argv hay trong log) ra
+`storage/app/backups/db-YYYYmmdd-HHMMSS.dump`, rồi đẩy thêm một bản ra disk
+Laravel khai ở `BACKUP_DISK` (`.env`, vd `s3`/`r2` — thiếu biến này lệnh vẫn
+chạy nhưng **cảnh báo "chưa có bản ngoài server"** mỗi lần). Dọn bản cũ hơn
+`BACKUP_KEEP_DAYS` (mặc định 14) ở cả hai nơi. `--with-files` thêm một bản
+`files-YYYYmmdd-HHMMSS.tar.gz` của `storage/app/public` (đính kèm khách hàng —
+`Attachment::disk()` mặc định `public`).
+
+Lịch chạy tự động (`routes/console.php`, giờ Việt Nam):
+
+| Lịch | Lệnh |
+|---|---|
+| Mỗi ngày 02:00 | `db:backup` |
+| Chủ nhật 03:00 | `db:backup --with-files` |
+
+Chủ nhật chạy cả hai lịch nghĩa là DB được dump hai lần hôm đó — chấp nhận
+được, đổi lấy việc không phải tách riêng một biến thể "chỉ tệp".
+
+`deploy.sh` tự sao lưu **trước khi migrate** khi phát hiện còn migration đang
+chờ (`migrate:status --pending=1`, đọc mã thoát chứ không suy luận từ chuỗi
+"Pending" trong output — bền hơn khi đổi ngôn ngữ/format). Sao lưu thất bại thì
+**dừng deploy trước khi đụng vào schema**.
+
+`php artisan db:restore-drill {file?}` (mặc định lấy bản mới nhất trong
+`storage/app/backups`) tự tạo database nháp `<DB_DATABASE>_restore_drill`,
+`pg_restore` bản dump vào đó, đếm vài bảng cốt lõi (`accounts`, `contacts`,
+`conversations`, `messages`) đối chiếu với database đang chạy, rồi **tự xoá**
+database nháp dù thành công hay thất bại — không để lại rác. Đo cục bộ trên
+dump ~340KB (4 account, 13 contact, 27 message): **~1.9s**; dump production lớn
+hơn nhiều lần sẽ lâu hơn tương ứng, cứ chạy thử trước khi tin vào con số này.
+
+**Yêu cầu vận hành:** role `DB_USERNAME` phải có quyền `CREATEDB` để tạo/xoá
+được database nháp — chạy một lần: `ALTER ROLE yona_app CREATEDB;` (superuser
+`postgres`, không phải `yona_app` tự chạy được).
+
+Không có lịch tự động cho restore drill — chạy tay định kỳ (khuyến nghị: sau
+mỗi lần đổi schema lớn, hoặc hằng tháng) để biết bản sao lưu THẬT SỰ phục hồi
+được, không chỉ "file có tồn tại":
+
+```bash
+cd /www/wwwroot/yona.vn
+php artisan db:restore-drill
+```
+
 ### Sự cố thường gặp
 
 | Triệu chứng | Nguyên nhân hay gặp |
@@ -1367,6 +1416,8 @@ xoá file). Qua CLI: `php artisan pail`.
 | Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
+| Deploy dừng ở `Sao lưu database thất bại` | `pg_dump`/`pg_restore`/`createdb`/`dropdb` không có trong PATH hoặc thiếu ở `/www/server/pgsql/bin` — đặt `PG_BIN_DIR`, hoặc DB hết dung lượng đĩa (mục 13, Sao lưu và phục hồi) |
+| `db:restore-drill` báo lỗi tạo database nháp | Role `DB_USERNAME` thiếu quyền `CREATEDB` — `ALTER ROLE yona_app CREATEDB;` một lần bằng superuser (mục 13, Sao lưu và phục hồi) |
 
 ### Rollback
 

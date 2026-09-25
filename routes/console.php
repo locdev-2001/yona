@@ -44,3 +44,19 @@ Schedule::command('pulse:trim')->hourly();
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
+
+// Sao lưu database mỗi ngày; Chủ nhật thêm bản kèm tệp đính kèm (chạy cả hai vì
+// db:backup luôn dump DB, --with-files chỉ thêm phần tar.gz — chấp nhận dump DB
+// trùng vào Chủ nhật để tránh phải tách một biến thể "chỉ tệp"). onOneServer
+// đón trước ngày có nhiều server hơn một; withoutOverlapping vì pg_dump/tar có
+// thể chạy lâu hơn 1 ngày nếu đĩa chậm.
+Schedule::command('db:backup')
+    ->dailyAt('02:00')
+    ->timezone('Asia/Ho_Chi_Minh')
+    ->withoutOverlapping()
+    ->onOneServer();
+Schedule::command('db:backup', ['--with-files'])
+    ->weeklyOn(0, '03:00')
+    ->timezone('Asia/Ho_Chi_Minh')
+    ->withoutOverlapping()
+    ->onOneServer();
