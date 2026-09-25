@@ -6,6 +6,7 @@ import { emitter } from 'shared/helpers/emitter';
 import { setLocale as setApiLocale } from './api/client';
 import { CAMPAIGN_SNOOZE_DURATION, WIDGET_BUS_EVENTS } from './helpers/constants';
 import { getExtraSpaceToScroll, IFrameHelper, loadedEventConfig } from './helpers/iframe';
+import type { LauncherLabels } from './helpers/iframe';
 import { getLocale } from './helpers/urlParams';
 import { t } from './i18n';
 import { useInboxAvailability } from './components/Availability';
@@ -186,7 +187,9 @@ export default function App() {
         if (!channelConfig) return;
 
         if (isIFrame) {
-            IFrameHelper.sendMessage(loadedEventConfig(getAuthToken(), channelConfig));
+            IFrameHelper.sendMessage(
+                loadedEventConfig(getAuthToken(), channelConfig, launcherLabels(selectUnreadMessageCount(widgetStore.getState()))),
+            );
             return;
         }
 
@@ -392,9 +395,10 @@ const shouldShowPreChatForm = (): boolean => {
 
 // Câu chữ của launcher (SDK vẽ trên trang khách) theo ngôn ngữ widget. `label` là chữ của bong bóng
 // mở rộng — SDK ưu tiên launcherTitle của trang khách rồi mới tới nhãn này.
-const launcherLabelsEvent = (unreadCount: number) => ({
-    event: 'setBubbleLabel',
+const launcherLabels = (unreadCount: number): LauncherLabels => ({
     label: t('BUBBLE.LABEL'),
     openLabel: unreadCount > 0 ? t('LAUNCHER.OPEN_UNREAD', { count: unreadCount }) : t('LAUNCHER.OPEN'),
     closeLabel: t('LAUNCHER.CLOSE'),
 });
+
+const launcherLabelsEvent = (unreadCount: number) => ({ event: 'setBubbleLabel', ...launcherLabels(unreadCount) });

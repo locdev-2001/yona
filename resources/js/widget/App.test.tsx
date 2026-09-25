@@ -1,8 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { showMessagesWhenConversationExists } from './App';
+import App, { showMessagesWhenConversationExists } from './App';
+import { IFrameHelper } from './helpers/iframe';
 import { widgetStore } from './store/widgetStore';
-import type { WidgetMessage } from './types';
+import { decodeFrameMessage, encodeFrameMessage } from '../sdk/constants/frameEvents';
+import type { ChannelConfig, WidgetContact, WidgetMessage } from './types';
 
 const anyMessage = { id: 1, content: 'hello', message_type: 0, created_at: 1 } as unknown as WidgetMessage;
 
@@ -54,5 +57,55 @@ describe('showMessagesWhenConversationExists', () => {
         showMessagesWhenConversationExists();
 
         expect(window.location.hash).toBe('#/prechat-form');
+    });
+});
+
+// Launcher do SDK vẽ trên trang khách không tự giữ chữ: iframe gửi nhãn theo ngôn ngữ widget.
+describe('nhãn launcher gửi cho SDK', () => {
+    const messagesToParent: Record<string, unknown>[] = [];
+
+    beforeEach(() => {
+        messagesToParent.length = 0;
+        vi.spyOn(IFrameHelper, 'isIFrame').mockReturnValue(true);
+        vi.spyOn(window.parent, 'postMessage').mockImplementation((message: unknown) => {
+            const decoded = decodeFrameMessage(message);
+            if (decoded) messagesToParent.push(decoded);
+        });
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ payload: [] })));
+        widgetStore.clearConversations();
+        widgetStore.setChannelConfig(
+            { websiteName: 'Yona', websiteToken: 'website-token', enabledFeatures: [], workingHours: [] } as unknown as ChannelConfig,
+            {},
+            {} as WidgetContact,
+        );
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    const sentEvents = (eventName: string) => messagesToParent.filter(message => message.event === eventName);
+
+    it('tin loaded đã mang nhãn mở/đóng để SDK gắn ngay lúc dựng bong bóng', () => {
+        render(<App />);
+
+        const [loaded] = sentEvents('loaded');
+        expect((loaded.config as { launcherLabels: unknown }).launcherLabels).toStrictEqual({
+            label: 'Chat with us',
+            openLabel: 'Open chat',
+            closeLabel: 'Minimize chat',
+        });
+    });
+
+    it('SDK gửi config-set thì iframe gửi lại setBubbleLabel kèm nhãn mở và đóng', () => {
+        render(<App />);
+        messagesToParent.length = 0;
+
+        act(() => {
+            window.dispatchEvent(
+                new MessageEvent('message', { data: encodeFrameMessage({ event: 'config-set' }), source: window.parent }),
+            );
+        });
+
+        const [labels] = sentEvents('setBubbleLabel');
+        expect(labels).toMatchObject({ openLabel: 'Open chat', closeLabel: 'Minimize chat' });
     });
 });

@@ -177,7 +177,13 @@ export const IFrameHelper = {
     },
 
     events: {
-        loaded: (message: { config: { authToken: string; channelConfig: { widgetColor: string } } }): void => {
+        loaded: (message: {
+            config: {
+                authToken: string;
+                channelConfig: { widgetColor: string };
+                launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
+            };
+        }): void => {
             updateAuthCookie(message.config.authToken, window.$yona.baseDomain);
             window.$yona.hasLoaded = true;
             const campaignsSnoozedTill = getCookie(CAMPAIGN_SNOOZE_COOKIE);
@@ -203,7 +209,10 @@ export const IFrameHelper = {
             if (window.$yona.isOpen) {
                 IFrameHelper.sendMessage('toggle-open', { isOpen: true });
             }
-            IFrameHelper.onLoad({ widgetColor: message.config.channelConfig.widgetColor });
+            IFrameHelper.onLoad({
+                widgetColor: message.config.channelConfig.widgetColor,
+                launcherLabels: message.config.launcherLabels,
+            });
             IFrameHelper.toggleCloseButton();
 
             if (window.$yona.user) {
@@ -329,7 +338,13 @@ export const IFrameHelper = {
         IFrameHelper.sendMessage('push-event', { eventName });
     },
 
-    onLoad: ({ widgetColor }: { widgetColor: string }): void => {
+    onLoad: ({
+        widgetColor,
+        launcherLabels,
+    }: {
+        widgetColor: string;
+        launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
+    }): void => {
         const iframe = IFrameHelper.getAppFrame();
         if (!iframe) return;
 
@@ -362,6 +377,9 @@ export const IFrameHelper = {
         chatIcon.style.background = widgetColor;
         closeBubble.style.background = widgetColor;
         bubbleHolder.style.setProperty('--yona-launcher-color', widgetColor);
+
+        // Nhãn đọc màn hình có ngay khi bong bóng xuất hiện, không đợi lượt setBubbleLabel sau.
+        if (launcherLabels) IFrameHelper.events.setBubbleLabel(launcherLabels);
 
         bubbleHolder.appendChild(chatIcon);
         bubbleHolder.appendChild(closeBubble);

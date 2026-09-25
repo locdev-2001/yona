@@ -35,10 +35,18 @@ export const IFrameHelper = {
     getMessage: (event: MessageEvent): FrameMessage => decodeFrameMessage(event.data) as FrameMessage,
 };
 
-// Gửi kèm channelConfig + authToken để SDK ghi cookie `cw_conversation`.
-export const loadedEventConfig = (authToken: string, channelConfig: unknown) => ({
+// Nhãn đọc màn hình + tooltip của launcher theo ngôn ngữ widget (SDK không tự giữ chữ).
+export interface LauncherLabels {
+    label: string;
+    openLabel: string;
+    closeLabel: string;
+}
+
+// Gửi kèm channelConfig + authToken để SDK ghi cookie `cw_conversation`, và nhãn launcher
+// để SDK gắn ngay lúc dựng bong bóng (bong bóng dựng khi nhận chính tin này).
+export const loadedEventConfig = (authToken: string, channelConfig: unknown, launcherLabels: LauncherLabels) => ({
     event: 'loaded',
-    config: { authToken, channelConfig },
+    config: { authToken, channelConfig, launcherLabels },
 });
 
 // Chiều cao cần thêm cho khung khi hiện màn tin chưa đọc (48px bù padding).

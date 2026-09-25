@@ -418,3 +418,33 @@ describe('khung xem trước tin mới giữ launcher đóng và badge số chư
         expect(isHidden(closeBubble)).toBe(false);
     });
 });
+
+describe('launcher dựng từ tin loaded', () => {
+    afterEach(() => {
+        IFrameHelper.getBubbleHolder()[0]?.remove();
+        chatBubble.removeAttribute('aria-label');
+        chatBubble.removeAttribute('title');
+        chatBubble.className = '';
+    });
+
+    it('có nhãn đọc màn hình và tooltip ngay lúc dựng, không đợi lượt setBubbleLabel sau', () => {
+        mountAppFrame();
+
+        IFrameHelper.onLoad({
+            widgetColor: '#1B6FCC',
+            launcherLabels: { label: 'Trò chuyện', openLabel: 'Mở trò chuyện', closeLabel: 'Thu nhỏ trò chuyện' },
+        });
+
+        expect(chatBubble.getAttribute('aria-label')).toBe('Mở trò chuyện');
+        expect(chatBubble.title).toBe('Mở trò chuyện');
+        expect(closeBubble.getAttribute('aria-label')).toBe('Thu nhỏ trò chuyện');
+    });
+
+    it('màu tenant sáng thì icon launcher dùng mực theo cùng luật tương phản với widget', () => {
+        mountAppFrame();
+
+        IFrameHelper.onLoad({ widgetColor: '#009CE0' });
+
+        expect(chatBubble.classList.contains('woot-widget-bubble-color--lighter')).toBe(true);
+    });
+});
