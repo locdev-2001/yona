@@ -1,10 +1,12 @@
 <?php
 
 use App\Channels\Capability;
+use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Channels\ChannelFixture;
 
@@ -142,3 +144,26 @@ it('chỉ nhà cung cấp Cloud khai năng lực trả lời trích dẫn', func
 
     expect($this->channel->fresh()->capabilities()->has(Capability::OutboundReplyTo))->toBeFalse();
 });
+
+it('tệp document lấy loại theo nội dung: mp4 thành video, pdf vẫn là tệp', function (string $bytes, string $filename, int $fileType) {
+    Storage::fake('public');
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['url' => 'https://lookaside.whatsapp.test/media/tep']),
+        'lookaside.whatsapp.test/*' => Http::response($bytes, 200, ['Content-Type' => 'application/octet-stream']),
+    ]);
+    $payload = ChannelFixture::load('whatsapp_cloud_text');
+    $payload['entry'][0]['changes'][0]['value']['messages'][0] = [
+        'from' => '15557654321',
+        'id' => 'wamid.DOC',
+        'timestamp' => '1662628935',
+        'type' => 'document',
+        'document' => ['id' => 'media-doc-1', 'filename' => $filename],
+    ];
+
+    whatsappPost($payload)->assertOk();
+
+    expect(Message::query()->latest('id')->first()->attachments()->first()->file_type)->toBe($fileType);
+})->with([
+    'video mp4' => [ChannelFixture::mp4Bytes(), 'video.mp4', Attachment::FILE_TYPE_VIDEO],
+    'tài liệu pdf' => [ChannelFixture::pdfBytes(), 'bang-gia.pdf', Attachment::FILE_TYPE_FILE],
+]);
