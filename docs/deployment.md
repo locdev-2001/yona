@@ -774,8 +774,8 @@ Cả ba **chặn sau guard `super_admin`** (`auth:super_admin`), khách lạ b�
 
 Lưu ý vận hành:
 
-- **Horizon chỉ hiển thị, không cảnh báo.** Worker chết vẫn phải có thứ khác báo
-  (mục 13, Sao lưu và phục hồi ghi lại lý do sao lưu tự động ra đời từ đây).
+- **Horizon chỉ hiển thị — cảnh báo chủ động nằm ở `monitor:check` và hai
+  listener JobFailed/LongWaitDetected** (mục 13, "Cảnh báo vận hành").
 - `horizon:snapshot` chạy 5 phút/lần qua scheduler; thiếu nó thì tab Metrics
   trống.
 - **Pulse ghi thẳng vào PostgreSQL dùng chung với dữ liệu khách.** Recorder bắn
@@ -1398,6 +1398,45 @@ cd /www/wwwroot/yona.vn
 php artisan db:restore-drill
 ```
 
+### Cảnh báo vận hành
+
+`App\Support\Alerts\OpsAlerter` là kênh cảnh báo duy nhất: gửi Telegram khi có
+`ALERT_TELEGRAM_BOT_TOKEN` + `ALERT_TELEGRAM_CHAT_ID` (`.env`), rơi về ghi log
+(`storage/logs`) khi chưa cấu hình. Tạo bot bằng
+[@BotFather](https://t.me/BotFather), lấy chat id bằng cách nhắn bot rồi gọi
+`https://api.telegram.org/bot<token>/getUpdates`.
+
+**Chỉ id, mã lỗi, số đếm — không bao giờ số điện thoại hay nội dung tin nhắn
+khách** đi vào cảnh báo. Đây là bất biến khi thêm điểm cảnh báo mới, không phải
+gợi ý.
+
+Dedup: một chữ ký (job lỗi = lớp job + nội dung exception băm lại; Horizon chờ
+lâu = connection + queue; trạng thái tiến trình = tên tiến trình) chỉ gửi tối
+đa 1 tin/15 phút. Một cơn bão lỗi (vd 20 job cùng loại lỗi liên tiếp) ra đúng
+một tin Telegram; số lần bị gộp trong cửa sổ trước hiện ở tin kế tiếp sau khi
+cửa sổ đó hết, không sửa lại tin Telegram cũ.
+
+Các điểm cảnh báo:
+
+| Sự kiện | Nơi xử lý | Ghi chú |
+|---|---|---|
+| Job lỗi hẳn (`JobFailed`) | `App\Listeners\Alerts\AlertOnJobFailure` | Gộp theo lớp job + exception; tin chỉ có tên lớp, id job, tên hàng đợi |
+| Hàng đợi chờ quá lâu (`LongWaitDetected`) | `App\Listeners\Alerts\AlertOnLongWaitDetected` | Ngưỡng ở `config/horizon.php` (`waits`), đã thêm `redis:critical` — thiếu nó trước đây là lỗ hổng thật |
+| Kênh Zalo mất phiên đăng nhập | `App\Jobs\Zalo\ZaloHealthSweepJob` | Chỉ id kênh + mã lý do, không có tên/số điện thoại khách |
+| Horizon / Reverb / zalo-bridge chết | `php artisan monitor:check` (mỗi phút, `routes/console.php`) | Chỉ báo khi ĐỔI trạng thái (down→up/up→down), không phải mỗi phút |
+| `failed_jobs` tăng | `php artisan monitor:check` | "Hết tăng" nghĩa là cơn bão đã dừng, KHÔNG phải backlog đã về 0 — vẫn cần vào `/horizon` dọn tay |
+
+**`monitor:check` chết theo cùng máy chủ nếu cả server sập** — nó không thay
+được một external uptime monitor. Việc founder phải tự làm, chưa có trong
+code:
+
+- **External uptime monitor** (UptimeRobot, BetterStack, …) bắn HTTP GET vào
+  `https://yona.vn/up` mỗi vài phút — bắt được cả trường hợp scheduler/cron
+  chết (lúc đó `monitor:check` cũng chết theo, im lặng luôn).
+- **Sentry** (hoặc tương đương) cho exception tracking có context đầy đủ
+  (stack trace, breadcrumb) — `OpsAlerter` chỉ báo "có lỗi", không thay được
+  công cụ debug lỗi.
+
 ### Sự cố thường gặp
 
 | Triệu chứng | Nguyên nhân hay gặp |
@@ -1418,6 +1457,7 @@ php artisan db:restore-drill
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
 | Deploy dừng ở `Sao lưu database thất bại` | `pg_dump`/`pg_restore`/`createdb`/`dropdb` không có trong PATH hoặc thiếu ở `/www/server/pgsql/bin` — đặt `PG_BIN_DIR`, hoặc DB hết dung lượng đĩa (mục 13, Sao lưu và phục hồi) |
 | `db:restore-drill` báo lỗi tạo database nháp | Role `DB_USERNAME` thiếu quyền `CREATEDB` — `ALTER ROLE yona_app CREATEDB;` một lần bằng superuser (mục 13, Sao lưu và phục hồi) |
+| Không thấy cảnh báo Telegram dù có sự cố thật | `ALERT_TELEGRAM_BOT_TOKEN`/`ALERT_TELEGRAM_CHAT_ID` trống → chỉ rơi về `storage/logs`; kiểm `.env` rồi `php artisan config:clear` (mục 13, Cảnh báo vận hành) |
 
 ### Rollback
 

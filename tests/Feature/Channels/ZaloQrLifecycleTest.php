@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Zalo\ZaloBridgeClient;
 use App\Services\Zalo\ZaloHealthMonitor;
 use App\Services\Zalo\ZaloProfileSync;
+use App\Support\Alerts\OpsAlerter;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -48,6 +49,7 @@ function runZaloHealthSweep(int $connectionId): void
         app(ZaloBridgeClient::class),
         app(ZaloHealthMonitor::class),
         app(ZaloProfileSync::class),
+        app(OpsAlerter::class),
     );
 }
 

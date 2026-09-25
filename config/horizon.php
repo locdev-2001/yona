@@ -103,8 +103,13 @@ return [
     |
     */
 
+    // `redis:critical` thiếu ở đây từng là lỗ hổng: alert LongWaitDetected chỉ
+    // bắn cho hàng đợi `default`, nên tier `critical` (Zalo, webhook) nghẽn mà
+    // không ai biết. AlertOnLongWaitDetected (AppServiceProvider) là nơi tiêu
+    // thụ sự kiện này.
     'waits' => [
         'redis:default' => 60,
+        'redis:critical' => 30,
     ],
 
     /*

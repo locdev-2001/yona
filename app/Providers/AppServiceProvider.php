@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Listeners\Alerts\AlertOnJobFailure;
+use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
 use App\Models\Account;
 use App\Models\AgentBot;
@@ -33,11 +35,14 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
+use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Livewire\Livewire;
 
@@ -81,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pulse.search-outbox', SearchOutboxCard::class);
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
+        $this->registerOpsAlerts();
 
         // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
@@ -107,6 +113,23 @@ class AppServiceProvider extends ServiceProvider
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,
         ]);
+    }
+
+    /**
+     * Horizon "chỉ hiển thị, không cảnh báo" (docs/deployment.md mục 8) — sự cố
+     * thật 20/09/2026 (128 lượt ActionCableBroadcastJob lỗi trôi 2 ngày không
+     * ai biết) là lý do có hai listener này.
+     */
+    private function registerOpsAlerts(): void
+    {
+        Event::listen(JobFailed::class, AlertOnJobFailure::class);
+
+        // LongWaitDetected chỉ tồn tại nếu Horizon đã cài — vendor có thể chưa
+        // có ở lần deploy đầu sau khi thêm gói, giống lý do Horizon::auth() ở
+        // registerObservabilityGates() cũng tự kiểm class_exists().
+        if (class_exists(LongWaitDetected::class)) {
+            Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
+        }
     }
 
     private function refreshConversationTabCountsOnChange(): void

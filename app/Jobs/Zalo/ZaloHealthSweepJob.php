@@ -7,6 +7,7 @@ use App\Models\Channel\Zalo;
 use App\Services\Zalo\ZaloBridgeClient;
 use App\Services\Zalo\ZaloHealthMonitor;
 use App\Services\Zalo\ZaloProfileSync;
+use App\Support\Alerts\OpsAlerter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -28,9 +29,9 @@ class ZaloHealthSweepJob extends ApplicationJob
         $this->onQueue('scheduled_jobs');
     }
 
-    public function handle(ZaloBridgeClient $bridge, ZaloHealthMonitor $monitor, ZaloProfileSync $profileSync): void
+    public function handle(ZaloBridgeClient $bridge, ZaloHealthMonitor $monitor, ZaloProfileSync $profileSync, OpsAlerter $alerter): void
     {
-        $this->channels()->each(function (Zalo $channel) use ($bridge, $monitor, $profileSync) {
+        $this->channels()->each(function (Zalo $channel) use ($bridge, $monitor, $profileSync, $alerter) {
             $response = $bridge->health($channel);
             $payload = $response !== null && $response->successful() ? (array) $response->json() : null;
 
@@ -41,7 +42,7 @@ class ZaloHealthSweepJob extends ApplicationJob
                 return;
             }
 
-            $this->markFailing($channel, $monitor, $this->reasonOf($response, $payload));
+            $this->markFailing($channel, $monitor, $this->reasonOf($response, $payload), $alerter);
         });
     }
 
@@ -84,7 +85,7 @@ class ZaloHealthSweepJob extends ApplicationJob
         ], authoritative: false);
     }
 
-    private function markFailing(Zalo $channel, ZaloHealthMonitor $monitor, string $reason): void
+    private function markFailing(Zalo $channel, ZaloHealthMonitor $monitor, string $reason, OpsAlerter $alerter): void
     {
         $failures = $monitor->recordBridgeFailure($channel->connectionId());
 
@@ -100,6 +101,13 @@ class ZaloHealthSweepJob extends ApplicationJob
 
         $monitor->recordError($channel->connectionId(), 'session_lost');
         $channel->markState(Zalo::STATE_SESSION_LOST, $reason);
+
+        // Chỉ id kênh + mã lý do (vd 'bridge_down', 'session_lost') — không có
+        // tên/số điện thoại khách hàng nào đi kèm.
+        $alerter->send(
+            "zalo-session-lost:{$channel->connectionId()}",
+            "Kênh Zalo #{$channel->connectionId()} mất phiên đăng nhập (lý do: {$reason}) — cần đăng nhập lại bằng QR.",
+        );
     }
 
     /** @param array<string, mixed>|null $payload */

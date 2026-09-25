@@ -60,3 +60,10 @@ Schedule::command('db:backup', ['--with-files'])
     ->timezone('Asia/Ho_Chi_Minh')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Horizon/Reverb/zalo-bridge chết và failed_jobs tăng bất thường — cảnh báo
+// khi ĐỔI trạng thái, không phải mỗi phút (App\Console\Commands\MonitorCheck).
+Schedule::command('monitor:check')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer();
