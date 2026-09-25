@@ -536,9 +536,9 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                                                         'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE',
                                                     )}
                                                 >
-                                                    <div className="flex items-center gap-6">
+                                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                                                         <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3">
+                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
                                                                 {t(
                                                                     'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_POSITION_LABEL',
                                                                 )}
@@ -568,9 +568,9 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                                                                 }
                                                             />
                                                         </div>
-                                                        <div className="h-3 w-px bg-n-weak rounded-lg" />
+                                                        <div className="hidden sm:block h-3 w-px bg-n-weak rounded-lg" />
                                                         <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3">
+                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
                                                                 {t(
                                                                     'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_TYPE_LABEL',
                                                                 )}
