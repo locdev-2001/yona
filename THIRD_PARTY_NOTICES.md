@@ -42,3 +42,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
+
+---
+
+## Phông chữ Be Vietnam Pro
+
+Widget chat tự host phông Be Vietnam Pro (các file `resources/fonts/BeVietnamPro/*.woff2`;
+nét 600 và 700 lấy từ gói `@fontsource/be-vietnam-pro` 5.3.0).
+
+Copyright 2021 The Be Vietnam Pro Project Authors (https://github.com/bettergui/BeVietnamPro).
+Phát hành theo SIL Open Font License 1.1; văn bản giấy phép nằm ở
+`resources/fonts/BeVietnamPro/OFL.txt`.
