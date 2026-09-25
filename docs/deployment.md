@@ -238,6 +238,51 @@ sed -i "s/^ZALO_BRIDGE_UI_SECRET=$/ZALO_BRIDGE_UI_SECRET=$(openssl rand -hex 32)
 Biến `VITE_*` được nướng vào bundle lúc build, nên đổi chúng thì phải build lại
 (chạy `deploy.sh`), không chỉ `optimize:clear`.
 
+### Giới hạn kích thước sự kiện realtime (Reverb)
+
+Laravel đẩy mỗi sự kiện realtime (thông báo, đang gõ, cập nhật hội thoại) tới
+Reverb bằng một lượt POST. Lượt nào vượt `REVERB_MAX_REQUEST_SIZE` bị Reverb đóng
+với 413 và sự kiện mất lặng lẽ: job `ActionCableBroadcastJob` hỏng với
+`Pusher error: Payload too large.`, nhân viên không thấy chuông, số chưa đọc hay
+"đang gõ" cho tới khi tải lại trang. Mặc định cũ 10 000 byte quá hẹp: payload mang
+cả hội thoại lẫn tin cuối (tin cuối lặp 2–3 lần), chữ tiếng Việt còn phình khi mã
+hoá JSON hai lần.
+
+Đo trên hội thoại Zalo dựng thử (byte của cả lượt POST):
+
+| Hội thoại | `conversation.updated` | `conversation.typing_on` | `notification.created` |
+|---|---|---|---|
+| Tin ngắn, 1 ảnh | 6 266 | 6 489 | 9 117 |
+| Album 10 ảnh | 16 075 | 16 310 | 23 839 |
+| Tin 1 500 ký tự, album 10 ảnh, 12 nhãn | 28 463 | 28 682 | 42 302 |
+| Tin 4 000 ký tự, album 20 ảnh, 12 nhãn | 60 732 | 60 949 | 90 690 |
+
+Mặc định trong `config/reverb.php`:
+
+| Biến | Mặc định | Vì sao |
+|---|---|---|
+| `REVERB_MAX_REQUEST_SIZE` | `131072` (128 KB) | Phủ ca nặng nhất đã đo (≈ 91 KB) và còn dư. Chỉ Laravel gọi đường này, trên loopback, có ký bằng app secret |
+| `REVERB_APP_MAX_MESSAGE_SIZE` | `65536` (64 KB) | Chỉ áp khung WebSocket trình duyệt gửi lên (đăng ký kênh, client event), không phải sự kiện server phát xuống. Không gây lỗi trên, nâng cho đủ dư |
+
+`.env` production chưa khai hai biến thì mặc định có hiệu lực ngay sau
+`deploy.sh` (script cache lại config và `reverb:restart`). Đã khai giá trị nhỏ hơn
+thì sửa rồi chạy lại:
+
+```bash
+cd /www/wwwroot/yona.vn
+grep -E '^REVERB_(MAX_REQUEST_SIZE|APP_MAX_MESSAGE_SIZE)=' .env
+php artisan config:cache && php artisan reverb:restart
+php artisan tinker --execute="dump(config('reverb.servers.reverb.max_request_size'), config('reverb.apps.apps.0.max_message_size'));"
+```
+
+Sau khi sửa, job hỏng cũ vẫn nằm trong `failed_jobs`. Không `retry` (sự kiện đã lỗi
+thời): xoá đúng loại job này, rồi theo dõi không còn job mới:
+
+```bash
+php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'like', '%ActionCableBroadcastJob%')->where('exception', 'like', '%Payload too large%')->count());"
+php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'like', '%ActionCableBroadcastJob%')->where('exception', 'like', '%Payload too large%')->delete());"
+```
+
 ### Phiên đăng nhập
 
 - Nhân viên giữ đăng nhập **30 ngày tính từ lần thao tác cuối**
@@ -1283,6 +1328,7 @@ xoá file). Qua CLI: `php artisan pail`.
 |---|---|
 | Deploy dừng ở `Bundle i18n lệch lang/` | Ai đó sửa `lang/**` mà quên `php artisan i18n:generate` + commit |
 | Giao diện đúng nhưng realtime chết | Reverb không chạy, hoặc `VITE_REVERB_*` lúc build khác `.env` hiện tại → build lại |
+| Có lúc mất chuông thông báo / "đang gõ", `failed_jobs` có `Payload too large` | `REVERB_MAX_REQUEST_SIZE` quá nhỏ so với payload — mục 5, Giới hạn kích thước sự kiện realtime |
 | Job không chạy sau deploy | `pcntl_*` còn bị chặn nên `horizon:terminate` vô hiệu → worker vẫn giữ code cũ. Mở `/horizon` xem master có sống không |
 | Gửi Zalo báo "chưa kết nối" | Host của `APP_URL` không nằm trong allowlist fetch của bridge; hoặc session cần quét QR lại |
 | Tin nhắn gửi hai lần | Bất biến `media_timeout < timeout < retry_after` bị phá (mục 8) |
