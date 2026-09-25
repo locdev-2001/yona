@@ -112,6 +112,14 @@ describe('getPresence', function () {
         expect(OnlineStatusTracker::getPresence($account->id, 'Contact', $contact->id))->toBeFalse();
     });
 
+    it('agent vừa qua một nhịp ping 20 giây của dashboard mà chưa kịp ping lại vẫn trực tuyến', function () {
+        $account = Account::factory()->create();
+        $lastPing = now()->getTimestamp() - 21;
+        Redis::zadd(OnlineStatusTracker::presenceKey($account->id, 'User'), $lastPing, '7');
+
+        expect(OnlineStatusTracker::getPresence($account->id, 'User', 7))->toBeTrue();
+    });
+
     it('uses the shorter presence window for users', function () {
         $account = Account::factory()->create();
         $stale = now()->getTimestamp() - config('yona.presence_duration') - 1;
