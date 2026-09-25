@@ -2,6 +2,7 @@
 
 namespace App\Services\Tiktok;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Channel\Tiktok;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
@@ -19,9 +20,12 @@ class SendOnTiktokService extends BaseSendOnChannelService
     protected function performReply(): void
     {
         try {
+            // Không có nút/chip gốc — tin có lựa chọn (input_select, cards…) hạ xuống chữ kèm danh sách đánh số.
+            $plan = app(DeliveryPlanner::class)->plan($this->message, $this->channel()->capabilities());
+
             $messageId = (new TiktokClient($this->channel()))->sendTextMessage(
                 (string) data_get($this->conversation()->additional_attributes, 'conversation_id'),
-                $this->message->outgoingContent(),
+                $plan->plainText(),
                 $this->message->content_attributes['in_reply_to_external_id'] ?? null,
             );
 

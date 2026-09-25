@@ -31,6 +31,12 @@ class MessageParser
         return data_get($this->messaging, 'message.text');
     }
 
+    /** Payload của chip trả lời nhanh do DeliveryPlanner vẽ (Renderers\FacebookRenderer). */
+    public function quickReplyPayload(): ?string
+    {
+        return data_get($this->messaging, 'message.quick_reply.payload');
+    }
+
     /** @return list<array<string, mixed>> */
     public function attachments(): array
     {

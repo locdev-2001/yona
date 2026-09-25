@@ -2,6 +2,7 @@
 
 namespace App\Services\Sms;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Channel\Sms;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
@@ -17,10 +18,13 @@ class SendOnSmsService extends BaseSendOnChannelService
     {
         $channel = $this->channel();
 
+        // Không có nút/chip gốc — tin có lựa chọn (input_select, cards…) hạ xuống chữ kèm danh sách đánh số.
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $channel->capabilities());
+
         $body = [
             'to' => $this->sourceId(),
             'from' => $channel->phone_number,
-            'text' => $this->message->outgoingContent(),
+            'text' => $plan->plainText(),
             'applicationId' => $channel->provider_config['application_id'] ?? null,
         ];
 

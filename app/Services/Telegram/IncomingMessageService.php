@@ -4,6 +4,7 @@ namespace App\Services\Telegram;
 
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
+use App\Messaging\Delivery\ChoiceToken;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -12,6 +13,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
+use App\Services\Messaging\ChoiceCallbackService;
 
 /**
  * Bản gốc không hỗ trợ chat nhóm nên chỉ nhận chat riêng tư.
@@ -36,6 +38,10 @@ class IncomingMessageService
 
     public function perform(): ?Message
     {
+        if ($this->isCallbackQuery()) {
+            return $this->handleCallbackQuery();
+        }
+
         $this->transformBusinessMessage();
 
         if (! $this->isPrivateMessage()) {
@@ -80,6 +86,24 @@ class IncomingMessageService
         $this->message->save();
 
         return $this->message;
+    }
+
+    // Khách bấm nút chip do DeliveryPlanner vẽ (Renderers\TelegramRenderer): map thẳng về
+    // tin gốc qua SubmissionService, không tạo tin đến mang callback_data thô.
+    private function handleCallbackQuery(): ?Message
+    {
+        $parsed = ChoiceToken::parseTelegram((string) data_get($this->params, 'callback_query.data'));
+
+        if ($parsed === null) {
+            return null;
+        }
+
+        return app(ChoiceCallbackService::class)->resolve(
+            messageId: $parsed['message_id'],
+            value: $parsed['value'] ?? null,
+            index: $parsed['index'] ?? null,
+            accountId: $this->inbox->account_id,
+        );
     }
 
     private function setContact(): void

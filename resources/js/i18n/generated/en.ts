@@ -8049,6 +8049,9 @@ const messages: Record<string, unknown> = {
             "empty_submission": "Nothing was submitted.",
             "payload_too_large": "The page data is too large."
         },
+        "delivery": {
+            "numbered_prompt": "Reply with a number:"
+        },
         "cards": {
             "preview_many": ":title and :count more",
             "compare_at": "was :price, -:percent%"

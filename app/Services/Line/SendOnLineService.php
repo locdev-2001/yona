@@ -2,6 +2,8 @@
 
 namespace App\Services\Line;
 
+use App\Messaging\Delivery\DeliveryLevel;
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Channel\Line;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
@@ -30,23 +32,26 @@ class SendOnLineService extends BaseSendOnChannelService
     /** @return array<int|string, mixed> */
     private function buildPayload(): array
     {
-        if ($this->message->contentTypeName() === 'input_select' && filled($this->message->content_attributes['items'] ?? null)) {
-            return [$this->inputSelectPayload()];
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $this->channel()->capabilities());
+
+        if ($plan->level === DeliveryLevel::Native) {
+            return $plan->parts;
         }
 
         $attachments = $this->attachmentPayloads();
+        $text = $plan->plainText();
 
-        if (blank($this->message->content)) {
+        if (blank($text)) {
             return $attachments;
         }
 
-        return $attachments === [] ? [$this->textMessage()] : [$this->textMessage(), ...$attachments];
+        return $attachments === [] ? [$this->textMessage($text)] : [$this->textMessage($text), ...$attachments];
     }
 
     /** @return array<string, mixed> */
-    private function textMessage(): array
+    private function textMessage(string $text): array
     {
-        return ['type' => 'text', 'text' => $this->message->outgoingContent()];
+        return ['type' => 'text', 'text' => $text];
     }
 
     /** @return list<array<string, mixed>> */
@@ -70,33 +75,6 @@ class SendOnLineService extends BaseSendOnChannelService
         }
 
         return $payloads;
-    }
-
-    /** @return array<string, mixed> */
-    private function inputSelectPayload(): array
-    {
-        $buttons = array_map(fn (array $item) => [
-            'type' => 'button',
-            'style' => 'link',
-            'height' => 'sm',
-            'action' => ['type' => 'message', 'label' => $item['title'], 'text' => $item['value']],
-        ], $this->message->content_attributes['items']);
-
-        return [
-            'type' => 'flex',
-            'altText' => $this->message->outgoingContent(),
-            'contents' => [
-                'type' => 'bubble',
-                'body' => [
-                    'type' => 'box',
-                    'layout' => 'vertical',
-                    'contents' => [
-                        ['type' => 'text', 'text' => $this->message->outgoingContent(), 'wrap' => true],
-                        ...$buttons,
-                    ],
-                ],
-            ],
-        ];
     }
 
     /** @param array<string, mixed> $error */

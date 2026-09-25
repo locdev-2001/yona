@@ -7,6 +7,7 @@ use App\Finders\ConversationFinder;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
@@ -73,6 +74,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(StructuredTypeRegistry::class, fn ($app) => new StructuredTypeRegistry(
             array_map(fn (string $type) => $app->make($type), config('messaging.structured_types')),
             $app->make(ValidationFactory::class),
+        ));
+
+        $this->app->singleton(DeliveryPlanner::class, fn ($app) => new DeliveryPlanner(
+            $app->make(StructuredTypeRegistry::class),
+            collect(config('messaging.delivery_renderers'))->map(fn (string $renderer) => $app->make($renderer))->all(),
         ));
 
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {

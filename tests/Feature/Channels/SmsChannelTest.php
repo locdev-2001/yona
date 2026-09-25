@@ -63,3 +63,27 @@ it('gửi tin đi qua Bandwidth và lưu source_id', function () {
 
     expect($outgoing->fresh()->source_id)->toBe('bw-outgoing-1');
 });
+
+it('tin có lựa chọn (không có nút gốc trên SMS) gửi chữ kèm danh sách đánh số', function () {
+    app()->setLocale('vi');
+    Http::fake(['messaging.bandwidth.com/*' => Http::response(['id' => 'bw-outgoing-2'])]);
+    $this->postJson('/webhooks/sms/'.urlencode('+15551234567'), ChannelFixture::load('sms_incoming'));
+
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Bạn muốn nhận hàng khi nào?',
+        'content_type' => Message::CONTENT_TYPES['input_select'],
+        'content_attributes' => ['items' => [
+            ['title' => 'Giờ hành chính', 'value' => 'office_hours'],
+            ['title' => 'Buổi tối', 'value' => 'evening'],
+        ]],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'messaging.bandwidth.com')
+        && $request['text'] === "Bạn muốn nhận hàng khi nào?\n\nTrả lời số:\n1. Giờ hành chính\n2. Buổi tối");
+
+    expect($outgoing->fresh()->source_id)->toBe('bw-outgoing-2');
+});

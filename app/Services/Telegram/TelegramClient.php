@@ -43,6 +43,12 @@ class TelegramClient
         return Http::asForm()->post($this->channel->apiUrl().'/sendDocument', $body);
     }
 
+    // Tắt vòng xoay chờ trên nút khách vừa bấm; không chặn luồng nếu Telegram lỗi.
+    public function answerCallbackQuery(string $callbackQueryId): Response
+    {
+        return Http::asForm()->post($this->channel->apiUrl().'/answerCallbackQuery', ['callback_query_id' => $callbackQueryId]);
+    }
+
     public function profileImageUrl(string|int $userId): ?string
     {
         $response = Http::get($this->channel->apiUrl().'/getUserProfilePhotos', ['user_id' => $userId]);

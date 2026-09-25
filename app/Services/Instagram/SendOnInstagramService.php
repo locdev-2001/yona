@@ -2,6 +2,7 @@
 
 namespace App\Services\Instagram;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\Instagram;
 use App\Services\Channels\BaseSendOnChannelService;
@@ -63,9 +64,12 @@ class SendOnInstagramService extends BaseSendOnChannelService
     /** @return array<string, mixed> */
     private function messageParams(): array
     {
+        // Chưa có renderer gốc cho IG — tin có lựa chọn hạ xuống chữ kèm danh sách đánh số.
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $this->channel()->capabilities());
+
         return $this->withHumanAgentTag([
             'recipient' => ['id' => $this->sourceId()],
-            'message' => ['text' => $this->message->outgoingContent()],
+            'message' => ['text' => $plan->plainText()],
         ]);
     }
 

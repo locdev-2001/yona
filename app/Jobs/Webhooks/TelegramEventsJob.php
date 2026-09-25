@@ -5,6 +5,7 @@ namespace App\Jobs\Webhooks;
 use App\Jobs\ApplicationJob;
 use App\Models\Channel\Telegram;
 use App\Services\Telegram\IncomingMessageService;
+use App\Services\Telegram\TelegramClient;
 use Illuminate\Support\Facades\Log;
 
 class TelegramEventsJob extends ApplicationJob
@@ -35,5 +36,12 @@ class TelegramEventsJob extends ApplicationJob
         }
 
         (new IncomingMessageService($channel->inbox, $payload))->perform();
+
+        $callbackQueryId = $payload['callback_query']['id'] ?? null;
+
+        if (filled($callbackQueryId)) {
+            // Tắt vòng xoay chờ trên nút khách vừa bấm; lỗi API ở đây không ảnh hưởng gì tới lựa chọn đã ghi nhận.
+            (new TelegramClient($channel))->answerCallbackQuery((string) $callbackQueryId);
+        }
     }
 }

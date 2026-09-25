@@ -62,7 +62,10 @@ it('cập nhật tin Slack với toàn bộ trường đã điền (form)', func
         'content' => 'Please fill this',
         'content_attributes' => [
             'items' => [['name' => 'email', 'label' => 'Email'], ['name' => 'company', 'label' => 'Company']],
-            'submitted_values' => [['name' => 'email', 'value' => 'a@example.com'], ['name' => 'company', 'value' => 'Acme']],
+            'submitted_values' => [
+                ['name' => 'email', 'title' => 'Email', 'value' => 'a@example.com'],
+                ['name' => 'company', 'title' => 'Company', 'value' => 'Acme'],
+            ],
         ],
     ]);
 

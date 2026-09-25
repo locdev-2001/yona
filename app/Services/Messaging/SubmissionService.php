@@ -22,12 +22,16 @@ final class SubmissionService
     public function __construct(private readonly StructuredTypeRegistry $registry) {}
 
     /**
-     * @return Message|null tin incoming đã tạo; null khi tin gốc đời cũ không có
-     *                      payload hợp lệ (chỉ lưu giá trị như trước khi có lõi)
+     * @param  Message|null  $repliedBy  tin incoming CỦA KHÁCH đã có sẵn (gõ số trên kênh
+     *                                   chữ — ChoiceReplyResolver): không tạo tin incoming thứ
+     *                                   hai, chỉ gắn `content_attributes.choice_of` vào tin này.
+     * @return Message|null tin incoming đã tạo (hoặc `$repliedBy` khi truyền vào); null khi
+     *                      tin gốc đời cũ không có payload hợp lệ (chỉ lưu giá trị như trước
+     *                      khi có lõi)
      *
      * @throws InvalidStructuredPayload
      */
-    public function submit(Message $message, mixed $submitted): ?Message
+    public function submit(Message $message, mixed $submitted, ?Message $repliedBy = null): ?Message
     {
         $type = $this->registry->for($message->contentTypeName());
         $attributes = $type === null ? null : $this->registry->read($message);
@@ -38,7 +42,7 @@ final class SubmissionService
             return null;
         }
 
-        return DB::transaction(function () use ($message, $type, $attributes, $submitted): Message {
+        return DB::transaction(function () use ($message, $type, $attributes, $submitted, $repliedBy): Message {
             // Khoá dòng: hai lần bấm gần nhau chỉ một lần được ghi nhận.
             $locked = Message::query()->whereKey($message->id)->lockForUpdate()->firstOrFail();
 
@@ -49,6 +53,12 @@ final class SubmissionService
             $accepted = $type->acceptSubmission($attributes, $submitted);
             $locked->update(['content_attributes' => [...($locked->content_attributes ?? []), 'submitted_values' => $accepted]]);
             $message->setRawAttributes($locked->getAttributes(), true);
+
+            if ($repliedBy !== null) {
+                $repliedBy->update(['content_attributes' => [...($repliedBy->content_attributes ?? []), 'choice_of' => $message->id]]);
+
+                return $repliedBy;
+            }
 
             return (new MessageBuilder(
                 user: null,

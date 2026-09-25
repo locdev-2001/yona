@@ -2,6 +2,9 @@
 
 namespace App\Services\Telegram;
 
+use App\Messaging\Delivery\DeliveryLevel;
+use App\Messaging\Delivery\DeliveryPlan;
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Channel\Telegram;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
@@ -22,8 +25,10 @@ class SendOnTelegramService extends BaseSendOnChannelService
         $client = new TelegramClient($channel);
         $messageId = null;
 
-        if (filled($this->message->content)) {
-            $messageId = $this->sendText($client);
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $channel->capabilities());
+
+        if (filled($this->textToSend($plan))) {
+            $messageId = $this->sendText($client, $plan);
         }
 
         if ($this->message->attachments()->exists()) {
@@ -35,14 +40,20 @@ class SendOnTelegramService extends BaseSendOnChannelService
         }
     }
 
-    private function sendText(TelegramClient $client): int|string|null
+    private function textToSend(DeliveryPlan $plan): ?string
+    {
+        return $plan->level === DeliveryLevel::Native ? ($plan->parts[0]['text'] ?? null) : $plan->plainText();
+    }
+
+    private function sendText(TelegramClient $client, DeliveryPlan $plan): int|string|null
     {
         $channel = $this->channel();
+        $native = $plan->level === DeliveryLevel::Native ? $plan->parts[0] : null;
 
         $body = array_filter([
             'chat_id' => $channel->chatId($this->message),
-            'text' => $this->message->outgoingContent(),
-            'reply_markup' => $this->replyMarkup(),
+            'text' => $this->textToSend($plan),
+            'reply_markup' => filled($native['reply_markup'] ?? null) ? json_encode($native['reply_markup']) : null,
             'parse_mode' => 'HTML',
             'reply_to_message_id' => $this->message->content_attributes['in_reply_to_external_id'] ?? null,
             'business_connection_id' => $channel->businessConnectionId($this->message),
@@ -108,21 +119,6 @@ class SendOnTelegramService extends BaseSendOnChannelService
 
     /** @var array<string, string> */
     private const TELEGRAM_TYPES = ['audio' => 'audio', 'image' => 'photo', 'file' => 'document', 'video' => 'video'];
-
-    private function replyMarkup(): ?string
-    {
-        if ($this->message->contentTypeName() !== 'input_select') {
-            return null;
-        }
-
-        return json_encode([
-            'one_time_keyboard' => true,
-            'inline_keyboard' => array_map(
-                fn (array $item) => [['text' => $item['title'], 'callback_data' => $item['value']]],
-                $this->message->content_attributes['items'] ?? [],
-            ),
-        ]);
-    }
 
     // Channel::Telegram#process_error — Telegram trả 200 kèm ok:false.
     private function handleResponse(Response $response): bool
