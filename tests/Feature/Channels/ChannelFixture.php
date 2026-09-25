@@ -27,4 +27,16 @@ class ChannelFixture
 
         return $jpeg.str_repeat("\0", max(0, $paddingBytes));
     }
+
+    /** Đầu hộp `ftyp` của MP4 — đủ để finfo nhận ra `video/mp4`. */
+    public static function mp4Bytes(): string
+    {
+        return "\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom".str_repeat("\0", 64);
+    }
+
+    /** Khung PDF tối thiểu — finfo nhận ra `application/pdf`. */
+    public static function pdfBytes(): string
+    {
+        return "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n";
+    }
 }

@@ -278,6 +278,39 @@ it('gắn đúng file_type cho video / âm thanh / tệp / gif', function (strin
     ['zalo_inbound_gif', Attachment::FILE_TYPE_IMAGE],
 ]);
 
+it('tệp chung (share.file) lấy loại theo nội dung: mp4 thành video, pdf vẫn là tệp, ảnh thành ảnh', function (string $bytes, string $filename, int $fileType, string $contentType) {
+    Storage::fake('public');
+    // Stub của beforeEach khớp cdn.zalo.test trước; host riêng để stub này thắng.
+    // Máy chủ khai octet-stream như CDN Zalo: loại phải dò từ chính nội dung.
+    Http::fake(['cdn.tep-chung.test/*' => Http::response($bytes, 200, ['Content-Type' => 'application/octet-stream'])]);
+
+    zaloWebhook(zaloPayload('zalo_inbound_file', $this->channel, [
+        'media_url' => "https://cdn.tep-chung.test/{$filename}",
+        'media_filename' => $filename,
+    ]))->assertOk();
+
+    $attachment = Message::query()->latest('id')->first()->attachments()->first();
+
+    expect($attachment->file_type)->toBe($fileType)
+        ->and($attachment->content_type)->toBe($contentType)
+        ->and($attachment->pushEventData()['file_type'])->toBe(array_search($fileType, Attachment::FILE_TYPES, true));
+})->with([
+    'video mp4' => [ChannelFixture::mp4Bytes(), 'video_san_pham.mp4', Attachment::FILE_TYPE_VIDEO, 'video/mp4'],
+    'tài liệu pdf' => [ChannelFixture::pdfBytes(), 'bang-gia.pdf', Attachment::FILE_TYPE_FILE, 'application/pdf'],
+    'ảnh jpeg' => [ChannelFixture::jpegBytes(), 'anh.jpg', Attachment::FILE_TYPE_IMAGE, 'image/jpeg'],
+]);
+
+it('loại Zalo khẳng định cụ thể vẫn thắng MIME dò được', function () {
+    Storage::fake('public');
+    Http::fake(['cdn.tep-chung.test/*' => Http::response(ChannelFixture::pdfBytes(), 200, ['Content-Type' => 'application/octet-stream'])]);
+
+    zaloWebhook(zaloPayload('zalo_inbound_video', $this->channel, [
+        'media_url' => 'https://cdn.tep-chung.test/clip.mp4',
+    ]))->assertOk();
+
+    expect(Message::query()->latest('id')->first()->attachments()->first()->file_type)->toBe(Attachment::FILE_TYPE_VIDEO);
+});
+
 it('cập nhật trạng thái phiên từ sự kiện bridge_session', function () {
     zaloWebhook(zaloPayload('zalo_bridge_session', $this->channel))->assertOk();
 
