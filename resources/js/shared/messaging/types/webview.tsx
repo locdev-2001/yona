@@ -81,7 +81,10 @@ export default defineMessageType<WebviewModel>({
         if (!page || !title) return null;
 
         const data = isRecord(attributes.data) ? attributes.data : {};
-        const slots = (records(data.slots) ?? []).flatMap(slot => (text(slot.label) ? [String(slot.label)] : []));
+        // `data.slots` là {date, label, value, full?} (phase-05 §C: trang "schedule"
+        // đọc cùng shape để chọn ngày/giờ) — thẻ trong tin chỉ xem trước nhãn, bỏ
+        // khung đã hết chỗ vì khách không chọn được gì ở đây (chỉ mở trang mới chọn).
+        const slots = (records(data.slots) ?? []).flatMap(slot => (!slot.full && text(slot.label) ? [String(slot.label)] : []));
 
         return { page, title, subtitle: text(attributes.subtitle), slots };
     },

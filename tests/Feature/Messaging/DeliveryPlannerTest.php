@@ -5,6 +5,7 @@ use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\MessageAccessToken;
 use Illuminate\Support\Facades\Http;
 
 // Ma trận content_type × kênh của DeliveryPlanner (phase-06 §6a). FB/Telegram/LINE khai
@@ -154,4 +155,40 @@ it('tin chữ thuần (không content_type có cấu trúc) giữ nguyên chữ,
     expect($plan->level)->toBe(DeliveryLevel::Text)
         ->and($plan->plainText())->toBe('Chào bạn')
         ->and($message->fresh()->content_attributes)->toBe([]);
+});
+
+// Tin cần trang công khai mà hạ xuống chữ (Zalo/SMS không vẽ được thẻ gốc) thì
+// kèm link `/m/{token}` — không cần truyền $pageUrlProvider, DeliveryPlanner tự
+// phát token qua PublicFlowService (phase-05 §C).
+it('webview hạ xuống chữ kèm link trang công khai', function () {
+    $inbox = Inbox::factory()->zalo()->create();
+    $message = planFor($inbox, 'webview', [
+        'page' => 'schedule',
+        'title' => 'Chọn lịch nhận hàng',
+        'data' => ['slots' => [['date' => '2026-09-27', 'label' => '8:00 đến 10:00', 'value' => 't7-am']]],
+    ]);
+
+    $plan = app(DeliveryPlanner::class)->plan($message, $inbox->channel->capabilities());
+
+    expect($plan->plainText())->toContain(url('/m/'))
+        ->and(MessageAccessToken::query()->where('message_id', $message->id)->where('purpose', 'schedule')->exists())->toBeTrue();
+});
+
+it('cards có nút Đặt mua hạ xuống chữ kèm link trang sản phẩm', function () {
+    $inbox = Inbox::factory()->sms()->create();
+    $message = planFor($inbox, 'cards', ['items' => [[
+        'id' => 'binh-lam-40',
+        'title' => 'Bình men lam 40cm',
+        'price' => ['amount' => 1250000],
+        'actions' => [['kind' => 'order', 'label' => 'Đặt mua']],
+    ]]]);
+
+    $plan = app(DeliveryPlanner::class)->plan($message, $inbox->channel->capabilities());
+
+    // Message::booted() đã tự gửi thật một lượt (Http::fake()) trước khi test gọi
+    // plan() lần nữa, nên có thể có 2 token — chỉ cần token mới nhất đúng nội dung.
+    $token = MessageAccessToken::query()->where('message_id', $message->id)->latest('id')->firstOrFail();
+    expect($plan->plainText())->toContain(url('/m/'))
+        ->and($token->purpose)->toBe('product')
+        ->and($token->item_id)->toBe('binh-lam-40');
 });

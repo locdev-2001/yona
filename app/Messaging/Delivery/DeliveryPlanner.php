@@ -3,8 +3,10 @@
 namespace App\Messaging\Delivery;
 
 use App\Channels\CapabilitySet;
+use App\Messaging\Structured\StructuredType;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Message;
+use App\Services\Messaging\PublicFlowService;
 
 /**
  * `Message` + `CapabilitySet` của kênh → `DeliveryPlan`. Nơi DUY NHẤT quyết
@@ -18,15 +20,18 @@ final class DeliveryPlanner
      *                                                                   format riêng dù trùng capability (vd FB, Telegram, LINE đều
      *                                                                   `outbound_quick_reply` nhưng payload khác nhau) — khoá bằng
      *                                                                   class kênh (`$inbox->channel::class`) để không lẫn renderer.
+     * @param  ?PublicFlowService  $publicFlows  phát token trang công khai (phase-05 §C) khi
+     *                                           `plan()` không được truyền `$pageUrlProvider` riêng.
      */
     public function __construct(
         private readonly StructuredTypeRegistry $registry,
         private readonly array $renderersByChannel = [],
+        private readonly ?PublicFlowService $publicFlows = null,
     ) {}
 
     /**
-     * @param  (callable(Message): ?string)|null  $pageUrlProvider  trang công khai của tin
-     *                                                              (phase 5, chưa có nên mặc định null)
+     * @param  (callable(Message): ?string)|null  $pageUrlProvider  trang công khai của tin;
+     *                                                              null thì dùng `$publicFlows` mặc định.
      */
     public function plan(Message $message, CapabilitySet $capabilities, ?callable $pageUrlProvider = null): DeliveryPlan
     {
@@ -52,7 +57,8 @@ final class DeliveryPlanner
             return $plan;
         }
 
-        $pageUrl = $pageUrlProvider !== null ? $pageUrlProvider($message) : null;
+        $pageUrlProvider ??= fn (Message $m) => $this->defaultPageUrl($m, $type, $attributes);
+        $pageUrl = $type->needsPublicPage($attributes) ? $pageUrlProvider($message) : null;
         $text = $type->plainText($message->content, $attributes, $pageUrl);
         $choices = $type->choices($attributes);
 
@@ -63,5 +69,42 @@ final class DeliveryPlanner
         DegradeLog::record($message, $plan->level);
 
         return $plan;
+    }
+
+    /**
+     * Trang mặc định khi tin cần trang công khai mà không ai truyền
+     * `$pageUrlProvider` riêng: `webview` dùng đúng `page` đã khai; `cards` dò
+     * từng thẻ tìm hành động `webview`/`order` (đặt mua cần trang sản phẩm);
+     * `form` dài (đã qua `needsPublicPage()`) dùng trang "form".
+     */
+    private function defaultPageUrl(Message $message, StructuredType $type, array $attributes): ?string
+    {
+        if ($this->publicFlows === null) {
+            return null;
+        }
+
+        return match ($type->contentType()) {
+            'webview' => $this->publicFlows->issue($message, (string) $attributes['page']),
+            'form' => $this->publicFlows->issue($message, 'form'),
+            'cards' => $this->issueForCards($message, $attributes),
+            default => null,
+        };
+    }
+
+    private function issueForCards(Message $message, array $attributes): ?string
+    {
+        foreach ($attributes['items'] as $item) {
+            foreach ($item['actions'] ?? [] as $action) {
+                if ($action['kind'] === 'webview') {
+                    return $this->publicFlows->issue($message, $action['page'], $item['id']);
+                }
+
+                if ($action['kind'] === 'order') {
+                    return $this->publicFlows->issue($message, 'product', $item['id']);
+                }
+            }
+        }
+
+        return null;
     }
 }

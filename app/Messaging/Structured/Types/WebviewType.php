@@ -3,6 +3,7 @@
 namespace App\Messaging\Structured\Types;
 
 use App\Messaging\Structured\AbstractStructuredType;
+use App\Messaging\Structured\Choice;
 use App\Messaging\Structured\InvalidStructuredPayload;
 use App\Messaging\Structured\PayloadContext;
 
@@ -63,5 +64,38 @@ final class WebviewType extends AbstractStructuredType
     public function needsPublicPage(array $attributes): bool
     {
         return true;
+    }
+
+    // Chỉ trang "schedule" nhận câu trả lời (chọn ngày + khung giờ trong
+    // `data.slots`); các trang còn lại chỉ để xem trên `/m/{token}`.
+    public function acceptSubmission(array $attributes, mixed $submitted): array
+    {
+        if (($attributes['page'] ?? null) !== 'schedule') {
+            throw InvalidStructuredPayload::notAnswerable($this->contentType());
+        }
+
+        return self::acceptedChoice(self::pickChoice($this->scheduleChoices($attributes), $submitted));
+    }
+
+    public function submissionText(array $accepted): string
+    {
+        return self::choiceLabel($accepted);
+    }
+
+    /** @return list<Choice> */
+    private function scheduleChoices(array $attributes): array
+    {
+        $slots = $attributes['data']['slots'] ?? [];
+        $choices = [];
+
+        foreach (is_array($slots) ? $slots : [] as $slot) {
+            if (! is_array($slot) || ($slot['full'] ?? false) || ! isset($slot['value'], $slot['label'])) {
+                continue;
+            }
+
+            $choices[] = new Choice((string) $slot['value'], (string) $slot['label']);
+        }
+
+        return $choices;
     }
 }
