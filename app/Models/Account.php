@@ -251,6 +251,7 @@ class Account extends Model
     }
 
     // Địa chỉ ở ô "Từ" của thư gửi khách khi hộp thư không gửi bằng hộp mail riêng.
+    // support_email có thể lưu dạng "Tên <mail@x>" nên chỉ lấy phần hộp thư.
     public function outgoingEmailAddress(): string
     {
         return EmailAddress::parseOrDefault($this->supportEmail());

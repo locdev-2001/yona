@@ -310,15 +310,6 @@ class Inbox extends Model
         return $this->channel_type === 'Channel::Email';
     }
 
-    // Địa chỉ khách thấy ở ô "Từ" của thư hộp thư này gửi: hộp thư email gửi bằng
-    // địa chỉ của chính nó, kênh khác (vd. tiếp tục hội thoại website qua email) gửi bằng địa chỉ của account.
-    public function outgoingEmailAddress(): string
-    {
-        $channelEmail = $this->isEmail() ? $this->channel?->email : null;
-
-        return filled($channelEmail) ? $channelEmail : $this->account->outgoingEmailAddress();
-    }
-
     // Inbox#sanitized_name / #sanitized_business_name — tên dùng làm display name
     // của header From, đã gỡ ký tự làm hỏng cú pháp địa chỉ thư.
     public function sanitizedName(): string

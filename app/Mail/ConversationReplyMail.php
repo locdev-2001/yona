@@ -215,15 +215,14 @@ class ConversationReplyMail extends Mailable
 
     // ---- Người gửi / người nhận -------------------------------------------------
 
+    // Địa chỉ luôn do FromBuilder chọn (cùng nguồn với ví dụ ở trang cài đặt); cờ chỉ đổi cách đặt tên người gửi.
     private function emailFrom(): string
     {
-        if ($this->account()->featureEnabled('reply_mailer_migration')) {
-            return (new FromBuilder($this->inbox(), $this->currentMessage()))->build();
-        }
+        $from = new FromBuilder($this->inbox(), $this->currentMessage());
 
-        return $this->emailOauthEnabled() || $this->emailSmtpEnabled()
-            ? $this->senderName($this->inbox()->channel->email)
-            : $this->fromEmailWithName();
+        return $this->account()->featureEnabled('reply_mailer_migration')
+            ? $from->build()
+            : $this->senderName($from->emailAddress());
     }
 
     private function emailReplyTo(): string
@@ -372,20 +371,9 @@ class ConversationReplyMail extends Mailable
             && filled($this->account()->supportEmail());
     }
 
-    private function emailSmtpEnabled(): bool
-    {
-        return $this->inbox()->isEmail() && $this->inbox()->channel->smtp_enabled;
-    }
-
     private function emailImapEnabled(): bool
     {
         return $this->inbox()->isEmail() && $this->inbox()->channel->imap_enabled;
-    }
-
-    private function emailOauthEnabled(): bool
-    {
-        return $this->inbox()->isEmail()
-            && ($this->inbox()->channel->isMicrosoft() || $this->inbox()->channel->isGoogle());
     }
 
     public static function smtpConfigSetOrDevelopment(): bool
