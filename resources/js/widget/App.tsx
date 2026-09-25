@@ -36,7 +36,9 @@ export default function App() {
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
     const unreadMessageCount = useWidgetState(selectUnreadMessageCount);
 
-    const [isMobile, setMobile] = useState(false);
+    // SDK báo khung đang hiện kiểu điện thoại (toàn màn) hay khung nổi trên máy tính; chưa
+    // báo (mở /widget trực tiếp, cửa sổ riêng) thì chưa biết.
+    const [isMobileFrame, setMobileFrame] = useState<boolean | null>(null);
     const isIFrame = IFrameHelper.isIFrame();
     const activeCampaign = useWidgetState(state => state.activeCampaign);
     const agents = useWidgetState(state => state.agents);
@@ -102,7 +104,7 @@ export default function App() {
                     break;
                 }
                 case 'toggle-close-button':
-                    setMobile(Boolean(message.isMobile));
+                    setMobileFrame(Boolean(message.isMobile));
                     break;
                 case 'push-event':
                     if (
@@ -337,7 +339,8 @@ export default function App() {
         <div
             className={[
                 'flex flex-col justify-end h-full',
-                isMobile ? 'is-mobile' : '',
+                isMobileFrame ? 'is-mobile' : '',
+                isMobileFrame === false ? 'is-desktop-frame' : '',
                 appConfig.position === 'right' ? 'is-widget-right' : '',
                 appConfig.hideMessageBubble ? 'is-bubble-hidden' : '',
                 appConfig.widgetStyle === 'flat' ? 'is-flat-design' : '',

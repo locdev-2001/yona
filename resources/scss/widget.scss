@@ -28,6 +28,25 @@ body {
   width: 100%;
 }
 
+// Dòng "Powered by": trên màn cảm ứng (và khi chưa biết khung) link là hộp chạm 44px phủ
+// khe dưới ô nhập và lề đáy footer, không đè ô nhập hay nút gửi; khung nổi trên máy tính
+// dùng chuột giữ đúng số đo design (cách ô nhập 9px, chữ cao một dòng).
+.yona-branding-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: -11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .is-desktop-frame .yona-branding-link {
+    display: block;
+    min-height: 0;
+    margin-top: 9px;
+    margin-bottom: 0;
+  }
+}
+
 // Nút đóng hiện ở mọi khung (design); chỉ mục "mở cửa sổ riêng" ẩn trên điện thoại.
 .is-mobile {
   display: block;
