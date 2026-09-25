@@ -1,6 +1,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode, TouchEvent as ReactTouchEvent } from 'react';
 
+import { autoGrowOverflow } from 'shared/helpers/autoGrowField';
+
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import {
@@ -32,21 +34,29 @@ interface ResizableEditorWrapperProps {
     children: ReactNode;
 }
 
+const cssPixels = (value: string | null | undefined): number => parseFloat(value || '0') || 0;
+
 /**
- * Chiều cao nội dung thật của editor. KHÔNG dùng `scrollHeight`: ô soạn bị ghim
+ * Chiều cao nội dung thật của editor, tính cả margin trên của khối đầu và margin
+ * dưới của khối cuối (đoạn văn có margin; bỏ qua thì ô luôn thấp hơn nội dung và
+ * hiện thanh cuộn ngay cả khi rỗng). KHÔNG dùng `scrollHeight`: ô soạn bị ghim
  * chiều cao nên `scrollHeight` không bao giờ nhỏ hơn chiều cao đang áp, ô soạn sẽ
  * không co lại được sau khi xoá chữ.
  */
-function measureContentHeight(body: HTMLElement): number {
+export function measureContentHeight(body: HTMLElement): number {
     const blocks = body.children;
     if (!blocks.length) return 0;
 
-    const first = blocks[0].getBoundingClientRect();
-    const last = blocks[blocks.length - 1].getBoundingClientRect();
-    const styles = window.getComputedStyle(body);
-    const padding = parseFloat(styles.paddingTop || '0') + parseFloat(styles.paddingBottom || '0');
+    const firstBlock = blocks[0];
+    const lastBlock = blocks[blocks.length - 1];
+    const first = firstBlock.getBoundingClientRect();
+    const last = lastBlock.getBoundingClientRect();
+    const bodyStyles = window.getComputedStyle(body);
+    const padding = cssPixels(bodyStyles.paddingTop) + cssPixels(bodyStyles.paddingBottom);
+    const outerMargins =
+        cssPixels(window.getComputedStyle(firstBlock).marginTop) + cssPixels(window.getComputedStyle(lastBlock).marginBottom);
 
-    return Math.ceil(last.bottom - first.top + padding);
+    return Math.ceil(last.bottom - first.top + padding + outerMargins);
 }
 
 const ResizableEditorWrapper = forwardRef<ResizableEditorWrapperHandle, ResizableEditorWrapperProps>(
@@ -210,7 +220,12 @@ const ResizableEditorWrapper = forwardRef<ResizableEditorWrapperHandle, Resizabl
         } as CSSProperties;
 
         return (
-            <div ref={wrapperRef} className="relative resizable-editor-wrapper" style={style}>
+            <div
+                ref={wrapperRef}
+                className="relative resizable-editor-wrapper"
+                style={style}
+                data-editor-overflow={autoGrowOverflow(contentHeight, appliedHeight)}
+            >
                 <div
                     role="separator"
                     aria-orientation="horizontal"
