@@ -40,6 +40,28 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
 
+### Tin nhắn có cấu trúc và hạ cấp theo kênh
+
+> Chốt 25/09/2026, **chưa có trong code**. Kế hoạch:
+> `plans/260925-1556-widget-market-review/plan.md`.
+
+- Tin đặc biệt (trả lời nhanh, nút, thẻ sản phẩm, đơn hàng, chuyển khoản, form…)
+  là **payload có cấu trúc**: `content_type` + `content_attributes`. Widget render
+  native từ payload, **không** render tin bằng iframe.
+- Luồng dài (form nhiều bước, tra đơn, chọn lịch, thanh toán) là **trang công
+  khai trên domain Yona**, định danh bằng token khó đoán và có hạn, như trang
+  CSAT. Widget mở trang đó trong sheet iframe cùng domain (`sandbox`, không nạp
+  URL do tenant nhập); kênh khác nhận link tới cùng trang.
+- Kênh không hiển thị được payload thì **hạ cấp theo `CapabilitySet`**, không rẽ
+  nhánh theo `content_type` trong từng adapter:
+  1. dạng gốc của kênh (template, quick reply, inline keyboard);
+  2. không có thì ảnh render từ chính component thẻ (Chromium, cache theo mã
+     băm nội dung, queue `low`, lỗi thì bỏ qua ảnh) + chữ thuần có link;
+  3. lựa chọn thành danh sách đánh số. Khách trả lời bằng số thì map về lựa
+     chọn; số lạ hoặc chữ tự do chuyển thẳng nhân viên.
+- Luôn kèm chữ thuần cho kênh không nhận ảnh và cho trình đọc màn hình. Mỗi lần
+  hạ cấp ghi log kênh và mức hạ để biết khách nào nhận bản kém.
+
 ## 4. Realtime
 
 - Laravel Reverb + Echo. Sự kiện đẩy qua `app/Events/RealtimeBroadcast.php`
