@@ -360,7 +360,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
     return (
         <Dashboard>
             <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
-                <div className="grid grid-rows-[auto_1fr] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
+                <div className="grid grid-rows-[auto_1fr] grid-cols-[minmax(0,1fr)] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
                     <SettingIntroBanner headerTitle={inboxHeaderTitle}>
                         <Tabs
                             className="[&_ul]:p-0 top-px relative"
