@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Queue;
 // Hội thoại Zalo "nặng" (album 10 ảnh, tin dài 1500 ký tự, 12 nhãn) và tin chữ dài
 // (email, tin dán cả đơn hàng) phải lọt ngưỡng.
 
-const VIETNAMESE_SENTENCE = 'Dạ shop ơi cho em hỏi mẫu áo này còn size M màu xanh rêu không ạ, em muốn đặt hai cái gửi về Hà Nội trong tuần này. ';
+const REVERB_SAMPLE_SENTENCE = 'Dạ shop ơi cho em hỏi mẫu áo này còn size M màu xanh rêu không ạ, em muốn đặt hai cái gửi về Hà Nội trong tuần này. ';
 
 // Dòng request + chữ ký auth_* trên query + header của lượt POST, làm tròn lên.
 const REVERB_REQUEST_OVERHEAD_BYTES = 1024;
@@ -45,13 +45,13 @@ function broadcastJobFor(EventType $type, array $data): ActionCableBroadcastJob
     return Queue::pushedJobs()[ActionCableBroadcastJob::class][0]['job'];
 }
 
-function vietnameseText(int $characters): string
+function reverbSampleText(int $characters): string
 {
-    return mb_substr(str_repeat(VIETNAMESE_SENTENCE, intdiv($characters, mb_strlen(VIETNAMESE_SENTENCE)) + 1), 0, $characters);
+    return mb_substr(str_repeat(REVERB_SAMPLE_SENTENCE, intdiv($characters, mb_strlen(REVERB_SAMPLE_SENTENCE)) + 1), 0, $characters);
 }
 
 /** Tin khách vào hội thoại, kèm album ảnh (nếu có), rồi làm mới hội thoại để tin này là tin cuối. */
-function incomingMessage(Conversation $conversation, string $content, int $imageCount = 0): Message
+function reverbIncomingMessage(Conversation $conversation, string $content, int $imageCount = 0): Message
 {
     $message = new Message([
         'account_id' => $conversation->account_id,
@@ -77,7 +77,7 @@ function incomingMessage(Conversation $conversation, string $content, int $image
 }
 
 /** @return list<ActionCableBroadcastJob> thông báo tạo + cập nhật, đang gõ, cập nhật hội thoại */
-function realtimeJobsFor(Conversation $conversation, Message $message, User $agent): array
+function reverbJobsFor(Conversation $conversation, Message $message, User $agent): array
 {
     $notification = Notification::factory()->ofType('conversation_mention')->create([
         'account_id' => $conversation->account_id,
@@ -126,9 +126,9 @@ beforeEach(function () {
 });
 
 it('hội thoại nặng: sự kiện thông báo, đang gõ, cập nhật hội thoại đều lọt max_request_size của Reverb', function () {
-    $message = incomingMessage($this->conversation, vietnameseText(1500), imageCount: 10);
+    $message = reverbIncomingMessage($this->conversation, reverbSampleText(1500), imageCount: 10);
 
-    $jobs = realtimeJobsFor($this->conversation, $message, $this->agent);
+    $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
 
     expectAllWithinReverbLimit($jobs);
     // Chứng minh ca này đúng là ca đã rơi ở ngưỡng cũ 10 000 byte.
@@ -136,9 +136,9 @@ it('hội thoại nặng: sự kiện thông báo, đang gõ, cập nhật hội
 });
 
 it('tin chữ dài 20 000 ký tự tiếng Việt: mọi sự kiện lọt max_request_size dù thông báo đã quá 128 KB', function () {
-    $message = incomingMessage($this->conversation, vietnameseText(20_000));
+    $message = reverbIncomingMessage($this->conversation, reverbSampleText(20_000));
 
-    $jobs = realtimeJobsFor($this->conversation, $message, $this->agent);
+    $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
 
     expectAllWithinReverbLimit($jobs);
     // Tin cuối lặp ba lần trong thông báo: ca này đã rơi ở ngưỡng 128 KB trước đó.
