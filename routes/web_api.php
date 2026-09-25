@@ -110,8 +110,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::match(['put', 'patch'], '/agents/{agentId}', [AgentsController::class, 'update'])->whereNumber('agentId');
         Route::delete('/agents/{agentId}', [AgentsController::class, 'destroy'])->whereNumber('agentId');
 
-        // Link mời tự phục vụ (bổ sung cho mời qua email ở trên) — gửi tay qua
-        // Zalo, chấp nhận ở mặt tiền web.php (Auth\InviteAcceptancesController).
+        // Link mời tự phục vụ — chấp nhận ở mặt tiền web.php (Auth\InviteAcceptancesController).
         Route::get('/invite_links', [InviteLinksController::class, 'index']);
         Route::post('/invite_links', [InviteLinksController::class, 'store']);
         Route::delete('/invite_links/{linkId}', [InviteLinksController::class, 'destroy'])->whereNumber('linkId');

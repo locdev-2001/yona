@@ -2,7 +2,6 @@
 
 namespace App\Builders;
 
-use App\Exceptions\Account\InvalidEmail;
 use App\Exceptions\Account\UserExists;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -27,7 +26,7 @@ class AccountBuilder
     public function perform(): array
     {
         if ($this->user === null) {
-            $this->validateEmail();
+            User::assertAllowedEmail($this->email);
             $this->validateUser();
         }
 
@@ -37,22 +36,6 @@ class AccountBuilder
 
             return [$user, $this->account];
         });
-    }
-
-    private function validateEmail(): void
-    {
-        if (! filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidEmail;
-        }
-
-        $domain = mb_strtolower(explode('@', $this->email)[1] ?? '');
-        $blockedDomains = array_filter(array_map('trim', explode("\n", (string) config('yona.blocked_email_domains'))));
-
-        foreach ($blockedDomains as $blockedDomain) {
-            if (preg_match('/'.$blockedDomain.'/i', $domain)) {
-                throw new InvalidEmail;
-            }
-        }
     }
 
     private function validateUser(): void

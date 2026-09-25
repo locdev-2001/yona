@@ -9,15 +9,12 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import FormInput from 'v3/components/Form/Input';
 import OAuthButtons from 'v3/components/OAuthButtons';
 import NextButton from 'dashboard/components-next/button/Button';
+import { EMAIL_REGEX, MIN_PASSWORD_LENGTH, isValidPassword } from 'v3/views/auth/passwordRules';
 import PasswordRequirements from './PasswordRequirements';
 
 // Port từ v3/views/auth/signup/components/Signup/Form.vue
 // Bỏ hCaptcha; business-email validator của bản cloud thay bằng validate email
 // thường (SME VN dùng gmail phổ biến).
-const MIN_PASSWORD_LENGTH = 6;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=[\]{}|'"/\\.,`<>:;?~]/;
-
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 // Port từ v3/helpers/AuthHelper.js getCredentialsFromEmail
@@ -29,9 +26,6 @@ function getCredentialsFromEmail(email: string) {
         accountName: capitalize(domain.split('.')[0]),
     };
 }
-
-const isValidPassword = (value: string) =>
-    /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value) && SPECIAL_CHAR_REGEX.test(value);
 
 interface SignupPageProps extends SharedPageProps {
     oauthProviders?: string[];

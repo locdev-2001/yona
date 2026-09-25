@@ -5,7 +5,6 @@ import { t } from '../../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import NextButton from 'dashboard/components-next/button/Button';
 
-// Người đã đăng nhập: tham gia một chạm, không cần nhập lại thông tin.
 export default function OneClickJoin({ token, email }: { token: string; email: string }) {
     const [isJoining, setJoining] = useState(false);
 
@@ -16,7 +15,7 @@ export default function OneClickJoin({ token, email }: { token: string; email: s
             `/invite/${token}`,
             {},
             {
-                onError: () => useAlert(t('INVITE_LINKS.PAGE.API.ERROR_MESSAGE')),
+                onError: () => useAlert(t('INVITE_LINKS.API.ERROR_MESSAGE')),
                 onFinish: () => setJoining(false),
             },
         );

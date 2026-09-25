@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\Account\InvalidEmail;
 use App\Models\Concerns\AccessTokenable;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\Reportable;
@@ -27,10 +28,6 @@ class User extends Authenticatable
     public const AVAILABILITY_OFFLINE = 1;
 
     public const AVAILABILITY_BUSY = 2;
-
-    // Cửa sổ chấp nhận lệch đồng hồ khi kiểm mã TOTP. devise-two-factor cho phép
-    // 30 giây trước/sau; otphp bắt buộc leeway < chu kỳ 30s nên lấy 29.
-    public const OTP_LEEWAY_SECONDS = 29;
 
     private const RANDOM_PASSWORD_LENGTH = 32;
 
@@ -134,6 +131,23 @@ class User extends Authenticatable
         }
 
         return self::query()->where('email', mb_strtolower($email))->first();
+    }
+
+    /** @throws InvalidEmail */
+    public static function assertAllowedEmail(string $email): void
+    {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidEmail;
+        }
+
+        $domain = mb_strtolower(explode('@', $email)[1] ?? '');
+        $blockedDomains = array_filter(array_map('trim', explode("\n", (string) config('yona.blocked_email_domains'))));
+
+        foreach ($blockedDomains as $blockedDomain) {
+            if (preg_match('/'.$blockedDomain.'/i', $domain)) {
+                throw new InvalidEmail;
+            }
+        }
     }
 
     // Tương đương Devise set_reset_password_token — sinh token cho link đặt mật khẩu.

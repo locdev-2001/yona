@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\AccountInviteLink;
 use App\Models\AccountUser;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 function inviteLinksAccount(): Account
 {
@@ -53,6 +54,18 @@ describe('GET /api/v1/accounts/{id}/invite_links', function () {
             ->and($response->json('0'))->not->toHaveKey('token')
             ->and($response->json('0'))->not->toHaveKey('token_digest');
     });
+
+    it('caps the list at 50 links', function () {
+        $account = inviteLinksAccount();
+        $admin = inviteLinksMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        AccountInviteLink::factory()->count(55)->create(['account_id' => $account->id]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/invite_links")
+            ->assertOk();
+
+        expect($response->json())->toHaveCount(50);
+    });
 });
 
 describe('POST /api/v1/accounts/{id}/invite_links', function () {
@@ -67,7 +80,7 @@ describe('POST /api/v1/accounts/{id}/invite_links', function () {
             ->assertUnauthorized();
     });
 
-    it('creates a link and returns the raw token and url once', function () {
+    it('creates a link and returns the raw url once, without the resource exposing it', function () {
         $account = inviteLinksAccount();
         $admin = inviteLinksMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
 
@@ -77,13 +90,14 @@ describe('POST /api/v1/accounts/{id}/invite_links', function () {
             ])
             ->assertCreated();
 
-        $token = $response->json('token');
-        expect($token)->toBeString()->not->toBeEmpty()
-            ->and($response->json('url'))->toContain("/invite/{$token}")
+        $url = $response->json('url');
+        expect($url)->toBeString()->toContain('/invite/')
+            ->and($response->json('link'))->not->toHaveKey('token')
             ->and($response->json('link.role'))->toBe('administrator')
             ->and($response->json('link.max_uses'))->toBe(3)
             ->and($response->json('link.status'))->toBe('active');
 
+        $token = Str::afterLast($url, '/invite/');
         expect(AccountInviteLink::findByToken($token))->not->toBeNull();
     });
 
@@ -94,6 +108,17 @@ describe('POST /api/v1/accounts/{id}/invite_links', function () {
         $this->actingAs($admin)
             ->postJson("/api/v1/accounts/{$account->id}/invite_links", [
                 'role' => 'agent', 'expires_in_days' => 14,
+            ])
+            ->assertUnprocessable();
+    });
+
+    it('rejects a max_uses above the cap', function () {
+        $account = inviteLinksAccount();
+        $admin = inviteLinksMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/invite_links", [
+                'role' => 'agent', 'expires_in_days' => 7, 'max_uses' => 1001,
             ])
             ->assertUnprocessable();
     });
@@ -120,6 +145,19 @@ describe('DELETE /api/v1/accounts/{id}/invite_links/{linkId}', function () {
             ->assertOk();
 
         expect($link->refresh()->isRevoked())->toBeTrue();
+    });
+
+    it('does not revoke an already-revoked link a second time', function () {
+        $account = inviteLinksAccount();
+        $admin = inviteLinksMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $link = AccountInviteLink::factory()->create(['account_id' => $account->id, 'revoked_at' => now()->subDay()]);
+        $revokedAt = $link->refresh()->revoked_at;
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/accounts/{$account->id}/invite_links/{$link->id}")
+            ->assertNotFound();
+
+        expect($link->refresh()->revoked_at)->toEqual($revokedAt);
     });
 
     it('does not revoke a link belonging to another account', function () {

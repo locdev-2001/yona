@@ -25,10 +25,8 @@ const ERROR_STATUS_KEYS: Record<Exclude<InviteStatus, 'active'>, string> = {
     exhausted: 'EXHAUSTED',
 };
 
-// Trang công khai /invite/{token} — Port mới, không có bản Vue tương ứng
-// (tính năng #46, không có trong bản gốc Chatwoot). `noindex`: trang riêng cho
-// một người, không có gì để xếp hạng (cùng lý do landing đặt noindex ở trang
-// cảm ơn).
+// `noindex`: trang riêng cho một người, không có gì để xếp hạng (cùng lý do
+// landing đặt noindex ở trang cảm ơn).
 export default function InviteIndex() {
     const { status, token, account, auth, flash } = usePage<InvitePageProps>().props;
 
@@ -69,8 +67,8 @@ export default function InviteIndex() {
                                     <SignupJoinForm token={token} />
                                     <p className="text-sm mt-5 mb-0 text-n-slate-11">
                                         {t('INVITE_LINKS.PAGE.LOGIN_LINK')}{' '}
-                                        {/* py + -my bù lại: đích chạm ≥44px trên điện thoại (C6) mà
-                                            không đẩy lệch dòng chữ xung quanh. */}
+                                        {/* py + -my bù lại: đích chạm ≥44px trên điện thoại, không
+                                            đẩy lệch dòng chữ xung quanh. */}
                                         <a
                                             className="inline-block py-3 -my-3 text-n-blue-10 font-medium hover:text-n-blue-11"
                                             href="/app/login"

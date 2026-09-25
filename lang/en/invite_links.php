@@ -1,13 +1,8 @@
 <?php
 
 return [
-    'accept' => [
-        'errors' => [
-            'not_found' => 'This invite link does not exist.',
-            'revoked' => 'This invite link has been revoked.',
-            'expired' => 'This invite link has expired.',
-            'exhausted' => 'This invite link has reached its usage limit.',
-        ],
+    'API' => [
+        'ERROR_MESSAGE' => 'Could not reach the server. Please try again later.',
     ],
 
     'PAGE' => [
@@ -54,9 +49,6 @@ return [
                 'DESC' => 'This invite link has reached its usage limit. Ask for a new one.',
             ],
         ],
-        'API' => [
-            'ERROR_MESSAGE' => 'Could not reach the server. Please try again later.',
-        ],
     ],
 
     'MANAGE' => [
@@ -87,7 +79,7 @@ return [
             'HINT' => 'This link only shows in full once. Copy or send it now.',
             'COPY' => 'Copy',
             'COPIED' => 'Copied',
-            'SHARE_ZALO' => 'Send via Zalo',
+            'SHARE' => 'Share',
         ],
         'LIST' => [
             'EMPTY' => 'No invite links yet.',
@@ -114,9 +106,7 @@ return [
         ],
         'API' => [
             'CREATE_SUCCESS' => 'Invite link created',
-            'CREATE_ERROR' => 'Could not reach the server. Please try again later.',
             'REVOKE_SUCCESS' => 'Invite link revoked',
-            'REVOKE_ERROR' => 'Could not reach the server. Please try again later.',
         ],
     ],
 ];

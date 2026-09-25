@@ -6,7 +6,9 @@ use App\Models\Account;
 use App\Models\AccountInviteLink;
 use App\Models\AccountUser;
 use App\Models\User;
+use App\Notifications\ConfirmationInstructions;
 use App\Services\AccountInviteAcceptanceService;
+use Illuminate\Support\Facades\Notification;
 
 function service(): AccountInviteAcceptanceService
 {
@@ -14,7 +16,8 @@ function service(): AccountInviteAcceptanceService
 }
 
 describe('acceptForNewUser', function () {
-    it('creates a confirmed user and joins the account with the link role', function () {
+    it('creates an unconfirmed user, mails confirmation and joins the account with the link role', function () {
+        Notification::fake();
         $link = AccountInviteLink::factory()->administrator()->create();
 
         $accountUser = service()->acceptForNewUser($link, 'new@example.com', 'Password1!', 'New Person');
@@ -28,7 +31,8 @@ describe('acceptForNewUser', function () {
         $user = User::fromEmail('new@example.com');
         expect($user)->not->toBeNull()
             ->and($user->name)->toBe('New Person')
-            ->and($user->isConfirmed())->toBeTrue();
+            ->and($user->isConfirmed())->toBeFalse();
+        Notification::assertSentTo($user, ConfirmationInstructions::class);
 
         expect($link->refresh()->use_count)->toBe(1);
     });

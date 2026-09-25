@@ -11,15 +11,7 @@ import ModalHeader from 'dashboard/components/ModalHeader';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
 import type { CreatedInviteLink, InviteLink } from './types';
 
-// Bổ sung cho mời qua email (AddAgent.tsx): tạo một đường dẫn dùng chung, gửi
-// tay qua Zalo — quản trị viên không phải gõ từng email. Vai trò/hạn dùng/giới
-// hạn lượt chọn ở đây; chấp nhận lời mời nằm ở trang công khai /invite/{token}
-// (v3/views/auth/invite/Index.tsx), không thuộc phạm vi component này.
-const EXPIRY_CHOICES: { days: number; labelKey: string }[] = [
-    { days: 1, labelKey: 'DAY_1' },
-    { days: 7, labelKey: 'DAY_7' },
-    { days: 30, labelKey: 'DAY_30' },
-];
+const EXPIRY_DAY_CHOICES = [1, 7, 30] as const;
 
 interface InviteLinksProps {
     accountId: number;
@@ -74,7 +66,7 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
             setLinks(current => [result.link, ...current]);
             useAlert(t('INVITE_LINKS.MANAGE.API.CREATE_SUCCESS'));
         } catch {
-            useAlert(t('INVITE_LINKS.MANAGE.API.CREATE_ERROR'));
+            useAlert(t('INVITE_LINKS.API.ERROR_MESSAGE'));
         } finally {
             setCreating(false);
         }
@@ -85,17 +77,12 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
         setCopied(true);
     };
 
-    const shareViaZalo = async (url: string) => {
-        if (navigator.share) {
-            try {
-                await navigator.share({ url });
-                return;
-            } catch {
-                // Người dùng huỷ hộp thoại chia sẻ — coi như không có gì xảy ra.
-                return;
-            }
-        }
-        await copyUrl(url);
+    const canShare = typeof navigator.share === 'function';
+
+    const shareLink = async (url: string) => {
+        try {
+            await navigator.share({ url });
+        } catch {}
     };
 
     const confirmRevoke = async () => {
@@ -113,7 +100,7 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
             );
             useAlert(t('INVITE_LINKS.MANAGE.API.REVOKE_SUCCESS'));
         } catch {
-            useAlert(t('INVITE_LINKS.MANAGE.API.REVOKE_ERROR'));
+            useAlert(t('INVITE_LINKS.API.ERROR_MESSAGE'));
         } finally {
             setRevokingId(null);
         }
@@ -143,11 +130,13 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
                                 label={isCopied ? t('INVITE_LINKS.MANAGE.CREATED.COPIED') : t('INVITE_LINKS.MANAGE.CREATED.COPY')}
                                 onClick={() => void copyUrl(created.url)}
                             />
-                            <Button
-                                sm
-                                label={t('INVITE_LINKS.MANAGE.CREATED.SHARE_ZALO')}
-                                onClick={() => void shareViaZalo(created.url)}
-                            />
+                            {canShare ? (
+                                <Button
+                                    sm
+                                    label={t('INVITE_LINKS.MANAGE.CREATED.SHARE')}
+                                    onClick={() => void shareLink(created.url)}
+                                />
+                            ) : null}
                         </div>
                     </div>
                 ) : null}
@@ -164,9 +153,9 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
                     <label>
                         {t('INVITE_LINKS.MANAGE.FORM.EXPIRES.LABEL')}
                         <select value={expiresInDays} onChange={event => setExpiresInDays(Number(event.target.value))}>
-                            {EXPIRY_CHOICES.map(choice => (
-                                <option key={choice.days} value={choice.days}>
-                                    {t(`INVITE_LINKS.MANAGE.FORM.EXPIRES.OPTIONS.${choice.labelKey}`)}
+                            {EXPIRY_DAY_CHOICES.map(days => (
+                                <option key={days} value={days}>
+                                    {t(`INVITE_LINKS.MANAGE.FORM.EXPIRES.OPTIONS.DAY_${days}`)}
                                 </option>
                             ))}
                         </select>

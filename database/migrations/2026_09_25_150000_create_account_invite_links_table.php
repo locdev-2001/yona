@@ -5,9 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 // Link mời tự phục vụ do quản trị viên tạo, gửi tay qua Zalo (khác lời mời qua
-// email của AgentBuilder). Token thật không lưu — chỉ lưu digest sha256, giống
-// cách reset_password_token của Devise không được lưu (ở đây Devise field vẫn
-// lưu plain vì bản gốc vậy; link mời là tính năng mới nên chọn chuẩn an toàn hơn).
+// email của AgentBuilder). Token thật không lưu — chỉ lưu digest sha256.
 return new class extends Migration
 {
     public function up(): void

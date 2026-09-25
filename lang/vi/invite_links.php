@@ -1,17 +1,8 @@
 <?php
 
-// Link mời tự phục vụ (Cài đặt > Nhân viên > Mời qua link) + trang công khai
-// /invite/{token}. `accept.errors.*` dùng ở backend qua __(), phần còn lại
-// dùng ở frontend qua t() (namespace INVITE_LINKS).
-
 return [
-    'accept' => [
-        'errors' => [
-            'not_found' => 'Đường dẫn mời này không tồn tại.',
-            'revoked' => 'Đường dẫn mời này đã bị thu hồi.',
-            'expired' => 'Đường dẫn mời này đã hết hạn.',
-            'exhausted' => 'Đường dẫn mời này đã hết lượt sử dụng.',
-        ],
+    'API' => [
+        'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
     ],
 
     'PAGE' => [
@@ -58,9 +49,6 @@ return [
                 'DESC' => 'Đường dẫn mời này đã dùng hết số lượt cho phép. Bạn hãy xin một đường dẫn mới.',
             ],
         ],
-        'API' => [
-            'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
-        ],
     ],
 
     'MANAGE' => [
@@ -91,7 +79,7 @@ return [
             'HINT' => 'Đường dẫn này chỉ hiện đầy đủ một lần. Bạn hãy sao chép hoặc gửi ngay.',
             'COPY' => 'Sao chép',
             'COPIED' => 'Đã sao chép',
-            'SHARE_ZALO' => 'Gửi qua Zalo',
+            'SHARE' => 'Chia sẻ',
         ],
         'LIST' => [
             'EMPTY' => 'Chưa có đường dẫn mời nào.',
@@ -118,9 +106,7 @@ return [
         ],
         'API' => [
             'CREATE_SUCCESS' => 'Đã tạo đường dẫn mời',
-            'CREATE_ERROR' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
             'REVOKE_SUCCESS' => 'Đã thu hồi đường dẫn mời',
-            'REVOKE_ERROR' => 'Không kết nối được máy chủ. Bạn hãy thử lại sau.',
         ],
     ],
 ];

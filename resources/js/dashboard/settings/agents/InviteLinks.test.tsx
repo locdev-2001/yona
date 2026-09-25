@@ -26,9 +26,7 @@ const link = (overrides: Partial<InviteLink> = {}): InviteLink => ({
     expires_at: '2026-10-02T00:00:00+00:00',
     max_uses: null,
     use_count: 0,
-    uses_left: null,
     revoked_at: null,
-    created_at: '2026-09-25T00:00:00+00:00',
     created_by_name: 'Admin Name',
     ...overrides,
 });
@@ -55,11 +53,10 @@ describe('InviteLinks', () => {
         await waitFor(() => expect(screen.getByText('Chưa có đường dẫn mời nào.')).toBeInTheDocument());
     });
 
-    it('creates a link and reveals the one-time token banner', async () => {
+    it('creates a link and reveals the one-time url banner', async () => {
         getJson.mockResolvedValue([]);
         const created: CreatedInviteLink = {
             link: link({ id: 9 }),
-            token: 'raw-token-value',
             url: 'https://yona.vn/invite/raw-token-value',
         };
         postJson.mockResolvedValue(created);
@@ -75,6 +72,28 @@ describe('InviteLinks', () => {
             max_uses: null,
         }));
         expect(await screen.findByDisplayValue(created.url)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Chia sẻ' })).not.toBeInTheDocument();
+    });
+
+    it('shows a share button and uses the OS share sheet when available', async () => {
+        getJson.mockResolvedValue([]);
+        const created: CreatedInviteLink = {
+            link: link({ id: 9 }),
+            url: 'https://yona.vn/invite/raw-token-value',
+        };
+        postJson.mockResolvedValue(created);
+        const share = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { ...navigator, share });
+
+        render(<InviteLinks accountId={5} onClose={() => undefined} />);
+        await waitFor(() => expect(getJson).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: 'Tạo đường dẫn' }));
+        await screen.findByDisplayValue(created.url);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Chia sẻ' }));
+
+        await waitFor(() => expect(share).toHaveBeenCalledWith({ url: created.url }));
+        vi.unstubAllGlobals();
     });
 
     it('revokes a link after confirming', async () => {

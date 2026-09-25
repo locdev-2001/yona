@@ -111,19 +111,19 @@ class AccountUser extends Model
         return $this->belongsTo(User::class, 'inviter_id');
     }
 
-    public function inviteLink(): BelongsTo
-    {
-        return $this->belongsTo(AccountInviteLink::class, 'invite_link_id');
-    }
-
     public function isAdministrator(): bool
     {
         return $this->role === self::ROLE_ADMINISTRATOR;
     }
 
+    public static function roleNameFor(int $role): string
+    {
+        return $role === self::ROLE_ADMINISTRATOR ? 'administrator' : 'agent';
+    }
+
     public function roleName(): string
     {
-        return $this->isAdministrator() ? 'administrator' : 'agent';
+        return self::roleNameFor($this->role);
     }
 
     public function availabilityName(): string

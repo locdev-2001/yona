@@ -2,70 +2,76 @@
 
 namespace App\Services;
 
+use App\Exceptions\Account\InvalidEmail;
 use App\Exceptions\Account\InviteLinkUnusable;
 use App\Exceptions\Account\UserExists;
 use App\Models\AccountInviteLink;
 use App\Models\AccountUser;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// Nhận lời mời qua link — hai lối vào: người mới ký mật khẩu ngay trên trang
-// công khai (coi như xác nhận email tại chỗ, cùng thời điểm email invite tự
-// confirm khi đặt mật khẩu — xem docs/ux-decisions.md), hoặc người đã đăng
-// nhập bấm tham gia một chạm.
 class AccountInviteAcceptanceService
 {
+    /** @throws InvalidEmail|InviteLinkUnusable|UserExists */
     public function acceptForNewUser(AccountInviteLink $link, string $email, string $password, ?string $name): AccountUser
     {
+        User::assertAllowedEmail($email);
+
         if (User::fromEmail($email) !== null) {
             throw new UserExists;
         }
 
-        return DB::transaction(function () use ($link, $email, $password, $name) {
-            $lockedLink = $this->lockAndValidate($link);
+        [$user, $accountUser] = DB::transaction(function () use ($link, $email, $password, $name) {
+            $lockedLink = $this->lock($link);
+            $this->assertUsable($lockedLink);
 
-            $user = new User([
-                'email' => $email,
-                'name' => $name !== null && $name !== '' ? $name : Str::before($email, '@'),
-                'password' => $password,
-                // Tin cậy ngay: mật khẩu đặt trực tiếp trên trang này, không có
-                // bước xác nhận email riêng như luồng tự đăng ký công khai.
-                'confirmed_at' => now(),
-            ]);
-            $user->save();
+            try {
+                $user = User::query()->create([
+                    'email' => $email,
+                    'name' => $name !== null && $name !== '' ? $name : Str::before($email, '@'),
+                    'password' => $password,
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                throw new UserExists;
+            }
 
-            return $this->join($lockedLink, $user);
+            return [$user, $this->join($lockedLink, $user)];
         });
+
+        $user->sendConfirmationInstructions();
+
+        return $accountUser;
     }
 
+    /** @throws InviteLinkUnusable */
     public function acceptForExistingUser(AccountInviteLink $link, User $user): AccountUser
     {
         return DB::transaction(function () use ($link, $user) {
-            $existing = $user->accountUsers()->where('account_id', $link->account_id)->first();
+            $lockedLink = $this->lock($link);
+
+            $existing = $user->accountUsers()->where('account_id', $lockedLink->account_id)->first();
             if ($existing !== null) {
-                // Bấm hai lần / mở hai tab không được tính thêm một lượt dùng.
                 return $existing;
             }
 
-            $lockedLink = $this->lockAndValidate($link);
+            $this->assertUsable($lockedLink);
 
             return $this->join($lockedLink, $user);
         });
     }
 
-    // lockForUpdate trên chính link — serialize dùng link này song song để
-    // không vượt max_uses (tương đương account.with_lock của AgentBuilder,
-    // nhưng khoá đối tượng đang cạnh tranh thay vì khoá cả account).
-    private function lockAndValidate(AccountInviteLink $link): AccountInviteLink
+    private function lock(AccountInviteLink $link): AccountInviteLink
     {
-        $locked = AccountInviteLink::query()->whereKey($link->id)->lockForUpdate()->firstOrFail();
+        return AccountInviteLink::query()->whereKey($link->id)->lockForUpdate()->firstOrFail();
+    }
 
-        if (! $locked->isUsable()) {
-            throw new InviteLinkUnusable($locked->status());
+    private function assertUsable(AccountInviteLink $link): void
+    {
+        if (! $link->isUsable()) {
+            throw new InviteLinkUnusable($link->status());
         }
-
-        return $locked;
     }
 
     private function join(AccountInviteLink $link, User $user): AccountUser

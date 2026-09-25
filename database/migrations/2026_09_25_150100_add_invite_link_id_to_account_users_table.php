@@ -4,8 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Ghi lại thành viên nào vào account qua link mời nào — phục vụ audit
-// ("liên hệ nháp" không áp dụng ở đây nhưng nguyên tắc ghi nguồn thì có).
 return new class extends Migration
 {
     public function up(): void
