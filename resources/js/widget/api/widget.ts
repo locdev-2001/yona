@@ -149,6 +149,22 @@ export const sendSticker = (stickerId: string, replyTo: number | string | null =
 export const recallMessage = (messageId: number | string): Promise<void> =>
     apiDelete(`${BASE}/messages/${messageId}${buildSearch()}`);
 
+/** Tin có cấu trúc do khách gửi (vd `order_request`); máy chủ tự đối chiếu với thẻ gốc. */
+export const sendStructuredMessage = (contentType: string, contentAttributes: Record<string, unknown>): Promise<WidgetMessage> =>
+    apiPost(`${BASE}/messages${buildSearch()}`, {
+        message: {
+            content: '',
+            content_type: contentType,
+            content_attributes: contentAttributes,
+            timestamp: new Date().toString(),
+            referer_url: referrerUrl(),
+        },
+    });
+
+/** Link có hạn tới trang công khai của một tin (chọn lịch, form dài…), để mở trong sheet. */
+export const fetchFlowUrl = (messageId: number | string, page: string, itemId?: string): Promise<{ url: string }> =>
+    apiPost(`${BASE}/messages/${messageId}/flow${buildSearch()}`, { page, item_id: itemId });
+
 export const setMessageReaction = (messageId: number | string, emoji: string | null): Promise<unknown> =>
     emoji
         ? apiPost(`${BASE}/messages/${messageId}/reactions${buildSearch()}`, { emoji })
