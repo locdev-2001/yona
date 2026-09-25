@@ -3,7 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
+use App\Messaging\MessagePreview;
 use App\Messaging\Structured\LegacyWebhookAliases;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Attachment;
@@ -80,6 +82,10 @@ class MessageResource extends JsonResource
             'source_id' => $message->source_id,
             'content_type' => $message->contentTypeName(),
             'content_attributes' => $message->content_attributes ?? [],
+            // Dòng xem trước cho danh sách hội thoại; chỉ tin có cấu trúc mới cần (content có thể rỗng).
+            'preview_text' => app(StructuredTypeRegistry::class)->for($message->contentTypeName()) === null
+                ? null
+                : app(MessagePreview::class)->for($message),
             'sender_type' => $message->sender_type,
             'sender_id' => $message->sender_id,
             'external_source_ids' => $message->external_source_ids ?? [],

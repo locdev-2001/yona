@@ -1,4 +1,6 @@
 import type { CSSProperties } from 'react';
+import { resolveStructured } from 'shared/messaging';
+import StructuredBubble, { ChoiceOfLabel } from './bubbles/Structured';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
@@ -61,6 +63,8 @@ interface MessageProps {
     // Tin được trả lời, MessageList tra sẵn: có = tin gốc · null = đã tra, không
     // có · undefined = chưa biết hoặc đang tải.
     inReplyTo?: ConversationMessage | null;
+    /** Câu hỏi có lựa chọn mà tin khách này trả lời (`content_attributes.choice_of`). */
+    choiceOf?: ConversationMessage | null;
     // Gửi lại tin thất bại (POST …/messages/{id}/retry) — emit `retry` của gốc.
     onRetry?: (message: ConversationMessage) => Promise<void> | void;
     onToggleReaction?: (message: ConversationMessage, emoji: string) => Promise<void> | void;
@@ -125,6 +129,7 @@ export default function Message({
     resolveReactorName,
     chatAttachments = [],
     inReplyTo,
+    choiceOf,
     onRetry,
     onToggleReaction,
     onDeleteMessage,
@@ -215,7 +220,13 @@ export default function Message({
               ? StickerBubble
               : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
 
+    const structured =
+        contentAttributes.deleted || contentAttributes.external_error
+            ? null
+            : resolveStructured({ ...message, content_attributes: contentAttributes });
+
     const shouldRenderMessage = Boolean(
+        structured ||
         attachments.length > 0 ||
             message.content ||
             ChannelCardBubble ||
@@ -259,7 +270,7 @@ export default function Message({
 
     // Trạng thái gửi và khoá ghi chú chỉ ở tin cuối nhóm; email tự vẽ dòng giờ trong khung thư.
     const showsStatusRow = !shouldGroupWithNext && variant !== MESSAGE_VARIANTS.EMAIL;
-    const hasFooter = Boolean(contentAttributes.external_error) || isExternalEcho || showsStatusRow;
+    const hasFooter = Boolean(contentAttributes.external_error) || isExternalEcho || showsStatusRow || Boolean(choiceOf);
 
     return (
         <MessageProvider value={contextValue}>
@@ -299,7 +310,7 @@ export default function Message({
                                     : 'ltr:mr-8 rtl:ml-8'
                             }`}
                         >
-                            <BubbleComponent />
+                            {structured ? <StructuredBubble resolved={structured} message={message} /> : <BubbleComponent />}
                         </MessageActions>
                         {hasFooter ? (
                             <div
@@ -319,6 +330,7 @@ export default function Message({
                                         {t('CONVERSATION.SENT_FROM_NATIVE_APP')}
                                     </div>
                                 ) : null}
+                                {choiceOf ? <ChoiceOfLabel question={choiceOf} onJump={onJumpToMessage} /> : null}
                                 {showsStatusRow ? <MessageMeta showTime={false} className="mt-1 text-n-slate-11" /> : null}
                             </div>
                         ) : null}

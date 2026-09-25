@@ -40,7 +40,9 @@ export default function MessagePreview({
     // Năng lực `friend_request`: thẻ hội thoại nói rõ đây là lời mời, không phải
     // tin thường — lời nhắn kèm theo (nếu có) đã nằm trong bong bóng.
     const isFriendRequest = Boolean(contentAttributes?.friend_request);
-    const parsedLastMessage = deletedMessageLabel(contentAttributes) ?? getPlainText(subject || message.content);
+    // Tin có cấu trúc (thẻ, lựa chọn…) có thể không có content: máy chủ gửi sẵn dòng xem trước.
+    const previewText = message.preview_text;
+    const parsedLastMessage = deletedMessageLabel(contentAttributes) ?? (previewText || getPlainText(subject || message.content));
     const fileType = String(message.attachments?.[0]?.file_type ?? '');
     const attachmentIcon = ATTACHMENT_ICONS[fileType];
     const isMessageSticker = message.content_type === 'sticker';
@@ -74,7 +76,7 @@ export default function MessagePreview({
                         <Icon icon="i-ph-sticker" className="size-3.5" />
                         {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                     </span>
-                ) : message.content ? (
+                ) : message.content || previewText ? (
                     parsedLastMessage
                 ) : message.attachments ? (
                     <span className="inline-block align-middle truncate">

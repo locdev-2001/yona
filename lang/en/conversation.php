@@ -108,6 +108,14 @@ return [
         'TITLE' => 'Friend request',
     ],
     // Tin chủ hộp thư gửi thẳng từ ứng dụng của kênh (`external_echo`).
+    'STRUCTURED' => [
+        'CHOICE_OF' => 'Reply to: {question}',
+        'DELIVERY' => [
+            'TEXT_NUMBERED' => 'No buttons on this channel: the customer got text with a numbered list',
+            'TEXT' => 'This channel can\'t show cards: the customer got a text version',
+            'IMAGE_TEXT' => 'This channel can\'t show cards: the customer got a card image with text',
+        ],
+    ],
     'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [
         'REPLY' => 'Reply',

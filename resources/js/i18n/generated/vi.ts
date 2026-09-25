@@ -2409,6 +2409,14 @@ const messages: Record<string, unknown> = {
         "FRIEND_REQUEST": {
             "TITLE": "Lời mời kết bạn"
         },
+        "STRUCTURED": {
+            "CHOICE_OF": "Trả lời cho: {question}",
+            "DELIVERY": {
+                "TEXT_NUMBERED": "Kênh này không có nút: khách nhận chữ kèm danh sách số",
+                "TEXT": "Kênh này không vẽ được thẻ: khách nhận bản chữ",
+                "IMAGE_TEXT": "Kênh này không vẽ được thẻ: khách nhận ảnh thẻ kèm chữ"
+            }
+        },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
             "REPLY": "Trả lời",

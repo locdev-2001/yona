@@ -283,3 +283,18 @@ it('webhook gửi kèm tên nút đời trước cho hệ thống khách đang �
     expect($actions[0])->toMatchArray(['kind' => 'link', 'type' => 'link', 'text' => 'Xem', 'uri' => 'https://gommoc.vn/coc'])
         ->and($actions[1])->toBe(['kind' => 'order', 'label' => 'Đặt mua']);
 });
+
+it('payload hội thoại có dòng xem trước cho tin có cấu trúc, tin thường để null', function () {
+    $session = WidgetSession::make();
+    $conversation = structuredConversation($session);
+    $card = productCard($conversation);
+    $plain = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào chị',
+    ]);
+
+    expect(App\Http\Resources\MessageResource::pushEventData($card)['preview_text'])->toContain('Bình men lam 40cm')
+        ->and(App\Http\Resources\MessageResource::pushEventData($plain)['preview_text'])->toBeNull();
+});
