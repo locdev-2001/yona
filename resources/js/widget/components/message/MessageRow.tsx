@@ -82,7 +82,7 @@ export default function MessageRow({ message, replyTo, isOwn, position, avatar =
     return (
         <div
             id={messageElementId(message.id)}
-            className={`yona-msg group flex items-end gap-2 rounded-[12px] ${isOwn ? 'justify-end' : 'justify-start'}`}
+            className={`yona-msg group relative flex items-end gap-2 rounded-[12px] ${isOwn ? 'justify-end' : 'justify-start'}`}
             data-own={isOwn ? 'true' : 'false'}
             onTouchStart={startLongPress}
             onTouchMove={cancelLongPress}

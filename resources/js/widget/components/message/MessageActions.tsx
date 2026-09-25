@@ -122,7 +122,7 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
     return (
         <div
             ref={containerRef}
-            className={`yona-msg-actions relative flex flex-none items-center gap-[2px] ${className} ${
+            className={`yona-msg-actions flex flex-none items-center gap-[2px] ${className} ${
                 isMenuOpen || isConfirmOpen || isPickerOpen ? '!opacity-100' : ''
             }`}
         >
@@ -141,53 +141,55 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
                 <ReplyIcon />
             </RoundButton>
             {hasMenu ? (
-                <RoundButton
-                    label={t('MESSAGE_ACTIONS.MORE')}
-                    onClick={() => {
-                        setPickerOpen(false);
-                        setMenuOpen(current => !current);
-                    }}
-                >
-                    <MoreIcon />
-                </RoundButton>
+                <span className="relative flex">
+                    <RoundButton
+                        label={t('MESSAGE_ACTIONS.MORE')}
+                        onClick={() => {
+                            setPickerOpen(false);
+                            setMenuOpen(current => !current);
+                        }}
+                    >
+                        <MoreIcon />
+                    </RoundButton>
+                    {isMenuOpen ? (
+                        <div
+                            role="menu"
+                            className={`absolute bottom-[36px] z-20 w-[176px] overflow-hidden rounded-[12px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] shadow-[var(--yona-chat-shadow-pop)] ${menuAnchor}`}
+                            onClick={event => event.stopPropagation()}
+                        >
+                            {showCopy ? (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    className="block w-full px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-ink)]"
+                                    onClick={copyContent}
+                                >
+                                    {t('MESSAGE_ACTIONS.COPY')}
+                                </button>
+                            ) : null}
+                            {showRecall ? (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    className="block w-full border-t border-[var(--yona-chat-line)] px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-danger)] first:border-t-0"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        setConfirmOpen(true);
+                                    }}
+                                >
+                                    {t('MESSAGE_ACTIONS.RECALL')}
+                                </button>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </span>
             ) : null}
 
             {isPickerOpen ? (
-                // Nằm trên bong bóng, canh theo mép trái hàng tin (tin của shop ở bên trái).
-                <div className="absolute bottom-[38px] z-20 ltr:right-0 rtl:left-0">
+                // Khung chứa là cả hàng tin (MessageRow `relative`): thanh nằm trên bong bóng,
+                // canh mép đầu bong bóng, sau cột avatar 26px + khoảng cách 8px.
+                <div className="absolute bottom-full z-20 mb-1 ltr:left-[34px] rtl:right-[34px]">
                     <ReactionPicker message={message} onDone={() => setPickerOpen(false)} />
-                </div>
-            ) : null}
-
-            {isMenuOpen ? (
-                <div
-                    role="menu"
-                    className={`absolute bottom-[36px] z-20 w-[176px] overflow-hidden rounded-[12px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] shadow-[var(--yona-chat-shadow-pop)] ${menuAnchor}`}
-                    onClick={event => event.stopPropagation()}
-                >
-                    {showCopy ? (
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="block w-full px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-ink)]"
-                            onClick={copyContent}
-                        >
-                            {t('MESSAGE_ACTIONS.COPY')}
-                        </button>
-                    ) : null}
-                    {showRecall ? (
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="block w-full border-t border-[var(--yona-chat-line)] px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-danger)] first:border-t-0"
-                            onClick={() => {
-                                setMenuOpen(false);
-                                setConfirmOpen(true);
-                            }}
-                        >
-                            {t('MESSAGE_ACTIONS.RECALL')}
-                        </button>
-                    ) : null}
                 </div>
             ) : null}
 
