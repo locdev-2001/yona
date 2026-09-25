@@ -252,13 +252,16 @@ return [
     ],
     'CONVERSATION_END' => [
         'TITLE' => 'This conversation has ended',
-        'RATE_PROMPT' => 'How was your conversation?',
+        'RATE_PROMPT' => 'How was the support you received?',
         'POOR' => 'Poor',
         'OKAY' => 'Okay',
         'GREAT' => 'Great',
-        'FEEDBACK_PLACEHOLDER' => 'Any extra feedback (optional)',
+        'FEEDBACK_PLACEHOLDER' => 'What could be better? (optional)',
         'SUBMIT' => 'Send rating',
         'THANKS' => 'Thanks for your rating!',
+        'SUPPORTED_MINUTES' => 'Helped you for {n} minute | Helped you for {n} minutes',
+        'SUPPORTED_HOURS' => 'Helped you for {n} hour | Helped you for {n} hours',
+        'SUPPORTED_DAYS' => 'Helped you for {n} day | Helped you for {n} days',
     ],
     'LAUNCHER' => [
         'OPEN' => 'Open chat',

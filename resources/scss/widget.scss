@@ -46,6 +46,9 @@
   --yona-chat-on-scrim: #ffffff;
   --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
   --yona-chat-send-idle: #d2d6db;
+  // Viền ô nhập liệu và nút chọn trong thẻ (đánh giá, ngoài giờ); nền nhẹ của lựa chọn đang chọn.
+  --yona-chat-line-field: rgba(0, 0, 0, 0.09);
+  --yona-chat-accent-soft: color-mix(in srgb, var(--yona-chat-accent) 12%, var(--yona-chat-panel));
   // Ảnh đại diện chữ tắt của nhân viên chưa có ảnh.
   --yona-chat-avatar: #e8d5c4;
   --yona-chat-on-avatar: #6b4a33;
@@ -73,6 +76,7 @@
   --yona-chat-dot: rgb(var(--slate-8));
   --yona-chat-send-idle: rgb(var(--slate-7));
   --yona-chat-progress-track: rgba(255, 255, 255, 0.25);
+  --yona-chat-line-field: rgba(255, 255, 255, 0.14);
   --yona-chat-avatar: rgb(var(--slate-6));
   --yona-chat-on-avatar: rgb(var(--slate-11));
 }
@@ -605,47 +609,6 @@ blockquote {
 
 .formkit-messages {
   @apply list-none m-0 p-0;
-}
-
-// Port từ <style scoped> của shared/components/CustomerSatisfaction.vue.
-.customer-satisfaction {
-  .ratings {
-    .emoji-button {
-      @apply shadow-none grayscale text-2xl outline-none transition-all duration-200;
-
-      &.selected,
-      &:hover,
-      &:focus,
-      &:active {
-        @apply grayscale-0 scale-[1.32];
-      }
-
-      &.disabled {
-        @apply cursor-not-allowed opacity-50 pointer-events-none;
-      }
-    }
-  }
-
-  .feedback-form {
-    input {
-      @apply h-10 dark:bg-n-alpha-black1 rtl:rounded-tl-[0] rtl:rounded-tr-[0] ltr:rounded-tr-[0] ltr:rounded-tl-[0] rtl:rounded-bl-[0] ltr:rounded-br-[0] ltr:rounded-bl-[0.25rem] rtl:rounded-br-[0.25rem] rounded-lg p-2.5 w-full focus:ring-0 focus:outline-n-brand;
-
-      &::placeholder {
-        @apply text-n-slate-10;
-      }
-    }
-
-    .button {
-      @apply rtl:rounded-tr-[0] rtl:rounded-tl-[0] appearance-none ltr:rounded-tl-[0] ltr:rounded-tr-[0] rtl:rounded-br-[0] ltr:rounded-bl-[0] rounded-lg h-auto ltr:-ml-px rtl:-mr-px text-xl;
-
-      .spinner {
-        display: block;
-        padding: 0;
-        height: auto;
-        width: auto;
-      }
-    }
-  }
 }
 
 // Port từ <style scoped> của widget/components/template/EmailInput.vue.

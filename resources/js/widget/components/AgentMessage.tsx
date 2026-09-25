@@ -11,7 +11,7 @@ import { t } from '../i18n';
 import CardsCarousel from './message/CardsCarousel';
 import MessageRow from './message/MessageRow';
 import { messageElementId } from './message/QuotedReply';
-import CustomerSatisfaction from './template/CustomerSatisfaction';
+import ConversationEndCard from './ConversationEndCard';
 import EmailInput from './template/EmailInput';
 import UserMessage from './UserMessage';
 import type { WidgetMessage } from '../types';
@@ -35,21 +35,6 @@ function AgentMessageBubble({
     messageId: number | string;
     messageContentAttributes: Record<string, unknown>;
 }) {
-    // Bong bóng CSAT thay hẳn bong bóng chữ (bản gốc loại `input_csat` khỏi
-    // nhánh `v-if` của chat-bubble) — tiêu đề đã nằm trong chính component.
-    if (contentType === 'input_csat') {
-        return (
-            <div className="chat-bubble-wrap">
-                <CustomerSatisfaction
-                    messageId={messageId}
-                    submittedValues={messageContentAttributes.submitted_values}
-                    displayType={messageContentAttributes.display_type as string | undefined}
-                    message={content}
-                />
-            </div>
-        );
-    }
-
     return (
         <div className="chat-bubble-wrap">
             <div className="chat-bubble agent bg-n-background dark:bg-n-solid-3 text-n-slate-12">
@@ -195,6 +180,10 @@ export default function AgentMessage({
 }: AgentMessageProps) {
     const agent = useAgentIdentity(message);
     const contentType = message.content_type ?? '';
+
+    if (contentType === 'input_csat' && !isDeletedMessage(message)) {
+        return <ConversationEndCard message={message} />;
+    }
 
     if (!isDeletedMessage(message) && (TEMPLATE_CONTENT_TYPES.includes(contentType) || isASubmittedFormMessage(message))) {
         return <TemplateMessage message={message} showAvatar={showAvatar} />;

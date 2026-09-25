@@ -62,7 +62,7 @@ return [
     'templates' => [
         'ways_to_reach_you_message_body' => 'Trong lúc chờ đội ngũ hỗ trợ phản hồi, bạn hãy để lại email để nhận được thông báo nhanh nhất nhé.',
         'email_input_box_message_body' => 'Nhận thông báo qua email',
-        'csat_input_message_body' => 'Bạn hãy vui lòng đánh giá hội thoại',
+        'csat_input_message_body' => 'Bạn thấy lần hỗ trợ này thế nào?',
     ],
 
     // config/locales/vi.yml — conversations.messages.deleted.

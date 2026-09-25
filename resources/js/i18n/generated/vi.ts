@@ -9735,13 +9735,16 @@ const messages: Record<string, unknown> = {
         },
         "CONVERSATION_END": {
             "TITLE": "Cuộc trò chuyện đã kết thúc",
-            "RATE_PROMPT": "Bạn thấy cuộc trò chuyện thế nào?",
+            "RATE_PROMPT": "Bạn thấy lần hỗ trợ này thế nào?",
             "POOR": "Kém",
             "OKAY": "Ổn",
             "GREAT": "Tuyệt",
-            "FEEDBACK_PLACEHOLDER": "Góp ý thêm (không bắt buộc)",
+            "FEEDBACK_PLACEHOLDER": "Điều gì có thể tốt hơn? (không bắt buộc)",
             "SUBMIT": "Gửi đánh giá",
-            "THANKS": "Cảm ơn bạn đã đánh giá!"
+            "THANKS": "Cảm ơn bạn đã đánh giá!",
+            "SUPPORTED_MINUTES": "Đã hỗ trợ trong {n} phút",
+            "SUPPORTED_HOURS": "Đã hỗ trợ trong {n} giờ",
+            "SUPPORTED_DAYS": "Đã hỗ trợ trong {n} ngày"
         },
         "LAUNCHER": {
             "OPEN": "Mở trò chuyện",
