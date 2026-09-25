@@ -24,7 +24,6 @@ export default function WebsiteChannelForm() {
     const uiSettings = (auth.user?.ui_settings ?? {}) as UISettings;
 
     const [inboxName, setInboxName] = useState('');
-    const [channelWebsiteUrl, setChannelWebsiteUrl] = useState('');
     const [channelWidgetColor, setChannelWidgetColor] = useState('#009CE0');
     const [channelWelcomeTitle, setChannelWelcomeTitle] = useState('');
     const [channelWelcomeTagline, setChannelWelcomeTagline] = useState('');
@@ -41,7 +40,6 @@ export default function WebsiteChannelForm() {
                 `/api/v1/accounts/${accountId}/inboxes`,
                 buildWebsiteChannelPayload({
                     inboxName,
-                    channelWebsiteUrl,
                     channelWidgetColor,
                     channelWelcomeTitle,
                     channelWelcomeTagline,
@@ -78,17 +76,6 @@ export default function WebsiteChannelForm() {
                                 value={inboxName}
                                 placeholder={t('INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER')}
                                 onChange={event => setInboxName(event.target.value)}
-                            />
-                        </label>
-                    </div>
-                    <div className="w-full">
-                        <label>
-                            {t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.LABEL')}
-                            <input
-                                type="text"
-                                value={channelWebsiteUrl}
-                                placeholder={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')}
-                                onChange={event => setChannelWebsiteUrl(event.target.value)}
                             />
                         </label>
                     </div>
@@ -154,7 +141,7 @@ export default function WebsiteChannelForm() {
                             <Button
                                 type="submit"
                                 isLoading={isCreating}
-                                disabled={!channelWebsiteUrl || !inboxName}
+                                disabled={!inboxName}
                                 solid
                                 blue
                                 label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.SUBMIT_BUTTON')}

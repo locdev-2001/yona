@@ -317,16 +317,39 @@ describe('POST /api/v1/accounts/{id}/inboxes', function () {
             ->and($response->json('greeting_enabled'))->toBeTrue();
     });
 
-    it('rejects a webwidget inbox without a website url', function () {
+    it('creates a webwidget inbox without a website url', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
                 'name' => 'test',
                 'channel' => ['type' => 'web_widget'],
             ])
-            ->assertUnprocessable();
+            ->assertOk();
+
+        expect($response->json('channel_type'))->toBe('Channel::WebWidget')
+            ->and($response->json('website_url'))->toBeNull();
+    });
+
+    it('keeps the stored website url when the settings form no longer sends it', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $inboxId = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'shop.test'],
+            ])
+            ->json('id');
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inboxId}", [
+                'name' => 'Shop',
+                'channel' => ['widget_color' => '#E0115F'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('website_url', 'shop.test');
     });
 
     it('rejects an unsupported channel type', function () {

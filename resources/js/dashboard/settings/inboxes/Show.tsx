@@ -149,7 +149,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const [businessName, setBusinessName] = useState('');
     const [showBusinessNameInput, setShowBusinessNameInput] = useState(false);
     const [lockToSingleConversation, setLockToSingleConversation] = useState(false);
-    const [channelWebsiteUrl, setChannelWebsiteUrl] = useState('');
     const [channelWelcomeTitle, setChannelWelcomeTitle] = useState('');
     const [channelWelcomeTagline, setChannelWelcomeTagline] = useState('');
     const [widgetColor, setWidgetColor] = useState('');
@@ -173,7 +172,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         setSenderNameType(nextInbox.sender_name_type);
         setBusinessName(nextInbox.business_name ?? '');
         setLockToSingleConversation(nextInbox.lock_to_single_conversation);
-        setChannelWebsiteUrl(nextInbox.website_url ?? '');
         setChannelWelcomeTitle(nextInbox.welcome_title ?? '');
         setChannelWelcomeTagline(nextInbox.welcome_tagline ?? '');
         setWidgetColor(nextInbox.widget_color ?? '');
@@ -239,7 +237,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         };
         const channelAttributes: Record<string, unknown> = {
             widget_color: widgetColor,
-            website_url: channelWebsiteUrl,
             webhook_url: webhookUrl,
             welcome_title: channelWelcomeTitle || '',
             welcome_tagline: channelWelcomeTagline || '',
@@ -430,33 +427,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                 />
                                             </SettingsFieldSection>
                                         ) : null}
-
-                                        {isWebWidget ? (
-                                            <SettingsFieldSection
-                                                label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.LABEL')}
-                                            >
-                                                <WootInput
-                                                    value={channelWebsiteUrl}
-                                                    className="[&>input]:!mb-0"
-                                                    placeholder={t(
-                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER',
-                                                    )}
-                                                    onChange={setChannelWebsiteUrl}
-                                                />
-                                            </SettingsFieldSection>
-                                        ) : null}
-
-                                        <SettingsFieldSection
-                                            label={t('INBOX_MGMT.HELP_CENTER.LABEL')}
-                                            helpText={t('INBOX_MGMT.HELP_CENTER.SUB_TEXT')}
-                                        >
-                                            <SelectInput
-                                                value=""
-                                                placeholder={t('INBOX_MGMT.HELP_CENTER.PLACEHOLDER')}
-                                                options={[{ value: '', label: t('INBOX_MGMT.HELP_CENTER.NONE') }]}
-                                                onChange={() => undefined}
-                                            />
-                                        </SettingsFieldSection>
 
                                         {canLockToSingleConversation ? (
                                             <SettingsFieldSection

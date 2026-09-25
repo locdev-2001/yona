@@ -12,7 +12,6 @@ import {
 describe('buildWebsiteChannelPayload', () => {
     const form = {
         inboxName: '  Acme site  ',
-        channelWebsiteUrl: 'https://acme.inc',
         channelWidgetColor: '#009CE0',
         channelWelcomeTitle: 'Hi there!',
         channelWelcomeTagline: 'Ask us anything',
@@ -27,7 +26,6 @@ describe('buildWebsiteChannelPayload', () => {
             greeting_message: 'Hello!',
             channel: {
                 type: 'web_widget',
-                website_url: 'https://acme.inc',
                 widget_color: '#009CE0',
                 welcome_title: 'Hi there!',
                 welcome_tagline: 'Ask us anything',

@@ -121,7 +121,8 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
     public static function channelRules(): array
     {
         return [
-            'website_url' => ['required', 'string', 'max:255'],
+            // Không còn trên form tạo: không nơi nào đọc cột này, giới hạn trang được nhúng nằm ở allowed_domains.
+            'website_url' => ['sometimes', 'nullable', 'string', 'max:255'],
             'widget_color' => ['sometimes', 'filled', 'string', 'max:255'],
             'welcome_title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'welcome_tagline' => ['sometimes', 'nullable', 'string', 'max:255'],

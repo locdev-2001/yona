@@ -4,7 +4,6 @@ import { usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson, patchJson } from 'dashboard/helper/apiClient';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
@@ -17,9 +16,9 @@ import type { Agent, Inbox } from '../types';
 
 // Port từ settings/inbox/settingsPage/CollaboratorsPage.vue @ v4.17.1.
 // Rẽ nhánh theo feature flag account như bản gốc: assignment_v2 (default BẬT)
-// hiện card "Default assignment rules" + banner Upgrade to Business khi chưa có
-// advanced_assignment; UI policy picker (advanced_assignment) + ô
-// max_assignment_limit (isEnterprise) port khi các feature đó vào.
+// hiện card "Default assignment rules". Yona chưa có gói cước nên không có lời
+// mời nâng cấp; UI policy picker (advanced_assignment) + ô max_assignment_limit
+// port khi các feature đó vào.
 interface CollaboratorsPageProps {
     inbox: Inbox;
     onInboxUpdated: (inbox: Inbox) => void;
@@ -30,7 +29,6 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
     const accountId = currentAccount!.id;
     const features = currentAccount!.features ?? {};
     const hasAssignmentV2 = Boolean(features.assignment_v2);
-    const hasAdvancedAssignment = Boolean(features.advanced_assignment);
 
     const [agentList, setAgentList] = useState<Agent[]>([]);
     const [selectedAgentIds, setSelectedAgentIds] = useState<number[]>([]);
@@ -153,7 +151,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                                             {t('INBOX_MGMT.ASSIGNMENT.DEFAULT_RULES_DESCRIPTION')}
                                         </p>
 
-                                        <ul className="space-y-2 mb-6 list-none p-0">
+                                        <ul className="space-y-2 list-none p-0">
                                             <li className="flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-n-slate-11 flex-shrink-0" />
                                                 <span className="text-body-main text-n-slate-12">
@@ -167,24 +165,6 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                                                 </span>
                                             </li>
                                         </ul>
-
-                                        <div className="w-full h-px bg-n-weak my-4" />
-
-                                        {!hasAdvancedAssignment ? (
-                                            <div>
-                                                <p className="text-body-main text-n-slate-11 mb-1">
-                                                    {t('INBOX_MGMT.ASSIGNMENT.UPGRADE_PROMPT')}
-                                                </p>
-                                                <a href={accountScopedUrl(accountId, 'settings/billing')}>
-                                                    <Button
-                                                        label={t('INBOX_MGMT.ASSIGNMENT.UPGRADE_TO_BUSINESS')}
-                                                        icon="i-lucide-arrow-right"
-                                                        trailingIcon
-                                                        link
-                                                    />
-                                                </a>
-                                            </div>
-                                        ) : null}
                                     </div>
                                 </div>
                             </div>
