@@ -108,10 +108,12 @@ return [
             'CHANNEL_WELCOME_TITLE' => [
                 'LABEL' => 'Welcome Heading',
                 'PLACEHOLDER' => 'Hi there !',
+                'HELP_TEXT' => 'The large heading visitors see on the widget before any message is sent.',
             ],
             'CHANNEL_WELCOME_TAGLINE' => [
                 'LABEL' => 'Welcome Tagline',
                 'PLACEHOLDER' => 'We make it simple to connect with us. Ask us anything, or share your feedback.',
+                'HELP_TEXT' => 'Shown right below the welcome heading, as plain text.',
             ],
             'CHANNEL_GREETING_MESSAGE' => [
                 'LABEL' => 'Channel greeting message',
@@ -128,7 +130,7 @@ return [
                 'IN_A_FEW_MINUTES' => 'In a few minutes',
                 'IN_A_FEW_HOURS' => 'In a few hours',
                 'IN_A_DAY' => 'In a day',
-                'HELP_TEXT' => 'This reply time will be displayed on the live chat widget',
+                'HELP_TEXT' => 'Shown in the status line at the top of the widget so visitors know how soon to expect a reply.',
             ],
             'WIDGET_COLOR' => [
                 'LABEL' => 'Widget Color',
@@ -1000,7 +1002,7 @@ return [
         'FORWARD_EMAIL_SUB_TEXT' => 'Start forwarding your emails to the following email address.',
         'FORWARD_EMAIL_NOT_CONFIGURED' => 'Forwarding emails to your inbox is currently disabled on this installation. To use this feature, it must be enabled by your administrator. Please get in touch with them to proceed.',
         'ALLOW_MESSAGES_AFTER_RESOLVED' => 'Allow messages after conversation resolved',
-        'ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT' => 'Allow the end-users to send messages even after the conversation is resolved.',
+        'ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT' => 'When off, a resolved conversation shows a button to start a new conversation instead of the message box on the widget.',
         'WHATSAPP_SECTION_SUBHEADER' => 'This API Key is used for the integration with the WhatsApp APIs.',
         'WHATSAPP_SECTION_UPDATE_SUBHEADER' => 'Enter the new API key to be used for the integration with the WhatsApp APIs.',
         'WHATSAPP_SECTION_TITLE' => 'API Key',
@@ -1204,20 +1206,19 @@ return [
         'PRE_CHAT_MESSAGE' => [
             'LABEL' => 'Pre chat message',
             'PLACEHOLDER' => 'This message would be visible to the users along with the form',
+            'DEFAULT' => 'Share your queries or comments here.',
         ],
+        'NO_FIELD_ENABLED_WARNING' => 'The form is on but no field is enabled, so visitors only see the message box. Turn on at least one field below.',
         'REQUIRE_EMAIL' => [
             'LABEL' => 'Visitors should provide their name and email address before starting the chat',
         ],
     ],
     'CSAT' => [
         'TITLE' => 'Enable CSAT',
-        'SUBTITLE' => 'Automatically trigger CSAT surveys at the end of conversations to understand how customers feel about their support experience. Track satisfaction trends and identify areas for improvement over time.',
-        'DISPLAY_TYPE' => [
-            'LABEL' => 'Display type',
-        ],
+        'SUBTITLE' => 'When a conversation is resolved, the customer gets a short survey and rates it on 3 levels: {poor}, {okay}, {great}. Results go to the CSAT report so you can track satisfaction over time.',
         'MESSAGE' => [
             'LABEL' => 'Message',
-            'PLACEHOLDER' => 'Please enter a message to show users with the form',
+            'PLACEHOLDER' => 'Please enter a message to show customers with the survey',
         ],
         'BUTTON_TEXT' => [
             'LABEL' => 'Button text',
@@ -1287,7 +1288,7 @@ return [
         'UPDATE' => 'Update business hours settings',
         'TOGGLE_AVAILABILITY' => 'Enable business availability for this inbox',
         'UNAVAILABLE_MESSAGE_LABEL' => 'Unavailable message for visitors',
-        'TOGGLE_HELP' => 'Enabling business availability will show the available hours on live chat widget even if all the agents are offline. Outside available hours visitors can be warned with a message and a pre-chat form.',
+        'TOGGLE_HELP' => 'Visitors who write outside business hours receive the unavailable message below. The website widget also tells them you are away.',
         'DAY' => [
             'DAY' => 'Day',
             'AVAILABILITY' => 'Availability',
@@ -1296,8 +1297,15 @@ return [
             'UNAVAILABLE' => 'Unavailable',
             'VALIDATION_ERROR' => 'Starting time should be before closing time.',
             'CHOOSE' => 'Choose',
+            'FROM' => 'Opening time on {day}',
+            'TO' => 'Closing time on {day}',
         ],
         'ALL_DAY' => 'All-Day',
+        'TOTAL' => [
+            'HOURS' => '{hours}h',
+            'HOURS_MINUTES' => '{hours}h {minutes}m',
+            'MINUTES' => '{minutes}m',
+        ],
     ],
     'IMAP' => [
         'TITLE' => 'IMAP',
@@ -1305,7 +1313,7 @@ return [
         'NOTE_TEXT' => 'To enable SMTP, please configure IMAP.',
         'UPDATE' => 'Update IMAP settings',
         'TOGGLE_AVAILABILITY' => 'Enable IMAP configuration for this inbox',
-        'TOGGLE_HELP' => 'Enabling IMAP will help the user to receive email',
+        'TOGGLE_HELP' => 'Enable IMAP so emails customers send to your mailbox arrive in this inbox.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'IMAP settings updated successfully',
             'ERROR_MESSAGE' => 'Unable to update IMAP settings',
@@ -1338,7 +1346,7 @@ return [
         'SUBTITLE' => 'Set your SMTP details',
         'UPDATE' => 'Update SMTP settings',
         'TOGGLE_AVAILABILITY' => 'Enable SMTP configuration for this inbox',
-        'TOGGLE_HELP' => 'Enabling SMTP will help the user to send email',
+        'TOGGLE_HELP' => 'Enable SMTP so replies to customers are sent from your mailbox.',
         'EDIT' => [
             'SUCCESS_MESSAGE' => 'SMTP settings updated successfully',
             'ERROR_MESSAGE' => 'Unable to update SMTP settings',
@@ -1366,7 +1374,7 @@ return [
         'ENCRYPTION' => 'Encryption',
         'SSL_TLS' => 'SSL/TLS',
         'START_TLS' => 'STARTTLS',
-        'OPEN_SSL_VERIFY_MODE' => 'Open SSL Verify Mode',
+        'OPEN_SSL_VERIFY_MODE' => 'SSL certificate verification mode',
         'AUTH_MECHANISM' => 'Authentication',
     ],
     'NOTE' => 'Note: ',

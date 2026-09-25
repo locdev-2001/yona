@@ -9,6 +9,8 @@ import Branding from '../components/Branding';
 import { ChatHeader } from '../components/ChatHeader';
 
 const BACK_BUTTON_ROUTES: WidgetRouteName[] = [WIDGET_ROUTES.PRECHAT_FORM];
+// Màn chat đặt dòng "Powered by" trong footer của ô nhập (ChatFooter).
+const COMPOSER_BRANDING_ROUTES: WidgetRouteName[] = [WIDGET_ROUTES.MESSAGES];
 
 // Vỏ màn hình: header dính trên, nội dung co giãn ở giữa, ô nhập của từng view nằm dưới.
 export default function ViewWithHeader({ route, children }: { route: WidgetRouteName; children: ReactNode }) {
@@ -38,7 +40,11 @@ export default function ViewWithHeader({ route, children }: { route: WidgetRoute
                 </div>
                 <Banner />
                 {children}
-                <Branding disableBranding={Boolean(channelConfig?.disableBranding)} />
+                {COMPOSER_BRANDING_ROUTES.includes(route) ? null : (
+                    <div className="flex-none pb-3">
+                        <Branding disableBranding={Boolean(channelConfig?.disableBranding)} />
+                    </div>
+                )}
             </div>
         </div>
     );

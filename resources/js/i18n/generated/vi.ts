@@ -3054,7 +3054,7 @@ const messages: Record<string, unknown> = {
         "templates": {
             "ways_to_reach_you_message_body": "Trong lúc chờ đội ngũ hỗ trợ phản hồi, bạn hãy để lại email để nhận được thông báo nhanh nhất nhé.",
             "email_input_box_message_body": "Nhận thông báo qua email",
-            "csat_input_message_body": "Bạn hãy vui lòng đánh giá hội thoại"
+            "csat_input_message_body": "Bạn thấy lần hỗ trợ này thế nào?"
         },
         "messages": {
             "deleted": "Tin nhắn đã bị xoá",
@@ -3726,6 +3726,14 @@ const messages: Record<string, unknown> = {
         "PREFERRED": "Ưu tiên"
     },
     "GENERAL_SETTINGS": {
+        "TITLE": "Cài đặt tài khoản",
+        "DESCRIPTION": "Thiết lập chung cho cả tài khoản doanh nghiệp.",
+        "LANGUAGE": {
+            "TITLE": "Ngôn ngữ",
+            "NOTE": "Ngôn ngữ của widget chat trên website và của dashboard với những ai chưa tự chọn ngôn ngữ riêng. Trang nhúng widget vẫn chọn được ngôn ngữ khác bằng tuỳ chọn locale trong mã nhúng.",
+            "UPDATE_SUCCESS": "Đã đổi ngôn ngữ tài khoản",
+            "UPDATE_ERROR": "Chưa đổi được ngôn ngữ, bạn thử lại nhé"
+        },
         "BACK": "Trở về",
         "FORM": {
             "AUTO_RESOLVE": {
@@ -4981,8 +4989,8 @@ const messages: Record<string, unknown> = {
                 "ERROR": "Vui lòng nhập tên kênh hợp lệ"
             },
             "WEBSITE_NAME": {
-                "LABEL": "Tên trang web",
-                "PLACEHOLDER": "Nhập tên trang web của bạn (ví dụ: Acme Inc)"
+                "LABEL": "Tên hiện trên widget",
+                "PLACEHOLDER": "Ví dụ: Shop Hoa Mai"
             },
             "FB": {
                 "HELP": "Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. {installationName} không bao giờ có thể truy cập tin nhắn riêng tư của bạn.",
@@ -5025,7 +5033,7 @@ const messages: Record<string, unknown> = {
             },
             "WEBSITE_CHANNEL": {
                 "TITLE": "Kênh trang web",
-                "DESC": "Tạo kênh cho trang web của bạn và bắt đầu hỗ trợ khách hàng của bạn thông qua widget trang web của chúng tôi.",
+                "DESC": "Gắn widget chat lên website để khách nhắn tin với bạn ngay trên trang.",
                 "LOADING_MESSAGE": "Tạo kênh hỗ trợ trang web",
                 "CHANNEL_AVATAR": {
                     "LABEL": "Hình đại diện kênh"
@@ -5049,32 +5057,34 @@ const messages: Record<string, unknown> = {
                 },
                 "CHANNEL_WELCOME_TITLE": {
                     "LABEL": "Tiêu đề chào mừng",
-                    "PLACEHOLDER": "Chào bạn !"
+                    "PLACEHOLDER": "Chào bạn!",
+                    "HELP_TEXT": "Dòng chữ lớn khách thấy trên widget khi chưa nhắn tin nào."
                 },
                 "CHANNEL_WELCOME_TAGLINE": {
                     "LABEL": "Dòng giới thiệu chào mừng",
-                    "PLACEHOLDER": "Chúng tôi làm cho việc kết nối với chúng tôi trở nên đơn giản. Hỏi chúng tôi bất cứ điều gì hoặc chia sẻ phản hồi của bạn."
+                    "PLACEHOLDER": "Bạn cần gì cứ nhắn cho chúng tôi nhé.",
+                    "HELP_TEXT": "Hiện ngay dưới tiêu đề chào mừng, dạng văn bản thường."
                 },
                 "CHANNEL_GREETING_MESSAGE": {
-                    "LABEL": "Tin nhắn chúc mừng kênh",
-                    "PLACEHOLDER": "Acme Inc thường trả lời sau vài giờ."
+                    "LABEL": "Tin nhắn chào tự động",
+                    "PLACEHOLDER": "Chào bạn! Chúng tôi đã nhận tin nhắn và sẽ trả lời sớm."
                 },
                 "CHANNEL_GREETING_TOGGLE": {
-                    "LABEL": "Bật lời chào kênh",
-                    "HELP_TEXT": "Tự động gửi tin nhắn chào mừng khi có hội thoại mới.",
+                    "LABEL": "Bật tin nhắn chào tự động",
+                    "HELP_TEXT": "Tự động gửi tin nhắn chào khi khách nhắn tin đầu tiên.",
                     "ENABLED": "Bật",
                     "DISABLED": "Không bật"
                 },
                 "REPLY_TIME": {
-                    "TITLE": "Đặt thời gian phản hồi",
-                    "IN_A_FEW_MINUTES": "Trong một vài phút",
-                    "IN_A_FEW_HOURS": "Trong một vài giờ",
+                    "TITLE": "Thời gian phản hồi",
+                    "IN_A_FEW_MINUTES": "Trong vài phút",
+                    "IN_A_FEW_HOURS": "Trong vài giờ",
                     "IN_A_DAY": "Trong một ngày",
-                    "HELP_TEXT": "Thời gian trả lời này sẽ được hiển thị trên tiện ích trò chuyện trực tiếp"
+                    "HELP_TEXT": "Hiện ở dòng trạng thái đầu widget, cho khách biết thường bao lâu thì được trả lời."
                 },
                 "WIDGET_COLOR": {
-                    "LABEL": "Màu tiện ích",
-                    "PLACEHOLDER": "Cập nhật màu tiện ích con được sử dụng trong tiện ích con"
+                    "LABEL": "Màu widget",
+                    "PLACEHOLDER": "Màu chủ đạo của widget"
                 },
                 "SUBMIT_BUTTON": "Tạo hộp thư",
                 "API": {
@@ -5441,7 +5451,7 @@ const messages: Record<string, unknown> = {
             },
             "AUTH": {
                 "TITLE": "Chọn kênh",
-                "DESC": "{installationName} hỗ trợ các tiện ích trò chuyện trực tiếp, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.",
+                "DESC": "{installationName} hỗ trợ widget chat trên website, Facebook Messenger, hồ sơ Twitter, WhatsApp, Email, v. v., dưới dạng các kênh. Nếu bạn muốn xây dựng một kênh tùy chỉnh, bạn có thể tạo kênh này bằng cách sử dụng kênh API. Để bắt đầu, hãy chọn một trong các kênh bên dưới.",
                 "TITLE_NEXT": "Hoàn tất thiết lập",
                 "TITLE_FINISH": "Xong rồi!",
                 "CHANNEL": {
@@ -5599,7 +5609,7 @@ const messages: Record<string, unknown> = {
         "EDIT": {
             "API": {
                 "SUCCESS_MESSAGE": "Đã cập nhật cài đặt hộp thư thành công",
-                "AUTO_ASSIGNMENT_SUCCESS_MESSAGE": "Đã cập nhật thành công bài tập tự động",
+                "AUTO_ASSIGNMENT_SUCCESS_MESSAGE": "Đã lưu thiết lập tự động phân công",
                 "ERROR_MESSAGE": "Chúng tôi không thể cập nhật cài đặt hộp thư. Vui lòng thử lại sau."
             },
             "EMAIL_COLLECT_BOX": {
@@ -5882,10 +5892,10 @@ const messages: Record<string, unknown> = {
         },
         "SETTINGS": "Cài đặt",
         "FEATURES": {
-            "LABEL": "Các tính năng",
-            "DISPLAY_FILE_PICKER": "Hiển thị bộ chọn tệp trên tiện ích con",
-            "DISPLAY_EMOJI_PICKER": "Hiển thị bộ chọn biểu tượng cảm xúc trên tiện ích con",
-            "ALLOW_END_CONVERSATION": "Cho phép người dùng kết thúc hội thoại từ công cụ chat",
+            "LABEL": "Tính năng",
+            "DISPLAY_FILE_PICKER": "Cho khách gửi tệp trên widget",
+            "DISPLAY_EMOJI_PICKER": "Cho khách chọn biểu tượng cảm xúc trên widget",
+            "ALLOW_END_CONVERSATION": "Cho khách tự kết thúc hội thoại trên widget",
             "USE_INBOX_AVATAR_FOR_BOT": "Dùng tên và ảnh đại diện của hộp thư cho bot"
         },
         "SETTINGS_POPUP": {
@@ -5899,7 +5909,7 @@ const messages: Record<string, unknown> = {
             },
             "ALLOWED_DOMAINS": {
                 "TITLE": "Tên miền được phép",
-                "DESCRIPTION": "Giới hạn website nào được nhúng widget chat của bạn. Vì an toàn, chỉ thêm tên miền bạn sở hữu và tin tưởng. Thêm một hoặc nhiều tên miền, cách nhau bằng dấu phẩy. Để trống là cho phép mọi tên miền (không nên dùng khi chạy thật).",
+                "DESCRIPTION": "Giới hạn những website được nhúng widget của bạn. Vì an toàn, chỉ thêm tên miền bạn sở hữu và tin tưởng. Thêm một hoặc nhiều tên miền, cách nhau bằng dấu phẩy. Để trống là cho phép mọi tên miền (không nên dùng khi chạy thật).",
                 "PLACEHOLDER": "example.com, www.example.com, app.example.com"
             },
             "ALLOW_MOBILE_WEBVIEW": {
@@ -5908,41 +5918,41 @@ const messages: Record<string, unknown> = {
             },
             "IDENTITY_VALIDATION": {
                 "TITLE": "Xác minh danh tính",
-                "DESCRIPTION": "Xác minh người dùng thật bằng cách sinh token an toàn. Cách này ngăn người lạ mạo danh người khác trong khung chat của bạn.",
+                "DESCRIPTION": "Website của bạn sinh token an toàn cho khách đã đăng nhập để widget nhận đúng khách đó. Cách này ngăn người lạ giả danh khách khác trên widget.",
                 "SECRET_KEY": "Khóa bí mật",
                 "REQUIRE_LABEL": "Bắt buộc xác minh danh tính cho mọi hội thoại",
-                "REQUIRE_DESCRIPTION": "Khi bật, người dùng phải có token danh tính hợp lệ mới bắt đầu hội thoại được. Yêu cầu không có token hợp lệ sẽ bị từ chối."
+                "REQUIRE_DESCRIPTION": "Khi bật, khách phải có token danh tính hợp lệ mới bắt đầu hội thoại được. Yêu cầu không có token hợp lệ sẽ bị từ chối."
             },
             "INBOX_AGENTS": "Nhân viên",
-            "INBOX_AGENTS_SUB_TEXT": "Thêm hoặc xóa tác nhân khỏi hộp thư này",
+            "INBOX_AGENTS_SUB_TEXT": "Thêm hoặc bớt nhân viên của hộp thư này",
             "AGENT_ASSIGNMENT": "Phân công hội thoại",
             "AGENT_ASSIGNMENT_SUB_TEXT": "Cập nhật phân công hội thoại",
             "UPDATE": "Cập nhật",
-            "ENABLE_EMAIL_COLLECT_BOX": "Bật hộp thu thập email",
-            "ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT": "Bật hoặc tắt hộp thu thập email trên hội thoại mới",
-            "AUTO_ASSIGNMENT": "Bật tự động chuyển nhượng",
+            "ENABLE_EMAIL_COLLECT_BOX": "Hỏi email của khách",
+            "ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT": "Khi khách nhắn tin đầu tiên mà chưa có email, widget tự gửi một tin nhắn xin email kèm ô nhập.",
+            "AUTO_ASSIGNMENT": "Bật tự động phân công",
             "SENDER_NAME_SECTION": "Hiện tên nhân viên trong email",
             "SENDER_NAME_SECTION_TEXT": "Bật/tắt hiện tên nhân viên trong email; nếu tắt sẽ hiện tên doanh nghiệp",
             "ENABLE_CONTINUITY_VIA_EMAIL": "Bật tiếp tục hội thoại qua email",
-            "ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT": "Hội thoại sẽ tiếp tục qua email nếu có địa chỉ email liên lạc.",
+            "ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT": "Khách đã rời widget thì trả lời của bạn được gửi tới email của khách, nếu khách đã để lại email.",
             "ENABLE_CONTINUITY_VIA_EMAIL_DISABLED_TEXT": "Tính năng này thuộc gói trả phí. Hãy nâng cấp để bật nối tiếp hội thoại qua email.",
             "LOCK_TO_SINGLE_CONVERSATION": "Điều hướng hội thoại",
             "LOCK_TO_SINGLE_CONVERSATION_SUB_TEXT": "Cấu hình cách tạo hội thoại cho liên hệ đã có",
             "INBOX_UPDATE_TITLE": "Cài đặt Hộp thư",
             "INBOX_UPDATE_SUB_TEXT": "Cập nhật cài đặt hộp thư của bạn",
-            "AUTO_ASSIGNMENT_SUB_TEXT": "Bật hoặc tắt tính năng tự động gán các hội thoại mới cho các tác nhân được thêm vào hộp thư này.",
-            "HMAC_VERIFICATION": "Xác thực danh tính người dùng",
-            "HMAC_DESCRIPTION": "Với khóa này bạn có thể sinh token bí mật để xác minh danh tính người dùng.",
+            "AUTO_ASSIGNMENT_SUB_TEXT": "Tự động giao hội thoại mới cho nhân viên của hộp thư này.",
+            "HMAC_VERIFICATION": "Xác minh danh tính khách",
+            "HMAC_DESCRIPTION": "Dùng khóa này để sinh token bí mật xác minh danh tính khách.",
             "HMAC_LINK_TO_DOCS": "Bạn có thể đọc thêm tại đây.",
-            "HMAC_MANDATORY_VERIFICATION": "Bắt buộc Xác thực danh tính người dùng",
+            "HMAC_MANDATORY_VERIFICATION": "Bắt buộc xác minh danh tính khách",
             "HMAC_MANDATORY_DESCRIPTION": "Nếu bật, những yêu cầu không xác minh được sẽ bị từ chối.",
             "INBOX_IDENTIFIER": "Định danh hộp thư",
-            "INBOX_IDENTIFIER_SUB_TEXT": "Dùng token định danh hộp thư hiện ở đây để xác thực các ứng dụng khách API của bạn.",
-            "FORWARD_EMAIL_TITLE": "Chuyển tiếp đến Email",
-            "FORWARD_EMAIL_SUB_TEXT": "Bắt đầu chuyển tiếp email của bạn tới địa chỉ email sau.",
+            "INBOX_IDENTIFIER_SUB_TEXT": "Ứng dụng của bạn dùng token này khi gọi API của hộp thư.",
+            "FORWARD_EMAIL_TITLE": "Địa chỉ chuyển tiếp thư",
+            "FORWARD_EMAIL_SUB_TEXT": "Chuyển tiếp thư của bạn tới địa chỉ dưới đây để thư vào hộp thư này.",
             "FORWARD_EMAIL_NOT_CONFIGURED": "Bản cài đặt này đang tắt tính năng chuyển tiếp thư vào hộp thư. Quản trị viên phải bật lên thì bạn mới dùng được. Hãy liên hệ họ để tiếp tục.",
-            "ALLOW_MESSAGES_AFTER_RESOLVED": "Cho phép nhắn tin sau khi hội thoại được giải quyết",
-            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "Cho phép người dùng cuối nhắn tin sau khi hội thoại được giải quyết.",
+            "ALLOW_MESSAGES_AFTER_RESOLVED": "Cho khách nhắn tiếp sau khi hội thoại đã giải quyết",
+            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "Tắt thì khi hội thoại đã giải quyết, widget thay ô nhập tin bằng nút bắt đầu hội thoại mới.",
             "WHATSAPP_SECTION_SUBHEADER": "Khóa API này được sử dụng để tích hợp với các API WhatsApp.",
             "WHATSAPP_SECTION_UPDATE_SUBHEADER": "Nhập API key mới dùng cho kết nối với API của WhatsApp.",
             "WHATSAPP_SECTION_TITLE": "Khóa API",
@@ -6079,7 +6089,7 @@ const messages: Record<string, unknown> = {
             "DEFAULT_RULES_TITLE": "Quy tắc phân công mặc định",
             "DEFAULT_RULES_DESCRIPTION": "Đang dùng cách phân công mặc định cho mọi hội thoại",
             "DEFAULT_RULE_1": "Hội thoại tạo sớm nhất được ưu tiên",
-            "DEFAULT_RULE_2": "Chia lần lượt (round robin)",
+            "DEFAULT_RULE_2": "Chia lần lượt cho từng nhân viên",
             "CUSTOMIZE_WITH_POLICY": "Tùy chỉnh bằng chính sách phân công",
             "USING_POLICY": "Hộp thư này đang dùng chính sách phân công riêng",
             "CUSTOMIZE_POLICY": "Tùy chỉnh bằng chính sách phân công",
@@ -6126,12 +6136,12 @@ const messages: Record<string, unknown> = {
             "MESSAGE_ERROR": "Đã có lỗi, vui lòng thử lại"
         },
         "PRE_CHAT_FORM": {
-            "DESCRIPTION": "Biểu mẫu trước khi trò chuyện cho phép bạn nắm bắt thông tin người dùng trước khi họ bắt đầu hội thoại với bạn.",
-            "SET_FIELDS": "Những ô cần điền vào trước hội thoại",
+            "DESCRIPTION": "Hỏi tên, email hoặc số điện thoại của khách trước khi khách bắt đầu chat trên widget.",
+            "SET_FIELDS": "Các ô khách điền trước khi chat",
             "SET_FIELDS_HEADER": {
                 "FIELDS": "Ô cần điền",
                 "LABEL": "Nhãn",
-                "PLACE_HOLDER": "Cụm từ hiện nền trong ô",
+                "PLACE_HOLDER": "Chữ gợi ý trong ô",
                 "KEY": "Khóa",
                 "TYPE": "Kiểu",
                 "REQUIRED": "Bắt buộc"
@@ -6144,22 +6154,21 @@ const messages: Record<string, unknown> = {
                 }
             },
             "PRE_CHAT_MESSAGE": {
-                "LABEL": "Tin nhắn trước khi trò chuyện",
-                "PLACEHOLDER": "Tin nhắn này sẽ hiện cho những người dùng cùng với biểu mẫu"
+                "LABEL": "Lời nhắn kèm biểu mẫu",
+                "PLACEHOLDER": "Lời nhắn khách thấy phía trên biểu mẫu trên widget",
+                "DEFAULT": "Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé."
             },
+            "NO_FIELD_ENABLED_WARNING": "Biểu mẫu đang bật nhưng chưa có ô nào được bật, nên khách chỉ thấy ô tin nhắn. Hãy bật ít nhất một ô bên dưới.",
             "REQUIRE_EMAIL": {
                 "LABEL": "Khách truy cập nên cung cấp tên và địa chỉ email của họ trước khi bắt đầu trò chuyện"
             }
         },
         "CSAT": {
             "TITLE": "Bật chỉ số đo lường sự hài lòng khách hàng",
-            "SUBTITLE": "Tự động gửi khảo sát CSAT khi kết thúc hội thoại để biết khách cảm nhận thế nào về trải nghiệm hỗ trợ. Theo dõi xu hướng hài lòng và tìm ra chỗ cần cải thiện theo thời gian.",
-            "DISPLAY_TYPE": {
-                "LABEL": "Kiểu hiển thị"
-            },
+            "SUBTITLE": "Khi hội thoại được giải quyết, khách nhận một khảo sát ngắn và chấm theo 3 mức: {poor}, {okay}, {great}. Kết quả vào báo cáo CSAT để bạn theo dõi mức hài lòng theo thời gian.",
             "MESSAGE": {
                 "LABEL": "Tin nhắn",
-                "PLACEHOLDER": "Nhập lời nhắn hiện kèm biểu mẫu cho người dùng"
+                "PLACEHOLDER": "Nhập lời nhắn hiện kèm khảo sát cho khách"
             },
             "BUTTON_TEXT": {
                 "LABEL": "Chữ trên nút",
@@ -6222,24 +6231,31 @@ const messages: Record<string, unknown> = {
             }
         },
         "BUSINESS_HOURS": {
-            "TITLE": "Đặt tính khả dụng của bạn",
-            "SUBTITLE": "Đặt tính khả dụng của bạn trên tiện ích trò chuyện trực tiếp",
-            "WEEKLY_TITLE": "Đặt giờ hàng tuần của bạn",
-            "TIMEZONE_LABEL": "Chọn múi giờ",
-            "UPDATE": "Cập nhật tuỳ chỉnh giờ làm việc",
-            "TOGGLE_AVAILABILITY": "Kích hoạt tính khả dụng của doanh nghiệp cho hộp thư này",
-            "UNAVAILABLE_MESSAGE_LABEL": "Thông báo không có sẵn cho khách truy cập",
-            "TOGGLE_HELP": "Bật giờ làm việc sẽ hiện khung giờ phục vụ trên widget chat kể cả khi mọi nhân viên đang ngoại tuyến. Ngoài khung giờ đó, khách sẽ thấy một lời nhắn và biểu mẫu trước chat.",
+            "TITLE": "Giờ làm việc",
+            "SUBTITLE": "Đặt khung giờ phục vụ khách của hộp thư này",
+            "WEEKLY_TITLE": "Lịch làm việc trong tuần",
+            "TIMEZONE_LABEL": "Múi giờ",
+            "UPDATE": "Lưu giờ làm việc",
+            "TOGGLE_AVAILABILITY": "Bật giờ làm việc cho hộp thư này",
+            "UNAVAILABLE_MESSAGE_LABEL": "Tin nhắn tự động khi khách nhắn ngoài giờ làm việc",
+            "TOGGLE_HELP": "Khách nhắn tới ngoài khung giờ làm việc sẽ nhận tin nhắn ngoài giờ bên dưới. Widget trên website cũng báo cho khách biết đang ngoài giờ.",
             "DAY": {
                 "DAY": "Ngày",
-                "AVAILABILITY": "Khả dụng",
-                "HOURS": "Khung giờ",
-                "ENABLE": "Kích hoạt tính khả dụng cho hôm nay",
-                "UNAVAILABLE": "Không có sẵn",
-                "VALIDATION_ERROR": "Giờ bắt đầu nên trước giờ đóng cửa.",
-                "CHOOSE": "Chọn"
+                "AVAILABILITY": "Giờ làm việc",
+                "HOURS": "Tổng giờ",
+                "ENABLE": "Làm việc ngày này",
+                "UNAVAILABLE": "Nghỉ",
+                "VALIDATION_ERROR": "Giờ bắt đầu phải trước giờ kết thúc.",
+                "CHOOSE": "Chọn",
+                "FROM": "Giờ bắt đầu {day}",
+                "TO": "Giờ kết thúc {day}"
             },
-            "ALL_DAY": "Cả ngày"
+            "ALL_DAY": "Cả ngày",
+            "TOTAL": {
+                "HOURS": "{hours} giờ",
+                "HOURS_MINUTES": "{hours} giờ {minutes} phút",
+                "MINUTES": "{minutes} phút"
+            }
         },
         "IMAP": {
             "TITLE": "IMAP",
@@ -6247,7 +6263,7 @@ const messages: Record<string, unknown> = {
             "NOTE_TEXT": "Để bật chế độ SMTP, xin hãy cấu hình IMAP.",
             "UPDATE": "Cập nhật chi tiết IMAP",
             "TOGGLE_AVAILABILITY": "Kích hoạt cấu hình IMAP cho hộp thư này",
-            "TOGGLE_HELP": "Bật IMAP giúp người dùng nhận được email",
+            "TOGGLE_HELP": "Bật IMAP để thư khách gửi vào hộp mail của bạn về hộp thư này.",
             "EDIT": {
                 "SUCCESS_MESSAGE": "Tuỳ chỉnh IMAP được cập nhật thành công",
                 "ERROR_MESSAGE": "Không thể cập nhật tuỳ chỉnh IMAP"
@@ -6276,11 +6292,11 @@ const messages: Record<string, unknown> = {
             "SUBTITLE": "Cấp quyền lại cho tài khoản MICROSOFT của bạn"
         },
         "SMTP": {
-            "TITLE": "STMP",
+            "TITLE": "SMTP",
             "SUBTITLE": "Đặt chi tiết SMTP",
             "UPDATE": "Cập nhật tuỳ chỉnh SMTP",
             "TOGGLE_AVAILABILITY": "Kích hoạt cấu hình SMTP cho hộp thư này",
-            "TOGGLE_HELP": "Kích hoạt SMTP sẽ giúp cho người dùng gửi email",
+            "TOGGLE_HELP": "Bật SMTP để thư trả lời khách được gửi bằng hộp mail của bạn.",
             "EDIT": {
                 "SUCCESS_MESSAGE": "Tuỳ chỉnh SMTP được cập nhật thành công",
                 "ERROR_MESSAGE": "Không thể cập nhật tuỳ chỉnh SMTP"
@@ -6308,7 +6324,7 @@ const messages: Record<string, unknown> = {
             "ENCRYPTION": "Mã hóa",
             "SSL_TLS": "SSL/TLS",
             "START_TLS": "STARTTLS",
-            "OPEN_SSL_VERIFY_MODE": "Mở Chế độ xác minh SSL",
+            "OPEN_SSL_VERIFY_MODE": "Chế độ xác minh chứng chỉ SSL",
             "AUTH_MECHANISM": "Xác minh"
         },
         "NOTE": "Ghi chú: ",
@@ -6342,7 +6358,7 @@ const messages: Record<string, unknown> = {
                     "IN_A_FEW_HOURS": "Trong một vài giờ",
                     "IN_A_DAY": "Trong một ngày"
                 },
-                "WIDGET_COLOR_LABEL": "Màu tiện ích",
+                "WIDGET_COLOR_LABEL": "Màu widget",
                 "WIDGET_BUBBLE": "Bong bóng",
                 "WIDGET_BUBBLE_POSITION_LABEL": "Vị trí:",
                 "WIDGET_BUBBLE_TYPE_LABEL": "Kiểu:",
@@ -9347,7 +9363,7 @@ const messages: Record<string, unknown> = {
         "REQUIRED_DESCRIPTION": "{installationName} yêu cầu bật 2FA để dùng console quản trị. Hoàn tất thiết lập bên dưới để tiếp tục."
     },
     "SURVEY": {
-        "DESCRIPTION": "Quý khách kính mếm 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",
+        "DESCRIPTION": "Quý khách kính mến 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",
         "RATING": {
             "LABEL": "Đánh giá hội thoại",
             "SUCCESS_MESSAGE": "Cảm ơn vì đã đánh giá"
@@ -9650,9 +9666,10 @@ const messages: Record<string, unknown> = {
         "BUBBLE": {
             "LABEL": "Trò chuyện với chúng tôi"
         },
-        "POWERED_BY": "Cung cấp bởi {installationName}",
+        "POWERED_BY": "Powered by {installationName}",
         "EMAIL_PLACEHOLDER": "Vui lòng nhập email",
-        "CHAT_PLACEHOLDER": "Gõ tin nhắn của bạn",
+        "EMAIL_SAVE_FAILED": "Chưa lưu được email. Bạn thử lại nhé.",
+        "CHAT_PLACEHOLDER": "Nhập tin nhắn…",
         "TODAY": "Hôm nay",
         "YESTERDAY": "Hôm qua",
         "PRE_CHAT_FORM": {
@@ -9688,7 +9705,6 @@ const messages: Record<string, unknown> = {
             "REQUIRED": "Bắt buộc",
             "REGEX_ERROR": "Bạn hãy nhập giá trị hợp lệ"
         },
-        "FILE_SIZE_LIMIT": "Tệp vượt quá kích thước giới hạn {MAXIMUM_FILE_UPLOAD_SIZE}",
         "CHAT_FORM": {
             "INVALID": {
                 "FIELD": "Trường không hợp lệ"
@@ -9765,7 +9781,7 @@ const messages: Record<string, unknown> = {
             "FAILED": "Không thu hồi được tin nhắn. Bạn thử lại nhé."
         },
         "REPLY": {
-            "REPLYING_TO": "Đang trả lời {name}",
+            "REPLYING_TO": "Trả lời {name}",
             "YOU": "Bạn",
             "CANCEL": "Bỏ trả lời",
             "JUMP_TO_ORIGINAL": "Xem tin gốc",
@@ -9782,6 +9798,9 @@ const messages: Record<string, unknown> = {
         "COMPOSER": {
             "ADD": "Gửi ảnh hoặc tệp",
             "STICKER": "Sticker và emoji",
+            "EMOJI": "Biểu tượng cảm xúc",
+            "CANCEL_UPLOAD": "Huỷ gửi tệp",
+            "CANCEL_SEND": "Huỷ gửi",
             "SEND": "Gửi",
             "CAPTION_PLACEHOLDER": "Thêm chú thích…",
             "ATTACH_IMAGE": "Ảnh",
@@ -9802,6 +9821,7 @@ const messages: Record<string, unknown> = {
         "ATTACHMENT_STATE": {
             "UPLOADING": "Đang gửi {count} ảnh…",
             "UPLOADING_FILE": "Đang gửi tệp…",
+            "UPLOADING_PROGRESS": "{size} · đang tải {percent}%",
             "UPLOAD_FAILED_TITLE": "Không gửi được ảnh",
             "UPLOAD_FAILED_FILE_TITLE": "Không gửi được tệp",
             "UPLOAD_FAILED_SIZE": "Tệp vượt {size}",
@@ -9812,36 +9832,58 @@ const messages: Record<string, unknown> = {
         },
         "EMPTY_STATE": {
             "TITLE": "Chào bạn!",
-            "BODY": "Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh, tệp hoặc sticker."
+            "BODY": "Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh, tệp hoặc sticker.",
+            "BODY_WITHOUT_STICKER": "Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh hoặc tệp."
         },
         "HEADER": {
             "ONLINE": "Đang trực tuyến",
             "AWAY": "Đang vắng mặt",
             "CLOSE": "Đóng cửa sổ trò chuyện",
-            "BACK": "Quay lại"
+            "BACK": "Quay lại",
+            "AGENT_ACTIVE": "Đang hoạt động",
+            "MORE": "Tuỳ chọn khác",
+            "POPOUT": "Mở trong cửa sổ riêng"
         },
         "OUT_OF_HOURS": {
             "TITLE": "Hiện ngoài giờ hỗ trợ",
             "BODY": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.",
             "EMAIL_PLACEHOLDER": "Email để nhận trả lời",
-            "CTA": "Để lại tin nhắn"
+            "CTA": "Để lại tin nhắn",
+            "HOURS": "Nhóm hỗ trợ trực từ {from} đến {to}.",
+            "BODY_REOPEN": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa {reopen}.",
+            "REOPEN": "Mở cửa lại {reopen}.",
+            "REOPEN_TODAY": "lúc {time}",
+            "REOPEN_TOMORROW": "lúc {time} mai",
+            "REOPEN_ON_DAY": "lúc {time} {day}",
+            "REOPEN_TOMORROW_ALL_DAY": "vào ngày mai",
+            "REOPEN_ON_DAY_ALL_DAY": "vào {day}",
+            "BANNER": "Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa {reopen}.",
+            "BANNER_FALLBACK": "Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa lại."
         },
         "CONVERSATION_END": {
             "TITLE": "Cuộc trò chuyện đã kết thúc",
-            "RATE_PROMPT": "Bạn thấy cuộc trò chuyện thế nào?",
+            "RATE_PROMPT": "Bạn thấy lần hỗ trợ này thế nào?",
             "POOR": "Kém",
             "OKAY": "Ổn",
             "GREAT": "Tuyệt",
-            "FEEDBACK_PLACEHOLDER": "Góp ý thêm (không bắt buộc)",
+            "FEEDBACK_PLACEHOLDER": "Điều gì có thể tốt hơn? (không bắt buộc)",
             "SUBMIT": "Gửi đánh giá",
-            "THANKS": "Cảm ơn bạn đã đánh giá!"
+            "SUBMIT_FAILED": "Chưa gửi được đánh giá. Bạn thử lại nhé.",
+            "THANKS": "Cảm ơn bạn đã đánh giá!",
+            "SUPPORTED_MINUTES": "Đã hỗ trợ trong {n} phút",
+            "SUPPORTED_HOURS": "Đã hỗ trợ trong {n} giờ",
+            "SUPPORTED_DAYS": "Đã hỗ trợ trong {n} ngày"
         },
         "LAUNCHER": {
             "OPEN": "Mở trò chuyện",
             "CLOSE": "Thu nhỏ trò chuyện",
-            "UNREAD": "{count} tin nhắn chưa đọc"
+            "UNREAD": "{count} tin nhắn chưa đọc",
+            "OPEN_UNREAD": "Mở trò chuyện, {count} tin nhắn chưa đọc"
         },
         "NEW_MESSAGES": "Tin nhắn mới",
+        "TYPING_INDICATOR": {
+            "LABEL": "Đang soạn tin…"
+        },
         "CARD": {
             "CTA_FALLBACK": "Xem chi tiết",
             "PREVIOUS": "Thẻ trước",

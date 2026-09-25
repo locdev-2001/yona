@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import SnackbarItem, { type SnackbarAction } from './Item';
@@ -15,7 +15,9 @@ const DEFAULT_DURATION = 2500;
 export default function SnackbarContainer({ duration = DEFAULT_DURATION }: { duration?: number }) {
     const [snackbarMessages, setSnackbarMessages] = useState<SnackbarMessage[]>([]);
 
-    useEffect(() => {
+    // Nghe từ lượt layout effect: chạy trước mọi useEffect của trang con, nên thông báo
+    // trang bắn ngay lúc dựng (ví dụ sau khi tải lại để đổi ngôn ngữ) không bị mất.
+    useLayoutEffect(() => {
         const onNewToastMessage = (payload: unknown) => {
             const { message, action } = payload as { message: string; action?: SnackbarAction };
             setSnackbarMessages(messages => [...messages, { key: Date.now(), message, action }]);

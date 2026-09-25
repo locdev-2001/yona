@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import EmojiPicker from '../EmojiPicker';
+import EmojiPicker, { EMOJI_CELL_CLASS, EMOJI_GRID_CLASS } from '../EmojiPicker';
 import { readRecentReactions, rememberRecentReaction } from './composerStorage';
 import type { RecentReaction } from './composerStorage';
 import { t } from '../../i18n';
@@ -10,15 +10,18 @@ type StickerPanelTab = 'sticker' | 'emoji' | 'recent';
 
 interface StickerPanelProps {
     stickers: WidgetSticker[];
+    canPickEmoji?: boolean;
     onSelectEmoji: (emoji: string) => void;
     onSelectSticker: (sticker: WidgetSticker) => void;
 }
 
-const GRID_CELL_CLASS =
-    'flex items-center justify-center w-full aspect-square rounded-xl hover:bg-[var(--yona-chat-field)] active:scale-[0.97]';
+const STICKER_GRID_CLASS = 'grid grid-cols-4 gap-[9px]';
+const STICKER_CELL_CLASS =
+    'flex items-center justify-center w-full aspect-square rounded-xl hover:bg-[var(--yona-chat-hover)] active:scale-[0.97]';
 
-// Panel Sticker / Emoji / Gần đây. Tab Sticker chỉ hiện khi kênh có danh mục sticker.
-export default function StickerPanel({ stickers, onSelectEmoji, onSelectSticker }: StickerPanelProps) {
+// Panel nằm TRÊN ô nhập: tab Sticker (chỉ khi kênh có danh mục sticker), Emoji
+// (khi hộp thư bật bộ chọn biểu tượng cảm xúc) và Gần đây.
+export default function StickerPanel({ stickers, canPickEmoji = true, onSelectEmoji, onSelectSticker }: StickerPanelProps) {
     const hasStickers = stickers.length > 0;
     const [activeTab, setActiveTab] = useState<StickerPanelTab>(hasStickers ? 'sticker' : 'emoji');
     const [recentReactions, setRecentReactions] = useState<RecentReaction[]>(readRecentReactions);
@@ -45,29 +48,35 @@ export default function StickerPanel({ stickers, onSelectEmoji, onSelectSticker 
     const stickerLabelOf = (stickerId: string): string =>
         stickers.find(sticker => sticker.id === stickerId)?.label || t('STICKER_PANEL.STICKER_ALT');
 
-    const recentAvailable = recentReactions.filter(
-        reaction => reaction.kind === 'emoji' || stickers.some(sticker => sticker.id === reaction.id),
+    const recentAvailable = recentReactions.filter(reaction =>
+        reaction.kind === 'emoji' ? canPickEmoji : stickers.some(sticker => sticker.id === reaction.id),
     );
+    const recentHasStickers = recentAvailable.some(reaction => reaction.kind === 'sticker');
 
     const tabs: { key: StickerPanelTab; label: string }[] = [
         ...(hasStickers ? [{ key: 'sticker' as const, label: t('STICKER_PANEL.TAB_STICKER') }] : []),
-        { key: 'emoji', label: t('STICKER_PANEL.TAB_EMOJI') },
+        ...(canPickEmoji ? [{ key: 'emoji' as const, label: t('STICKER_PANEL.TAB_EMOJI') }] : []),
         { key: 'recent', label: t('STICKER_PANEL.TAB_RECENT') },
     ];
 
     return (
-        <div className="border-t border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)]" data-testid="sticker-panel">
-            <div role="tablist" className="flex gap-1 px-3 pt-2">
+        // Trải hết bề ngang footer; đứng đầu footer thì sát viền trên, còn nằm dưới khối
+        // "đang trả lời" thì có viền ngăn cách.
+        <div
+            className="-mx-3.5 mb-3 border-y border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] [:first-child>&]:-mt-[11px] [:first-child>&]:border-t-0"
+            data-testid="sticker-panel"
+        >
+            <div role="tablist" className="flex px-1.5 border-b border-[var(--yona-chat-line)]">
                 {tabs.map(tab => (
                     <button
                         key={tab.key}
                         type="button"
                         role="tab"
                         aria-selected={activeTab === tab.key}
-                        className={`min-h-9 px-3 text-sm rounded-full ${
+                        className={`flex min-h-11 items-center border-b-2 px-3 text-xs leading-none active:scale-[0.97] ${
                             activeTab === tab.key
-                                ? 'bg-[var(--yona-chat-field)] font-medium text-[var(--yona-chat-ink)]'
-                                : 'text-[var(--yona-chat-ink-soft)]'
+                                ? 'border-[var(--yona-chat-ink)] font-semibold text-[var(--yona-chat-ink)]'
+                                : 'border-transparent font-medium text-[var(--yona-chat-ink-muted)]'
                         }`}
                         onClick={() => setActiveTab(tab.key)}
                     >
@@ -75,49 +84,49 @@ export default function StickerPanel({ stickers, onSelectEmoji, onSelectSticker 
                     </button>
                 ))}
             </div>
-            {activeTab === 'emoji' ? (
-                <EmojiPicker className="!static !w-full !shadow-none !outline-0 !rounded-none" onSelect={pickEmoji} />
-            ) : (
-                <div className="h-60 overflow-y-auto p-3">
-                    {activeTab === 'sticker' ? (
-                        <div className="grid grid-cols-4 gap-2">
-                            {stickers.map(sticker => (
-                                <button
-                                    key={sticker.id}
-                                    type="button"
-                                    className={GRID_CELL_CLASS}
-                                    aria-label={sticker.label || t('STICKER_PANEL.STICKER_ALT')}
-                                    onClick={() => pickSticker(sticker)}
-                                >
-                                    <img src={sticker.image_url} alt="" className="object-contain w-full h-full p-1" />
-                                </button>
-                            ))}
-                        </div>
-                    ) : recentAvailable.length ? (
-                        <div className="grid grid-cols-4 gap-2">
-                            {recentAvailable.map(reaction => (
-                                <button
-                                    key={reaction.kind === 'emoji' ? `e-${reaction.value}` : `s-${reaction.id}`}
-                                    type="button"
-                                    className={`${GRID_CELL_CLASS} text-3xl`}
-                                    aria-label={reaction.kind === 'emoji' ? reaction.value : stickerLabelOf(reaction.id)}
-                                    onClick={() => pickRecent(reaction)}
-                                >
-                                    {reaction.kind === 'emoji' ? (
-                                        reaction.value
-                                    ) : (
-                                        <img src={reaction.imageUrl} alt="" className="object-contain w-full h-full p-1" />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="py-10 text-sm text-center text-[var(--yona-chat-ink-muted)]">
-                            {t('STICKER_PANEL.RECENT_EMPTY')}
-                        </p>
-                    )}
-                </div>
-            )}
+            <div className="h-48 px-3.5 py-3">
+                {activeTab === 'emoji' ? (
+                    <EmojiPicker onSelect={pickEmoji} />
+                ) : activeTab === 'sticker' ? (
+                    <div className={`${STICKER_GRID_CLASS} h-full overflow-y-auto no-scrollbar`}>
+                        {stickers.map(sticker => (
+                            <button
+                                key={sticker.id}
+                                type="button"
+                                className={STICKER_CELL_CLASS}
+                                aria-label={sticker.label || t('STICKER_PANEL.STICKER_ALT')}
+                                onClick={() => pickSticker(sticker)}
+                            >
+                                <img src={sticker.image_url} alt="" className="object-contain w-full h-full p-1" />
+                            </button>
+                        ))}
+                    </div>
+                ) : recentAvailable.length ? (
+                    <div
+                        className={`${recentHasStickers ? STICKER_GRID_CLASS : EMOJI_GRID_CLASS} h-full content-start overflow-y-auto no-scrollbar`}
+                    >
+                        {recentAvailable.map(reaction => (
+                            <button
+                                key={reaction.kind === 'emoji' ? `e-${reaction.value}` : `s-${reaction.id}`}
+                                type="button"
+                                className={reaction.kind === 'emoji' ? EMOJI_CELL_CLASS : STICKER_CELL_CLASS}
+                                aria-label={reaction.kind === 'emoji' ? reaction.value : stickerLabelOf(reaction.id)}
+                                onClick={() => pickRecent(reaction)}
+                            >
+                                {reaction.kind === 'emoji' ? (
+                                    reaction.value
+                                ) : (
+                                    <img src={reaction.imageUrl} alt="" className="object-contain w-full h-full p-1" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="flex items-center justify-center h-full text-[13px] text-[var(--yona-chat-ink-muted)]">
+                        {t('STICKER_PANEL.RECENT_EMPTY')}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

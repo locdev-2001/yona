@@ -81,7 +81,7 @@ abstract class BaseMessageBuilder
         $attributes['external_url'] = $url;
 
         if (! in_array($type, ['share', 'story_mention'], true)) {
-            $attributes['file_type'] = Attachment::FILE_TYPES[$type] ?? $attributes['file_type'];
+            $attributes['file_type'] = Attachment::fileTypeFromChannel(Attachment::FILE_TYPES[$type] ?? null, $attributes['content_type']);
         }
 
         $message->attachments()->create($attributes);

@@ -63,6 +63,9 @@ export function mimeToExt(ct) {
         'image/webp': 'webp',
         'image/gif': 'gif',
         'video/mp4': 'mp4',
+        // Không có dòng này thì video iPhone tên không đuôi thành `.mp4` theo loại
+        // media, bridge coi là mp4 thật và bỏ qua bước đổi vỏ.
+        'video/quicktime': 'mov',
         'audio/mpeg': 'mp3',
         'audio/mp3': 'mp3',
         'application/pdf': 'pdf',

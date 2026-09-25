@@ -104,6 +104,16 @@ const findNextSlot = (
         })
         .find(Boolean) || null;
 
+// Giờ đóng của khung vừa mở, quy theo cùng múi giờ với giờ mở (khung có thể vắt qua nửa đêm).
+const closingTimeOf = (config: WorkingHour, openingTime: Date, timeZone: string): Date | null => {
+    if (config.openAllDay || config.closeHour === undefined || config.closeHour === null) return null;
+
+    const slotMinutes = toMinutes(config.closeHour, config.closeMinutes ?? 0) - toMinutes(config.openHour ?? 0, config.openMinutes ?? 0);
+    const lengthMinutes = slotMinutes > 0 ? slotMinutes : slotMinutes + MINUTES_IN_DAY;
+
+    return getDateInTimezone(new Date(openingTime.getTime() + lengthMinutes * 60000), timeZone);
+};
+
 const convertSlotToUserTimezone = (
     time: Date | string,
     inboxTz: string,
@@ -119,6 +129,7 @@ const convertSlotToUserTimezone = (
 
     const openingInUserTz = getDateInTimezone(openingTime, userTz);
     const nowInUserTz = getDateInTimezone(now, userTz);
+    const closingInUserTz = closingTimeOf(slotDetails.config, openingTime, userTz);
 
     const openingDate = new Date(openingInUserTz);
     openingDate.setHours(0, 0, 0, 0);
@@ -132,6 +143,9 @@ const convertSlotToUserTimezone = (
             ...slotDetails.config,
             openHour: openingInUserTz.getHours(),
             openMinutes: openingInUserTz.getMinutes(),
+            ...(closingInUserTz
+                ? { closeHour: closingInUserTz.getHours(), closeMinutes: closingInUserTz.getMinutes() }
+                : {}),
             dayOfWeek: openingInUserTz.getDay(),
         },
         daysUntilOpen,
@@ -184,10 +198,12 @@ export const isOnline = (
     return isInWorkingHours(time, utcOffset, workingHours) && hasOnlineAgents;
 };
 
-// dashboard/routes/dashboard/settings/inbox/helpers/businessHour.js#getTime
-export const getTime = (hours: number, minutes: number): string => {
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const hoursIn12HourFormat = hours % 12 || 12;
-    const paddedMinutes = String(minutes).padStart(2, '0');
-    return `${hoursIn12HourFormat}:${paddedMinutes} ${period}`;
+// Giờ đồng hồ theo thói quen của ngôn ngữ: "8:00" (vi), "8:00 AM" (en).
+export const formatClockTime = (hours: number, minutes: number, locale: string): string => {
+    const clock = new Date(2000, 0, 1, hours, minutes);
+    try {
+        return new Intl.DateTimeFormat(locale.replace('_', '-'), { hour: 'numeric', minute: '2-digit' }).format(clock);
+    } catch {
+        return `${hours}:${String(minutes).padStart(2, '0')}`;
+    }
 };

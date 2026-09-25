@@ -143,8 +143,10 @@ export interface MessageAttachment {
     thumb_url?: string;
     status?: string;
     file_size?: number;
-    // Chỉ có ở tệp đang tải lên: phần trăm đã tải để vẽ tiến trình trong ô.
+    // Chỉ có ở tệp đang tải lên: phần trăm đã tải để vẽ tiến trình, và tên tệp gốc
+    // (URL xem trước là blob nên không suy ra được tên).
     progress?: number;
+    file_name?: string;
 }
 
 // `content_attributes.items` của tin `cards`.
@@ -158,6 +160,8 @@ export interface CardAction {
 export interface CardItem {
     title: string;
     description?: string;
+    // Dòng giá tuỳ chọn, hiện đúng chuỗi bot gửi (vd "4.290.000 ₫").
+    price?: string | number;
     media_url?: string;
     actions?: CardAction[];
 }
@@ -215,9 +219,28 @@ export interface FormattedCampaign {
     url?: string;
 }
 
+// Nhân viên đang phụ trách hội thoại, đúng những trường widget được thấy.
+export interface ConversationAssignee {
+    id: number;
+    name: string;
+    avatar_url: string;
+    // Trạng thái trực của chính nhân viên này trong account, kể cả khi họ không phải
+    // thành viên hộp thư (danh sách thành viên không có họ).
+    availability_status?: string | null;
+}
+
+// Người đang gõ bên phía hộp thư (nhân viên hoặc bot), lấy từ sự kiện đang gõ.
+export interface TypingAgent {
+    name: string;
+    avatar_url?: string | null;
+}
+
 export interface ConversationAttributes {
     id: number | string;
     status: string;
+    // Mốc tạo hội thoại (giây Unix): màn đánh giá tính "đã hỗ trợ trong bao lâu".
+    createdAt?: number | null;
+    assignee?: ConversationAssignee | null;
 }
 
 export interface AvailableAgent {

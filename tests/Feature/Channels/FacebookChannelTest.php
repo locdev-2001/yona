@@ -4,6 +4,7 @@ use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Channels\ChannelFixture;
 
@@ -145,3 +146,23 @@ it('tin không trả lời trích dẫn thì không gửi reply_to', function ()
 
     Http::assertSent(fn ($request) => str_contains($request->url(), '/me/messages') && ! isset($request['reply_to']));
 });
+
+it('đính kèm kiểu file lấy loại theo nội dung: mp4 thành video, pdf vẫn là tệp', function (string $bytes, int $fileType) {
+    Storage::fake('public');
+    Http::fake([
+        'cdn.messenger.test/*' => Http::response($bytes, 200, ['Content-Type' => 'application/octet-stream']),
+        'graph.facebook.com/*' => Http::response(['first_name' => 'Nguyễn', 'last_name' => 'An']),
+    ]);
+    $payload = ChannelFixture::load('facebook_messaging');
+    $payload['entry'][0]['messaging'][0]['message'] = [
+        'mid' => 'mid.facebook.file',
+        'attachments' => [['type' => 'file', 'payload' => ['url' => 'https://cdn.messenger.test/tep']]],
+    ];
+
+    facebookPost($payload)->assertOk();
+
+    expect(Message::query()->latest('id')->first()->attachments()->first()->file_type)->toBe($fileType);
+})->with([
+    'video mp4' => [ChannelFixture::mp4Bytes(), Attachment::FILE_TYPE_VIDEO],
+    'tài liệu pdf' => [ChannelFixture::pdfBytes(), Attachment::FILE_TYPE_FILE],
+]);

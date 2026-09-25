@@ -1,6 +1,5 @@
 import DOMPurify from 'dompurify';
 
-import Avatar from 'dashboard/components-next/avatar/Avatar';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
@@ -8,12 +7,14 @@ import { MESSAGE_TYPE } from '../helpers/constants';
 import { isASubmittedFormMessage, isDeletedMessage } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
+import { bubbleRadius } from './message/bubbleShape';
 import CardsCarousel from './message/CardsCarousel';
 import MessageRow from './message/MessageRow';
 import { messageElementId } from './message/QuotedReply';
-import CustomerSatisfaction from './template/CustomerSatisfaction';
+import ConversationEndCard from './ConversationEndCard';
 import EmailInput from './template/EmailInput';
 import UserMessage from './UserMessage';
+import WidgetAvatar from './WidgetAvatar';
 import type { WidgetMessage } from '../types';
 import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 
@@ -22,7 +23,7 @@ import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 const TEMPLATE_CONTENT_TYPES = ['input_csat', 'input_email', 'input_select', 'form', 'article', 'integrations'];
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
-// Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
+// avatar tự rơi về chữ tắt khi ảnh lỗi.
 
 function AgentMessageBubble({
     content,
@@ -35,26 +36,15 @@ function AgentMessageBubble({
     messageId: number | string;
     messageContentAttributes: Record<string, unknown>;
 }) {
-    // Bong bóng CSAT thay hẳn bong bóng chữ (bản gốc loại `input_csat` khỏi
-    // nhánh `v-if` của chat-bubble) — tiêu đề đã nằm trong chính component.
-    if (contentType === 'input_csat') {
-        return (
-            <div className="chat-bubble-wrap">
-                <CustomerSatisfaction
-                    messageId={messageId}
-                    submittedValues={messageContentAttributes.submitted_values}
-                    displayType={messageContentAttributes.display_type as string | undefined}
-                    message={content}
-                />
-            </div>
-        );
-    }
-
+    // Tin mẫu (xin email, lựa chọn, biểu mẫu…) dùng cùng bong bóng agent của khung chat.
     return (
         <div className="chat-bubble-wrap">
-            <div className="chat-bubble agent bg-n-background dark:bg-n-solid-3 text-n-slate-12">
+            <div
+                className="yona-template-bubble inline-block max-w-full border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-[13px] py-[10px] text-[13.5px] leading-[1.5] text-[var(--yona-chat-ink)]"
+                style={bubbleRadius(false, 'single')}
+            >
                 <div
-                    className="message-content text-n-slate-12"
+                    className="message-content break-words [&_a]:underline"
                     dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
                     }}
@@ -139,15 +129,14 @@ function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; show
             id={messageElementId(message.id)}
         >
             {!isASubmittedForm ? (
-                <div className="agent-message">
-                    <div className="avatar-wrap">
-                        <div className="user-thumbnail-box">
-                            {showAvatar || hasRecordedResponse ? (
-                                <Avatar src={agent.avatarUrl} size={24} name={agent.name} roundedFull />
-                            ) : null}
-                        </div>
+                // Cùng hàng với tin agent thường: cột avatar 26px, bong bóng rộng tối đa 74%.
+                <div className="flex items-end gap-2">
+                    <div className="w-[26px] flex-none self-end">
+                        {showAvatar || hasRecordedResponse ? (
+                            <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" />
+                        ) : null}
                     </div>
-                    <div className="message-wrap">
+                    <div className="flex min-w-0 max-w-[74%] flex-col items-start">
                         {shouldDisplayAgentMessage ? (
                             <AgentMessageBubble
                                 content={message.content ?? ''}
@@ -196,12 +185,16 @@ export default function AgentMessage({
     const agent = useAgentIdentity(message);
     const contentType = message.content_type ?? '';
 
+    if (contentType === 'input_csat' && !isDeletedMessage(message)) {
+        return <ConversationEndCard message={message} />;
+    }
+
     if (!isDeletedMessage(message) && (TEMPLATE_CONTENT_TYPES.includes(contentType) || isASubmittedFormMessage(message))) {
         return <TemplateMessage message={message} showAvatar={showAvatar} />;
     }
 
     const cardItems = contentType === 'cards' && !isDeletedMessage(message) ? (message.content_attributes?.items ?? []) : [];
-    const avatar = showAvatar ? <Avatar src={agent.avatarUrl} size={26} name={agent.name} roundedFull /> : null;
+    const avatar = showAvatar ? <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" /> : null;
 
     return (
         <>

@@ -5,7 +5,8 @@ import DOMPurify from 'dompurify';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
-import { isDeletedMessage } from '../../helpers/messageHelpers';
+import { isDeletedMessage, uploadCancelPlacement } from '../../helpers/messageHelpers';
+import { widgetStore } from '../../store/widgetStore';
 import { AudioBubble, FileBubble, VideoBubble } from '../bubbles';
 import { bubbleRadius, partPosition } from './bubbleShape';
 import DeletedBubble from './DeletedBubble';
@@ -45,7 +46,17 @@ function TextBubble({
     );
 }
 
-function OtherAttachment({ attachment, isInProgress }: { attachment: MessageAttachment; isInProgress: boolean }) {
+// Video/âm thanh phát ngay trong khung; video không phát được (định dạng trình duyệt
+// không giải mã được) rơi về thẻ tệp để khách vẫn tải về xem.
+function OtherAttachment({
+    attachment,
+    isInProgress,
+    onCancelUpload,
+}: {
+    attachment: MessageAttachment;
+    isInProgress: boolean;
+    onCancelUpload?: () => void;
+}) {
     const [hasMediaError, setMediaError] = useState(false);
     const url = attachment.data_url ?? '';
 
@@ -54,8 +65,11 @@ function OtherAttachment({ attachment, isInProgress }: { attachment: MessageAtta
     }
     if (attachment.file_type === 'audio') return <AudioBubble url={url} />;
 
-    return <FileBubble attachment={attachment} isInProgress={isInProgress} />;
+    return <FileBubble attachment={attachment} isInProgress={isInProgress} onCancelUpload={onCancelUpload} />;
 }
+
+const attachmentKeyOf = (attachment: MessageAttachment, index: number): string =>
+    String(attachment.id ?? attachment.data_url ?? `attachment-${index}`);
 
 interface MessageBodyProps {
     message: WidgetMessage;
@@ -67,17 +81,25 @@ interface MessageBodyProps {
 // Thân một tin, dùng chung cho tin của khách và của agent: khối chữ (kèm trích
 // dẫn), lưới ảnh, tệp; tin thu hồi thành bong bóng nét đứt, sticker đứng trần.
 export default function MessageBody({ message, replyTo, isOwn, position }: MessageBodyProps) {
-    const [hasImageError, setImageError] = useState(false);
+    // Ảnh tải hỏng chỉ hạ riêng ảnh đó xuống thẻ tệp; các ảnh còn lại giữ lưới.
+    const [failedImageKeys, setFailedImageKeys] = useState<ReadonlySet<string>>(() => new Set());
 
-    useEffect(() => setImageError(false), [message.attachments]);
+    useEffect(() => setFailedImageKeys(new Set()), [message.attachments]);
 
     if (isDeletedMessage(message)) return <DeletedBubble isOwn={isOwn} position={position} />;
     if (message.content_type === 'sticker') return <StickerBubble message={message} />;
 
     const attachments = message.attachments ?? [];
-    const images = hasImageError ? [] : attachments.filter(attachment => attachment.file_type === 'image');
+    const images = attachments.filter(
+        (attachment, index) => attachment.file_type === 'image' && !failedImageKeys.has(attachmentKeyOf(attachment, index)),
+    );
     const others = attachments.filter(attachment => !images.includes(attachment));
+    const markImageFailed = (image: MessageAttachment) => {
+        const imageKey = attachmentKeyOf(image, attachments.indexOf(image));
+        setFailedImageKeys(current => (current.has(imageKey) ? current : new Set(current).add(imageKey)));
+    };
     const isInProgress = message.status === 'in_progress';
+    const cancelOnCard = uploadCancelPlacement(message) === 'card';
     const content = message.content ?? '';
 
     const parts: ((partPositionValue: MessageGroupPosition) => ReactNode)[] = [];
@@ -93,7 +115,7 @@ export default function MessageBody({ message, replyTo, isOwn, position }: Messa
                 images={images}
                 isOwn={isOwn}
                 position={partPositionValue}
-                onImageError={() => setImageError(true)}
+                onImageError={markImageFailed}
             />
         ));
     }
@@ -103,6 +125,7 @@ export default function MessageBody({ message, replyTo, isOwn, position }: Messa
                 key={attachment.id ?? attachment.data_url ?? `file-${index}`}
                 attachment={attachment}
                 isInProgress={isInProgress}
+                onCancelUpload={cancelOnCard ? () => widgetStore.cancelSend(message.id) : undefined}
             />
         ));
     });

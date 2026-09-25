@@ -7,6 +7,7 @@ use App\Models\Channel\Api;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Support\Timezones;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -317,16 +318,39 @@ describe('POST /api/v1/accounts/{id}/inboxes', function () {
             ->and($response->json('greeting_enabled'))->toBeTrue();
     });
 
-    it('rejects a webwidget inbox without a website url', function () {
+    it('creates a webwidget inbox without a website url', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
                 'name' => 'test',
                 'channel' => ['type' => 'web_widget'],
             ])
-            ->assertUnprocessable();
+            ->assertOk();
+
+        expect($response->json('channel_type'))->toBe('Channel::WebWidget')
+            ->and($response->json('website_url'))->toBeNull();
+    });
+
+    it('keeps the stored website url when the settings form no longer sends it', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $inboxId = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'shop.test'],
+            ])
+            ->json('id');
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inboxId}", [
+                'name' => 'Shop',
+                'channel' => ['widget_color' => '#E0115F'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('website_url', 'shop.test');
     });
 
     it('rejects an unsupported channel type', function () {
@@ -663,6 +687,73 @@ describe('working hours qua PATCH inbox', function () {
             ->and($schedule[1]['close_hour'])->toBe(23)
             ->and($schedule[1]['close_minutes'])->toBe(59)
             ->and($schedule[2]['open_hour'])->toBe(9);
+    });
+
+    it('creates a new inbox on Vietnam time', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'test.com'],
+            ])
+            ->assertOk();
+
+        expect($response->json('timezone'))->toBe(Inbox::DEFAULT_TIMEZONE)
+            ->and(Inbox::DEFAULT_TIMEZONE)->toBe('Asia/Ho_Chi_Minh');
+    });
+
+    it('keeps the stored timezone when the working hours tab is saved without a timezone change', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+        $inbox->update(['timezone' => 'UTC']);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'working_hours_enabled' => false,
+                'out_of_office_message' => '',
+                'timezone' => 'UTC',
+                'working_hours' => [
+                    ['day_of_week' => 1, 'closed_all_day' => false, 'open_hour' => 9, 'open_minutes' => 0, 'close_hour' => 17, 'close_minutes' => 0, 'open_all_day' => false],
+                ],
+                'channel' => [],
+            ])
+            ->assertOk();
+
+        expect($response->json('timezone'))->toBe('UTC')
+            ->and($inbox->fresh()->timezone)->toBe('UTC');
+    });
+
+    it('saves every timezone that the working hours tab offers', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $offered = array_column(Timezones::options(), 'value');
+        $saved = [];
+
+        foreach ($offered as $timezone) {
+            $this->actingAs($admin)
+                ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", ['timezone' => $timezone])
+                ->assertOk();
+
+            $saved[] = $inbox->fresh()->timezone;
+        }
+
+        expect($saved)->toBe($offered)
+            ->and($offered)->toContain('UTC', 'Asia/Ho_Chi_Minh');
+    });
+
+    it('rejects a timezone that does not exist', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", ['timezone' => 'Asia/Atlantis'])
+            ->assertUnprocessable();
     });
 
     it('leaves the schedule untouched when the payload has no working hours', function () {

@@ -11,12 +11,13 @@ import {
     onClickChatBubble,
     onBubbleClick,
     setBubbleText,
+    setLauncherLabels,
     removeUnreadClass,
     showUnreadPreview,
     hideUnreadPreview,
     formatUnreadBadge,
 } from './bubbleHelpers';
-import { isWidgetColorLighter } from './helpers/colorHelper';
+import { isLightAccent } from '../shared/helpers/accentContrast';
 import { dispatchSdkEvent, toSdkEventKey } from './helpers/customEvent';
 import { SDK_EVENTS } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
@@ -52,8 +53,11 @@ const updateCampaignReadStatus = (baseDomain?: string): void => {
 type FrameMessageHandler = (message: never) => void;
 
 export const IFrameHelper = {
-    getUrl({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): string {
-        return `${baseUrl}/widget?website_token=${websiteToken}&${FRAME_PROTOCOL_PARAM}=${FRAME_PROTOCOL_VERSION}`;
+    // Ngôn ngữ trang nhúng chọn đi theo URL để máy chủ in đúng <html lang> ngay lần render đầu.
+    getUrl({ baseUrl, websiteToken, locale }: { baseUrl: string; websiteToken: string; locale?: string }): string {
+        const localeParam = locale ? `&locale=${encodeURIComponent(locale)}` : '';
+
+        return `${baseUrl}/widget?website_token=${websiteToken}&${FRAME_PROTOCOL_PARAM}=${FRAME_PROTOCOL_VERSION}${localeParam}`;
     },
     createFrame: ({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): void => {
         if (IFrameHelper.getAppFrame()) {
@@ -63,7 +67,7 @@ export const IFrameHelper = {
         loadCSS();
         const iframe = document.createElement('iframe');
         const cwCookie = getCookie(AUTH_COOKIE);
-        let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken });
+        let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken, locale: window.$yona.locale });
         if (cwCookie) {
             widgetUrl = `${widgetUrl}&cw_conversation=${cwCookie}`;
         }
@@ -96,7 +100,7 @@ export const IFrameHelper = {
     // không được đưa iframe về URL còn mang token cũ. Cờ mang mã riêng từng lần xoá, widget chỉ
     // dùng mỗi mã một lần.
     startNewSession: (): void => {
-        const { baseUrl, websiteToken, baseDomain } = window.$yona;
+        const { baseUrl, websiteToken, baseDomain, locale } = window.$yona;
         removeCookieWithDomain(AUTH_COOKIE, baseDomain);
         removeCookieWithDomain(getUserCookieName(), baseDomain);
 
@@ -104,7 +108,7 @@ export const IFrameHelper = {
         if (iframe) {
             const resetId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
             const freshFrame = iframe.cloneNode(false) as HTMLIFrameElement;
-            freshFrame.src = `${IFrameHelper.getUrl({ baseUrl, websiteToken })}&${NEW_SESSION_URL_PARAM}=${resetId}`;
+            freshFrame.src = `${IFrameHelper.getUrl({ baseUrl, websiteToken, locale })}&${NEW_SESSION_URL_PARAM}=${resetId}`;
             iframe.replaceWith(freshFrame);
         }
 
@@ -173,7 +177,13 @@ export const IFrameHelper = {
     },
 
     events: {
-        loaded: (message: { config: { authToken: string; channelConfig: { widgetColor: string } } }): void => {
+        loaded: (message: {
+            config: {
+                authToken: string;
+                channelConfig: { widgetColor: string };
+                launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
+            };
+        }): void => {
             updateAuthCookie(message.config.authToken, window.$yona.baseDomain);
             window.$yona.hasLoaded = true;
             const campaignsSnoozedTill = getCookie(CAMPAIGN_SNOOZE_COOKIE);
@@ -199,7 +209,10 @@ export const IFrameHelper = {
             if (window.$yona.isOpen) {
                 IFrameHelper.sendMessage('toggle-open', { isOpen: true });
             }
-            IFrameHelper.onLoad({ widgetColor: message.config.channelConfig.widgetColor });
+            IFrameHelper.onLoad({
+                widgetColor: message.config.channelConfig.widgetColor,
+                launcherLabels: message.config.launcherLabels,
+            });
             IFrameHelper.toggleCloseButton();
 
             if (window.$yona.user) {
@@ -226,8 +239,9 @@ export const IFrameHelper = {
         onEvent({ eventIdentifier, data }: { eventIdentifier: string; data: unknown }): void {
             dispatchSdkEvent(toSdkEventKey(eventIdentifier), data);
         },
-        setBubbleLabel(message: { label: string }): void {
+        setBubbleLabel(message: { label: string; openLabel?: string; closeLabel?: string }): void {
             setBubbleText(window.$yona.launcherTitle || message.label);
+            setLauncherLabels(message);
         },
 
         setAuthCookie({ data: { widgetAuthToken } }: { data: { widgetAuthToken: string } }): void {
@@ -324,7 +338,13 @@ export const IFrameHelper = {
         IFrameHelper.sendMessage('push-event', { eventName });
     },
 
-    onLoad: ({ widgetColor }: { widgetColor: string }): void => {
+    onLoad: ({
+        widgetColor,
+        launcherLabels,
+    }: {
+        widgetColor: string;
+        launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
+    }): void => {
         const iframe = IFrameHelper.getAppFrame();
         if (!iframe) return;
 
@@ -345,7 +365,7 @@ export const IFrameHelper = {
             closeBtnClassName += ' woot-widget-bubble--flat';
         }
 
-        if (isWidgetColorLighter(widgetColor)) {
+        if (isLightAccent(widgetColor)) {
             className += ' woot-widget-bubble-color--lighter';
             closeBtnClassName += ' woot-widget-bubble-color--lighter';
         }
@@ -356,6 +376,10 @@ export const IFrameHelper = {
 
         chatIcon.style.background = widgetColor;
         closeBubble.style.background = widgetColor;
+        bubbleHolder.style.setProperty('--yona-launcher-color', widgetColor);
+
+        // Nhãn đọc màn hình có ngay khi bong bóng xuất hiện, không đợi lượt setBubbleLabel sau.
+        if (launcherLabels) IFrameHelper.events.setBubbleLabel(launcherLabels);
 
         bubbleHolder.appendChild(chatIcon);
         bubbleHolder.appendChild(closeBubble);

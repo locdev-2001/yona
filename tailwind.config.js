@@ -7,6 +7,19 @@ const {
   iconsPlugin,
   getIconCollections,
 } = require('@egoist/tailwindcss-icons');
+const plugin = require('tailwindcss/plugin');
+
+// Ẩn thanh cuộn nhưng vẫn cuộn được. Khai ở config gốc để mọi bề mặt (dashboard,
+// widget, survey…) kế thừa qua tailwind/surface.cjs.
+const hiddenScrollbarPlugin = plugin(({ addUtilities }) => {
+  addUtilities({
+    '.no-scrollbar': {
+      '-ms-overflow-style': 'none',
+      'scrollbar-width': 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
+    },
+  });
+});
 
 const defaultSansFonts = [
   '-apple-system',
@@ -254,6 +267,7 @@ const tailwindConfig = {
   plugins: [
     // eslint-disable-next-line
     require('@tailwindcss/typography'),
+    hiddenScrollbarPlugin,
     iconsPlugin({
       collections: {
         woot: { icons },

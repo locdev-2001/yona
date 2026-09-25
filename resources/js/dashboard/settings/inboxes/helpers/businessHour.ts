@@ -1,6 +1,6 @@
-import { getHours, getMinutes, parse } from 'date-fns';
+import { format, getHours, getMinutes, parse } from 'date-fns';
 
-import timeZoneData from './timezones.json';
+import { matchTimezone } from 'shared/helpers/timezoneAliases';
 
 // Port từ settings/inbox/helpers/businessHour.js.
 
@@ -61,6 +61,13 @@ export const generateTimeSlots = (step = 15): string[] => {
     return slots;
 };
 
+// Giá trị mốc giờ trong form vẫn là chuỗi 12h ('09:00 AM'), chỉ chữ hiện ra là 24h ('09:00').
+export const timeSlotLabel = (slot: string): string => format(parse(slot, 'hh:mm a', new Date()), 'HH:mm');
+
+// Thứ hai đứng đầu tuần như lịch Việt Nam; `day` vẫn theo API (0 = Chủ nhật).
+export const mondayFirst = (slots: TimeSlot[]): TimeSlot[] =>
+    [...slots].sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7));
+
 export const getTime = (hour: number, minute: number): string => {
     const meridian = hour > 11 ? 'PM' : 'AM';
     const modHour = hour > 12 ? hour % 12 : hour || 12;
@@ -114,5 +121,16 @@ export const timeSlotTransform = (timeSlots: TimeSlot[]): WorkingHourPayload[] =
         };
     });
 
-export const timeZoneOptions = (): TimeZoneOption[] =>
-    Object.entries(timeZoneData as Record<string, string>).map(([label, value]) => ({ label, value }));
+/**
+ * Danh sách chọn (`options` do máy chủ cấp, cùng nguồn với luật kiểm ở API) cùng mục
+ * ứng với múi giờ đang lưu của hộp thư. Khớp cả bí danh ('Etc/UTC' ↔ 'UTC'); giá trị
+ * không có trong danh sách được thêm thành một mục riêng thay vì rơi về mục mặc định,
+ * để bấm lưu mà không đổi gì thì múi giờ giữ nguyên.
+ */
+export const timeZoneSelection = (stored: string, options: TimeZoneOption[]): { options: TimeZoneOption[]; selected: string } => {
+    const matched = matchTimezone(stored, options.map(option => option.value));
+
+    if (matched || !stored) return { options, selected: matched ?? '' };
+
+    return { options: [{ label: stored, value: stored }, ...options], selected: stored };
+};

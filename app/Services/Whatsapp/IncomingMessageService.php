@@ -211,7 +211,7 @@ class IncomingMessageService
             return;
         }
 
-        $attributes['file_type'] = self::FILE_TYPES[$type] ?? Attachment::FILE_TYPE_FILE;
+        $attributes['file_type'] = Attachment::fileTypeFromChannel(self::FILE_TYPES[$type] ?? null, $attributes['content_type']);
         $message->pendingAttachments[] = new Attachment($attributes);
     }
 

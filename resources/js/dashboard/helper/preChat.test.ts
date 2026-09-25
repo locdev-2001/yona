@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { setLocale } from '../../i18n';
 
 import { getCustomFields, getFormattedPreChatFields, getPreChatFields } from './preChat';
 import type { CustomAttributeDefinition, PreChatField } from './preChat';
@@ -96,23 +98,69 @@ describe('preChat helper', () => {
         ]);
     });
 
-    it('lấy nhãn/placeholder mặc định từ bảng chuỗi widget khi trường chưa có', () => {
+    it('lấy nhãn/placeholder mặc định từ bảng chuỗi widget khi trường chuẩn chưa có', () => {
         expect(
             getFormattedPreChatFields({
-                preChatFields: [
-                    { label: '', name: 'EMAIL_ADDRESS', type: 'email', required: false, enabled: false },
-                ],
+                preChatFields: [{ label: '', name: 'emailAddress', type: 'email', required: false, enabled: false }],
             }),
         ).toEqual([
             {
                 label: 'Email Address',
-                name: 'EMAIL_ADDRESS',
+                name: 'emailAddress',
                 placeholder: 'Please enter your email address',
                 type: 'email',
                 required: false,
                 enabled: false,
             },
         ]);
+    });
+
+    describe('khi giao diện tiếng Việt', () => {
+        beforeEach(() => setLocale('vi'));
+        afterEach(() => setLocale('en'));
+
+        it('đổi nhãn tiếng Anh mặc định cũ của trường chuẩn sang tiếng Việt theo name', () => {
+            const fields = getFormattedPreChatFields({
+                preChatFields: [
+                    { label: 'Email Id', name: 'emailAddress', type: 'email', required: true, enabled: false },
+                    { label: 'Full name', name: 'fullName', type: 'text', required: false, enabled: false },
+                    { label: 'Phone number', name: 'phoneNumber', type: 'text', required: false, enabled: false },
+                ],
+            });
+
+            expect(fields.map(field => [field.label, field.placeholder])).toEqual([
+                ['Email', 'Vui lòng nhập email'],
+                ['Tên đầy đủ', 'Vui lòng nhập tên đầy đủ của bạn'],
+                ['Số điện thoại', 'Vui lòng nhập số điện thoại của bạn'],
+            ]);
+        });
+
+        it('giữ nhãn quản trị viên đã tự đặt', () => {
+            const [field] = getFormattedPreChatFields({
+                preChatFields: [
+                    {
+                        label: 'Email công việc',
+                        placeholder: 'ban@congty.vn',
+                        name: 'emailAddress',
+                        type: 'email',
+                        required: true,
+                        enabled: true,
+                    },
+                ],
+            });
+
+            expect([field.label, field.placeholder]).toEqual(['Email công việc', 'ban@congty.vn']);
+        });
+
+        it('đổi lời nhắn mặc định cũ sang tiếng Việt, giữ lời nhắn tự đặt', () => {
+            expect(getPreChatFields({ preChatFormOptions: customFields }).pre_chat_message).toBe(
+                'Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé.',
+            );
+            expect(
+                getPreChatFields({ preChatFormOptions: { ...customFields, pre_chat_message: 'Chào bạn' } })
+                    .pre_chat_message,
+            ).toBe('Chào bạn');
+        });
     });
 
     it('dựng trường tuỳ biến cho thuộc tính chưa có trong danh sách', () => {

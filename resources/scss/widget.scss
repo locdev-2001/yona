@@ -9,68 +9,7 @@
 @import 'widget-fonts';
 @import 'next-colors';
 
-// Token thiết kế của khung chat — nguồn DUY NHẤT; component chỉ dùng tên biến,
-// không viết mã màu. Giá trị sáng theo design "Yona Chat Widget"; giá trị tối suy
-// từ thang màu chung của dự án. Màu nhấn lấy widgetColor của tenant.
-:root {
-  --yona-chat-surface: #f7f7f8;
-  --yona-chat-panel: #ffffff;
-  --yona-chat-field: #f2f3f5;
-  --yona-chat-ink: #17181a;
-  --yona-chat-ink-soft: #5b6068;
-  --yona-chat-ink-muted: #6b7076;
-  --yona-chat-line: rgba(0, 0, 0, 0.06);
-  --yona-chat-line-strong: rgba(0, 0, 0, 0.18);
-  --yona-chat-accent: var(--widget-color, #1b6fcc);
-  --yona-chat-on-accent: #ffffff;
-  --yona-chat-online: #1e7f4e;
-  --yona-chat-online-dot: #22c55e;
-  --yona-chat-danger: #c0392b;
-  --yona-chat-danger-bg: #fff3f2;
-  --yona-chat-danger-line: #f6d2ce;
-  --yona-chat-radius-bubble: 16px;
-  --yona-chat-radius-tail: 5px;
-  --yona-chat-radius-stack: 6px;
-  // Nền đặc tương phản (bong bóng khách, ô +N, chấm carousel đang chọn) tách khỏi
-  // màu chữ vì hai vai đảo chiều ở chế độ tối.
-  --yona-chat-solid: #17181a;
-  --yona-chat-on-solid: #ffffff;
-  --yona-chat-on-solid-soft: rgba(255, 255, 255, 0.72);
-  --yona-chat-quote-own: rgba(255, 255, 255, 0.1);
-  --yona-chat-quote-line-own: #6fa8e8;
-  --yona-chat-quote-name-own: #a8cbf2;
-  --yona-chat-dot: #c4c8ce;
-  --yona-chat-progress-track: rgba(255, 255, 255, 0.6);
-  --yona-chat-scrim: rgba(23, 24, 26, 0.9);
-  --yona-chat-scrim-soft: rgba(23, 24, 26, 0.3);
-  --yona-chat-on-scrim: #ffffff;
-  --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
-  --yona-chat-send-idle: #d2d6db;
-  --yona-chat-font: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
-
-.dark {
-  --yona-chat-surface: rgb(var(--slate-1));
-  --yona-chat-panel: rgb(var(--slate-2));
-  --yona-chat-field: rgb(var(--slate-4));
-  --yona-chat-ink: rgb(var(--slate-12));
-  --yona-chat-ink-soft: rgb(var(--slate-11));
-  --yona-chat-ink-muted: rgb(var(--slate-10));
-  --yona-chat-line: rgba(255, 255, 255, 0.09);
-  --yona-chat-line-strong: rgba(255, 255, 255, 0.22);
-  --yona-chat-online: rgb(var(--teal-11));
-  --yona-chat-online-dot: rgb(var(--teal-10));
-  --yona-chat-danger: rgb(var(--ruby-11));
-  --yona-chat-danger-bg: rgb(var(--ruby-2));
-  --yona-chat-danger-line: rgb(var(--ruby-6));
-  --yona-chat-solid: rgb(var(--slate-5));
-  --yona-chat-on-solid: rgb(var(--slate-12));
-  --yona-chat-on-solid-soft: rgb(var(--slate-11));
-  --yona-chat-quote-own: rgba(255, 255, 255, 0.08);
-  --yona-chat-dot: rgb(var(--slate-8));
-  --yona-chat-send-idle: rgb(var(--slate-7));
-  --yona-chat-progress-track: rgba(255, 255, 255, 0.25);
-}
+@import 'chat-tokens';
 
 // Tin gốc vừa được nhảy tới từ khối trích dẫn nháy nền trong chốc lát.
 .yona-chat-highlight {
@@ -89,31 +28,31 @@ body {
   width: 100%;
 }
 
+// Dòng "Powered by": trên màn cảm ứng (và khi chưa biết khung) link là hộp chạm 44px phủ
+// khe dưới ô nhập và lề đáy footer, không đè ô nhập hay nút gửi; khung nổi trên máy tính
+// dùng chuột giữ đúng số đo design (cách ô nhập 9px, chữ cao một dòng).
+.yona-branding-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: -11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .is-desktop-frame .yona-branding-link {
+    display: block;
+    min-height: 0;
+    margin-top: 9px;
+    margin-bottom: 0;
+  }
+}
+
+// Nút đóng hiện ở mọi khung (design); chỉ mục "mở cửa sổ riêng" ẩn trên điện thoại.
 .is-mobile {
   display: block;
 
-  .actions {
-    .close-button {
-      display: block !important;
-    }
-
-    .new-window--button {
-      display: none !important;
-    }
-  }
-}
-
-.is-bubble-hidden {
-  .actions {
-    .close-button {
-      display: block !important;
-    }
-  }
-}
-
-.actions {
-  .close-button {
-    display: none;
+  .new-window--button {
+    display: none !important;
   }
 }
 
@@ -156,7 +95,7 @@ body {
 }
 
 label {
-  @apply block font-medium py-1 px-0 capitalize;
+  @apply block font-medium py-1 px-0;
 }
 
 input:not(.reset-base),
@@ -177,8 +116,12 @@ textarea {
   resize: none;
 }
 
+// Ô nhập tin: cao đúng một dòng khi rỗng, ChatInputWrap tự giãn tới trần và chỉ
+// mở cuộn khi nội dung vượt trần (shared/helpers/autoGrowField.ts).
 .user-message-input {
-  @apply border-none outline-none w-full placeholder:text-n-slate-10 resize-none h-8 min-h-8 max-h-60 py-1 px-0 my-2 bg-n-background text-n-slate-12 transition-all duration-200;
+  @apply block m-0 px-0 py-[9px] w-full border-none outline-none resize-none bg-transparent text-[13.5px] leading-[18px] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)] no-scrollbar;
+
+  overflow-y: hidden;
 }
 
 p code {
@@ -249,7 +192,10 @@ blockquote {
   }
 }
 
+// Vùng tin nhắn cuộn bằng lăn chuột/vuốt, không có thanh cuộn hệ điều hành (▲▼) như ô nhập.
 .conversation--container {
+  @apply no-scrollbar;
+
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -274,8 +220,39 @@ blockquote {
   text-align: center;
 }
 
-.typing-bubble {
-  @apply max-w-[2.4rem] p-2 ltr:rounded-bl-[1.25rem] rtl:rounded-br-[1.25rem] ltr:rounded-tl-lg rtl:rounded-tr-lg;
+// Chỉ báo đang gõ: ba chấm nhấp nháy lần lượt; tắt chuyển động khi người dùng yêu cầu.
+@keyframes yona-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.yona-typing-dot {
+  @apply size-1.5 rounded-full bg-[var(--yona-chat-typing-dot-1)];
+
+  animation: yona-typing-dot 1.2s ease-out infinite;
+
+  &:nth-child(2) {
+    background: var(--yona-chat-typing-dot-2);
+    animation-delay: 0.15s;
+  }
+
+  &:nth-child(3) {
+    background: var(--yona-chat-typing-dot-3);
+    animation-delay: 0.3s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 .image {
@@ -619,71 +596,4 @@ blockquote {
 
 .formkit-messages {
   @apply list-none m-0 p-0;
-}
-
-// Port từ <style scoped> của shared/components/CustomerSatisfaction.vue.
-.customer-satisfaction {
-  .ratings {
-    .emoji-button {
-      @apply shadow-none grayscale text-2xl outline-none transition-all duration-200;
-
-      &.selected,
-      &:hover,
-      &:focus,
-      &:active {
-        @apply grayscale-0 scale-[1.32];
-      }
-
-      &.disabled {
-        @apply cursor-not-allowed opacity-50 pointer-events-none;
-      }
-    }
-  }
-
-  .feedback-form {
-    input {
-      @apply h-10 dark:bg-n-alpha-black1 rtl:rounded-tl-[0] rtl:rounded-tr-[0] ltr:rounded-tr-[0] ltr:rounded-tl-[0] rtl:rounded-bl-[0] ltr:rounded-br-[0] ltr:rounded-bl-[0.25rem] rtl:rounded-br-[0.25rem] rounded-lg p-2.5 w-full focus:ring-0 focus:outline-n-brand;
-
-      &::placeholder {
-        @apply text-n-slate-10;
-      }
-    }
-
-    .button {
-      @apply rtl:rounded-tr-[0] rtl:rounded-tl-[0] appearance-none ltr:rounded-tl-[0] ltr:rounded-tr-[0] rtl:rounded-br-[0] ltr:rounded-bl-[0] rounded-lg h-auto ltr:-ml-px rtl:-mr-px text-xl;
-
-      .spinner {
-        display: block;
-        padding: 0;
-        height: auto;
-        width: auto;
-      }
-    }
-  }
-}
-
-// Port từ <style scoped> của widget/components/template/EmailInput.vue.
-.email-input-group {
-  input {
-    @apply dark:bg-n-alpha-black1 rtl:rounded-tl-[0] ltr:rounded-tr-[0] rtl:rounded-bl-[0] ltr:rounded-br-[0] p-2.5 w-full focus:ring-0 focus:outline-n-brand;
-
-    &::placeholder {
-      @apply text-n-slate-10;
-    }
-
-    &.error {
-      @apply outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9;
-    }
-  }
-
-  .button {
-    @apply rtl:rounded-tr-[0] ltr:rounded-tl-[0] rtl:rounded-br-[0] ltr:rounded-bl-[0] rounded-lg h-auto ltr:-ml-px rtl:-mr-px text-xl;
-
-    .spinner {
-      display: block;
-      padding: 0;
-      height: auto;
-      width: auto;
-    }
-  }
 }

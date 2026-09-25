@@ -1,5 +1,6 @@
 <?php
 
+use App\Builders\Messages\MessageBuilder;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Attachment;
 use App\Models\Contact;
@@ -71,6 +72,25 @@ describe('GET /api/v1/widget/messages', function () {
         expect($csat['content_attributes']['display_type'])->toBe('emoji');
         expect($csat['content_attributes']['submitted_values'])
             ->toBe(['csat_survey_response' => ['rating' => 4, 'feedback_message' => 'phuc vu tot']]);
+    });
+
+    it('keeps the optional price of each bot card intact on the way to the widget', function () {
+        $session = WidgetSession::make();
+        $conversation = widgetConversationFor($session);
+        $items = [
+            ['title' => 'Bàn nâng hạ Ergo M', 'description' => '120×60cm · gỗ sồi', 'price' => '4.290.000 ₫'],
+            ['title' => 'Ghế lưới', 'description' => 'Lưới thoáng'],
+        ];
+        (new MessageBuilder(null, $conversation, [
+            'content' => 'Có 2 mẫu đang bán chạy',
+            'content_type' => 'cards',
+            'content_attributes' => ['items' => $items],
+        ]))->perform();
+
+        $response = $this->getJson($session->url('messages'), $session->headers())->assertOk();
+
+        $cards = collect($response->json('payload'))->firstWhere('content_type', 'cards');
+        expect($cards['content_attributes']['items'])->toBe($items);
     });
 
     it('returns an empty payload when the visitor has no conversation', function () {

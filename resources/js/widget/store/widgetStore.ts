@@ -25,6 +25,7 @@ import type {
     ChannelMessagingPolicy,
     ConversationAttributes,
     MessageAttachment,
+    TypingAgent,
     WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
@@ -65,6 +66,7 @@ export interface WidgetState {
     campaignsFetched: boolean;
     messagingPolicy: ChannelMessagingPolicy;
     agentLastSeenAt: number;
+    typingAgent: TypingAgent | null;
 }
 
 const DEFAULT_APP_CONFIG: AppConfig = {
@@ -107,6 +109,7 @@ let state: WidgetState = {
     // Hạn 0 = chưa biết chính sách của kênh, chưa hiện mục thu hồi.
     messagingPolicy: { recallWindowSeconds: 0, stickers: [] },
     agentLastSeenAt: 0,
+    typingAgent: null,
 };
 
 type Listener = () => void;
@@ -143,6 +146,7 @@ const attachmentPreviewOf = (file: File): MessageAttachment => {
         data_url: previewUrl,
         file_type: file.type.startsWith('image/') ? 'image' : 'file',
         file_size: file.size,
+        file_name: file.name,
         status: 'in_progress',
         progress: 0,
     };
@@ -166,8 +170,19 @@ function patchMessage(messageId: number | string, patch: (message: WidgetMessage
     setState({ conversations: { ...state.conversations, [messageId]: patch(message) } });
 }
 
+// Ảnh/tệp xem trước của tin tạm là blob URL trong bộ nhớ trình duyệt: gỡ tin tạm (huỷ,
+// hoặc bản thật của máy chủ thay vào) thì trả bộ nhớ đó lại.
+function revokePreviewUrls(message: WidgetMessage | undefined): void {
+    if (typeof URL === 'undefined' || typeof URL.revokeObjectURL !== 'function') return;
+    new Set((message?.attachments ?? []).flatMap(attachment => [attachment.data_url, attachment.thumb_url]))
+        .forEach(url => {
+            if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+        });
+}
+
 function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMessage): void {
     const conversations = { ...state.conversations };
+    revokePreviewUrls(conversations[temporaryId]);
     delete conversations[temporaryId];
     setState({ conversations });
     pushMessageToConversation(message);
@@ -180,7 +195,7 @@ function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMe
 interface OutgoingSend {
     temporaryMessage: WidgetMessage;
     carriesPendingMetadata: boolean;
-    request: (metadata: ReturnType<typeof pendingMetadata>) => Promise<WidgetMessage>;
+    request: (metadata: ReturnType<typeof pendingMetadata>, signal: AbortSignal) => Promise<WidgetMessage>;
 }
 
 interface FailedSend {
@@ -189,6 +204,8 @@ interface FailedSend {
 }
 
 const failedSends = new Map<number | string, FailedSend>();
+// Lần gửi đang chạy theo id tin tạm, để khách huỷ được giữa chừng.
+const inFlightSends = new Map<number | string, AbortController>();
 
 // Không có phản hồi (mất mạng) hoặc máy chủ lỗi 5xx: gửi lại có cơ hội thành công.
 const isNetworkFailure = (error: unknown): boolean =>
@@ -199,20 +216,25 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
     failedSends.delete(temporaryMessage.id);
     pushMessageToConversation({ ...temporaryMessage, status: 'in_progress' });
     const metadata = carriesPendingMetadata ? pendingMetadata() : {};
+    const controller = new AbortController();
+    inFlightSends.set(temporaryMessage.id, controller);
 
     try {
-        const data = await request(metadata);
+        const data = await request(metadata, controller.signal);
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
         void widgetStore.reconnectRealtimeIfPending();
     } catch (error) {
-        if (!state.conversations[temporaryMessage.id]) return;
+        // Tin tạm đã bị gỡ (khách huỷ, hoặc xoá hội thoại) thì không còn gì để báo lỗi.
+        if (controller.signal.aborted || !state.conversations[temporaryMessage.id]) return;
         failedSends.set(temporaryMessage.id, { send, isNetworkFailure: isNetworkFailure(error) });
         patchMessage(temporaryMessage.id, () => ({
             ...temporaryMessage,
             status: 'failed',
             attachments: temporaryMessage.attachments?.map(attachment => ({ ...attachment, status: 'failed' })),
         }));
+    } finally {
+        if (inFlightSends.get(temporaryMessage.id) === controller) inFlightSends.delete(temporaryMessage.id);
     }
 }
 
@@ -247,7 +269,7 @@ async function sendAttachmentMessage({
     await deliverOutgoingMessage({
         temporaryMessage,
         carriesPendingMetadata: true,
-        request: metadata => api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress),
+        request: (metadata, signal) => api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress, signal),
     });
 }
 
@@ -463,6 +485,19 @@ export const widgetStore = {
         await deliverOutgoingMessage(failedSend.send);
     },
 
+    // Huỷ một tin đang gửi (tệp đang tải): dừng yêu cầu và gỡ tin tạm khỏi luồng tin.
+    cancelSend(messageId: number | string): void {
+        const controller = inFlightSends.get(messageId);
+        if (!controller) return;
+        inFlightSends.delete(messageId);
+        failedSends.delete(messageId);
+        const conversations = { ...state.conversations };
+        revokePreviewUrls(conversations[messageId]);
+        delete conversations[messageId];
+        setState({ conversations });
+        controller.abort();
+    },
+
     // Chỉ tin hỏng còn payload trong bộ nhớ mới gửi lại được.
     retryableFailureOf(messageId: number | string): Pick<FailedSend, 'isNetworkFailure'> | undefined {
         return failedSends.get(messageId);
@@ -505,15 +540,20 @@ export const widgetStore = {
 
     clearConversations(): void {
         failedSends.clear();
+        inFlightSends.forEach(controller => controller.abort());
+        inFlightSends.clear();
         setState({ conversations: {}, pendingCustomAttributes: {}, pendingLabels: [] });
     },
 
-    toggleAgentTyping(status: 'on' | 'off'): void {
+    toggleAgentTyping(status: 'on' | 'off', typingAgent: TypingAgent | null = null): void {
         if (agentTypingTimer) {
             clearTimeout(agentTypingTimer);
             agentTypingTimer = null;
         }
-        setState({ uiFlags: { ...state.uiFlags, isAgentTyping: status === 'on' } });
+        setState({
+            uiFlags: { ...state.uiFlags, isAgentTyping: status === 'on' },
+            typingAgent: status === 'on' ? typingAgent : null,
+        });
         if (status === 'on') {
             agentTypingTimer = setTimeout(() => widgetStore.toggleAgentTyping('off'), AGENT_TYPING_TIMEOUT);
         }
@@ -547,7 +587,12 @@ export const widgetStore = {
         try {
             const data = await api.fetchConversationAttributes();
             setState({
-                conversationAttributes: { id: data?.id ?? '', status: data?.status ?? '' },
+                conversationAttributes: {
+                    id: data?.id ?? '',
+                    status: data?.status ?? '',
+                    createdAt: data?.created_at ?? null,
+                    assignee: data?.assignee ?? null,
+                },
                 meta: { userLastSeenAt: data?.contact_last_seen_at ?? state.meta.userLastSeenAt },
                 agentLastSeenAt: data?.agent_last_seen_at ?? state.agentLastSeenAt,
             });
@@ -562,7 +607,7 @@ export const widgetStore = {
 
     updateConversationAttributes(data: ConversationAttributes): void {
         if (data.id !== state.conversationAttributes.id) return;
-        setState({ conversationAttributes: { id: data.id, status: data.status } });
+        setState({ conversationAttributes: { ...state.conversationAttributes, status: data.status } });
     },
 
     // ── custom attributes / labels (SDK) ──────────────────────────────────────
@@ -632,13 +677,19 @@ export const widgetStore = {
     },
 
     // mutationHelpers.updatePresence: agent vắng trong map = offline.
+    // Bản đồ trực của cả account: cập nhật thành viên hộp thư lẫn nhân viên phụ trách.
     updateAgentsPresence(users: Record<string, string> | undefined): void {
         const presence = users ?? {};
+        const statusOf = (agentId: number) => presence[String(agentId)] ?? 'offline';
+        const { assignee } = state.conversationAttributes;
         setState({
-            agents: state.agents.map(agent => ({
-                ...agent,
-                availability_status: presence[String(agent.id)] ?? 'offline',
-            })),
+            agents: state.agents.map(agent => ({ ...agent, availability_status: statusOf(agent.id) })),
+            conversationAttributes: assignee
+                ? {
+                      ...state.conversationAttributes,
+                      assignee: { ...assignee, availability_status: statusOf(assignee.id) },
+                  }
+                : state.conversationAttributes,
         });
     },
 
@@ -652,11 +703,7 @@ export const widgetStore = {
         }
     },
 
-    // Phiên còn "treo" lúc /config (chưa có hành động thật) không mang pubsub_token
-    // thật — sau hành động thật đầu tiên (tin, hội thoại, campaign, gắn định danh),
-    // đọc lại /contact (đã có contact_inbox thật, cùng auth token) để lấy
-    // pubsub_token, báo main.tsx nối kênh realtime, rồi bù mọi tin/trạng thái lỡ tới
-    // trong lúc kênh chưa nối và gửi nốt custom attributes contact đã xếp hàng.
+    // Phiên chưa có hành động thật không mang pubsub_token; lấy lại qua /contact rồi bù tin lỡ trong lúc chưa nối realtime.
     async reconnectRealtimeIfPending(): Promise<void> {
         if (state.contact?.pubsub_token) return;
         if (reconnectPromise) return reconnectPromise;
@@ -672,7 +719,7 @@ export const widgetStore = {
                 await widgetStore.getConversationAttributes();
                 await widgetStore.flushPendingContactCustomAttributes();
             } catch {
-                // Bỏ qua như bản gốc: thử lại ở hành động kế tiếp.
+                // Thử lại ở hành động kế tiếp.
             } finally {
                 reconnectPromise = null;
             }
@@ -693,14 +740,16 @@ export const widgetStore = {
         }
     },
 
-    async updateContact(user: Record<string, unknown>): Promise<void> {
+    // Trả về đã lưu hay chưa để màn gọi báo lỗi ngắn cho khách thay vì nuốt im.
+    async updateContact(user: Record<string, unknown>): Promise<boolean> {
         try {
             await api.updateContact(user);
-            await widgetStore.fetchContact();
-            await widgetStore.reconnectRealtimeIfPending();
         } catch {
-            // Bỏ qua như bản gốc.
+            return false;
         }
+        await widgetStore.fetchContact();
+        await widgetStore.reconnectRealtimeIfPending();
+        return true;
     },
 
     async setContactUser({
@@ -797,17 +846,18 @@ export const widgetStore = {
         messageId: number | string;
         email?: string;
         submittedValues?: unknown;
-    }): Promise<void> {
+    }): Promise<boolean> {
         try {
             await api.updateMessage({ messageId, email, values: submittedValues });
-            widgetStore.updateMessageContentAttributes(messageId, {
-                submitted_email: email,
-                submitted_values: email ? null : submittedValues,
-            });
-            await widgetStore.fetchContact();
         } catch {
-            // Bỏ qua như bản gốc.
+            return false;
         }
+        widgetStore.updateMessageContentAttributes(messageId, {
+            submitted_email: email,
+            submitted_values: email ? null : submittedValues,
+        });
+        await widgetStore.fetchContact();
+        return true;
     },
 
     // ── campaign ──────────────────────────────────────────────────────────────

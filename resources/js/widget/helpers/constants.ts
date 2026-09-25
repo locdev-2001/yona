@@ -54,3 +54,4 @@ export const STANDALONE_CONTENT_TYPES: readonly string[] = [
     'cards',
     'integrations',
 ];
+

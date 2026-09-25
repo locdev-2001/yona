@@ -68,9 +68,10 @@ return [
     'BUBBLE' => [
         'LABEL' => 'Trò chuyện với chúng tôi',
     ],
-    'POWERED_BY' => 'Cung cấp bởi {installationName}',
+    'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Vui lòng nhập email',
-    'CHAT_PLACEHOLDER' => 'Gõ tin nhắn của bạn',
+    'EMAIL_SAVE_FAILED' => 'Chưa lưu được email. Bạn thử lại nhé.',
+    'CHAT_PLACEHOLDER' => 'Nhập tin nhắn…',
     'TODAY' => 'Hôm nay',
     'YESTERDAY' => 'Hôm qua',
     'PRE_CHAT_FORM' => [
@@ -106,7 +107,6 @@ return [
         'REQUIRED' => 'Bắt buộc',
         'REGEX_ERROR' => 'Bạn hãy nhập giá trị hợp lệ',
     ],
-    'FILE_SIZE_LIMIT' => 'Tệp vượt quá kích thước giới hạn {MAXIMUM_FILE_UPLOAD_SIZE}',
     'CHAT_FORM' => [
         'INVALID' => [
             'FIELD' => 'Trường không hợp lệ',
@@ -183,7 +183,7 @@ return [
         'FAILED' => 'Không thu hồi được tin nhắn. Bạn thử lại nhé.',
     ],
     'REPLY' => [
-        'REPLYING_TO' => 'Đang trả lời {name}',
+        'REPLYING_TO' => 'Trả lời {name}',
         'YOU' => 'Bạn',
         'CANCEL' => 'Bỏ trả lời',
         'JUMP_TO_ORIGINAL' => 'Xem tin gốc',
@@ -200,6 +200,9 @@ return [
     'COMPOSER' => [
         'ADD' => 'Gửi ảnh hoặc tệp',
         'STICKER' => 'Sticker và emoji',
+        'EMOJI' => 'Biểu tượng cảm xúc',
+        'CANCEL_UPLOAD' => 'Huỷ gửi tệp',
+        'CANCEL_SEND' => 'Huỷ gửi',
         'SEND' => 'Gửi',
         'CAPTION_PLACEHOLDER' => 'Thêm chú thích…',
         'ATTACH_IMAGE' => 'Ảnh',
@@ -220,6 +223,7 @@ return [
     'ATTACHMENT_STATE' => [
         'UPLOADING' => 'Đang gửi {count} ảnh…',
         'UPLOADING_FILE' => 'Đang gửi tệp…',
+        'UPLOADING_PROGRESS' => '{size} · đang tải {percent}%',
         'UPLOAD_FAILED_TITLE' => 'Không gửi được ảnh',
         'UPLOAD_FAILED_FILE_TITLE' => 'Không gửi được tệp',
         'UPLOAD_FAILED_SIZE' => 'Tệp vượt {size}',
@@ -231,35 +235,58 @@ return [
     'EMPTY_STATE' => [
         'TITLE' => 'Chào bạn!',
         'BODY' => 'Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh, tệp hoặc sticker.',
+        'BODY_WITHOUT_STICKER' => 'Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh hoặc tệp.',
     ],
     'HEADER' => [
         'ONLINE' => 'Đang trực tuyến',
         'AWAY' => 'Đang vắng mặt',
         'CLOSE' => 'Đóng cửa sổ trò chuyện',
         'BACK' => 'Quay lại',
+        'AGENT_ACTIVE' => 'Đang hoạt động',
+        'MORE' => 'Tuỳ chọn khác',
+        'POPOUT' => 'Mở trong cửa sổ riêng',
     ],
     'OUT_OF_HOURS' => [
         'TITLE' => 'Hiện ngoài giờ hỗ trợ',
         'BODY' => 'Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.',
         'EMAIL_PLACEHOLDER' => 'Email để nhận trả lời',
         'CTA' => 'Để lại tin nhắn',
+        'HOURS' => 'Nhóm hỗ trợ trực từ {from} đến {to}.',
+        'BODY_REOPEN' => 'Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa {reopen}.',
+        'REOPEN' => 'Mở cửa lại {reopen}.',
+        'REOPEN_TODAY' => 'lúc {time}',
+        'REOPEN_TOMORROW' => 'lúc {time} mai',
+        'REOPEN_ON_DAY' => 'lúc {time} {day}',
+        'REOPEN_TOMORROW_ALL_DAY' => 'vào ngày mai',
+        'REOPEN_ON_DAY_ALL_DAY' => 'vào {day}',
+        'BANNER' => 'Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa {reopen}.',
+        'BANNER_FALLBACK' => 'Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa lại.',
     ],
     'CONVERSATION_END' => [
         'TITLE' => 'Cuộc trò chuyện đã kết thúc',
-        'RATE_PROMPT' => 'Bạn thấy cuộc trò chuyện thế nào?',
+        'RATE_PROMPT' => 'Bạn thấy lần hỗ trợ này thế nào?',
+        // Ba mức khách chấm ở MỌI nơi (widget, trang khảo sát, chữ giới thiệu tab CSAT).
         'POOR' => 'Kém',
         'OKAY' => 'Ổn',
         'GREAT' => 'Tuyệt',
-        'FEEDBACK_PLACEHOLDER' => 'Góp ý thêm (không bắt buộc)',
+        'FEEDBACK_PLACEHOLDER' => 'Điều gì có thể tốt hơn? (không bắt buộc)',
         'SUBMIT' => 'Gửi đánh giá',
+        'SUBMIT_FAILED' => 'Chưa gửi được đánh giá. Bạn thử lại nhé.',
         'THANKS' => 'Cảm ơn bạn đã đánh giá!',
+        'SUPPORTED_MINUTES' => 'Đã hỗ trợ trong {n} phút',
+        'SUPPORTED_HOURS' => 'Đã hỗ trợ trong {n} giờ',
+        'SUPPORTED_DAYS' => 'Đã hỗ trợ trong {n} ngày',
     ],
     'LAUNCHER' => [
         'OPEN' => 'Mở trò chuyện',
         'CLOSE' => 'Thu nhỏ trò chuyện',
         'UNREAD' => '{count} tin nhắn chưa đọc',
+        'OPEN_UNREAD' => 'Mở trò chuyện, {count} tin nhắn chưa đọc',
     ],
     'NEW_MESSAGES' => 'Tin nhắn mới',
+    'TYPING_INDICATOR' => [
+        'LABEL' => 'Đang soạn tin…',
+    ],
     'CARD' => [
         'CTA_FALLBACK' => 'Xem chi tiết',
         'PREVIOUS' => 'Thẻ trước',

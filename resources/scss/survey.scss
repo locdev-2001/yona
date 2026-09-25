@@ -6,6 +6,8 @@
 
 @import 'widget-fonts';
 @import 'next-colors';
+// Các nút đánh giá dùng chung component và token với widget.
+@import 'chat-tokens';
 
 // Bundle survey của bản gốc nạp thêm reset Meyer (`widget/assets/scss/reset`).
 // Yona không port cả bộ reset đó (preflight của Tailwind đã lo phần lớn); dòng
@@ -26,26 +28,6 @@ body {
 
 .woot-survey-wrap {
   height: 100%;
-}
-
-// Port từ <style scoped> của survey/components/Rating.vue.
-.emoji-button {
-  filter: grayscale(100%);
-
-  &.selected,
-  &:hover,
-  &:focus,
-  &:active {
-    filter: grayscale(0%);
-    transform: scale(1.32);
-    transition: transform 300ms;
-  }
-
-  &.disabled {
-    cursor: default;
-    opacity: 0.5;
-    pointer-events: none;
-  }
 }
 
 // Spinner của shared/components/Spinner (định nghĩa giống app.scss / widget.scss).

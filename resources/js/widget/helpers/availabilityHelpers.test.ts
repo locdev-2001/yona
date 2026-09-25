@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     findNextAvailableSlotDetails,
     getDateInTimezone,
-    getTime,
+    formatClockTime,
     isInWorkingHours,
     isOnline,
     toCamelCaseWorkingHours,
@@ -123,10 +123,34 @@ describe('toCamelCaseWorkingHours', () => {
     });
 });
 
-describe('getTime', () => {
-    it('định dạng 12 giờ như businessHour helper của dashboard', () => {
-        expect(getTime(9, 5)).toBe('9:05 AM');
-        expect(getTime(13, 0)).toBe('1:00 PM');
-        expect(getTime(0, 30)).toBe('12:30 AM');
+describe('formatClockTime', () => {
+    it('tiếng Việt dùng giờ 24, tiếng Anh dùng AM/PM', () => {
+        expect(formatClockTime(8, 0, 'vi')).toBe('8:00');
+        expect(formatClockTime(22, 5, 'vi')).toBe('22:05');
+        expect(formatClockTime(13, 0, 'en')).toBe('1:00 PM');
+    });
+});
+
+describe('giờ đóng của khung mở kế tiếp', () => {
+    it('đi kèm giờ mở để widget ghi được khung trực, kể cả khung vắt qua nửa đêm', () => {
+        const workingHours = [{ dayOfWeek: 2, openHour: 22, openMinutes: 0, closeHour: 2, closeMinutes: 30 }];
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const slot = findNextAvailableSlotDetails(MONDAY_10H_UTC, timeZone, workingHours);
+
+        expect(slot?.config.openHour).toBe(22);
+        expect(slot?.config.closeHour).toBe(2);
+        expect(slot?.config.closeMinutes).toBe(30);
+    });
+
+    it('quy giờ đóng sang múi giờ của khách cùng với giờ mở', () => {
+        const workingHours = [{ dayOfWeek: 2, openHour: 8, openMinutes: 0, closeHour: 17, closeMinutes: 0 }];
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const inboxZone = timeZone === 'Asia/Tokyo' ? 'Asia/Ho_Chi_Minh' : 'Asia/Tokyo';
+
+        const slot = findNextAvailableSlotDetails(MONDAY_10H_UTC, inboxZone, workingHours);
+        const lengthHours = ((slot!.config.closeHour! - slot!.config.openHour! + 24) % 24);
+
+        expect(lengthHours).toBe(9);
     });
 });

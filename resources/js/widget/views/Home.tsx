@@ -37,7 +37,7 @@ export default function Home() {
             <div className="p-4 bg-[var(--yona-chat-panel)] border-t border-[var(--yona-chat-line)]">
                 <button
                     type="button"
-                    className="w-full min-h-11 rounded-full font-medium bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]"
+                    className="w-full min-h-11 rounded-full font-semibold bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]"
                     onClick={startConversation}
                 >
                     {t('START_CONVERSATION')}

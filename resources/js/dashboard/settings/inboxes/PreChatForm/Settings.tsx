@@ -7,6 +7,7 @@ import { patchJson } from 'dashboard/helper/apiClient';
 import { getPreChatFields } from 'dashboard/helper/preChat';
 import type { PreChatField, PreChatFormOptions } from 'dashboard/helper/preChat';
 import Button from 'dashboard/components-next/button/Button';
+import Icon from 'dashboard/components-next/icon/Icon';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor';
 import PreChatFields from './PreChatFields';
@@ -48,15 +49,7 @@ export default function PreChatFormSettings({ inbox, uiSettings, onInboxUpdated 
         setPreChatFields(preChatFieldOptions.pre_chat_fields);
     }, [inbox.id, inbox.pre_chat_form_enabled, preChatFieldOptions]);
 
-    const tableHeaders = [
-        '',
-        '',
-        t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.KEY'),
-        t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.TYPE'),
-        t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.REQUIRED'),
-        t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.LABEL'),
-        t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.PLACE_HOLDER'),
-    ];
+    const hasNoEnabledField = preChatFormEnabled && !preChatFields.some(field => field.enabled);
 
     const patchField = (name: string, patch: Partial<PreChatField>) =>
         setPreChatFields(fields => fields.map(field => (field.name === name ? { ...field, ...patch } : field)));
@@ -117,31 +110,22 @@ export default function PreChatFormSettings({ inbox, uiSettings, onInboxUpdated 
                     void updateInbox();
                 }}
             >
+                {hasNoEnabledField ? (
+                    <p
+                        role="status"
+                        className="flex items-start gap-2 mb-4 rounded-xl bg-n-amber-3 text-n-amber-12 px-4 py-3 text-body-main"
+                    >
+                        <Icon icon="i-lucide-triangle-alert" className="size-4 mt-0.5 flex-shrink-0" />
+                        {t('INBOX_MGMT.PRE_CHAT_FORM.NO_FIELD_ENABLED_WARNING')}
+                    </p>
+                ) : null}
                 {preChatFormEnabled ? (
-                    <div>
-                        <div className="w-full">
-                            <table className="min-w-full table-auto outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
-                                <thead>
-                                    <tr className="border-b border-n-weak">
-                                        {tableHeaders.map((header, index) => (
-                                            <th
-                                                key={index}
-                                                className="py-3 ltr:pr-4 rtl:pl-4 text-start text-heading-3 text-n-slate-12"
-                                            >
-                                                {header}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <PreChatFields
-                                    preChatFields={preChatFields}
-                                    onToggle={(type, field) => patchField(field.name, { [type]: !field[type] })}
-                                    onEdit={(type, field, value) => patchField(field.name, { [type]: value })}
-                                    onReorder={setPreChatFields}
-                                />
-                            </table>
-                        </div>
-                    </div>
+                    <PreChatFields
+                        preChatFields={preChatFields}
+                        onToggle={(type, field) => patchField(field.name, { [type]: !field[type] })}
+                        onEdit={(type, field, value) => patchField(field.name, { [type]: value })}
+                        onReorder={setPreChatFields}
+                    />
                 ) : null}
                 <div className="w-full flex justify-end items-center py-4 mt-2">
                     <Button

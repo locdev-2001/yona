@@ -36,7 +36,12 @@ return [
             'options' => [
                 'tls' => [],
             ],
-            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
+            // Laravel đẩy mỗi sự kiện realtime tới Reverb bằng một lượt POST; lượt
+            // vượt ngưỡng bị đóng 413 và sự kiện mất lặng lẽ. Tin cuối lặp tới 3 lần
+            // trong payload và chữ tiếng Việt phình khi mã hoá JSON hai lần, nên ngưỡng
+            // phải phủ tin dài nhất được lưu (Message::MAX_CONTENT_LENGTH); số đo ở
+            // docs/deployment.md, Reverb. Chỉ Laravel gọi qua loopback, lượt POST phải ký.
+            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_485_760),
             'scaling' => [
                 'enabled' => env('REVERB_SCALING_ENABLED', false),
                 'channel' => env('REVERB_SCALING_CHANNEL', 'reverb'),
@@ -86,7 +91,8 @@ return [
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),
-                'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000),
+                // Chỉ áp khung WebSocket trình duyệt gửi lên (đăng ký kênh, client event).
+                'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 65_536),
                 'accept_client_events_from' => env('REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM', 'members'),
                 'rate_limiting' => [
                     'enabled' => env('REVERB_APP_RATE_LIMITING_ENABLED', false),

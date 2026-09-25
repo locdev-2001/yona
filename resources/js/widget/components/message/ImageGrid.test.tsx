@@ -32,6 +32,17 @@ describe('ImageGrid', () => {
         expect(quad.container.textContent).not.toContain('+');
     });
 
+    it('ba ảnh ba cột một hàng, năm ảnh lưới 2×2 có ô "+2"', () => {
+        const trio = render(<ImageGrid images={images(3)} isOwn position="single" />);
+        expect(gridOf(trio.container).dataset.layout).toBe('trio');
+        expect(gridOf(trio.container).style.gridTemplateColumns).toBe('1fr 1fr 1fr');
+
+        const five = render(<ImageGrid images={images(5)} isOwn position="single" />);
+        expect(gridOf(five.container).style.gridTemplateColumns).toBe('1fr 1fr');
+        expect(five.container.querySelectorAll('.yona-image-grid img')).toHaveLength(3);
+        expect(five.container.textContent).toContain('+2');
+    });
+
     it('sáu ảnh: ba ô ảnh + ô "+3" mở xem toàn bộ', () => {
         const { container } = render(<ImageGrid images={images(6)} isOwn position="single" />);
 

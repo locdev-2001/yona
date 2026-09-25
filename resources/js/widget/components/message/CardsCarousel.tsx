@@ -1,13 +1,19 @@
 import { useRef, useState } from 'react';
 
+import { getLocale } from '../../../i18n';
 import { IFrameHelper } from '../../helpers/iframe';
 import { t } from '../../i18n';
 import type { CardAction, CardItem } from '../../types';
 
 // Carousel `cards`: thẻ 190px cuộn ngang, thụt lề bằng avatar, dot chỉ vị trí,
-// một CTA mỗi thẻ (hành động đầu tiên của thẻ).
+// một CTA mỗi thẻ (hành động đầu tiên của thẻ), dòng giá khi item có `price`.
 const CARD_WIDTH = 190;
 const CARD_GAP = 10;
+
+// Giá là số thì nhóm chữ số theo ngôn ngữ widget (vi: 5.590.000); chuỗi do bot tự
+// viết (kèm đơn vị tiền) giữ nguyên.
+export const formatCardPrice = (price: string | number): string =>
+    typeof price === 'number' ? new Intl.NumberFormat(getLocale().replace('_', '-')).format(price) : price;
 
 function CardCta({ action }: { action: CardAction }) {
     const label = action.text || t('CARD.CTA_FALLBACK');
@@ -47,7 +53,7 @@ export default function CardsCarousel({ items }: { items: CardItem[] }) {
         <div className="yona-cards w-full">
             <div
                 ref={trackRef}
-                className="flex gap-[10px] overflow-x-auto pb-1 pt-[9px] ltr:pl-[34px] rtl:pr-[34px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex gap-[10px] overflow-x-auto pb-1 pt-[9px] ltr:pl-[34px] rtl:pr-[34px] no-scrollbar"
                 onScroll={onScroll}
             >
                 {items.map((item, index) => {
@@ -55,7 +61,7 @@ export default function CardsCarousel({ items }: { items: CardItem[] }) {
                     return (
                         <div
                             key={`${item.title}-${index}`}
-                            className="w-[190px] flex-none overflow-hidden rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)]"
+                            className="w-[190px] flex-none overflow-hidden rounded-[14px] border border-[var(--yona-chat-line-card)] bg-[var(--yona-chat-panel)]"
                         >
                             {item.media_url ? (
                                 <img src={item.media_url} alt="" className="h-[104px] w-full object-cover" />
@@ -67,6 +73,11 @@ export default function CardsCarousel({ items }: { items: CardItem[] }) {
                                 {item.description ? (
                                     <div className="mt-[3px] text-[11.5px] leading-[1.4] text-[var(--yona-chat-ink-soft)]">
                                         {item.description}
+                                    </div>
+                                ) : null}
+                                {item.price !== undefined && item.price !== null && item.price !== '' ? (
+                                    <div className="yona-card-price mt-[7px] text-[13.5px] font-bold leading-[1.3] text-[var(--yona-chat-ink)]">
+                                        {formatCardPrice(item.price)}
                                     </div>
                                 ) : null}
                                 {cta ? <CardCta action={cta} /> : null}

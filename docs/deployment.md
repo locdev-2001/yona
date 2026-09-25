@@ -239,6 +239,69 @@ sed -i "s/^ZALO_BRIDGE_UI_SECRET=$/ZALO_BRIDGE_UI_SECRET=$(openssl rand -hex 32)
 Biến `VITE_*` được nướng vào bundle lúc build, nên đổi chúng thì phải build lại
 (chạy `deploy.sh`), không chỉ `optimize:clear`.
 
+### Giới hạn kích thước sự kiện realtime (Reverb)
+
+Laravel đẩy mỗi sự kiện realtime (thông báo, đang gõ, cập nhật hội thoại) tới
+Reverb bằng một lượt POST. Lượt nào vượt `REVERB_MAX_REQUEST_SIZE` bị Reverb đóng
+với 413 và sự kiện mất lặng lẽ: job `ActionCableBroadcastJob` hỏng với
+`Pusher error: Payload too large.`, nhân viên không thấy chuông, số chưa đọc hay
+"đang gõ" cho tới khi tải lại trang. Mặc định cũ 10 000 byte quá hẹp: payload mang
+cả hội thoại lẫn tin cuối (tin cuối lặp 2–3 lần), chữ tiếng Việt còn phình khi mã
+hoá JSON hai lần.
+
+Đo trên hội thoại Zalo dựng thử (byte của cả lượt POST):
+
+| Hội thoại | `conversation.updated` | `conversation.typing_on` | `notification.created` |
+|---|---|---|---|
+| Tin ngắn, 1 ảnh | 6 266 | 6 489 | 9 117 |
+| Album 10 ảnh | 16 075 | 16 310 | 23 839 |
+| Tin 1 500 ký tự, album 10 ảnh, 12 nhãn | 28 463 | 28 682 | 42 302 |
+| Tin 4 000 ký tự, album 20 ảnh, 12 nhãn | 60 732 | 60 949 | 90 690 |
+
+Tin chữ dài (email, tin dán cả đơn hàng) nặng hơn album: tin cuối lặp ba lần
+trong thông báo, mỗi ký tự tiếng Việt có dấu thành 7 byte sau hai lần mã hoá.
+Đo trên hội thoại Zalo của DB dev, chỉ có chữ, phát thật tới Reverb:
+
+| Độ dài tin | `conversation.updated` | `conversation.typing_on` | `notification.created` | Ở ngưỡng 128 KB cũ |
+|---|---|---|---|---|
+| 10 000 ký tự | 86 777 | 87 021 | 130 234 | lọt, sát ngưỡng |
+| 12 000 ký tự | 103 441 | 103 685 | 155 230 | thông báo 413 |
+| 20 000 ký tự | 170 217 | 170 461 | 255 394 | cả ba 413 |
+| 40 000 ký tự | 337 145 | 337 389 | 505 786 | cả ba 413 |
+| 45 000 ký tự | 378 841 | 379 085 | 568 330 | cả ba 413; thông báo vẫn 413 ở 512 KB |
+
+Mặc định trong `config/reverb.php`:
+
+| Biến | Mặc định | Vì sao |
+|---|---|---|
+| `REVERB_MAX_REQUEST_SIZE` | `10485760` (10 MB) | Phủ tin dài nhất được lưu (150 000 ký tự, `Message::MAX_CONTENT_LENGTH`): theo bảng trên thông báo tăng khoảng 12,6 byte mỗi ký tự, nên tin 150 000 ký tự khoảng 1,9 MB, tin toàn chữ có dấu khoảng 3 MB. Người gọi hợp lệ duy nhất là Laravel qua loopback; lượt POST phải ký bằng app secret, lượt không ký bị từ chối |
+| `REVERB_APP_MAX_MESSAGE_SIZE` | `65536` (64 KB) | Chỉ áp khung WebSocket trình duyệt gửi lên (đăng ký kênh, client event), không phải sự kiện server phát xuống. Không gây lỗi trên, nâng cho đủ dư |
+
+**Payload vẫn nặng.** Ngưỡng 10 MB phủ mọi tin lưu được, nhưng một tin dài vẫn
+đẩy hàng trăm KB tới mỗi nhân viên cho mỗi sự kiện. Cách chữa tận gốc là thu gọn
+payload (không lặp tin cuối, không mang cả nội dung tin dài trong thông báo, mã hoá
+JSON không escape unicode); việc này còn mở. Nếu `.env` production có ghi cứng
+`REVERB_MAX_REQUEST_SIZE` thì sửa cả ở đó, rồi `php artisan reverb:restart`.
+
+`.env` production chưa khai hai biến thì mặc định có hiệu lực ngay sau
+`deploy.sh` (script cache lại config và `reverb:restart`). Đã khai giá trị nhỏ hơn
+thì sửa rồi chạy lại:
+
+```bash
+cd /www/wwwroot/yona.vn
+grep -E '^REVERB_(MAX_REQUEST_SIZE|APP_MAX_MESSAGE_SIZE)=' .env
+php artisan config:cache && php artisan reverb:restart
+php artisan tinker --execute="dump(config('reverb.servers.reverb.max_request_size'), config('reverb.apps.apps.0.max_message_size'));"
+```
+
+Sau khi sửa, job hỏng cũ vẫn nằm trong `failed_jobs`. Không `retry` (sự kiện đã lỗi
+thời): xoá đúng loại job này, rồi theo dõi không còn job mới:
+
+```bash
+php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'like', '%ActionCableBroadcastJob%')->where('exception', 'like', '%Payload too large%')->count());"
+php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'like', '%ActionCableBroadcastJob%')->where('exception', 'like', '%Payload too large%')->delete());"
+```
+
 ### Phiên đăng nhập
 
 - Nhân viên giữ đăng nhập **30 ngày tính từ lần thao tác cuối**
@@ -440,6 +503,94 @@ Phiên đã kết nối từ trước không bị chặn — chỉ chặn mở p
 
 Kiểm tra: `curl -s -H "X-Bridge-UI-Secret: $BRIDGE_UI_SECRET" http://127.0.0.1:8612/health`
 trả khối `bridge: {active_sessions, max_sessions, rss_bytes}`.
+
+### Gửi video dạng video gốc: ffmpeg + ffprobe
+
+Video nhân viên gửi cho khách Zalo đi thành video phát được (khách thấy khung
+phát kèm ảnh bìa và thời lượng) chỉ khi máy chạy bridge có `ffmpeg` và `ffprobe`:
+bridge dùng `ffprobe` đo thời lượng + kích thước và `ffmpeg` cắt một khung làm
+ảnh bìa. Thiếu một trong hai thì video vẫn tới khách nhưng thành **tệp** phải
+tải về, như trước.
+
+| Loại tệp | Đi đường nào |
+|---|---|
+| `.mp4` | Video gốc |
+| `.mov` (video quay trên iPhone) | Đổi vỏ sang mp4 bằng `ffmpeg -c copy` (không mã hoá lại, thường dưới một giây), rồi đi video gốc. Đổi vỏ lỗi (vd video ProRes, mp4 không chứa được) thì gửi nguyên tệp `.mov` |
+| Loại khác (`.webm`, `.mkv`, `.avi`…) | Tệp, như trước |
+
+Đổi vỏ giữ nguyên mã hình: video iPhone quay ở chế độ "Hiệu quả cao" vẫn là HEVC.
+Zalo trên máy quá cũ không giải được HEVC thì khách thấy khung video nhưng không
+phát được; gặp phản ánh như vậy thì tắt video gốc (bên dưới).
+
+```bash
+# Ubuntu/Debian (aaPanel): cài một lần, không cần khởi động lại gì ngoài bridge
+apt-get install -y ffmpeg
+# Chạy được bằng đúng user chạy pm2 của bridge
+ffmpeg -version | head -1 && ffprobe -version | head -1
+```
+
+Không nằm trong `PATH` của user chạy pm2 thì trỏ thẳng trong
+`services/zalo-bridge/.env`:
+
+```dotenv
+FFMPEG_PATH=/usr/bin/ffmpeg
+FFPROBE_PATH=/usr/bin/ffprobe
+```
+
+Bridge đọc `.env` và dò hai công cụ **một lần lúc khởi động**. Cài ffmpeg xong hay
+sửa `services/zalo-bridge/.env` xong thì nạp lại bridge bằng đúng lệnh `deploy.sh`
+dùng. `pm2 restart <tên>` giữ env đã lưu lúc khởi động, nên biến đã có từ trước
+không nhận giá trị mới trong `.env`:
+
+```bash
+cd /www/wwwroot/yona.vn
+corepack pnpm --dir services/zalo-bridge exec pm2 startOrReload \
+    /www/wwwroot/yona.vn/services/zalo-bridge/ecosystem.config.cjs --update-env
+grep 'zalo-bridge:send-video' storage/logs/zalo-bridge/out.log | tail -1
+# mong đợi: [zalo-bridge:send-video] {"native_video":true,"enabled":true}
+```
+
+Nạp lại bridge làm mọi phiên Zalo nối lại, giống lúc deploy.
+
+Một video rơi về đường tệp để lại một dòng cảnh báo cùng thẻ trong `error.log`,
+có `message_id` và bước hỏng (`disabled`, `tools_missing`, `not_mp4`, `remux`,
+`probe`, `thumbnail`, `upload_video`, `upload_thumbnail`, `send_video`), không
+có URL hay nội dung tin.
+
+**Tắt nhanh khi có sự cố.** Khách báo video không phát được, hoặc `error.log`
+dồn dập `send_video`: đặt công tắc trong `services/zalo-bridge/.env` rồi nạp lại
+bridge bằng lệnh trên. Mọi video đi đường tệp như trước khi có tính năng này,
+không dò ffmpeg.
+
+```dotenv
+ZALO_NATIVE_VIDEO=0
+```
+
+- Log khởi động thành `{"native_video":false,"enabled":false}`.
+- Mỗi video gửi đi để lại một dòng bước `disabled`.
+- Bật lại: đặt `ZALO_NATIVE_VIDEO=1` rồi nạp lại. Đừng xoá dòng: pm2 giữ giá trị
+  cũ của biến đã biến mất khỏi `.env`.
+- Đừng tắt bằng cách trỏ `FFMPEG_PATH` sai. Log khi đó báo `tools_missing`, dễ
+  nhầm với máy thiếu ffmpeg thật.
+
+**Tải lên hai lần khi rơi về tệp.** Đường video gốc tải video lên Zalo trước rồi
+mới gọi `sendVideo`. Zalo từ chối `sendVideo` thì bridge gửi lại cả video theo
+đường tệp, tức video lên Zalo lần thứ hai. Toàn bộ lượt gửi phải xong trong
+`zalo.bridge.media_timeout` = 120 giây của Laravel. Gồm: bridge tải tệp từ
+Laravel, tải lên Zalo lần một, và lần hai nếu rơi về tệp. Quá hạn thì Laravel
+báo gửi lỗi trong khi bridge vẫn đang gửi; nhân viên bấm Thử lại lúc đó có thể
+làm khách nhận hai bản. `sendVideo` lỗi mạng hoặc quá giờ thì **không** rơi về
+tệp: Zalo có thể đã nhận, nên bridge báo thất bại để nhân viên tự Thử lại.
+
+**Kích thước nên dùng.**
+- Bridge chỉ tải tối đa 25 MB mỗi tệp (`DEFAULT_MAX_FETCH_BYTES` trong
+  `services/zalo-bridge/src/media-fetch.mjs`). Tệp lớn hơn báo lỗi
+  `download_too_large`, dù Yona mặc định cho tải lên tới 40 MB
+  (`MAXIMUM_FILE_UPLOAD_SIZE`).
+- Khuyên nhân viên gửi video **dưới 20 MB**. Ở 25 MB, ca xấu nhất là 50 MB tải
+  lên Zalo trong 120 giây: cần đường lên tới Zalo ổn định trên khoảng 4 Mbit/s.
+- Log `[zalo-bridge:send-timing]` ghi `bytes` và thời gian từng chặng của mỗi
+  lượt gửi, dùng để xem video thật đang tốn bao lâu.
 
 ---
 
@@ -1384,8 +1535,10 @@ code:
 |---|---|
 | Deploy dừng ở `Bundle i18n lệch lang/` | Ai đó sửa `lang/**` mà quên `php artisan i18n:generate` + commit |
 | Giao diện đúng nhưng realtime chết | Reverb không chạy, hoặc `VITE_REVERB_*` lúc build khác `.env` hiện tại → build lại |
+| Có lúc mất chuông thông báo / "đang gõ", `failed_jobs` có `Payload too large` | `REVERB_MAX_REQUEST_SIZE` quá nhỏ so với payload — mục 5, Giới hạn kích thước sự kiện realtime |
 | Job không chạy sau deploy | `pcntl_*` còn bị chặn nên `horizon:terminate` vô hiệu → worker vẫn giữ code cũ. Mở `/horizon` xem master có sống không |
 | Gửi Zalo báo "chưa kết nối" | Host của `APP_URL` không nằm trong allowlist fetch của bridge; hoặc session cần quét QR lại |
+| Khách Zalo thấy khung video nhưng không phát được, hoặc `error.log` dồn dập bước `send_video` | Tắt video gốc bằng `ZALO_NATIVE_VIDEO=0` rồi nạp lại bridge; video đi dạng tệp như cũ (mục 6, Gửi video dạng video gốc) |
 | Tin nhắn gửi hai lần | Bất biến `media_timeout < timeout < retry_after` bị phá (mục 8) |
 | Job theo lịch nằm im | Sai tên hàng đợi trong `config/queue_tiers.php` → tab Horizon của tier đó trống |
 | Deploy dừng vì working tree bẩn | Có file sửa trực tiếp trên server — commit hoặc `git checkout --` trước |
@@ -1397,6 +1550,26 @@ code:
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
 | Không thấy cảnh báo Telegram dù có sự cố thật | `ALERT_TELEGRAM_BOT_TOKEN`/`ALERT_TELEGRAM_CHAT_ID` trống → chỉ rơi về `storage/logs`; kiểm `.env` rồi `php artisan config:clear` (mục 13, Cảnh báo vận hành) |
+
+### Tính lại loại tệp media lưu nhầm là tệp
+
+Trước bản sửa chiều nhận, video (hoặc ảnh, âm thanh) khách gửi qua Zalo bằng
+"gửi tệp" được lưu là tệp. Hộp thư hiện thẻ tệp .mp4 phải tải về thay vì trình
+phát. Tin mới đã đúng. Tin cũ sửa bằng một lệnh trung tính: lệnh chỉ đụng đính
+kèm tin nhắn đang là tệp, có tệp trên đĩa và có MIME xem trước được. Loại mới
+lấy đúng luật của lõi (`Attachment::fileTypeFor`).
+
+```bash
+cd /www/wwwroot/yona.vn
+# Đếm trước, in id từng đính kèm, không ghi gì
+php artisan attachments:reclassify-media --dry-run
+# Ghi thật
+php artisan attachments:reclassify-media
+# Chạy lại phải ra 0
+php artisan attachments:reclassify-media --dry-run
+```
+
+Lệnh không đổi nội dung tệp. Chạy lại bao nhiêu lần cũng được.
 
 ### Rollback
 

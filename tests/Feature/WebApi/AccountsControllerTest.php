@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
+use Tests\Support\WidgetSession;
 
 // Port từ spec/controllers/api/v1/accounts_controller_spec.rb (nhánh show + update).
 
@@ -121,5 +122,46 @@ describe('PATCH /api/v1/accounts/{id}', function () {
             ->assertOk();
 
         expect($account->fresh()->custom_attributes['onboarding_step'])->toBe('invite_team');
+    });
+});
+
+describe('ngôn ngữ tài khoản', function () {
+    it('quản trị viên đổi ngôn ngữ, trang cài đặt tài khoản và widget của account đổi theo', function () {
+        $account = Account::factory()->create(['locale' => 'en']);
+        $admin = accountMember($account, AccountUser::ROLE_ADMINISTRATOR);
+        $widget = WidgetSession::make();
+        $widget->inbox->update(['account_id' => $account->id]);
+        $widget->channel->update(['account_id' => $account->id]);
+
+        $this->actingAs($admin)->patchJson("/api/v1/accounts/{$account->id}", ['locale' => 'vi'])
+            ->assertOk()
+            ->assertJsonPath('locale', 'vi');
+
+        $this->actingAs($admin)->get("/app/accounts/{$account->id}/settings/general")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('dashboard/settings/account/Index')
+                ->where('availableLocales', config('yona.available_locales')));
+
+        config()->set('app.locale', 'en');
+        $html = $this->get(route('widget', ['website_token' => $widget->channel->website_token]))->assertOk()->getContent();
+        expect($html)->toMatch('/<html\b[^>]*\blang="vi"/');
+    });
+
+    it('từ chối ngôn ngữ chưa có bản dịch', function () {
+        $account = Account::factory()->create(['locale' => 'vi']);
+        $admin = accountMember($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)->patchJson("/api/v1/accounts/{$account->id}", ['locale' => 'fr'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('locale');
+
+        expect($account->refresh()->locale)->toBe('vi');
+    });
+
+    it('nhân viên không vào được trang cài đặt tài khoản', function () {
+        $account = Account::factory()->create();
+        $agent = accountMember($account);
+
+        $this->actingAs($agent)->get("/app/accounts/{$account->id}/settings/general")->assertRedirect();
     });
 });

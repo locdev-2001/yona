@@ -22,8 +22,8 @@ import type { TabItem } from 'dashboard/components/ui/Tabs';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker';
-import Editor from 'dashboard/components-next/Editor/Editor';
 import SelectInput from 'dashboard/components-next/select/Select';
+import TextArea from 'dashboard/components-next/textarea/TextArea';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
@@ -34,7 +34,7 @@ import AccessToken from 'dashboard/settings/profile/AccessToken';
 import Widget from 'dashboard/modules/widget-preview/components/Widget';
 import LockToSingleConversationPreview from './components/LockToSingleConversationPreview';
 import WeeklyAvailability from './components/WeeklyAvailability';
-import SenderNameExamplePreview from './components/SenderNameExamplePreview';
+import SenderNameSection from './components/SenderNameSection';
 import PreChatFormSettings from './PreChatForm/Settings';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
@@ -44,11 +44,13 @@ import ZaloSessionBanner from './channels/ZaloSessionBanner';
 import {
     DEFAULT_WIDGET_BUBBLE_SETTINGS,
     WEB_WIDGET_FEATURE_FLAGS,
+    WELCOME_TAGLINE_MAX_LENGTH,
     readWidgetBubbleSettings,
     toggleFeatureFlag,
     writeWidgetBubbleSettings,
 } from './webWidgetHelpers';
 import type { WidgetBubbleSettings } from './webWidgetHelpers';
+import type { TimeZoneOption } from './helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
@@ -59,6 +61,8 @@ import type { Inbox } from './types';
 interface ShowProps {
     inboxId: number;
     tab?: string | null;
+    senderEmailAddress: string;
+    timezoneOptions: TimeZoneOption[];
 }
 
 const TAB_LABELS: Record<string, string> = {
@@ -125,11 +129,12 @@ function tabKeysFor(channelType: string, provider: string | null | undefined): s
     ];
 }
 
-export default function InboxShow({ inboxId, tab = null }: ShowProps) {
+export default function InboxShow({ inboxId, tab = null, senderEmailAddress, timezoneOptions }: ShowProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
     const uiSettings = (auth.user?.ui_settings ?? {}) as UISettings;
     const isInboundEmailEnabled = Boolean(currentAccount!.features?.inbound_emails);
+    const currentAgentName = auth.user?.display_name || auth.user?.name || '';
 
     const [inbox, setInbox] = useState<Inbox | null>(null);
     const [requestedTab] = useState(tab ?? '');
@@ -147,9 +152,8 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const [continuityViaEmail, setContinuityViaEmail] = useState(true);
     const [senderNameType, setSenderNameType] = useState('friendly');
     const [businessName, setBusinessName] = useState('');
-    const [showBusinessNameInput, setShowBusinessNameInput] = useState(false);
+    const [isSavingBusinessName, setSavingBusinessName] = useState(false);
     const [lockToSingleConversation, setLockToSingleConversation] = useState(false);
-    const [channelWebsiteUrl, setChannelWebsiteUrl] = useState('');
     const [channelWelcomeTitle, setChannelWelcomeTitle] = useState('');
     const [channelWelcomeTagline, setChannelWelcomeTagline] = useState('');
     const [widgetColor, setWidgetColor] = useState('');
@@ -173,7 +177,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         setSenderNameType(nextInbox.sender_name_type);
         setBusinessName(nextInbox.business_name ?? '');
         setLockToSingleConversation(nextInbox.lock_to_single_conversation);
-        setChannelWebsiteUrl(nextInbox.website_url ?? '');
         setChannelWelcomeTitle(nextInbox.welcome_title ?? '');
         setChannelWelcomeTagline(nextInbox.welcome_tagline ?? '');
         setWidgetColor(nextInbox.widget_color ?? '');
@@ -239,7 +242,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         };
         const channelAttributes: Record<string, unknown> = {
             widget_color: widgetColor,
-            website_url: channelWebsiteUrl,
             webhook_url: webhookUrl,
             welcome_title: channelWelcomeTitle || '',
             welcome_tagline: channelWelcomeTagline || '',
@@ -275,12 +277,30 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
             }
             setAvatarFile(null);
             syncInboxData(updated);
-            setShowBusinessNameInput(false);
             useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
         } catch (error) {
             useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
         } finally {
             setUpdating(false);
+        }
+    };
+
+    // Chỉ gửi tên doanh nghiệp, và chỉ cập nhật lại ô đó: các ô khác đang sửa dở giữ nguyên.
+    const saveBusinessName = async (): Promise<boolean> => {
+        setSavingBusinessName(true);
+        try {
+            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`, {
+                business_name: businessName.trim() || null,
+            });
+            setInbox(updated);
+            setBusinessName(updated.business_name ?? '');
+            useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+            return true;
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
+            return false;
+        } finally {
+            setSavingBusinessName(false);
         }
     };
 
@@ -313,6 +333,20 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
         }
     };
 
+    const senderNameSection = (
+        <SenderNameSection
+            senderNameType={senderNameType}
+            businessName={businessName}
+            inboxName={selectedInboxName}
+            agentName={currentAgentName}
+            emailAddress={senderEmailAddress}
+            isSavingBusinessName={isSavingBusinessName}
+            onSenderNameTypeChange={setSenderNameType}
+            onBusinessNameChange={setBusinessName}
+            onSaveBusinessName={saveBusinessName}
+        />
+    );
+
     if (!inbox) {
         return (
             <Dashboard>
@@ -328,7 +362,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     return (
         <Dashboard>
             <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
-                <div className="grid grid-rows-[auto_1fr] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
+                <div className="grid grid-rows-[auto_1fr] grid-cols-[minmax(0,1fr)] h-full flex-grow flex-shrink pr-0 pl-0 w-full min-w-0 settings">
                     <SettingIntroBanner headerTitle={inboxHeaderTitle}>
                         <Tabs
                             className="[&_ul]:p-0 top-px relative"
@@ -431,33 +465,6 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                             </SettingsFieldSection>
                                         ) : null}
 
-                                        {isWebWidget ? (
-                                            <SettingsFieldSection
-                                                label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.LABEL')}
-                                            >
-                                                <WootInput
-                                                    value={channelWebsiteUrl}
-                                                    className="[&>input]:!mb-0"
-                                                    placeholder={t(
-                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER',
-                                                    )}
-                                                    onChange={setChannelWebsiteUrl}
-                                                />
-                                            </SettingsFieldSection>
-                                        ) : null}
-
-                                        <SettingsFieldSection
-                                            label={t('INBOX_MGMT.HELP_CENTER.LABEL')}
-                                            helpText={t('INBOX_MGMT.HELP_CENTER.SUB_TEXT')}
-                                        >
-                                            <SelectInput
-                                                value=""
-                                                placeholder={t('INBOX_MGMT.HELP_CENTER.PLACEHOLDER')}
-                                                options={[{ value: '', label: t('INBOX_MGMT.HELP_CENTER.NONE') }]}
-                                                onChange={() => undefined}
-                                            />
-                                        </SettingsFieldSection>
-
                                         {canLockToSingleConversation ? (
                                             <SettingsFieldSection
                                                 label={t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION')}
@@ -471,54 +478,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                             />
                                         ) : null}
 
-                                        {isWebWidget || isEmailChannel ? (
-                                            <SettingsFieldSection
-                                                label={t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.TITLE')}
-                                                className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"
-                                                extra={
-                                                    <SenderNameExamplePreview
-                                                        senderNameType={senderNameType}
-                                                        businessName={businessName}
-                                                        isWebsiteChannel={isWebWidget}
-                                                        onUpdate={setSenderNameType}
-                                                    />
-                                                }
-                                            >
-                                                {showBusinessNameInput ? (
-                                                    <div className="flex justify-end gap-2 w-full">
-                                                        <input
-                                                            autoFocus
-                                                            value={businessName}
-                                                            placeholder={t(
-                                                                'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.PLACEHOLDER',
-                                                            )}
-                                                            className="!mb-0"
-                                                            type="text"
-                                                            onChange={event => setBusinessName(event.target.value)}
-                                                            onBlur={() => setShowBusinessNameInput(false)}
-                                                        />
-                                                        <Button
-                                                            label={t(
-                                                                'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.SAVE_BUTTON_TEXT',
-                                                            )}
-                                                            className="flex-shrink-0"
-                                                            onMouseDown={event => event.preventDefault()}
-                                                            onClick={() => void updateInbox()}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <Button
-                                                        ghost
-                                                        blue
-                                                        sm
-                                                        label={t(
-                                                            'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.BUTTON_TEXT',
-                                                        )}
-                                                        onClick={() => setShowBusinessNameInput(true)}
-                                                    />
-                                                )}
-                                            </SettingsFieldSection>
-                                        ) : null}
+                                        {isEmailChannel ? <div className="py-2 mb-2">{senderNameSection}</div> : null}
 
                                         {isWebWidget ? (
                                             <SettingsAccordion
@@ -528,6 +488,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                 <SettingsFieldSection
                                                     label={t(
                                                         'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.LABEL',
+                                                    )}
+                                                    helpText={t(
+                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.HELP_TEXT',
                                                     )}
                                                 >
                                                     <WootInput
@@ -544,16 +507,21 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                     label={t(
                                                         'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.LABEL',
                                                     )}
+                                                    helpText={t(
+                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.HELP_TEXT',
+                                                    )}
                                                     className="[&>div]:!items-start [&>div>label]:mt-1"
                                                 >
-                                                    <Editor
+                                                    <TextArea
+                                                        id="welcome-tagline"
                                                         value={channelWelcomeTagline}
                                                         onChange={setChannelWelcomeTagline}
-                                                        uiSettings={uiSettings}
                                                         placeholder={t(
                                                             'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.PLACEHOLDER',
                                                         )}
-                                                        maxLength={255}
+                                                        maxLength={WELCOME_TAGLINE_MAX_LENGTH}
+                                                        showCharacterCount
+                                                        autoHeight
                                                     />
                                                 </SettingsFieldSection>
 
@@ -570,9 +538,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                         'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE',
                                                     )}
                                                 >
-                                                    <div className="flex items-center gap-6">
+                                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                                                         <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3">
+                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
                                                                 {t(
                                                                     'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_POSITION_LABEL',
                                                                 )}
@@ -602,9 +570,9 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                                 }
                                                             />
                                                         </div>
-                                                        <div className="h-3 w-px bg-n-weak rounded-lg" />
+                                                        <div className="hidden sm:block h-3 w-px bg-n-weak rounded-lg" />
                                                         <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3">
+                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
                                                                 {t(
                                                                     'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_TYPE_LABEL',
                                                                 )}
@@ -784,6 +752,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                     description={t(
                                                         'INBOX_MGMT.SETTINGS_POPUP.ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT',
                                                     )}
+                                                    editor={continuityViaEmail ? senderNameSection : undefined}
                                                 />
                                             ) : null}
                                         </SettingsAccordion>
@@ -833,6 +802,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                             {selectedTabKey === 'business-hours' ? (
                                 <WeeklyAvailability
                                     inbox={inbox}
+                                    timeZoneOptions={timezoneOptions}
                                     uiSettings={uiSettings}
                                     onInboxUpdated={syncInboxData}
                                 />

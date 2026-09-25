@@ -38,6 +38,9 @@ class Inbox extends Model
 
     public const SENDER_NAME_TYPE_PROFESSIONAL = 1;
 
+    // Múi giờ của hộp thư mới: khách hàng của Yona là shop Việt, tính giờ làm việc theo giờ Việt Nam.
+    public const DEFAULT_TIMEZONE = 'Asia/Ho_Chi_Minh';
+
     protected $fillable = [
         'account_id',
         'channel_id',
@@ -66,7 +69,7 @@ class Inbox extends Model
         'enable_auto_assignment' => true,
         'greeting_enabled' => false,
         'working_hours_enabled' => false,
-        'timezone' => 'UTC',
+        'timezone' => self::DEFAULT_TIMEZONE,
         'enable_email_collect' => true,
         'csat_survey_enabled' => false,
         'allow_messages_after_resolved' => true,

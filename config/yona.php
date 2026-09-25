@@ -88,11 +88,12 @@ return [
     |
     | Tương đương PRESENCE_DURATION / CONTACT_PRESENCE_DURATION của
     | OnlineStatusTracker (giây). Widget ping mỗi 60s nên contact cần cửa sổ
-    | dài hơn agent.
+    | dài hơn agent. Dashboard ping mỗi 20s: hạn của agent phải dài hơn chu kỳ
+    | đó, nếu không giữa hai nhịp ping agent bị tính vắng mặt trong chốc lát.
     |
     */
 
-    'presence_duration' => (int) env('PRESENCE_DURATION', 20),
+    'presence_duration' => (int) env('PRESENCE_DURATION', 30),
     'contact_presence_duration' => (int) env('CONTACT_PRESENCE_DURATION', 90),
 
     /*

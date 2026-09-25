@@ -3054,7 +3054,7 @@ const messages: Record<string, unknown> = {
         "templates": {
             "ways_to_reach_you_message_body": "Give the team a way to reach you.",
             "email_input_box_message_body": "Get notified by email",
-            "csat_input_message_body": "Please rate the conversation"
+            "csat_input_message_body": "How was the support you received?"
         },
         "messages": {
             "deleted": "This message was deleted",
@@ -3726,6 +3726,14 @@ const messages: Record<string, unknown> = {
         "PREFERRED": "Preferred"
     },
     "GENERAL_SETTINGS": {
+        "TITLE": "Account settings",
+        "DESCRIPTION": "General settings for the whole business account.",
+        "LANGUAGE": {
+            "TITLE": "Language",
+            "NOTE": "Language of the website chat widget, and of the dashboard for anyone who has not picked their own. A page embedding the widget can still pick another language with the locale option in the embed code.",
+            "UPDATE_SUCCESS": "Account language updated",
+            "UPDATE_ERROR": "Could not update the account language, please try again"
+        },
         "BACK": "Back",
         "FORM": {
             "AUTO_RESOLVE": {
@@ -5049,11 +5057,13 @@ const messages: Record<string, unknown> = {
                 },
                 "CHANNEL_WELCOME_TITLE": {
                     "LABEL": "Welcome Heading",
-                    "PLACEHOLDER": "Hi there !"
+                    "PLACEHOLDER": "Hi there !",
+                    "HELP_TEXT": "The large heading visitors see on the widget before any message is sent."
                 },
                 "CHANNEL_WELCOME_TAGLINE": {
                     "LABEL": "Welcome Tagline",
-                    "PLACEHOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback."
+                    "PLACEHOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback.",
+                    "HELP_TEXT": "Shown right below the welcome heading, as plain text."
                 },
                 "CHANNEL_GREETING_MESSAGE": {
                     "LABEL": "Channel greeting message",
@@ -5070,7 +5080,7 @@ const messages: Record<string, unknown> = {
                     "IN_A_FEW_MINUTES": "In a few minutes",
                     "IN_A_FEW_HOURS": "In a few hours",
                     "IN_A_DAY": "In a day",
-                    "HELP_TEXT": "This reply time will be displayed on the live chat widget"
+                    "HELP_TEXT": "Shown in the status line at the top of the widget so visitors know how soon to expect a reply."
                 },
                 "WIDGET_COLOR": {
                     "LABEL": "Widget Color",
@@ -5942,7 +5952,7 @@ const messages: Record<string, unknown> = {
             "FORWARD_EMAIL_SUB_TEXT": "Start forwarding your emails to the following email address.",
             "FORWARD_EMAIL_NOT_CONFIGURED": "Forwarding emails to your inbox is currently disabled on this installation. To use this feature, it must be enabled by your administrator. Please get in touch with them to proceed.",
             "ALLOW_MESSAGES_AFTER_RESOLVED": "Allow messages after conversation resolved",
-            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "Allow the end-users to send messages even after the conversation is resolved.",
+            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "When off, a resolved conversation shows a button to start a new conversation instead of the message box on the widget.",
             "WHATSAPP_SECTION_SUBHEADER": "This API Key is used for the integration with the WhatsApp APIs.",
             "WHATSAPP_SECTION_UPDATE_SUBHEADER": "Enter the new API key to be used for the integration with the WhatsApp APIs.",
             "WHATSAPP_SECTION_TITLE": "API Key",
@@ -6145,21 +6155,20 @@ const messages: Record<string, unknown> = {
             },
             "PRE_CHAT_MESSAGE": {
                 "LABEL": "Pre chat message",
-                "PLACEHOLDER": "This message would be visible to the users along with the form"
+                "PLACEHOLDER": "This message would be visible to the users along with the form",
+                "DEFAULT": "Share your queries or comments here."
             },
+            "NO_FIELD_ENABLED_WARNING": "The form is on but no field is enabled, so visitors only see the message box. Turn on at least one field below.",
             "REQUIRE_EMAIL": {
                 "LABEL": "Visitors should provide their name and email address before starting the chat"
             }
         },
         "CSAT": {
             "TITLE": "Enable CSAT",
-            "SUBTITLE": "Automatically trigger CSAT surveys at the end of conversations to understand how customers feel about their support experience. Track satisfaction trends and identify areas for improvement over time.",
-            "DISPLAY_TYPE": {
-                "LABEL": "Display type"
-            },
+            "SUBTITLE": "When a conversation is resolved, the customer gets a short survey and rates it on 3 levels: {poor}, {okay}, {great}. Results go to the CSAT report so you can track satisfaction over time.",
             "MESSAGE": {
                 "LABEL": "Message",
-                "PLACEHOLDER": "Please enter a message to show users with the form"
+                "PLACEHOLDER": "Please enter a message to show customers with the survey"
             },
             "BUTTON_TEXT": {
                 "LABEL": "Button text",
@@ -6229,7 +6238,7 @@ const messages: Record<string, unknown> = {
             "UPDATE": "Update business hours settings",
             "TOGGLE_AVAILABILITY": "Enable business availability for this inbox",
             "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
-            "TOGGLE_HELP": "Enabling business availability will show the available hours on live chat widget even if all the agents are offline. Outside available hours visitors can be warned with a message and a pre-chat form.",
+            "TOGGLE_HELP": "Visitors who write outside business hours receive the unavailable message below. The website widget also tells them you are away.",
             "DAY": {
                 "DAY": "Day",
                 "AVAILABILITY": "Availability",
@@ -6237,9 +6246,16 @@ const messages: Record<string, unknown> = {
                 "ENABLE": "Enable availability for this day",
                 "UNAVAILABLE": "Unavailable",
                 "VALIDATION_ERROR": "Starting time should be before closing time.",
-                "CHOOSE": "Choose"
+                "CHOOSE": "Choose",
+                "FROM": "Opening time on {day}",
+                "TO": "Closing time on {day}"
             },
-            "ALL_DAY": "All-Day"
+            "ALL_DAY": "All-Day",
+            "TOTAL": {
+                "HOURS": "{hours}h",
+                "HOURS_MINUTES": "{hours}h {minutes}m",
+                "MINUTES": "{minutes}m"
+            }
         },
         "IMAP": {
             "TITLE": "IMAP",
@@ -6247,7 +6263,7 @@ const messages: Record<string, unknown> = {
             "NOTE_TEXT": "To enable SMTP, please configure IMAP.",
             "UPDATE": "Update IMAP settings",
             "TOGGLE_AVAILABILITY": "Enable IMAP configuration for this inbox",
-            "TOGGLE_HELP": "Enabling IMAP will help the user to receive email",
+            "TOGGLE_HELP": "Enable IMAP so emails customers send to your mailbox arrive in this inbox.",
             "EDIT": {
                 "SUCCESS_MESSAGE": "IMAP settings updated successfully",
                 "ERROR_MESSAGE": "Unable to update IMAP settings"
@@ -6280,7 +6296,7 @@ const messages: Record<string, unknown> = {
             "SUBTITLE": "Set your SMTP details",
             "UPDATE": "Update SMTP settings",
             "TOGGLE_AVAILABILITY": "Enable SMTP configuration for this inbox",
-            "TOGGLE_HELP": "Enabling SMTP will help the user to send email",
+            "TOGGLE_HELP": "Enable SMTP so replies to customers are sent from your mailbox.",
             "EDIT": {
                 "SUCCESS_MESSAGE": "SMTP settings updated successfully",
                 "ERROR_MESSAGE": "Unable to update SMTP settings"
@@ -6308,7 +6324,7 @@ const messages: Record<string, unknown> = {
             "ENCRYPTION": "Encryption",
             "SSL_TLS": "SSL/TLS",
             "START_TLS": "STARTTLS",
-            "OPEN_SSL_VERIFY_MODE": "Open SSL Verify Mode",
+            "OPEN_SSL_VERIFY_MODE": "SSL certificate verification mode",
             "AUTH_MECHANISM": "Authentication"
         },
         "NOTE": "Note: ",
@@ -9652,7 +9668,8 @@ const messages: Record<string, unknown> = {
         },
         "POWERED_BY": "Powered by {installationName}",
         "EMAIL_PLACEHOLDER": "Please enter your email",
-        "CHAT_PLACEHOLDER": "Type your message",
+        "EMAIL_SAVE_FAILED": "Your email was not saved. Please try again.",
+        "CHAT_PLACEHOLDER": "Type a message…",
         "TODAY": "Today",
         "YESTERDAY": "Yesterday",
         "PRE_CHAT_FORM": {
@@ -9688,7 +9705,6 @@ const messages: Record<string, unknown> = {
             "REQUIRED": "Required",
             "REGEX_ERROR": "Please provide a valid input"
         },
-        "FILE_SIZE_LIMIT": "File exceeds the {MAXIMUM_FILE_UPLOAD_SIZE} attachment limit",
         "CHAT_FORM": {
             "INVALID": {
                 "FIELD": "Invalid field"
@@ -9782,6 +9798,9 @@ const messages: Record<string, unknown> = {
         "COMPOSER": {
             "ADD": "Add photo or file",
             "STICKER": "Stickers and emoji",
+            "EMOJI": "Emoji",
+            "CANCEL_UPLOAD": "Cancel upload",
+            "CANCEL_SEND": "Cancel sending",
             "SEND": "Send",
             "CAPTION_PLACEHOLDER": "Add a caption…",
             "ATTACH_IMAGE": "Photos",
@@ -9802,6 +9821,7 @@ const messages: Record<string, unknown> = {
         "ATTACHMENT_STATE": {
             "UPLOADING": "Sending {count} photo… | Sending {count} photos…",
             "UPLOADING_FILE": "Sending file…",
+            "UPLOADING_PROGRESS": "{size} · uploading {percent}%",
             "UPLOAD_FAILED_TITLE": "Could not send the photo",
             "UPLOAD_FAILED_FILE_TITLE": "Could not send the file",
             "UPLOAD_FAILED_SIZE": "File is over {size}",
@@ -9812,36 +9832,58 @@ const messages: Record<string, unknown> = {
         },
         "EMPTY_STATE": {
             "TITLE": "Hi there!",
-            "BODY": "Send {name} a message about anything. You can attach photos, files or stickers."
+            "BODY": "Send {name} a message about anything. You can attach photos, files or stickers.",
+            "BODY_WITHOUT_STICKER": "Send {name} a message about anything. You can attach photos or files."
         },
         "HEADER": {
             "ONLINE": "Online",
             "AWAY": "Away",
             "CLOSE": "Close chat window",
-            "BACK": "Back"
+            "BACK": "Back",
+            "AGENT_ACTIVE": "Active now",
+            "MORE": "More options",
+            "POPOUT": "Open in a new window"
         },
         "OUT_OF_HOURS": {
             "TITLE": "We are outside support hours",
             "BODY": "Leave a message and we will reply when we open again.",
             "EMAIL_PLACEHOLDER": "Email to receive our reply",
-            "CTA": "Leave a message"
+            "CTA": "Leave a message",
+            "HOURS": "Our team is available from {from} to {to}.",
+            "BODY_REOPEN": "Leave a message and we will reply when we open {reopen}.",
+            "REOPEN": "We open again {reopen}.",
+            "REOPEN_TODAY": "at {time}",
+            "REOPEN_TOMORROW": "at {time} tomorrow",
+            "REOPEN_ON_DAY": "at {time} on {day}",
+            "REOPEN_TOMORROW_ALL_DAY": "tomorrow",
+            "REOPEN_ON_DAY_ALL_DAY": "on {day}",
+            "BANNER": "We are outside support hours and will reply when we open {reopen}.",
+            "BANNER_FALLBACK": "We are outside support hours and will reply when we open again."
         },
         "CONVERSATION_END": {
             "TITLE": "This conversation has ended",
-            "RATE_PROMPT": "How was your conversation?",
+            "RATE_PROMPT": "How was the support you received?",
             "POOR": "Poor",
             "OKAY": "Okay",
             "GREAT": "Great",
-            "FEEDBACK_PLACEHOLDER": "Any extra feedback (optional)",
+            "FEEDBACK_PLACEHOLDER": "What could be better? (optional)",
             "SUBMIT": "Send rating",
-            "THANKS": "Thanks for your rating!"
+            "SUBMIT_FAILED": "Your rating was not sent. Please try again.",
+            "THANKS": "Thanks for your rating!",
+            "SUPPORTED_MINUTES": "Helped you for {n} minute | Helped you for {n} minutes",
+            "SUPPORTED_HOURS": "Helped you for {n} hour | Helped you for {n} hours",
+            "SUPPORTED_DAYS": "Helped you for {n} day | Helped you for {n} days"
         },
         "LAUNCHER": {
             "OPEN": "Open chat",
             "CLOSE": "Minimize chat",
-            "UNREAD": "{count} unread message | {count} unread messages"
+            "UNREAD": "{count} unread message | {count} unread messages",
+            "OPEN_UNREAD": "Open chat, {count} unread message | Open chat, {count} unread messages"
         },
         "NEW_MESSAGES": "New messages",
+        "TYPING_INDICATOR": {
+            "LABEL": "Typing…"
+        },
         "CARD": {
             "CTA_FALLBACK": "View details",
             "PREVIOUS": "Previous card",

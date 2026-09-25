@@ -6,6 +6,7 @@ import { fetchConfig } from './api/widget';
 import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
 import { WIDGET_BUS_EVENTS } from './helpers/constants';
 import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
+import { isLightAccent } from 'shared/helpers/accentContrast';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
@@ -72,6 +73,9 @@ async function bootstrap() {
         const channelConfig = toChannelConfig(channelPayload);
         widgetStore.setChannelConfig(channelConfig, globalConfig ?? {}, contact);
         document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
+        // Chỗ DUY NHẤT quyết màu chữ trên màu nhấn: nền sáng thì --yona-chat-on-accent và
+        // --yona-chat-accent-ink chuyển sang mực (_chat-tokens.scss, khối data-accent-tone).
+        document.documentElement.dataset.accentTone = isLightAccent(channelConfig.widgetColor) ? 'light' : 'dark';
 
         await widgetStore.getConversationAttributes();
         if (contact.pubsub_token) widgetConnector.connect(contact.pubsub_token);

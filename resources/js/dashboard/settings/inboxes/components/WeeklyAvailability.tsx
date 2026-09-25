@@ -9,33 +9,38 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor';
-import BusinessDay from './BusinessDay';
-import { defaultTimeSlot, timeSlotParse, timeSlotTransform, timeZoneOptions } from '../helpers/businessHour';
-import type { TimeSlot } from '../helpers/businessHour';
+import BusinessDay, { BUSINESS_DAY_GRID } from './BusinessDay';
+import {
+    defaultTimeSlot,
+    mondayFirst,
+    timeSlotParse,
+    timeSlotTransform,
+    timeZoneSelection,
+} from '../helpers/businessHour';
+import type { TimeSlot, TimeZoneOption } from '../helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
 
 // Port từ settings/inbox/components/WeeklyAvailability.vue.
 
-const DEFAULT_TIMEZONE = 'America/Los_Angeles';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Khóa của lang/{locale}/days_of_week.php theo day_of_week của API (0 = Chủ nhật).
+const DAY_NAME_KEYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
 interface WeeklyAvailabilityProps {
     inbox: Inbox;
+    timeZoneOptions: TimeZoneOption[];
     uiSettings: UISettings;
     onInboxUpdated: (inbox: Inbox) => void;
 }
 
-export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }: WeeklyAvailabilityProps) {
+export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings, onInboxUpdated }: WeeklyAvailabilityProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
-    const timeZones = useMemo(() => timeZoneOptions(), []);
 
     const [isBusinessHoursEnabled, setBusinessHoursEnabled] = useState(false);
     const [unavailableMessage, setUnavailableMessage] = useState('');
-    const [timeZone, setTimeZone] = useState(DEFAULT_TIMEZONE);
+    const [timeZone, setTimeZone] = useState(inbox.timezone);
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(defaultTimeSlot);
     const [isUpdating, setUpdating] = useState(false);
 
@@ -46,8 +51,10 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
         setBusinessHoursEnabled(inbox.working_hours_enabled);
         setUnavailableMessage(inbox.out_of_office_message ?? '');
         setTimeSlots(parsed.length ? parsed : defaultTimeSlot);
-        setTimeZone(timeZones.some(option => option.value === inbox.timezone) ? inbox.timezone : DEFAULT_TIMEZONE);
-    }, [inbox, timeZones]);
+        setTimeZone(inbox.timezone);
+    }, [inbox]);
+
+    const timeZoneChoice = useMemo(() => timeZoneSelection(timeZone, timeZoneOptions), [timeZone, timeZoneOptions]);
 
     const hasError = isBusinessHoursEnabled && timeSlots.some(slot => slot.from && !slot.valid);
 
@@ -62,7 +69,7 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
                     working_hours_enabled: isBusinessHoursEnabled,
                     out_of_office_message: unavailableMessage,
                     working_hours: timeSlotTransform(timeSlots),
-                    timezone: timeZone,
+                    ...(timeZone ? { timezone: timeZone } : {}),
                     channel: {},
                 },
             );
@@ -109,8 +116,8 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
 
                     <SettingsFieldSection label={t('INBOX_MGMT.BUSINESS_HOURS.TIMEZONE_LABEL')}>
                         <ComboBox
-                            value={timeZone}
-                            options={timeZones}
+                            value={timeZoneChoice.selected}
+                            options={timeZoneChoice.options}
                             placeholder={t('INBOX_MGMT.BUSINESS_HOURS.DAY.CHOOSE')}
                             className="[&>div>button]:!bg-n-alpha-black2"
                             onChange={setTimeZone}
@@ -121,38 +128,29 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
 
             <form className="flex flex-col" onSubmit={updateInbox}>
                 {isBusinessHoursEnabled ? (
-                    <div className="mt-2">
-                        <div className="w-full">
-                            <table className="min-w-full table-auto outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
-                                <thead>
-                                    <tr className="border-b border-n-weak">
-                                        <th className="py-3 ltr:pl-4 ltr:pr-3 rtl:pl-3 rtl:pr-4 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.DAY')}
-                                        </th>
-                                        <th className="py-3 ltr:pr-3 rtl:pl-3 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.AVAILABILITY')}
-                                        </th>
-                                        <th className="py-3 ltr:pr-3 rtl:pl-3 text-start text-heading-3 text-n-slate-12">
-                                            {t('INBOX_MGMT.BUSINESS_HOURS.DAY.HOURS')}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-n-weak">
-                                    {timeSlots.map(timeSlot => (
-                                        <BusinessDay
-                                            key={timeSlot.day}
-                                            dayName={DAY_NAMES[timeSlot.day]}
-                                            timeSlot={timeSlot}
-                                            onUpdate={slot =>
-                                                setTimeSlots(slots =>
-                                                    slots.map(item => (item.day === timeSlot.day ? slot : item)),
-                                                )
-                                            }
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
+                    <div className="mt-2 outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
+                        <div
+                            className={`hidden md:grid ${BUSINESS_DAY_GRID} gap-x-3 px-4 py-3 border-b border-n-weak text-heading-3 text-n-slate-12`}
+                            aria-hidden="true"
+                        >
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.DAY')}</span>
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.AVAILABILITY')}</span>
+                            <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.HOURS')}</span>
                         </div>
+                        <ul className="list-none m-0 p-0 divide-y divide-n-weak">
+                            {mondayFirst(timeSlots).map(timeSlot => (
+                                <BusinessDay
+                                    key={timeSlot.day}
+                                    dayName={t(`DAYS_OF_WEEK.${DAY_NAME_KEYS[timeSlot.day]}`)}
+                                    timeSlot={timeSlot}
+                                    onUpdate={slot =>
+                                        setTimeSlots(slots =>
+                                            slots.map(item => (item.day === timeSlot.day ? slot : item)),
+                                        )
+                                    }
+                                />
+                            ))}
+                        </ul>
                     </div>
                 ) : null}
                 <div className="w-full flex justify-end items-center py-4 mt-2">

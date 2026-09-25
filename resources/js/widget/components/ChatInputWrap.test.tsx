@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { widgetStore } from '../store/widgetStore';
+import type { ChannelConfig, WidgetContact } from '../types';
 import ChatInputWrap from './ChatInputWrap';
 import { readComposerDraft } from './composer/composerStorage';
 
@@ -15,6 +16,20 @@ const renderComposer = () => {
 
 const sendButton = () => screen.getByRole('button', { name: 'Send' });
 
+// Cấu hình hộp thư: cờ tính năng của kênh + giới hạn cỡ tệp (MB).
+const configureInbox = (enabledFeatures: string[], maximumFileUploadSizeMb = 40) =>
+    act(() =>
+        widgetStore.setChannelConfig(
+            { enabledFeatures, widgetColor: '#1b6fcc' } as unknown as ChannelConfig,
+            { MAXIMUM_FILE_UPLOAD_SIZE: maximumFileUploadSizeMb },
+            {} as WidgetContact,
+        ),
+    );
+
+// jsdom không dàn trang: giả chiều cao nội dung của ô nhập như trình duyệt đo.
+const stubContentHeight = (textarea: HTMLElement, contentHeight: number) =>
+    Object.defineProperty(textarea, 'scrollHeight', { configurable: true, get: () => contentHeight });
+
 beforeEach(() => {
     window.sessionStorage.clear();
     window.localStorage.clear();
@@ -24,6 +39,7 @@ beforeEach(() => {
         widgetStore.setAppConfig({ enableFileUpload: true, enableEmojiPicker: true });
         widgetStore.setMessagingPolicy({ recallWindowSeconds: 300, stickers: [] });
     });
+    configureInbox(['attachments']);
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -73,22 +89,58 @@ describe('ChatInputWrap', () => {
         expect(onSendMessage).not.toHaveBeenCalled();
     });
 
-    it('có danh mục sticker thì panel mở ở tab Sticker và bấm là gửi sticker', () => {
+    it('chỉ có danh mục sticker thì nút mở panel ở tab Sticker và bấm là gửi sticker', () => {
         const sticker = { id: 'hi', image_url: '/s/hi.png', pack_id: null, label: 'Chào' };
         act(() => widgetStore.setMessagingPolicy({ recallWindowSeconds: 300, stickers: [sticker] }));
         const { onSendSticker } = renderComposer();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Stickers and emoji' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Stickers' }));
         expect(screen.getByRole('tab', { name: 'Stickers' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.queryByRole('tab', { name: 'Emoji' })).not.toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Chào' }));
 
         expect(onSendSticker).toHaveBeenCalledWith(sticker);
         expect(screen.queryByTestId('sticker-panel')).not.toBeInTheDocument();
     });
 
-    it('không có sticker lẫn emoji thì không hiện nút sticker', () => {
+    it('bật bộ chọn biểu tượng cảm xúc mà chưa có sticker: panel Emoji + Gần đây nằm trên ô nhập, không nhắc sticker', () => {
+        configureInbox(['attachments', 'emoji_picker']);
         renderComposer();
-        expect(screen.queryByRole('button', { name: 'Stickers and emoji' })).not.toBeInTheDocument();
+
+        expect(screen.queryByRole('button', { name: /sticker/i })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Emoji' }));
+
+        const panel = screen.getByTestId('sticker-panel');
+        expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toStrictEqual(['Emoji', 'Recent']);
+        expect(panel.compareDocumentPosition(screen.getByRole('textbox')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'grinning face' })[0]);
+        expect(screen.getByRole('textbox')).toHaveValue('😀');
+    });
+
+    it('không có sticker lẫn emoji thì không hiện nút mở panel', () => {
+        renderComposer();
+        expect(screen.queryByRole('button', { name: /sticker|emoji/i })).not.toBeInTheDocument();
+    });
+
+    it('tệp quá lớn hiện khối lỗi đỏ có đơn vị MB thay cho banner, "Thử lại" mở lại bộ chọn tệp', () => {
+        configureInbox(['attachments'], 1);
+        const showBanner = vi.spyOn(widgetStore, 'showBanner');
+        renderComposer();
+        const bigFile = new File([new Uint8Array(2 * 1024 * 1024)], 'bao-gia.pdf', { type: 'application/pdf' });
+        const fileInput = screen.getByTestId('composer-file-input');
+        const openPicker = vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+
+        fireEvent.change(fileInput, { target: { files: [bigFile] } });
+
+        const alert = screen.getByRole('alert');
+        expect(alert).toHaveTextContent('Could not send the file');
+        expect(alert).toHaveTextContent('File is over 1 MB');
+        expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
+        expect(showBanner).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+        expect(openPicker).toHaveBeenCalledTimes(1);
     });
 
     it('giữ nội dung đang gõ qua lần dựng lại ô nhập', () => {
@@ -114,5 +166,34 @@ describe('ChatInputWrap', () => {
 
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'vẫn gõ được' } });
         expect(screen.getByRole('textbox')).toHaveValue('vẫn gõ được');
+    });
+
+    it('ô rỗng và một dòng: cao đúng nội dung, không cho cuộn (không hiện ▲▼)', () => {
+        renderComposer();
+        const input = screen.getByRole('textbox');
+        stubContentHeight(input, 36);
+
+        fireEvent.change(input, { target: { value: 'a' } });
+        expect(input.style.height).toBe('36px');
+        expect(input.style.overflowY).toBe('hidden');
+
+        fireEvent.change(input, { target: { value: '' } });
+        expect(parseFloat(input.style.height)).toBeGreaterThanOrEqual(input.scrollHeight);
+        expect(input.style.overflowY).toBe('hidden');
+    });
+
+    it('nhiều dòng giãn tới trần 120px rồi mới cho cuộn', () => {
+        renderComposer();
+        const input = screen.getByRole('textbox');
+
+        stubContentHeight(input, 108);
+        fireEvent.change(input, { target: { value: 'một\nhai\nba\nbốn\nnăm' } });
+        expect(input.style.height).toBe('108px');
+        expect(input.style.overflowY).toBe('hidden');
+
+        stubContentHeight(input, 180);
+        fireEvent.change(input, { target: { value: 'một\nhai\nba\nbốn\nnăm\nsáu\nbảy\ntám\nchín' } });
+        expect(input.style.height).toBe('120px');
+        expect(input.style.overflowY).toBe('auto');
     });
 });

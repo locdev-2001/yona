@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Reportable;
+use App\Support\EmailAddress;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -252,6 +253,13 @@ class Account extends Model
     public function supportEmail(): ?string
     {
         return $this->support_email ?: config('mail.sender_email');
+    }
+
+    // Địa chỉ ở ô "Từ" của thư gửi khách khi hộp thư không gửi bằng hộp mail riêng.
+    // support_email có thể lưu dạng "Tên <mail@x>" nên chỉ lấy phần hộp thư.
+    public function outgoingEmailAddress(): string
+    {
+        return EmailAddress::parseOrDefault($this->supportEmail());
     }
 
     public function featureEnabled(string $name): bool

@@ -12,9 +12,11 @@ export const WEB_WIDGET_FEATURE_FLAGS = [
 
 export const ALLOW_MOBILE_WEBVIEW_FLAG = 'allow_mobile_webview';
 
+// Widget in dòng giới thiệu thành văn bản thuần; giới hạn khớp luật max:255 phía server.
+export const WELCOME_TAGLINE_MAX_LENGTH = 255;
+
 export interface WebsiteChannelForm {
     inboxName: string;
-    channelWebsiteUrl: string;
     channelWidgetColor: string;
     channelWelcomeTitle: string;
     channelWelcomeTagline: string;
@@ -29,7 +31,6 @@ export function buildWebsiteChannelPayload(form: WebsiteChannelForm): Record<str
         greeting_message: form.greetingMessage,
         channel: {
             type: 'web_widget',
-            website_url: form.channelWebsiteUrl,
             widget_color: form.channelWidgetColor,
             welcome_title: form.channelWelcomeTitle,
             welcome_tagline: form.channelWelcomeTagline,

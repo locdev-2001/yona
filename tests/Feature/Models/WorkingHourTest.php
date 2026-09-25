@@ -14,7 +14,7 @@ it('creates the seven default working hours with the inbox', function () {
 });
 
 it('is open on monday 10am and closed on sunday 1pm', function () {
-    $inbox = Inbox::factory()->create(['working_hours_enabled' => true, 'out_of_office_message' => 'Message']);
+    $inbox = Inbox::factory()->create(['working_hours_enabled' => true, 'out_of_office_message' => 'Message', 'timezone' => 'UTC']);
 
     $this->travelTo('2020-10-26 10:00:00');
     expect($inbox->workingNow())->toBeTrue();
@@ -24,7 +24,7 @@ it('is open on monday 10am and closed on sunday 1pm', function () {
 });
 
 it('is open on friday 12:30 and closed on friday 17:30', function () {
-    $inbox = Inbox::factory()->create(['working_hours_enabled' => true]);
+    $inbox = Inbox::factory()->create(['working_hours_enabled' => true, 'timezone' => 'UTC']);
 
     $this->travelTo('2021-09-10 12:30:00');
     expect($inbox->todayWorkingHour()->openNow())->toBeTrue();

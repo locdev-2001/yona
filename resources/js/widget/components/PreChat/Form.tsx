@@ -4,7 +4,6 @@ import DOMPurify from 'dompurify';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import Spinner from 'shared/components/Spinner';
 
-import { getContrastingTextColor } from '../../helpers/colorHelper';
 import {
     buildPreChatSubmission,
     enabledPreChatFields,
@@ -73,7 +72,6 @@ interface PreChatFormProps {
 }
 
 export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPreChat }: PreChatFormProps) {
-    const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
     const isCreating = useWidgetState(state => state.uiFlags.isCreating);
     const contact = useWidgetState(state => state.contact);
     const preChatFormEnabled = useWidgetState(state => Boolean(state.channelConfig?.preChatFormEnabled));
@@ -100,7 +98,6 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
           ? t('PRE_CHAT_FORM.CAMPAIGN_HEADER')
           : '';
     const shouldShowHeaderMessage = hasActiveCampaign || (preChatFormEnabled && Boolean(headerMessage));
-    const textColor = getContrastingTextColor(widgetColor);
 
     const failingRuleFor = (field: PreChatField): ValidationRule | null =>
         firstFailingRule(
@@ -240,8 +237,7 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
             {hasActiveCampaign ? null : renderField(MESSAGE_FIELD, fields.length)}
 
             <button
-                className="text-white py-3 px-4 rounded-lg shadow-sm leading-4 cursor-pointer disabled:opacity-50 w-full mt-3 mb-5 font-medium flex items-center justify-center gap-2"
-                style={{ backgroundColor: widgetColor, color: textColor }}
+                className="py-3 px-4 rounded-lg shadow-sm leading-4 cursor-pointer disabled:opacity-50 w-full mt-3 mb-5 font-medium flex items-center justify-center gap-2 bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]"
                 disabled={isCreating}
             >
                 {isCreating ? <Spinner className="p-0" /> : null}

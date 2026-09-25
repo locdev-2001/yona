@@ -196,6 +196,20 @@ class Attachment extends Model
     }
 
     /**
+     * Loại của tệp kênh gửi về. Kênh báo loại cụ thể (ảnh, video, âm thanh…)
+     * thì theo kênh. Kênh chỉ báo "tệp" hoặc không báo gì thì đó không phải lời
+     * khẳng định loại, nên suy theo MIME đã dò từ nội dung.
+     */
+    public static function fileTypeFromChannel(?int $reportedFileType, ?string $contentType): int
+    {
+        if ($reportedFileType === null || $reportedFileType === self::FILE_TYPE_FILE) {
+            return self::fileTypeFor($contentType);
+        }
+
+        return $reportedFileType;
+    }
+
+    /**
      * Lưu tệp tải lên vào đĩa và trả về thuộc tính dựng bản ghi — nguồn duy nhất
      * cho cả đường multipart (MessageBuilder) lẫn đường upload trực tiếp.
      *

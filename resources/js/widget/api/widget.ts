@@ -38,7 +38,11 @@ export const fetchConfig = async (): Promise<WidgetConfigResponse> => {
     return config;
 };
 
-export const fetchConversationAttributes = (): Promise<Partial<ConversationAttributes> & {
+export const fetchConversationAttributes = (): Promise<{
+    id?: ConversationAttributes['id'];
+    status?: string;
+    created_at?: number | null;
+    assignee?: ConversationAttributes['assignee'];
     contact_last_seen_at?: number;
     agent_last_seen_at?: number;
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);
@@ -90,11 +94,13 @@ export const sendAttachments = (
     { files, caption = '', replyTo = null }: { files: (File | string)[]; caption?: string; replyTo?: number | string | null },
     { customAttributes, labels }: { customAttributes?: Record<string, unknown>; labels?: string[] } = {},
     onUploadProgress?: (loadedBytes: number, totalBytes: number) => void,
+    signal?: AbortSignal,
 ): Promise<WidgetMessage> =>
     postFormWithProgress(
         `${BASE}/messages${buildSearch()}`,
         buildSendAttachmentsFormData({ files, caption, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
         onUploadProgress,
+        signal,
     );
 
 // Sticker gửi MÃ trong danh mục của kênh; máy chủ tự tra ảnh, không nhận URL.

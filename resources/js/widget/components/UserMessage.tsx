@@ -1,5 +1,6 @@
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
+import CancelSendButton from './message/CancelSendButton';
 import FailedSendNotice from './message/FailedSendNotice';
 import MessageRow from './message/MessageRow';
 import type { WidgetMessage } from '../types';
@@ -10,7 +11,8 @@ interface UserMessageProps {
     position?: MessageGroupPosition;
 }
 
-// Tin của khách: nằm bên phải, nền đặc. Tin gửi hỏng có khối lỗi kèm "Thử lại".
+// Tin của khách: nằm bên phải, nền đặc. Tin nhiều tệp đang tải có nút "Huỷ gửi"; tin gửi
+// hỏng có khối lỗi kèm "Thử lại".
 export default function UserMessage({ message, replyTo = null, position = 'single' }: UserMessageProps) {
     return (
         <MessageRow
@@ -18,7 +20,12 @@ export default function UserMessage({ message, replyTo = null, position = 'singl
             replyTo={replyTo}
             isOwn
             position={position}
-            footer={<FailedSendNotice message={message} />}
+            footer={
+                <>
+                    <CancelSendButton message={message} />
+                    <FailedSendNotice message={message} />
+                </>
+            }
         />
     );
 }

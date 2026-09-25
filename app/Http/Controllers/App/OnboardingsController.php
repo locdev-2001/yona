@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Support\Timezones;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -47,8 +48,7 @@ class OnboardingsController extends Controller
             'website' => ['nullable', 'string', 'max:255'],
             'industry' => ['nullable', 'string', 'max:255'],
             'company_size' => ['nullable', 'string', 'max:255'],
-            // Trình duyệt có thể gửi tên cũ (Asia/Saigon) thay cho tên hiện hành (Asia/Ho_Chi_Minh).
-            'timezone' => ['nullable', 'string', 'timezone:all_with_bc'],
+            'timezone' => ['nullable', 'string', Timezones::VALIDATION_RULE],
             'referral_source' => ['nullable', 'string', 'max:255'],
             'user_role' => ['nullable', 'string', 'max:255'],
         ]);

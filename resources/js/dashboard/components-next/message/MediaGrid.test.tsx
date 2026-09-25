@@ -45,7 +45,7 @@ describe('lưới ảnh/video trong một tin', () => {
     it.each([
         [1, 'single', 1],
         [2, 'pair', 2],
-        [3, 'quad', 3],
+        [3, 'trio', 3],
         [4, 'quad', 4],
         [7, 'quad', 4],
     ])('%i ảnh → lưới %s với %i ô', (count, layout, tileCount) => {
@@ -64,10 +64,12 @@ describe('lưới ảnh/video trong một tin', () => {
         expect(container.querySelector('[data-bubble-name="image"]')?.className).not.toMatch(/\bp-3\b/);
     });
 
-    it('ba ảnh: ảnh thứ ba trải hết hàng dưới', () => {
+    it('ba ảnh: ba cột trên một hàng, ô vuông đều nhau', () => {
         const container = renderMessage(message({ attachments: attachments(3) as never }));
+        const grid = container.querySelector('[data-media-grid] > .grid') as HTMLElement;
 
-        expect(tiles(container)[2].className).toContain('col-span-2');
+        expect(grid.style.gridTemplateColumns).toBe('1fr 1fr 1fr');
+        expect(Array.from(tiles(container)).every((tile) => tile.className.includes('aspect-square'))).toBe(true);
     });
 
     it('bảy ảnh: ô cuối hiện +4 và mở trình xem ở ảnh thứ tư, lướt đúng bảy ảnh của tin', () => {

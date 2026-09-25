@@ -74,6 +74,12 @@ describe('getUrl', () => {
         );
     });
 
+    it('gắn ngôn ngữ trang nhúng chọn để máy chủ render đúng ngôn ngữ ngay lần đầu', () => {
+        expect(IFrameHelper.getUrl({ baseUrl: 'https://app.yona.vn', websiteToken: 'abc123', locale: 'vi' })).toBe(
+            'https://app.yona.vn/widget?website_token=abc123&sdk_protocol=2&locale=vi',
+        );
+    });
+
     it('giữ nguyên baseUrl có cổng và không thêm dấu / thừa', () => {
         expect(IFrameHelper.getUrl({ baseUrl: 'http://localhost:8000', websiteToken: 'abc123' })).toBe(
             'http://localhost:8000/widget?website_token=abc123&sdk_protocol=2',
@@ -263,6 +269,15 @@ describe('xoá phiên khách', () => {
         expect(window.$yona.resetTriggered).toBe(true);
     });
 
+    it('khung dựng lại cho phiên mới giữ ngôn ngữ trang nhúng đã chọn', () => {
+        window.$yona.locale = 'vi';
+        mountAppFrame();
+
+        IFrameHelper.startNewSession();
+
+        expect(new URL(IFrameHelper.getAppFrame()!.src).searchParams.get('locale')).toBe('vi');
+    });
+
     it('mỗi lần xoá phiên mang một mã riêng để widget chỉ xử lý mỗi lần một lần', () => {
         mountAppFrame();
 
@@ -401,5 +416,46 @@ describe('khung xem trước tin mới giữ launcher đóng và badge số chư
         expect(window.$yona.isOpen).toBe(true);
         expect(isHidden(widgetHolder)).toBe(false);
         expect(isHidden(closeBubble)).toBe(false);
+    });
+});
+
+describe('launcher dựng từ tin loaded', () => {
+    // onLoad gắn bộ theo dõi đổi URL trang; test không cần nó chạy sau khi môi trường đã dọn.
+    beforeEach(() => {
+        vi.stubGlobal(
+            'MutationObserver',
+            class {
+                observe() {}
+                disconnect() {}
+            },
+        );
+    });
+
+    afterEach(() => {
+        IFrameHelper.getBubbleHolder()[0]?.remove();
+        chatBubble.removeAttribute('aria-label');
+        chatBubble.removeAttribute('title');
+        chatBubble.className = '';
+    });
+
+    it('có nhãn đọc màn hình và tooltip ngay lúc dựng, không đợi lượt setBubbleLabel sau', () => {
+        mountAppFrame();
+
+        IFrameHelper.onLoad({
+            widgetColor: '#1B6FCC',
+            launcherLabels: { label: 'Trò chuyện', openLabel: 'Mở trò chuyện', closeLabel: 'Thu nhỏ trò chuyện' },
+        });
+
+        expect(chatBubble.getAttribute('aria-label')).toBe('Mở trò chuyện');
+        expect(chatBubble.title).toBe('Mở trò chuyện');
+        expect(closeBubble.getAttribute('aria-label')).toBe('Thu nhỏ trò chuyện');
+    });
+
+    it('màu tenant sáng thì icon launcher dùng mực theo cùng luật tương phản với widget', () => {
+        mountAppFrame();
+
+        IFrameHelper.onLoad({ widgetColor: '#009CE0' });
+
+        expect(chatBubble.classList.contains('woot-widget-bubble-color--lighter')).toBe(true);
     });
 });

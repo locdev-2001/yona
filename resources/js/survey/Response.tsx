@@ -2,22 +2,21 @@ import { useEffect, useState } from 'react';
 import DOMPurify from 'dompurify';
 
 import Branding from 'shared/components/Branding';
+import CsatLevelPicker from 'shared/components/CsatLevelPicker';
 import Spinner from 'shared/components/Spinner';
-import StarRating from 'shared/components/StarRating';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { csatSurveyUuidFromUrl, isCsatFeedbackSubmitted, isCsatRatingSubmitted } from 'shared/helpers/csatHelpers';
 import type { CsatSurveyResponseValues } from 'shared/helpers/csatHelpers';
-import { CSAT_DISPLAY_TYPES } from 'shared/constants/messages';
 
 import { getSurveyDetails, updateSurvey } from './api';
 import type { SurveyDetails } from './api';
 import Banner from './components/Banner';
 import Feedback from './components/Feedback';
-import Rating from './components/Rating';
 import { t } from './i18n';
 import { surveyGlobalConfig } from './globalConfig';
 
-// Port từ survey/views/Response.vue.
+// Trang khảo sát CSAT công khai (link/email): cùng ba nút Kém/Ổn/Tuyệt và cùng quy đổi
+// 1/3/5 với thẻ đánh giá trong widget.
 const surveyUuid = () => csatSurveyUuidFromUrl(window.location.href);
 
 export default function Response() {
@@ -44,7 +43,6 @@ export default function Response() {
 
     const isRatingSubmitted = isCsatRatingSubmitted(submitted);
     const isFeedbackSubmitted = isCsatFeedbackSubmitted(submitted, hasSubmittedFeedback);
-    const displayType = details?.display_type || CSAT_DISPLAY_TYPES.EMOJI;
     const inboxName = details?.inbox_name ?? '';
     const messageContent = details?.content || t('DESCRIPTION', { inboxName });
     const message = errorMessage || t('RATING.SUCCESS_MESSAGE');
@@ -107,21 +105,14 @@ export default function Response() {
                     {!isRatingSubmitted ? (
                         <label className="mb-4 text-base font-medium text-n-slate-11">{t('RATING.LABEL')}</label>
                     ) : null}
-                    {displayType === CSAT_DISPLAY_TYPES.EMOJI ? (
-                        <Rating
-                            selectedRating={selectedRating}
-                            isDisabled={isFeedbackSubmitted || isUpdating}
-                            onSelectRating={selectRating}
+                    <div className="mt-4 mb-2">
+                        <CsatLevelPicker
+                            rating={selectedRating}
+                            label={t('RATING.LABEL')}
+                            disabled={isFeedbackSubmitted || isUpdating}
+                            onSelect={selectRating}
                         />
-                    ) : null}
-                    {displayType === CSAT_DISPLAY_TYPES.STAR ? (
-                        <StarRating
-                            selectedRating={selectedRating}
-                            isDisabled={isFeedbackSubmitted || isUpdating}
-                            className="[&>button>span]:text-4xl !justify-start !px-0"
-                            onSelectRating={selectRating}
-                        />
-                    ) : null}
+                    </div>
                     {!isFeedbackSubmitted && isRatingSubmitted ? (
                         <Feedback
                             isUpdating={isUpdating}

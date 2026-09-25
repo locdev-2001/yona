@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Widget;
 
+use App\Http\Resources\Widget\WidgetAgentResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,14 +16,7 @@ class InboxMembersController extends WidgetController
         $agents = $this->inbox($request)->members()->with('accountUsers')->get();
 
         return response()->json([
-            'payload' => $agents->map(fn (User $agent) => [
-                'id' => $agent->id,
-                'name' => $agent->availableName(),
-                'avatar_url' => $agent->avatarUrl(),
-                'availability_status' => $agent->accountUsers
-                    ->firstWhere('account_id', $account->id)
-                    ?->availabilityStatus(),
-            ])->values()->all(),
+            'payload' => $agents->map(fn (User $agent) => WidgetAgentResource::make($agent, $account->id))->values()->all(),
         ]);
     }
 }

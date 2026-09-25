@@ -50,13 +50,11 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         5 => 'allow_mobile_webview',
     ];
 
-    private const DEFAULT_PRE_CHAT_FORM_OPTIONS = [
-        'pre_chat_message' => 'Share your queries or comments here.',
-        'pre_chat_fields' => [
-            ['field_type' => 'standard', 'label' => 'Email Id', 'name' => 'emailAddress', 'type' => 'email', 'required' => true, 'enabled' => false],
-            ['field_type' => 'standard', 'label' => 'Full name', 'name' => 'fullName', 'type' => 'text', 'required' => false, 'enabled' => false],
-            ['field_type' => 'standard', 'label' => 'Phone number', 'name' => 'phoneNumber', 'type' => 'text', 'required' => false, 'enabled' => false],
-        ],
+    /** @var array<string, array{0: string, 1: string, 2: bool}> name => [khóa chuỗi ở lang/widget.php, type, required] */
+    private const STANDARD_PRE_CHAT_FIELDS = [
+        'emailAddress' => ['EMAIL_ADDRESS', 'email', true],
+        'fullName' => ['FULL_NAME', 'text', false],
+        'phoneNumber' => ['PHONE_NUMBER', 'text', false],
     ];
 
     protected $fillable = [
@@ -97,7 +95,7 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         // before_validation :validate_pre_chat_options — chạy cả lúc tạo lẫn sửa.
         static::saving(function (WebWidget $channel) {
             if (blank($channel->pre_chat_form_options['pre_chat_fields'] ?? null)) {
-                $channel->pre_chat_form_options = self::DEFAULT_PRE_CHAT_FORM_OPTIONS;
+                $channel->pre_chat_form_options = self::defaultPreChatFormOptions($channel->account?->locale);
             }
         });
     }
@@ -105,6 +103,36 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function name(): string
     {
         return 'Website';
+    }
+
+    /**
+     * Biểu mẫu trước chat của hộp thư mới: ba trường chuẩn (đều tắt) và lời nhắn.
+     * Widget in thẳng chữ đã lưu cho khách và hiện theo ngôn ngữ của account, nên
+     * chữ mặc định lấy từ lang/ theo ngôn ngữ account, không theo người đang thao tác.
+     *
+     * @return array{pre_chat_message: string, pre_chat_fields: list<array<string, mixed>>}
+     */
+    public static function defaultPreChatFormOptions(?string $accountLocale): array
+    {
+        $locale = $accountLocale ?? config('app.locale');
+
+        $fields = collect(self::STANDARD_PRE_CHAT_FIELDS)
+            ->map(fn (array $field, string $name): array => [
+                'field_type' => 'standard',
+                'label' => __("widget.PRE_CHAT_FORM.FIELDS.{$field[0]}.LABEL", [], $locale),
+                'placeholder' => __("widget.PRE_CHAT_FORM.FIELDS.{$field[0]}.PLACEHOLDER", [], $locale),
+                'name' => $name,
+                'type' => $field[1],
+                'required' => $field[2],
+                'enabled' => false,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'pre_chat_message' => __('inbox_mgmt.PRE_CHAT_FORM.PRE_CHAT_MESSAGE.DEFAULT', [], $locale),
+            'pre_chat_fields' => $fields,
+        ];
     }
 
     public function platform(): ChannelPlatform
@@ -121,7 +149,8 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
     public static function channelRules(): array
     {
         return [
-            'website_url' => ['required', 'string', 'max:255'],
+            // Không còn trên form tạo: không nơi nào đọc cột này, giới hạn trang được nhúng nằm ở allowed_domains.
+            'website_url' => ['sometimes', 'nullable', 'string', 'max:255'],
             'widget_color' => ['sometimes', 'filled', 'string', 'max:255'],
             'welcome_title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'welcome_tagline' => ['sometimes', 'nullable', 'string', 'max:255'],

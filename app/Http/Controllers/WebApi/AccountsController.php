@@ -7,6 +7,7 @@ use App\Http\Resources\AccountResource;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * Port từ Api::V1::AccountsController (nhánh show + update).
@@ -52,6 +53,8 @@ class AccountsController extends Controller
 
         $data = $request->validate([
             ...self::ATTRIBUTE_RULES,
+            // Chỉ nhận ngôn ngữ có bản dịch: ngôn ngữ account quyết giao diện dashboard và widget.
+            'locale' => [...self::ATTRIBUTE_RULES['locale'], Rule::in(array_column(config('yona.available_locales', []), 'iso_639_1_code'))],
             ...self::SETTINGS_RULES,
             ...self::CUSTOM_ATTRIBUTE_RULES,
         ]);

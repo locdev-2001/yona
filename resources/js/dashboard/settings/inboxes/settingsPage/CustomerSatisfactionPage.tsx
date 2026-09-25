@@ -9,8 +9,6 @@ import Editor from 'dashboard/components-next/Editor/Editor';
 import FilterSelect from 'dashboard/components-next/filter/inputs/FilterSelect';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import WithLabel from 'v3/components/Form/WithLabel';
-import { CSAT_DISPLAY_TYPES } from 'shared/constants/messages';
-import CSATDisplayTypeSelector from './components/CSATDisplayTypeSelector';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -18,6 +16,7 @@ import type { Inbox } from '../types';
 // Port từ settings/inbox/settingsPage/CustomerSatisfactionPage.vue @ v4.17.1.
 // Bỏ toàn bộ nhánh mẫu WhatsApp Cloud / Twilio (kênh chưa port) và bộ phân tích
 // utility của Captain (enterprise) — hai nhánh đó vào cùng tính năng của chúng.
+// Không còn ô chọn kiểu hiển thị: khách luôn đánh giá bằng 3 nút ở widget lẫn trang khảo sát.
 interface CustomerSatisfactionPageProps {
     inbox: Inbox;
     uiSettings: UISettings;
@@ -29,6 +28,11 @@ interface SurveyRules {
     values?: string[];
 }
 
+interface CsatConfig {
+    message?: string;
+    survey_rules?: SurveyRules;
+}
+
 export default function CustomerSatisfactionPage({
     inbox,
     uiSettings,
@@ -38,7 +42,6 @@ export default function CustomerSatisfactionPage({
     const accountId = currentAccount!.id;
 
     const [csatSurveyEnabled, setCsatSurveyEnabled] = useState(false);
-    const [displayType, setDisplayType] = useState<string>(CSAT_DISPLAY_TYPES.EMOJI);
     const [message, setMessage] = useState('');
     const [surveyRuleOperator, setSurveyRuleOperator] = useState('contains');
     const [selectedLabelValues, setSelectedLabelValues] = useState<string[]>([]);
@@ -47,13 +50,8 @@ export default function CustomerSatisfactionPage({
 
     // initializeState() — chạy lúc mount và mỗi lần inbox đổi, y bản gốc.
     useEffect(() => {
-        const config = (inbox.csat_config ?? {}) as {
-            display_type?: string;
-            message?: string;
-            survey_rules?: SurveyRules;
-        };
+        const config = (inbox.csat_config ?? {}) as CsatConfig;
         setCsatSurveyEnabled(inbox.csat_survey_enabled || false);
-        setDisplayType(config.display_type ?? CSAT_DISPLAY_TYPES.EMOJI);
         setMessage(config.message ?? '');
         setSurveyRuleOperator(config.survey_rules?.operator ?? 'contains');
         setSelectedLabelValues(Array.isArray(config.survey_rules?.values) ? [...config.survey_rules.values] : []);
@@ -91,8 +89,9 @@ export default function CustomerSatisfactionPage({
         try {
             const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
                 csat_survey_enabled: csatSurveyEnabled,
+                // Giữ nguyên các khóa khác đã lưu (vd. display_type cũ), chỉ ghi phần trang này sửa.
                 csat_config: {
-                    display_type: displayType,
+                    ...inbox.csat_config,
                     message,
                     survey_rules: { operator: surveyRuleOperator, values: selectedLabelValues },
                 },
@@ -111,15 +110,15 @@ export default function CustomerSatisfactionPage({
             <SettingsToggleSection
                 value={csatSurveyEnabled}
                 header={t('INBOX_MGMT.CSAT.TITLE')}
-                description={t('INBOX_MGMT.CSAT.SUBTITLE')}
+                description={t('INBOX_MGMT.CSAT.SUBTITLE', {
+                    poor: t('WIDGET.CONVERSATION_END.POOR'),
+                    okay: t('WIDGET.CONVERSATION_END.OKAY'),
+                    great: t('WIDGET.CONVERSATION_END.GREAT'),
+                })}
                 onChange={setCsatSurveyEnabled}
                 editor={
                     csatSurveyEnabled ? (
                         <div className="grid gap-5">
-                            <WithLabel label={t('INBOX_MGMT.CSAT.DISPLAY_TYPE.LABEL')} name="display_type">
-                                <CSATDisplayTypeSelector selectedType={displayType} onUpdate={setDisplayType} />
-                            </WithLabel>
-
                             <WithLabel label={t('INBOX_MGMT.CSAT.MESSAGE.LABEL')} name="message">
                                 <Editor
                                     value={message}

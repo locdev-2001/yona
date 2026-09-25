@@ -29,3 +29,21 @@ export const isCsatFeedbackSubmitted = (
 // Trang khảo sát công khai đọc uuid từ chính URL đang mở.
 export const csatSurveyUuidFromUrl = (href: string): string =>
     href.split(/[?#]/)[0].replace(/\/+$/, '').split('/').pop() ?? '';
+
+// Ba mức đánh giá khách thấy ở MỌI nơi (widget, trang khảo sát gửi qua link/email),
+// quy về thang CSAT 1–5 mà báo cáo dùng. Nhãn ở lang/*/widget.php, khoá CONVERSATION_END.*.
+export const CSAT_LEVELS = [
+    { key: 'POOR', value: 1 },
+    { key: 'OKAY', value: 3 },
+    { key: 'GREAT', value: 5 },
+] as const;
+
+export type CsatLevel = (typeof CSAT_LEVELS)[number];
+
+// Điểm đã lưu theo thang 5 mức cũ (2, 4) hiện về mức gần nghĩa nhất.
+export const csatLevelFor = (rating: number): CsatLevel => {
+    const [poor, okay, great] = CSAT_LEVELS;
+    if (rating < okay.value) return poor;
+
+    return rating > okay.value ? great : okay;
+};

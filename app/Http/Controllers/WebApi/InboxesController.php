@@ -25,6 +25,7 @@ use App\Models\Channel\Whatsapp;
 use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use App\Services\Channels\ChannelSetupService;
+use App\Support\Timezones;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -66,7 +67,7 @@ class InboxesController extends Controller
         'auto_assignment_config' => ['sometimes', 'array'],
         'working_hours_enabled' => ['sometimes', 'boolean'],
         'out_of_office_message' => ['sometimes', 'nullable', 'string', 'max:10000'],
-        'timezone' => ['sometimes', 'string', 'timezone:all'],
+        'timezone' => ['sometimes', 'string', Timezones::VALIDATION_RULE],
         'allow_messages_after_resolved' => ['sometimes', 'boolean'],
         'lock_to_single_conversation' => ['sometimes', 'boolean'],
         'sender_name_type' => ['sometimes', 'in:friendly,professional'],

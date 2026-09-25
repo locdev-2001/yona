@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'TITLE' => 'Account settings',
+    'DESCRIPTION' => 'General settings for the whole business account.',
+    'LANGUAGE' => [
+        'TITLE' => 'Language',
+        'NOTE' => 'Language of the website chat widget, and of the dashboard for anyone who has not picked their own. A page embedding the widget can still pick another language with the locale option in the embed code.',
+        'UPDATE_SUCCESS' => 'Account language updated',
+        'UPDATE_ERROR' => 'Could not update the account language, please try again',
+    ],
     'BACK' => 'Back',
     'FORM' => [
         'AUTO_RESOLVE' => [

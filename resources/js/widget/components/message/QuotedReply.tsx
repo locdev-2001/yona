@@ -41,7 +41,7 @@ export default function QuotedReply({ replyTo, isOwn }: { replyTo: WidgetMessage
             {senderName ? (
                 <span
                     className={`mb-[2px] block text-[11px] font-semibold leading-[1.3] ${
-                        isOwn ? 'text-[var(--yona-chat-quote-name-own)]' : 'text-[var(--yona-chat-accent)]'
+                        isOwn ? 'text-[var(--yona-chat-quote-name-own)]' : 'text-[var(--yona-chat-accent-ink)]'
                     }`}
                 >
                     {senderName}

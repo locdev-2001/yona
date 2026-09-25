@@ -5,7 +5,6 @@ namespace App\Builders\Email;
 use App\Models\Account;
 use App\Models\Inbox;
 use App\Models\Message;
-use App\Support\EmailAddress;
 use Illuminate\Database\Eloquent\Model;
 
 abstract class BaseBuilder
@@ -56,9 +55,8 @@ abstract class BaseBuilder
         return $this->inbox->sanitizedBusinessName();
     }
 
-    // Người dùng có thể lưu support_email dạng "Tên <mail@x>" — chỉ lấy hộp thư.
     protected function accountSupportEmail(): string
     {
-        return EmailAddress::parseOrDefault($this->account()->supportEmail());
+        return $this->account()->outgoingEmailAddress();
     }
 }

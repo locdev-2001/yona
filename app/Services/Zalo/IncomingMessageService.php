@@ -31,13 +31,18 @@ use Illuminate\Support\Carbon;
  */
 class IncomingMessageService
 {
-    /** @var array<string, int> */
+    /**
+     * Loại Zalo khẳng định cụ thể. `share.file` (inbound_kind `file`) cố ý
+     * không có ở đây: người gửi chọn "gửi tệp" không nói gì về nội dung, nên
+     * lõi quyết theo MIME (mp4 gửi dạng tệp vẫn hiện trình phát video).
+     *
+     * @var array<string, int>
+     */
     private const ATTACHMENT_TYPES = [
         'image' => Attachment::FILE_TYPE_IMAGE,
         'gif' => Attachment::FILE_TYPE_IMAGE,
         'video' => Attachment::FILE_TYPE_VIDEO,
         'audio' => Attachment::FILE_TYPE_AUDIO,
-        'file' => Attachment::FILE_TYPE_FILE,
     ];
 
     private const STICKER_KIND = 'sticker';
@@ -791,7 +796,7 @@ class IncomingMessageService
             ])];
         }
 
-        $attributes['file_type'] = self::ATTACHMENT_TYPES[$kind] ?? Attachment::fileTypeFor($attributes['content_type']);
+        $attributes['file_type'] = Attachment::fileTypeFromChannel(self::ATTACHMENT_TYPES[$kind] ?? null, $attributes['content_type']);
 
         return [new Attachment($attributes)];
     }
