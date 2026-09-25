@@ -193,6 +193,29 @@ describe('form trong tin', () => {
     });
 });
 
+describe('mở trang công khai (webview)', () => {
+    it('xem trước khung giờ: bỏ khung đã hết chỗ, chỉ hiện nhãn của khung còn trống', () => {
+        const { container } = renderMessage(
+            messageOf('webview', {
+                page: 'schedule',
+                title: 'Chọn lịch nhận',
+                data: {
+                    slots: [
+                        { date: '2026-09-27', label: 'T7 · 8–10h', value: 't7-am', full: true },
+                        { date: '2026-09-27', label: 'T7 · 14–16h', value: 't7-pm' },
+                        { date: '2026-09-28', label: 'CN · 8–10h', value: 'cn-am' },
+                    ],
+                },
+            }),
+        );
+
+        expect(screen.queryByText('T7 · 8–10h')).not.toBeInTheDocument();
+        expect(screen.getByText('T7 · 14–16h')).toBeInTheDocument();
+        // 2 khung còn trống vừa đủ PREVIEW_SLOTS, không hiện nhãn "+n" thừa.
+        expect(container.querySelector('.mk-slot--more')).toBeNull();
+    });
+});
+
 describe('đơn hàng và yêu cầu đặt hàng', () => {
     it('trạng thái đơn: thanh tiến độ đánh dấu đoạn đang giao', () => {
         const { container } = renderMessage(

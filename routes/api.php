@@ -24,6 +24,7 @@ use App\Http\Controllers\Widget\DirectUploadsController;
 use App\Http\Controllers\Widget\EventsController;
 use App\Http\Controllers\Widget\InboxMembersController;
 use App\Http\Controllers\Widget\LabelsController;
+use App\Http\Controllers\Widget\MessageFlowLinksController;
 use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
 use App\Http\Controllers\Widget\UpdatesController;
@@ -68,6 +69,8 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::get('/messages', [MessagesController::class, 'index']);
             Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
+            // Sheet trong widget xin URL trang công khai (phase-05 §C) thay vì tự ghép.
+            Route::post('/messages/{messageId}/flow', [MessageFlowLinksController::class, 'store'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);

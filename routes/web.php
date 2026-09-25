@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\SessionsController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalPagesController;
+use App\Http\Controllers\Public\FlowsController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -105,6 +106,11 @@ Route::get('/survey/responses/{uuid}', fn () => view('survey', ['globalConfig' =
     'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
     'INSTALLATION_NAME' => config('yona.branding.installation_name'),
 ]]))->name('survey_response');
+
+// Trang công khai theo token (`/m/{token}`, phase-05 §C) — link Yona gửi kèm tin
+// Zalo/SMS khi kênh không vẽ được thẻ gốc (schedule, form dài, theo dõi đơn,
+// chuyển khoản, chi tiết sản phẩm). Token sai/hết hạn/đã dùng: 404 ở FlowsController.
+Route::get('/m/{token}', [FlowsController::class, 'page'])->where('token', '[0-9A-Za-z]+')->name('flows.page');
 
 Route::middleware('guest')->group(function () {
     Route::get('/app/login', [SessionsController::class, 'create'])->name('login');
