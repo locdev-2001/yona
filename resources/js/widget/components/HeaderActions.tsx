@@ -71,7 +71,7 @@ function HeaderMenu({ items }: { items: HeaderMenuItem[] }) {
                         ref={menuRef}
                         role="menu"
                         aria-label={t('HEADER.MORE')}
-                        className="absolute end-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] p-1.5 shadow-[var(--yona-chat-shadow-pop)]"
+                        className="absolute end-0 top-full z-50 mt-1.5 w-max min-w-[224px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] p-1.5 shadow-[var(--yona-chat-shadow-pop)]"
                         onKeyDown={onMenuKeyDown}
                     >
                         {items.map(item => (
@@ -86,7 +86,7 @@ function HeaderMenu({ items }: { items: HeaderMenuItem[] }) {
                                 }}
                             >
                                 <span className={`${item.icon} size-[18px] flex-shrink-0 text-[var(--yona-chat-ink-soft)]`} />
-                                <span className="truncate">{item.label}</span>
+                                <span>{item.label}</span>
                             </button>
                         ))}
                     </div>
