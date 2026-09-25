@@ -27,9 +27,10 @@ class FlowsController extends Controller
         $record = $flows->resolve($token);
         abort_if($record === null, 404);
 
-        return response()
-            ->view('flows', ['globalConfig' => $this->globalConfig()])
-            ->header('Content-Security-Policy', $flows->frameAncestorsHeader($record->message, $request->headers->get('Origin')));
+        $response = response()->view('flows', ['globalConfig' => $this->globalConfig()]);
+        $policy = $flows->frameAncestorsHeader($record->message, $request->headers->get('Origin'));
+
+        return $policy === null ? $response : $response->header('Content-Security-Policy', $policy);
     }
 
     public function show(string $token, PublicFlowService $flows): JsonResponse

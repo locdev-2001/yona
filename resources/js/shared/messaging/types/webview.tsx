@@ -47,8 +47,8 @@ function WebviewView({ model, message }: { model: WebviewModel; message: Structu
             </span>
             {model.slots.length ? (
                 <span className="mk-row" style={{ gap: 6 }}>
-                    {model.slots.slice(0, PREVIEW_SLOTS).map(slot => (
-                        <span key={slot} className="mk-slot">
+                    {model.slots.slice(0, PREVIEW_SLOTS).map((slot, index) => (
+                        <span key={index} className="mk-slot">
                             {slot}
                         </span>
                     ))}
@@ -84,7 +84,13 @@ export default defineMessageType<WebviewModel>({
         // `data.slots` là {date, label, value, full?} (phase-05 §C: trang "schedule"
         // đọc cùng shape để chọn ngày/giờ) — thẻ trong tin chỉ xem trước nhãn, bỏ
         // khung đã hết chỗ vì khách không chọn được gì ở đây (chỉ mở trang mới chọn).
-        const slots = (records(data.slots) ?? []).flatMap(slot => (!slot.full && text(slot.label) ? [String(slot.label)] : []));
+        // Nhiều ngày có cùng khung giờ: ghi thêm ngày/tháng để hai ô không trông giống hệt nhau.
+        const slots = (records(data.slots) ?? []).flatMap(slot => {
+            if (slot.full || !text(slot.label)) return [];
+            const day = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(slot.date ?? ''));
+
+            return [day ? `${day[2]}/${day[1]} ${String(slot.label)}` : String(slot.label)];
+        });
 
         return { page, title, subtitle: text(attributes.subtitle), slots };
     },

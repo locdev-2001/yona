@@ -45,10 +45,11 @@
     box-sizing: border-box;
 }
 
-.mk button,
-.mk input,
-.mk select,
-.mk textarea {
+/* :where() giữ độ ưu tiên bằng 0 để lớp của kit (.mk-pill--primary…) đặt được màu chữ. */
+:where(.mk) button,
+:where(.mk) input,
+:where(.mk) select,
+:where(.mk) textarea {
     font: inherit;
     color: inherit;
 }

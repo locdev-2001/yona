@@ -64,7 +64,10 @@ export default function ScheduleFlow({ flow, token, onSubmitted }: FlowPageProps
         setError('');
 
         try {
-            await submitFlow(token, { submitted_values: [{ title: selected.label, value: selected.value }] });
+            // Nhân viên đọc câu trả lời trong hộp thư: phải có cả ngày, không chỉ khung giờ.
+            const dayLabel = selectedDay ? `${WEEKDAY_LONG[selectedDay.getDay()]} ${String(selectedDay.getDate()).padStart(2, '0')}/${String(selectedDay.getMonth() + 1).padStart(2, '0')}` : '';
+            const title = dayLabel ? `${dayLabel.charAt(0).toUpperCase()}${dayLabel.slice(1)}, ${selected.label}` : selected.label;
+            await submitFlow(token, { submitted_values: [{ title, value: selected.value }] });
             onSubmitted();
         } catch {
             setError(t('FLOWS.send_failed'));

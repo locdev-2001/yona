@@ -194,23 +194,25 @@ describe('form trong tin', () => {
 });
 
 describe('mở trang công khai (webview)', () => {
-    it('xem trước khung giờ: bỏ khung đã hết chỗ, chỉ hiện nhãn của khung còn trống', () => {
+    it('xem trước khung giờ: bỏ khung đã hết chỗ, ghi ngày trước giờ', () => {
         const { container } = renderMessage(
             messageOf('webview', {
                 page: 'schedule',
                 title: 'Chọn lịch nhận',
                 data: {
                     slots: [
-                        { date: '2026-09-27', label: 'T7 · 8–10h', value: 't7-am', full: true },
-                        { date: '2026-09-27', label: 'T7 · 14–16h', value: 't7-pm' },
-                        { date: '2026-09-28', label: 'CN · 8–10h', value: 'cn-am' },
+                        { date: '2026-09-27', label: '8:00 đến 10:00', value: 't7-am', full: true },
+                        { date: '2026-09-27', label: '14:00 đến 16:00', value: 't7-pm' },
+                        { date: '2026-09-28', label: '8:00 đến 10:00', value: 'cn-am' },
                     ],
                 },
             }),
         );
 
-        expect(screen.queryByText('T7 · 8–10h')).not.toBeInTheDocument();
-        expect(screen.getByText('T7 · 14–16h')).toBeInTheDocument();
+        // Cùng khung giờ ở hai ngày khác nhau: có ngày/tháng phía trước để phân biệt.
+        expect(screen.queryByText('27/09 8:00 đến 10:00')).not.toBeInTheDocument();
+        expect(screen.getByText('27/09 14:00 đến 16:00')).toBeInTheDocument();
+        expect(screen.getByText('28/09 8:00 đến 10:00')).toBeInTheDocument();
         // 2 khung còn trống vừa đủ PREVIEW_SLOTS, không hiện nhãn "+n" thừa.
         expect(container.querySelector('.mk-slot--more')).toBeNull();
     });

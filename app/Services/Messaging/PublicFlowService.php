@@ -120,19 +120,18 @@ final class PublicFlowService
     }
 
     /**
-     * Header CSP của trang `/m/{token}`: mở cho chính Yona và domain tenant đã
-     * khai (như widget), mặc định chỉ 'self' khi kênh không phải website hoặc
-     * chưa khai domain nào — link Zalo/SMS mở trực tiếp, không cần nhúng ở đâu.
+     * Header CSP của trang `/m/{token}`. `frame-ancestors` xét MỌI khung cha, kể cả trang
+     * của shop ở ngoài cùng, nên trang phải cho nhúng đúng như chính widget: kênh website
+     * chưa khai domain thì không gửi header (widget nhúng được ở mọi nơi, sheet cũng vậy);
+     * đã khai thì self + các domain đó. Kênh khác chỉ mở trực tiếp từ link nên chỉ 'self'.
      */
-    public function frameAncestorsHeader(Message $message, ?string $origin): string
+    public function frameAncestorsHeader(Message $message, ?string $origin): ?string
     {
         $channel = $message->inbox->channel;
 
-        if ($channel instanceof WebWidget) {
-            return $channel->frameAncestorsPolicy($origin) ?? "frame-ancestors 'self'";
-        }
-
-        return "frame-ancestors 'self'";
+        return $channel instanceof WebWidget
+            ? $channel->frameAncestorsPolicy($origin)
+            : "frame-ancestors 'self'";
     }
 
     private static function hash(string $token): string

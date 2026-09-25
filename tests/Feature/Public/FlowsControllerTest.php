@@ -202,6 +202,14 @@ describe('header frame-ancestors', function () {
         $this->get("/m/{$token}")->assertHeader('Content-Security-Policy', "frame-ancestors 'self' shop.acme.vn");
     });
 
+    it('kênh website chưa khai domain: không gửi header, sheet nhúng được trên trang của shop như chính widget', function () {
+        $session = WidgetSession::make(['allowed_domains' => '']);
+        $message = flowAgentSends(flowConversation($session), 'webview', ['page' => 'schedule', 'title' => 'X', 'data' => []]);
+        $token = issueFlowToken($message, 'schedule');
+
+        $this->get("/m/{$token}")->assertOk()->assertHeaderMissing('Content-Security-Policy');
+    });
+
     it('kênh không phải website: chỉ self', function () {
         $inbox = Inbox::factory()->zalo()->create();
         $conversation = Conversation::factory()->create(['account_id' => $inbox->account_id, 'inbox_id' => $inbox->id]);
