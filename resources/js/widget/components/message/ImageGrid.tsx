@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { planImageGrid } from 'shared/helpers/imageGrid';
+import { imageGridTemplateColumns, planImageGrid } from 'shared/helpers/imageGrid';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
 import { t } from '../../i18n';
@@ -27,7 +27,7 @@ interface ImageGridProps {
     images: MessageAttachment[];
     isOwn: boolean;
     position: MessageGroupPosition;
-    onImageError?: () => void;
+    onImageError?: (image: MessageAttachment) => void;
 }
 
 export default function ImageGrid({ images, isOwn, position, onImageError }: ImageGridProps) {
@@ -39,7 +39,7 @@ export default function ImageGrid({ images, isOwn, position, onImageError }: Ima
             <div
                 className="yona-image-grid grid w-[216px] max-w-full gap-[3px] overflow-hidden"
                 data-layout={plan.layout}
-                style={{ gridTemplateColumns: plan.columns === 1 ? '1fr' : '1fr 1fr', ...bubbleRadius(isOwn, position) }}
+                style={{ gridTemplateColumns: imageGridTemplateColumns(plan.columns), ...bubbleRadius(isOwn, position) }}
             >
                 {plan.tiles.map(tile =>
                     tile.kind === 'overflow' ? (
@@ -57,7 +57,7 @@ export default function ImageGrid({ images, isOwn, position, onImageError }: Ima
                             key={tile.image.id ?? tile.image.data_url ?? tile.imageIndex}
                             type="button"
                             className={`relative block overflow-hidden bg-[var(--yona-chat-field)] ${
-                                tile.spansRow ? 'col-span-2 aspect-[2/1]' : plan.layout === 'single' ? '' : 'aspect-square'
+                                plan.layout === 'single' ? '' : 'aspect-square'
                             }`}
                             aria-label={t('ATTACHMENTS.image.CONTENT')}
                             onClick={() => setLightboxIndex(tile.imageIndex)}
@@ -66,7 +66,7 @@ export default function ImageGrid({ images, isOwn, position, onImageError }: Ima
                                 src={tile.image.thumb_url || tile.image.data_url}
                                 alt=""
                                 className={`block w-full object-cover ${plan.layout === 'single' ? 'max-h-[240px]' : 'h-full'}`}
-                                onError={onImageError}
+                                onError={() => onImageError?.(tile.image)}
                             />
                             {tile.image.status === 'in_progress' ? (
                                 <UploadProgress percent={tile.image.progress ?? 0} />

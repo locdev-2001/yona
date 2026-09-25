@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import GalleryView from 'dashboard/components/widgets/conversation/components/GalleryView';
-import { planImageGrid } from 'shared/helpers/imageGrid';
+import { imageGridTemplateColumns, planImageGrid } from 'shared/helpers/imageGrid';
 import { formatDuration } from 'shared/helpers/timeHelper';
 
 import { t } from '../../../../i18n';
@@ -183,13 +183,16 @@ export default function MediaGrid({ media, className = '' }: MediaGridProps) {
                 {plan.layout === 'single' ? (
                     <SingleMedia attachment={media[0]} onOpen={() => setOpenedAttachment(media[0])} />
                 ) : (
-                    <div className="grid grid-cols-2 gap-0.5 w-72 max-w-full">
+                    <div
+                        className="grid gap-0.5 w-72 max-w-full"
+                        style={{ gridTemplateColumns: imageGridTemplateColumns(plan.columns) }}
+                    >
                         {plan.tiles.map((tile) =>
                             tile.kind === 'image' ? (
                                 <MediaTile
                                     key={tile.image.id}
                                     attachment={tile.image}
-                                    className={tile.spansRow ? 'col-span-2 aspect-[2/1]' : 'aspect-square'}
+                                    className="aspect-square"
                                     onOpen={() => setOpenedAttachment(tile.image)}
                                 />
                             ) : (

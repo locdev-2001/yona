@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { planImageGrid } from './imageGrid';
+import { imageGridTemplateColumns, planImageGrid } from './imageGrid';
 
 const images = (count: number) => Array.from({ length: count }, (_, index) => `anh-${index + 1}`);
 
@@ -18,19 +18,23 @@ describe('planImageGrid', () => {
 
         expect(plan.layout).toBe('pair');
         expect(plan.columns).toBe(2);
-        expect(plan.tiles.every(tile => tile.kind === 'image' && !tile.spansRow)).toBe(true);
+        expect(plan.tiles.every(tile => tile.kind === 'image')).toBe(true);
     });
 
-    it('ba ảnh xếp 2×2, ảnh thứ ba trải hết hàng', () => {
+    it('ba ảnh xếp ba cột trên một hàng', () => {
         const plan = planImageGrid(images(3));
 
-        expect(plan.layout).toBe('quad');
-        expect(plan.tiles.map(tile => tile.kind === 'image' && tile.spansRow)).toStrictEqual([false, false, true]);
+        expect(plan.layout).toBe('trio');
+        expect(plan.columns).toBe(3);
+        expect(plan.tiles).toHaveLength(3);
+        expect(imageGridTemplateColumns(plan.columns)).toBe('1fr 1fr 1fr');
     });
 
     it('bốn ảnh lấp đủ lưới 2×2, không có ô +N', () => {
         const plan = planImageGrid(images(4));
 
+        expect(plan.layout).toBe('quad');
+        expect(plan.columns).toBe(2);
         expect(plan.tiles).toHaveLength(4);
         expect(plan.tiles.some(tile => tile.kind === 'overflow')).toBe(false);
     });
