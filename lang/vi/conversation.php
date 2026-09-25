@@ -164,6 +164,7 @@ return [
             'TEXT' => 'Kênh này không vẽ được thẻ: khách nhận bản chữ',
             'IMAGE_TEXT' => 'Kênh này không vẽ được thẻ: khách nhận ảnh thẻ kèm chữ',
         ],
+        'MARK_BANK_TRANSFER_PAID' => 'Đánh dấu đã nhận tiền',
     ],
     'SENT_FROM_NATIVE_APP' => 'từ điện thoại',
     'MESSAGE_ACTIONS' => [

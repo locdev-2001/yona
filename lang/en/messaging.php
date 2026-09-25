@@ -22,6 +22,9 @@ return [
         'field_invalid' => ':field is invalid.',
         'empty_submission' => 'Nothing was submitted.',
         'payload_too_large' => 'The page data is too large.',
+        'unknown_payment_account' => 'The receiving bank account was not found.',
+        'payment_account_not_allowed' => 'You are not allowed to send a bank transfer card with this account.',
+        'duplicate_payment_account' => 'This bank and account number were already added.',
     ],
     'settings' => [
         'invalid_channel' => 'Invalid channel: check the channel type and its link or phone number.',
@@ -57,6 +60,13 @@ return [
         'line' => 'Order request: :title:selection × :quantity',
         'note' => 'Note: :note',
     ],
+    'bank_transfer' => [
+        'preview' => 'Bank transfer via :bank',
+        'bank_line' => 'Bank :bank, account :account',
+        'holder' => 'Account holder :name',
+        'amount' => 'Amount :amount',
+        'memo' => 'Memo: :memo',
+    ],
     // Message kit strings (resources/js/shared/messaging), placeholders as {name}.
     'kit' => [
         'item_position' => 'Item {current} of {total}',
@@ -87,5 +97,13 @@ return [
             'delivering' => 'On the way',
             'delivered' => 'Delivered',
         ],
+        'bank_transfer_title' => 'Bank transfer',
+        'bank_transfer_qr_alt' => 'Bank transfer QR code',
+        'bank' => 'Bank',
+        'account_number' => 'Account number',
+        'account_holder' => 'Account holder',
+        'transfer_amount' => 'Amount',
+        'transfer_memo' => 'Memo',
+        'paid' => 'Payment received',
     ],
 ];

@@ -33,7 +33,9 @@ function outgoingContext(): PayloadContext
 beforeEach(fn () => app()->setLocale('vi'));
 
 it('mọi loại tin đăng ký đều có fixture, trừ loại cần dữ liệu thật', function () {
-    $needsDatabase = ['order_request'];
+    // bank_transfer tra `PaymentAccount` thật theo account_id — không dựng được
+    // với `new Conversation` rời như các fixture khác.
+    $needsDatabase = ['order_request', 'bank_transfer'];
 
     expect(array_keys(messagingFixtures()))
         ->toEqualCanonicalizing(array_diff(app(StructuredTypeRegistry::class)->contentTypes(), $needsDatabase));

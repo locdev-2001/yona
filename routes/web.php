@@ -183,6 +183,10 @@ Route::middleware('auth')->group(function () {
             // Trang "Bài cập nhật trên widget" (tab Cập nhật của widget) — administrator only.
             Route::get('/settings/widget-updates', fn (Account $account) => Inertia::render('dashboard/settings/widgetUpdates/Index'))
                 ->name('settings_widget_updates');
+            // Chuyển khoản (Cài đặt / Tài khoản / Chuyển khoản): quản trị viên cấu
+            // hình tài khoản nhận tiền + mã QR VietQR.
+            Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
+                ->name('settings_payment_accounts');
 
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');

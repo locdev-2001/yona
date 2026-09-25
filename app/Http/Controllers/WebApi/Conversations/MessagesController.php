@@ -136,6 +136,27 @@ class MessagesController extends Controller
      * dựng theo docs/channel-capabilities.md §2.2 `outbound_reaction`. Lõi trung
      * tính: emoji vào, driver kênh tự dịch sang mã của nền tảng.
      */
+    // Đánh dấu thẻ chuyển khoản đã nhận tiền: ghi content_attributes.paid_at +
+    // paid_by (kích hoạt MESSAGE_UPDATED qua hook `updated` của Message). Đã
+    // đánh dấu rồi thì không ghi lại — bấm nhiều lần không đổi ai/lúc nào.
+    public function markBankTransferPaid(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        $message = $conversation->messages()->findOrFail($messageId);
+
+        abort_unless($message->contentTypeName() === 'bank_transfer', 422, 'not_a_bank_transfer_card');
+
+        if (blank($message->content_attributes['paid_at'] ?? null)) {
+            $message->update(['content_attributes' => [
+                ...($message->content_attributes ?? []),
+                'paid_at' => now()->toISOString(),
+                'paid_by' => $request->user()->id,
+            ]]);
+        }
+
+        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+    }
+
     public function storeReaction(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
     {
         $emoji = trim((string) $request->input('emoji'));

@@ -299,6 +299,13 @@ export function buildMenuItems(
                     to: scoped('settings/widget-updates'),
                 },
                 {
+                    name: 'Settings Payment Accounts',
+                    permissions: ['administrator'],
+                    label: t('SIDEBAR.PAYMENT_ACCOUNTS'),
+                    icon: 'i-lucide-landmark',
+                    to: scoped('settings/payment-accounts'),
+                },
+                {
                     name: 'Settings Custom Attributes',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),

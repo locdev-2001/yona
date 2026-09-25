@@ -81,7 +81,7 @@ final class StructuredTypeRegistry
         }
 
         try {
-            $context = new PayloadContext($message->conversation, $type->allowedMessageTypes()[0]);
+            $context = new PayloadContext($message->conversation, $type->allowedMessageTypes()[0], fromStorage: true);
 
             return $this->prepare($type->contentType(), $message->content, $message->content_attributes ?? [], $context);
         } catch (InvalidStructuredPayload) {

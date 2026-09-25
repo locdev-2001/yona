@@ -39,6 +39,7 @@ import {
     addMessageReaction,
     removeMessageReaction,
     deleteMessage,
+    markBankTransferPaid as markBankTransferPaidRequest,
     updateConversationCustomAttributes as updateCustomAttributesRequest,
     togglePriority as togglePriorityRequest,
     toggleStatus as toggleStatusRequest,
@@ -168,6 +169,7 @@ interface ConversationContextValue {
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
     deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
+    markBankTransferPaid: (message: ConversationMessage) => Promise<void>;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
     toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
     togglePriority: (priority: ConversationPriority | null) => Promise<void>;
@@ -280,6 +282,12 @@ export function useConversation(): ConversationContextValue {
         throw new Error('useConversation must be used within ConversationProvider');
     }
     return context;
+}
+
+// Bản không bắt buộc có provider — cho các mảnh UI (vd nút trong bong bóng tin)
+// vẫn cần render được khi test đứng riêng, không dựng cả cây ConversationProvider.
+export function useOptionalConversation(): ConversationContextValue | null {
+    return useContext(ConversationContext);
 }
 
 const EMPTY_META: ConversationListMeta = {
@@ -1114,6 +1122,21 @@ export function ConversationProvider({
         [accountId, conversationId, addMessage],
     );
 
+    // Đánh dấu thẻ chuyển khoản đã nhận tiền. Idempotent phía server — bấm lại
+    // vẫn gọi được, chỉ không đổi gì thêm.
+    const markBankTransferPaid = useCallback(
+        async (message: ConversationMessage) => {
+            if (!conversationId || !message.id) return;
+            try {
+                addMessage(await markBankTransferPaidRequest(accountId, conversationId, message.id));
+            } catch (error: unknown) {
+                const body = (error as { body?: { error?: string } }).body;
+                useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [accountId, conversationId, addMessage],
+    );
+
     // Đổi status ngay trên UI để thao tác Resolve/Snooze không bị chặn bởi round-trip
     // API/worker. Request chạy nền sau khi hàm trả về; response server vẫn ghi đè
     // optimistic state, lỗi thì rollback snapshot.
@@ -1348,6 +1371,7 @@ export function ConversationProvider({
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
+            markBankTransferPaid,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
@@ -1403,6 +1427,7 @@ export function ConversationProvider({
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
+            markBankTransferPaid,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
