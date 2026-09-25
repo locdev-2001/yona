@@ -26,17 +26,15 @@ export function ChatHeader({
     availableAgents,
     onBack,
 }: ChatHeaderProps) {
-    const { isOnline: isInboxOnline, inboxConfig } = useInboxAvailability(availableAgents);
     const assignee = useWidgetState(state => state.conversationAttributes.assignee ?? null);
-    const assigneeId = assignee?.id;
-    const isAssigneeOnline = useWidgetState(state =>
-        state.agents.some(agent => agent.id === assigneeId && agent.availability_status === 'online'),
-    );
+    // Cùng một luật trực tuyến (trong giờ làm việc + có người trực) cho hộp thư lẫn nhân viên phụ trách,
+    // để header không báo "đang hoạt động" khi màn ngoài giờ đang nói hẹn trả lời sau.
+    const agentsOnDuty = assignee ? availableAgents.filter(agent => agent.id === assignee.id) : availableAgents;
+    const { isOnline, inboxConfig } = useInboxAvailability(agentsOnDuty);
     const availableMessage = useWidgetState(state => state.appConfig.availableMessage);
     const unavailableMessage = useWidgetState(state => state.appConfig.unavailableMessage);
 
     const inboxName = DOMPurify.sanitize(title, { ALLOWED_TAGS: [] });
-    const isOnline = assignee ? isAssigneeOnline : isInboxOnline;
     const onlineText = assignee ? t('HEADER.AGENT_ACTIVE') : availableMessage || replyTimeLabel(inboxConfig.replyTime);
     const awayText = assignee ? t('HEADER.AWAY') : unavailableMessage || t('HEADER.AWAY');
 

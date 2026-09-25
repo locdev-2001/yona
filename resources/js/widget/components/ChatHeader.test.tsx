@@ -38,8 +38,15 @@ const loadConversation = async (summary: Record<string, unknown>, agents: Availa
     await act(() => widgetStore.getConversationAttributes());
 };
 
+// Như ViewWithHeader: header chỉ nhận những nhân viên đang trực tuyến.
 const renderHeader = () =>
-    render(<ChatHeader title="Yona" availableAgents={widgetStore.getState().agents} onBack={() => undefined} />);
+    render(
+        <ChatHeader
+            title="Yona"
+            availableAgents={widgetStore.getState().agents.filter(agent => agent.availability_status === 'online')}
+            onBack={() => undefined}
+        />,
+    );
 
 const resetRequests = () =>
     messagesToParent.filter(message => decodeFrameMessage(message)?.event === RESET_SESSION_EVENT);
@@ -92,6 +99,20 @@ describe('header theo hộp thư hay theo nhân viên', () => {
 
         renderHeader();
 
+        expect(screen.getByTestId('header-status').textContent).toBe('Away');
+    });
+
+    it('ngoài giờ làm việc của hộp thư thì nhân viên phụ trách cũng báo vắng mặt, khớp màn ngoài giờ', async () => {
+        useChannel({
+            workingHoursEnabled: true,
+            timezone: 'UTC',
+            workingHours: [0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => ({ dayOfWeek, closedAllDay: true })),
+        } as unknown as Partial<ChannelConfig>);
+        await loadConversation({ id: 3, status: 'open', assignee: { id: 7, name: 'Robert Nguyễn', avatar_url: '' } });
+
+        renderHeader();
+
+        expect(screen.getByTestId('header-title').textContent).toBe('Robert Nguyễn');
         expect(screen.getByTestId('header-status').textContent).toBe('Away');
     });
 });
