@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    CSAT_LEVELS,
+    csatLevelFor,
     csatResponseFrom,
     csatSurveyUuidFromUrl,
     isCsatFeedbackSubmitted,
@@ -49,5 +51,25 @@ describe('csatSurveyUuidFromUrl', () => {
         expect(csatSurveyUuidFromUrl('https://app.test/survey/responses/abc-123/')).toBe('abc-123');
         expect(csatSurveyUuidFromUrl('https://app.test/survey/responses/abc-123?x=1')).toBe('abc-123');
         expect(csatSurveyUuidFromUrl('https://app.test/survey/responses/abc-123#top')).toBe('abc-123');
+    });
+});
+
+describe('csatLevelFor', () => {
+    it('ba mức Kém / Ổn / Tuyệt là 1 / 3 / 5', () => {
+        expect(CSAT_LEVELS.map(level => [level.key, level.value])).toStrictEqual([
+            ['POOR', 1],
+            ['OKAY', 3],
+            ['GREAT', 5],
+        ]);
+    });
+
+    it('điểm theo thang 5 mức cũ về mức gần nghĩa nhất', () => {
+        expect([1, 2, 3, 4, 5].map(rating => csatLevelFor(rating).key)).toStrictEqual([
+            'POOR',
+            'POOR',
+            'OKAY',
+            'GREAT',
+            'GREAT',
+        ]);
     });
 });

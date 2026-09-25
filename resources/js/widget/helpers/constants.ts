@@ -54,19 +54,3 @@ export const STANDALONE_CONTENT_TYPES: readonly string[] = [
     'integrations',
 ];
 
-// Ba mức đánh giá khi kết thúc hội thoại, quy về thang CSAT 1–5 mà báo cáo dùng.
-export const CONVERSATION_END_RATINGS = [
-    { key: 'POOR', value: 1 },
-    { key: 'OKAY', value: 3 },
-    { key: 'GREAT', value: 5 },
-] as const;
-
-export type ConversationEndRating = (typeof CONVERSATION_END_RATINGS)[number];
-
-// Điểm chấm từ thang 5 mức cũ (2, 4) hiện về mức gần nghĩa nhất.
-export const conversationEndRatingFor = (rating: number): ConversationEndRating => {
-    const [poor, okay, great] = CONVERSATION_END_RATINGS;
-    if (rating < okay.value) return poor;
-
-    return rating > okay.value ? great : okay;
-};

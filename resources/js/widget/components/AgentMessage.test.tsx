@@ -1,8 +1,10 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CSAT_LEVELS } from 'shared/helpers/csatHelpers';
+
 import AgentMessage from './AgentMessage';
-import { CONVERSATION_END_RATINGS, MESSAGE_TYPE } from '../helpers/constants';
+import { MESSAGE_TYPE } from '../helpers/constants';
 import { widgetStore } from '../store/widgetStore';
 import type { WidgetMessage } from '../types';
 
@@ -57,7 +59,7 @@ describe('AgentMessage — thẻ kết thúc & đánh giá', () => {
     });
 
     it('Kém là 1, Ổn là 3', () => {
-        expect(CONVERSATION_END_RATINGS.map(rating => [rating.key, rating.value])).toStrictEqual([
+        expect(CSAT_LEVELS.map(level => [level.key, level.value])).toStrictEqual([
             ['POOR', 1],
             ['OKAY', 3],
             ['GREAT', 5],

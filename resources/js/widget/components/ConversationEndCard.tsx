@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import CsatLevelPicker from 'shared/components/CsatLevelPicker';
 import { csatResponseFrom, isCsatRatingSubmitted } from 'shared/helpers/csatHelpers';
 
-import { CONVERSATION_END_RATINGS, conversationEndRatingFor } from '../helpers/constants';
 import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
@@ -23,12 +23,6 @@ const supportDurationLabel = (startedAt: number | null, endedAt: number): string
     return t('CONVERSATION_END.SUPPORTED_DAYS', { n: Math.round(minutes / MINUTES_IN_DAY) });
 };
 
-const RATING_BUTTON_CLASS =
-    'flex-1 min-h-11 rounded-xl border text-xs font-semibold leading-none transition-colors disabled:cursor-default';
-const RATING_IDLE_CLASS = 'border-[var(--yona-chat-line-field)] text-[var(--yona-chat-ink-soft)]';
-const RATING_SELECTED_CLASS =
-    'border-2 border-[var(--yona-chat-accent)] bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent-ink)]';
-
 // Kết thúc & đánh giá: phiếu CSAT (tin `input_csat`) hiện thành thẻ riêng trong luồng tin.
 export default function ConversationEndCard({ message }: { message: WidgetMessage }) {
     const submitted = csatResponseFrom(message.content_attributes?.submitted_values);
@@ -42,7 +36,7 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
     const [feedback, setFeedback] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
 
-    const shownRating = isSubmitted ? conversationEndRatingFor(Number(submitted?.rating)).value : selectedRating;
+    const shownRating = isSubmitted ? Number(submitted?.rating) : selectedRating;
     const supportedFor = supportDurationLabel(conversationStartedAt, message.created_at);
 
     const submit = async () => {
@@ -79,25 +73,12 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
             <h2 className="text-[17px] font-semibold leading-[1.35] text-[var(--yona-chat-ink)]">
                 {isSubmitted ? t('CONVERSATION_END.THANKS') : message.content || t('CONVERSATION_END.RATE_PROMPT')}
             </h2>
-            <div role="radiogroup" aria-label={t('CONVERSATION_END.RATE_PROMPT')} className="flex gap-2">
-                {CONVERSATION_END_RATINGS.map(rating => {
-                    const isSelected = shownRating === rating.value;
-
-                    return (
-                        <button
-                            key={rating.key}
-                            type="button"
-                            role="radio"
-                            aria-checked={isSelected}
-                            disabled={isSubmitted || isSubmitting}
-                            className={`${RATING_BUTTON_CLASS} ${isSelected ? RATING_SELECTED_CLASS : RATING_IDLE_CLASS}`}
-                            onClick={() => setSelectedRating(rating.value)}
-                        >
-                            {t(`CONVERSATION_END.${rating.key}`)}
-                        </button>
-                    );
-                })}
-            </div>
+            <CsatLevelPicker
+                rating={shownRating}
+                label={t('CONVERSATION_END.RATE_PROMPT')}
+                disabled={isSubmitted || isSubmitting}
+                onSelect={setSelectedRating}
+            />
             {!isSubmitted ? (
                 <>
                     <textarea

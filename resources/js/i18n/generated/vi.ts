@@ -9250,7 +9250,7 @@ const messages: Record<string, unknown> = {
         }
     },
     "SURVEY": {
-        "DESCRIPTION": "Quý khách kính mếm 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",
+        "DESCRIPTION": "Quý khách kính mến 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",
         "RATING": {
             "LABEL": "Đánh giá hội thoại",
             "SUCCESS_MESSAGE": "Cảm ơn vì đã đánh giá"
