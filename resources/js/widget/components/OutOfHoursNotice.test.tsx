@@ -47,7 +47,7 @@ describe('ngoài giờ hỗ trợ', () => {
         render(<OutOfHoursNotice />);
 
         expect(screen.getByTestId('out-of-hours').textContent).toContain(
-            'Our team is available 8:00 AM–8:00 PM. Leave a message and we will reply when we open at 8:00 AM tomorrow.',
+            'Our team is available from 8:00 AM to 8:00 PM. Leave a message and we will reply when we open at 8:00 AM tomorrow.',
         );
     });
 

@@ -249,7 +249,7 @@ return [
         'BODY' => 'Leave a message and we will reply when we open again.',
         'EMAIL_PLACEHOLDER' => 'Email to receive our reply',
         'CTA' => 'Leave a message',
-        'HOURS' => 'Our team is available {from}–{to}.',
+        'HOURS' => 'Our team is available from {from} to {to}.',
         'BODY_REOPEN' => 'Leave a message and we will reply when we open {reopen}.',
         'REOPEN' => 'We open again {reopen}.',
         'REOPEN_TODAY' => 'at {time}',

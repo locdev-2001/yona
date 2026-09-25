@@ -247,7 +247,7 @@ return [
         'BODY' => 'Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.',
         'EMAIL_PLACEHOLDER' => 'Email để nhận trả lời',
         'CTA' => 'Để lại tin nhắn',
-        'HOURS' => 'Nhóm hỗ trợ trực {from}–{to}.',
+        'HOURS' => 'Nhóm hỗ trợ trực từ {from} đến {to}.',
         'BODY_REOPEN' => 'Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa {reopen}.',
         'REOPEN' => 'Mở cửa lại {reopen}.',
         'REOPEN_TODAY' => 'lúc {time}',
