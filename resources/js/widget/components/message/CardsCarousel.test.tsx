@@ -1,7 +1,11 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import CardsCarousel from './CardsCarousel';
+import { getLocale, setLocale } from '../../../i18n';
+import CardsCarousel, { formatCardPrice } from './CardsCarousel';
+
+const initialLocale = getLocale();
+afterEach(() => setLocale(initialLocale));
 
 describe('CardsCarousel', () => {
     it('thẻ có giá hiện dòng giá riêng dưới mô tả, thẻ không có giá thì không', () => {
@@ -18,5 +22,14 @@ describe('CardsCarousel', () => {
         expect(prices).toHaveLength(1);
         expect(prices[0]).toHaveTextContent('4.290.000 ₫');
         expect(prices[0].previousElementSibling).toHaveTextContent(/^120×60cm · gỗ sồi$/);
+    });
+
+    it('giá dạng số nhóm chữ số theo ngôn ngữ widget, giá dạng chuỗi giữ nguyên', () => {
+        setLocale('vi');
+        expect(formatCardPrice(5590000)).toBe('5.590.000');
+        expect(formatCardPrice('4.290.000 ₫')).toBe('4.290.000 ₫');
+
+        setLocale('en');
+        expect(formatCardPrice(5590000)).toBe('5,590,000');
     });
 });

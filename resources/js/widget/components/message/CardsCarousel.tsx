@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { getLocale } from '../../../i18n';
 import { IFrameHelper } from '../../helpers/iframe';
 import { t } from '../../i18n';
 import type { CardAction, CardItem } from '../../types';
@@ -8,6 +9,11 @@ import type { CardAction, CardItem } from '../../types';
 // một CTA mỗi thẻ (hành động đầu tiên của thẻ), dòng giá khi item có `price`.
 const CARD_WIDTH = 190;
 const CARD_GAP = 10;
+
+// Giá là số thì nhóm chữ số theo ngôn ngữ widget (vi: 5.590.000); chuỗi do bot tự
+// viết (kèm đơn vị tiền) giữ nguyên.
+export const formatCardPrice = (price: string | number): string =>
+    typeof price === 'number' ? new Intl.NumberFormat(getLocale().replace('_', '-')).format(price) : price;
 
 function CardCta({ action }: { action: CardAction }) {
     const label = action.text || t('CARD.CTA_FALLBACK');
@@ -71,7 +77,7 @@ export default function CardsCarousel({ items }: { items: CardItem[] }) {
                                 ) : null}
                                 {item.price !== undefined && item.price !== null && item.price !== '' ? (
                                     <div className="yona-card-price mt-[7px] text-[13.5px] font-bold leading-[1.3] text-[var(--yona-chat-ink)]">
-                                        {String(item.price)}
+                                        {formatCardPrice(item.price)}
                                     </div>
                                 ) : null}
                                 {cta ? <CardCta action={cta} /> : null}
