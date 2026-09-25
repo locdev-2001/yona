@@ -9687,6 +9687,7 @@ const messages: Record<string, unknown> = {
             "STICKER": "Stickers and emoji",
             "EMOJI": "Emoji",
             "CANCEL_UPLOAD": "Cancel upload",
+            "CANCEL_SEND": "Cancel sending",
             "SEND": "Send",
             "CAPTION_PLACEHOLDER": "Add a caption…",
             "ATTACH_IMAGE": "Photos",

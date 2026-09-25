@@ -143,6 +143,31 @@ describe('sendAttachments', () => {
         expect(widgetStore.retryableFailureOf(temporary.id)).toBeUndefined();
     });
 
+    it('huỷ tệp đang tải thì trả lại bộ nhớ của ảnh/tệp xem trước (blob URL)', async () => {
+        const createdUrls: string[] = [];
+        const revokedUrls: string[] = [];
+        const originalUrlApi = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+        URL.createObjectURL = () => {
+            createdUrls.push(`blob:http://localhost/xem-truoc-${createdUrls.length}`);
+            return createdUrls[createdUrls.length - 1];
+        };
+        URL.revokeObjectURL = (url: string) => revokedUrls.push(url);
+        apiMock.sendAttachments.mockImplementation(
+            (_params: unknown, _metadata: unknown, _progress: unknown, signal: AbortSignal) =>
+                new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new WidgetApiError(0, null)))),
+        );
+
+        const sending = widgetStore.sendAttachments({ files: [image('a.png', 10), image('b.png', 10)] });
+        const [temporary] = Object.values(widgetStore.getState().conversations);
+        widgetStore.cancelSend(temporary.id);
+        await sending;
+
+        URL.createObjectURL = originalUrlApi.create;
+        URL.revokeObjectURL = originalUrlApi.revoke;
+        expect(createdUrls).toHaveLength(2);
+        expect(revokedUrls.sort()).toStrictEqual([...createdUrls].sort());
+    });
+
     it('không có tệp thì không gửi gì', async () => {
         await widgetStore.sendAttachments({ files: [] });
 

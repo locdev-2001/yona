@@ -94,6 +94,19 @@ export const canRecallMessage = (
     message.status !== 'failed' &&
     nowSeconds - message.created_at < recallWindowSeconds;
 
+// Tin đang tải lên huỷ được tới khi mọi tệp đã lên hết máy chủ. Tin chỉ có một tệp (không
+// phải ảnh) đặt nút huỷ ngay trên thẻ tệp; tin nhiều tệp hoặc có ảnh có đúng MỘT nút
+// "Huỷ gửi" dưới tin, vì huỷ là huỷ cả tin.
+export type UploadCancelPlacement = 'card' | 'message';
+
+export const uploadCancelPlacement = (message: WidgetMessage): UploadCancelPlacement | null => {
+    const attachments = message.attachments ?? [];
+    if (message.status !== 'in_progress' || !attachments.length) return null;
+    if (attachments.every(attachment => (attachment.progress ?? 0) >= 100)) return null;
+
+    return attachments.length === 1 && attachments[0].file_type !== 'image' ? 'card' : 'message';
+};
+
 export type DeliveryStatus = 'sending' | 'failed' | 'sent' | 'delivered' | 'seen';
 
 // Trạng thái hiện dưới tin của khách: agent đọc hội thoại sau lúc tin gửi = Đã xem.

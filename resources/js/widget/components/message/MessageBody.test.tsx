@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGE_TYPE } from '../../helpers/constants';
 import { widgetStore } from '../../store/widgetStore';
 import type { MessageAttachment, WidgetMessage } from '../../types';
+import UserMessage from '../UserMessage';
 import MessageBody from './MessageBody';
 
 const imageAttachment = (id: number): MessageAttachment => ({
@@ -66,6 +67,30 @@ describe('MessageBody', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Cancel upload' }));
         expect(cancelSend).toHaveBeenCalledWith('tam-1');
+    });
+
+    it('tin nhiều tệp đang tải chỉ có một nút "Huỷ gửi" cho cả tin, thẻ tệp không có nút X riêng', () => {
+        const cancelSend = vi.spyOn(widgetStore, 'cancelSend').mockImplementation(() => {});
+        const uploading = (fileName: string, progress: number) => ({
+            file_type: 'file',
+            data_url: `blob:${fileName}`,
+            file_name: fileName,
+            file_size: 2048,
+            status: 'in_progress',
+            progress,
+        });
+        render(
+            <UserMessage
+                message={messageWith([uploading('a.pdf', 40), uploading('b.pdf', 10)], { id: 'tam-2', status: 'in_progress' })}
+            />,
+        );
+
+        expect(screen.queryByRole('button', { name: 'Cancel upload' })).not.toBeInTheDocument();
+        const cancelButtons = screen.getAllByRole('button', { name: 'Cancel sending' });
+        expect(cancelButtons).toHaveLength(1);
+
+        fireEvent.click(cancelButtons[0]);
+        expect(cancelSend).toHaveBeenCalledWith('tam-2');
     });
 
     it('tải xong phần gửi lên (100%) thì không còn nút huỷ', () => {

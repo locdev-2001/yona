@@ -163,8 +163,19 @@ function patchMessage(messageId: number | string, patch: (message: WidgetMessage
     setState({ conversations: { ...state.conversations, [messageId]: patch(message) } });
 }
 
+// Ảnh/tệp xem trước của tin tạm là blob URL trong bộ nhớ trình duyệt: gỡ tin tạm (huỷ,
+// hoặc bản thật của máy chủ thay vào) thì trả bộ nhớ đó lại.
+function revokePreviewUrls(message: WidgetMessage | undefined): void {
+    if (typeof URL === 'undefined' || typeof URL.revokeObjectURL !== 'function') return;
+    new Set((message?.attachments ?? []).flatMap(attachment => [attachment.data_url, attachment.thumb_url]))
+        .forEach(url => {
+            if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+        });
+}
+
 function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMessage): void {
     const conversations = { ...state.conversations };
+    revokePreviewUrls(conversations[temporaryId]);
     delete conversations[temporaryId];
     setState({ conversations });
     pushMessageToConversation(message);
@@ -471,6 +482,7 @@ export const widgetStore = {
         inFlightSends.delete(messageId);
         failedSends.delete(messageId);
         const conversations = { ...state.conversations };
+        revokePreviewUrls(conversations[messageId]);
         delete conversations[messageId];
         setState({ conversations });
         controller.abort();

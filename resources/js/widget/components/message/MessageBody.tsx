@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
-import { isDeletedMessage } from '../../helpers/messageHelpers';
+import { isDeletedMessage, uploadCancelPlacement } from '../../helpers/messageHelpers';
 import { widgetStore } from '../../store/widgetStore';
 import { AudioBubble, FileBubble, VideoBubble } from '../bubbles';
 import { bubbleRadius, partPosition } from './bubbleShape';
@@ -55,7 +55,7 @@ function OtherAttachment({
 }: {
     attachment: MessageAttachment;
     isInProgress: boolean;
-    onCancelUpload: () => void;
+    onCancelUpload?: () => void;
 }) {
     const [hasMediaError, setMediaError] = useState(false);
     const url = attachment.data_url ?? '';
@@ -99,6 +99,7 @@ export default function MessageBody({ message, replyTo, isOwn, position }: Messa
         setFailedImageKeys(current => (current.has(imageKey) ? current : new Set(current).add(imageKey)));
     };
     const isInProgress = message.status === 'in_progress';
+    const cancelOnCard = uploadCancelPlacement(message) === 'card';
     const content = message.content ?? '';
 
     const parts: ((partPositionValue: MessageGroupPosition) => ReactNode)[] = [];
@@ -124,7 +125,7 @@ export default function MessageBody({ message, replyTo, isOwn, position }: Messa
                 key={attachment.id ?? attachment.data_url ?? `file-${index}`}
                 attachment={attachment}
                 isInProgress={isInProgress}
-                onCancelUpload={() => widgetStore.cancelSend(message.id)}
+                onCancelUpload={cancelOnCard ? () => widgetStore.cancelSend(message.id) : undefined}
             />
         ));
     });
