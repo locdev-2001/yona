@@ -5,6 +5,8 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Label;
+use App\Models\Note;
 
 function emptyWidgetContactInbox(Account $account, Inbox $inbox): ContactInbox
 {
@@ -54,6 +56,47 @@ it('giữ lại contact_inbox mà contact đã có email/phone/identifier hoặc
 
     expect(ContactInbox::query()->whereKey($withEmailInbox->id)->exists())->toBeTrue()
         ->and(ContactInbox::query()->whereKey($withCustomAttrsInbox->id)->exists())->toBeTrue();
+});
+
+it('giữ lại contact có ghi chú, nhãn, hoặc đã bị chặn', function () {
+    $account = Account::factory()->create();
+    $inbox = Inbox::factory()->webWidget()->create(['account_id' => $account->id]);
+
+    $withNote = Contact::factory()->create(['account_id' => $account->id]);
+    $withNoteInbox = ContactInbox::factory()->create(['contact_id' => $withNote->id, 'inbox_id' => $inbox->id]);
+    Note::factory()->create(['account_id' => $account->id, 'contact_id' => $withNote->id]);
+
+    $withLabel = Contact::factory()->create(['account_id' => $account->id]);
+    $withLabelInbox = ContactInbox::factory()->create(['contact_id' => $withLabel->id, 'inbox_id' => $inbox->id]);
+    Label::factory()->create(['account_id' => $account->id, 'title' => 'vip']);
+    $withLabel->addLabels('vip');
+
+    $blocked = Contact::factory()->create(['account_id' => $account->id, 'blocked' => true]);
+    $blockedInbox = ContactInbox::factory()->create(['contact_id' => $blocked->id, 'inbox_id' => $inbox->id]);
+
+    $this->artisan('widget:prune-empty-contacts')->assertSuccessful();
+
+    expect(ContactInbox::query()->whereKey($withNoteInbox->id)->exists())->toBeTrue()
+        ->and(ContactInbox::query()->whereKey($withLabelInbox->id)->exists())->toBeTrue()
+        ->and(ContactInbox::query()->whereKey($blockedInbox->id)->exists())->toBeTrue();
+});
+
+it('soát lại đúng tiêu chí ngay lúc xoá — hội thoại vừa có trước khi command chạy vẫn được giữ lại', function () {
+    $account = Account::factory()->create();
+    $inbox = Inbox::factory()->webWidget()->create(['account_id' => $account->id]);
+    $contactInbox = emptyWidgetContactInbox($account, $inbox);
+
+    Conversation::factory()->create([
+        'account_id' => $account->id,
+        'inbox_id' => $inbox->id,
+        'contact_id' => $contactInbox->contact_id,
+        'contact_inbox_id' => $contactInbox->id,
+    ]);
+
+    $this->artisan('widget:prune-empty-contacts')->assertSuccessful();
+
+    expect(ContactInbox::query()->whereKey($contactInbox->id)->exists())->toBeTrue()
+        ->and(Contact::query()->whereKey($contactInbox->contact_id)->exists())->toBeTrue();
 });
 
 it('không đụng contact_inbox của inbox không phải widget', function () {

@@ -158,9 +158,7 @@ class Notification extends Model
         return $actor instanceof Conversation ? $actor : null;
     }
 
-    // Payload đẩy qua Reverb — rút gọn qua RealtimePayload (Reverb giới hạn kích thước
-    // request, xem RealtimePayload::class). NotificationResource (REST GET /notifications)
-    // KHÔNG gọi hàm này, giữ nguyên đủ dữ liệu qua ConversationResource/MessageResource.
+    // Payload đẩy qua Reverb — rút gọn qua RealtimePayload::class.
     public function pushEventData(): array
     {
         $payload = [

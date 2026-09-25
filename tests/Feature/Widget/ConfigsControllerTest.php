@@ -100,3 +100,25 @@ it('returns the channel config, branding and a usable session token', function (
     expect(WidgetTokenService::decode($config['website_channel_config']['auth_token']))
         ->toMatchArray(['source_id' => $session->contactInbox->source_id, 'inbox_id' => $session->inbox->id]);
 });
+
+it('reuses the pending source_id across reloads of the same inbox before any real action', function () {
+    $session = WidgetSession::make();
+    $pendingToken = WidgetTokenService::generate(['source_id' => 'pending-uuid', 'inbox_id' => $session->inbox->id]);
+
+    $response = $this->postJson($session->url('config'), [], ['X-Auth-Token' => $pendingToken])->assertOk();
+
+    expect(WidgetTokenService::decode($response->json('website_channel_config.auth_token')))
+        ->toMatchArray(['source_id' => 'pending-uuid', 'inbox_id' => $session->inbox->id]);
+});
+
+it('does not reuse a pending source_id minted for a different inbox', function () {
+    $session = WidgetSession::make();
+    $otherInbox = WidgetSession::make()->inbox;
+    $foreignPendingToken = WidgetTokenService::generate(['source_id' => 'from-other-inbox', 'inbox_id' => $otherInbox->id]);
+
+    $response = $this->postJson($session->url('config'), [], ['X-Auth-Token' => $foreignPendingToken])->assertOk();
+
+    $decoded = WidgetTokenService::decode($response->json('website_channel_config.auth_token'));
+    expect($decoded['source_id'])->not->toBe('from-other-inbox')
+        ->and($decoded['inbox_id'])->toBe($session->inbox->id);
+});

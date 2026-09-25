@@ -29,8 +29,6 @@ export const WIDGET_BUS_EVENTS = {
     ON_UNREAD_MESSAGE_CLICK: 'ON_UNREAD_MESSAGE_CLICK',
     ON_UNREAD_VIEW_CLOSE: 'ON_UNREAD_VIEW_CLOSE',
     ON_CONVERSATION_CREATED: 'ON_CONVERSATION_CREATED',
-    // Phiên "treo" vừa có contact_inbox thật (sau hành động đầu tiên) — kênh
-    // realtime cần nối lại bằng pubsub_token thật thay vì token rỗng lúc /config.
     ON_REALTIME_TOKEN_READY: 'ON_REALTIME_TOKEN_READY',
     SHOW_ALERT: 'SHOW_ALERT',
     TOGGLE_REPLY_TO_MESSAGE: 'TOGGLE_REPLY_TO_MESSAGE',

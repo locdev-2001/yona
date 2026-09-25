@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Widget;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
-use App\Http\Middleware\ResolveWidgetChannel;
 use App\Models\ContactInbox;
 use App\Support\BrowserInfo;
 use App\Support\Widget\LazyWidgetContactResolver;
@@ -38,10 +37,7 @@ class EventsController extends WidgetController
         return response()->noContent();
     }
 
-    // campaign.triggered là hành động thật của khách (bấm mở tin chủ động) nên
-    // dựng contact lazy như messages/conversations; các sự kiện khác (vd.
-    // webwidget.triggered phát khi mở khung chat) giữ nguyên yêu cầu đã có
-    // phiên — KHÔNG tự tạo khách chỉ vì mở widget.
+    // campaign.triggered là hành động thật duy nhất ở đây có thể dựng contact lazy.
     private function resolveContactInbox(Request $request, EventType $type): ?ContactInbox
     {
         $contactInbox = $this->contactInbox($request);
@@ -50,14 +46,6 @@ class EventsController extends WidgetController
             return $contactInbox;
         }
 
-        $channel = $this->channel($request);
-        $payload = $request->attributes->get(ResolveWidgetChannel::AUTH_PAYLOAD, []);
-        $contactInbox = app(LazyWidgetContactResolver::class)->resolve($channel, $payload, $request);
-
-        if ($contactInbox !== null) {
-            $request->attributes->set(ResolveWidgetChannel::CONTACT_INBOX, $contactInbox);
-        }
-
-        return $contactInbox;
+        return app(LazyWidgetContactResolver::class)->resolve($request);
     }
 }

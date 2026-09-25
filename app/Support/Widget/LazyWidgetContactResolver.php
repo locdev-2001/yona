@@ -3,34 +3,36 @@
 namespace App\Support\Widget;
 
 use App\Builders\ContactInboxWithContactBuilder;
-use App\Models\Channel\WebWidget;
+use App\Http\Middleware\ResolveWidgetChannel;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
 use Illuminate\Http\Request;
 
-// Điểm dựng contact + contact_inbox DUY NHẤT của widget khi khách có hành động
-// thật đầu tiên (gửi tin, mở hội thoại, gắn định danh, tương tác campaign).
-// /config chỉ cấp source_id "treo" (không ghi DB) — dựng ở đây dùng lại ĐÚNG
-// source_id đó nên an toàn khi đua nhau: unique(inbox_id, source_id) +
-// ContactInboxWithContactBuilder tự tìm lại bản ghi vừa được luồng khác tạo.
+// source_id tái dùng qua unique(inbox_id, source_id) làm cho hành động thật đầu tiên đua nhau vẫn an toàn.
 final class LazyWidgetContactResolver
 {
-    /** @param array<string, mixed> $payload */
-    public function resolve(WebWidget $channel, array $payload, Request $request): ?ContactInbox
+    public function resolve(Request $request): ?ContactInbox
     {
+        $payload = $request->attributes->get(ResolveWidgetChannel::AUTH_PAYLOAD, []);
         $sourceId = $payload['source_id'] ?? null;
 
         if (blank($sourceId)) {
             return null;
         }
 
-        $inbox = $channel->inbox;
+        $inbox = $request->attributes->get(ResolveWidgetChannel::CHANNEL)->inbox;
 
-        return (new ContactInboxWithContactBuilder(
+        $contactInbox = (new ContactInboxWithContactBuilder(
             inbox: $inbox,
             contactAttributes: ['additional_attributes' => $this->additionalAttributes($request, $inbox)],
             sourceId: (string) $sourceId,
         ))->perform();
+
+        if ($contactInbox !== null) {
+            $request->attributes->set(ResolveWidgetChannel::CONTACT_INBOX, $contactInbox);
+        }
+
+        return $contactInbox;
     }
 
     /** @return array<string, mixed> */

@@ -1,9 +1,9 @@
 <?php
 
 use App\Events\RealtimeBroadcast;
-use App\Http\Resources\ConversationResource;
 use App\Jobs\ActionCableBroadcastJob;
 use App\Models\Conversation;
+use App\Support\RealtimePayload;
 use Illuminate\Broadcasting\BroadcastEvent;
 use Illuminate\Support\Facades\Bus;
 
@@ -48,7 +48,7 @@ it('re-reads the conversation for conversation update events', function () {
         return $data['priority'] === 'high'
             && $data['status'] === 'open'
             && $data['account_id'] === $conversation->account_id
-            && $data == [...ConversationResource::pushEventData($conversation->fresh()), 'account_id' => $conversation->account_id];
+            && $data == [...RealtimePayload::conversation($conversation->fresh()), 'account_id' => $conversation->account_id];
     });
 });
 

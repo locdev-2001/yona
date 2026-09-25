@@ -55,6 +55,7 @@ export interface WidgetState {
     };
     lastMessageId: number | string | null;
     pendingCustomAttributes: Record<string, unknown>;
+    pendingContactCustomAttributes: Record<string, unknown>;
     pendingLabels: string[];
     agents: AvailableAgent[];
     conversationAttributes: ConversationAttributes;
@@ -95,6 +96,7 @@ let state: WidgetState = {
     uiFlags: { allMessagesLoaded: false, isFetchingList: false, isAgentTyping: false, isCreating: false },
     lastMessageId: null,
     pendingCustomAttributes: {},
+    pendingContactCustomAttributes: {},
     pendingLabels: [],
     agents: [],
     conversationAttributes: { id: '', status: '' },
@@ -117,8 +119,10 @@ function setState(patch: Partial<WidgetState>): void {
 
 let bannerTimer: ReturnType<typeof setTimeout> | null = null;
 let agentTypingTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectPromise: Promise<void> | null = null;
 
 const hasConversation = () => Boolean(state.conversationAttributes.id);
+const hasContact = () => Boolean(state.contact?.id);
 
 const hasPendingMetadata = () =>
     Object.keys(state.pendingCustomAttributes).length > 0 || state.pendingLabels.length > 0;
@@ -280,6 +284,7 @@ export const widgetStore = {
             channelConfig,
             globalConfig,
             contact,
+            pendingContactCustomAttributes: {},
             appConfig: { ...state.appConfig, widgetColor: channelConfig.widgetColor },
         });
     },
@@ -647,20 +652,44 @@ export const widgetStore = {
         }
     },
 
-    // Phiên còn "treo" lúc /config (chưa có hành động thật) không mang
-    // pubsub_token thật — sau khi hội thoại/tin đầu tiên vừa tạo xong, tải lại
-    // config một lần để lấy pubsub_token thật rồi báo main.tsx nối kênh realtime.
+    // Phiên còn "treo" lúc /config (chưa có hành động thật) không mang pubsub_token
+    // thật — sau hành động thật đầu tiên (tin, hội thoại, campaign, gắn định danh),
+    // đọc lại /contact (đã có contact_inbox thật, cùng auth token) để lấy
+    // pubsub_token, báo main.tsx nối kênh realtime, rồi bù mọi tin/trạng thái lỡ tới
+    // trong lúc kênh chưa nối và gửi nốt custom attributes contact đã xếp hàng.
     async reconnectRealtimeIfPending(): Promise<void> {
         if (state.contact?.pubsub_token) return;
+        if (reconnectPromise) return reconnectPromise;
 
+        reconnectPromise = (async () => {
+            try {
+                const contact = await api.fetchContact();
+                if (!contact?.pubsub_token) return;
+
+                setState({ contact: { ...(state.contact ?? {}), ...contact } as WidgetContact });
+                emitter.emit(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, contact.pubsub_token);
+                await widgetStore.syncLatestMessages();
+                await widgetStore.getConversationAttributes();
+                await widgetStore.flushPendingContactCustomAttributes();
+            } catch {
+                // Bỏ qua như bản gốc: thử lại ở hành động kế tiếp.
+            } finally {
+                reconnectPromise = null;
+            }
+        })();
+
+        return reconnectPromise;
+    },
+
+    async flushPendingContactCustomAttributes(): Promise<void> {
+        if (!Object.keys(state.pendingContactCustomAttributes).length) return;
+
+        const pending = state.pendingContactCustomAttributes;
+        setState({ pendingContactCustomAttributes: {} });
         try {
-            const { contact } = await api.fetchConfig();
-            if (!contact?.pubsub_token) return;
-
-            setState({ contact: { ...(state.contact ?? {}), ...contact } as WidgetContact });
-            emitter.emit(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, contact.pubsub_token);
+            await api.setContactCustomAttributes(pending);
         } catch {
-            // Bỏ qua như bản gốc: thử lại ở hành động kế tiếp.
+            setState({ pendingContactCustomAttributes: { ...pending, ...state.pendingContactCustomAttributes } });
         }
     },
 
@@ -668,6 +697,7 @@ export const widgetStore = {
         try {
             await api.updateContact(user);
             await widgetStore.fetchContact();
+            await widgetStore.reconnectRealtimeIfPending();
         } catch {
             // Bỏ qua như bản gốc.
         }
@@ -717,6 +747,7 @@ export const widgetStore = {
                 IFrameHelper.sendMessage({ event: 'setAuthCookie', data: { widgetAuthToken } });
             }
             await widgetStore.fetchContact();
+            await widgetStore.reconnectRealtimeIfPending();
             if (identifierHash || widgetAuthToken) {
                 widgetStore.clearConversations();
                 await widgetStore.fetchOldConversations();
@@ -731,7 +762,17 @@ export const widgetStore = {
         }
     },
 
+    // SDK gọi hàm này ở mỗi lần tải trang để đồng bộ dữ liệu phiên — KHÔNG được
+    // dựng contact chỉ vì cuộc gọi này (ngược với chủ đích lazy contact). Phiên
+    // còn treo thì giữ tại chỗ, gửi kèm khi contact thật xuất hiện (xem
+    // reconnectRealtimeIfPending/flushPendingContactCustomAttributes).
     async setContactCustomAttributes(customAttributes: Record<string, unknown>): Promise<void> {
+        if (!hasContact()) {
+            setState({
+                pendingContactCustomAttributes: { ...state.pendingContactCustomAttributes, ...customAttributes },
+            });
+            return;
+        }
         try {
             await api.setContactCustomAttributes(customAttributes);
         } catch {
@@ -833,6 +874,9 @@ export const widgetStore = {
         try {
             await api.triggerCampaign(campaignId, customAttributes);
             setState({ activeCampaign: null });
+            // campaign.triggered có thể vừa dựng contact/hội thoại lazy — nối realtime
+            // và bù ngay tin campaign vừa gửi trước khi kênh kịp subscribe.
+            await widgetStore.reconnectRealtimeIfPending();
         } catch {
             // Bỏ qua như bản gốc.
         } finally {

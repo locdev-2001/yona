@@ -8,30 +8,27 @@ use App\Models\Inbox;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Xoá contact_inbox của widget website chưa từng có hội thoại/tin nhắn và
  * chưa được khách nhập bất kỳ định danh nào (email/phone/identifier/custom
  * attributes) — hồ sơ dựng thừa từ lúc /config còn tạo khách ngay lúc tải
- * trang. Contact đi kèm chỉ bị xoá theo nếu nó KHÔNG còn gắn với contact_inbox
- * nào khác (không đụng khách đã xác thực qua kênh khác).
- *
- * Chạy lại được nhiều lần: lượt sau không còn gì để xoá.
+ * trang. Chạy lại được nhiều lần: lượt sau không còn gì để xoá.
  */
 class PruneEmptyWidgetContacts extends Command
 {
-    protected $signature = 'widget:prune-empty-contacts
-        {--dry-run : Chỉ đếm, không xoá}
-        {--chunk=500 : Số contact_inbox xử lý mỗi đợt}';
+    private const CHUNK_SIZE = 500;
+
+    protected $signature = 'widget:prune-empty-contacts {--dry-run : Chỉ đếm, không xoá}';
 
     protected $description = 'Xoá contact_inbox widget chưa có hội thoại và chưa từng được khách nhập định danh';
 
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        $chunkSize = max(1, (int) $this->option('chunk'));
 
-        $inboxIds = $this->webWidgetInboxIds();
+        $inboxIds = Inbox::query()->where('channel_type', 'Channel::WebWidget')->pluck('id');
 
         if ($inboxIds->isEmpty()) {
             $this->components->info('Không có inbox website nào.');
@@ -43,33 +40,35 @@ class PruneEmptyWidgetContacts extends Command
         $contactsDeleted = 0;
 
         $this->eligibleContactInboxesQuery($inboxIds)
-            ->with('contact')
-            ->chunkById($chunkSize, function (Collection $contactInboxes) use ($dryRun, &$contactInboxesDeleted, &$contactsDeleted) {
-                [$inboxIdsInChunk, $contactIdsToCheck] = $this->partitionChunk($contactInboxes);
-                $orphanContactIds = $this->orphanContactIds($contactIdsToCheck, $inboxIdsInChunk)->all();
-
-                // Contact_inbox của contact mồ côi sẽ bị cascade xoá cùng contact
-                // (contact_inboxes.contact_id → cascadeOnDelete) — phần còn lại
-                // (contact null hoặc còn dùng ở contact_inbox khác) xoá dòng riêng.
-                $contactInboxIdsToDeleteDirectly = collect($contactInboxes)
-                    ->reject(fn (ContactInbox $contactInbox) => in_array($contactInbox->contact_id, $orphanContactIds, true))
-                    ->pluck('id')
-                    ->all();
-
-                $contactInboxesDeleted += count($inboxIdsInChunk);
-                $contactsDeleted += count($orphanContactIds);
+            ->chunkById(self::CHUNK_SIZE, function (Collection $contactInboxes) use ($dryRun, &$contactInboxesDeleted, &$contactsDeleted) {
+                $contactInboxIds = $contactInboxes->pluck('id')->all();
+                $contactIds = $contactInboxes->pluck('contact_id')->filter()->unique()->values()->all();
+                $orphanContactIds = $this->orphanContactIds($contactIds, $contactInboxIds)->all();
 
                 if ($dryRun) {
+                    $contactInboxesDeleted += count($contactInboxIds);
+                    $contactsDeleted += count($orphanContactIds);
+
                     return;
                 }
 
-                if ($orphanContactIds !== []) {
-                    Contact::query()->whereIn('id', $orphanContactIds)->delete();
-                }
+                // Contact mồ côi xoá QUA MODEL: cascade kéo theo contact_inbox của nó ở
+                // DB, và hook Contact dọn theo (search outbox, avatar, taggings, realtime
+                // CONTACT_DELETED) — khác bản trước dùng query builder bỏ qua hết các hook.
+                $contactsDeleted += $this->deleteOrphanContacts($orphanContactIds, $contactInboxIds);
 
-                if ($contactInboxIdsToDeleteDirectly !== []) {
-                    ContactInbox::query()->whereIn('id', $contactInboxIdsToDeleteDirectly)->delete();
-                }
+                // Phần còn lại (contact null hoặc còn dùng ở contact_inbox khác) xoá
+                // dòng riêng qua model.
+                $directIds = collect($contactInboxes)
+                    ->reject(fn (ContactInbox $contactInbox) => in_array($contactInbox->contact_id, $orphanContactIds, true))
+                    ->pluck('id')
+                    ->all();
+                $this->deleteContactInboxes($directIds);
+
+                // Đếm theo số dòng THỰC SỰ còn lại thay vì cộng dồn từng nhánh — vài
+                // dòng có thể bị soát lại và giữ nguyên lúc xoá (xem deleteOrphanContacts).
+                $contactInboxesDeleted += count($contactInboxIds)
+                    - ContactInbox::query()->whereIn('id', $contactInboxIds)->count();
             });
 
         $this->components->info($dryRun
@@ -77,12 +76,6 @@ class PruneEmptyWidgetContacts extends Command
             : "Đã xoá {$contactInboxesDeleted} contact_inbox và {$contactsDeleted} contact.");
 
         return self::SUCCESS;
-    }
-
-    /** @return Collection<int, int> */
-    private function webWidgetInboxIds(): Collection
-    {
-        return Inbox::query()->where('channel_type', 'Channel::WebWidget')->pluck('id');
     }
 
     /** @param Collection<int, int> $inboxIds @return Builder<ContactInbox> */
@@ -96,6 +89,9 @@ class PruneEmptyWidgetContacts extends Command
                     $contactQuery->whereNull('email')
                         ->whereNull('phone_number')
                         ->whereNull('identifier')
+                        ->where('blocked', false)
+                        ->whereDoesntHave('notes')
+                        ->whereDoesntHave('labels')
                         ->where(function (Builder $attrsQuery) {
                             // Contact rỗng lưu '[]' (mảng PHP rỗng qua cast `array`)
                             // dù cột mặc định '{}' — coi cả hai là "chưa nhập gì".
@@ -104,18 +100,6 @@ class PruneEmptyWidgetContacts extends Command
                         });
                 });
             });
-    }
-
-    /**
-     * @param  Collection<int, ContactInbox>  $contactInboxes
-     * @return array{0: list<int>, 1: list<int>}
-     */
-    private function partitionChunk(Collection $contactInboxes): array
-    {
-        $inboxIds = $contactInboxes->pluck('id')->all();
-        $contactIds = $contactInboxes->pluck('contact_id')->filter()->unique()->values()->all();
-
-        return [$inboxIds, $contactIds];
     }
 
     /**
@@ -137,5 +121,53 @@ class PruneEmptyWidgetContacts extends Command
             ->whereDoesntHave('conversations')
             ->whereDoesntHave('contactInboxes', fn (Builder $query) => $query->whereNotIn('id', $contactInboxIdsInChunk))
             ->pluck('id');
+    }
+
+    /**
+     * Khoá hàng rồi soát lại đúng tiêu chí ngay lúc xoá (không phải lúc SELECT ở
+     * trên) — khách có thể vừa gửi tin đầu tiên, thêm ghi chú/nhãn, hoặc gắn thêm
+     * một contact_inbox khác giữa hai bước.
+     *
+     * @param  list<int>  $contactIds
+     * @param  list<int>  $contactInboxIdsInChunk
+     */
+    private function deleteOrphanContacts(array $contactIds, array $contactInboxIdsInChunk): int
+    {
+        if ($contactIds === []) {
+            return 0;
+        }
+
+        return DB::transaction(function () use ($contactIds, $contactInboxIdsInChunk) {
+            $contacts = Contact::query()
+                ->whereKey($contactIds)
+                ->whereDoesntHave('conversations')
+                ->whereDoesntHave('contactInboxes', fn (Builder $query) => $query->whereNotIn('id', $contactInboxIdsInChunk))
+                ->whereDoesntHave('notes')
+                ->whereDoesntHave('labels')
+                ->where('blocked', false)
+                ->lockForUpdate()
+                ->get();
+
+            $contacts->each->delete();
+
+            return $contacts->count();
+        });
+    }
+
+    /** @param list<int> $contactInboxIds */
+    private function deleteContactInboxes(array $contactInboxIds): void
+    {
+        if ($contactInboxIds === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($contactInboxIds) {
+            ContactInbox::query()
+                ->whereKey($contactInboxIds)
+                ->whereDoesntHave('conversations')
+                ->lockForUpdate()
+                ->get()
+                ->each->delete();
+        });
     }
 }

@@ -29,6 +29,7 @@ describe('GET /api/v1/widget/contact', function () {
                 'has_name' => true,
                 'has_phone_number' => true,
                 'identifier' => 'abc',
+                'pubsub_token' => $session->contactInbox->pubsub_token,
             ]);
     });
 });

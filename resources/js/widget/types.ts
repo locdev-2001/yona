@@ -84,8 +84,6 @@ export interface WebsiteChannelConfigPayload {
     working_hours_enabled: boolean;
 }
 
-// id/pubsub_token là `null` khi phiên còn "treo" — chưa có hành động thật nào
-// nên contact/contact_inbox chưa được dựng ở máy chủ.
 export interface WidgetContact {
     id: number | null;
     name?: string | null;

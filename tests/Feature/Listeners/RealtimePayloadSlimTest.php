@@ -15,6 +15,7 @@ use App\Models\Label;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Models\User;
+use App\Support\RealtimePayload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -139,7 +140,7 @@ function buildHeavyMentionNotification(Account $account, User $agent, Conversati
 }
 
 describe('notification.created/updated', function () {
-    it('compacts primary_actor to id/display_id/inbox_id/status/priority/meta.sender', function () {
+    it('compacts primary_actor to id/inbox_id/priority/meta.sender', function () {
         [$account, , $agent, , $conversation, $message] = buildHeavyConversation();
         $notification = buildHeavyMentionNotification($account, $agent, $conversation, $message);
         Queue::fake();
@@ -151,9 +152,7 @@ describe('notification.created/updated', function () {
 
         expect($primaryActor)->toBe([
             'id' => $conversation->display_id,
-            'display_id' => $conversation->display_id,
             'inbox_id' => $conversation->inbox_id,
-            'status' => $conversation->statusName(),
             'priority' => $conversation->priorityName(),
             'meta' => [
                 'sender' => [
@@ -164,7 +163,7 @@ describe('notification.created/updated', function () {
         ]);
     });
 
-    it('compacts secondary_actor to id/sender/truncated content/attachment count+types, no file URLs', function () {
+    it('compacts secondary_actor down to just id — dashboard declares no other field', function () {
         [$account, , $agent, , $conversation, $message] = buildHeavyConversation();
         $notification = buildHeavyMentionNotification($account, $agent, $conversation, $message);
         Queue::fake();
@@ -173,12 +172,7 @@ describe('notification.created/updated', function () {
 
         $secondaryActor = onlyPushedBroadcastJob()->data['notification']['secondary_actor'];
 
-        expect($secondaryActor['id'])->toBe($message->id)
-            ->and(mb_strlen($secondaryActor['content']))->toBeLessThanOrEqual(210)
-            ->and($secondaryActor['attachment_count'])->toBe(20)
-            ->and($secondaryActor['attachment_types'])->toBe(['image'])
-            ->and($secondaryActor)->not->toHaveKey('data_url')
-            ->and($secondaryActor)->not->toHaveKey('attachments');
+        expect($secondaryActor)->toBe(['id' => $message->id]);
     });
 
     it('notification.created and notification.updated stay well under the Reverb limit for the heaviest conversation', function () {
@@ -210,16 +204,58 @@ describe('notification.created/updated', function () {
         $rest = (new NotificationResource($notification->fresh()))->toArray(request());
 
         expect($rest['primary_actor'])->toHaveKey('labels')
+            ->and($rest['primary_actor']['last_non_activity_message']['content'])->toBe($message->content)
+            ->and($rest['primary_actor']['last_non_activity_message']['attachments'])->toHaveCount(20)
             ->and($rest['secondary_actor']['content'])->toBe($message->content)
             ->and($rest['secondary_actor']['attachments'])->toHaveCount(20);
     });
 });
 
-describe('conversation push payload (assignee.changed etc.)', function () {
-    it('shares one compact preview instead of sending the last message twice', function () {
+describe('ConversationResource::pushEventData (webhook/REST/NotificationResource source)', function () {
+    it('stays full — webhook, REST and NotificationResource all read this, only Reverb slims further', function () {
         [, , , , $conversation, $message] = buildHeavyConversation();
 
         $data = ConversationResource::pushEventData($conversation->fresh());
+
+        expect($data['messages'][0]['id'])->toBe($message->id)
+            ->and($data['messages'][0])->toHaveKey('sentiment')
+            ->and($data['messages'][0])->toHaveKey('conversation')
+            ->and($data['messages'][0]['content'])->toBe($message->content)
+            ->and($data['messages'][0]['attachments'])->toHaveCount(20)
+            ->and($data['last_non_activity_message']['content'])->toBe($message->content)
+            ->and($data['last_non_activity_message']['attachments'])->toHaveCount(20);
+    });
+
+    it('keeps the REST conversation payload unchanged with the full last message', function () {
+        [, , , , $conversation, $message] = buildHeavyConversation();
+
+        $rest = (new ConversationResource($conversation->fresh(['latestMessage.attachments', 'latestNonActivityMessage.attachments'])))
+            ->toArray(request());
+
+        expect($rest['messages'][0]['id'])->toBe($message->id)
+            ->and($rest['messages'][0])->toHaveKey('sentiment')
+            ->and($rest['messages'][0])->toHaveKey('conversation')
+            ->and($rest['messages'][0]['content'])->toBe($message->content)
+            ->and($rest['messages'][0]['attachments'])->toHaveCount(20);
+    });
+
+    it('keeps webhookData full — integrators must not silently lose attachments/conversation summary', function () {
+        [, , , , $conversation, $message] = buildHeavyConversation();
+
+        $webhookData = $conversation->fresh()->webhookData();
+
+        expect($webhookData['last_non_activity_message']['content'])->toBe($message->content)
+            ->and($webhookData['last_non_activity_message']['attachments'])->toHaveCount(20)
+            ->and($webhookData['last_non_activity_message'])->toHaveKey('conversation')
+            ->and($webhookData['last_non_activity_message'])->toHaveKey('sentiment');
+    });
+});
+
+describe('RealtimePayload::conversation (Reverb broadcast only)', function () {
+    it('shares one compact preview instead of sending the last message twice', function () {
+        [, , , , $conversation, $message] = buildHeavyConversation();
+
+        $data = RealtimePayload::conversation($conversation->fresh());
 
         expect($data['messages'])->toHaveCount(1)
             ->and($data['messages'][0])->toBe($data['last_non_activity_message'])
@@ -239,24 +275,11 @@ describe('conversation push payload (assignee.changed etc.)', function () {
             'content' => 'Cuộc trò chuyện đã được gán lại',
         ]);
 
-        $data = ConversationResource::pushEventData($conversation->fresh());
+        $data = RealtimePayload::conversation($conversation->fresh());
 
         expect($data['messages'][0]['id'])->toBe($activity->id)
             ->and($data['last_non_activity_message']['id'])->toBe($message->id)
             ->and($data['messages'][0])->not->toBe($data['last_non_activity_message']);
-    });
-
-    it('keeps the REST conversation payload unchanged with the full last message', function () {
-        [, , , , $conversation, $message] = buildHeavyConversation();
-
-        $rest = (new ConversationResource($conversation->fresh(['latestMessage.attachments', 'latestNonActivityMessage.attachments'])))
-            ->toArray(request());
-
-        expect($rest['messages'][0]['id'])->toBe($message->id)
-            ->and($rest['messages'][0])->toHaveKey('sentiment')
-            ->and($rest['messages'][0])->toHaveKey('conversation')
-            ->and($rest['messages'][0]['content'])->toBe($message->content)
-            ->and($rest['messages'][0]['attachments'])->toHaveCount(20);
     });
 
     it('assignee.changed stays well under the Reverb limit for the heaviest conversation', function () {

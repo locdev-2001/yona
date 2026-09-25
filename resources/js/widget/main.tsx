@@ -74,8 +74,6 @@ async function bootstrap() {
         document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
 
         await widgetStore.getConversationAttributes();
-        // Phiên còn "treo" (chưa có hành động thật) chưa có pubsub_token thật —
-        // nối lại khi ON_REALTIME_TOKEN_READY bắn lên sau hành động đầu tiên.
         if (contact.pubsub_token) widgetConnector.connect(contact.pubsub_token);
     } catch {
         // Token sai/inbox không tồn tại: giữ màn trống như bản gốc (server trả 404).

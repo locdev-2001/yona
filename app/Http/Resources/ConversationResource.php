@@ -7,7 +7,6 @@ use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
-use App\Support\RealtimePayload;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
@@ -135,26 +134,14 @@ class ConversationResource extends JsonResource
         ];
     }
 
-    // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder
-    // cộng thêm channel + contact_inbox (presenter serialize cả record).
-    // Khác REST (toArray không đổi): messages[0]/last_non_activity_message đổi sang
-    // bản xem trước rút gọn và dùng CHUNG một bản khi cùng là một tin — REST
-    // (ConversationResource::collection, jbuilder cũ) vẫn nhận đủ MessageResource::pushEventData.
+    // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder cộng
+    // thêm channel + contact_inbox. Nguồn ĐẦY ĐỦ dùng chung cho webhook, REST
+    // (NotificationResource) và Reverb — bản rút gọn cho riêng Reverb nằm ở
+    // RealtimePayload::conversation().
     public static function pushEventData(Conversation $conversation): array
     {
         $contactInbox = $conversation->contactInbox;
         $data = (new self($conversation))->toArray(request());
-        [$lastMessage, $lastNonActivityMessage] = self::resolveLastMessages($conversation);
-
-        $nonActivityPreview = $lastNonActivityMessage === null ? null : RealtimePayload::messagePreview($lastNonActivityMessage);
-        $lastMessagePreview = match (true) {
-            $lastMessage === null => null,
-            $lastNonActivityMessage !== null && $lastMessage->is($lastNonActivityMessage) => $nonActivityPreview,
-            default => RealtimePayload::messagePreview($lastMessage),
-        };
-
-        $data['messages'] = $lastMessagePreview === null ? [] : [$lastMessagePreview];
-        $data['last_non_activity_message'] = $nonActivityPreview;
 
         return [
             ...$data,

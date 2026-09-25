@@ -41,16 +41,13 @@ Route::middleware(ResolveWidgetChannel::class)
     ->prefix('/api/v1/widget')
     ->group(function () {
         // config KHÔNG ghi DB (xem ConfigsController); inbox_members + campaigns
-        // không cần khách (skip_before_action :set_contact của bản gốc); events tự
-        // quyết định theo loại sự kiện (xem EventsController).
+        // không cần khách; events tự quyết định theo loại sự kiện (xem EventsController).
         Route::post('/config', [ConfigsController::class, 'store']);
         Route::get('/inbox_members', [InboxMembersController::class, 'index']);
         Route::get('/campaigns', [CampaignsController::class, 'index']);
         Route::post('/events', [EventsController::class, 'store']);
 
-        // Hành động THẬT đầu tiên của khách — chưa có contact_inbox thì dựng lazy
-        // ngay tại đây (ResolveOrCreateWidgetContact), khác EnsureWidgetContact ở
-        // dưới chỉ 404 khi chưa có phiên chứ không tự tạo.
+        // Hành động THẬT đầu tiên của khách — dựng contact_inbox lazy nếu chưa có.
         Route::middleware(ResolveOrCreateWidgetContact::class)->group(function () {
             Route::post('/messages', [MessagesController::class, 'store']);
             Route::post('/conversations', [ConversationsController::class, 'store']);
@@ -75,8 +72,6 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::post('/conversations/transcript', [ConversationsController::class, 'transcript']);
             Route::get('/conversations/toggle_status', [ConversationsController::class, 'toggleStatus']);
 
-            // `resource :contact` (số ít): show ở /contact, hai action collection
-            // nằm dưới cùng đoạn đường đó — update/set_user đã chuyển lên nhóm lazy.
             Route::get('/contact', [ContactsController::class, 'show']);
             Route::post('/contact/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes']);
 

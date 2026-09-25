@@ -6,7 +6,6 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Finders\NotificationFinder;
 use App\Http\Resources\ContactResource;
-use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\UserResource;
 use App\Jobs\ActionCableBroadcastJob;
@@ -216,7 +215,7 @@ class ActionCableListener extends BaseListener
         [$conversation, $account] = $this->extractConversationAndAccount($event);
         $user = $event->data['user'];
 
-        $this->broadcast($account, [$user->pubsub_token], EventType::CONVERSATION_MENTIONED, ConversationResource::pushEventData($conversation));
+        $this->broadcast($account, [$user->pubsub_token], EventType::CONVERSATION_MENTIONED, RealtimePayload::conversation($conversation));
     }
 
     private function broadcastConversationToMembers(DomainEvent $event, EventType $type): void
@@ -224,7 +223,7 @@ class ActionCableListener extends BaseListener
         [$conversation, $account] = $this->extractConversationAndAccount($event);
         $tokens = $this->userTokens($account, $conversation->inbox->members()->get());
 
-        $this->broadcast($account, $tokens, $type, ConversationResource::pushEventData($conversation));
+        $this->broadcast($account, $tokens, $type, RealtimePayload::conversation($conversation));
     }
 
     private function broadcastConversationToMembersAndContact(DomainEvent $event, EventType $type): void
@@ -235,7 +234,7 @@ class ActionCableListener extends BaseListener
             ...$this->contactInboxTokens($conversation->contactInbox),
         ];
 
-        $this->broadcast($account, $tokens, $type, ConversationResource::pushEventData($conversation));
+        $this->broadcast($account, $tokens, $type, RealtimePayload::conversation($conversation));
     }
 
     private function broadcastContactToAccount(DomainEvent $event, EventType $type): void
