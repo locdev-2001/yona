@@ -95,7 +95,7 @@ body {
 }
 
 label {
-  @apply block font-medium py-1 px-0 capitalize;
+  @apply block font-medium py-1 px-0;
 }
 
 input:not(.reset-base),
