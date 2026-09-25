@@ -633,14 +633,6 @@ postgres_query() {
     fi
 }
 
-migrations_pending() {
-    if is_enabled "$DEPLOY_DRY_RUN"; then
-        return 1
-    fi
-
-    ! "$PHP_BIN" artisan migrate:status --pending=1 --no-interaction >/dev/null 2>&1
-}
-
 deploy_database() {
     if is_enabled "$DEPLOY_FRESH_DB"; then
         log "XOÁ SẠCH database '$(env_value DB_DATABASE)' và dựng lại schema từ đầu"
@@ -649,12 +641,6 @@ deploy_database() {
             --no-interaction
         DATABASE_WAS_RESET=1
     else
-        if migrations_pending; then
-            log 'Có migration đang chờ; sao lưu database trước khi migrate'
-            run "$PHP_BIN" artisan db:backup --no-interaction \
-                || fail 'Sao lưu database thất bại; dừng deploy trước khi migrate.'
-        fi
-
         log 'Chạy forward-only migrations'
         run "$PHP_BIN" artisan migrate \
             --force \

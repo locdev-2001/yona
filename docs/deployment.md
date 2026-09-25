@@ -125,9 +125,8 @@ sudo -u postgres /www/server/pgsql/bin/psql -d postgres -v ON_ERROR_STOP=1 -c "R
 `yona_app` là owner của database nên migration tự tạo/sửa được bảng; không cần
 `ALTER DEFAULT PRIVILEGES`.
 
-Sao lưu tự động hằng ngày qua `php artisan db:backup` (lịch ở
-`routes/console.php`, `deploy.sh` cũng tự chạy trước khi migrate — mục 13, Sao
-lưu và phục hồi). Backup tay khi cần thêm:
+Sao lưu tự động do cron trên server đảm nhận, không nằm trong app. Backup tay
+khi cần thêm (ví dụ trước một migration rủi ro):
 
 ```bash
 sudo -u postgres /www/server/pgsql/bin/pg_dump -Fc yona > /www/backup/yona-$(date +%F-%H%M).dump
@@ -1340,38 +1339,6 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 Đọc qua giao diện: `/log-viewer` (chỉ super admin, chỉ `storage/logs`, không cho
 xoá file). Qua CLI: `php artisan pail`.
 
-### Sao lưu và phục hồi
-
-`php artisan db:backup` chạy `pg_dump -Fc` (mật khẩu qua biến môi trường
-`PGPASSWORD` của tiến trình con, không bao giờ trên argv hay trong log) ra
-`storage/app/backups/db-YYYYmmdd-HHMMSS.dump`, rồi đẩy thêm một bản ra disk
-Laravel khai ở `BACKUP_DISK` (`.env`, vd `s3`/`r2` — thiếu biến này lệnh vẫn
-chạy nhưng **cảnh báo "chưa có bản ngoài server"** mỗi lần). Dọn bản cũ hơn 14
-ngày (`BackupDatabase::KEEP_DAYS`) ở cả hai nơi. `--with-files` thêm một bản
-`files-YYYYmmdd-HHMMSS.tar.gz` của `storage/app/public` (đính kèm khách hàng —
-`Attachment::disk()` mặc định `public`).
-
-Lịch chạy tự động (`routes/console.php`, giờ Việt Nam):
-
-| Lịch | Lệnh |
-|---|---|
-| Mỗi ngày 02:00, trừ Chủ nhật | `db:backup` |
-| Chủ nhật 02:00 | `db:backup --with-files` |
-
-`deploy.sh` tự sao lưu **trước khi migrate** khi phát hiện còn migration đang
-chờ (`migrate:status --pending=1`). Sao lưu thất bại thì **dừng deploy trước
-khi đụng vào schema**.
-
-**Kiểm tra một bản dump phục hồi được** mà không cần tạo database nháp:
-
-```bash
-pg_restore --list storage/app/backups/db-<timestamp>.dump >/dev/null
-```
-
-Đọc được TOC (table of contents) của archive nghĩa là file không hỏng/cắt cụt.
-Muốn kiểm cả nội dung thì phục hồi tay vào một database dev, không chạy trên
-production (tốn CREATEDB trên role ứng dụng, không đáng đánh đổi).
-
 ### Cảnh báo vận hành
 
 `App\Support\Alerts\OpsAlerter` là kênh cảnh báo duy nhất: gửi Telegram khi có
@@ -1429,7 +1396,6 @@ code:
 | Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
-| Deploy dừng ở `Sao lưu database thất bại` | `pg_dump` không có trong PATH và thiếu ở `/www/server/pgsql/bin`, hoặc DB hết dung lượng đĩa (mục 13, Sao lưu và phục hồi) |
 | Không thấy cảnh báo Telegram dù có sự cố thật | `ALERT_TELEGRAM_BOT_TOKEN`/`ALERT_TELEGRAM_CHAT_ID` trống → chỉ rơi về `storage/logs`; kiểm `.env` rồi `php artisan config:clear` (mục 13, Cảnh báo vận hành) |
 
 ### Rollback

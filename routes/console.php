@@ -45,21 +45,6 @@ Schedule::command('pulse:trim')->hourly();
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
 
-// Một bản backup mỗi ngày — Chủ nhật kèm thêm tệp đính kèm thay vì chạy cả hai
-// biến thể (db:backup luôn dump DB nên chạy hai lần cùng ngày là dump trùng).
-Schedule::command('db:backup')
-    ->dailyAt('02:00')
-    ->timezone('Asia/Ho_Chi_Minh')
-    ->when(fn () => ! now()->isSunday())
-    ->withoutOverlapping()
-    ->onOneServer();
-Schedule::command('db:backup', ['--with-files'])
-    ->dailyAt('02:00')
-    ->timezone('Asia/Ho_Chi_Minh')
-    ->when(fn () => now()->isSunday())
-    ->withoutOverlapping()
-    ->onOneServer();
-
 // Cảnh báo khi Horizon/Reverb/zalo-bridge đổi trạng thái, không phải mỗi phút.
 Schedule::command('monitor:check')
     ->everyMinute()

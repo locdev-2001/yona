@@ -77,8 +77,4 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
-    // Disk nhận bản sao lưu database ngoài server (db:backup), ví dụ s3/r2. Để
-    // trống = chỉ lưu cục bộ ở storage/app/backups.
-    'backup_disk' => env('BACKUP_DISK'),
-
 ];
