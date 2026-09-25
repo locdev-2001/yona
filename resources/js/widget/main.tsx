@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { fetchConfig } from './api/widget';
 import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
 import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
-import { isLightBackground } from './helpers/colorHelper';
+import { isLightAccent } from 'shared/helpers/accentContrast';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
@@ -70,8 +70,9 @@ async function bootstrap() {
         const channelConfig = toChannelConfig(channelPayload);
         widgetStore.setChannelConfig(channelConfig, globalConfig ?? {}, contact);
         document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
-        // Màu nhấn do tenant chọn: nền sáng thì chữ/icon trên nó dùng mực tối (token trong widget.scss).
-        document.documentElement.dataset.accentTone = isLightBackground(channelConfig.widgetColor) ? 'light' : 'dark';
+        // Chỗ DUY NHẤT quyết màu chữ trên màu nhấn: nền sáng thì --yona-chat-on-accent và
+        // --yona-chat-accent-ink chuyển sang mực (_chat-tokens.scss, khối data-accent-tone).
+        document.documentElement.dataset.accentTone = isLightAccent(channelConfig.widgetColor) ? 'light' : 'dark';
 
         await widgetStore.getConversationAttributes();
         widgetConnector.connect(contact.pubsub_token);

@@ -16,7 +16,7 @@ export default function ReplyPreview({ message, onDismiss }: { message: WidgetMe
         <div className="mb-2 flex items-center gap-[9px] rounded-[11px] bg-[var(--yona-chat-field)] py-2 ps-2.5 pe-1">
             <span aria-hidden="true" className="self-stretch w-[3px] flex-none rounded-[2px] bg-[var(--yona-chat-accent)]" />
             <div className="flex-1 min-w-0">
-                <div className="truncate text-[11px] font-semibold leading-[1.3] text-[var(--yona-chat-accent)]">
+                <div className="truncate text-[11px] font-semibold leading-[1.3] text-[var(--yona-chat-accent-ink)]">
                     {t('REPLY.REPLYING_TO', { name: senderName })}
                 </div>
                 <div className="truncate text-xs leading-[1.4] text-[var(--yona-chat-ink-soft)]">

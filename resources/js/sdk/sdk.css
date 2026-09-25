@@ -1,6 +1,7 @@
 :root {
   --b-100: #f2f3f7;
-  --s-700: #37546d;
+  /* Chữ/icon trên launcher khi màu tenant sáng: cùng mực với chữ trên màu nhấn trong widget. */
+  --yona-launcher-ink: #17181a;
 }
 
 .woot-widget-holder {
@@ -141,7 +142,7 @@
 
 .woot-widget-bubble.woot-widget--expanded.woot-widget-bubble-color--lighter
   div {
-  color: var(--s-700);
+  color: var(--yona-launcher-ink);
 }
 
 .woot-widget-bubble.woot-widget--expanded svg {
@@ -176,7 +177,7 @@
 }
 
 .woot-widget-bubble.woot-widget-bubble-color--lighter svg path {
-  stroke: var(--s-700);
+  stroke: var(--yona-launcher-ink);
 }
 
 @media only screen and (min-width: 667px) {
@@ -207,7 +208,7 @@
 
 .woot-widget-bubble-color--lighter.woot--close::before,
 .woot-widget-bubble-color--lighter.woot--close::after {
-  background-color: var(--s-700);
+  background-color: var(--yona-launcher-ink);
 }
 
 .woot--close::before {

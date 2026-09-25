@@ -39,6 +39,8 @@
   --yona-chat-on-scrim: #ffffff;
   --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
   --yona-chat-send-idle: #d2d6db;
+  // Mũi tên của nút gửi lúc chưa có chữ: luôn trắng trên nền xám, không theo màu nhấn.
+  --yona-chat-on-send-idle: #ffffff;
   // Viền ô nhập liệu và nút chọn trong thẻ (đánh giá, ngoài giờ).
   --yona-chat-line-field: rgba(0, 0, 0, 0.09);
   // Ảnh đại diện chữ tắt của nhân viên chưa có ảnh.

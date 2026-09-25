@@ -23,7 +23,7 @@ export default function ChatEmptyState() {
             className="flex flex-col items-center justify-center flex-1 gap-2 px-[34px] py-6 text-center"
             data-testid="chat-empty-state"
         >
-            <span className="flex items-center justify-center mb-[3px] size-12 rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] text-[var(--yona-chat-accent)]">
+            <span className="flex items-center justify-center mb-[3px] size-12 rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] text-[var(--yona-chat-accent-ink)]">
                 <svg
                     aria-hidden="true"
                     width="22"

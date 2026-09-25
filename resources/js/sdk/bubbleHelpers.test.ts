@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { bubbleSVG, createBubbleIcon } from './bubbleHelpers';
-import { isWidgetColorLighter } from './helpers/colorHelper';
 import type { SdkInstance } from './types';
 
 const stubSdkInstance = (overrides: Partial<SdkInstance>) => {
@@ -82,17 +81,6 @@ describe('setLauncherLabels', () => {
         setLauncherLabels({});
 
         expect(chatBubble.getAttribute('aria-label')).toBe('Mở trò chuyện');
-    });
-});
-
-describe('isWidgetColorLighter', () => {
-    it('màu mặc định #1f93ff là màu tối → chữ trắng', () => {
-        expect(isWidgetColorLighter('#1f93ff')).toBe(false);
-    });
-
-    it('màu sáng vượt ngưỡng 225 → chữ đậm', () => {
-        expect(isWidgetColorLighter('#ffffff')).toBe(true);
-        expect(isWidgetColorLighter('#f2f3f7')).toBe(true);
     });
 });
 

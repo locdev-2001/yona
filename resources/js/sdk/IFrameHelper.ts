@@ -17,7 +17,7 @@ import {
     hideUnreadPreview,
     formatUnreadBadge,
 } from './bubbleHelpers';
-import { isWidgetColorLighter } from './helpers/colorHelper';
+import { isLightAccent } from '../shared/helpers/accentContrast';
 import { dispatchSdkEvent, toSdkEventKey } from './helpers/customEvent';
 import { SDK_EVENTS } from './constants/sdkEvents';
 import { SET_USER_ERROR } from './constants/errorTypes';
@@ -350,7 +350,7 @@ export const IFrameHelper = {
             closeBtnClassName += ' woot-widget-bubble--flat';
         }
 
-        if (isWidgetColorLighter(widgetColor)) {
+        if (isLightAccent(widgetColor)) {
             className += ' woot-widget-bubble-color--lighter';
             closeBtnClassName += ' woot-widget-bubble-color--lighter';
         }

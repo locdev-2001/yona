@@ -134,7 +134,7 @@ export function FileBubble({
                     rel="noreferrer noopener nofollow"
                     aria-label={t('COMPONENTS.FILE_BUBBLE.DOWNLOAD')}
                     title={t('COMPONENTS.FILE_BUBBLE.DOWNLOAD')}
-                    className="relative flex size-[30px] flex-none items-center justify-center rounded-[8px] bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent)] after:absolute after:-inset-[7px] after:content-[''] active:scale-[0.97]"
+                    className="relative flex size-[30px] flex-none items-center justify-center rounded-[8px] bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent-ink)] after:absolute after:-inset-[7px] after:content-[''] active:scale-[0.97]"
                 >
                     <DownloadIcon />
                 </a>

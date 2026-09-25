@@ -14,7 +14,7 @@ export default function AttachMenu({ maximumFileSizeMb, onPickImages, onPickFile
         {
             key: 'image',
             icon: 'i-lucide-image',
-            iconClass: 'bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent)]',
+            iconClass: 'bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent-ink)]',
             label: t('COMPOSER.ATTACH_IMAGE'),
             hint: t('COMPOSER.ATTACH_IMAGE_HINT'),
             onSelect: onPickImages,

@@ -29,7 +29,7 @@ const PILL_FACE_IDLE_CLASS =
     'text-[var(--yona-chat-ink-muted)] group-hover:bg-[var(--yona-chat-hover)] group-hover:text-[var(--yona-chat-ink)]';
 const PILL_FACE_ACTIVE_CLASS = 'bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)]';
 const SEND_FACE_READY_CLASS = 'bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]';
-const SEND_FACE_IDLE_CLASS = 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-chat-on-accent)]';
+const SEND_FACE_IDLE_CLASS = 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-chat-on-send-idle)]';
 
 function PillButton({ faceClass, children, ...buttonProps }: ButtonHTMLAttributes<HTMLButtonElement> & { faceClass: string }) {
     return (

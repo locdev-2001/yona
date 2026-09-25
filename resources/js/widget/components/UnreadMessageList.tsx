@@ -6,7 +6,6 @@ import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { emitter } from 'shared/helpers/emitter';
 
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
-import { isWidgetColorLighter } from '../../sdk/helpers/colorHelper';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import type { MessageAttachment, MessageSender } from '../types';
@@ -103,9 +102,7 @@ export default function UnreadMessageList({
     unreadMessageCount: number;
     onClose: () => void;
 }) {
-    const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
     const channelConfig = useWidgetState(state => state.channelConfig);
-    const isBackgroundLighter = isWidgetColorLighter(widgetColor || '#1f93ff');
 
     return (
         <div className="unread-wrap" dir="ltr">
@@ -139,10 +136,7 @@ export default function UnreadMessageList({
                         className="button clear-button"
                         onClick={() => emitter.emit(WIDGET_BUS_EVENTS.ON_UNREAD_MESSAGE_CLICK)}
                     >
-                        <span
-                            className={`flex items-center ${isBackgroundLighter ? '!text-n-slate-12' : ''}`.trim()}
-                            style={{ color: widgetColor }}
-                        >
+                        <span className="flex items-center text-[var(--yona-chat-accent-ink)]">
                             <FluentIcon className="mr-2" size="16" icon="arrow-right" />
                             {t('UNREAD_VIEW.VIEW_MESSAGES_BUTTON')}
                         </span>
