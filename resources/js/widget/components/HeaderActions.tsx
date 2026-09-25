@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 
 import { CONVERSATION_STATUS } from '../helpers/constants';
@@ -9,6 +9,8 @@ import { widgetStore } from '../store/widgetStore';
 import { getAuthToken } from '../api/client';
 import { t } from '../i18n';
 import ResetSessionDialog from './ResetSessionDialog';
+import { useEmailTranscript } from './useEmailTranscript';
+import { startNewConversation } from '../screens/navigation';
 import { HEADER_ACTION_CLASS } from './headerActionClass';
 
 interface HeaderMenuItem {
@@ -16,6 +18,8 @@ interface HeaderMenuItem {
     icon: string;
     label: string;
     className?: string;
+    /** Thao tác huỷ/kết thúc: chữ đỏ, tách khỏi nhóm trên bằng một đường kẻ. */
+    danger?: boolean;
     onSelect: () => void;
 }
 
@@ -74,20 +78,22 @@ function HeaderMenu({ items }: { items: HeaderMenuItem[] }) {
                         className="absolute end-0 top-full z-50 mt-1.5 w-max min-w-[224px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] p-1.5 shadow-[var(--yona-chat-shadow-pop)]"
                         onKeyDown={onMenuKeyDown}
                     >
-                        {items.map(item => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                role="menuitem"
-                                className={`flex items-center w-full gap-2.5 px-2.5 text-start rounded-[10px] min-h-11 text-[13.5px] font-medium text-[var(--yona-chat-ink)] hover:bg-[var(--yona-chat-field)] focus-visible:bg-[var(--yona-chat-field)] focus-visible:outline-none ${item.className ?? ''}`.trim()}
-                                onClick={() => {
-                                    setOpen(false);
-                                    item.onSelect();
-                                }}
-                            >
-                                <span className={`${item.icon} size-[18px] flex-shrink-0 text-[var(--yona-chat-ink-soft)]`} />
-                                <span>{item.label}</span>
-                            </button>
+                        {items.map((item, index) => (
+                            <Fragment key={item.key}>
+                                {item.danger && index > 0 ? <div role="separator" className="mx-2.5 my-1 h-px bg-[var(--yona-chat-line)]" /> : null}
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    className={`flex items-center w-full gap-2.5 px-2.5 text-start rounded-[10px] min-h-11 text-[13.5px] font-medium ${item.danger ? 'text-[var(--yona-chat-danger)]' : 'text-[var(--yona-chat-ink)]'} hover:bg-[var(--yona-chat-field)] focus-visible:bg-[var(--yona-chat-field)] focus-visible:outline-none ${item.className ?? ''}`.trim()}
+                                    onClick={() => {
+                                        setOpen(false);
+                                        item.onSelect();
+                                    }}
+                                >
+                                    <span className={`${item.icon} size-[18px] flex-shrink-0 ${item.danger ? '' : 'text-[var(--yona-chat-ink-soft)]'}`} />
+                                    <span>{item.label}</span>
+                                </button>
+                            </Fragment>
                         ))}
                     </div>
                 </>
@@ -104,6 +110,7 @@ export default function HeaderActions({ showPopoutButton = false }: { showPopout
     const websiteToken = useWidgetState(state => state.channelConfig?.websiteToken ?? '');
     const locale = useWidgetState(state => state.channelConfig?.locale ?? 'en');
     const hasConversationHistory = useWidgetState(state => Object.keys(state.conversations).length > 0);
+    const transcript = useEmailTranscript();
 
     const isIframe = IFrameHelper.isIFrame();
     const hasEndConversationEnabled = Boolean(enabledFeatures?.includes('end_conversation'));
@@ -115,24 +122,8 @@ export default function HeaderActions({ showPopoutButton = false }: { showPopout
         if (isIframe) IFrameHelper.sendMessage({ event: 'closeWindow' });
     };
 
+    // Thứ tự theo design: mở cửa sổ riêng, gửi lịch sử, hội thoại mới, xoá phiên; kết thúc tách riêng ở cuối.
     const menuItems: HeaderMenuItem[] = [];
-    if (canLeaveConversation && canUserEndConversation && hasEndConversationEnabled) {
-        menuItems.push({
-            key: 'end-conversation',
-            icon: 'i-lucide-log-out',
-            label: t('END_CONVERSATION'),
-            onSelect: () => void widgetStore.resolveConversation(),
-        });
-    }
-    // Cửa sổ bật riêng không có SDK giữ cookie để xoá cùng, nên chỉ xoá phiên khi nằm trong trang khách.
-    if (isIframe && hasConversationHistory) {
-        menuItems.push({
-            key: 'reset-session',
-            icon: 'i-lucide-rotate-ccw',
-            label: t('RESET_SESSION.BUTTON'),
-            onSelect: () => setConfirmingReset(true),
-        });
-    }
     if (showPopoutButton) {
         menuItems.push({
             key: 'popout',
@@ -143,6 +134,31 @@ export default function HeaderActions({ showPopoutButton = false }: { showPopout
                 closeWindow();
                 popoutChatWindow(window.location.origin, websiteToken, locale, getAuthToken());
             },
+        });
+    }
+    if (transcript.available && hasConversationHistory) {
+        menuItems.push({ key: 'transcript', icon: 'i-lucide-mail', label: t('HEADER.TRANSCRIPT'), onSelect: () => void transcript.send() });
+    }
+    // Hội thoại mới giữ lịch sử (tab Tin nhắn vẫn thấy hội thoại cũ); khác với xoá phiên bên dưới.
+    if (hasConversationHistory) {
+        menuItems.push({ key: 'new-conversation', icon: 'i-lucide-message-square-plus', label: t('HEADER.NEW_CONVERSATION'), onSelect: startNewConversation });
+    }
+    // Cửa sổ bật riêng không có SDK giữ cookie để xoá cùng, nên chỉ xoá phiên khi nằm trong trang khách.
+    if (isIframe && hasConversationHistory) {
+        menuItems.push({
+            key: 'reset-session',
+            icon: 'i-lucide-rotate-ccw',
+            label: t('RESET_SESSION.BUTTON'),
+            onSelect: () => setConfirmingReset(true),
+        });
+    }
+    if (canLeaveConversation && canUserEndConversation && hasEndConversationEnabled) {
+        menuItems.push({
+            key: 'end-conversation',
+            icon: 'i-lucide-log-out',
+            label: t('END_CONVERSATION'),
+            danger: true,
+            onSelect: () => void widgetStore.resolveConversation(),
         });
     }
 

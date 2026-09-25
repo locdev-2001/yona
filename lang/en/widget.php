@@ -54,7 +54,7 @@ return [
     'YOU' => 'You',
     'START_NEW_CONVERSATION' => 'Start a new conversation',
     'RESET_SESSION' => [
-        'BUTTON' => 'Start a new chat',
+        'BUTTON' => 'Start over as a new visitor',
         'CONFIRM_TITLE' => 'Start a new chat?',
         'CONFIRM_BODY' => 'The chat will start over as a new visitor. Earlier messages will no longer show in this browser.',
         'CONFIRM' => 'Start over',
@@ -128,6 +128,11 @@ return [
         'TITLE' => 'Rate your conversation',
         'SUBMITTED_TITLE' => 'Thank you for submitting the rating',
         'PLACEHOLDER' => 'Tell us more...',
+    ],
+    'EMAIL_CAPTURE' => [
+        'HINT' => 'We’ll email you when we reply, feel free to leave',
+        'LABEL' => 'Email',
+        'DONE' => 'We’ll reply to {email}',
     ],
     'EMAIL_TRANSCRIPT' => [
         'BUTTON_TEXT' => 'Request a conversation transcript',
@@ -247,12 +252,17 @@ return [
         'AGENT_ACTIVE' => 'Active now',
         'MORE' => 'More options',
         'POPOUT' => 'Open in a new window',
+        'TRANSCRIPT' => 'Email me this chat',
+        'NEW_CONVERSATION' => 'New conversation',
     ],
     'OUT_OF_HOURS' => [
         'TITLE' => 'We are outside support hours',
         'BODY' => 'Leave a message and we will reply when we open again.',
         'EMAIL_PLACEHOLDER' => 'Email to receive our reply',
         'CTA' => 'Leave a message',
+        'EMAIL_TITLE' => 'Get our reply by email',
+        'EMAIL_LABEL' => 'Your email',
+        'HINT' => 'Or message us below, we will read it when we open.',
         'HOURS' => 'Our team is available from {from} to {to}.',
         'BODY_REOPEN' => 'Leave a message and we will reply when we open {reopen}.',
         'REOPEN' => 'We open again {reopen}.',

@@ -38,7 +38,11 @@ function AgentMessageBubble({
     messageId: number | string;
     messageContentAttributes: Record<string, unknown>;
 }) {
-    // Tin mẫu (xin email, lựa chọn, biểu mẫu…) dùng cùng bong bóng agent của khung chat.
+    if (contentType === 'input_email') {
+        return <EmailInput title={content} messageId={messageId} messageContentAttributes={messageContentAttributes} />;
+    }
+
+    // Tin mẫu còn lại dùng cùng bong bóng agent của khung chat.
     return (
         <div className="chat-bubble-wrap">
             <div
@@ -51,9 +55,6 @@ function AgentMessageBubble({
                         __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
                     }}
                 />
-                {contentType === 'input_email' ? (
-                    <EmailInput messageId={messageId} messageContentAttributes={messageContentAttributes} />
-                ) : null}
             </div>
         </div>
     );

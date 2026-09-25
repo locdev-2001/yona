@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { emitter } from 'shared/helpers/emitter';
 
-import { sendEmailTranscript } from '../api/widget';
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
 import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
@@ -11,10 +10,9 @@ import { t } from '../i18n';
 import Branding from './Branding';
 import ChatInputWrap from './ChatInputWrap';
 import ReplyPreview from './composer/ReplyPreview';
+import { useEmailTranscript } from './useEmailTranscript';
 import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
 import type { WidgetMessage, WidgetSticker } from '../types';
-
-const TRANSCRIPT_COOLDOWN_MS = 15000;
 
 export default function ChatFooter({ onStartNewConversation }: { onStartNewConversation: () => void }) {
     const isWidgetStyleFlat = useWidgetState(state => state.appConfig.widgetStyle === 'flat');
@@ -22,21 +20,17 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
     const allowMessagesAfterResolved = useWidgetState(
         state => state.channelConfig?.allowMessagesAfterResolved ?? true,
     );
-    const hasEmail = useWidgetState(state => Boolean(state.contact?.has_email));
     const disableBranding = useWidgetState(state => Boolean(state.channelConfig?.disableBranding));
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
 
     const [inReplyTo, setInReplyTo] = useState<WidgetMessage | null>(null);
-    const [isSendingTranscript, setSendingTranscript] = useState(false);
-    const [transcriptCooldown, setTranscriptCooldown] = useState(false);
-    const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const transcript = useEmailTranscript();
 
     useEffect(() => {
         const handler = (message: unknown) => setInReplyTo(message as WidgetMessage);
         emitter.on(WIDGET_BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, handler);
         return () => {
             emitter.off(WIDGET_BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, handler);
-            if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
         };
     }, []);
 
@@ -72,22 +66,6 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
         });
     };
 
-    const sendTranscript = async () => {
-        if (!hasEmail || isSendingTranscript || transcriptCooldown) return;
-        setSendingTranscript(true);
-        try {
-            await sendEmailTranscript();
-            setTranscriptCooldown(true);
-            if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
-            cooldownTimer.current = setTimeout(() => setTranscriptCooldown(false), TRANSCRIPT_COOLDOWN_MS);
-            widgetStore.showBanner({ message: t('EMAIL_TRANSCRIPT.SEND_EMAIL_SUCCESS'), type: 'success' });
-        } catch {
-            widgetStore.showBanner({ message: t('EMAIL_TRANSCRIPT.SEND_EMAIL_ERROR'), type: 'error' });
-        } finally {
-            setSendingTranscript(false);
-        }
-    };
-
     const branding = <Branding disableBranding={disableBranding} />;
     const footerClass = `relative z-50 border-t border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-3.5 py-[11px] ${
         !isWidgetStyleFlat ? 'rounded-b-lg' : ''
@@ -105,12 +83,12 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
                 >
                     {t('START_NEW_CONVERSATION')}
                 </button>
-                {hasEmail ? (
+                {transcript.available ? (
                     <button
                         type="button"
                         className="mx-auto mt-1 flex min-h-11 items-center px-3 text-[11.5px] leading-[1.3] text-[var(--yona-chat-ink-soft)] hover:text-[var(--yona-chat-ink)] disabled:opacity-50 active:scale-[0.97]"
-                        disabled={isSendingTranscript || transcriptCooldown}
-                        onClick={sendTranscript}
+                        disabled={transcript.busy}
+                        onClick={() => void transcript.send()}
                     >
                         {t('EMAIL_TRANSCRIPT.BUTTON_TEXT')}
                     </button>
