@@ -243,7 +243,7 @@ class ConversationReplyMail extends Mailable
     private function fromEmail(): string
     {
         return $this->shouldUseConversationEmailAddress()
-            ? EmailAddress::parseOrDefault($this->account()->supportEmail())
+            ? $this->account()->outgoingEmailAddress()
             : EmailAddress::parseOrDefault($this->inboxFromEmailAddress());
     }
 

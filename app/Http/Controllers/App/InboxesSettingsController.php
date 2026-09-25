@@ -52,9 +52,13 @@ class InboxesSettingsController extends Controller
 
     public function show(Account $account, int $inboxId, ?string $tab = null): Response
     {
+        $inbox = $account->inboxes()->whereKey($inboxId)->firstOrFail();
+
         return Inertia::render('dashboard/settings/inboxes/Show', [
-            'inboxId' => $this->fetchInboxId($account, $inboxId),
+            'inboxId' => $inbox->id,
             'tab' => $tab,
+            // Ví dụ "Tên người gửi" dùng đúng địa chỉ thư sẽ gửi cho khách.
+            'senderEmailAddress' => $inbox->outgoingEmailAddress(),
         ]);
     }
 

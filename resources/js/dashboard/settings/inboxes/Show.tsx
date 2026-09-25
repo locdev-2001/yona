@@ -34,7 +34,7 @@ import AccessToken from 'dashboard/settings/profile/AccessToken';
 import Widget from 'dashboard/modules/widget-preview/components/Widget';
 import LockToSingleConversationPreview from './components/LockToSingleConversationPreview';
 import WeeklyAvailability from './components/WeeklyAvailability';
-import SenderNameExamplePreview from './components/SenderNameExamplePreview';
+import SenderNameSection from './components/SenderNameSection';
 import PreChatFormSettings from './PreChatForm/Settings';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
@@ -59,6 +59,7 @@ import type { Inbox } from './types';
 interface ShowProps {
     inboxId: number;
     tab?: string | null;
+    senderEmailAddress: string;
 }
 
 const TAB_LABELS: Record<string, string> = {
@@ -125,11 +126,12 @@ function tabKeysFor(channelType: string, provider: string | null | undefined): s
     ];
 }
 
-export default function InboxShow({ inboxId, tab = null }: ShowProps) {
+export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: ShowProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
     const uiSettings = (auth.user?.ui_settings ?? {}) as UISettings;
     const isInboundEmailEnabled = Boolean(currentAccount!.features?.inbound_emails);
+    const currentAgentName = auth.user?.display_name || auth.user?.name || '';
 
     const [inbox, setInbox] = useState<Inbox | null>(null);
     const [requestedTab] = useState(tab ?? '');
@@ -147,7 +149,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
     const [continuityViaEmail, setContinuityViaEmail] = useState(true);
     const [senderNameType, setSenderNameType] = useState('friendly');
     const [businessName, setBusinessName] = useState('');
-    const [showBusinessNameInput, setShowBusinessNameInput] = useState(false);
+    const [isSavingBusinessName, setSavingBusinessName] = useState(false);
     const [lockToSingleConversation, setLockToSingleConversation] = useState(false);
     const [channelWelcomeTitle, setChannelWelcomeTitle] = useState('');
     const [channelWelcomeTagline, setChannelWelcomeTagline] = useState('');
@@ -272,12 +274,30 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
             }
             setAvatarFile(null);
             syncInboxData(updated);
-            setShowBusinessNameInput(false);
             useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
         } catch (error) {
             useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
         } finally {
             setUpdating(false);
+        }
+    };
+
+    // Chỉ gửi tên doanh nghiệp, và chỉ cập nhật lại ô đó: các ô khác đang sửa dở giữ nguyên.
+    const saveBusinessName = async (): Promise<boolean> => {
+        setSavingBusinessName(true);
+        try {
+            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`, {
+                business_name: businessName.trim() || null,
+            });
+            setInbox(updated);
+            setBusinessName(updated.business_name ?? '');
+            useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+            return true;
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
+            return false;
+        } finally {
+            setSavingBusinessName(false);
         }
     };
 
@@ -309,6 +329,20 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
             useAlert(t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_SECRET.RESET_ERROR'));
         }
     };
+
+    const senderNameSection = (
+        <SenderNameSection
+            senderNameType={senderNameType}
+            businessName={businessName}
+            inboxName={selectedInboxName}
+            agentName={currentAgentName}
+            emailAddress={senderEmailAddress}
+            isSavingBusinessName={isSavingBusinessName}
+            onSenderNameTypeChange={setSenderNameType}
+            onBusinessNameChange={setBusinessName}
+            onSaveBusinessName={saveBusinessName}
+        />
+    );
 
     if (!inbox) {
         return (
@@ -441,54 +475,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                             />
                                         ) : null}
 
-                                        {isWebWidget || isEmailChannel ? (
-                                            <SettingsFieldSection
-                                                label={t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.TITLE')}
-                                                className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"
-                                                extra={
-                                                    <SenderNameExamplePreview
-                                                        senderNameType={senderNameType}
-                                                        businessName={businessName}
-                                                        isWebsiteChannel={isWebWidget}
-                                                        onUpdate={setSenderNameType}
-                                                    />
-                                                }
-                                            >
-                                                {showBusinessNameInput ? (
-                                                    <div className="flex justify-end gap-2 w-full">
-                                                        <input
-                                                            autoFocus
-                                                            value={businessName}
-                                                            placeholder={t(
-                                                                'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.PLACEHOLDER',
-                                                            )}
-                                                            className="!mb-0"
-                                                            type="text"
-                                                            onChange={event => setBusinessName(event.target.value)}
-                                                            onBlur={() => setShowBusinessNameInput(false)}
-                                                        />
-                                                        <Button
-                                                            label={t(
-                                                                'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.SAVE_BUTTON_TEXT',
-                                                            )}
-                                                            className="flex-shrink-0"
-                                                            onMouseDown={event => event.preventDefault()}
-                                                            onClick={() => void updateInbox()}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <Button
-                                                        ghost
-                                                        blue
-                                                        sm
-                                                        label={t(
-                                                            'INBOX_MGMT.EDIT.SENDER_NAME_SECTION.BUSINESS_NAME.BUTTON_TEXT',
-                                                        )}
-                                                        onClick={() => setShowBusinessNameInput(true)}
-                                                    />
-                                                )}
-                                            </SettingsFieldSection>
-                                        ) : null}
+                                        {isEmailChannel ? <div className="py-2 mb-2">{senderNameSection}</div> : null}
 
                                         {isWebWidget ? (
                                             <SettingsAccordion
@@ -754,6 +741,7 @@ export default function InboxShow({ inboxId, tab = null }: ShowProps) {
                                                     description={t(
                                                         'INBOX_MGMT.SETTINGS_POPUP.ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT',
                                                     )}
+                                                    editor={continuityViaEmail ? senderNameSection : undefined}
                                                 />
                                             ) : null}
                                         </SettingsAccordion>

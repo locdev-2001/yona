@@ -1,90 +1,70 @@
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import RadioCard from 'dashboard/components-next/radioCard/RadioCard';
-import { useBranding } from 'shared/composables/useBranding';
 
-// Port từ settings/inbox/components/SenderNameExamplePreview.vue
+// Hai kiểu tên người gửi, mỗi kiểu kèm ví dụ dựng từ dữ liệu thật: tên nhân viên
+// đang đăng nhập, tên doanh nghiệp (trống thì là tên hộp thư, như lúc gửi thư) và
+// địa chỉ thư sẽ gửi cho khách.
 interface SenderNameExamplePreviewProps {
     senderNameType: string;
     businessName: string;
-    isWebsiteChannel?: boolean;
+    agentName: string;
+    emailAddress: string;
     onUpdate: (key: string) => void;
 }
 
 export default function SenderNameExamplePreview({
     senderNameType,
     businessName,
-    isWebsiteChannel = false,
+    agentName,
+    emailAddress,
     onUpdate,
 }: SenderNameExamplePreviewProps) {
-    const { installationName } = useBranding();
-
     const senderNameKeyOptions = [
         {
             key: 'friendly',
             heading: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.TITLE'),
             content: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.SUBTITLE'),
-            preview: {
-                senderName: 'Smith',
-                businessName: installationName,
-                email: '<support@yourbusiness.com>',
-            },
+            avatarName: agentName,
         },
         {
             key: 'professional',
             heading: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.PROFESSIONAL.TITLE'),
             content: t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.PROFESSIONAL.SUBTITLE'),
-            preview: {
-                senderName: '',
-                businessName: installationName,
-                email: '<support@yourbusiness.com>',
-            },
+            avatarName: businessName,
         },
     ];
 
     return (
-        <div
-            className={`flex flex-col items-start gap-4 mt-3 min-w-0 ${
-                isWebsiteChannel ? 'sm:flex-row md:flex-col xl:flex-row' : 'sm:flex-row'
-            }`}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
             {senderNameKeyOptions.map(keyOption => {
                 const isFriendly = keyOption.key === 'friendly';
-                const userName = isFriendly
-                    ? keyOption.preview.senderName
-                    : businessName || keyOption.preview.businessName;
 
                 return (
                     <RadioCard
-                        id={keyOption.key}
+                        id={`sender-name-${keyOption.key}`}
                         key={keyOption.key}
                         label={keyOption.heading}
                         description={keyOption.content}
                         isActive={keyOption.key === senderNameType}
-                        className="flex-1 !gap-2"
-                        onSelect={onUpdate}
+                        className="min-w-0 !gap-2"
+                        onSelect={() => onUpdate(keyOption.key)}
                     >
-                        <div className="flex items-center gap-3">
-                            <Avatar name={userName} size={30} />
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <Avatar name={keyOption.avatarName} size={30} />
+                            <div className="flex flex-col min-w-0">
+                                <div className="flex flex-wrap items-center gap-x-1 text-body-main">
                                     {isFriendly ? (
-                                        <span className="text-body-main text-n-slate-12">
-                                            {keyOption.preview.senderName}
-                                        </span>
+                                        <>
+                                            <span className="text-n-slate-12">{agentName}</span>
+                                            <span className="text-n-slate-11">
+                                                {t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.FROM')}
+                                            </span>
+                                        </>
                                     ) : null}
-                                    {isFriendly ? (
-                                        <span className="text-body-main text-n-slate-11">
-                                            {t('INBOX_MGMT.EDIT.SENDER_NAME_SECTION.FRIENDLY.FROM')}
-                                        </span>
-                                    ) : null}
-                                    <span className="text-body-main text-n-slate-12">
-                                        {businessName || keyOption.preview.businessName}
-                                    </span>
+                                    <span className="text-n-slate-12">{businessName}</span>
                                 </div>
-                                <span className="text-label-small text-n-slate-11">
-                                    {keyOption.preview.email}
-                                </span>
+                                <span className="text-label-small text-n-slate-11 break-all">{`<${emailAddress}>`}</span>
                             </div>
                         </div>
                     </RadioCard>
