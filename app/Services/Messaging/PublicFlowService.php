@@ -75,6 +75,16 @@ final class PublicFlowService
             return $this->describeCardItem($message, $attributes, $itemId);
         }
 
+        // Form dài (FormType::needsPublicPage) mở trang "form" với chính danh sách ô của tin.
+        if ($message->contentTypeName() === 'form' && $purpose === 'form') {
+            return [
+                'message_id' => $message->id,
+                'title' => trim((string) $message->content),
+                'subtitle' => null,
+                'data' => $attributes,
+            ];
+        }
+
         if ($message->contentTypeName() !== 'webview' || ($attributes['page'] ?? null) !== $purpose) {
             return null;
         }

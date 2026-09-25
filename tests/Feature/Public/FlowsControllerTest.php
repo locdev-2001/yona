@@ -211,3 +211,24 @@ describe('header frame-ancestors', function () {
         $this->get("/m/{$token}")->assertHeader('Content-Security-Policy', "frame-ancestors 'self'");
     });
 });
+
+it('form dài gửi qua kênh chữ: link planner phát mở được trang form và gửi được câu trả lời', function () {
+    $conversation = flowConversation();
+    $message = flowAgentSends($conversation, 'form', ['items' => [
+        ['name' => 'ho_ten', 'type' => 'text', 'label' => 'Họ tên'],
+        ['name' => 'dia_chi', 'type' => 'text_area', 'label' => 'Địa chỉ giao hàng'],
+    ]], 'Cho shop xin thông tin giao hàng nhé');
+    $token = issueFlowToken($message, 'form');
+
+    $this->getJson("/public/api/v1/flows/{$token}")
+        ->assertOk()
+        ->assertJsonPath('purpose', 'form')
+        ->assertJsonPath('data.items.1.name', 'dia_chi');
+
+    $this->postJson("/public/api/v1/flows/{$token}/submit", [
+        'submitted_values' => [['name' => 'ho_ten', 'value' => 'Chị Hoa'], ['name' => 'dia_chi', 'value' => '12 Hàng Bông']],
+    ])->assertOk();
+
+    expect($message->fresh()->content_attributes['submitted_values'])->toHaveCount(2);
+    $this->getJson("/public/api/v1/flows/{$token}")->assertNotFound();
+});
