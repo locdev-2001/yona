@@ -350,11 +350,49 @@ LARAVEL_BASE_URL=https://yona.vn
 BRIDGE_HTTP_HOST=127.0.0.1
 BRIDGE_HTTP_PORT=8612
 BRIDGE_ELEVATED_SECRET=
+BRIDGE_SESSION_KEY=
+BRIDGE_MAX_SESSIONS=50
 ```
 
 `deploy.sh` bắt `BRIDGE_HTTP_HOST=127.0.0.1` và `LARAVEL_WEBHOOK_URL` phải là
 HTTPS. Bridge không bao giờ expose thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
 để trống = không bao giờ cho phép nhóm method destructive (fail-closed).
+
+### Mã hoá at-rest kho phiên (`BRIDGE_SESSION_KEY`)
+
+Cookie trong `.sessions/c{id}.json` là toàn quyền tài khoản Zalo cá nhân của
+khách — quyền tệp `0600` (mục "Kho phiên .sessions/" phía dưới) chỉ chặn user
+khác trên cùng máy, không chặn backup/ảnh đĩa bị lộ. Từ bản này, bridge mã hoá
+AES-256-GCM mọi tệp ghi vào `.sessions/` khi có `BRIDGE_SESSION_KEY`:
+
+```bash
+# Sinh khoá 32 byte MỘT LẦN, lưu như secret khác (không commit, không log):
+openssl rand -base64 32
+```
+
+Dán giá trị vào `services/zalo-bridge/.env`:
+
+```dotenv
+BRIDGE_SESSION_KEY=<chuoi-openssl-vua-sinh>
+```
+
+- **Thiếu khoá không chặn deploy**: bridge vẫn boot và ghi phiên dạng plaintext
+  như trước, chỉ in cảnh báo lúc boot khi `NODE_ENV=production` — production cũ
+  chưa đặt khoá không bị gãy đột ngột. Khoá **sai định dạng** (đặt rồi nhưng
+  không phải 32 byte base64/hex) thì bridge từ chối boot — đó là lỗi cấu hình rõ
+  ràng, không phải "chưa kịp đặt khoá".
+- **Di trú tệp cũ**: không cần thao tác tay. Tệp phiên ghi từ trước (plaintext)
+  vẫn đọc được bình thường; ngay lần đọc đó (khôi phục phiên lúc bridge khởi
+  động, hoặc lần ghi kế tiếp) bridge tự ghi đè lại dạng đã mã hoá. Sau khi đặt
+  khoá lần đầu, restart bridge một lần (mục "Khởi động lại bridge") để mọi
+  phiên đang restore được đi qua bước di trú ngay, thay vì chờ tới lần ghi sau.
+- **Xoay khoá**: đặt khoá mới vào `BRIDGE_SESSION_KEY`, khoá cũ chuyển sang
+  `BRIDGE_SESSION_KEY_PREVIOUS` rồi restart. Bridge mã hoá tệp MỚI bằng khoá
+  mới, nhưng vẫn giải mã được tệp cũ qua khoá cũ (đọc thử khoá mới trước, hỏng
+  thì thử khoá cũ). Sau một chu kỳ restart (mọi phiên đã được đọc lại ít nhất
+  một lần → đã re-encrypt bằng khoá mới), có thể bỏ `BRIDGE_SESSION_KEY_PREVIOUS`.
+- Kiểm tra đã mã hoá: `cat services/zalo-bridge/.sessions/c<id>.json` phải ra
+  JSON `{"v":1,"iv":"...","tag":"...","data":"..."}`, không phải cookie thô.
 
 ### Sống sót qua reboot
 

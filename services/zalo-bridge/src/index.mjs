@@ -46,7 +46,8 @@ import {
 import { maskUid, rawPayloadLogEnabled, rawPayloadLogWarning, shortToken } from './redact.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { safeEqual } from './secret-compare.mjs';
-import { copySessionFile, ensureSessionDir, hardenSessionStore, writeSessionFile } from './session-store-fs.mjs';
+import { copySessionFile, ensureSessionDir, hardenSessionStore, readSessionFile, writeSessionFile } from './session-store-fs.mjs';
+import { loadSessionKeys } from './session-crypto.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
     buildFriendRequestPayload,
@@ -248,7 +249,7 @@ async function readSlotMetaForKey(key) {
         return null;
     }
     try {
-        const raw = await fs.readFile(p, 'utf8');
+        const raw = await readSessionFile(p);
         return JSON.parse(raw);
     } catch {
         return null;
@@ -2112,7 +2113,7 @@ async function tryLoginWithSavedSession(connectionId) {
     }
     const slot = getSlot(key);
     try {
-        const raw = await fs.readFile(cp, 'utf8');
+        const raw = await readSessionFile(cp);
         const creds = JSON.parse(raw);
         if (!creds?.cookie || !creds?.imei || !creds?.userAgent) {
             return false;
@@ -2673,6 +2674,23 @@ async function boot() {
             console.error(`[bridge] FATAL: missing required env vars in production: ${missing.join(', ')}. Refusing to start.`);
             process.exit(1);
         }
+    }
+
+    // BRIDGE_SESSION_KEY SAI ĐỊNH DẠNG chặn boot ngay (lỗi cấu hình rõ ràng,
+    // mọi NODE_ENV) — nhưng THIẾU khoá ở production chỉ cảnh báo rồi chạy tiếp:
+    // chặn hẳn ở đây sẽ phá deploy production trước khi founder kịp đặt khoá.
+    // deploy.sh/docs/deployment.md phải nói rõ khoá là bắt buộc trên thực tế.
+    try {
+        const { current } = loadSessionKeys();
+        if (!current && process.env.NODE_ENV === 'production') {
+            console.warn(
+                '[bridge] CANH BAO: BRIDGE_SESSION_KEY chua duoc dat — phien Zalo dang ghi PLAINTEXT xuong dia. ' +
+                'Dat BRIDGE_SESSION_KEY (openssl rand -base64 32) trong .env cua bridge roi restart de bat ma hoa at-rest.'
+            );
+        }
+    } catch (e) {
+        console.error(`[bridge] FATAL: ${e.message}. Refusing to start.`);
+        process.exit(1);
     }
 
     // 8.1: tệp phiên do bản bridge cũ ghi ra vẫn 664 — siết về 600 trước khi dùng.
