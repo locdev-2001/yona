@@ -358,9 +358,10 @@
   }
 }
 
-/* Khung chat trên máy tính theo design: 380×620, bo 18px, cách launcher 20px. */
+/* Khung chat trên máy tính theo design: 380×620 tính cả viền, bo 18px, cách launcher 20px. */
 @media only screen and (min-width: 667px) {
   .woot-widget-holder {
+    box-sizing: border-box;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 18px;
     bottom: 96px;

@@ -149,7 +149,7 @@ export default function HeaderActions({ showPopoutButton = false }: { showPopout
     if (!menuItems.length && !isIframe) return null;
 
     return (
-        <div className="actions flex items-center flex-shrink-0 gap-1">
+        <div className="actions flex items-center flex-shrink-0 gap-2">
             {menuItems.length ? <HeaderMenu items={menuItems} /> : null}
             {isIframe ? (
                 <button
