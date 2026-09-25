@@ -143,8 +143,10 @@ export interface MessageAttachment {
     thumb_url?: string;
     status?: string;
     file_size?: number;
-    // Chỉ có ở tệp đang tải lên: phần trăm đã tải để vẽ tiến trình trong ô.
+    // Chỉ có ở tệp đang tải lên: phần trăm đã tải để vẽ tiến trình, và tên tệp gốc
+    // (URL xem trước là blob nên không suy ra được tên).
     progress?: number;
+    file_name?: string;
 }
 
 // `content_attributes.items` của tin `cards`.

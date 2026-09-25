@@ -94,11 +94,13 @@ export const sendAttachments = (
     { files, caption = '', replyTo = null }: { files: (File | string)[]; caption?: string; replyTo?: number | string | null },
     { customAttributes, labels }: { customAttributes?: Record<string, unknown>; labels?: string[] } = {},
     onUploadProgress?: (loadedBytes: number, totalBytes: number) => void,
+    signal?: AbortSignal,
 ): Promise<WidgetMessage> =>
     postFormWithProgress(
         `${BASE}/messages${buildSearch()}`,
         buildSendAttachmentsFormData({ files, caption, replyTo, referrerURL: referrerUrl(), customAttributes, labels }),
         onUploadProgress,
+        signal,
     );
 
 // Sticker gửi MÃ trong danh mục của kênh; máy chủ tự tra ảnh, không nhận URL.

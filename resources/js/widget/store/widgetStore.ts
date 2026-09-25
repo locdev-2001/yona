@@ -139,6 +139,7 @@ const attachmentPreviewOf = (file: File): MessageAttachment => {
         data_url: previewUrl,
         file_type: file.type.startsWith('image/') ? 'image' : 'file',
         file_size: file.size,
+        file_name: file.name,
         status: 'in_progress',
         progress: 0,
     };
@@ -176,7 +177,7 @@ function replaceTemporaryMessage(temporaryId: number | string, message: WidgetMe
 interface OutgoingSend {
     temporaryMessage: WidgetMessage;
     carriesPendingMetadata: boolean;
-    request: (metadata: ReturnType<typeof pendingMetadata>) => Promise<WidgetMessage>;
+    request: (metadata: ReturnType<typeof pendingMetadata>, signal: AbortSignal) => Promise<WidgetMessage>;
 }
 
 interface FailedSend {
@@ -185,6 +186,8 @@ interface FailedSend {
 }
 
 const failedSends = new Map<number | string, FailedSend>();
+// Lần gửi đang chạy theo id tin tạm, để khách huỷ được giữa chừng.
+const inFlightSends = new Map<number | string, AbortController>();
 
 // Không có phản hồi (mất mạng) hoặc máy chủ lỗi 5xx: gửi lại có cơ hội thành công.
 const isNetworkFailure = (error: unknown): boolean =>
@@ -195,19 +198,24 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
     failedSends.delete(temporaryMessage.id);
     pushMessageToConversation({ ...temporaryMessage, status: 'in_progress' });
     const metadata = carriesPendingMetadata ? pendingMetadata() : {};
+    const controller = new AbortController();
+    inFlightSends.set(temporaryMessage.id, controller);
 
     try {
-        const data = await request(metadata);
+        const data = await request(metadata, controller.signal);
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
     } catch (error) {
-        if (!state.conversations[temporaryMessage.id]) return;
+        // Tin tạm đã bị gỡ (khách huỷ, hoặc xoá hội thoại) thì không còn gì để báo lỗi.
+        if (controller.signal.aborted || !state.conversations[temporaryMessage.id]) return;
         failedSends.set(temporaryMessage.id, { send, isNetworkFailure: isNetworkFailure(error) });
         patchMessage(temporaryMessage.id, () => ({
             ...temporaryMessage,
             status: 'failed',
             attachments: temporaryMessage.attachments?.map(attachment => ({ ...attachment, status: 'failed' })),
         }));
+    } finally {
+        if (inFlightSends.get(temporaryMessage.id) === controller) inFlightSends.delete(temporaryMessage.id);
     }
 }
 
@@ -242,7 +250,7 @@ async function sendAttachmentMessage({
     await deliverOutgoingMessage({
         temporaryMessage,
         carriesPendingMetadata: true,
-        request: metadata => api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress),
+        request: (metadata, signal) => api.sendAttachments({ files, caption, replyTo }, metadata, reportProgress, signal),
     });
 }
 
@@ -456,6 +464,18 @@ export const widgetStore = {
         await deliverOutgoingMessage(failedSend.send);
     },
 
+    // Huỷ một tin đang gửi (tệp đang tải): dừng yêu cầu và gỡ tin tạm khỏi luồng tin.
+    cancelSend(messageId: number | string): void {
+        const controller = inFlightSends.get(messageId);
+        if (!controller) return;
+        inFlightSends.delete(messageId);
+        failedSends.delete(messageId);
+        const conversations = { ...state.conversations };
+        delete conversations[messageId];
+        setState({ conversations });
+        controller.abort();
+    },
+
     // Chỉ tin hỏng còn payload trong bộ nhớ mới gửi lại được.
     retryableFailureOf(messageId: number | string): Pick<FailedSend, 'isNetworkFailure'> | undefined {
         return failedSends.get(messageId);
@@ -498,6 +518,8 @@ export const widgetStore = {
 
     clearConversations(): void {
         failedSends.clear();
+        inFlightSends.forEach(controller => controller.abort());
+        inFlightSends.clear();
         setState({ conversations: {}, pendingCustomAttributes: {}, pendingLabels: [] });
     },
 

@@ -121,6 +121,28 @@ describe('sendAttachments', () => {
         expect(message.status).toBe('failed');
     });
 
+    it('khách huỷ tệp đang tải: dừng yêu cầu, gỡ tin tạm, không báo gửi hỏng', async () => {
+        let uploadSignal: AbortSignal | undefined;
+        apiMock.sendAttachments.mockImplementation(
+            (_params: unknown, _metadata: unknown, _progress: unknown, signal: AbortSignal) =>
+                new Promise((_resolve, reject) => {
+                    uploadSignal = signal;
+                    signal.addEventListener('abort', () => reject(new WidgetApiError(0, null)));
+                }),
+        );
+
+        const sending = widgetStore.sendAttachments({ files: [image('bao-gia.pdf', 10)] });
+        const [temporary] = Object.values(widgetStore.getState().conversations);
+        expect(temporary.attachments?.[0].file_name).toBe('bao-gia.pdf');
+
+        widgetStore.cancelSend(temporary.id);
+        await sending;
+
+        expect(uploadSignal?.aborted).toBe(true);
+        expect(widgetStore.getState().conversations).toStrictEqual({});
+        expect(widgetStore.retryableFailureOf(temporary.id)).toBeUndefined();
+    });
+
     it('không có tệp thì không gửi gì', async () => {
         await widgetStore.sendAttachments({ files: [] });
 
