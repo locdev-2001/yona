@@ -16,6 +16,19 @@ it('fills the default pre chat options', function () {
         ->toBe(['emailAddress', 'fullName', 'phoneNumber']);
 });
 
+it('writes the default pre chat texts in the default language of the installation', function () {
+    config(['app.locale' => 'vi']);
+
+    $options = WebWidget::factory()->create()->pre_chat_form_options;
+    $fields = collect($options['pre_chat_fields'])->keyBy('name');
+
+    expect($options['pre_chat_message'])->toBe('Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé.')
+        ->and($fields['emailAddress'])->toMatchArray(['label' => 'Email', 'placeholder' => 'Vui lòng nhập email', 'type' => 'email', 'required' => true, 'enabled' => false])
+        ->and($fields['fullName']['label'])->toBe('Tên đầy đủ')
+        ->and($fields['phoneNumber']['label'])->toBe('Số điện thoại')
+        ->and($fields->pluck('field_type')->unique()->all())->toBe(['standard']);
+});
+
 it('keeps pre chat fields provided by the caller', function () {
     $fields = [['field_type' => 'standard', 'label' => 'Email Id', 'name' => 'emailAddress', 'type' => 'email', 'required' => true, 'enabled' => true]];
 

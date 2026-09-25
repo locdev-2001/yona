@@ -6144,8 +6144,10 @@ const messages: Record<string, unknown> = {
             },
             "PRE_CHAT_MESSAGE": {
                 "LABEL": "Tin nhắn trước khi trò chuyện",
-                "PLACEHOLDER": "Tin nhắn này sẽ hiện cho những người dùng cùng với biểu mẫu"
+                "PLACEHOLDER": "Tin nhắn này sẽ hiện cho những người dùng cùng với biểu mẫu",
+                "DEFAULT": "Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé."
             },
+            "NO_FIELD_ENABLED_WARNING": "Biểu mẫu đang bật nhưng chưa có ô nào được bật, nên khách chỉ thấy ô tin nhắn. Hãy bật ít nhất một ô bên dưới.",
             "REQUIRE_EMAIL": {
                 "LABEL": "Khách truy cập nên cung cấp tên và địa chỉ email của họ trước khi bắt đầu trò chuyện"
             }

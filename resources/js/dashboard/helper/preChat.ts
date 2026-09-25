@@ -1,8 +1,10 @@
 import { t } from '../../i18n';
 
-// Port từ dashboard/helper/preChat.js. Nhãn/placeholder mặc định của trường
-// chuẩn tra trong bảng chuỗi widget (`WIDGET.PRE_CHAT_FORM.FIELDS.*`); `t` trả
-// lại chính khoá khi không có nên dùng đúng nó để phân biệt "có/không có".
+// Port từ dashboard/helper/preChat.js. Hộp thư tạo trước khi có mặc định tiếng
+// Việt đã lưu nhãn tiếng Anh cho trường chuẩn ('Email Id', 'Full name'…); màn
+// cấu hình nhận ra các giá trị cũ đó theo `name` của trường và hiện chữ mặc định
+// trong bảng chuỗi widget (`WIDGET.PRE_CHAT_FORM.FIELDS.*`). Nhãn quản trị viên đã
+// tự đặt thì giữ nguyên.
 
 export interface PreChatField {
     name: string;
@@ -32,6 +34,7 @@ export interface CustomAttributeDefinition {
     regex_cue?: string;
 }
 
+// Chữ mặc định cũ (tiếng Anh) mà hộp thư tạo trước đây đã lưu cho từng trường chuẩn.
 export const standardFieldKeys = {
     emailAddress: {
         key: 'EMAIL_ADDRESS',
@@ -50,6 +53,10 @@ export const standardFieldKeys = {
     },
 } as const;
 
+export const LEGACY_DEFAULT_PRE_CHAT_MESSAGE = 'Share your queries or comments here.';
+
+type StandardFieldText = 'label' | 'placeholder';
+
 const widgetFieldString = (key: string, part: 'LABEL' | 'PLACEHOLDER'): string | null => {
     const path = `WIDGET.PRE_CHAT_FORM.FIELDS.${key}.${part}`;
     const value = t(path);
@@ -57,11 +64,20 @@ const widgetFieldString = (key: string, part: 'LABEL' | 'PLACEHOLDER'): string |
     return value === path ? null : value;
 };
 
-export const getLabel = ({ key, label }: { key: string; label: string }): string =>
-    widgetFieldString(key, 'LABEL') ?? label;
+const isLegacyDefault = (stored: string | undefined, legacy: string): boolean =>
+    !stored?.trim() || stored.trim().toLowerCase() === legacy.toLowerCase();
 
-export const getPlaceHolder = ({ key, placeholder }: { key: string; placeholder: string }): string =>
-    widgetFieldString(key, 'PLACEHOLDER') ?? placeholder;
+// Chữ mặc định theo ngôn ngữ đang dùng cho trường chuẩn còn giữ giá trị cũ; null khi
+// trường không phải trường chuẩn hoặc quản trị viên đã tự đặt chữ.
+export const standardFieldText = (name: string, part: StandardFieldText, stored?: string): string | null => {
+    const standard = standardFieldKeys[name as keyof typeof standardFieldKeys];
+    if (!standard || !isLegacyDefault(stored, standard[part])) return null;
+
+    return widgetFieldString(standard.key, part === 'label' ? 'LABEL' : 'PLACEHOLDER');
+};
+
+export const preChatMessageText = (stored?: string): string | undefined =>
+    stored?.trim() === LEGACY_DEFAULT_PRE_CHAT_MESSAGE ? t('INBOX_MGMT.PRE_CHAT_FORM.PRE_CHAT_MESSAGE.DEFAULT') : stored;
 
 export const getCustomFields = ({
     standardFields,
@@ -91,11 +107,8 @@ export const getCustomFields = ({
 export const getFormattedPreChatFields = ({ preChatFields }: { preChatFields: PreChatField[] }): PreChatField[] =>
     preChatFields.map(item => ({
         ...item,
-        label: getLabel({ key: item.name, label: item.label ? item.label : item.name }),
-        placeholder: getPlaceHolder({
-            key: item.name,
-            placeholder: item.placeholder ? item.placeholder : item.name,
-        }),
+        label: standardFieldText(item.name, 'label', item.label) ?? (item.label || item.name),
+        placeholder: standardFieldText(item.name, 'placeholder', item.placeholder) ?? (item.placeholder || item.name),
     }));
 
 export const getPreChatFields = ({
@@ -114,7 +127,7 @@ export const getPreChatFields = ({
     });
 
     return {
-        pre_chat_message: preChatMessage,
+        pre_chat_message: preChatMessageText(preChatMessage),
         pre_chat_fields: [...formattedPreChatFields, ...customFields],
     };
 };

@@ -6144,8 +6144,10 @@ const messages: Record<string, unknown> = {
             },
             "PRE_CHAT_MESSAGE": {
                 "LABEL": "Pre chat message",
-                "PLACEHOLDER": "This message would be visible to the users along with the form"
+                "PLACEHOLDER": "This message would be visible to the users along with the form",
+                "DEFAULT": "Share your queries or comments here."
             },
+            "NO_FIELD_ENABLED_WARNING": "The form is on but no field is enabled, so visitors only see the message box. Turn on at least one field below.",
             "REQUIRE_EMAIL": {
                 "LABEL": "Visitors should provide their name and email address before starting the chat"
             }
