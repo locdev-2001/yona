@@ -52,8 +52,11 @@ const updateCampaignReadStatus = (baseDomain?: string): void => {
 type FrameMessageHandler = (message: never) => void;
 
 export const IFrameHelper = {
-    getUrl({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): string {
-        return `${baseUrl}/widget?website_token=${websiteToken}&${FRAME_PROTOCOL_PARAM}=${FRAME_PROTOCOL_VERSION}`;
+    // Ngôn ngữ trang nhúng chọn đi theo URL để máy chủ in đúng <html lang> ngay lần render đầu.
+    getUrl({ baseUrl, websiteToken, locale }: { baseUrl: string; websiteToken: string; locale?: string }): string {
+        const localeParam = locale ? `&locale=${encodeURIComponent(locale)}` : '';
+
+        return `${baseUrl}/widget?website_token=${websiteToken}&${FRAME_PROTOCOL_PARAM}=${FRAME_PROTOCOL_VERSION}${localeParam}`;
     },
     createFrame: ({ baseUrl, websiteToken }: { baseUrl: string; websiteToken: string }): void => {
         if (IFrameHelper.getAppFrame()) {
@@ -63,7 +66,7 @@ export const IFrameHelper = {
         loadCSS();
         const iframe = document.createElement('iframe');
         const cwCookie = getCookie(AUTH_COOKIE);
-        let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken });
+        let widgetUrl = IFrameHelper.getUrl({ baseUrl, websiteToken, locale: window.$yona.locale });
         if (cwCookie) {
             widgetUrl = `${widgetUrl}&cw_conversation=${cwCookie}`;
         }
@@ -96,7 +99,7 @@ export const IFrameHelper = {
     // không được đưa iframe về URL còn mang token cũ. Cờ mang mã riêng từng lần xoá, widget chỉ
     // dùng mỗi mã một lần.
     startNewSession: (): void => {
-        const { baseUrl, websiteToken, baseDomain } = window.$yona;
+        const { baseUrl, websiteToken, baseDomain, locale } = window.$yona;
         removeCookieWithDomain(AUTH_COOKIE, baseDomain);
         removeCookieWithDomain(getUserCookieName(), baseDomain);
 
@@ -104,7 +107,7 @@ export const IFrameHelper = {
         if (iframe) {
             const resetId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
             const freshFrame = iframe.cloneNode(false) as HTMLIFrameElement;
-            freshFrame.src = `${IFrameHelper.getUrl({ baseUrl, websiteToken })}&${NEW_SESSION_URL_PARAM}=${resetId}`;
+            freshFrame.src = `${IFrameHelper.getUrl({ baseUrl, websiteToken, locale })}&${NEW_SESSION_URL_PARAM}=${resetId}`;
             iframe.replaceWith(freshFrame);
         }
 

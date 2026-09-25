@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\User;
+use Tests\Support\WidgetSession;
 
 function langCuaTrang(string $html): ?string
 {
@@ -60,4 +61,51 @@ it('account tạo mới lấy APP_LOCALE, không phải en ghim cứng trong mod
     config()->set('app.locale', 'vi');
 
     expect(Account::create(['name' => 'Không truyền locale'])->locale)->toBe('vi');
+});
+
+describe('trang widget', function () {
+    // Widget in ra <html lang> theo account chủ hộp thư; test ghim app.locale về
+    // phía ngược lại để chắc ngôn ngữ đến từ đúng nguồn.
+    $moWidget = function (string $ngonNguAccount, array $query = []) {
+        $session = WidgetSession::make();
+        $session->account->update(['locale' => $ngonNguAccount]);
+        config()->set('app.locale', $ngonNguAccount === 'vi' ? 'en' : 'vi');
+
+        return [$session, route('widget', ['website_token' => $session->channel->website_token, ...$query])];
+    };
+
+    it('theo ngôn ngữ account chủ hộp thư khi trang nhúng không chọn', function () use ($moWidget) {
+        foreach (['vi', 'en'] as $ngonNgu) {
+            [, $url] = $moWidget($ngonNgu);
+
+            expect(langCuaTrang($this->get($url)->assertOk()->getContent()))->toBe($ngonNgu);
+        }
+    });
+
+    it('ngôn ngữ trang nhúng chọn qua SDK thắng ngôn ngữ account', function () use ($moWidget) {
+        [, $url] = $moWidget('en', ['locale' => 'vi']);
+
+        expect(langCuaTrang($this->get($url)->assertOk()->getContent()))->toBe('vi');
+    });
+
+    it('ngôn ngữ trang nhúng không hỗ trợ thì quay về ngôn ngữ account', function () use ($moWidget) {
+        [, $url] = $moWidget('vi', ['locale' => 'xx']);
+
+        expect(langCuaTrang($this->get($url)->assertOk()->getContent()))->toBe('vi');
+    });
+
+    it('không ghi cookie ngôn ngữ dùng chung với dashboard và landing', function () use ($moWidget) {
+        [, $url] = $moWidget('en', ['locale' => 'vi']);
+
+        $this->get($url)->assertOk()->assertCookieMissing('yona_locale');
+    });
+
+    it('không lấy ngôn ngữ của người dùng dashboard đang đăng nhập cùng trình duyệt', function () use ($moWidget) {
+        [$session, $url] = $moWidget('vi');
+        $user = nguoiDungCuaAccount($session->account, ['locale' => 'en']);
+
+        $html = $this->actingAs($user)->withCookie('yona_locale', 'en')->get($url)->assertOk()->getContent();
+
+        expect(langCuaTrang($html))->toBe('vi');
+    });
 });

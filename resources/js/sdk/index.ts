@@ -91,7 +91,7 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
             IFrameHelper.events.popoutChatWindow({
                 baseUrl: window.$yona.baseUrl,
                 websiteToken: window.$yona.websiteToken,
-                locale,
+                locale: window.$yona.locale,
             });
         },
 
@@ -159,6 +159,8 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         },
 
         setLocale(localeToBeUsed = 'en') {
+            // Khung dựng lại sau này (bắt đầu phiên mới) cũng mang ngôn ngữ vừa chọn.
+            window.$yona.locale = localeToBeUsed;
             IFrameHelper.sendMessage('set-locale', { locale: localeToBeUsed });
         },
 

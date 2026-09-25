@@ -26,13 +26,7 @@ class SetLocale
 
     public function handle(Request $request, Closure $next): Response
     {
-        $picked = $this->supported((string) $request->query('locale'));
-
-        if ($picked !== null) {
-            Cookie::queue(Cookie::forever(self::COOKIE, $picked));
-        }
-
-        $locale = $picked ?? $this->resolve($request);
+        $locale = $request->routeIs('widget') ? $this->widgetLocale($request) : $this->pageLocale($request);
 
         if ($locale !== null) {
             // ponytail: App::setLocale() ghi đè config('app.locale') và không có ai
@@ -46,13 +40,35 @@ class SetLocale
         return $next($request);
     }
 
+    private function pageLocale(Request $request): ?string
+    {
+        $picked = $this->supported((string) $request->query('locale'));
+
+        if ($picked !== null) {
+            Cookie::queue(Cookie::forever(self::COOKIE, $picked));
+        }
+
+        return $picked ?? $this->resolve($request);
+    }
+
+    /**
+     * Trang widget chạy trong iframe trên site của khách: ngôn ngữ do trang nhúng
+     * chọn (`?locale=` mà SDK gắn vào URL iframe), không thì theo account chủ hộp
+     * thư. Không đọc cài đặt/cookie của người dùng dashboard và không ghi cookie:
+     * cùng trình duyệt có thể đang mở dashboard hay landing bằng ngôn ngữ khác.
+     */
+    private function widgetLocale(Request $request): ?string
+    {
+        return $this->supported((string) $request->query('locale'))
+            ?? $this->supported((string) $this->widgetAccountLocale($request));
+    }
+
     private function resolve(Request $request): ?string
     {
         $candidates = [
             $request->route()?->parameter('locale'),
             data_get($request->user()?->ui_settings, 'locale'),
             $this->accountLocale($request),
-            $this->widgetAccountLocale($request),
             $request->cookie(self::COOKIE),
         ];
 
@@ -87,15 +103,14 @@ class SetLocale
     }
 
     /**
-     * Ngôn ngữ của trang widget: do doanh nghiệp chủ hộp thư chọn, không phải
-     * ngôn ngữ trình duyệt của khách — giống khóa `locale` mà /widget/config trả
-     * về. Chỉ hỏi ở trang widget để không thêm truy vấn cho mọi request API.
+     * Ngôn ngữ doanh nghiệp chủ hộp thư chọn, không phải ngôn ngữ trình duyệt
+     * của khách — giống khóa `locale` mà /widget/config trả về.
      */
     private function widgetAccountLocale(Request $request): ?string
     {
         $token = $request->query('website_token');
 
-        if (! $request->routeIs('widget') || ! is_string($token) || $token === '') {
+        if (! is_string($token) || $token === '') {
             return null;
         }
 

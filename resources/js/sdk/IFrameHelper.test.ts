@@ -74,6 +74,12 @@ describe('getUrl', () => {
         );
     });
 
+    it('gắn ngôn ngữ trang nhúng chọn để máy chủ render đúng ngôn ngữ ngay lần đầu', () => {
+        expect(IFrameHelper.getUrl({ baseUrl: 'https://app.yona.vn', websiteToken: 'abc123', locale: 'vi' })).toBe(
+            'https://app.yona.vn/widget?website_token=abc123&sdk_protocol=2&locale=vi',
+        );
+    });
+
     it('giữ nguyên baseUrl có cổng và không thêm dấu / thừa', () => {
         expect(IFrameHelper.getUrl({ baseUrl: 'http://localhost:8000', websiteToken: 'abc123' })).toBe(
             'http://localhost:8000/widget?website_token=abc123&sdk_protocol=2',
@@ -261,6 +267,15 @@ describe('xoá phiên khách', () => {
         expect(freshFrame.src).toMatch(/^https:\/\/app\.yona\.vn\/widget\?website_token=website-token&sdk_protocol=2&new_session=/);
         expect(freshFrame.src).not.toContain('cw_conversation');
         expect(window.$yona.resetTriggered).toBe(true);
+    });
+
+    it('khung dựng lại cho phiên mới giữ ngôn ngữ trang nhúng đã chọn', () => {
+        window.$yona.locale = 'vi';
+        mountAppFrame();
+
+        IFrameHelper.startNewSession();
+
+        expect(new URL(IFrameHelper.getAppFrame()!.src).searchParams.get('locale')).toBe('vi');
     });
 
     it('mỗi lần xoá phiên mang một mã riêng để widget chỉ xử lý mỗi lần một lần', () => {

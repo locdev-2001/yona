@@ -64,6 +64,33 @@ describe('SDK nhúng', () => {
         expect(window.$yona.launcherTitle).toBe('Cũ');
     });
 
+    it('ngôn ngữ trang nhúng chọn (cả biến settings đời trước) đi vào URL iframe', async () => {
+        globals()[LEGACY_SETTINGS_GLOBAL] = { locale: 'vi' };
+        await loadSdk();
+        run();
+
+        const frameUrl = new URL((document.getElementById(APP_FRAME_ID) as HTMLIFrameElement).src);
+        expect(frameUrl.searchParams.get('locale')).toBe('vi');
+    });
+
+    it('trang không chọn ngôn ngữ thì URL iframe không mang locale, máy chủ theo account', async () => {
+        await loadSdk();
+        run();
+
+        const frameUrl = new URL((document.getElementById(APP_FRAME_ID) as HTMLIFrameElement).src);
+        expect(frameUrl.searchParams.has('locale')).toBe(false);
+    });
+
+    it('useBrowserLanguage lấy ngôn ngữ trình duyệt cho URL iframe', async () => {
+        window.yonaSettings = { useBrowserLanguage: true };
+        vi.stubGlobal('navigator', { ...window.navigator, language: 'vi-VN' });
+        await loadSdk();
+        run();
+
+        const frameUrl = new URL((document.getElementById(APP_FRAME_ID) as HTMLIFrameElement).src);
+        expect(frameUrl.searchParams.get('locale')).toBe('vi_VN');
+    });
+
     it('gọi run() lần hai không dựng iframe thứ hai', async () => {
         await loadSdk();
         run();
