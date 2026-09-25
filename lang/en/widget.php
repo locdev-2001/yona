@@ -72,7 +72,7 @@ return [
     ],
     'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Please enter your email',
-    'CHAT_PLACEHOLDER' => 'Type your message',
+    'CHAT_PLACEHOLDER' => 'Type a message…',
     'TODAY' => 'Today',
     'YESTERDAY' => 'Yesterday',
     'PRE_CHAT_FORM' => [
@@ -108,7 +108,6 @@ return [
         'REQUIRED' => 'Required',
         'REGEX_ERROR' => 'Please provide a valid input',
     ],
-    'FILE_SIZE_LIMIT' => 'File exceeds the {MAXIMUM_FILE_UPLOAD_SIZE} attachment limit',
     'CHAT_FORM' => [
         'INVALID' => [
             'FIELD' => 'Invalid field',
@@ -202,6 +201,8 @@ return [
     'COMPOSER' => [
         'ADD' => 'Add photo or file',
         'STICKER' => 'Stickers and emoji',
+        'EMOJI' => 'Emoji',
+        'CANCEL_UPLOAD' => 'Cancel upload',
         'SEND' => 'Send',
         'CAPTION_PLACEHOLDER' => 'Add a caption…',
         'ATTACH_IMAGE' => 'Photos',
@@ -222,6 +223,7 @@ return [
     'ATTACHMENT_STATE' => [
         'UPLOADING' => 'Sending {count} photo… | Sending {count} photos…',
         'UPLOADING_FILE' => 'Sending file…',
+        'UPLOADING_PROGRESS' => '{size} · uploading {percent}%',
         'UPLOAD_FAILED_TITLE' => 'Could not send the photo',
         'UPLOAD_FAILED_FILE_TITLE' => 'Could not send the file',
         'UPLOAD_FAILED_SIZE' => 'File is over {size}',
@@ -280,6 +282,9 @@ return [
         'OPEN_UNREAD' => 'Open chat, {count} unread message | Open chat, {count} unread messages',
     ],
     'NEW_MESSAGES' => 'New messages',
+    'TYPING_INDICATOR' => [
+        'LABEL' => 'Typing…',
+    ],
     'CARD' => [
         'CTA_FALLBACK' => 'View details',
         'PREVIOUS' => 'Previous card',

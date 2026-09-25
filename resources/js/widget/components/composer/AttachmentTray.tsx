@@ -25,8 +25,8 @@ export default function AttachmentTray({ files, onRemove, onAddMore }: Attachmen
     const imageCount = files.filter(isImageFile).length;
 
     return (
-        <div className="px-3 pt-2.5">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <div className="mb-[9px] flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto py-1.5 -my-1.5 pe-1.5 no-scrollbar">
                 {files.map((file, fileIndex) => (
                     <div
                         key={`${file.name}-${file.size}-${fileIndex}`}
@@ -65,7 +65,7 @@ export default function AttachmentTray({ files, onRemove, onAddMore }: Attachmen
                 </button>
             </div>
             {imageCount > 0 ? (
-                <div className="mt-1 text-xs text-[var(--yona-chat-ink-muted)]">
+                <div className="flex-none text-[11px] leading-[1.4] text-[var(--yona-chat-ink-muted)]">
                     {t('COMPOSER.SELECTED_COUNT', { count: imageCount })}
                 </div>
             ) : null}

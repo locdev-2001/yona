@@ -4,11 +4,11 @@ import { emitter } from 'shared/helpers/emitter';
 
 import { sendEmailTranscript } from '../api/widget';
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
-import { getContrastingTextColor } from '../helpers/colorHelper';
 import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
+import Branding from './Branding';
 import ChatInputWrap from './ChatInputWrap';
 import ReplyPreview from './composer/ReplyPreview';
 import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
@@ -17,13 +17,13 @@ import type { WidgetMessage, WidgetSticker } from '../types';
 const TRANSCRIPT_COOLDOWN_MS = 15000;
 
 export default function ChatFooter({ onStartNewConversation }: { onStartNewConversation: () => void }) {
-    const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
     const isWidgetStyleFlat = useWidgetState(state => state.appConfig.widgetStyle === 'flat');
     const conversationStatus = useWidgetState(state => state.conversationAttributes.status);
     const allowMessagesAfterResolved = useWidgetState(
         state => state.channelConfig?.allowMessagesAfterResolved ?? true,
     );
     const hasEmail = useWidgetState(state => Boolean(state.contact?.has_email));
+    const disableBranding = useWidgetState(state => Boolean(state.channelConfig?.disableBranding));
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
 
     const [inReplyTo, setInReplyTo] = useState<WidgetMessage | null>(null);
@@ -88,14 +88,19 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
         }
     };
 
+    const branding = <Branding disableBranding={disableBranding} />;
+    const footerClass = `relative z-50 border-t border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-3.5 py-[11px] ${
+        !isWidgetStyleFlat ? 'rounded-b-lg' : ''
+    }`.trim();
+
+    // Hội thoại đã kết thúc và hộp thư không cho nhắn tiếp: thay ô nhập bằng nút mở
+    // hội thoại mới (điều kiện giữ nguyên, chỉ dựng lại theo token của khung chat).
     if (hideReplyBox) {
         return (
-            <div>
-                {/* shared/components/Button.vue: type mặc định + block + màu widget. */}
+            <footer className={footerClass}>
                 <button
                     type="button"
-                    className="text-white py-3 px-4 rounded-lg shadow-sm leading-4 cursor-pointer disabled:opacity-50 w-full font-medium"
-                    style={{ backgroundColor: widgetColor, color: getContrastingTextColor(widgetColor) }}
+                    className="w-full min-h-11 rounded-[11px] p-3 text-[13.5px] font-semibold leading-none bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)] active:scale-[0.97]"
                     onClick={startNewConversation}
                 >
                     {t('START_NEW_CONVERSATION')}
@@ -103,23 +108,20 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
                 {hasEmail ? (
                     <button
                         type="button"
-                        className="flex mx-auto mt-4 text-xs leading-3 w-auto text-n-gray-12 font-normal disabled:opacity-50"
+                        className="mx-auto mt-1 flex min-h-11 items-center px-3 text-[11.5px] leading-[1.3] text-[var(--yona-chat-ink-soft)] hover:text-[var(--yona-chat-ink)] disabled:opacity-50 active:scale-[0.97]"
                         disabled={isSendingTranscript || transcriptCooldown}
                         onClick={sendTranscript}
                     >
                         {t('EMAIL_TRANSCRIPT.BUTTON_TEXT')}
                     </button>
                 ) : null}
-            </div>
+                {branding}
+            </footer>
         );
     }
 
     return (
-        <footer
-            className={`relative z-50 border-t border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] ${
-                !isWidgetStyleFlat ? 'rounded-b-lg' : ''
-            }`.trim()}
-        >
+        <footer className={footerClass}>
             {hasReplyTo ? (
                 <ReplyPreview message={inReplyTo as WidgetMessage} onDismiss={() => setInReplyTo(null)} />
             ) : null}
@@ -128,6 +130,7 @@ export default function ChatFooter({ onStartNewConversation }: { onStartNewConve
                 onSendFiles={handleSendFiles}
                 onSendSticker={handleSendSticker}
             />
+            {branding}
         </footer>
     );
 }

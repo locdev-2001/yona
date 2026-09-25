@@ -68,9 +68,9 @@ return [
     'BUBBLE' => [
         'LABEL' => 'Trò chuyện với chúng tôi',
     ],
-    'POWERED_BY' => 'Cung cấp bởi {installationName}',
+    'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Vui lòng nhập email',
-    'CHAT_PLACEHOLDER' => 'Gõ tin nhắn của bạn',
+    'CHAT_PLACEHOLDER' => 'Nhập tin nhắn…',
     'TODAY' => 'Hôm nay',
     'YESTERDAY' => 'Hôm qua',
     'PRE_CHAT_FORM' => [
@@ -106,7 +106,6 @@ return [
         'REQUIRED' => 'Bắt buộc',
         'REGEX_ERROR' => 'Bạn hãy nhập giá trị hợp lệ',
     ],
-    'FILE_SIZE_LIMIT' => 'Tệp vượt quá kích thước giới hạn {MAXIMUM_FILE_UPLOAD_SIZE}',
     'CHAT_FORM' => [
         'INVALID' => [
             'FIELD' => 'Trường không hợp lệ',
@@ -183,7 +182,7 @@ return [
         'FAILED' => 'Không thu hồi được tin nhắn. Bạn thử lại nhé.',
     ],
     'REPLY' => [
-        'REPLYING_TO' => 'Đang trả lời {name}',
+        'REPLYING_TO' => 'Trả lời {name}',
         'YOU' => 'Bạn',
         'CANCEL' => 'Bỏ trả lời',
         'JUMP_TO_ORIGINAL' => 'Xem tin gốc',
@@ -200,6 +199,8 @@ return [
     'COMPOSER' => [
         'ADD' => 'Gửi ảnh hoặc tệp',
         'STICKER' => 'Sticker và emoji',
+        'EMOJI' => 'Biểu tượng cảm xúc',
+        'CANCEL_UPLOAD' => 'Huỷ gửi tệp',
         'SEND' => 'Gửi',
         'CAPTION_PLACEHOLDER' => 'Thêm chú thích…',
         'ATTACH_IMAGE' => 'Ảnh',
@@ -220,6 +221,7 @@ return [
     'ATTACHMENT_STATE' => [
         'UPLOADING' => 'Đang gửi {count} ảnh…',
         'UPLOADING_FILE' => 'Đang gửi tệp…',
+        'UPLOADING_PROGRESS' => '{size} · đang tải {percent}%',
         'UPLOAD_FAILED_TITLE' => 'Không gửi được ảnh',
         'UPLOAD_FAILED_FILE_TITLE' => 'Không gửi được tệp',
         'UPLOAD_FAILED_SIZE' => 'Tệp vượt {size}',
@@ -278,6 +280,9 @@ return [
         'OPEN_UNREAD' => 'Mở trò chuyện, {count} tin nhắn chưa đọc',
     ],
     'NEW_MESSAGES' => 'Tin nhắn mới',
+    'TYPING_INDICATOR' => [
+        'LABEL' => 'Đang soạn tin…',
+    ],
     'CARD' => [
         'CTA_FALLBACK' => 'Xem chi tiết',
         'PREVIOUS' => 'Thẻ trước',
