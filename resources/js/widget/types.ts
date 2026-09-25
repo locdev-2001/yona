@@ -125,7 +125,7 @@ export type OtherChannelKind = 'zalo' | 'messenger' | 'telegram' | 'whatsapp' | 
 
 /** `widget_settings` của hộp thư (App\Support\Widget\WidgetSettings), đã trộn mặc định. */
 export interface WidgetSettingsConfig {
-    appearance: { launcher: 'round' | 'pill'; launcher_label: string | null; greeting: string | null };
+    appearance: { launcher: 'round' | 'pill'; launcher_label: string | null; position: 'left' | 'right'; greeting: string | null };
     home: { blocks: { recent_conversation: boolean; help: boolean; other_channels: boolean; custom_links: boolean; request: boolean } };
     other_channels: { kind: OtherChannelKind; label: string | null; value: string; enabled: boolean }[];
     custom_links: { label: string; url: string }[];

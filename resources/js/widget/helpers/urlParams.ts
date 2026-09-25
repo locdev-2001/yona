@@ -18,3 +18,6 @@ export const getNewSessionResetId = (search = ''): string =>
 // SDK hiện hành gắn tham số giao thức vào URL iframe; SDK đời trước (còn trong cache) thì không.
 export const hostSpeaksCurrentFrameProtocol = (search = ''): boolean =>
     new URLSearchParams(search).get(FRAME_PROTOCOL_PARAM) === FRAME_PROTOCOL_VERSION;
+
+// Khung xem trước trong màn cấu hình widget của dashboard (`preview=1`).
+export const isPreviewMode = (search = ''): boolean => new URLSearchParams(search).get('preview') === '1';

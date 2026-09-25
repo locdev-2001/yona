@@ -34,9 +34,17 @@ const writeStoredSession = (session: StoredVisitorSession): void => {
     }
 };
 
+// Xem trước trong dashboard: không ghi gì lên máy chủ, không lưu phiên (dashboard và widget
+// cùng domain, lưu thì phiên xem trước lẫn vào phiên khách thật trên cùng trình duyệt).
+let previewMode = false;
+
+export const setPreviewMode = (enabled: boolean): void => {
+    previewMode = enabled;
+};
+
 export const setAuthToken = (token: string): void => {
     authToken = token;
-    writeStoredSession({ ...readStoredSession(), authToken: token });
+    if (!previewMode) writeStoredSession({ ...readStoredSession(), authToken: token });
 };
 
 // Token lúc widget khởi động: token SDK gắn vào URL (cookie trang chủ) trước, rồi tới token widget
@@ -103,7 +111,14 @@ export class WidgetApiError extends Error {
     }
 }
 
+// /config chỉ đọc (dù là POST): xem trước vẫn cần nó để có màu, tên, Help Center của hộp thư.
+const PREVIEW_READ_ONLY_POSTS = ['/api/v1/widget/config'];
+
 async function request<T>(url: string, method: string, body?: BodyInit, contentType?: string): Promise<T> {
+    if (previewMode && method !== 'GET' && !PREVIEW_READ_ONLY_POSTS.some(path => url.startsWith(path))) {
+        throw new WidgetApiError(423, { code: 'preview_read_only' });
+    }
+
     const response = await fetch(url, {
         method,
         headers: {
