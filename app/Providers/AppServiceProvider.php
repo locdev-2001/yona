@@ -7,6 +7,7 @@ use App\Finders\ConversationFinder;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
@@ -32,6 +33,7 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -67,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
             'pgsql',
             fn ($pdo, string $database, string $prefix, array $config) => new PostgresConnection($pdo, $database, $prefix, $config),
         );
+
+        $this->app->singleton(StructuredTypeRegistry::class, fn ($app) => new StructuredTypeRegistry(
+            array_map(fn (string $type) => $app->make($type), config('messaging.structured_types')),
+            $app->make(ValidationFactory::class),
+        ));
 
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {
             $driver = (string) config('search.driver');

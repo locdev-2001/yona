@@ -3,26 +3,35 @@ import { useRef, useState } from 'react';
 import { getLocale } from '../../../i18n';
 import { IFrameHelper } from '../../helpers/iframe';
 import { t } from '../../i18n';
-import type { CardAction, CardItem } from '../../types';
+import type { CardAction, CardItem, CardPrice } from '../../types';
 
 // Carousel `cards`: thẻ 190px cuộn ngang, thụt lề bằng avatar, dot chỉ vị trí,
 // một CTA mỗi thẻ (hành động đầu tiên của thẻ), dòng giá khi item có `price`.
 const CARD_WIDTH = 190;
 const CARD_GAP = 10;
 
-// Giá là số thì nhóm chữ số theo ngôn ngữ widget (vi: 5.590.000); chuỗi do bot tự
-// viết (kèm đơn vị tiền) giữ nguyên.
-export const formatCardPrice = (price: string | number): string =>
-    typeof price === 'number' ? new Intl.NumberFormat(getLocale().replace('_', '-')).format(price) : price;
+// Giá là số thì nhóm chữ số theo ngôn ngữ widget (vi: 5.590.000); giá có cấu trúc
+// thêm đơn vị (VND viết "đ"); chuỗi do bot tự viết (kèm đơn vị tiền) giữ nguyên.
+export const formatCardPrice = (price: string | number | CardPrice): string => {
+    if (typeof price === 'string') return price;
+
+    const amount = typeof price === 'number' ? price : price.amount;
+    const formatted = new Intl.NumberFormat(getLocale().replace('_', '-')).format(amount);
+
+    if (typeof price === 'number') return formatted;
+
+    return price.currency === 'VND' ? `${formatted}đ` : `${formatted} ${price.currency}`;
+};
 
 function CardCta({ action }: { action: CardAction }) {
-    const label = action.text || t('CARD.CTA_FALLBACK');
+    const label = action.label || action.text || t('CARD.CTA_FALLBACK');
+    const href = action.url ?? action.uri;
     const className =
         'mt-[10px] block w-full rounded-[9px] bg-[var(--yona-chat-accent)] p-[10px] text-center text-[12.5px] font-semibold leading-none text-[var(--yona-chat-on-accent)]';
 
-    if (action.type === 'link') {
+    if (action.type === 'link' || action.kind === 'link') {
         return (
-            <a className={className} href={action.uri} target="_blank" rel="noopener nofollow noreferrer">
+            <a className={className} href={href} target="_blank" rel="noopener nofollow noreferrer">
                 {label}
             </a>
         );

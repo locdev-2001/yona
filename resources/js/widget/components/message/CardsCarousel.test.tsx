@@ -32,4 +32,22 @@ describe('CardsCarousel', () => {
         setLocale('en');
         expect(formatCardPrice(5590000)).toBe('5,590,000');
     });
+
+    it('đọc thẻ đã chuẩn hoá: giá có cấu trúc và nút dạng kind/label/url', () => {
+        setLocale('vi');
+        const { container, getByRole } = render(
+            <CardsCarousel
+                items={[
+                    {
+                        title: 'Bình men lam 40cm',
+                        price: { amount: 1250000, currency: 'VND' },
+                        actions: [{ kind: 'link', label: 'Chi tiết', url: 'https://gommoc.vn/binh-lam' }],
+                    },
+                ]}
+            />,
+        );
+
+        expect(container.querySelector('.yona-card-price')).toHaveTextContent('1.250.000đ');
+        expect(getByRole('link', { name: 'Chi tiết' })).toHaveAttribute('href', 'https://gommoc.vn/binh-lam');
+    });
 });

@@ -3,6 +3,8 @@
 namespace App\Builders\Messages;
 
 use App\Exceptions\MessageValidationException;
+use App\Messaging\Structured\PayloadContext;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\AgentBot;
 use App\Models\Attachment;
 use App\Models\Contact;
@@ -23,7 +25,11 @@ class MessageBuilder
      * Khoá `content_attributes` chỉ máy chủ được ghi: client gửi lên thì bị bỏ, để
      * không ai giả được payload đi thẳng ra kênh hay dấu chuyển tiếp.
      */
-    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from'];
+    /**
+     * Khoá chỉ server được ghi. `submitted_values` đi qua SubmissionService,
+     * `in_reply_to_choice` do chính service đó gắn vào tin trả lời của khách.
+     */
+    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from', 'submitted_values', 'in_reply_to_choice'];
 
     private ?Message $message = null;
 
@@ -226,7 +232,22 @@ class MessageBuilder
             'source_id' => $this->params['source_id'] ?? null,
         ];
 
-        $contentAttributes = $this->contentAttributes();
+        $registry = app(StructuredTypeRegistry::class);
+        $contentType = $this->params['content_type'] ?? null;
+        $contentAttributes = $registry->prepare(
+            $contentType,
+            $attributes['content'],
+            $this->contentAttributes(),
+            new PayloadContext($this->conversation, $attributes['message_type']),
+        );
+
+        // Tin có cấu trúc do khách gửi (yêu cầu đặt hàng…) mang luôn bản chữ thuần,
+        // để tìm kiếm, automation, thông báo và kênh chữ đọc được như tin thường.
+        $structured = $registry->for($contentType);
+
+        if ($structured !== null && $attributes['message_type'] === Message::TYPE_INCOMING && blank($attributes['content'])) {
+            $attributes['content'] = $structured->plainText(null, $contentAttributes);
+        }
 
         if ($contentAttributes !== []) {
             $attributes['content_attributes'] = $contentAttributes;

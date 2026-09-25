@@ -74,7 +74,9 @@ describe('GET /api/v1/widget/messages', function () {
             ->toBe(['csat_survey_response' => ['rating' => 4, 'feedback_message' => 'phuc vu tot']]);
     });
 
-    it('keeps the optional price of each bot card intact on the way to the widget', function () {
+    // Giá chuỗi của bot được lõi tin có cấu trúc chuẩn hoá thành số nguyên + tiền tệ,
+    // không mất khi tới widget.
+    it('keeps the optional price of each bot card on the way to the widget', function () {
         $session = WidgetSession::make();
         $conversation = widgetConversationFor($session);
         $items = [
@@ -90,7 +92,8 @@ describe('GET /api/v1/widget/messages', function () {
         $response = $this->getJson($session->url('messages'), $session->headers())->assertOk();
 
         $cards = collect($response->json('payload'))->firstWhere('content_type', 'cards');
-        expect($cards['content_attributes']['items'])->toBe($items);
+        expect($cards['content_attributes']['items'][0]['price'])->toBe(['amount' => 4290000, 'currency' => 'VND'])
+            ->and($cards['content_attributes']['items'][1])->not->toHaveKey('price');
     });
 
     it('returns an empty payload when the visitor has no conversation', function () {

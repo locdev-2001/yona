@@ -81,6 +81,12 @@ abstract class BotProcessorService
             return false;
         }
 
+        // Tin khách sinh ra từ việc bấm lựa chọn: bot đã nhận lựa chọn đó qua
+        // `message.updated` của tin gốc, xử lý thêm lần nữa là trả lời hai lần.
+        if ($message->isIncoming() && isset($message->content_attributes['in_reply_to_choice'])) {
+            return false;
+        }
+
         return ! $message->isOutgoing() || $this->processableOutgoingMessage($message);
     }
 
