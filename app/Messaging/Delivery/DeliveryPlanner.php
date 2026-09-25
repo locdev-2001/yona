@@ -2,7 +2,9 @@
 
 namespace App\Messaging\Delivery;
 
+use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Messaging\Structured\StructuredType;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Message;
 
@@ -52,6 +54,25 @@ final class DeliveryPlanner
             return $plan;
         }
 
+        // 6b: không có renderer gốc nhưng kênh nhận được ảnh — vẽ ảnh thẻ (satori)
+        // cho các loại "thẻ hình" thay vì chỉ hạ xuống chữ. Ảnh lỗi/chưa cấu hình
+        // bridge thì CardImageService trả null, rơi tiếp xuống nhánh chữ bên dưới.
+        if ($capabilities->has(Capability::OutboundImage) && self::isVisualCard($type)) {
+            $imageUrl = app(CardImageService::class)->for($message);
+
+            if ($imageUrl !== null) {
+                $imagePageUrl = $pageUrlProvider !== null ? $pageUrlProvider($message) : null;
+                $imageText = $type->plainText($message->content, $attributes, $imagePageUrl);
+                $imageChoices = $type->choices($attributes);
+                $imageText = $imageChoices === [] ? $imageText : trim($imageText."\n\n".NumberedChoices::render($imageChoices));
+
+                $plan = DeliveryPlan::imageText($imageText, $imageUrl);
+                DegradeLog::record($message, $plan->level);
+
+                return $plan;
+            }
+        }
+
         $pageUrl = $pageUrlProvider !== null ? $pageUrlProvider($message) : null;
         $text = $type->plainText($message->content, $attributes, $pageUrl);
         $choices = $type->choices($attributes);
@@ -63,5 +84,11 @@ final class DeliveryPlanner
         DegradeLog::record($message, $plan->level);
 
         return $plan;
+    }
+
+    /** Loại có ảnh vẽ được ở `services/zalo-bridge/src/card-render` — khớp `kind` bridge nhận. */
+    private static function isVisualCard(StructuredType $type): bool
+    {
+        return in_array($type->contentType(), ['cards', 'order_status', 'webview', 'article'], true);
     }
 }
