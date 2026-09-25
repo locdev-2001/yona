@@ -215,6 +215,51 @@ describe('đơn hàng và yêu cầu đặt hàng', () => {
     });
 });
 
+describe('thẻ chuyển khoản', () => {
+    const bankTransfer = messageOf('bank_transfer', {
+        bank_name: 'Vietcombank',
+        account_number: '1023456789',
+        account_name: 'HKD GOM MOC',
+        amount: { amount: 480000, currency: 'VND' },
+        memo: 'GM1024',
+        qr_payload: '00020101021138570010A00000072701270006970436011010234567890208QRIBFTTA5303704540648000058020VN62110807GM10246304ABCD',
+    });
+
+    it('vẽ QR từ qr_payload và hiện đủ thông tin ngân hàng', async () => {
+        renderMessage(bankTransfer);
+
+        expect(await screen.findByRole('img', { name: 'Mã QR chuyển khoản' })).toHaveAttribute('src', expect.stringContaining('data:image/png'));
+        expect(screen.getByText('Vietcombank')).toBeInTheDocument();
+        expect(screen.getByText('1023456789')).toBeInTheDocument();
+        expect(screen.getByText('HKD GOM MOC')).toBeInTheDocument();
+        expect(screen.getByText('480.000đ')).toBeInTheDocument();
+        expect(screen.getByText('GM1024')).toBeInTheDocument();
+    });
+
+    it('bấm chép số tài khoản giao cho host, không tự đụng clipboard', async () => {
+        const { host } = renderMessage(bankTransfer);
+        await screen.findByRole('img', { name: 'Mã QR chuyển khoản' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Chép Số tài khoản' }));
+
+        expect(host.act).toHaveBeenCalledWith({ kind: 'copy', label: 'Số tài khoản', value: '1023456789' }, expect.objectContaining({ message: bankTransfer }));
+    });
+
+    it('hộp thư chỉ xem thì không có nút chép', async () => {
+        renderMessage(bankTransfer, { surface: 'dashboard', interactive: false });
+        await screen.findByRole('img', { name: 'Mã QR chuyển khoản' });
+
+        expect(screen.queryByRole('button', { name: 'Chép Số tài khoản' })).toBeNull();
+    });
+
+    it('có paid_at thì hiện trạng thái Đã nhận', async () => {
+        renderMessage({ ...bankTransfer, content_attributes: { ...bankTransfer.content_attributes, paid_at: '2026-09-26T10:00:00Z' } });
+        await screen.findByRole('img', { name: 'Mã QR chuyển khoản' });
+
+        expect(screen.getByText('Đã nhận tiền')).toBeInTheDocument();
+    });
+});
+
 it('thêm một loại tin mới không cần sửa kit', () => {
     registerMessageTypes([
         defineMessageType<string[]>({

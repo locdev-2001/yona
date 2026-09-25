@@ -115,6 +115,7 @@ return [
             'TEXT' => 'This channel can\'t show cards: the customer got a text version',
             'IMAGE_TEXT' => 'This channel can\'t show cards: the customer got a card image with text',
         ],
+        'MARK_BANK_TRANSFER_PAID' => 'Mark as paid',
     ],
     'SENT_FROM_NATIVE_APP' => 'from phone',
     'MESSAGE_ACTIONS' => [

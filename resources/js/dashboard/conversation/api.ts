@@ -352,6 +352,21 @@ export function deleteMessage(
 }
 
 /**
+ * Đánh dấu thẻ chuyển khoản đã nhận tiền — idempotent, bấm lại khi đã đánh dấu
+ * rồi không đổi ai/lúc nào (server chỉ ghi lần đầu).
+ */
+export function markBankTransferPaid(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/mark_bank_transfer_paid`,
+        {},
+    );
+}
+
+/**
  * Dịch nội dung một tin sang ngôn ngữ đích. Tin đã có bản dịch sẵn thì máy chủ
  * trả thân rỗng — bản dịch khi đó nằm ở `content_attributes.translations`.
  */

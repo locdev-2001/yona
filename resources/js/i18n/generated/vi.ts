@@ -2415,7 +2415,8 @@ const messages: Record<string, unknown> = {
                 "TEXT_NUMBERED": "Kênh này không có nút: khách nhận chữ kèm danh sách số",
                 "TEXT": "Kênh này không vẽ được thẻ: khách nhận bản chữ",
                 "IMAGE_TEXT": "Kênh này không vẽ được thẻ: khách nhận ảnh thẻ kèm chữ"
-            }
+            },
+            "MARK_BANK_TRANSFER_PAID": "Đánh dấu đã nhận tiền"
         },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
@@ -8055,7 +8056,10 @@ const messages: Record<string, unknown> = {
             "field_required": "Cần điền :field.",
             "field_invalid": ":field không hợp lệ.",
             "empty_submission": "Chưa có thông tin nào được gửi.",
-            "payload_too_large": "Dữ liệu kèm trang quá lớn."
+            "payload_too_large": "Dữ liệu kèm trang quá lớn.",
+            "unknown_payment_account": "Không tìm thấy tài khoản nhận tiền.",
+            "payment_account_not_allowed": "Bạn không được gửi thẻ chuyển khoản bằng tài khoản này.",
+            "duplicate_payment_account": "Ngân hàng và số tài khoản này đã được thêm."
         },
         "settings": {
             "invalid_channel": "Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại."
@@ -8091,6 +8095,13 @@ const messages: Record<string, unknown> = {
             "line": "Yêu cầu đặt hàng: :title:selection × :quantity",
             "note": "Ghi chú: :note"
         },
+        "bank_transfer": {
+            "preview": "Chuyển khoản qua :bank",
+            "bank_line": "Ngân hàng :bank, số TK :account",
+            "holder": "Chủ TK :name",
+            "amount": "Số tiền :amount",
+            "memo": "Nội dung: :memo"
+        },
         "kit": {
             "item_position": "Sản phẩm {current} trên {total}",
             "previous_item": "Sản phẩm trước",
@@ -8119,7 +8130,15 @@ const messages: Record<string, unknown> = {
                 "shipped": "Đã gửi",
                 "delivering": "Đang giao",
                 "delivered": "Đã nhận"
-            }
+            },
+            "bank_transfer_title": "Chuyển khoản ngân hàng",
+            "bank_transfer_qr_alt": "Mã QR chuyển khoản",
+            "bank": "Ngân hàng",
+            "account_number": "Số tài khoản",
+            "account_holder": "Chủ tài khoản",
+            "transfer_amount": "Số tiền",
+            "transfer_memo": "Nội dung",
+            "paid": "Đã nhận tiền"
         }
     },
     "MFA_SETTINGS": {
@@ -8509,6 +8528,78 @@ const messages: Record<string, unknown> = {
     "PAGINATION_FOOTER": {
         "SHOWING": "Hiển thị {startItem}–{endItem} trong tổng số {totalItems} mục",
         "CURRENT_PAGE_INFO": "Trang {currentPage}/{totalPages}"
+    },
+    "PAYMENT_ACCOUNTS": {
+        "HEADER": "Chuyển khoản",
+        "DESCRIPTION": "Tài khoản ngân hàng nhận tiền khi gửi thẻ chuyển khoản trong hội thoại. Khách chuyển thẳng vào tài khoản của bạn, Yona không giữ tiền.",
+        "LOADING": "Đang tải tài khoản",
+        "LIST": {
+            "TITLE": "Tài khoản nhận tiền",
+            "EMPTY": "Chưa có tài khoản nhận tiền nào.",
+            "ADD": "Thêm tài khoản",
+            "DEFAULT_BADGE": "Mặc định"
+        },
+        "FORM": {
+            "EDIT": "Sửa",
+            "DELETE": "Xoá",
+            "SAVE": "Lưu thay đổi",
+            "CREATE": "Thêm tài khoản",
+            "CANCEL": "Huỷ",
+            "BANK": {
+                "LABEL": "Ngân hàng",
+                "PLACEHOLDER": "Chọn ngân hàng",
+                "SEARCH_PLACEHOLDER": "Tìm ngân hàng...",
+                "EMPTY": "Không tìm thấy ngân hàng"
+            },
+            "ACCOUNT_NUMBER": {
+                "LABEL": "Số tài khoản",
+                "PLACEHOLDER": "Chỉ nhập số",
+                "INVALID": "Số tài khoản chỉ gồm 4-30 chữ số."
+            },
+            "ACCOUNT_NAME": {
+                "LABEL": "Chủ tài khoản",
+                "PLACEHOLDER": "HKD GOM MOC",
+                "HINT": "Viết hoa không dấu, đúng như trên ngân hàng để khách kiểm tra."
+            },
+            "MEMO_TEMPLATE": {
+                "LABEL": "Nội dung chuyển khoản",
+                "HINT": "Tự thay bằng mã hội thoại khi gửi, ví dụ GM1024. Giúp đối soát nhanh."
+            },
+            "IS_DEFAULT": {
+                "LABEL": "Đặt làm tài khoản mặc định"
+            },
+            "ALLOW_ALL_AGENTS": {
+                "LABEL": "Cho mọi nhân viên gửi thẻ chuyển khoản trong hội thoại"
+            }
+        },
+        "ADD": {
+            "TITLE": "Thêm tài khoản",
+            "SUCCESS": "Đã thêm tài khoản",
+            "ERROR": "Đã có lỗi, vui lòng thử lại"
+        },
+        "EDIT": {
+            "TITLE": "Sửa tài khoản",
+            "SUCCESS": "Đã lưu thay đổi",
+            "ERROR": "Đã có lỗi, vui lòng thử lại"
+        },
+        "DELETE": {
+            "SUCCESS": "Đã xoá tài khoản",
+            "ERROR": "Đã có lỗi, vui lòng thử lại",
+            "CONFIRM": {
+                "TITLE": "Xoá tài khoản?",
+                "MESSAGE": "Nhân viên sẽ không gửi thẻ chuyển khoản bằng tài khoản này được nữa:",
+                "YES": "Có, xoá",
+                "NO": "Không, giữ lại"
+            }
+        },
+        "PREVIEW": {
+            "TITLE": "Khách sẽ thấy",
+            "EMPTY": "Lưu tài khoản để xem mã QR.",
+            "QR_ALT": "Mã QR chuyển khoản",
+            "BANK": "Ngân hàng",
+            "ACCOUNT_NUMBER": "Số tài khoản",
+            "NOTE": "Mã QR theo chuẩn VietQR, quét được bằng mọi ứng dụng ngân hàng."
+        }
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Tìm quốc gia",
@@ -9305,6 +9396,7 @@ const messages: Record<string, unknown> = {
         "ACCOUNT_SETTINGS": "Cài đặt tài khoản",
         "APPLICATIONS": "Ứng dụng",
         "LABELS": "Nhãn",
+        "PAYMENT_ACCOUNTS": "Chuyển khoản",
         "CUSTOM_ATTRIBUTES": "Thuộc tính tùy chỉnh",
         "AUTOMATION": "Tự động hóa",
         "MACROS": "Macro",
