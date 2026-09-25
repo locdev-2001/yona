@@ -244,8 +244,9 @@ export interface SendMessagePayload {
     private: boolean;
     echo_id?: string;
     content_attributes?: Record<string, unknown>;
-    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm.
-    content_type?: 'sticker';
+    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm. Tin có cấu trúc
+    // (input_select, cards…): máy chủ kiểm và chuẩn hoá content_attributes theo loại.
+    content_type?: string;
     sticker_id?: string;
     files?: File[];
     // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).

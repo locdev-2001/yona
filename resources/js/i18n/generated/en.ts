@@ -2422,6 +2422,54 @@ const messages: Record<string, unknown> = {
         "FRIEND_REQUEST": {
             "TITLE": "Friend request"
         },
+        "SEND_CARD": {
+            "BUTTON": "Send a card",
+            "PREVIEW": "What the customer sees",
+            "PREVIEW_EMPTY": "Fill in the form to preview",
+            "SEND": "Send",
+            "CANCEL": "Cancel",
+            "REMOVE": "Remove",
+            "QUICK_REPLIES": {
+                "TITLE": "Quick replies",
+                "HINT": "A question with 2–6 options to tap",
+                "QUESTION": "Question",
+                "OPTIONS": "Options",
+                "OPTION": "Option {index}",
+                "ADD_OPTION": "Add option"
+            },
+            "PRODUCT": {
+                "TITLE": "Product card",
+                "HINT": "Image, price, variants and an Order button",
+                "NAME": "Product name",
+                "UPLOAD_IMAGE": "Upload image",
+                "CHANGE_IMAGE": "Change image",
+                "UPLOADING": "Uploading…",
+                "PRICE": "Price (VND)",
+                "COMPARE_AT": "Original price (VND)",
+                "STOCK_LABEL": "Stock line",
+                "STOCK_PLACEHOLDER": "2 left",
+                "MAX_QUANTITY": "Max quantity",
+                "VARIANTS": "Variants",
+                "VARIANT_NAME": "Group name",
+                "VARIANT_NAME_PLACEHOLDER": "Colour",
+                "VARIANT_OPTIONS": "Options, separated by commas",
+                "VARIANT_OPTIONS_PLACEHOLDER": "Blue, Ivory, Jade",
+                "ADD_VARIANT": "Add variant group",
+                "LINK": "Product link on your website (optional)",
+                "ORDER_BUTTON": "Order",
+                "VIEW_BUTTON": "View"
+            },
+            "ERRORS": {
+                "QUESTION_REQUIRED": "A question is required",
+                "TOO_FEW_OPTIONS": "Add at least 2 options",
+                "OPTION_TOO_LONG": "Each option is at most 80 characters",
+                "DUPLICATE_OPTION": "Two options are the same",
+                "TITLE_REQUIRED": "A product name is required",
+                "COMPARE_AT_INVALID": "The original price must be higher than the price",
+                "LINK_INVALID": "Links must start with http:// or https://",
+                "VARIANT_EMPTY": "A variant group needs at least one option"
+            }
+        },
         "STRUCTURED": {
             "CHOICE_OF": "Reply to: {question}",
             "DELIVERY": {

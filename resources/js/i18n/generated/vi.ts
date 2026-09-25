@@ -2422,6 +2422,54 @@ const messages: Record<string, unknown> = {
         "FRIEND_REQUEST": {
             "TITLE": "Lời mời kết bạn"
         },
+        "SEND_CARD": {
+            "BUTTON": "Gửi thẻ",
+            "PREVIEW": "Khách thấy thế này",
+            "PREVIEW_EMPTY": "Điền thông tin để xem trước",
+            "SEND": "Gửi",
+            "CANCEL": "Huỷ",
+            "REMOVE": "Xoá",
+            "QUICK_REPLIES": {
+                "TITLE": "Trả lời nhanh",
+                "HINT": "Câu hỏi kèm 2–6 lựa chọn để khách bấm",
+                "QUESTION": "Câu hỏi",
+                "OPTIONS": "Lựa chọn",
+                "OPTION": "Lựa chọn {index}",
+                "ADD_OPTION": "Thêm lựa chọn"
+            },
+            "PRODUCT": {
+                "TITLE": "Thẻ sản phẩm",
+                "HINT": "Ảnh, giá, biến thể và nút Đặt mua",
+                "NAME": "Tên sản phẩm",
+                "UPLOAD_IMAGE": "Tải ảnh lên",
+                "CHANGE_IMAGE": "Đổi ảnh",
+                "UPLOADING": "Đang tải…",
+                "PRICE": "Giá bán (đ)",
+                "COMPARE_AT": "Giá cũ (đ)",
+                "STOCK_LABEL": "Dòng tồn kho",
+                "STOCK_PLACEHOLDER": "Còn 2 cái",
+                "MAX_QUANTITY": "Số lượng tối đa",
+                "VARIANTS": "Biến thể",
+                "VARIANT_NAME": "Tên nhóm",
+                "VARIANT_NAME_PLACEHOLDER": "Màu",
+                "VARIANT_OPTIONS": "Các lựa chọn, cách nhau bằng dấu phẩy",
+                "VARIANT_OPTIONS_PLACEHOLDER": "Lam, Ngà, Ngọc",
+                "ADD_VARIANT": "Thêm nhóm biến thể",
+                "LINK": "Link sản phẩm trên website (không bắt buộc)",
+                "ORDER_BUTTON": "Đặt mua",
+                "VIEW_BUTTON": "Xem"
+            },
+            "ERRORS": {
+                "QUESTION_REQUIRED": "Cần có câu hỏi",
+                "TOO_FEW_OPTIONS": "Cần ít nhất 2 lựa chọn",
+                "OPTION_TOO_LONG": "Mỗi lựa chọn tối đa 80 ký tự",
+                "DUPLICATE_OPTION": "Hai lựa chọn đang trùng nhau",
+                "TITLE_REQUIRED": "Cần có tên sản phẩm",
+                "COMPARE_AT_INVALID": "Giá cũ phải lớn hơn giá bán",
+                "LINK_INVALID": "Link phải bắt đầu bằng http:// hoặc https://",
+                "VARIANT_EMPTY": "Nhóm biến thể cần ít nhất một lựa chọn"
+            }
+        },
         "STRUCTURED": {
             "CHOICE_OF": "Trả lời cho: {question}",
             "DELIVERY": {

@@ -295,6 +295,33 @@ it('payload hội thoại có dòng xem trước cho tin có cấu trúc, tin th
         'content' => 'Chào chị',
     ]);
 
-    expect(App\Http\Resources\MessageResource::pushEventData($card)['preview_text'])->toContain('Bình men lam 40cm')
-        ->and(App\Http\Resources\MessageResource::pushEventData($plain)['preview_text'])->toBeNull();
+    expect(MessageResource::pushEventData($card)['preview_text'])->toContain('Bình men lam 40cm')
+        ->and(MessageResource::pushEventData($plain)['preview_text'])->toBeNull();
+});
+
+it('thẻ sản phẩm do menu "Gửi thẻ" dựng (không có id, giá không có tiền tệ) được máy chủ nhận', function () {
+    $session = WidgetSession::make();
+    $conversation = structuredConversation($session);
+    $agent = User::factory()->create();
+    AccountUser::factory()->create(['account_id' => $session->account->id, 'user_id' => $agent->id, 'role' => AccountUser::ROLE_AGENT]);
+    $session->inbox->addMembers([$agent->id]);
+
+    $this->actingAs($agent)
+        ->postJson("/api/v1/accounts/{$session->account->id}/conversations/{$conversation->display_id}/messages", [
+            'private' => false,
+            'content_type' => 'cards',
+            'content_attributes' => ['items' => [[
+                'title' => 'Bình men lam',
+                'price' => ['amount' => 450000, 'compare_at' => 530000],
+                'max_quantity' => 2,
+                'variants' => [['name' => 'Màu', 'options' => [['value' => 'Lam', 'label' => 'Lam'], ['value' => 'Ngà', 'label' => 'Ngà']]]],
+                'actions' => [['kind' => 'order', 'label' => 'Đặt mua'], ['kind' => 'link', 'label' => 'Xem', 'url' => 'https://gommoc.vn/binh']],
+            ]]],
+        ])
+        ->assertOk()
+        ->assertJsonPath('content_type', 'cards')
+        ->assertJsonPath('content_attributes.items.0.id', 'item-1')
+        ->assertJsonPath('content_attributes.items.0.price.discount_percent', 15)
+        // Danh sách hội thoại lấy dòng xem trước từ chính phản hồi gửi tin (tin thẻ không có content).
+        ->assertJsonPath('preview_text', fn (?string $preview) => str_contains((string) $preview, 'Bình men lam'));
 });

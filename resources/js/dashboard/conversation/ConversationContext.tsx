@@ -163,6 +163,8 @@ interface ConversationContextValue {
     }) => void;
     // Sticker đi một mình: không nội dung, không trích dẫn; máy chủ tự dựng tin từ mã.
     sendSticker: (sticker: StickerItem) => void;
+    // Thẻ từ menu "Gửi thẻ": máy chủ kiểm payload, sai thì tin chuyển sang lỗi kèm lý do.
+    sendStructured: (contentType: string, contentAttributes: Record<string, unknown>, content?: string) => void;
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
     deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
@@ -1050,6 +1052,16 @@ export function ConversationProvider({
         [sendWithPendingMessage],
     );
 
+    const sendStructured = useCallback(
+        (contentType: string, contentAttributes: Record<string, unknown>, content?: string) => {
+            sendWithPendingMessage(
+                { private: false, content, content_type: contentType, content_attributes: contentAttributes },
+                { content_type: contentType },
+            );
+        },
+        [sendWithPendingMessage],
+    );
+
     // Gửi lại tin thất bại. Tin quay về qua chính đường ADD_MESSAGE nên trạng
     // thái/lý do lỗi cập nhật một chỗ như tin gửi mới.
     const retryFailedMessage = useCallback(
@@ -1332,6 +1344,7 @@ export function ConversationProvider({
             fetchPreviousMessages,
             sendReply,
             sendSticker,
+            sendStructured,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
@@ -1386,6 +1399,7 @@ export function ConversationProvider({
             fetchPreviousMessages,
             sendReply,
             sendSticker,
+            sendStructured,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,

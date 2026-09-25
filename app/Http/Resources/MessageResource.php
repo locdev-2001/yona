@@ -47,6 +47,7 @@ class MessageResource extends JsonResource
             'content_type' => $message->contentTypeName(),
             'status' => $message->statusName(),
             'content_attributes' => $message->content_attributes ?? [],
+            'preview_text' => self::previewText($message),
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
@@ -63,6 +64,14 @@ class MessageResource extends JsonResource
         return $attachments->isEmpty()
             ? []
             : ['attachments' => $attachments->map(fn (Attachment $attachment) => $attachment->pushEventData())->values()->all()];
+    }
+
+    // Dòng xem trước cho danh sách hội thoại; chỉ tin có cấu trúc mới cần (content có thể rỗng).
+    private static function previewText(Message $message): ?string
+    {
+        return app(StructuredTypeRegistry::class)->for($message->contentTypeName()) === null
+            ? null
+            : app(MessagePreview::class)->for($message);
     }
 
     // Message#push_event_data: toàn bộ attributes + sender + tóm tắt conversation.
@@ -82,10 +91,7 @@ class MessageResource extends JsonResource
             'source_id' => $message->source_id,
             'content_type' => $message->contentTypeName(),
             'content_attributes' => $message->content_attributes ?? [],
-            // Dòng xem trước cho danh sách hội thoại; chỉ tin có cấu trúc mới cần (content có thể rỗng).
-            'preview_text' => app(StructuredTypeRegistry::class)->for($message->contentTypeName()) === null
-                ? null
-                : app(MessagePreview::class)->for($message),
+            'preview_text' => self::previewText($message),
             'sender_type' => $message->sender_type,
             'sender_id' => $message->sender_id,
             'external_source_ids' => $message->external_source_ids ?? [],

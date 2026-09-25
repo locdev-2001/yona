@@ -95,6 +95,7 @@ export default function ReplyBox({
         messages,
         sendReply,
         sendSticker,
+        sendStructured,
         uiSettings,
         updateUISettings,
         toggleTypingStatus,
@@ -623,6 +624,11 @@ export default function ReplyBox({
                 onToggleSignature={toggleMessageSignature}
                 onSelectEmoji={insertEmoji}
                 stickerPicker={stickerPicker}
+                onSendCard={
+                    isOnPrivateNote
+                        ? null
+                        : draft => sendStructured(draft.contentType, draft.contentAttributes, draft.content)
+                }
             />
         </div>
     </>

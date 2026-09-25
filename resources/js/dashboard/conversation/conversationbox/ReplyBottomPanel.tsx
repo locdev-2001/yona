@@ -6,6 +6,8 @@ import EmojiIconPicker from 'dashboard/components-next/emoji-icon-picker/EmojiIc
 import type { PickerSelection } from 'dashboard/components-next/emoji-icon-picker/EmojiIconPicker';
 import Popover from 'dashboard/components-next/popover/Popover';
 import StickerPicker from 'dashboard/components-next/sticker-picker/StickerPicker';
+import SendCardMenu from 'dashboard/conversation/composer/SendCardMenu/SendCardMenu';
+import type { StructuredDraft } from 'dashboard/conversation/composer/SendCardMenu/cardPayloads';
 import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
 import { t } from '../../../i18n';
@@ -41,6 +43,8 @@ interface ReplyBottomPanelProps {
     onSelectEmoji: (emoji: string) => void;
     // null = kênh không gửi được sticker hoặc đang ở Lưu ý riêng: không có nút.
     stickerPicker?: ReplyStickerPicker | null;
+    // null = đang ở Lưu ý riêng: thẻ chỉ gửi cho khách.
+    onSendCard?: ((draft: StructuredDraft) => void) | null;
 }
 
 export default function ReplyBottomPanel({
@@ -60,6 +64,7 @@ export default function ReplyBottomPanel({
     onToggleSignature,
     onSelectEmoji,
     stickerPicker = null,
+    onSendCard = null,
 }: ReplyBottomPanelProps) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const emojiButtonRef = useRef<HTMLDivElement>(null);
@@ -128,6 +133,7 @@ export default function ReplyBottomPanel({
                         )}
                     />
                 ) : null}
+                {onSendCard && !isEditorDisabled ? <SendCardMenu onSend={onSendCard} /> : null}
                 {showAttachButton ? (
                     <>
                         <input
