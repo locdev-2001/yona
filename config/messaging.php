@@ -43,4 +43,10 @@ return [
         Telegram::class => TelegramRenderer::class,
         Line::class => LineRenderer::class,
     ],
+
+    /*
+    | Biểu cảm khách được thả trên widget, đúng thứ tự thanh chọn. Máy chủ chỉ
+    | nhận emoji trong danh sách này; widget đọc qua cấu hình kênh.
+    */
+    'widget_reactions' => ['👍', '❤️', '😆', '😮', '😢', '🙏'],
 ];

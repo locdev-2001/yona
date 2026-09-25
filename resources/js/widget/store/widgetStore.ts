@@ -29,6 +29,7 @@ import type {
     WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
+    MessageReaction,
     WidgetMessage,
 } from '../types';
 
@@ -107,7 +108,7 @@ let state: WidgetState = {
     activeCampaign: null,
     campaignsFetched: false,
     // Hạn 0 = chưa biết chính sách của kênh, chưa hiện mục thu hồi.
-    messagingPolicy: { recallWindowSeconds: 0, stickers: [] },
+    messagingPolicy: { recallWindowSeconds: 0, stickers: [], reactions: [] },
     agentLastSeenAt: 0,
     typingAgent: null,
 };
@@ -337,8 +338,8 @@ export const widgetStore = {
         setState({ appConfig: { ...state.appConfig, ...patch } });
     },
 
-    setMessagingPolicy(messagingPolicy: ChannelMessagingPolicy): void {
-        setState({ messagingPolicy });
+    setMessagingPolicy(policy: Partial<ChannelMessagingPolicy>): void {
+        setState({ messagingPolicy: { ...state.messagingPolicy, ...policy } });
     },
 
     setWidgetColor(widgetColor: string): void {
@@ -523,6 +524,25 @@ export const widgetStore = {
                 type: 'error',
             });
             throw error;
+        }
+    },
+
+    /**
+     * Thả (`emoji`) hoặc gỡ (`null`) biểu cảm của khách. Hiện ngay rồi mới gọi máy chủ;
+     * lỗi thì trả lại như cũ. Mỗi khách giữ một biểu cảm trên một tin.
+     */
+    async reactToMessage(messageId: number | string, emoji: string | null): Promise<void> {
+        const me = `contact:${state.contact?.id ?? ''}`;
+        const before = state.conversations[messageId]?.content_attributes?.reactions;
+        const others = ((before as MessageReaction[] | undefined) ?? []).filter(reaction => reaction.by !== me);
+        const next = emoji ? [...others, { emoji, by: me, at: Math.floor(Date.now() / 1000) }] : others;
+
+        widgetStore.updateMessageContentAttributes(messageId, { reactions: next });
+        try {
+            await api.setMessageReaction(messageId, emoji);
+        } catch {
+            widgetStore.updateMessageContentAttributes(messageId, { reactions: before ?? [] });
+            widgetStore.showBanner({ message: t('REACTIONS.FAILED'), type: 'error' });
         }
     },
 
@@ -984,6 +1004,7 @@ api.onConfigLoaded(({ website_channel_config: channelPayload }) => {
     widgetStore.setMessagingPolicy({
         recallWindowSeconds: channelPayload.recall_window ?? 0,
         stickers: channelPayload.stickers ?? [],
+        reactions: channelPayload.reactions ?? [],
     });
 });
 

@@ -79,3 +79,14 @@ export function ArrowRightIcon({ size = 16 }: { size?: number }) {
         </svg>
     );
 }
+
+export function ReactIcon({ size = 15 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20.9 11.2A9 9 0 1 1 12.8 3" />
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+            <path d="M9 9h.01M15 9h.01" />
+            <path d="M16 5h6M19 2v6" />
+        </svg>
+    );
+}

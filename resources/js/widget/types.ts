@@ -71,6 +71,8 @@ export interface WebsiteChannelConfigPayload {
     pre_chat_form_options: PreChatFormOptions;
     // Hạn thu hồi tin của khách (giây) — chính sách của kênh, máy chủ thực thi.
     recall_window?: number;
+    // Biểu cảm khách được thả, đúng thứ tự thanh chọn; máy chủ chỉ nhận các emoji này.
+    reactions?: string[];
     reply_time: string;
     stickers?: WidgetSticker[];
     timezone: string;
@@ -295,4 +297,12 @@ export interface MessagesOfDay {
 export interface ChannelMessagingPolicy {
     recallWindowSeconds: number;
     stickers: WidgetSticker[];
+    reactions: string[];
+}
+
+/** Một biểu cảm trên tin (`content_attributes.reactions[]`). `by` của khách là `contact:{id}`. */
+export interface MessageReaction {
+    emoji: string;
+    by: string;
+    at: number;
 }

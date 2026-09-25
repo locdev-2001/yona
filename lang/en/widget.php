@@ -174,10 +174,16 @@ return [
         'REPLY_TO' => 'Replying to:',
     ],
     'MESSAGE_ACTIONS' => [
+        'REACT' => 'React',
         'REPLY' => 'Reply',
         'MORE' => 'More actions',
         'RECALL' => 'Unsend',
         'COPY' => 'Copy text',
+    ],
+    'REACTIONS' => [
+        'COUNT' => '{count} reacted {emoji}',
+        'REMOVE' => 'Remove reaction {emoji}',
+        'FAILED' => 'Could not add the reaction, please try again.',
     ],
     'RECALL' => [
         'CONFIRM_TITLE' => 'Unsend this message?',

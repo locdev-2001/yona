@@ -149,6 +149,11 @@ export const sendSticker = (stickerId: string, replyTo: number | string | null =
 export const recallMessage = (messageId: number | string): Promise<void> =>
     apiDelete(`${BASE}/messages/${messageId}${buildSearch()}`);
 
+export const setMessageReaction = (messageId: number | string, emoji: string | null): Promise<unknown> =>
+    emoji
+        ? apiPost(`${BASE}/messages/${messageId}/reactions${buildSearch()}`, { emoji })
+        : apiDelete(`${BASE}/messages/${messageId}/reactions${buildSearch()}`);
+
 export const updateMessage = ({
     messageId,
     email,

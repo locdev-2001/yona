@@ -94,3 +94,45 @@ describe('MessageActions', () => {
         expect(screen.queryByRole('menuitem', { name: 'Unsend' })).toBeNull();
     });
 });
+
+describe('cảm xúc', () => {
+    const agentMessage = (reactions: unknown[] = []): WidgetMessage => ({
+        id: 88,
+        content: 'Dạ còn 2 cái ạ',
+        message_type: MESSAGE_TYPE.OUTGOING,
+        status: 'sent',
+        created_at: NOW - 60,
+        content_attributes: { reactions },
+    });
+
+    beforeEach(() => {
+        act(() => widgetStore.setMessagingPolicy({ reactions: ['👍', '❤️', '😆'] }));
+    });
+
+    it('tin của shop có nút cảm xúc, tin của khách thì không', () => {
+        const { unmount } = render(<MessageActions message={ownMessage()} isOwn onReply={() => undefined} />);
+        expect(screen.queryByRole('button', { name: 'React' })).toBeNull();
+        unmount();
+
+        render(<MessageActions message={agentMessage()} isOwn={false} onReply={() => undefined} />);
+        fireEvent.click(screen.getByRole('button', { name: 'React' }));
+        expect(screen.getAllByRole('menuitemradio').map(item => item.textContent)).toEqual(['👍', '❤️', '😆']);
+    });
+
+    it('chọn một biểu cảm thì thả; bấm lại đúng cái đang giữ thì gỡ', () => {
+        const react = vi.spyOn(widgetStore, 'reactToMessage').mockResolvedValue();
+        act(() => widgetStore.setChannelConfig({ widgetColor: '#1f6feb' } as never, {} as never, { id: 5 } as never));
+
+        const { rerender } = render(<MessageActions message={agentMessage()} isOwn={false} onReply={() => undefined} />);
+        fireEvent.click(screen.getByRole('button', { name: 'React' }));
+        fireEvent.click(screen.getByRole('menuitemradio', { name: '❤️' }));
+        expect(react).toHaveBeenLastCalledWith(88, '❤️');
+        expect(screen.queryByRole('menuitemradio')).toBeNull();
+
+        rerender(<MessageActions message={agentMessage([{ emoji: '❤️', by: 'contact:5', at: 1 }])} isOwn={false} onReply={() => undefined} />);
+        fireEvent.click(screen.getByRole('button', { name: 'React' }));
+        expect(screen.getByRole('menuitemradio', { name: '❤️' }).getAttribute('aria-checked')).toBe('true');
+        fireEvent.click(screen.getByRole('menuitemradio', { name: '❤️' }));
+        expect(react).toHaveBeenLastCalledWith(88, null);
+    });
+});

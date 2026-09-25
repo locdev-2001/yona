@@ -4,6 +4,7 @@ namespace App\Services\Channels;
 
 use App\Models\Inbox;
 use App\Services\Channels\Stickers\StickerCatalog;
+use App\Services\Widget\WidgetOutboundActions;
 use App\Services\Widget\WidgetStickerCatalog;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
@@ -18,6 +19,7 @@ class ChannelActionRegistry
     /** @var array<string, class-string<ChannelOutboundActions>> */
     private const DRIVERS = [
         'Channel::Zalo' => ZaloOutboundActions::class,
+        'Channel::WebWidget' => WidgetOutboundActions::class,
     ];
 
     /** @var array<string, class-string<ChannelGroupMembers>> */

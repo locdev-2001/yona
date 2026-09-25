@@ -6,7 +6,8 @@ import { canRecallMessage } from '../../helpers/messageHelpers';
 import { useWidgetState } from '../../store/hooks';
 import { widgetStore } from '../../store/widgetStore';
 import { t } from '../../i18n';
-import { MoreIcon, ReplyIcon } from './icons';
+import { MoreIcon, ReactIcon, ReplyIcon } from './icons';
+import { ReactionPicker } from './Reactions';
 import type { WidgetMessage } from '../../types';
 
 function RoundButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
@@ -80,24 +81,27 @@ interface MessageActionsProps {
     className?: string;
 }
 
-// Hai nút tròn cạnh bong bóng: trả lời và "thêm". Thu hồi nằm trong menu "thêm",
-// chỉ hiện khi tin còn trong hạn thu hồi của kênh (máy chủ vẫn kiểm lại).
+// Nút tròn cạnh bong bóng: cảm xúc (tin của shop), trả lời và "thêm". Thu hồi nằm trong
+// menu "thêm", chỉ hiện khi tin còn trong hạn thu hồi của kênh (máy chủ vẫn kiểm lại).
 export default function MessageActions({ message, isOwn, onReply, className = '' }: MessageActionsProps) {
     const recallWindowSeconds = useWidgetState(state => state.messagingPolicy.recallWindowSeconds);
+    const canReact = useWidgetState(state => !isOwn && state.messagingPolicy.reactions.length > 0);
     const [isMenuOpen, setMenuOpen] = useState(false);
+    const [isPickerOpen, setPickerOpen] = useState(false);
     const [isConfirmOpen, setConfirmOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Chỉ đóng khi bấm ra ngoài: chính cú bấm mở menu vẫn đang lan lên document.
     useEffect(() => {
-        if (!isMenuOpen) return undefined;
+        if (!isMenuOpen && !isPickerOpen) return undefined;
         const closeOnOutsideClick = (event: MouseEvent) => {
             if (event.target instanceof Node && containerRef.current?.contains(event.target)) return;
             setMenuOpen(false);
+            setPickerOpen(false);
         };
         document.addEventListener('click', closeOnOutsideClick);
         return () => document.removeEventListener('click', closeOnOutsideClick);
-    }, [isMenuOpen]);
+    }, [isMenuOpen, isPickerOpen]);
 
     const showRecall = isOwn && canRecallMessage(message, recallWindowSeconds);
     const showCopy = Boolean(message.content) && typeof navigator !== 'undefined' && Boolean(navigator.clipboard);
@@ -119,19 +123,40 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
         <div
             ref={containerRef}
             className={`yona-msg-actions relative flex flex-none items-center gap-[2px] ${className} ${
-                isMenuOpen || isConfirmOpen ? '!opacity-100' : ''
+                isMenuOpen || isConfirmOpen || isPickerOpen ? '!opacity-100' : ''
             }`}
         >
+            {canReact ? (
+                <RoundButton
+                    label={t('MESSAGE_ACTIONS.REACT')}
+                    onClick={() => {
+                        setMenuOpen(false);
+                        setPickerOpen(current => !current);
+                    }}
+                >
+                    <ReactIcon />
+                </RoundButton>
+            ) : null}
             <RoundButton label={t('MESSAGE_ACTIONS.REPLY')} onClick={onReply}>
                 <ReplyIcon />
             </RoundButton>
             {hasMenu ? (
                 <RoundButton
                     label={t('MESSAGE_ACTIONS.MORE')}
-                    onClick={() => setMenuOpen(current => !current)}
+                    onClick={() => {
+                        setPickerOpen(false);
+                        setMenuOpen(current => !current);
+                    }}
                 >
                     <MoreIcon />
                 </RoundButton>
+            ) : null}
+
+            {isPickerOpen ? (
+                // Nằm trên bong bóng, canh theo mép trái hàng tin (tin của shop ở bên trái).
+                <div className="absolute bottom-[38px] z-20 ltr:right-0 rtl:left-0">
+                    <ReactionPicker message={message} onDone={() => setPickerOpen(false)} />
+                </div>
             ) : null}
 
             {isMenuOpen ? (

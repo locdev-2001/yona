@@ -8,6 +8,7 @@ const apiMock = vi.hoisted(() => ({
     configListeners: [] as ((config: unknown) => void)[],
     sendAttachments: vi.fn(),
     recallMessage: vi.fn(),
+    setMessageReaction: vi.fn(),
     sendSticker: vi.fn(),
     sendMessage: vi.fn(),
     fetchContact: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('../api/widget', () => ({
     },
     sendAttachments: apiMock.sendAttachments,
     recallMessage: apiMock.recallMessage,
+    setMessageReaction: apiMock.setMessageReaction,
     sendSticker: apiMock.sendSticker,
     sendMessage: apiMock.sendMessage,
     fetchContact: apiMock.fetchContact,
@@ -75,6 +77,7 @@ describe('chính sách nhắn tin của kênh', () => {
                 website_channel_config: {
                     recall_window: 300,
                     stickers: [{ id: 'hi', image_url: '/hi.png', pack_id: null, label: null }],
+                    reactions: ['👍', '❤️'],
                 },
             }),
         );
@@ -82,7 +85,27 @@ describe('chính sách nhắn tin của kênh', () => {
         expect(widgetStore.getState().messagingPolicy).toStrictEqual({
             recallWindowSeconds: 300,
             stickers: [{ id: 'hi', image_url: '/hi.png', pack_id: null, label: null }],
+            reactions: ['👍', '❤️'],
         });
+    });
+});
+
+describe('cảm xúc của khách', () => {
+    const agentMessage = { id: 41, content: 'Dạ còn ạ', message_type: 1, created_at: 1, content_attributes: {} };
+
+    it('hiện ngay trước khi máy chủ trả lời; lỗi thì trả lại như cũ và báo', async () => {
+        widgetStore.setChannelConfig({ widgetColor: '#000' } as never, {} as never, { id: 7 } as never);
+        widgetStore.addOrUpdateMessage(agentMessage as never);
+        let reject: (error: Error) => void = () => undefined;
+        apiMock.setMessageReaction.mockReturnValueOnce(new Promise((_, fail) => (reject = fail)));
+
+        const pending = widgetStore.reactToMessage(41, '👍');
+        expect(widgetStore.getState().conversations[41].content_attributes?.reactions).toMatchObject([{ emoji: '👍', by: 'contact:7' }]);
+
+        reject(new Error('mạng'));
+        await pending;
+        expect(widgetStore.getState().conversations[41].content_attributes?.reactions).toEqual([]);
+        expect(widgetStore.getState().banner?.type).toBe('error');
     });
 });
 

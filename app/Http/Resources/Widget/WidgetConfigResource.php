@@ -43,6 +43,7 @@ final class WidgetConfigResource
                 'pre_chat_form_options' => $channel->pre_chat_form_options,
                 // Giây; widget ẩn nút thu hồi khi hết hạn và điền số phút vào hộp xác nhận.
                 'recall_window' => (int) $channel->recallWindow()->totalSeconds,
+                'reactions' => config('messaging.widget_reactions'),
                 'reply_time' => $channel->reply_time,
                 'stickers' => array_map(fn (Sticker $sticker) => $sticker->toApi(), app(WidgetStickerCatalog::class)->all()),
                 'timezone' => $inbox->timezone,

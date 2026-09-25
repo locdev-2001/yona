@@ -8,6 +8,7 @@ import { WIDGET_BUS_EVENTS } from '../../helpers/constants';
 import { isDeletedMessage } from '../../helpers/messageHelpers';
 import MessageActions from './MessageActions';
 import MessageBody from './MessageBody';
+import { ReactionSummary } from './Reactions';
 import { messageElementId } from './QuotedReply';
 import type { WidgetMessage } from '../../types';
 
@@ -94,6 +95,7 @@ export default function MessageRow({ message, replyTo, isOwn, position, avatar =
             {isOwn ? actions : <div className="w-[26px] flex-none self-end">{avatar}</div>}
             <div className={`flex min-w-0 max-w-[74%] flex-col gap-[2px] ${isOwn ? 'items-end' : 'items-start'}`}>
                 <MessageBody message={message} replyTo={replyTo} isOwn={isOwn} position={position} />
+                {isDeletedMessage(message) ? null : <ReactionSummary message={message} isOwn={isOwn} />}
                 {footer}
             </div>
             {isOwn ? null : actions}

@@ -26,6 +26,7 @@ use App\Http\Controllers\Widget\InboxMembersController;
 use App\Http\Controllers\Widget\LabelsController;
 use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
+use App\Http\Controllers\Widget\ReactionsController;
 use App\Http\Controllers\Widget\UpdatesController;
 use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
@@ -68,6 +69,8 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::get('/messages', [MessagesController::class, 'index']);
             Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
+            Route::post('/messages/{messageId}/reactions', [ReactionsController::class, 'store'])->whereNumber('messageId');
+            Route::delete('/messages/{messageId}/reactions', [ReactionsController::class, 'destroy'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);

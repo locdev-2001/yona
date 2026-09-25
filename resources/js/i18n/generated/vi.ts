@@ -9856,10 +9856,16 @@ const messages: Record<string, unknown> = {
             "REPLY_TO": "Đang trả lời:"
         },
         "MESSAGE_ACTIONS": {
+            "REACT": "Thả cảm xúc",
             "REPLY": "Trả lời",
             "MORE": "Thêm",
             "RECALL": "Thu hồi",
             "COPY": "Sao chép"
+        },
+        "REACTIONS": {
+            "COUNT": "{count} người thả {emoji}",
+            "REMOVE": "Gỡ cảm xúc {emoji}",
+            "FAILED": "Chưa thả được cảm xúc, thử lại nhé."
         },
         "RECALL": {
             "CONFIRM_TITLE": "Thu hồi tin nhắn này?",
