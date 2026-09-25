@@ -34,7 +34,7 @@ const fileNameOf = (url: string): string => {
 };
 
 const FILE_CARD_CLASS =
-    'yona-file-bubble max-w-[240px] rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)]';
+    'yona-file-bubble w-[300px] max-w-full rounded-[14px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)]';
 
 function FileTypeBadge() {
     return (
