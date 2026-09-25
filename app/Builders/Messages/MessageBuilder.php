@@ -238,7 +238,7 @@ class MessageBuilder
             $contentType,
             $attributes['content'],
             $this->contentAttributes(),
-            new PayloadContext($this->conversation, $attributes['message_type']),
+            new PayloadContext($this->conversation, $attributes['message_type'], $this->user),
         );
 
         // Tin có cấu trúc do khách gửi (yêu cầu đặt hàng…) mang luôn bản chữ thuần,

@@ -4,6 +4,7 @@ use App\Messaging\Delivery\Renderers\FacebookRenderer;
 use App\Messaging\Delivery\Renderers\LineRenderer;
 use App\Messaging\Delivery\Renderers\TelegramRenderer;
 use App\Messaging\Structured\Types\ArticleType;
+use App\Messaging\Structured\Types\BankTransferType;
 use App\Messaging\Structured\Types\ButtonsType;
 use App\Messaging\Structured\Types\CardsType;
 use App\Messaging\Structured\Types\FormType;
@@ -30,6 +31,7 @@ return [
         WebviewType::class,
         OrderStatusType::class,
         OrderRequestType::class,
+        BankTransferType::class,
     ],
 
     /*

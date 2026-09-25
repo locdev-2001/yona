@@ -22,6 +22,9 @@ return [
         'field_invalid' => ':field không hợp lệ.',
         'empty_submission' => 'Chưa có thông tin nào được gửi.',
         'payload_too_large' => 'Dữ liệu kèm trang quá lớn.',
+        'unknown_payment_account' => 'Không tìm thấy tài khoản nhận tiền.',
+        'payment_account_not_allowed' => 'Bạn không được gửi thẻ chuyển khoản bằng tài khoản này.',
+        'duplicate_payment_account' => 'Ngân hàng và số tài khoản này đã được thêm.',
     ],
     'settings' => [
         'invalid_channel' => 'Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại.',
@@ -57,6 +60,13 @@ return [
         'line' => 'Yêu cầu đặt hàng: :title:selection × :quantity',
         'note' => 'Ghi chú: :note',
     ],
+    'bank_transfer' => [
+        'preview' => 'Chuyển khoản qua :bank',
+        'bank_line' => 'Ngân hàng :bank, số TK :account',
+        'holder' => 'Chủ TK :name',
+        'amount' => 'Số tiền :amount',
+        'memo' => 'Nội dung: :memo',
+    ],
     // Chuỗi của message kit (resources/js/shared/messaging), placeholder dạng {tên}.
     'kit' => [
         'item_position' => 'Sản phẩm {current} trên {total}',
@@ -87,5 +97,13 @@ return [
             'delivering' => 'Đang giao',
             'delivered' => 'Đã nhận',
         ],
+        'bank_transfer_title' => 'Chuyển khoản ngân hàng',
+        'bank_transfer_qr_alt' => 'Mã QR chuyển khoản',
+        'bank' => 'Ngân hàng',
+        'account_number' => 'Số tài khoản',
+        'account_holder' => 'Chủ tài khoản',
+        'transfer_amount' => 'Số tiền',
+        'transfer_memo' => 'Nội dung',
+        'paid' => 'Đã nhận tiền',
     ],
 ];
