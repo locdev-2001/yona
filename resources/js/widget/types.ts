@@ -160,6 +160,8 @@ export interface CardAction {
 export interface CardItem {
     title: string;
     description?: string;
+    // Dòng giá tuỳ chọn, hiện đúng chuỗi bot gửi (vd "4.290.000 ₫").
+    price?: string | number;
     media_url?: string;
     actions?: CardAction[];
 }
