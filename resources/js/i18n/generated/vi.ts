@@ -6992,13 +6992,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "INVITE_LINKS": {
-        "accept": {
-            "errors": {
-                "not_found": "Đường dẫn mời này không tồn tại.",
-                "revoked": "Đường dẫn mời này đã bị thu hồi.",
-                "expired": "Đường dẫn mời này đã hết hạn.",
-                "exhausted": "Đường dẫn mời này đã hết lượt sử dụng."
-            }
+        "API": {
+            "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
         },
         "PAGE": {
             "TITLE": "Lời mời tham gia {account}",
@@ -7043,9 +7038,6 @@ const messages: Record<string, unknown> = {
                     "TITLE": "Lời mời đã hết lượt dùng",
                     "DESC": "Đường dẫn mời này đã dùng hết số lượt cho phép. Bạn hãy xin một đường dẫn mới."
                 }
-            },
-            "API": {
-                "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
             }
         },
         "MANAGE": {
@@ -7076,7 +7068,7 @@ const messages: Record<string, unknown> = {
                 "HINT": "Đường dẫn này chỉ hiện đầy đủ một lần. Bạn hãy sao chép hoặc gửi ngay.",
                 "COPY": "Sao chép",
                 "COPIED": "Đã sao chép",
-                "SHARE_ZALO": "Gửi qua Zalo"
+                "SHARE": "Chia sẻ"
             },
             "LIST": {
                 "EMPTY": "Chưa có đường dẫn mời nào.",
@@ -7103,9 +7095,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "CREATE_SUCCESS": "Đã tạo đường dẫn mời",
-                "CREATE_ERROR": "Không kết nối được máy chủ. Bạn hãy thử lại sau.",
-                "REVOKE_SUCCESS": "Đã thu hồi đường dẫn mời",
-                "REVOKE_ERROR": "Không kết nối được máy chủ. Bạn hãy thử lại sau."
+                "REVOKE_SUCCESS": "Đã thu hồi đường dẫn mời"
             }
         }
     },
@@ -9354,9 +9344,7 @@ const messages: Record<string, unknown> = {
     },
     "SUPER_ADMIN_MFA": {
         "REQUIRED_TITLE": "Bắt buộc bật xác thực hai lớp",
-        "REQUIRED_DESCRIPTION": "{installationName} yêu cầu bật 2FA để dùng console quản trị. Hoàn tất thiết lập bên dưới để tiếp tục.",
-        "START_ERROR": "Không khởi tạo được bước cài đặt 2FA.",
-        "INVALID_CODE": "Mã không đúng, bạn thử lại."
+        "REQUIRED_DESCRIPTION": "{installationName} yêu cầu bật 2FA để dùng console quản trị. Hoàn tất thiết lập bên dưới để tiếp tục."
     },
     "SURVEY": {
         "DESCRIPTION": "Quý khách kính mếm 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",

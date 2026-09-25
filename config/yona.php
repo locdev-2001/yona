@@ -56,19 +56,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | 2FA bắt buộc cho console quản trị
-    |--------------------------------------------------------------------------
-    |
-    | Mặc định bật: super admin chưa bật 2FA bị chặn ở mọi trang trừ màn cài đặt
-    | 2FA (và logout) — xem app/Http/Middleware/EnsureSuperAdminMfaEnrolled.php.
-    | Tắt (false) chỉ nên dùng tạm thời khi tự host và chấp nhận rủi ro.
-    |
-    */
-
-    'super_admin_require_mfa' => (bool) env('SUPER_ADMIN_REQUIRE_MFA', true),
-
-    /*
-    |--------------------------------------------------------------------------
     | Blocked email domains
     |--------------------------------------------------------------------------
     |

@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
-use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
@@ -116,21 +115,10 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
-    /**
-     * Horizon "chỉ hiển thị, không cảnh báo" (docs/deployment.md mục 8) — sự cố
-     * thật 20/09/2026 (128 lượt ActionCableBroadcastJob lỗi trôi 2 ngày không
-     * ai biết) là lý do có hai listener này.
-     */
     private function registerOpsAlerts(): void
     {
         Event::listen(JobFailed::class, AlertOnJobFailure::class);
-
-        // LongWaitDetected chỉ tồn tại nếu Horizon đã cài — vendor có thể chưa
-        // có ở lần deploy đầu sau khi thêm gói, giống lý do Horizon::auth() ở
-        // registerObservabilityGates() cũng tự kiểm class_exists().
-        if (class_exists(LongWaitDetected::class)) {
-            Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
-        }
+        Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
     }
 
     private function refreshConversationTabCountsOnChange(): void
@@ -159,14 +147,14 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Ba dashboard vận hành (/horizon, /pulse, /log-viewer) đã nằm sau
-     * middleware `auth:super_admin`. Gate riêng của từng gói lại đọc user ở
-     * guard mặc định — guard đó luôn null với phiên super admin — nên phải khai
-     * lại cho khớp, nếu không super admin qua được middleware vẫn bị gate chặn.
+     * middleware `auth:super_admin` + `EnsureSuperAdminMfaEnrolled` (khai trong
+     * config của từng gói). Gate riêng của từng gói lại đọc user ở guard mặc
+     * định — guard đó luôn null với phiên super admin — nên phải khai lại cho
+     * khớp, nếu không super admin qua được middleware vẫn bị gate chặn.
      */
     private function registerObservabilityGates(): void
     {
-        $isSuperAdmin = fn (?Authenticatable $user = null) => ($superAdmin = Auth::guard('super_admin')->user()) !== null
-            && EnsureSuperAdminMfaEnrolled::satisfied($superAdmin);
+        $isSuperAdmin = fn (?Authenticatable $user = null): bool => Auth::guard('super_admin')->check();
 
         foreach (['viewPulse', 'viewLogViewer'] as $ability) {
             Gate::define($ability, $isSuperAdmin);

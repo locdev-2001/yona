@@ -12,8 +12,6 @@ vi.mock('@inertiajs/react', () => ({
     }),
 }));
 
-vi.mock('dashboard/helper/apiClient', () => ({ xsrfToken: () => 'test-csrf-token' }));
-
 import ResourceShow from './Show';
 
 const baseProps = {
@@ -24,8 +22,8 @@ const baseProps = {
     actions: ['index', 'show'],
 };
 
-// Dash #38: đăng nhập hộ giờ đòi lý do trước khi mở form thật (POST, không
-// còn là <a> GET như bản cũ) — form chỉ hiện sau khi bấm "Impersonate user".
+// Đăng nhập hộ đòi lý do trước khi mở form thật (POST, không còn là <a> GET
+// như bản cũ) — form chỉ hiện sau khi bấm "Impersonate user".
 describe('ResourceShow — mục đăng nhập hộ', () => {
     it('không hiện nút đăng nhập hộ khi không có impersonateUrl', () => {
         render(<ResourceShow {...baseProps} />);
@@ -47,14 +45,20 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
         expect(submit.disabled).toBe(false);
     });
 
-    it('form gửi POST tới đúng impersonateUrl kèm CSRF token', () => {
-        render(<ResourceShow {...baseProps} impersonateUrl="/super_admin/users/5/impersonate" />);
+    it('form gửi POST tới đúng impersonateUrl kèm CSRF token thô từ prop csrf', () => {
+        render(
+            <ResourceShow
+                {...baseProps}
+                impersonateUrl="/super_admin/users/5/impersonate"
+                csrf="real-csrf-token"
+            />,
+        );
         fireEvent.click(screen.getByRole('button', { name: 'Impersonate user' }));
 
         const form = document.querySelector('form') as HTMLFormElement;
         expect(form.method.toLowerCase()).toBe('post');
         expect(form.getAttribute('action')).toBe('/super_admin/users/5/impersonate');
         expect(form.target).toBe('_blank');
-        expect((form.querySelector('input[name="_token"]') as HTMLInputElement).value).toBe('test-csrf-token');
+        expect((form.querySelector('input[name="_token"]') as HTMLInputElement).value).toBe('real-csrf-token');
     });
 });

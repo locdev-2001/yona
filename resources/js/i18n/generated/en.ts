@@ -6992,13 +6992,8 @@ const messages: Record<string, unknown> = {
         }
     },
     "INVITE_LINKS": {
-        "accept": {
-            "errors": {
-                "not_found": "This invite link does not exist.",
-                "revoked": "This invite link has been revoked.",
-                "expired": "This invite link has expired.",
-                "exhausted": "This invite link has reached its usage limit."
-            }
+        "API": {
+            "ERROR_MESSAGE": "Could not reach the server. Please try again later."
         },
         "PAGE": {
             "TITLE": "Invitation to join {account}",
@@ -7043,9 +7038,6 @@ const messages: Record<string, unknown> = {
                     "TITLE": "Invite fully used",
                     "DESC": "This invite link has reached its usage limit. Ask for a new one."
                 }
-            },
-            "API": {
-                "ERROR_MESSAGE": "Could not reach the server. Please try again later."
             }
         },
         "MANAGE": {
@@ -7076,7 +7068,7 @@ const messages: Record<string, unknown> = {
                 "HINT": "This link only shows in full once. Copy or send it now.",
                 "COPY": "Copy",
                 "COPIED": "Copied",
-                "SHARE_ZALO": "Send via Zalo"
+                "SHARE": "Share"
             },
             "LIST": {
                 "EMPTY": "No invite links yet.",
@@ -7103,9 +7095,7 @@ const messages: Record<string, unknown> = {
             },
             "API": {
                 "CREATE_SUCCESS": "Invite link created",
-                "CREATE_ERROR": "Could not reach the server. Please try again later.",
-                "REVOKE_SUCCESS": "Invite link revoked",
-                "REVOKE_ERROR": "Could not reach the server. Please try again later."
+                "REVOKE_SUCCESS": "Invite link revoked"
             }
         }
     },
@@ -9354,9 +9344,7 @@ const messages: Record<string, unknown> = {
     },
     "SUPER_ADMIN_MFA": {
         "REQUIRED_TITLE": "Two-factor authentication required",
-        "REQUIRED_DESCRIPTION": "{installationName} requires 2FA for the super admin console. Finish setup below to continue.",
-        "START_ERROR": "Could not start 2FA setup.",
-        "INVALID_CODE": "Invalid code, try again."
+        "REQUIRED_DESCRIPTION": "{installationName} requires 2FA for the super admin console. Finish setup below to continue."
     },
     "SURVEY": {
         "DESCRIPTION": "Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.",

@@ -42,7 +42,6 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="REDIS_DB" value="4"/>
         <env name="SESSION_DRIVER" value="array"/>
-        <env name="SUPER_ADMIN_REQUIRE_MFA" value="false"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

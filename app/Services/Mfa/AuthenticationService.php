@@ -29,27 +29,46 @@ class AuthenticationService
     }
 
     // Tương đương validate_and_consume_otp! của devise-two-factor: một mã chỉ
-    // dùng được một lần, cột consumed_timestep ghi lại timestep vừa tiêu thụ.
+    // dùng được một lần. Thay vì tin vào timestep hiện tại lúc verify (một mã
+    // của bước kế tiếp nộp ở cuối bước hiện tại sẽ ghi nhầm timestep, cho phép
+    // phát lại), tìm đúng timestep mà mã thật sự khớp (không leeway) rồi chỉ
+    // chấp nhận nếu timestep đó mới hơn lần tiêu thụ trước. Ghi nguyên tử bằng
+    // UPDATE có điều kiện để hai request đồng thời cùng mã không cùng qua được.
     private function authenticateWithOtp(): bool
     {
-        if (! $this->user->otp_secret) {
+        if (! $this->user->otp_secret || ! $this->otpCode) {
             return false;
         }
 
+        // time() thay vì now()->getTimestamp(): otphp tự sinh/kiểm mã bằng đồng hồ
+        // hệ thống thật (không đọc Carbon::now()), Carbon::setTestNow() trong test
+        // sẽ không khớp nếu dùng now() ở đây.
         $totp = TOTP::createFromSecret($this->user->otp_secret);
+        $period = $totp->getPeriod();
+        $now = time();
 
-        if (! $totp->verify($this->otpCode, null, User::OTP_LEEWAY_SECONDS)) {
+        $matchedTimestep = null;
+
+        foreach ([-1, 0, 1] as $offset) {
+            $timestamp = $now + $offset * $period;
+
+            if ($timestamp >= 0 && $totp->verify($this->otpCode, $timestamp, 0)) {
+                $matchedTimestep = intdiv($timestamp, $period);
+                break;
+            }
+        }
+
+        if ($matchedTimestep === null) {
             return false;
         }
 
-        $timestep = (int) floor(time() / $totp->getPeriod());
+        $affected = User::query()
+            ->whereKey($this->user->getKey())
+            ->where(function ($query) use ($matchedTimestep) {
+                $query->whereNull('consumed_timestep')->orWhere('consumed_timestep', '<', $matchedTimestep);
+            })
+            ->update(['consumed_timestep' => $matchedTimestep]);
 
-        if ($this->user->consumed_timestep === $timestep) {
-            return false;
-        }
-
-        $this->user->forceFill(['consumed_timestep' => $timestep])->save();
-
-        return true;
+        return $affected === 1;
     }
 }

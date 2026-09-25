@@ -29,6 +29,36 @@ it('refuses to reuse the same otp code twice', function () {
         ->and((new AuthenticationService($this->user->refresh(), $code))->authenticate())->toBeFalse();
 });
 
+it('accepts the code from the next time-step even if it was already valid at the tail of the current one', function () {
+    $totp = TOTP::createFromSecret($this->user->otp_secret);
+    $period = $totp->getPeriod();
+    $currentTimestep = intdiv(time(), $period);
+
+    // Mã của bước kế tiếp đã hợp lệ (leeway 0 mới chấp nhận) trước khi thời
+    // gian thật sự sang bước đó — kịch bản gây ra C1: verify cũ ghi nhầm
+    // consumed_timestep = bước hiện tại thay vì bước mã thật sự khớp.
+    $nextStepCode = $totp->at(($currentTimestep + 1) * $period);
+
+    expect((new AuthenticationService($this->user, $nextStepCode))->authenticate())->toBeTrue()
+        ->and($this->user->refresh()->consumed_timestep)->toBe($currentTimestep + 1);
+
+    // Cùng mã đó không dùng lại được, kể cả khi thời gian thật đã sang đúng
+    // bước mà mã ứng với (không còn là "phát lại từ tương lai" nữa).
+    expect((new AuthenticationService($this->user->refresh(), $nextStepCode))->authenticate())->toBeFalse();
+});
+
+it('rejects a code matching a time-step that is not newer than the last consumed one', function () {
+    $totp = TOTP::createFromSecret($this->user->otp_secret);
+    $period = $totp->getPeriod();
+    $currentTimestep = intdiv(time(), $period);
+
+    $this->user->forceFill(['consumed_timestep' => $currentTimestep + 1])->save();
+
+    // Mã của bước hiện tại (cũ hơn bước đã tiêu thụ) không được chấp nhận,
+    // dù đúng cửa sổ leeway mặc định của thư viện.
+    expect((new AuthenticationService($this->user, ($this->otp)()))->authenticate())->toBeFalse();
+});
+
 it('accepts a backup code once and marks it used', function () {
     $codes = (new ManagementService($this->user))->generateBackupCodes();
 

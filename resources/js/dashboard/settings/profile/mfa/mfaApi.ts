@@ -1,6 +1,9 @@
 import { deleteJson, getJson, postJson } from 'dashboard/helper/apiClient';
 
-// Port từ dashboard/api/mfa.js — nơi duy nhất biết đường dẫn endpoint MFA.
+// Port từ dashboard/api/mfa.js. createMfaApi nhận baseUrl để dùng chung cho cả
+// MFA của agent (/api/v1/profile/mfa) và của super admin (/super_admin/mfa) —
+// cùng ManagementService/AuthenticationService phía backend
+// (App\Http\Controllers\Concerns\MfaEnrollmentActions), khác đường dẫn.
 export interface MfaStatus {
     feature_available: boolean;
     enabled: boolean;
@@ -13,14 +16,17 @@ export interface MfaSetupPayload {
     secret: string;
 }
 
-const URL = '/api/v1/profile/mfa';
+export function createMfaApi(baseUrl: string) {
+    return {
+        get: () => getJson<MfaStatus>(baseUrl),
+        enable: () => postJson<MfaSetupPayload>(baseUrl, {}),
+        verify: (otpCode: string) =>
+            postJson<{ enabled: boolean; backup_codes?: string[] }>(`${baseUrl}/verify`, { otp_code: otpCode }),
+        disable: (password: string, { otpCode = '', backupCode = '' }: { otpCode?: string; backupCode?: string }) =>
+            deleteJson<{ enabled: boolean }>(baseUrl, { password, otp_code: otpCode, backup_code: backupCode }),
+        regenerateBackupCodes: (otpCode: string) =>
+            postJson<{ backup_codes: string[] }>(`${baseUrl}/backup_codes`, { otp_code: otpCode }),
+    };
+}
 
-export const mfaApi = {
-    get: () => getJson<MfaStatus>(URL),
-    enable: () => postJson<MfaSetupPayload>(URL, {}),
-    verify: (otpCode: string) => postJson<{ enabled: boolean; backup_codes?: string[] }>(`${URL}/verify`, { otp_code: otpCode }),
-    disable: (password: string, { otpCode = '', backupCode = '' }: { otpCode?: string; backupCode?: string }) =>
-        deleteJson<{ enabled: boolean }>(URL, { password, otp_code: otpCode, backup_code: backupCode }),
-    regenerateBackupCodes: (otpCode: string) =>
-        postJson<{ backup_codes: string[] }>(`${URL}/backup_codes`, { otp_code: otpCode }),
-};
+export const mfaApi = createMfaApi('/api/v1/profile/mfa');

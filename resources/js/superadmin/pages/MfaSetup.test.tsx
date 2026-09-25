@@ -12,11 +12,11 @@ vi.mock('@inertiajs/react', () => ({
 
 const enable = vi.fn();
 const verify = vi.fn();
-vi.mock('../mfaApi', () => ({
-    superAdminMfaApi: {
+vi.mock('dashboard/settings/profile/mfa/mfaApi', () => ({
+    createMfaApi: () => ({
         enable: (...args: unknown[]) => enable(...args),
         verify: (...args: unknown[]) => verify(...args),
-    },
+    }),
 }));
 
 import SuperAdminMfaSetup from './MfaSetup';
@@ -31,17 +31,17 @@ const superAdmin = {
     currentPath: '/super_admin/mfa/setup',
 };
 
-// Dash #39: màn bắt buộc cài đặt 2FA — server chỉ điều hướng tới đây khi chưa
-// bật 2FA, nên trang tự gọi enable() lấy QR ngay khi mở, trừ khi đã bật rồi.
+// Màn bắt buộc cài đặt 2FA — server (MfaController::setupPage) chỉ điều hướng
+// tới đây khi chưa bật 2FA, nên trang tự gọi enable() lấy QR ngay khi mở.
 describe('SuperAdminMfaSetup', () => {
     beforeEach(() => {
         routerVisit.mockReset();
         enable.mockReset();
         verify.mockReset();
-        pageProps = { superAdmin, mfaEnabled: false };
+        pageProps = { superAdmin };
     });
 
-    it('gọi enable() để lấy QR khi chưa bật 2FA', async () => {
+    it('gọi enable() để lấy QR khi mở trang', async () => {
         enable.mockResolvedValue({ provisioning_url: 'otpauth://totp/x', secret: 'ABCDEF' });
 
         render(<SuperAdminMfaSetup />);
@@ -50,20 +50,11 @@ describe('SuperAdminMfaSetup', () => {
         expect(await screen.findByDisplayValue('ABCDEF')).toBeInTheDocument();
     });
 
-    it('không gọi enable() và không hiện gì khi đã bật 2FA', () => {
-        pageProps = { superAdmin, mfaEnabled: true };
-
-        const { container } = render(<SuperAdminMfaSetup />);
-
-        expect(enable).not.toHaveBeenCalled();
-        expect(container).toBeEmptyDOMElement();
-    });
-
     it('báo lỗi khi enable() thất bại', async () => {
         enable.mockRejectedValue(new Error('network'));
 
         render(<SuperAdminMfaSetup />);
 
-        expect(await screen.findByText('Could not start 2FA setup.')).toBeInTheDocument();
+        expect(await screen.findByText('MFA not enabled. Please contact administrator.')).toBeInTheDocument();
     });
 });

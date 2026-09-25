@@ -32,6 +32,7 @@ class UsersController extends ResourceController
             'mfaEnabled' => $record->mfaEnabled(),
             'confirmed' => $record->isConfirmed(),
             'impersonateUrl' => "/super_admin/users/{$record->getKey()}/impersonate",
+            'csrf' => csrf_token(),
         ];
     }
 
@@ -74,28 +75,21 @@ class UsersController extends ResourceController
     }
 
     // Mở phiên đăng nhập dưới danh nghĩa người dùng (generate_sso_link_with_impersonation).
-    // Bắt buộc lý do (ghi vào super_admin_impersonations) — dash #38: mọi lượt
-    // đăng nhập hộ phải truy vết được ai, hộ ai, vì sao.
+    // Bắt buộc lý do, ghi vào super_admin_impersonations: mọi lượt đăng nhập hộ
+    // phải truy vết được ai, hộ ai, vì sao.
     public function impersonate(Request $request, int $id): RedirectResponse
     {
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:10', 'max:500'],
-            'account_id' => ['nullable', 'integer'],
         ]);
 
         $target = $this->findRecord($id);
-
-        $accountId = $data['account_id'] ?? null;
-        if ($accountId !== null && ! $target->accounts()->whereKey($accountId)->exists()) {
-            abort(422, 'Account does not belong to this user.');
-        }
 
         $token = $target->generateSsoAuthToken(impersonation: true);
 
         SuperAdminImpersonation::query()->create([
             'super_admin_id' => Auth::guard('super_admin')->id(),
             'target_user_id' => $target->getKey(),
-            'account_id' => $accountId,
             'reason' => $data['reason'],
             'ip_address' => $request->ip(),
             'user_agent' => (string) $request->userAgent(),

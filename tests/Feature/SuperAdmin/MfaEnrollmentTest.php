@@ -4,12 +4,8 @@ use App\Models\SuperAdmin;
 use App\Services\Mfa\ManagementService;
 use OTPHP\TOTP;
 
-// Dash #39: super admin chưa bật 2FA bị chặn ở mọi trang console trừ màn cài
-// đặt 2FA + logout — bật/tắt qua config('yona.super_admin_require_mfa').
-beforeEach(function () {
-    config(['yona.super_admin_require_mfa' => true]);
-});
-
+// Super admin chưa bật 2FA bị chặn ở mọi trang console trừ màn cài đặt 2FA +
+// logout — luôn bắt buộc, không có cờ tắt.
 it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì trang console', function () {
     $superAdmin = SuperAdmin::factory()->create();
 
@@ -34,13 +30,12 @@ it('cho super admin đã bật 2FA dùng console bình thường', function () {
         ->assertOk();
 });
 
-it('tắt cờ SUPER_ADMIN_REQUIRE_MFA thì không chặn nữa', function () {
-    config(['yona.super_admin_require_mfa' => false]);
-    $superAdmin = SuperAdmin::factory()->create();
+it('đưa super admin đã bật 2FA ra khỏi màn cài đặt thay vì hiện trang trắng', function () {
+    $superAdmin = SuperAdmin::factory()->withMfa()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
-        ->get('/super_admin')
-        ->assertOk();
+        ->get('/super_admin/mfa/setup')
+        ->assertRedirect('/super_admin');
 });
 
 describe('luồng cài đặt 2FA trong console', function () {

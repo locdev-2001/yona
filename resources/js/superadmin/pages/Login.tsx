@@ -13,9 +13,9 @@ interface SuperAdminLoginPageProps extends SuperAdminPageProps {
     otpError?: string | null;
 }
 
-// Port từ app/views/super_admin/devise/sessions/new.html.erb. Dash #39: thêm
-// bước OTP sau mật khẩu khi tài khoản đã bật 2FA — cùng component
-// MfaVerification với màn đăng nhập agent (v3/views/login/Index.tsx).
+// Port từ app/views/super_admin/devise/sessions/new.html.erb. Thêm bước OTP
+// sau mật khẩu khi tài khoản đã bật 2FA — cùng component MfaVerification với
+// màn đăng nhập agent (v3/views/login/Index.tsx).
 export default function SuperAdminLogin() {
     const { flash, superAdmin, otpRequired, otpToken, otpError } = usePage<SuperAdminLoginPageProps>().props;
     const { data, setData, post, processing } = useForm({

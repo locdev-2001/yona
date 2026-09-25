@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 // Các màn Administrate của console quản trị.
 beforeEach(function () {
-    $this->superAdmin = SuperAdmin::factory()->create();
+    $this->superAdmin = SuperAdmin::factory()->withMfa()->create();
     $this->actingAs($this->superAdmin, 'super_admin');
 });
 

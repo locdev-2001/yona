@@ -25,12 +25,10 @@ it('cho super admin đã bật 2FA vào', function (string $path) {
         ->assertOk();
 })->with($dashboards);
 
-it('chặn super admin chưa bật 2FA khi bắt buộc 2FA', function (string $path) {
-    config(['yona.super_admin_require_mfa' => true]);
-
+it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì cho vào dashboard', function (string $path) {
     $this->actingAs(SuperAdmin::factory()->create(), 'super_admin')
         ->get($path)
-        ->assertForbidden();
+        ->assertRedirect('/super_admin/mfa/setup');
 })->with($dashboards);
 
 it('không cho xoá file log qua giao diện', function () {

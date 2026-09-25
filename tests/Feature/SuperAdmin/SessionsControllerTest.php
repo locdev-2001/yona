@@ -130,7 +130,19 @@ describe('đăng nhập hai bước với 2FA', function () {
         ])->assertRedirect('/super_admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
     });
 
-    it('khoá bước OTP sau 5 lần sai cùng IP', function () {
+    it('từ chối mfa_token của agent thường, không tiêu mất timestep của agent đó', function () {
+        $agent = User::factory()->withMfa()->create();
+        $token = (new TokenService)->generateToken($agent);
+
+        $this->post('/super_admin/sign_in', [
+            'otp_token' => $token,
+            'otp_code' => TOTP::createFromSecret($agent->otp_secret)->now(),
+        ])->assertRedirect('/super_admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
+
+        expect($agent->refresh()->consumed_timestep)->toBeNull();
+    });
+
+    it('khoá bước OTP sau 5 lần sai theo tài khoản', function () {
         $superAdmin = SuperAdmin::factory()->withMfa()->create();
         $token = (new TokenService)->generateToken($superAdmin);
 
@@ -142,6 +154,26 @@ describe('đăng nhập hai bước với 2FA', function () {
             'otp_token' => $token,
             'otp_code' => superAdminOtpFor($superAdmin),
         ], ['X-Inertia' => 'true'])->assertOk();
+
+        expect($response->json('props.otpError'))->not->toBeEmpty()
+            ->and($response->json('props.otpError'))->not->toBe(__('errors.mfa.invalid_code'));
+        expect(auth()->guard('super_admin')->check())->toBeFalse();
+    });
+
+    it('khoá bước OTP dù kẻ tấn công đổi IP giữa các lần thử', function () {
+        $superAdmin = SuperAdmin::factory()->withMfa()->create();
+        $token = (new TokenService)->generateToken($superAdmin);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => "203.0.113.{$i}"])
+                ->post('/super_admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
+        }
+
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.1'])
+            ->post('/super_admin/sign_in', [
+                'otp_token' => $token,
+                'otp_code' => superAdminOtpFor($superAdmin),
+            ], ['X-Inertia' => 'true'])->assertOk();
 
         expect($response->json('props.otpError'))->not->toBeEmpty()
             ->and($response->json('props.otpError'))->not->toBe(__('errors.mfa.invalid_code'));

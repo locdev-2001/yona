@@ -98,19 +98,15 @@ class SessionsController extends Controller
     {
         $token = (string) $request->input('sso_auth_token');
         $user = User::fromEmail($request->input('email'));
+        $tokenType = $user?->redeemSsoAuthToken($token);
 
-        if ($user === null || ! $user->validSsoAuthToken($token)) {
+        if ($user === null || $tokenType === null) {
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        $impersonation = $user->ssoAuthTokenIsImpersonation($token);
-        $user->invalidateSsoAuthToken($token);
-
-        if ($impersonation) {
+        if ($tokenType === 'impersonation') {
             SuperAdminImpersonation::markUsedByTokenHash(hash('sha256', $token));
-        }
-
-        if (! $impersonation) {
+        } else {
             $limitResponse = $this->enforceSessionLimit($request, $user);
             if ($limitResponse) {
                 return $limitResponse;

@@ -1,14 +1,12 @@
 <?php
 
-use App\Models\Account;
-use App\Models\AccountUser;
 use App\Models\SuperAdmin;
 use App\Models\SuperAdminImpersonation;
 use App\Models\User;
 
-// Dash #38: đăng nhập hộ bắt buộc lý do và ghi nhật ký; GET không còn hoạt động.
+// Đăng nhập hộ bắt buộc lý do và ghi nhật ký; GET không còn hoạt động.
 beforeEach(function () {
-    $this->superAdmin = SuperAdmin::factory()->create();
+    $this->superAdmin = SuperAdmin::factory()->withMfa()->create();
 });
 
 it('từ chối khi thiếu lý do', function () {
@@ -77,34 +75,6 @@ it('đánh dấu used_at và mở đúng phiên guard web khi tiêu thụ token 
 
     expect(auth()->guard('web')->id())->toBe($target->id)
         ->and($log->refresh()->used_at)->not->toBeNull();
-});
-
-it('kiểm tra account_id thuộc về user mục tiêu', function () {
-    $target = User::factory()->create();
-    $otherAccount = Account::factory()->create();
-
-    $response = $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", [
-            'reason' => 'điều tra sự cố khách báo lỗi',
-            'account_id' => $otherAccount->id,
-        ]);
-
-    $response->assertStatus(422);
-    expect(SuperAdminImpersonation::query()->count())->toBe(0);
-});
-
-it('ghi account_id khi user thuộc về account đó', function () {
-    $target = User::factory()->create();
-    $account = Account::factory()->create();
-    AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $target->id]);
-
-    $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", [
-            'reason' => 'điều tra sự cố khách báo lỗi',
-            'account_id' => $account->id,
-        ])->assertRedirect();
-
-    expect(SuperAdminImpersonation::query()->sole()->account_id)->toBe($account->id);
 });
 
 it('liệt kê nhật ký đăng nhập hộ trong console, lọc theo super admin', function () {

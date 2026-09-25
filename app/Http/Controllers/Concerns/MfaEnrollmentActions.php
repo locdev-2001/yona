@@ -10,9 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 
-// Bật/tắt 2FA của một tài khoản — dùng chung cho agent (WebApi\Profile\MfaController,
-// guard mặc định) và super admin (SuperAdmin\MfaController, guard `super_admin`);
-// mỗi controller chỉ khai báo currentUser() theo guard của mình.
 trait MfaEnrollmentActions
 {
     abstract protected function currentUser(Request $request): User;

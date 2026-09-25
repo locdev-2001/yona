@@ -289,28 +289,28 @@ hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 
 ### 2FA bắt buộc cho console quản trị
 
-- `SUPER_ADMIN_REQUIRE_MFA` (mặc định `true`): super admin chưa bật 2FA bị chặn
-  ở mọi trang của `/super_admin/*` trừ `/super_admin/mfa/setup` (QR + xác nhận
-  mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào phần
-  còn lại của console.
+- Super admin chưa bật 2FA bị chặn ở mọi trang của `/super_admin/*` (cùng
+  `/horizon`, `/pulse`, `/log-viewer`) trừ `/super_admin/mfa/setup` (QR + xác
+  nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
+  phần còn lại của console. Luôn bắt buộc, không có cờ tắt.
 - **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
   `/super_admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
   cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
   lại 10 mã dự phòng ở nơi an toàn (chỉ hiện một lần). Làm việc này cho MỌI tài
   khoản `SuperAdmin` đang có trước khi báo người khác đăng nhập, nếu không họ sẽ
   bị chặn ở màn cài đặt cho tới khi tự làm xong bước trên.
-- Đăng nhập console (cả bước mật khẩu lẫn bước OTP) throttle 5 lần/phút theo
-  cặp email+IP, dùng chung cơ chế với đăng nhập agent
-  (`App\Services\Mfa`).
-- Tắt hẳn cờ này (`SUPER_ADMIN_REQUIRE_MFA=false`) chỉ nên dùng tạm thời khi tự
-  host một mình và chấp nhận rủi ro — không dùng trên production nhiều người có
-  quyền super admin.
+- Đăng nhập console: bước mật khẩu throttle 5 lần/phút theo cặp email+IP
+  (dùng chung cơ chế với đăng nhập agent, `App\Services\Mfa`); bước OTP throttle
+  5 lần/phút theo tài khoản (không tính IP — mật khẩu đã lộ thì kẻ tấn công chỉ
+  cần xoay IP để né throttle theo IP).
+- Mất máy xác thực và mất hết mã dự phòng: không có màn tự phục hồi, phải xoá
+  `otp_secret`, `otp_required_for_login`, `otp_backup_codes`, `consumed_timestep`
+  của tài khoản đó qua `artisan tinker` để họ đăng ký lại 2FA từ đầu.
 - Đăng nhập hộ (`Impersonate user` trên trang chi tiết user) từ bản này bắt
   buộc nhập lý do (tối thiểu 10 ký tự) và ghi vào bảng
-  `super_admin_impersonations` (ai, hộ ai, tài khoản nào nếu có, IP, user
-  agent, thời điểm token SSO thật sự được tiêu thụ). Xem lại nhật ký ở mục
-  "Super Admin Impersonations" trên thanh điều hướng console, lọc bằng
-  `?super_admin_id=` / `?account_id=` trên URL.
+  `super_admin_impersonations` (ai, hộ ai, IP, user agent, thời điểm token SSO
+  thật sự được tiêu thụ). Xem lại nhật ký ở mục "Super Admin Impersonations"
+  trên thanh điều hướng console, lọc bằng `?super_admin_id=` trên URL.
 
 ### Analytics
 
@@ -378,11 +378,11 @@ BRIDGE_HTTP_HOST=127.0.0.1
 BRIDGE_HTTP_PORT=8612
 BRIDGE_ELEVATED_SECRET=
 BRIDGE_SESSION_KEY=
-BRIDGE_MAX_SESSIONS=50
 ```
 
-`deploy.sh` bắt `BRIDGE_HTTP_HOST=127.0.0.1` và `LARAVEL_WEBHOOK_URL` phải là
-HTTPS. Bridge không bao giờ expose thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
+`deploy.sh` bắt `BRIDGE_HTTP_HOST=127.0.0.1`, `LARAVEL_WEBHOOK_URL` phải là
+HTTPS, và `BRIDGE_SESSION_KEY` phải có giá trị. Bridge không bao giờ expose
+thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
 để trống = không bao giờ cho phép nhóm method destructive (fail-closed).
 
 ### Mã hoá at-rest kho phiên (`BRIDGE_SESSION_KEY`)
@@ -403,21 +403,20 @@ Dán giá trị vào `services/zalo-bridge/.env`:
 BRIDGE_SESSION_KEY=<chuoi-openssl-vua-sinh>
 ```
 
-- **Thiếu khoá không chặn deploy**: bridge vẫn boot và ghi phiên dạng plaintext
-  như trước, chỉ in cảnh báo lúc boot khi `NODE_ENV=production` — production cũ
-  chưa đặt khoá không bị gãy đột ngột. Khoá **sai định dạng** (đặt rồi nhưng
-  không phải 32 byte base64/hex) thì bridge từ chối boot — đó là lỗi cấu hình rõ
-  ràng, không phải "chưa kịp đặt khoá".
+- **Thiếu khoá CHẶN boot ở production**: bridge từ chối khởi động thay vì ghi
+  phiên dạng plaintext. Cũng chặn boot nếu khoá **sai định dạng** (đặt rồi
+  nhưng không phải 32 byte base64/hex), hoặc nếu có tệp phiên đã mã hoá trên
+  đĩa mà khoá hiện tại/cũ không giải mã được — chặn ở đây thay vì âm thầm đánh
+  dấu từng tenant `session_lost` một.
 - **Di trú tệp cũ**: không cần thao tác tay. Tệp phiên ghi từ trước (plaintext)
   vẫn đọc được bình thường; ngay lần đọc đó (khôi phục phiên lúc bridge khởi
-  động, hoặc lần ghi kế tiếp) bridge tự ghi đè lại dạng đã mã hoá. Sau khi đặt
-  khoá lần đầu, restart bridge một lần (mục "Khởi động lại bridge") để mọi
-  phiên đang restore được đi qua bước di trú ngay, thay vì chờ tới lần ghi sau.
+  động, hoặc lần ghi kế tiếp) bridge tự ghi đè lại dạng đã mã hoá.
 - **Xoay khoá**: đặt khoá mới vào `BRIDGE_SESSION_KEY`, khoá cũ chuyển sang
   `BRIDGE_SESSION_KEY_PREVIOUS` rồi restart. Bridge mã hoá tệp MỚI bằng khoá
-  mới, nhưng vẫn giải mã được tệp cũ qua khoá cũ (đọc thử khoá mới trước, hỏng
-  thì thử khoá cũ). Sau một chu kỳ restart (mọi phiên đã được đọc lại ít nhất
-  một lần → đã re-encrypt bằng khoá mới), có thể bỏ `BRIDGE_SESSION_KEY_PREVIOUS`.
+  mới, giải mã tệp cũ qua khoá cũ, và **ghi đè lại ngay bằng khoá mới** ở lần
+  đọc đó. Sau một chu kỳ restart (mọi phiên đã được đọc lại ít nhất một lần),
+  có thể bỏ `BRIDGE_SESSION_KEY_PREVIOUS` — phiên nào chưa được đọc lại lúc đó
+  vẫn giải mã hỏng nếu bỏ khoá cũ quá sớm.
 - Kiểm tra đã mã hoá: `cat services/zalo-bridge/.sessions/c<id>.json` phải ra
   JSON `{"v":1,"iv":"...","tag":"...","data":"..."}`, không phải cookie thô.
 
@@ -432,55 +431,16 @@ dựng bridge là chạy trùng.
 
 Kiểm tra: `systemctl is-enabled pm2-root`.
 
-### Hạn mức phiên đồng thời (`BRIDGE_MAX_SESSIONS`)
+### Hạn mức phiên đồng thời
 
 Một process bridge giữ phiên WebSocket Zalo của **mọi** tenant trong RAM cùng
-lúc (`ecosystem.config.cjs` cố định `instances: 1` / `exec_mode: fork` — outbox
-ghi file không an toàn multi-process, xem comment trong `.env.example`). Không
-hạn mức thì một khách mở QR liên tục (hoặc bị lỗi client spam) có thể kéo process
-dùng hết RAM, ảnh hưởng tới khách khác trên cùng bridge.
+lúc. `session-cap.mjs` cố định `MAX_SESSIONS = 50` (chưa có dữ liệu RAM/phiên
+thật để đưa thành biến cấu hình). Vượt hạn mức: `POST /auth/qr/start` trả `429
+{code: "session_cap_reached"}` (dịch tiếng Việt ở `lang/vi/inbox_mgmt.php`).
+Phiên đã kết nối từ trước không bị chặn — chỉ chặn mở phiên QR MỚI.
 
-```dotenv
-BRIDGE_MAX_SESSIONS=50   # mặc định nếu bỏ trống hoặc đặt số không hợp lệ
-```
-
-Vượt hạn mức: `POST /auth/qr/start` trả `429 {code: "session_cap_reached"}`,
-Laravel dịch thành thông điệp tiếng Việt trong
-`lang/vi/inbox_mgmt.php` → `ZALO_SESSION.ERRORS.SESSION_CAP_REACHED`. Phiên đã
-kết nối từ trước (`connection_id` khôi phục lúc boot) **không** bị chặn bởi hạn
-mức này — chỉ chặn việc MỞ MỘT phiên mới qua QR.
-
-`GET /health` (cần `X-Bridge-UI-Secret`) trả thêm khối `bridge`:
-
-```json
-{"bridge": {"active_sessions": 12, "max_sessions": 50, "rss_bytes": 187654144}}
-```
-
-`rss_bytes` là RAM của cả process — chưa đo được RAM riêng từng phiên vì việc đó
-cần một tài khoản Zalo thật quét QR (không mô phỏng được). Founder tự đo bằng
-cách so `rss_bytes` trước/sau khi một số phiên thật kết nối, chia đều.
-
-### Chia tải khi vượt hạn mức một process (kế hoạch, CHƯA thi công)
-
-`BRIDGE_MAX_SESSIONS` chặn một process phình RAM vô hạn, nhưng không tăng tổng
-sức chứa. Khi 50 (hoặc hạn mức đã nâng) không đủ cho số tenant, hướng chia tải:
-
-- **Nhiều process, mỗi process một `.sessions/` + một cổng riêng** (không dùng
-  `pm2 cluster`/`instances > 1` trỏ cùng thư mục — outbox file-based không có
-  file-lock, xem cảnh báo trong `.env.example`). Mỗi process là một app pm2
-  riêng (`zalo-personal-bridge-2`, cổng `8613`, `.sessions-2/`…).
-- **Định tuyến theo `connection_id`**: Laravel cần biết channel Zalo nào thuộc
-  process nào — thêm cột `bridge_url` (hoặc `bridge_shard`) vào `channel_zalo`,
-  `ZaloBridgeClient` đọc từ đó thay vì hằng số `config('zalo.bridge.url')` duy
-  nhất. Gán shard lúc tạo kênh (round-robin hoặc theo `active_sessions` thấp
-  nhất từ `/health` của từng shard).
-- **Không di chuyển phiên đang sống giữa các shard** — muốn đổi shard thì ngắt
-  kết nối + quét QR lại, giống như đổi tài khoản Zalo.
-- Mỗi shard vẫn cần `BRIDGE_SESSION_KEY` riêng hoặc dùng chung một khoá cho mọi
-  shard (đơn giản hơn để vận hành, chấp nhận được vì khoá không rời máy).
-
-Chưa làm vì cần dữ liệu RAM/phiên thật (mục trên) để biết ngưỡng nào mới cần
-shard thứ hai.
+Kiểm tra: `curl -s -H "X-Bridge-UI-Secret: $BRIDGE_UI_SECRET" http://127.0.0.1:8612/health`
+trả khối `bridge: {active_sessions, max_sessions, rss_bytes}`.
 
 ---
 
@@ -1014,6 +974,10 @@ php artisan widget:prune-empty-contacts
 php artisan widget:prune-empty-contacts --dry-run
 ```
 
+Nếu một tab khách đang mở đúng lúc chạy lệnh và hồ sơ của nó bị xoá, widget sẽ tự
+dựng lại contact_inbox ở hành động thật kế tiếp nhưng KHÔNG tự nối lại kênh
+realtime cho tới khi tải lại trang — chấp nhận được vì đây là lệnh dọn một lần.
+
 ---
 
 
@@ -1382,8 +1346,8 @@ xoá file). Qua CLI: `php artisan pail`.
 `PGPASSWORD` của tiến trình con, không bao giờ trên argv hay trong log) ra
 `storage/app/backups/db-YYYYmmdd-HHMMSS.dump`, rồi đẩy thêm một bản ra disk
 Laravel khai ở `BACKUP_DISK` (`.env`, vd `s3`/`r2` — thiếu biến này lệnh vẫn
-chạy nhưng **cảnh báo "chưa có bản ngoài server"** mỗi lần). Dọn bản cũ hơn
-`BACKUP_KEEP_DAYS` (mặc định 14) ở cả hai nơi. `--with-files` thêm một bản
+chạy nhưng **cảnh báo "chưa có bản ngoài server"** mỗi lần). Dọn bản cũ hơn 14
+ngày (`BackupDatabase::KEEP_DAYS`) ở cả hai nơi. `--with-files` thêm một bản
 `files-YYYYmmdd-HHMMSS.tar.gz` của `storage/app/public` (đính kèm khách hàng —
 `Attachment::disk()` mặc định `public`).
 
@@ -1391,37 +1355,22 @@ Lịch chạy tự động (`routes/console.php`, giờ Việt Nam):
 
 | Lịch | Lệnh |
 |---|---|
-| Mỗi ngày 02:00 | `db:backup` |
-| Chủ nhật 03:00 | `db:backup --with-files` |
-
-Chủ nhật chạy cả hai lịch nghĩa là DB được dump hai lần hôm đó — chấp nhận
-được, đổi lấy việc không phải tách riêng một biến thể "chỉ tệp".
+| Mỗi ngày 02:00, trừ Chủ nhật | `db:backup` |
+| Chủ nhật 02:00 | `db:backup --with-files` |
 
 `deploy.sh` tự sao lưu **trước khi migrate** khi phát hiện còn migration đang
-chờ (`migrate:status --pending=1`, đọc mã thoát chứ không suy luận từ chuỗi
-"Pending" trong output — bền hơn khi đổi ngôn ngữ/format). Sao lưu thất bại thì
-**dừng deploy trước khi đụng vào schema**.
+chờ (`migrate:status --pending=1`). Sao lưu thất bại thì **dừng deploy trước
+khi đụng vào schema**.
 
-`php artisan db:restore-drill {file?}` (mặc định lấy bản mới nhất trong
-`storage/app/backups`) tự tạo database nháp `<DB_DATABASE>_restore_drill`,
-`pg_restore` bản dump vào đó, đếm vài bảng cốt lõi (`accounts`, `contacts`,
-`conversations`, `messages`) đối chiếu với database đang chạy, rồi **tự xoá**
-database nháp dù thành công hay thất bại — không để lại rác. Đo cục bộ trên
-dump ~340KB (4 account, 13 contact, 27 message): **~1.9s**; dump production lớn
-hơn nhiều lần sẽ lâu hơn tương ứng, cứ chạy thử trước khi tin vào con số này.
-
-**Yêu cầu vận hành:** role `DB_USERNAME` phải có quyền `CREATEDB` để tạo/xoá
-được database nháp — chạy một lần: `ALTER ROLE yona_app CREATEDB;` (superuser
-`postgres`, không phải `yona_app` tự chạy được).
-
-Không có lịch tự động cho restore drill — chạy tay định kỳ (khuyến nghị: sau
-mỗi lần đổi schema lớn, hoặc hằng tháng) để biết bản sao lưu THẬT SỰ phục hồi
-được, không chỉ "file có tồn tại":
+**Kiểm tra một bản dump phục hồi được** mà không cần tạo database nháp:
 
 ```bash
-cd /www/wwwroot/yona.vn
-php artisan db:restore-drill
+pg_restore --list storage/app/backups/db-<timestamp>.dump >/dev/null
 ```
+
+Đọc được TOC (table of contents) của archive nghĩa là file không hỏng/cắt cụt.
+Muốn kiểm cả nội dung thì phục hồi tay vào một database dev, không chạy trên
+production (tốn CREATEDB trên role ứng dụng, không đáng đánh đổi).
 
 ### Cảnh báo vận hành
 
@@ -1435,21 +1384,21 @@ php artisan db:restore-drill
 khách** đi vào cảnh báo. Đây là bất biến khi thêm điểm cảnh báo mới, không phải
 gợi ý.
 
-Dedup: một chữ ký (job lỗi = lớp job + nội dung exception băm lại; Horizon chờ
-lâu = connection + queue; trạng thái tiến trình = tên tiến trình) chỉ gửi tối
-đa 1 tin/15 phút. Một cơn bão lỗi (vd 20 job cùng loại lỗi liên tiếp) ra đúng
-một tin Telegram; số lần bị gộp trong cửa sổ trước hiện ở tin kế tiếp sau khi
-cửa sổ đó hết, không sửa lại tin Telegram cũ.
+Dedup: một chữ ký (job lỗi = lớp job + lớp exception, KHÔNG phải nội dung
+message vì message mang id/timestamp riêng mỗi lần; Horizon chờ lâu =
+connection + queue; trạng thái tiến trình = tên tiến trình) chỉ gửi tối đa 1
+tin/15 phút. Một cơn bão lỗi (vd 20 job cùng loại lỗi liên tiếp) ra đúng một
+tin Telegram; số lần bị gộp trong cửa sổ trước hiện ở tin kế tiếp sau khi cửa
+sổ đó hết, không sửa lại tin Telegram cũ.
 
 Các điểm cảnh báo:
 
 | Sự kiện | Nơi xử lý | Ghi chú |
 |---|---|---|
-| Job lỗi hẳn (`JobFailed`) | `App\Listeners\Alerts\AlertOnJobFailure` | Gộp theo lớp job + exception; tin chỉ có tên lớp, id job, tên hàng đợi |
-| Hàng đợi chờ quá lâu (`LongWaitDetected`) | `App\Listeners\Alerts\AlertOnLongWaitDetected` | Ngưỡng ở `config/horizon.php` (`waits`), đã thêm `redis:critical` — thiếu nó trước đây là lỗ hổng thật |
-| Kênh Zalo mất phiên đăng nhập | `App\Jobs\Zalo\ZaloHealthSweepJob` | Chỉ id kênh + mã lý do, không có tên/số điện thoại khách |
+| Job lỗi hẳn (`JobFailed`) | `App\Listeners\Alerts\AlertOnJobFailure` | Gộp theo lớp job + lớp exception; tin chỉ có tên lớp, id job, tên hàng đợi |
+| Hàng đợi chờ quá lâu (`LongWaitDetected`) | `App\Listeners\Alerts\AlertOnLongWaitDetected` | Ngưỡng ở `config/horizon.php` (`waits`), có `redis:critical` riêng cho tier Zalo/webhook |
+| Kênh Zalo mất phiên đăng nhập | `App\Jobs\Zalo\ZaloHealthSweepJob` | Chỉ id kênh + mã lý do, không có tên/số điện thoại khách. Bỏ qua khi lý do là `bridge_down` — `monitor:check` đã báo bridge chết, một alert mỗi kênh chỉ là bão trùng lặp |
 | Horizon / Reverb / zalo-bridge chết | `php artisan monitor:check` (mỗi phút, `routes/console.php`) | Chỉ báo khi ĐỔI trạng thái (down→up/up→down), không phải mỗi phút |
-| `failed_jobs` tăng | `php artisan monitor:check` | "Hết tăng" nghĩa là cơn bão đã dừng, KHÔNG phải backlog đã về 0 — vẫn cần vào `/horizon` dọn tay |
 
 **`monitor:check` chết theo cùng máy chủ nếu cả server sập** — nó không thay
 được một external uptime monitor. Việc founder phải tự làm, chưa có trong
@@ -1480,8 +1429,7 @@ code:
 | Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
-| Deploy dừng ở `Sao lưu database thất bại` | `pg_dump`/`pg_restore`/`createdb`/`dropdb` không có trong PATH hoặc thiếu ở `/www/server/pgsql/bin` — đặt `PG_BIN_DIR`, hoặc DB hết dung lượng đĩa (mục 13, Sao lưu và phục hồi) |
-| `db:restore-drill` báo lỗi tạo database nháp | Role `DB_USERNAME` thiếu quyền `CREATEDB` — `ALTER ROLE yona_app CREATEDB;` một lần bằng superuser (mục 13, Sao lưu và phục hồi) |
+| Deploy dừng ở `Sao lưu database thất bại` | `pg_dump` không có trong PATH và thiếu ở `/www/server/pgsql/bin`, hoặc DB hết dung lượng đĩa (mục 13, Sao lưu và phục hồi) |
 | Không thấy cảnh báo Telegram dù có sự cố thật | `ALERT_TELEGRAM_BOT_TOKEN`/`ALERT_TELEGRAM_CHAT_ID` trống → chỉ rơi về `storage/logs`; kiểm `.env` rồi `php artisan config:clear` (mục 13, Cảnh báo vận hành) |
 
 ### Rollback

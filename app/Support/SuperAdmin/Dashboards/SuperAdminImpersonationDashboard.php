@@ -6,7 +6,7 @@ use App\Models\SuperAdminImpersonation;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Model;
 
-// Nhật ký đăng nhập hộ (dash #38) — chỉ đọc, không có new/edit/destroy.
+// Nhật ký đăng nhập hộ — chỉ đọc, không có new/edit/destroy.
 class SuperAdminImpersonationDashboard extends Dashboard
 {
     public function modelClass(): string
@@ -19,7 +19,6 @@ class SuperAdminImpersonationDashboard extends Dashboard
         return [
             'superAdmin' => 'belongs_to',
             'targetUser' => 'belongs_to',
-            'account' => 'belongs_to',
             'reason' => 'string',
             'ip_address' => 'string',
             'used_at' => 'date_time',
@@ -29,12 +28,12 @@ class SuperAdminImpersonationDashboard extends Dashboard
 
     public function collectionAttributes(): array
     {
-        return ['superAdmin', 'targetUser', 'account', 'created_at', 'used_at'];
+        return ['superAdmin', 'targetUser', 'created_at', 'used_at'];
     }
 
     public function showPageAttributes(): array
     {
-        return ['superAdmin', 'targetUser', 'account', 'reason', 'ip_address', 'created_at', 'used_at'];
+        return ['superAdmin', 'targetUser', 'reason', 'ip_address', 'created_at', 'used_at'];
     }
 
     public function formAttributes(): array

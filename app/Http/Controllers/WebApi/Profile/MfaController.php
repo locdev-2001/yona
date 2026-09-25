@@ -7,8 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-// Port api/v1/profile/mfa_controller.rb + view jbuilder tương ứng. Logic dùng
-// chung với SuperAdmin\MfaController nằm ở MfaEnrollmentActions.
+// Port api/v1/profile/mfa_controller.rb + view jbuilder tương ứng.
 class MfaController extends Controller
 {
     use MfaEnrollmentActions;

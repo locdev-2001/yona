@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use Illuminate\Support\Str;
 
 // Thứ tự tier là nguồn duy nhất ở config/queue_tiers.php — Makefile và
@@ -89,8 +90,8 @@ return [
 
     // Horizon mặc định chỉ chặn bằng gate `viewHorizon` ngoài môi trường
     // local. Dashboard này đọc được payload job (có số điện thoại, nội dung
-    // tin nhắn khách) nên chặn thẳng bằng guard super_admin.
-    'middleware' => ['web', 'auth:super_admin'],
+    // tin nhắn khách) nên chặn thẳng bằng guard super_admin + bắt buộc 2FA.
+    'middleware' => ['web', 'auth:super_admin', EnsureSuperAdminMfaEnrolled::class],
 
     /*
     |--------------------------------------------------------------------------
@@ -103,10 +104,9 @@ return [
     |
     */
 
-    // `redis:critical` thiếu ở đây từng là lỗ hổng: alert LongWaitDetected chỉ
-    // bắn cho hàng đợi `default`, nên tier `critical` (Zalo, webhook) nghẽn mà
-    // không ai biết. AlertOnLongWaitDetected (AppServiceProvider) là nơi tiêu
-    // thụ sự kiện này.
+    // AlertOnLongWaitDetected (AppServiceProvider) tiêu thụ sự kiện này — mỗi
+    // tier hàng đợi cần một ngưỡng riêng ở đây, thiếu tier nào thì tier đó
+    // không bao giờ được cảnh báo dù nghẽn thật.
     'waits' => [
         'redis:default' => 60,
         'redis:critical' => 30,

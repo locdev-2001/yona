@@ -141,10 +141,9 @@ Route::get('/app/auth/reset/password', fn () => Inertia::render('v3/views/auth/r
 Route::get('/app/auth/password/edit', [PasswordsController::class, 'edit'])->name('password_edit');
 Route::put('/app/auth/password', [PasswordsController::class, 'update'])->name('password_update');
 
-// Link mời tự phục vụ (#task 46): không nằm sau 'guest' hay 'auth' vì phục vụ
-// cả khách chưa có tài khoản (ký mật khẩu tại chỗ) lẫn người đã đăng nhập (tham
-// gia một chạm). POST giới hạn tốc độ vì đây là điểm công khai không CSRF-gated
-// bởi phiên đăng nhập cho người vừa tới.
+// Link mời tự phục vụ: không nằm sau 'guest' hay 'auth' vì phục vụ cả khách
+// chưa có tài khoản (ký mật khẩu tại chỗ) lẫn người đã đăng nhập (tham gia một
+// chạm). POST giới hạn tốc độ vì đây là điểm công khai, ai giữ được link cũng gọi tới được.
 Route::get('/invite/{token}', [InviteAcceptancesController::class, 'show'])
     ->where('token', '[A-Za-z0-9]+')->name('invite_links.show');
 Route::post('/invite/{token}', [InviteAcceptancesController::class, 'store'])
@@ -474,10 +473,7 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
     Route::middleware('auth:super_admin')->group(function () {
         Route::match(['get', 'delete'], '/logout', [SuperAdminSessionsController::class, 'destroy']);
 
-        // Bật 2FA xong mới vào được phần còn lại của console (SUPER_ADMIN_REQUIRE_MFA,
-        // mặc định bật) — xem docs/deployment.md mục 2FA & console quản trị.
         Route::get('/mfa/setup', [SuperAdminMfaController::class, 'setupPage'])->name('super_admin.mfa.setup');
-        Route::get('/mfa', [SuperAdminMfaController::class, 'show']);
         Route::post('/mfa', [SuperAdminMfaController::class, 'store']);
         Route::post('/mfa/verify', [SuperAdminMfaController::class, 'verify']);
 
@@ -501,7 +497,7 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
             Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
             Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
 
-            // Nhật ký đăng nhập hộ (dash #38) — chỉ đọc, không CRUD như các resource khác.
+            // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
             Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);
             Route::get('/impersonations/{id}', [SuperAdminImpersonationsController::class, 'show'])->whereNumber('id');
 

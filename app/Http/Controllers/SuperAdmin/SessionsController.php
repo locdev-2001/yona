@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// — đăng nhập riêng cho console quản trị, guard `super_admin`. Dash #39: thêm
-// bước OTP (dùng chung service với agent qua App\Services\Mfa) + throttle 5
-// lần/phút theo email+IP cho cả bước mật khẩu lẫn bước OTP.
+// Đăng nhập riêng cho console quản trị, guard `super_admin`. Bước OTP dùng
+// chung service với agent qua App\Services\Mfa; bước mật khẩu throttle theo
+// email+IP, bước OTP throttle theo tài khoản (xem verifyOtp()).
 class SessionsController extends Controller
 {
     private const MAX_ATTEMPTS = 5;
@@ -77,24 +77,31 @@ class SessionsController extends Controller
         return redirect('/');
     }
 
-    // Bước 2: đổi otp_token + mã OTP/dự phòng lấy phiên (giống bước MFA của agent).
     private function verifyOtp(Request $request): RedirectResponse|Response
     {
         $token = (string) $request->input('otp_token');
         $user = (new TokenService)->verifyToken($token);
 
-        if (! $user) {
+        // TokenService::verifyToken trả về mọi User, kể cả agent thường (mfa_token
+        // của agent cũng đi qua đây được nếu chỉ kiểm null). Tra lại đúng bảng
+        // SuperAdmin trước khi chạm tới OTP, để không tiêu mất timestep của agent
+        // rồi mới báo lỗi token.
+        $superAdmin = $user ? SuperAdmin::query()->find($user->getKey()) : null;
+
+        if (! $superAdmin) {
             return redirect('/super_admin/sign_in')->with('error', __('errors.mfa.invalid_token'));
         }
 
-        $throttleKey = 'super-admin-otp|'.$user->getKey().'|'.$request->ip();
+        // Khoá theo tài khoản, không theo IP: kẻ tấn công đã có mật khẩu chỉ cần
+        // xoay IP là thử mã vô hạn nếu khoá gồm cả IP.
+        $throttleKey = 'super-admin-otp|'.$superAdmin->getKey();
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
             return $this->renderOtpStep($token, __('auth.throttle', ['seconds' => RateLimiter::availableIn($throttleKey)]));
         }
 
         $authenticated = (new AuthenticationService(
-            $user,
+            $superAdmin,
             $request->input('otp_code'),
             $request->input('backup_code'),
         ))->authenticate();
@@ -107,7 +114,7 @@ class SessionsController extends Controller
 
         RateLimiter::clear($throttleKey);
 
-        $this->login($request, SuperAdmin::query()->findOrFail($user->getKey()));
+        $this->login($request, $superAdmin);
 
         return redirect('/super_admin');
     }

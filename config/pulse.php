@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use Laravel\Pulse\Http\Middleware\Authorize;
 use Laravel\Pulse\Pulse;
 use Laravel\Pulse\Recorders;
@@ -122,9 +123,11 @@ return [
 
     // Authorize::class chỉ đọc gate `viewPulse`; chặn thẳng bằng guard
     // super_admin để dashboard không hở khi gate chưa khai.
+    // EnsureSuperAdminMfaEnrolled bắt buộc 2FA giống mọi trang khác của console.
     'middleware' => [
         'web',
         'auth:super_admin',
+        EnsureSuperAdminMfaEnrolled::class,
         Authorize::class,
     ],
 

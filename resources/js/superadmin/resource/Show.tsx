@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 
-import { xsrfToken } from 'dashboard/helper/apiClient';
 import FieldValue from '../components/FieldValue';
 import type { SuperAdminField } from '../types';
 
@@ -22,6 +21,7 @@ type Props = {
     mfaEnabled?: boolean;
     confirmed?: boolean;
     impersonateUrl?: string;
+    csrf?: string;
     actions: string[];
 };
 
@@ -36,6 +36,7 @@ export default function ResourceShow({
     mfaEnabled,
     confirmed = true,
     impersonateUrl,
+    csrf,
     actions,
 }: Props) {
     return (
@@ -98,7 +99,9 @@ export default function ResourceShow({
 
             {accountUserForm ? <AccountUserSection form={accountUserForm} /> : null}
 
-            {impersonateUrl ? <ImpersonateSection url={impersonateUrl} title={record.title} /> : null}
+            {impersonateUrl ? (
+                <ImpersonateSection url={impersonateUrl} title={record.title} csrf={csrf ?? ''} />
+            ) : null}
 
             {resource === 'accounts' ? (
                 <section className="main-content__body">
@@ -122,14 +125,13 @@ export default function ResourceShow({
     );
 }
 
-// Dash #38: đăng nhập hộ giờ bắt buộc lý do và mở phiên trên trang login của
-// app (bundle Inertia khác) — nộp bằng <form> gốc + target="_blank" thay vì
-// router.post, vì router.post gắn header X-Inertia khiến Laravel trả JSON
-// Inertia cho trang bên bundle kia thay vì HTML, và bundle superadmin không
-// biết vẽ component của bundle đó.
+// Đăng nhập hộ mở phiên trên trang login của app (bundle Inertia khác) — nộp
+// bằng <form> gốc + target="_blank" thay vì router.post, vì router.post gắn
+// header X-Inertia khiến Laravel trả JSON Inertia cho trang bên bundle kia
+// thay vì HTML, và bundle superadmin không biết vẽ component của bundle đó.
 const REASON_MIN_LENGTH = 10;
 
-function ImpersonateSection({ url, title }: { url: string; title: string }) {
+function ImpersonateSection({ url, title, csrf }: { url: string; title: string; csrf: string }) {
     const [expanded, setExpanded] = useState(false);
     const [reason, setReason] = useState('');
     const reasonTooShort = reason.trim().length < REASON_MIN_LENGTH;
@@ -144,7 +146,7 @@ function ImpersonateSection({ url, title }: { url: string; title: string }) {
                 </p>
                 {expanded ? (
                     <form method="post" action={url} target="_blank" className="form">
-                        <input type="hidden" name="_token" value={xsrfToken()} />
+                        <input type="hidden" name="_token" value={csrf} />
                         <div className="field-unit field-unit--string field-unit--required">
                             <div className="field-unit__label">
                                 <label htmlFor="impersonate_reason">
