@@ -1,0 +1,639 @@
+/*
+ * Message kit — một bộ style cho tin có cấu trúc, dùng chung widget và hộp thư.
+ * Không dùng Tailwind vì hai bề mặt build với hai cấu hình khác nhau.
+ * Token --mk-* lấy từ --yona-chat-* của widget (có sẵn chế độ tối, màu tenant),
+ * ngoài widget thì rơi về giá trị design. Ngoại lệ bóng mềm: yona-ui decisions.md.
+ */
+.mk {
+    --mk-accent: var(--yona-chat-accent, #1b6fcc);
+    --mk-on-accent: var(--yona-chat-on-accent, #ffffff);
+    --mk-accent-ink: var(--yona-chat-accent-ink, var(--mk-accent));
+    --mk-surface: var(--yona-chat-panel, #ffffff);
+    --mk-soft: var(--yona-chat-field, #f4f5f7);
+    --mk-ink: var(--yona-chat-ink, #17181a);
+    --mk-ink-2: var(--yona-chat-ink-soft, #5b6068);
+    --mk-ink-3: var(--yona-chat-ink-muted, #6b7076);
+    --mk-line: var(--yona-chat-line, rgba(0, 0, 0, 0.06));
+    --mk-solid: var(--yona-chat-solid, #17181a);
+    --mk-on-solid: var(--yona-chat-on-solid, #ffffff);
+    --mk-on-solid-soft: var(--yona-chat-on-solid-soft, rgba(255, 255, 255, 0.72));
+    --mk-good: var(--yona-chat-online, #1e7f4e);
+    --mk-track: var(--yona-chat-track, #e3e5e8);
+    --mk-media: #eef1f6;
+    --mk-sale: #d92d20;
+    --mk-sale-bg: #fee4e2;
+    --mk-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.05);
+    --mk-shadow-chip: 0 1px 2px rgba(16, 24, 40, 0.07);
+    --mk-card-width: 272px;
+    font-family: var(--yona-chat-font, 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif);
+    color: var(--mk-ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+.dark .mk,
+.mk.mk-dark {
+    --mk-media: rgba(255, 255, 255, 0.06);
+    --mk-sale: #f97066;
+    --mk-sale-bg: rgba(217, 45, 32, 0.18);
+    --mk-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --mk-shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.mk *,
+.mk *::before,
+.mk *::after {
+    box-sizing: border-box;
+}
+
+.mk button,
+.mk input,
+.mk select,
+.mk textarea {
+    font: inherit;
+    color: inherit;
+}
+
+.mk-icon {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Thẻ: nền trắng, không viền, bóng mềm; đuôi 6px phía người gửi. */
+.mk-card {
+    width: var(--mk-card-width);
+    max-width: 100%;
+    background: var(--mk-surface);
+    border-radius: 20px 20px 20px 6px;
+    box-shadow: var(--mk-shadow-card);
+    overflow: hidden;
+}
+
+.mk-card--round {
+    border-radius: 20px;
+}
+
+.mk-card--contact {
+    border-radius: 20px 20px 6px 20px;
+}
+
+.mk-pad {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mk-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.mk-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mk-title {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.mk-body {
+    font-size: 14px;
+    line-height: 21px;
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.mk-meta {
+    font-size: 12px;
+    line-height: 17px;
+    color: var(--mk-ink-2);
+}
+
+.mk-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ô icon 40px bo 12. */
+.mk-tile {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    background: var(--mk-soft);
+    color: var(--mk-ink-2);
+}
+
+.mk-tile--accent {
+    background: var(--mk-accent);
+    color: var(--mk-on-accent);
+}
+
+.mk-tile--good {
+    background: var(--mk-good);
+    color: #ffffff;
+}
+
+/* Nút dạng viên thuốc: accent cho hành động chính, soft cho phụ. */
+.mk-pill {
+    height: 40px;
+    min-width: 0;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 120ms ease-out;
+}
+
+.mk-pill:active {
+    transform: scale(0.97);
+}
+
+.mk-pill:focus-visible,
+.mk-chip:focus-visible,
+.mk-link-card:focus-visible,
+.mk-nav:focus-visible {
+    outline: 2px solid var(--mk-accent);
+    outline-offset: 2px;
+}
+
+.mk-pill--primary {
+    background: var(--mk-accent);
+    color: var(--mk-on-accent);
+}
+
+.mk-pill--soft {
+    background: var(--mk-soft);
+    color: var(--mk-ink);
+}
+
+.mk-pill--block {
+    width: 100%;
+    height: 44px;
+    border-radius: 22px;
+}
+
+.mk-pill--icon {
+    width: 40px;
+    padding: 0;
+    flex: none;
+}
+
+.mk-pill[aria-disabled='true'] {
+    cursor: default;
+}
+
+.mk-actions {
+    display: grid;
+    gap: 8px;
+}
+
+.mk-actions--pair {
+    grid-template-columns: 1fr 1.3fr;
+}
+
+/* Chip trả lời nhanh: nền trắng, bóng 1px, chữ màu nhấn. */
+.mk-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.mk-chip {
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 20px;
+    background: var(--mk-surface);
+    box-shadow: var(--mk-shadow-chip);
+    color: var(--mk-accent-ink);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 120ms ease-out;
+}
+
+.mk-chip:active {
+    transform: scale(0.97);
+}
+
+.mk-chip[aria-pressed='true'] {
+    background: var(--mk-accent);
+    color: var(--mk-on-accent);
+}
+
+.mk-chip:disabled {
+    cursor: default;
+}
+
+/* Ảnh sản phẩm vuông bo 14. */
+.mk-media {
+    position: relative;
+    flex: none;
+    width: 88px;
+    height: 88px;
+    border-radius: 14px;
+    background: var(--mk-media);
+    overflow: hidden;
+}
+
+.mk-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Giá: dòng 1 giá bán, dòng 2 giá cũ gạch + nhãn giảm đỏ. */
+.mk-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mk-price-now {
+    font-size: 17px;
+    line-height: 22px;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.mk-price-was {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mk-price-old {
+    font-size: 12px;
+    color: var(--mk-ink-3);
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
+.mk-sale {
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 5px;
+    background: var(--mk-sale-bg);
+    color: var(--mk-sale);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Trượt ngang: scroll-snap native, bóng không bị cắt nhờ padding + margin âm. */
+.mk-carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mk-track {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin: -8px -16px -8px -8px;
+    padding: 8px 16px 12px 8px;
+    overscroll-behavior-x: contain;
+}
+
+.mk-track::-webkit-scrollbar {
+    display: none;
+}
+
+.mk-track > * {
+    flex: none;
+    scroll-snap-align: start;
+    width: 252px;
+}
+
+.mk-carousel-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mk-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mk-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--mk-track);
+    transition: width 200ms ease-out;
+}
+
+.mk-dot[data-active='true'] {
+    width: 16px;
+    background: var(--mk-solid);
+}
+
+.mk-nav {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--mk-surface);
+    color: var(--mk-ink);
+    box-shadow: var(--mk-shadow-chip);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mk-nav:disabled {
+    color: var(--mk-ink-3);
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Thẻ dạng một hàng bấm được (bài viết, mở trang). */
+.mk-link-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.mk-round-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--mk-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.mk-slot {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--mk-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.mk-slot--more {
+    flex: none;
+    color: var(--mk-ink-2);
+}
+
+/* Form trong tin. Chữ ô nhập 16px trên màn cảm ứng để iOS không tự phóng to. */
+.mk-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mk-label {
+    font-size: 12px;
+    color: var(--mk-ink-2);
+}
+
+.mk-input {
+    width: 100%;
+    height: 48px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--mk-soft);
+    padding: 0 14px;
+    font-size: 16px;
+    outline: none;
+}
+
+.mk-input:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--mk-accent);
+}
+
+.mk-input[aria-invalid='true'] {
+    box-shadow: inset 0 0 0 2px var(--mk-sale);
+}
+
+textarea.mk-input {
+    height: 96px;
+    padding: 12px 14px;
+    resize: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .mk-input {
+        font-size: 14px;
+    }
+}
+
+.mk-inline-field {
+    display: flex;
+    gap: 8px;
+}
+
+.mk-go {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border: 0;
+    border-radius: 14px;
+    background: var(--mk-accent);
+    color: var(--mk-on-accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mk-go:active {
+    transform: scale(0.97);
+}
+
+.mk-error {
+    font-size: 12px;
+    color: var(--mk-sale);
+}
+
+.mk-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: var(--mk-soft);
+}
+
+.mk-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 28px;
+    font-size: 13px;
+    color: var(--mk-ink-2);
+}
+
+.mk-summary-row b {
+    color: var(--mk-ink);
+    font-weight: 500;
+}
+
+/* Thẻ đơn hàng: đầu tối, thanh tiến độ 4 đoạn. */
+.mk-order-head {
+    background: var(--mk-solid);
+    color: var(--mk-on-solid);
+    padding: 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mk-order-head .mk-meta {
+    color: var(--mk-on-solid-soft);
+}
+
+.mk-steps {
+    display: flex;
+    gap: 4px;
+}
+
+.mk-step {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--mk-track);
+}
+
+.mk-step[data-state='done'] {
+    background: var(--mk-good);
+}
+
+.mk-step[data-state='current'] {
+    background: var(--mk-accent);
+}
+
+.mk-step-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--mk-ink-2);
+}
+
+.mk-step-labels [data-current='true'] {
+    color: var(--mk-ink);
+    font-weight: 500;
+}
+
+.mk-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+
+/* Yêu cầu đặt hàng: thẻ tối phía khách. */
+.mk-request {
+    background: var(--mk-solid);
+    color: var(--mk-on-solid);
+    border-radius: 20px 20px 6px 20px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: var(--mk-card-width);
+    max-width: 100%;
+}
+
+.mk-request .mk-meta {
+    color: var(--mk-on-solid-soft);
+}
+
+.mk-request .mk-media {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.mk-request-note {
+    font-size: 13px;
+    line-height: 19px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--mk-on-solid-soft);
+}
+
+.mk-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--mk-ink-2);
+}
+
+.mk-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mk-pill,
+    .mk-chip,
+    .mk-dot {
+        transition: none;
+    }
+
+    .mk-track {
+        scroll-behavior: auto;
+    }
+}

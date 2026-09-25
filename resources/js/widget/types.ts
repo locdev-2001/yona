@@ -149,35 +149,6 @@ export interface MessageAttachment {
     file_name?: string;
 }
 
-// `content_attributes.items` của tin `cards`. Tin tạo sau khi có lõi tin có cấu
-// trúc (app/Messaging/Structured) lưu dạng `{kind, label, url}` và giá có cấu
-// trúc; tin cũ còn dạng `{type, text, uri}` và giá là chuỗi bot tự viết.
-// ponytail: carousel này bị thay bởi message kit (shared/messaging), chỉ cần đọc được cả hai dạng tới lúc đó.
-export interface CardAction {
-    type?: 'link' | 'postback';
-    kind?: string;
-    text?: string;
-    label?: string;
-    uri?: string;
-    url?: string;
-    payload?: string;
-}
-
-export interface CardPrice {
-    amount: number;
-    currency: string;
-    compare_at?: number;
-    discount_percent?: number;
-}
-
-export interface CardItem {
-    title: string;
-    description?: string;
-    price?: string | number | CardPrice;
-    media_url?: string;
-    actions?: CardAction[];
-}
-
 // Sticker đã lưu: máy chủ tra danh mục và ghi lại ảnh; tin tạm phía khách chỉ có mã.
 export type MessageSticker = string | { id?: string | number; url?: string; thumbnail?: string };
 
@@ -201,7 +172,7 @@ export interface WidgetMessage {
         submitted_email?: string;
         submitted_values?: unknown;
         sticker?: MessageSticker;
-        items?: CardItem[];
+        items?: unknown[];
     };
     created_at: number;
     conversation_id?: number;

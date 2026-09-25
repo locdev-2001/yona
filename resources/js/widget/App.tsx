@@ -19,6 +19,7 @@ import Messages from './views/Messages';
 import PreChatForm from './views/PreChatForm';
 import UnreadMessages from './views/UnreadMessages';
 import ViewWithHeader from './views/ViewWithHeader';
+import WidgetMessageHost from './messaging/WidgetMessageHost';
 import { getAuthToken } from './api/client';
 import { SDK_SET_BUBBLE_VISIBILITY } from '../sdk/constants/frameEvents';
 import type { AppConfig } from './types';
@@ -351,13 +352,15 @@ export default function App() {
                 .filter(Boolean)
                 .join(' ')}
         >
-            {route === WIDGET_ROUTES.CAMPAIGNS ? (
-                <Campaigns />
-            ) : isUnreadView ? (
-                <UnreadMessages />
-            ) : (
-                <ViewWithHeader route={route}>{view}</ViewWithHeader>
-            )}
+            <WidgetMessageHost>
+                {route === WIDGET_ROUTES.CAMPAIGNS ? (
+                    <Campaigns />
+                ) : isUnreadView ? (
+                    <UnreadMessages />
+                ) : (
+                    <ViewWithHeader route={route}>{view}</ViewWithHeader>
+                )}
+            </WidgetMessageHost>
         </div>
     );
 }

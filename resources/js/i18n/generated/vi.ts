@@ -8071,6 +8071,36 @@ const messages: Record<string, unknown> = {
             "preview": "Yêu cầu đặt hàng: :title",
             "line": "Yêu cầu đặt hàng: :title:selection × :quantity",
             "note": "Ghi chú: :note"
+        },
+        "kit": {
+            "item_position": "Sản phẩm {current} trên {total}",
+            "previous_item": "Sản phẩm trước",
+            "next_item": "Sản phẩm sau",
+            "copied": "Đã chép",
+            "copy": "Chép {label}",
+            "submit_field": "Gửi {field}",
+            "submit": "Gửi",
+            "selected": "Khách đã chọn: {value}",
+            "form_received": "Đã nhận thông tin",
+            "form_open": "Điền thông tin",
+            "order_request": "Yêu cầu đặt hàng",
+            "note": "Ghi chú: {note}",
+            "order_ref": "Đơn #{ref}",
+            "eta": "Dự kiến nhận {date}",
+            "fee_included": "Đã gồm phí giao",
+            "total": "Tổng",
+            "track_order": "Theo dõi đơn",
+            "help_article": "Trợ giúp",
+            "more": "+{count}",
+            "read_only": "Khách bấm được trong widget",
+            "check_field": "Kiểm tra lại {field}",
+            "send_failed": "Chưa gửi được, thử lại nhé",
+            "steps": {
+                "placed": "Đã đặt",
+                "shipped": "Đã gửi",
+                "delivering": "Đang giao",
+                "delivered": "Đã nhận"
+            }
         }
     },
     "MFA_SETTINGS": {
