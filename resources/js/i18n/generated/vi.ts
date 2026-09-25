@@ -8049,6 +8049,9 @@ const messages: Record<string, unknown> = {
             "empty_submission": "Chưa có thông tin nào được gửi.",
             "payload_too_large": "Dữ liệu kèm trang quá lớn."
         },
+        "settings": {
+            "invalid_channel": "Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại."
+        },
         "preview": {
             "deleted": "Tin nhắn đã thu hồi",
             "image": "Đã gửi một ảnh",

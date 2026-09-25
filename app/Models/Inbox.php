@@ -110,6 +110,12 @@ class Inbox extends Model
         });
     }
 
+    /** Help Center gắn với hộp thư — widget đọc bài ngay trong khung chat. */
+    public function portal(): BelongsTo
+    {
+        return $this->belongsTo(Portal::class);
+    }
+
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);

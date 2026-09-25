@@ -8049,6 +8049,9 @@ const messages: Record<string, unknown> = {
             "empty_submission": "Nothing was submitted.",
             "payload_too_large": "The page data is too large."
         },
+        "settings": {
+            "invalid_channel": "Invalid channel: check the channel type and its link or phone number."
+        },
         "preview": {
             "deleted": "Message recalled",
             "image": "Sent a photo",

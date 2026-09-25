@@ -26,6 +26,7 @@ use App\Http\Controllers\Widget\InboxMembersController;
 use App\Http\Controllers\Widget\LabelsController;
 use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
+use App\Http\Controllers\Widget\UpdatesController;
 use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveOrCreateWidgetContact;
@@ -45,6 +46,8 @@ Route::middleware(ResolveWidgetChannel::class)
         Route::post('/config', [ConfigsController::class, 'store']);
         Route::get('/inbox_members', [InboxMembersController::class, 'index']);
         Route::get('/campaigns', [CampaignsController::class, 'index']);
+        Route::get('/updates', [UpdatesController::class, 'index']);
+        Route::get('/updates/{updateId}', [UpdatesController::class, 'show'])->whereNumber('updateId');
         Route::post('/events', [EventsController::class, 'store']);
 
         // Hành động THẬT đầu tiên của khách — dựng contact_inbox lazy nếu chưa có.

@@ -32,8 +32,13 @@ final class WidgetConfigResource
                 'enabled_languages' => config('yona.available_locales'),
                 'locale' => $account->locale,
                 'out_of_office_message' => $inbox->out_of_office_message,
-                // portal chờ nhóm D (help center) — jbuilder gốc trả null khi chưa gắn.
-                'portal' => null,
+                // Help Center gắn với hộp thư: widget gọi /hc/{slug}/{locale}/*.json.
+                'portal' => $inbox->portal === null ? null : [
+                    'slug' => $inbox->portal->slug,
+                    'name' => $inbox->portal->name,
+                    'default_locale' => $inbox->portal->defaultLocale(),
+                    'locales' => $inbox->portal->allowedLocaleCodes(),
+                ],
                 'pre_chat_form_enabled' => $channel->pre_chat_form_enabled,
                 'pre_chat_form_options' => $channel->pre_chat_form_options,
                 // Giây; widget ẩn nút thu hồi khi hết hạn và điền số phút vào hộp xác nhận.
@@ -47,6 +52,7 @@ final class WidgetConfigResource
                 'welcome_tagline' => $channel->welcome_tagline,
                 'welcome_title' => $channel->welcome_title,
                 'widget_color' => $channel->widget_color,
+                'widget_settings' => $channel->widgetSettings(),
                 // Bản gốc trả nguyên bản ghi working_hours (kèm id/account_id/timestamps);
                 // widget chỉ đọc 7 khóa lịch nên dùng chung `weeklySchedule()` với dashboard.
                 'working_hours' => $inbox->weeklySchedule(),

@@ -10,6 +10,7 @@ use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Support\FlagBitmask;
+use App\Support\Widget\WidgetSettings;
 use App\Support\WidgetEmbedScript;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
@@ -82,7 +83,14 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
             'pre_chat_form_options' => 'array',
             'hmac_mandatory' => 'boolean',
             'continuity_via_email' => 'boolean',
+            'widget_settings' => 'array',
         ];
+    }
+
+    /** Cấu hình widget mới đã trộn mặc định (App\Support\Widget\WidgetSettings). */
+    public function widgetSettings(): array
+    {
+        return WidgetSettings::resolve($this->widget_settings);
     }
 
     protected static function booted(): void
