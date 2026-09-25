@@ -129,15 +129,14 @@ function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; show
             id={messageElementId(message.id)}
         >
             {!isASubmittedForm ? (
-                <div className="agent-message">
-                    <div className="avatar-wrap">
-                        <div className="user-thumbnail-box">
-                            {showAvatar || hasRecordedResponse ? (
-                                <Avatar src={agent.avatarUrl} size={24} name={agent.name} roundedFull />
-                            ) : null}
-                        </div>
+                // Cùng hàng với tin agent thường: cột avatar 26px, bong bóng rộng tối đa 74%.
+                <div className="flex items-end gap-2">
+                    <div className="w-[26px] flex-none self-end">
+                        {showAvatar || hasRecordedResponse ? (
+                            <Avatar src={agent.avatarUrl} size={26} name={agent.name} roundedFull />
+                        ) : null}
                     </div>
-                    <div className="message-wrap">
+                    <div className="flex min-w-0 max-w-[74%] flex-col items-start">
                         {shouldDisplayAgentMessage ? (
                             <AgentMessageBubble
                                 content={message.content ?? ''}
