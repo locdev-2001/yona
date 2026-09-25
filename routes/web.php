@@ -7,6 +7,7 @@ use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\App\TeamsSettingsController;
 use App\Http\Controllers\AttachmentsController;
 use App\Http\Controllers\Auth\ConfirmationsController;
+use App\Http\Controllers\Auth\InviteAcceptancesController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
@@ -136,6 +137,15 @@ Route::get('/app/auth/reset/password', fn () => Inertia::render('v3/views/auth/r
     ->name('password_reset_form');
 Route::get('/app/auth/password/edit', [PasswordsController::class, 'edit'])->name('password_edit');
 Route::put('/app/auth/password', [PasswordsController::class, 'update'])->name('password_update');
+
+// Link mời tự phục vụ (#task 46): không nằm sau 'guest' hay 'auth' vì phục vụ
+// cả khách chưa có tài khoản (ký mật khẩu tại chỗ) lẫn người đã đăng nhập (tham
+// gia một chạm). POST giới hạn tốc độ vì đây là điểm công khai không CSRF-gated
+// bởi phiên đăng nhập cho người vừa tới.
+Route::get('/invite/{token}', [InviteAcceptancesController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]+')->name('invite_links.show');
+Route::post('/invite/{token}', [InviteAcceptancesController::class, 'store'])
+    ->where('token', '[A-Za-z0-9]+')->middleware('throttle:10,1')->name('invite_links.accept');
 
 Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');

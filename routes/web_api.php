@@ -39,6 +39,7 @@ use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsCo
 use App\Http\Controllers\WebApi\Integrations\DyteController as IntegrationDyteController;
 use App\Http\Controllers\WebApi\Integrations\HooksController as IntegrationHooksController;
 use App\Http\Controllers\WebApi\Integrations\SlackController as IntegrationSlackController;
+use App\Http\Controllers\WebApi\InviteLinksController;
 use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
@@ -108,6 +109,12 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/agents/bulk_create', [AgentsController::class, 'bulkCreate']);
         Route::match(['put', 'patch'], '/agents/{agentId}', [AgentsController::class, 'update'])->whereNumber('agentId');
         Route::delete('/agents/{agentId}', [AgentsController::class, 'destroy'])->whereNumber('agentId');
+
+        // Link mời tự phục vụ (bổ sung cho mời qua email ở trên) — gửi tay qua
+        // Zalo, chấp nhận ở mặt tiền web.php (Auth\InviteAcceptancesController).
+        Route::get('/invite_links', [InviteLinksController::class, 'index']);
+        Route::post('/invite_links', [InviteLinksController::class, 'store']);
+        Route::delete('/invite_links/{linkId}', [InviteLinksController::class, 'destroy'])->whereNumber('linkId');
 
         Route::get('/teams', [TeamsController::class, 'index']);
         Route::post('/teams', [TeamsController::class, 'store']);

@@ -51,6 +51,7 @@ class AccountUser extends Model
         'user_id',
         'role',
         'inviter_id',
+        'invite_link_id',
         'availability',
         'auto_offline',
         'active_at',
@@ -108,6 +109,11 @@ class AccountUser extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'inviter_id');
+    }
+
+    public function inviteLink(): BelongsTo
+    {
+        return $this->belongsTo(AccountInviteLink::class, 'invite_link_id');
     }
 
     public function isAdministrator(): bool

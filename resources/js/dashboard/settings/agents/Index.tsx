@@ -15,6 +15,7 @@ import Modal from 'dashboard/components/Modal';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
 import AddAgent from './AddAgent';
 import EditAgent from './EditAgent';
+import InviteLinks from './InviteLinks';
 import { useAgentsWithPresence } from './presence';
 import type { Agent } from './types';
 import type { DashboardPageProps } from '../../types';
@@ -33,6 +34,7 @@ export default function AgentsIndex() {
     const [isFetching, setFetching] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddPopup, setShowAddPopup] = useState(false);
+    const [showInviteLinksPopup, setShowInviteLinksPopup] = useState(false);
     const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
     const [deletingAgent, setDeletingAgent] = useState<Agent | null>(null);
     const [deletingIds, setDeletingIds] = useState<number[]>([]);
@@ -116,11 +118,20 @@ export default function AgentsIndex() {
                                 ) : null
                             }
                             actions={
-                                <Button
-                                    label={t('AGENT_MGMT.HEADER_BTN_TXT')}
-                                    size="sm"
-                                    onClick={() => setShowAddPopup(true)}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        label={t('INVITE_LINKS.MANAGE.BUTTON')}
+                                        size="sm"
+                                        faded
+                                        slate
+                                        onClick={() => setShowInviteLinksPopup(true)}
+                                    />
+                                    <Button
+                                        label={t('AGENT_MGMT.HEADER_BTN_TXT')}
+                                        size="sm"
+                                        onClick={() => setShowAddPopup(true)}
+                                    />
+                                </div>
                             }
                         />
                     }
@@ -201,6 +212,10 @@ export default function AgentsIndex() {
                             onClose={() => setShowAddPopup(false)}
                             onCreated={agent => setAgents(current => [...current, agent])}
                         />
+                    </Modal>
+
+                    <Modal show={showInviteLinksPopup} onClose={() => setShowInviteLinksPopup(false)}>
+                        <InviteLinks accountId={accountId} onClose={() => setShowInviteLinksPopup(false)} />
                     </Modal>
 
                     <Modal show={editingAgent !== null} onClose={() => setEditingAgent(null)}>

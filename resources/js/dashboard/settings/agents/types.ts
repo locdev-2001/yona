@@ -13,3 +13,24 @@ export interface Agent {
     role: 'agent' | 'administrator';
     thumbnail: string;
 }
+
+// Shape trả về của /api/v1/accounts/{id}/invite_links (AccountInviteLinkResource).
+export interface InviteLink {
+    id: number;
+    role: 'agent' | 'administrator';
+    status: 'active' | 'revoked' | 'expired' | 'exhausted';
+    expires_at: string;
+    max_uses: number | null;
+    use_count: number;
+    uses_left: number | null;
+    revoked_at: string | null;
+    created_at: string;
+    created_by_name: string | null;
+}
+
+// Response riêng của POST /invite_links: token thật chỉ xuất hiện ở đây, một lần.
+export interface CreatedInviteLink {
+    link: InviteLink;
+    token: string;
+    url: string;
+}
