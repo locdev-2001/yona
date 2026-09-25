@@ -1001,7 +1001,7 @@ return [
         'FORWARD_EMAIL_SUB_TEXT' => 'Start forwarding your emails to the following email address.',
         'FORWARD_EMAIL_NOT_CONFIGURED' => 'Forwarding emails to your inbox is currently disabled on this installation. To use this feature, it must be enabled by your administrator. Please get in touch with them to proceed.',
         'ALLOW_MESSAGES_AFTER_RESOLVED' => 'Allow messages after conversation resolved',
-        'ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT' => 'Allow the end-users to send messages even after the conversation is resolved.',
+        'ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT' => 'When off, a resolved conversation shows a button to start a new conversation instead of the message box on the widget.',
         'WHATSAPP_SECTION_SUBHEADER' => 'This API Key is used for the integration with the WhatsApp APIs.',
         'WHATSAPP_SECTION_UPDATE_SUBHEADER' => 'Enter the new API key to be used for the integration with the WhatsApp APIs.',
         'WHATSAPP_SECTION_TITLE' => 'API Key',

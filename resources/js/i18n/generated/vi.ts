@@ -5942,8 +5942,8 @@ const messages: Record<string, unknown> = {
             "FORWARD_EMAIL_TITLE": "Chuyển tiếp đến Email",
             "FORWARD_EMAIL_SUB_TEXT": "Bắt đầu chuyển tiếp email của bạn tới địa chỉ email sau.",
             "FORWARD_EMAIL_NOT_CONFIGURED": "Bản cài đặt này đang tắt tính năng chuyển tiếp thư vào hộp thư. Quản trị viên phải bật lên thì bạn mới dùng được. Hãy liên hệ họ để tiếp tục.",
-            "ALLOW_MESSAGES_AFTER_RESOLVED": "Cho phép nhắn tin sau khi hội thoại được giải quyết",
-            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "Cho phép người dùng cuối nhắn tin sau khi hội thoại được giải quyết.",
+            "ALLOW_MESSAGES_AFTER_RESOLVED": "Cho khách nhắn tiếp sau khi hội thoại đã giải quyết",
+            "ALLOW_MESSAGES_AFTER_RESOLVED_SUB_TEXT": "Tắt thì khi hội thoại đã giải quyết, widget thay ô nhập tin bằng nút bắt đầu hội thoại mới.",
             "WHATSAPP_SECTION_SUBHEADER": "Khóa API này được sử dụng để tích hợp với các API WhatsApp.",
             "WHATSAPP_SECTION_UPDATE_SUBHEADER": "Nhập API key mới dùng cho kết nối với API của WhatsApp.",
             "WHATSAPP_SECTION_TITLE": "Khóa API",
@@ -6145,8 +6145,8 @@ const messages: Record<string, unknown> = {
                 }
             },
             "PRE_CHAT_MESSAGE": {
-                "LABEL": "Tin nhắn trước khi trò chuyện",
-                "PLACEHOLDER": "Tin nhắn này sẽ hiện cho những người dùng cùng với biểu mẫu",
+                "LABEL": "Lời nhắn kèm biểu mẫu",
+                "PLACEHOLDER": "Lời nhắn khách thấy phía trên biểu mẫu trên widget",
                 "DEFAULT": "Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé."
             },
             "NO_FIELD_ENABLED_WARNING": "Biểu mẫu đang bật nhưng chưa có ô nào được bật, nên khách chỉ thấy ô tin nhắn. Hãy bật ít nhất một ô bên dưới.",
