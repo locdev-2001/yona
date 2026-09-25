@@ -30,15 +30,19 @@ export async function writeSessionFile(filePath, data) {
     await ensureSessionDir(path.dirname(filePath));
     const { current } = loadSessionKeys();
     const payload = current ? encryptSessionPayload(data, current) : data;
-    await fs.writeFile(filePath, payload, { encoding: 'utf8', mode: SESSION_FILE_MODE });
-    await fs.chmod(filePath, SESSION_FILE_MODE).catch(() => {});
+    // Ghi tệp tạm rồi rename: process chết giữa chừng không để lại tệp phiên cụt.
+    const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+    await fs.writeFile(tmpPath, payload, { encoding: 'utf8', mode: SESSION_FILE_MODE });
+    await fs.chmod(tmpPath, SESSION_FILE_MODE).catch(() => {});
+    await fs.rename(tmpPath, filePath);
 }
 
 /**
  * Đọc một tệp ghi qua `writeSessionFile`. Tệp mã hoá ⇒ giải mã (khoá hiện tại,
  * xoay khoá qua khoá cũ); tệp bản cũ (JSON thẳng, thiếu trường `v`) ⇒ trả nguyên
- * văn VÀ, nếu đã có khoá cấu hình, ghi đè lại dạng mã hoá ngay (best-effort, lỗi
- * ghi không được chặn luồng đọc đang chạy).
+ * văn VÀ, nếu đã có khoá cấu hình, ghi đè lại dạng mã hoá trước khi trả về — chờ
+ * xong để lần ghi muộn này không đè lên cookie mới hơn mà caller lưu ngay sau đó.
+ * Lỗi ghi chỉ cảnh báo, không chặn luồng đọc.
  */
 export async function readSessionFile(filePath) {
     const raw = await fs.readFile(filePath, 'utf8');
@@ -52,7 +56,7 @@ export async function readSessionFile(filePath) {
     if (!isEncryptedEnvelope(parsed)) {
         const { current } = loadSessionKeys();
         if (current) {
-            writeSessionFile(filePath, raw).catch((error) => {
+            await writeSessionFile(filePath, raw).catch((error) => {
                 console.warn('zalo-bridge: khong the tu di tru ma hoa phien', filePath, error?.message || error);
             });
         }
