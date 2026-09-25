@@ -672,13 +672,15 @@ export const widgetStore = {
         }
     },
 
-    async updateContact(user: Record<string, unknown>): Promise<void> {
+    // Trả về đã lưu hay chưa để màn gọi báo lỗi ngắn cho khách thay vì nuốt im.
+    async updateContact(user: Record<string, unknown>): Promise<boolean> {
         try {
             await api.updateContact(user);
-            await widgetStore.fetchContact();
         } catch {
-            // Bỏ qua như bản gốc.
+            return false;
         }
+        await widgetStore.fetchContact();
+        return true;
     },
 
     async setContactUser({
@@ -764,17 +766,18 @@ export const widgetStore = {
         messageId: number | string;
         email?: string;
         submittedValues?: unknown;
-    }): Promise<void> {
+    }): Promise<boolean> {
         try {
             await api.updateMessage({ messageId, email, values: submittedValues });
-            widgetStore.updateMessageContentAttributes(messageId, {
-                submitted_email: email,
-                submitted_values: email ? null : submittedValues,
-            });
-            await widgetStore.fetchContact();
         } catch {
-            // Bỏ qua như bản gốc.
+            return false;
         }
+        widgetStore.updateMessageContentAttributes(messageId, {
+            submitted_email: email,
+            submitted_values: email ? null : submittedValues,
+        });
+        await widgetStore.fetchContact();
+        return true;
     },
 
     // ── campaign ──────────────────────────────────────────────────────────────

@@ -96,13 +96,28 @@ describe('ngoài giờ hỗ trợ', () => {
     });
 
     it('email hợp lệ thì lưu vào hồ sơ khách', async () => {
-        const updateContact = vi.spyOn(widgetStore, 'updateContact').mockResolvedValue();
+        const updateContact = vi.spyOn(widgetStore, 'updateContact').mockResolvedValue(true);
 
         render(<OutOfHoursNotice />);
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'khach@shop.vn' } });
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Leave a message' })));
 
         expect(updateContact).toHaveBeenCalledWith({ email: 'khach@shop.vn' });
+    });
+
+    it('lưu email lỗi mạng thì báo ngắn ngay trên nút, khách ở lại để thử lại', async () => {
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+        document.body.insertAdjacentHTML('beforeend', '<textarea id="chat-input"></textarea>');
+
+        render(<OutOfHoursNotice />);
+        const emailField = screen.getByRole('textbox', { name: 'Email to receive our reply' });
+        fireEvent.change(emailField, { target: { value: 'khach@shop.vn' } });
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Leave a message' })));
+
+        expect(screen.getByRole('alert').textContent).toBe('Your email was not saved. Please try again.');
+        expect(document.activeElement?.id).not.toBe('chat-input');
+        expect(emailField).toHaveValue('khach@shop.vn');
+        document.getElementById('chat-input')?.remove();
     });
 
     it('đã có hội thoại thì chỉ còn một dòng nhắc trên ô nhập', () => {

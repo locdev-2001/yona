@@ -35,6 +35,7 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
     const [selectedRating, setSelectedRating] = useState<number | null>(null);
     const [feedback, setFeedback] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
+    const [hasSubmitFailed, setSubmitFailed] = useState(false);
 
     const shownRating = isSubmitted ? Number(submitted?.rating) : selectedRating;
     const supportedFor = supportDurationLabel(conversationStartedAt, message.created_at);
@@ -42,10 +43,12 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
     const submit = async () => {
         if (selectedRating === null || isSubmitting) return;
         setSubmitting(true);
-        await widgetStore.updateMessage({
+        setSubmitFailed(false);
+        const isSaved = await widgetStore.updateMessage({
             messageId: message.id,
             submittedValues: { csat_survey_response: { rating: selectedRating, feedback_message: feedback.trim() } },
         });
+        setSubmitFailed(!isSaved);
         setSubmitting(false);
     };
 
@@ -89,6 +92,11 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
                         className="reset-base w-full min-h-[52px] resize-none rounded-xl border border-[var(--yona-chat-line-field)] bg-transparent px-[13px] py-3 text-[12.5px] leading-[1.4] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)]"
                         onChange={event => setFeedback(event.target.value)}
                     />
+                    {hasSubmitFailed ? (
+                        <p role="alert" className="text-[11.5px] leading-[1.4] text-[var(--yona-chat-danger)]">
+                            {t('CONVERSATION_END.SUBMIT_FAILED')}
+                        </p>
+                    ) : null}
                     <button
                         type="button"
                         disabled={selectedRating === null || isSubmitting}

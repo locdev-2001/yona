@@ -72,6 +72,7 @@ return [
     ],
     'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Please enter your email',
+    'EMAIL_SAVE_FAILED' => 'Your email was not saved. Please try again.',
     'CHAT_PLACEHOLDER' => 'Type a message…',
     'TODAY' => 'Today',
     'YESTERDAY' => 'Yesterday',
@@ -265,11 +266,13 @@ return [
     'CONVERSATION_END' => [
         'TITLE' => 'This conversation has ended',
         'RATE_PROMPT' => 'How was the support you received?',
+        // Ba mức khách chấm ở MỌI nơi (widget, trang khảo sát, chữ giới thiệu tab CSAT).
         'POOR' => 'Poor',
         'OKAY' => 'Okay',
         'GREAT' => 'Great',
         'FEEDBACK_PLACEHOLDER' => 'What could be better? (optional)',
         'SUBMIT' => 'Send rating',
+        'SUBMIT_FAILED' => 'Your rating was not sent. Please try again.',
         'THANKS' => 'Thanks for your rating!',
         'SUPPORTED_MINUTES' => 'Helped you for {n} minute | Helped you for {n} minutes',
         'SUPPORTED_HOURS' => 'Helped you for {n} hour | Helped you for {n} hours',

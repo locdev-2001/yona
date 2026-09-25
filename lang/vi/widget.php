@@ -70,6 +70,7 @@ return [
     ],
     'POWERED_BY' => 'Powered by {installationName}',
     'EMAIL_PLACEHOLDER' => 'Vui lòng nhập email',
+    'EMAIL_SAVE_FAILED' => 'Chưa lưu được email. Bạn thử lại nhé.',
     'CHAT_PLACEHOLDER' => 'Nhập tin nhắn…',
     'TODAY' => 'Hôm nay',
     'YESTERDAY' => 'Hôm qua',
@@ -263,11 +264,13 @@ return [
     'CONVERSATION_END' => [
         'TITLE' => 'Cuộc trò chuyện đã kết thúc',
         'RATE_PROMPT' => 'Bạn thấy lần hỗ trợ này thế nào?',
+        // Ba mức khách chấm ở MỌI nơi (widget, trang khảo sát, chữ giới thiệu tab CSAT).
         'POOR' => 'Kém',
         'OKAY' => 'Ổn',
         'GREAT' => 'Tuyệt',
         'FEEDBACK_PLACEHOLDER' => 'Điều gì có thể tốt hơn? (không bắt buộc)',
         'SUBMIT' => 'Gửi đánh giá',
+        'SUBMIT_FAILED' => 'Chưa gửi được đánh giá. Bạn thử lại nhé.',
         'THANKS' => 'Cảm ơn bạn đã đánh giá!',
         'SUPPORTED_MINUTES' => 'Đã hỗ trợ trong {n} phút',
         'SUPPORTED_HOURS' => 'Đã hỗ trợ trong {n} giờ',

@@ -56,6 +56,7 @@ export default function OutOfHoursNotice() {
     const [email, setEmail] = useState('');
     const [hasInvalidEmail, setInvalidEmail] = useState(false);
     const [isSubmitting, setSubmitting] = useState(false);
+    const [hasSaveFailed, setSaveFailed] = useState(false);
     const errorId = useId();
 
     const defaultBody = [hours, reopen ? t('OUT_OF_HOURS.BODY_REOPEN', { reopen }) : t('OUT_OF_HOURS.BODY')]
@@ -70,8 +71,13 @@ export default function OutOfHoursNotice() {
                 return;
             }
             setSubmitting(true);
-            await widgetStore.updateContact({ email: typedEmail });
+            setSaveFailed(false);
+            const isSaved = await widgetStore.updateContact({ email: typedEmail });
             setSubmitting(false);
+            if (!isSaved) {
+                setSaveFailed(true);
+                return;
+            }
         }
         document.getElementById('chat-input')?.focus();
     };
@@ -122,6 +128,11 @@ export default function OutOfHoursNotice() {
                             </p>
                         ) : null}
                     </div>
+                ) : null}
+                {hasSaveFailed ? (
+                    <p role="alert" className="text-[11.5px] leading-[1.4] text-[var(--yona-chat-danger)]">
+                        {t('EMAIL_SAVE_FAILED')}
+                    </p>
                 ) : null}
                 <button
                     type="submit"

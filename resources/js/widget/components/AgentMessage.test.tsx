@@ -58,6 +58,21 @@ describe('AgentMessage — thẻ kết thúc & đánh giá', () => {
         });
     });
 
+    it('gửi đánh giá lỗi mạng thì báo ngắn trong thẻ, mức đã chọn và góp ý còn nguyên để gửi lại', async () => {
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+        render(<AgentMessage message={csatMessage()} />);
+
+        fireEvent.click(screen.getByRole('radio', { name: 'Okay' }));
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'hơi lâu' } });
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Send rating' })));
+
+        const card = screen.getByTestId('conversation-end');
+        expect(within(card).getByRole('alert').textContent).toBe('Your rating was not sent. Please try again.');
+        expect(within(card).getByRole('radio', { name: 'Okay' })).toHaveAttribute('aria-checked', 'true');
+        expect(within(card).getByRole('textbox')).toHaveValue('hơi lâu');
+        expect(within(card).getByRole('button', { name: 'Send rating' })).toBeEnabled();
+    });
+
     it('Kém là 1, Ổn là 3', () => {
         expect(CSAT_LEVELS.map(level => [level.key, level.value])).toStrictEqual([
             ['POOR', 1],
