@@ -6156,13 +6156,10 @@ const messages: Record<string, unknown> = {
         },
         "CSAT": {
             "TITLE": "Bật chỉ số đo lường sự hài lòng khách hàng",
-            "SUBTITLE": "Tự động gửi khảo sát CSAT khi kết thúc hội thoại để biết khách cảm nhận thế nào về trải nghiệm hỗ trợ. Theo dõi xu hướng hài lòng và tìm ra chỗ cần cải thiện theo thời gian.",
-            "DISPLAY_TYPE": {
-                "LABEL": "Kiểu hiển thị"
-            },
+            "SUBTITLE": "Khi hội thoại được giải quyết, khách nhận một khảo sát ngắn và chấm theo 3 mức: {poor}, {okay}, {great}. Kết quả vào báo cáo CSAT để bạn theo dõi mức hài lòng theo thời gian.",
             "MESSAGE": {
                 "LABEL": "Tin nhắn",
-                "PLACEHOLDER": "Nhập lời nhắn hiện kèm biểu mẫu cho người dùng"
+                "PLACEHOLDER": "Nhập lời nhắn hiện kèm khảo sát cho khách"
             },
             "BUTTON_TEXT": {
                 "LABEL": "Chữ trên nút",

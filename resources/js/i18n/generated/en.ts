@@ -6156,13 +6156,10 @@ const messages: Record<string, unknown> = {
         },
         "CSAT": {
             "TITLE": "Enable CSAT",
-            "SUBTITLE": "Automatically trigger CSAT surveys at the end of conversations to understand how customers feel about their support experience. Track satisfaction trends and identify areas for improvement over time.",
-            "DISPLAY_TYPE": {
-                "LABEL": "Display type"
-            },
+            "SUBTITLE": "When a conversation is resolved, the customer gets a short survey and rates it on 3 levels: {poor}, {okay}, {great}. Results go to the CSAT report so you can track satisfaction over time.",
             "MESSAGE": {
                 "LABEL": "Message",
-                "PLACEHOLDER": "Please enter a message to show users with the form"
+                "PLACEHOLDER": "Please enter a message to show customers with the survey"
             },
             "BUTTON_TEXT": {
                 "LABEL": "Button text",
