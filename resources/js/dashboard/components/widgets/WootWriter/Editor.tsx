@@ -348,6 +348,9 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                 },
                 keydown: (view_, event) => {
                     if (callbacksRef.current.disabled) return false;
+                    // Enter khi bộ gõ tiếng Việt còn đang ghép dấu chỉ để chốt từ; gửi lúc này thì
+                    // từ đang ghép được chốt vào ô đã xoá và thành một tin thứ hai.
+                    if (event.isComposing || event.keyCode === 229) return false;
                     if (isPickerOpenRef.current && event.key === 'Escape') {
                         // Escape khi bảng gợi ý đang mở = "đóng bảng", không phải
                         // "rời ô soạn". useKeyboardEvents ở tầng document blur mọi ô
