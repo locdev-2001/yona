@@ -237,6 +237,9 @@ return [
         'AWAY' => 'Đang vắng mặt',
         'CLOSE' => 'Đóng cửa sổ trò chuyện',
         'BACK' => 'Quay lại',
+        'AGENT_ACTIVE' => 'Đang hoạt động',
+        'MORE' => 'Tuỳ chọn khác',
+        'POPOUT' => 'Mở trong cửa sổ riêng',
     ],
     'OUT_OF_HOURS' => [
         'TITLE' => 'Hiện ngoài giờ hỗ trợ',

@@ -540,7 +540,12 @@ export const widgetStore = {
         try {
             const data = await api.fetchConversationAttributes();
             setState({
-                conversationAttributes: { id: data?.id ?? '', status: data?.status ?? '' },
+                conversationAttributes: {
+                    id: data?.id ?? '',
+                    status: data?.status ?? '',
+                    createdAt: data?.created_at ?? null,
+                    assignee: data?.assignee ?? null,
+                },
                 meta: { userLastSeenAt: data?.contact_last_seen_at ?? state.meta.userLastSeenAt },
                 agentLastSeenAt: data?.agent_last_seen_at ?? state.agentLastSeenAt,
             });
@@ -555,7 +560,7 @@ export const widgetStore = {
 
     updateConversationAttributes(data: ConversationAttributes): void {
         if (data.id !== state.conversationAttributes.id) return;
-        setState({ conversationAttributes: { id: data.id, status: data.status } });
+        setState({ conversationAttributes: { ...state.conversationAttributes, status: data.status } });
     },
 
     // ── custom attributes / labels (SDK) ──────────────────────────────────────

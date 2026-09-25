@@ -1,8 +1,11 @@
 import DOMPurify from 'dompurify';
 
-import { useInboxAvailability } from './Availability';
+import { replyTimeLabel, useInboxAvailability } from './Availability';
 import HeaderActions from './HeaderActions';
+import { HEADER_ACTION_CLASS } from './headerActionClass';
+import WidgetAvatar from './WidgetAvatar';
 import { t } from '../i18n';
+import { useWidgetState } from '../store/hooks';
 import type { AvailableAgent } from '../types';
 
 interface ChatHeaderProps {
@@ -14,7 +17,7 @@ interface ChatHeaderProps {
     onBack: () => void;
 }
 
-// Header một màn chat: avatar 34px có chấm trạng thái, tên + trạng thái thật, hành động bên phải.
+// Header một màn chat: hộp thư, hoặc nhân viên khi hội thoại đã có người nhận.
 export function ChatHeader({
     title,
     avatarUrl = '',
@@ -23,45 +26,55 @@ export function ChatHeader({
     availableAgents,
     onBack,
 }: ChatHeaderProps) {
-    const { isOnline } = useInboxAvailability(availableAgents);
-    const plainTitle = DOMPurify.sanitize(title, { ALLOWED_TAGS: [] });
+    const { isOnline: isInboxOnline, inboxConfig } = useInboxAvailability(availableAgents);
+    const assignee = useWidgetState(state => state.conversationAttributes.assignee ?? null);
+    const assigneeId = assignee?.id;
+    const isAssigneeOnline = useWidgetState(state =>
+        state.agents.some(agent => agent.id === assigneeId && agent.availability_status === 'online'),
+    );
+    const availableMessage = useWidgetState(state => state.appConfig.availableMessage);
+    const unavailableMessage = useWidgetState(state => state.appConfig.unavailableMessage);
+
+    const inboxName = DOMPurify.sanitize(title, { ALLOWED_TAGS: [] });
+    const isOnline = assignee ? isAssigneeOnline : isInboxOnline;
+    const onlineText = assignee ? t('HEADER.AGENT_ACTIVE') : availableMessage || replyTimeLabel(inboxConfig.replyTime);
+    const awayText = assignee ? t('HEADER.AWAY') : unavailableMessage || t('HEADER.AWAY');
 
     return (
-        <header className="flex items-center w-full gap-2 py-2 ps-3 pe-2 bg-[var(--yona-chat-panel)] border-b border-[var(--yona-chat-line)]">
+        <header className="flex items-center w-full gap-[11px] px-4 py-[13px] bg-[var(--yona-chat-panel)] border-b border-[var(--yona-chat-line)]">
             {showBackButton ? (
-                <button
-                    type="button"
-                    aria-label={t('HEADER.BACK')}
-                    className="flex items-center justify-center flex-shrink-0 rounded-full size-11 -ms-2 text-[var(--yona-chat-ink)] hover:bg-[var(--yona-chat-field)]"
-                    onClick={onBack}
-                >
-                    <span className="i-lucide-chevron-left size-6 rtl:rotate-180" />
+                <button type="button" aria-label={t('HEADER.BACK')} className={`${HEADER_ACTION_CLASS} -ms-2`} onClick={onBack}>
+                    <span className="i-lucide-chevron-left size-5 rtl:rotate-180" />
                 </button>
             ) : null}
-            <div className="relative flex-shrink-0 size-[34px]">
-                {avatarUrl ? (
-                    <img className="object-cover rounded-full size-[34px]" src={avatarUrl} alt="" />
+            <div className="relative flex-shrink-0" data-testid="header-avatar">
+                {assignee ? (
+                    <WidgetAvatar name={assignee.name} src={assignee.avatar_url} size={34} tone="agent" />
                 ) : (
-                    <span className="flex items-center justify-center rounded-full size-[34px] bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)] text-sm font-medium">
-                        {plainTitle.trim().charAt(0).toUpperCase()}
-                    </span>
+                    <WidgetAvatar name={inboxName} src={avatarUrl} size={34} tone="inbox" />
                 )}
                 <span
                     aria-hidden="true"
                     data-testid="header-status-dot"
-                    className={`absolute bottom-0 end-0 size-2.5 rounded-full ring-2 ring-[var(--yona-chat-panel)] ${
+                    className={`absolute -bottom-px -end-px size-2.5 rounded-full ring-2 ring-[var(--yona-chat-panel)] ${
                         isOnline ? 'bg-[var(--yona-chat-online-dot)]' : 'bg-[var(--yona-chat-dot)]'
                     }`}
                 />
             </div>
             <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-[15px] font-medium leading-5 truncate text-[var(--yona-chat-ink)]">{plainTitle}</span>
                 <span
-                    className={`text-xs leading-4 ${
+                    data-testid="header-title"
+                    className="text-sm font-semibold leading-[1.2] truncate text-[var(--yona-chat-ink)]"
+                >
+                    {assignee ? assignee.name : inboxName}
+                </span>
+                <span
+                    data-testid="header-status"
+                    className={`text-[11.5px] leading-[1.4] truncate ${
                         isOnline ? 'text-[var(--yona-chat-online)]' : 'text-[var(--yona-chat-ink-muted)]'
                     }`}
                 >
-                    {isOnline ? t('HEADER.ONLINE') : t('HEADER.AWAY')}
+                    {isOnline ? onlineText : awayText}
                 </span>
             </div>
             <HeaderActions showPopoutButton={showPopoutButton} />

@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 use App\Support\WidgetTokenService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -55,6 +56,38 @@ describe('GET /api/v1/widget/conversations', function () {
         $this->getJson($session->url('conversations'), $session->headers())
             ->assertOk()
             ->assertJson(['agent_last_seen_at' => $conversation->agent_last_seen_at->getTimestamp()]);
+    });
+
+    it('lộ nhân viên đang phụ trách để header widget hiện tên và ảnh người đó', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        $agent = User::factory()->create(['name' => 'Nguyễn Văn Hỗ Trợ', 'display_name' => 'Robert']);
+        $conversation = Conversation::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'contact_id' => $session->contact->id,
+            'contact_inbox_id' => $session->contactInbox->id,
+            'assignee_id' => $agent->id,
+        ]);
+
+        $response = $this->getJson($session->url('conversations'), $session->headers())->assertOk();
+
+        expect($response->json('assignee'))->toBe(['id' => $agent->id, 'name' => 'Robert', 'avatar_url' => $agent->avatarUrl()])
+            ->and($response->json('created_at'))->toBe($conversation->created_at->getTimestamp())
+            ->and($response->json('assignee'))->not->toHaveKey('email');
+    });
+
+    it('chưa có nhân viên nhận thì assignee là null', function () {
+        $session = WidgetSession::make(contactAttributes: ['email' => null]);
+        Conversation::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'contact_id' => $session->contact->id,
+            'contact_inbox_id' => $session->contactInbox->id,
+        ]);
+
+        $this->getJson($session->url('conversations'), $session->headers())
+            ->assertOk()
+            ->assertJsonPath('assignee', null);
     });
 
     it('returns not found when the token points at an unknown source id', function () {

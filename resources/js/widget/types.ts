@@ -215,9 +215,19 @@ export interface FormattedCampaign {
     url?: string;
 }
 
+// Nhân viên đang phụ trách hội thoại, đúng những trường widget được thấy.
+export interface ConversationAssignee {
+    id: number;
+    name: string;
+    avatar_url: string;
+}
+
 export interface ConversationAttributes {
     id: number | string;
     status: string;
+    // Mốc tạo hội thoại (giây Unix): màn đánh giá tính "đã hỗ trợ trong bao lâu".
+    createdAt?: number | null;
+    assignee?: ConversationAssignee | null;
 }
 
 export interface AvailableAgent {

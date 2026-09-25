@@ -46,6 +46,9 @@
   --yona-chat-on-scrim: #ffffff;
   --yona-chat-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.2);
   --yona-chat-send-idle: #d2d6db;
+  // Ảnh đại diện chữ tắt của nhân viên chưa có ảnh.
+  --yona-chat-avatar: #e8d5c4;
+  --yona-chat-on-avatar: #6b4a33;
   --yona-chat-font: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -70,6 +73,8 @@
   --yona-chat-dot: rgb(var(--slate-8));
   --yona-chat-send-idle: rgb(var(--slate-7));
   --yona-chat-progress-track: rgba(255, 255, 255, 0.25);
+  --yona-chat-avatar: rgb(var(--slate-6));
+  --yona-chat-on-avatar: rgb(var(--slate-11));
 }
 
 // Tin gốc vừa được nhảy tới từ khối trích dẫn nháy nền trong chốc lát.
@@ -89,31 +94,12 @@ body {
   width: 100%;
 }
 
+// Nút đóng hiện ở mọi khung (design); chỉ mục "mở cửa sổ riêng" ẩn trên điện thoại.
 .is-mobile {
   display: block;
 
-  .actions {
-    .close-button {
-      display: block !important;
-    }
-
-    .new-window--button {
-      display: none !important;
-    }
-  }
-}
-
-.is-bubble-hidden {
-  .actions {
-    .close-button {
-      display: block !important;
-    }
-  }
-}
-
-.actions {
-  .close-button {
-    display: none;
+  .new-window--button {
+    display: none !important;
   }
 }
 

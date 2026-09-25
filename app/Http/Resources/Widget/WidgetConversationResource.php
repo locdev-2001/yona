@@ -25,6 +25,21 @@ final class WidgetConversationResource
             // Mốc agent đọc hội thoại: widget suy ra "Đã xem" dưới tin của khách.
             'agent_last_seen_at' => $conversation->agent_last_seen_at?->getTimestamp() ?? 0,
             'status' => $conversation->statusName(),
+            'created_at' => $conversation->created_at?->getTimestamp(),
+            // Nhân viên đang phụ trách: widget hiện tên + ảnh người này thay tên hộp thư.
+            'assignee' => self::assignee($conversation),
+        ];
+    }
+
+    /** @return array{id: int, name: string, avatar_url: string}|null */
+    private static function assignee(Conversation $conversation): ?array
+    {
+        $agent = $conversation->assignee;
+
+        return $agent === null ? null : [
+            'id' => $agent->id,
+            'name' => $agent->availableName(),
+            'avatar_url' => $agent->avatarUrl(),
         ];
     }
 

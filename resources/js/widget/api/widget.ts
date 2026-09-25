@@ -38,7 +38,11 @@ export const fetchConfig = async (): Promise<WidgetConfigResponse> => {
     return config;
 };
 
-export const fetchConversationAttributes = (): Promise<Partial<ConversationAttributes> & {
+export const fetchConversationAttributes = (): Promise<{
+    id?: ConversationAttributes['id'];
+    status?: string;
+    created_at?: number | null;
+    assignee?: ConversationAttributes['assignee'];
     contact_last_seen_at?: number;
     agent_last_seen_at?: number;
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);

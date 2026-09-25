@@ -239,6 +239,9 @@ return [
         'AWAY' => 'Away',
         'CLOSE' => 'Close chat window',
         'BACK' => 'Back',
+        'AGENT_ACTIVE' => 'Active now',
+        'MORE' => 'More options',
+        'POPOUT' => 'Open in a new window',
     ],
     'OUT_OF_HOURS' => [
         'TITLE' => 'We are outside support hours',

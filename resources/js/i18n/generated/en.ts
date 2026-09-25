@@ -3054,7 +3054,7 @@ const messages: Record<string, unknown> = {
         "templates": {
             "ways_to_reach_you_message_body": "Give the team a way to reach you.",
             "email_input_box_message_body": "Get notified by email",
-            "csat_input_message_body": "Please rate the conversation"
+            "csat_input_message_body": "How was the support you received?"
         },
         "messages": {
             "deleted": "This message was deleted",
@@ -9721,7 +9721,10 @@ const messages: Record<string, unknown> = {
             "ONLINE": "Online",
             "AWAY": "Away",
             "CLOSE": "Close chat window",
-            "BACK": "Back"
+            "BACK": "Back",
+            "AGENT_ACTIVE": "Active now",
+            "MORE": "More options",
+            "POPOUT": "Open in a new window"
         },
         "OUT_OF_HOURS": {
             "TITLE": "We are outside support hours",

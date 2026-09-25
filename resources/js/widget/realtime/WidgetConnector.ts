@@ -43,6 +43,7 @@ export class WidgetConnector {
             'conversation.typing_on': this.onTypingOn as (data: never) => void,
             'conversation.typing_off': this.onTypingOff as (data: never) => void,
             'conversation.status_changed': this.onStatusChange as (data: never) => void,
+            'conversation.updated': this.onConversationUpdated as (data: never) => void,
             'conversation.created': this.onConversationCreated as (data: never) => void,
             'presence.update': this.onPresenceUpdate as (data: never) => void,
             'contact.merged': this.onContactMerge as (data: never) => void,
@@ -150,6 +151,13 @@ export class WidgetConnector {
 
     private onStatusChange = (data: ConversationAttributes) => {
         widgetStore.updateConversationAttributes(data);
+    };
+
+    // Đổi người phụ trách, trạng thái…: tải lại bản tóm tắt dành cho widget thay vì
+    // đọc payload của dashboard, để widget chỉ thấy đúng những trường được phép.
+    private onConversationUpdated = (data: { id?: number | string }) => {
+        if (data.id !== widgetStore.getState().conversationAttributes.id) return;
+        void widgetStore.getConversationAttributes();
     };
 
     private onPresenceUpdate = (data: { users?: Record<string, string> }) => {
