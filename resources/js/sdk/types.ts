@@ -32,6 +32,8 @@ export type SdkInstance = {
     hideMessageBubble: boolean;
     isOpen: boolean;
     position: 'left' | 'right';
+    /** Mã nhúng tự đặt vị trí thì thắng cấu hình dashboard. */
+    positionFromEmbed?: boolean;
     websiteToken: string;
     locale?: string;
     useBrowserLanguage: boolean;

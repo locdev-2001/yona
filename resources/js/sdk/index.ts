@@ -48,6 +48,7 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         hideMessageBubble: settings.hideMessageBubble || false,
         isOpen: false,
         position: settings.position === 'left' ? 'left' : 'right',
+        positionFromEmbed: settings.position === 'left' || settings.position === 'right',
         websiteToken,
         locale,
         useBrowserLanguage: settings.useBrowserLanguage || false,

@@ -482,6 +482,19 @@ describe('cấu hình launcher và phóng to từ dashboard', () => {
         expect(window.$yona.type).toBeUndefined();
     });
 
+    it('dashboard đặt vị trí trái: khung chứa đổi sang trái, trừ khi mã nhúng đã tự đặt', () => {
+        widgetHolder.classList.add('woot-widget-holder', 'woot-elements--right');
+        window.$yona.position = 'right';
+
+        IFrameHelper.applyLauncherSetting({ launcher: 'round', position: 'left' });
+        expect(window.$yona.position).toBe('left');
+        expect(widgetHolder.classList.contains('woot-elements--left')).toBe(true);
+
+        window.$yona.positionFromEmbed = true;
+        IFrameHelper.applyLauncherSetting({ launcher: 'round', position: 'right' });
+        expect(window.$yona.position).toBe('left');
+    });
+
     it('widget xin phóng to/thu nhỏ: khung chứa iframe đổi lớp tương ứng', () => {
         IFrameHelper.initPostMessageCommunication();
         postFromWidget({ event: 'setExpanded', expanded: true });

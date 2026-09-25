@@ -40,6 +40,7 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         'hmac_mandatory',
         'allowed_domains',
         'selected_feature_flags',
+        'widget_settings',
     ];
 
     /** @var array<int, string> has_flags 1 => :attachments … 5 => :allow_mobile_webview */

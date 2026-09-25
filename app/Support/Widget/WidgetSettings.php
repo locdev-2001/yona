@@ -23,6 +23,7 @@ final class WidgetSettings
         'appearance' => [
             'launcher' => 'round',
             'launcher_label' => null,
+            'position' => 'right',
             'greeting' => null,
         ],
         'home' => [
@@ -39,6 +40,17 @@ final class WidgetSettings
         'capture' => ['phone' => true, 'email' => true],
         'expanded_enabled' => true,
     ];
+
+    /**
+     * Bản dashboard gửi lên trộn nông với bản đang lưu: gửi riêng `appearance` thì các
+     * mục khác giữ nguyên. Danh sách (kênh khác, link) luôn thay nguyên cả danh sách.
+     *
+     * @throws ValidationException
+     */
+    public static function merge(?array $stored, array $input): array
+    {
+        return self::normalize([...self::resolve($stored), ...$input]);
+    }
 
     /** Cấu hình đã lưu trộn với mặc định; khoá lạ bị bỏ. */
     public static function resolve(?array $stored): array
@@ -62,6 +74,7 @@ final class WidgetSettings
             'appearance' => [
                 'launcher' => in_array($appearance['launcher'] ?? null, ['round', 'pill'], true) ? $appearance['launcher'] : 'round',
                 'launcher_label' => self::text($appearance['launcher_label'] ?? null, 30),
+                'position' => in_array($appearance['position'] ?? null, ['left', 'right'], true) ? $appearance['position'] : 'right',
                 'greeting' => self::text($appearance['greeting'] ?? null, 80),
             ],
             'home' => ['blocks' => array_map(

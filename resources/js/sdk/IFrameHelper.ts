@@ -394,7 +394,14 @@ export const IFrameHelper = {
     },
     // Kiểu launcher chọn ở dashboard. Mã nhúng đã đặt `type: 'expanded_bubble'` / `launcherTitle`
     // thì giữ nguyên của mã nhúng. Phải chạy trước onLoad vì bong bóng dựng ở đó.
-    applyLauncherSetting: (appearance?: { launcher?: string; launcher_label?: string | null }): void => {
+    applyLauncherSetting: (appearance?: { launcher?: string; launcher_label?: string | null; position?: string }): void => {
+        const position = appearance?.position;
+        if (!window.$yona.positionFromEmbed && (position === 'left' || position === 'right') && position !== window.$yona.position) {
+            // Khung chứa iframe đã dựng theo vị trí mặc định trước khi cấu hình về: đổi lớp tại chỗ.
+            widgetHolder.classList.replace(`woot-elements--${window.$yona.position}`, `woot-elements--${position}`);
+            window.$yona.position = position;
+        }
+
         if (appearance?.launcher !== 'pill' || isExpandedView(window.$yona.type)) return;
 
         window.$yona.type = BUBBLE_DESIGN[1];

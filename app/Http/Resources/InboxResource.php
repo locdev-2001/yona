@@ -176,6 +176,7 @@ class InboxResource extends JsonResource
             'pre_chat_form_enabled' => $channel->pre_chat_form_enabled,
             'pre_chat_form_options' => $channel->pre_chat_form_options,
             'continuity_via_email' => $channel->continuity_via_email,
+            'widget_settings' => $channel->widgetSettings(),
         ];
     }
 

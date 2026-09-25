@@ -780,3 +780,38 @@ describe('working hours qua PATCH inbox', function () {
             ->assertStatus(422);
     });
 });
+
+describe('cấu hình widget (widget_settings)', function () {
+    it('lưu phần gửi lên, giữ nguyên phần còn lại, trả về đã trộn mặc định', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+        $inbox->channel->update(['widget_settings' => ['custom_links' => [['label' => 'Bảng giá sỉ', 'url' => 'https://gommoc.vn/si']]]]);
+        $url = "/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}";
+
+        $this->actingAs($admin)
+            ->patchJson($url, ['channel' => ['widget_settings' => [
+                'appearance' => ['launcher' => 'pill', 'launcher_label' => 'Chat với shop', 'position' => 'left'],
+                'la' => 'bị bỏ',
+            ]]])
+            ->assertOk()
+            ->assertJsonPath('widget_settings.appearance.position', 'left')
+            ->assertJsonPath('widget_settings.custom_links.0.label', 'Bảng giá sỉ');
+
+        expect($inbox->channel->fresh()->widget_settings)->not->toHaveKey('la');
+    });
+
+    it('từ chối link không phải http(s) và kênh khác sai định dạng', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+        $url = "/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}";
+
+        $this->actingAs($admin)
+            ->patchJson($url, ['channel' => ['widget_settings' => ['custom_links' => [['label' => 'x', 'url' => 'javascript:alert(1)']]]]])
+            ->assertUnprocessable();
+        $this->actingAs($admin)
+            ->patchJson($url, ['channel' => ['widget_settings' => ['other_channels' => [['kind' => 'hotline', 'value' => 'gọi em']]]]])
+            ->assertUnprocessable();
+    });
+});
