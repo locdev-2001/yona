@@ -14,7 +14,6 @@ interface PlaceholderPageProps extends DashboardPageProps {
 // Gọi đúng tên mục người dùng vừa bấm; dùng lại nhãn của sidebar nên không lệch chữ.
 // Xoá dòng tương ứng khi tính năng được port.
 const VIEW_LABEL_KEYS: Record<string, string> = {
-    'settings/general': 'SIDEBAR.ACCOUNT_SETTINGS',
     'settings/templates': 'SIDEBAR.WHATSAPP_TEMPLATES',
     'settings/data/imports': 'SIDEBAR.DATA',
     'settings/security': 'SIDEBAR.SECURITY',
