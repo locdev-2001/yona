@@ -19,7 +19,7 @@ export default function Branding({ disableBranding = false }: { disableBranding?
                 href={branding.href}
                 rel="noreferrer noopener nofollow"
                 target="_blank"
-                className="branding--link text-[10.5px] leading-[1.2] text-[var(--yona-chat-ink-faint)] no-underline hover:text-[var(--yona-chat-ink-soft)]"
+                className="branding--link text-[10.5px] leading-[1.2] text-[var(--yona-chat-ink-muted)] no-underline hover:text-[var(--yona-chat-ink-soft)]"
             >
                 {branding.label}
             </a>

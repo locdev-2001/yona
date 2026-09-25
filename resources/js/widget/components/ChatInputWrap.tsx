@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { ButtonHTMLAttributes } from 'react';
 import { createTypingIndicator } from '@ext/utils';
 
 import { fitAutoGrowHeight } from 'shared/helpers/autoGrowField';
@@ -23,12 +24,28 @@ type PickerKind = 'image' | 'file';
 // Trần của ô nhập; quá trần mới cho cuộn.
 const COMPOSER_MAX_HEIGHT_PX = 120;
 
-// Nút tròn 36px trong viên thuốc; lớp giả nới vùng bấm ra 44px.
-const PILL_BUTTON_CLASS =
-    "relative flex size-9 flex-none items-center justify-center rounded-full transition-colors after:absolute after:-inset-1 after:content-[''] active:scale-[0.97]";
-const PILL_BUTTON_IDLE_CLASS =
-    'text-[var(--yona-chat-ink-muted)] hover:bg-[var(--yona-chat-hover)] hover:text-[var(--yona-chat-ink)]';
-const PILL_BUTTON_ACTIVE_CLASS = 'bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)]';
+// Mặt nút tròn 36px theo design; hộp bấm 44px, lề âm giữ đúng bố cục 36px trong viên thuốc.
+const PILL_FACE_IDLE_CLASS =
+    'text-[var(--yona-chat-ink-muted)] group-hover:bg-[var(--yona-chat-hover)] group-hover:text-[var(--yona-chat-ink)]';
+const PILL_FACE_ACTIVE_CLASS = 'bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)]';
+const SEND_FACE_READY_CLASS = 'bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]';
+const SEND_FACE_IDLE_CLASS = 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-chat-on-accent)]';
+
+function PillButton({ faceClass, children, ...buttonProps }: ButtonHTMLAttributes<HTMLButtonElement> & { faceClass: string }) {
+    return (
+        <button
+            type="button"
+            {...buttonProps}
+            className="group relative -m-1 flex size-11 flex-none items-center justify-center rounded-full outline-none disabled:cursor-default active:scale-[0.97]"
+        >
+            <span
+                className={`flex size-9 items-center justify-center rounded-full transition-colors group-focus-visible:ring-2 group-focus-visible:ring-[var(--yona-chat-accent)] ${faceClass}`}
+            >
+                {children}
+            </span>
+        </button>
+    );
+}
 
 interface ChatInputWrapProps {
     onSendMessage: (content: string) => void | Promise<void>;
@@ -160,8 +177,7 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
         input.value = '';
     };
 
-    const pillButtonClass = (isActive: boolean) =>
-        `${PILL_BUTTON_CLASS} ${isActive ? PILL_BUTTON_ACTIVE_CLASS : PILL_BUTTON_IDLE_CLASS}`;
+    const pillFaceClass = (isActive: boolean) => (isActive ? PILL_FACE_ACTIVE_CLASS : PILL_FACE_IDLE_CLASS);
 
     return (
         <div
@@ -235,42 +251,38 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
                     onBlur={() => typingIndicator.current.stop()}
                 />
                 {canHandleAttachments ? (
-                    <button
-                        type="button"
+                    <PillButton
                         aria-label={t('COMPOSER.ADD')}
                         title={t('COMPOSER.ADD')}
                         aria-expanded={openPanel === 'attach-menu'}
-                        className={pillButtonClass(openPanel === 'attach-menu')}
+                        faceClass={pillFaceClass(openPanel === 'attach-menu')}
                         onClick={() => togglePanel('attach-menu')}
                     >
                         <PlusIcon />
-                    </button>
+                    </PillButton>
                 ) : null}
                 {canOpenReactions ? (
-                    <button
-                        type="button"
+                    <PillButton
                         aria-label={reactionLabel}
                         title={reactionLabel}
                         aria-expanded={openPanel === 'reactions'}
-                        className={pillButtonClass(openPanel === 'reactions')}
+                        faceClass={pillFaceClass(openPanel === 'reactions')}
                         onClick={() => togglePanel('reactions')}
                     >
                         <SmileIcon />
-                    </button>
+                    </PillButton>
                 ) : null}
-                <button
+                <PillButton
                     type="submit"
                     aria-label={t('COMPOSER.SEND')}
                     title={t('COMPOSER.SEND')}
                     disabled={!hasContent}
                     data-state={hasContent ? 'ready' : 'idle'}
-                    className={`${PILL_BUTTON_CLASS} text-[var(--yona-chat-on-accent)] ${
-                        hasContent ? 'bg-[var(--yona-chat-accent)]' : 'cursor-default bg-[var(--yona-chat-send-idle)]'
-                    }`}
+                    faceClass={hasContent ? SEND_FACE_READY_CLASS : SEND_FACE_IDLE_CLASS}
                     onClick={sendComposer}
                 >
                     <ArrowRightIcon />
-                </button>
+                </PillButton>
             </div>
             {canHandleAttachments ? (
                 <>
