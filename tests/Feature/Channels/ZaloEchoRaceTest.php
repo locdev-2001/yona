@@ -210,3 +210,34 @@ it('thu hồi theo msgId của phần thứ hai vẫn áp lên tin gốc', funct
 
     expect($sent->refresh()->isDeleted())->toBeTrue();
 });
+
+it('echo video gốc (chat.video.msg) của tin Yona vừa gửi khớp đúng tin đã tạo, không dựng tin hay tệp trùng', function () {
+    $conversation = echoRaceConversation();
+    // Chú thích đi thành tin chữ riêng rồi mới tới video: hai msgId, chữ là msgId chính.
+    $sent = echoRaceOutgoing($conversation, [
+        'content' => 'Mẫu mới ạ',
+        'source_id' => 'msg-chu',
+        'content_attributes' => ['external_source_ids' => ['msg-chu', 'msg-video']],
+    ]);
+    $sent->attachments()->create([
+        'account_id' => $conversation->account_id,
+        'file_type' => Attachment::FILE_TYPE_VIDEO,
+        'path' => 'zalo/video.mp4',
+        'filename' => 'video.mp4',
+        'content_type' => 'video/mp4',
+        'byte_size' => 2048,
+    ]);
+
+    $echo = echoRacePayload('zalo_inbound_video', [
+        'source_id' => 'msg-video',
+        'is_self' => true,
+        'direction' => 'echo',
+        'listener_data' => ['msgType' => 'chat.video.msg', 'msgId' => 'msg-video', 'cliMsgId' => '1788700000009'],
+    ]);
+
+    runZaloEventOnQueue($echo, attempts: 1, expectRelease: false);
+
+    expect($conversation->messages()->count())->toBe(1)
+        ->and(Attachment::query()->count())->toBe(1)
+        ->and($sent->refresh()->content_attributes['zca_message']['msgType'])->toBe('chat.video.msg');
+});

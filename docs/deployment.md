@@ -367,6 +367,42 @@ dựng bridge là chạy trùng.
 
 Kiểm tra: `systemctl is-enabled pm2-root`.
 
+### Gửi video dạng video gốc: ffmpeg + ffprobe
+
+Video nhân viên gửi cho khách Zalo đi thành video phát được (khách thấy khung
+phát kèm ảnh bìa và thời lượng) chỉ khi máy chạy bridge có `ffmpeg` và `ffprobe`:
+bridge dùng `ffprobe` đo thời lượng + kích thước và `ffmpeg` cắt một khung làm
+ảnh bìa. Thiếu một trong hai thì video vẫn tới khách nhưng thành **tệp .mp4**
+phải tải về, như trước. Chỉ tệp `.mp4` đi đường này; `.mov` và loại khác vẫn là tệp.
+
+```bash
+# Ubuntu/Debian (aaPanel): cài một lần, không cần khởi động lại gì ngoài bridge
+apt-get install -y ffmpeg
+# Chạy được bằng đúng user chạy pm2 của bridge
+ffmpeg -version | head -1 && ffprobe -version | head -1
+```
+
+Không nằm trong `PATH` của user chạy pm2 thì trỏ thẳng trong
+`services/zalo-bridge/.env`:
+
+```dotenv
+FFMPEG_PATH=/usr/bin/ffmpeg
+FFPROBE_PATH=/usr/bin/ffprobe
+```
+
+Bridge dò hai công cụ **một lần lúc khởi động** (cài sau thì
+`corepack pnpm --dir services/zalo-bridge exec pm2 restart zalo-personal-bridge`)
+và ghi một dòng vào `storage/logs/zalo-bridge/out.log`:
+
+```bash
+grep 'zalo-bridge:send-video' /www/wwwroot/yona.vn/storage/logs/zalo-bridge/out.log | tail -1
+# mong đợi: [zalo-bridge:send-video] {"native_video":true}
+```
+
+Một video rơi về đường tệp để lại một dòng cảnh báo cùng thẻ trong `error.log`,
+có `message_id` và bước hỏng (`tools_missing`, `not_mp4`, `probe`, `thumbnail`,
+`upload_video`, `upload_thumbnail`, `send_video`), không có URL hay nội dung tin.
+
 ---
 
 
