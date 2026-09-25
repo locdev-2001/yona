@@ -8,6 +8,7 @@ import { MESSAGE_TYPE } from '../helpers/constants';
 import { isASubmittedFormMessage, isDeletedMessage } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
+import { bubbleRadius } from './message/bubbleShape';
 import CardsCarousel from './message/CardsCarousel';
 import MessageRow from './message/MessageRow';
 import { messageElementId } from './message/QuotedReply';
@@ -35,11 +36,15 @@ function AgentMessageBubble({
     messageId: number | string;
     messageContentAttributes: Record<string, unknown>;
 }) {
+    // Tin mẫu (xin email, lựa chọn, biểu mẫu…) dùng cùng bong bóng agent của khung chat.
     return (
         <div className="chat-bubble-wrap">
-            <div className="chat-bubble agent bg-n-background dark:bg-n-solid-3 text-n-slate-12">
+            <div
+                className="yona-template-bubble inline-block max-w-full border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-[13px] py-[10px] text-[13.5px] leading-[1.5] text-[var(--yona-chat-ink)]"
+                style={bubbleRadius(false, 'single')}
+            >
                 <div
-                    className="message-content text-n-slate-12"
+                    className="message-content break-words [&_a]:underline"
                     dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
                     }}

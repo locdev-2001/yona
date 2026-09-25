@@ -2,11 +2,9 @@ import { useState } from 'react';
 
 import Spinner from 'shared/components/Spinner';
 
-import { getContrastingTextColor } from '../../helpers/colorHelper';
 import { t } from '../../i18n';
-import { useWidgetState } from '../../store/hooks';
 import { widgetStore } from '../../store/widgetStore';
-import { ChevronRightIcon } from '../icons';
+import { ArrowRightIcon } from '../composer/icons';
 
 // Port từ widget/components/template/EmailInput.vue — ô nhập email trong bong
 // bóng bot `input_email`. Luật @vuelidate `required` + `email`.
@@ -22,7 +20,6 @@ interface EmailInputProps {
 }
 
 export default function EmailInput({ messageId, messageContentAttributes }: EmailInputProps) {
-    const widgetColor = useWidgetState(state => state.appConfig.widgetColor);
     const [email, setEmail] = useState('');
     const [isTouched, setTouched] = useState(false);
     const [isUpdating, setUpdating] = useState(false);
@@ -31,7 +28,7 @@ export default function EmailInput({ messageId, messageContentAttributes }: Emai
     if (hasSubmitted) return <div />;
 
     const isInvalid = !email || !EMAIL_PATTERN.test(email);
-    const textColor = getContrastingTextColor(widgetColor);
+    const showsError = isTouched && isInvalid;
 
     const onSubmit = async () => {
         if (isInvalid) return;
@@ -45,33 +42,41 @@ export default function EmailInput({ messageId, messageContentAttributes }: Emai
         }
     };
 
+    // Ô email gọn trong bong bóng bot: trường nền ô nhập bo 11, nút gửi tròn màu
+    // nhấn (xám khi email chưa hợp lệ) như nút gửi của ô nhập.
     return (
-        <div>
-            <form
-                className="email-input-group h-10 flex my-2 mx-0 min-w-[200px]"
-                onSubmit={event => {
-                    event.preventDefault();
-                    void onSubmit();
+        <form
+            className={`mt-2 flex min-w-[200px] items-center gap-1 rounded-[11px] border bg-[var(--yona-chat-field)] py-1 pe-1 ps-3 ${
+                showsError ? 'border-[var(--yona-chat-danger)]' : 'border-[var(--yona-chat-line)]'
+            }`}
+            onSubmit={event => {
+                event.preventDefault();
+                void onSubmit();
+            }}
+        >
+            <input
+                value={email}
+                type="email"
+                aria-label={t('EMAIL_PLACEHOLDER')}
+                aria-invalid={showsError}
+                placeholder={t('EMAIL_PLACEHOLDER')}
+                className="reset-base min-w-0 flex-1 border-none bg-transparent py-[7px] text-[13.5px] leading-[18px] text-[var(--yona-chat-ink)] outline-none placeholder:text-[var(--yona-chat-ink-muted)]"
+                onChange={event => {
+                    setEmail(event.target.value);
+                    setTouched(true);
                 }}
+            />
+            <button
+                type="submit"
+                aria-label={t('COMPOSER.SEND')}
+                title={t('COMPOSER.SEND')}
+                disabled={isInvalid || isUpdating}
+                className={`relative flex size-9 flex-none items-center justify-center rounded-full text-[var(--yona-chat-on-accent)] after:absolute after:-inset-1 after:content-[''] active:scale-[0.97] ${
+                    isInvalid ? 'cursor-default bg-[var(--yona-chat-send-idle)]' : 'bg-[var(--yona-chat-accent)]'
+                }`}
             >
-                <input
-                    value={email}
-                    type="email"
-                    placeholder={t('EMAIL_PLACEHOLDER')}
-                    className={isTouched && isInvalid ? 'error' : undefined}
-                    onChange={event => {
-                        setEmail(event.target.value);
-                        setTouched(true);
-                    }}
-                />
-                <button
-                    className="button small"
-                    disabled={isInvalid}
-                    style={{ background: widgetColor, borderColor: widgetColor, color: textColor }}
-                >
-                    {isUpdating ? <Spinner className="mx-2" /> : <ChevronRightIcon />}
-                </button>
-            </form>
-        </div>
+                {isUpdating ? <Spinner /> : <ArrowRightIcon />}
+            </button>
+        </form>
     );
 }
