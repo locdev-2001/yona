@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { linksOfMessages } from './sharedContent';
+import { linksOfMessages } from './sharedContentLinks';
 
 describe('linksOfMessages', () => {
     it('lists every link of each message with its domain, keeping message order', () => {
