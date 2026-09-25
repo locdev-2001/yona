@@ -4,13 +4,12 @@ namespace App\Models;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
-use App\Http\Resources\ConversationResource;
-use App\Http\Resources\MessageResource;
 use App\Http\Resources\UserResource;
 use App\Jobs\Notification\EmailNotificationJob;
 use App\Jobs\Notification\PushNotificationJob;
 use App\Jobs\Notification\RemoveDuplicateNotificationJob;
 use App\Support\PlainTextContent;
+use App\Support\RealtimePayload;
 use Database\Factories\NotificationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -159,6 +158,9 @@ class Notification extends Model
         return $actor instanceof Conversation ? $actor : null;
     }
 
+    // Payload đẩy qua Reverb — rút gọn qua RealtimePayload (Reverb giới hạn kích thước
+    // request, xem RealtimePayload::class). NotificationResource (REST GET /notifications)
+    // KHÔNG gọi hàm này, giữ nguyên đủ dữ liệu qua ConversationResource/MessageResource.
     public function pushEventData(): array
     {
         $payload = [
@@ -184,7 +186,7 @@ class Notification extends Model
 
         return [
             ...$payload,
-            'primary_actor' => ConversationResource::pushEventData($primaryActor),
+            'primary_actor' => RealtimePayload::notificationPrimaryActor($primaryActor),
             // TODO gốc: "Rename push_message_title to push_message_body" — hai khóa
             // cùng nội dung, FE đọc push_message_body.
             'push_message_title' => $this->pushMessageBody(),
@@ -271,7 +273,7 @@ class Notification extends Model
     {
         $actor = $this->secondaryActor;
 
-        return $actor instanceof Message ? MessageResource::pushEventData($actor) : null;
+        return $actor instanceof Message ? RealtimePayload::notificationSecondaryActor($actor) : null;
     }
 
     // process_notification_delivery: đẩy + email theo cài đặt, rồi dọn thông báo trùng.

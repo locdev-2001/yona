@@ -18,6 +18,7 @@ use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Support\RealtimePayload;
 use Illuminate\Support\Str;
 
 // Gom token người nghe rồi đẩy ActionCableBroadcastJob (queue critical). Chạy đồng bộ
@@ -251,7 +252,7 @@ class ActionCableListener extends BaseListener
         $user = $event->data['user'];
 
         $this->broadcast($account, $this->typingEventListenerTokens($account, $conversation, $user), $type, [
-            'conversation' => ConversationResource::pushEventData($conversation),
+            'conversation' => RealtimePayload::typingConversation($conversation),
             'user' => match (true) {
                 $user instanceof User => UserResource::pushEventData($user, $account),
                 $user instanceof AgentBot => $user->pushEventData($conversation->inbox),

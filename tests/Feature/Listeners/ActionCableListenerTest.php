@@ -158,7 +158,7 @@ describe('typing_on', function () {
         expect($job->members)->toEqualCanonicalizing([$admin->pubsub_token, $conversation->contactInbox->pubsub_token])
             ->and($job->eventName)->toBe('conversation.typing_on')
             ->and($job->data)->toEqual([
-                'conversation' => ConversationResource::pushEventData($conversation),
+                'conversation' => ['id' => $conversation->display_id],
                 'user' => UserResource::pushEventData($agent, $account),
                 'is_private' => false,
                 'account_id' => $account->id,

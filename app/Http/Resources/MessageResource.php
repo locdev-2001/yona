@@ -83,7 +83,12 @@ class MessageResource extends JsonResource
             'sender_id' => $message->sender_id,
             'external_source_ids' => $message->external_source_ids ?? [],
             'additional_attributes' => self::attributeMap($message->additional_attributes),
-            'processed_message_content' => $message->processed_message_content,
+            // Chỉ gửi khi khác content — Reverb giới hạn kích thước request, còn FE
+            // (quotedEmailHelper.ts) chỉ đọc trường này khi content rỗng nên lặp y hệt
+            // vô nghĩa cho những tin dài.
+            ...($message->processed_message_content === $message->content
+                ? []
+                : ['processed_message_content' => $message->processed_message_content]),
             'sentiment' => $message->sentiment ?? [],
             'conversation' => [
                 'assignee_id' => $message->conversation->assignee_id,

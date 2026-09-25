@@ -5,7 +5,9 @@ namespace App\Http\Resources;
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\User;
+use App\Support\RealtimePayload;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
@@ -99,14 +101,7 @@ class ConversationResource extends JsonResource
         /** @var Conversation $conversation */
         $conversation = $this->resource;
 
-        // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
-        // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
-        $lastMessage = $conversation->relationLoaded('latestMessage')
-            ? $conversation->latestMessage
-            : $conversation->messagesNewestFirst()->first();
-        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
-            ? $conversation->latestNonActivityMessage
-            : $conversation->lastNonActivityMessage();
+        [$lastMessage, $lastNonActivityMessage] = self::resolveLastMessages($conversation);
 
         return [
             'meta' => $this->meta($conversation),
@@ -142,12 +137,27 @@ class ConversationResource extends JsonResource
 
     // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder
     // cộng thêm channel + contact_inbox (presenter serialize cả record).
+    // Khác REST (toArray không đổi): messages[0]/last_non_activity_message đổi sang
+    // bản xem trước rút gọn và dùng CHUNG một bản khi cùng là một tin — REST
+    // (ConversationResource::collection, jbuilder cũ) vẫn nhận đủ MessageResource::pushEventData.
     public static function pushEventData(Conversation $conversation): array
     {
         $contactInbox = $conversation->contactInbox;
+        $data = (new self($conversation))->toArray(request());
+        [$lastMessage, $lastNonActivityMessage] = self::resolveLastMessages($conversation);
+
+        $nonActivityPreview = $lastNonActivityMessage === null ? null : RealtimePayload::messagePreview($lastNonActivityMessage);
+        $lastMessagePreview = match (true) {
+            $lastMessage === null => null,
+            $lastNonActivityMessage !== null && $lastMessage->is($lastNonActivityMessage) => $nonActivityPreview,
+            default => RealtimePayload::messagePreview($lastMessage),
+        };
+
+        $data['messages'] = $lastMessagePreview === null ? [] : [$lastMessagePreview];
+        $data['last_non_activity_message'] = $nonActivityPreview;
 
         return [
-            ...(new self($conversation))->toArray(request()),
+            ...$data,
             'channel' => $conversation->inbox->channel_type,
             'contact_inbox' => $contactInbox === null ? null : [
                 'id' => $contactInbox->id,
@@ -160,6 +170,21 @@ class ConversationResource extends JsonResource
                 'updated_at' => $contactInbox->updated_at?->toISOString(),
             ],
         ];
+    }
+
+    /** @return array{0: ?Message, 1: ?Message} */
+    private static function resolveLastMessages(Conversation $conversation): array
+    {
+        // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
+        // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
+        $lastMessage = $conversation->relationLoaded('latestMessage')
+            ? $conversation->latestMessage
+            : $conversation->messagesNewestFirst()->first();
+        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
+            ? $conversation->latestNonActivityMessage
+            : $conversation->lastNonActivityMessage();
+
+        return [$lastMessage, $lastNonActivityMessage];
     }
 
     private function meta(Conversation $conversation): array
