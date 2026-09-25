@@ -1260,6 +1260,26 @@ xoá file). Qua CLI: `php artisan pail`.
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
 
+### Tính lại loại tệp media lưu nhầm là tệp
+
+Trước bản sửa chiều nhận, video (hoặc ảnh, âm thanh) khách gửi qua Zalo bằng
+"gửi tệp" được lưu là tệp. Hộp thư hiện thẻ tệp .mp4 phải tải về thay vì trình
+phát. Tin mới đã đúng. Tin cũ sửa bằng một lệnh trung tính: lệnh chỉ đụng đính
+kèm tin nhắn đang là tệp, có tệp trên đĩa và có MIME xem trước được. Loại mới
+lấy đúng luật của lõi (`Attachment::fileTypeFor`).
+
+```bash
+cd /www/wwwroot/yona.vn
+# Đếm trước, in id từng đính kèm, không ghi gì
+php artisan attachments:reclassify-media --dry-run
+# Ghi thật
+php artisan attachments:reclassify-media
+# Chạy lại phải ra 0
+php artisan attachments:reclassify-media --dry-run
+```
+
+Lệnh không đổi nội dung tệp. Chạy lại bao nhiêu lần cũng được.
+
 ### Rollback
 
 Không có release directory, nên rollback = deploy lại commit cũ:
