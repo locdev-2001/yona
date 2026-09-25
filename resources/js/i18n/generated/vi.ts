@@ -3726,6 +3726,14 @@ const messages: Record<string, unknown> = {
         "PREFERRED": "Ưu tiên"
     },
     "GENERAL_SETTINGS": {
+        "TITLE": "Cài đặt tài khoản",
+        "DESCRIPTION": "Thiết lập chung cho cả tài khoản doanh nghiệp.",
+        "LANGUAGE": {
+            "TITLE": "Ngôn ngữ",
+            "NOTE": "Ngôn ngữ của widget chat trên website và của dashboard với những ai chưa tự chọn ngôn ngữ riêng. Trang nhúng widget vẫn chọn được ngôn ngữ khác bằng tuỳ chọn locale trong mã nhúng.",
+            "UPDATE_SUCCESS": "Đã đổi ngôn ngữ tài khoản",
+            "UPDATE_ERROR": "Chưa đổi được ngôn ngữ, bạn thử lại nhé"
+        },
         "BACK": "Trở về",
         "FORM": {
             "AUTO_RESOLVE": {
