@@ -487,6 +487,9 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                                                     label={t(
                                                         'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.LABEL',
                                                     )}
+                                                    helpText={t(
+                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TITLE.HELP_TEXT',
+                                                    )}
                                                 >
                                                     <WootInput
                                                         value={channelWelcomeTitle}
@@ -501,6 +504,9 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                                                 <SettingsFieldSection
                                                     label={t(
                                                         'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.LABEL',
+                                                    )}
+                                                    helpText={t(
+                                                        'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.HELP_TEXT',
                                                     )}
                                                     className="[&>div]:!items-start [&>div>label]:mt-1"
                                                 >

@@ -5049,11 +5049,13 @@ const messages: Record<string, unknown> = {
                 },
                 "CHANNEL_WELCOME_TITLE": {
                     "LABEL": "Welcome Heading",
-                    "PLACEHOLDER": "Hi there !"
+                    "PLACEHOLDER": "Hi there !",
+                    "HELP_TEXT": "The large heading visitors see on the widget before any message is sent."
                 },
                 "CHANNEL_WELCOME_TAGLINE": {
                     "LABEL": "Welcome Tagline",
-                    "PLACEHOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback."
+                    "PLACEHOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback.",
+                    "HELP_TEXT": "Shown right below the welcome heading, as plain text."
                 },
                 "CHANNEL_GREETING_MESSAGE": {
                     "LABEL": "Channel greeting message",
@@ -5070,7 +5072,7 @@ const messages: Record<string, unknown> = {
                     "IN_A_FEW_MINUTES": "In a few minutes",
                     "IN_A_FEW_HOURS": "In a few hours",
                     "IN_A_DAY": "In a day",
-                    "HELP_TEXT": "This reply time will be displayed on the live chat widget"
+                    "HELP_TEXT": "Shown in the status line at the top of the widget so visitors know how soon to expect a reply."
                 },
                 "WIDGET_COLOR": {
                     "LABEL": "Widget Color",
