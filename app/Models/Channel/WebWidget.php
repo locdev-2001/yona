@@ -95,7 +95,7 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
         // before_validation :validate_pre_chat_options — chạy cả lúc tạo lẫn sửa.
         static::saving(function (WebWidget $channel) {
             if (blank($channel->pre_chat_form_options['pre_chat_fields'] ?? null)) {
-                $channel->pre_chat_form_options = self::defaultPreChatFormOptions();
+                $channel->pre_chat_form_options = self::defaultPreChatFormOptions($channel->account?->locale);
             }
         });
     }
@@ -106,15 +106,15 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
     }
 
     /**
-     * Biểu mẫu trước chat của hộp thư mới: ba trường chuẩn (đều tắt) và lời nhắn,
-     * chữ lấy từ lang/ theo ngôn ngữ mặc định của Yona (config app.locale) vì
-     * widget in thẳng nhãn đã lưu cho khách.
+     * Biểu mẫu trước chat của hộp thư mới: ba trường chuẩn (đều tắt) và lời nhắn.
+     * Widget in thẳng chữ đã lưu cho khách và hiện theo ngôn ngữ của account, nên
+     * chữ mặc định lấy từ lang/ theo ngôn ngữ account, không theo người đang thao tác.
      *
      * @return array{pre_chat_message: string, pre_chat_fields: list<array<string, mixed>>}
      */
-    public static function defaultPreChatFormOptions(): array
+    public static function defaultPreChatFormOptions(?string $accountLocale): array
     {
-        $locale = config('app.locale');
+        $locale = $accountLocale ?? config('app.locale');
 
         $fields = collect(self::STANDARD_PRE_CHAT_FIELDS)
             ->map(fn (array $field, string $name): array => [

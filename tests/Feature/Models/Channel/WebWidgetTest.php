@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
+use Illuminate\Support\Facades\App;
 
 // Port từ spec/models/channel/web_widget_spec.rb, cộng phần hành vi mà bản gốc
 // mượn gem (FlagShihTzu cho bitmask, has_secure_token cho website/hmac token).
@@ -16,10 +17,13 @@ it('fills the default pre chat options', function () {
         ->toBe(['emailAddress', 'fullName', 'phoneNumber']);
 });
 
-it('writes the default pre chat texts in the default language of the installation', function () {
-    config(['app.locale' => 'vi']);
+// Widget hiện theo ngôn ngữ account và in thẳng chữ đã lưu, nên chữ mặc định theo account,
+// không theo ngôn ngữ của người đang tạo hộp thư.
+it('writes the default pre chat texts in the language of a Vietnamese account', function () {
+    App::setLocale('en');
+    $account = Account::factory()->create(['locale' => 'vi']);
 
-    $options = WebWidget::factory()->create()->pre_chat_form_options;
+    $options = WebWidget::factory()->create(['account_id' => $account->id])->pre_chat_form_options;
     $fields = collect($options['pre_chat_fields'])->keyBy('name');
 
     expect($options['pre_chat_message'])->toBe('Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé.')
@@ -27,6 +31,19 @@ it('writes the default pre chat texts in the default language of the installatio
         ->and($fields['fullName']['label'])->toBe('Tên đầy đủ')
         ->and($fields['phoneNumber']['label'])->toBe('Số điện thoại')
         ->and($fields->pluck('field_type')->unique()->all())->toBe(['standard']);
+});
+
+it('writes the default pre chat texts in the language of an English account', function () {
+    App::setLocale('vi');
+    $account = Account::factory()->create(['locale' => 'en']);
+
+    $options = WebWidget::factory()->create(['account_id' => $account->id])->pre_chat_form_options;
+    $fields = collect($options['pre_chat_fields'])->keyBy('name');
+
+    expect($options['pre_chat_message'])->toBe('Share your queries or comments here.')
+        ->and($fields['emailAddress'])->toMatchArray(['label' => 'Email Address', 'placeholder' => 'Please enter your email address'])
+        ->and($fields['fullName']['label'])->toBe('Full Name')
+        ->and($fields['phoneNumber']['label'])->toBe('Phone Number');
 });
 
 it('keeps pre chat fields provided by the caller', function () {
