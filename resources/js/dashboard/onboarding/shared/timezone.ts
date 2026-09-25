@@ -1,19 +1,7 @@
+import { matchTimezone } from 'shared/helpers/timezoneAliases';
 import type { SelectOption } from './constants';
 
 export const FALLBACK_TIMEZONE = 'Asia/Ho_Chi_Minh';
-
-// Cùng một múi giờ nhưng hai tên: ICU (Chrome) giữ tên cũ Asia/Saigon trong
-// Intl.supportedValuesOf, trong khi resolvedOptions() có thể trả tên hiện hành
-// Asia/Ho_Chi_Minh — so khớp trực tiếp sẽ trượt và ô múi giờ thành rỗng.
-const TIMEZONE_ALIAS_GROUPS: readonly (readonly string[])[] = [['Asia/Ho_Chi_Minh', 'Asia/Saigon']];
-
-function aliasesOf(timezone: string): readonly string[] {
-    return TIMEZONE_ALIAS_GROUPS.find(group => group.includes(timezone)) ?? [timezone];
-}
-
-function matchingOption(timezone: string, available: readonly string[]): string | undefined {
-    return aliasesOf(timezone).find(alias => available.includes(alias));
-}
 
 export function browserTimezone(): string {
     try {
@@ -44,8 +32,8 @@ export function defaultTimezone(options: readonly SelectOption[], browserZone: s
     const available = options.map(option => option.value);
 
     return (
-        (browserZone ? matchingOption(browserZone, available) : undefined) ??
-        matchingOption(FALLBACK_TIMEZONE, available) ??
+        (browserZone ? matchTimezone(browserZone, available) : undefined) ??
+        matchTimezone(FALLBACK_TIMEZONE, available) ??
         ''
     );
 }

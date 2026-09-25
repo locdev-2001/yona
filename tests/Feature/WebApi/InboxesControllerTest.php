@@ -665,6 +665,43 @@ describe('working hours qua PATCH inbox', function () {
             ->and($schedule[2]['open_hour'])->toBe(9);
     });
 
+    it('creates a new inbox on Vietnam time', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'test.com'],
+            ])
+            ->assertOk();
+
+        expect($response->json('timezone'))->toBe(Inbox::DEFAULT_TIMEZONE)
+            ->and(Inbox::DEFAULT_TIMEZONE)->toBe('Asia/Ho_Chi_Minh');
+    });
+
+    it('keeps the stored timezone when the working hours tab is saved without a timezone change', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+        $inbox->update(['timezone' => 'UTC']);
+
+        $response = $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", [
+                'working_hours_enabled' => false,
+                'out_of_office_message' => '',
+                'timezone' => 'UTC',
+                'working_hours' => [
+                    ['day_of_week' => 1, 'closed_all_day' => false, 'open_hour' => 9, 'open_minutes' => 0, 'close_hour' => 17, 'close_minutes' => 0, 'open_all_day' => false],
+                ],
+                'channel' => [],
+            ])
+            ->assertOk();
+
+        expect($response->json('timezone'))->toBe('UTC')
+            ->and($inbox->fresh()->timezone)->toBe('UTC');
+    });
+
     it('leaves the schedule untouched when the payload has no working hours', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);

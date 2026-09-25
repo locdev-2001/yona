@@ -6,6 +6,7 @@ import {
     timeSlotParse,
     timeSlotTransform,
     timeZoneOptions,
+    timeZoneSelection,
 } from './businessHour';
 
 // Port từ settings/inbox/helpers/specs/businessHour.spec.js.
@@ -150,5 +151,30 @@ describe('timeZoneOptions', () => {
             value: 'Etc/GMT+12',
             label: 'International Date Line West (GMT−12:00)',
         });
+    });
+});
+
+describe('timeZoneSelection', () => {
+    it('khớp múi giờ UTC mà hộp thư cũ lưu với mục Etc/UTC của danh sách', () => {
+        expect(timeZoneSelection('UTC').selected).toBe('Etc/UTC');
+    });
+
+    it('khớp tên cũ Asia/Saigon với mục giờ Việt Nam', () => {
+        expect(timeZoneSelection('Asia/Saigon').selected).toBe('Asia/Ho_Chi_Minh');
+    });
+
+    it('có mục giờ Việt Nam cho mặc định của hộp thư mới', () => {
+        const { options, selected } = timeZoneSelection('Asia/Ho_Chi_Minh');
+
+        expect(selected).toBe('Asia/Ho_Chi_Minh');
+        expect(options.find(option => option.value === 'Asia/Ho_Chi_Minh')?.label).toContain('GMT+07:00');
+    });
+
+    it('giữ múi giờ không có trong danh sách thay vì rơi về một múi giờ khác', () => {
+        const { options, selected } = timeZoneSelection('Pacific/Kiritimati');
+
+        expect(selected).toBe('Pacific/Kiritimati');
+        expect(options[0]).toStrictEqual({ label: 'Pacific/Kiritimati', value: 'Pacific/Kiritimati' });
+        expect(options).toHaveLength(timeZoneOptions().length + 1);
     });
 });

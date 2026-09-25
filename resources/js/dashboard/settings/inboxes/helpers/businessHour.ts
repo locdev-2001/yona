@@ -1,5 +1,6 @@
 import { getHours, getMinutes, parse } from 'date-fns';
 
+import { matchTimezone } from 'shared/helpers/timezoneAliases';
 import timeZoneData from './timezones.json';
 
 // Port từ settings/inbox/helpers/businessHour.js.
@@ -116,3 +117,17 @@ export const timeSlotTransform = (timeSlots: TimeSlot[]): WorkingHourPayload[] =
 
 export const timeZoneOptions = (): TimeZoneOption[] =>
     Object.entries(timeZoneData as Record<string, string>).map(([label, value]) => ({ label, value }));
+
+/**
+ * Danh sách chọn cùng mục ứng với múi giờ đang lưu của hộp thư. Khớp cả bí danh
+ * ('UTC' ↔ 'Etc/UTC'); giá trị không có trong danh sách được thêm thành một mục
+ * riêng thay vì rơi về mục mặc định, để bấm lưu mà không đổi gì thì múi giờ giữ nguyên.
+ */
+export const timeZoneSelection = (stored: string): { options: TimeZoneOption[]; selected: string } => {
+    const options = timeZoneOptions();
+    const matched = matchTimezone(stored, options.map(option => option.value));
+
+    if (matched || !stored) return { options, selected: matched ?? '' };
+
+    return { options: [{ label: stored, value: stored }, ...options], selected: stored };
+};
