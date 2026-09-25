@@ -34,4 +34,19 @@ final class DegradeLog
             'level' => $level->value,
         ]);
     }
+
+    /**
+     * Ảnh thẻ (`CardImageService`) lỗi hoặc quá giờ — tin vẫn gửi được (rơi xuống
+     * `text`/`text_numbered`), chỉ ghi log để dò kênh/loại tin nào ảnh hay hỏng.
+     * Không phải một `DeliveryLevel` thật nên tách khỏi `record()`.
+     */
+    public static function recordImageFailed(Message $message): void
+    {
+        Log::info('messaging.delivery.degraded', [
+            'message_id' => $message->id,
+            'channel' => $message->inbox?->channel_type,
+            'content_type' => $message->contentTypeName(),
+            'level' => 'image_failed',
+        ]);
+    }
 }

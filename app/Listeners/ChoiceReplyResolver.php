@@ -77,7 +77,7 @@ class ChoiceReplyResolver extends BaseListener
 
     /**
      * Tin outgoing/template gần nhất còn lựa chọn chưa trả lời, trong 24 giờ, và đã thực sự
-     * tới khách dưới dạng danh sách đánh số — khách không thấy số thì "2" chỉ là chữ.
+     * tới khách dưới dạng danh sách đánh số (chữ, hoặc ảnh thẻ kèm chữ) — khách không thấy số thì "2" chỉ là chữ.
      */
     private function latestUnansweredChoice(Message $incoming): ?Message
     {
@@ -95,7 +95,9 @@ class ChoiceReplyResolver extends BaseListener
             ->get();
 
         return $candidates->first(function (Message $candidate): bool {
-            if (($candidate->content_attributes['delivery'] ?? null) !== DeliveryLevel::TextNumbered->value
+            $sawNumbers = in_array($candidate->content_attributes['delivery'] ?? null, [DeliveryLevel::TextNumbered->value, DeliveryLevel::ImageText->value], true);
+
+            if (! $sawNumbers
                 || filled($candidate->content_attributes['submitted_values'] ?? null)) {
                 return false;
             }

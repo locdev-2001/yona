@@ -2,6 +2,7 @@
 
 namespace App\Messaging\Delivery;
 
+use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Messaging\Structured\StructuredType;
 use App\Messaging\Structured\StructuredTypeRegistry;
@@ -61,10 +62,19 @@ final class DeliveryPlanner
         $pageUrl = $type->needsPublicPage($attributes) ? $pageUrlProvider($message) : null;
         $text = $type->plainText($message->content, $attributes, $pageUrl);
         $choices = $type->choices($attributes);
+        $text = $choices === [] ? $text : trim($text."\n\n".NumberedChoices::render($choices));
 
-        $plan = $choices === []
-            ? DeliveryPlan::text($text)
-            : DeliveryPlan::textNumbered(trim($text."\n\n".NumberedChoices::render($choices)));
+        // Không có renderer gốc nhưng kênh nhận được ảnh: gửi ảnh thẻ kèm đúng bản chữ trên.
+        // Ảnh lỗi hoặc bridge chưa cấu hình thì CardImageService trả null, gửi chữ như cũ.
+        $imageUrl = $capabilities->has(Capability::OutboundImage) && self::isVisualCard($type)
+            ? app(CardImageService::class)->for($message)
+            : null;
+
+        $plan = match (true) {
+            $imageUrl !== null => DeliveryPlan::imageText($text, $imageUrl),
+            $choices === [] => DeliveryPlan::text($text),
+            default => DeliveryPlan::textNumbered($text),
+        };
 
         DegradeLog::record($message, $plan->level);
 
@@ -106,5 +116,11 @@ final class DeliveryPlanner
         }
 
         return null;
+    }
+
+    /** Loại có ảnh vẽ được ở `services/zalo-bridge/src/card-render` — khớp `kind` bridge nhận. */
+    private static function isVisualCard(StructuredType $type): bool
+    {
+        return in_array($type->contentType(), ['cards', 'order_status', 'webview', 'article'], true);
     }
 }

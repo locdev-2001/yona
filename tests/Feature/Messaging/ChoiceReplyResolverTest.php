@@ -142,3 +142,12 @@ it('khách chưa từng thấy danh sách đánh số (kênh có chip gốc) th�
 
     expect($question->fresh()->content_attributes)->not->toHaveKey('submitted_values');
 });
+
+it('ảnh thẻ kèm danh sách số (image_text) cũng map được khi khách gõ số', function () {
+    $conversation = resolverConversation();
+    $question = askChoice($conversation, [['title' => 'A', 'value' => 'a'], ['title' => 'B', 'value' => 'b']], delivery: 'image_text');
+
+    customerReplies($conversation, '2');
+
+    expect($question->fresh()->content_attributes['submitted_values'])->toBe([['title' => 'B', 'value' => 'b']]);
+});

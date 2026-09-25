@@ -19,6 +19,7 @@ import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
+import { registerCardRenderRoutes } from './routes/card-render.mjs';
 import { createOutbox } from './outbox.mjs';
 import { backfillOnReconnect, computeGapMs, requestThreadBackfill } from './reconnect-backfill.mjs';
 import {
@@ -2618,6 +2619,8 @@ function buildExpress() {
         buildGroupBackfillPayload,
         enqueueOutbox: (body) => enqueueInboundEnriched(body),
     });
+    // Ảnh thẻ (phase-06 §6b): không đụng slot Zalo, chỉ cần secret gửi tin.
+    registerCardRenderRoutes(app, { checkSendSecret });
     // P11: dispatcher generic — mount SAU các route active. resolve-only (M2):
     // slots.get, KHÔNG getSlot (get-or-create).
     registerZcaDispatchRoutes(app, {

@@ -50,9 +50,15 @@ THE SOFTWARE.
 Widget chat tự host phông Be Vietnam Pro (các file `resources/fonts/BeVietnamPro/*.woff2`;
 nét 600 và 700 lấy từ gói `@fontsource/be-vietnam-pro` 5.3.0).
 
+Bridge Zalo (`services/zalo-bridge/assets/fonts/BeVietnamPro-{Regular,SemiBold,Bold}.ttf`)
+dùng bản TTF ĐẦY ĐỦ ký tự (không tách theo subset latin/latin-ext/vietnamese như bản
+web ở trên) để vẽ ảnh thẻ bằng satori — bản tách subset của `@fontsource` thiếu hẳn
+glyph `đ` khi in cùng dòng với chữ La-tinh thường/số, thứ satori không tự vá được bằng
+cách gộp nhiều font. Lấy từ chính kho `google/fonts` (thứ `@fontsource` cũng đóng gói lại).
+
 Copyright 2021 The Be Vietnam Pro Project Authors (https://github.com/bettergui/BeVietnamPro).
 Phát hành theo SIL Open Font License 1.1; văn bản giấy phép nằm ở
-`resources/fonts/BeVietnamPro/OFL.txt`.
+`resources/fonts/BeVietnamPro/OFL.txt` và `services/zalo-bridge/assets/fonts/OFL.txt`.
 
 ---
 
