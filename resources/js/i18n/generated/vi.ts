@@ -9731,7 +9731,17 @@ const messages: Record<string, unknown> = {
             "TITLE": "Hiện ngoài giờ hỗ trợ",
             "BODY": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.",
             "EMAIL_PLACEHOLDER": "Email để nhận trả lời",
-            "CTA": "Để lại tin nhắn"
+            "CTA": "Để lại tin nhắn",
+            "HOURS": "Nhóm hỗ trợ trực {from}–{to}.",
+            "BODY_REOPEN": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa {reopen}.",
+            "REOPEN": "Mở cửa lại {reopen}.",
+            "REOPEN_TODAY": "lúc {time}",
+            "REOPEN_TOMORROW": "lúc {time} mai",
+            "REOPEN_ON_DAY": "lúc {time} {day}",
+            "REOPEN_TOMORROW_ALL_DAY": "vào ngày mai",
+            "REOPEN_ON_DAY_ALL_DAY": "vào {day}",
+            "BANNER": "Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa {reopen}.",
+            "BANNER_FALLBACK": "Đang ngoài giờ hỗ trợ, mình trả lời khi mở cửa lại."
         },
         "CONVERSATION_END": {
             "TITLE": "Cuộc trò chuyện đã kết thúc",

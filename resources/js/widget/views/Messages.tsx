@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import ChatEmptyState from '../components/ChatEmptyState';
 import ChatFooter from '../components/ChatFooter';
 import { useInboxAvailability } from '../components/Availability';
-import OutOfHoursNotice from '../components/OutOfHoursNotice';
+import OutOfHoursNotice, { OutOfHoursBanner } from '../components/OutOfHoursNotice';
 import { IFrameHelper } from '../helpers/iframe';
 import ConversationWrap from '../components/ConversationWrap';
 import { replaceRoute, WIDGET_ROUTES } from '../router';
@@ -31,6 +31,7 @@ export default function Messages() {
             <div className="flex flex-1 min-h-0 overflow-auto">
                 {hasMessages ? <ConversationWrap /> : isOutOfHours ? <OutOfHoursNotice /> : <ChatEmptyState />}
             </div>
+            {hasMessages && isOutOfHours ? <OutOfHoursBanner /> : null}
             <ChatFooter onStartNewConversation={() => replaceRoute(WIDGET_ROUTES.PRECHAT_FORM)} />
         </div>
     );
