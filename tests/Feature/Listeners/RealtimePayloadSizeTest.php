@@ -144,3 +144,13 @@ it('tin chữ dài 20 000 ký tự tiếng Việt: mọi sự kiện lọt max_r
     // Tin cuối lặp ba lần trong thông báo: ca này đã rơi ở ngưỡng 128 KB trước đó.
     expect(reverbRequestBytes($jobs[0]))->toBeGreaterThan(131_072);
 });
+
+it('tin dài nhất được lưu (150 000 ký tự tiếng Việt): mọi sự kiện vẫn lọt max_request_size', function () {
+    $message = reverbIncomingMessage($this->conversation, reverbSampleText(Message::MAX_CONTENT_LENGTH));
+
+    $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
+
+    expectAllWithinReverbLimit($jobs);
+    // Ca này đã rơi ở ngưỡng 512 KB trước đó.
+    expect(reverbRequestBytes($jobs[0]))->toBeGreaterThan(524_288);
+});

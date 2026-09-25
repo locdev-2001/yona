@@ -273,15 +273,14 @@ Mặc định trong `config/reverb.php`:
 
 | Biến | Mặc định | Vì sao |
 |---|---|---|
-| `REVERB_MAX_REQUEST_SIZE` | `524288` (512 KB) | Phủ album nặng nhất đã đo (≈ 91 KB) và tin chữ tới khoảng 40 000 ký tự tiếng Việt. Người gọi hợp lệ duy nhất là Laravel qua loopback; lượt POST phải ký bằng app secret, lượt không ký bị từ chối |
+| `REVERB_MAX_REQUEST_SIZE` | `10485760` (10 MB) | Phủ tin dài nhất được lưu (150 000 ký tự, `Message::MAX_CONTENT_LENGTH`): theo bảng trên thông báo tăng khoảng 12,6 byte mỗi ký tự, nên tin 150 000 ký tự khoảng 1,9 MB, tin toàn chữ có dấu khoảng 3 MB. Người gọi hợp lệ duy nhất là Laravel qua loopback; lượt POST phải ký bằng app secret, lượt không ký bị từ chối |
 | `REVERB_APP_MAX_MESSAGE_SIZE` | `65536` (64 KB) | Chỉ áp khung WebSocket trình duyệt gửi lên (đăng ký kênh, client event), không phải sự kiện server phát xuống. Không gây lỗi trên, nâng cho đủ dư |
 
-**Ngưỡng còn lại.** Tin chữ trên khoảng 40 000 ký tự tiếng Việt có dấu (khoảng
-60 000 với `conversation.updated` và "đang gõ"), hoặc khoảng 12 000 emoji, vẫn
-làm `notification.created` vượt 512 KB và mất lặng lẽ như cũ. Tin được lưu tới
-150 000 ký tự (`Message::MAX_CONTENT_LENGTH`), nên chỉ nâng ngưỡng không phủ hết.
-Cách chữa tận gốc là thu gọn payload (không lặp tin cuối, không mang cả nội dung
-tin dài trong thông báo); việc này còn mở.
+**Payload vẫn nặng.** Ngưỡng 10 MB phủ mọi tin lưu được, nhưng một tin dài vẫn
+đẩy hàng trăm KB tới mỗi nhân viên cho mỗi sự kiện. Cách chữa tận gốc là thu gọn
+payload (không lặp tin cuối, không mang cả nội dung tin dài trong thông báo, mã hoá
+JSON không escape unicode); việc này còn mở. Nếu `.env` production có ghi cứng
+`REVERB_MAX_REQUEST_SIZE` thì sửa cả ở đó, rồi `php artisan reverb:restart`.
 
 `.env` production chưa khai hai biến thì mặc định có hiệu lực ngay sau
 `deploy.sh` (script cache lại config và `reverb:restart`). Đã khai giá trị nhỏ hơn
@@ -472,7 +471,7 @@ không nhận giá trị mới trong `.env`:
 ```bash
 cd /www/wwwroot/yona.vn
 corepack pnpm --dir services/zalo-bridge exec pm2 startOrReload \
-    services/zalo-bridge/ecosystem.config.cjs --update-env
+    /www/wwwroot/yona.vn/services/zalo-bridge/ecosystem.config.cjs --update-env
 grep 'zalo-bridge:send-video' storage/logs/zalo-bridge/out.log | tail -1
 # mong đợi: [zalo-bridge:send-video] {"native_video":true,"enabled":true}
 ```

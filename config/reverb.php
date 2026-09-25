@@ -38,9 +38,10 @@ return [
             ],
             // Laravel đẩy mỗi sự kiện realtime tới Reverb bằng một lượt POST; lượt
             // vượt ngưỡng bị đóng 413 và sự kiện mất lặng lẽ. Tin cuối lặp tới 3 lần
-            // trong payload nên tin chữ tiếng Việt khoảng 12 000 ký tự đã vượt 128 KB; số đo và
-            // ngưỡng còn lại ở docs/deployment.md, Reverb.
-            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 524_288),
+            // trong payload và chữ tiếng Việt phình khi mã hoá JSON hai lần, nên ngưỡng
+            // phải phủ tin dài nhất được lưu (Message::MAX_CONTENT_LENGTH); số đo ở
+            // docs/deployment.md, Reverb. Chỉ Laravel gọi qua loopback, lượt POST phải ký.
+            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_485_760),
             'scaling' => [
                 'enabled' => env('REVERB_SCALING_ENABLED', false),
                 'channel' => env('REVERB_SCALING_CHANNEL', 'reverb'),
