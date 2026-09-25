@@ -67,11 +67,26 @@ export const setLocale = (value: string): void => {
     locale = value;
 };
 
+/**
+ * Hội thoại đang mở: display_id, `'new'` (sắp mở hội thoại mới — tin đầu tiên tạo
+ * nó), hoặc null (chưa chọn → server dùng hội thoại mới nhất như widget đời cũ).
+ * Nơi DUY NHẤT gắn `conversation_id` vào request.
+ */
+export type ActiveConversation = number | string | 'new' | null;
+let activeConversation: ActiveConversation = null;
+
+export const setActiveConversation = (conversation: ActiveConversation): void => {
+    activeConversation = conversation === '' ? null : conversation;
+};
+
+export const getActiveConversation = (): ActiveConversation => activeConversation;
+
 // buildSearchParamsWithLocale: mọi request mang website_token, thêm locale khi có.
 export const buildSearch = (extra: Record<string, string | number | undefined> = {}): string => {
     const params = new URLSearchParams();
     if (websiteToken) params.set('website_token', websiteToken);
     if (locale) params.set('locale', locale);
+    if (activeConversation !== null) params.set('conversation_id', String(activeConversation));
     Object.entries(extra).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
     });

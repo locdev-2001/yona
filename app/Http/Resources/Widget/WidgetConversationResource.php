@@ -3,7 +3,9 @@
 namespace App\Http\Resources\Widget;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
+use App\Messaging\MessagePreview;
 use App\Models\Conversation;
+use App\Models\Message;
 
 // Port từ api/v1/widget/conversations/{index,create}.json.jbuilder.
 final class WidgetConversationResource
@@ -33,6 +35,29 @@ final class WidgetConversationResource
     }
 
     /** @return array{id: int, name: string, avatar_url: string, availability_status: string|null}|null */
+    /** Một dòng của tab Tin nhắn. Cần `contact_unread_count` từ withCount. */
+    public static function listItem(Conversation $conversation, MessagePreview $preview): array
+    {
+        // ponytail: một truy vấn tin cuối mỗi hội thoại (≤ 20/trang); gộp bằng lateral join nếu danh sách dài ra.
+        $last = $conversation->messages()
+            ->where('private', false)
+            ->where('message_type', '!=', Message::TYPE_ACTIVITY)
+            ->reorder('id', 'desc')
+            ->first();
+
+        return [
+            ...self::summary($conversation),
+            'unread_count' => (int) $conversation->contact_unread_count,
+            'last_activity_at' => $conversation->last_activity_at?->getTimestamp(),
+            'last_message' => $last === null ? null : [
+                'id' => $last->id,
+                'preview' => $preview->for($last),
+                'message_type' => $last->message_type,
+                'created_at' => $last->created_at->getTimestamp(),
+            ],
+        ];
+    }
+
     private static function assignee(Conversation $conversation): ?array
     {
         $agent = $conversation->assignee;

@@ -48,6 +48,20 @@ export const fetchConversationAttributes = (): Promise<{
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);
 
 // endPoints.js#createConversation — tin đầu tiên đi kèm ngay trong yêu cầu tạo.
+export interface ConversationListItem {
+    id: number;
+    status: string;
+    unread_count: number;
+    last_activity_at: number | null;
+    created_at?: number;
+    assignee?: { name?: string; avatar_url?: string; availability_status?: string } | null;
+    last_message: { id: number; preview: string; message_type: number; created_at: number } | null;
+}
+
+// Tab Tin nhắn: hội thoại của khách, không lọc theo hội thoại đang mở.
+export const fetchConversationList = (page = 1): Promise<{ payload: ConversationListItem[]; meta: { has_more: boolean } }> =>
+    apiGet(`${BASE}/conversations/list${buildSearch({ page })}`);
+
 export const createConversation = (params: {
     fullName?: string;
     emailAddress?: string;
@@ -55,7 +69,7 @@ export const createConversation = (params: {
     message?: string;
     contactCustomAttributes?: Record<string, unknown>;
     customAttributes?: Record<string, unknown>;
-}): Promise<{ messages?: WidgetMessage[] }> =>
+}): Promise<{ id?: number; messages?: WidgetMessage[] }> =>
     apiPost(`${BASE}/conversations${buildSearch()}`, {
         contact: {
             name: params.fullName,

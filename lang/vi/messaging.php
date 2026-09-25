@@ -23,6 +23,11 @@ return [
         'empty_submission' => 'Chưa có thông tin nào được gửi.',
         'payload_too_large' => 'Dữ liệu kèm trang quá lớn.',
     ],
+    'preview' => [
+        'deleted' => 'Tin nhắn đã thu hồi',
+        'image' => 'Đã gửi một ảnh',
+        'file' => 'Đã gửi một tệp',
+    ],
     'cards' => [
         'preview_many' => ':title và :count sản phẩm khác',
         'compare_at' => 'giá cũ :price, -:percent%',

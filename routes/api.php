@@ -65,6 +65,7 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
+            Route::get('/conversations/list', [ConversationsController::class, 'list']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);
             Route::post('/conversations/set_custom_attributes', [ConversationsController::class, 'setCustomAttributes']);
             Route::post('/conversations/update_last_seen', [ConversationsController::class, 'updateLastSeen']);

@@ -23,6 +23,11 @@ return [
         'empty_submission' => 'Nothing was submitted.',
         'payload_too_large' => 'The page data is too large.',
     ],
+    'preview' => [
+        'deleted' => 'Message recalled',
+        'image' => 'Sent a photo',
+        'file' => 'Sent a file',
+    ],
     'cards' => [
         'preview_many' => ':title and :count more',
         'compare_at' => 'was :price, -:percent%',

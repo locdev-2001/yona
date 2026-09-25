@@ -1,5 +1,5 @@
 import * as api from '../api/widget';
-import { getWebsiteToken, setAuthToken, WidgetApiError } from '../api/client';
+import { getActiveConversation, getWebsiteToken, setActiveConversation, setAuthToken, WidgetApiError } from '../api/client';
 import {
     AGENT_TYPING_TIMEOUT,
     CAMPAIGN_CACHE_EXPIRY,
@@ -221,6 +221,12 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
 
     try {
         const data = await request(metadata, controller.signal);
+        // Tin đầu tiên của "hội thoại mới" vừa tạo hội thoại trên server: từ giờ mọi
+        // request đi vào đúng hội thoại đó, không tạo thêm hội thoại thứ hai.
+        if (getActiveConversation() === 'new' && data.conversation_id) {
+            setActiveConversation(data.conversation_id);
+            void widgetStore.getConversationAttributes();
+        }
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
         void widgetStore.reconnectRealtimeIfPending();
@@ -359,6 +365,7 @@ export const widgetStore = {
         setState({ uiFlags: { ...state.uiFlags, isCreating: true } });
         try {
             const data = await api.createConversation(params);
+            if (data?.id) setActiveConversation(data.id);
             const [message] = data?.messages ?? [];
             if (message) pushMessageToConversation(message);
             await widgetStore.getConversationAttributes();
@@ -586,6 +593,8 @@ export const widgetStore = {
     async getConversationAttributes(): Promise<void> {
         try {
             const data = await api.fetchConversationAttributes();
+            // Chưa chọn hội thoại (widget vừa mở): khoá vào hội thoại server trả về.
+            if (getActiveConversation() === null && data?.id) setActiveConversation(data.id);
             setState({
                 conversationAttributes: {
                     id: data?.id ?? '',
@@ -599,6 +608,26 @@ export const widgetStore = {
         } catch {
             // Bỏ qua như bản gốc.
         }
+    },
+
+    /**
+     * Mở một hội thoại khác (tab Tin nhắn) hoặc `'new'` để bắt đầu hội thoại mới:
+     * khung chat đổi hẳn sang hội thoại đó, mọi request sau mang đúng id của nó.
+     */
+    async openConversation(conversation: number | 'new'): Promise<void> {
+        if (getActiveConversation() === conversation && (conversation === 'new' || state.conversationAttributes.id === conversation)) return;
+
+        setActiveConversation(conversation);
+        widgetStore.clearConversations();
+        setState({
+            conversationAttributes: { id: '', status: '' },
+            lastMessageId: null,
+            uiFlags: { ...state.uiFlags, allMessagesLoaded: conversation === 'new' },
+        });
+
+        if (conversation === 'new') return;
+
+        await Promise.all([widgetStore.fetchOldConversations(), widgetStore.getConversationAttributes()]);
     },
 
     clearConversationAttributes(): void {
@@ -924,6 +953,8 @@ export const widgetStore = {
         try {
             await api.triggerCampaign(campaignId, customAttributes);
             setState({ activeCampaign: null });
+            // Campaign có thể vừa tạo hội thoại mới: bỏ chọn để lần đọc sau khoá vào nó.
+            setActiveConversation(null);
             // campaign.triggered có thể vừa dựng contact/hội thoại lazy — nối realtime
             // và bù ngay tin campaign vừa gửi trước khi kênh kịp subscribe.
             await widgetStore.reconnectRealtimeIfPending();
