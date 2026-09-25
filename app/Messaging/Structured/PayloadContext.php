@@ -16,5 +16,8 @@ final readonly class PayloadContext
         // lượt gửi thật); loại tin cần kiểm quyền theo người gửi (vd bank_transfer)
         // chỉ áp dụng khi giá trị này khác null.
         public User|AgentBot|null $performedBy = null,
+        // Đọc lại payload đã lưu (hiển thị, gửi ra kênh, xem trước) chứ không phải tạo tin:
+        // loại tin chụp dữ liệu lúc gửi (vd thẻ chuyển khoản) giữ nguyên bản đã chụp.
+        public bool $fromStorage = false,
     ) {}
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Messaging\Structured\Types\BankTransferType;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -7,6 +8,7 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Models\PaymentAccount;
 use App\Models\User;
 
@@ -139,4 +141,27 @@ it('plainText mang đủ thông tin để khách chuyển khoản bằng tay tr�
 
 it('cần một trang công khai cho kênh không vẽ được thẻ', function () {
     expect(app(BankTransferType::class)->needsPublicPage([]))->toBeTrue();
+});
+
+it('thẻ đã gửi giữ nguyên số tài khoản đã gửi dù quản trị viên sửa hay xoá tài khoản sau đó; client không tự đặt được qr_payload', function () {
+    [$account, $inbox, $conversation] = bankTransferFixtures();
+    $admin = bankTransferUserOf($account, $inbox, AccountUser::ROLE_ADMINISTRATOR);
+    $paymentAccount = PaymentAccount::factory()->create(['account_id' => $account->id, 'bank_bin' => '970436', 'account_number' => '1023456789']);
+
+    $id = $this->actingAs($admin)->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/messages", [
+        'content_type' => 'bank_transfer',
+        'content_attributes' => ['payment_account_id' => $paymentAccount->id, 'amount' => 480000, 'qr_payload' => 'QR-GIA-MAO'],
+    ])->assertOk()->json('id');
+
+    $message = Message::find($id);
+    $sentQr = $message->content_attributes['qr_payload'];
+    expect($sentQr)->not->toBe('QR-GIA-MAO')->and($sentQr)->toContain('1023456789');
+
+    $paymentAccount->update(['account_number' => '9999999999']);
+    expect(app(StructuredTypeRegistry::class)->read($message->fresh()))
+        ->toMatchArray(['account_number' => '1023456789', 'qr_payload' => $sentQr]);
+
+    $paymentAccount->delete();
+    expect(app(StructuredTypeRegistry::class)->read($message->fresh()))
+        ->toMatchArray(['account_number' => '1023456789']);
 });

@@ -31,11 +31,26 @@ final class BankTransferType extends AbstractStructuredType
             'payment_account_id' => ['required', 'integer'],
             'amount' => ['nullable'],
             'memo' => ['nullable', 'string', 'max:100'],
+            // Bản chụp lúc gửi, chỉ dùng khi đọc lại tin đã lưu; lúc gửi luôn dựng lại từ tài khoản thật.
+            'bank_bin' => ['nullable', 'string', 'max:10'],
+            'bank_code' => ['nullable', 'string', 'max:40'],
+            'bank_name' => ['nullable', 'string', 'max:120'],
+            'account_number' => ['nullable', 'string', 'max:40'],
+            'account_name' => ['nullable', 'string', 'max:120'],
+            'qr_payload' => ['nullable', 'string', 'max:512'],
         ];
     }
 
+    private const SNAPSHOT_KEYS = ['payment_account_id', 'bank_bin', 'bank_code', 'bank_name', 'account_number', 'account_name', 'amount', 'memo', 'qr_payload'];
+
     public function normalize(array $attributes, PayloadContext $context): array
     {
+        // Thẻ đã gửi là bằng chứng khách đã nhận số tài khoản nào: đọc lại thì giữ đúng bản chụp,
+        // kể cả khi quản trị viên sau đó sửa hay xoá tài khoản.
+        if ($context->fromStorage && isset($attributes['qr_payload'], $attributes['account_number'])) {
+            return array_intersect_key($attributes, array_flip(self::SNAPSHOT_KEYS));
+        }
+
         $account = PaymentAccount::query()
             ->where('account_id', $context->conversation->account_id)
             ->find($attributes['payment_account_id']);
