@@ -28,7 +28,7 @@ export default function Messages() {
 
     return (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-b-lg bg-[var(--yona-chat-surface)]">
-            <div className="flex flex-1 min-h-0 overflow-auto">
+            <div className="flex flex-1 min-h-0 overflow-auto no-scrollbar">
                 {hasMessages ? <ConversationWrap /> : isOutOfHours ? <OutOfHoursNotice /> : <ChatEmptyState />}
             </div>
             {hasMessages && isOutOfHours ? <OutOfHoursBanner /> : null}

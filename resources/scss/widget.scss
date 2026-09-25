@@ -192,7 +192,10 @@ blockquote {
   }
 }
 
+// Vùng tin nhắn cuộn bằng lăn chuột/vuốt, không có thanh cuộn hệ điều hành (▲▼) như ô nhập.
 .conversation--container {
+  @apply no-scrollbar;
+
   display: flex;
   flex-direction: column;
   flex: 1;
