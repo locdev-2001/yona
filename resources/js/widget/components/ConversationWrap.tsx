@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isToday, isYesterday } from 'date-fns';
 
+import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Spinner from 'shared/components/Spinner';
 
 import { MESSAGE_TYPE } from '../helpers/constants';
@@ -34,11 +35,18 @@ function DateSeparator({ date }: { date: string }) {
     );
 }
 
-// Bong bóng ba chấm theo design, thụt lề bằng chỗ avatar để thẳng hàng tin agent.
+// Bong bóng ba chấm theo design, cột avatar thẳng hàng tin agent: có ảnh/tên người
+// đang gõ (sự kiện đang gõ kèm theo) thì hiện avatar người đó.
 function AgentTypingBubble() {
+    const typingAgent = useWidgetState(state => state.typingAgent);
+
     return (
         <div className="yona-typing sticky bottom-1 flex items-end gap-2" role="status" aria-label={t('TYPING_INDICATOR.LABEL')}>
-            <span aria-hidden="true" className="size-[26px] flex-none" />
+            <span aria-hidden="true" className="size-[26px] flex-none">
+                {typingAgent ? (
+                    <Avatar src={typingAgent.avatar_url ?? undefined} size={26} name={typingAgent.name} roundedFull />
+                ) : null}
+            </span>
             <span
                 aria-hidden="true"
                 className="flex items-center gap-[5px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-[15px] py-[13px]"

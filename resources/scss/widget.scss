@@ -214,15 +214,17 @@ blockquote {
 }
 
 .yona-typing-dot {
-  @apply size-1.5 rounded-full bg-[var(--yona-chat-typing-dot)];
+  @apply size-1.5 rounded-full bg-[var(--yona-chat-typing-dot-1)];
 
   animation: yona-typing-dot 1.2s ease-out infinite;
 
   &:nth-child(2) {
+    background: var(--yona-chat-typing-dot-2);
     animation-delay: 0.15s;
   }
 
   &:nth-child(3) {
+    background: var(--yona-chat-typing-dot-3);
     animation-delay: 0.3s;
   }
 

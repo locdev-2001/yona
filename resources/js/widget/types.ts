@@ -224,6 +224,15 @@ export interface ConversationAssignee {
     id: number;
     name: string;
     avatar_url: string;
+    // Trạng thái trực của chính nhân viên này trong account, kể cả khi họ không phải
+    // thành viên hộp thư (danh sách thành viên không có họ).
+    availability_status?: string | null;
+}
+
+// Người đang gõ bên phía hộp thư (nhân viên hoặc bot), lấy từ sự kiện đang gõ.
+export interface TypingAgent {
+    name: string;
+    avatar_url?: string | null;
 }
 
 export interface ConversationAttributes {

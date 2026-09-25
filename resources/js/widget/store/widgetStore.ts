@@ -25,6 +25,7 @@ import type {
     ChannelMessagingPolicy,
     ConversationAttributes,
     MessageAttachment,
+    TypingAgent,
     WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
@@ -64,6 +65,7 @@ export interface WidgetState {
     campaignsFetched: boolean;
     messagingPolicy: ChannelMessagingPolicy;
     agentLastSeenAt: number;
+    typingAgent: TypingAgent | null;
 }
 
 const DEFAULT_APP_CONFIG: AppConfig = {
@@ -105,6 +107,7 @@ let state: WidgetState = {
     // Hạn 0 = chưa biết chính sách của kênh, chưa hiện mục thu hồi.
     messagingPolicy: { recallWindowSeconds: 0, stickers: [] },
     agentLastSeenAt: 0,
+    typingAgent: null,
 };
 
 type Listener = () => void;
@@ -535,12 +538,15 @@ export const widgetStore = {
         setState({ conversations: {}, pendingCustomAttributes: {}, pendingLabels: [] });
     },
 
-    toggleAgentTyping(status: 'on' | 'off'): void {
+    toggleAgentTyping(status: 'on' | 'off', typingAgent: TypingAgent | null = null): void {
         if (agentTypingTimer) {
             clearTimeout(agentTypingTimer);
             agentTypingTimer = null;
         }
-        setState({ uiFlags: { ...state.uiFlags, isAgentTyping: status === 'on' } });
+        setState({
+            uiFlags: { ...state.uiFlags, isAgentTyping: status === 'on' },
+            typingAgent: status === 'on' ? typingAgent : null,
+        });
         if (status === 'on') {
             agentTypingTimer = setTimeout(() => widgetStore.toggleAgentTyping('off'), AGENT_TYPING_TIMEOUT);
         }
