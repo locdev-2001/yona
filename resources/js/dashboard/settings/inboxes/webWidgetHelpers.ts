@@ -12,6 +12,9 @@ export const WEB_WIDGET_FEATURE_FLAGS = [
 
 export const ALLOW_MOBILE_WEBVIEW_FLAG = 'allow_mobile_webview';
 
+// Widget in dòng giới thiệu thành văn bản thuần; giới hạn khớp luật max:255 phía server.
+export const WELCOME_TAGLINE_MAX_LENGTH = 255;
+
 export interface WebsiteChannelForm {
     inboxName: string;
     channelWidgetColor: string;

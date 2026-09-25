@@ -8,20 +8,18 @@ import { parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import Button from 'dashboard/components-next/button/Button';
 import ColorPicker from 'dashboard/components/widgets/ColorPicker';
-import Editor from 'dashboard/components-next/Editor/Editor';
+import TextArea from 'dashboard/components-next/textarea/TextArea';
 import LoadingState from 'dashboard/components/widgets/LoadingState';
 import GreetingsEditor from 'shared/components/GreetingsEditor';
 import SettingsSubPageHeader from '../../SettingsSubPageHeader';
-import { buildWebsiteChannelPayload } from '../webWidgetHelpers';
+import { WELCOME_TAGLINE_MAX_LENGTH, buildWebsiteChannelPayload } from '../webWidgetHelpers';
 import type { DashboardPageProps } from '../../../types';
-import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { Inbox } from '../types';
 
 // Port từ settings/inbox/channels/Website.vue — bước 2 của wizard cho kênh Website.
 export default function WebsiteChannelForm() {
-    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
+    const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
-    const uiSettings = (auth.user?.ui_settings ?? {}) as UISettings;
 
     const [inboxName, setInboxName] = useState('');
     const [channelWidgetColor, setChannelWidgetColor] = useState('#009CE0');
@@ -100,13 +98,15 @@ export default function WebsiteChannelForm() {
                             />
                         </label>
                     </div>
-                    <Editor
+                    <TextArea
+                        id="welcome-tagline"
                         value={channelWelcomeTagline}
                         onChange={setChannelWelcomeTagline}
-                        uiSettings={uiSettings}
                         label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.LABEL')}
                         placeholder={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.PLACEHOLDER')}
-                        maxLength={255}
+                        maxLength={WELCOME_TAGLINE_MAX_LENGTH}
+                        showCharacterCount
+                        autoHeight
                         className="mb-4"
                     />
 

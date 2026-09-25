@@ -22,8 +22,8 @@ import type { TabItem } from 'dashboard/components/ui/Tabs';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker';
-import Editor from 'dashboard/components-next/Editor/Editor';
 import SelectInput from 'dashboard/components-next/select/Select';
+import TextArea from 'dashboard/components-next/textarea/TextArea';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
@@ -44,6 +44,7 @@ import ZaloSessionBanner from './channels/ZaloSessionBanner';
 import {
     DEFAULT_WIDGET_BUBBLE_SETTINGS,
     WEB_WIDGET_FEATURE_FLAGS,
+    WELCOME_TAGLINE_MAX_LENGTH,
     readWidgetBubbleSettings,
     toggleFeatureFlag,
     writeWidgetBubbleSettings,
@@ -503,14 +504,16 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                                                     )}
                                                     className="[&>div]:!items-start [&>div>label]:mt-1"
                                                 >
-                                                    <Editor
+                                                    <TextArea
+                                                        id="welcome-tagline"
                                                         value={channelWelcomeTagline}
                                                         onChange={setChannelWelcomeTagline}
-                                                        uiSettings={uiSettings}
                                                         placeholder={t(
                                                             'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WELCOME_TAGLINE.PLACEHOLDER',
                                                         )}
-                                                        maxLength={255}
+                                                        maxLength={WELCOME_TAGLINE_MAX_LENGTH}
+                                                        showCharacterCount
+                                                        autoHeight
                                                     />
                                                 </SettingsFieldSection>
 
