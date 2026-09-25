@@ -45,6 +45,11 @@ class Campaign extends Model
     // phải có scheduled_at; còn lại (Website) luôn là ongoing, scheduled_at rỗng.
     public const ONE_OFF_INBOX_TYPES = ['Twilio SMS', 'Sms', 'Whatsapp'];
 
+    public const MAX_QUICK_REPLIES = 3;
+
+    /** Lời mời hiện cho ai: mọi khách, khách chưa từng nhắn, hay khách đã có hội thoại. */
+    public const SHOW_TO = ['all', 'new', 'returning'];
+
     protected $fillable = [
         'account_id',
         'inbox_id',
@@ -55,6 +60,8 @@ class Campaign extends Model
         'enabled',
         'trigger_rules',
         'trigger_only_during_business_hours',
+        'quick_replies',
+        'show_to',
         'campaign_type',
         'campaign_status',
         'audience',
@@ -79,6 +86,7 @@ class Campaign extends Model
             'enabled' => 'boolean',
             'trigger_only_during_business_hours' => 'boolean',
             'trigger_rules' => 'array',
+            'quick_replies' => 'array',
             'audience' => 'array',
             'template_params' => 'array',
             'scheduled_at' => 'datetime',
@@ -189,6 +197,10 @@ class Campaign extends Model
             'audience.*.type' => ['required_with:audience', 'string'],
             'scheduled_at' => ['sometimes', 'nullable', 'date'],
             'template_params' => ['sometimes', 'nullable', 'array'],
+            // Chip dưới lời mời trên widget: bấm = mở khung chat và gửi đúng chữ đó làm tin đầu.
+            'quick_replies' => ['sometimes', 'nullable', 'array', 'max:'.self::MAX_QUICK_REPLIES],
+            'quick_replies.*' => ['required', 'string', 'max:40', 'distinct'],
+            'show_to' => ['sometimes', Rule::in(self::SHOW_TO)],
         ];
     }
 

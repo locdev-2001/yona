@@ -2,6 +2,7 @@
 
 use App\Models\AccountUser;
 use App\Models\Campaign;
+use App\Models\Conversation;
 use App\Models\User;
 use Tests\Support\WidgetSession;
 
@@ -62,4 +63,29 @@ it('includes the sender push payload when the campaign has one', function () {
 
     expect($response->json('0.sender.id'))->toBe($sender->id)
         ->and($response->json('0.sender.type'))->toBe('user');
+});
+
+it('trả chip trả lời nhanh và chỉ mời đúng nhóm khách (mới / quay lại)', function () {
+    $this->session->account->forceFill(['feature_flags' => ['campaigns' => true]])->save();
+    $this->enabledCampaign->update(['quick_replies' => ['Còn hàng không?', 'Phí ship?'], 'show_to' => 'new']);
+    $returningOnly = Campaign::factory()->create([
+        'account_id' => $this->session->account->id,
+        'inbox_id' => $this->session->inbox->id,
+        'enabled' => true,
+        'show_to' => 'returning',
+    ])->refresh();
+
+    $fresh = $this->getJson($this->session->url('campaigns'), $this->session->headers())->assertOk();
+    expect(collect($fresh->json())->pluck('id')->all())->toBe([$this->enabledCampaign->display_id])
+        ->and($fresh->json('0.quick_replies'))->toBe(['Còn hàng không?', 'Phí ship?']);
+
+    Conversation::factory()->create([
+        'account_id' => $this->session->account->id,
+        'inbox_id' => $this->session->inbox->id,
+        'contact_id' => $this->session->contact->id,
+        'contact_inbox_id' => $this->session->contactInbox->id,
+    ]);
+
+    $returning = $this->getJson($this->session->url('campaigns'), $this->session->headers())->assertOk();
+    expect(collect($returning->json())->pluck('id')->all())->toBe([$returningOnly->display_id]);
 });

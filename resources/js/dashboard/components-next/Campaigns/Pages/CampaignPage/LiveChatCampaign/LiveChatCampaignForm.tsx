@@ -13,7 +13,7 @@ import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 
 import { t } from '../../../../../../i18n';
-import type { Campaign, LiveChatCampaignPayload } from '../../../types';
+import type { Campaign, CampaignAudience, LiveChatCampaignPayload } from '../../../types';
 import type { DashboardPageProps } from '../../../../../types';
 
 // Port từ components-next/Campaigns/Pages/CampaignPage/LiveChatCampaign/LiveChatCampaignForm.vue.
@@ -30,7 +30,15 @@ interface FormState {
     triggerOnlyDuringBusinessHours: boolean;
     endPoint: string;
     timeOnPage: string;
+    quickReplies: string[];
+    showTo: CampaignAudience;
 }
+
+const MAX_QUICK_REPLIES = 3;
+const MAX_QUICK_REPLY_LENGTH = 40;
+const AUDIENCES: CampaignAudience[] = ['all', 'new', 'returning'];
+
+const filledQuickReplies = (quickReplies: string[]) => quickReplies.map(reply => reply.trim()).filter(Boolean);
 
 const INITIAL_STATE: FormState = {
     title: '',
@@ -41,6 +49,8 @@ const INITIAL_STATE: FormState = {
     triggerOnlyDuringBusinessHours: false,
     endPoint: '',
     timeOnPage: '10',
+    quickReplies: ['', '', ''],
+    showTo: 'all',
 };
 
 // urlValidators của bản gốc: phải parse được thành URLPattern VÀ bắt đầu bằng http(s).
@@ -57,6 +67,12 @@ export function isValidCampaignUrl(value: string): boolean {
     }
 }
 
+function quickRepliesValid(quickReplies: string[]): boolean {
+    const filled = filledQuickReplies(quickReplies);
+
+    return filled.every(reply => reply.length <= MAX_QUICK_REPLY_LENGTH) && new Set(filled).size === filled.length;
+}
+
 export function campaignFormErrors(state: FormState): Record<string, string> {
     const baseKey = 'CAMPAIGN.LIVE_CHAT.CREATE.FORM';
 
@@ -66,6 +82,7 @@ export function campaignFormErrors(state: FormState): Record<string, string> {
         ...(state.inboxId ? {} : { inbox: t(`${baseKey}.INBOX.ERROR`) }),
         ...(isValidCampaignUrl(state.endPoint) ? {} : { endPoint: t(`${baseKey}.END_POINT.ERROR`) }),
         ...(state.timeOnPage !== '' ? {} : { timeOnPage: t(`${baseKey}.TIME_ON_PAGE.ERROR`) }),
+        ...(quickRepliesValid(state.quickReplies) ? {} : { quickReplies: t(`${baseKey}.QUICK_REPLIES.ERROR`) }),
     };
 }
 
@@ -171,6 +188,8 @@ export default function LiveChatCampaignForm({
             triggerOnlyDuringBusinessHours: selectedCampaign.trigger_only_during_business_hours,
             endPoint: selectedCampaign.trigger_rules?.url ?? '',
             timeOnPage: String(selectedCampaign.trigger_rules?.time_on_page ?? ''),
+            quickReplies: Array.from({ length: MAX_QUICK_REPLIES }, (_, index) => selectedCampaign.quick_replies?.[index] ?? ''),
+            showTo: selectedCampaign.show_to ?? 'all',
         });
     }, [mode, selectedCampaign]);
 
@@ -186,6 +205,8 @@ export default function LiveChatCampaignForm({
         enabled: state.enabled,
         trigger_only_during_business_hours: state.triggerOnlyDuringBusinessHours,
         trigger_rules: { url: state.endPoint, time_on_page: Number(state.timeOnPage) },
+        quick_replies: filledQuickReplies(state.quickReplies),
+        show_to: state.showTo,
     });
 
     useImperativeHandle(ref, () => ({ prepareCampaignDetails }));
@@ -282,6 +303,43 @@ export default function LiveChatCampaignForm({
                 message={visibleErrors.timeOnPage ?? ''}
                 messageType={visibleErrors.timeOnPage ? 'error' : 'info'}
             />
+
+            <fieldset className="flex flex-col gap-2">
+                <legend className="mb-1 text-sm font-medium text-n-slate-12">
+                    {t('CAMPAIGN.LIVE_CHAT.CREATE.FORM.QUICK_REPLIES.LABEL')}
+                </legend>
+                <p className="m-0 text-xs text-n-slate-11">{t('CAMPAIGN.LIVE_CHAT.CREATE.FORM.QUICK_REPLIES.HINT')}</p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {state.quickReplies.map((reply, index) => (
+                        <Input
+                            key={index}
+                            value={reply}
+                            maxLength={MAX_QUICK_REPLY_LENGTH}
+                            aria-label={t('CAMPAIGN.LIVE_CHAT.CREATE.FORM.QUICK_REPLIES.ITEM', { index: index + 1 })}
+                            placeholder={index === 0 ? t('CAMPAIGN.LIVE_CHAT.CREATE.FORM.QUICK_REPLIES.PLACEHOLDER') : ''}
+                            onChange={event =>
+                                patch({ quickReplies: state.quickReplies.map((current, at) => (at === index ? event.target.value : current)) })
+                            }
+                        />
+                    ))}
+                </div>
+                {visibleErrors.quickReplies ? <p className="m-0 text-xs text-n-ruby-11">{visibleErrors.quickReplies}</p> : null}
+            </fieldset>
+
+            <div className="flex flex-col gap-1">
+                <label htmlFor="showTo" className="mb-0.5 text-sm font-medium text-n-slate-12">
+                    {t('CAMPAIGN.LIVE_CHAT.CREATE.FORM.SHOW_TO.LABEL')}
+                </label>
+                <ComboBox
+                    value={state.showTo}
+                    options={AUDIENCES.map(audience => ({
+                        value: audience,
+                        label: t(`CAMPAIGN.LIVE_CHAT.CREATE.FORM.SHOW_TO.${audience.toUpperCase()}`),
+                    }))}
+                    className={comboBoxClass}
+                    onChange={value => patch({ showTo: (value || 'all') as CampaignAudience })}
+                />
+            </div>
 
             <fieldset className="flex flex-col gap-2.5">
                 <legend className="mb-2.5 text-sm font-medium text-n-slate-12">

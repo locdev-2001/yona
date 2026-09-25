@@ -57,6 +57,19 @@ return [
                     'PLACEHOLDER' => 'Vui lòng nhập thời gian',
                     'ERROR' => 'Thời gian trên trang là bắt buộc',
                 ],
+                'QUICK_REPLIES' => [
+                    'LABEL' => 'Chip trả lời nhanh',
+                    'HINT' => 'Tối đa 3 chip hiện dưới lời mời. Khách bấm là mở khung chat và gửi đúng chữ đó.',
+                    'PLACEHOLDER' => 'Ví dụ: Còn hàng không?',
+                    'ITEM' => 'Chip {index}',
+                    'ERROR' => 'Mỗi chip tối đa 40 ký tự và không trùng nhau',
+                ],
+                'SHOW_TO' => [
+                    'LABEL' => 'Mời ai',
+                    'ALL' => 'Mọi khách',
+                    'NEW' => 'Khách chưa từng nhắn',
+                    'RETURNING' => 'Khách đã từng nhắn',
+                ],
                 'OTHER_PREFERENCES' => [
                     'TITLE' => 'Tùy chọn khác',
                     'ENABLED' => 'Vận hành chiến dịch',

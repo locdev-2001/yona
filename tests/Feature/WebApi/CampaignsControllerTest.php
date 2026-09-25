@@ -195,3 +195,20 @@ describe('DELETE /api/v1/accounts/{id}/campaigns/{displayId}', function () {
         expect(Campaign::query()->whereKey($this->campaign->id)->exists())->toBeFalse();
     });
 });
+
+describe('lời mời chủ động: chip trả lời nhanh và nhóm khách', function () {
+    it('lưu tối đa 3 chip không trùng và nhóm khách hợp lệ', function () {
+        $url = "/api/v1/accounts/{$this->account->id}/campaigns";
+        $base = ['inbox_id' => $this->inbox->id, 'title' => 'Mời', 'message' => 'Shop đang online nè'];
+
+        $this->actingAs($this->admin)
+            ->postJson($url, [...$base, 'quick_replies' => ['Còn hàng không?', 'Phí ship?'], 'show_to' => 'new'])
+            ->assertOk()
+            ->assertJsonPath('quick_replies', ['Còn hàng không?', 'Phí ship?'])
+            ->assertJsonPath('show_to', 'new');
+
+        $this->actingAs($this->admin)->postJson($url, [...$base, 'quick_replies' => ['a', 'b', 'c', 'd']])->assertUnprocessable();
+        $this->actingAs($this->admin)->postJson($url, [...$base, 'quick_replies' => ['a', 'a']])->assertUnprocessable();
+        $this->actingAs($this->admin)->postJson($url, [...$base, 'show_to' => 'vip'])->assertUnprocessable();
+    });
+});

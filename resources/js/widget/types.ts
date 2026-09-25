@@ -215,6 +215,8 @@ export interface WidgetCampaign {
     trigger_only_during_business_hours: boolean;
     trigger_rules?: { url?: string; time_on_page?: number };
     sender?: MessageSender | null;
+    /** Chip dưới bong bóng mời: bấm = mở khung chat và gửi đúng chữ đó làm tin đầu. */
+    quick_replies?: string[];
 }
 
 // Dạng đã rút gọn cho luật kích hoạt (campaignHelper.formatCampaigns).

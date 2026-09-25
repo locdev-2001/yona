@@ -242,25 +242,31 @@ export default function App() {
 
     // App.vue#registerCampaignEvents
     useEffect(() => {
-        const onCampaignClick = () => {
+        // Bấm chip dưới lời mời: như bấm bong bóng, rồi gửi chữ của chip làm tin đầu. Có biểu
+        // mẫu trước chat thì khách điền biểu mẫu trước, chip bỏ qua (khách tự gõ lại).
+        const onCampaignClick = (details: unknown) => {
+            const { firstMessage } = (details ?? {}) as { firstMessage?: string };
             openChatWindow();
             const campaign = widgetStore.getState().activeCampaign;
             if (shouldShowPreChatForm()) {
                 replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
             } else {
                 replaceRoute(WIDGET_ROUTES.MESSAGES);
-                if (campaign) emitter.emit(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, { campaignId: campaign.id });
+                if (campaign) emitter.emit(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, { campaignId: campaign.id, firstMessage });
             }
             unsetUnreadView();
         };
         const onExecuteCampaign = (details: unknown) => {
-            const { campaignId, customAttributes } = (details ?? {}) as {
+            const { campaignId, customAttributes, firstMessage } = (details ?? {}) as {
                 campaignId?: number;
                 customAttributes?: Record<string, unknown>;
+                firstMessage?: string;
             };
             if (!campaignId) return;
-            void widgetStore.executeCampaign(campaignId, customAttributes);
             replaceRoute(WIDGET_ROUTES.MESSAGES);
+            void widgetStore.executeCampaign(campaignId, customAttributes).then(() => {
+                if (firstMessage) void widgetStore.sendMessage({ content: firstMessage });
+            });
         };
         const onSnoozeCampaigns = () => {
             campaignsSnoozedTill.current = Date.now() + CAMPAIGN_SNOOZE_DURATION;

@@ -50,6 +50,8 @@ class CampaignResource extends JsonResource
             ...$this->oneOffAttributes($campaign),
             'trigger_rules' => $campaign->trigger_rules ?? [],
             'trigger_only_during_business_hours' => $campaign->trigger_only_during_business_hours,
+            'quick_replies' => $campaign->quick_replies ?? [],
+            'show_to' => $campaign->show_to,
             'created_at' => RailsTimestamp::format($campaign->created_at),
             'updated_at' => RailsTimestamp::format($campaign->updated_at),
         ];
