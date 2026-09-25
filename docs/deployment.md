@@ -436,8 +436,18 @@ Kiểm tra: `systemctl is-enabled pm2-root`.
 Video nhân viên gửi cho khách Zalo đi thành video phát được (khách thấy khung
 phát kèm ảnh bìa và thời lượng) chỉ khi máy chạy bridge có `ffmpeg` và `ffprobe`:
 bridge dùng `ffprobe` đo thời lượng + kích thước và `ffmpeg` cắt một khung làm
-ảnh bìa. Thiếu một trong hai thì video vẫn tới khách nhưng thành **tệp .mp4**
-phải tải về, như trước. Chỉ tệp `.mp4` đi đường này; `.mov` và loại khác vẫn là tệp.
+ảnh bìa. Thiếu một trong hai thì video vẫn tới khách nhưng thành **tệp** phải
+tải về, như trước.
+
+| Loại tệp | Đi đường nào |
+|---|---|
+| `.mp4` | Video gốc |
+| `.mov` (video quay trên iPhone) | Đổi vỏ sang mp4 bằng `ffmpeg -c copy` (không mã hoá lại, thường dưới một giây), rồi đi video gốc. Đổi vỏ lỗi (vd video ProRes, mp4 không chứa được) thì gửi nguyên tệp `.mov` |
+| Loại khác (`.webm`, `.mkv`, `.avi`…) | Tệp, như trước |
+
+Đổi vỏ giữ nguyên mã hình: video iPhone quay ở chế độ "Hiệu quả cao" vẫn là HEVC.
+Zalo trên máy quá cũ không giải được HEVC thì khách thấy khung video nhưng không
+phát được; gặp phản ánh như vậy thì tắt video gốc (bên dưới).
 
 ```bash
 # Ubuntu/Debian (aaPanel): cài một lần, không cần khởi động lại gì ngoài bridge
@@ -454,18 +464,60 @@ FFMPEG_PATH=/usr/bin/ffmpeg
 FFPROBE_PATH=/usr/bin/ffprobe
 ```
 
-Bridge dò hai công cụ **một lần lúc khởi động** (cài sau thì
-`corepack pnpm --dir services/zalo-bridge exec pm2 restart zalo-personal-bridge`)
-và ghi một dòng vào `storage/logs/zalo-bridge/out.log`:
+Bridge đọc `.env` và dò hai công cụ **một lần lúc khởi động**. Cài ffmpeg xong hay
+sửa `services/zalo-bridge/.env` xong thì nạp lại bridge bằng đúng lệnh `deploy.sh`
+dùng. `pm2 restart <tên>` giữ env đã lưu lúc khởi động, nên biến đã có từ trước
+không nhận giá trị mới trong `.env`:
 
 ```bash
-grep 'zalo-bridge:send-video' /www/wwwroot/yona.vn/storage/logs/zalo-bridge/out.log | tail -1
-# mong đợi: [zalo-bridge:send-video] {"native_video":true}
+cd /www/wwwroot/yona.vn
+corepack pnpm --dir services/zalo-bridge exec pm2 startOrReload \
+    services/zalo-bridge/ecosystem.config.cjs --update-env
+grep 'zalo-bridge:send-video' storage/logs/zalo-bridge/out.log | tail -1
+# mong đợi: [zalo-bridge:send-video] {"native_video":true,"enabled":true}
 ```
 
+Nạp lại bridge làm mọi phiên Zalo nối lại, giống lúc deploy.
+
 Một video rơi về đường tệp để lại một dòng cảnh báo cùng thẻ trong `error.log`,
-có `message_id` và bước hỏng (`tools_missing`, `not_mp4`, `probe`, `thumbnail`,
-`upload_video`, `upload_thumbnail`, `send_video`), không có URL hay nội dung tin.
+có `message_id` và bước hỏng (`disabled`, `tools_missing`, `not_mp4`, `remux`,
+`probe`, `thumbnail`, `upload_video`, `upload_thumbnail`, `send_video`), không
+có URL hay nội dung tin.
+
+**Tắt nhanh khi có sự cố.** Khách báo video không phát được, hoặc `error.log`
+dồn dập `send_video`: đặt công tắc trong `services/zalo-bridge/.env` rồi nạp lại
+bridge bằng lệnh trên. Mọi video đi đường tệp như trước khi có tính năng này,
+không dò ffmpeg.
+
+```dotenv
+ZALO_NATIVE_VIDEO=0
+```
+
+- Log khởi động thành `{"native_video":false,"enabled":false}`.
+- Mỗi video gửi đi để lại một dòng bước `disabled`.
+- Bật lại: đặt `ZALO_NATIVE_VIDEO=1` rồi nạp lại. Đừng xoá dòng: pm2 giữ giá trị
+  cũ của biến đã biến mất khỏi `.env`.
+- Đừng tắt bằng cách trỏ `FFMPEG_PATH` sai. Log khi đó báo `tools_missing`, dễ
+  nhầm với máy thiếu ffmpeg thật.
+
+**Tải lên hai lần khi rơi về tệp.** Đường video gốc tải video lên Zalo trước rồi
+mới gọi `sendVideo`. Zalo từ chối `sendVideo` thì bridge gửi lại cả video theo
+đường tệp, tức video lên Zalo lần thứ hai. Toàn bộ lượt gửi phải xong trong
+`zalo.bridge.media_timeout` = 120 giây của Laravel. Gồm: bridge tải tệp từ
+Laravel, tải lên Zalo lần một, và lần hai nếu rơi về tệp. Quá hạn thì Laravel
+báo gửi lỗi trong khi bridge vẫn đang gửi; nhân viên bấm Thử lại lúc đó có thể
+làm khách nhận hai bản. `sendVideo` lỗi mạng hoặc quá giờ thì **không** rơi về
+tệp: Zalo có thể đã nhận, nên bridge báo thất bại để nhân viên tự Thử lại.
+
+**Kích thước nên dùng.**
+- Bridge chỉ tải tối đa 25 MB mỗi tệp (`DEFAULT_MAX_FETCH_BYTES` trong
+  `services/zalo-bridge/src/media-fetch.mjs`). Tệp lớn hơn báo lỗi
+  `download_too_large`, dù Yona mặc định cho tải lên tới 40 MB
+  (`MAXIMUM_FILE_UPLOAD_SIZE`).
+- Khuyên nhân viên gửi video **dưới 20 MB**. Ở 25 MB, ca xấu nhất là 50 MB tải
+  lên Zalo trong 120 giây: cần đường lên tới Zalo ổn định trên khoảng 4 Mbit/s.
+- Log `[zalo-bridge:send-timing]` ghi `bytes` và thời gian từng chặng của mỗi
+  lượt gửi, dùng để xem video thật đang tốn bao lâu.
 
 ---
 
@@ -1350,6 +1402,7 @@ xoá file). Qua CLI: `php artisan pail`.
 | Có lúc mất chuông thông báo / "đang gõ", `failed_jobs` có `Payload too large` | `REVERB_MAX_REQUEST_SIZE` quá nhỏ so với payload — mục 5, Giới hạn kích thước sự kiện realtime |
 | Job không chạy sau deploy | `pcntl_*` còn bị chặn nên `horizon:terminate` vô hiệu → worker vẫn giữ code cũ. Mở `/horizon` xem master có sống không |
 | Gửi Zalo báo "chưa kết nối" | Host của `APP_URL` không nằm trong allowlist fetch của bridge; hoặc session cần quét QR lại |
+| Khách Zalo thấy khung video nhưng không phát được, hoặc `error.log` dồn dập bước `send_video` | Tắt video gốc bằng `ZALO_NATIVE_VIDEO=0` rồi nạp lại bridge; video đi dạng tệp như cũ (mục 6, Gửi video dạng video gốc) |
 | Tin nhắn gửi hai lần | Bất biến `media_timeout < timeout < retry_after` bị phá (mục 8) |
 | Job theo lịch nằm im | Sai tên hàng đợi trong `config/queue_tiers.php` → tab Horizon của tier đó trống |
 | Deploy dừng vì working tree bẩn | Có file sửa trực tiếp trên server — commit hoặc `git checkout --` trước |

@@ -9,6 +9,7 @@ import {
     cleanupTempDownload,
     collectSourceIdsFromSendResult,
     downloadUrlToTemp,
+    mimeToExt,
     safeAttachmentFilename,
 } from './media-fetch.mjs';
 
@@ -216,6 +217,11 @@ test('downloadUrlToTemp: content_type của Laravel quyết định đuôi khi t
         await cleanupTempDownload(p);
         server.close();
     }
+});
+
+test('mimeToExt: video/quicktime giữ đuôi .mov, không bị gán .mp4 theo loại media', () => {
+    assert.equal(mimeToExt('video/quicktime'), 'mov');
+    assert.equal(mimeToExt('video/mp4; codecs="avc1"'), 'mp4');
 });
 
 test('cleanupTempDownload: xoá cả thư mục tạm bọc ngoài, không để rác', async () => {

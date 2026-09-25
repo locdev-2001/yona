@@ -16,7 +16,7 @@ import { buildSendMessageContent } from './send-content.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
 import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
-import { SEND_VIDEO_LOG_TAG, createVideoTools, sendVideoOrFile } from './send-video.mjs';
+import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { createOutbox } from './outbox.mjs';
@@ -118,12 +118,9 @@ const ZALO_OPTIONS = {
     imageMetadataGetter: zcaImageMetadataGetter,
 };
 
-// Gửi video dạng video gốc cần ffmpeg + ffprobe trên máy chạy bridge; thiếu thì
-// video đi đường tệp như cũ.
-const videoTools = createVideoTools({
-    ffmpegPath: process.env.FFMPEG_PATH || 'ffmpeg',
-    ffprobePath: process.env.FFPROBE_PATH || 'ffprobe',
-});
+// Gửi video dạng video gốc cần ffmpeg + ffprobe trên máy chạy bridge; thiếu, hoặc
+// tắt bằng ZALO_NATIVE_VIDEO=0, thì video đi đường tệp như cũ.
+const videoTools = videoToolsFromEnv();
 
 const slots = new Map();
 
@@ -2225,7 +2222,7 @@ async function bridgeSendTextOrMedia(slot, body) {
     }
 }
 
-async function sendTextOrMediaThroughZca(slot, body, timing) {
+export async function sendTextOrMediaThroughZca(slot, body, timing) {
     const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions, forward } =
         body || {};
     if (!thread_id) {
@@ -2703,7 +2700,7 @@ async function boot() {
         cleanupStaleQrSessionFiles().catch(() => {});
     }, 6 * 60 * 60 * 1000);
     const nativeVideo = await videoTools.isAvailable();
-    console.info(SEND_VIDEO_LOG_TAG, JSON.stringify({ native_video: nativeVideo }));
+    console.info(SEND_VIDEO_LOG_TAG, JSON.stringify({ native_video: nativeVideo, enabled: videoTools.enabled }));
     const app = buildExpress();
     app.listen(BRIDGE_HTTP_PORT, BRIDGE_HTTP_HOST, () => {
         console.info(

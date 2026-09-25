@@ -6,11 +6,15 @@
  * trên CDN Zalo, cùng thời lượng và kích thước. Vì vậy phải: ffprobe đo video,
  * ffmpeg cắt một khung làm ảnh bìa, `uploadAttachment` cả hai, rồi `sendVideo`.
  *
- * Bước chuẩn bị nào hỏng (thiếu ffmpeg, không phải mp4, đo/cắt/tải lên lỗi) thì
- * chưa có gì tới khách: rơi về đường gửi tệp cũ với nguyên nội dung. `sendVideo`
- * bị Zalo từ chối cũng rơi về gửi tệp. Lỗi khác của `sendVideo` (mạng, timeout)
- * có thể xảy ra sau khi Zalo đã nhận, nên ném tiếp để Laravel đánh dấu thất bại,
- * tránh khách nhận hai lần (cùng luật với chuyển tiếp gốc).
+ * Video .mov (quay trên iPhone) được đổi vỏ sang mp4 bằng `ffmpeg -c copy`, giữ
+ * nguyên luồng hình và tiếng, rồi đi cùng đường đó.
+ *
+ * Bước chuẩn bị nào hỏng (tắt bằng env, thiếu ffmpeg, định dạng khác, đổi vỏ /
+ * đo / cắt / tải lên lỗi) thì chưa có gì tới khách: rơi về đường gửi tệp cũ với
+ * nguyên nội dung (tệp gốc nhân viên gửi). `sendVideo` bị Zalo từ chối cũng rơi
+ * về gửi tệp. Lỗi khác của `sendVideo` (mạng, timeout) có thể xảy ra sau khi
+ * Zalo đã nhận, nên ném tiếp để Laravel đánh dấu thất bại, tránh khách nhận hai
+ * lần (cùng luật với chuyển tiếp gốc).
  */
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -21,6 +25,9 @@ export const SEND_VIDEO_LOG_TAG = '[zalo-bridge:send-video]';
 
 // zca chỉ gửi mp4 theo loại "video" (uploadAttachment.js nhánh `case "mp4"`).
 const NATIVE_VIDEO_EXTENSION = '.mp4';
+// Vỏ đổi được sang mp4 mà không mã hoá lại.
+const REMUXABLE_EXTENSIONS = new Set(['.mov']);
+const DISABLED_FLAG_VALUES = new Set(['0', 'false', 'off', 'no']);
 const TOOL_TIMEOUT_MS = 30000;
 const THUMBNAIL_MAX_WIDTH = 720;
 const THUMBNAIL_SEEK_SECONDS = 1;
@@ -74,18 +81,33 @@ export function parseProbeOutput(json) {
 
 /**
  * ffmpeg/ffprobe dò MỘT lần (lần gọi `isAvailable` đầu tiên, thường lúc khởi động);
- * đường dẫn đặt qua env, mặc định tìm trong PATH.
+ * đường dẫn đặt qua env, mặc định tìm trong PATH. `enabled: false` là tắt hẳn
+ * video gốc: không dò công cụ, mọi video đi đường tệp.
  */
-export function createVideoTools({ ffmpegPath = 'ffmpeg', ffprobePath = 'ffprobe', run = runTool } = {}) {
+export function createVideoTools({ enabled = true, ffmpegPath = 'ffmpeg', ffprobePath = 'ffprobe', run = runTool } = {}) {
     let availability = null;
 
     return {
+        enabled,
         isAvailable() {
-            availability ??= Promise.all([run(ffmpegPath, ['-version']), run(ffprobePath, ['-version'])]).then(
-                () => true,
-                () => false
-            );
+            availability ??= enabled
+                ? Promise.all([run(ffmpegPath, ['-version']), run(ffprobePath, ['-version'])]).then(
+                      () => true,
+                      () => false
+                  )
+                : Promise.resolve(false);
             return availability;
+        },
+        async remuxToMp4(sourcePath, targetPath) {
+            await run(ffmpegPath, [
+                '-hide_banner', '-loglevel', 'error', '-y',
+                '-i', sourcePath,
+                '-map', '0:v:0', '-map', '0:a:0?',
+                '-c', 'copy',
+                '-movflags', '+faststart',
+                targetPath,
+            ]);
+            await fs.access(targetPath);
         },
         async probe(videoPath) {
             const json = await run(ffprobePath, [
@@ -111,6 +133,22 @@ export function createVideoTools({ ffmpegPath = 'ffmpeg', ffprobePath = 'ffprobe
             await fs.access(thumbnailPath);
         },
     };
+}
+
+/**
+ * Cấu hình từ env của bridge: `ZALO_NATIVE_VIDEO=0` tắt video gốc (công tắc khi
+ * có sự cố, có hiệu lực sau khi nạp lại bridge); `FFMPEG_PATH` / `FFPROBE_PATH`
+ * trỏ công cụ. Cách nạp lại: docs/deployment.md, mục 6.
+ */
+export function videoToolsFromEnv(env = process.env, overrides = {}) {
+    const flag = String(env.ZALO_NATIVE_VIDEO ?? '').trim().toLowerCase();
+
+    return createVideoTools({
+        enabled: !DISABLED_FLAG_VALUES.has(flag),
+        ffmpegPath: env.FFMPEG_PATH || 'ffmpeg',
+        ffprobePath: env.FFPROBE_PATH || 'ffprobe',
+        ...overrides,
+    });
 }
 
 class NativeVideoUnavailable extends Error {
@@ -149,9 +187,16 @@ function uploadedUrl(uploadResult, pick) {
     return url;
 }
 
-function thumbnailPathFor(videoPath) {
+function siblingPath(videoPath, suffix) {
     const stem = path.basename(videoPath, path.extname(videoPath));
-    return path.join(path.dirname(videoPath), `${stem}-thumbnail.jpg`);
+    return path.join(path.dirname(videoPath), `${stem}${suffix}`);
+}
+
+/** Tệp mp4 đổi vỏ từ video .mov; null khi video không cần đổi vỏ. */
+function remuxedPathFor(videoPath) {
+    return REMUXABLE_EXTENSIONS.has(path.extname(videoPath).toLowerCase())
+        ? siblingPath(videoPath, `-remux${NATIVE_VIDEO_EXTENSION}`)
+        : null;
 }
 
 /**
@@ -168,7 +213,8 @@ function thumbnailPathFor(videoPath) {
  */
 export async function sendVideoOrFile({ api, content, threadId, threadType, tools, messageId = null, warn = console.warn }) {
     const videoPath = content.attachments[0];
-    const thumbnailPath = thumbnailPathFor(videoPath);
+    const thumbnailPath = siblingPath(videoPath, '-thumbnail.jpg');
+    const remuxedPath = remuxedPathFor(videoPath);
     const logFallback = (stage, error) =>
         warn(
             SEND_VIDEO_LOG_TAG,
@@ -178,7 +224,7 @@ export async function sendVideoOrFile({ api, content, threadId, threadType, tool
     try {
         let prepared;
         try {
-            prepared = await prepareNativeVideo({ api, videoPath, thumbnailPath, threadId, threadType, tools });
+            prepared = await prepareNativeVideo({ api, videoPath, remuxedPath, thumbnailPath, threadId, threadType, tools });
         } catch (error) {
             if (!(error instanceof NativeVideoUnavailable)) {
                 throw error;
@@ -206,21 +252,30 @@ export async function sendVideoOrFile({ api, content, threadId, threadType, tool
 
         return { message: textResult?.message ?? null, attachment: [videoResult] };
     } finally {
-        await fs.rm(thumbnailPath, { force: true }).catch(() => {});
+        await Promise.all(
+            [thumbnailPath, remuxedPath].filter(Boolean).map((workPath) => fs.rm(workPath, { force: true }).catch(() => {}))
+        );
     }
 }
 
-async function prepareNativeVideo({ api, videoPath, thumbnailPath, threadId, threadType, tools }) {
+async function prepareNativeVideo({ api, videoPath, remuxedPath, thumbnailPath, threadId, threadType, tools }) {
+    if (!tools.enabled) {
+        throw new NativeVideoUnavailable('disabled', null);
+    }
     if (!(await tools.isAvailable())) {
         throw new NativeVideoUnavailable('tools_missing', null);
     }
-    if (path.extname(videoPath).toLowerCase() !== NATIVE_VIDEO_EXTENSION) {
+    let mp4Path = videoPath;
+    if (remuxedPath) {
+        await prepareStage('remux', () => tools.remuxToMp4(videoPath, remuxedPath));
+        mp4Path = remuxedPath;
+    } else if (path.extname(videoPath).toLowerCase() !== NATIVE_VIDEO_EXTENSION) {
         throw new NativeVideoUnavailable('not_mp4', null);
     }
-    const { durationMs, width, height } = await prepareStage('probe', () => tools.probe(videoPath));
-    await prepareStage('thumbnail', () => tools.extractThumbnail(videoPath, thumbnailPath, durationMs));
+    const { durationMs, width, height } = await prepareStage('probe', () => tools.probe(mp4Path));
+    await prepareStage('thumbnail', () => tools.extractThumbnail(mp4Path, thumbnailPath, durationMs));
     const videoUrl = await prepareStage('upload_video', async () =>
-        uploadedUrl(await api.uploadAttachment(videoPath, threadId, threadType), (entry) => entry.fileUrl)
+        uploadedUrl(await api.uploadAttachment(mp4Path, threadId, threadType), (entry) => entry.fileUrl)
     );
     const thumbnailUrl = await prepareStage('upload_thumbnail', async () =>
         uploadedUrl(

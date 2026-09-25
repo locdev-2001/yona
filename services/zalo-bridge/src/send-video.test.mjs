@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { collectSourceIdsFromSendResult } from './media-fetch.mjs';
-import { SEND_VIDEO_LOG_TAG, createVideoTools, parseProbeOutput, sendVideoOrFile } from './send-video.mjs';
+import { SEND_VIDEO_LOG_TAG, createVideoTools, parseProbeOutput, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 
 const THREAD_ID = '9876543210';
 const THREAD_TYPE = 0;
@@ -48,11 +48,13 @@ function fakeApi(overrides = {}) {
     return { api, calls, callsTo: (name) => calls.filter((call) => call.name === name) };
 }
 
-function fakeTools({ available = true, probe, extractThumbnail } = {}) {
+function fakeTools({ enabled = true, available = true, probe, extractThumbnail, remuxToMp4 } = {}) {
     return {
+        enabled,
         isAvailable: async () => available,
         probe: probe ?? (async () => ({ durationMs: 5500, width: 720, height: 1280 })),
         extractThumbnail: extractThumbnail ?? (async () => {}),
+        remuxToMp4: remuxToMp4 ?? (async (_source, target) => fs.writeFile(target, 'mp4')),
     };
 }
 
@@ -120,12 +122,27 @@ test('không có ffmpeg: rơi về gửi tệp nguyên nội dung, log một dò
     assert.deepEqual(warnings[0].entry, { message_id: 42, fallback: 'file', stage: 'tools_missing', error: null });
 });
 
-test('không phải mp4 (mov): gửi tệp như cũ, không đo, không tải lên', async () => {
+test('tắt bằng env: gửi tệp nguyên nội dung, không dò công cụ, log bước disabled', async () => {
+    const { api, calls } = fakeApi();
+    let checked = false;
+    const tools = { ...fakeTools({ enabled: false }), isAvailable: async () => ((checked = true), true) };
+
+    const { warnings } = await send({ api, tools });
+
+    assert.equal(checked, false);
+    assert.deepEqual(
+        calls.map((call) => call.name),
+        ['sendMessage']
+    );
+    assert.deepEqual(warnings[0].entry, { message_id: 42, fallback: 'file', stage: 'disabled', error: null });
+});
+
+test('định dạng không đổi vỏ được (webm): gửi tệp như cũ, không đo, không tải lên', async () => {
     const { api, calls } = fakeApi();
     let probed = false;
     const tools = fakeTools({ probe: async () => ((probed = true), { durationMs: 1, width: 1, height: 1 }) });
 
-    const { warnings } = await send({ api, tools, content: { msg: '', attachments: ['/tmp/zbr-test/clip.mov'] } });
+    const { warnings } = await send({ api, tools, content: { msg: '', attachments: ['/tmp/zbr-test/clip.webm'] } });
 
     assert.equal(probed, false);
     assert.deepEqual(
@@ -133,6 +150,67 @@ test('không phải mp4 (mov): gửi tệp như cũ, không đo, không tải l�
         ['sendMessage']
     );
     assert.equal(warnings[0].entry.stage, 'not_mp4');
+});
+
+test('mov: đổi vỏ sang mp4 rồi gửi video gốc bằng tệp đã đổi vỏ; dọn tệp đổi vỏ và ảnh bìa', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'zbr-video-test-'));
+    try {
+        const movPath = path.join(dir, 'IMG_0421.mov');
+        await fs.writeFile(movPath, 'mov');
+        const remuxed = [];
+        const probed = [];
+        const tools = fakeTools({
+            remuxToMp4: async (source, target) => {
+                remuxed.push([source, target]);
+                await fs.writeFile(target, 'mp4');
+            },
+            probe: async (videoPath) => (probed.push(videoPath), { durationMs: 3000, width: 1080, height: 1920 }),
+            extractThumbnail: async (_video, thumbnail) => fs.writeFile(thumbnail, 'jpg'),
+        });
+        const { api, calls, callsTo } = fakeApi();
+
+        const { result, warnings } = await send({ api, tools, content: { msg: '', attachments: [movPath] } });
+
+        const [[source, target]] = remuxed;
+        assert.equal(source, movPath);
+        assert.equal(path.extname(target), '.mp4');
+        assert.equal(path.dirname(target), dir);
+        assert.deepEqual(probed, [target]);
+        assert.deepEqual(
+            calls.map((call) => call.name),
+            ['uploadAttachment', 'uploadAttachment', 'sendVideo']
+        );
+        assert.equal(callsTo('uploadAttachment')[0].args[0], target);
+        assert.deepEqual(collectSourceIdsFromSendResult(result), ['7001']);
+        assert.deepEqual(warnings, []);
+        assert.deepEqual(await fs.readdir(dir), ['IMG_0421.mov'], 'chỉ còn tệp gốc: tệp đổi vỏ và ảnh bìa đã dọn');
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('mov đổi vỏ lỗi: rơi về gửi tệp .mov gốc nguyên nội dung, log bước remux', async () => {
+    const { api, calls, callsTo } = fakeApi();
+    const content = { msg: 'Video mẫu ạ', attachments: ['/tmp/zbr-test/IMG_0421.mov'] };
+    const tools = fakeTools({ remuxToMp4: async () => Promise.reject(new Error('Could not find tag for codec prores in stream #0')) });
+
+    const { result, warnings } = await send({ api, tools, content });
+
+    assert.deepEqual(
+        calls.map((call) => call.name),
+        ['sendMessage']
+    );
+    assert.deepEqual(callsTo('sendMessage')[0].args[0], content);
+    assert.deepEqual(collectSourceIdsFromSendResult(result), ['8001']);
+    assert.equal(warnings[0].entry.stage, 'remux');
+});
+
+test('mov bị Zalo từ chối sendVideo: tệp rơi về là .mov gốc, không phải bản đổi vỏ', async () => {
+    const { api, callsTo } = fakeApi({ sendVideo: () => Promise.reject(zaloRejection()) });
+
+    await send({ api, content: { msg: '', attachments: ['/tmp/zbr-test/IMG_0421.mov'] } });
+
+    assert.deepEqual(callsTo('sendMessage')[0].args[0], { msg: '', attachments: ['/tmp/zbr-test/IMG_0421.mov'] });
 });
 
 for (const [stage, overrides, tools] of [
@@ -209,6 +287,24 @@ test('createVideoTools: dò ffmpeg/ffprobe một lần; thiếu một trong hai 
     assert.deepEqual(invoked, ['/opt/ffmpeg', '/opt/ffprobe-khong-co']);
 });
 
+test('videoToolsFromEnv: mặc định bật; ZALO_NATIVE_VIDEO=0/false/off tắt hẳn, không dò công cụ', async () => {
+    const invoked = [];
+    const run = async (binary) => (invoked.push(binary), 'ffmpeg version 8');
+
+    const enabled = videoToolsFromEnv({ FFMPEG_PATH: '/opt/ffmpeg', FFPROBE_PATH: '/opt/ffprobe' }, { run });
+    assert.equal(enabled.enabled, true);
+    assert.equal(await enabled.isAvailable(), true);
+    assert.deepEqual(invoked, ['/opt/ffmpeg', '/opt/ffprobe']);
+
+    for (const value of ['0', 'false', 'OFF', ' no ']) {
+        const disabled = videoToolsFromEnv({ ZALO_NATIVE_VIDEO: value }, { run });
+        assert.equal(disabled.enabled, false, value);
+        assert.equal(await disabled.isAvailable(), false, value);
+    }
+    assert.equal(invoked.length, 2, 'tắt thì không chạy ffmpeg/ffprobe');
+    assert.equal(videoToolsFromEnv({ ZALO_NATIVE_VIDEO: '1' }, { run }).enabled, true);
+});
+
 /** ffmpeg ≥ 7 đặt góc xoay bằng `-display_rotation`; bản cũ hơn chỉ hiểu thẻ `rotate`. */
 function rotateWithoutReencode(source, target) {
     const quiet = ['-hide_banner', '-loglevel', 'error', '-y'];
@@ -240,6 +336,39 @@ test('ffmpeg thật: đo được video xoay và cắt được ảnh bìa đún
         ).streams[0];
         assert.deepEqual(size, { width: 240, height: 320 });
         assert.ok((await fs.stat(thumbnail)).size > 0);
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('ffmpeg thật: .mov đổi vỏ sang mp4 không mã hoá lại, đo được như mp4', { skip: !hasRealFfmpeg && 'máy không có ffmpeg/ffprobe' }, async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'zbr-video-test-'));
+    try {
+        const mov = path.join(dir, 'IMG_0421.mov');
+        const mp4 = path.join(dir, 'IMG_0421-remux.mp4');
+        execFileSync('ffmpeg', [
+            '-hide_banner', '-loglevel', 'error', '-y',
+            '-f', 'lavfi', '-i', 'testsrc=size=320x240:rate=10',
+            '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=44100',
+            '-t', '2', '-pix_fmt', 'yuv420p', '-c:a', 'aac', mov,
+        ]);
+
+        await realTools.remuxToMp4(mov, mp4);
+
+        const probeStreams = (file) =>
+            JSON.parse(
+                execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type,codec_name:format_tags=major_brand', '-of', 'json', file]).toString()
+            );
+        const source = probeStreams(mov);
+        const remuxed = probeStreams(mp4);
+        assert.equal(source.format.tags.major_brand.trim(), 'qt');
+        assert.match(remuxed.format.tags.major_brand, /^(isom|mp4\d)$/, 'vỏ mp4, không còn là QuickTime');
+        assert.deepEqual(
+            remuxed.streams.map((stream) => [stream.codec_type, stream.codec_name]),
+            source.streams.map((stream) => [stream.codec_type, stream.codec_name]),
+            'giữ nguyên luồng hình và tiếng'
+        );
+        assert.deepEqual(await realTools.probe(mp4), { durationMs: 2000, width: 320, height: 240 });
     } finally {
         rmSync(dir, { recursive: true, force: true });
     }
