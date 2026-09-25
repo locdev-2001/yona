@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { fetchConfig } from './api/widget';
 import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
 import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
+import { isLightBackground } from './helpers/colorHelper';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
@@ -69,6 +70,8 @@ async function bootstrap() {
         const channelConfig = toChannelConfig(channelPayload);
         widgetStore.setChannelConfig(channelConfig, globalConfig ?? {}, contact);
         document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
+        // Màu nhấn do tenant chọn: nền sáng thì chữ/icon trên nó dùng mực tối (token trong widget.scss).
+        document.documentElement.dataset.accentTone = isLightBackground(channelConfig.widgetColor) ? 'light' : 'dark';
 
         await widgetStore.getConversationAttributes();
         widgetConnector.connect(contact.pubsub_token);

@@ -23,6 +23,8 @@
   --yona-chat-line-strong: rgba(0, 0, 0, 0.18);
   --yona-chat-accent: var(--widget-color, #1b6fcc);
   --yona-chat-on-accent: #ffffff;
+  // Chữ mang màu nhấn trên nền sáng (lựa chọn đang chọn); màu nhấn quá sáng thì dùng mực.
+  --yona-chat-accent-ink: var(--yona-chat-accent);
   --yona-chat-online: #1e7f4e;
   --yona-chat-online-dot: #22c55e;
   --yona-chat-danger: #c0392b;
@@ -53,6 +55,12 @@
   --yona-chat-avatar: #e8d5c4;
   --yona-chat-on-avatar: #6b4a33;
   --yona-chat-font: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+// Màu nhấn của tenant đủ sáng để chữ trắng trên nó không đạt tương phản: đổi sang mực tối.
+:root[data-accent-tone='light'] {
+  --yona-chat-on-accent: #17181a;
+  --yona-chat-accent-ink: var(--yona-chat-ink);
 }
 
 .dark {

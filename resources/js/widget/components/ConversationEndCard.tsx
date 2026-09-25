@@ -27,7 +27,7 @@ const RATING_BUTTON_CLASS =
     'flex-1 min-h-11 rounded-xl border text-xs font-semibold leading-none transition-colors disabled:cursor-default';
 const RATING_IDLE_CLASS = 'border-[var(--yona-chat-line-field)] text-[var(--yona-chat-ink-soft)]';
 const RATING_SELECTED_CLASS =
-    'border-2 border-[var(--yona-chat-accent)] bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent)]';
+    'border-2 border-[var(--yona-chat-accent)] bg-[var(--yona-chat-accent-soft)] text-[var(--yona-chat-accent-ink)]';
 
 // Kết thúc & đánh giá: phiếu CSAT (tin `input_csat`) hiện thành thẻ riêng trong luồng tin.
 export default function ConversationEndCard({ message }: { message: WidgetMessage }) {
