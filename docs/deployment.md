@@ -257,12 +257,31 @@ hoá JSON hai lần.
 | Tin 1 500 ký tự, album 10 ảnh, 12 nhãn | 28 463 | 28 682 | 42 302 |
 | Tin 4 000 ký tự, album 20 ảnh, 12 nhãn | 60 732 | 60 949 | 90 690 |
 
+Tin chữ dài (email, tin dán cả đơn hàng) nặng hơn album: tin cuối lặp ba lần
+trong thông báo, mỗi ký tự tiếng Việt có dấu thành 7 byte sau hai lần mã hoá.
+Đo trên hội thoại Zalo của DB dev, chỉ có chữ, phát thật tới Reverb:
+
+| Độ dài tin | `conversation.updated` | `conversation.typing_on` | `notification.created` | Ở ngưỡng 128 KB cũ |
+|---|---|---|---|---|
+| 10 000 ký tự | 86 777 | 87 021 | 130 234 | lọt, sát ngưỡng |
+| 12 000 ký tự | 103 441 | 103 685 | 155 230 | thông báo 413 |
+| 20 000 ký tự | 170 217 | 170 461 | 255 394 | cả ba 413 |
+| 40 000 ký tự | 337 145 | 337 389 | 505 786 | cả ba 413 |
+| 45 000 ký tự | 378 841 | 379 085 | 568 330 | cả ba 413; thông báo vẫn 413 ở 512 KB |
+
 Mặc định trong `config/reverb.php`:
 
 | Biến | Mặc định | Vì sao |
 |---|---|---|
-| `REVERB_MAX_REQUEST_SIZE` | `131072` (128 KB) | Phủ ca nặng nhất đã đo (≈ 91 KB) và còn dư. Chỉ Laravel gọi đường này, trên loopback, có ký bằng app secret |
+| `REVERB_MAX_REQUEST_SIZE` | `524288` (512 KB) | Phủ album nặng nhất đã đo (≈ 91 KB) và tin chữ tới khoảng 40 000 ký tự tiếng Việt. Người gọi hợp lệ duy nhất là Laravel qua loopback; lượt POST phải ký bằng app secret, lượt không ký bị từ chối |
 | `REVERB_APP_MAX_MESSAGE_SIZE` | `65536` (64 KB) | Chỉ áp khung WebSocket trình duyệt gửi lên (đăng ký kênh, client event), không phải sự kiện server phát xuống. Không gây lỗi trên, nâng cho đủ dư |
+
+**Ngưỡng còn lại.** Tin chữ trên khoảng 40 000 ký tự tiếng Việt có dấu (khoảng
+60 000 với `conversation.updated` và "đang gõ"), hoặc khoảng 12 000 emoji, vẫn
+làm `notification.created` vượt 512 KB và mất lặng lẽ như cũ. Tin được lưu tới
+150 000 ký tự (`Message::MAX_CONTENT_LENGTH`), nên chỉ nâng ngưỡng không phủ hết.
+Cách chữa tận gốc là thu gọn payload (không lặp tin cuối, không mang cả nội dung
+tin dài trong thông báo); việc này còn mở.
 
 `.env` production chưa khai hai biến thì mặc định có hiệu lực ngay sau
 `deploy.sh` (script cache lại config và `reverb:restart`). Đã khai giá trị nhỏ hơn
