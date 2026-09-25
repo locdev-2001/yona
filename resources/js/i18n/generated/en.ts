@@ -9352,6 +9352,12 @@ const messages: Record<string, unknown> = {
             }
         }
     },
+    "SUPER_ADMIN_MFA": {
+        "REQUIRED_TITLE": "Two-factor authentication required",
+        "REQUIRED_DESCRIPTION": "{installationName} requires 2FA for the super admin console. Finish setup below to continue.",
+        "START_ERROR": "Could not start 2FA setup.",
+        "INVALID_CODE": "Invalid code, try again."
+    },
     "SURVEY": {
         "DESCRIPTION": "Dear customer 👋, please take a few moments to share feedback about the conversation you had with {inboxName}.",
         "RATING": {

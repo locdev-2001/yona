@@ -9,6 +9,7 @@ const RESOURCE_ICONS: Record<string, string> = {
     users: 'icon-user-follow-line',
     agent_bots: 'icon-robot-line',
     platform_apps: 'icon-apps-2-line',
+    impersonations: 'icon-mist-fill',
 };
 
 const NAV_ITEM_CLASS =

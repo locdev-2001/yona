@@ -19,10 +19,11 @@ class DashboardRegistry
         'agent_bots' => Dashboards\AgentBotDashboard::class,
         'platform_apps' => Dashboards\PlatformAppDashboard::class,
         'account_users' => Dashboards\AccountUserDashboard::class,
+        'impersonations' => Dashboards\SuperAdminImpersonationDashboard::class,
     ];
 
     // Thứ tự mục trong thanh điều hướng (bản gốc bỏ các resource phụ trợ).
-    private const NAVIGATION_RESOURCES = ['accounts', 'users', 'agent_bots', 'platform_apps'];
+    private const NAVIGATION_RESOURCES = ['accounts', 'users', 'agent_bots', 'platform_apps', 'impersonations'];
 
     /** @var array<string, Dashboard> */
     private array $resolved = [];

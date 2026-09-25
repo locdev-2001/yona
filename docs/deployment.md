@@ -287,6 +287,31 @@ vì bot ghé landing cũng tạo phiên) × dung lượng trung bình một key.
 300 MB và máy còn RAM thì giữ 30 ngày, đặt `maxmemory` + `volatile-lru`; lớn hơn thì
 hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 
+### 2FA bắt buộc cho console quản trị
+
+- `SUPER_ADMIN_REQUIRE_MFA` (mặc định `true`): super admin chưa bật 2FA bị chặn
+  ở mọi trang của `/super_admin/*` trừ `/super_admin/mfa/setup` (QR + xác nhận
+  mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào phần
+  còn lại của console.
+- **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
+  `/super_admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
+  cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
+  lại 10 mã dự phòng ở nơi an toàn (chỉ hiện một lần). Làm việc này cho MỌI tài
+  khoản `SuperAdmin` đang có trước khi báo người khác đăng nhập, nếu không họ sẽ
+  bị chặn ở màn cài đặt cho tới khi tự làm xong bước trên.
+- Đăng nhập console (cả bước mật khẩu lẫn bước OTP) throttle 5 lần/phút theo
+  cặp email+IP, dùng chung cơ chế với đăng nhập agent
+  (`App\Services\Mfa`).
+- Tắt hẳn cờ này (`SUPER_ADMIN_REQUIRE_MFA=false`) chỉ nên dùng tạm thời khi tự
+  host một mình và chấp nhận rủi ro — không dùng trên production nhiều người có
+  quyền super admin.
+- Đăng nhập hộ (`Impersonate user` trên trang chi tiết user) từ bản này bắt
+  buộc nhập lý do (tối thiểu 10 ký tự) và ghi vào bảng
+  `super_admin_impersonations` (ai, hộ ai, tài khoản nào nếu có, IP, user
+  agent, thời điểm token SSO thật sự được tiêu thụ). Xem lại nhật ký ở mục
+  "Super Admin Impersonations" trên thanh điều hướng console, lọc bằng
+  `?super_admin_id=` / `?account_id=` trên URL.
+
 ### Analytics
 
 - Script và sự kiện Plausible đi qua **chính domain app**: `GET /yv/s` (script) và

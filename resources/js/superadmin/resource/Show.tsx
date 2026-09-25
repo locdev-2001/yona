@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 
+import { xsrfToken } from 'dashboard/helper/apiClient';
 import FieldValue from '../components/FieldValue';
 import type { SuperAdminField } from '../types';
 
@@ -96,20 +98,7 @@ export default function ResourceShow({
 
             {accountUserForm ? <AccountUserSection form={accountUserForm} /> : null}
 
-            {impersonateUrl ? (
-                <section className="main-content__body">
-                    <hr />
-                    <div className="form-actions">
-                        <p className="text-color-red">
-                            Caution: Any actions executed after impersonate will appear as if
-                            performed by the impersonated user - [{record.title}]
-                        </p>
-                        <a className="button" target="_blank" rel="noreferrer" href={impersonateUrl}>
-                            Impersonate user
-                        </a>
-                    </div>
-                </section>
-            ) : null}
+            {impersonateUrl ? <ImpersonateSection url={impersonateUrl} title={record.title} /> : null}
 
             {resource === 'accounts' ? (
                 <section className="main-content__body">
@@ -130,6 +119,62 @@ export default function ResourceShow({
 
             <span className="hidden">{singularLabel}</span>
         </>
+    );
+}
+
+// Dash #38: đăng nhập hộ giờ bắt buộc lý do và mở phiên trên trang login của
+// app (bundle Inertia khác) — nộp bằng <form> gốc + target="_blank" thay vì
+// router.post, vì router.post gắn header X-Inertia khiến Laravel trả JSON
+// Inertia cho trang bên bundle kia thay vì HTML, và bundle superadmin không
+// biết vẽ component của bundle đó.
+const REASON_MIN_LENGTH = 10;
+
+function ImpersonateSection({ url, title }: { url: string; title: string }) {
+    const [expanded, setExpanded] = useState(false);
+    const [reason, setReason] = useState('');
+    const reasonTooShort = reason.trim().length < REASON_MIN_LENGTH;
+
+    return (
+        <section className="main-content__body">
+            <hr />
+            <div className="form-actions">
+                <p className="text-color-red">
+                    Caution: Any actions executed after impersonate will appear as if performed by the
+                    impersonated user - [{title}]
+                </p>
+                {expanded ? (
+                    <form method="post" action={url} target="_blank" className="form">
+                        <input type="hidden" name="_token" value={xsrfToken()} />
+                        <div className="field-unit field-unit--string field-unit--required">
+                            <div className="field-unit__label">
+                                <label htmlFor="impersonate_reason">
+                                    Reason (min {REASON_MIN_LENGTH} characters, logged for audit)
+                                </label>
+                            </div>
+                            <div className="field-unit__field">
+                                <textarea
+                                    id="impersonate_reason"
+                                    name="reason"
+                                    rows={3}
+                                    value={reason}
+                                    onChange={event => setReason(event.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-actions">
+                            <input type="submit" className="button" value="Confirm & impersonate" disabled={reasonTooShort} />
+                            <button type="button" className="button button--link" onClick={() => setExpanded(false)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <button type="button" className="button" onClick={() => setExpanded(true)}>
+                        Impersonate user
+                    </button>
+                )}
+            </div>
+        </section>
     );
 }
 

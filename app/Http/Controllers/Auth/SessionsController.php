@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Auth\Concerns\CompletesSignIn;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserSessionResource;
+use App\Models\SuperAdminImpersonation;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\Mfa\AuthenticationService;
@@ -104,6 +105,10 @@ class SessionsController extends Controller
 
         $impersonation = $user->ssoAuthTokenIsImpersonation($token);
         $user->invalidateSsoAuthToken($token);
+
+        if ($impersonation) {
+            SuperAdminImpersonation::markUsedByTokenHash(hash('sha256', $token));
+        }
 
         if (! $impersonation) {
             $limitResponse = $this->enforceSessionLimit($request, $user);

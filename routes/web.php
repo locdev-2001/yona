@@ -26,12 +26,15 @@ use App\Http\Controllers\SuperAdmin\AccountUsersController as SuperAdminAccountU
 use App\Http\Controllers\SuperAdmin\AgentBotsController as SuperAdminAgentBotsController;
 use App\Http\Controllers\SuperAdmin\AppConfigsController as SuperAdminAppConfigsController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\ImpersonationsController as SuperAdminImpersonationsController;
 use App\Http\Controllers\SuperAdmin\InstallationConfigsController as SuperAdminInstallationConfigsController;
 use App\Http\Controllers\SuperAdmin\InstanceStatusesController as SuperAdminInstanceStatusesController;
+use App\Http\Controllers\SuperAdmin\MfaController as SuperAdminMfaController;
 use App\Http\Controllers\SuperAdmin\PlatformAppsController as SuperAdminPlatformAppsController;
 use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsController;
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
+use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\SuperAdminInertia;
 use App\Models\Account;
@@ -471,42 +474,55 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
     Route::middleware('auth:super_admin')->group(function () {
         Route::match(['get', 'delete'], '/logout', [SuperAdminSessionsController::class, 'destroy']);
 
-        Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('super_admin.root');
+        // Bật 2FA xong mới vào được phần còn lại của console (SUPER_ADMIN_REQUIRE_MFA,
+        // mặc định bật) — xem docs/deployment.md mục 2FA & console quản trị.
+        Route::get('/mfa/setup', [SuperAdminMfaController::class, 'setupPage'])->name('super_admin.mfa.setup');
+        Route::get('/mfa', [SuperAdminMfaController::class, 'show']);
+        Route::post('/mfa', [SuperAdminMfaController::class, 'store']);
+        Route::post('/mfa/verify', [SuperAdminMfaController::class, 'verify']);
 
-        Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
-        Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
-        Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
-        Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
+        Route::middleware(EnsureSuperAdminMfaEnrolled::class)->group(function () {
+            Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('super_admin.root');
 
-        Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
+            Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
+            Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
+            Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
+            Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
 
-        Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
-        Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
-        Route::get('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
+            Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
 
-        Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
+            Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
+            Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
+            Route::post('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
 
-        Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
-        Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
-        Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+            Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
 
-        // Thứ tự resource quyết định thứ tự mục trong thanh điều hướng của bản gốc.
-        foreach ([
-            'accounts' => SuperAdminAccountsController::class,
-            'users' => SuperAdminUsersController::class,
-            'access_tokens' => SuperAdminAccessTokensController::class,
-            'installation_configs' => SuperAdminInstallationConfigsController::class,
-            'agent_bots' => SuperAdminAgentBotsController::class,
-            'platform_apps' => SuperAdminPlatformAppsController::class,
-        ] as $resource => $controller) {
-            Route::get("/{$resource}", [$controller, 'index']);
-            Route::get("/{$resource}/new", [$controller, 'create']);
-            Route::post("/{$resource}", [$controller, 'store']);
-            Route::get("/{$resource}/{id}", [$controller, 'show'])->whereNumber('id');
-            Route::get("/{$resource}/{id}/edit", [$controller, 'edit'])->whereNumber('id');
-            Route::match(['put', 'patch'], "/{$resource}/{id}", [$controller, 'update'])->whereNumber('id');
-            Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
-        }
+            Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
+            Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
+            Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+
+            // Nhật ký đăng nhập hộ (dash #38) — chỉ đọc, không CRUD như các resource khác.
+            Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);
+            Route::get('/impersonations/{id}', [SuperAdminImpersonationsController::class, 'show'])->whereNumber('id');
+
+            // Thứ tự resource quyết định thứ tự mục trong thanh điều hướng của bản gốc.
+            foreach ([
+                'accounts' => SuperAdminAccountsController::class,
+                'users' => SuperAdminUsersController::class,
+                'access_tokens' => SuperAdminAccessTokensController::class,
+                'installation_configs' => SuperAdminInstallationConfigsController::class,
+                'agent_bots' => SuperAdminAgentBotsController::class,
+                'platform_apps' => SuperAdminPlatformAppsController::class,
+            ] as $resource => $controller) {
+                Route::get("/{$resource}", [$controller, 'index']);
+                Route::get("/{$resource}/new", [$controller, 'create']);
+                Route::post("/{$resource}", [$controller, 'store']);
+                Route::get("/{$resource}/{id}", [$controller, 'show'])->whereNumber('id');
+                Route::get("/{$resource}/{id}/edit", [$controller, 'edit'])->whereNumber('id');
+                Route::match(['put', 'patch'], "/{$resource}/{id}", [$controller, 'update'])->whereNumber('id');
+                Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
+            }
+        });
     });
 });
 

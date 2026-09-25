@@ -9352,6 +9352,12 @@ const messages: Record<string, unknown> = {
             }
         }
     },
+    "SUPER_ADMIN_MFA": {
+        "REQUIRED_TITLE": "Bắt buộc bật xác thực hai lớp",
+        "REQUIRED_DESCRIPTION": "{installationName} yêu cầu bật 2FA để dùng console quản trị. Hoàn tất thiết lập bên dưới để tiếp tục.",
+        "START_ERROR": "Không khởi tạo được bước cài đặt 2FA.",
+        "INVALID_CODE": "Mã không đúng, bạn thử lại."
+    },
     "SURVEY": {
         "DESCRIPTION": "Quý khách kính mếm 👋, vui lòng dành một chút thời gian để chia sẻ phản hồi về hội thoại mà bạn đã có với {inboxName}.",
         "RATING": {

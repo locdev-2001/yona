@@ -36,9 +36,16 @@ trait SsoAuthenticatable
 
     public function generateSsoLink(bool $impersonation = false): string
     {
+        return $this->ssoLoginUrl($this->generateSsoAuthToken($impersonation), $impersonation);
+    }
+
+    // Tách riêng để chỗ gọi cần biết token thô trước khi build URL (vd. ghi log
+    // impersonation bằng hash của token) không phải parse lại query string.
+    public function ssoLoginUrl(string $token, bool $impersonation = false): string
+    {
         $query = [
             'email' => $this->email,
-            'sso_auth_token' => $this->generateSsoAuthToken($impersonation),
+            'sso_auth_token' => $token,
         ];
 
         if ($impersonation) {

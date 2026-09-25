@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 
+import { t } from '../../i18n';
 import MfaSetupWizard from 'dashboard/settings/profile/mfa/MfaSetupWizard';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { superAdminMfaApi } from '../mfaApi';
@@ -32,7 +33,7 @@ export default function SuperAdminMfaSetup() {
                 setProvisioningUri(payload.provisioning_url);
                 setSecretKey(payload.secret);
             })
-            .catch(error => setStartError(parseApiErrorMessage(error) || 'Could not start 2FA setup.'));
+            .catch(error => setStartError(parseApiErrorMessage(error) || t('SUPER_ADMIN_MFA.START_ERROR')));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -43,7 +44,7 @@ export default function SuperAdminMfaSetup() {
             setVerificationError('');
             return true;
         } catch (error) {
-            setVerificationError(parseApiErrorMessage(error) || 'Invalid code, try again.');
+            setVerificationError(parseApiErrorMessage(error) || t('SUPER_ADMIN_MFA.INVALID_CODE'));
             return false;
         }
     };
@@ -60,11 +61,8 @@ export default function SuperAdminMfaSetup() {
     return (
         <div className="max-w-2xl mx-auto py-10 px-6">
             <Head title="Set up 2FA" />
-            <h1 className="text-2xl font-medium text-slate-900 mb-2">Two-factor authentication required</h1>
-            <p className="text-sm text-slate-700 mb-6">
-                {superAdmin.installationName} requires 2FA for the super admin console. Finish setup below to
-                continue.
-            </p>
+            <h1 className="text-2xl font-medium text-slate-900 mb-2">{t('SUPER_ADMIN_MFA.REQUIRED_TITLE')}</h1>
+            <p className="text-sm text-slate-700 mb-6">{t('SUPER_ADMIN_MFA.REQUIRED_DESCRIPTION')}</p>
 
             {startError ? <p className="mb-5 text-sm text-ruby-600">{startError}</p> : null}
 
