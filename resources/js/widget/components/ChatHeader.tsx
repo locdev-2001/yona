@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify';
 
 import { replyTimeLabel, useInboxAvailability } from './Availability';
 import HeaderActions from './HeaderActions';
+import { ExpandButton } from '../ui/PanelHeader';
 import { HEADER_ACTION_CLASS } from './headerActionClass';
 import WidgetAvatar from './WidgetAvatar';
 import { t } from '../i18n';
@@ -81,6 +82,7 @@ export function ChatHeader({
                     {isOnline ? onlineText : awayText}
                 </span>
             </div>
+            <ExpandButton />
             <HeaderActions showPopoutButton={showPopoutButton} />
         </header>
     );

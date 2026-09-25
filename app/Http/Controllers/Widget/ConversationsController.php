@@ -29,6 +29,10 @@ class ConversationsController extends WidgetController
      */
     public function list(Request $request, MessagePreview $preview): JsonResponse
     {
+        if ($this->contactInbox($request) === null) {
+            return response()->json(['payload' => [], 'meta' => ['has_more' => false]]);
+        }
+
         $conversations = $this->conversationsQuery($request)
             ->with('assignee')
             ->withCount(['messages as contact_unread_count' => fn ($query) => $query

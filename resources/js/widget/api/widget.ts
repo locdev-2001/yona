@@ -62,6 +62,22 @@ export interface ConversationListItem {
 export const fetchConversationList = (page = 1): Promise<{ payload: ConversationListItem[]; meta: { has_more: boolean } }> =>
     apiGet(`${BASE}/conversations/list${buildSearch({ page })}`);
 
+export interface WidgetUpdateItem {
+    id: number;
+    title: string;
+    tag: 'promo' | 'new' | 'notice';
+    cover_url: string | null;
+    cta: { label: string | null; url: string } | null;
+    published_at: number | null;
+    excerpt: string;
+    body?: string | null;
+}
+
+export const fetchUpdates = (page = 1): Promise<{ payload: WidgetUpdateItem[]; meta: { has_more: boolean } }> =>
+    apiGet(`${BASE}/updates${buildSearch({ page })}`);
+
+export const fetchUpdate = (id: number): Promise<WidgetUpdateItem> => apiGet(`${BASE}/updates/${id}${buildSearch()}`);
+
 export const createConversation = (params: {
     fullName?: string;
     emailAddress?: string;

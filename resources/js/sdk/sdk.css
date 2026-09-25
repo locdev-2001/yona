@@ -369,6 +369,18 @@
     max-height: 620px !important;
     min-height: 250px !important;
     width: 380px !important;
+    transition:
+      opacity 0.2s linear,
+      transform 0.25s linear,
+      width 0.2s ease,
+      max-height 0.2s ease;
+  }
+
+  /* Phóng to: hai cột (danh sách hội thoại + khung chat), vẫn chừa lề trang khách. */
+  .woot-widget-holder.woot-widget-holder--expanded {
+    width: min(760px, calc(100vw - 40px)) !important;
+    max-height: 760px !important;
+    height: calc(100% - 116px);
   }
 }
 

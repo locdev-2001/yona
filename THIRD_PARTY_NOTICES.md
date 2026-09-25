@@ -53,3 +53,35 @@ nét 600 và 700 lấy từ gói `@fontsource/be-vietnam-pro` 5.3.0).
 Copyright 2021 The Be Vietnam Pro Project Authors (https://github.com/bettergui/BeVietnamPro).
 Phát hành theo SIL Open Font License 1.1; văn bản giấy phép nằm ở
 `resources/fonts/BeVietnamPro/OFL.txt`.
+
+---
+
+## Logo nền tảng trong widget
+
+`resources/js/widget/ui/platformLogos.ts` chứa SVG logo Zalo, Messenger, Telegram,
+WhatsApp, Instagram, TikTok chép từ gói `@thesvg/icons` 3.3.8 (https://thesvg.org),
+phát hành theo giấy phép MIT. Tên và logo là nhãn hiệu của chủ sở hữu tương ứng.
+
+```
+MIT License
+
+Copyright (c) 2025 thesvg.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

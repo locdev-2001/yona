@@ -5,6 +5,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Portal;
 use App\Models\User;
+use App\Support\HelpCenter\ArticleMarkdown;
 
 // Port từ spec/controllers/public/api/v1/portals/{articles,categories}_controller_spec.rb.
 // Khác bản gốc: các URL ở đây không mang hậu tố `.json` (mặt tiền hiện tại chỉ
@@ -105,6 +106,7 @@ it('serves one article by slug without counting a view', function () {
 
     expect($payload['id'])->toBe($this->article->id)
         ->and($payload['link'])->toBe('hc/test-portal/articles/'.$this->article->slug)
+        ->and($payload['content_html'])->toBe(ArticleMarkdown::toHtml($this->article->content))
         ->and($this->article->refresh()->views)->toBe(0);
 });
 

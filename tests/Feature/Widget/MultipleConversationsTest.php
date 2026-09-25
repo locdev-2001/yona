@@ -89,6 +89,15 @@ it('hội thoại của khách khác là 404, không rơi về hội thoại c�
 });
 
 describe('GET conversations/list', function () {
+    it('khách mới (mới mở widget, chưa nhắn tin) thấy danh sách rỗng, không 404', function () {
+        $session = WidgetSession::make();
+        $token = $this->postJson($session->url('config'))->assertOk()->json('website_channel_config.auth_token');
+
+        $this->getJson($session->url('conversations/list'), ['X-Auth-Token' => $token])
+            ->assertOk()
+            ->assertExactJson(['payload' => [], 'meta' => ['has_more' => false]]);
+    });
+
     it('liệt kê hội thoại của khách, mới hoạt động trước, kèm số tin shop gửi chưa đọc', function () {
         $session = WidgetSession::make();
         $read = sessionConversation($session, ['last_activity_at' => now()->subDay(), 'contact_last_seen_at' => now()]);

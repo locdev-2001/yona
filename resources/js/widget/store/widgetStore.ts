@@ -567,6 +567,8 @@ export const widgetStore = {
     },
 
     async toggleUserTyping(typingStatus: 'on' | 'off'): Promise<void> {
+        // Hội thoại mới chưa tồn tại trên server tới khi tin đầu gửi xong: không có ai để báo.
+        if (getActiveConversation() === 'new') return;
         try {
             await api.toggleTyping(typingStatus);
         } catch {

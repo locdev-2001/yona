@@ -49,6 +49,8 @@ Route::middleware(ResolveWidgetChannel::class)
         Route::get('/updates', [UpdatesController::class, 'index']);
         Route::get('/updates/{updateId}', [UpdatesController::class, 'show'])->whereNumber('updateId');
         Route::post('/events', [EventsController::class, 'store']);
+        // Tab Tin nhắn: khách mới (chưa nhắn tin nào, chưa có contact) thấy danh sách rỗng, không 404.
+        Route::get('/conversations/list', [ConversationsController::class, 'list']);
 
         // Hành động THẬT đầu tiên của khách — dựng contact_inbox lazy nếu chưa có.
         Route::middleware(ResolveOrCreateWidgetContact::class)->group(function () {
@@ -68,7 +70,6 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
-            Route::get('/conversations/list', [ConversationsController::class, 'list']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);
             Route::post('/conversations/set_custom_attributes', [ConversationsController::class, 'setCustomAttributes']);
             Route::post('/conversations/update_last_seen', [ConversationsController::class, 'updateLastSeen']);

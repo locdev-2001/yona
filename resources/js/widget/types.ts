@@ -66,7 +66,7 @@ export interface WebsiteChannelConfigPayload {
     enabled_languages: EnabledLanguage[];
     locale: string;
     out_of_office_message: string | null;
-    portal: unknown;
+    portal: { slug: string; name: string; default_locale: string; locales: string[] } | null;
     pre_chat_form_enabled: boolean;
     pre_chat_form_options: PreChatFormOptions;
     // Hạn thu hồi tin của khách (giây) — chính sách của kênh, máy chủ thực thi.
@@ -80,6 +80,7 @@ export interface WebsiteChannelConfigPayload {
     welcome_tagline: string | null;
     welcome_title: string | null;
     widget_color: string;
+    widget_settings?: WidgetSettingsConfig;
     working_hours: WorkingHourSlot[];
     working_hours_enabled: boolean;
 }
@@ -111,6 +112,25 @@ export interface WidgetConfigResponse {
 }
 
 // Cấu hình kênh widget đã map sang camelCase.
+export interface PortalConfig {
+    slug: string;
+    name: string;
+    defaultLocale: string;
+    locales: string[];
+}
+
+export type OtherChannelKind = 'zalo' | 'messenger' | 'telegram' | 'whatsapp' | 'instagram' | 'tiktok' | 'hotline' | 'email' | 'custom';
+
+/** `widget_settings` của hộp thư (App\Support\Widget\WidgetSettings), đã trộn mặc định. */
+export interface WidgetSettingsConfig {
+    appearance: { launcher: 'round' | 'pill'; launcher_label: string | null; greeting: string | null };
+    home: { blocks: { recent_conversation: boolean; help: boolean; other_channels: boolean; custom_links: boolean; request: boolean } };
+    other_channels: { kind: OtherChannelKind; label: string | null; value: string; enabled: boolean }[];
+    custom_links: { label: string; url: string }[];
+    capture: { phone: boolean; email: boolean };
+    expanded_enabled: boolean;
+}
+
 export interface ChannelConfig {
     allowMessagesAfterResolved: boolean;
     apiHost: string;
@@ -121,7 +141,8 @@ export interface ChannelConfig {
     enabledLanguages: EnabledLanguage[];
     locale: string;
     outOfOfficeMessage: string | null;
-    portal: unknown;
+    portal: PortalConfig | null;
+    widgetSettings: WidgetSettingsConfig;
     preChatFormEnabled: boolean;
     preChatFormOptions: PreChatFormOptions;
     replyTime: string;

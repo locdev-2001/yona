@@ -58,6 +58,12 @@
   --yona-chat-typing-dot-1: #b7bcc2;
   --yona-chat-typing-dot-2: #9ea4ab;
   --yona-chat-typing-dot-3: #82888f;
+  // Bóng mềm của widget mới (ngoại lệ yona-ui đã ghi ở decisions.md): thẻ/khối nổi và chip.
+  --yona-chat-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.05);
+  --yona-chat-shadow-chip: 0 1px 2px rgba(16, 24, 40, 0.07);
+  --yona-chat-highlight: rgb(var(--amber-4));
+  --yona-chat-positive-bg: rgb(var(--teal-3));
+  --yona-chat-positive-ink: rgb(var(--teal-11));
   --yona-chat-font: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -101,4 +107,7 @@
   --yona-chat-typing-dot-1: rgb(var(--slate-8));
   --yona-chat-typing-dot-2: rgb(var(--slate-9));
   --yona-chat-typing-dot-3: rgb(var(--slate-10));
+  --yona-chat-highlight: rgb(var(--amber-5));
+  --yona-chat-positive-bg: rgb(var(--teal-3));
+  --yona-chat-positive-ink: rgb(var(--teal-11));
 }

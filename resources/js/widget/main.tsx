@@ -10,6 +10,7 @@ import { isLightAccent } from 'shared/helpers/accentContrast';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
+import { DEFAULT_WIDGET_SETTINGS } from './helpers/widgetSettings';
 import type { ChannelConfig, WebsiteChannelConfigPayload } from './types';
 
 // Điểm vào của app widget. Phiên khách dựng bằng POST /api/v1/widget/config rồi map
@@ -26,7 +27,10 @@ function toChannelConfig(payload: WebsiteChannelConfigPayload): ChannelConfig {
         enabledLanguages: payload.enabled_languages ?? [],
         locale: payload.locale,
         outOfOfficeMessage: payload.out_of_office_message,
-        portal: payload.portal,
+        portal: payload.portal
+            ? { slug: payload.portal.slug, name: payload.portal.name, defaultLocale: payload.portal.default_locale, locales: payload.portal.locales }
+            : null,
+        widgetSettings: payload.widget_settings ?? DEFAULT_WIDGET_SETTINGS,
         preChatFormEnabled: payload.pre_chat_form_enabled,
         preChatFormOptions: payload.pre_chat_form_options ?? {},
         replyTime: payload.reply_time,

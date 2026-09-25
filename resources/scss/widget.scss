@@ -617,3 +617,69 @@ blockquote {
 .formkit-messages {
   @apply list-none m-0 p-0;
 }
+
+// Bài Help Center trong khung chat: HTML do server render (ArticleMarkdown) rồi DOMPurify.
+.yona-article {
+  @apply text-[15px] leading-[24px] text-[var(--yona-chat-ink)] [overflow-wrap:anywhere];
+
+  > * + * {
+    @apply mt-3;
+  }
+
+  h1, h2, h3, h4 {
+    @apply m-0 mt-5 text-[16px] font-semibold leading-6;
+  }
+
+  h2 {
+    @apply text-[17px];
+  }
+
+  ul, ol {
+    @apply m-0 ps-5;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  li + li {
+    @apply mt-1.5;
+  }
+
+  a {
+    @apply text-[var(--yona-chat-accent-ink)] underline underline-offset-2;
+  }
+
+  img {
+    @apply h-auto max-w-full rounded-xl;
+  }
+
+  code {
+    @apply rounded bg-[var(--yona-chat-field)] px-1 text-[13px];
+  }
+
+  pre {
+    @apply overflow-x-auto rounded-xl bg-[var(--yona-chat-field)] p-3 text-[13px];
+  }
+
+  .tableWrapper {
+    @apply overflow-x-auto;
+  }
+
+  table {
+    @apply w-full border-collapse text-[14px];
+  }
+
+  th, td {
+    @apply border border-solid border-[var(--yona-chat-line)] px-2 py-1.5 text-start align-top;
+  }
+}
+
+// Khung chat toàn màn hình trên điện thoại: không có gì để phóng to.
+.is-mobile .yona-expand-button {
+  display: none;
+}
