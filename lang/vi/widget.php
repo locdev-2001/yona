@@ -231,6 +231,7 @@ return [
     'EMPTY_STATE' => [
         'TITLE' => 'Chào bạn!',
         'BODY' => 'Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh, tệp hoặc sticker.',
+        'BODY_WITHOUT_STICKER' => 'Nhắn cho {name} bất cứ điều gì. Bạn có thể gửi kèm ảnh hoặc tệp.',
     ],
     'HEADER' => [
         'ONLINE' => 'Đang trực tuyến',

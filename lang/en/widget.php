@@ -233,6 +233,7 @@ return [
     'EMPTY_STATE' => [
         'TITLE' => 'Hi there!',
         'BODY' => 'Send {name} a message about anything. You can attach photos, files or stickers.',
+        'BODY_WITHOUT_STICKER' => 'Send {name} a message about anything. You can attach photos or files.',
     ],
     'HEADER' => [
         'ONLINE' => 'Online',
