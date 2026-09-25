@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Support\Timezones;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -59,6 +60,7 @@ class InboxesSettingsController extends Controller
             'tab' => $tab,
             // Ví dụ "Tên người gửi" dùng đúng địa chỉ thư sẽ gửi cho khách.
             'senderEmailAddress' => $inbox->outgoingEmailAddress(),
+            'timezoneOptions' => Timezones::options(),
         ]);
     }
 

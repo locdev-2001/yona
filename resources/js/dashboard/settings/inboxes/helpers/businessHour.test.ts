@@ -7,7 +7,6 @@ import {
     timeSlotLabel,
     timeSlotParse,
     timeSlotTransform,
-    timeZoneOptions,
     timeZoneSelection,
 } from './businessHour';
 
@@ -147,37 +146,35 @@ describe('timeSlotTransform', () => {
     });
 });
 
-describe('timeZoneOptions', () => {
-    it('keeps the order of the source list', () => {
-        expect(timeZoneOptions()[0]).toStrictEqual({
-            value: 'Etc/GMT+12',
-            label: 'International Date Line West (GMT−12:00)',
-        });
-    });
-});
-
 describe('timeZoneSelection', () => {
-    it('khớp múi giờ UTC mà hộp thư cũ lưu với mục Etc/UTC của danh sách', () => {
-        expect(timeZoneSelection('UTC').selected).toBe('Etc/UTC');
+    // Danh sách thật do máy chủ cấp (App\Support\Timezones); ở đây chỉ cần vài mục.
+    const options = [
+        { label: 'UTC (UTC+00:00)', value: 'UTC' },
+        { label: 'Bangkok (GMT+07:00)', value: 'Asia/Bangkok' },
+        { label: 'Hanoi (GMT+07:00)', value: 'Asia/Ho_Chi_Minh' },
+    ];
+
+    it('chọn đúng mục UTC mà hộp thư cũ lưu', () => {
+        expect(timeZoneSelection('UTC', options).selected).toBe('UTC');
+    });
+
+    it('khớp tên Etc/UTC với mục UTC của danh sách', () => {
+        expect(timeZoneSelection('Etc/UTC', options).selected).toBe('UTC');
     });
 
     it('khớp tên cũ Asia/Saigon với mục giờ Việt Nam', () => {
-        expect(timeZoneSelection('Asia/Saigon').selected).toBe('Asia/Ho_Chi_Minh');
+        expect(timeZoneSelection('Asia/Saigon', options).selected).toBe('Asia/Ho_Chi_Minh');
     });
 
-    it('có mục giờ Việt Nam cho mặc định của hộp thư mới', () => {
-        const { options, selected } = timeZoneSelection('Asia/Ho_Chi_Minh');
-
-        expect(selected).toBe('Asia/Ho_Chi_Minh');
-        expect(options.find(option => option.value === 'Asia/Ho_Chi_Minh')?.label).toContain('GMT+07:00');
+    it('giữ nguyên danh sách khi múi giờ đang lưu có trong đó', () => {
+        expect(timeZoneSelection('Asia/Ho_Chi_Minh', options)).toStrictEqual({ options, selected: 'Asia/Ho_Chi_Minh' });
     });
 
     it('giữ múi giờ không có trong danh sách thay vì rơi về một múi giờ khác', () => {
-        const { options, selected } = timeZoneSelection('Pacific/Kiritimati');
+        const selection = timeZoneSelection('Pacific/Kiritimati', options);
 
-        expect(selected).toBe('Pacific/Kiritimati');
-        expect(options[0]).toStrictEqual({ label: 'Pacific/Kiritimati', value: 'Pacific/Kiritimati' });
-        expect(options).toHaveLength(timeZoneOptions().length + 1);
+        expect(selection.selected).toBe('Pacific/Kiritimati');
+        expect(selection.options).toStrictEqual([{ label: 'Pacific/Kiritimati', value: 'Pacific/Kiritimati' }, ...options]);
     });
 });
 

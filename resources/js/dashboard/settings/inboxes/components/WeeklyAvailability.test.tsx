@@ -16,6 +16,23 @@ vi.mock('dashboard/helper/apiClient', () => ({
     patchJson: (...args: unknown[]) => patchJson(...args),
 }));
 
+// Vài mục của danh sách máy chủ cấp (App\Support\Timezones).
+const TIME_ZONE_OPTIONS = [
+    { label: 'UTC (UTC+00:00)', value: 'UTC' },
+    { label: 'Bangkok (GMT+07:00)', value: 'Asia/Bangkok' },
+    { label: 'Hanoi (GMT+07:00)', value: 'Asia/Ho_Chi_Minh' },
+];
+
+const renderWeeklyAvailability = (inbox: Inbox) =>
+    render(<WeeklyAvailability inbox={inbox} timeZoneOptions={TIME_ZONE_OPTIONS} uiSettings={{}} onInboxUpdated={() => undefined} />);
+
+const submittedPayload = async (container: HTMLElement) => {
+    fireEvent.click(container.querySelector('form button[type=submit]') as HTMLButtonElement);
+    await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+
+    return patchJson.mock.calls[0][1] as Record<string, unknown>;
+};
+
 const inboxWith = (overrides: Partial<Inbox>): Inbox =>
     ({
         id: 85,
@@ -30,13 +47,8 @@ const inboxWith = (overrides: Partial<Inbox>): Inbox =>
 
 const saveWithoutChanges = async (inbox: Inbox) => {
     patchJson.mockResolvedValue(inbox);
-    const { container } = render(
-        <WeeklyAvailability inbox={inbox} uiSettings={{}} onInboxUpdated={() => undefined} />,
-    );
-    fireEvent.click(container.querySelector('form button[type=submit]') as HTMLButtonElement);
-    await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
 
-    return patchJson.mock.calls[0][1] as Record<string, unknown>;
+    return submittedPayload(renderWeeklyAvailability(inbox).container);
 };
 
 describe('WeeklyAvailability — lưu mà không đổi gì', () => {
@@ -62,6 +74,24 @@ describe('WeeklyAvailability — lưu mà không đổi gì', () => {
     });
 });
 
+describe('WeeklyAvailability — đổi múi giờ', () => {
+    beforeEach(() => {
+        setLocale('vi');
+        patchJson.mockReset();
+    });
+
+    it('chọn mục UTC thì gửi đúng giá trị của danh sách', async () => {
+        const inbox = inboxWith({ working_hours_enabled: true, timezone: 'Asia/Bangkok' });
+        patchJson.mockResolvedValue(inbox);
+        const { container } = renderWeeklyAvailability(inbox);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Bangkok (GMT+07:00)' }));
+        fireEvent.click(screen.getByRole('option', { name: 'UTC (UTC+00:00)' }));
+
+        expect((await submittedPayload(container)).timezone).toBe('UTC');
+    });
+});
+
 describe('WeeklyAvailability — lịch tuần', () => {
     beforeEach(() => setLocale('vi'));
 
@@ -76,13 +106,7 @@ describe('WeeklyAvailability — lịch tuần', () => {
     });
 
     it('hiện tên ngày tiếng Việt, thứ hai đầu tuần, giờ 24h', () => {
-        render(
-            <WeeklyAvailability
-                inbox={inboxWith({ working_hours_enabled: true, working_hours: [0, 1, 2, 3, 4, 5, 6].map(weekday) })}
-                uiSettings={{}}
-                onInboxUpdated={() => undefined}
-            />,
-        );
+        renderWeeklyAvailability(inboxWith({ working_hours_enabled: true, working_hours: [0, 1, 2, 3, 4, 5, 6].map(weekday) }));
 
         const days = screen.getAllByRole('listitem');
         const dayNames = days.map(day => within(day).getAllByRole('checkbox')[0].closest('label')?.textContent);

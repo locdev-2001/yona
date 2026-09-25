@@ -7,6 +7,7 @@ use App\Models\Channel\Api;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Support\Timezones;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -723,6 +724,36 @@ describe('working hours qua PATCH inbox', function () {
 
         expect($response->json('timezone'))->toBe('UTC')
             ->and($inbox->fresh()->timezone)->toBe('UTC');
+    });
+
+    it('saves every timezone that the working hours tab offers', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $offered = array_column(Timezones::options(), 'value');
+        $saved = [];
+
+        foreach ($offered as $timezone) {
+            $this->actingAs($admin)
+                ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", ['timezone' => $timezone])
+                ->assertOk();
+
+            $saved[] = $inbox->fresh()->timezone;
+        }
+
+        expect($saved)->toBe($offered)
+            ->and($offered)->toContain('UTC', 'Asia/Ho_Chi_Minh');
+    });
+
+    it('rejects a timezone that does not exist', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = apiInboxFor($account);
+
+        $this->actingAs($admin)
+            ->patchJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}", ['timezone' => 'Asia/Atlantis'])
+            ->assertUnprocessable();
     });
 
     it('leaves the schedule untouched when the payload has no working hours', function () {

@@ -1,6 +1,6 @@
 // Một múi giờ có thể mang nhiều tên. ICU (Chrome) giữ tên cũ Asia/Saigon trong
 // Intl.supportedValuesOf, còn resolvedOptions() có thể trả tên hiện hành
-// Asia/Ho_Chi_Minh; DB hộp thư cũ lưu 'UTC' trong khi danh sách chọn dùng 'Etc/UTC'.
+// Asia/Ho_Chi_Minh; trình duyệt có thể trả 'Etc/UTC' trong khi danh sách chọn dùng 'UTC'.
 // So khớp thẳng chuỗi sẽ trượt, nên mọi phép so khớp múi giờ đi qua bảng này.
 const TIMEZONE_ALIAS_GROUPS: readonly (readonly string[])[] = [
     ['Asia/Ho_Chi_Minh', 'Asia/Saigon'],

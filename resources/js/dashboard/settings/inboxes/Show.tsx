@@ -50,6 +50,7 @@ import {
     writeWidgetBubbleSettings,
 } from './webWidgetHelpers';
 import type { WidgetBubbleSettings } from './webWidgetHelpers';
+import type { TimeZoneOption } from './helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
@@ -61,6 +62,7 @@ interface ShowProps {
     inboxId: number;
     tab?: string | null;
     senderEmailAddress: string;
+    timezoneOptions: TimeZoneOption[];
 }
 
 const TAB_LABELS: Record<string, string> = {
@@ -127,7 +129,7 @@ function tabKeysFor(channelType: string, provider: string | null | undefined): s
     ];
 }
 
-export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: ShowProps) {
+export default function InboxShow({ inboxId, tab = null, senderEmailAddress, timezoneOptions }: ShowProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
     const uiSettings = (auth.user?.ui_settings ?? {}) as UISettings;
@@ -800,6 +802,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress }: S
                             {selectedTabKey === 'business-hours' ? (
                                 <WeeklyAvailability
                                     inbox={inbox}
+                                    timeZoneOptions={timezoneOptions}
                                     uiSettings={uiSettings}
                                     onInboxUpdated={syncInboxData}
                                 />

@@ -17,7 +17,7 @@ import {
     timeSlotTransform,
     timeZoneSelection,
 } from '../helpers/businessHour';
-import type { TimeSlot } from '../helpers/businessHour';
+import type { TimeSlot, TimeZoneOption } from '../helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -29,11 +29,12 @@ const DAY_NAME_KEYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', '
 
 interface WeeklyAvailabilityProps {
     inbox: Inbox;
+    timeZoneOptions: TimeZoneOption[];
     uiSettings: UISettings;
     onInboxUpdated: (inbox: Inbox) => void;
 }
 
-export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }: WeeklyAvailabilityProps) {
+export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings, onInboxUpdated }: WeeklyAvailabilityProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
@@ -53,7 +54,7 @@ export default function WeeklyAvailability({ inbox, uiSettings, onInboxUpdated }
         setTimeZone(inbox.timezone);
     }, [inbox]);
 
-    const timeZoneChoice = useMemo(() => timeZoneSelection(timeZone), [timeZone]);
+    const timeZoneChoice = useMemo(() => timeZoneSelection(timeZone, timeZoneOptions), [timeZone, timeZoneOptions]);
 
     const hasError = isBusinessHoursEnabled && timeSlots.some(slot => slot.from && !slot.valid);
 

@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Support\Timezones;
 
 function inboxSettingsAdmin(Account $account): User
 {
@@ -43,6 +44,17 @@ it('shows the mailbox address as the sender of an email inbox', function () {
     $this->actingAs(inboxSettingsAdmin($account))
         ->get("/app/accounts/{$account->id}/settings/inboxes/{$inbox->id}")
         ->assertInertia(fn ($page) => $page->where('senderEmailAddress', $inbox->channel->email));
+});
+
+it('offers the timezones that the inbox api accepts', function () {
+    $account = Account::factory()->create();
+    $inbox = Inbox::factory()->webWidget()->create(['account_id' => $account->id]);
+
+    $this->actingAs(inboxSettingsAdmin($account))
+        ->get("/app/accounts/{$account->id}/settings/inboxes/{$inbox->id}")
+        ->assertInertia(fn ($page) => $page->where('timezoneOptions', Timezones::options()));
+
+    expect(Timezones::options())->toContain(['label' => 'UTC (UTC+00:00)', 'value' => 'UTC']);
 });
 
 it('returns not found for an inbox of another account', function () {
