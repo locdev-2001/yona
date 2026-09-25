@@ -420,6 +420,17 @@ describe('khung xem trước tin mới giữ launcher đóng và badge số chư
 });
 
 describe('launcher dựng từ tin loaded', () => {
+    // onLoad gắn bộ theo dõi đổi URL trang; test không cần nó chạy sau khi môi trường đã dọn.
+    beforeEach(() => {
+        vi.stubGlobal(
+            'MutationObserver',
+            class {
+                observe() {}
+                disconnect() {}
+            },
+        );
+    });
+
     afterEach(() => {
         IFrameHelper.getBubbleHolder()[0]?.remove();
         chatBubble.removeAttribute('aria-label');
