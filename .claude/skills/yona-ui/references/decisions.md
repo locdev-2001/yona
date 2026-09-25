@@ -43,6 +43,19 @@ từng khối, đo hai lần cách nhau 1.8s, và **trượt** nếu trang đang
 | Hero cao đúng một màn hình | yêu cầu của chủ dự án, 20/09 |
 | Ba section tĩnh, không carousel | tham chiếu dùng carousel; ta chưa chốt làm hay không |
 
+## Widget chat được lệch luật 1 và luật bo góc (founder chốt 25/09/2026)
+
+Phạm vi: `resources/js/widget/**`, `resources/js/shared/messaging/**` (message kit dùng chung với hộp thư), trang công khai theo token (`resources/js/flows/**`). Landing, portal, survey, auth vẫn theo luật chung.
+
+| Lệch | Giá trị | Vì sao |
+|---|---|---|
+| Có `box-shadow` trên thẻ và bong bóng | thẻ `0 1px 2px rgba(16,24,40,.05), 0 4px 12px rgba(16,24,40,.05)`; bong bóng và chip `0 1px 2px rgba(16,24,40,.06–.07)`; lớp nổi (menu, lời mời) tới `0 6px 18px rgba(23,24,26,.09)` · `ta chọn` | Widget nằm trên website của khách, nền đủ loại màu; khảo sát 15 widget (`plans/260925-1556-widget-market-review/reports/`) cho thấy bóng mềm, không viền là chuẩn khách đã quen. Founder duyệt bản không viền và yêu cầu giảm bóng một nấc, chốt ở giá trị này |
+| Bo góc lớn | thẻ 20 (đuôi 6 phía người gửi), ảnh 14, nút dạng pill 20–24, ô nhập 14 · `ta chọn` | Khung chat mọi hãng đều bo lớn; bo 0/4px của nhận diện Yona làm widget lạc trên site khách |
+| Chữ đậm 600 | tiêu đề thẻ, giá, tên người trong danh sách · `ta chọn` | Font Be Vietnam Pro tự host có nét 600; giá tiền và tên cần nổi ở cỡ 14–17px |
+| Màu giảm giá | `#D92D20` trên `#FEE4E2` · `ta chọn` | Nhãn giảm phải nổi bật (founder chốt 25/09); đỏ tách khỏi màu nhấn tenant |
+
+Không lệch: tương phản chữ ≥ 4.5:1, vùng chạm ≥ 44px trên màn cảm ứng, không gradient, không glow, không viền màu một bên (founder rất không thích mẫu này).
+
 ## Vì sao một số luật tồn tại
 
 **Không `box-shadow`.** Ba bậc bề mặt đã đủ tách lớp. Bóng là cách rẻ tiền để giả
