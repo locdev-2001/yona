@@ -125,7 +125,8 @@ sudo -u postgres /www/server/pgsql/bin/psql -d postgres -v ON_ERROR_STOP=1 -c "R
 `yona_app` là owner của database nên migration tự tạo/sửa được bảng; không cần
 `ALTER DEFAULT PRIVILEGES`.
 
-Backup khi bạn thấy cần (script không tự dump):
+Sao lưu tự động do cron trên server đảm nhận, không nằm trong app. Backup tay
+khi cần thêm (ví dụ trước một migration rủi ro):
 
 ```bash
 sudo -u postgres /www/server/pgsql/bin/pg_dump -Fc yona > /www/backup/yona-$(date +%F-%H%M).dump
@@ -348,6 +349,31 @@ vì bot ghé landing cũng tạo phiên) × dung lượng trung bình một key.
 300 MB và máy còn RAM thì giữ 30 ngày, đặt `maxmemory` + `volatile-lru`; lớn hơn thì
 hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 
+### 2FA bắt buộc cho console quản trị
+
+- Super admin chưa bật 2FA bị chặn ở mọi trang của `/super_admin/*` (cùng
+  `/horizon`, `/pulse`, `/log-viewer`) trừ `/super_admin/mfa/setup` (QR + xác
+  nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
+  phần còn lại của console. Luôn bắt buộc, không có cờ tắt.
+- **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
+  `/super_admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
+  cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
+  lại 10 mã dự phòng ở nơi an toàn (chỉ hiện một lần). Làm việc này cho MỌI tài
+  khoản `SuperAdmin` đang có trước khi báo người khác đăng nhập, nếu không họ sẽ
+  bị chặn ở màn cài đặt cho tới khi tự làm xong bước trên.
+- Đăng nhập console: bước mật khẩu throttle 5 lần/phút theo cặp email+IP
+  (dùng chung cơ chế với đăng nhập agent, `App\Services\Mfa`); bước OTP throttle
+  5 lần/phút theo tài khoản (không tính IP — mật khẩu đã lộ thì kẻ tấn công chỉ
+  cần xoay IP để né throttle theo IP).
+- Mất máy xác thực và mất hết mã dự phòng: không có màn tự phục hồi, phải xoá
+  `otp_secret`, `otp_required_for_login`, `otp_backup_codes`, `consumed_timestep`
+  của tài khoản đó qua `artisan tinker` để họ đăng ký lại 2FA từ đầu.
+- Đăng nhập hộ (`Impersonate user` trên trang chi tiết user) từ bản này bắt
+  buộc nhập lý do (tối thiểu 10 ký tự) và ghi vào bảng
+  `super_admin_impersonations` (ai, hộ ai, IP, user agent, thời điểm token SSO
+  thật sự được tiêu thụ). Xem lại nhật ký ở mục "Super Admin Impersonations"
+  trên thanh điều hướng console, lọc bằng `?super_admin_id=` trên URL.
+
 ### Analytics
 
 - Script và sự kiện Plausible đi qua **chính domain app**: `GET /yv/s` (script) và
@@ -413,11 +439,48 @@ LARAVEL_BASE_URL=https://yona.vn
 BRIDGE_HTTP_HOST=127.0.0.1
 BRIDGE_HTTP_PORT=8612
 BRIDGE_ELEVATED_SECRET=
+BRIDGE_SESSION_KEY=
 ```
 
-`deploy.sh` bắt `BRIDGE_HTTP_HOST=127.0.0.1` và `LARAVEL_WEBHOOK_URL` phải là
-HTTPS. Bridge không bao giờ expose thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
+`deploy.sh` bắt `BRIDGE_HTTP_HOST=127.0.0.1`, `LARAVEL_WEBHOOK_URL` phải là
+HTTPS, và `BRIDGE_SESSION_KEY` phải có giá trị. Bridge không bao giờ expose
+thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
 để trống = không bao giờ cho phép nhóm method destructive (fail-closed).
+
+### Mã hoá at-rest kho phiên (`BRIDGE_SESSION_KEY`)
+
+Cookie trong `.sessions/c{id}.json` là toàn quyền tài khoản Zalo cá nhân của
+khách — quyền tệp `0600` (mục "Kho phiên .sessions/" phía dưới) chỉ chặn user
+khác trên cùng máy, không chặn backup/ảnh đĩa bị lộ. Từ bản này, bridge mã hoá
+AES-256-GCM mọi tệp ghi vào `.sessions/` khi có `BRIDGE_SESSION_KEY`:
+
+```bash
+# Sinh khoá 32 byte MỘT LẦN, lưu như secret khác (không commit, không log):
+openssl rand -base64 32
+```
+
+Dán giá trị vào `services/zalo-bridge/.env`:
+
+```dotenv
+BRIDGE_SESSION_KEY=<chuoi-openssl-vua-sinh>
+```
+
+- **Thiếu khoá CHẶN boot ở production**: bridge từ chối khởi động thay vì ghi
+  phiên dạng plaintext. Cũng chặn boot nếu khoá **sai định dạng** (đặt rồi
+  nhưng không phải 32 byte base64/hex), hoặc nếu có tệp phiên đã mã hoá trên
+  đĩa mà khoá hiện tại/cũ không giải mã được — chặn ở đây thay vì âm thầm đánh
+  dấu từng tenant `session_lost` một.
+- **Di trú tệp cũ**: không cần thao tác tay. Tệp phiên ghi từ trước (plaintext)
+  vẫn đọc được bình thường; ngay lần đọc đó (khôi phục phiên lúc bridge khởi
+  động, hoặc lần ghi kế tiếp) bridge tự ghi đè lại dạng đã mã hoá.
+- **Xoay khoá**: đặt khoá mới vào `BRIDGE_SESSION_KEY`, khoá cũ chuyển sang
+  `BRIDGE_SESSION_KEY_PREVIOUS` rồi restart. Bridge mã hoá tệp MỚI bằng khoá
+  mới, giải mã tệp cũ qua khoá cũ, và **ghi đè lại ngay bằng khoá mới** ở lần
+  đọc đó. Sau một chu kỳ restart (mọi phiên đã được đọc lại ít nhất một lần),
+  có thể bỏ `BRIDGE_SESSION_KEY_PREVIOUS` — phiên nào chưa được đọc lại lúc đó
+  vẫn giải mã hỏng nếu bỏ khoá cũ quá sớm.
+- Kiểm tra đã mã hoá: `cat services/zalo-bridge/.sessions/c<id>.json` phải ra
+  JSON `{"v":1,"iv":"...","tag":"...","data":"..."}`, không phải cookie thô.
 
 ### Sống sót qua reboot
 
@@ -429,6 +492,17 @@ Nếu máy đã có unit `pm2-*` của user khác, script cảnh báo — hai da
 dựng bridge là chạy trùng.
 
 Kiểm tra: `systemctl is-enabled pm2-root`.
+
+### Hạn mức phiên đồng thời
+
+Một process bridge giữ phiên WebSocket Zalo của **mọi** tenant trong RAM cùng
+lúc. `session-cap.mjs` cố định `MAX_SESSIONS = 50` (chưa có dữ liệu RAM/phiên
+thật để đưa thành biến cấu hình). Vượt hạn mức: `POST /auth/qr/start` trả `429
+{code: "session_cap_reached"}` (dịch tiếng Việt ở `lang/vi/inbox_mgmt.php`).
+Phiên đã kết nối từ trước không bị chặn — chỉ chặn mở phiên QR MỚI.
+
+Kiểm tra: `curl -s -H "X-Bridge-UI-Secret: $BRIDGE_UI_SECRET" http://127.0.0.1:8612/health`
+trả khối `bridge: {active_sessions, max_sessions, rss_bytes}`.
 
 ### Gửi video dạng video gốc: ffmpeg + ffprobe
 
@@ -835,8 +909,8 @@ Cả ba **chặn sau guard `super_admin`** (`auth:super_admin`), khách lạ b�
 
 Lưu ý vận hành:
 
-- **Horizon chỉ hiển thị, không cảnh báo.** Worker chết vẫn phải có thứ khác báo
-  (issue #38).
+- **Horizon chỉ hiển thị — cảnh báo chủ động nằm ở `monitor:check` và hai
+  listener JobFailed/LongWaitDetected** (mục 13, "Cảnh báo vận hành").
 - `horizon:snapshot` chạy 5 phút/lần qua scheduler; thiếu nó thì tab Metrics
   trống.
 - **Pulse ghi thẳng vào PostgreSQL dùng chung với dữ liệu khách.** Recorder bắn
@@ -1029,6 +1103,30 @@ php artisan access-tokens:prune-orphans --dry-run
 
 Lệnh chỉ xoá token mà bản ghi chủ không còn; loại chủ không nhận ra thì bỏ qua và
 in cảnh báo. Chạy lại bao nhiêu lần cũng được.
+
+---
+
+### Dọn liên hệ nháp rỗng của widget website
+
+Trước bản dựng khách LAZY (chỉ tạo contact + contact_inbox ở hành động thật đầu
+tiên), mỗi lần tải trang có widget đều đẻ một "liên hệ nháp" dù khách không làm
+gì. Dọn một lần các hồ sơ đó — chỉ xoá contact_inbox của inbox website CHƯA có
+hội thoại và CHƯA được khách nhập email/phone/identifier/custom attribute nào;
+contact đi kèm chỉ bị xoá nếu nó không còn gắn với contact_inbox nào khác:
+
+```bash
+cd /www/wwwroot/yona.vn
+# Đếm trước, không xoá gì
+php artisan widget:prune-empty-contacts --dry-run
+# Xoá thật (theo lô, an toàn chạy lại nhiều lần)
+php artisan widget:prune-empty-contacts
+# Chạy lại phải ra 0
+php artisan widget:prune-empty-contacts --dry-run
+```
+
+Nếu một tab khách đang mở đúng lúc chạy lệnh và hồ sơ của nó bị xoá, widget sẽ tự
+dựng lại contact_inbox ở hành động thật kế tiếp nhưng KHÔNG tự nối lại kênh
+realtime cho tới khi tải lại trang — chấp nhận được vì đây là lệnh dọn một lần.
 
 ---
 
@@ -1392,6 +1490,45 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 Đọc qua giao diện: `/log-viewer` (chỉ super admin, chỉ `storage/logs`, không cho
 xoá file). Qua CLI: `php artisan pail`.
 
+### Cảnh báo vận hành
+
+`App\Support\Alerts\OpsAlerter` là kênh cảnh báo duy nhất: gửi Telegram khi có
+`ALERT_TELEGRAM_BOT_TOKEN` + `ALERT_TELEGRAM_CHAT_ID` (`.env`), rơi về ghi log
+(`storage/logs`) khi chưa cấu hình. Tạo bot bằng
+[@BotFather](https://t.me/BotFather), lấy chat id bằng cách nhắn bot rồi gọi
+`https://api.telegram.org/bot<token>/getUpdates`.
+
+**Chỉ id, mã lỗi, số đếm — không bao giờ số điện thoại hay nội dung tin nhắn
+khách** đi vào cảnh báo. Đây là bất biến khi thêm điểm cảnh báo mới, không phải
+gợi ý.
+
+Dedup: một chữ ký (job lỗi = lớp job + lớp exception, KHÔNG phải nội dung
+message vì message mang id/timestamp riêng mỗi lần; Horizon chờ lâu =
+connection + queue; trạng thái tiến trình = tên tiến trình) chỉ gửi tối đa 1
+tin/15 phút. Một cơn bão lỗi (vd 20 job cùng loại lỗi liên tiếp) ra đúng một
+tin Telegram; số lần bị gộp trong cửa sổ trước hiện ở tin kế tiếp sau khi cửa
+sổ đó hết, không sửa lại tin Telegram cũ.
+
+Các điểm cảnh báo:
+
+| Sự kiện | Nơi xử lý | Ghi chú |
+|---|---|---|
+| Job lỗi hẳn (`JobFailed`) | `App\Listeners\Alerts\AlertOnJobFailure` | Gộp theo lớp job + lớp exception; tin chỉ có tên lớp, id job, tên hàng đợi |
+| Hàng đợi chờ quá lâu (`LongWaitDetected`) | `App\Listeners\Alerts\AlertOnLongWaitDetected` | Ngưỡng ở `config/horizon.php` (`waits`), có `redis:critical` riêng cho tier Zalo/webhook |
+| Kênh Zalo mất phiên đăng nhập | `App\Jobs\Zalo\ZaloHealthSweepJob` | Chỉ id kênh + mã lý do, không có tên/số điện thoại khách. Bỏ qua khi lý do là `bridge_down` — `monitor:check` đã báo bridge chết, một alert mỗi kênh chỉ là bão trùng lặp |
+| Horizon / Reverb / zalo-bridge chết | `php artisan monitor:check` (mỗi phút, `routes/console.php`) | Chỉ báo khi ĐỔI trạng thái (down→up/up→down), không phải mỗi phút |
+
+**`monitor:check` chết theo cùng máy chủ nếu cả server sập** — nó không thay
+được một external uptime monitor. Việc founder phải tự làm, chưa có trong
+code:
+
+- **External uptime monitor** (UptimeRobot, BetterStack, …) bắn HTTP GET vào
+  `https://yona.vn/up` mỗi vài phút — bắt được cả trường hợp scheduler/cron
+  chết (lúc đó `monitor:check` cũng chết theo, im lặng luôn).
+- **Sentry** (hoặc tương đương) cho exception tracking có context đầy đủ
+  (stack trace, breadcrumb) — `OpsAlerter` chỉ báo "có lỗi", không thay được
+  công cụ debug lỗi.
+
 ### Sự cố thường gặp
 
 | Triệu chứng | Nguyên nhân hay gặp |
@@ -1412,6 +1549,7 @@ xoá file). Qua CLI: `php artisan pail`.
 | Mọi người bị đăng xuất sau mỗi lần deploy | Phiên và cache chung một DB Redis (`REDIS_DB` = `REDIS_CACHE_DB` hoặc `SESSION_CONNECTION=cache`) — mục 5, Phiên đăng nhập |
 | Danh sách phiên hiện IP Cloudflare, khách bị khoá đăng nhập vì lượt sai của người khác | Config cache cũ chưa có `config/trustedproxy.php`, hoặc IP edge nằm ngoài dải đã ghi → `php artisan trusted-proxies:refresh` ở máy dev, commit, deploy (mục 7, IP thật của khách) |
 | Plausible không ghi lượt xem | `/yv/s` phải 200 JavaScript, `/yv/e` phải 202 và không có `x-plausible-dropped`; có header đó thì kiểm `PLAUSIBLE_CLIENT_IP_HEADER` (mục 5, Analytics) |
+| Không thấy cảnh báo Telegram dù có sự cố thật | `ALERT_TELEGRAM_BOT_TOKEN`/`ALERT_TELEGRAM_CHAT_ID` trống → chỉ rơi về `storage/logs`; kiểm `.env` rồi `php artisan config:clear` (mục 13, Cảnh báo vận hành) |
 
 ### Tính lại loại tệp media lưu nhầm là tệp
 

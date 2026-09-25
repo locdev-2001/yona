@@ -236,6 +236,8 @@ validate_zalo_environment() {
         || fail 'BRIDGE_HTTP_HOST phải là 127.0.0.1 trên production.'
     [[ "$(bridge_env_value LARAVEL_WEBHOOK_URL)" == https://* ]] \
         || fail 'LARAVEL_WEBHOOK_URL của bridge phải dùng HTTPS.'
+    [[ -n "$(bridge_env_value BRIDGE_SESSION_KEY)" ]] \
+        || fail 'Thiếu BRIDGE_SESSION_KEY trong services/zalo-bridge/.env — bridge sẽ từ chối boot vì phiên Zalo sẽ ghi PLAINTEXT xuống đĩa.'
 }
 
 require_command() {

@@ -131,18 +131,17 @@ it('hội thoại nặng: sự kiện thông báo, đang gõ, cập nhật hội
     $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
 
     expectAllWithinReverbLimit($jobs);
-    // Chứng minh ca này đúng là ca đã rơi ở ngưỡng cũ 10 000 byte.
-    expect(reverbRequestBytes($jobs[0]))->toBeGreaterThan(10_000);
+    // Payload rút gọn giữ cả ca nặng dưới ngưỡng cũ 10 000 byte.
+    expect(reverbRequestBytes($jobs[0]))->toBeLessThan(10_000);
 });
 
-it('tin chữ dài 20 000 ký tự tiếng Việt: mọi sự kiện lọt max_request_size dù thông báo đã quá 128 KB', function () {
+it('tin chữ dài 20 000 ký tự tiếng Việt: mọi sự kiện lọt max_request_size', function () {
     $message = reverbIncomingMessage($this->conversation, reverbSampleText(20_000));
 
     $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
 
     expectAllWithinReverbLimit($jobs);
-    // Tin cuối lặp ba lần trong thông báo: ca này đã rơi ở ngưỡng 128 KB trước đó.
-    expect(reverbRequestBytes($jobs[0]))->toBeGreaterThan(131_072);
+    expect(reverbRequestBytes($jobs[0]))->toBeLessThan(10_000);
 });
 
 it('tin dài nhất được lưu (150 000 ký tự tiếng Việt): mọi sự kiện vẫn lọt max_request_size', function () {
@@ -151,6 +150,5 @@ it('tin dài nhất được lưu (150 000 ký tự tiếng Việt): mọi sự 
     $jobs = reverbJobsFor($this->conversation, $message, $this->agent);
 
     expectAllWithinReverbLimit($jobs);
-    // Ca này đã rơi ở ngưỡng 512 KB trước đó.
-    expect(reverbRequestBytes($jobs[0]))->toBeGreaterThan(524_288);
+    expect(reverbRequestBytes($jobs[0]))->toBeLessThan(10_000);
 });

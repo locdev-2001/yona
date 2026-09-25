@@ -653,6 +653,7 @@ return [
             'NO_QR_SESSION' => 'Chưa có phiên quét mã QR nào đang mở. Hãy mở phiên mới.',
             'ACCOUNT_MISMATCH' => 'Mã QR vừa quét thuộc tài khoản Zalo khác. Hộp thư này đang gắn tài khoản {name}.',
             'ACCOUNT_IN_USE' => 'Tài khoản Zalo đó đã gắn vào hộp thư "{inbox}". Một tài khoản chỉ phục vụ được một hộp thư.',
+            'SESSION_CAP_REACHED' => 'Máy chủ Zalo đang phục vụ tối đa {max} tài khoản cùng lúc. Vui lòng thử lại sau ít phút.',
         ],
     ],
     'REAUTH' => 'Ủy quyền lại',

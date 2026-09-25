@@ -6,16 +6,18 @@ use App\Models\Conversation;
 use Tests\Support\WidgetSession;
 
 // Vòng đời phiên khách của widget qua nhiều lần tải trang: token nhận ở /config đầu tiên
-// là thứ duy nhất trình duyệt giữ lại. Gửi lại token đó phải ra đúng khách và đúng lịch sử.
+// là thứ duy nhất trình duyệt giữ lại. /config không ghi DB — contact/contact_inbox chỉ
+// dựng khi khách gửi tin đầu tiên; gửi lại token đó (trước hay sau khi có tin) phải ra
+// đúng khách và đúng lịch sử.
 
-function startVisitor(WidgetSession $session): array
+function startVisitor(WidgetSession $session): string
 {
-    $config = test()->postJson($session->url('config'))->assertOk()->json();
+    return test()->postJson($session->url('config'))->assertOk()->json('website_channel_config.auth_token');
+}
 
-    return [
-        'token' => $config['website_channel_config']['auth_token'],
-        'contactId' => $config['contact']['id'],
-    ];
+function contactIdFor(WidgetSession $session, string $token): ?int
+{
+    return test()->postJson($session->url('config'), [], ['X-Auth-Token' => $token])->assertOk()->json('contact.id');
 }
 
 function sendVisitorMessage(WidgetSession $session, string $token, string $content): void
@@ -27,16 +29,31 @@ function sendVisitorMessage(WidgetSession $session, string $token, string $conte
     )->assertOk();
 }
 
+it('does not create a contact until the visitor sends the first message', function () {
+    $session = WidgetSession::make();
+    $before = Contact::query()->count();
+
+    $token = startVisitor($session);
+    expect(contactIdFor($session, $token))->toBeNull()
+        ->and(Contact::query()->count())->toBe($before);
+
+    sendVisitorMessage($session, $token, 'Xin chào, còn hàng không?');
+
+    expect(contactIdFor($session, $token))->not->toBeNull()
+        ->and(Contact::query()->count())->toBe($before + 1);
+});
+
 it('returns the same visitor and the earlier messages when the page reloads with the stored token', function () {
     $session = WidgetSession::make();
-    $visitor = startVisitor($session);
-    sendVisitorMessage($session, $visitor['token'], 'Xin chào, còn hàng không?');
+    $token = startVisitor($session);
+    sendVisitorMessage($session, $token, 'Xin chào, còn hàng không?');
+    $contactId = contactIdFor($session, $token);
     $contactsBeforeReload = Contact::query()->count();
     $contactInboxesBeforeReload = ContactInbox::query()->count();
 
-    $reloaded = $this->postJson($session->url('config'), [], ['X-Auth-Token' => $visitor['token']])->assertOk();
+    $reloaded = $this->postJson($session->url('config'), [], ['X-Auth-Token' => $token])->assertOk();
 
-    expect($reloaded->json('contact.id'))->toBe($visitor['contactId'])
+    expect($reloaded->json('contact.id'))->toBe($contactId)
         ->and(Contact::query()->count())->toBe($contactsBeforeReload)
         ->and(ContactInbox::query()->count())->toBe($contactInboxesBeforeReload);
 
@@ -49,11 +66,11 @@ it('returns the same visitor and the earlier messages when the page reloads with
 
 it('still shows the history of a resolved conversation after the page reloads', function () {
     $session = WidgetSession::make();
-    $visitor = startVisitor($session);
-    sendVisitorMessage($session, $visitor['token'], 'Cảm ơn shop');
+    $token = startVisitor($session);
+    sendVisitorMessage($session, $token, 'Cảm ơn shop');
     Conversation::query()->where('inbox_id', $session->inbox->id)->update(['status' => Conversation::STATUS_RESOLVED]);
 
-    $messages = $this->getJson($session->url('messages'), ['X-Auth-Token' => $visitor['token']])
+    $messages = $this->getJson($session->url('messages'), ['X-Auth-Token' => $token])
         ->assertOk()
         ->json('payload');
 
@@ -62,16 +79,19 @@ it('still shows the history of a resolved conversation after the page reloads', 
 
 it('starts a new visitor without the earlier messages when the token is dropped', function () {
     $session = WidgetSession::make();
-    $visitor = startVisitor($session);
-    sendVisitorMessage($session, $visitor['token'], 'Tin của khách cũ');
+    $token = startVisitor($session);
+    sendVisitorMessage($session, $token, 'Tin của khách cũ');
 
-    $freshVisitor = startVisitor($session);
+    $freshToken = startVisitor($session);
+    sendVisitorMessage($session, $freshToken, 'Tin của khách mới');
 
-    expect($freshVisitor['contactId'])->not->toBe($visitor['contactId']);
+    expect(contactIdFor($session, $freshToken))->not->toBe(contactIdFor($session, $token));
 
-    $messages = $this->getJson($session->url('messages'), ['X-Auth-Token' => $freshVisitor['token']])
+    $messages = $this->getJson($session->url('messages'), ['X-Auth-Token' => $freshToken])
         ->assertOk()
         ->json('payload');
 
-    expect($messages)->toBe([]);
+    expect(collect($messages)->pluck('content'))
+        ->toContain('Tin của khách mới')
+        ->not->toContain('Tin của khách cũ');
 });

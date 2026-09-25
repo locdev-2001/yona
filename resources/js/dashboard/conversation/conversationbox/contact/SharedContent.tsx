@@ -14,8 +14,8 @@ import { fetchSharedAttachments, fetchSharedLinks } from '../../api';
 import type { LinkMessage } from '../../api';
 import { useConversation } from '../../ConversationContext';
 import { setContactPanelOverlayOpen } from '../../contactPanelVisibility';
-import { SHARED_CONTENT_TABS, linksOfMessages } from './sharedContent';
-import type { SharedContentTab } from './sharedContent';
+import { SHARED_CONTENT_TABS, linksOfMessages } from './sharedContentLinks';
+import type { SharedContentTab } from './sharedContentLinks';
 
 interface PagedItems<T> {
     items: T[];

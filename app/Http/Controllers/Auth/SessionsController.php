@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Auth\Concerns\CompletesSignIn;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserSessionResource;
+use App\Models\SuperAdminImpersonation;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\Mfa\AuthenticationService;
@@ -97,15 +98,15 @@ class SessionsController extends Controller
     {
         $token = (string) $request->input('sso_auth_token');
         $user = User::fromEmail($request->input('email'));
+        $tokenType = $user?->redeemSsoAuthToken($token);
 
-        if ($user === null || ! $user->validSsoAuthToken($token)) {
+        if ($user === null || $tokenType === null) {
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        $impersonation = $user->ssoAuthTokenIsImpersonation($token);
-        $user->invalidateSsoAuthToken($token);
-
-        if (! $impersonation) {
+        if ($tokenType === 'impersonation') {
+            SuperAdminImpersonation::markUsedByTokenHash(hash('sha256', $token));
+        } else {
             $limitResponse = $this->enforceSessionLimit($request, $user);
             if ($limitResponse) {
                 return $limitResponse;

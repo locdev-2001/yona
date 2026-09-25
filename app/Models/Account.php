@@ -131,6 +131,11 @@ class Account extends Model
         return $this->hasMany(DataImport::class);
     }
 
+    public function inviteLinks(): HasMany
+    {
+        return $this->hasMany(AccountInviteLink::class);
+    }
+
     public function labels(): HasMany
     {
         return $this->hasMany(Label::class);

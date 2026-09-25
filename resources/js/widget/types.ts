@@ -85,12 +85,12 @@ export interface WebsiteChannelConfigPayload {
 }
 
 export interface WidgetContact {
-    id: number;
+    id: number | null;
     name?: string | null;
     email?: string | null;
     phone_number?: string | null;
     identifier?: string | null;
-    pubsub_token: string;
+    pubsub_token: string | null;
     has_email?: boolean;
     has_name?: boolean;
     has_phone_number?: boolean;

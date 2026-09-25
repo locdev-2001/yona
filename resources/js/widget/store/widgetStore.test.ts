@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WidgetApiError } from '../api/client';
-import { MESSAGE_TYPE } from '../helpers/constants';
+import { MESSAGE_TYPE, WIDGET_BUS_EVENTS } from '../helpers/constants';
 import type { WidgetMessage } from '../types';
 
 const apiMock = vi.hoisted(() => ({
@@ -10,6 +10,10 @@ const apiMock = vi.hoisted(() => ({
     recallMessage: vi.fn(),
     sendSticker: vi.fn(),
     sendMessage: vi.fn(),
+    fetchContact: vi.fn(),
+    setContactCustomAttributes: vi.fn(),
+    fetchMessages: vi.fn(),
+    fetchConversationAttributes: vi.fn(),
 }));
 
 vi.mock('../api/widget', () => ({
@@ -21,8 +25,13 @@ vi.mock('../api/widget', () => ({
     recallMessage: apiMock.recallMessage,
     sendSticker: apiMock.sendSticker,
     sendMessage: apiMock.sendMessage,
+    fetchContact: apiMock.fetchContact,
+    setContactCustomAttributes: apiMock.setContactCustomAttributes,
+    fetchMessages: apiMock.fetchMessages,
+    fetchConversationAttributes: apiMock.fetchConversationAttributes,
 }));
 
+const { emitter } = await import('shared/helpers/emitter');
 const { widgetStore, splitProgressAcrossFiles } = await import('./widgetStore');
 
 const serverMessage = (overrides: Partial<WidgetMessage> = {}): WidgetMessage => ({
@@ -46,6 +55,15 @@ beforeEach(() => {
     apiMock.recallMessage.mockReset();
     apiMock.sendSticker.mockReset();
     apiMock.sendMessage.mockReset();
+    apiMock.fetchContact.mockReset();
+    apiMock.setContactCustomAttributes.mockReset();
+    apiMock.fetchMessages.mockReset().mockResolvedValue({ payload: [] });
+    apiMock.fetchConversationAttributes.mockReset().mockResolvedValue({});
+    widgetStore.setChannelConfig(
+        {} as never,
+        {},
+        { id: null, pubsub_token: null, has_email: false, has_name: false, has_phone_number: false },
+    );
 });
 
 afterEach(() => vi.useRealTimers());
@@ -320,5 +338,70 @@ describe('retryMessage', () => {
 
         expect(widgetStore.retryableFailureOf(failedId)).toBeUndefined();
         expect(apiMock.sendMessage).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('setContactCustomAttributes trên phiên còn treo', () => {
+    it('chưa có contact thật thì giữ tại chỗ, KHÔNG gọi API (không được đẻ contact chỉ vì gọi hàm này)', async () => {
+        await widgetStore.setContactCustomAttributes({ plan: 'pro' });
+
+        expect(apiMock.setContactCustomAttributes).not.toHaveBeenCalled();
+        expect(widgetStore.getState().pendingContactCustomAttributes).toStrictEqual({ plan: 'pro' });
+    });
+
+    it('đã có contact thật thì gửi thẳng, không giữ lại', async () => {
+        widgetStore.setChannelConfig({} as never, {}, { id: 9, pubsub_token: 'tok', has_email: false, has_name: false, has_phone_number: false });
+        apiMock.setContactCustomAttributes.mockResolvedValueOnce({});
+
+        await widgetStore.setContactCustomAttributes({ plan: 'pro' });
+
+        expect(apiMock.setContactCustomAttributes).toHaveBeenCalledWith({ plan: 'pro' });
+        expect(widgetStore.getState().pendingContactCustomAttributes).toStrictEqual({});
+    });
+});
+
+describe('reconnectRealtimeIfPending', () => {
+    it('không làm gì khi đã có pubsub_token thật', async () => {
+        widgetStore.setChannelConfig({} as never, {}, { id: 9, pubsub_token: 'tok', has_email: false, has_name: false, has_phone_number: false });
+
+        await widgetStore.reconnectRealtimeIfPending();
+
+        expect(apiMock.fetchContact).not.toHaveBeenCalled();
+    });
+
+    it('phiên treo có pubsub_token thật thì nối realtime, bù tin/trạng thái và gửi nốt custom attributes đã xếp hàng', async () => {
+        await widgetStore.setContactCustomAttributes({ plan: 'pro' });
+        apiMock.fetchContact.mockResolvedValueOnce({ id: 9, pubsub_token: 'tok-that' });
+        apiMock.setContactCustomAttributes.mockResolvedValueOnce({});
+        const tokens: unknown[] = [];
+        const onTokenReady = (payload: unknown) => tokens.push(payload);
+        emitter.on(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, onTokenReady);
+
+        await widgetStore.reconnectRealtimeIfPending();
+        emitter.off(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, onTokenReady);
+
+        expect(widgetStore.getState().contact?.pubsub_token).toBe('tok-that');
+        expect(tokens).toStrictEqual(['tok-that']);
+        expect(apiMock.fetchMessages).toHaveBeenCalledTimes(1);
+        expect(apiMock.fetchConversationAttributes).toHaveBeenCalledTimes(1);
+        expect(apiMock.setContactCustomAttributes).toHaveBeenCalledWith({ plan: 'pro' });
+        expect(widgetStore.getState().pendingContactCustomAttributes).toStrictEqual({});
+    });
+
+    it('vẫn còn treo (chưa có pubsub_token thật) thì không nối, không bù gì', async () => {
+        apiMock.fetchContact.mockResolvedValueOnce({ id: null, pubsub_token: null });
+
+        await widgetStore.reconnectRealtimeIfPending();
+
+        expect(widgetStore.getState().contact?.pubsub_token).toBeFalsy();
+        expect(apiMock.fetchMessages).not.toHaveBeenCalled();
+    });
+
+    it('gọi liền nhau chỉ gửi một yêu cầu /contact, không nối đúp', async () => {
+        apiMock.fetchContact.mockResolvedValue({ id: 9, pubsub_token: 'tok-that' });
+
+        await Promise.all([widgetStore.reconnectRealtimeIfPending(), widgetStore.reconnectRealtimeIfPending()]);
+
+        expect(apiMock.fetchContact).toHaveBeenCalledTimes(1);
     });
 });

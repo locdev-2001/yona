@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 // Các màn Administrate của console quản trị.
 beforeEach(function () {
-    $this->superAdmin = SuperAdmin::factory()->create();
+    $this->superAdmin = SuperAdmin::factory()->withMfa()->create();
     $this->actingAs($this->superAdmin, 'super_admin');
 });
 
@@ -206,7 +206,9 @@ it('trang dashboard trả số liệu qua JSON', function () {
 it('impersonate chuyển sang link sso', function () {
     $user = User::factory()->create();
 
-    $response = $this->get("/super_admin/users/{$user->id}/impersonate");
+    $response = $this->post("/super_admin/users/{$user->id}/impersonate", [
+        'reason' => 'kiểm tra sự cố theo yêu cầu khách hàng',
+    ]);
 
     expect($response->headers->get('Location'))->toContain('impersonation=true');
 });

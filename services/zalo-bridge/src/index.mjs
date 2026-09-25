@@ -47,7 +47,9 @@ import {
 import { maskUid, rawPayloadLogEnabled, rawPayloadLogWarning, shortToken } from './redact.mjs';
 import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { safeEqual } from './secret-compare.mjs';
-import { copySessionFile, ensureSessionDir, hardenSessionStore, writeSessionFile } from './session-store-fs.mjs';
+import { copySessionFile, ensureSessionDir, hardenSessionStore, readSessionFile, writeSessionFile } from './session-store-fs.mjs';
+import { decryptWithFallback, isEncryptedEnvelope, loadSessionKeys } from './session-crypto.mjs';
+import { MAX_SESSIONS, countActiveSlots, sessionCapExceeded } from './session-cap.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
     buildFriendRequestPayload,
@@ -253,7 +255,7 @@ async function readSlotMetaForKey(key) {
         return null;
     }
     try {
-        const raw = await fs.readFile(p, 'utf8');
+        const raw = await readSessionFile(p);
         return JSON.parse(raw);
     } catch {
         return null;
@@ -2117,7 +2119,7 @@ async function tryLoginWithSavedSession(connectionId) {
     }
     const slot = getSlot(key);
     try {
-        const raw = await fs.readFile(cp, 'utf8');
+        const raw = await readSessionFile(cp);
         const creds = JSON.parse(raw);
         if (!creds?.cookie || !creds?.imei || !creds?.userAgent) {
             return false;
@@ -2347,6 +2349,12 @@ function buildExpress() {
             outbox: outbox.stats(),
             // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
             relay_counters: relayEventCounters,
+            // Hạn mức phiên đồng thời của CẢ process (không riêng slot này) — xem session-cap.mjs.
+            bridge: {
+                active_sessions: countActiveSlots(slots),
+                max_sessions: MAX_SESSIONS,
+                rss_bytes: process.memoryUsage().rss,
+            },
             // Lô 1: đo sức khoẻ process — rớt/nối lại, handler ném lỗi, frame hỏng.
             resilience: {
                 ...resilience.stats(),
@@ -2391,6 +2399,15 @@ function buildExpress() {
         }
         if (!LARAVEL_WEBHOOK_URL) {
             return res.status(400).json({ ok: false, message: 'bridge_missing_laravel_webhook_url' });
+        }
+        // Điểm duy nhất tạo phiên Zalo THẬT MỚI — chặn hạn mức ở đây trước khi loginQR().
+        if (sessionCapExceeded(slots, MAX_SESSIONS)) {
+            return res.status(429).json({
+                ok: false,
+                code: 'session_cap_reached',
+                message: 'session_cap_reached',
+                max_sessions: MAX_SESSIONS,
+            });
         }
 
         slot.botId = botId;
@@ -2668,6 +2685,73 @@ async function cleanupStaleQrSessionFiles() {
     }
 }
 
+/**
+ * BRIDGE_SESSION_KEY sai định dạng, THIẾU ở production, hoặc không giải mã
+ * được tệp phiên đã mã hoá đang có trên đĩa đều chặn boot — không âm thầm
+ * chạy tiếp rồi để `tryLoginWithSavedSession` báo từng phiên một là
+ * `session_lost` (khách phải quét lại QR dù cookie vẫn còn sống, chỉ là bridge
+ * không đọc được).
+ */
+async function verifySessionStoreOrExit() {
+    let keys;
+    try {
+        keys = loadSessionKeys();
+    } catch (e) {
+        console.error(`[bridge] FATAL: ${e.message}. Refusing to start.`);
+        process.exit(1);
+    }
+
+    if (!keys.current && process.env.NODE_ENV === 'production') {
+        console.error(
+            '[bridge] FATAL: thieu BRIDGE_SESSION_KEY trong production — tu choi boot de khong ghi phien Zalo ' +
+            '(toan quyen tai khoan khach) PLAINTEXT xuong dia. Dat BRIDGE_SESSION_KEY (openssl rand -base64 32) roi restart.'
+        );
+        process.exit(1);
+    }
+
+    if (!keys.current && !keys.previous) {
+        return;
+    }
+
+    let files = [];
+    try {
+        files = readdirSync(SESSIONS_DIR);
+    } catch {
+        return;
+    }
+
+    const undecryptable = [];
+    for (const file of files) {
+        if (!/^(c\d+|qt_[0-9a-f]+)\.json$/.test(file)) {
+            continue;
+        }
+        const filePath = path.join(SESSIONS_DIR, file);
+        let parsed;
+        try {
+            parsed = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        } catch {
+            continue;
+        }
+        if (!isEncryptedEnvelope(parsed)) {
+            continue;
+        }
+        try {
+            decryptWithFallback(parsed, keys);
+        } catch {
+            undecryptable.push(file);
+        }
+    }
+
+    if (undecryptable.length > 0) {
+        console.error(
+            `[bridge] FATAL: ${undecryptable.length} tep phien da ma hoa khong giai ma duoc voi BRIDGE_SESSION_KEY ` +
+            `hien tai (${undecryptable.join(', ')}). Tu choi boot thay vi danh dau moi tenant session_lost — kiem tra ` +
+            'lai BRIDGE_SESSION_KEY/BRIDGE_SESSION_KEY_PREVIOUS truoc khi restart.'
+        );
+        process.exit(1);
+    }
+}
+
 async function boot() {
     // 1.2: chốt chặn cuối — một exception lạc không được giết process đang giữ
     // phiên Zalo của MỌI tenant. Cài TRƯỚC mọi thứ khác.
@@ -2686,6 +2770,8 @@ async function boot() {
             process.exit(1);
         }
     }
+
+    await verifySessionStoreOrExit();
 
     // 8.1: tệp phiên do bản bridge cũ ghi ra vẫn 664 — siết về 600 trước khi dùng.
     const hardened = await hardenSessionStore(SESSIONS_DIR);

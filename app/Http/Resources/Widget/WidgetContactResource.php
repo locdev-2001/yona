@@ -20,9 +20,9 @@ final class WidgetContactResource
     }
 
     /** @return array<string, mixed> */
-    public static function show(Contact $contact): array
+    public static function show(Contact $contact, ?string $pubsubToken): array
     {
-        return [...self::identityFlags($contact), 'identifier' => $contact->identifier];
+        return [...self::identityFlags($contact), 'identifier' => $contact->identifier, 'pubsub_token' => $pubsubToken];
     }
 
     /** @return array<string, mixed> */

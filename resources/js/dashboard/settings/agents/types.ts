@@ -13,3 +13,19 @@ export interface Agent {
     role: 'agent' | 'administrator';
     thumbnail: string;
 }
+
+export interface InviteLink {
+    id: number;
+    role: 'agent' | 'administrator';
+    status: 'active' | 'revoked' | 'expired' | 'exhausted';
+    expires_at: string;
+    max_uses: number | null;
+    use_count: number;
+    revoked_at: string | null;
+    created_by_name: string | null;
+}
+
+export interface CreatedInviteLink {
+    link: InviteLink;
+    url: string;
+}

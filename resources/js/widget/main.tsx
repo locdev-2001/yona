@@ -1,7 +1,10 @@
 import { createRoot } from 'react-dom/client';
 
+import { emitter } from 'shared/helpers/emitter';
+
 import { fetchConfig } from './api/widget';
 import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
+import { WIDGET_BUS_EVENTS } from './helpers/constants';
 import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
 import { isLightAccent } from 'shared/helpers/accentContrast';
 import { widgetConnector } from './realtime/WidgetConnector';
@@ -75,10 +78,14 @@ async function bootstrap() {
         document.documentElement.dataset.accentTone = isLightAccent(channelConfig.widgetColor) ? 'light' : 'dark';
 
         await widgetStore.getConversationAttributes();
-        widgetConnector.connect(contact.pubsub_token);
+        if (contact.pubsub_token) widgetConnector.connect(contact.pubsub_token);
     } catch {
         // Token sai/inbox không tồn tại: giữ màn trống như bản gốc (server trả 404).
     }
 }
+
+emitter.on(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, payload => {
+    if (typeof payload === 'string' && payload) widgetConnector.connect(payload);
+});
 
 void bootstrap();

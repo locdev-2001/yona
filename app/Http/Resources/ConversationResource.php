@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -99,14 +100,7 @@ class ConversationResource extends JsonResource
         /** @var Conversation $conversation */
         $conversation = $this->resource;
 
-        // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
-        // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
-        $lastMessage = $conversation->relationLoaded('latestMessage')
-            ? $conversation->latestMessage
-            : $conversation->messagesNewestFirst()->first();
-        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
-            ? $conversation->latestNonActivityMessage
-            : $conversation->lastNonActivityMessage();
+        [$lastMessage, $lastNonActivityMessage] = self::resolveLastMessages($conversation);
 
         return [
             'meta' => $this->meta($conversation),
@@ -140,14 +134,17 @@ class ConversationResource extends JsonResource
         ];
     }
 
-    // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder
-    // cộng thêm channel + contact_inbox (presenter serialize cả record).
+    // Conversations::EventDataPresenter#push_data — cùng shape với jbuilder cộng
+    // thêm channel + contact_inbox. Nguồn ĐẦY ĐỦ dùng chung cho webhook, REST
+    // (NotificationResource) và Reverb — bản rút gọn cho riêng Reverb nằm ở
+    // RealtimePayload::conversation().
     public static function pushEventData(Conversation $conversation): array
     {
         $contactInbox = $conversation->contactInbox;
+        $data = (new self($conversation))->toArray(request());
 
         return [
-            ...(new self($conversation))->toArray(request()),
+            ...$data,
             'channel' => $conversation->inbox->channel_type,
             'contact_inbox' => $contactInbox === null ? null : [
                 'id' => $contactInbox->id,
@@ -160,6 +157,21 @@ class ConversationResource extends JsonResource
                 'updated_at' => $contactInbox->updated_at?->toISOString(),
             ],
         ];
+    }
+
+    /** @return array{0: ?Message, 1: ?Message} */
+    private static function resolveLastMessages(Conversation $conversation): array
+    {
+        // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
+        // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
+        $lastMessage = $conversation->relationLoaded('latestMessage')
+            ? $conversation->latestMessage
+            : $conversation->messagesNewestFirst()->first();
+        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
+            ? $conversation->latestNonActivityMessage
+            : $conversation->lastNonActivityMessage();
+
+        return [$lastMessage, $lastNonActivityMessage];
     }
 
     private function meta(Conversation $conversation): array

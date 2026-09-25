@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Events\EventType;
 use App\Events\RealtimeBroadcast;
-use App\Http\Resources\ConversationResource;
 use App\Models\Account;
+use App\Support\RealtimePayload;
 
 class ActionCableBroadcastJob extends ApplicationJob
 {
@@ -53,6 +53,6 @@ class ActionCableBroadcastJob extends ApplicationJob
             ->where('display_id', $this->data['id'])
             ->firstOrFail();
 
-        return [...ConversationResource::pushEventData($conversation), 'account_id' => $this->data['account_id']];
+        return [...RealtimePayload::conversation($conversation), 'account_id' => $this->data['account_id']];
     }
 }

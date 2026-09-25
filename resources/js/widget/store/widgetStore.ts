@@ -56,6 +56,7 @@ export interface WidgetState {
     };
     lastMessageId: number | string | null;
     pendingCustomAttributes: Record<string, unknown>;
+    pendingContactCustomAttributes: Record<string, unknown>;
     pendingLabels: string[];
     agents: AvailableAgent[];
     conversationAttributes: ConversationAttributes;
@@ -97,6 +98,7 @@ let state: WidgetState = {
     uiFlags: { allMessagesLoaded: false, isFetchingList: false, isAgentTyping: false, isCreating: false },
     lastMessageId: null,
     pendingCustomAttributes: {},
+    pendingContactCustomAttributes: {},
     pendingLabels: [],
     agents: [],
     conversationAttributes: { id: '', status: '' },
@@ -120,8 +122,10 @@ function setState(patch: Partial<WidgetState>): void {
 
 let bannerTimer: ReturnType<typeof setTimeout> | null = null;
 let agentTypingTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectPromise: Promise<void> | null = null;
 
 const hasConversation = () => Boolean(state.conversationAttributes.id);
+const hasContact = () => Boolean(state.contact?.id);
 
 const hasPendingMetadata = () =>
     Object.keys(state.pendingCustomAttributes).length > 0 || state.pendingLabels.length > 0;
@@ -219,6 +223,7 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
         const data = await request(metadata, controller.signal);
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
+        void widgetStore.reconnectRealtimeIfPending();
     } catch (error) {
         // Tin tạm đã bị gỡ (khách huỷ, hoặc xoá hội thoại) thì không còn gì để báo lỗi.
         if (controller.signal.aborted || !state.conversations[temporaryMessage.id]) return;
@@ -301,6 +306,7 @@ export const widgetStore = {
             channelConfig,
             globalConfig,
             contact,
+            pendingContactCustomAttributes: {},
             appConfig: { ...state.appConfig, widgetColor: channelConfig.widgetColor },
         });
     },
@@ -356,6 +362,7 @@ export const widgetStore = {
             const [message] = data?.messages ?? [];
             if (message) pushMessageToConversation(message);
             await widgetStore.getConversationAttributes();
+            await widgetStore.reconnectRealtimeIfPending();
             emitter.emit(WIDGET_BUS_EVENTS.ON_CONVERSATION_CREATED);
         } catch {
             // Bỏ qua như bản gốc.
@@ -696,6 +703,43 @@ export const widgetStore = {
         }
     },
 
+    // Phiên chưa có hành động thật không mang pubsub_token; lấy lại qua /contact rồi bù tin lỡ trong lúc chưa nối realtime.
+    async reconnectRealtimeIfPending(): Promise<void> {
+        if (state.contact?.pubsub_token) return;
+        if (reconnectPromise) return reconnectPromise;
+
+        reconnectPromise = (async () => {
+            try {
+                const contact = await api.fetchContact();
+                if (!contact?.pubsub_token) return;
+
+                setState({ contact: { ...(state.contact ?? {}), ...contact } as WidgetContact });
+                emitter.emit(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, contact.pubsub_token);
+                await widgetStore.syncLatestMessages();
+                await widgetStore.getConversationAttributes();
+                await widgetStore.flushPendingContactCustomAttributes();
+            } catch {
+                // Thử lại ở hành động kế tiếp.
+            } finally {
+                reconnectPromise = null;
+            }
+        })();
+
+        return reconnectPromise;
+    },
+
+    async flushPendingContactCustomAttributes(): Promise<void> {
+        if (!Object.keys(state.pendingContactCustomAttributes).length) return;
+
+        const pending = state.pendingContactCustomAttributes;
+        setState({ pendingContactCustomAttributes: {} });
+        try {
+            await api.setContactCustomAttributes(pending);
+        } catch {
+            setState({ pendingContactCustomAttributes: { ...pending, ...state.pendingContactCustomAttributes } });
+        }
+    },
+
     // Trả về đã lưu hay chưa để màn gọi báo lỗi ngắn cho khách thay vì nuốt im.
     async updateContact(user: Record<string, unknown>): Promise<boolean> {
         try {
@@ -704,6 +748,7 @@ export const widgetStore = {
             return false;
         }
         await widgetStore.fetchContact();
+        await widgetStore.reconnectRealtimeIfPending();
         return true;
     },
 
@@ -751,6 +796,7 @@ export const widgetStore = {
                 IFrameHelper.sendMessage({ event: 'setAuthCookie', data: { widgetAuthToken } });
             }
             await widgetStore.fetchContact();
+            await widgetStore.reconnectRealtimeIfPending();
             if (identifierHash || widgetAuthToken) {
                 widgetStore.clearConversations();
                 await widgetStore.fetchOldConversations();
@@ -765,7 +811,17 @@ export const widgetStore = {
         }
     },
 
+    // SDK gọi hàm này ở mỗi lần tải trang để đồng bộ dữ liệu phiên — KHÔNG được
+    // dựng contact chỉ vì cuộc gọi này (ngược với chủ đích lazy contact). Phiên
+    // còn treo thì giữ tại chỗ, gửi kèm khi contact thật xuất hiện (xem
+    // reconnectRealtimeIfPending/flushPendingContactCustomAttributes).
     async setContactCustomAttributes(customAttributes: Record<string, unknown>): Promise<void> {
+        if (!hasContact()) {
+            setState({
+                pendingContactCustomAttributes: { ...state.pendingContactCustomAttributes, ...customAttributes },
+            });
+            return;
+        }
         try {
             await api.setContactCustomAttributes(customAttributes);
         } catch {
@@ -868,6 +924,9 @@ export const widgetStore = {
         try {
             await api.triggerCampaign(campaignId, customAttributes);
             setState({ activeCampaign: null });
+            // campaign.triggered có thể vừa dựng contact/hội thoại lazy — nối realtime
+            // và bù ngay tin campaign vừa gửi trước khi kênh kịp subscribe.
+            await widgetStore.reconnectRealtimeIfPending();
         } catch {
             // Bỏ qua như bản gốc.
         } finally {

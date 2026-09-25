@@ -3,17 +3,27 @@
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Models\SuperAdmin;
 use App\Models\User;
+use OTPHP\TOTP;
 
 beforeEach(function () {
     config(['yona.super_admin_idle_minutes' => 120]);
 });
 
+// 2FA luôn bắt buộc: đăng nhập trọn vẹn nghĩa là qua cả bước mật khẩu lẫn OTP.
 function signInSuperAdmin(): SuperAdmin
 {
-    $superAdmin = SuperAdmin::factory()->create(['password' => 'Password1!']);
+    $superAdmin = SuperAdmin::factory()->withMfa()->create(['password' => 'Password1!']);
 
-    test()->post('/super_admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!']])
-        ->assertRedirect('/super_admin');
+    $response = test()->post('/super_admin/sign_in', [
+        'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
+    ], ['X-Inertia' => 'true'])->assertOk();
+
+    $code = TOTP::createFromSecret($superAdmin->refresh()->otp_secret)->now();
+
+    test()->post('/super_admin/sign_in', [
+        'otp_token' => $response->json('props.otpToken'),
+        'otp_code' => $code,
+    ])->assertRedirect('/super_admin');
 
     return $superAdmin;
 }
@@ -40,7 +50,7 @@ it('keeps an active super admin signed in and slides the idle window', function 
 });
 
 it('starts the idle clock instead of signing out a session opened before the clock existed', function () {
-    $this->actingAs(SuperAdmin::factory()->create(), 'super_admin');
+    $this->actingAs(SuperAdmin::factory()->withMfa()->create(), 'super_admin');
     expect(session()->has(ExpireIdleSuperAdminSession::LAST_SEEN_SESSION_KEY))->toBeFalse();
 
     $this->get('/super_admin')->assertOk();

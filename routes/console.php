@@ -44,3 +44,9 @@ Schedule::command('pulse:trim')->hourly();
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
+
+// Cảnh báo khi Horizon/Reverb/zalo-bridge đổi trạng thái, không phải mỗi phút.
+Schedule::command('monitor:check')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer();

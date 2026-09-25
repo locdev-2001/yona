@@ -9,7 +9,9 @@ export function BrandMark({ className = 'h-8', href = '/' }: { className?: strin
     const { globalConfig } = usePage<SharedPageProps>().props;
 
     return (
-        <a href={href} className="inline-block">
+        // py + -my bù lại: đích chạm ≥44px trên điện thoại — logo cỡ h-7/h-8
+        // tự nó chỉ cao 28-32px.
+        <a href={href} className="inline-block py-3 -my-3">
             <img src={globalConfig.logo} alt={globalConfig.installationName} className={`block w-auto ${className} dark:hidden`} />
             {globalConfig.logoDark ? (
                 <img src={globalConfig.logoDark} alt={globalConfig.installationName} className={`hidden w-auto ${className} dark:block`} />

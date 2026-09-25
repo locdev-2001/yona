@@ -19,26 +19,24 @@ trait SsoAuthenticatable
         return $token;
     }
 
-    public function invalidateSsoAuthToken(string $token): void
+    // Nguyên tử: lấy loại token ('impersonation'/'normal') và vô hiệu nó trong
+    // một thao tác cache duy nhất, để hai request song song cùng token không
+    // thể cùng đăng nhập được. Trả về null nếu token không tồn tại/đã hết hạn.
+    public function redeemSsoAuthToken(string $token): ?string
     {
-        Cache::forget($this->ssoTokenKey($token));
-    }
-
-    public function validSsoAuthToken(string $token): bool
-    {
-        return Cache::get($this->ssoTokenKey($token)) !== null;
-    }
-
-    public function ssoAuthTokenIsImpersonation(string $token): bool
-    {
-        return Cache::get($this->ssoTokenKey($token)) === 'impersonation';
+        return Cache::pull($this->ssoTokenKey($token));
     }
 
     public function generateSsoLink(bool $impersonation = false): string
     {
+        return $this->ssoLoginUrl($this->generateSsoAuthToken($impersonation), $impersonation);
+    }
+
+    public function ssoLoginUrl(string $token, bool $impersonation = false): string
+    {
         $query = [
             'email' => $this->email,
-            'sso_auth_token' => $this->generateSsoAuthToken($impersonation),
+            'sso_auth_token' => $token,
         ];
 
         if ($impersonation) {

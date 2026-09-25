@@ -51,6 +51,7 @@ class AccountUser extends Model
         'user_id',
         'role',
         'inviter_id',
+        'invite_link_id',
         'availability',
         'auto_offline',
         'active_at',
@@ -115,9 +116,14 @@ class AccountUser extends Model
         return $this->role === self::ROLE_ADMINISTRATOR;
     }
 
+    public static function roleNameFor(int $role): string
+    {
+        return $role === self::ROLE_ADMINISTRATOR ? 'administrator' : 'agent';
+    }
+
     public function roleName(): string
     {
-        return $this->isAdministrator() ? 'administrator' : 'agent';
+        return self::roleNameFor($this->role);
     }
 
     public function availabilityName(): string

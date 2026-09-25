@@ -4,12 +4,14 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\SuperAdminImpersonation;
 use App\Models\User;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\Dashboards\UserDashboard;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UsersController extends ResourceController
 {
@@ -30,6 +32,7 @@ class UsersController extends ResourceController
             'mfaEnabled' => $record->mfaEnabled(),
             'confirmed' => $record->isConfirmed(),
             'impersonateUrl' => "/super_admin/users/{$record->getKey()}/impersonate",
+            'csrf' => csrf_token(),
         ];
     }
 
@@ -72,8 +75,27 @@ class UsersController extends ResourceController
     }
 
     // Mở phiên đăng nhập dưới danh nghĩa người dùng (generate_sso_link_with_impersonation).
-    public function impersonate(int $id): RedirectResponse
+    // Bắt buộc lý do, ghi vào super_admin_impersonations: mọi lượt đăng nhập hộ
+    // phải truy vết được ai, hộ ai, vì sao.
+    public function impersonate(Request $request, int $id): RedirectResponse
     {
-        return redirect()->away($this->findRecord($id)->generateSsoLink(impersonation: true));
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ]);
+
+        $target = $this->findRecord($id);
+
+        $token = $target->generateSsoAuthToken(impersonation: true);
+
+        SuperAdminImpersonation::query()->create([
+            'super_admin_id' => Auth::guard('super_admin')->id(),
+            'target_user_id' => $target->getKey(),
+            'reason' => $data['reason'],
+            'ip_address' => $request->ip(),
+            'user_agent' => (string) $request->userAgent(),
+            'token_hash' => hash('sha256', $token),
+        ]);
+
+        return redirect()->away($target->ssoLoginUrl($token, impersonation: true));
     }
 }

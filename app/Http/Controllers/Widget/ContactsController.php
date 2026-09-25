@@ -20,7 +20,7 @@ class ContactsController extends WidgetController
 
     public function show(Request $request): JsonResponse
     {
-        return response()->json(WidgetContactResource::show($this->contact($request)));
+        return response()->json(WidgetContactResource::show($this->contact($request), $this->contactInbox($request)?->pubsub_token));
     }
 
     public function update(Request $request): JsonResponse

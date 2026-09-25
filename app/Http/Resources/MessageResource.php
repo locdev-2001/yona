@@ -83,7 +83,9 @@ class MessageResource extends JsonResource
             'sender_id' => $message->sender_id,
             'external_source_ids' => $message->external_source_ids ?? [],
             'additional_attributes' => self::attributeMap($message->additional_attributes),
-            'processed_message_content' => $message->processed_message_content,
+            'processed_message_content' => $message->processed_message_content === $message->content
+                ? null
+                : $message->processed_message_content,
             'sentiment' => $message->sentiment ?? [],
             'conversation' => [
                 'assignee_id' => $message->conversation->assignee_id,

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Listeners\Alerts\AlertOnJobFailure;
+use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
 use App\Models\Account;
 use App\Models\AgentBot;
@@ -33,11 +35,14 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
+use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Livewire\Livewire;
 
@@ -81,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pulse.search-outbox', SearchOutboxCard::class);
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
+        $this->registerOpsAlerts();
 
         // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
@@ -109,6 +115,12 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
+    private function registerOpsAlerts(): void
+    {
+        Event::listen(JobFailed::class, AlertOnJobFailure::class);
+        Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
+    }
+
     private function refreshConversationTabCountsOnChange(): void
     {
         $forget = fn (Conversation $conversation) => ConversationFinder::forgetTabCounts($conversation->account_id);
@@ -135,13 +147,14 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Ba dashboard vận hành (/horizon, /pulse, /log-viewer) đã nằm sau
-     * middleware `auth:super_admin`. Gate riêng của từng gói lại đọc user ở
-     * guard mặc định — guard đó luôn null với phiên super admin — nên phải khai
-     * lại cho khớp, nếu không super admin qua được middleware vẫn bị gate chặn.
+     * middleware `auth:super_admin` + `EnsureSuperAdminMfaEnrolled` (khai trong
+     * config của từng gói). Gate riêng của từng gói lại đọc user ở guard mặc
+     * định — guard đó luôn null với phiên super admin — nên phải khai lại cho
+     * khớp, nếu không super admin qua được middleware vẫn bị gate chặn.
      */
     private function registerObservabilityGates(): void
     {
-        $isSuperAdmin = fn (?Authenticatable $user = null) => Auth::guard('super_admin')->check();
+        $isSuperAdmin = fn (?Authenticatable $user = null): bool => Auth::guard('super_admin')->check();
 
         foreach (['viewPulse', 'viewLogViewer'] as $ability) {
             Gate::define($ability, $isSuperAdmin);
@@ -155,7 +168,7 @@ class AppServiceProvider extends ServiceProvider
         // lần rollback về commit chưa có nó) vendor chưa có Horizon. Gọi thẳng
         // là mọi lệnh artisan chết theo, kể cả lệnh đang dựng lại vendor.
         if (class_exists(Horizon::class)) {
-            Horizon::auth(fn () => Auth::guard('super_admin')->check());
+            Horizon::auth(fn () => $isSuperAdmin());
         }
 
         // Xoá file log từ giao diện web: không. Log là thứ duy nhất dựng lại
