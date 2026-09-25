@@ -4,7 +4,7 @@
 }
 
 .woot-widget-holder {
-  box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
   opacity: 1;
   will-change: transform, opacity;
   transform: translateY(0);
@@ -34,23 +34,25 @@
   border-radius: 0 !important;
   min-height: 80px !important;
   height: auto;
-  bottom: 94px;
+  bottom: 86px;
   box-shadow: none !important;
   border: 0;
 }
 
+/* Launcher theo design: 56px, bóng nhuộm theo màu widget (--yona-launcher-color do SDK gắn). */
 .woot-widget-bubble {
-  background: #1f93ff;
+  background: #1b6fcc;
   border-radius: 100px;
   border-width: 0px;
   bottom: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--yona-launcher-color, #1b6fcc) 35%, transparent) !important;
   cursor: pointer;
-  height: 64px;
+  height: 56px;
   padding: 0px;
   position: fixed;
   user-select: none;
-  width: 64px;
+  width: 56px;
   z-index: 2147483000 !important;
 }
 
@@ -95,7 +97,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  background: #e5484d;
+  background: #e63a2e;
   color: #ffffff;
   font: 600 11px/16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   text-align: center;
@@ -157,20 +159,24 @@
 }
 
 .woot-widget-bubble:hover {
-  background: #1f93ff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--yona-launcher-color, #1b6fcc) 50%, transparent) !important;
 }
 
 .woot-widget-bubble svg {
   all: revert;
   height: 24px !important;
-  margin: 20px !important;
+  margin: 16px !important;
   padding: 0 !important;
   width: 24px !important;
 }
 
-.woot-widget-bubble.woot-widget-bubble-color--lighter path {
-  fill: var(--s-700);
+.woot-widget-bubble svg path {
+  stroke: #ffffff;
+}
+
+.woot-widget-bubble.woot-widget-bubble-color--lighter svg path {
+  stroke: var(--s-700);
 }
 
 @media only screen and (min-width: 667px) {
@@ -195,7 +201,7 @@
   display: inline;
   height: 14px;
   position: absolute;
-  top: 25px;
+  top: 21px;
   width: 3px;
 }
 
@@ -205,12 +211,12 @@
 }
 
 .woot--close::before {
-  left: 25.5px;
+  left: 21.5px;
   transform: rotate(-45deg);
 }
 
 .woot--close::after {
-  left: 35.5px;
+  left: 31.5px;
   transform: rotate(45deg);
 }
 
@@ -329,9 +335,9 @@
     height: auto;
     right: 0;
     width: auto;
-    bottom: 94px;
+    bottom: 86px;
     top: auto;
-    max-height: calc(100vh - 94px);
+    max-height: calc(100vh - 86px);
     padding: 0 8px;
   }
 
@@ -351,14 +357,16 @@
   }
 }
 
+/* Khung chat trên máy tính theo design: 380×620, bo 18px, cách launcher 20px. */
 @media only screen and (min-width: 667px) {
   .woot-widget-holder {
-    border-radius: 16px;
-    bottom: 104px;
-    height: calc(90% - 64px - 20px);
-    max-height: 640px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
+    bottom: 96px;
+    height: calc(90% - 56px - 20px);
+    max-height: 620px !important;
     min-height: 250px !important;
-    width: 400px !important;
+    width: 380px !important;
   }
 }
 

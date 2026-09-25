@@ -9759,7 +9759,8 @@ const messages: Record<string, unknown> = {
         "LAUNCHER": {
             "OPEN": "Open chat",
             "CLOSE": "Minimize chat",
-            "UNREAD": "{count} unread message | {count} unread messages"
+            "UNREAD": "{count} unread message | {count} unread messages",
+            "OPEN_UNREAD": "Open chat, {count} unread message | Open chat, {count} unread messages"
         },
         "NEW_MESSAGES": "New messages",
         "CARD": {

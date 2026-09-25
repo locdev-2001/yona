@@ -11,6 +11,7 @@ import {
     onClickChatBubble,
     onBubbleClick,
     setBubbleText,
+    setLauncherLabels,
     removeUnreadClass,
     showUnreadPreview,
     hideUnreadPreview,
@@ -229,8 +230,9 @@ export const IFrameHelper = {
         onEvent({ eventIdentifier, data }: { eventIdentifier: string; data: unknown }): void {
             dispatchSdkEvent(toSdkEventKey(eventIdentifier), data);
         },
-        setBubbleLabel(message: { label: string }): void {
+        setBubbleLabel(message: { label: string; openLabel?: string; closeLabel?: string }): void {
             setBubbleText(window.$yona.launcherTitle || message.label);
+            setLauncherLabels(message);
         },
 
         setAuthCookie({ data: { widgetAuthToken } }: { data: { widgetAuthToken: string } }): void {
@@ -359,6 +361,7 @@ export const IFrameHelper = {
 
         chatIcon.style.background = widgetColor;
         closeBubble.style.background = widgetColor;
+        bubbleHolder.style.setProperty('--yona-launcher-color', widgetColor);
 
         bubbleHolder.appendChild(chatIcon);
         bubbleHolder.appendChild(closeBubble);

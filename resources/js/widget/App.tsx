@@ -10,7 +10,7 @@ import { getLocale } from './helpers/urlParams';
 import { t } from './i18n';
 import { useInboxAvailability } from './components/Availability';
 import { useWidgetState } from './store/hooks';
-import { widgetStore } from './store/widgetStore';
+import { selectUnreadMessageCount, widgetStore } from './store/widgetStore';
 import { currentRoute, replaceRoute, useWidgetRoute, WIDGET_ROUTES } from './router';
 import Campaigns from './views/Campaigns';
 import Home from './views/Home';
@@ -33,12 +33,7 @@ export default function App() {
     const appConfig = useWidgetState(state => state.appConfig);
     const isFetchingList = useWidgetState(state => state.uiFlags.isFetchingList);
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
-    const unreadMessageCount = useWidgetState(state =>
-        Object.values(state.conversations).filter(message => {
-            const lastSeen = state.meta.userLastSeenAt;
-            return message.message_type === 1 && (lastSeen ? message.created_at * 1000 > lastSeen * 1000 : true);
-        }).length,
-    );
+    const unreadMessageCount = useWidgetState(selectUnreadMessageCount);
 
     const [isMobile, setMobile] = useState(false);
     const isIFrame = IFrameHelper.isIFrame();
@@ -82,7 +77,7 @@ export default function App() {
             switch (message.event) {
                 case 'config-set': {
                     if (message.locale) setApiLocale(String(message.locale));
-                    IFrameHelper.sendMessage({ event: 'setBubbleLabel', label: widgetBubbleLabel() });
+                    IFrameHelper.sendMessage(launcherLabelsEvent(selectUnreadMessageCount(widgetStore.getState())));
                     widgetStore.setAppConfig(message as unknown as Partial<AppConfig>);
                     void widgetStore.fetchOldConversations().then(showMessagesWhenConversationExists);
                     void widgetStore.fetchAvailableAgents();
@@ -152,7 +147,7 @@ export default function App() {
                     break;
                 case 'set-locale':
                     setApiLocale(String(message.locale));
-                    IFrameHelper.sendMessage({ event: 'setBubbleLabel', label: widgetBubbleLabel() });
+                    IFrameHelper.sendMessage(launcherLabelsEvent(selectUnreadMessageCount(widgetStore.getState())));
                     break;
                 case 'set-color-scheme':
                     widgetStore.patchAppConfig({ darkMode: String(message.darkMode) });
@@ -289,6 +284,7 @@ export default function App() {
     useEffect(() => {
         if (!isIFrame) return;
         IFrameHelper.sendMessage({ event: 'handleNotificationDot', unreadMessageCount });
+        IFrameHelper.sendMessage(launcherLabelsEvent(unreadMessageCount));
     }, [unreadMessageCount, appConfig.hideMessageBubble, isIFrame]);
 
     const setUnreadView = () => {
@@ -300,10 +296,7 @@ export default function App() {
             return;
         }
 
-        const unreadCount = Object.values(state.conversations).filter(message => {
-            const lastSeen = state.meta.userLastSeenAt;
-            return message.message_type === 1 && (lastSeen ? message.created_at * 1000 > lastSeen * 1000 : true);
-        }).length;
+        const unreadCount = selectUnreadMessageCount(state);
 
         if (unreadCount > 0 && !state.appConfig.isWidgetOpen) {
             replaceRoute(WIDGET_ROUTES.UNREAD_MESSAGES);
@@ -397,5 +390,11 @@ const shouldShowPreChatForm = (): boolean => {
     return Boolean(channelConfig?.preChatFormEnabled) && enabledFields.length > 0;
 };
 
-// BUBBLE.LABEL — SDK ưu tiên launcherTitle của trang khách rồi mới tới nhãn này.
-const widgetBubbleLabel = () => t('BUBBLE.LABEL');
+// Câu chữ của launcher (SDK vẽ trên trang khách) theo ngôn ngữ widget. `label` là chữ của bong bóng
+// mở rộng — SDK ưu tiên launcherTitle của trang khách rồi mới tới nhãn này.
+const launcherLabelsEvent = (unreadCount: number) => ({
+    event: 'setBubbleLabel',
+    label: t('BUBBLE.LABEL'),
+    openLabel: unreadCount > 0 ? t('LAUNCHER.OPEN_UNREAD', { count: unreadCount }) : t('LAUNCHER.OPEN'),
+    closeLabel: t('LAUNCHER.CLOSE'),
+});

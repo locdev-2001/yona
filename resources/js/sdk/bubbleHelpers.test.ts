@@ -19,7 +19,7 @@ describe('createBubbleIcon', () => {
         });
 
         expect(target.className).toBe('woot-widget-bubble woot-elements--right');
-        expect(target.title).toBe('Open chat window');
+        expect(target.title).toBe('');
     });
 
     it('gắn lớp vị trí trái khi position = left', () => {
@@ -47,7 +47,7 @@ describe('createBubbleIcon', () => {
         expect(target.querySelector('#woot-widget--expanded__text')).not.toBeNull();
     });
 
-    it('vẽ đúng icon SVG 24x24 viewBox 0 0 240 240', () => {
+    it('vẽ bong bóng nét viền 24x24 của design, icon ẩn với trình đọc màn hình', () => {
         const target = createBubbleIcon({
             className: 'woot-widget-bubble',
             path: bubbleSVG,
@@ -57,8 +57,31 @@ describe('createBubbleIcon', () => {
 
         expect(icon?.getAttribute('width')).toBe('24');
         expect(icon?.getAttribute('height')).toBe('24');
-        expect(icon?.getAttribute('viewBox')).toBe('0 0 240 240');
+        expect(icon?.getAttribute('viewBox')).toBe('0 0 24 24');
+        expect(icon?.getAttribute('aria-hidden')).toBe('true');
         expect(icon?.querySelector('path')?.getAttribute('d')).toBe(bubbleSVG);
+        expect(icon?.querySelector('path')?.getAttribute('fill')).toBe('none');
+    });
+});
+
+describe('setLauncherLabels', () => {
+    it('gắn nhãn đọc màn hình và tooltip theo câu chữ widget gửi sang', async () => {
+        const { chatBubble, closeBubble, setLauncherLabels } = await import('./bubbleHelpers');
+
+        setLauncherLabels({ openLabel: 'Mở trò chuyện', closeLabel: 'Thu nhỏ trò chuyện' });
+
+        expect(chatBubble.getAttribute('aria-label')).toBe('Mở trò chuyện');
+        expect(chatBubble.title).toBe('Mở trò chuyện');
+        expect(closeBubble.getAttribute('aria-label')).toBe('Thu nhỏ trò chuyện');
+    });
+
+    it('giữ nhãn cũ khi widget đời trước chỉ gửi chữ của bong bóng mở rộng', async () => {
+        const { chatBubble, setLauncherLabels } = await import('./bubbleHelpers');
+        setLauncherLabels({ openLabel: 'Mở trò chuyện' });
+
+        setLauncherLabels({});
+
+        expect(chatBubble.getAttribute('aria-label')).toBe('Mở trò chuyện');
     });
 });
 

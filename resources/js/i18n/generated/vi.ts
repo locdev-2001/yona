@@ -9759,7 +9759,8 @@ const messages: Record<string, unknown> = {
         "LAUNCHER": {
             "OPEN": "Mở trò chuyện",
             "CLOSE": "Thu nhỏ trò chuyện",
-            "UNREAD": "{count} tin nhắn chưa đọc"
+            "UNREAD": "{count} tin nhắn chưa đọc",
+            "OPEN_UNREAD": "Mở trò chuyện, {count} tin nhắn chưa đọc"
         },
         "NEW_MESSAGES": "Tin nhắn mới",
         "CARD": {
