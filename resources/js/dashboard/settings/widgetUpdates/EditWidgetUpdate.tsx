@@ -49,9 +49,9 @@ export default function EditWidgetUpdate({ accountId, update, onClose, onUpdated
     const publish = async (values: WidgetUpdateFormValues) => {
         setPublishing(true);
         try {
-            await updateWidgetUpdate(accountId, update.id, values);
-            const published = await publishWidgetUpdate(accountId, update.id);
-            onUpdated(published);
+            const saved = await updateWidgetUpdate(accountId, update.id, values);
+            // Bài đã đăng thì chỉ lưu sửa đổi: đăng lại sẽ đổi ngày đăng, đẩy bài sửa lỗi chính tả lên đầu tab Cập nhật.
+            onUpdated(update.published ? saved : await publishWidgetUpdate(accountId, update.id));
             useAlert(t('WIDGET_UPDATES_MGMT.PUBLISH.API.SUCCESS_MESSAGE'));
             onClose();
         } catch (error) {
