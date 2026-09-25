@@ -1,6 +1,5 @@
 import DOMPurify from 'dompurify';
 
-import Avatar from 'dashboard/components-next/avatar/Avatar';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
@@ -15,6 +14,7 @@ import { messageElementId } from './message/QuotedReply';
 import ConversationEndCard from './ConversationEndCard';
 import EmailInput from './template/EmailInput';
 import UserMessage from './UserMessage';
+import WidgetAvatar from './WidgetAvatar';
 import type { WidgetMessage } from '../types';
 import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 
@@ -23,7 +23,7 @@ import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 const TEMPLATE_CONTENT_TYPES = ['input_csat', 'input_email', 'input_select', 'form', 'article', 'integrations'];
 
 // Ảnh mặc định của agent bot — chưa có trong public/ (agent_bot chưa port);
-// Avatar tự rơi về chữ cái đầu khi ảnh lỗi.
+// avatar tự rơi về chữ tắt khi ảnh lỗi.
 
 function AgentMessageBubble({
     content,
@@ -133,7 +133,7 @@ function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; show
                 <div className="flex items-end gap-2">
                     <div className="w-[26px] flex-none self-end">
                         {showAvatar || hasRecordedResponse ? (
-                            <Avatar src={agent.avatarUrl} size={26} name={agent.name} roundedFull />
+                            <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" />
                         ) : null}
                     </div>
                     <div className="flex min-w-0 max-w-[74%] flex-col items-start">
@@ -194,7 +194,7 @@ export default function AgentMessage({
     }
 
     const cardItems = contentType === 'cards' && !isDeletedMessage(message) ? (message.content_attributes?.items ?? []) : [];
-    const avatar = showAvatar ? <Avatar src={agent.avatarUrl} size={26} name={agent.name} roundedFull /> : null;
+    const avatar = showAvatar ? <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" /> : null;
 
     return (
         <>

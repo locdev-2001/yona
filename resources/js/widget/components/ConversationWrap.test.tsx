@@ -151,3 +151,19 @@ describe('ConversationWrap', () => {
         expect(screen.queryByRole('button', { name: 'New messages' })).not.toBeInTheDocument();
     });
 });
+
+describe('avatar nhân viên trong luồng tin', () => {
+    it('tin agent và bong bóng đang gõ dùng cùng avatar chữ tắt tông ấm như header', () => {
+        load([visitorMessage(1, BASE), agentMessage(2, BASE + 30, { sender: { id: 7, name: 'Lan Nguyễn' } })]);
+        act(() => widgetStore.toggleAgentTyping('on', { name: 'Minh Trần', avatar_url: null }));
+        const { container } = render(<ConversationWrap />);
+
+        const agentAvatar = container.querySelector('.yona-msg-group:last-of-type [aria-hidden=true].rounded-full');
+        const typingAvatar = screen.getByRole('status').querySelector('.rounded-full');
+
+        expect(agentAvatar?.textContent).toBe('LN');
+        expect(typingAvatar?.textContent).toBe('MT');
+        [agentAvatar, typingAvatar].forEach(avatar => expect(avatar?.className).toContain('bg-[var(--yona-chat-avatar)]'));
+        act(() => widgetStore.toggleAgentTyping('off'));
+    });
+});

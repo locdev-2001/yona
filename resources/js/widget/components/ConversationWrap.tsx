@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isToday, isYesterday } from 'date-fns';
 
-import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Spinner from 'shared/components/Spinner';
 
 import { MESSAGE_TYPE } from '../helpers/constants';
@@ -13,6 +12,7 @@ import AgentMessage from './AgentMessage';
 import { bubbleRadius } from './message/bubbleShape';
 import MessageMeta from './message/MessageMeta';
 import UserMessage from './UserMessage';
+import WidgetAvatar from './WidgetAvatar';
 import type { PositionedMessage, WidgetMessage } from '../types';
 
 const NEAR_BOTTOM_THRESHOLD_PX = 80;
@@ -44,7 +44,7 @@ function AgentTypingBubble() {
         <div className="yona-typing sticky bottom-1 flex items-end gap-2" role="status" aria-label={t('TYPING_INDICATOR.LABEL')}>
             <span aria-hidden="true" className="size-[26px] flex-none">
                 {typingAgent ? (
-                    <Avatar src={typingAgent.avatar_url ?? undefined} size={26} name={typingAgent.name} roundedFull />
+                    <WidgetAvatar src={typingAgent.avatar_url} size={26} name={typingAgent.name} tone="agent" />
                 ) : null}
             </span>
             <span
