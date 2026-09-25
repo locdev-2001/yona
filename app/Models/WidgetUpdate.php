@@ -26,6 +26,11 @@ class WidgetUpdate extends Model
         return $this->belongsTo(Account::class);
     }
 
+    public function inbox(): BelongsTo
+    {
+        return $this->belongsTo(Inbox::class);
+    }
+
     /** Đã xuất bản và dành cho hộp thư này (hoặc mọi hộp thư của account). */
     public function scopeVisibleIn(Builder $query, Inbox $inbox): Builder
     {

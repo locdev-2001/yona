@@ -48,6 +48,7 @@ return [
     'ACCOUNT_SETTINGS' => 'Cài đặt tài khoản',
     'APPLICATIONS' => 'Ứng dụng',
     'LABELS' => 'Nhãn',
+    'WIDGET_UPDATES' => 'Bài cập nhật trên widget',
     'CUSTOM_ATTRIBUTES' => 'Thuộc tính tùy chỉnh',
     'AUTOMATION' => 'Tự động hóa',
     'MACROS' => 'Macro',

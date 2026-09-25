@@ -59,6 +59,7 @@ use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
 use App\Http\Controllers\WebApi\WebhooksController;
+use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -409,6 +410,14 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/campaigns/{campaignId}', [CampaignsController::class, 'show'])->whereNumber('campaignId');
         Route::match(['put', 'patch'], '/campaigns/{campaignId}', [CampaignsController::class, 'update'])->whereNumber('campaignId');
         Route::delete('/campaigns/{campaignId}', [CampaignsController::class, 'destroy'])->whereNumber('campaignId');
+
+        // Trang cài đặt "Bài cập nhật trên widget" — administrator only (WidgetUpdatesController).
+        Route::get('/widget_updates', [WidgetUpdatesController::class, 'index']);
+        Route::post('/widget_updates', [WidgetUpdatesController::class, 'store']);
+        Route::match(['put', 'patch'], '/widget_updates/{updateId}', [WidgetUpdatesController::class, 'update'])->whereNumber('updateId');
+        Route::delete('/widget_updates/{updateId}', [WidgetUpdatesController::class, 'destroy'])->whereNumber('updateId');
+        Route::post('/widget_updates/{updateId}/publish', [WidgetUpdatesController::class, 'publish'])->whereNumber('updateId');
+        Route::post('/widget_updates/{updateId}/unpublish', [WidgetUpdatesController::class, 'unpublish'])->whereNumber('updateId');
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

@@ -180,6 +180,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/labels/list', fn (Account $account) => Inertia::render('dashboard/settings/labels/Index'))
                 ->name('settings_labels_list');
 
+            // Trang "Bài cập nhật trên widget" (tab Cập nhật của widget) — administrator only.
+            Route::get('/settings/widget-updates', fn (Account $account) => Inertia::render('dashboard/settings/widgetUpdates/Index'))
+                ->name('settings_widget_updates');
+
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
             Route::get('/settings/teams/new', [TeamsSettingsController::class, 'create'])->name('settings_teams_new');
