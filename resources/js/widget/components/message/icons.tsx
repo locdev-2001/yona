@@ -1,4 +1,5 @@
-// Icon nét mảnh của design khung chat, vẽ thẳng bằng SVG cho đúng độ dày nét.
+// Bộ icon nét mảnh DUY NHẤT của khung chat (ô nhập, tin, thẻ tệp), vẽ thẳng bằng SVG cho
+// đúng độ dày nét của design; icon khác dùng lucide.
 
 export function ReplyIcon({ size = 14 }: { size?: number }) {
     return (
@@ -49,6 +50,32 @@ export function AlertCircleIcon({ size = 15 }: { size?: number }) {
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7.5v5M12 16.2v.3" />
+        </svg>
+    );
+}
+
+export function PlusIcon({ size = 18 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 6v12M6 12h12" />
+        </svg>
+    );
+}
+
+export function SmileIcon({ size = 18 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M8.5 14.5c.9 1.1 2.1 1.7 3.5 1.7s2.6-.6 3.5-1.7" />
+            <path d="M9 9.5v.5M15 9.5v.5" />
+        </svg>
+    );
+}
+
+export function ArrowRightIcon({ size = 16 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 12h15M13 6l6 6-6 6" />
         </svg>
     );
 }

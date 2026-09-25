@@ -12,7 +12,7 @@ import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import AttachMenu from './composer/AttachMenu';
 import AttachmentTray from './composer/AttachmentTray';
-import { ArrowRightIcon, PlusIcon, SmileIcon } from './composer/icons';
+import { ArrowRightIcon, PlusIcon, SmileIcon } from './message/icons';
 import StickerPanel from './composer/StickerPanel';
 import { readComposerDraft, writeComposerDraft } from './composer/composerStorage';
 import FailureBlock from './message/FailureBlock';

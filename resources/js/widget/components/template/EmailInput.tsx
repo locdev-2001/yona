@@ -4,7 +4,7 @@ import Spinner from 'shared/components/Spinner';
 
 import { t } from '../../i18n';
 import { widgetStore } from '../../store/widgetStore';
-import { ArrowRightIcon } from '../composer/icons';
+import { ArrowRightIcon } from '../message/icons';
 
 // Port từ widget/components/template/EmailInput.vue — ô nhập email trong bong
 // bóng bot `input_email`. Luật @vuelidate `required` + `email`.
