@@ -295,8 +295,37 @@ blockquote {
   text-align: center;
 }
 
-.typing-bubble {
-  @apply max-w-[2.4rem] p-2 ltr:rounded-bl-[1.25rem] rtl:rounded-br-[1.25rem] ltr:rounded-tl-lg rtl:rounded-tr-lg;
+// Chỉ báo đang gõ: ba chấm nhấp nháy lần lượt; tắt chuyển động khi người dùng yêu cầu.
+@keyframes yona-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.yona-typing-dot {
+  @apply size-1.5 rounded-full bg-[var(--yona-chat-typing-dot)];
+
+  animation: yona-typing-dot 1.2s ease-out infinite;
+
+  &:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 .image {

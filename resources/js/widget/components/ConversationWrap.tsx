@@ -9,6 +9,7 @@ import { useWidgetState } from '../store/hooks';
 import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import AgentMessage from './AgentMessage';
+import { bubbleRadius } from './message/bubbleShape';
 import MessageMeta from './message/MessageMeta';
 import UserMessage from './UserMessage';
 import type { PositionedMessage, WidgetMessage } from '../types';
@@ -33,21 +34,20 @@ function DateSeparator({ date }: { date: string }) {
     );
 }
 
+// Bong bóng ba chấm theo design, thụt lề bằng chỗ avatar để thẳng hàng tin agent.
 function AgentTypingBubble() {
     return (
-        <div className="agent-message-wrap sticky bottom-1">
-            <div className="agent-message">
-                <div className="avatar-wrap" />
-                <div className="message-wrap mt-2">
-                    <div className="chat-bubble agent typing-bubble bg-n-background dark:bg-n-solid-3">
-                        <img
-                            src="/assets/images/dashboard/typing.gif"
-                            alt="Agent is typing a message"
-                            className="!w-full"
-                        />
-                    </div>
-                </div>
-            </div>
+        <div className="yona-typing sticky bottom-1 flex items-end gap-2" role="status" aria-label={t('TYPING_INDICATOR.LABEL')}>
+            <span aria-hidden="true" className="size-[26px] flex-none" />
+            <span
+                aria-hidden="true"
+                className="flex items-center gap-[5px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] px-[15px] py-[13px]"
+                style={bubbleRadius(false, 'single')}
+            >
+                <span className="yona-typing-dot" />
+                <span className="yona-typing-dot" />
+                <span className="yona-typing-dot" />
+            </span>
         </div>
     );
 }
