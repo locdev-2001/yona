@@ -969,6 +969,26 @@ in cảnh báo. Chạy lại bao nhiêu lần cũng được.
 
 ---
 
+### Dọn liên hệ nháp rỗng của widget website
+
+Trước bản dựng khách LAZY (chỉ tạo contact + contact_inbox ở hành động thật đầu
+tiên), mỗi lần tải trang có widget đều đẻ một "liên hệ nháp" dù khách không làm
+gì. Dọn một lần các hồ sơ đó — chỉ xoá contact_inbox của inbox website CHƯA có
+hội thoại và CHƯA được khách nhập email/phone/identifier/custom attribute nào;
+contact đi kèm chỉ bị xoá nếu nó không còn gắn với contact_inbox nào khác:
+
+```bash
+cd /www/wwwroot/yona.vn
+# Đếm trước, không xoá gì
+php artisan widget:prune-empty-contacts --dry-run
+# Xoá thật (theo lô, an toàn chạy lại nhiều lần)
+php artisan widget:prune-empty-contacts
+# Chạy lại phải ra 0
+php artisan widget:prune-empty-contacts --dry-run
+```
+
+---
+
 
 ### Tìm kiếm bằng Meilisearch (tuỳ chọn)
 

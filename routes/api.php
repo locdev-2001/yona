@@ -28,6 +28,7 @@ use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
 use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
+use App\Http\Middleware\ResolveOrCreateWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
 use Illuminate\Support\Facades\Route;
@@ -39,26 +40,34 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(ResolveWidgetChannel::class)
     ->prefix('/api/v1/widget')
     ->group(function () {
-        // configs tự dựng hồ sơ khách khi chưa có; inbox_members + campaigns không
-        // cần khách (skip_before_action :set_contact của bản gốc).
+        // config KHÔNG ghi DB (xem ConfigsController); inbox_members + campaigns
+        // không cần khách (skip_before_action :set_contact của bản gốc); events tự
+        // quyết định theo loại sự kiện (xem EventsController).
         Route::post('/config', [ConfigsController::class, 'store']);
         Route::get('/inbox_members', [InboxMembersController::class, 'index']);
         Route::get('/campaigns', [CampaignsController::class, 'index']);
+        Route::post('/events', [EventsController::class, 'store']);
+
+        // Hành động THẬT đầu tiên của khách — chưa có contact_inbox thì dựng lazy
+        // ngay tại đây (ResolveOrCreateWidgetContact), khác EnsureWidgetContact ở
+        // dưới chỉ 404 khi chưa có phiên chứ không tự tạo.
+        Route::middleware(ResolveOrCreateWidgetContact::class)->group(function () {
+            Route::post('/messages', [MessagesController::class, 'store']);
+            Route::post('/conversations', [ConversationsController::class, 'store']);
+            Route::match(['put', 'patch'], '/contact', [ContactsController::class, 'update']);
+            Route::match(['put', 'patch'], '/contact/set_user', [ContactsController::class, 'setUser']);
+        });
 
         Route::middleware(EnsureWidgetContact::class)->group(function () {
             Route::post('/direct_uploads', [DirectUploadsController::class, 'store']);
             Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'authenticate']);
             Route::post('/presence', [PresenceController::class, 'update']);
 
-            Route::post('/events', [EventsController::class, 'store']);
-
             Route::get('/messages', [MessagesController::class, 'index']);
-            Route::post('/messages', [MessagesController::class, 'store']);
             Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
-            Route::post('/conversations', [ConversationsController::class, 'store']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);
             Route::post('/conversations/set_custom_attributes', [ConversationsController::class, 'setCustomAttributes']);
             Route::post('/conversations/update_last_seen', [ConversationsController::class, 'updateLastSeen']);
@@ -66,11 +75,9 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::post('/conversations/transcript', [ConversationsController::class, 'transcript']);
             Route::get('/conversations/toggle_status', [ConversationsController::class, 'toggleStatus']);
 
-            // `resource :contact` (số ít): show/update ở /contact, hai action
-            // collection nằm dưới cùng đoạn đường đó.
+            // `resource :contact` (số ít): show ở /contact, hai action collection
+            // nằm dưới cùng đoạn đường đó — update/set_user đã chuyển lên nhóm lazy.
             Route::get('/contact', [ContactsController::class, 'show']);
-            Route::match(['put', 'patch'], '/contact', [ContactsController::class, 'update']);
-            Route::match(['put', 'patch'], '/contact/set_user', [ContactsController::class, 'setUser']);
             Route::post('/contact/destroy_custom_attributes', [ContactsController::class, 'destroyCustomAttributes']);
 
             Route::post('/labels', [LabelsController::class, 'store']);

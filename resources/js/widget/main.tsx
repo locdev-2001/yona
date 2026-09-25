@@ -1,7 +1,10 @@
 import { createRoot } from 'react-dom/client';
 
+import { emitter } from 'shared/helpers/emitter';
+
 import { fetchConfig } from './api/widget';
 import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
+import { WIDGET_BUS_EVENTS } from './helpers/constants';
 import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
@@ -71,10 +74,16 @@ async function bootstrap() {
         document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
 
         await widgetStore.getConversationAttributes();
-        widgetConnector.connect(contact.pubsub_token);
+        // Phiên còn "treo" (chưa có hành động thật) chưa có pubsub_token thật —
+        // nối lại khi ON_REALTIME_TOKEN_READY bắn lên sau hành động đầu tiên.
+        if (contact.pubsub_token) widgetConnector.connect(contact.pubsub_token);
     } catch {
         // Token sai/inbox không tồn tại: giữ màn trống như bản gốc (server trả 404).
     }
 }
+
+emitter.on(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, payload => {
+    if (typeof payload === 'string' && payload) widgetConnector.connect(payload);
+});
 
 void bootstrap();

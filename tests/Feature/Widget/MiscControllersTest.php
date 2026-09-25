@@ -3,6 +3,8 @@
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Models\AccountUser;
+use App\Models\Campaign;
+use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Label;
 use App\Models\User;
@@ -57,6 +59,33 @@ describe('POST /api/v1/widget/events', function () {
         $session = WidgetSession::make();
 
         $this->postJson($session->url('events'), ['name' => 'not.an.event'], $session->headers())->assertNotFound();
+    });
+
+    it('returns not found for a non-campaign event without an existing visitor session', function () {
+        $session = WidgetSession::make();
+        $token = test()->postJson($session->url('config'))->assertOk()->json('website_channel_config.auth_token');
+
+        $this->postJson($session->url('events'), ['name' => 'webwidget.triggered'], ['X-Auth-Token' => $token])
+            ->assertNotFound();
+    });
+
+    it('lazily creates a contact and starts the conversation when a campaign is triggered from a pending session', function () {
+        $session = WidgetSession::make();
+        $campaign = Campaign::factory()->create([
+            'account_id' => $session->account->id,
+            'inbox_id' => $session->inbox->id,
+            'enabled' => true,
+        ])->refresh();
+        $token = test()->postJson($session->url('config'))->assertOk()->json('website_channel_config.auth_token');
+        $before = Contact::query()->count();
+
+        $this->postJson($session->url('events'), [
+            'name' => 'campaign.triggered',
+            'event_info' => ['campaign_id' => $campaign->display_id],
+        ], ['X-Auth-Token' => $token])->assertNoContent();
+
+        expect(Contact::query()->count())->toBe($before + 1);
+        expect(Conversation::query()->where('inbox_id', $session->inbox->id)->where('campaign_id', $campaign->id)->exists())->toBeTrue();
     });
 });
 

@@ -2,53 +2,40 @@
 
 namespace App\Http\Controllers\Widget;
 
-use App\Builders\ContactInboxWithContactBuilder;
-use App\Http\Middleware\ResolveWidgetChannel;
 use App\Http\Resources\Widget\WidgetConfigResource;
-use App\Models\ContactInbox;
 use App\Support\WidgetTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
-// Cửa vào của mọi phiên khách: chưa có token (hoặc token hỏng) thì dựng hồ sơ
-// nháp mới, có token hợp lệ thì dùng lại đúng phiên cũ.
+// Cửa vào của mọi phiên khách — KHÔNG ghi DB: token hợp lệ thì dùng lại đúng
+// phiên cũ, token thiếu/hỏng thì chỉ cấp một source_id "treo" (chưa có bản ghi
+// contact_inbox nào mang nó). Contact + contact_inbox chỉ dựng khi khách có
+// hành động thật đầu tiên, ở ResolveOrCreateWidgetContact.
 class ConfigsController extends WidgetController
 {
     public function store(Request $request): JsonResponse
     {
         $channel = $this->channel($request);
-        $contactInbox = $this->contactInbox($request) ?? $this->buildContactInbox($request);
+        $contactInbox = $this->contactInbox($request);
 
         $token = WidgetTokenService::generate([
-            'source_id' => $contactInbox->source_id,
+            'source_id' => $contactInbox?->source_id ?? $this->pendingSourceId($request),
             'inbox_id' => $channel->inbox->id,
         ]);
 
         return response()->json(
-            WidgetConfigResource::make($channel, $contactInbox, $contactInbox->contact, $token)
+            WidgetConfigResource::make($channel, $contactInbox, $contactInbox?->contact, $token)
         );
     }
 
-    // Channel::WebWidget#create_contact_inbox — dùng lại builder định danh của B2.
-    private function buildContactInbox(Request $request): ContactInbox
+    // Giữ nguyên source_id đã cấp trong request (nếu có) để tải lại nhiều lần
+    // không đổi định danh phiên dù chưa có hành động thật nào; garbage/không có
+    // token thì cấp UUID mới.
+    private function pendingSourceId(Request $request): string
     {
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox($request),
-            contactAttributes: ['additional_attributes' => $this->additionalAttributes($request)],
-        ))->perform();
+        $existing = $this->authPayload($request)['source_id'] ?? null;
 
-        abort_if($contactInbox === null, 422, 'Could not create a contact for this widget');
-
-        $request->attributes->set(ResolveWidgetChannel::CONTACT_INBOX, $contactInbox);
-
-        return $contactInbox;
-    }
-
-    /** @return array<string, mixed> */
-    private function additionalAttributes(Request $request): array
-    {
-        return $this->account($request)->featureEnabled('ip_lookup')
-            ? ['created_at_ip' => $request->ip()]
-            : [];
+        return is_string($existing) && $existing !== '' ? $existing : (string) Str::uuid();
     }
 }

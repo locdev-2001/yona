@@ -15,7 +15,7 @@ use Throwable;
 final class WidgetConfigResource
 {
     /** @return array<string, mixed> */
-    public static function make(WebWidget $channel, ContactInbox $contactInbox, Contact $contact, string $authToken): array
+    public static function make(WebWidget $channel, ?ContactInbox $contactInbox, ?Contact $contact, string $authToken): array
     {
         $inbox = $channel->inbox;
         $account = $inbox->account;
@@ -52,7 +52,9 @@ final class WidgetConfigResource
                 'working_hours' => $inbox->weeklySchedule(),
                 'working_hours_enabled' => $inbox->working_hours_enabled,
             ],
-            'contact' => [
+            // Phiên còn "treo" (chưa có hành động thật nào) chưa có contact/contact_inbox
+            // thật — trả placeholder null, KHÔNG dựng hồ sơ chỉ vì tải cấu hình.
+            'contact' => $contact === null ? self::pendingContact() : [
                 'email' => $contact->email,
                 'id' => $contact->id,
                 'identifier' => $contact->identifier,
@@ -68,6 +70,19 @@ final class WidgetConfigResource
                 'MAXIMUM_FILE_UPLOAD_SIZE' => config('limits.maximum_file_upload_size'),
                 'INSTALLATION_NAME' => config('yona.branding.installation_name'),
             ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function pendingContact(): array
+    {
+        return [
+            'email' => null,
+            'id' => null,
+            'identifier' => null,
+            'name' => null,
+            'phone_number' => null,
+            'pubsub_token' => null,
         ];
     }
 

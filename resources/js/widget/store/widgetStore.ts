@@ -200,6 +200,7 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
         const data = await request(metadata);
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
+        void widgetStore.reconnectRealtimeIfPending();
     } catch (error) {
         if (!state.conversations[temporaryMessage.id]) return;
         failedSends.set(temporaryMessage.id, { send, isNetworkFailure: isNetworkFailure(error) });
@@ -334,6 +335,7 @@ export const widgetStore = {
             const [message] = data?.messages ?? [];
             if (message) pushMessageToConversation(message);
             await widgetStore.getConversationAttributes();
+            await widgetStore.reconnectRealtimeIfPending();
             emitter.emit(WIDGET_BUS_EVENTS.ON_CONVERSATION_CREATED);
         } catch {
             // Bỏ qua như bản gốc.
@@ -642,6 +644,23 @@ export const widgetStore = {
             setState({ contact: { ...(state.contact ?? {}), ...contact } as WidgetContact });
         } catch {
             // Bỏ qua như bản gốc.
+        }
+    },
+
+    // Phiên còn "treo" lúc /config (chưa có hành động thật) không mang
+    // pubsub_token thật — sau khi hội thoại/tin đầu tiên vừa tạo xong, tải lại
+    // config một lần để lấy pubsub_token thật rồi báo main.tsx nối kênh realtime.
+    async reconnectRealtimeIfPending(): Promise<void> {
+        if (state.contact?.pubsub_token) return;
+
+        try {
+            const { contact } = await api.fetchConfig();
+            if (!contact?.pubsub_token) return;
+
+            setState({ contact: { ...(state.contact ?? {}), ...contact } as WidgetContact });
+            emitter.emit(WIDGET_BUS_EVENTS.ON_REALTIME_TOKEN_READY, contact.pubsub_token);
+        } catch {
+            // Bỏ qua như bản gốc: thử lại ở hành động kế tiếp.
         }
     },
 
