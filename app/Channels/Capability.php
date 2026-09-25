@@ -46,6 +46,9 @@ enum Capability: string
     case OutboundTyping = 'outbound_typing';
     case OutboundReadReceipt = 'outbound_read_receipt';
     case OutboundRetry = 'outbound_retry';
+    case OutboundQuickReply = 'outbound_quick_reply';
+    case OutboundButtons = 'outbound_buttons';
+    case OutboundCard = 'outbound_card';
 
     // §2.3 Sự kiện đến
     case EventDelivered = 'event_delivered';

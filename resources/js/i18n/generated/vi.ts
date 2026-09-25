@@ -8057,6 +8057,9 @@ const messages: Record<string, unknown> = {
             "image": "Đã gửi một ảnh",
             "file": "Đã gửi một tệp"
         },
+        "delivery": {
+            "numbered_prompt": "Nhắn số tương ứng để chọn:"
+        },
         "cards": {
             "preview_many": ":title và :count sản phẩm khác",
             "compare_at": "giá cũ :price, -:percent%"

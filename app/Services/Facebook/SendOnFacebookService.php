@@ -2,6 +2,9 @@
 
 namespace App\Services\Facebook;
 
+use App\Messaging\Delivery\DeliveryLevel;
+use App\Messaging\Delivery\DeliveryPlan;
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\FacebookPage;
 use App\Services\Channels\BaseSendOnChannelService;
@@ -19,14 +22,26 @@ class SendOnFacebookService extends BaseSendOnChannelService
 
     protected function performReply(): void
     {
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $this->channel()->capabilities());
+
         $payloads = [
-            ...(filled($this->message->content) ? [$this->textMessageParams()] : []),
+            ...array_map(fn (array $part) => $this->messageParams($part), $this->messageParts($plan)),
             ...$this->message->attachments->map(fn (Attachment $attachment) => $this->attachmentMessageParams($attachment))->all(),
         ];
 
         foreach ($this->withMessengerReplyToOnFirst($payloads) as $payload) {
             $this->deliver($payload);
         }
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function messageParts(DeliveryPlan $plan): array
+    {
+        if ($plan->level === DeliveryLevel::Native) {
+            return $plan->parts;
+        }
+
+        return filled($plan->plainText()) ? [['text' => $plan->plainText()]] : [];
     }
 
     /** @param array<string, mixed> $payload */
@@ -45,23 +60,16 @@ class SendOnFacebookService extends BaseSendOnChannelService
         }
     }
 
-    /** @return array<string, mixed> */
-    private function textMessageParams(): array
+    /**
+     * @param  array<string, mixed>  $message  phần đã dựng bởi DeliveryPlanner (text thuần
+     *                                         hoặc payload gốc kèm quick_replies)
+     * @return array<string, mixed>
+     */
+    private function messageParams(array $message): array
     {
-        $payload = $this->message->contentTypeName() === 'input_select' && filled($this->message->content_attributes['items'] ?? null)
-            ? [
-                'text' => $this->message->outgoingContent(),
-                'quick_replies' => array_map(fn (array $item) => [
-                    'content_type' => 'text',
-                    'payload' => $item['title'],
-                    'title' => $item['title'],
-                ], $this->message->content_attributes['items']),
-            ]
-            : ['text' => $this->message->outgoingContent()];
-
         return $this->withHumanAgentTag([
             'recipient' => ['id' => $this->sourceId()],
-            'message' => $payload,
+            'message' => $message,
         ]);
     }
 

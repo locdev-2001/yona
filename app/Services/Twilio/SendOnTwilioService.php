@@ -2,6 +2,7 @@
 
 namespace App\Services\Twilio;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Channel\TwilioSms;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
@@ -18,10 +19,13 @@ class SendOnTwilioService extends BaseSendOnChannelService
     {
         $channel = $this->channel();
 
+        // Không có nút/chip gốc — tin có lựa chọn (input_select, cards…) hạ xuống chữ kèm danh sách đánh số.
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $channel->capabilities());
+
         $params = [
             ...$channel->sendMessageFrom(),
             'To' => $this->sourceId(),
-            'Body' => $this->message->outgoingContent(),
+            'Body' => $plan->plainText(),
             'StatusCallback' => route('twilio.delivery_status'),
         ];
 

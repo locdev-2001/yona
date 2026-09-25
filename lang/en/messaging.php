@@ -31,6 +31,9 @@ return [
         'image' => 'Sent a photo',
         'file' => 'Sent a file',
     ],
+    'delivery' => [
+        'numbered_prompt' => 'Reply with the number of your choice:',
+    ],
     'cards' => [
         'preview_many' => ':title and :count more',
         'compare_at' => 'was :price, -:percent%',

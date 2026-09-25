@@ -119,6 +119,26 @@ it('gửi tin ra bridge đúng payload và ghi source_id', function () {
     expect($message->refresh()->source_id)->toBe('sent-1');
 });
 
+it('tin có lựa chọn gửi thành chữ kèm danh sách đánh số và ghi mức đã gửi', function () {
+    fakeZaloSendBridge();
+
+    $message = $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Nhận hàng lúc nào ạ?',
+        'content_type' => Message::CONTENT_TYPES['input_select'],
+        'content_attributes' => ['items' => [['title' => 'Giờ hành chính', 'value' => 'office'], ['title' => 'Buổi tối', 'value' => 'evening']]],
+    ]);
+
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/personal-messages/send')
+        && str_starts_with($request['text'], 'Nhận hàng lúc nào ạ?')
+        && str_contains($request['text'], '1. Giờ hành chính')
+        && str_contains($request['text'], '2. Buổi tối'));
+
+    expect($message->refresh()->content_attributes['delivery'])->toBe('text_numbered');
+});
+
 it('gửi kèm quote zca khi agent trả lời trích dẫn', function () {
     fakeZaloSendBridge();
 

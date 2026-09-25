@@ -1,5 +1,8 @@
 <?php
 
+use App\Messaging\Delivery\Renderers\FacebookRenderer;
+use App\Messaging\Delivery\Renderers\LineRenderer;
+use App\Messaging\Delivery\Renderers\TelegramRenderer;
 use App\Messaging\Structured\Types\ArticleType;
 use App\Messaging\Structured\Types\ButtonsType;
 use App\Messaging\Structured\Types\CardsType;
@@ -8,6 +11,9 @@ use App\Messaging\Structured\Types\OrderRequestType;
 use App\Messaging\Structured\Types\OrderStatusType;
 use App\Messaging\Structured\Types\QuickRepliesType;
 use App\Messaging\Structured\Types\WebviewType;
+use App\Models\Channel\FacebookPage;
+use App\Models\Channel\Line;
+use App\Models\Channel\Telegram;
 
 return [
     /*
@@ -24,5 +30,17 @@ return [
         WebviewType::class,
         OrderStatusType::class,
         OrderRequestType::class,
+    ],
+
+    /*
+    | Renderer gốc theo kênh cho DeliveryPlanner (App\Messaging\Delivery). Khoá
+    | bằng class kênh: dù nhiều kênh cùng khai một capability (vd
+    | outbound_quick_reply), mỗi kênh vẫn có payload riêng. Thêm kênh mới có
+    | payload gốc: một class hiện thực NativeRenderer + một dòng ở đây.
+    */
+    'delivery_renderers' => [
+        FacebookPage::class => FacebookRenderer::class,
+        Telegram::class => TelegramRenderer::class,
+        Line::class => LineRenderer::class,
     ],
 ];
