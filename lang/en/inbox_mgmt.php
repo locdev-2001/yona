@@ -648,6 +648,7 @@ return [
             'BRIDGE_REJECTED' => 'The Zalo connection could not process the request. Try again, or contact support if it persists.',
             'NO_QR_SESSION' => 'No QR sign-in session is open. Start a new one.',
             'ACCOUNT_MISMATCH' => 'That QR code belongs to a different Zalo account. This inbox is connected to {name}.',
+            'SESSION_CAP_REACHED' => 'The Zalo server is at capacity ({max} accounts). Please try again in a few minutes.',
             'ACCOUNT_IN_USE' => 'That Zalo account is already connected to inbox "{inbox}". One account can only serve one inbox.',
         ],
     ],

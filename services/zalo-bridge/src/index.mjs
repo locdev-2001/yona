@@ -48,6 +48,7 @@ import { deriveInboundSourceId } from './inbound-source-id.mjs';
 import { safeEqual } from './secret-compare.mjs';
 import { copySessionFile, ensureSessionDir, hardenSessionStore, readSessionFile, writeSessionFile } from './session-store-fs.mjs';
 import { loadSessionKeys } from './session-crypto.mjs';
+import { countActiveSlots, resolveMaxSessions, sessionCapExceeded } from './session-cap.mjs';
 import { attachRelayForwarder } from './relay-forwarder.mjs';
 import {
     buildFriendRequestPayload,
@@ -84,6 +85,9 @@ const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
+// Một process giữ phiên Zalo của MỌI tenant trong RAM — hạn mức chặn một khách
+// spam mở QR kéo sập process cho khách khác. Xem session-cap.mjs.
+const BRIDGE_MAX_SESSIONS = resolveMaxSessions();
 
 // Tier 1 outbox — khởi tạo sớm, start() gọi sau bootRestoreAllSessions()
 const outbox = createOutbox({
@@ -2336,6 +2340,14 @@ function buildExpress() {
             outbox: outbox.stats(),
             // P09 spike chatty: rate event fire-and-forget theo type kể từ boot
             relay_counters: relayEventCounters,
+            // Hạn mức phiên đồng thời của CẢ process (không riêng slot này) + rss
+            // để founder tự đo RAM/phiên khi có tài khoản thật quét QR — xem
+            // session-cap.mjs và mục "Chia tải" ở docs/deployment.md.
+            bridge: {
+                active_sessions: countActiveSlots(slots),
+                max_sessions: BRIDGE_MAX_SESSIONS,
+                rss_bytes: process.memoryUsage().rss,
+            },
             // Lô 1: đo sức khoẻ process — rớt/nối lại, handler ném lỗi, frame hỏng.
             resilience: {
                 ...resilience.stats(),
@@ -2380,6 +2392,17 @@ function buildExpress() {
         }
         if (!LARAVEL_WEBHOOK_URL) {
             return res.status(400).json({ ok: false, message: 'bridge_missing_laravel_webhook_url' });
+        }
+        // Điểm DUY NHẤT tạo một phiên Zalo THẬT MỚI (các nhánh phía trên đều tái
+        // dùng slot đã có, không tốn thêm hạn mức) — chặn ở đây trước khi gọi
+        // zalo.loginQR() và tốn tài nguyên.
+        if (sessionCapExceeded(slots, BRIDGE_MAX_SESSIONS)) {
+            return res.status(429).json({
+                ok: false,
+                code: 'session_cap_reached',
+                message: 'session_cap_reached',
+                max_sessions: BRIDGE_MAX_SESSIONS,
+            });
         }
 
         slot.botId = botId;

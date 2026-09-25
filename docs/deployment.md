@@ -405,6 +405,56 @@ dựng bridge là chạy trùng.
 
 Kiểm tra: `systemctl is-enabled pm2-root`.
 
+### Hạn mức phiên đồng thời (`BRIDGE_MAX_SESSIONS`)
+
+Một process bridge giữ phiên WebSocket Zalo của **mọi** tenant trong RAM cùng
+lúc (`ecosystem.config.cjs` cố định `instances: 1` / `exec_mode: fork` — outbox
+ghi file không an toàn multi-process, xem comment trong `.env.example`). Không
+hạn mức thì một khách mở QR liên tục (hoặc bị lỗi client spam) có thể kéo process
+dùng hết RAM, ảnh hưởng tới khách khác trên cùng bridge.
+
+```dotenv
+BRIDGE_MAX_SESSIONS=50   # mặc định nếu bỏ trống hoặc đặt số không hợp lệ
+```
+
+Vượt hạn mức: `POST /auth/qr/start` trả `429 {code: "session_cap_reached"}`,
+Laravel dịch thành thông điệp tiếng Việt trong
+`lang/vi/inbox_mgmt.php` → `ZALO_SESSION.ERRORS.SESSION_CAP_REACHED`. Phiên đã
+kết nối từ trước (`connection_id` khôi phục lúc boot) **không** bị chặn bởi hạn
+mức này — chỉ chặn việc MỞ MỘT phiên mới qua QR.
+
+`GET /health` (cần `X-Bridge-UI-Secret`) trả thêm khối `bridge`:
+
+```json
+{"bridge": {"active_sessions": 12, "max_sessions": 50, "rss_bytes": 187654144}}
+```
+
+`rss_bytes` là RAM của cả process — chưa đo được RAM riêng từng phiên vì việc đó
+cần một tài khoản Zalo thật quét QR (không mô phỏng được). Founder tự đo bằng
+cách so `rss_bytes` trước/sau khi một số phiên thật kết nối, chia đều.
+
+### Chia tải khi vượt hạn mức một process (kế hoạch, CHƯA thi công)
+
+`BRIDGE_MAX_SESSIONS` chặn một process phình RAM vô hạn, nhưng không tăng tổng
+sức chứa. Khi 50 (hoặc hạn mức đã nâng) không đủ cho số tenant, hướng chia tải:
+
+- **Nhiều process, mỗi process một `.sessions/` + một cổng riêng** (không dùng
+  `pm2 cluster`/`instances > 1` trỏ cùng thư mục — outbox file-based không có
+  file-lock, xem cảnh báo trong `.env.example`). Mỗi process là một app pm2
+  riêng (`zalo-personal-bridge-2`, cổng `8613`, `.sessions-2/`…).
+- **Định tuyến theo `connection_id`**: Laravel cần biết channel Zalo nào thuộc
+  process nào — thêm cột `bridge_url` (hoặc `bridge_shard`) vào `channel_zalo`,
+  `ZaloBridgeClient` đọc từ đó thay vì hằng số `config('zalo.bridge.url')` duy
+  nhất. Gán shard lúc tạo kênh (round-robin hoặc theo `active_sessions` thấp
+  nhất từ `/health` của từng shard).
+- **Không di chuyển phiên đang sống giữa các shard** — muốn đổi shard thì ngắt
+  kết nối + quét QR lại, giống như đổi tài khoản Zalo.
+- Mỗi shard vẫn cần `BRIDGE_SESSION_KEY` riêng hoặc dùng chung một khoá cho mọi
+  shard (đơn giản hơn để vận hành, chấp nhận được vì khoá không rời máy).
+
+Chưa làm vì cần dữ liệu RAM/phiên thật (mục trên) để biết ngưỡng nào mới cần
+shard thứ hai.
+
 ---
 
 

@@ -26,6 +26,11 @@ class QrLoginService
 
     public const ERROR_NO_QR_SESSION = 'qr_session_missing';
 
+    public const ERROR_SESSION_CAP_REACHED = 'zalo_session_cap_reached';
+
+    /** `code` bridge trả trong body khi từ chối vì `BRIDGE_MAX_SESSIONS` — vocabulary của bridge (không tiền tố `zalo_`), khác `ERROR_SESSION_CAP_REACHED` là error_code Laravel trả ra ngoài cho frontend. */
+    private const BRIDGE_CODE_SESSION_CAP_REACHED = 'session_cap_reached';
+
     public function __construct(
         private readonly ZaloBridgeClient $bridge,
         private readonly ZaloProfileSync $profileSync,
@@ -47,6 +52,10 @@ class QrLoginService
         }
 
         if (! $response->successful()) {
+            if ($response->status() === 429 && $response->json('code') === self::BRIDGE_CODE_SESSION_CAP_REACHED) {
+                return $this->sessionCapReached($response->json('max_sessions'));
+            }
+
             return $this->rejected($response->status(), $response->json('message'));
         }
 
@@ -233,6 +242,24 @@ class QrLoginService
             'status' => 503,
             'error_code' => self::ERROR_BRIDGE_UNREACHABLE,
             'message' => self::line('BRIDGE_UNREACHABLE'),
+        ];
+    }
+
+    /**
+     * Bridge từ chối mở phiên vì đã đạt `BRIDGE_MAX_SESSIONS` (một process giữ
+     * phiên Zalo của mọi tenant — hạn mức chặn một khách kéo sập process cho
+     * khách khác). Khác `bridge_rejected`: đây không phải lỗi cấu hình QR, người
+     * dùng chỉ cần thử lại sau, không phải liên hệ hỗ trợ ngay.
+     *
+     * @return array<string, mixed>
+     */
+    private function sessionCapReached(mixed $maxSessions): array
+    {
+        return [
+            'ok' => false,
+            'status' => 503,
+            'error_code' => self::ERROR_SESSION_CAP_REACHED,
+            'message' => self::line('SESSION_CAP_REACHED', ['{max}' => (string) (is_numeric($maxSessions) ? $maxSessions : '?')]),
         ];
     }
 

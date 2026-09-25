@@ -205,6 +205,24 @@ it('mở phiên QR mới thì huỷ phiên quét dở trước đó ở bridge',
         && $request['qr_token'] === 'token-cu');
 });
 
+it('bridge báo đã đạt hạn mức phiên thì hiện thông điệp riêng, không phải bridge_rejected chung', function () {
+    // 'code' đúng nguyên văn bridge trả (services/zalo-bridge/src/index.mjs
+    // POST /auth/qr/start) — KHÔNG tiền tố zalo_, khác error_code Laravel trả ra.
+    fakeZaloBridge([zaloBridgePattern('auth/qr/start') => Http::response([
+        'ok' => false,
+        'code' => 'session_cap_reached',
+        'message' => 'session_cap_reached',
+        'max_sessions' => 50,
+    ], 429)]);
+
+    $response = $this->actingAs($this->admin)
+        ->postJson("/api/v1/accounts/{$this->account->id}/inboxes/{$this->inbox->id}/zalo/qr")
+        ->assertStatus(503)
+        ->assertJsonPath('error_code', 'zalo_session_cap_reached');
+
+    expect($response->json('message'))->toContain('50');
+});
+
 it('không nối được cầu nối thì báo bridge_unreachable', function () {
     Http::fake(fn () => throw new ConnectionException('refused'));
 
