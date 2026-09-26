@@ -1,8 +1,6 @@
-import DOMPurify from 'dompurify';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
-import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { emitter } from 'shared/helpers/emitter';
 
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
@@ -10,6 +8,7 @@ import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import type { MessageAttachment, MessageSender } from '../types';
 import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
+import { messageHtml } from '../helpers/messageHelpers';
 
 // Port từ widget/components/UnreadMessageList.vue + UnreadMessage.vue — khung
 // bong bóng nổi ngoài widget, dùng chung cho tin chưa đọc và cho campaign
@@ -83,9 +82,7 @@ function UnreadMessage({
                 <div
                     className="message-content"
                     dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(
-                            new MessageFormatter(messageContent(message), false).formattedMessage,
-                        ),
+                        __html: messageHtml(messageContent(message)),
                     }}
                 />
             </button>
