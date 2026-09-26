@@ -6,6 +6,9 @@ import Dialog, { type DialogHandle } from 'dashboard/components-next/dialog/Dial
 import Input from 'dashboard/components-next/input/Input';
 import Popover from 'dashboard/components-next/popover/Popover';
 import { uploadFile } from 'dashboard/helper/uploadHelper';
+import { getJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { createCannedResponse, isShortCodeInvalid } from 'dashboard/composables/useCannedResponses';
 
 import { t } from '../../../../i18n';
 import BankTransferForm from './BankTransferForm';
@@ -22,13 +25,13 @@ import {
     schedulePayload,
     withPreviewDiscount,
     type BankTransferDraft,
+    type CardKind,
+    type PaymentAccountOption,
     type ProductDraft,
     type QuickRepliesDraft,
     type ScheduleDraft,
     type StructuredDraft,
 } from './cardPayloads';
-
-type CardKind = 'quick_replies' | 'product' | 'bank_transfer' | 'schedule';
 
 const CARD_KINDS: { kind: CardKind; icon: string }[] = [
     { kind: 'quick_replies', icon: 'i-lucide-list-checks' },
@@ -198,6 +201,74 @@ function ProductForm({ draft, onChange }: { draft: ProductDraft; onChange: (draf
     );
 }
 
+export interface CannedCardPayload {
+    contentType: string;
+    content: string | null;
+    contentAttributes: Record<string, unknown>;
+}
+
+/**
+ * Xem lại thẻ của một câu trả lời mẫu trước khi gửi. Thẻ chuyển khoản chỉ lưu
+ * mã tài khoản/số tiền/nội dung (không lưu số tài khoản/QR) nên phải tự tra
+ * lại từ `PaymentAccount`, cùng luật với BankTransferType::normalize.
+ */
+export function useCannedCardPreview(accountId: number, cannedCard: CannedCardPayload | null): StructuredDraft | null {
+    const [preview, setPreview] = useState<StructuredDraft | null>(null);
+
+    useEffect(() => {
+        if (!cannedCard) {
+            setPreview(null);
+            return undefined;
+        }
+
+        if (cannedCard.contentType !== 'bank_transfer') {
+            setPreview({ contentType: cannedCard.contentType, content: cannedCard.content ?? undefined, contentAttributes: cannedCard.contentAttributes });
+            return undefined;
+        }
+
+        let alive = true;
+        setPreview(null);
+        const paymentAccountId = cannedCard.contentAttributes.payment_account_id;
+        const amount = cannedCard.contentAttributes.amount;
+        const memo = typeof cannedCard.contentAttributes.memo === 'string' ? cannedCard.contentAttributes.memo : '';
+
+        getJson<{ payload: PaymentAccountOption[] }>(`/api/v1/accounts/${accountId}/payment_accounts`)
+            .then(({ payload }) => {
+                const account = payload.find(item => item.id === paymentAccountId);
+                if (!alive || !account) return;
+
+                const query = new URLSearchParams({
+                    ...(typeof amount === 'number' ? { amount: String(amount) } : {}),
+                    ...(memo.trim() ? { memo: memo.trim() } : {}),
+                });
+
+                getJson<{ qr_payload: string }>(`/api/v1/accounts/${accountId}/payment_accounts/${account.id}/preview?${query}`)
+                    .then(({ qr_payload: qrPayload }) => {
+                        if (!alive) return;
+                        setPreview({
+                            contentType: 'bank_transfer',
+                            contentAttributes: {
+                                bank_name: account.bank_name,
+                                account_number: account.account_number,
+                                account_name: account.account_name,
+                                ...(typeof amount === 'number' ? { amount: { amount, currency: 'VND' } } : {}),
+                                ...(memo.trim() ? { memo: memo.trim() } : {}),
+                                qr_payload: qrPayload,
+                            },
+                        });
+                    })
+                    .catch(() => alive && setPreview(null));
+            })
+            .catch(() => alive && setPreview(null));
+
+        return () => {
+            alive = false;
+        };
+    }, [accountId, cannedCard]);
+
+    return preview;
+}
+
 /**
  * Nút "Gửi thẻ" trên thanh soạn tin: chọn loại thẻ, điền form, xem trước đúng như khách thấy,
  * rồi gửi. Kênh không vẽ được thẻ thì máy chủ tự hạ xuống chữ (DeliveryPlanner).
@@ -206,9 +277,13 @@ export interface SendCardTarget {
     accountId: number;
     conversationDisplayId: number;
     onSend: (draft: StructuredDraft) => void;
+    // Chọn một câu trả lời mẫu mang thẻ trong ô soạn (xem Editor.tsx): mở sẵn
+    // dialog này để nhân viên xem lại rồi bấm Gửi, không sửa từng trường.
+    cannedCard?: CannedCardPayload | null;
+    onCannedCardConsumed?: () => void;
 }
 
-export default function SendCardMenu({ accountId, conversationDisplayId, onSend }: SendCardTarget) {
+export default function SendCardMenu({ accountId, conversationDisplayId, onSend, cannedCard = null, onCannedCardConsumed }: SendCardTarget) {
     const [kind, setKind] = useState<CardKind | null>(null);
     const [quickReplies, setQuickReplies] = useState(EMPTY_QUICK_REPLIES);
     const [product, setProduct] = useState(EMPTY_PRODUCT);
@@ -216,11 +291,14 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend 
     const [bankPreview, setBankPreview] = useState<StructuredDraft | null>(null);
     const [schedule, setSchedule] = useState(EMPTY_SCHEDULE);
     const [showErrors, setShowErrors] = useState(false);
+    const [shortCode, setShortCode] = useState('');
+    const [isSavingCanned, setSavingCanned] = useState(false);
     const dialogRef = useRef<DialogHandle>(null);
+    const cannedCardPreview = useCannedCardPreview(accountId, cannedCard);
 
     useEffect(() => {
-        if (kind) dialogRef.current?.open();
-    }, [kind]);
+        if (kind || cannedCard) dialogRef.current?.open();
+    }, [kind, cannedCard]);
 
     const labels = { order: k('PRODUCT.ORDER_BUTTON'), view: k('PRODUCT.VIEW_BUTTON') };
     const draft = useMemo<StructuredDraft | null>(() => {
@@ -245,14 +323,24 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend 
         schedule: () => scheduleError(schedule),
     }[kind ?? 'quick_replies']();
     // Thẻ chuyển khoản xem trước bằng bản máy chủ dựng (có mã QR thật), không bằng payload gửi đi.
-    const preview = kind === 'bank_transfer' ? bankPreview : draft;
+    // Câu trả lời mẫu: xem trước bằng bản đã tra lại (useCannedCardPreview), gửi bằng đúng bản đã lưu.
+    const preview = cannedCard ? cannedCardPreview : kind === 'bank_transfer' ? bankPreview : draft;
 
     const close = () => {
         setKind(null);
         setShowErrors(false);
+        setShortCode('');
+        if (cannedCard) onCannedCardConsumed?.();
     };
 
     const send = () => {
+        if (cannedCard) {
+            onSend({ contentType: cannedCard.contentType, content: cannedCard.content ?? undefined, contentAttributes: cannedCard.contentAttributes });
+            onCannedCardConsumed?.();
+            dialogRef.current?.close();
+            return;
+        }
+
         setShowErrors(true);
         if (error || !draft) return;
         onSend(draft);
@@ -261,6 +349,29 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend 
         if (kind === 'bank_transfer') setBankTransfer(EMPTY_BANK_TRANSFER);
         if (kind === 'schedule') setSchedule(EMPTY_SCHEDULE);
         dialogRef.current?.close();
+    };
+
+    // Lưu đúng thẻ đang soạn thành một câu trả lời mẫu, không gửi đi. Thẻ
+    // chuyển khoản đã ở đúng dạng cần lưu (payment_account_id/amount/memo,
+    // không có số tài khoản/QR) — máy chủ kiểm lại và từ chối nếu sai.
+    const saveAsCanned = async () => {
+        if (error || !draft || isShortCodeInvalid(shortCode)) return;
+
+        setSavingCanned(true);
+        try {
+            await createCannedResponse(accountId, {
+                short_code: shortCode.trim(),
+                content: draft.content,
+                content_type: draft.contentType,
+                content_attributes: draft.contentAttributes,
+            });
+            useAlert(k('SAVE_AS_CANNED_SUCCESS'));
+            setShortCode('');
+        } catch (err) {
+            useAlert(parseApiErrorMessage(err) || k('SAVE_AS_CANNED_ERROR'));
+        } finally {
+            setSavingCanned(false);
+        }
     };
 
     return (
@@ -295,7 +406,7 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend 
                     ref={dialogRef}
                     type="edit"
                     width="3xl"
-                    title={kind ? k(`${kind.toUpperCase()}.TITLE`) : ''}
+                    title={kind ? k(`${kind.toUpperCase()}.TITLE`) : cannedCard ? k('REVIEW_TITLE') : ''}
                     confirmButtonLabel={k('SEND')}
                     cancelButtonLabel={k('CANCEL')}
                     overflowYAuto
@@ -304,23 +415,48 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend 
                 >
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_300px]">
                         <div className="flex min-w-0 flex-col gap-3">
-                            {kind === 'quick_replies' ? <QuickRepliesForm draft={quickReplies} onChange={setQuickReplies} /> : null}
-                            {kind === 'product' ? <ProductForm draft={product} onChange={setProduct} /> : null}
-                            {kind === 'bank_transfer' ? (
-                                <BankTransferForm
-                                    accountId={accountId}
-                                    conversationDisplayId={conversationDisplayId}
-                                    draft={bankTransfer}
-                                    onChange={setBankTransfer}
-                                    onPreview={setBankPreview}
-                                />
-                            ) : null}
-                            {kind === 'schedule' ? <ScheduleForm draft={schedule} onChange={setSchedule} /> : null}
-                            {showErrors && error ? (
-                                <p role="alert" className="m-0 text-sm text-n-ruby-11">
-                                    {k(`ERRORS.${error}`)}
-                                </p>
-                            ) : null}
+                            {cannedCard ? (
+                                <p className="m-0 text-sm text-n-slate-11">{k('REVIEW_HINT')}</p>
+                            ) : (
+                                <>
+                                    {kind === 'quick_replies' ? <QuickRepliesForm draft={quickReplies} onChange={setQuickReplies} /> : null}
+                                    {kind === 'product' ? <ProductForm draft={product} onChange={setProduct} /> : null}
+                                    {kind === 'bank_transfer' ? (
+                                        <BankTransferForm
+                                            accountId={accountId}
+                                            conversationDisplayId={conversationDisplayId}
+                                            draft={bankTransfer}
+                                            onChange={setBankTransfer}
+                                            onPreview={setBankPreview}
+                                        />
+                                    ) : null}
+                                    {kind === 'schedule' ? <ScheduleForm draft={schedule} onChange={setSchedule} /> : null}
+                                    {showErrors && error ? (
+                                        <p role="alert" className="m-0 text-sm text-n-ruby-11">
+                                            {k(`ERRORS.${error}`)}
+                                        </p>
+                                    ) : null}
+                                    <div className="mt-2 flex items-end gap-2 border-t border-n-weak pt-3">
+                                        <Input
+                                            className="flex-1"
+                                            label={k('SAVE_AS_CANNED_LABEL')}
+                                            placeholder={k('SAVE_AS_CANNED_PLACEHOLDER')}
+                                            value={shortCode}
+                                            onChange={event => setShortCode(event.target.value)}
+                                        />
+                                        <NextButton
+                                            type="button"
+                                            slate
+                                            faded
+                                            icon="i-lucide-bookmark-plus"
+                                            label={k('SAVE_AS_CANNED')}
+                                            isLoading={isSavingCanned}
+                                            disabled={!draft || Boolean(error) || isShortCodeInvalid(shortCode)}
+                                            onClick={() => void saveAsCanned()}
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                         {preview ? <CardPreview draft={preview} /> : null}
                     </div>

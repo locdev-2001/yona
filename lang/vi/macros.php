@@ -111,6 +111,7 @@ return [
         'CHANGE_STATUS' => 'Đổi trạng thái',
         'SEND_ATTACHMENT' => 'Gửi tệp đính kèm',
         'SEND_MESSAGE' => 'Gửi một tin nhắn',
+        'SEND_CANNED_CARD' => 'Gửi thẻ từ câu trả lời mẫu',
         'CHANGE_PRIORITY' => 'Đổi mức ưu tiên',
         'ADD_PRIVATE_NOTE' => 'Thêm một ghi chú riêng',
         'SEND_WEBHOOK_EVENT' => 'Gửi sự kiện webhook',

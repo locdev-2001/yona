@@ -2,6 +2,7 @@
 
 namespace App\Services\Macros;
 
+use App\Builders\Messages\MessageBuilder;
 use App\Jobs\WebhookJob;
 use App\Models\Attachment;
 use App\Models\Conversation;
@@ -51,6 +52,7 @@ final class ExecutionService
         match ($actionName) {
             'send_attachment' => $this->sendAttachment(Arr::wrap($params)),
             'send_webhook_event' => $this->sendWebhookEvent(Arr::wrap($params)),
+            'send_canned_card' => $this->sendCannedCard(Arr::wrap($params)),
             default => $this->executor()->execute($actionName, $params),
         };
     }
@@ -95,6 +97,43 @@ final class ExecutionService
         }
 
         return $copy;
+    }
+
+    /**
+     * Gửi lại đúng thẻ đã lưu trong một câu trả lời mẫu — máy chủ tự chuẩn
+     * hoá lại content_attributes (thẻ chuyển khoản tự tra số tài khoản thật)
+     * y hệt lúc nhân viên bấm Gửi trong hộp thư, đường tạo tin không có gì riêng
+     * cho macro nên không cần chạm vào ActionExecutor.
+     *
+     * @param  list<mixed>  $params
+     */
+    private function sendCannedCard(array $params): void
+    {
+        $cannedResponseId = (int) ($params[0] ?? 0);
+        if (! $cannedResponseId || $this->conversationIsTweet()) {
+            return;
+        }
+
+        $cannedResponse = $this->macro->account->cannedResponses()
+            ->whereKey($cannedResponseId)
+            ->whereNotNull('content_type')
+            ->first();
+
+        if ($cannedResponse === null) {
+            return;
+        }
+
+        (new MessageBuilder($this->user, $this->conversation->fresh(), [
+            'content' => $cannedResponse->content,
+            'content_type' => $cannedResponse->content_type,
+            'content_attributes' => $cannedResponse->content_attributes,
+            'private' => false,
+        ]))->perform();
+    }
+
+    private function conversationIsTweet(): bool
+    {
+        return data_get($this->conversation->additional_attributes, 'type') === 'tweet';
     }
 
     /** @param list<mixed> $params */

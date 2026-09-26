@@ -116,6 +116,13 @@ return [
         'SEND' => 'Gửi',
         'CANCEL' => 'Huỷ',
         'REMOVE' => 'Xoá',
+        'REVIEW_TITLE' => 'Xem lại thẻ trước khi gửi',
+        'REVIEW_HINT' => 'Thẻ từ câu trả lời mẫu, xem lại rồi bấm Gửi.',
+        'SAVE_AS_CANNED' => 'Lưu làm câu trả lời mẫu',
+        'SAVE_AS_CANNED_LABEL' => 'Mã tắt',
+        'SAVE_AS_CANNED_PLACEHOLDER' => 'Ví dụ: ck-tra-truoc',
+        'SAVE_AS_CANNED_SUCCESS' => 'Đã lưu làm câu trả lời mẫu.',
+        'SAVE_AS_CANNED_ERROR' => 'Không lưu được, bạn hãy thử lại.',
         'QUICK_REPLIES' => [
             'TITLE' => 'Trả lời nhanh',
             'HINT' => 'Câu hỏi kèm 2–6 lựa chọn để khách bấm',

@@ -12,6 +12,7 @@ import {
 } from 'dashboard/composables/useCannedResponses';
 import type { CannedResponse, CannedSortOrder } from 'dashboard/composables/useCannedResponses';
 import { getPlainText } from 'shared/helpers/MessageFormatter';
+import { CARD_KIND_BY_CONTENT_TYPE } from 'dashboard/conversation/composer/SendCardMenu/cardPayloads';
 import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
 import SettingsLayout from '../SettingsLayout';
@@ -65,6 +66,14 @@ export default function CannedIndex() {
         t('CANNED_MGMT.LIST.TABLE_HEADER.SHORT_CODE'),
         t('CANNED_MGMT.LIST.TABLE_HEADER.ACTIONS'),
     ];
+
+    // Nhãn loại thẻ (Gửi thẻ) hiện cạnh mã lệnh trong danh sách — null khi câu
+    // trả lời mẫu chỉ có chữ thuần.
+    const cardKindLabel = (contentType?: string | null): string | null => {
+        if (!contentType) return null;
+        const kind = CARD_KIND_BY_CONTENT_TYPE[contentType];
+        return kind ? t(`CONVERSATION.SEND_CARD.${kind.toUpperCase()}.TITLE`) : t('CANNED_MGMT.LIST.UNKNOWN_CARD_TYPE');
+    };
 
     return (
         <Dashboard>
@@ -132,9 +141,17 @@ export default function CannedIndex() {
                                 <BaseTableRow key={record.short_code}>
                                     <BaseTableCell className="max-w-0">
                                         <div className="flex flex-col gap-2 min-w-0">
-                                            <span className="text-heading-3 text-n-slate-12 truncate block">
-                                                {record.short_code}
-                                            </span>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-heading-3 text-n-slate-12 truncate block">
+                                                    {record.short_code}
+                                                </span>
+                                                {cardKindLabel(record.content_type) ? (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-n-alpha-2 px-2 py-0.5 text-xs font-medium text-n-slate-11">
+                                                        <span className="i-lucide-layout-panel-top size-3" />
+                                                        {cardKindLabel(record.content_type)}
+                                                    </span>
+                                                ) : null}
+                                            </div>
                                             <p className="text-body-main text-n-slate-11 line-clamp-5">
                                                 {getPlainText(record.content)}
                                             </p>

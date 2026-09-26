@@ -21,6 +21,7 @@ return [
             'CONTENT' => 'Nội dung',
             'ACTIONS' => 'Hành động',
         ],
+        'UNKNOWN_CARD_TYPE' => 'Thẻ',
     ],
     'ADD' => [
         'TITLE' => 'Thêm câu trả lời mẫu',
@@ -64,6 +65,12 @@ return [
         'API' => [
             'SUCCESS_MESSAGE' => 'Đã cập nhật câu trả lời mẫu.',
             'ERROR_MESSAGE' => 'Không kết nối được máy chủ. Bạn hãy thử lại.',
+        ],
+        // Câu trả lời mẫu mang thẻ: chỉ đổi được mã tắt ở đây, đổi nội dung thẻ
+        // thì gửi lại từ hội thoại rồi lưu làm câu trả lời mẫu mới.
+        'CARD_VIEW' => [
+            'TYPE_LABEL' => 'Loại thẻ',
+            'HINT' => 'Câu trả lời mẫu này gửi một thẻ. Muốn đổi nội dung thẻ, hãy vào một hội thoại, gửi thẻ mới rồi lưu làm câu trả lời mẫu.',
         ],
     ],
     'DELETE' => [

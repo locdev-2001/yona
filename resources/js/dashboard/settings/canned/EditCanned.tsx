@@ -7,6 +7,7 @@ import { updateCannedResponse } from 'dashboard/composables/useCannedResponses';
 import type { CannedResponse } from 'dashboard/composables/useCannedResponses';
 import CannedForm from './CannedForm';
 import type { CannedFormValues } from './CannedForm';
+import CardCannedView from './CardCannedView';
 
 // Port từ dashboard/routes/dashboard/settings/canned/EditCanned.vue
 interface EditCannedProps {
@@ -19,10 +20,10 @@ interface EditCannedProps {
 export default function EditCanned({ accountId, record, onClose, onUpdated }: EditCannedProps) {
     const [isUpdating, setUpdating] = useState(false);
 
-    const editCannedResponse = async (values: CannedFormValues) => {
+    const editCannedResponse = async (payload: CannedFormValues | { short_code: string }) => {
         setUpdating(true);
         try {
-            const updated = await updateCannedResponse(accountId, record.id, values);
+            const updated = await updateCannedResponse(accountId, record.id, payload);
             onUpdated(updated);
             useAlert(t('CANNED_MGMT.EDIT.API.SUCCESS_MESSAGE'));
             // Gốc chờ 10ms trước khi đóng để alert kịp gắn vào DOM.
@@ -33,6 +34,20 @@ export default function EditCanned({ accountId, record, onClose, onUpdated }: Ed
             setUpdating(false);
         }
     };
+
+    // Câu trả lời mẫu mang thẻ: không mở form JSON, chỉ đổi mã tắt — gửi mỗi
+    // short_code, không đụng đến content/content_type/content_attributes đã lưu.
+    if (record.content_type) {
+        return (
+            <CardCannedView
+                accountId={accountId}
+                record={record}
+                isSubmitting={isUpdating}
+                onSubmit={shortCode => void editCannedResponse({ short_code: shortCode })}
+                onClose={onClose}
+            />
+        );
+    }
 
     return (
         <CannedForm

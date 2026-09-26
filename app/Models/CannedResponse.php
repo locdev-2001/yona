@@ -13,7 +13,16 @@ class CannedResponse extends Model
         'account_id',
         'short_code',
         'content',
+        'content_type',
+        'content_attributes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'content_attributes' => 'array',
+        ];
+    }
 
     public function account(): BelongsTo
     {

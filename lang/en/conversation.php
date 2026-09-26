@@ -115,6 +115,13 @@ return [
         'SEND' => 'Send',
         'CANCEL' => 'Cancel',
         'REMOVE' => 'Remove',
+        'REVIEW_TITLE' => 'Review the card before sending',
+        'REVIEW_HINT' => 'Card from a canned response — review it, then press Send.',
+        'SAVE_AS_CANNED' => 'Save as a canned response',
+        'SAVE_AS_CANNED_LABEL' => 'Short code',
+        'SAVE_AS_CANNED_PLACEHOLDER' => 'e.g. bank-transfer-deposit',
+        'SAVE_AS_CANNED_SUCCESS' => 'Saved as a canned response.',
+        'SAVE_AS_CANNED_ERROR' => 'Could not save, please try again.',
         'QUICK_REPLIES' => [
             'TITLE' => 'Quick replies',
             'HINT' => 'A question with 2–6 options to tap',

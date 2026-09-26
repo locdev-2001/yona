@@ -40,6 +40,8 @@ export interface MacroOptionSets {
     agents: FilterOption[];
     teams: FilterOption[];
     labels: FilterOption[];
+    // Câu trả lời mẫu có mang thẻ (content_type khác rỗng) — action "Gửi thẻ".
+    cannedCards: FilterOption[];
 }
 
 export type { AutomationAction as MacroAction };

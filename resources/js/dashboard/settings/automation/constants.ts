@@ -110,6 +110,7 @@ const ACTION_ICONS: Record<string, string> = {
     send_email_to_team: 'i-lucide-send',
     send_email_transcript: 'i-lucide-mail',
     send_message: 'i-lucide-message-square',
+    send_canned_card: 'i-lucide-layout-panel-top',
     add_private_note: 'i-lucide-sticky-note',
     send_attachment: 'i-lucide-paperclip',
     send_webhook_event: 'i-lucide-webhook',

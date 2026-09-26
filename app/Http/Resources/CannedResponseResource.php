@@ -21,6 +21,8 @@ class CannedResponseResource extends JsonResource
             'account_id' => $cannedResponse->account_id,
             'short_code' => $cannedResponse->short_code,
             'content' => $cannedResponse->content,
+            'content_type' => $cannedResponse->content_type,
+            'content_attributes' => $cannedResponse->content_attributes,
             'created_at' => RailsTimestamp::format($cannedResponse->created_at),
             'updated_at' => RailsTimestamp::format($cannedResponse->updated_at),
         ];

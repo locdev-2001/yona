@@ -32,12 +32,21 @@ function highlightContent(content: string, searchTerm: string, highlightClass: s
     return plainTextContent.replace(new RegExp(`(${escapedSearchTerm})`, 'ig'), `<span class="${highlightClass}">$1</span>`);
 }
 
+export interface CannedCardSelection {
+    contentType: string;
+    content: string | null;
+    contentAttributes: Record<string, unknown>;
+}
+
 interface CannedResponseProps {
     caretPosition: CaretPosition | null;
     searchKey: string;
     schema: Schema | null;
     boundaryElement?: HTMLElement | null;
     onReplace: (content: string) => void;
+    // Câu trả lời mẫu mang thẻ (content_type khác rỗng): chọn là gửi thẻ, không
+    // chèn chữ vào ô soạn — xem Editor.tsx.
+    onSelectCard: (selection: CannedCardSelection) => void;
     onClose: (reason: PickerCloseReason) => void;
     onRemoveTrigger: () => void;
 }
@@ -49,6 +58,8 @@ interface CannedPickerItem {
     label: string;
     title: string;
     subtitle: string;
+    contentType: string | null;
+    contentAttributes: Record<string, unknown> | null;
 }
 
 export default function CannedResponse({
@@ -57,6 +68,7 @@ export default function CannedResponse({
     schema,
     boundaryElement = null,
     onReplace,
+    onSelectCard,
     onClose,
     onRemoveTrigger,
 }: CannedResponseProps) {
@@ -73,13 +85,15 @@ export default function CannedResponse({
 
     const preparedRecords = useMemo(
         () =>
-            records.map(({ id, short_code: shortCode, content }) => {
+            records.map(({ id, short_code: shortCode, content, content_type: contentType, content_attributes: contentAttributes }) => {
                 const resolved = schema ? stripUnsupportedFormatting(content, schema) : content;
                 return {
                     id,
                     content,
                     resolved,
                     shortCode,
+                    contentType: contentType ?? null,
+                    contentAttributes: contentAttributes ?? null,
                     plainText: getPlainText(resolved).replace(/\s+/g, ' ').trim(),
                 };
             }),
@@ -106,6 +120,8 @@ export default function CannedResponse({
             label: `/${record.shortCode}`,
             title: highlight(`/${record.shortCode}`),
             subtitle: highlight(buildSnippet(record.plainText)),
+            contentType: record.contentType,
+            contentAttributes: record.contentAttributes,
         }));
     }, [preparedRecords, searchTerm]);
 
@@ -137,7 +153,11 @@ export default function CannedResponse({
                 searchTerm ? t('COMBOBOX.EMPTY_SEARCH_RESULTS', { searchTerm }) : t('COMBOBOX.EMPTY_STATE')
             }
             renderEmpty={records.length ? undefined : renderEmpty}
-            onSelect={item => onReplace(item.content)}
+            onSelect={item =>
+                item.contentType
+                    ? onSelectCard({ contentType: item.contentType, content: item.content || null, contentAttributes: item.contentAttributes ?? {} })
+                    : onReplace(item.content)
+            }
             onClose={onClose}
             onRemoveTrigger={onRemoveTrigger}
             renderPreview={item => (

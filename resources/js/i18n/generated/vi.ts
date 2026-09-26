@@ -1225,7 +1225,8 @@ const messages: Record<string, unknown> = {
                 "SHORT_CODE": "Mã tắt",
                 "CONTENT": "Nội dung",
                 "ACTIONS": "Hành động"
-            }
+            },
+            "UNKNOWN_CARD_TYPE": "Thẻ"
         },
         "ADD": {
             "TITLE": "Thêm câu trả lời mẫu",
@@ -1269,6 +1270,10 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Đã cập nhật câu trả lời mẫu.",
                 "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
+            },
+            "CARD_VIEW": {
+                "TYPE_LABEL": "Loại thẻ",
+                "HINT": "Câu trả lời mẫu này gửi một thẻ. Muốn đổi nội dung thẻ, hãy vào một hội thoại, gửi thẻ mới rồi lưu làm câu trả lời mẫu."
             }
         },
         "DELETE": {
@@ -2429,6 +2434,13 @@ const messages: Record<string, unknown> = {
             "SEND": "Gửi",
             "CANCEL": "Huỷ",
             "REMOVE": "Xoá",
+            "REVIEW_TITLE": "Xem lại thẻ trước khi gửi",
+            "REVIEW_HINT": "Thẻ từ câu trả lời mẫu, xem lại rồi bấm Gửi.",
+            "SAVE_AS_CANNED": "Lưu làm câu trả lời mẫu",
+            "SAVE_AS_CANNED_LABEL": "Mã tắt",
+            "SAVE_AS_CANNED_PLACEHOLDER": "Ví dụ: ck-tra-truoc",
+            "SAVE_AS_CANNED_SUCCESS": "Đã lưu làm câu trả lời mẫu.",
+            "SAVE_AS_CANNED_ERROR": "Không lưu được, bạn hãy thử lại.",
             "QUICK_REPLIES": {
                 "TITLE": "Trả lời nhanh",
                 "HINT": "Câu hỏi kèm 2–6 lựa chọn để khách bấm",
@@ -8140,6 +8152,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_STATUS": "Đổi trạng thái",
             "SEND_ATTACHMENT": "Gửi tệp đính kèm",
             "SEND_MESSAGE": "Gửi một tin nhắn",
+            "SEND_CANNED_CARD": "Gửi thẻ từ câu trả lời mẫu",
             "CHANGE_PRIORITY": "Đổi mức ưu tiên",
             "ADD_PRIVATE_NOTE": "Thêm một ghi chú riêng",
             "SEND_WEBHOOK_EVENT": "Gửi sự kiện webhook"
