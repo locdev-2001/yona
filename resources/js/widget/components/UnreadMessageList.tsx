@@ -138,7 +138,7 @@ export default function UnreadMessageList({
                             <button
                                 key={reply}
                                 type="button"
-                                className="rounded-full border border-[var(--yona-chat-accent)] bg-[var(--yona-chat-panel)] px-3.5 py-2 text-[14px] font-medium leading-none text-[var(--yona-chat-accent-ink)] shadow-[var(--yona-chat-shadow-chip)] active:scale-95"
+                                className="min-h-10 rounded-full border border-[var(--yona-chat-line-field)] bg-[var(--yona-chat-panel)] px-3.5 py-2 text-[14px] font-medium leading-none text-[var(--yona-chat-ink)] shadow-[var(--yona-chat-shadow-chip)] active:scale-95"
                                 onClick={() => onQuickReply(reply)}
                             >
                                 {reply}

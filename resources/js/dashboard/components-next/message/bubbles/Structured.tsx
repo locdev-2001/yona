@@ -51,7 +51,7 @@ export default function StructuredBubble({ resolved, message }: { resolved: Reso
         resolved.definition.contentType === 'bank_transfer' ? (resolved.model as { paidAt?: string }) : null;
 
     return (
-        <div className="flex min-w-0 max-w-[340px] flex-col gap-1.5">
+        <div className="flex min-w-0 max-w-[360px] flex-col gap-1.5">
             <div className="rounded-2xl border border-n-weak bg-n-alpha-1 p-2">
                 {resolved.definition.content === 'host' && message.content ? (
                     <p className="m-0 whitespace-pre-wrap break-words px-1.5 pb-2 pt-0.5 text-sm text-n-slate-12">{message.content}</p>

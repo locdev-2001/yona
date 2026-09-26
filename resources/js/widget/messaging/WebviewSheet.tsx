@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { t } from '../i18n';
-import Sheet, { SheetCloseButton } from '../ui/Sheet';
+import Sheet from '../ui/Sheet';
 
 export const FLOW_MESSAGE_PREFIX = 'yona-flow:';
 
@@ -52,7 +52,16 @@ export default function WebviewSheet({ title, url, onClose, onSubmitted }: Webvi
                 >
                     <span className="i-lucide-external-link size-[18px]" />
                 </a>
-                <SheetCloseButton label={t('WEBVIEW_SHEET.CLOSE')} onClick={onClose} />
+                {/* Artboard Webview: hai nút cạnh nhau cùng kiểu icon trần. */}
+                <button
+                    type="button"
+                    aria-label={t('WEBVIEW_SHEET.CLOSE')}
+                    title={t('WEBVIEW_SHEET.CLOSE')}
+                    className="flex size-9 items-center justify-center rounded-full text-[var(--yona-chat-ink)]"
+                    onClick={onClose}
+                >
+                    <span className="i-lucide-x size-[18px]" />
+                </button>
             </div>
             <iframe
                 src={url}

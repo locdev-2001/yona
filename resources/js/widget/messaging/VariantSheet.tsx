@@ -162,7 +162,7 @@ export default function VariantSheet({ item, onClose, onSubmit }: VariantSheetPr
                             <span className="text-[14px] text-[var(--yona-chat-ink-soft)]">{t('ORDER_SHEET.SUBTOTAL')}</span>
                             <span className="text-[12.5px] text-[var(--yona-chat-ink-muted)]">{t('ORDER_SHEET.SHIPPING_HINT')}</span>
                         </span>
-                        <span className="text-[22px] font-bold tabular-nums text-[var(--yona-chat-ink)]">
+                        <span className="text-[20px] font-bold tabular-nums text-[var(--yona-chat-ink)]">
                             {formatMoney(item.price.amount * quantity, item.price.currency)}
                         </span>
                     </div>
