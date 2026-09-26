@@ -16,7 +16,7 @@ const HOTKEY_BASE =
     'hotkey p-0.5 min-w-[1rem] uppercase inline-flex rounded tracking-wide flex-shrink-0 items-center select-none justify-center';
 // class `.key` trong <style scoped> của modal gốc.
 const KEY_STYLE =
-    'py-2 px-2.5 font-semibold text-xs text-n-slate-12 bg-n-slate-4 dark:bg-n-slate-2 shadow border-b-2 rtl:border-l-2 ltr:border-r-2 border-n-strong';
+    'py-2 px-2.5 font-semibold text-xs text-n-slate-12 bg-n-slate-4 shadow border-b-2 rtl:border-l-2 ltr:border-r-2 border-n-strong';
 
 function Hotkey({ className = '', children }: { className?: string; children: ReactNode }) {
     return <kbd className={`${HOTKEY_BASE} ${className}`}>{children}</kbd>;

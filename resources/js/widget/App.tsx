@@ -158,9 +158,6 @@ export default function App() {
                     setApiLocale(String(message.locale));
                     IFrameHelper.sendMessage(launcherLabelsEvent(selectUnreadMessageCount(widgetStore.getState())));
                     break;
-                case 'set-color-scheme':
-                    widgetStore.patchAppConfig({ darkMode: String(message.darkMode) });
-                    break;
                 case 'toggle-open': {
                     const isOpen = Boolean(message.isOpen);
                     widgetStore.patchAppConfig({ isWidgetOpen: isOpen });
@@ -323,16 +320,10 @@ export default function App() {
     };
 
     const isUnreadView = UNREAD_OR_CAMPAIGN_ROUTES.includes(route);
-    const prefersDarkMode =
-        appConfig.darkMode === 'auto'
-            ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
-            : appConfig.darkMode === 'dark';
 
     if (!conversationSize && isFetchingList) {
         return (
-            <div
-                className={`flex items-center justify-center flex-1 h-full bg-n-background ${prefersDarkMode ? 'dark' : ''}`.trim()}
-            >
+            <div className="flex items-center justify-center flex-1 h-full bg-n-background">
                 <Spinner size="" />
             </div>
         );
@@ -375,8 +366,7 @@ export default function App() {
                 appConfig.position === 'right' ? 'is-widget-right' : '',
                 appConfig.hideMessageBubble ? 'is-bubble-hidden' : '',
                 appConfig.widgetStyle === 'flat' ? 'is-flat-design' : '',
-                isUnreadView ? '' : 'bg-n-slate-2 dark:bg-n-solid-1',
-                prefersDarkMode ? 'dark' : '',
+                isUnreadView ? '' : 'bg-n-slate-2',
                 channelConfig ? '' : 'invisible',
             ]
                 .filter(Boolean)

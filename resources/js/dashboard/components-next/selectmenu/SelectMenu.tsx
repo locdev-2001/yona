@@ -45,13 +45,13 @@ export default function SelectMenu({ options, value, label, subMenuPosition = 'r
                 trailingIcon
                 color="slate"
                 variant="faded"
-                className={`!w-fit max-w-40 ${isOpen ? 'dark:!bg-n-alpha-2 !bg-n-slate-9/20' : ''}`.trim()}
+                className={`!w-fit max-w-40 ${isOpen ? '!bg-n-slate-9/20' : ''}`.trim()}
                 label={label}
                 onClick={() => setOpen(open => !open)}
             />
             {isOpen ? (
                 <div
-                    className={`absolute select-none max-w-64 flex flex-col gap-1 bg-n-alpha-3 backdrop-blur-[100px] p-1 top-0 shadow-lg z-40 rounded-lg border border-n-weak dark:border-n-strong/50 ${SUB_MENU_POSITION_CLASSES[subMenuPosition]}`}
+                    className={`absolute select-none max-w-64 flex flex-col gap-1 bg-n-alpha-3 backdrop-blur-[100px] p-1 top-0 shadow-lg z-40 rounded-lg border border-n-weak ${SUB_MENU_POSITION_CLASSES[subMenuPosition]}`}
                 >
                     {options.map(option => (
                         <Button

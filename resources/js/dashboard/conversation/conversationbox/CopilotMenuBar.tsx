@@ -113,7 +113,7 @@ export default function CopilotMenuBar({
                                 </Button>
                                 {item.subMenuItems ? (
                                     <DropdownBody
-                                        className="group-hover/submenu:block hidden [&>ul]:gap-2 [&>ul]:px-3 [&>ul]:py-2.5 [&>ul]:dark:!border-n-strong max-h-[15rem] min-w-32 z-10 top-0 left-full"
+                                        className="group-hover/submenu:block hidden [&>ul]:gap-2 [&>ul]:px-3 [&>ul]:py-2.5 max-h-[15rem] min-w-32 z-10 top-0 left-full"
                                     >
                                         {item.subMenuItems.map(subItem => (
                                             <Button

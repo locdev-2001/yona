@@ -101,7 +101,7 @@ label {
 input:not(.reset-base),
 textarea:not(.reset-base) {
   font-family: inherit;
-  @apply rounded-lg box-border bg-n-background dark:bg-n-alpha-2 border-none outline outline-1 outline-offset-[-1px] outline-n-weak block text-base leading-[1.5] p-2.5 w-full text-n-slate-12 focus:outline-n-brand focus:ring-1 focus:ring-n-brand;
+  @apply rounded-lg box-border bg-n-background border-none outline outline-1 outline-offset-[-1px] outline-n-weak block text-base leading-[1.5] p-2.5 w-full text-n-slate-12 focus:outline-n-brand focus:ring-1 focus:ring-n-brand;
 
   &:disabled {
     @apply opacity-40 cursor-not-allowed;
@@ -144,11 +144,11 @@ textarea {
 }
 
 p code {
-  @apply bg-n-slate-3 dark:bg-n-alpha-2 text-n-slate-11 text-sm inline-block rounded py-px px-1;
+  @apply bg-n-slate-3 text-n-slate-11 text-sm inline-block rounded py-px px-1;
 }
 
 pre {
-  @apply bg-n-slate-3 dark:bg-n-alpha-2 text-n-slate-11 overflow-y-auto rounded-md p-2 mt-1 mb-2 block leading-[1.5] whitespace-pre-wrap;
+  @apply bg-n-slate-3 text-n-slate-11 overflow-y-auto rounded-md p-2 mt-1 mb-2 block leading-[1.5] whitespace-pre-wrap;
 
   code {
     @apply bg-transparent text-n-slate-11 p-0 text-sm;
@@ -220,15 +220,7 @@ blockquote {
   flex-direction: column;
   flex: 1;
   overflow-y: auto;
-  color-scheme: light dark;
-
-  &.light-scheme {
-    color-scheme: light;
-  }
-
-  &.dark-scheme {
-    color-scheme: dark;
-  }
+  color-scheme: light;
 }
 
 .conversation-wrap {
@@ -401,7 +393,7 @@ blockquote {
       @apply flex items-end flex-row-reverse;
 
       .chat-bubble.user {
-        @apply bg-n-ruby-9 dark:bg-n-ruby-9 #{!important};
+        @apply bg-n-ruby-9 #{!important};
       }
     }
   }
@@ -465,7 +457,7 @@ blockquote {
 
   .close-unread-button {
     transition: all 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-    @apply bg-n-slate-3 dark:bg-n-slate-12 text-n-slate-12 dark:text-n-slate-1 hover:brightness-95 border-none border-0 font-medium text-xxs rounded-2xl mb-3;
+    @apply bg-n-slate-3 text-n-slate-12 hover:brightness-95 border-none border-0 font-medium text-xxs rounded-2xl mb-3;
   }
 }
 
@@ -480,7 +472,7 @@ blockquote {
     }
 
     .chat-bubble {
-      @apply border border-solid border-n-slate-5 dark:border-n-slate-11/50 text-n-black;
+      @apply border border-solid border-n-slate-5 text-n-black;
     }
 
     + .chat-bubble-wrap {
@@ -545,7 +537,7 @@ blockquote {
     }
 
     p code {
-      @apply bg-n-alpha-2 dark:bg-n-alpha-1 text-white;
+      @apply bg-n-alpha-2 text-white;
     }
   }
 
@@ -601,7 +593,7 @@ blockquote {
     .formkit-inner input,
     .formkit-inner textarea,
     .formkit-inner select {
-      @apply outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9 focus:outline-n-ruby-9 dark:focus:outline-n-ruby-9;
+      @apply outline-n-ruby-8 hover:outline-n-ruby-9 focus:outline-n-ruby-9;
     }
   }
 }

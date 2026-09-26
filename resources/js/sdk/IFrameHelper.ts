@@ -195,7 +195,6 @@ export const IFrameHelper = {
                 hideMessageBubble: window.$yona.hideMessageBubble,
                 showPopoutButton: window.$yona.showPopoutButton,
                 widgetStyle: window.$yona.widgetStyle,
-                darkMode: window.$yona.darkMode,
                 showUnreadMessagesDialog: window.$yona.showUnreadMessagesDialog,
                 campaignsSnoozedTill,
                 welcomeTitle: window.$yona.welcomeTitle,

@@ -93,9 +93,9 @@ function InboxLayout({ conversationId }: { conversationId: number }) {
                             key={notification.id}
                             inboxItem={notification}
                             stateInbox={inboxes.find(inbox => inbox.id === notification.primary_actor?.inbox_id)}
-                            className={`inbox-card rounded-none hover:rounded-lg hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 ${
+                            className={`inbox-card rounded-none hover:rounded-lg hover:bg-n-alpha-1 ${
                                 conversationId === notification.primary_actor?.id
-                                    ? 'bg-n-alpha-1 dark:bg-n-alpha-3 !rounded-lg active'
+                                    ? 'bg-n-alpha-1 !rounded-lg active'
                                     : ''
                             }`}
                             onClick={() => openConversation(notification)}

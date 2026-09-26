@@ -11,7 +11,6 @@ return [
     'PROFILE_SETTINGS' => 'Thiết lập hồ sơ',
     'YEAR_IN_REVIEW' => 'Nhìn lại một năm',
     'KEYBOARD_SHORTCUTS' => 'Phím tắt',
-    'APPEARANCE' => 'Đổi giao diện',
     'SUPER_ADMIN_CONSOLE' => 'Console quản trị',
     'DOCS' => 'Đọc tài liệu',
     'CHANGELOG' => 'Nhật ký thay đổi',

@@ -19,7 +19,6 @@ return [
         'REMOVE_LABEL' => 'Xoá nhãn khỏi hội thoại',
         'SETTINGS' => 'Cài đặt',
         'AI_ASSIST' => 'Trợ lý AI',
-        'APPEARANCE' => 'Giao diện',
         'SNOOZE_NOTIFICATION' => 'Tạm ẩn thông báo',
     ],
     'COMMANDS' => [
@@ -74,10 +73,6 @@ return [
         'UNTIL_NEXT_MONTH' => 'Tới tháng sau',
         'AN_HOUR_FROM_NOW' => 'Trong một giờ nữa',
         'UNTIL_CUSTOM_TIME' => 'Tùy chỉnh...',
-        'CHANGE_APPEARANCE' => 'Đổi giao diện',
-        'LIGHT_MODE' => 'Sáng',
-        'DARK_MODE' => 'Tối',
-        'SYSTEM_MODE' => 'Theo hệ thống',
         'SNOOZE_NOTIFICATION' => 'Tạm ẩn thông báo',
     ],
     'NO_RESULTS' => 'Không tìm thấy kết quả nào',

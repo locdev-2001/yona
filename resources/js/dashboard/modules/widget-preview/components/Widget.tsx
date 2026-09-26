@@ -109,7 +109,7 @@ export default function Widget({
                 {isPreviewTab ? (
                     <div className="flex-1 flex flex-col items-center justify-end pb-4">
                         {isWidgetVisible ? (
-                            <div className="widget-wrapper flex flex-1 flex-shrink-0 flex-col justify-between rounded-lg shadow-md bg-n-slate-2 dark:bg-n-solid-1 h-[31.25rem] w-80 mb-4">
+                            <div className="widget-wrapper flex flex-1 flex-shrink-0 flex-col justify-between rounded-lg shadow-md bg-n-slate-2 h-[31.25rem] w-80 mb-4">
                                 <WidgetHead config={widgetConfig} />
                                 <div>
                                     {!widgetConfig.isDefaultScreen ? <WidgetBody config={widgetConfig} /> : null}
@@ -135,7 +135,7 @@ export default function Widget({
                             <button
                                 className={`relative flex items-center justify-center rounded-full cursor-pointer ${
                                     isBubbleExpanded
-                                        ? 'w-auto font-medium text-base text-white dark:text-white h-12 px-4'
+                                        ? 'w-auto font-medium text-base text-white h-12 px-4'
                                         : 'w-16 h-16'
                                 }`}
                                 style={{ background: color }}

@@ -65,7 +65,7 @@ export default function MultiselectDropdownItems({
                 <input
                     ref={searchbarRef}
                     type="text"
-                    className="search-input m-0 w-full border border-solid border-transparent h-8 text-sm text-n-slate-12 rounded-md focus:border-n-brand bg-n-background dark:bg-n-background"
+                    className="search-input m-0 w-full border border-solid border-transparent h-8 text-sm text-n-slate-12 rounded-md focus:border-n-brand bg-n-background"
                     placeholder={inputPlaceholder}
                     value={search}
                     onChange={event => setSearch(event.target.value)}

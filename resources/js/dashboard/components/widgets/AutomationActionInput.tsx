@@ -183,7 +183,7 @@ export default function AutomationActionInput({
                         editorId={editorId}
                         uiSettings={uiSettings}
                         placeholder={t('AUTOMATION.ACTION.TEAM_MESSAGE_INPUT_PLACEHOLDER')}
-                        className="px-3 py-1 bg-n-alpha-1 rounded-lg outline outline-1 outline-n-weak dark:outline-n-strong"
+                        className="px-3 py-1 bg-n-alpha-1 rounded-lg outline outline-1 outline-n-weak"
                         onChange={value => onChange({ ...action, action_params: value })}
                     />
                 ) : null}

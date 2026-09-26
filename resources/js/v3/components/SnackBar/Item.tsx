@@ -14,7 +14,7 @@ export default function SnackbarItem({ message, action }: SnackbarItemProps) {
 
     return (
         <div
-            className={`bg-n-slate-12 dark:bg-n-slate-7 rounded-md drop-shadow-md mb-4 max-w-[40rem] inline-flex items-center min-w-[22rem] py-3 px-4 animate-fade-in-up ${
+            className={`bg-n-slate-12 rounded-md drop-shadow-md mb-4 max-w-[40rem] inline-flex items-center min-w-[22rem] py-3 px-4 animate-fade-in-up ${
                 isActionPresent ? 'justify-between' : 'justify-center'
             }`}
         >
@@ -22,7 +22,7 @@ export default function SnackbarItem({ message, action }: SnackbarItemProps) {
             {isActionPresent ? (
                 <button
                     type="button"
-                    className="text-sm font-medium text-n-slate-1 dark:text-white underline"
+                    className="text-sm font-medium text-n-slate-1 underline"
                     onClick={action?.onClick}
                 >
                     {action?.message}

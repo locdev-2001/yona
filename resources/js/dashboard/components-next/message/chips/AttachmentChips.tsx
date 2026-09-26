@@ -29,7 +29,7 @@ export default function AttachmentChips({ attachments, className = '' }: Attachm
                     {recordings.map((attachment) => (
                         <div key={attachment.id}>
                             <AudioChip
-                                className="bg-n-alpha-3 dark:bg-n-alpha-2 text-n-slate-12"
+                                className="bg-n-alpha-3 text-n-slate-12"
                                 attachment={attachment}
                             />
                         </div>

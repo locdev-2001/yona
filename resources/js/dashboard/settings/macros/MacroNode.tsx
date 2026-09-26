@@ -35,8 +35,8 @@ export default function MacroNode({
 }: Props) {
     const errorMessage = errorKey ? t(`MACROS.ERRORS.${errorKey}`) : '';
     const boxClass = errorKey
-        ? 'animate-shake bg-n-ruby-8/20 outline-n-ruby-5 dark:outline-n-ruby-5'
-        : 'bg-n-background dark:bg-n-solid-1';
+        ? 'animate-shake bg-n-ruby-8/20 outline-n-ruby-5'
+        : 'bg-n-background';
 
     return (
         <div className="relative flex items-start w-full min-w-0 basis-full">

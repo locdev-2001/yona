@@ -141,7 +141,7 @@ export default function ArticleEditor({
                             autoHeight
                             minHeight="4rem"
                             customTextAreaClass="!text-[32px] !leading-[48px] !font-medium !tracking-[0.2px]"
-                            customTextAreaWrapperClass="border-0 !bg-transparent dark:!bg-transparent !py-0 !px-0"
+                            customTextAreaWrapperClass="border-0 !bg-transparent !py-0 !px-0"
                             placeholder="Title"
                             autofocus={isNewArticle}
                         />

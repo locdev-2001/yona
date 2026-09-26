@@ -205,7 +205,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                                     {inboxMenuItems.length > 0 && showInboxesDropdown ? (
                                         <DropdownMenu
                                             menuItems={inboxMenuItems}
-                                            className="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-sm dark:!outline-n-slate-5"
+                                            className="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-sm"
                                             onAction={handleInboxAction}
                                         />
                                     ) : null}
@@ -243,7 +243,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                                 editorId={`compose-${contact.id}`}
                                 className={`[&>div]:!border-transparent [&>div]:px-0 [&>div]:py-0 [&>div]:!bg-transparent h-full [&_.ProseMirror-woot-style]:!max-h-[12.5rem] [&_.ProseMirror-woot-style]:!min-h-[12rem] [&_.ProseMirror-menubar]:!pt-0 ${
                                     showErrors && isMessageEmpty
-                                        ? '[&_.empty-node]:before:!text-n-ruby-9 [&_.empty-node]:dark:before:!text-n-ruby-9'
+                                        ? '[&_.empty-node]:before:!text-n-ruby-9'
                                         : ''
                                 }`}
                                 placeholder={t('COMPOSE_NEW_CONVERSATION.FORM.MESSAGE_EDITOR.PLACEHOLDER')}

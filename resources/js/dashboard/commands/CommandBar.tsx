@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '../../i18n';
 import CommandBarFooter from './CommandBarFooter';
-import { useAppearanceHotKeys } from './useAppearanceHotKeys';
 import { useGoToCommandHotKeys } from './useGoToCommandHotKeys';
 import { useCommandBarActions } from './commandBarStore';
 import type { NinjaKeysElement } from './commandBarStore';
@@ -43,7 +42,6 @@ export default function CommandBar() {
     // Các nguồn action không phụ thuộc hội thoại (gốc gọi thẳng trong commandbar.vue);
     // nguồn `conversation` do ConversationView đăng ký.
     useGoToCommandHotKeys();
-    useAppearanceHotKeys();
     const actions = useCommandBarActions();
     const [currentCommandRoot, setCurrentCommandRoot] = useState<string | null>(null);
     const [hasNoMatches, setHasNoMatches] = useState(false);

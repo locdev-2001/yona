@@ -38,7 +38,7 @@ export default function SessionLimitOverlay({
 
     return (
         <div className="w-full max-w-lg mx-auto">
-            <div className="bg-white shadow dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg">
+            <div className="bg-white shadow p-11 sm:shadow-lg sm:rounded-lg">
                 <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                         <h2 className="text-2xl font-semibold text-n-slate-12">{t('SESSION_LIMIT.TITLE')}</h2>

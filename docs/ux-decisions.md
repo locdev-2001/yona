@@ -129,6 +129,14 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Nút nổi mở thanh điều hướng (`#mobile-sidebar-launcher`) | Ẩn khi đang mở một hội thoại, hiện ở màn danh sách | Ở màn chat nút đè ô soạn; màn danh sách vẫn cần lối vào thanh điều hướng | 08/09/2026 |
 | Mũ khung chat dưới 1280px | Gom một dòng: Trở về · avatar · tên · icon kênh · (chuông tạm ẩn) · nút Liên hệ · Giải quyết dạng icon · ⋯; `SidepanelSwitch` nằm trong mũ (`variant="inline"`) | Mũ ba dòng chiếm 136/844px ở điện thoại và cụm nút nổi đè tin đầu tiên | 08/09/2026 |
 
+## Chủ đề màu
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Mọi bề mặt (dashboard, widget, portal, trang `/m`, survey, super admin) | **Chỉ một giao diện sáng.** Không theo chế độ tối của hệ điều hành, không có nút đổi giao diện; `darkMode: []` ở mọi cấu hình Tailwind, trang đặt cố định `color-scheme: light` | Duy trì hai bộ màu nhân đôi công kiểm thử cho mỗi màn, trong khi phần lớn chỗ tối từng lệch màu hoặc sai tương phản. Chốt 20/09/2026 | 26/09/2026 |
+| SDK `window.$yona.setColorScheme()` | Giữ hàm dạng rỗng (cảnh báo deprecate một lần trên console), `darkMode` luôn `'light'`; không gửi gì vào iframe | Là API công khai: tích hợp cũ của tenant gọi hàm này sẽ ném `TypeError` và làm vỡ script trang của họ nếu xoá thẳng | 26/09/2026 |
+| Link portal có `?theme=` | Bỏ qua tham số, trang vẫn mở bình thường | Link đã chia sẻ công khai không được thành 404 | 26/09/2026 |
+
 ## Thông báo
 
 | Màn | Quyết định | Lý do | Ngày |

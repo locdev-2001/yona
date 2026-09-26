@@ -140,7 +140,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                         enableAutoAssignment && hasAssignmentV2 ? (
                             <div className="ltr:pr-0 rtl:pl-0 ltr:pl-4 rtl:pr-4 py-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 size-10 rounded-xl bg-n-slate-3 dark:bg-n-slate-4 flex items-center justify-center">
+                                    <div className="flex-shrink-0 size-10 rounded-xl bg-n-slate-3 flex items-center justify-center">
                                         <Icon icon="i-lucide-zap" className="text-xl text-n-slate-11" />
                                     </div>
                                     <div className="flex-grow">

@@ -13,7 +13,7 @@ export default function WidgetBody({ config }: WidgetBodyProps) {
                 <div>
                     <div className="items-end flex justify-end ml-auto mb-1 mt-0 max-w-[85%] text-right">
                         <div
-                            className="rounded-[1.25rem] rounded-br-[0.25rem] text-white dark:text-white text-sm px-4 py-3"
+                            className="rounded-[1.25rem] rounded-br-[0.25rem] text-white text-sm px-4 py-3"
                             style={{ background: config.color }}
                         >
                             <p className="m-0">{t('INBOX_MGMT.WIDGET_BUILDER.BODY.USER_MESSAGE')}</p>
@@ -21,7 +21,7 @@ export default function WidgetBody({ config }: WidgetBodyProps) {
                     </div>
                 </div>
 
-                <div className="shadow rounded-[1.25rem] rounded-bl-[0.25rem] px-4 py-3 inline-block text-sm text-n-slate-12 bg-n-background dark:bg-n-solid-3">
+                <div className="shadow rounded-[1.25rem] rounded-bl-[0.25rem] px-4 py-3 inline-block text-sm text-n-slate-12 bg-n-background">
                     <div>
                         <p className="m-0">{t('INBOX_MGMT.WIDGET_BUILDER.BODY.AGENT_MESSAGE')}</p>
                     </div>

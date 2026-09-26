@@ -54,7 +54,7 @@ export default function TableOfContents({ rows }: TableOfContentsProps) {
                     <nav className="max-w-2xl">
                         <ol
                             role="list"
-                            className="flex flex-col gap-2 text-base ltr:border-l-2 rtl:border-r-2 border-solid border-slate-100 dark:border-slate-800"
+                            className="flex flex-col gap-2 text-base ltr:border-l-2 rtl:border-r-2 border-solid border-slate-100"
                         >
                             {rows.map(row => (
                                 <li
@@ -62,7 +62,7 @@ export default function TableOfContents({ rows }: TableOfContentsProps) {
                                     className={`leading-6 ltr:border-l-2 rtl:border-r-2 relative ltr:-left-0.5 rtl:-right-0.5 border-solid ${
                                         currentSlug === row.slug
                                             ? 'border-n-portal transition-colors duration-200'
-                                            : 'border-slate-100 dark:border-slate-800'
+                                            : 'border-slate-100'
                                     }`}
                                 >
                                     <p className={`py-1 px-3 ${indentClass(row)}`}>
@@ -71,7 +71,7 @@ export default function TableOfContents({ rows }: TableOfContentsProps) {
                                             className={`font-medium text-sm tracking-[0.28px] cursor-pointer ${
                                                 currentSlug === row.slug
                                                     ? 'text-n-portal transition-colors duration-200'
-                                                    : 'text-slate-700 dark:text-slate-100'
+                                                    : 'text-slate-700'
                                             }`}
                                         >
                                             {row.title}

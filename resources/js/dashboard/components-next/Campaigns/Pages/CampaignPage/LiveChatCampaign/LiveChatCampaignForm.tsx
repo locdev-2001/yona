@@ -227,7 +227,7 @@ export default function LiveChatCampaignForm({
     };
 
     const comboBoxClass =
-        '[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6';
+        '[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:hover:!outline-n-slate-6';
 
     const Container = embedded ? 'div' : 'form';
 

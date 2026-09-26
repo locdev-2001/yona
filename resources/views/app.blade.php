@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {{-- dir bắt buộc cho variant ltr:/rtl: của Tailwind (App.vue gốc đặt trên #app; rtl_view động vào nhóm G) --}}
-<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr">
+<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr" style="color-scheme: light">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,23 +13,6 @@
         @inertiaHead
     </head>
     <body class="h-full w-full">
-        <script>
-            (function () {
-                let scheme = 'auto';
-                try {
-                    scheme = JSON.parse(localStorage.getItem('color_scheme')) || 'auto';
-                } catch (e) {
-                    scheme = localStorage.getItem('color_scheme') || 'auto';
-                }
-                const osOnDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if ((scheme === 'auto' && osOnDark) || scheme === 'dark') {
-                    document.body.classList.add('dark');
-                    document.documentElement.style.setProperty('color-scheme', 'dark');
-                } else {
-                    document.documentElement.style.setProperty('color-scheme', 'light');
-                }
-            })();
-        </script>
         @inertia
     </body>
 </html>

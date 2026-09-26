@@ -64,7 +64,7 @@ function QrCodeBlock({
         <div className={`flex flex-col ${gapClass} items-center mt-8`}>
             <p className="mt-2 text-sm text-n-slate-9">{instruction}</p>
             <div className="rounded-lg shadow outline-1 outline-n-strong outline">
-                <img src={dataUrl} alt={alt} className="rounded-lg size-48 dark:invert" />
+                <img src={dataUrl} alt={alt} className="rounded-lg size-48" />
             </div>
         </div>
     );

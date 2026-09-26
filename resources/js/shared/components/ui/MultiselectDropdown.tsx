@@ -111,7 +111,7 @@ export default function MultiselectDropdown({
             <div
                 className={`${
                     showSearchDropdown ? 'block visible' : 'hidden invisible'
-                } box-border top-[2.625rem] w-full border rounded-lg bg-n-alpha-3 backdrop-blur-[100px] absolute shadow-lg border-n-strong dark:border-n-strong p-2 z-[9999]`}
+                } box-border top-[2.625rem] w-full border rounded-lg bg-n-alpha-3 backdrop-blur-[100px] absolute shadow-lg border-n-strong p-2 z-[9999]`}
             >
                 <div className="flex items-center justify-between mb-1">
                     <h4 className="m-0 overflow-hidden text-sm text-n-slate-11 whitespace-nowrap text-ellipsis">

@@ -20,8 +20,8 @@ export default function WidgetHead({ config }: WidgetHeadProps) {
         <div
             className={`rounded-t-lg flex-shrink-0 transition-[max-height] duration-300 ${
                 isDefaultScreen
-                    ? 'bg-n-slate-2 dark:bg-n-solid-1 px-4 py-5'
-                    : 'bg-n-slate-2 dark:bg-n-solid-1 p-4'
+                    ? 'bg-n-slate-2 px-4 py-5'
+                    : 'bg-n-slate-2 p-4'
             }`}
         >
             <div className="relative top-px">

@@ -218,7 +218,7 @@ export default function Sidebar({
                         ) : (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
-                                className="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30"
+                                className="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2"
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                             >
                                 <span className="i-lucide-search size-4 text-n-slate-11" />
@@ -230,7 +230,7 @@ export default function Sidebar({
                             color="slate"
                             size="sm"
                             disabled
-                            className={`flex-shrink-0 dark:hover:!bg-n-slate-9/30 ${
+                            className={`flex-shrink-0 ${
                                 isEffectivelyCollapsed
                                     ? '!size-8 !outline-n-weak !text-n-slate-11'
                                     : '!h-7 !outline-n-weak !text-n-slate-11'

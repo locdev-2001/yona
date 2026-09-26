@@ -12,7 +12,7 @@
   </div>
   @include('public.portal.articles.article-body', ['contentPadding' => 'py-4'])
 @else
-  <div id="portal-bg" class="bg-white dark:bg-slate-900 shadow-inner">
+  <div id="portal-bg" class="bg-white shadow-inner">
     <div id="portal-bg-gradient" class="pt-8 pb-8 md:pt-14 md:pb-6">
       <div class="max-w-5xl px-4 md:px-8 mx-auto flex flex-col">
         @include('public.portal.articles.article-header')

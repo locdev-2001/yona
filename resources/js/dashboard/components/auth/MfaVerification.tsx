@@ -103,7 +103,7 @@ export default function MfaVerification({
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <div className="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg">
+            <div className="bg-white shadow sm:mx-auto sm:w-full sm:max-w-lg p-11 sm:shadow-lg sm:rounded-lg">
                 <div className="text-center mb-6">
                     <div className="inline-flex items-center justify-center size-14 bg-n-solid-1 outline outline-n-weak rounded-full mb-4">
                         <Icon icon="i-lucide-lock-keyhole" className="size-6 text-n-slate-10" />

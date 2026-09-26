@@ -101,7 +101,7 @@ export default function ContactsCard({
         <div className="relative">
             <CardLayout
                 layout="row"
-                className={isSelected ? 'outline-n-weak !bg-n-slate-3 dark:!bg-n-solid-3' : ''}
+                className={isSelected ? 'outline-n-weak !bg-n-slate-3' : ''}
                 after={
                     <div
                         className={`transition-all duration-500 ease-in-out grid overflow-hidden ${

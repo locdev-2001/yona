@@ -37,10 +37,10 @@ const PublicSearchInput = forwardRef<SearchInputHandle, PublicSearchInputProps>(
 
     return (
         <div
-            className={`w-full flex items-center gap-2 rounded-lg border-solid border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-200 transition-all duration-500 ease-out ${sizeClasses.wrapper} ${
+            className={`w-full flex items-center gap-2 rounded-lg border-solid border bg-white text-slate-600 transition-all duration-500 ease-out ${sizeClasses.wrapper} ${
                 isFocused
                     ? 'shadow border-n-portal ring-4 ring-n-portal-soft'
-                    : 'border-slate-50 dark:border-slate-800 shadow-sm ring-0 ring-transparent'
+                    : 'border-slate-50 shadow-sm ring-0 ring-transparent'
             }`}
         >
             <FluentIcon icon="search" />
@@ -48,7 +48,7 @@ const PublicSearchInput = forwardRef<SearchInputHandle, PublicSearchInputProps>(
                 ref={inputRef}
                 value={searchTerm}
                 type="text"
-                className={`flex-1 min-w-0 focus:outline-none h-full bg-transparent px-2 text-slate-700 dark:text-slate-100 placeholder-slate-500 ${sizeClasses.input}`}
+                className={`flex-1 min-w-0 focus:outline-none h-full bg-transparent px-2 text-slate-700 placeholder-slate-500 ${sizeClasses.input}`}
                 placeholder={searchPlaceholder}
                 role="search"
                 onChange={(event: ChangeEvent<HTMLInputElement>) => onUpdateSearchTerm(event.target.value)}

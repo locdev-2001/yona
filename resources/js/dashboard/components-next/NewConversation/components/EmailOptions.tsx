@@ -31,7 +31,7 @@ export default function EmailOptions({
 }: EmailOptionsProps) {
     const [showBccInput, setShowBccInput] = useState(false);
 
-    const inputClass = hasErrors ? 'placeholder:!text-n-ruby-9 dark:placeholder:!text-n-ruby-9' : '';
+    const inputClass = hasErrors ? 'placeholder:!text-n-ruby-9' : '';
 
     const updateList = (field: 'ccEmails' | 'bccEmails', list: string[]) =>
         onChange({ [field]: list.join(',') });

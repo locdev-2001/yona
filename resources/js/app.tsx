@@ -2,10 +2,6 @@ import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 
 import { documentTitle } from './documentTitle';
-import { setColorTheme } from './dashboard/helper/themeHelper';
-
-const osDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-osDarkQuery.addEventListener('change', event => setColorTheme(event.matches));
 
 const pages = import.meta.glob([
     './v3/views/**/*.tsx',

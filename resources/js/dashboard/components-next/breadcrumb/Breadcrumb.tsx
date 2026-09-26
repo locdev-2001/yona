@@ -29,7 +29,7 @@ export default function Breadcrumb({ items, onClick }: BreadcrumbProps) {
                         {index > 0 ? (
                             <Icon
                                 icon="i-lucide-chevron-right"
-                                className="flex-shrink-0 mx-2 size-4 text-n-slate-11 dark:text-n-slate-11"
+                                className="flex-shrink-0 mx-2 size-4 text-n-slate-11"
                             />
                         ) : null}
 

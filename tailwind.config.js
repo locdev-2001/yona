@@ -34,7 +34,7 @@ const defaultSansFonts = [
 ];
 
 const tailwindConfig = {
-  darkMode: 'class',
+  darkMode: [], // sản phẩm chỉ có một chủ đề sáng (gỡ dark mode 20/09/2026)
   content: [
     './resources/js/**/*.{ts,tsx,js,jsx}',
     './resources/views/**/*.blade.php',

@@ -10,7 +10,7 @@ import './ReplyEmailHead.scss';
 // sao nội bộ và chỉ emit lúc blur — ở đây state do ReplyBox làm chủ, blur mới
 // đánh dấu "đã chạm" để hiện lỗi (cùng hành vi hiển thị).
 const FIELD_CLASS =
-    '[&>input]:!mb-0 [&>input]:border-transparent [&>input]:!outline-none [&>input]:h-8 [&>input]:!text-sm [&>input]:!border-0 [&>input]:border-none [&>input]:!bg-transparent dark:[&>input]:!bg-transparent';
+    '[&>input]:!mb-0 [&>input]:border-transparent [&>input]:!outline-none [&>input]:h-8 [&>input]:!text-sm [&>input]:!border-0 [&>input]:border-none [&>input]:!bg-transparent';
 
 interface ReplyEmailHeadProps {
     toEmails: string;

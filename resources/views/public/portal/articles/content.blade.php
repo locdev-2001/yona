@@ -1,6 +1,6 @@
 {{-- Port từ articles/_content.html.erb — thân bài dùng chung cho mọi layout. --}}
 <div id="cw-article-content"
-     class="prose dark:prose-invert max-w-none break-words
+     class="prose max-w-none break-words
             prose-headings:font-620
             prose-p:font-420 prose-li:font-420 prose-blockquote:font-420 prose-td:font-420
             {{ $linkClass ?? 'prose-a:underline' }}

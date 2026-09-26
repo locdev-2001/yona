@@ -26,7 +26,7 @@ const InlineInput = forwardRef<HTMLInputElement, InlineInputProps>(function Inli
             <input
                 id={id}
                 ref={ref}
-                className={`flex w-full min-w-0 reset-base text-sm h-6 !mb-0 border-0 rounded-none outline-none outline-0 bg-transparent dark:bg-transparent placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 dark:text-n-slate-12 transition-all duration-500 ease-in-out ${customInputClass}`}
+                className={`flex w-full min-w-0 reset-base text-sm h-6 !mb-0 border-0 rounded-none outline-none outline-0 bg-transparent placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out ${customInputClass}`}
                 onKeyDown={event => {
                     if (event.key === 'Enter') {
                         event.preventDefault();

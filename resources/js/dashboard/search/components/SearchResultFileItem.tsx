@@ -63,7 +63,7 @@ export default function SearchResultFileItem({ file, accountId, query }: SearchR
     return (
         <CardLayout
             layout="row"
-            className="relative [&>div]:justify-start [&>div]:gap-3 [&>div]:px-4 [&>div]:py-3 hover:bg-n-slate-2 dark:hover:bg-n-solid-3"
+            className="relative [&>div]:justify-start [&>div]:gap-3 [&>div]:px-4 [&>div]:py-3 hover:bg-n-slate-2"
         >
             {showThumbnail ? (
                 <img src={file.thumbUrl} alt="" className="size-10 flex-shrink-0 rounded-lg object-cover" />

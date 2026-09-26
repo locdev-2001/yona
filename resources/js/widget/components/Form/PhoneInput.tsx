@@ -96,14 +96,14 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
     return (
         <div className="relative mt-2 phone-input--wrap">
             <div
-                className={`flex items-center justify-start outline-none phone-input rounded-lg box-border bg-n-background dark:bg-n-alpha-2 border-none outline outline-1 outline-offset-[-1px] text-sm w-full text-n-slate-12 focus-within:outline-n-brand focus-within:ring-1 focus-within:ring-n-brand ${
+                className={`flex items-center justify-start outline-none phone-input rounded-lg box-border bg-n-background border-none outline outline-1 outline-offset-[-1px] text-sm w-full text-n-slate-12 focus-within:outline-n-brand focus-within:ring-1 focus-within:ring-n-brand ${
                     hasError
-                        ? 'outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9'
+                        ? 'outline-n-ruby-8 hover:outline-n-ruby-9'
                         : 'outline-n-weak'
                 }`}
             >
                 <div
-                    className="flex items-center justify-between h-[2.625rem] px-2 py-2 cursor-pointer bg-n-alpha-1 dark:bg-n-solid-1 ltr:rounded-bl-lg rtl:rounded-br-lg ltr:rounded-tl-lg rtl:rounded-tr-lg min-w-[3.6rem] w-[3.6rem]"
+                    className="flex items-center justify-between h-[2.625rem] px-2 py-2 cursor-pointer bg-n-alpha-1 ltr:rounded-bl-lg rtl:rounded-br-lg ltr:rounded-tl-lg rtl:rounded-tr-lg min-w-[3.6rem] w-[3.6rem]"
                     onClick={toggleCountryDropdown}
                 >
                     {activeCountry?.emoji ? (
@@ -119,7 +119,7 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
                 <input
                     value={phoneNumber}
                     type="phoneInput"
-                    className="w-full h-full !py-3 pl-2 pr-3 leading-tight rounded-r !outline-none focus:!ring-0 !bg-transparent dark:!bg-transparent"
+                    className="w-full h-full !py-3 pl-2 pr-3 leading-tight rounded-r !outline-none focus:!ring-0 !bg-transparent"
                     name="phoneNumber"
                     placeholder={placeholder}
                     onChange={event => {
@@ -132,14 +132,14 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
             {showDropdown ? (
                 <div
                     ref={dropdownRef}
-                    className="country-dropdown absolute bg-n-background text-n-slate-12 dark:bg-n-solid-3 z-10 h-48 px-0 pt-0 pb-1 pl-1 pr-1 overflow-y-auto rounded-lg shadow-lg top-12 w-full min-w-24 max-w-[14.8rem]"
+                    className="country-dropdown absolute bg-n-background text-n-slate-12 z-10 h-48 px-0 pt-0 pb-1 pl-1 pr-1 overflow-y-auto rounded-lg shadow-lg top-12 w-full min-w-24 max-w-[14.8rem]"
                     onKeyDown={event => {
                         if (event.key === 'ArrowUp') adjustSelection('up');
                         if (event.key === 'ArrowDown') adjustSelection('down');
                         if (event.key === 'Enter' && selectedIndex !== -1) onSelectCountry(items[selectedIndex]);
                     }}
                 >
-                    <div className="sticky top-0 bg-n-background text-n-slate-12 dark:bg-n-solid-3">
+                    <div className="sticky top-0 bg-n-background text-n-slate-12">
                         <input
                             ref={searchbarRef}
                             value={searchCountry}
@@ -153,9 +153,9 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
                         <div
                             key={index}
                             className={[
-                                'flex items-center h-8 px-2 py-2 rounded cursor-pointer country-dropdown--item text-n-slate-12 dark:hover:bg-n-solid-2 hover:bg-n-alpha-2',
-                                country.id === activeCountryCode ? 'active bg-n-alpha-1 dark:bg-n-solid-1' : '',
-                                index === selectedIndex ? 'focus dark:bg-n-solid-2 bg-n-alpha-2' : '',
+                                'flex items-center h-8 px-2 py-2 rounded cursor-pointer country-dropdown--item text-n-slate-12 hover:bg-n-alpha-2',
+                                country.id === activeCountryCode ? 'active bg-n-alpha-1' : '',
+                                index === selectedIndex ? 'focus bg-n-alpha-2' : '',
                             ]
                                 .filter(Boolean)
                                 .join(' ')}

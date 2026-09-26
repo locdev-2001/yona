@@ -268,7 +268,6 @@ export interface AppConfig {
     showUnreadMessagesDialog: boolean;
     widgetColor: string;
     widgetStyle: string;
-    darkMode: string;
     welcomeTitle: string;
     welcomeDescription: string;
     availableMessage: string;

@@ -67,12 +67,6 @@ return [
         'go_to_homepage' => 'Website',
         'visit_website' => 'Visit website',
         'language' => 'Language',
-        'appearance' => [
-            'title' => 'Appearance',
-            'system' => 'System',
-            'light' => 'Light',
-            'dark' => 'Dark',
-        ],
         'featured_articles' => 'Featured Articles',
         'recommended' => 'Recommended articles',
         'uncategorized' => 'Uncategorized',

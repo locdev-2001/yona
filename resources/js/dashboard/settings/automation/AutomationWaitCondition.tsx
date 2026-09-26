@@ -127,7 +127,7 @@ export default function AutomationWaitCondition({
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_17rem]">
                 <div
                     className={`flex flex-col gap-3 p-4 outline outline-1 -outline-offset-1 rounded-xl ${
-                        hasError ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak dark:outline-n-strong'
+                        hasError ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak'
                     }`}
                 >
                     <div className="flex items-center gap-3 min-h-8">

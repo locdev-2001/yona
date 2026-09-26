@@ -55,8 +55,7 @@ function FeaturePlaceholder() {
 function EmptyStateMessage({ message, action }: { message: string; action?: ReactNode }) {
     return (
         <div className="flex flex-col items-center justify-center h-full">
-            <img className="m-4 w-32 hidden dark:block" src="/assets/images/dashboard/no-chat-dark.svg" alt="No Chat dark" />
-            <img className="m-4 w-32 block dark:hidden" src="/assets/images/dashboard/no-chat.svg" alt="No Chat" />
+            <img className="m-4 w-32 block" src="/assets/images/dashboard/no-chat.svg" alt="No Chat" />
             <span className="text-sm text-n-slate-12 font-medium text-center">
                 {message}
                 <br />

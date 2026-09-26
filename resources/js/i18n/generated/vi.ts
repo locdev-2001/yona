@@ -1531,7 +1531,6 @@ const messages: Record<string, unknown> = {
             "REMOVE_LABEL": "Xoá nhãn khỏi hội thoại",
             "SETTINGS": "Cài đặt",
             "AI_ASSIST": "Trợ lý AI",
-            "APPEARANCE": "Giao diện",
             "SNOOZE_NOTIFICATION": "Tạm ẩn thông báo"
         },
         "COMMANDS": {
@@ -1586,10 +1585,6 @@ const messages: Record<string, unknown> = {
             "UNTIL_NEXT_MONTH": "Tới tháng sau",
             "AN_HOUR_FROM_NOW": "Trong một giờ nữa",
             "UNTIL_CUSTOM_TIME": "Tùy chỉnh...",
-            "CHANGE_APPEARANCE": "Đổi giao diện",
-            "LIGHT_MODE": "Sáng",
-            "DARK_MODE": "Tối",
-            "SYSTEM_MODE": "Theo hệ thống",
             "SNOOZE_NOTIFICATION": "Tạm ẩn thông báo"
         },
         "NO_RESULTS": "Không tìm thấy kết quả nào",
@@ -9078,12 +9073,6 @@ const messages: Record<string, unknown> = {
             "go_to_homepage": "Website",
             "visit_website": "Vào website",
             "language": "Ngôn ngữ",
-            "appearance": {
-                "title": "Giao diện",
-                "system": "Theo hệ thống",
-                "light": "Sáng",
-                "dark": "Tối"
-            },
             "featured_articles": "Bài viết nổi bật",
             "recommended": "Bài viết gợi ý",
             "uncategorized": "Chưa được phân loại"
@@ -9636,7 +9625,6 @@ const messages: Record<string, unknown> = {
         "PROFILE_SETTINGS": "Thiết lập hồ sơ",
         "YEAR_IN_REVIEW": "Nhìn lại một năm",
         "KEYBOARD_SHORTCUTS": "Phím tắt",
-        "APPEARANCE": "Đổi giao diện",
         "SUPER_ADMIN_CONSOLE": "Console quản trị",
         "DOCS": "Đọc tài liệu",
         "CHANGELOG": "Nhật ký thay đổi",

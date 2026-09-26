@@ -27,7 +27,7 @@ export default function QuotedEmailPreview({
 
     return (
         <div className="mt-2">
-            <div className="relative rounded-md px-3 py-2 text-xs text-n-slate-12 bg-n-slate-3 dark:bg-n-solid-3">
+            <div className="relative rounded-md px-3 py-2 text-xs text-n-slate-12 bg-n-slate-3">
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
                     <Button
                         title={
@@ -51,7 +51,7 @@ export default function QuotedEmailPreview({
                     />
                 </div>
                 <div
-                    className={`w-full max-w-none break-words prose prose-sm dark:prose-invert cursor-pointer ltr:pr-8 rtl:pl-8 ${
+                    className={`w-full max-w-none break-words prose prose-sm cursor-pointer ltr:pr-8 rtl:pl-8 ${
                         isExpanded ? 'max-h-60 overflow-y-auto' : 'line-clamp-1'
                     }`}
                     title={previewText}

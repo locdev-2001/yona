@@ -20,8 +20,8 @@ interface Props {
     onSubmit: () => void;
 }
 
-const ACTIVE_CLASS = 'bg-n-blue-2 dark:bg-n-blue-1 border-n-blue-3 dark:border-n-blue-4';
-const INACTIVE_CLASS = 'bg-white dark:bg-n-solid-2 border-n-weak dark:border-n-strong';
+const ACTIVE_CLASS = 'bg-n-blue-2 border-n-blue-3';
+const INACTIVE_CLASS = 'bg-white border-n-weak';
 const CARD_CLASS = 'p-2 relative rounded-md border border-solid justify-between items-start gap-2 flex flex-col text-start';
 
 export default function MacroProperties({
@@ -111,7 +111,7 @@ export default function MacroProperties({
                         </p>
                     </button>
                 </div>
-                <div className="mt-2 flex items-start p-2 bg-n-alpha-1 gap-2 dark:bg-n-solid-3 rounded-md">
+                <div className="mt-2 flex items-start p-2 bg-n-alpha-1 gap-2 rounded-md">
                     <Icon icon="i-lucide-info" className="flex-shrink-0 mt-0.5 size-4 text-n-slate-11" />
                     <p className="mb-0 text-n-slate-11 text-body-para">{t('MACROS.ORDER_INFO')}</p>
                 </div>

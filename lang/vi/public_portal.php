@@ -67,12 +67,6 @@ return [
         'go_to_homepage' => 'Website',
         'visit_website' => 'Vào website',
         'language' => 'Ngôn ngữ',
-        'appearance' => [
-            'title' => 'Giao diện',
-            'system' => 'Theo hệ thống',
-            'light' => 'Sáng',
-            'dark' => 'Tối',
-        ],
         'featured_articles' => 'Bài viết nổi bật',
         'recommended' => 'Bài viết gợi ý',
         'uncategorized' => 'Chưa được phân loại',

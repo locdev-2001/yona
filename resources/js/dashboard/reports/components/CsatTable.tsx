@@ -70,7 +70,7 @@ export default function CsatTable({ pageIndex, onPageChange }: CsatTableProps) {
                                 return (
                                     <tr
                                         key={response.id}
-                                        className="group hover:bg-n-slate-2 dark:hover:bg-n-solid-3 transition-colors"
+                                        className="group hover:bg-n-slate-2 transition-colors"
                                     >
                                         <td className="py-4 px-5">
                                             <CsatContactCell

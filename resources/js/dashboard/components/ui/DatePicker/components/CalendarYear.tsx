@@ -47,7 +47,7 @@ export default function CalendarYear({
                         className={`p-2 text-sm font-medium text-center text-n-slate-12 w-[144px] h-10 rounded-lg py-2.5 px-2 ${
                             year === activeYear
                                 ? 'bg-n-brand text-white hover:bg-n-blue-10'
-                                : 'hover:bg-n-alpha-2 dark:hover:bg-n-solid-3'
+                                : 'hover:bg-n-alpha-2'
                         }`}
                         onClick={event => {
                             event.stopPropagation();

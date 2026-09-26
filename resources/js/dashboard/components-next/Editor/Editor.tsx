@@ -10,9 +10,9 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 type MessageType = 'info' | 'error' | 'success';
 
 const MESSAGE_CLASSES: Record<MessageType, string> = {
-    error: 'text-n-ruby-9 dark:text-n-ruby-9',
-    success: 'text-n-teal-10 dark:text-n-teal-10',
-    info: 'text-n-slate-11 dark:text-n-slate-11',
+    error: 'text-n-ruby-9',
+    success: 'text-n-teal-10',
+    info: 'text-n-slate-11',
 };
 
 interface EditorProps {
@@ -69,12 +69,12 @@ export default function Editor({
     }, [value, maxLength, showCharacterCount, actions, onChange]);
 
     const borderClasses = disabled
-        ? 'cursor-not-allowed opacity-50 pointer-events-none !bg-n-alpha-black2 disabled:border-n-weak dark:disabled:border-n-weak'
+        ? 'cursor-not-allowed opacity-50 pointer-events-none !bg-n-alpha-black2 disabled:border-n-weak'
         : isFocused
-          ? 'border-n-brand dark:border-n-brand'
+          ? 'border-n-brand'
           : messageType === 'error'
-            ? 'border-n-ruby-8 dark:border-n-ruby-8 hover:border-n-ruby-9 dark:hover:border-n-ruby-9'
-            : 'hover:border-n-slate-6 dark:hover:border-n-slate-6 border-n-weak dark:border-n-weak';
+            ? 'border-n-ruby-8 hover:border-n-ruby-9'
+            : 'hover:border-n-slate-6 border-n-weak';
 
     return (
         <div className={`flex flex-col min-w-0 gap-1 ${className}`.trim()}>

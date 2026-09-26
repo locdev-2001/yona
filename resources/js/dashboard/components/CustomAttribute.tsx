@@ -195,12 +195,12 @@ export default function CustomAttribute({
                                 href={isValidURL(String(value)) ? String(value) : ''}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group-hover:bg-n-slate-3 group-hover:dark:bg-n-solid-3 inline-block rounded-sm mb-0 break-all py-0.5 px-1"
+                                className="group-hover:bg-n-slate-3 inline-block rounded-sm mb-0 break-all py-0.5 px-1"
                             >
                                 {isValidURL(String(value)) ? String(value) : '---'}
                             </a>
                         ) : (
-                            <p className="group-hover:bg-n-slate-3 group-hover:dark:bg-n-solid-3 inline-block rounded-sm mb-0 break-all py-0.5 px-1">
+                            <p className="group-hover:bg-n-slate-3 inline-block rounded-sm mb-0 break-all py-0.5 px-1">
                                 {String(displayValue)}
                             </p>
                         )}

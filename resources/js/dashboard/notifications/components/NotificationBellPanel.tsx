@@ -50,7 +50,7 @@ export default function NotificationBellPanel({ onNavigate }: { onNavigate: () =
                         key={notification.id}
                         inboxItem={notification}
                         stateInbox={inboxes.find(inbox => inbox.id === notification.primary_actor?.inbox_id)}
-                        className="rounded-none hover:rounded-lg hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3"
+                        className="rounded-none hover:rounded-lg hover:bg-n-alpha-1"
                         onClick={() => openConversation(notification)}
                         onMarkAsRead={() => void markAsRead(notification).catch(() => undefined)}
                         onMarkAsUnread={() => void markAsUnread(notification).catch(() => undefined)}

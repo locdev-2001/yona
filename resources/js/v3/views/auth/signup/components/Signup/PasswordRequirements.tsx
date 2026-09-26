@@ -19,7 +19,7 @@ export default function PasswordRequirements({ password = '' }: { password?: str
     ];
 
     return (
-        <div className="absolute top-0 z-50 w-64 text-xs rounded-lg px-4 py-3 bg-white dark:bg-n-solid-3 shadow-lg outline outline-1 outline-n-weak start-full ms-4">
+        <div className="absolute top-0 z-50 w-64 text-xs rounded-lg px-4 py-3 bg-white shadow-lg outline outline-1 outline-n-weak start-full ms-4">
             <ul role="list" className="space-y-1.5">
                 {requirements.map(item => (
                     <li key={item.id} className="inline-flex gap-1.5 items-start">
