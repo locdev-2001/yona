@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -12,6 +12,7 @@ import {
     putForm,
 } from 'dashboard/helper/apiClient';
 import { INBOX_TYPES, getInboxIconByType } from 'dashboard/helper/inbox';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import Dashboard from '../../Dashboard';
@@ -41,15 +42,7 @@ import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
 import BotConfigurationPage from './settingsPage/BotConfigurationPage';
 import ZaloSessionBanner from './channels/ZaloSessionBanner';
-import {
-    DEFAULT_WIDGET_BUBBLE_SETTINGS,
-    WEB_WIDGET_FEATURE_FLAGS,
-    WELCOME_TAGLINE_MAX_LENGTH,
-    readWidgetBubbleSettings,
-    toggleFeatureFlag,
-    writeWidgetBubbleSettings,
-} from './webWidgetHelpers';
-import type { WidgetBubbleSettings } from './webWidgetHelpers';
+import { WEB_WIDGET_FEATURE_FLAGS, WELCOME_TAGLINE_MAX_LENGTH, toggleFeatureFlag } from './webWidgetHelpers';
 import type { TimeZoneOption } from './helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
@@ -159,9 +152,6 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
     const [widgetColor, setWidgetColor] = useState('');
     const [selectedFeatureFlags, setSelectedFeatureFlags] = useState<string[]>([]);
     const [replyTime, setReplyTime] = useState('');
-    const [bubbleSettings, setBubbleSettings] = useState<WidgetBubbleSettings>(
-        DEFAULT_WIDGET_BUBBLE_SETTINGS,
-    );
     const [isUpdating, setUpdating] = useState(false);
 
     const syncInboxData = (nextInbox: Inbox) => {
@@ -182,7 +172,6 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
         setWidgetColor(nextInbox.widget_color ?? '');
         setSelectedFeatureFlags(nextInbox.selected_feature_flags ?? []);
         setReplyTime(nextInbox.reply_time ?? '');
-        setBubbleSettings(readWidgetBubbleSettings(nextInbox.id));
     };
 
     useEffect(() => {
@@ -227,7 +216,6 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
 
     const updateInbox = async () => {
         if (!inbox) return;
-        writeWidgetBubbleSettings(inbox.id, bubbleSettings);
         setUpdating(true);
 
         const inboxAttributes: Record<string, unknown> = {
@@ -534,93 +522,18 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                 </SettingsFieldSection>
 
                                                 <SettingsFieldSection
-                                                    label={t(
-                                                        'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE',
-                                                    )}
+                                                    label={t('INBOX_MGMT.WIDGET_BUILDER.OPEN_BUILDER.LABEL')}
+                                                    helpText={t('INBOX_MGMT.WIDGET_BUILDER.OPEN_BUILDER.HELP_TEXT')}
                                                 >
-                                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
-                                                                {t(
-                                                                    'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_POSITION_LABEL',
-                                                                )}
-                                                            </label>
-                                                            <SelectInput
-                                                                value={bubbleSettings.position}
-                                                                options={[
-                                                                    {
-                                                                        label: t(
-                                                                            'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_POSITION.LEFT',
-                                                                        ),
-                                                                        value: 'left',
-                                                                    },
-                                                                    {
-                                                                        label: t(
-                                                                            'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_POSITION.RIGHT',
-                                                                        ),
-                                                                        value: 'right',
-                                                                    },
-                                                                ]}
-                                                                className="[&>select]:!p-0 min-w-16 [&>select]:!outline-none"
-                                                                onChange={position =>
-                                                                    setBubbleSettings(current => ({
-                                                                        ...current,
-                                                                        position,
-                                                                    }))
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div className="hidden sm:block h-3 w-px bg-n-weak rounded-lg" />
-                                                        <div className="flex items-center gap-2">
-                                                            <label className="text-n-slate-11 text-heading-3 whitespace-nowrap">
-                                                                {t(
-                                                                    'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_TYPE_LABEL',
-                                                                )}
-                                                            </label>
-                                                            <SelectInput
-                                                                value={bubbleSettings.type}
-                                                                options={[
-                                                                    {
-                                                                        label: t(
-                                                                            'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_TYPE.STANDARD',
-                                                                        ),
-                                                                        value: 'standard',
-                                                                    },
-                                                                    {
-                                                                        label: t(
-                                                                            'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_TYPE.EXPANDED_BUBBLE',
-                                                                        ),
-                                                                        value: 'expanded_bubble',
-                                                                    },
-                                                                ]}
-                                                                className="[&>select]:!p-0 min-w-16 [&>select]:!outline-none"
-                                                                onChange={type =>
-                                                                    setBubbleSettings(current => ({
-                                                                        ...current,
-                                                                        type,
-                                                                    }))
-                                                                }
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </SettingsFieldSection>
-
-                                                <SettingsFieldSection
-                                                    label={t(
-                                                        'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_LAUNCHER_TITLE.LABEL',
-                                                    )}
-                                                >
-                                                    <WootInput
-                                                        value={bubbleSettings.launcherTitle}
-                                                        className="[&>input]:!mb-0"
-                                                        placeholder={t(
-                                                            'INBOX_MGMT.WIDGET_BUILDER.WIDGET_OPTIONS.WIDGET_BUBBLE_LAUNCHER_TITLE.PLACE_HOLDER',
-                                                        )}
-                                                        onChange={launcherTitle =>
-                                                            setBubbleSettings(current => ({
-                                                                ...current,
-                                                                launcherTitle,
-                                                            }))
+                                                    <Button
+                                                        variant="outline"
+                                                        color="slate"
+                                                        icon="i-lucide-wand-sparkles"
+                                                        label={t('INBOX_MGMT.WIDGET_BUILDER.OPEN_BUILDER.BUTTON')}
+                                                        onClick={() =>
+                                                            router.visit(
+                                                                accountScopedUrl(accountId, `settings/inboxes/${inbox.id}/widget`),
+                                                            )
                                                         }
                                                     />
                                                 </SettingsFieldSection>
@@ -779,9 +692,6 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                     isOnline
                                                     replyTime={replyTime}
                                                     color={widgetColor}
-                                                    widgetBubblePosition={bubbleSettings.position}
-                                                    widgetBubbleLauncherTitle={bubbleSettings.launcherTitle}
-                                                    widgetBubbleType={bubbleSettings.type}
                                                     webWidgetScript={inbox.web_widget_script ?? ''}
                                                 />
                                             </div>

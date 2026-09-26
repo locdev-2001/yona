@@ -3,9 +3,11 @@
 use App\Jobs\DeleteObjectJob;
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\Article;
 use App\Models\Channel\Api;
 use App\Models\Channel\WebWidget;
 use App\Models\Inbox;
+use App\Models\Portal;
 use App\Models\User;
 use App\Support\Timezones;
 use Illuminate\Http\UploadedFile;
@@ -801,6 +803,40 @@ describe('cấu hình widget (widget_settings)', function () {
         expect($inbox->channel->fresh()->widget_settings)->not->toHaveKey('la');
     });
 
+    it('lưu trọn bản nháp của màn Widget chat trong một PATCH (widget_color + welcome_tagline + name + widget_settings)', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+        $url = "/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}";
+
+        $response = $this->actingAs($admin)
+            ->patchJson($url, [
+                'name' => 'Website Gốm Mộc',
+                'channel' => [
+                    'widget_color' => '#1B6FCC',
+                    'welcome_tagline' => 'Gốm Mộc có thể giúp gì?',
+                    'widget_settings' => [
+                        'appearance' => ['launcher' => 'pill', 'launcher_label' => 'Chat với shop', 'position' => 'right', 'greeting' => 'Gốm Mộc có thể giúp gì?'],
+                        'home' => ['blocks' => ['recent_conversation' => true, 'help' => true, 'other_channels' => true, 'custom_links' => false, 'request' => false]],
+                        'other_channels' => [['kind' => 'zalo', 'label' => 'Zalo', 'value' => 'https://zalo.me/0901000000', 'enabled' => true]],
+                        'custom_links' => [['label' => 'Tra cứu đơn hàng', 'url' => 'https://gommoc.vn/tra-don']],
+                        'capture' => ['phone' => true, 'email' => false],
+                        'expanded_enabled' => true,
+                    ],
+                ],
+            ])
+            ->assertOk();
+
+        $response
+            ->assertJsonPath('name', 'Website Gốm Mộc')
+            ->assertJsonPath('widget_color', '#1B6FCC')
+            ->assertJsonPath('welcome_tagline', 'Gốm Mộc có thể giúp gì?')
+            ->assertJsonPath('widget_settings.appearance.launcher', 'pill')
+            ->assertJsonPath('widget_settings.appearance.greeting', 'Gốm Mộc có thể giúp gì?')
+            ->assertJsonPath('widget_settings.other_channels.0.kind', 'zalo')
+            ->assertJsonPath('widget_settings.custom_links.0.label', 'Tra cứu đơn hàng');
+    });
+
     it('từ chối link không phải http(s) và kênh khác sai định dạng', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
@@ -814,4 +850,23 @@ describe('cấu hình widget (widget_settings)', function () {
             ->patchJson($url, ['channel' => ['widget_settings' => ['other_channels' => [['kind' => 'hotline', 'value' => 'gọi em']]]]])
             ->assertUnprocessable();
     });
+});
+
+it('hộp thư website trả Help Center đang gắn (cùng nguồn với widget) kèm số bài đã đăng', function () {
+    $account = Account::factory()->create();
+    $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+    $inbox = webWidgetInboxFor($account);
+    $url = "/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}";
+
+    $this->actingAs($admin)->getJson($url)->assertOk()->assertJsonPath('help_center', null);
+
+    $portal = Portal::factory()->create(['account_id' => $account->id, 'name' => 'Trợ giúp Gốm Mộc']);
+    Article::factory()->count(2)->create(['account_id' => $account->id, 'portal_id' => $portal->id, 'status' => Article::STATUS_PUBLISHED]);
+    Article::factory()->create(['account_id' => $account->id, 'portal_id' => $portal->id, 'status' => Article::STATUS_DRAFT]);
+    $inbox->update(['portal_id' => $portal->id]);
+
+    $this->actingAs($admin)->getJson($url)
+        ->assertOk()
+        ->assertJsonPath('help_center.name', 'Trợ giúp Gốm Mộc')
+        ->assertJsonPath('help_center.article_count', 2);
 });

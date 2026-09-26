@@ -1381,6 +1381,11 @@ return [
     ],
     'NOTE' => 'Ghi chú: ',
     'WIDGET_BUILDER' => [
+        'OPEN_BUILDER' => [
+            'LABEL' => 'Widget chat',
+            'HELP_TEXT' => 'Launcher, màu sắc, trang chủ, kênh khác, lời mời chủ động, trợ lý AI, mã nhúng — chỉnh hết ở một chỗ.',
+            'BUTTON' => 'Tùy chỉnh widget',
+        ],
         'WIDGET_OPTIONS' => [
             'AVATAR' => [
                 'LABEL' => 'Hình đại diện trang web',
