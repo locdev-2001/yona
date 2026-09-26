@@ -71,11 +71,13 @@ class MessagesController extends WidgetController
     {
         $message = $this->fetchVisitorMessage($request, $messageId);
 
+        $reply = null;
+
         try {
             if ($message->contentTypeName() === 'input_email') {
                 $this->submitEmail($request, $message);
             } else {
-                $submissions->submit($message, $request->input('message.submitted_values'));
+                $reply = $submissions->submit($message, $request->input('message.submitted_values'));
             }
         } catch (InvalidStructuredPayload $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
@@ -85,7 +87,13 @@ class MessagesController extends WidgetController
 
         $contact = $this->contact($request);
 
-        return response()->json($contact === null ? [] : ['contact' => $contact->attributesToArray()]);
+        // Trả luôn tin trả lời vừa tạo và câu trả lời đã ghi: widget hiện ngay tin của khách thay
+        // cho hàng chip, không phải đợi realtime.
+        return response()->json([
+            ...($contact === null ? [] : ['contact' => $contact->attributesToArray()]),
+            'submitted_values' => $message->fresh()->content_attributes['submitted_values'] ?? null,
+            ...($reply === null ? [] : ['message' => WidgetMessageResource::listItem($reply)]),
+        ]);
     }
 
     /**

@@ -19,8 +19,9 @@ function QuickRepliesView({ model, message }: { model: ChoiceItem[]; message: St
         );
     }
 
-    // Server đã ghi câu trả lời: tin trả lời của khách đã hiện trong luồng, chip không cần nữa.
-    if (saved) return null;
+    // Khách đã chọn (đang gửi hoặc đã ghi): hàng chip biến mất, câu chọn hiện thành tin của
+    // khách trong luồng. Gửi lỗi thì chip quay lại kèm dòng báo lỗi.
+    if (saved || (answered && interactive)) return null;
 
     return (
         <KitRoot>

@@ -120,16 +120,15 @@ describe('thẻ sản phẩm', () => {
 describe('trả lời nhanh', () => {
     const question = messageOf('input_select', { items: [{ title: 'Giờ hành chính', value: 'office' }, { title: 'Buổi tối', value: 'evening' }] }, 'Khi nào ạ?');
 
-    it('bấm chip gửi câu trả lời, hiện ngay lựa chọn và khoá chip còn lại', async () => {
+    it('bấm chip gửi câu trả lời và hàng chip biến mất ngay (câu chọn thành tin của khách)', async () => {
         let resolve!: () => void;
         const submit = vi.fn(() => new Promise<void>(done => (resolve = done)));
-        renderMessage(question, { submit });
+        const { container } = renderMessage(question, { submit });
 
         fireEvent.click(screen.getByRole('button', { name: 'Buổi tối' }));
 
         expect(submit).toHaveBeenCalledWith(question, [{ title: 'Buổi tối', value: 'evening' }]);
-        expect(screen.getByRole('button', { name: 'Buổi tối' })).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByRole('button', { name: 'Giờ hành chính' })).toBeDisabled();
+        expect(container.querySelector('.mk-chip')).toBeNull();
         await act(async () => resolve());
     });
 

@@ -53,7 +53,13 @@ export default function WidgetMessageHost({ children }: { children: ReactNode })
             surface: 'widget',
             interactive: true,
             submit: async (message, values) => {
-                await updateMessage({ messageId: message.id, values });
+                const response = await updateMessage({ messageId: message.id, values });
+                // Hiện ngay tin trả lời của khách và đánh dấu tin gốc đã trả lời (chip ẩn đi),
+                // realtime tới sau chỉ cập nhật đè đúng hai tin này.
+                if (response.submitted_values) {
+                    widgetStore.updateMessageContentAttributes(message.id, { submitted_values: response.submitted_values });
+                }
+                if (response.message) widgetStore.addOrUpdateMessage(response.message);
             },
             act: (action, { message, itemId }) => {
                 if (action.kind === 'order') {

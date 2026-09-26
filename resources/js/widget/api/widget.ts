@@ -178,7 +178,7 @@ export const updateMessage = ({
     messageId: number | string;
     email?: string;
     values?: unknown;
-}): Promise<{ contact: WidgetContact }> =>
+}): Promise<{ contact?: WidgetContact; submitted_values?: unknown[] | null; message?: WidgetMessage }> =>
     apiPatch(`${BASE}/messages/${messageId}${buildSearch()}`, {
         contact: { email },
         message: { submitted_values: values },

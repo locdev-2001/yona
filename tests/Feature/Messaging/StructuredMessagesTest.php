@@ -336,3 +336,16 @@ it('payload realtime của danh sách hội thoại giữ dòng xem trước c�
 
     expect($payload['last_non_activity_message']['preview_text'])->toContain('Bình men lam 40cm');
 });
+
+it('widget gửi câu trả lời nhận lại luôn tin của khách vừa tạo để hiện ngay thay cho hàng chip', function () {
+    $session = WidgetSession::make(contactAttributes: ['email' => 'khach@vi.example']);
+    $question = agentSends(structuredConversation($session), 'input_select', [
+        'items' => [['title' => 'Giờ hành chính', 'value' => 'office'], ['title' => 'Buổi tối', 'value' => 'evening']],
+    ], 'Nhận hàng khi nào ạ?');
+
+    $this->patchJson($session->url("messages/{$question->id}"), ['message' => ['submitted_values' => [['title' => 'Buổi tối', 'value' => 'evening']]]], $session->headers())
+        ->assertOk()
+        ->assertJsonPath('submitted_values.0.value', 'evening')
+        ->assertJsonPath('message.content', 'Buổi tối')
+        ->assertJsonPath('message.message_type', Message::TYPE_INCOMING);
+});
