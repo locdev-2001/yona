@@ -6,6 +6,7 @@ import Button from 'dashboard/components-next/button/Button';
 import Modal from 'dashboard/components/Modal';
 import ModalHeader from 'dashboard/components/ModalHeader';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
+import { isShortCodeInvalid } from 'dashboard/composables/useCannedResponses';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 
@@ -18,11 +19,9 @@ export interface CannedFormValues {
     content: string;
 }
 
-// vuelidate: shortCode required + minLength(2), content required.
-export function isShortCodeInvalid(shortCode: string): boolean {
-    return shortCode.trim().length < 2;
-}
+export { isShortCodeInvalid };
 
+// vuelidate: content required.
 export function isContentInvalid(content: string): boolean {
     return !content.trim();
 }

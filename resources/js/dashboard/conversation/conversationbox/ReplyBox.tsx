@@ -51,6 +51,7 @@ import ReplyBoxBanner from './ReplyBoxBanner';
 import ReplyTopPanel from './ReplyTopPanel';
 import ReplyBottomPanel from './ReplyBottomPanel';
 import type { ReplyStickerPicker } from './ReplyBottomPanel';
+import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCardMenu/SendCardMenu';
 
 // Port từ dashboard/components/widgets/conversation/ReplyBox.vue — rút về kênh
 // Channel::Api (B3): isWithinMessagingWindow luôn true (can_reply || isAPIInbox),
@@ -133,6 +134,8 @@ export default function ReplyBox({
     const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+    // Câu trả lời mẫu có thẻ vừa được chọn ở `/`: mở sẵn dialog Gửi thẻ với thẻ này.
+    const [cannedCard, setCannedCard] = useState<CannedCardPayload | null>(null);
 
     const editorRef = useRef<EditorHandle>(null);
     // Bảng gợi ý `/` bung lên trên phải dừng ở mép khối soạn, không che thanh tab
@@ -585,6 +588,7 @@ export default function ReplyBox({
                     onSend={onSendReply}
                     onTypingOn={() => toggleTyping('on')}
                     onTypingOff={() => toggleTyping('off')}
+                    onSelectCannedCard={setCannedCard}
                     onAttachFiles={onAttachFiles}
                 />
                 {shouldShowQuotedPreview ? (
@@ -631,6 +635,8 @@ export default function ReplyBox({
                               accountId,
                               conversationDisplayId: conversationId,
                               onSend: draft => sendStructured(draft.contentType, draft.contentAttributes, draft.content),
+                              cannedCard,
+                              onCannedCardConsumed: () => setCannedCard(null),
                           }
                 }
             />

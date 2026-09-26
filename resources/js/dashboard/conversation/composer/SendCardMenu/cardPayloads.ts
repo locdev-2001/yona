@@ -1,6 +1,18 @@
 // Dựng payload tin có cấu trúc từ form "Gửi thẻ". Cùng luật với máy chủ
 // (app/Messaging/Structured/Types/*) để báo lỗi ngay trong form; máy chủ vẫn kiểm lại.
 
+export type CardKind = 'quick_replies' | 'product' | 'bank_transfer' | 'schedule';
+
+// content_type máy chủ lưu (StructuredTypeRegistry) → loại thẻ form này vẽ.
+// `kind.toUpperCase()` khớp thẳng khối lang CONVERSATION.SEND_CARD.<KIND> nên
+// dùng chung cho cả tiêu đề form lẫn nhãn "loại thẻ" trong danh sách câu trả lời mẫu.
+export const CARD_KIND_BY_CONTENT_TYPE: Record<string, CardKind> = {
+    input_select: 'quick_replies',
+    cards: 'product',
+    bank_transfer: 'bank_transfer',
+    webview: 'schedule',
+};
+
 export const QUICK_REPLY_LIMITS = { min: 2, max: 6, title: 80 } as const;
 
 export interface QuickRepliesDraft {

@@ -10,6 +10,7 @@ const optionSets: MacroOptionSets = {
     agents: [{ id: 1, name: 'John' }],
     teams: [{ id: 2, name: 'support' }],
     labels: [{ id: 'billing', name: 'billing' }],
+    cannedCards: [],
 };
 
 // MacroForm là component controlled: cha giữ state như MacroEditor thật.

@@ -4,10 +4,12 @@ use App\Jobs\WebhookJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Attachment;
+use App\Models\CannedResponse;
 use App\Models\Conversation;
 use App\Models\Label;
 use App\Models\Macro;
 use App\Models\Message;
+use App\Models\PaymentAccount;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Macros\ExecutionService;
@@ -296,4 +298,59 @@ it('skips send_webhook_event without a url', function () {
     d3Execute([['action_name' => 'send_webhook_event', 'action_params' => []]]);
 
     Queue::assertNotPushed(WebhookJob::class);
+});
+
+it('sends the card of a canned response for send_canned_card, rebuilding the bank details', function () {
+    $paymentAccount = PaymentAccount::factory()->create([
+        'account_id' => $this->account->id,
+        'bank_bin' => '970436',
+        'account_number' => '1023456789',
+        'account_name' => 'HKD GOM MOC',
+    ]);
+    $canned = CannedResponse::query()->create([
+        'account_id' => $this->account->id,
+        'short_code' => 'ck-tra-truoc',
+        'content_type' => 'bank_transfer',
+        'content_attributes' => ['payment_account_id' => $paymentAccount->id, 'amount' => 480000],
+    ]);
+
+    d3Execute([['action_name' => 'send_canned_card', 'action_params' => [$canned->id]]]);
+
+    $message = d3LastMessage();
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['bank_transfer'])
+        ->and($message->content_attributes['account_number'])->toBe('1023456789')
+        ->and($message->sender_id)->toBe($this->user->id)
+        ->and($message->private)->toBeFalse();
+});
+
+it('ignores send_canned_card for a canned response without a card, or from another account', function () {
+    $plain = CannedResponse::query()->create(['account_id' => $this->account->id, 'short_code' => 'chao', 'content' => 'Chào bạn']);
+    $foreign = CannedResponse::query()->create([
+        'account_id' => Account::factory()->create()->id,
+        'short_code' => 'khac-tenant',
+        'content_type' => 'input_select',
+        'content_attributes' => ['items' => [['title' => 'A', 'value' => 'A']]],
+    ]);
+
+    d3Execute([
+        ['action_name' => 'send_canned_card', 'action_params' => [$plain->id]],
+        ['action_name' => 'send_canned_card', 'action_params' => [$foreign->id]],
+    ]);
+
+    expect(Message::query()->where('conversation_id', $this->conversation->id)->count())->toBe(0);
+});
+
+it('skips send_canned_card on a tweet conversation', function () {
+    $this->conversation->update(['additional_attributes' => ['type' => 'tweet']]);
+    $canned = CannedResponse::query()->create([
+        'account_id' => $this->account->id,
+        'short_code' => 'hoi-gio',
+        'content' => 'Bạn muốn nhận hàng khi nào ạ?',
+        'content_type' => 'input_select',
+        'content_attributes' => ['items' => [['title' => 'Sáng', 'value' => 'Sáng'], ['title' => 'Tối', 'value' => 'Tối']]],
+    ]);
+
+    d3Execute([['action_name' => 'send_canned_card', 'action_params' => [$canned->id]]]);
+
+    expect(Message::query()->where('conversation_id', $this->conversation->id)->count())->toBe(0);
 });

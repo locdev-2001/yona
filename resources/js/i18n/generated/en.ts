@@ -1225,7 +1225,8 @@ const messages: Record<string, unknown> = {
                 "SHORT_CODE": "Short code",
                 "CONTENT": "Content",
                 "ACTIONS": "Actions"
-            }
+            },
+            "UNKNOWN_CARD_TYPE": "Card"
         },
         "ADD": {
             "TITLE": "Add canned response",
@@ -1269,6 +1270,10 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Canned response is updated successfully.",
                 "ERROR_MESSAGE": "Could not connect to the server. Please try again."
+            },
+            "CARD_VIEW": {
+                "TYPE_LABEL": "Card type",
+                "HINT": "This canned response sends a card. To change the card, send a new one from a conversation and save it as a canned response."
             }
         },
         "DELETE": {
@@ -2429,6 +2434,13 @@ const messages: Record<string, unknown> = {
             "SEND": "Send",
             "CANCEL": "Cancel",
             "REMOVE": "Remove",
+            "REVIEW_TITLE": "Review the card before sending",
+            "REVIEW_HINT": "Card from a canned response — review it, then press Send.",
+            "SAVE_AS_CANNED": "Save as a canned response",
+            "SAVE_AS_CANNED_LABEL": "Short code",
+            "SAVE_AS_CANNED_PLACEHOLDER": "e.g. bank-transfer-deposit",
+            "SAVE_AS_CANNED_SUCCESS": "Saved as a canned response.",
+            "SAVE_AS_CANNED_ERROR": "Could not save, please try again.",
             "QUICK_REPLIES": {
                 "TITLE": "Quick replies",
                 "HINT": "A question with 2–6 options to tap",
@@ -8140,6 +8152,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_STATUS": "Change Status",
             "SEND_ATTACHMENT": "Send Attachment",
             "SEND_MESSAGE": "Send a Message",
+            "SEND_CANNED_CARD": "Send a card from a canned response",
             "CHANGE_PRIORITY": "Change Priority",
             "ADD_PRIVATE_NOTE": "Add a Private Note",
             "SEND_WEBHOOK_EVENT": "Send Webhook Event"

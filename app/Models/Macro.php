@@ -31,7 +31,7 @@ class Macro extends Model
         'send_message', 'add_label', 'assign_team', 'assign_agent', 'mute_conversation',
         'change_status', 'remove_label', 'remove_assigned_agent', 'remove_assigned_team',
         'resolve_conversation', 'snooze_conversation', 'change_priority', 'send_email_transcript',
-        'send_attachment', 'add_private_note', 'send_webhook_event',
+        'send_attachment', 'add_private_note', 'send_webhook_event', 'send_canned_card',
     ];
 
     protected $fillable = ['account_id', 'name', 'visibility', 'actions', 'created_by_id', 'updated_by_id'];
