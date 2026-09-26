@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
+use App\Models\Article;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Channel\Telegram;
@@ -177,6 +178,24 @@ class InboxResource extends JsonResource
             'pre_chat_form_options' => $channel->pre_chat_form_options,
             'continuity_via_email' => $channel->continuity_via_email,
             'widget_settings' => $channel->widgetSettings(),
+            'help_center' => $this->helpCenterSummary($inbox),
+        ];
+    }
+
+    // Khối "Tìm trợ giúp" của màn Widget chat đọc CÙNG nguồn với widget (`inboxes.portal_id`,
+    // xem WidgetConfigResource) — null nghĩa là chưa nối Help Center nào, màn cấu hình phải
+    // nói thẳng điều đó thay vì bịa số bài viết.
+    private function helpCenterSummary(Inbox $inbox): ?array
+    {
+        $portal = $inbox->portal;
+
+        if (! $portal) {
+            return null;
+        }
+
+        return [
+            'name' => $portal->name,
+            'article_count' => $portal->articles()->where('status', Article::STATUS_PUBLISHED)->count(),
         ];
     }
 

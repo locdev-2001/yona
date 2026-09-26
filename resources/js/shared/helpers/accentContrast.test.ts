@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isLightAccent } from './accentContrast';
+import { contrastRatioWithWhite, isLightAccent } from './accentContrast';
 
 describe('chữ trên màu nhấn của tenant (một luật cho launcher và widget)', () => {
     it('màu nhấn của design (#1B6FCC) giữ chữ trắng', () => {
@@ -21,5 +21,15 @@ describe('chữ trên màu nhấn của tenant (một luật cho launcher và wi
         expect(isLightAccent('#f2f3f7')).toBe(true);
         expect(isLightAccent('#000')).toBe(false);
         expect(isLightAccent('không phải màu')).toBe(false);
+    });
+});
+
+describe('tỉ lệ tương phản chữ trắng dùng cho dòng gợi ý ở màn cấu hình widget', () => {
+    it('tính đúng con số hiện ở màn Giao diện của widget (#1B6FCC ≈ 5.0:1)', () => {
+        expect(contrastRatioWithWhite('#1B6FCC')).toBeCloseTo(5.0, 1);
+    });
+
+    it('mã màu sai trả về null để nơi gọi tự quyết định', () => {
+        expect(contrastRatioWithWhite('không phải màu')).toBeNull();
     });
 });

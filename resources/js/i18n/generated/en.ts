@@ -6350,6 +6350,11 @@ const messages: Record<string, unknown> = {
         },
         "NOTE": "Note: ",
         "WIDGET_BUILDER": {
+            "OPEN_BUILDER": {
+                "LABEL": "Widget chat",
+                "HELP_TEXT": "Launcher, colors, home screen, other channels, proactive invites, AI assistant, embed code — all in one place.",
+                "BUTTON": "Customize widget"
+            },
             "WIDGET_OPTIONS": {
                 "AVATAR": {
                     "LABEL": "Website Avatar",
@@ -10140,6 +10145,128 @@ const messages: Record<string, unknown> = {
             "MINUTES": "{n}m",
             "HOURS": "{n}h",
             "YESTERDAY": "Yesterday"
+        }
+    },
+    "WIDGET_BUILDER": {
+        "COMING_SOON": "Coming soon",
+        "HEADER": {
+            "BREADCRUMB_ARIA_LABEL": "Breadcrumb",
+            "BREADCRUMB_SETTINGS": "Settings",
+            "BREADCRUMB_INBOXES": "Inboxes",
+            "TITLE": "Widget chat",
+            "UNSAVED": "Unsaved changes",
+            "CANCEL": "Cancel",
+            "SAVE": "Save changes",
+            "CONFIRM_LEAVE": "Leaving now will discard your unsaved changes. Leave anyway?",
+            "SAVE_SUCCESS": "Widget settings saved.",
+            "SAVE_ERROR": "Could not save the widget settings, please try again."
+        },
+        "NAV": {
+            "ARIA_LABEL": "Widget settings sections",
+            "APPEARANCE": "Appearance",
+            "HOME": "Home",
+            "CHANNELS": "Other channels & links",
+            "CAPTURE": "Collect customer info",
+            "INVITE": "Proactive invites",
+            "AI": "AI assistant",
+            "EMBED": "Embed code"
+        },
+        "PREVIEW": {
+            "TITLE": "Preview",
+            "DEVICE_LABEL": "Preview on",
+            "DEVICE_DESKTOP": "Desktop",
+            "DEVICE_MOBILE": "Mobile",
+            "IFRAME_TITLE": "Widget preview"
+        },
+        "APPEARANCE": {
+            "TITLE": "Appearance",
+            "DESCRIPTION": "Color, launcher and position on your website.",
+            "ACCENT_COLOR_LABEL": "Accent color",
+            "ACCENT_COLOR_HEX_LABEL": "Hex code",
+            "ACCENT_COLOR_CONTRAST_GOOD": "White text reads well on this color ({ratio}:1)",
+            "ACCENT_COLOR_CONTRAST_BAD": "White text is hard to read on this color ({ratio}:1) — the widget will switch to dark text",
+            "ACCENT_COLOR_INVALID": "Invalid color code — use #RRGGBB",
+            "LAUNCHER_LABEL": "Launcher style",
+            "LAUNCHER_ROUND": "Round",
+            "LAUNCHER_PILL": "With label",
+            "LAUNCHER_LABEL_PLACEHOLDER": "Chat with us",
+            "POSITION_LABEL": "Position",
+            "POSITION_LEFT": "Left",
+            "POSITION_RIGHT": "Right",
+            "GREETING_LABEL": "Home greeting",
+            "GREETING_HINT": "Shown right under the shop name on the widget home screen.",
+            "GREETING_PLACEHOLDER": "How can we help?"
+        },
+        "HOME": {
+            "TITLE": "Home",
+            "DESCRIPTION": "Toggle each block on or off. Turn all of them off and the widget opens straight into chat.",
+            "ALWAYS_ON": "Always on",
+            "BLOCK_MESSAGE_SHOP": "Message the shop",
+            "BLOCK_MESSAGE_SHOP_DESCRIPTION": "Always shown, with online status and reply time.",
+            "BLOCK_RECENT_CONVERSATION": "Recent conversation",
+            "BLOCK_HELP": "Search help & top articles",
+            "HELP_BLOCK_CONNECTED": "Pulled from the \"{portal}\" help center, {count} articles",
+            "HELP_BLOCK_NOT_CONNECTED": "No help center connected — connect one",
+            "BLOCK_OTHER_CHANNELS": "Other channels (Zalo, Messenger, hotline)",
+            "BLOCK_CUSTOM_LINKS": "Custom links",
+            "BLOCK_REQUEST": "Submit a request by type",
+            "BLOCK_REQUEST_DESCRIPTION": "Customers pick the exact request type (return, warranty…) before messaging."
+        },
+        "CHANNELS": {
+            "TITLE": "Other channels",
+            "DESCRIPTION": "Tapping one opens that channel directly. Only enabled channels show on the widget home screen.",
+            "KIND_HOTLINE": "Hotline",
+            "KIND_EMAIL": "Email",
+            "KIND_CUSTOM": "Other",
+            "VALUE_LABEL": "Address or number",
+            "ENABLED_LABEL": "Enable this channel",
+            "MOVE_UP": "Move up",
+            "MOVE_DOWN": "Move down",
+            "REMOVE": "Remove",
+            "ADD": "Add channel",
+            "LINKS_TITLE": "Custom links",
+            "LINKS_DESCRIPTION": "Up to {max} links. Opens in a new tab.",
+            "LINK_LABEL_LABEL": "Display name",
+            "LINK_URL_LABEL": "Address",
+            "ADD_LINK": "Add link"
+        },
+        "CAPTURE": {
+            "TITLE": "Collect customer info",
+            "DESCRIPTION": "Asked mid-conversation after the first message — never blocks the customer from messaging.",
+            "PHONE_LABEL": "Ask for phone number",
+            "EMAIL_LABEL": "Ask for email"
+        },
+        "INVITE": {
+            "TITLE": "Proactive invites",
+            "DESCRIPTION": "Reuses the live chat campaign module — add or edit invites on the Campaigns page.",
+            "ADD": "Add invite",
+            "EMPTY": "This inbox has no proactive invites yet.",
+            "QUICK_REPLIES_COUNT": "{count} quick reply buttons",
+            "STATUS_ON": "On",
+            "STATUS_OFF": "Off",
+            "AUDIENCE_ALL": "All customers",
+            "AUDIENCE_NEW": "New customers",
+            "AUDIENCE_RETURNING": "Returning customers",
+            "MANAGE_LINK": "Manage proactive invites"
+        },
+        "AI": {
+            "TITLE": "AI assistant",
+            "DESCRIPTION": "The AI brain does not exist in Yona yet — here is a preview of what it will do.",
+            "FEATURE_KNOWLEDGE": "Answers from the shop's documents and saved replies.",
+            "FEATURE_AUTO_REPLY": "Replies to customers automatically, with agents able to step in anytime.",
+            "FEATURE_HANDOFF": "Hands off to an agent when the customer asks for one, or the AI is unsure.",
+            "MOCK_CUSTOMER_MESSAGE": "I bought this but it doesn't fit — how do I exchange it?",
+            "MOCK_AI_REPLY": "You can exchange it within 7 days of delivery, as long as the tag is still on.",
+            "MOCK_SOURCE": "Source: 7-day exchange policy"
+        },
+        "EMBED": {
+            "TITLE": "Embed code",
+            "DESCRIPTION": "Paste this snippet right before </body>. Paste it once and the widget shows on every page.",
+            "NO_LOADED_EVENT_YET": "Yona doesn't record when customers last opened the widget yet, so there's no \"running on…\" banner here.",
+            "DOMAINS_LABEL": "Only show on these domains",
+            "DOMAINS_HINT": "Stops others from copying your snippet onto their own site. Leave empty to allow any domain.",
+            "DOMAINS_PLACEHOLDER": "Enter a domain, press Enter to add",
+            "DOMAINS_ERROR": "Could not save the domain list."
         }
     }
 };

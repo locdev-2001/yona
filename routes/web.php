@@ -208,6 +208,10 @@ Route::middleware('auth')->group(function () {
             });
             Route::get('/settings/inboxes/new/{subPage}', [InboxesSettingsController::class, 'newChannel'])
                 ->where('subPage', '[a-z_]+')->name('settings_inboxes_page_channel');
+            // Màn "Widget chat" (nhóm D) — trang riêng, không phải tab của Show.tsx.
+            // Đăng ký trước route {tab?} bên dưới vì "widget" cũng khớp regex tab đó.
+            Route::get('/settings/inboxes/{inboxId}/widget', [InboxesSettingsController::class, 'widgetBuilder'])
+                ->whereNumber('inboxId')->name('settings_inbox_widget_builder');
             Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
 

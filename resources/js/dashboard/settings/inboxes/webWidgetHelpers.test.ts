@@ -1,13 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import {
-    ALLOW_MOBILE_WEBVIEW_FLAG,
-    DEFAULT_WIDGET_BUBBLE_SETTINGS,
-    buildWebsiteChannelPayload,
-    readWidgetBubbleSettings,
-    toggleFeatureFlag,
-    writeWidgetBubbleSettings,
-} from './webWidgetHelpers';
+import { ALLOW_MOBILE_WEBVIEW_FLAG, buildWebsiteChannelPayload, toggleFeatureFlag } from './webWidgetHelpers';
 
 describe('buildWebsiteChannelPayload', () => {
     const form = {
@@ -58,46 +51,5 @@ describe('toggleFeatureFlag', () => {
 
     it('dùng chung được cho cờ webview di động của tab Configuration', () => {
         expect(toggleFeatureFlag([], ALLOW_MOBILE_WEBVIEW_FLAG)).toEqual([ALLOW_MOBILE_WEBVIEW_FLAG]);
-    });
-});
-
-describe('tuỳ chọn bong bóng widget trong localStorage', () => {
-    beforeEach(() => {
-        window.localStorage.clear();
-    });
-
-    it('trả mặc định khi chưa lưu gì', () => {
-        expect(readWidgetBubbleSettings(7)).toEqual(DEFAULT_WIDGET_BUBBLE_SETTINGS);
-    });
-
-    it('lưu vào khóa widgetBubble_{inboxId} như LOCAL_STORAGE_KEYS gốc', () => {
-        writeWidgetBubbleSettings(7, { position: 'left', type: 'expanded_bubble', launcherTitle: 'Chat' });
-
-        expect(window.localStorage.getItem('widgetBubble_7')).toBe(
-            '{"position":"left","type":"expanded_bubble","launcherTitle":"Chat"}',
-        );
-        expect(readWidgetBubbleSettings(7)).toEqual({
-            position: 'left',
-            type: 'expanded_bubble',
-            launcherTitle: 'Chat',
-        });
-    });
-
-    it('mỗi inbox một khóa riêng', () => {
-        writeWidgetBubbleSettings(7, { position: 'left', type: 'standard', launcherTitle: '' });
-
-        expect(readWidgetBubbleSettings(8)).toEqual(DEFAULT_WIDGET_BUBBLE_SETTINGS);
-    });
-
-    it('rơi về mặc định khi giá trị lưu hỏng hoặc thiếu trường', () => {
-        window.localStorage.setItem('widgetBubble_7', 'không-phải-json');
-        expect(readWidgetBubbleSettings(7)).toEqual(DEFAULT_WIDGET_BUBBLE_SETTINGS);
-
-        window.localStorage.setItem('widgetBubble_7', '{"position":"left"}');
-        expect(readWidgetBubbleSettings(7)).toEqual({
-            position: 'left',
-            type: 'standard',
-            launcherTitle: '',
-        });
     });
 });

@@ -1379,6 +1379,11 @@ return [
     ],
     'NOTE' => 'Note: ',
     'WIDGET_BUILDER' => [
+        'OPEN_BUILDER' => [
+            'LABEL' => 'Widget chat',
+            'HELP_TEXT' => 'Launcher, colors, home screen, other channels, proactive invites, AI assistant, embed code — all in one place.',
+            'BUTTON' => 'Customize widget',
+        ],
         'WIDGET_OPTIONS' => [
             'AVATAR' => [
                 'LABEL' => 'Website Avatar',

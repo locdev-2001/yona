@@ -1,6 +1,41 @@
 import type { WorkingHourPayload } from './helpers/businessHour';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
+/** kind chấp nhận ở `widget_settings.other_channels` (App\Support\Widget\WidgetSettings::CHANNEL_KINDS). */
+export type WidgetOtherChannelKind =
+    | 'zalo'
+    | 'messenger'
+    | 'telegram'
+    | 'whatsapp'
+    | 'instagram'
+    | 'tiktok'
+    | 'hotline'
+    | 'email'
+    | 'custom';
+
+/** `widget_settings` của hộp thư website (App\Support\Widget\WidgetSettings), đã trộn mặc định. */
+export interface WidgetSettingsShape {
+    appearance: {
+        launcher: 'round' | 'pill';
+        launcher_label: string | null;
+        position: 'left' | 'right';
+        greeting: string | null;
+    };
+    home: {
+        blocks: {
+            recent_conversation: boolean;
+            help: boolean;
+            other_channels: boolean;
+            custom_links: boolean;
+            request: boolean;
+        };
+    };
+    other_channels: { kind: WidgetOtherChannelKind; label: string | null; value: string; enabled: boolean }[];
+    custom_links: { label: string; url: string }[];
+    capture: { phone: boolean; email: boolean };
+    expanded_enabled: boolean;
+}
+
 // Shape trả về từ InboxResource (api/v1/models/_inbox.json.jbuilder).
 export interface Inbox {
     id: number;
@@ -40,6 +75,8 @@ export interface Inbox {
     welcome_title?: string | null;
     welcome_tagline?: string | null;
     web_widget_script?: string | null;
+    widget_settings?: WidgetSettingsShape | null;
+    help_center?: { name: string; article_count: number } | null;
     // Kênh Zalo cá nhân (G1) — trạng thái phiên cho biểu ngữ quét lại QR.
     zalo_state?: string | null;
     zalo_display_name?: string | null;
