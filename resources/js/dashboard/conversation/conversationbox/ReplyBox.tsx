@@ -624,10 +624,14 @@ export default function ReplyBox({
                 onToggleSignature={toggleMessageSignature}
                 onSelectEmoji={insertEmoji}
                 stickerPicker={stickerPicker}
-                onSendCard={
+                sendCard={
                     isOnPrivateNote
                         ? null
-                        : draft => sendStructured(draft.contentType, draft.contentAttributes, draft.content)
+                        : {
+                              accountId,
+                              conversationDisplayId: conversationId,
+                              onSend: draft => sendStructured(draft.contentType, draft.contentAttributes, draft.content),
+                          }
                 }
             />
         </div>

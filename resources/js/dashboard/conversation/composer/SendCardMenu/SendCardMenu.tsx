@@ -8,7 +8,6 @@ import Popover from 'dashboard/components-next/popover/Popover';
 import { uploadFile } from 'dashboard/helper/uploadHelper';
 
 import { t } from '../../../../i18n';
-import { useOptionalConversation } from '../../ConversationContext';
 import BankTransferForm from './BankTransferForm';
 import ScheduleForm from './ScheduleForm';
 import {
@@ -194,7 +193,13 @@ function ProductForm({ draft, onChange }: { draft: ProductDraft; onChange: (draf
  * Nút "Gửi thẻ" trên thanh soạn tin: chọn loại thẻ, điền form, xem trước đúng như khách thấy,
  * rồi gửi. Kênh không vẽ được thẻ thì máy chủ tự hạ xuống chữ (DeliveryPlanner).
  */
-export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDraft) => void }) {
+export interface SendCardTarget {
+    accountId: number;
+    conversationDisplayId: number;
+    onSend: (draft: StructuredDraft) => void;
+}
+
+export default function SendCardMenu({ accountId, conversationDisplayId, onSend }: SendCardTarget) {
     const [kind, setKind] = useState<CardKind | null>(null);
     const [quickReplies, setQuickReplies] = useState(EMPTY_QUICK_REPLIES);
     const [product, setProduct] = useState(EMPTY_PRODUCT);
@@ -202,7 +207,6 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
     const [bankPreview, setBankPreview] = useState<StructuredDraft | null>(null);
     const [schedule, setSchedule] = useState(EMPTY_SCHEDULE);
     const [showErrors, setShowErrors] = useState(false);
-    const conversation = useOptionalConversation();
     const dialogRef = useRef<DialogHandle>(null);
 
     useEffect(() => {
@@ -293,10 +297,10 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
                         <div className="flex min-w-0 flex-col gap-3">
                             {kind === 'quick_replies' ? <QuickRepliesForm draft={quickReplies} onChange={setQuickReplies} /> : null}
                             {kind === 'product' ? <ProductForm draft={product} onChange={setProduct} /> : null}
-                            {kind === 'bank_transfer' && conversation ? (
+                            {kind === 'bank_transfer' ? (
                                 <BankTransferForm
-                                    accountId={conversation.accountId}
-                                    conversationDisplayId={conversation.conversationId}
+                                    accountId={accountId}
+                                    conversationDisplayId={conversationDisplayId}
                                     draft={bankTransfer}
                                     onChange={setBankTransfer}
                                     onPreview={setBankPreview}
