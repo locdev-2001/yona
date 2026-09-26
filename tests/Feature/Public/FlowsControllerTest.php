@@ -240,3 +240,13 @@ it('form dài gửi qua kênh chữ: link planner phát mở được trang form
     expect($message->fresh()->content_attributes['submitted_values'])->toHaveCount(2);
     $this->getJson("/public/api/v1/flows/{$token}")->assertNotFound();
 });
+
+it('trang theo token, khung widget và khảo sát CSAT không cho máy tìm kiếm lập chỉ mục', function () {
+    $session = WidgetSession::make();
+    $message = flowAgentSends(flowConversation($session), 'webview', ['page' => 'schedule', 'title' => 'X', 'data' => []]);
+    $token = issueFlowToken($message, 'schedule');
+    $noindex = '<meta name="robots" content="noindex, nofollow">';
+
+    $this->get("/m/{$token}")->assertOk()->assertSee($noindex, escape: false);
+    $this->get('/widget?website_token='.$session->inbox->channel->website_token)->assertOk()->assertSee($noindex, escape: false);
+});
