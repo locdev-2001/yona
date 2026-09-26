@@ -46,7 +46,7 @@ function WebviewView({ model, message }: { model: WebviewModel; message: Structu
                 </span>
             </span>
             {model.slots.length ? (
-                <span className="mk-row" style={{ gap: 6 }}>
+                <span className="mk-slots">
                     {model.slots.slice(0, PREVIEW_SLOTS).map((slot, index) => (
                         <span key={index} className="mk-slot">
                             {slot}

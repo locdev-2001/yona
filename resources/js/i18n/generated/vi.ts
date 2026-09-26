@@ -2459,7 +2459,32 @@ const messages: Record<string, unknown> = {
                 "ORDER_BUTTON": "Đặt mua",
                 "VIEW_BUTTON": "Xem"
             },
+            "BANK_TRANSFER": {
+                "TITLE": "Thẻ chuyển khoản",
+                "HINT": "Mã VietQR, số tài khoản, số tiền và nội dung",
+                "ACCOUNT": "Tài khoản nhận tiền",
+                "AMOUNT": "Số tiền (đ, không bắt buộc)",
+                "AMOUNT_PLACEHOLDER": "Để trống nếu khách tự nhập",
+                "MEMO": "Nội dung chuyển khoản",
+                "MEMO_HINT": "Ngân hàng chỉ đọc chữ không dấu, tối đa 25 ký tự; Yona tự lược dấu.",
+                "NO_ACCOUNTS": "Chưa có tài khoản nhận tiền nào bạn được phép gửi. Quản trị viên thêm ở Cài đặt → Chuyển khoản."
+            },
+            "SCHEDULE": {
+                "TITLE": "Chọn lịch nhận hàng",
+                "HINT": "Khách chọn ngày và khung giờ trên một trang riêng",
+                "TITLE_LABEL": "Tiêu đề",
+                "SLOTS": "Khung giờ",
+                "DATE": "Ngày",
+                "TIME": "Khung giờ",
+                "TIME_PLACEHOLDER": "8:00 đến 10:00",
+                "ADD_SLOT": "Thêm khung giờ",
+                "NOTE": "Ghi chú cho khách (không bắt buộc)",
+                "NOTE_PLACEHOLDER": "Đơn #GM1024, giao tới 12 Hàng Bông"
+            },
             "ERRORS": {
+                "ACCOUNT_REQUIRED": "Chọn tài khoản nhận tiền",
+                "AMOUNT_INVALID": "Số tiền không hợp lệ",
+                "SLOTS_REQUIRED": "Cần ít nhất một khung giờ có ngày và giờ",
                 "QUESTION_REQUIRED": "Cần có câu hỏi",
                 "TOO_FEW_OPTIONS": "Cần ít nhất 2 lựa chọn",
                 "OPTION_TOO_LONG": "Mỗi lựa chọn tối đa 80 ký tự",

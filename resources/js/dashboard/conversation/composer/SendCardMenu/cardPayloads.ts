@@ -126,3 +126,71 @@ export function withPreviewDiscount(draft: StructuredDraft): StructuredDraft {
         },
     };
 }
+
+export interface PaymentAccountOption {
+    id: number;
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+    memo_template: string | null;
+    is_default: boolean;
+}
+
+export interface BankTransferDraft {
+    paymentAccountId: number | null;
+    amount: string;
+    memo: string;
+}
+
+/** Nội dung mặc định lấy từ mẫu của tài khoản, `{ma_hoi_thoai}` = số hội thoại (khớp máy chủ). */
+export const defaultMemo = (account: PaymentAccountOption | undefined, conversationDisplayId: number | string): string =>
+    (account?.memo_template ?? '').replace('{ma_hoi_thoai}', String(conversationDisplayId)).trim();
+
+export function bankTransferError(draft: BankTransferDraft): string | null {
+    if (!draft.paymentAccountId) return 'ACCOUNT_REQUIRED';
+    if (draft.amount.trim() && !parseAmount(draft.amount)) return 'AMOUNT_INVALID';
+
+    return null;
+}
+
+/** Máy chủ tự tra ngân hàng, số tài khoản, dựng mã QR: chỉ gửi mã tài khoản, số tiền, nội dung. */
+export function bankTransferPayload(draft: BankTransferDraft): StructuredDraft {
+    const amount = parseAmount(draft.amount);
+
+    return {
+        contentType: 'bank_transfer',
+        contentAttributes: {
+            payment_account_id: draft.paymentAccountId,
+            ...(amount ? { amount } : {}),
+            ...(draft.memo.trim() ? { memo: draft.memo.trim() } : {}),
+        },
+    };
+}
+
+export interface ScheduleDraft {
+    title: string;
+    note: string;
+    /** Mỗi dòng một khung: ngày (YYYY-MM-DD) + nhãn giờ. */
+    slots: { date: string; label: string }[];
+}
+
+export function scheduleError(draft: ScheduleDraft): string | null {
+    if (!draft.title.trim()) return 'TITLE_REQUIRED';
+    if (!draft.slots.some(slot => slot.date && slot.label.trim())) return 'SLOTS_REQUIRED';
+
+    return null;
+}
+
+export const schedulePayload = (draft: ScheduleDraft): StructuredDraft => ({
+    contentType: 'webview',
+    contentAttributes: {
+        page: 'schedule',
+        title: draft.title.trim(),
+        data: {
+            slots: draft.slots
+                .filter(slot => slot.date && slot.label.trim())
+                .map((slot, index) => ({ date: slot.date, label: slot.label.trim(), value: `${slot.date}-${index + 1}` })),
+            ...(draft.note.trim() ? { note: draft.note.trim() } : {}),
+        },
+    },
+});

@@ -59,3 +59,42 @@ describe('thẻ sản phẩm', () => {
         expect(item.price).toMatchObject({ discount_percent: 15, currency: 'VND' });
     });
 });
+
+describe('thẻ chuyển khoản và chọn lịch', () => {
+    it('chuyển khoản chỉ gửi mã tài khoản, số tiền, nội dung; nội dung mặc định thay số hội thoại', async () => {
+        const { bankTransferPayload, bankTransferError, defaultMemo } = await import('./cardPayloads');
+        const account = { id: 3, bank_name: 'VCB', account_number: '1023', account_name: 'GOM MOC', memo_template: 'GM {ma_hoi_thoai}', is_default: true };
+
+        expect(defaultMemo(account, 17)).toBe('GM 17');
+        expect(bankTransferError({ paymentAccountId: null, amount: '', memo: '' })).toBe('ACCOUNT_REQUIRED');
+        expect(bankTransferPayload({ paymentAccountId: 3, amount: '480.000', memo: ' GM 17 ' })).toEqual({
+            contentType: 'bank_transfer',
+            contentAttributes: { payment_account_id: 3, amount: 480000, memo: 'GM 17' },
+        });
+    });
+
+    it('chọn lịch: bỏ dòng thiếu ngày/giờ, mỗi khung có value riêng', async () => {
+        const { schedulePayload, scheduleError } = await import('./cardPayloads');
+        const draft = {
+            title: 'Chọn lịch nhận hàng',
+            note: '',
+            slots: [
+                { date: '2026-09-27', label: '8:00 đến 10:00' },
+                { date: '', label: 'thiếu ngày' },
+                { date: '2026-09-28', label: '8:00 đến 10:00' },
+            ],
+        };
+
+        expect(scheduleError({ ...draft, slots: [{ date: '', label: '' }] })).toBe('SLOTS_REQUIRED');
+        expect(schedulePayload(draft).contentAttributes).toEqual({
+            page: 'schedule',
+            title: 'Chọn lịch nhận hàng',
+            data: {
+                slots: [
+                    { date: '2026-09-27', label: '8:00 đến 10:00', value: '2026-09-27-1' },
+                    { date: '2026-09-28', label: '8:00 đến 10:00', value: '2026-09-28-2' },
+                ],
+            },
+        });
+    });
+});

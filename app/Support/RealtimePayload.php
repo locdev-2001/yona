@@ -49,6 +49,8 @@ final class RealtimePayload
         return [
             'id' => $message['id'],
             'content' => self::truncate($message['content']),
+            // Tin có cấu trúc (thẻ, chuyển khoản…) thường không có content: danh sách hội thoại đọc dòng này.
+            'preview_text' => $message['preview_text'] ?? null,
             'content_type' => $message['content_type'],
             'content_attributes' => self::compactContentAttributes($message['content_attributes'] ?? null),
             'message_type' => $message['message_type'],

@@ -12,6 +12,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Messaging\SubmissionService;
+use App\Support\RealtimePayload;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Tests\Support\WidgetSession;
 
@@ -324,4 +325,14 @@ it('thẻ sản phẩm do menu "Gửi thẻ" dựng (không có id, giá không 
         ->assertJsonPath('content_attributes.items.0.price.discount_percent', 15)
         // Danh sách hội thoại lấy dòng xem trước từ chính phản hồi gửi tin (tin thẻ không có content).
         ->assertJsonPath('preview_text', fn (?string $preview) => str_contains((string) $preview, 'Bình men lam'));
+});
+
+it('payload realtime của danh sách hội thoại giữ dòng xem trước của tin có cấu trúc', function () {
+    $session = WidgetSession::make();
+    $conversation = structuredConversation($session);
+    productCard($conversation);
+
+    $payload = RealtimePayload::conversation($conversation->fresh());
+
+    expect($payload['last_non_activity_message']['preview_text'])->toContain('Bình men lam 40cm');
 });

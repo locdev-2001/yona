@@ -8,24 +8,34 @@ import Popover from 'dashboard/components-next/popover/Popover';
 import { uploadFile } from 'dashboard/helper/uploadHelper';
 
 import { t } from '../../../../i18n';
+import { useOptionalConversation } from '../../ConversationContext';
+import BankTransferForm from './BankTransferForm';
+import ScheduleForm from './ScheduleForm';
 import {
-
+    bankTransferError,
+    bankTransferPayload,
     productError,
     productPayload,
     quickRepliesError,
     quickRepliesPayload,
     QUICK_REPLY_LIMITS,
+    scheduleError,
+    schedulePayload,
     withPreviewDiscount,
+    type BankTransferDraft,
     type ProductDraft,
     type QuickRepliesDraft,
+    type ScheduleDraft,
     type StructuredDraft,
 } from './cardPayloads';
 
-type CardKind = 'quick_replies' | 'product';
+type CardKind = 'quick_replies' | 'product' | 'bank_transfer' | 'schedule';
 
 const CARD_KINDS: { kind: CardKind; icon: string }[] = [
     { kind: 'quick_replies', icon: 'i-lucide-list-checks' },
     { kind: 'product', icon: 'i-lucide-shopping-bag' },
+    { kind: 'bank_transfer', icon: 'i-lucide-landmark' },
+    { kind: 'schedule', icon: 'i-lucide-calendar-clock' },
 ];
 
 const k = (key: string, values?: Record<string, string | number>) => t(`CONVERSATION.SEND_CARD.${key}`, values);
@@ -41,6 +51,8 @@ const EMPTY_PRODUCT: ProductDraft = {
     variants: [{ name: '', options: '' }],
     link: '',
 };
+const EMPTY_BANK_TRANSFER: BankTransferDraft = { paymentAccountId: null, amount: '', memo: '' };
+const EMPTY_SCHEDULE: ScheduleDraft = { title: '', note: '', slots: [{ date: '', label: '' }] };
 
 /** Thẻ đúng như khách thấy trên widget: vẽ bằng chính message kit, chỉ xem. */
 function CardPreview({ draft }: { draft: StructuredDraft }) {
@@ -186,7 +198,11 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
     const [kind, setKind] = useState<CardKind | null>(null);
     const [quickReplies, setQuickReplies] = useState(EMPTY_QUICK_REPLIES);
     const [product, setProduct] = useState(EMPTY_PRODUCT);
+    const [bankTransfer, setBankTransfer] = useState(EMPTY_BANK_TRANSFER);
+    const [bankPreview, setBankPreview] = useState<StructuredDraft | null>(null);
+    const [schedule, setSchedule] = useState(EMPTY_SCHEDULE);
     const [showErrors, setShowErrors] = useState(false);
+    const conversation = useOptionalConversation();
     const dialogRef = useRef<DialogHandle>(null);
 
     useEffect(() => {
@@ -194,12 +210,29 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
     }, [kind]);
 
     const labels = { order: k('PRODUCT.ORDER_BUTTON'), view: k('PRODUCT.VIEW_BUTTON') };
-    const draft = useMemo<StructuredDraft | null>(
-        () => (kind === 'quick_replies' ? quickRepliesPayload(quickReplies) : kind === 'product' ? productPayload(product, labels) : null),
+    const draft = useMemo<StructuredDraft | null>(() => {
+        switch (kind) {
+            case 'quick_replies':
+                return quickRepliesPayload(quickReplies);
+            case 'product':
+                return productPayload(product, labels);
+            case 'bank_transfer':
+                return bankTransferPayload(bankTransfer);
+            case 'schedule':
+                return schedulePayload(schedule);
+            default:
+                return null;
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [kind, quickReplies, product],
-    );
-    const error = kind === 'quick_replies' ? quickRepliesError(quickReplies) : kind === 'product' ? productError(product) : null;
+    }, [kind, quickReplies, product, bankTransfer, schedule]);
+    const error = {
+        quick_replies: () => quickRepliesError(quickReplies),
+        product: () => productError(product),
+        bank_transfer: () => bankTransferError(bankTransfer),
+        schedule: () => scheduleError(schedule),
+    }[kind ?? 'quick_replies']();
+    // Thẻ chuyển khoản xem trước bằng bản máy chủ dựng (có mã QR thật), không bằng payload gửi đi.
+    const preview = kind === 'bank_transfer' ? bankPreview : draft;
 
     const close = () => {
         setKind(null);
@@ -212,6 +245,8 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
         onSend(draft);
         if (kind === 'quick_replies') setQuickReplies(EMPTY_QUICK_REPLIES);
         if (kind === 'product') setProduct(EMPTY_PRODUCT);
+        if (kind === 'bank_transfer') setBankTransfer(EMPTY_BANK_TRANSFER);
+        if (kind === 'schedule') setSchedule(EMPTY_SCHEDULE);
         dialogRef.current?.close();
     };
 
@@ -258,13 +293,23 @@ export default function SendCardMenu({ onSend }: { onSend: (draft: StructuredDra
                         <div className="flex min-w-0 flex-col gap-3">
                             {kind === 'quick_replies' ? <QuickRepliesForm draft={quickReplies} onChange={setQuickReplies} /> : null}
                             {kind === 'product' ? <ProductForm draft={product} onChange={setProduct} /> : null}
+                            {kind === 'bank_transfer' && conversation ? (
+                                <BankTransferForm
+                                    accountId={conversation.accountId}
+                                    conversationDisplayId={conversation.conversationId}
+                                    draft={bankTransfer}
+                                    onChange={setBankTransfer}
+                                    onPreview={setBankPreview}
+                                />
+                            ) : null}
+                            {kind === 'schedule' ? <ScheduleForm draft={schedule} onChange={setSchedule} /> : null}
                             {showErrors && error ? (
                                 <p role="alert" className="m-0 text-sm text-n-ruby-11">
                                     {k(`ERRORS.${error}`)}
                                 </p>
                             ) : null}
                         </div>
-                        {draft ? <CardPreview draft={draft} /> : null}
+                        {preview ? <CardPreview draft={preview} /> : null}
                     </div>
             </Dialog>
         </>

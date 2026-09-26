@@ -411,9 +411,17 @@
     flex: none;
 }
 
+/* Khung giờ kèm ngày ("27/09 8:00 đến 10:00") dài hơn nửa thẻ: xuống dòng thay vì chồng chữ. */
+.mk-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
 .mk-slot {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    white-space: nowrap;
     height: 36px;
     border-radius: 12px;
     background: var(--mk-soft);
