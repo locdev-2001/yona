@@ -41,6 +41,7 @@ Chưa thấy tool `mcp__yona-dash__*` trong phiên → báo founder chạy `clau
 4. **Không dán đường dẫn máy cá nhân** (`.playwright-mcp/...`, `/home/...`) vào mô tả — người khác không mở được.
 5. **Luôn gán người làm** là founder (nhân sự "Nguyen Robert"), trừ khi founder chỉ định người khác. Tên người → id: tra `get_task_options.staff` (tên, email), khớp cả khi gọi tắt ("Lộc", "anh Robert") hay theo email. Khớp nhiều người hoặc không khớp ai thì liệt kê danh sách và hỏi lại — không đoán, không gán đại.
 6. **Nối việc liên quan** bằng `task #<id>` (id công việc trên dash, không phải số `#` issue GitHub nằm trong tên việc đồng bộ) kèm link `url` mà tool trả về; nếu việc này chặn/bị chặn bởi việc kia thì nói rõ bằng câu, không chỉ liệt kê số.
+7. **Báo cáo với founder luôn gọi việc bằng tên**, không bao giờ chỉ bằng số. Mỗi lần nhắc tới một việc (thống kê, danh sách, việc liên quan, việc vừa tạo) thì ghi tên ngắn gọn đủ hiểu đó là việc gì, số `#id` chỉ đi kèm làm link: `[Sticker lẫn vào mục Ảnh (#135)](url)`. Cấm những câu kiểu "#120–#124 chưa bắt đầu" — founder không nhớ số nào là việc nào. Danh sách dài thì gom theo nhóm (cột, ưu tiên, người làm) nhưng từng dòng vẫn phải có tên.
 
 ## Điền đủ mọi trường khi tạo
 
