@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import DOMPurify from 'dompurify';
 
-import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
-import { isDeletedMessage, uploadCancelPlacement } from '../../helpers/messageHelpers';
+import { isDeletedMessage, uploadCancelPlacement, messageHtml } from '../../helpers/messageHelpers';
 import { widgetStore } from '../../store/widgetStore';
 import { AudioBubble, FileBubble, VideoBubble } from '../bubbles';
 import { bubbleRadius, partPosition } from './bubbleShape';
@@ -38,7 +36,7 @@ function TextBubble({
                 <div
                     className={`message-content break-words [&_a]:underline ${replyTo ? 'px-[7px]' : ''}`}
                     dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
+                        __html: messageHtml(content),
                     }}
                 />
             ) : null}

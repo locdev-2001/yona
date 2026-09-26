@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MESSAGE_TYPE } from './constants';
 import {
+    messageHtml,
     buildSendAttachmentFormData,
     buildSendAttachmentsFormData,
     buildSendMessagePayload,
@@ -268,5 +269,25 @@ describe('deliveryStatusOf', () => {
         expect(deliveryStatusOf(message({ status: 'failed' }), 1758000100)).toBe('failed');
         expect(deliveryStatusOf(message({ status: 'delivered', created_at: 1758000000 }))).toBe('delivered');
         expect(deliveryStatusOf(message({ status: 'read' }))).toBe('seen');
+    });
+});
+
+describe('messageHtml', () => {
+    it('biến URL trần thành link mở tab mới, không điều hướng trong iframe widget', () => {
+        const container = document.createElement('div');
+        container.innerHTML = messageHtml('Đăng ký tại https://yona.vn/app/auth/signup nhé');
+        const link = container.querySelector('a');
+
+        expect(link?.getAttribute('href')).toBe('https://yona.vn/app/auth/signup');
+        expect(link?.getAttribute('target')).toBe('_blank');
+        expect(link?.getAttribute('rel')).toContain('noopener');
+    });
+
+    it('không để lọt script hay link javascript:', () => {
+        const container = document.createElement('div');
+        container.innerHTML = messageHtml('<script>alert(1)</script> [bấm](javascript:alert(1))');
+
+        expect(container.querySelector('script')).toBeNull();
+        expect([...container.querySelectorAll('a')].some(a => a.getAttribute('href')?.startsWith('javascript:'))).toBe(false);
     });
 });

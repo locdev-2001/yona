@@ -1,10 +1,8 @@
-import DOMPurify from 'dompurify';
 
-import MessageFormatter from 'shared/helpers/MessageFormatter';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
 import { MESSAGE_TYPE } from '../helpers/constants';
-import { isASubmittedFormMessage, isDeletedMessage } from '../helpers/messageHelpers';
+import { isASubmittedFormMessage, isDeletedMessage, messageHtml } from '../helpers/messageHelpers';
 import { useWidgetState } from '../store/hooks';
 import { t } from '../i18n';
 import { bubbleRadius } from './message/bubbleShape';
@@ -52,7 +50,7 @@ function AgentMessageBubble({
                 <div
                     className="message-content break-words [&_a]:underline"
                     dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(new MessageFormatter(content, false).formattedMessage),
+                        __html: messageHtml(content),
                     }}
                 />
             </div>
