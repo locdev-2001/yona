@@ -122,7 +122,12 @@ function QuickRepliesForm({ draft, onChange }: { draft: QuickRepliesDraft; onCha
 
 function ProductForm({ draft, onChange }: { draft: ProductDraft; onChange: (draft: ProductDraft) => void }) {
     const [uploading, setUploading] = useState(false);
-    const set = (patch: Partial<ProductDraft>) => onChange({ ...draft, ...patch });
+    // Ảnh tải lỗi (link hỏng, bị chặn) thì hiện ô trống như chưa có ảnh, không để icon ảnh vỡ.
+    const [brokenImage, setBrokenImage] = useState(false);
+    const set = (patch: Partial<ProductDraft>) => {
+        if (patch.mediaUrl !== undefined) setBrokenImage(false);
+        onChange({ ...draft, ...patch });
+    };
 
     const upload = async (file: File | undefined) => {
         if (!file) return;
@@ -139,7 +144,11 @@ function ProductForm({ draft, onChange }: { draft: ProductDraft; onChange: (draf
             <Input label={k('PRODUCT.NAME')} value={draft.title} maxLength={120} onChange={event => set({ title: event.target.value })} />
             <div className="flex items-center gap-3">
                 <span className="flex size-16 flex-none items-center justify-center overflow-hidden rounded-lg bg-n-alpha-2">
-                    {draft.mediaUrl ? <img src={draft.mediaUrl} alt="" className="size-full object-cover" /> : <span className="i-lucide-image size-5 text-n-slate-10" />}
+                    {draft.mediaUrl && !brokenImage ? (
+                        <img src={draft.mediaUrl} alt="" className="size-full object-cover" onError={() => setBrokenImage(true)} />
+                    ) : (
+                        <span className="i-lucide-image size-5 text-n-slate-10" />
+                    )}
                 </span>
                 <label className="cursor-pointer text-sm font-medium text-n-blue-11">
                     {uploading ? k('PRODUCT.UPLOADING') : draft.mediaUrl ? k('PRODUCT.CHANGE_IMAGE') : k('PRODUCT.UPLOAD_IMAGE')}

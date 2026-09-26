@@ -84,18 +84,22 @@ body {
 .flow-day {
     flex: 1 0 64px;
     min-width: 64px;
+    min-height: 60px;
     padding: 10px 4px;
     border-radius: 14px;
-    border: 2px solid transparent;
-    background: var(--mk-soft, #f4f5f7);
+    border: 1px solid var(--mk-line-strong, rgba(0, 0, 0, 0.14));
+    background: var(--mk-surface, #fff);
     color: inherit;
     text-align: center;
     cursor: pointer;
 }
 
-.flow-day[aria-pressed='true'] {
-    border-color: var(--mk-accent, #1b6fcc);
-    color: var(--mk-accent-ink, var(--mk-accent, #1b6fcc));
+.flow-day[aria-pressed='true'],
+.flow-slot[aria-pressed='true'] {
+    /* Artboard Webview: ô chọn nền nhạt màu nhấn, viền màu nhấn, chữ giữ màu mực để dễ đọc. */
+    border: 2px solid var(--mk-accent, #1b6fcc);
+    background: color-mix(in srgb, var(--mk-accent, #1b6fcc) 8%, var(--mk-surface, #fff));
+    color: var(--mk-ink, #17181a);
 }
 
 .flow-day-name {
@@ -119,24 +123,21 @@ body {
 }
 
 .flow-slot {
+    min-height: 48px;
     padding: 12px 8px;
     border-radius: 14px;
-    border: 2px solid transparent;
-    background: var(--mk-soft, #f4f5f7);
+    border: 1px solid var(--mk-line-strong, rgba(0, 0, 0, 0.14));
+    background: var(--mk-surface, #fff);
     color: inherit;
     font-size: 14px;
     cursor: pointer;
 }
 
-.flow-slot[aria-pressed='true'] {
-    border-color: var(--mk-accent, #1b6fcc);
-    color: var(--mk-accent-ink, var(--mk-accent, #1b6fcc));
-}
-
 .flow-slot:disabled {
     color: var(--mk-ink-3, #6b7076);
     text-decoration: line-through;
-    background: transparent;
+    background: var(--mk-soft, #f4f5f7);
+    border-color: transparent;
     cursor: default;
 }
 

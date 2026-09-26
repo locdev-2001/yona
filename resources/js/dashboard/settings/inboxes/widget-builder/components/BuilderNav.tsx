@@ -39,7 +39,7 @@ export default function BuilderNav({ activeSection, onSelect, orientation = 'ver
                         aria-current={isActive ? 'true' : undefined}
                         className={`rounded-lg px-3 py-2 text-body-main text-start whitespace-nowrap transition-colors ${
                             isActive
-                                ? 'bg-n-solid-3 text-n-slate-12 font-medium'
+                                ? 'bg-n-alpha-2 text-n-slate-12 font-medium'
                                 : 'text-n-slate-11 hover:bg-n-alpha-1 hover:text-n-slate-12'
                         }`}
                         onClick={() => onSelect(section)}

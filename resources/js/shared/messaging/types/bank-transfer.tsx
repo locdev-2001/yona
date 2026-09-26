@@ -43,7 +43,8 @@ function QrImage({ payload }: { payload: string }) {
     return <img src={src} width={200} height={200} alt={kt('bank_transfer_qr_alt')} />;
 }
 
-function CopyRow({ label, value, message }: { label: string; value: string; message: StructuredMessage }) {
+/** Một dòng nhãn / giá trị / nút chép; lưới 3 cột nên giá trị các dòng thẳng hàng. */
+function BankRow({ label, value, copyable = false, message }: { label: string; value: string; copyable?: boolean; message: StructuredMessage }) {
     const host = useMessageHost();
     const [copied, setCopied] = useState(false);
 
@@ -54,18 +55,23 @@ function CopyRow({ label, value, message }: { label: string; value: string; mess
     };
 
     return (
-        <span className="mk-summary-row">
-            {label}: <b>{value}</b>
-            {host.interactive ? (
-                <button type="button" className="mk-pill mk-pill--soft mk-pill--icon" aria-label={kt('copy', { label })} onClick={onClick}>
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-            ) : null}
-        </span>
+        <>
+            <dt className="mk-bank-label">{label}</dt>
+            <dd className="mk-bank-value">{value}</dd>
+            <span className="mk-bank-action">
+                {copyable && host.interactive ? (
+                    <button type="button" className="mk-pill mk-pill--soft mk-pill--icon" aria-label={kt('copy', { label })} onClick={onClick}>
+                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                ) : null}
+            </span>
+        </>
     );
 }
 
 function BankTransferView({ model, message }: { model: BankTransferModel; message: StructuredMessage }) {
+    const host = useMessageHost();
+
     return (
         <KitRoot>
             <div className="mk-card mk-pad">
@@ -76,24 +82,23 @@ function BankTransferView({ model, message }: { model: BankTransferModel; messag
                         {model.paidAt ? <span className="mk-meta">{kt('paid')}</span> : null}
                     </span>
                 </div>
-                <div className="mk-row" style={{ justifyContent: 'center' }}>
-                    <QrImage payload={model.qrPayload} />
-                </div>
-                <div className="mk-summary">
-                    <span className="mk-summary-row">
-                        {kt('bank')}: <b>{model.bankName}</b>
-                    </span>
-                    <CopyRow label={kt('account_number')} value={model.accountNumber} message={message} />
-                    <span className="mk-summary-row">
-                        {kt('account_holder')}: <b>{model.accountName}</b>
-                    </span>
+                <dl className="mk-bank">
+                    <BankRow label={kt('bank')} value={model.bankName} message={message} />
+                    <BankRow label={kt('account_number')} value={model.accountNumber} copyable message={message} />
+                    <BankRow label={kt('account_holder')} value={model.accountName} message={message} />
                     {model.amount ? (
-                        <span className="mk-summary-row">
-                            {kt('transfer_amount')}: <b>{formatMoney(model.amount.amount, model.amount.currency)}</b>
-                        </span>
+                        <BankRow label={kt('transfer_amount')} value={formatMoney(model.amount.amount, model.amount.currency)} message={message} />
                     ) : null}
-                    {model.memo ? <CopyRow label={kt('transfer_memo')} value={model.memo} message={message} /> : null}
-                </div>
+                    {model.memo ? <BankRow label={kt('transfer_memo')} value={model.memo} copyable message={message} /> : null}
+                </dl>
+                {/* Khách đang chat trên chính điện thoại thì không quét được mã trên màn hình mình: số tài khoản
+                    và nút chép lên trước, mã QR thu vào một dòng mở ra khi cần. Hộp thư (chỉ xem) mở sẵn. */}
+                <details className="mk-bank-qr" open={!host.interactive}>
+                    <summary>{kt('show_qr')}</summary>
+                    <div className="mk-row" style={{ justifyContent: 'center', paddingTop: 8 }}>
+                        <QrImage payload={model.qrPayload} />
+                    </div>
+                </details>
             </div>
         </KitRoot>
     );

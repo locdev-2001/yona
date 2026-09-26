@@ -98,6 +98,7 @@ return [
             'delivered' => 'Đã nhận',
         ],
         'bank_transfer_title' => 'Chuyển khoản ngân hàng',
+        'show_qr' => 'Hiện mã QR để quét',
         'bank_transfer_qr_alt' => 'Mã QR chuyển khoản',
         'bank' => 'Ngân hàng',
         'account_number' => 'Số tài khoản',

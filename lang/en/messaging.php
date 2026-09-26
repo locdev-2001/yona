@@ -98,6 +98,7 @@ return [
             'delivered' => 'Delivered',
         ],
         'bank_transfer_title' => 'Bank transfer',
+        'show_qr' => 'Show QR code to scan',
         'bank_transfer_qr_alt' => 'Bank transfer QR code',
         'bank' => 'Bank',
         'account_number' => 'Account number',

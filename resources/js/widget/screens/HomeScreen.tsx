@@ -79,7 +79,10 @@ export default function HomeScreen() {
                 </div>
             </section>
 
-            <section className="relative mx-4 -mt-11 flex flex-none flex-col gap-3 rounded-2xl bg-[var(--yona-chat-panel)] px-4 pb-4 pt-1.5 shadow-[var(--yona-chat-shadow-card)]">
+            {/* Không có hội thoại gần nhất thì nút là thứ đầu tiên trong thẻ: cần đệm trên bằng đệm dưới, nếu không nút dính mép thẻ trên nền màu nhấn. */}
+            <section
+                className={`relative mx-4 -mt-11 flex flex-none flex-col gap-3 rounded-2xl bg-[var(--yona-chat-panel)] px-4 pb-4 shadow-[var(--yona-chat-shadow-card)] ${recent ? 'pt-1.5' : 'pt-4'}`}
+            >
                 {recent ? (
                     <button
                         type="button"
