@@ -504,6 +504,27 @@ Phiên đã kết nối từ trước không bị chặn — chỉ chặn mở p
 Kiểm tra: `curl -s -H "X-Bridge-UI-Secret: $BRIDGE_UI_SECRET" http://127.0.0.1:8612/health`
 trả khối `bridge: {active_sessions, max_sessions, rss_bytes}`.
 
+### Ảnh thẻ cho kênh không có dạng gốc (`POST /render/card`)
+
+Zalo cá nhân không có nút/thẻ gốc: thẻ sản phẩm, tra đơn, mở trang, bài viết được
+gửi thành ảnh PNG kèm bản chữ. Ảnh vẽ trong chính tiến trình bridge bằng `satori` +
+`@resvg/resvg-js` (không Chromium, không service mới).
+
+- Phụ thuộc cài cùng bridge ở bước `pnpm --dir services/zalo-bridge install --prod`
+  của `deploy.sh`; `@resvg/resvg-js` tải binary dựng sẵn cho linux-x64, không cần
+  build tools. Font Be Vietnam Pro nằm sẵn trong `services/zalo-bridge/assets/fonts/`.
+- Laravel gọi bằng `ZALO_BRIDGE_URL` + `ZALO_BRIDGE_SEND_SECRET` đã có, hết giờ 3 giây;
+  lỗi thì gửi chữ như cũ và ghi log `messaging.delivery.degraded` với `level: image_failed`.
+- Ảnh cache trên disk `public` ở `storage/app/public/card-images/` (cần
+  `php artisan storage:link` như ảnh đính kèm). Chưa có job dọn: dung lượng tăng
+  theo số thẻ khác nhau đã gửi.
+- Ảnh sản phẩm chỉ được tải từ địa chỉ công khai, không theo chuyển hướng. Máy
+  local ảnh nằm ở 127.0.0.1 thì đặt trong `services/zalo-bridge/.env`:
+
+```dotenv
+CARD_RENDER_ALLOW_PRIVATE_MEDIA=1   # chỉ local; production để 0
+```
+
 ### Gửi video dạng video gốc: ffmpeg + ffprobe
 
 Video nhân viên gửi cho khách Zalo đi thành video phát được (khách thấy khung
