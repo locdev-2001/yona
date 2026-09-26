@@ -1,6 +1,7 @@
 <?php
 
 use App\Messaging\Delivery\Renderers\FacebookRenderer;
+use App\Messaging\Delivery\Renderers\InstagramRenderer;
 use App\Messaging\Delivery\Renderers\LineRenderer;
 use App\Messaging\Delivery\Renderers\TelegramRenderer;
 use App\Messaging\Structured\Types\ArticleType;
@@ -13,6 +14,7 @@ use App\Messaging\Structured\Types\OrderStatusType;
 use App\Messaging\Structured\Types\QuickRepliesType;
 use App\Messaging\Structured\Types\WebviewType;
 use App\Models\Channel\FacebookPage;
+use App\Models\Channel\Instagram;
 use App\Models\Channel\Line;
 use App\Models\Channel\Telegram;
 
@@ -42,6 +44,7 @@ return [
     */
     'delivery_renderers' => [
         FacebookPage::class => FacebookRenderer::class,
+        Instagram::class => InstagramRenderer::class,
         Telegram::class => TelegramRenderer::class,
         Line::class => LineRenderer::class,
     ],

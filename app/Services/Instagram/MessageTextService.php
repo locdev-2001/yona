@@ -4,10 +4,12 @@ namespace App\Services\Instagram;
 
 use App\Builders\Messages\Instagram\MessageBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
+use App\Messaging\Delivery\ChoiceToken;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Messaging\ChoiceCallbackService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,6 +42,11 @@ class MessageTextService
         }
 
         $isEcho = filled(data_get($this->messaging, 'message.is_echo'));
+
+        if (! $isEcho && $this->handleQuickReply($inbox)) {
+            return null;
+        }
+
         $contactId = (string) ($isEcho
             ? data_get($this->messaging, 'recipient.id')
             : data_get($this->messaging, 'sender.id'));
@@ -49,6 +56,25 @@ class MessageTextService
         }
 
         return (new MessageBuilder($this->messaging, $inbox, outgoingEcho: $isEcho))->perform();
+    }
+
+    /**
+     * Khách bấm chip do DeliveryPlanner vẽ (Renderers\InstagramRenderer): map thẳng về tin
+     * gốc qua SubmissionService thay vì tạo tin đến mang payload thô. Payload không phải của
+     * chúng ta, hoặc câu hỏi đã được trả lời rồi, thì để rơi xuống luồng tạo tin bình thường
+     * để chữ khách bấm vẫn tới nhân viên (App\Services\Facebook\MessageCreator làm y hệt).
+     */
+    private function handleQuickReply(Inbox $inbox): bool
+    {
+        $parsed = ChoiceToken::parseFacebook((string) data_get($this->messaging, 'message.quick_reply.payload'));
+        $senderId = data_get($this->messaging, 'sender.id');
+
+        if ($parsed === null || $senderId === null) {
+            return false;
+        }
+
+        return app(ChoiceCallbackService::class)
+            ->resolve($parsed['message_id'], $parsed['value'], null, $inbox->id, (string) $senderId) !== null;
     }
 
     private function unsendMessage(Inbox $inbox): void

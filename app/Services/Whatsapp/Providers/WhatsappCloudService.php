@@ -42,7 +42,7 @@ class WhatsappCloudService extends BaseWhatsappService
             'messaging_product' => 'whatsapp',
             'to' => $phoneNumber,
             ...self::replyContext($message),
-            'text' => ['body' => $message->outgoingContent()],
+            'text' => ['body' => $this->outgoingText($message)],
             'type' => 'text',
         ]);
 
@@ -57,7 +57,7 @@ class WhatsappCloudService extends BaseWhatsappService
         $typeContent = ['link' => $attachment->downloadUrl()];
 
         if ($type !== 'audio') {
-            $typeContent['caption'] = $message->outgoingContent();
+            $typeContent['caption'] = $this->outgoingText($message);
         }
 
         if ($type === 'document') {

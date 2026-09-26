@@ -82,6 +82,7 @@
         "outbound_audio",
         "outbound_file",
         "outbound_reply_to",
+        "outbound_quick_reply",
         "event_recall",
         "profile_name",
         "profile_avatar",
