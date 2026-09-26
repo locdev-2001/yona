@@ -9,7 +9,7 @@
           alt="{{ $globalConfig['BRAND_NAME'] }}"
           src="{{ $globalConfig['LOGO_THUMBNAIL'] }}"
         />
-        <p class="text-slate-700 dark:text-slate-300 text-sm font-medium text-center">
+        <p class="text-slate-700 text-sm font-medium text-center">
           {{ __('public_portal.footer.made_with') }}
 
             <a class="hover:underline" href="{{ $globalConfig['BRAND_URL'].'?utm_campaign=branding&utm_medium=helpcenter' }}" target="_blank" rel="noopener noreferrer nofollow">{{ $globalConfig['INSTALLATION_NAME'] }}</a>

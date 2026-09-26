@@ -64,7 +64,7 @@ export default function ContactHeader({
                                 value={searchValue}
                                 type="search"
                                 placeholder={t('CONTACTS_LAYOUT.HEADER.SEARCH_PLACEHOLDER')}
-                                customInputClass="h-8 [&:not(.focus)]:!border-transparent bg-n-alpha-2 dark:bg-n-solid-1 ltr:!pl-8 !py-1 rtl:!pr-8"
+                                customInputClass="h-8 [&:not(.focus)]:!border-transparent bg-n-alpha-2 ltr:!pl-8 !py-1 rtl:!pr-8"
                                 className="w-full"
                                 onChange={event => onSearch(event.target.value)}
                                 prefix={

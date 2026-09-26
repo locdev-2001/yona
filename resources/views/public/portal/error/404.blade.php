@@ -6,10 +6,10 @@
     <div class="text-center mb-12">
         <span class="text-8xl">🔍</span>
     </div>
-    <h1 class="text-6xl text-center font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">{{ __('public_portal.404.title') }}</h1>
-    <p class="text-center text-slate-700 dark:text-slate-300 my-1">{{ __('public_portal.404.description') }}</p>
+    <h1 class="text-6xl text-center font-semibold text-slate-800 leading-relaxed">{{ __('public_portal.404.title') }}</h1>
+    <p class="text-center text-slate-700 my-1">{{ __('public_portal.404.description') }}</p>
     <div class="text-center my-8">
-        <a href="{{ $links::home($portal->slug, $portal->defaultLocale() ?: $locale, $theme, $isPlainLayout) }}" class="text-woot-500 font-semibold underline">
+        <a href="{{ $links::home($portal->slug, $portal->defaultLocale() ?: $locale, $isPlainLayout) }}" class="text-woot-500 font-semibold underline">
             {{ __('public_portal.404.back_to_home') }}
         </a>
     </div>

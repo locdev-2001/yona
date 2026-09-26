@@ -114,7 +114,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
     return (
         <div className="flex flex-col w-full gap-4">
             <div className="flex flex-col w-full gap-2">
-                <label className="mb-0.5 text-sm font-medium text-gray-900 dark:text-gray-50">
+                <label className="mb-0.5 text-sm font-medium text-gray-900">
                     {t('HELP_CENTER.PORTAL_SETTINGS.FORM.AVATAR.LABEL')}
                 </label>
                 <Avatar
@@ -135,7 +135,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
                         placeholder={t('HELP_CENTER.PORTAL_SETTINGS.FORM.NAME.PLACEHOLDER')}
                         messageType={nameError ? 'error' : 'info'}
                         message={nameError}
-                        customInputClass="!bg-transparent dark:!bg-transparent"
+                        customInputClass="!bg-transparent"
                         onChange={event => set({ name: event.target.value })}
                     />
                 </div>
@@ -144,7 +144,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
                     <Input
                         value={state.headerText}
                         placeholder={t('HELP_CENTER.PORTAL_SETTINGS.FORM.HEADER_TEXT.PLACEHOLDER')}
-                        customInputClass="!bg-transparent dark:!bg-transparent"
+                        customInputClass="!bg-transparent"
                         onChange={event => set({ headerText: event.target.value })}
                     />
                 </div>
@@ -153,7 +153,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
                     <Input
                         value={state.pageTitle}
                         placeholder={t('HELP_CENTER.PORTAL_SETTINGS.FORM.PAGE_TITLE.PLACEHOLDER')}
-                        customInputClass="!bg-transparent dark:!bg-transparent"
+                        customInputClass="!bg-transparent"
                         onChange={event => set({ pageTitle: event.target.value })}
                     />
                 </div>
@@ -164,7 +164,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
                         placeholder={t('HELP_CENTER.PORTAL_SETTINGS.FORM.HOME_PAGE_LINK.PLACEHOLDER')}
                         messageType={homePageLinkError ? 'error' : 'info'}
                         message={homePageLinkError}
-                        customInputClass="!bg-transparent dark:!bg-transparent"
+                        customInputClass="!bg-transparent"
                         onChange={event => set({ homePageLink: event.target.value })}
                     />
                 </div>

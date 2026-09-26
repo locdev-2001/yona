@@ -17,7 +17,7 @@
     @php($otherAuthorsCount = $authorCount - 1)
     @php($otherAuthorsText = $otherAuthorsCount > 1 ? __('public_portal.common.others') : __('public_portal.common.other'))
 
-    <span class="{{ $showExpanded ? 'text-base' : 'text-sm' }} font-medium text-slate-600 dark:text-slate-400">
+    <span class="{{ $showExpanded ? 'text-base' : 'text-sm' }} font-medium text-slate-600">
     @if ($showExpanded)
         {{ __('public_portal.common.by').' '.$firstAuthor }}
         {{ $otherAuthorsCount > 0 ? " and {$otherAuthorsCount} {$otherAuthorsText}" : '' }}

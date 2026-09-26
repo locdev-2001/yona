@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { buildAppearanceActions } from './useAppearanceHotKeys';
 import { GO_TO_COMMANDS, buildGoToActions } from './useGoToCommandHotKeys';
 import { KEYS, SHORTCUT_KEYS } from './shortcutKeys';
 import { clearCommandBarActions, getCommandBarActions, setCommandBarActions } from './commandBarStore';
@@ -58,16 +57,6 @@ describe('buildGoToActions', () => {
             expect(item.icon).toBeTruthy();
             expect(typeof item.handler).toBe('function');
         });
-    });
-});
-
-describe('buildAppearanceActions', () => {
-    it('một action cha + ba lựa chọn con', () => {
-        const actions = buildAppearanceActions();
-
-        expect(actions.map(item => item.id)).toEqual(['appearance_settings', 'light', 'dark', 'auto']);
-        expect(actions[0].children).toEqual(['light', 'dark', 'auto']);
-        actions.slice(1).forEach(item => expect(item.parent).toBe('appearance_settings'));
     });
 });
 

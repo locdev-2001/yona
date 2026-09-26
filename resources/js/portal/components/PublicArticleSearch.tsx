@@ -15,7 +15,7 @@ interface PublicArticleSearchProps {
 }
 
 export default function PublicArticleSearch({ size = 'default', showKbd = false }: PublicArticleSearchProps) {
-    const { portalSlug, localeCode, searchTranslations, theme, isPlainLayoutEnabled } = window.portalConfig;
+    const { portalSlug, localeCode, searchTranslations, isPlainLayoutEnabled } = window.portalConfig;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setLoading] = useState(false);
@@ -101,7 +101,6 @@ export default function PublicArticleSearch({ size = 'default', showKbd = false 
         if (!normalizedSearchTerm) return;
 
         const searchParams = new URLSearchParams({ query: normalizedSearchTerm });
-        if (theme) searchParams.set('theme', theme);
         if (isPlainLayoutEnabled === 'true') searchParams.set('show_plain_layout', 'true');
 
         window.location.href = `/hc/${portalSlug}/${localeCode}/search?${searchParams.toString()}`;

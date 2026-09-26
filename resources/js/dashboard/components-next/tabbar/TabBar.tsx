@@ -60,7 +60,7 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
     // giữ trọn vùng chạm 44px (transform thu nhỏ cả vùng nhận chạm).
     return (
         <div
-            className={`relative flex items-center h-11 md:h-8 rounded-lg bg-n-alpha-1 dark:bg-n-solid-1 w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
+            className={`relative flex items-center h-11 md:h-8 rounded-lg bg-n-alpha-1 w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
         >
             <div
                 className={`absolute rounded-lg bg-n-solid-active shadow-sm pointer-events-none outline-1 outline outline-n-container inset-y-0 ${enableTransition ? 'transition-all duration-300 ease-out' : ''}`.trim()}
@@ -86,7 +86,7 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
                     {index < tabs.length - 1 ? (
                         <div
                             className={`w-px h-3.5 rounded my-auto transition-colors duration-300 ease-in-out ${
-                                showDivider(index) ? 'bg-n-strong' : 'bg-transparent dark:bg-transparent'
+                                showDivider(index) ? 'bg-n-strong' : 'bg-transparent'
                             }`}
                         />
                     ) : null}

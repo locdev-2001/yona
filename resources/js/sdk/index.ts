@@ -1,13 +1,17 @@
 // Điểm vào bundle IIFE độc lập — API công khai `window.yonaSDK.run({websiteToken, baseUrl})`.
 // Tên toàn cục đời trước vẫn trỏ cùng object (shared/legacyContracts.ts) để mã nhúng cũ không gãy.
 import { IFrameHelper } from './IFrameHelper';
-import { getBubbleView, getDarkMode, getWidgetStyle } from './settingsHelper';
+import { getBubbleView, getWidgetStyle } from './settingsHelper';
 import { computeHashForUserData, getUserCookieName, hasUserKeys, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { addClasses, removeClasses, restoreWidgetInDOM } from './DOMHelpers';
 import { SDK_SET_BUBBLE_VISIBILITY } from './constants/frameEvents';
 import { exposeLegacySdk, exposeLegacySdkInstance, readLegacySdkSettings } from '../shared/legacyContracts';
 import type { RunOptions, SdkSettings, SdkUserAttributes } from './types';
+
+// Module-scope: `runSDK` tự thoát sớm nếu `window.$yona` đã tồn tại, nên
+// setColorScheme (deprecated) chỉ có thể được gán một lần — cờ này đủ cảnh báo 1 lần/trang.
+let hasWarnedColorSchemeDeprecated = false;
 
 const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
     if (window.$yona) {
@@ -58,7 +62,9 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
         showUnreadMessagesDialog: settings.showUnreadMessagesDialog ?? true,
         widgetStyle: getWidgetStyle(settings.widgetStyle) || 'standard',
         resetTriggered: false,
-        darkMode: getDarkMode(settings.darkMode),
+        // Sản phẩm chỉ còn giao diện sáng — giữ giá trị cố định 'light' thay vì undefined
+        // để tích hợp cũ của tenant đọc `window.$yona.darkMode` không vỡ kiểu dữ liệu.
+        darkMode: 'light',
         welcomeTitle: settings.welcomeTitle || '',
         welcomeDescription: settings.welcomeDescription || '',
         availableMessage: settings.availableMessage || '',
@@ -165,8 +171,17 @@ const runSDK = ({ baseUrl, websiteToken }: RunOptions): void => {
             IFrameHelper.sendMessage('set-locale', { locale: localeToBeUsed });
         },
 
-        setColorScheme(darkMode = 'light') {
-            IFrameHelper.sendMessage('set-color-scheme', { darkMode: getDarkMode(darkMode) });
+        // @deprecated Sản phẩm đã gỡ dark mode (20/09/2026) — giữ hàm rỗng thay vì xoá
+        // để tích hợp cũ của tenant gọi `setColorScheme` không ném TypeError và làm vỡ
+        // script trang của họ. Không còn gửi postMessage nào tới iframe.
+        setColorScheme(_darkMode) {
+            if (!hasWarnedColorSchemeDeprecated) {
+                hasWarnedColorSchemeDeprecated = true;
+                // eslint-disable-next-line no-console
+                console.warn(
+                    '[Yona] $yona.setColorScheme() is deprecated and no longer has any effect. The widget only supports a light theme.',
+                );
+            }
         },
 
         reset() {

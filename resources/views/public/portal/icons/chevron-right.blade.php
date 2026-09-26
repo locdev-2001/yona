@@ -1,5 +1,5 @@
 <svg
-  class="w-4 h-4 fill-current text-slate-500 dark:text-slate-400"
+  class="w-4 h-4 fill-current text-slate-500"
   width="24"
   height="24"
   fill="none"

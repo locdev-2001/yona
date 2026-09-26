@@ -122,7 +122,7 @@ export default function TagInput({
                         <DropdownMenu
                             menuItems={filteredMenuItems}
                             isLoading={isLoading}
-                            className="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-[inherit] max-w-md dark:!outline-n-slate-5"
+                            className="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-[inherit] max-w-md"
                             onAction={handleAction}
                         />
                     ) : null}

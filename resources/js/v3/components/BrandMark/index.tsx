@@ -2,9 +2,6 @@ import { usePage } from '@inertiajs/react';
 
 import type { SharedPageProps } from '../../../types';
 
-// Logo thương hiệu ở các màn công khai (đăng nhập, đăng ký…). Gom về một chỗ vì
-// trước đây mỗi màn tự lặp cặp <img> sáng/tối — sửa logo hay đổi đích liên kết
-// phải sờ nhiều file. Bấm vào logo quay về trang chủ, như mọi trang SaaS.
 export function BrandMark({ className = 'h-8', href = '/' }: { className?: string; href?: string }) {
     const { globalConfig } = usePage<SharedPageProps>().props;
 
@@ -12,10 +9,7 @@ export function BrandMark({ className = 'h-8', href = '/' }: { className?: strin
         // py + -my bù lại: đích chạm ≥44px trên điện thoại — logo cỡ h-7/h-8
         // tự nó chỉ cao 28-32px.
         <a href={href} className="inline-block py-3 -my-3">
-            <img src={globalConfig.logo} alt={globalConfig.installationName} className={`block w-auto ${className} dark:hidden`} />
-            {globalConfig.logoDark ? (
-                <img src={globalConfig.logoDark} alt={globalConfig.installationName} className={`hidden w-auto ${className} dark:block`} />
-            ) : null}
+            <img src={globalConfig.logo} alt={globalConfig.installationName} className={`block w-auto ${className}`} />
         </a>
     );
 }

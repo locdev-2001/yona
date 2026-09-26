@@ -98,7 +98,7 @@ export default function SearchInput({
                     ref={searchInput}
                     value={value}
                     type="search"
-                    className="reset-base outline-none w-full m-0 bg-transparent border-transparent shadow-none text-n-slate-12 dark:text-n-slate-12 active:border-transparent active:shadow-none hover:border-transparent hover:shadow-none focus:border-transparent focus:shadow-none placeholder:text-n-slate-10 text-base"
+                    className="reset-base outline-none w-full m-0 bg-transparent border-transparent shadow-none text-n-slate-12 active:border-transparent active:shadow-none hover:border-transparent hover:shadow-none focus:border-transparent focus:shadow-none placeholder:text-n-slate-10 text-base"
                     placeholder={t('SEARCH.INPUT_PLACEHOLDER')}
                     onFocus={() => {
                         setInputFocused(true);

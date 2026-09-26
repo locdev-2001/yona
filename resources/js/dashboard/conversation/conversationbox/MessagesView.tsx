@@ -239,7 +239,7 @@ export default function MessagesView() {
             <div className="flex relative flex-col bg-n-surface-1">
                 {isAnyoneTyping && (
                     <div className="absolute flex items-center w-full h-0 -top-7">
-                        <div className="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white dark:bg-n-solid-3 text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">
+                        <div className="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">
                             {typingUserNames}
                             <img
                                 className="w-6 ltr:ml-2 rtl:mr-2"

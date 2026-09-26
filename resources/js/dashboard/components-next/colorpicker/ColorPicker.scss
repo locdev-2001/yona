@@ -2,7 +2,7 @@
 // hiệu bằng selector đôi như bản widgets (utility Tailwind cùng độ đặc hiệu và
 // đứng trước `.vc-chrome` nên không thắng được).
 .colorpicker-next--chrome.vc-chrome {
-    @apply shadow-lg absolute bg-n-background z-[9999] border border-n-weak dark:border-n-weak rounded-[8px];
+    @apply shadow-lg absolute bg-n-background z-[9999] border border-n-weak rounded-[8px];
 
     .vc-chrome-saturation-wrap {
         @apply rounded-t-[7px];
@@ -17,7 +17,7 @@
 
         .vc-chrome-toggle-btn {
             .vc-chrome-toggle-icon svg {
-                @apply [&>path]:fill-n-slate-10 dark:[&>path]:fill-n-slate-10 left-3 relative;
+                @apply [&>path]:fill-n-slate-10 left-3 relative;
             }
 
             .vc-chrome-toggle-icon-highlight {
@@ -32,6 +32,6 @@
     }
 
     .vc-input__label {
-        @apply text-n-slate-11 dark:text-n-slate-11;
+        @apply text-n-slate-11;
     }
 }

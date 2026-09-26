@@ -19,8 +19,8 @@ interface LabelProps {
 }
 
 const VARIANT_CLASSES: Record<string, string> = {
-    smooth: 'bg-transparent text-n-slate-11 dark:text-n-slate-12 border-solid border-n-strong',
-    dashed: 'bg-transparent text-n-slate-11 dark:text-n-slate-12 border-dashed border-n-strong',
+    smooth: 'bg-transparent text-n-slate-11 border-solid border-n-strong',
+    dashed: 'bg-transparent text-n-slate-11 border-dashed border-n-strong',
     '': 'bg-n-slate-3 text-n-slate-12 border-solid border-n-strong',
 };
 

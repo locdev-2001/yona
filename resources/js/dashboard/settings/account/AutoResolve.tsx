@@ -62,7 +62,7 @@ export default function AutoResolve({ uiSettings }: AutoResolveProps) {
                 name: label.title,
                 icon: (
                     <span
-                        className="size-[12px] ring-1 ring-n-alpha-1 dark:ring-white/20 ring-inset rounded-sm"
+                        className="size-[12px] ring-1 ring-n-alpha-1 ring-inset rounded-sm"
                         style={{ backgroundColor: label.color }}
                     />
                 ),

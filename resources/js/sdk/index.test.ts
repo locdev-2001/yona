@@ -91,6 +91,25 @@ describe('SDK nhúng', () => {
         expect(frameUrl.searchParams.get('locale')).toBe('vi_VN');
     });
 
+    it('setColorScheme cũ của tenant không ném lỗi, không gửi gì vào widget, cảnh báo một lần; darkMode luôn light', async () => {
+        window.yonaSettings = { darkMode: 'dark' };
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        await loadSdk();
+        run();
+        const { IFrameHelper } = await import('./IFrameHelper');
+        const send = vi.spyOn(IFrameHelper, 'sendMessage');
+
+        expect(() => {
+            window.$yona.setColorScheme('dark');
+            window.$yona.setColorScheme('auto');
+        }).not.toThrow();
+
+        expect(window.$yona.darkMode).toBe('light');
+        expect(send).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledTimes(1);
+        warn.mockRestore();
+    });
+
     it('gọi run() lần hai không dựng iframe thứ hai', async () => {
         await loadSdk();
         run();

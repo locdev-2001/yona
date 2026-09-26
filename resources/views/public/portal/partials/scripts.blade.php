@@ -24,19 +24,11 @@
 </script>
 @endisset
 <style>
-html.dark {
-  --dynamic-portal-bg: {{ $links::background($portal->color, 'dark') }};
-  --dynamic-portal-bg-gradient: {{ $links::backgroundGradient('dark') }};
-  --dynamic-hover-bg-color: {{ $links::hoverBackground($portal->color, 'dark') }};
-  --dynamic-portal-color: {{ $portal->color }};
-  --dynamic-portal-color-soft: color-mix(in srgb, {{ $portal->color }} 18%, transparent);
-  --dynamic-portal-color-faint: color-mix(in srgb, {{ $portal->color }} 6%, transparent);
-}
-
-html.light {
-  --dynamic-portal-bg: {{ $links::background($portal->color, 'light') }};
-  --dynamic-portal-bg-gradient: {{ $links::backgroundGradient('light') }};
-  --dynamic-hover-bg-color: {{ $links::hoverBackground($portal->color, 'light') }};
+html {
+  --dynamic-portal-bg: {{ $links::background($portal->color) }};
+  --dynamic-portal-bg-gradient: {{ $links::backgroundGradient() }};
+  --dynamic-hover-bg-color: {{ $links::hoverBackground($portal->color) }};
+  --dynamic-hover-color: {{ $links::hoverColor($portal->color) }};
   --dynamic-portal-color: {{ $portal->color }};
   --dynamic-portal-color-soft: color-mix(in srgb, {{ $portal->color }} 12%, transparent);
   --dynamic-portal-color-faint: color-mix(in srgb, {{ $portal->color }} 5%, transparent);
@@ -56,9 +48,7 @@ html.light {
 }
 
 /* Header section */
-#header-action-button:hover,
-#toggle-appearance:hover,
-#toggle-theme-button:hover {
+#header-action-button:hover {
   color: var(--dynamic-hover-color);
   stroke: var(--dynamic-hover-color);
 }
@@ -79,7 +69,6 @@ html.light {
   window.portalConfig = {
     portalSlug: @json($portal->slug),
     portalColor: @json($portal->color),
-    theme: @json($theme ?? ''),
     customDomain: @json($portal->custom_domain ?? ''),
     hostURL: @json(config('app.url')),
     localeCode: @json($locale),

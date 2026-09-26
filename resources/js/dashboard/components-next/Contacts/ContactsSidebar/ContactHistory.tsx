@@ -67,7 +67,7 @@ export default function ContactHistory({ contactId, selectedContact = null }: Co
                     stateInbox={inboxes.find(inbox => inbox.id === conversation.inbox_id) ?? null}
                     accountLabels={accountLabels}
                     accountId={accountId}
-                    className="rounded-none hover:rounded-xl hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3"
+                    className="rounded-none hover:rounded-xl hover:bg-n-alpha-1"
                 />
             ))}
         </div>

@@ -33,14 +33,6 @@ abstract class BaseController extends Controller
         return $request->query('show_plain_layout') === 'true';
     }
 
-    // set_color_scheme: chỉ nhận dark/light, còn lại để trống ⇒ theo hệ thống.
-    protected function themeFromParams(Request $request): ?string
-    {
-        $theme = $request->query('theme');
-
-        return in_array($theme, ['dark', 'light'], true) ? $theme : null;
-    }
-
     protected function portalLayout(Portal $portal): string
     {
         return in_array($portal->layout(), Portal::LAYOUTS, true) ? $portal->layout() : 'classic';
@@ -54,12 +46,10 @@ abstract class BaseController extends Controller
     protected function portalViewData(Request $request, Portal $portal, ?string $locale): array
     {
         $isPlainLayout = $this->isPlainLayout($request);
-        $theme = $this->themeFromParams($request);
 
         return [
             'portal' => $portal,
             'locale' => $locale ?: $portal->defaultLocale(),
-            'theme' => $theme,
             'isPlainLayout' => $isPlainLayout,
             'portalLayout' => $this->portalLayout($portal),
             'languages' => config('portal_languages'),

@@ -19,9 +19,8 @@ interface PhoneNumberInputProps {
     onChange: (value: string) => void;
 }
 
-const ERROR_OUTLINE =
-    'outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9';
-const FOCUS_OUTLINE = 'has-[:focus]:outline-n-brand dark:has-[:focus]:outline-n-brand';
+const ERROR_OUTLINE = 'outline-n-ruby-8 hover:outline-n-ruby-9';
+const FOCUS_OUTLINE = 'has-[:focus]:outline-n-brand';
 
 export default function PhoneNumberInput({
     value,
@@ -109,7 +108,7 @@ export default function PhoneNumberInput({
             : `outline-transparent ${FOCUS_OUTLINE}`
         : hasError
           ? ERROR_OUTLINE
-          : `${FOCUS_OUTLINE} outline-n-weak dark:outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6`;
+          : `${FOCUS_OUTLINE} outline-n-weak hover:outline-n-slate-6`;
 
     const phoneNumberError = isDirty && isPhoneNumberInvalid ? t('PHONE_INPUT.ERROR') : '';
 
@@ -158,7 +157,7 @@ export default function PhoneNumberInput({
                 ) : null}
             </div>
             {phoneNumberError ? (
-                <p className="min-w-0 mt-1 mb-0 text-xs truncate transition-all duration-500 ease-in-out text-n-ruby-9 dark:text-n-ruby-9">
+                <p className="min-w-0 mt-1 mb-0 text-xs truncate transition-all duration-500 ease-in-out text-n-ruby-9">
                     {phoneNumberError}
                 </p>
             ) : null}

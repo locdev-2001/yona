@@ -34,7 +34,7 @@ export default function AutomationActions({ actions, errors, uiSettings, getActi
             <label>{t('AUTOMATION.ADD.FORM.ACTIONS.LABEL')}</label>
             <ul
                 className={`grid p-3 list-none border-solid outline outline-1 rounded-xl -outline-offset-1 ${
-                    hasActionErrors ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak dark:outline-n-strong'
+                    hasActionErrors ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak'
                 }`}
             >
                 {actions.map((action, index) => (

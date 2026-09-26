@@ -51,7 +51,7 @@ export default function SidebarGroupHeader({
             <div className="flex items-center gap-1.5 flex-grow justify-between min-w-0 flex-1">
                 <span className={!isActive ? 'text-body-main truncate' : 'font-medium text-sm truncate'}>{label}</span>
                 {count && !expandable ? (
-                    <span className="inline-grid h-5 min-w-5 place-items-center rounded-full bg-n-slate-4 px-1 text-xxs font-medium leading-3 text-n-slate-12 dark:bg-n-slate-5 flex-shrink-0">
+                    <span className="inline-grid h-5 min-w-5 place-items-center rounded-full bg-n-slate-4 px-1 text-xxs font-medium leading-3 text-n-slate-12 flex-shrink-0">
                         {count > 99 ? '99+' : count}
                     </span>
                 ) : null}

@@ -74,7 +74,7 @@ export default function SearchSuggestions({
     return (
         <div
             ref={listRef}
-            className="mt-2 overflow-y-auto bg-white dark:bg-n-slate-2 border border-solid border-n-weak rounded-xl shadow-2xl max-h-96 p-2"
+            className="mt-2 overflow-y-auto bg-white border border-solid border-n-weak rounded-xl shadow-2xl max-h-96 p-2"
         >
             {isLoading ? <div className="px-3 py-6 text-sm text-n-slate-11 text-center">{loadingPlaceholder}</div> : null}
             {shouldShowResults ? (

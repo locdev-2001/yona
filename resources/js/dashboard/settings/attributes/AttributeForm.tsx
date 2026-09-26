@@ -132,7 +132,7 @@ export default function AttributeForm({
                         />
                     </div>
                     {isTagInputInvalid ? (
-                        <label className="text-n-ruby-9 dark:text-n-ruby-9 text-sm font-normal mt-1">
+                        <label className="text-n-ruby-9 text-sm font-normal mt-1">
                             {t('ATTRIBUTES_MGMT.ADD.FORM.TYPE.LIST.ERROR')}
                         </label>
                     ) : null}

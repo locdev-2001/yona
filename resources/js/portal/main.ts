@@ -6,7 +6,6 @@ import { createElement } from 'react';
 import PublicArticleSearch from './components/PublicArticleSearch';
 import TableOfContents from './components/TableOfContents';
 import type { TocRow } from './components/TableOfContents';
-import { initializeTheme } from './portalThemeHelper';
 import './types';
 
 const HEADING_SELECTOR = 'h1, h2, h3';
@@ -136,7 +135,6 @@ function initialize(): void {
         return;
     }
 
-    initializeTheme();
     navigateToLocalePage();
     initializeSearch();
     initializeTableOfContents();

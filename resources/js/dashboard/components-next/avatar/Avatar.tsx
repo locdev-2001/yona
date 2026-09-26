@@ -39,15 +39,7 @@ interface AvatarProps {
 }
 
 const AVATAR_COLORS = {
-    dark: [
-        ['#4B143D', '#FF8DCC'],
-        ['#3F220D', '#FFA366'],
-        ['#2A2A2A', '#ADB1B8'],
-        ['#023B37', '#0BD8B6'],
-        ['#27264D', '#A19EFF'],
-        ['#1D2E62', '#9EB1FF'],
-    ],
-    light: [
+    palette: [
         ['#FBDCEF', '#C2298A'],
         ['#FFE0BB', '#99543A'],
         ['#E8E8E8', '#60646C'],
@@ -114,16 +106,11 @@ export default function Avatar({
     const showDefaultAvatar = !src && !name;
     const showColors = !showDefaultAvatar && (!src || !isImageValid);
 
-    const colorIndex = name ? name.length % AVATAR_COLORS.light.length : -1;
+    const colorIndex = name ? name.length % AVATAR_COLORS.palette.length : -1;
     const colors =
         colorIndex >= 0
-            ? {
-                  bg: AVATAR_COLORS.light[colorIndex][0],
-                  darkBg: AVATAR_COLORS.dark[colorIndex][0],
-                  text: AVATAR_COLORS.light[colorIndex][1],
-                  darkText: AVATAR_COLORS.dark[colorIndex][1],
-              }
-            : { ...AVATAR_COLORS.default, darkBg: AVATAR_COLORS.default.bg, darkText: AVATAR_COLORS.default.text };
+            ? { bg: AVATAR_COLORS.palette[colorIndex][0], text: AVATAR_COLORS.palette[colorIndex][1] }
+            : AVATAR_COLORS.default;
 
     const badgeSize = Math.max(size * 0.35, 8);
     const showPlatformBadge = Boolean(platform) && size >= PLATFORM_BADGE_MIN_AVATAR;
@@ -197,13 +184,12 @@ export default function Avatar({
             <span
                 {...previewTriggerProps}
                 className={[
-                    'relative inline-flex items-center justify-center object-cover overflow-hidden font-medium outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)] dark:outline-[rgb(255_255_255_/_0.04)]',
+                    'relative inline-flex items-center justify-center object-cover overflow-hidden font-medium outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)]',
                     borderRadiusClass,
                     canPreview
                         ? 'cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-n-brand'
                         : '',
-                    showColors ? 'dark:!bg-[var(--dark-bg)] dark:!text-[var(--dark-text)]' : '',
-                    showDefaultAvatar ? 'bg-n-slate-3 dark:bg-n-slate-4' : '',
+                    showDefaultAvatar ? 'bg-n-slate-3' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
@@ -212,8 +198,6 @@ export default function Avatar({
                     height: size,
                     backgroundColor: showColors ? colors.bg : undefined,
                     color: showColors ? colors.text : undefined,
-                    ['--dark-bg' as string]: colors.darkBg,
-                    ['--dark-text' as string]: colors.darkText,
                 }}
             >
                 {src && isImageValid ? (

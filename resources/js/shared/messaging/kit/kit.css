@@ -30,15 +30,6 @@
     -webkit-font-smoothing: antialiased;
 }
 
-.dark .mk,
-.mk.mk-dark {
-    --mk-media: rgba(255, 255, 255, 0.06);
-    --mk-sale: #f97066;
-    --mk-sale-bg: rgba(217, 45, 32, 0.18);
-    --mk-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --mk-shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
 .mk *,
 .mk *::before,
 .mk *::after {

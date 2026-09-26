@@ -16,7 +16,7 @@ p {
   @apply mb-2 leading-[1.65] text-sm;
 
   a {
-    @apply text-n-brand dark:text-n-brand cursor-pointer;
+    @apply text-n-brand cursor-pointer;
   }
 }
 
@@ -31,7 +31,7 @@ a {
 }
 
 hr {
-  @apply clear-both max-w-full h-0 my-5 mx-0 border-slate-300 dark:border-slate-600;
+  @apply clear-both max-w-full h-0 my-5 mx-0 border-slate-300;
 }
 
 ul,
@@ -72,15 +72,15 @@ textarea {
 // Field base styles (Input, TextArea, Select)
 @layer components {
   .field-base {
-    @apply block box-border w-full transition-colors duration-[0.25s] ease-[ease-in-out] focus:outline-n-brand dark:focus:outline-n-brand appearance-none mx-0 mt-0 mb-4 py-2 px-3 rounded-lg text-sm font-normal bg-n-alpha-black2 placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 text-n-slate-12 border-none outline outline-1 outline-n-weak dark:outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6;
+    @apply block box-border w-full transition-colors duration-[0.25s] ease-[ease-in-out] focus:outline-n-brand appearance-none mx-0 mt-0 mb-4 py-2 px-3 rounded-lg text-sm font-normal bg-n-alpha-black2 placeholder:text-n-slate-10 text-n-slate-12 border-none outline outline-1 outline-n-weak hover:outline-n-slate-6;
   }
 
   .field-disabled {
-    @apply opacity-50 outline-n-weak dark:outline-n-weak cursor-not-allowed;
+    @apply opacity-50 outline-n-weak cursor-not-allowed;
   }
 
   .field-error {
-    @apply outline outline-1 outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9 disabled:outline-n-ruby-8 dark:disabled:outline-n-ruby-8;
+    @apply outline outline-1 outline-n-ruby-8 hover:outline-n-ruby-9 disabled:outline-n-ruby-8;
   }
 }
 
@@ -145,7 +145,7 @@ label:has(.help-text) {
   }
 
   .formkit-message {
-    @apply text-n-ruby-9 dark:text-n-ruby-9 block text-sm mb-2.5 w-full;
+    @apply text-n-ruby-9 block text-sm mb-2.5 w-full;
   }
 }
 
@@ -168,7 +168,7 @@ label:has(.help-text) {
   }
 
   .message {
-    @apply text-n-ruby-9 dark:text-n-ruby-9 block text-sm mb-2.5 w-full;
+    @apply text-n-ruby-9 block text-sm mb-2.5 w-full;
   }
 }
 
@@ -178,7 +178,7 @@ label:has(.help-text) {
   }
 
   .error {
-    @apply text-n-ruby-9 dark:text-n-ruby-9;
+    @apply text-n-ruby-9;
   }
 }
 
@@ -189,11 +189,11 @@ code {
   @apply text-xs border-0;
 
   &.hljs {
-    @apply bg-n-slate-3 dark:bg-n-solid-3 text-n-slate-12 rounded-lg p-5;
+    @apply bg-n-slate-3 text-n-slate-12 rounded-lg p-5;
 
     .hljs-number,
     .hljs-string {
-      @apply text-n-ruby-9 dark:text-n-ruby-9;
+      @apply text-n-ruby-9;
     }
 
     .hljs-name,

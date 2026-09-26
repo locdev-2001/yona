@@ -79,7 +79,6 @@ const DEFAULT_APP_CONFIG: AppConfig = {
     showUnreadMessagesDialog: true,
     widgetColor: '',
     widgetStyle: 'standard',
-    darkMode: 'light',
     welcomeTitle: '',
     welcomeDescription: '',
     availableMessage: '',
@@ -329,7 +328,6 @@ export const widgetStore = {
                 showPopoutButton: Boolean(config.showPopoutButton),
                 showUnreadMessagesDialog: Boolean(config.showUnreadMessagesDialog),
                 widgetStyle: config.widgetStyle || 'rounded',
-                darkMode: config.darkMode || 'light',
             },
         });
     },

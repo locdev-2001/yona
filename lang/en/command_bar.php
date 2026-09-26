@@ -17,7 +17,6 @@ return [
         'REMOVE_LABEL' => 'Remove label from the conversation',
         'SETTINGS' => 'Settings',
         'AI_ASSIST' => 'AI Assist',
-        'APPEARANCE' => 'Appearance',
         'SNOOZE_NOTIFICATION' => 'Snooze Notification',
     ],
     'COMMANDS' => [
@@ -72,10 +71,6 @@ return [
         'UNTIL_NEXT_MONTH' => 'Until next month',
         'AN_HOUR_FROM_NOW' => 'Until an hour from now',
         'UNTIL_CUSTOM_TIME' => 'Custom...',
-        'CHANGE_APPEARANCE' => 'Change Appearance',
-        'LIGHT_MODE' => 'Light',
-        'DARK_MODE' => 'Dark',
-        'SYSTEM_MODE' => 'System',
         'SNOOZE_NOTIFICATION' => 'Snooze Notification',
     ],
     'NO_RESULTS' => 'No results found',

@@ -36,7 +36,7 @@ export default function SearchResultSection({
                 <LoadingState message={empty ? t('SEARCH.SEARCHING_DATA') : t('SEARCH.LOADING_DATA')} />
             ) : null}
             {empty && !isFetching ? (
-                <div className="flex items-start justify-center px-4 py-6 rounded-xl bg-n-slate-2 dark:bg-n-solid-1">
+                <div className="flex items-start justify-center px-4 py-6 rounded-xl bg-n-slate-2">
                     <Icon icon="i-lucide-info" className="text-n-slate-11 size-4 flex-shrink-0 mt-[3px]" />
                     <p className="mx-2 my-0 text-center text-n-slate-11">
                         {t('SEARCH.EMPTY_STATE', { item: title.toLowerCase(), query })}

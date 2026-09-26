@@ -99,7 +99,6 @@ export default function ConversationWrap() {
     const allMessagesLoaded = useWidgetState(state => state.uiFlags.allMessagesLoaded);
     const isAgentTyping = useWidgetState(state => state.uiFlags.isAgentTyping);
     const conversationStatus = useWidgetState(state => state.conversationAttributes.status);
-    const darkMode = useWidgetState(state => state.appConfig.darkMode);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const previousScrollHeight = useRef(0);
@@ -160,7 +159,9 @@ export default function ConversationWrap() {
     return (
         <div
             ref={containerRef}
-            className={`conversation--container ${darkMode === 'dark' ? 'dark-scheme' : 'light-scheme'}`}
+            // `.conversation--container` (resources/scss/widget.scss) khoá thẳng
+            // `color-scheme: light` — widget chỉ còn một giao diện sáng.
+            className="conversation--container"
             onScroll={handleScroll}
         >
             <div className={`conversation-wrap ${isAgentTyping ? 'is-typing' : ''}`.trim()}>

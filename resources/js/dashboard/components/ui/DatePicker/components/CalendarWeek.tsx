@@ -64,11 +64,11 @@ export default function CalendarWeek({
         [
             !isInCurrentMonth(day) ? 'text-n-slate-10 pointer-events-none' : '',
             isInCurrentMonth(day)
-                ? 'text-n-slate-12 hover:text-n-slate-12 hover:bg-n-blue-6 dark:hover:bg-n-blue-7'
+                ? 'text-n-slate-12 hover:text-n-slate-12 hover:bg-n-blue-6'
                 : '',
             isSelectedStartOrEndDate(day) && isInCurrentMonth(day) ? 'bg-n-brand text-white' : '',
             (isInRange(day) || isHoveringInRange(day)) && !isSelectedStartOrEndDate(day) && isInCurrentMonth(day)
-                ? 'bg-n-blue-4 dark:bg-n-blue-5'
+                ? 'bg-n-blue-4'
                 : '',
             isToday(currentDate, day) && !isSelectedStartOrEndDate(day)
                 ? 'outline outline-1 outline-n-blue-8 -outline-offset-1 !text-n-blue-11'
@@ -107,7 +107,7 @@ export default function CalendarWeek({
                                 isNextDayInRange(day) &&
                                 !isLastDayOfMonth(day) &&
                                 isInCurrentMonth(day) && (
-                                    <span className="absolute bottom-0 w-6 h-8 ltr:-right-4 rtl:-left-4 bg-n-blue-4 dark:bg-n-blue-5 -z-10" />
+                                    <span className="absolute bottom-0 w-6 h-8 ltr:-right-4 rtl:-left-4 bg-n-blue-4 -z-10" />
                                 )}
                         </div>
                     ))}

@@ -59,7 +59,7 @@ export default function SearchResultConversationItem({
         <Link href={href}>
             <CardLayout
                 layout="col"
-                className="[&>div]:justify-start [&>div]:gap-2 [&>div]:px-4 [&>div]:py-3 [&>div]:items-start hover:bg-n-slate-2 dark:hover:bg-n-solid-3"
+                className="[&>div]:justify-start [&>div]:gap-2 [&>div]:px-4 [&>div]:py-3 [&>div]:items-start hover:bg-n-slate-2"
             >
                 <div className="flex items-center min-w-0 justify-between gap-2 w-full h-7 mb-1">
                     <div className="flex items-center gap-3">

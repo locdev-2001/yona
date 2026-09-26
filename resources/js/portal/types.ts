@@ -9,7 +9,6 @@ export interface PortalSearchTranslations {
 export interface PortalConfig {
     portalSlug: string;
     portalColor: string;
-    theme: string;
     customDomain: string;
     hostURL: string;
     localeCode: string;

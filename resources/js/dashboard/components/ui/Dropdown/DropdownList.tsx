@@ -101,7 +101,7 @@ export default function DropdownList({
             onClick={event => event.stopPropagation()}
         >
             {enableSearch && (
-                <div className="flex items-center justify-between h-10 min-h-[40px] sticky top-0 bg-n-solid-2 dark:bg-n-solid-2 z-10 gap-2 px-3 border-b rounded-t-xl border-n-weak">
+                <div className="flex items-center justify-between h-10 min-h-[40px] sticky top-0 bg-n-solid-2 z-10 gap-2 px-3 border-b rounded-t-xl border-n-weak">
                     <div className="flex items-center w-full gap-2">
                         <FluentIcon icon="search" size="16" className="text-n-slate-11 flex-shrink-0" />
                         <input

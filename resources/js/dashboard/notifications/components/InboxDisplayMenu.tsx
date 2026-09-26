@@ -37,7 +37,7 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
 
     return (
         <div
-            className={`flex flex-col bg-n-alpha-3 backdrop-blur-[100px] border-0 outline outline-1 outline-n-container shadow-lg z-50 max-w-64 min-w-[170px] w-fit rounded-xl divide-y divide-n-weak dark:divide-n-strong ${className}`}
+            className={`flex flex-col bg-n-alpha-3 backdrop-blur-[100px] border-0 outline outline-1 outline-n-container shadow-lg z-50 max-w-64 min-w-[170px] w-fit rounded-xl divide-y divide-n-weak ${className}`}
         >
             <div className="flex items-center gap-2 justify-between p-3 rounded-t-lg h-11">
                 <div className="flex gap-1.5 min-w-0">
@@ -58,13 +58,13 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
                         onClick={() => setShowSortMenu(open => !open)}
                     />
                     {showSortMenu ? (
-                        <div className="absolute flex flex-col gap-0.5 bg-n-alpha-3 backdrop-blur-[100px] z-60 rounded-lg p-0.5 w-fit min-w-20 max-w-32 top-px outline outline-1 outline-n-container dark:outline-n-strong">
+                        <div className="absolute flex flex-col gap-0.5 bg-n-alpha-3 backdrop-blur-[100px] z-60 rounded-lg p-0.5 w-fit min-w-20 max-w-32 top-px outline outline-1 outline-n-container">
                             {SORT_OPTIONS.map(option => (
                                 <div
                                     key={option.key}
                                     role="button"
                                     className={`flex rounded-md h-5 w-full items-center justify-between px-1.5 py-0.5 gap-2 whitespace-nowrap ${
-                                        activeSort === option.key ? 'bg-n-brand/10 dark:bg-n-brand/10' : ''
+                                        activeSort === option.key ? 'bg-n-brand/10' : ''
                                     }`}
                                     onClick={event => {
                                         event.stopPropagation();
@@ -73,10 +73,8 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
                                     }}
                                 >
                                     <span
-                                        className={`text-xs font-medium hover:text-n-brand truncate min-w-0 dark:hover:text-n-brand ${
-                                            activeSort === option.key
-                                                ? 'text-n-blue-11 dark:text-n-blue-11'
-                                                : 'text-n-slate-11'
+                                        className={`text-xs font-medium hover:text-n-brand truncate min-w-0 ${
+                                            activeSort === option.key ? 'text-n-blue-11' : 'text-n-slate-11'
                                         }`}
                                     >
                                         {t(option.labelKey)}
@@ -92,7 +90,7 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
             </div>
             <div>
                 <span className="px-3 py-4 text-xs font-medium text-n-slate-11">{t('INBOX.DISPLAY_MENU.DISPLAY')}</span>
-                <div className="flex flex-col divide-y divide-n-weak dark:divide-n-strong">
+                <div className="flex flex-col divide-y divide-n-weak">
                     {DISPLAY_OPTIONS.map(option => (
                         <div key={option.key} className="flex items-center px-3 py-2 gap-1.5 h-9">
                             <input
@@ -100,14 +98,14 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
                                 type="checkbox"
                                 name={option.key}
                                 checked={isSelected(option)}
-                                className="m-0 border-[1.5px] shadow border-n-weak appearance-none rounded-[4px] w-4 h-4 dark:bg-n-background focus:ring-1 focus:ring-n-weak dark:focus:ring-n-strong checked:bg-n-brand dark:checked:bg-n-brand after:content-[''] after:text-white checked:after:content-['✓'] after:flex after:items-center after:justify-center checked:border-t checked:border-n-blue-10 checked:border-b-0 checked:border-r-0 checked:border-l-0 after:text-center after:text-xs after:font-bold after:relative after:-top-[1.5px]"
+                                className="m-0 border-[1.5px] shadow border-n-weak appearance-none rounded-[4px] w-4 h-4 focus:ring-1 focus:ring-n-weak checked:bg-n-brand after:content-[''] after:text-white checked:after:content-['✓'] after:flex after:items-center after:justify-center checked:border-t checked:border-n-blue-10 checked:border-b-0 checked:border-r-0 checked:border-l-0 after:text-center after:text-xs after:font-bold after:relative after:-top-[1.5px]"
                                 onChange={() =>
                                     onFilter({ key: option.key, type: option.type, selected: !isSelected(option) })
                                 }
                             />
                             <label
                                 htmlFor={option.key}
-                                className="text-xs font-medium text-n-slate-12 !ml-0 !mr-0 dark:text-n-slate-12"
+                                className="text-xs font-medium text-n-slate-12 !ml-0 !mr-0"
                             >
                                 {t(option.labelKey)}
                             </label>

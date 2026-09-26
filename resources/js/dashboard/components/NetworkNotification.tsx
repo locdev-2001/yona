@@ -102,7 +102,7 @@ export default function NetworkNotification() {
             className={`fixed z-50 top-2 left-2 group transition-opacity duration-300 ${showNotification ? '' : 'opacity-0 pointer-events-none'}`}
             hidden={!showNotification}
         >
-            <div className="relative flex items-center justify-between w-full px-2 py-1 bg-n-amber-4 dark:bg-n-amber-8 rounded-lg shadow-lg">
+            <div className="relative flex items-center justify-between w-full px-2 py-1 bg-n-amber-4 rounded-lg shadow-lg">
                 <FluentIcon icon={iconName} className="text-n-amber-12" size="18" />
                 <span className="px-2 text-xs font-medium tracking-wide text-n-amber-12">{bannerText}</span>
                 {canRefresh && (
@@ -112,7 +112,7 @@ export default function NetworkNotification() {
                         amber
                         icon="i-lucide-refresh-ccw"
                         title={t('NETWORK.BUTTON.REFRESH')}
-                        className="!text-n-amber-12 dark:!text-n-amber-9"
+                        className="!text-n-amber-12"
                         onClick={refreshPage}
                     />
                 )}
@@ -121,7 +121,7 @@ export default function NetworkNotification() {
                     sm
                     amber
                     icon="i-lucide-x"
-                    className="!text-n-amber-12 dark:!text-n-amber-9"
+                    className="!text-n-amber-12"
                     onClick={closeNotification}
                 />
             </div>

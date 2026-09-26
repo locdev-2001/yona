@@ -9,7 +9,7 @@
 @if ($isPlainLayout)
   @include('public.portal.categories.category-hero')
 @else
-  <div id="portal-bg" class="bg-white dark:bg-slate-900">
+  <div id="portal-bg" class="bg-white">
     <div id="portal-bg-gradient" class="pt-8 pb-8 md:pt-14 md:pb-6">
       @include('public.portal.categories.category-hero')
     </div>

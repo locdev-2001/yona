@@ -98,9 +98,9 @@ export default function MfaSetupWizard({
                     <div className="flex justify-center">
                         <div className="bg-n-background p-4 rounded-lg outline outline-1 outline-n-weak">
                             {qrCodeUrl ? (
-                                <img src={qrCodeUrl} alt="MFA QR Code" className="w-48 h-48 dark:invert-0" />
+                                <img src={qrCodeUrl} alt="MFA QR Code" className="w-48 h-48" />
                             ) : (
-                                <div className="w-48 h-48 flex items-center justify-center bg-n-slate-2 dark:bg-n-slate-3">
+                                <div className="w-48 h-48 flex items-center justify-center bg-n-slate-2">
                                     <span className="text-n-slate-10">{t('MFA_SETTINGS.SETUP.LOADING_QR')}</span>
                                 </div>
                             )}
@@ -108,7 +108,7 @@ export default function MfaSetupWizard({
                     </div>
 
                     <details className="border border-n-slate-4 rounded-lg">
-                        <summary className="px-4 py-3 cursor-pointer hover:bg-n-slate-2 dark:hover:bg-n-slate-3 text-sm font-medium text-n-slate-11">
+                        <summary className="px-4 py-3 cursor-pointer hover:bg-n-slate-2 text-sm font-medium text-n-slate-11">
                             {t('MFA_SETTINGS.SETUP.MANUAL_ENTRY')}
                         </summary>
                         <div className="px-4 pb-4">

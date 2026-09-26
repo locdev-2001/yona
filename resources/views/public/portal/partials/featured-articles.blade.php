@@ -2,11 +2,11 @@
 @php($featured = $recommendedArticles->isNotEmpty() ? $recommendedArticles : $featuredArticles)
 @if ($recommendedArticles->isNotEmpty() || $featuredArticles->count() >= 6)
 <section class="flex flex-col w-full h-full lg:container">
-   <div class="flex flex-col gap-5 px-3 py-5 border border-solid rounded-lg border-slate-100 dark:border-slate-800">
+   <div class="flex flex-col gap-5 px-3 py-5 border border-solid rounded-lg border-slate-100">
       <div class="flex items-center justify-between w-full">
          <div class="flex flex-col items-start gap-1">
             <div class="flex flex-row items-center gap-2 px-2">
-               <h3 class="text-xl font-semibold leading-relaxed text-slate-800 dark:text-slate-50">
+               <h3 class="text-xl font-semibold leading-relaxed text-slate-800">
                   {{ $recommendedArticles->isNotEmpty() ? __('public_portal.header.recommended') : __('public_portal.header.featured_articles') }}
                </h3>
             </div>
@@ -14,7 +14,7 @@
       </div>
       <div class="grid grid-cols-1 gap-2 md:grid-cols-2 gap-x-2 gap-y-2">
          @foreach ($featured as $article)
-         <a class="leading-7 text-slate-700 dark:text-slate-100" href="{{ $links::article($portal->slug, $article->slug, $theme, false) }}">
+         <a class="leading-7 text-slate-700" href="{{ $links::article($portal->slug, $article->slug, false) }}">
             <div  id="category-item" class="flex items-start justify-between gap-6 px-2 py-1 rounded-lg">
                {{ $article->title }}
                <span class="flex items-center font-normal mt-1.5">

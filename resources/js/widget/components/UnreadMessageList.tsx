@@ -74,7 +74,7 @@ function UnreadMessage({
                             roundedFull
                         />
                         <span className="agent--name font-medium ml-1">{agentName}</span>
-                        <span className="company--name text-n-slate-11 dark:text-n-slate-10 ml-1">
+                        <span className="company--name text-n-slate-11 ml-1">
                             {`${t('UNREAD_VIEW.COMPANY_FROM')} ${websiteName}`}
                         </span>
                     </div>

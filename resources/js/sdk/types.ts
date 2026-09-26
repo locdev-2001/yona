@@ -14,6 +14,7 @@ export type SdkSettings = {
     showPopoutButton?: boolean;
     showUnreadMessagesDialog?: boolean;
     widgetStyle?: string;
+    /** @deprecated Sản phẩm chỉ còn giao diện sáng (20/09/2026) — bị bỏ qua nếu có. */
     darkMode?: string;
     welcomeTitle?: string;
     welcomeDescription?: string;
@@ -43,6 +44,7 @@ export type SdkInstance = {
     showUnreadMessagesDialog: boolean;
     widgetStyle: WidgetDesign;
     resetTriggered: boolean;
+    /** @deprecated Luôn 'light' — sản phẩm chỉ còn giao diện sáng (20/09/2026). */
     darkMode: DarkMode;
     welcomeTitle: string;
     welcomeDescription: string;
@@ -64,6 +66,7 @@ export type SdkInstance = {
     setLabel(label?: string): void;
     removeLabel(label?: string): void;
     setLocale(locale?: string): void;
+    /** @deprecated No-op — sản phẩm chỉ còn giao diện sáng (20/09/2026). Giữ chữ ký để không vỡ TypeScript của bên tích hợp. */
     setColorScheme(darkMode?: string): void;
     reset(): void;
 };

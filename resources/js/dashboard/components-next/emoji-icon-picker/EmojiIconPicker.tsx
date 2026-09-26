@@ -182,7 +182,7 @@ export default function EmojiIconPicker({
                 // xong trước khi trình duyệt vẽ).
                 opacity: position ? 1 : 0,
             }}
-            className="fixed z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak dark:outline-n-strong/50"
+            className="fixed z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak"
         >
             {showHeader ? (
                 <div className="flex items-center justify-between gap-2 p-2">

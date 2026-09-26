@@ -134,7 +134,7 @@ export default function TagAgents({
                             aria-selected={activeFilter === tab.value}
                             className={`flex items-center min-w-0 gap-1 px-2 py-1 text-xs font-medium transition-colors rounded-md ${
                                 activeFilter === tab.value
-                                    ? 'bg-n-alpha-1 dark:bg-n-alpha-2 text-n-slate-12'
+                                    ? 'bg-n-alpha-1 text-n-slate-12'
                                     : 'text-n-slate-11 hover:bg-n-alpha-1'
                             }`}
                             onClick={() => setActiveFilter(tab.value)}

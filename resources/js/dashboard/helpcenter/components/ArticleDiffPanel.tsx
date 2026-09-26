@@ -108,7 +108,7 @@ const ArticleDiffPanel = forwardRef<DiffPanelHandle, { article: Partial<Article>
                         {contentBlocks.map((block, index) => (
                             <div
                                 key={index}
-                                className={`px-3 py-1.5 overflow-x-auto text-sm leading-relaxed break-words border-s-[3px] rounded-e-md text-n-slate-12 prose-sm prose dark:prose-invert max-w-none [&_p]:my-0 [&>:first-child]:mt-0 [&>:last-child]:mb-0 ${blockClass(block.type)}`}
+                                className={`px-3 py-1.5 overflow-x-auto text-sm leading-relaxed break-words border-s-[3px] rounded-e-md text-n-slate-12 prose-sm prose max-w-none [&_p]:my-0 [&>:first-child]:mt-0 [&>:last-child]:mb-0 ${blockClass(block.type)}`}
                                 dangerouslySetInnerHTML={{ __html: renderMarkdown(block.md) }}
                             />
                         ))}

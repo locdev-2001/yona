@@ -5,7 +5,7 @@
     <head>
         @include('public.portal.partials.head')
     </head>
-    <body class="font-default bg-white dark:bg-slate-900">
+    <body class="font-default bg-white">
         @unless ($isPlainLayout)
             @include('public.portal.partials.analytics-noscript')
         @endunless

@@ -91,7 +91,7 @@ export default function BaseHeatmap({
                     {Array.from({ length: numberOfRows }, (_, index) => (
                         <div
                             key={index}
-                            className="w-full rounded-sm bg-n-slate-3 dark:bg-n-slate-1 animate-loader-pulse h-8 min-w-[4.375rem]"
+                            className="w-full rounded-sm bg-n-slate-3 animate-loader-pulse h-8 min-w-[4.375rem]"
                         />
                     ))}
                 </div>
@@ -101,7 +101,7 @@ export default function BaseHeatmap({
                             {Array.from({ length: 24 }, (_, cellIndex) => (
                                 <div
                                     key={cellIndex}
-                                    className="w-full h-8 rounded-sm bg-n-slate-3 dark:bg-n-slate-1 animate-loader-pulse"
+                                    className="w-full h-8 rounded-sm bg-n-slate-3 animate-loader-pulse"
                                 />
                             ))}
                         </div>

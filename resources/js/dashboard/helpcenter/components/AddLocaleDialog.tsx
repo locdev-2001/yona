@@ -85,7 +85,7 @@ const AddLocaleDialog = forwardRef<DialogHandle, { portal: Portal | null }>(func
                     value={selectedLocale}
                     options={localeOptions}
                     placeholder={t('HELP_CENTER.LOCALES_PAGE.ADD_LOCALE_DIALOG.COMBOBOX.PLACEHOLDER')}
-                    className="[&>div>button:not(.focused)]:!outline-n-slate-5 [&>div>button:not(.focused)]:dark:!outline-n-slate-5"
+                    className="[&>div>button:not(.focused)]:!outline-n-slate-5"
                     onChange={setSelectedLocale}
                 />
                 <div className="flex flex-col gap-2">
@@ -95,7 +95,7 @@ const AddLocaleDialog = forwardRef<DialogHandle, { portal: Portal | null }>(func
                     <ComboBox
                         value={localeStatus}
                         options={statusOptions}
-                        className="[&>div>button:not(.focused)]:!outline-n-slate-5 [&>div>button:not(.focused)]:dark:!outline-n-slate-5"
+                        className="[&>div>button:not(.focused)]:!outline-n-slate-5"
                         onChange={value => setLocaleStatus(value || 'published')}
                     />
                 </div>

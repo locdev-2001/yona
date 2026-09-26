@@ -119,7 +119,7 @@ export default function PortalLayoutContentSettings({
                         description={t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.LAYOUT.CLASSIC.DESCRIPTION')}
                         onSelect={value => setLayout(value)}
                     >
-                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1">
+                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2">
                             <span dangerouslySetInnerHTML={{ __html: classicLayoutPreview }} />
                         </div>
                     </RadioCard>
@@ -131,7 +131,7 @@ export default function PortalLayoutContentSettings({
                         description={t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.LAYOUT.SIDEBAR.DESCRIPTION')}
                         onSelect={value => setLayout(value)}
                     >
-                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2 dark:bg-n-slate-1">
+                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2">
                             <span dangerouslySetInnerHTML={{ __html: documentationLayoutPreview }} />
                         </div>
                     </RadioCard>

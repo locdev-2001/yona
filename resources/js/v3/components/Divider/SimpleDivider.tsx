@@ -7,7 +7,7 @@ interface SimpleDividerProps {
 
 export default function SimpleDivider({
     label = '',
-    bg = 'bg-white dark:bg-n-solid-2',
+    bg = 'bg-white',
     className = '',
 }: SimpleDividerProps) {
     return (

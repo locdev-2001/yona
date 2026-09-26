@@ -6,9 +6,9 @@ import type { ReactNode } from 'react';
 type MessageType = 'info' | 'error' | 'success';
 
 const MESSAGE_CLASSES: Record<MessageType, string> = {
-    error: 'text-n-ruby-9 dark:text-n-ruby-9',
-    success: 'text-n-teal-10 dark:text-n-teal-10',
-    info: 'text-n-slate-11 dark:text-n-slate-11',
+    error: 'text-n-ruby-9',
+    success: 'text-n-teal-10',
+    info: 'text-n-slate-11',
 };
 
 interface TextAreaProps {
@@ -68,12 +68,12 @@ export default function TextArea({
     }, [autofocus]);
 
     const borderClasses = disabled
-        ? 'cursor-not-allowed opacity-50 !bg-n-alpha-black2 disabled:border-n-weak dark:disabled:border-n-weak'
+        ? 'cursor-not-allowed opacity-50 !bg-n-alpha-black2 disabled:border-n-weak'
         : isFocused
-          ? 'border-n-brand dark:border-n-brand'
+          ? 'border-n-brand'
           : messageType === 'error'
-            ? 'border-n-ruby-8 dark:border-n-ruby-8 hover:border-n-ruby-9 dark:hover:border-n-ruby-9'
-            : 'hover:border-n-slate-6 dark:hover:border-n-slate-6 border-n-weak dark:border-n-weak';
+            ? 'border-n-ruby-8 hover:border-n-ruby-9'
+            : 'hover:border-n-slate-6 border-n-weak';
 
     return (
         <div className={`relative flex flex-col gap-1 ${className}`.trim()}>
@@ -92,7 +92,7 @@ export default function TextArea({
                     value={value}
                     placeholder={placeholder}
                     maxLength={showCharacterCount ? maxLength : undefined}
-                    className={`flex w-full reset-base text-sm p-0 !rounded-none !bg-transparent dark:!bg-transparent !border-0 !outline-0 !mb-0 placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 text-n-slate-12 dark:text-n-slate-12 disabled:cursor-not-allowed disabled:opacity-50 ${customTextAreaClass} ${resize ? '' : 'resize-none'}`}
+                    className={`flex w-full reset-base text-sm p-0 !rounded-none !bg-transparent !border-0 !outline-0 !mb-0 placeholder:text-n-slate-10 text-n-slate-12 disabled:cursor-not-allowed disabled:opacity-50 ${customTextAreaClass} ${resize ? '' : 'resize-none'}`}
                     style={{
                         minHeight: autoHeight ? minHeight : undefined,
                         maxHeight: autoHeight ? maxHeight : undefined,

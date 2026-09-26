@@ -24,8 +24,8 @@ function WidgetChatInput() {
 
     return (
         <div
-            className={`flex items-center h-10 bg-white rounded-md dark:!bg-n-slate-3 ${
-                isInputFocused ? 'ring-2 ring-n-brand dark:ring-n-brand' : ''
+            className={`flex items-center h-10 bg-white rounded-md ${
+                isInputFocused ? 'ring-2 ring-n-brand' : ''
             }`}
         >
             <textarea
@@ -33,7 +33,7 @@ function WidgetChatInput() {
                 ref={textareaRef}
                 rows={1}
                 placeholder={t('INBOX_MGMT.WIDGET_BUILDER.FOOTER.CHAT_INPUT_PLACEHOLDER')}
-                className="flex-grow !bg-white border-0 outline-none !outline-0 border-none h-8 text-sm dark:!bg-n-slate-3 pb-0 !pt-1.5 resize-none px-3 !mb-0 focus:outline-none rounded-md"
+                className="flex-grow !bg-white border-0 outline-none !outline-0 border-none h-8 text-sm pb-0 !pt-1.5 resize-none px-3 !mb-0 focus:outline-none rounded-md"
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
             />
@@ -53,10 +53,10 @@ export default function WidgetFooter({ config }: WidgetFooterProps) {
     return (
         <div className="relative flex flex-col w-full px-4">
             {config.isDefaultScreen ? (
-                <div className="p-4 rounded-md shadow-sm bg-n-background dark:bg-n-solid-2">
+                <div className="p-4 rounded-md shadow-sm bg-n-background">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium leading-4 text-n-slate-12 dark:text-n-slate-50">
+                            <div className="text-sm font-medium leading-4 text-n-slate-12">
                                 {statusText}
                             </div>
                             <div className="mt-1 text-xs text-n-slate-11">{config.replyTime}</div>
@@ -64,7 +64,7 @@ export default function WidgetFooter({ config }: WidgetFooterProps) {
                         <Avatar name="C" size={34} roundedFull />
                     </div>
                     <button
-                        className="inline-flex items-center justify-between px-2 py-1 mt-1 -ml-2 font-medium leading-6 bg-transparent rounded-md text-n-slate-12 dark:bg-transparent"
+                        className="inline-flex items-center justify-between px-2 py-1 mt-1 -ml-2 font-medium leading-6 bg-transparent rounded-md text-n-slate-12"
                         style={{ color: config.color }}
                     >
                         <span className="pr-2 text-xs">

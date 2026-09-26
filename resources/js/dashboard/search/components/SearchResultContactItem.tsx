@@ -62,7 +62,7 @@ export default function SearchResultContactItem({
         <Link href={frontendURL(`accounts/${accountId}/contacts/${id}`)}>
             <CardLayout
                 layout="row"
-                className="[&>div]:justify-start [&>div]:px-4 [&>div]:py-3 [&>div]:items-start hover:bg-n-slate-2 dark:hover:bg-n-solid-3"
+                className="[&>div]:justify-start [&>div]:px-4 [&>div]:py-3 [&>div]:items-start hover:bg-n-slate-2"
             >
                 <Avatar name={name} src={thumbnail} size={24} roundedFull className="mt-1 flex-shrink-0" />
                 <div className="min-w-0 flex flex-col items-start gap-1.5 w-full">

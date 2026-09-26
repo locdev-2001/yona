@@ -174,10 +174,3 @@ body {
 .flow-copy-row + .flow-copy-row {
     margin-top: -2px;
 }
-
-@media (prefers-color-scheme: dark) {
-    html,
-    body {
-        background: #0f1012;
-    }
-}

@@ -28,11 +28,11 @@ const BUTTON_COLOR: Record<string, 'blue' | 'ruby' | 'amber'> = {
 // (hai class = độ đặc hiệu cao hơn). Utility Tailwind cùng độ đặc hiệu nên phải gom
 // màu chữ vào đúng scheme thay vì đặt mặc định ở base.
 const COLOR_SCHEME_CLASS: Record<string, string> = {
-    primary: 'bg-n-brand text-white dark:text-white',
-    secondary: 'bg-n-slate-3 dark:bg-n-solid-3 text-n-slate-12',
+    primary: 'bg-n-brand text-white',
+    secondary: 'bg-n-slate-3 text-n-slate-12',
     alert: 'bg-n-ruby-3 text-n-ruby-12',
     warning: 'bg-n-amber-5 text-n-amber-12',
-    gray: 'text-n-gray-10 dark:text-n-gray-10',
+    gray: 'text-n-gray-10',
 };
 
 const LINK_CLASS: Record<string, string> = {

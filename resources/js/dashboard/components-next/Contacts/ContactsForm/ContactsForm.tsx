@@ -332,16 +332,11 @@ const ContactsForm = forwardRef<ContactsFormHandle, ContactsFormProps>(function 
                         const socialKey = key.toLowerCase() as keyof ContactFormState['additionalAttributes']['socialProfiles'];
 
                         return (
-                            <div
-                                key={key}
-                                className={`flex items-center h-8 gap-2 px-2 rounded-lg ${
-                                    isDetailsView ? 'bg-n-alpha-2 dark:bg-n-solid-2' : 'bg-n-alpha-2 dark:bg-n-solid-3'
-                                }`}
-                            >
+                            <div key={key} className="flex items-center h-8 gap-2 px-2 rounded-lg bg-n-alpha-2">
                                 <Icon icon={icon} className="flex-shrink-0 text-n-slate-11 size-4" />
                                 <input
                                     value={state.additionalAttributes.socialProfiles[socialKey]}
-                                    className="w-auto min-w-[100px] text-sm bg-transparent outline-none reset-base text-n-slate-12 dark:text-n-slate-12 placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10"
+                                    className="w-auto min-w-[100px] text-sm bg-transparent outline-none reset-base text-n-slate-12 placeholder:text-n-slate-10"
                                     placeholder={placeholder}
                                     size={placeholder.length}
                                     onChange={event => handleSocialInput(socialKey, event.target.value)}

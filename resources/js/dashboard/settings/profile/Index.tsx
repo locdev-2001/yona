@@ -34,14 +34,12 @@ const HOT_KEYS = [
         titleKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.ENTER_KEY.HEADING',
         descriptionKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.ENTER_KEY.CONTENT',
         lightImage: '/assets/images/dashboard/profile/hot-key-enter.svg',
-        darkImage: '/assets/images/dashboard/profile/hot-key-enter-dark.svg',
     },
     {
         key: 'cmd_enter' as const,
         titleKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.CMD_ENTER_KEY.HEADING',
         descriptionKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.CMD_ENTER_KEY.CONTENT',
         lightImage: '/assets/images/dashboard/profile/hot-key-ctrl-enter.svg',
-        darkImage: '/assets/images/dashboard/profile/hot-key-ctrl-enter-dark.svg',
     },
 ];
 
@@ -236,13 +234,8 @@ export default function ProfileSettingsIndex() {
                                 >
                                     <img
                                         src={hotKey.lightImage}
-                                        alt={`Light themed image for ${t(hotKey.titleKey)}`}
-                                        className="block object-cover w-full dark:hidden"
-                                    />
-                                    <img
-                                        src={hotKey.darkImage}
-                                        alt={`Dark themed image for ${t(hotKey.titleKey)}`}
-                                        className="hidden object-cover w-full dark:block"
+                                        alt={t(hotKey.titleKey)}
+                                        className="block object-cover w-full"
                                     />
                                 </RadioCard>
                             ))}

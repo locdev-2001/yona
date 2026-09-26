@@ -15,15 +15,14 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' 
 }
 
 const MESSAGE_CLASSES: Record<MessageType, string> = {
-    error: 'text-n-ruby-9 dark:text-n-ruby-9',
-    success: 'text-n-teal-10 dark:text-n-teal-10',
-    info: 'text-n-slate-11 dark:text-n-slate-11',
+    error: 'text-n-ruby-9',
+    success: 'text-n-teal-10',
+    info: 'text-n-slate-11',
 };
 
 const OUTLINE_CLASSES: Record<string, string> = {
-    error: 'outline-n-ruby-8 dark:outline-n-ruby-8 hover:outline-n-ruby-9 dark:hover:outline-n-ruby-9 disabled:outline-n-ruby-8 dark:disabled:outline-n-ruby-8',
-    default:
-        'outline-n-weak dark:outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6 disabled:outline-n-weak dark:disabled:outline-n-weak focus:outline-n-brand dark:focus:outline-n-brand',
+    error: 'outline-n-ruby-8 hover:outline-n-ruby-9 disabled:outline-n-ruby-8',
+    default: 'outline-n-weak hover:outline-n-slate-6 disabled:outline-n-weak focus:outline-n-brand',
 };
 
 const SIZE_CLASSES: Record<InputSize, string> = {
@@ -59,7 +58,7 @@ export default function Input({
         SIZE_CLASSES[size],
         messageType === 'error' ? 'error' : '',
         isFocused ? 'focus' : '',
-        'block w-full reset-base text-sm !mb-0 outline outline-1 border-none border-0 outline-offset-[-1px] rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium text-ellipsis placeholder:text-n-slate-10 dark:placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+        'block w-full reset-base text-sm !mb-0 outline outline-1 border-none border-0 outline-offset-[-1px] rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium text-ellipsis placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
     ]
         .filter(Boolean)
         .join(' ');

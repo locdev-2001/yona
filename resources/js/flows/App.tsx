@@ -6,7 +6,6 @@ import { t } from '../i18n';
 import { getFlow } from './api';
 import { FLOW_PAGES } from './registry';
 import { isEmbedded, notifyClose, notifySubmitted } from './postMessage';
-import { prefersDarkMode } from './theme';
 import type { FlowResponse } from './types';
 
 // Trang công khai theo token (`/m/{token}`, phase-05 §C). Mở trực tiếp (link
@@ -38,7 +37,7 @@ export default function App() {
         if (flow) notifySubmitted(flow.message_id);
     };
 
-    const rootClass = `mk flow-page${prefersDarkMode() ? ' mk-dark' : ''}`;
+    const rootClass = 'mk flow-page';
 
     if (loading) {
         return (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBubbleView, getDarkMode, getWidgetStyle, isExpandedView, isFlatWidgetStyle } from './settingsHelper';
+import { getBubbleView, getWidgetStyle, isExpandedView, isFlatWidgetStyle } from './settingsHelper';
 
 describe('getBubbleView', () => {
     it('rơi về standard khi giá trị lạ', () => {
@@ -31,13 +31,5 @@ describe('isFlatWidgetStyle', () => {
         expect(isFlatWidgetStyle('')).toBe(false);
         expect(isFlatWidgetStyle('standard')).toBe(false);
         expect(isFlatWidgetStyle('flat')).toBe(true);
-    });
-});
-
-describe('getDarkMode', () => {
-    it('rơi về light khi giá trị lạ', () => {
-        expect(getDarkMode('')).toBe('light');
-        expect(getDarkMode('auto')).toBe('auto');
-        expect(getDarkMode('dark')).toBe('dark');
     });
 });

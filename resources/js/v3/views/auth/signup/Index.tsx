@@ -8,7 +8,7 @@ import { BrandMark } from '../../../components/BrandMark';
 export default function SignupIndex() {
     return (
         <AuthShell>
-            <div className="flex max-w-[960px] bg-white dark:bg-n-solid-2 rounded-lg outline outline-1 outline-n-container shadow-sm">
+            <div className="flex max-w-[960px] bg-white rounded-lg outline outline-1 outline-n-container shadow-sm">
                 <div className="flex-1 flex items-center justify-center py-10 px-10">
                     <div className="max-w-[420px] w-full">
                         <div className="mb-6">
