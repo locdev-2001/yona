@@ -45,6 +45,7 @@ use App\Http\Controllers\WebApi\MacrosController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
 use App\Http\Controllers\WebApi\NotificationSubscriptionsController;
+use App\Http\Controllers\WebApi\PaymentAccountsController;
 use App\Http\Controllers\WebApi\PortalsController;
 use App\Http\Controllers\WebApi\PresenceController;
 use App\Http\Controllers\WebApi\Profile\MfaController;
@@ -59,6 +60,7 @@ use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
 use App\Http\Controllers\WebApi\WebhooksController;
+use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -187,6 +189,9 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
             ->whereNumber(['conversationId', 'messageId']);
         Route::post('/conversations/{conversationId}/messages/{messageId}/forward', [MessageForwardsController::class, 'store'])
             ->whereNumber(['conversationId', 'messageId']);
+        // Đánh dấu thẻ chuyển khoản đã nhận tiền — ghi content_attributes.paid_at/paid_by, idempotent.
+        Route::post('/conversations/{conversationId}/messages/{messageId}/mark_bank_transfer_paid', [MessagesController::class, 'markBankTransferPaid'])
+            ->whereNumber(['conversationId', 'messageId']);
         Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])->whereNumber('conversationId');
         Route::match(['put', 'patch'], '/conversations/{conversationId}', [ConversationsController::class, 'update'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
@@ -235,6 +240,15 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/labels/{labelId}', [LabelsController::class, 'show'])->whereNumber('labelId');
         Route::match(['put', 'patch'], '/labels/{labelId}', [LabelsController::class, 'update'])->whereNumber('labelId');
         Route::delete('/labels/{labelId}', [LabelsController::class, 'destroy'])->whereNumber('labelId');
+
+        // Chuyển khoản (Cài đặt / Tài khoản / Chuyển khoản) — danh sách ngân
+        // hàng, CRUD tài khoản nhận tiền, xem trước QR khi đang sửa form.
+        Route::get('/payment_accounts/banks', [PaymentAccountsController::class, 'banks']);
+        Route::get('/payment_accounts', [PaymentAccountsController::class, 'index']);
+        Route::post('/payment_accounts', [PaymentAccountsController::class, 'store']);
+        Route::match(['put', 'patch'], '/payment_accounts/{paymentAccountId}', [PaymentAccountsController::class, 'update'])->whereNumber('paymentAccountId');
+        Route::delete('/payment_accounts/{paymentAccountId}', [PaymentAccountsController::class, 'destroy'])->whereNumber('paymentAccountId');
+        Route::get('/payment_accounts/{paymentAccountId}/preview', [PaymentAccountsController::class, 'preview'])->whereNumber('paymentAccountId');
 
         Route::get('/canned_responses', [CannedResponsesController::class, 'index']);
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
@@ -409,6 +423,14 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/campaigns/{campaignId}', [CampaignsController::class, 'show'])->whereNumber('campaignId');
         Route::match(['put', 'patch'], '/campaigns/{campaignId}', [CampaignsController::class, 'update'])->whereNumber('campaignId');
         Route::delete('/campaigns/{campaignId}', [CampaignsController::class, 'destroy'])->whereNumber('campaignId');
+
+        // Trang cài đặt "Bài cập nhật trên widget" — administrator only (WidgetUpdatesController).
+        Route::get('/widget_updates', [WidgetUpdatesController::class, 'index']);
+        Route::post('/widget_updates', [WidgetUpdatesController::class, 'store']);
+        Route::match(['put', 'patch'], '/widget_updates/{updateId}', [WidgetUpdatesController::class, 'update'])->whereNumber('updateId');
+        Route::delete('/widget_updates/{updateId}', [WidgetUpdatesController::class, 'destroy'])->whereNumber('updateId');
+        Route::post('/widget_updates/{updateId}/publish', [WidgetUpdatesController::class, 'publish'])->whereNumber('updateId');
+        Route::post('/widget_updates/{updateId}/unpublish', [WidgetUpdatesController::class, 'unpublish'])->whereNumber('updateId');
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

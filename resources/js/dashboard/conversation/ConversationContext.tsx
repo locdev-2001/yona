@@ -39,6 +39,7 @@ import {
     addMessageReaction,
     removeMessageReaction,
     deleteMessage,
+    markBankTransferPaid as markBankTransferPaidRequest,
     updateConversationCustomAttributes as updateCustomAttributesRequest,
     togglePriority as togglePriorityRequest,
     toggleStatus as toggleStatusRequest,
@@ -163,9 +164,12 @@ interface ConversationContextValue {
     }) => void;
     // Sticker đi một mình: không nội dung, không trích dẫn; máy chủ tự dựng tin từ mã.
     sendSticker: (sticker: StickerItem) => void;
+    // Thẻ từ menu "Gửi thẻ": máy chủ kiểm payload, sai thì tin chuyển sang lỗi kèm lý do.
+    sendStructured: (contentType: string, contentAttributes: Record<string, unknown>, content?: string) => void;
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
     deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
+    markBankTransferPaid: (message: ConversationMessage) => Promise<void>;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
     toggleStatus: (payload: ToggleStatusPayload) => Promise<void>;
     togglePriority: (priority: ConversationPriority | null) => Promise<void>;
@@ -278,6 +282,12 @@ export function useConversation(): ConversationContextValue {
         throw new Error('useConversation must be used within ConversationProvider');
     }
     return context;
+}
+
+// Bản không bắt buộc có provider — cho các mảnh UI (vd nút trong bong bóng tin)
+// vẫn cần render được khi test đứng riêng, không dựng cả cây ConversationProvider.
+export function useOptionalConversation(): ConversationContextValue | null {
+    return useContext(ConversationContext);
 }
 
 const EMPTY_META: ConversationListMeta = {
@@ -1050,6 +1060,16 @@ export function ConversationProvider({
         [sendWithPendingMessage],
     );
 
+    const sendStructured = useCallback(
+        (contentType: string, contentAttributes: Record<string, unknown>, content?: string) => {
+            sendWithPendingMessage(
+                { private: false, content, content_type: contentType, content_attributes: contentAttributes },
+                { content_type: contentType },
+            );
+        },
+        [sendWithPendingMessage],
+    );
+
     // Gửi lại tin thất bại. Tin quay về qua chính đường ADD_MESSAGE nên trạng
     // thái/lý do lỗi cập nhật một chỗ như tin gửi mới.
     const retryFailedMessage = useCallback(
@@ -1094,6 +1114,21 @@ export function ConversationProvider({
             if (!conversationId || !message.id) return;
             try {
                 addMessage(await deleteMessage(accountId, conversationId, message.id));
+            } catch (error: unknown) {
+                const body = (error as { body?: { error?: string } }).body;
+                useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [accountId, conversationId, addMessage],
+    );
+
+    // Đánh dấu thẻ chuyển khoản đã nhận tiền. Idempotent phía server — bấm lại
+    // vẫn gọi được, chỉ không đổi gì thêm.
+    const markBankTransferPaid = useCallback(
+        async (message: ConversationMessage) => {
+            if (!conversationId || !message.id) return;
+            try {
+                addMessage(await markBankTransferPaidRequest(accountId, conversationId, message.id));
             } catch (error: unknown) {
                 const body = (error as { body?: { error?: string } }).body;
                 useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
@@ -1332,9 +1367,11 @@ export function ConversationProvider({
             fetchPreviousMessages,
             sendReply,
             sendSticker,
+            sendStructured,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
+            markBankTransferPaid,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,
@@ -1386,9 +1423,11 @@ export function ConversationProvider({
             fetchPreviousMessages,
             sendReply,
             sendSticker,
+            sendStructured,
             retryFailedMessage,
             toggleMessageReaction,
             deleteConversationMessage,
+            markBankTransferPaid,
             toggleTypingStatus,
             toggleStatus,
             togglePriority,

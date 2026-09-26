@@ -73,10 +73,31 @@ abstract class WidgetController extends Controller
         return $contactInbox->conversations()->getQuery()->where('inbox_id', $inboxId);
     }
 
-    // `conversations.last` của Rails: sắp theo khóa chính rồi lấy bản ghi cuối.
+    /** Giá trị `conversation_id` báo "bắt đầu hội thoại mới" (tab Tin nhắn → Gửi tin nhắn mới). */
+    public const NEW_CONVERSATION = 'new';
+
+    /**
+     * Hội thoại đang mở của khách. Widget có nhiều hội thoại gửi kèm
+     * `conversation_id` (display_id) trên mọi request; SDK/widget đời cũ không gửi
+     * thì vẫn là hội thoại mới nhất như `conversations.last` của Rails.
+     * Id không thuộc khách này thì 404 — không rơi về hội thoại khác, để tin không
+     * bao giờ vào nhầm chỗ.
+     */
     protected function conversation(Request $request): ?Conversation
     {
-        return $this->conversationsQuery($request)->reorder('id', 'desc')->first();
+        $requested = $request->input('conversation_id');
+
+        if ($requested === null || $requested === '') {
+            return $this->conversationsQuery($request)->reorder('id', 'desc')->first();
+        }
+
+        if ($requested === self::NEW_CONVERSATION) {
+            return null;
+        }
+
+        abort_unless(is_numeric($requested), 404);
+
+        return $this->conversationsQuery($request)->where('display_id', (int) $requested)->first() ?? abort(404);
     }
 
     // create_conversation — bản gốc gọi thẳng Conversation.create!, KHÔNG qua

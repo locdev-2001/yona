@@ -1,0 +1,41 @@
+{
+  "content_type": "order_status",
+  "valid": [
+    {
+      "name": "đang giao",
+      "content": null,
+      "attributes": {
+        "order_ref": "#GM1024",
+        "status": "delivering",
+        "eta": "2026-09-27",
+        "total": 480000,
+        "fee_included": true,
+        "tracking_url": "https://yona.vn/m/abc"
+      },
+      "normalized": {
+        "order_ref": "GM1024",
+        "status": "delivering",
+        "eta": "2026-09-27",
+        "total": {
+          "amount": 480000,
+          "currency": "VND"
+        },
+        "fee_included": true,
+        "tracking_url": "https://yona.vn/m/abc"
+      },
+      "plain_text": "Đơn #GM1024 · Đang giao\nDự kiến nhận 27/09\nTổng 480.000đ\nTheo dõi: https://yona.vn/m/abc",
+      "preview_text": "Đơn #GM1024 · Đang giao",
+      "choices": []
+    }
+  ],
+  "invalid": [
+    {
+      "name": "trạng thái lạ",
+      "content": null,
+      "attributes": {
+        "order_ref": "A1",
+        "status": "lost"
+      }
+    }
+  ]
+}

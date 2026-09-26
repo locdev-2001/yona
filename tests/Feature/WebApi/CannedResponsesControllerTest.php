@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\CannedResponse;
+use App\Models\PaymentAccount;
 use App\Models\User;
 
 // Port từ spec/controllers/api/v1/accounts/canned_responses_controller_spec.rb,
@@ -48,6 +49,8 @@ describe('GET /api/v1/accounts/{id}/canned_responses', function () {
             'account_id' => $this->account->id,
             'short_code' => 'name-short-code',
             'content' => 'Hey {{ contact.name }}, Thanks for reaching out',
+            'content_type' => null,
+            'content_attributes' => null,
             'created_at' => $this->cannedResponse->created_at->clone()->utc()->format('Y-m-d\TH:i:s.v\Z'),
             'updated_at' => $this->cannedResponse->updated_at->clone()->utc()->format('Y-m-d\TH:i:s.v\Z'),
         ]]);
@@ -159,6 +162,104 @@ describe('POST /api/v1/accounts/{id}/canned_responses', function () {
             ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [])
             ->assertStatus(422)
             ->assertExactJson(['error' => 'param is missing or the value is empty: canned_response']);
+    });
+
+    it('creates a canned response with a valid card', function () {
+        $response = $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'hoi-gio-nhan',
+                'content' => 'Bạn muốn nhận hàng khi nào ạ?',
+                'content_type' => 'input_select',
+                'content_attributes' => ['items' => [['title' => 'Sáng'], ['title' => 'Tối']]],
+            ])
+            ->assertOk();
+
+        expect($response->json('content_type'))->toBe('input_select')
+            ->and($response->json('content_attributes.items'))->toBe([
+                ['title' => 'Sáng', 'value' => 'Sáng'],
+                ['title' => 'Tối', 'value' => 'Tối'],
+            ]);
+    });
+
+    it('creates a card canned response without content when the card type allows it', function () {
+        $response = $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'sp-binh-lam',
+                'content_type' => 'cards',
+                'content_attributes' => ['items' => [['title' => 'Bình men lam']]],
+            ])
+            ->assertOk();
+
+        expect($response->json('content'))->toBeNull()
+            ->and($response->json('content_attributes.items.0.title'))->toBe('Bình men lam');
+    });
+
+    it('rejects an invalid card payload with 422', function () {
+        $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'hoi-thieu-luachon',
+                'content_type' => 'input_select',
+                'content_attributes' => ['items' => []],
+            ])
+            ->assertStatus(422);
+
+        expect($this->account->cannedResponses()->where('short_code', 'hoi-thieu-luachon')->exists())->toBeFalse();
+    });
+
+    it('rejects an unknown content_type with 422', function () {
+        $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'loai-la',
+                'content_type' => 'khong_ton_tai',
+                'content_attributes' => [],
+            ])
+            ->assertStatus(422);
+    });
+
+    it('a bank_transfer canned response never stores the account number or QR', function () {
+        $paymentAccount = PaymentAccount::factory()->create([
+            'account_id' => $this->account->id,
+            'bank_bin' => '970436',
+            'account_number' => '1023456789',
+            'account_name' => 'HKD GOM MOC',
+        ]);
+
+        $response = $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'ck-tra-truoc',
+                'content_type' => 'bank_transfer',
+                'content_attributes' => [
+                    'payment_account_id' => $paymentAccount->id,
+                    'amount' => 480000,
+                    'memo' => 'GM1024',
+                    // Client tự khai — phải bị bỏ qua hoàn toàn, không được lưu.
+                    'account_number' => 'FAKE999999',
+                    'qr_payload' => 'QR-GIA-MAO',
+                ],
+            ])
+            ->assertOk();
+
+        expect($response->json('content_attributes'))->toBe([
+            'payment_account_id' => $paymentAccount->id,
+            'amount' => 480000,
+            'memo' => 'GM1024',
+        ]);
+
+        $stored = CannedResponse::query()->where('short_code', 'ck-tra-truoc')->sole();
+        expect($stored->content_attributes)->not->toHaveKeys(['account_number', 'qr_payload', 'bank_name', 'account_name']);
+    });
+
+    it('rejects a bank_transfer card pointing at a payment account of another tenant', function () {
+        $otherAccount = Account::factory()->create();
+        $foreignPaymentAccount = PaymentAccount::factory()->create(['account_id' => $otherAccount->id]);
+
+        $this->actingAs($this->agent)
+            ->postJson("/api/v1/accounts/{$this->account->id}/canned_responses", [
+                'short_code' => 'ck-tenant-khac',
+                'content_type' => 'bank_transfer',
+                'content_attributes' => ['payment_account_id' => $foreignPaymentAccount->id],
+            ])
+            ->assertStatus(422);
     });
 });
 

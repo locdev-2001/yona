@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 // Gửi tin ra Zalo qua bridge giả. Founder chốt 07/09/2026: KHÔNG còn chặn tin
 // chủ động (bỏ khung 7h–22h + trần 3 tin/ngày) — bộ đếm chỉ để thống kê.
@@ -117,6 +118,56 @@ it('gửi tin ra bridge đúng payload và ghi source_id', function () {
     });
 
     expect($message->refresh()->source_id)->toBe('sent-1');
+});
+
+it('tin có lựa chọn gửi thành chữ kèm danh sách đánh số và ghi mức đã gửi', function () {
+    fakeZaloSendBridge();
+
+    $message = $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Nhận hàng lúc nào ạ?',
+        'content_type' => Message::CONTENT_TYPES['input_select'],
+        'content_attributes' => ['items' => [['title' => 'Giờ hành chính', 'value' => 'office'], ['title' => 'Buổi tối', 'value' => 'evening']]],
+    ]);
+
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/personal-messages/send')
+        && str_starts_with($request['text'], 'Nhận hàng lúc nào ạ?')
+        && str_contains($request['text'], '1. Giờ hành chính')
+        && str_contains($request['text'], '2. Buổi tối'));
+
+    expect($message->refresh()->content_attributes['delivery'])->toBe('text_numbered');
+});
+
+// 6b: ảnh thẻ (satori) — Zalo không có khung thẻ gốc nên gửi ảnh như một đính kèm mang chữ.
+it('cards gửi ra Zalo bằng một đính kèm ảnh (file_url PNG) kèm chữ, khi bridge vẽ ảnh được', function () {
+    Storage::fake('public');
+    config(['zalo.bridge.send_secret' => 'test-secret']);
+    // render/card PHẢI đứng trước personal-messages/send và '*': Http chọn stub khớp
+    // ĐẦU TIÊN theo thứ tự khai, không theo độ cụ thể — xem CardImageDeliveryTest.php.
+    Http::fake([
+        zaloBridgePattern('render/card') => Http::response('fake-png-bytes', 200, ['Content-Type' => 'image/png']),
+        zaloBridgePattern('personal-messages/send') => Http::response(['ok' => true, 'source_id' => 'sent-1']),
+        zaloBridgePattern('*') => Http::response(['ok' => true]),
+    ]);
+
+    $this->conversation->messages()->create([
+        'account_id' => $this->conversation->account_id,
+        'inbox_id' => $this->conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Xem sản phẩm này nhé',
+        'content_type' => Message::CONTENT_TYPES['cards'],
+        'content_attributes' => ['items' => [['title' => 'Bình men lam', 'price' => 450000]]],
+    ]);
+
+    $payload = zaloSendPayloads()[0];
+
+    expect($payload['text'])->toContain('Xem sản phẩm này nhé')
+        ->and($payload['file_url'])->toContain('card-images/')
+        ->and($payload['media_kind'])->toBe('image')
+        ->and($payload['filename'])->toBe('the.png')
+        ->and($payload['content_type'])->toBe('image/png');
 });
 
 it('gửi kèm quote zca khi agent trả lời trích dẫn', function () {

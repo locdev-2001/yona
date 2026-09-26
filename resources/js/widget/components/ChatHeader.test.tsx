@@ -5,6 +5,8 @@ import { ChatHeader } from './ChatHeader';
 import HeaderActions from './HeaderActions';
 import { IFrameHelper } from '../helpers/iframe';
 import { widgetStore } from '../store/widgetStore';
+import { getActiveConversation, setActiveConversation } from '../api/client';
+import { currentRoute, resetRouterForTests } from '../router';
 import { decodeFrameMessage, RESET_SESSION_EVENT } from '../../sdk/constants/frameEvents';
 import type { AvailableAgent, ChannelConfig, WidgetContact, WidgetMessage } from '../types';
 
@@ -170,17 +172,35 @@ describe('nút đóng', () => {
 });
 
 describe('menu ⋯', () => {
-    it('gom Kết thúc hội thoại và Bắt đầu cuộc trò chuyện mới, header không còn icon rời', async () => {
+    it('theo thứ tự design: hội thoại mới (giữ lịch sử), xoá phiên, rồi Kết thúc tách riêng bằng đường kẻ; header không còn icon rời', async () => {
         vi.spyOn(IFrameHelper, 'isIFrame').mockReturnValue(true);
         widgetStore.addOrUpdateMessage(anyMessage);
         await loadConversation({ id: 3, status: 'open' });
 
         render(<HeaderActions />);
-        expect(screen.queryByRole('button', { name: 'Start a new chat' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Start over as a new visitor' })).toBeNull();
 
         const menu = openMenu();
         const items = within(menu).getAllByRole('menuitem').map(item => item.textContent);
-        expect(items).toStrictEqual(['End Conversation', 'Start a new chat']);
+        expect(items).toStrictEqual(['New conversation', 'Start over as a new visitor', 'End Conversation']);
+        expect(within(menu).getAllByRole('separator')).toHaveLength(1);
+    });
+
+    it('Cuộc trò chuyện mới mở hội thoại trống, không xoá phiên khách', async () => {
+        vi.spyOn(IFrameHelper, 'isIFrame').mockReturnValue(true);
+        const post = vi.spyOn(window.parent, 'postMessage');
+        resetRouterForTests();
+        widgetStore.addOrUpdateMessage(anyMessage);
+        await loadConversation({ id: 3, status: 'open' });
+
+        render(<HeaderActions />);
+        fireEvent.click(within(openMenu()).getByRole('menuitem', { name: 'New conversation' }));
+
+        expect(getActiveConversation()).toBe('new');
+        expect(currentRoute()).toBe('messages');
+        const sent = post.mock.calls.map(([data]) => decodeFrameMessage(data)?.event);
+        expect(sent).not.toContain(RESET_SESSION_EVENT);
+        setActiveConversation(null);
     });
 
     it('khách chưa có tin nhắn và không kết thúc được thì không có menu', () => {
@@ -213,7 +233,7 @@ describe('bắt đầu cuộc trò chuyện mới', () => {
         vi.spyOn(IFrameHelper, 'isIFrame').mockReturnValue(true);
         widgetStore.addOrUpdateMessage(anyMessage);
         render(<HeaderActions />);
-        fireEvent.click(within(openMenu()).getByRole('menuitem', { name: 'Start a new chat' }));
+        fireEvent.click(within(openMenu()).getByRole('menuitem', { name: 'Start over as a new visitor' }));
 
         return screen.getByRole('alertdialog', { name: 'Start a new chat?' });
     };
@@ -238,7 +258,7 @@ describe('bắt đầu cuộc trò chuyện mới', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         expect(screen.queryByRole('alertdialog')).toBeNull();
 
-        fireEvent.click(within(openMenu()).getByRole('menuitem', { name: 'Start a new chat' }));
+        fireEvent.click(within(openMenu()).getByRole('menuitem', { name: 'Start over as a new visitor' }));
         fireEvent.keyDown(screen.getByRole('alertdialog'), { key: 'Escape' });
         expect(screen.queryByRole('alertdialog')).toBeNull();
 
@@ -251,6 +271,6 @@ describe('bắt đầu cuộc trò chuyện mới', () => {
 
         render(<HeaderActions showPopoutButton />);
 
-        expect(within(openMenu()).queryByRole('menuitem', { name: 'Start a new chat' })).toBeNull();
+        expect(within(openMenu()).queryByRole('menuitem', { name: 'Start over as a new visitor' })).toBeNull();
     });
 });

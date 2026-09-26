@@ -459,3 +459,48 @@ describe('launcher dựng từ tin loaded', () => {
         expect(chatBubble.classList.contains('woot-widget-bubble-color--lighter')).toBe(true);
     });
 });
+
+describe('cấu hình launcher và phóng to từ dashboard', () => {
+    it('dashboard chọn launcher dạng viên thuốc: bong bóng có chữ, lấy nhãn của dashboard', () => {
+        IFrameHelper.applyLauncherSetting({ launcher: 'pill', launcher_label: 'Chat với shop' });
+
+        expect(window.$yona.type).toBe('expanded_bubble');
+        expect(window.$yona.launcherTitle).toBe('Chat với shop');
+    });
+
+    it('mã nhúng đã đặt launcherTitle thì giữ chữ của mã nhúng', () => {
+        window.$yona.launcherTitle = 'Hỏi Gốm Mộc';
+
+        IFrameHelper.applyLauncherSetting({ launcher: 'pill', launcher_label: 'Chat với shop' });
+
+        expect(window.$yona.launcherTitle).toBe('Hỏi Gốm Mộc');
+    });
+
+    it('launcher tròn thì không đụng tới kiểu bong bóng', () => {
+        IFrameHelper.applyLauncherSetting({ launcher: 'round', launcher_label: 'x' });
+
+        expect(window.$yona.type).toBeUndefined();
+    });
+
+    it('dashboard đặt vị trí trái: khung chứa đổi sang trái, trừ khi mã nhúng đã tự đặt', () => {
+        widgetHolder.classList.add('woot-widget-holder', 'woot-elements--right');
+        window.$yona.position = 'right';
+
+        IFrameHelper.applyLauncherSetting({ launcher: 'round', position: 'left' });
+        expect(window.$yona.position).toBe('left');
+        expect(widgetHolder.classList.contains('woot-elements--left')).toBe(true);
+
+        window.$yona.positionFromEmbed = true;
+        IFrameHelper.applyLauncherSetting({ launcher: 'round', position: 'right' });
+        expect(window.$yona.position).toBe('left');
+    });
+
+    it('widget xin phóng to/thu nhỏ: khung chứa iframe đổi lớp tương ứng', () => {
+        IFrameHelper.initPostMessageCommunication();
+        postFromWidget({ event: 'setExpanded', expanded: true });
+        expect(widgetHolder.classList.contains('woot-widget-holder--expanded')).toBe(true);
+
+        postFromWidget({ event: 'setExpanded', expanded: false });
+        expect(widgetHolder.classList.contains('woot-widget-holder--expanded')).toBe(false);
+    });
+});

@@ -34,7 +34,8 @@ import {
 import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
-import { isFlatWidgetStyle } from './settingsHelper';
+import { isExpandedView, isFlatWidgetStyle } from './settingsHelper';
+import { BUBBLE_DESIGN } from './constants/design';
 import { popoutChatWindow } from './helpers/popoutHelper';
 
 const AUTH_COOKIE = 'cw_conversation';
@@ -180,10 +181,11 @@ export const IFrameHelper = {
         loaded: (message: {
             config: {
                 authToken: string;
-                channelConfig: { widgetColor: string };
+                channelConfig: { widgetColor: string; widgetSettings?: { appearance?: { launcher?: string; launcher_label?: string | null } } };
                 launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
             };
         }): void => {
+            IFrameHelper.applyLauncherSetting(message.config.channelConfig.widgetSettings?.appearance);
             updateAuthCookie(message.config.authToken, window.$yona.baseDomain);
             window.$yona.hasLoaded = true;
             const campaignsSnoozedTill = getCookie(CAMPAIGN_SNOOZE_COOKIE);
@@ -286,6 +288,11 @@ export const IFrameHelper = {
             popoutChatWindow(baseUrl, websiteToken, locale, cwCookie);
         },
 
+        // Panel phóng to (chỉ khung nổi trên máy tính); widget tự đổi bố cục bên trong.
+        setExpanded: ({ expanded }: { expanded: boolean }): void => {
+            widgetHolder.classList.toggle('woot-widget-holder--expanded', Boolean(expanded));
+        },
+
         closeWindow: (): void => {
             onBubbleClick({ toggleValue: false });
             removeUnreadClass();
@@ -384,6 +391,21 @@ export const IFrameHelper = {
         bubbleHolder.appendChild(chatIcon);
         bubbleHolder.appendChild(closeBubble);
         onClickChatBubble();
+    },
+    // Kiểu launcher chọn ở dashboard. Mã nhúng đã đặt `type: 'expanded_bubble'` / `launcherTitle`
+    // thì giữ nguyên của mã nhúng. Phải chạy trước onLoad vì bong bóng dựng ở đó.
+    applyLauncherSetting: (appearance?: { launcher?: string; launcher_label?: string | null; position?: string }): void => {
+        const position = appearance?.position;
+        if (!window.$yona.positionFromEmbed && (position === 'left' || position === 'right') && position !== window.$yona.position) {
+            // Khung chứa iframe đã dựng theo vị trí mặc định trước khi cấu hình về: đổi lớp tại chỗ.
+            widgetHolder.classList.replace(`woot-elements--${window.$yona.position}`, `woot-elements--${position}`);
+            window.$yona.position = position;
+        }
+
+        if (appearance?.launcher !== 'pill' || isExpandedView(window.$yona.type)) return;
+
+        window.$yona.type = BUBBLE_DESIGN[1];
+        if (!window.$yona.launcherTitle && appearance.launcher_label) window.$yona.launcherTitle = appearance.launcher_label;
     },
     toggleCloseButton: (): void => {
         let isMobile = false;

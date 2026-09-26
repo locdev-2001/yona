@@ -69,7 +69,8 @@ class ArticlesController extends BaseController
         $article = $this->article($slug, $articleSlug);
 
         if ($this->wantsJson($request)) {
-            return response()->json((new ArticleResource($article))->toArray($request));
+            // content_html: widget hiển thị bài ngay trong khung chat, render giống trang Help Center.
+            return response()->json((new ArticleResource($article))->toArray($request) + ['content_html' => ArticleMarkdown::toHtml($article->content)]);
         }
 
         // switch_locale_with_article: locale của trang lấy theo category của bài,

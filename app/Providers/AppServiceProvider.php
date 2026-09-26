@@ -7,6 +7,8 @@ use App\Finders\ConversationFinder;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
+use App\Messaging\Delivery\DeliveryPlanner;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Channel\Api;
@@ -30,8 +32,10 @@ use App\Models\PlatformApp;
 use App\Models\User;
 use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
+use App\Services\Messaging\PublicFlowService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -56,6 +60,12 @@ class AppServiceProvider extends ServiceProvider
     // lượt đổi mã lấy token.
     public const OAUTH_SIGN_IN_REQUESTS_PER_MINUTE = 30;
 
+    // Trang công khai theo token không đăng nhập — hạn theo cả token (khách bấm
+    // nhầm nhiều lần) lẫn IP (một máy dò nhiều token) để không chặn nhầm khách thật.
+    private const PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_TOKEN = 5;
+
+    private const PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP = 20;
+
     /**
      * Register any application services.
      */
@@ -67,6 +77,17 @@ class AppServiceProvider extends ServiceProvider
             'pgsql',
             fn ($pdo, string $database, string $prefix, array $config) => new PostgresConnection($pdo, $database, $prefix, $config),
         );
+
+        $this->app->singleton(StructuredTypeRegistry::class, fn ($app) => new StructuredTypeRegistry(
+            array_map(fn (string $type) => $app->make($type), config('messaging.structured_types')),
+            $app->make(ValidationFactory::class),
+        ));
+
+        $this->app->singleton(DeliveryPlanner::class, fn ($app) => new DeliveryPlanner(
+            $app->make(StructuredTypeRegistry::class),
+            collect(config('messaging.delivery_renderers'))->map(fn (string $renderer) => $app->make($renderer))->all(),
+            $app->make(PublicFlowService::class),
+        ));
 
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {
             $driver = (string) config('search.driver');
@@ -143,6 +164,11 @@ class AppServiceProvider extends ServiceProvider
             'oauth-sign-in',
             fn (Request $request) => Limit::perMinute(self::OAUTH_SIGN_IN_REQUESTS_PER_MINUTE)->by($request->ip()),
         );
+
+        RateLimiter::for('public-flow-submit', fn (Request $request) => [
+            Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_TOKEN)->by('token:'.$request->route('token')),
+            Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP)->by('ip:'.$request->ip()),
+        ]);
     }
 
     /**

@@ -1,5 +1,5 @@
 import * as api from '../api/widget';
-import { getWebsiteToken, setAuthToken, WidgetApiError } from '../api/client';
+import { getActiveConversation, getWebsiteToken, setActiveConversation, setAuthToken, WidgetApiError } from '../api/client';
 import {
     AGENT_TYPING_TIMEOUT,
     CAMPAIGN_CACHE_EXPIRY,
@@ -29,6 +29,7 @@ import type {
     WidgetCampaign,
     WidgetContact,
     WidgetGlobalConfig,
+    MessageReaction,
     WidgetMessage,
 } from '../types';
 
@@ -107,7 +108,7 @@ let state: WidgetState = {
     activeCampaign: null,
     campaignsFetched: false,
     // Hạn 0 = chưa biết chính sách của kênh, chưa hiện mục thu hồi.
-    messagingPolicy: { recallWindowSeconds: 0, stickers: [] },
+    messagingPolicy: { recallWindowSeconds: 0, stickers: [], reactions: [] },
     agentLastSeenAt: 0,
     typingAgent: null,
 };
@@ -221,6 +222,12 @@ async function deliverOutgoingMessage(send: OutgoingSend): Promise<void> {
 
     try {
         const data = await request(metadata, controller.signal);
+        // Tin đầu tiên của "hội thoại mới" vừa tạo hội thoại trên server: từ giờ mọi
+        // request đi vào đúng hội thoại đó, không tạo thêm hội thoại thứ hai.
+        if (getActiveConversation() === 'new' && data.conversation_id) {
+            setActiveConversation(data.conversation_id);
+            void widgetStore.getConversationAttributes();
+        }
         if (carriesPendingMetadata && hasPendingMetadata()) widgetStore.clearPendingConversationMetadata();
         replaceTemporaryMessage(temporaryMessage.id, { ...data, status: data.status ?? 'sent' });
         void widgetStore.reconnectRealtimeIfPending();
@@ -331,8 +338,8 @@ export const widgetStore = {
         setState({ appConfig: { ...state.appConfig, ...patch } });
     },
 
-    setMessagingPolicy(messagingPolicy: ChannelMessagingPolicy): void {
-        setState({ messagingPolicy });
+    setMessagingPolicy(policy: Partial<ChannelMessagingPolicy>): void {
+        setState({ messagingPolicy: { ...state.messagingPolicy, ...policy } });
     },
 
     setWidgetColor(widgetColor: string): void {
@@ -359,6 +366,7 @@ export const widgetStore = {
         setState({ uiFlags: { ...state.uiFlags, isCreating: true } });
         try {
             const data = await api.createConversation(params);
+            if (data?.id) setActiveConversation(data.id);
             const [message] = data?.messages ?? [];
             if (message) pushMessageToConversation(message);
             await widgetStore.getConversationAttributes();
@@ -519,6 +527,25 @@ export const widgetStore = {
         }
     },
 
+    /**
+     * Thả (`emoji`) hoặc gỡ (`null`) biểu cảm của khách. Hiện ngay rồi mới gọi máy chủ;
+     * lỗi thì trả lại như cũ. Mỗi khách giữ một biểu cảm trên một tin.
+     */
+    async reactToMessage(messageId: number | string, emoji: string | null): Promise<void> {
+        const me = `contact:${state.contact?.id ?? ''}`;
+        const before = state.conversations[messageId]?.content_attributes?.reactions;
+        const others = ((before as MessageReaction[] | undefined) ?? []).filter(reaction => reaction.by !== me);
+        const next = emoji ? [...others, { emoji, by: me, at: Math.floor(Date.now() / 1000) }] : others;
+
+        widgetStore.updateMessageContentAttributes(messageId, { reactions: next });
+        try {
+            await api.setMessageReaction(messageId, emoji);
+        } catch {
+            widgetStore.updateMessageContentAttributes(messageId, { reactions: before ?? [] });
+            widgetStore.showBanner({ message: t('REACTIONS.FAILED'), type: 'error' });
+        }
+    },
+
     // Tin bị thu hồi ở lại danh sách thành bong bóng nét đứt cho cả hai bên.
     addOrUpdateMessage(message: WidgetMessage): void {
         pushMessageToConversation(message);
@@ -560,6 +587,8 @@ export const widgetStore = {
     },
 
     async toggleUserTyping(typingStatus: 'on' | 'off'): Promise<void> {
+        // Hội thoại mới chưa tồn tại trên server tới khi tin đầu gửi xong: không có ai để báo.
+        if (getActiveConversation() === 'new') return;
         try {
             await api.toggleTyping(typingStatus);
         } catch {
@@ -586,6 +615,8 @@ export const widgetStore = {
     async getConversationAttributes(): Promise<void> {
         try {
             const data = await api.fetchConversationAttributes();
+            // Chưa chọn hội thoại (widget vừa mở): khoá vào hội thoại server trả về.
+            if (getActiveConversation() === null && data?.id) setActiveConversation(data.id);
             setState({
                 conversationAttributes: {
                     id: data?.id ?? '',
@@ -599,6 +630,26 @@ export const widgetStore = {
         } catch {
             // Bỏ qua như bản gốc.
         }
+    },
+
+    /**
+     * Mở một hội thoại khác (tab Tin nhắn) hoặc `'new'` để bắt đầu hội thoại mới:
+     * khung chat đổi hẳn sang hội thoại đó, mọi request sau mang đúng id của nó.
+     */
+    async openConversation(conversation: number | 'new'): Promise<void> {
+        if (getActiveConversation() === conversation && (conversation === 'new' || state.conversationAttributes.id === conversation)) return;
+
+        setActiveConversation(conversation);
+        widgetStore.clearConversations();
+        setState({
+            conversationAttributes: { id: '', status: '' },
+            lastMessageId: null,
+            uiFlags: { ...state.uiFlags, allMessagesLoaded: conversation === 'new' },
+        });
+
+        if (conversation === 'new') return;
+
+        await Promise.all([widgetStore.fetchOldConversations(), widgetStore.getConversationAttributes()]);
     },
 
     clearConversationAttributes(): void {
@@ -924,6 +975,8 @@ export const widgetStore = {
         try {
             await api.triggerCampaign(campaignId, customAttributes);
             setState({ activeCampaign: null });
+            // Campaign có thể vừa tạo hội thoại mới: bỏ chọn để lần đọc sau khoá vào nó.
+            setActiveConversation(null);
             // campaign.triggered có thể vừa dựng contact/hội thoại lazy — nối realtime
             // và bù ngay tin campaign vừa gửi trước khi kênh kịp subscribe.
             await widgetStore.reconnectRealtimeIfPending();
@@ -951,6 +1004,7 @@ api.onConfigLoaded(({ website_channel_config: channelPayload }) => {
     widgetStore.setMessagingPolicy({
         recallWindowSeconds: channelPayload.recall_window ?? 0,
         stickers: channelPayload.stickers ?? [],
+        reactions: channelPayload.reactions ?? [],
     });
 });
 

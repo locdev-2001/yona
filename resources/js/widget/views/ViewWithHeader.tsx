@@ -2,13 +2,12 @@ import type { ReactNode } from 'react';
 
 import { IFrameHelper } from '../helpers/iframe';
 import { useWidgetState } from '../store/hooks';
-import { replaceRoute, WIDGET_ROUTES } from '../router';
+import { canGoBack, popRoute, WIDGET_ROUTES } from '../router';
 import type { WidgetRouteName } from '../router';
 import Banner from '../components/Banner';
 import Branding from '../components/Branding';
 import { ChatHeader } from '../components/ChatHeader';
 
-const BACK_BUTTON_ROUTES: WidgetRouteName[] = [WIDGET_ROUTES.PRECHAT_FORM];
 // Màn chat đặt dòng "Powered by" trong footer của ô nhập (ChatFooter).
 const COMPOSER_BRANDING_ROUTES: WidgetRouteName[] = [WIDGET_ROUTES.MESSAGES];
 
@@ -34,8 +33,8 @@ export default function ViewWithHeader({ route, children }: { route: WidgetRoute
                         avatarUrl={channelConfig?.avatarUrl}
                         showPopoutButton={appConfig.showPopoutButton}
                         availableAgents={availableAgents}
-                        showBackButton={BACK_BUTTON_ROUTES.includes(route)}
-                        onBack={() => replaceRoute(WIDGET_ROUTES.HOME)}
+                        showBackButton={canGoBack()}
+                        onBack={popRoute}
                     />
                 </div>
                 <Banner />

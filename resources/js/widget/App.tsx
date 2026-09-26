@@ -14,11 +14,16 @@ import { useWidgetState } from './store/hooks';
 import { selectUnreadMessageCount, widgetStore } from './store/widgetStore';
 import { currentRoute, replaceRoute, useWidgetRoute, WIDGET_ROUTES } from './router';
 import Campaigns from './views/Campaigns';
-import Home from './views/Home';
 import Messages from './views/Messages';
 import PreChatForm from './views/PreChatForm';
 import UnreadMessages from './views/UnreadMessages';
 import ViewWithHeader from './views/ViewWithHeader';
+import { SCREENS } from './screens/registry';
+import TabBar from './ui/TabBar';
+import EmptyState from './ui/EmptyState';
+import { useExpanded } from './ui/expanded';
+import MessageListScreen from './screens/MessageListScreen';
+import WidgetMessageHost from './messaging/WidgetMessageHost';
 import { getAuthToken } from './api/client';
 import { SDK_SET_BUBBLE_VISIBILITY } from '../sdk/constants/frameEvents';
 import type { AppConfig } from './types';
@@ -30,6 +35,7 @@ const UNREAD_OR_CAMPAIGN_ROUTES: string[] = [WIDGET_ROUTES.UNREAD_MESSAGES, WIDG
 
 export default function App() {
     const route = useWidgetRoute();
+    const expanded = useExpanded();
     const channelConfig = useWidgetState(state => state.channelConfig);
     const appConfig = useWidgetState(state => state.appConfig);
     const isFetchingList = useWidgetState(state => state.uiFlags.isFetchingList);
@@ -236,25 +242,31 @@ export default function App() {
 
     // App.vue#registerCampaignEvents
     useEffect(() => {
-        const onCampaignClick = () => {
+        // Bấm chip dưới lời mời: như bấm bong bóng, rồi gửi chữ của chip làm tin đầu. Có biểu
+        // mẫu trước chat thì khách điền biểu mẫu trước, chip bỏ qua (khách tự gõ lại).
+        const onCampaignClick = (details: unknown) => {
+            const { firstMessage } = (details ?? {}) as { firstMessage?: string };
             openChatWindow();
             const campaign = widgetStore.getState().activeCampaign;
             if (shouldShowPreChatForm()) {
                 replaceRoute(WIDGET_ROUTES.PRECHAT_FORM);
             } else {
                 replaceRoute(WIDGET_ROUTES.MESSAGES);
-                if (campaign) emitter.emit(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, { campaignId: campaign.id });
+                if (campaign) emitter.emit(WIDGET_BUS_EVENTS.EXECUTE_CAMPAIGN, { campaignId: campaign.id, firstMessage });
             }
             unsetUnreadView();
         };
         const onExecuteCampaign = (details: unknown) => {
-            const { campaignId, customAttributes } = (details ?? {}) as {
+            const { campaignId, customAttributes, firstMessage } = (details ?? {}) as {
                 campaignId?: number;
                 customAttributes?: Record<string, unknown>;
+                firstMessage?: string;
             };
             if (!campaignId) return;
-            void widgetStore.executeCampaign(campaignId, customAttributes);
             replaceRoute(WIDGET_ROUTES.MESSAGES);
+            void widgetStore.executeCampaign(campaignId, customAttributes).then(() => {
+                if (firstMessage) void widgetStore.sendMessage({ content: firstMessage });
+            });
         };
         const onSnoozeCampaigns = () => {
             campaignsSnoozedTill.current = Date.now() + CAMPAIGN_SNOOZE_DURATION;
@@ -326,14 +338,33 @@ export default function App() {
         );
     }
 
-    const view =
-        route === WIDGET_ROUTES.MESSAGES ? (
-            <Messages />
-        ) : route === WIDGET_ROUTES.PRECHAT_FORM ? (
-            <PreChatForm />
-        ) : (
-            <Home />
-        );
+    const screen = SCREENS[route];
+    // Phóng to trên máy tính: tab Tin nhắn thành hai cột, danh sách luôn bên trái.
+    const split = expanded && isMobileFrame === false && (route === WIDGET_ROUTES.MESSAGES || route === WIDGET_ROUTES.MESSAGE_LIST);
+    const view = split ? (
+        <div className="flex h-full min-h-0">
+            <div className="flex w-[300px] flex-none flex-col border-e border-[var(--yona-chat-line)]">
+                <MessageListScreen />
+                <TabBar />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col bg-[var(--yona-chat-panel)]">
+                {route === WIDGET_ROUTES.MESSAGES ? (
+                    <ViewWithHeader route={route}>
+                        <Messages />
+                    </ViewWithHeader>
+                ) : (
+                    <EmptyState icon="i-lucide-messages-square" title={t('MESSAGE_LIST.PICK')} />
+                )}
+            </div>
+        </div>
+    ) : screen ? (
+        <div className="flex h-full min-h-0 flex-col">
+            <screen.Component />
+            {screen.tabBar ? <TabBar /> : null}
+        </div>
+    ) : (
+        <ViewWithHeader route={route}>{route === WIDGET_ROUTES.PRECHAT_FORM ? <PreChatForm /> : <Messages />}</ViewWithHeader>
+    );
 
     return (
         <div
@@ -351,13 +382,15 @@ export default function App() {
                 .filter(Boolean)
                 .join(' ')}
         >
-            {route === WIDGET_ROUTES.CAMPAIGNS ? (
-                <Campaigns />
-            ) : isUnreadView ? (
-                <UnreadMessages />
-            ) : (
-                <ViewWithHeader route={route}>{view}</ViewWithHeader>
-            )}
+            <WidgetMessageHost>
+                {route === WIDGET_ROUTES.CAMPAIGNS ? (
+                    <Campaigns />
+                ) : isUnreadView ? (
+                    <UnreadMessages />
+                ) : (
+                    view
+                )}
+            </WidgetMessageHost>
         </div>
     );
 }
@@ -382,6 +415,8 @@ export const showMessagesWhenConversationExists = (): void => {
     if (!widgetStore.getState().appConfig.isWidgetOpen) return;
     if (currentRoute() !== WIDGET_ROUTES.HOME) return;
     if (!conversationSizeNow()) return;
+    // Chỉ vào thẳng khung chat khi hội thoại còn dở; đã xong thì ở Home (founder chốt 25/09).
+    if (widgetStore.getState().conversationAttributes.status === 'resolved') return;
     replaceRoute(WIDGET_ROUTES.MESSAGES);
 };
 

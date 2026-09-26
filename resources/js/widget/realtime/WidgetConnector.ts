@@ -2,6 +2,7 @@ import type Echo from 'laravel-echo';
 
 import { apiPost, buildSearch } from '../api/client';
 import { IFrameHelper, shouldTriggerMessageUpdateEvent } from '../helpers/iframe';
+import { conversationList } from '../store/conversationList';
 import { notifyAgentMessageReceived, widgetStore } from '../store/widgetStore';
 import { createWidgetEcho } from './echo';
 import { SDK_EVENTS } from '../../sdk/constants/sdkEvents';
@@ -123,7 +124,9 @@ export class WidgetConnector {
     };
 
     private onMessageCreated = (data: WidgetMessage & { sender_type?: string }) => {
-        if (this.isMessageInAnotherConversation(data)) return;
+        const inAnotherConversation = this.isMessageInAnotherConversation(data);
+        conversationList.applyMessage(data, { isOpen: !inAnotherConversation && widgetStore.getState().appConfig.isWidgetOpen });
+        if (inAnotherConversation) return;
 
         widgetStore.addOrUpdateMessage(data);
         notifyAgentMessageReceived();
@@ -147,6 +150,7 @@ export class WidgetConnector {
 
     private onConversationCreated = () => {
         void widgetStore.getConversationAttributes();
+        if (conversationList.getState().loaded) void conversationList.load();
     };
 
     private onStatusChange = (data: ConversationAttributes) => {

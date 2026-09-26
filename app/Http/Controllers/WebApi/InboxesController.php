@@ -26,6 +26,7 @@ use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use App\Services\Channels\ChannelSetupService;
 use App\Support\Timezones;
+use App\Support\Widget\WidgetSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -324,6 +325,13 @@ class InboxesController extends Controller
     private function updateChannel(Inbox $inbox, array $channelParams): void
     {
         $editable = collect($channelParams)->only($inbox->channel::EDITABLE_ATTRS)->all();
+
+        // Cấu hình widget đi qua luật chuẩn hoá của chính nó (khoá lạ, URL không phải http(s) → 422).
+        if (is_array($editable['widget_settings'] ?? null)) {
+            $editable['widget_settings'] = WidgetSettings::merge($inbox->channel->widget_settings, $editable['widget_settings']);
+        } else {
+            unset($editable['widget_settings']);
+        }
 
         if ($editable !== []) {
             $inbox->channel->update($editable);

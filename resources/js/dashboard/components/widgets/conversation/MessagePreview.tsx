@@ -39,8 +39,10 @@ export default function MessagePreview({
     const isMessageSticker = message.content_type === 'sticker';
 
     const emailSubject = (message.content_attributes as { email?: { subject?: string } } | null)?.email?.subject;
+    // Tin có cấu trúc (thẻ, chuyển khoản, chọn lịch…) thường không có content: máy chủ gửi sẵn dòng xem trước.
+    const previewText = message.preview_text;
     const parsedLastMessage =
-        deletedMessageLabel(message.content_attributes) ?? getPlainText(emailSubject || message.content);
+        deletedMessageLabel(message.content_attributes) ?? (previewText || getPlainText(emailSubject || message.content));
 
     const [firstAttachment] = message.attachments ?? [];
     const lastMessageFileType = (firstAttachment as { file_type?: string } | undefined)?.file_type ?? '';
@@ -64,7 +66,7 @@ export default function MessagePreview({
                     <Icon icon="i-ph-sticker" className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
                     {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                 </span>
-            ) : message.content ? (
+            ) : message.content || previewText ? (
                 highlightQuery ? (
                     <HighlightedText text={parsedLastMessage} query={highlightQuery} />
                 ) : (

@@ -2,6 +2,7 @@
 
 namespace App\Services\Integrations;
 
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Conversation;
 use App\Models\Integrations\Hook;
 use App\Models\Message;
@@ -81,13 +82,27 @@ abstract class BotProcessorService
             return false;
         }
 
+        // Tin khách sinh ra từ việc bấm lựa chọn: bot đã nhận lựa chọn đó qua
+        // `message.updated` của tin gốc, xử lý thêm lần nữa là trả lời hai lần.
+        if ($message->isIncoming() && isset($message->content_attributes['in_reply_to_choice'])) {
+            return false;
+        }
+
         return ! $message->isOutgoing() || $this->processableOutgoingMessage($message);
     }
 
     private function processableOutgoingMessage(Message $message): bool
     {
-        return $this->eventName === 'message.updated'
-            && $message->content_type === Message::CONTENT_TYPES['input_select'];
+        if ($this->eventName !== 'message.updated') {
+            return false;
+        }
+
+        // Tin có lựa chọn (input_select, cards…) — registry biết, không cần liệt kê content_type ở đây.
+        $registry = app(StructuredTypeRegistry::class);
+        $type = $registry->for($message->contentTypeName());
+        $attributes = $type === null ? null : $registry->read($message);
+
+        return $attributes !== null && $type->choices($attributes) !== [];
     }
 
     private function processContent(Message $message): void

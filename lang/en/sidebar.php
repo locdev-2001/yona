@@ -45,6 +45,8 @@ return [
     'ACCOUNT_SETTINGS' => 'Account Settings',
     'APPLICATIONS' => 'Applications',
     'LABELS' => 'Labels',
+    'WIDGET_UPDATES' => 'Widget updates',
+    'PAYMENT_ACCOUNTS' => 'Bank transfer',
     'CUSTOM_ATTRIBUTES' => 'Custom Attributes',
     'AUTOMATION' => 'Automation',
     'MACROS' => 'Macros',

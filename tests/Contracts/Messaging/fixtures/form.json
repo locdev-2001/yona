@@ -1,0 +1,102 @@
+{
+  "content_type": "form",
+  "valid": [
+    {
+      "name": "thông tin giao hàng",
+      "content": "Bạn điền giúp shop thông tin giao hàng nhé",
+      "attributes": {
+        "items": [
+          {
+            "name": "full_name",
+            "type": "text",
+            "label": "Họ tên",
+            "required": true
+          },
+          {
+            "name": "phone",
+            "type": "phone",
+            "label": "Số điện thoại",
+            "required": true
+          },
+          {
+            "name": "slot",
+            "type": "select",
+            "label": "Giờ nhận",
+            "options": [
+              {
+                "label": "Giờ hành chính",
+                "value": "office"
+              },
+              {
+                "label": "Buổi tối",
+                "value": "evening"
+              }
+            ]
+          }
+        ]
+      },
+      "normalized": {
+        "items": [
+          {
+            "name": "full_name",
+            "type": "text",
+            "label": "Họ tên",
+            "required": true
+          },
+          {
+            "name": "phone",
+            "type": "phone",
+            "label": "Số điện thoại",
+            "required": true
+          },
+          {
+            "name": "slot",
+            "type": "select",
+            "label": "Giờ nhận",
+            "options": [
+              {
+                "label": "Giờ hành chính",
+                "value": "office"
+              },
+              {
+                "label": "Buổi tối",
+                "value": "evening"
+              }
+            ]
+          }
+        ]
+      },
+      "plain_text": "Bạn điền giúp shop thông tin giao hàng nhé",
+      "preview_text": "Bạn điền giúp shop thông tin giao hàng nhé",
+      "choices": []
+    }
+  ],
+  "invalid": [
+    {
+      "name": "loại ô lạ",
+      "content": null,
+      "attributes": {
+        "items": [
+          {
+            "name": "x",
+            "type": "color",
+            "label": "X"
+          }
+        ]
+      }
+    },
+    {
+      "name": "select thiếu options",
+      "content": null,
+      "attributes": {
+        "items": [
+          {
+            "name": "x",
+            "type": "select",
+            "label": "X"
+          }
+        ]
+      }
+    }
+  ]
+}

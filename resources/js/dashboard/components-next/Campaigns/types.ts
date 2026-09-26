@@ -25,6 +25,8 @@ export interface Campaign {
     enabled: boolean;
     trigger_rules: { url?: string; time_on_page?: number };
     trigger_only_during_business_hours: boolean;
+    quick_replies?: string[];
+    show_to?: CampaignAudience;
     created_at: string;
     updated_at: string;
 }
@@ -38,4 +40,9 @@ export interface LiveChatCampaignPayload {
     enabled: boolean;
     trigger_only_during_business_hours: boolean;
     trigger_rules: { url: string; time_on_page: number };
+    quick_replies: string[];
+    show_to: CampaignAudience;
 }
+
+/** Lời mời hiện cho ai (khớp Campaign::SHOW_TO). */
+export type CampaignAudience = 'all' | 'new' | 'returning';

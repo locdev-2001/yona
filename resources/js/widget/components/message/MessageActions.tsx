@@ -6,7 +6,8 @@ import { canRecallMessage } from '../../helpers/messageHelpers';
 import { useWidgetState } from '../../store/hooks';
 import { widgetStore } from '../../store/widgetStore';
 import { t } from '../../i18n';
-import { MoreIcon, ReplyIcon } from './icons';
+import { MoreIcon, ReactIcon, ReplyIcon } from './icons';
+import { ReactionPicker } from './Reactions';
 import type { WidgetMessage } from '../../types';
 
 function RoundButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
@@ -80,24 +81,27 @@ interface MessageActionsProps {
     className?: string;
 }
 
-// Hai nút tròn cạnh bong bóng: trả lời và "thêm". Thu hồi nằm trong menu "thêm",
-// chỉ hiện khi tin còn trong hạn thu hồi của kênh (máy chủ vẫn kiểm lại).
+// Nút tròn cạnh bong bóng: cảm xúc (tin của shop), trả lời và "thêm". Thu hồi nằm trong
+// menu "thêm", chỉ hiện khi tin còn trong hạn thu hồi của kênh (máy chủ vẫn kiểm lại).
 export default function MessageActions({ message, isOwn, onReply, className = '' }: MessageActionsProps) {
     const recallWindowSeconds = useWidgetState(state => state.messagingPolicy.recallWindowSeconds);
+    const canReact = useWidgetState(state => !isOwn && state.messagingPolicy.reactions.length > 0);
     const [isMenuOpen, setMenuOpen] = useState(false);
+    const [isPickerOpen, setPickerOpen] = useState(false);
     const [isConfirmOpen, setConfirmOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Chỉ đóng khi bấm ra ngoài: chính cú bấm mở menu vẫn đang lan lên document.
     useEffect(() => {
-        if (!isMenuOpen) return undefined;
+        if (!isMenuOpen && !isPickerOpen) return undefined;
         const closeOnOutsideClick = (event: MouseEvent) => {
             if (event.target instanceof Node && containerRef.current?.contains(event.target)) return;
             setMenuOpen(false);
+            setPickerOpen(false);
         };
         document.addEventListener('click', closeOnOutsideClick);
         return () => document.removeEventListener('click', closeOnOutsideClick);
-    }, [isMenuOpen]);
+    }, [isMenuOpen, isPickerOpen]);
 
     const showRecall = isOwn && canRecallMessage(message, recallWindowSeconds);
     const showCopy = Boolean(message.content) && typeof navigator !== 'undefined' && Boolean(navigator.clipboard);
@@ -118,51 +122,74 @@ export default function MessageActions({ message, isOwn, onReply, className = ''
     return (
         <div
             ref={containerRef}
-            className={`yona-msg-actions relative flex flex-none items-center gap-[2px] ${className} ${
-                isMenuOpen || isConfirmOpen ? '!opacity-100' : ''
+            className={`yona-msg-actions flex flex-none items-center gap-[2px] ${className} ${
+                isMenuOpen || isConfirmOpen || isPickerOpen ? '!opacity-100' : ''
             }`}
         >
+            {canReact ? (
+                <RoundButton
+                    label={t('MESSAGE_ACTIONS.REACT')}
+                    onClick={() => {
+                        setMenuOpen(false);
+                        setPickerOpen(current => !current);
+                    }}
+                >
+                    <ReactIcon />
+                </RoundButton>
+            ) : null}
             <RoundButton label={t('MESSAGE_ACTIONS.REPLY')} onClick={onReply}>
                 <ReplyIcon />
             </RoundButton>
             {hasMenu ? (
-                <RoundButton
-                    label={t('MESSAGE_ACTIONS.MORE')}
-                    onClick={() => setMenuOpen(current => !current)}
-                >
-                    <MoreIcon />
-                </RoundButton>
+                <span className="relative flex">
+                    <RoundButton
+                        label={t('MESSAGE_ACTIONS.MORE')}
+                        onClick={() => {
+                            setPickerOpen(false);
+                            setMenuOpen(current => !current);
+                        }}
+                    >
+                        <MoreIcon />
+                    </RoundButton>
+                    {isMenuOpen ? (
+                        <div
+                            role="menu"
+                            className={`absolute bottom-[36px] z-20 w-[176px] overflow-hidden rounded-[12px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] shadow-[var(--yona-chat-shadow-pop)] ${menuAnchor}`}
+                            onClick={event => event.stopPropagation()}
+                        >
+                            {showCopy ? (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    className="block w-full px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-ink)]"
+                                    onClick={copyContent}
+                                >
+                                    {t('MESSAGE_ACTIONS.COPY')}
+                                </button>
+                            ) : null}
+                            {showRecall ? (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    className="block w-full border-t border-[var(--yona-chat-line)] px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-danger)] first:border-t-0"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        setConfirmOpen(true);
+                                    }}
+                                >
+                                    {t('MESSAGE_ACTIONS.RECALL')}
+                                </button>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </span>
             ) : null}
 
-            {isMenuOpen ? (
-                <div
-                    role="menu"
-                    className={`absolute bottom-[36px] z-20 w-[176px] overflow-hidden rounded-[12px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-panel)] shadow-[var(--yona-chat-shadow-pop)] ${menuAnchor}`}
-                    onClick={event => event.stopPropagation()}
-                >
-                    {showCopy ? (
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="block w-full px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-ink)]"
-                            onClick={copyContent}
-                        >
-                            {t('MESSAGE_ACTIONS.COPY')}
-                        </button>
-                    ) : null}
-                    {showRecall ? (
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="block w-full border-t border-[var(--yona-chat-line)] px-[13px] py-[11px] text-start text-[13.5px] text-[var(--yona-chat-danger)] first:border-t-0"
-                            onClick={() => {
-                                setMenuOpen(false);
-                                setConfirmOpen(true);
-                            }}
-                        >
-                            {t('MESSAGE_ACTIONS.RECALL')}
-                        </button>
-                    ) : null}
+            {isPickerOpen ? (
+                // Khung chứa là cả hàng tin (MessageRow `relative`): thanh nằm trên bong bóng,
+                // canh mép đầu bong bóng, sau cột avatar 26px + khoảng cách 8px.
+                <div className="absolute bottom-full z-20 mb-1 ltr:left-[34px] rtl:right-[34px]">
+                    <ReactionPicker message={message} onDone={() => setPickerOpen(false)} />
                 </div>
             ) : null}
 

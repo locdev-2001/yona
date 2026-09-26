@@ -3,13 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { emitter } from 'shared/helpers/emitter';
 
 import { fetchConfig } from './api/widget';
-import { restoreAuthToken, setAuthToken, setLocale, setWebsiteToken } from './api/client';
+import { restoreAuthToken, setAuthToken, setLocale, setPreviewMode, setWebsiteToken } from './api/client';
 import { WIDGET_BUS_EVENTS } from './helpers/constants';
-import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken } from './helpers/urlParams';
-import { isLightAccent } from 'shared/helpers/accentContrast';
+import { getConversationCookie, getLocale, getNewSessionResetId, getWebsiteToken, isPreviewMode } from './helpers/urlParams';
 import { widgetConnector } from './realtime/WidgetConnector';
 import { widgetStore } from './store/widgetStore';
 import App from './App';
+import { DEFAULT_WIDGET_SETTINGS } from './helpers/widgetSettings';
+import { applyAccent, listenForPreviewConfig } from './helpers/previewMode';
 import type { ChannelConfig, WebsiteChannelConfigPayload } from './types';
 
 // Điểm vào của app widget. Phiên khách dựng bằng POST /api/v1/widget/config rồi map
@@ -26,7 +27,10 @@ function toChannelConfig(payload: WebsiteChannelConfigPayload): ChannelConfig {
         enabledLanguages: payload.enabled_languages ?? [],
         locale: payload.locale,
         outOfOfficeMessage: payload.out_of_office_message,
-        portal: payload.portal,
+        portal: payload.portal
+            ? { slug: payload.portal.slug, name: payload.portal.name, defaultLocale: payload.portal.default_locale, locales: payload.portal.locales }
+            : null,
+        widgetSettings: payload.widget_settings ?? DEFAULT_WIDGET_SETTINGS,
         preChatFormEnabled: payload.pre_chat_form_enabled,
         preChatFormOptions: payload.pre_chat_form_options ?? {},
         replyTime: payload.reply_time,
@@ -54,8 +58,12 @@ async function bootstrap() {
     const search = window.location.search;
     setWebsiteToken(getWebsiteToken(search));
 
-    // Token phiên cũ gửi ngay ở /config để nhận lại đúng khách, không đẻ hồ sơ mới.
-    restoreAuthToken({ tokenFromUrl: getConversationCookie(search), resetId: getNewSessionResetId(search) });
+    const preview = isPreviewMode(search);
+    setPreviewMode(preview);
+
+    // Token phiên cũ gửi ngay ở /config để nhận lại đúng khách, không đẻ hồ sơ mới. Xem trước
+    // luôn là khách chưa có gì, không nhận lại phiên của ai.
+    if (!preview) restoreAuthToken({ tokenFromUrl: getConversationCookie(search), resetId: getNewSessionResetId(search) });
 
     const localeFromUrl = getLocale(search);
     if (localeFromUrl) setLocale(localeFromUrl);
@@ -72,10 +80,14 @@ async function bootstrap() {
 
         const channelConfig = toChannelConfig(channelPayload);
         widgetStore.setChannelConfig(channelConfig, globalConfig ?? {}, contact);
-        document.documentElement.style.setProperty('--widget-color', channelConfig.widgetColor);
         // Chỗ DUY NHẤT quyết màu chữ trên màu nhấn: nền sáng thì --yona-chat-on-accent và
         // --yona-chat-accent-ink chuyển sang mực (_chat-tokens.scss, khối data-accent-tone).
-        document.documentElement.dataset.accentTone = isLightAccent(channelConfig.widgetColor) ? 'light' : 'dark';
+        applyAccent(channelConfig.widgetColor);
+
+        if (preview) {
+            listenForPreviewConfig();
+            return;
+        }
 
         await widgetStore.getConversationAttributes();
         if (contact.pubsub_token) widgetConnector.connect(contact.pubsub_token);

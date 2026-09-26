@@ -244,8 +244,9 @@ export interface SendMessagePayload {
     private: boolean;
     echo_id?: string;
     content_attributes?: Record<string, unknown>;
-    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm.
-    content_type?: 'sticker';
+    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm. Tin có cấu trúc
+    // (input_select, cards…): máy chủ kiểm và chuẩn hoá content_attributes theo loại.
+    content_type?: string;
     sticker_id?: string;
     files?: File[];
     // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).
@@ -349,6 +350,21 @@ export function deleteMessage(
     messageId: number,
 ): Promise<ConversationMessage> {
     return deleteJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`);
+}
+
+/**
+ * Đánh dấu thẻ chuyển khoản đã nhận tiền — idempotent, bấm lại khi đã đánh dấu
+ * rồi không đổi ai/lúc nào (server chỉ ghi lần đầu).
+ */
+export function markBankTransferPaid(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/mark_bank_transfer_paid`,
+        {},
+    );
 }
 
 /**

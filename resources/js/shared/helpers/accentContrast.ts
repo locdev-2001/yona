@@ -25,3 +25,15 @@ export const isLightAccent = (accentColor: string): boolean => {
 
     return contrastWithInk > contrastWithWhite;
 };
+
+/**
+ * Tỉ lệ tương phản (công thức WCAG) giữa chữ trắng và màu nhấn — dùng để hiện
+ * dòng "Chữ trắng đọc tốt trên màu này (x.x:1)" ở màn cấu hình widget. Trả về
+ * null khi không đọc được mã màu, để nơi gọi tự quyết định hiện gì.
+ */
+export const contrastRatioWithWhite = (accentColor: string): number | null => {
+    const luminance = relativeLuminance(accentColor);
+    if (luminance === null) return null;
+
+    return 1.05 / (luminance + 0.05);
+};

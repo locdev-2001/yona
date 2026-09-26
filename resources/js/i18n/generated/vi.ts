@@ -1159,6 +1159,19 @@ const messages: Record<string, unknown> = {
                         "PLACEHOLDER": "Vui lòng nhập thời gian",
                         "ERROR": "Thời gian trên trang là bắt buộc"
                     },
+                    "QUICK_REPLIES": {
+                        "LABEL": "Chip trả lời nhanh",
+                        "HINT": "Tối đa 3 chip hiện dưới lời mời. Khách bấm là mở khung chat và gửi đúng chữ đó.",
+                        "PLACEHOLDER": "Ví dụ: Còn hàng không?",
+                        "ITEM": "Chip {index}",
+                        "ERROR": "Mỗi chip tối đa 40 ký tự và không trùng nhau"
+                    },
+                    "SHOW_TO": {
+                        "LABEL": "Mời ai",
+                        "ALL": "Mọi khách",
+                        "NEW": "Khách chưa từng nhắn",
+                        "RETURNING": "Khách đã từng nhắn"
+                    },
                     "OTHER_PREFERENCES": {
                         "TITLE": "Tùy chọn khác",
                         "ENABLED": "Vận hành chiến dịch",
@@ -1212,7 +1225,8 @@ const messages: Record<string, unknown> = {
                 "SHORT_CODE": "Mã tắt",
                 "CONTENT": "Nội dung",
                 "ACTIONS": "Hành động"
-            }
+            },
+            "UNKNOWN_CARD_TYPE": "Thẻ"
         },
         "ADD": {
             "TITLE": "Thêm câu trả lời mẫu",
@@ -1256,6 +1270,10 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Đã cập nhật câu trả lời mẫu.",
                 "ERROR_MESSAGE": "Không kết nối được máy chủ. Bạn hãy thử lại."
+            },
+            "CARD_VIEW": {
+                "TYPE_LABEL": "Loại thẻ",
+                "HINT": "Câu trả lời mẫu này gửi một thẻ. Muốn đổi nội dung thẻ, hãy vào một hội thoại, gửi thẻ mới rồi lưu làm câu trả lời mẫu."
             }
         },
         "DELETE": {
@@ -2408,6 +2426,95 @@ const messages: Record<string, unknown> = {
         },
         "FRIEND_REQUEST": {
             "TITLE": "Lời mời kết bạn"
+        },
+        "SEND_CARD": {
+            "BUTTON": "Gửi thẻ",
+            "PREVIEW": "Khách thấy thế này",
+            "PREVIEW_EMPTY": "Điền thông tin để xem trước",
+            "SEND": "Gửi",
+            "CANCEL": "Huỷ",
+            "REMOVE": "Xoá",
+            "REVIEW_TITLE": "Xem lại thẻ trước khi gửi",
+            "REVIEW_HINT": "Thẻ từ câu trả lời mẫu, xem lại rồi bấm Gửi.",
+            "SAVE_AS_CANNED": "Lưu làm câu trả lời mẫu",
+            "SAVE_AS_CANNED_LABEL": "Mã tắt",
+            "SAVE_AS_CANNED_PLACEHOLDER": "Ví dụ: ck-tra-truoc",
+            "SAVE_AS_CANNED_SUCCESS": "Đã lưu làm câu trả lời mẫu.",
+            "SAVE_AS_CANNED_ERROR": "Không lưu được, bạn hãy thử lại.",
+            "QUICK_REPLIES": {
+                "TITLE": "Trả lời nhanh",
+                "HINT": "Câu hỏi kèm 2–6 lựa chọn để khách bấm",
+                "QUESTION": "Câu hỏi",
+                "OPTIONS": "Lựa chọn",
+                "OPTION": "Lựa chọn {index}",
+                "ADD_OPTION": "Thêm lựa chọn"
+            },
+            "PRODUCT": {
+                "TITLE": "Thẻ sản phẩm",
+                "HINT": "Ảnh, giá, biến thể và nút Đặt mua",
+                "NAME": "Tên sản phẩm",
+                "UPLOAD_IMAGE": "Tải ảnh lên",
+                "CHANGE_IMAGE": "Đổi ảnh",
+                "UPLOADING": "Đang tải…",
+                "PRICE": "Giá bán (đ)",
+                "COMPARE_AT": "Giá cũ (đ)",
+                "STOCK_LABEL": "Dòng tồn kho",
+                "STOCK_PLACEHOLDER": "Còn 2 cái",
+                "MAX_QUANTITY": "Số lượng tối đa",
+                "VARIANTS": "Biến thể",
+                "VARIANT_NAME": "Tên nhóm",
+                "VARIANT_NAME_PLACEHOLDER": "Màu",
+                "VARIANT_OPTIONS": "Các lựa chọn, cách nhau bằng dấu phẩy",
+                "VARIANT_OPTIONS_PLACEHOLDER": "Lam, Ngà, Ngọc",
+                "ADD_VARIANT": "Thêm nhóm biến thể",
+                "LINK": "Link sản phẩm trên website (không bắt buộc)",
+                "ORDER_BUTTON": "Đặt mua",
+                "VIEW_BUTTON": "Xem"
+            },
+            "BANK_TRANSFER": {
+                "TITLE": "Thẻ chuyển khoản",
+                "HINT": "Mã VietQR, số tài khoản, số tiền và nội dung",
+                "ACCOUNT": "Tài khoản nhận tiền",
+                "AMOUNT": "Số tiền (đ, không bắt buộc)",
+                "AMOUNT_PLACEHOLDER": "Để trống nếu khách tự nhập",
+                "MEMO": "Nội dung chuyển khoản",
+                "MEMO_HINT": "Ngân hàng chỉ đọc chữ không dấu, tối đa 25 ký tự; Yona tự lược dấu.",
+                "NO_ACCOUNTS": "Chưa có tài khoản nhận tiền nào bạn được phép gửi. Quản trị viên thêm ở Cài đặt → Chuyển khoản."
+            },
+            "SCHEDULE": {
+                "TITLE": "Chọn lịch nhận hàng",
+                "HINT": "Khách chọn ngày và khung giờ trên một trang riêng",
+                "TITLE_LABEL": "Tiêu đề",
+                "SLOTS": "Khung giờ",
+                "DATE": "Ngày",
+                "TIME": "Khung giờ",
+                "TIME_PLACEHOLDER": "8:00 đến 10:00",
+                "ADD_SLOT": "Thêm khung giờ",
+                "NOTE": "Ghi chú cho khách (không bắt buộc)",
+                "NOTE_PLACEHOLDER": "Đơn #GM1024, giao tới 12 Hàng Bông"
+            },
+            "ERRORS": {
+                "ACCOUNT_REQUIRED": "Chọn tài khoản nhận tiền",
+                "AMOUNT_INVALID": "Số tiền không hợp lệ",
+                "SLOTS_REQUIRED": "Cần ít nhất một khung giờ có ngày và giờ",
+                "QUESTION_REQUIRED": "Cần có câu hỏi",
+                "TOO_FEW_OPTIONS": "Cần ít nhất 2 lựa chọn",
+                "OPTION_TOO_LONG": "Mỗi lựa chọn tối đa 80 ký tự",
+                "DUPLICATE_OPTION": "Hai lựa chọn đang trùng nhau",
+                "TITLE_REQUIRED": "Cần có tên sản phẩm",
+                "COMPARE_AT_INVALID": "Giá cũ phải lớn hơn giá bán",
+                "LINK_INVALID": "Link phải bắt đầu bằng http:// hoặc https://",
+                "VARIANT_EMPTY": "Nhóm biến thể cần ít nhất một lựa chọn"
+            }
+        },
+        "STRUCTURED": {
+            "CHOICE_OF": "Trả lời cho: {question}",
+            "DELIVERY": {
+                "TEXT_NUMBERED": "Kênh này không có nút: khách nhận chữ kèm danh sách số",
+                "TEXT": "Kênh này không vẽ được thẻ: khách nhận bản chữ",
+                "IMAGE_TEXT": "Kênh này không vẽ được thẻ: khách nhận ảnh thẻ kèm chữ"
+            },
+            "MARK_BANK_TRANSFER_PAID": "Đánh dấu đã nhận tiền"
         },
         "SENT_FROM_NATIVE_APP": "từ điện thoại",
         "MESSAGE_ACTIONS": {
@@ -3698,6 +3805,63 @@ const messages: Record<string, unknown> = {
                     "ERROR_MESSAGE": "Có lỗi xảy ra lúc xoá phân khúc."
                 }
             }
+        }
+    },
+    "FLOWS": {
+        "not_found": "Liên kết không hợp lệ hoặc đã hết hạn.",
+        "loading": "Đang tải…",
+        "send_failed": "Chưa gửi được, thử lại nhé.",
+        "submitted_title": "Đã ghi nhận",
+        "submitted_body": "Cảm ơn bạn, shop đã nhận được thông tin.",
+        "close": "Đóng",
+        "you_can_close_tab": "Bạn có thể đóng trang này.",
+        "open_in_new_tab": "Mở trong tab mới",
+        "schedule": {
+            "day_section": "Ngày",
+            "time_section": "Khung giờ",
+            "full_note": "Khung gạch ngang đã hết chỗ.",
+            "no_slots": "Hiện chưa có khung giờ nào trống.",
+            "confirm": "Xác nhận {day}, {time}",
+            "choose_slot": "Chọn một khung giờ"
+        },
+        "form": {
+            "submit": "Gửi thông tin",
+            "check_field": "Kiểm tra lại {field}"
+        },
+        "order_tracking": {
+            "ref": "Đơn #{ref}",
+            "eta": "Dự kiến nhận {date}",
+            "fee_included": "Đã gồm phí giao",
+            "total": "Tổng tiền",
+            "track_order": "Theo dõi trên website",
+            "statuses": {
+                "placed": "Đã đặt",
+                "confirmed": "Đã xác nhận",
+                "shipped": "Đã gửi hàng",
+                "delivering": "Đang giao",
+                "delivered": "Đã nhận hàng",
+                "cancelled": "Đã huỷ"
+            }
+        },
+        "bank_transfer": {
+            "copy": "Chép",
+            "copied": "Đã chép",
+            "bank_name": "Ngân hàng",
+            "account_number": "Số tài khoản",
+            "account_name": "Chủ tài khoản",
+            "amount": "Số tiền",
+            "transfer_note": "Nội dung chuyển khoản",
+            "instructions": "Hướng dẫn"
+        },
+        "product": {
+            "variant": "Phân loại",
+            "quantity": "Số lượng",
+            "max_quantity": "Tối đa {max}",
+            "note_label": "Ghi chú cho shop",
+            "note_placeholder": "Không bắt buộc",
+            "subtotal": "Tạm tính",
+            "submit": "Gửi yêu cầu đặt hàng",
+            "select_variant": "Chọn đủ phân loại trước khi đặt"
         }
     },
     "GALLERY_VIEW": {
@@ -6329,6 +6493,11 @@ const messages: Record<string, unknown> = {
         },
         "NOTE": "Ghi chú: ",
         "WIDGET_BUILDER": {
+            "OPEN_BUILDER": {
+                "LABEL": "Widget chat",
+                "HELP_TEXT": "Launcher, màu sắc, trang chủ, kênh khác, lời mời chủ động, trợ lý AI, mã nhúng — chỉnh hết ở một chỗ.",
+                "BUTTON": "Tùy chỉnh widget"
+            },
             "WIDGET_OPTIONS": {
                 "AVATAR": {
                     "LABEL": "Hình đại diện trang web",
@@ -7983,6 +8152,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_STATUS": "Đổi trạng thái",
             "SEND_ATTACHMENT": "Gửi tệp đính kèm",
             "SEND_MESSAGE": "Gửi một tin nhắn",
+            "SEND_CANNED_CARD": "Gửi thẻ từ câu trả lời mẫu",
             "CHANGE_PRIORITY": "Đổi mức ưu tiên",
             "ADD_PRIVATE_NOTE": "Thêm một ghi chú riêng",
             "SEND_WEBHOOK_EVENT": "Gửi sự kiện webhook"
@@ -8026,6 +8196,111 @@ const messages: Record<string, unknown> = {
         },
         "DROPDOWN_ITEM": {
             "ID": "(ID: {identifier})"
+        }
+    },
+    "MESSAGING": {
+        "errors": {
+            "not_allowed": "Loại tin :type không gửi được theo chiều này.",
+            "not_answerable": "Tin :type không nhận câu trả lời.",
+            "unknown_choice": "Lựa chọn không có trong tin.",
+            "already_submitted": "Tin này đã được trả lời.",
+            "duplicate_choice": "Các lựa chọn phải khác nhau.",
+            "duplicate_item": "Mã thẻ bị trùng.",
+            "invalid_action": "Nút không hợp lệ.",
+            "invalid_url": "Đường dẫn phải bắt đầu bằng http:// hoặc https://.",
+            "invalid_phone": "Số điện thoại không hợp lệ.",
+            "invalid_price": "Giá không hợp lệ.",
+            "variants_without_order": "Thẻ có biến thể phải có nút Đặt mua.",
+            "unknown_item": "Không tìm thấy sản phẩm để đặt.",
+            "invalid_selection": "Lựa chọn :name không hợp lệ hoặc đã hết.",
+            "quantity_exceeded": "Số lượng vượt quá mức cho phép.",
+            "field_required": "Cần điền :field.",
+            "field_invalid": ":field không hợp lệ.",
+            "empty_submission": "Chưa có thông tin nào được gửi.",
+            "payload_too_large": "Dữ liệu kèm trang quá lớn.",
+            "unknown_payment_account": "Không tìm thấy tài khoản nhận tiền.",
+            "payment_account_not_allowed": "Bạn không được gửi thẻ chuyển khoản bằng tài khoản này.",
+            "duplicate_payment_account": "Ngân hàng và số tài khoản này đã được thêm."
+        },
+        "settings": {
+            "invalid_channel": "Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại."
+        },
+        "preview": {
+            "deleted": "Tin nhắn đã thu hồi",
+            "image": "Đã gửi một ảnh",
+            "file": "Đã gửi một tệp"
+        },
+        "delivery": {
+            "numbered_prompt": "Nhắn số tương ứng để chọn:"
+        },
+        "cards": {
+            "preview_many": ":title và :count sản phẩm khác",
+            "compare_at": "giá cũ :price, -:percent%"
+        },
+        "order_status": {
+            "preview": "Đơn #:ref · :status",
+            "eta": "Dự kiến nhận :date",
+            "total": "Tổng :amount",
+            "tracking": "Theo dõi: :url",
+            "statuses": {
+                "placed": "Đã đặt",
+                "confirmed": "Đã xác nhận",
+                "shipped": "Đã gửi",
+                "delivering": "Đang giao",
+                "delivered": "Đã nhận",
+                "cancelled": "Đã huỷ"
+            }
+        },
+        "order_request": {
+            "preview": "Yêu cầu đặt hàng: :title",
+            "line": "Yêu cầu đặt hàng: :title:selection × :quantity",
+            "note": "Ghi chú: :note"
+        },
+        "bank_transfer": {
+            "preview": "Chuyển khoản qua :bank",
+            "bank_line": "Ngân hàng :bank, số TK :account",
+            "holder": "Chủ TK :name",
+            "amount": "Số tiền :amount",
+            "memo": "Nội dung: :memo"
+        },
+        "kit": {
+            "item_position": "Sản phẩm {current} trên {total}",
+            "previous_item": "Sản phẩm trước",
+            "next_item": "Sản phẩm sau",
+            "copied": "Đã chép",
+            "copy": "Chép {label}",
+            "submit_field": "Gửi {field}",
+            "submit": "Gửi",
+            "selected": "Khách đã chọn: {value}",
+            "form_received": "Đã nhận thông tin",
+            "form_open": "Điền thông tin",
+            "order_request": "Yêu cầu đặt hàng",
+            "note": "Ghi chú: {note}",
+            "order_ref": "Đơn #{ref}",
+            "eta": "Dự kiến nhận {date}",
+            "fee_included": "Đã gồm phí giao",
+            "total": "Tổng",
+            "track_order": "Theo dõi đơn",
+            "help_article": "Trợ giúp",
+            "more": "+{count}",
+            "read_only": "Khách bấm được trong widget",
+            "check_field": "Kiểm tra lại {field}",
+            "send_failed": "Chưa gửi được, thử lại nhé",
+            "steps": {
+                "placed": "Đã đặt",
+                "shipped": "Đã gửi",
+                "delivering": "Đang giao",
+                "delivered": "Đã nhận"
+            },
+            "bank_transfer_title": "Chuyển khoản ngân hàng",
+            "show_qr": "Hiện mã QR để quét",
+            "bank_transfer_qr_alt": "Mã QR chuyển khoản",
+            "bank": "Ngân hàng",
+            "account_number": "Số tài khoản",
+            "account_holder": "Chủ tài khoản",
+            "transfer_amount": "Số tiền",
+            "transfer_memo": "Nội dung",
+            "paid": "Đã nhận tiền"
         }
     },
     "MFA_SETTINGS": {
@@ -8415,6 +8690,78 @@ const messages: Record<string, unknown> = {
     "PAGINATION_FOOTER": {
         "SHOWING": "Hiển thị {startItem}–{endItem} trong tổng số {totalItems} mục",
         "CURRENT_PAGE_INFO": "Trang {currentPage}/{totalPages}"
+    },
+    "PAYMENT_ACCOUNTS": {
+        "HEADER": "Chuyển khoản",
+        "DESCRIPTION": "Tài khoản ngân hàng nhận tiền khi gửi thẻ chuyển khoản trong hội thoại. Khách chuyển thẳng vào tài khoản của bạn, Yona không giữ tiền.",
+        "LOADING": "Đang tải tài khoản",
+        "LIST": {
+            "TITLE": "Tài khoản nhận tiền",
+            "EMPTY": "Chưa có tài khoản nhận tiền nào.",
+            "ADD": "Thêm tài khoản",
+            "DEFAULT_BADGE": "Mặc định"
+        },
+        "FORM": {
+            "EDIT": "Sửa",
+            "DELETE": "Xoá",
+            "SAVE": "Lưu thay đổi",
+            "CREATE": "Thêm tài khoản",
+            "CANCEL": "Huỷ",
+            "BANK": {
+                "LABEL": "Ngân hàng",
+                "PLACEHOLDER": "Chọn ngân hàng",
+                "SEARCH_PLACEHOLDER": "Tìm ngân hàng...",
+                "EMPTY": "Không tìm thấy ngân hàng"
+            },
+            "ACCOUNT_NUMBER": {
+                "LABEL": "Số tài khoản",
+                "PLACEHOLDER": "Chỉ nhập số",
+                "INVALID": "Số tài khoản chỉ gồm 4-30 chữ số."
+            },
+            "ACCOUNT_NAME": {
+                "LABEL": "Chủ tài khoản",
+                "PLACEHOLDER": "HKD GOM MOC",
+                "HINT": "Viết hoa không dấu, đúng như trên ngân hàng để khách kiểm tra."
+            },
+            "MEMO_TEMPLATE": {
+                "LABEL": "Nội dung chuyển khoản",
+                "HINT": "Tự thay bằng mã hội thoại khi gửi, ví dụ GM1024. Giúp đối soát nhanh."
+            },
+            "IS_DEFAULT": {
+                "LABEL": "Đặt làm tài khoản mặc định"
+            },
+            "ALLOW_ALL_AGENTS": {
+                "LABEL": "Cho mọi nhân viên gửi thẻ chuyển khoản trong hội thoại"
+            }
+        },
+        "ADD": {
+            "TITLE": "Thêm tài khoản",
+            "SUCCESS": "Đã thêm tài khoản",
+            "ERROR": "Đã có lỗi, vui lòng thử lại"
+        },
+        "EDIT": {
+            "TITLE": "Sửa tài khoản",
+            "SUCCESS": "Đã lưu thay đổi",
+            "ERROR": "Đã có lỗi, vui lòng thử lại"
+        },
+        "DELETE": {
+            "SUCCESS": "Đã xoá tài khoản",
+            "ERROR": "Đã có lỗi, vui lòng thử lại",
+            "CONFIRM": {
+                "TITLE": "Xoá tài khoản?",
+                "MESSAGE": "Nhân viên sẽ không gửi thẻ chuyển khoản bằng tài khoản này được nữa:",
+                "YES": "Có, xoá",
+                "NO": "Không, giữ lại"
+            }
+        },
+        "PREVIEW": {
+            "TITLE": "Khách sẽ thấy",
+            "EMPTY": "Lưu tài khoản để xem mã QR.",
+            "QR_ALT": "Mã QR chuyển khoản",
+            "BANK": "Ngân hàng",
+            "ACCOUNT_NUMBER": "Số tài khoản",
+            "NOTE": "Mã QR theo chuẩn VietQR, quét được bằng mọi ứng dụng ngân hàng."
+        }
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Tìm quốc gia",
@@ -9211,6 +9558,8 @@ const messages: Record<string, unknown> = {
         "ACCOUNT_SETTINGS": "Cài đặt tài khoản",
         "APPLICATIONS": "Ứng dụng",
         "LABELS": "Nhãn",
+        "WIDGET_UPDATES": "Bài cập nhật trên widget",
+        "PAYMENT_ACCOUNTS": "Chuyển khoản",
         "CUSTOM_ATTRIBUTES": "Thuộc tính tùy chỉnh",
         "AUTOMATION": "Tự động hóa",
         "MACROS": "Macro",
@@ -9650,7 +9999,7 @@ const messages: Record<string, unknown> = {
         "YOU": "You",
         "START_NEW_CONVERSATION": "Bắt đầu hội thoại mới",
         "RESET_SESSION": {
-            "BUTTON": "Bắt đầu cuộc trò chuyện mới",
+            "BUTTON": "Bắt đầu lại như khách mới",
             "CONFIRM_TITLE": "Bắt đầu cuộc trò chuyện mới?",
             "CONFIRM_BODY": "Khung chat sẽ bắt đầu lại như một khách mới. Các tin nhắn trước đó sẽ không còn hiện trên trình duyệt này.",
             "CONFIRM": "Bắt đầu lại",
@@ -9725,6 +10074,11 @@ const messages: Record<string, unknown> = {
             "SUBMITTED_TITLE": "Cảm ơn vì đã đánh giá",
             "PLACEHOLDER": "Cho chúng tôi biết thêm..."
         },
+        "EMAIL_CAPTURE": {
+            "HINT": "Shop báo khi có trả lời, rời trang cũng không sao",
+            "LABEL": "Email",
+            "DONE": "Shop sẽ báo qua {email}"
+        },
         "EMAIL_TRANSCRIPT": {
             "BUTTON_TEXT": "Yêu cầu bản ghi hội thoại",
             "SEND_EMAIL_SUCCESS": "Bản ghi hội thoại đã được gửi thành công",
@@ -9765,10 +10119,37 @@ const messages: Record<string, unknown> = {
             "REPLY_TO": "Đang trả lời:"
         },
         "MESSAGE_ACTIONS": {
+            "REACT": "Thả cảm xúc",
             "REPLY": "Trả lời",
             "MORE": "Thêm",
             "RECALL": "Thu hồi",
             "COPY": "Sao chép"
+        },
+        "ORDER_SHEET": {
+            "CLOSE": "Đóng",
+            "MAX": "Tối đa {count}",
+            "QUANTITY": "Số lượng",
+            "DECREASE": "Bớt một",
+            "INCREASE": "Thêm một",
+            "NOTE": "Ghi chú cho shop",
+            "OPTIONAL": "Không bắt buộc",
+            "NOTE_PLACEHOLDER": "Ví dụ: gói quà giúp mình",
+            "SUBTOTAL": "Tạm tính",
+            "SHIPPING_HINT": "Phí giao shop báo trong chat",
+            "SUBMIT": "Gửi yêu cầu đặt hàng",
+            "VIEW_SITE": "Xem trên website của shop",
+            "SOLD_OUT": "{option}, hết hàng",
+            "FAILED": "Chưa gửi được yêu cầu, thử lại nhé."
+        },
+        "WEBVIEW_SHEET": {
+            "OPEN_TAB": "Mở trong tab mới",
+            "CLOSE": "Đóng",
+            "FAILED": "Chưa mở được trang, thử lại nhé."
+        },
+        "REACTIONS": {
+            "COUNT": "{count} người thả {emoji}",
+            "REMOVE": "Gỡ cảm xúc {emoji}",
+            "FAILED": "Chưa thả được cảm xúc, thử lại nhé."
         },
         "RECALL": {
             "CONFIRM_TITLE": "Thu hồi tin nhắn này?",
@@ -9842,13 +10223,18 @@ const messages: Record<string, unknown> = {
             "BACK": "Quay lại",
             "AGENT_ACTIVE": "Đang hoạt động",
             "MORE": "Tuỳ chọn khác",
-            "POPOUT": "Mở trong cửa sổ riêng"
+            "POPOUT": "Mở trong cửa sổ riêng",
+            "TRANSCRIPT": "Gửi lịch sử chat qua email",
+            "NEW_CONVERSATION": "Cuộc trò chuyện mới"
         },
         "OUT_OF_HOURS": {
-            "TITLE": "Hiện ngoài giờ hỗ trợ",
+            "TITLE": "Shop đang nghỉ",
             "BODY": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa lại.",
             "EMAIL_PLACEHOLDER": "Email để nhận trả lời",
             "CTA": "Để lại tin nhắn",
+            "EMAIL_TITLE": "Nhận trả lời qua email",
+            "EMAIL_LABEL": "Email của bạn",
+            "HINT": "Hoặc nhắn ngay bên dưới, shop đọc khi mở cửa.",
             "HOURS": "Nhóm hỗ trợ trực từ {from} đến {to}.",
             "BODY_REOPEN": "Bạn cứ để lại tin nhắn, mình trả lời khi mở cửa {reopen}.",
             "REOPEN": "Mở cửa lại {reopen}.",
@@ -9888,6 +10274,342 @@ const messages: Record<string, unknown> = {
             "CTA_FALLBACK": "Xem chi tiết",
             "PREVIOUS": "Thẻ trước",
             "NEXT": "Thẻ sau"
+        },
+        "TABS": {
+            "LABEL": "Điều hướng widget",
+            "HOME": "Trang chủ",
+            "MESSAGES": "Tin nhắn",
+            "HELP": "Trợ giúp",
+            "UPDATES": "Cập nhật"
+        },
+        "NAV": {
+            "BACK": "Quay lại",
+            "CLOSE": "Đóng",
+            "EXPAND": "Phóng to",
+            "COLLAPSE": "Thu nhỏ"
+        },
+        "HOME": {
+            "GREETING_LINE": "Chào bạn,",
+            "GREETING_DEFAULT": "{name} có thể giúp gì?",
+            "CONTINUE_WITH": "Tiếp tục với {name} · {time}",
+            "CONTINUE": "Tiếp tục hội thoại · {time}",
+            "SEND_NEW": "Gửi tin nhắn mới",
+            "START": "Bắt đầu trò chuyện",
+            "FIND_ANSWERS": "Tìm câu trả lời",
+            "SEARCH_PLACEHOLDER": "Hỏi về đổi trả, giao hàng…",
+            "OTHER_CHANNELS": "Nhắn qua kênh khác",
+            "REQUEST": "Gửi yêu cầu bảo hành, đổi trả",
+            "COMING_SOON": "Sắp ra mắt",
+            "CHANNEL_HINT": {
+                "ZALO": "Nhắn Zalo của {name}",
+                "MESSENGER": "Trang Facebook {name}",
+                "TELEGRAM": "Telegram của {name}",
+                "WHATSAPP": "WhatsApp của {name}",
+                "INSTAGRAM": "Instagram của {name}",
+                "TIKTOK": "TikTok của {name}",
+                "HOTLINE": "Gọi hotline",
+                "EMAIL": "Gửi email",
+                "CUSTOM": "Mở liên kết"
+            },
+            "CHANNEL_NAME": {
+                "ZALO": "Zalo",
+                "MESSENGER": "Messenger",
+                "TELEGRAM": "Telegram",
+                "WHATSAPP": "WhatsApp",
+                "INSTAGRAM": "Instagram",
+                "TIKTOK": "TikTok",
+                "HOTLINE": "Gọi hotline",
+                "EMAIL": "Email",
+                "CUSTOM": "Liên kết"
+            }
+        },
+        "MESSAGE_LIST": {
+            "TITLE": "Tin nhắn",
+            "NEW": "Gửi tin nhắn mới",
+            "EMPTY_TITLE": "Chưa có tin nhắn nào",
+            "EMPTY_BODY": "Các cuộc trò chuyện với {name} sẽ nằm ở đây.",
+            "LOAD_FAILED": "Chưa tải được danh sách, thử lại nhé",
+            "RETRY": "Thử lại",
+            "LOAD_MORE": "Xem thêm",
+            "UNREAD": "{count} tin chưa đọc",
+            "YOU": "Bạn: {text}",
+            "PICK": "Chọn một cuộc trò chuyện",
+            "NEW_CONVERSATION": "Cuộc trò chuyện mới"
+        },
+        "HELP": {
+            "TITLE": "Trợ giúp",
+            "SEARCH": "Tìm câu trả lời",
+            "CLEAR": "Xoá từ khoá",
+            "POPULAR": "Hay được hỏi",
+            "CATEGORIES": "Danh mục",
+            "EMPTY_TITLE": "Chưa có bài viết nào",
+            "EMPTY_BODY": "Nhắn cho shop, nhân viên sẽ trả lời bạn.",
+            "LOAD_FAILED": "Chưa tải được bài viết, thử lại nhé",
+            "RESULTS": "{count} bài viết",
+            "NO_RESULTS": "Không thấy bài nào khớp “{query}”",
+            "NOT_FOUND": "Chưa thấy câu trả lời?",
+            "MESSAGE_TEAM": "Nhắn nhân viên",
+            "UPDATED": "Cập nhật {date}",
+            "READ_TIME": "{n} phút đọc",
+            "STILL_NEED_HELP": "Vẫn cần hỗ trợ? Nhắn cho shop"
+        },
+        "UPDATES": {
+            "TITLE": "Cập nhật",
+            "EMPTY_TITLE": "Chưa có tin mới",
+            "EMPTY_BODY": "Khuyến mãi, hàng mới và thông báo của {name} sẽ hiện ở đây.",
+            "LOAD_FAILED": "Chưa tải được tin, thử lại nhé",
+            "ASK": "Hỏi shop về tin này",
+            "TAG": {
+                "PROMO": "Khuyến mãi",
+                "NEW": "Sản phẩm mới",
+                "NOTICE": "Thông báo"
+            }
+        },
+        "REQUEST": {
+            "TITLE": "Gửi yêu cầu",
+            "NOTICE_TITLE": "Tính năng đang hoàn thiện",
+            "NOTICE_BODY": "Trong lúc chờ, bạn nhắn trực tiếp cho shop, nhân viên sẽ xử lý như một yêu cầu.",
+            "WARRANTY": "Bảo hành sản phẩm",
+            "WARRANTY_HINT": "Gửi ảnh lỗi, mã đơn",
+            "RETURN": "Đổi trả",
+            "RETURN_HINT": "Kèm mã đơn và lý do",
+            "INVOICE": "Xuất hoá đơn VAT",
+            "INVOICE_HINT": "Tên công ty, mã số thuế",
+            "MESSAGE_SHOP": "Nhắn cho shop"
+        },
+        "TIME": {
+            "NOW": "vừa xong",
+            "MINUTES": "{n} phút",
+            "HOURS": "{n} giờ",
+            "YESTERDAY": "Hôm qua"
+        }
+    },
+    "WIDGET_BUILDER": {
+        "COMING_SOON": "Sắp ra mắt",
+        "HEADER": {
+            "BREADCRUMB_ARIA_LABEL": "Đường dẫn",
+            "BREADCRUMB_SETTINGS": "Cài đặt",
+            "BREADCRUMB_INBOXES": "Hộp thư",
+            "TITLE": "Widget chat",
+            "UNSAVED": "Có thay đổi chưa lưu",
+            "CANCEL": "Huỷ",
+            "SAVE": "Lưu thay đổi",
+            "CONFIRM_LEAVE": "Rời trang sẽ mất các thay đổi chưa lưu. Vẫn muốn rời trang?",
+            "SAVE_SUCCESS": "Đã lưu cấu hình widget.",
+            "SAVE_ERROR": "Lưu cấu hình widget không thành công, thử lại nhé."
+        },
+        "NAV": {
+            "ARIA_LABEL": "Mục cấu hình widget",
+            "APPEARANCE": "Giao diện",
+            "HOME": "Trang chủ",
+            "CHANNELS": "Kênh khác và liên kết",
+            "CAPTURE": "Thu thông tin khách",
+            "INVITE": "Lời mời chủ động",
+            "AI": "Trợ lý AI",
+            "EMBED": "Mã nhúng"
+        },
+        "PREVIEW": {
+            "TITLE": "Xem trước",
+            "DEVICE_LABEL": "Xem trước trên",
+            "DEVICE_DESKTOP": "Máy tính",
+            "DEVICE_MOBILE": "Điện thoại",
+            "IFRAME_TITLE": "Xem trước widget"
+        },
+        "APPEARANCE": {
+            "TITLE": "Giao diện",
+            "DESCRIPTION": "Màu, launcher và vị trí trên website của bạn.",
+            "ACCENT_COLOR_LABEL": "Màu nhấn",
+            "ACCENT_COLOR_HEX_LABEL": "Mã màu (hex)",
+            "ACCENT_COLOR_CONTRAST_GOOD": "Chữ trắng đọc tốt trên màu này ({ratio}:1)",
+            "ACCENT_COLOR_CONTRAST_BAD": "Chữ trắng khó đọc trên màu này ({ratio}:1), widget sẽ tự đổi sang chữ mực",
+            "ACCENT_COLOR_INVALID": "Mã màu không hợp lệ — dùng dạng #RRGGBB",
+            "LAUNCHER_LABEL": "Kiểu launcher",
+            "LAUNCHER_ROUND": "Tròn",
+            "LAUNCHER_PILL": "Có chữ",
+            "LAUNCHER_LABEL_PLACEHOLDER": "Chat với shop",
+            "POSITION_LABEL": "Vị trí",
+            "POSITION_LEFT": "Trái",
+            "POSITION_RIGHT": "Phải",
+            "GREETING_LABEL": "Lời chào trang chủ",
+            "GREETING_HINT": "Hiện ngay dưới tên shop ở màn trang chủ widget.",
+            "GREETING_PLACEHOLDER": "Chúng tôi có thể giúp gì?"
+        },
+        "HOME": {
+            "TITLE": "Trang chủ",
+            "DESCRIPTION": "Bật tắt từng khối. Tắt hết thì widget mở thẳng vào khung chat.",
+            "ALWAYS_ON": "Luôn bật",
+            "BLOCK_MESSAGE_SHOP": "Gửi tin nhắn cho shop",
+            "BLOCK_MESSAGE_SHOP_DESCRIPTION": "Luôn hiện, kèm trạng thái và thời gian phản hồi.",
+            "BLOCK_RECENT_CONVERSATION": "Hội thoại gần nhất",
+            "BLOCK_HELP": "Tìm trợ giúp và bài nổi bật",
+            "HELP_BLOCK_CONNECTED": "Lấy từ Help Center \"{portal}\", {count} bài",
+            "HELP_BLOCK_NOT_CONNECTED": "Chưa nối Help Center — kết nối ngay",
+            "BLOCK_OTHER_CHANNELS": "Kênh khác (Zalo, Messenger, hotline)",
+            "BLOCK_CUSTOM_LINKS": "Liên kết tuỳ chỉnh",
+            "BLOCK_REQUEST": "Gửi yêu cầu theo loại",
+            "BLOCK_REQUEST_DESCRIPTION": "Khách chọn đúng loại yêu cầu (đổi trả, bảo hành…) trước khi nhắn."
+        },
+        "CHANNELS": {
+            "TITLE": "Kênh khác",
+            "DESCRIPTION": "Khách bấm vào sẽ mở đúng kênh đó. Chỉ kênh đang bật mới hiện trên trang chủ widget.",
+            "KIND_HOTLINE": "Hotline",
+            "KIND_EMAIL": "Email",
+            "KIND_CUSTOM": "Khác",
+            "VALUE_LABEL": "Địa chỉ hoặc số",
+            "ENABLED_LABEL": "Bật kênh này",
+            "MOVE_UP": "Đưa lên trên",
+            "MOVE_DOWN": "Đưa xuống dưới",
+            "REMOVE": "Xoá",
+            "ADD": "Thêm kênh",
+            "LINKS_TITLE": "Liên kết tuỳ chỉnh",
+            "LINKS_DESCRIPTION": "Tối đa {max} liên kết. Mở trong tab mới.",
+            "LINK_LABEL_LABEL": "Tên hiển thị",
+            "LINK_URL_LABEL": "Địa chỉ",
+            "ADD_LINK": "Thêm liên kết"
+        },
+        "CAPTURE": {
+            "TITLE": "Thu thông tin khách",
+            "DESCRIPTION": "Hỏi trong luồng chat sau tin đầu tiên, không chặn khách trước khi nhắn.",
+            "PHONE_LABEL": "Hỏi số điện thoại",
+            "EMAIL_LABEL": "Hỏi email"
+        },
+        "INVITE": {
+            "TITLE": "Lời mời chủ động",
+            "DESCRIPTION": "Dùng chung với chiến dịch live chat — thêm/sửa lời mời ở trang Chiến dịch.",
+            "ADD": "Thêm lời mời",
+            "EMPTY": "Hộp thư này chưa có lời mời chủ động nào.",
+            "QUICK_REPLIES_COUNT": "{count} nút trả lời nhanh",
+            "STATUS_ON": "Đang bật",
+            "STATUS_OFF": "Đang tắt",
+            "AUDIENCE_ALL": "Mọi khách",
+            "AUDIENCE_NEW": "Khách mới",
+            "AUDIENCE_RETURNING": "Khách quay lại",
+            "MANAGE_LINK": "Quản lý lời mời chủ động"
+        },
+        "AI": {
+            "TITLE": "Trợ lý AI",
+            "DESCRIPTION": "Bộ não AI chưa có trong Yona — đây là hình dung trước những gì nó sẽ làm.",
+            "FEATURE_KNOWLEDGE": "Trả lời dựa trên tài liệu và câu trả lời mẫu của shop.",
+            "FEATURE_AUTO_REPLY": "Tự trả lời khách, nhân viên vào tiếp quản khi cần.",
+            "FEATURE_HANDOFF": "Chuyển cho nhân viên khi khách muốn gặp người hoặc AI không chắc câu trả lời.",
+            "MOCK_CUSTOMER_MESSAGE": "Mua rồi mà không vừa thì đổi thế nào vậy shop?",
+            "MOCK_AI_REPLY": "Bạn được đổi trong 7 ngày kể từ khi nhận hàng, sản phẩm còn nguyên tem.",
+            "MOCK_SOURCE": "Nguồn: Đổi trả trong 7 ngày"
+        },
+        "EMBED": {
+            "TITLE": "Mã nhúng",
+            "DESCRIPTION": "Dán đoạn mã này trước thẻ </body>. Dán một lần là widget hiện trên mọi trang.",
+            "NO_LOADED_EVENT_YET": "Yona chưa ghi lại thời điểm khách mở widget lần gần nhất, nên chưa hiện được banner \"đang chạy trên…\" ở đây.",
+            "DOMAINS_LABEL": "Chỉ hiện trên các tên miền",
+            "DOMAINS_HINT": "Chặn người khác chép mã của bạn lên website của họ. Để trống là cho phép mọi tên miền.",
+            "DOMAINS_PLACEHOLDER": "Nhập tên miền, Enter để thêm",
+            "DOMAINS_ERROR": "Lưu danh sách tên miền không thành công."
+        }
+    },
+    "WIDGET_UPDATES_MGMT": {
+        "HEADER": "Bài cập nhật trên widget",
+        "HEADER_BTN_TXT": "Thêm bài cập nhật",
+        "DESCRIPTION": "Đăng khuyến mãi, hàng mới hoặc thông báo lên tab Cập nhật của widget chat trên website.",
+        "LOADING": "Đang tải bài cập nhật",
+        "SEARCH_PLACEHOLDER": "Tìm bài cập nhật...",
+        "NO_RESULTS": "Không tìm thấy bài nào khớp",
+        "LIST": {
+            "404": "Chưa có bài cập nhật nào. Thêm bài đầu tiên để khách thấy ở tab Cập nhật.",
+            "TABLE_HEADER": {
+                "COVER": "Ảnh bìa",
+                "TITLE": "Tiêu đề",
+                "TAG": "Nhãn",
+                "INBOX": "Hộp thư",
+                "STATUS": "Trạng thái",
+                "ACTION": "Hành động"
+            },
+            "ALL_INBOXES": "Mọi website",
+            "STATUS_DRAFT": "Nháp",
+            "STATUS_PUBLISHED": "Đã đăng"
+        },
+        "FORM": {
+            "TITLE": {
+                "LABEL": "Tiêu đề",
+                "PLACEHOLDER": "Giảm 15% bộ sưu tập men lam đến hết 30/09",
+                "REQUIRED_ERROR": "Tiêu đề là bắt buộc",
+                "MAX_ERROR": "Tiêu đề tối đa 120 ký tự"
+            },
+            "BODY": {
+                "LABEL": "Nội dung",
+                "PLACEHOLDER": "Mô tả chi tiết bài cập nhật. Xuống dòng sẽ giữ nguyên khi hiển thị trên widget.",
+                "MAX_ERROR": "Nội dung tối đa 5000 ký tự"
+            },
+            "TAG": {
+                "LABEL": "Nhãn"
+            },
+            "COVER": {
+                "LABEL": "Ảnh bìa",
+                "UPLOAD_BTN": "Tải ảnh lên",
+                "REPLACE_BTN": "Đổi ảnh",
+                "REMOVE_BTN": "Gỡ ảnh",
+                "UPLOAD_ERROR": "Tải ảnh lên thất bại, thử lại nhé"
+            },
+            "CTA_LABEL": {
+                "LABEL": "Chữ trên nút hành động",
+                "PLACEHOLDER": "Xem bộ sưu tập",
+                "REQUIRED_ERROR": "Cần có chữ trên nút khi đã nhập đường dẫn",
+                "MAX_ERROR": "Tối đa 40 ký tự"
+            },
+            "CTA_URL": {
+                "LABEL": "Đường dẫn khi bấm nút",
+                "PLACEHOLDER": "https://...",
+                "INVALID_ERROR": "Đường dẫn phải bắt đầu bằng http:// hoặc https://"
+            },
+            "INBOX": {
+                "LABEL": "Hiện ở hộp thư",
+                "PLACEHOLDER": "Mọi website"
+            },
+            "PREVIEW_TITLE": "Xem trước trên widget",
+            "SAVE_DRAFT": "Lưu nháp",
+            "PUBLISH": "Đăng",
+            "UNPUBLISH": "Gỡ đăng",
+            "CANCEL": "Huỷ",
+            "EDIT": "Sửa",
+            "DELETE": "Xoá"
+        },
+        "ADD": {
+            "TITLE": "Thêm bài cập nhật",
+            "DESC": "Bài mới lưu ở dạng nháp cho tới khi bạn bấm Đăng.",
+            "API": {
+                "SUCCESS_MESSAGE": "Đã lưu bài cập nhật",
+                "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
+            }
+        },
+        "EDIT": {
+            "TITLE": "Sửa bài cập nhật",
+            "API": {
+                "SUCCESS_MESSAGE": "Đã lưu thay đổi",
+                "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
+            }
+        },
+        "PUBLISH": {
+            "API": {
+                "SUCCESS_MESSAGE": "Đã đăng bài lên widget",
+                "ERROR_MESSAGE": "Đăng bài thất bại, vui lòng thử lại"
+            }
+        },
+        "UNPUBLISH": {
+            "API": {
+                "SUCCESS_MESSAGE": "Đã gỡ bài khỏi widget",
+                "ERROR_MESSAGE": "Gỡ bài thất bại, vui lòng thử lại"
+            }
+        },
+        "DELETE": {
+            "CONFIRM": {
+                "TITLE": "Xác nhận xoá",
+                "MESSAGE": "Bạn có chắc muốn xoá bài",
+                "YES": "Có, xoá",
+                "NO": "Không, giữ lại"
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Đã xoá bài cập nhật",
+                "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
+            }
         }
     }
 };

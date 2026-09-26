@@ -14,9 +14,25 @@ export interface CannedResponse {
     id: number;
     short_code: string;
     content: string;
+    // Có thì câu trả lời mẫu mang một thẻ (Gửi thẻ) thay vì chỉ chữ thuần.
+    content_type?: string | null;
+    content_attributes?: Record<string, unknown> | null;
+}
+
+export interface CannedResponsePayload {
+    short_code?: string;
+    content?: string;
+    content_type?: string;
+    content_attributes?: Record<string, unknown>;
 }
 
 export type CannedSortOrder = 'asc' | 'desc';
+
+// vuelidate: shortCode required + minLength(2) — dùng chung ở form Cài đặt lẫn
+// nút "Lưu làm câu trả lời mẫu" trong hộp thoại Gửi thẻ.
+export function isShortCodeInvalid(shortCode: string): boolean {
+    return shortCode.trim().length < 2;
+}
 
 const EMPTY_RECORDS: CannedResponse[] = [];
 
@@ -64,9 +80,9 @@ export function fetchCannedResponses(accountId: number, { force = false } = {}):
 
 export async function createCannedResponse(
     accountId: number,
-    payload: { short_code: string; content: string },
+    payload: CannedResponsePayload,
 ): Promise<CannedResponse> {
-    const created = await postJson<CannedResponse>(endpoint(accountId), payload);
+    const created = await postJson<CannedResponse>(endpoint(accountId), payload as Record<string, unknown>);
     records = [...records, created];
     notify();
     return created;
@@ -75,9 +91,9 @@ export async function createCannedResponse(
 export async function updateCannedResponse(
     accountId: number,
     id: number,
-    payload: { short_code: string; content: string },
+    payload: CannedResponsePayload,
 ): Promise<CannedResponse> {
-    const updated = await patchJson<CannedResponse>(endpoint(accountId, id), payload);
+    const updated = await patchJson<CannedResponse>(endpoint(accountId, id), payload as Record<string, unknown>);
     records = records.map(record => (record.id === updated.id ? updated : record));
     notify();
     return updated;

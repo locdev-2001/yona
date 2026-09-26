@@ -48,6 +48,36 @@ export const fetchConversationAttributes = (): Promise<{
 }> => apiGet(`${BASE}/conversations${buildSearch()}`);
 
 // endPoints.js#createConversation — tin đầu tiên đi kèm ngay trong yêu cầu tạo.
+export interface ConversationListItem {
+    id: number;
+    status: string;
+    unread_count: number;
+    last_activity_at: number | null;
+    created_at?: number;
+    assignee?: { name?: string; avatar_url?: string; availability_status?: string } | null;
+    last_message: { id: number; preview: string; message_type: number; created_at: number } | null;
+}
+
+// Tab Tin nhắn: hội thoại của khách, không lọc theo hội thoại đang mở.
+export const fetchConversationList = (page = 1): Promise<{ payload: ConversationListItem[]; meta: { has_more: boolean } }> =>
+    apiGet(`${BASE}/conversations/list${buildSearch({ page })}`);
+
+export interface WidgetUpdateItem {
+    id: number;
+    title: string;
+    tag: 'promo' | 'new' | 'notice';
+    cover_url: string | null;
+    cta: { label: string | null; url: string } | null;
+    published_at: number | null;
+    excerpt: string;
+    body?: string | null;
+}
+
+export const fetchUpdates = (page = 1): Promise<{ payload: WidgetUpdateItem[]; meta: { has_more: boolean } }> =>
+    apiGet(`${BASE}/updates${buildSearch({ page })}`);
+
+export const fetchUpdate = (id: number): Promise<WidgetUpdateItem> => apiGet(`${BASE}/updates/${id}${buildSearch()}`);
+
 export const createConversation = (params: {
     fullName?: string;
     emailAddress?: string;
@@ -55,7 +85,7 @@ export const createConversation = (params: {
     message?: string;
     contactCustomAttributes?: Record<string, unknown>;
     customAttributes?: Record<string, unknown>;
-}): Promise<{ messages?: WidgetMessage[] }> =>
+}): Promise<{ id?: number; messages?: WidgetMessage[] }> =>
     apiPost(`${BASE}/conversations${buildSearch()}`, {
         contact: {
             name: params.fullName,
@@ -119,6 +149,27 @@ export const sendSticker = (stickerId: string, replyTo: number | string | null =
 export const recallMessage = (messageId: number | string): Promise<void> =>
     apiDelete(`${BASE}/messages/${messageId}${buildSearch()}`);
 
+/** Tin có cấu trúc do khách gửi (vd `order_request`); máy chủ tự đối chiếu với thẻ gốc. */
+export const sendStructuredMessage = (contentType: string, contentAttributes: Record<string, unknown>): Promise<WidgetMessage> =>
+    apiPost(`${BASE}/messages${buildSearch()}`, {
+        message: {
+            content: '',
+            content_type: contentType,
+            content_attributes: contentAttributes,
+            timestamp: new Date().toString(),
+            referer_url: referrerUrl(),
+        },
+    });
+
+/** Link có hạn tới trang công khai của một tin (chọn lịch, form dài…), để mở trong sheet. */
+export const fetchFlowUrl = (messageId: number | string, page: string, itemId?: string): Promise<{ url: string }> =>
+    apiPost(`${BASE}/messages/${messageId}/flow${buildSearch()}`, { page, item_id: itemId });
+
+export const setMessageReaction = (messageId: number | string, emoji: string | null): Promise<unknown> =>
+    emoji
+        ? apiPost(`${BASE}/messages/${messageId}/reactions${buildSearch()}`, { emoji })
+        : apiDelete(`${BASE}/messages/${messageId}/reactions${buildSearch()}`);
+
 export const updateMessage = ({
     messageId,
     email,
@@ -127,7 +178,7 @@ export const updateMessage = ({
     messageId: number | string;
     email?: string;
     values?: unknown;
-}): Promise<{ contact: WidgetContact }> =>
+}): Promise<{ contact?: WidgetContact; submitted_values?: unknown[] | null; message?: WidgetMessage }> =>
     apiPatch(`${BASE}/messages/${messageId}${buildSearch()}`, {
         contact: { email },
         message: { submitted_values: values },

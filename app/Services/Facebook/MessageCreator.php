@@ -3,7 +3,9 @@
 namespace App\Services\Facebook;
 
 use App\Builders\Messages\Facebook\MessageBuilder;
+use App\Messaging\Delivery\ChoiceToken;
 use App\Models\Channel\FacebookPage;
+use App\Services\Messaging\ChoiceCallbackService;
 
 class MessageCreator
 {
@@ -17,6 +19,11 @@ class MessageCreator
         }
 
         $isEcho = $this->response->isEcho();
+
+        if (! $isEcho && $this->handleQuickReply()) {
+            return;
+        }
+
         $pageId = $isEcho ? $this->response->senderId() : $this->response->recipientId();
 
         FacebookPage::query()->where('page_id', $pageId)->get()
@@ -27,5 +34,24 @@ class MessageCreator
 
                 (new MessageBuilder($this->response, $page->inbox, outgoingEcho: $isEcho))->perform();
             });
+    }
+
+    // Khách bấm chip do DeliveryPlanner vẽ (Renderers\FacebookRenderer): map thẳng về tin gốc
+    // qua SubmissionService thay vì tạo tin đến mang payload thô. Payload không phải của
+    // chúng ta, hoặc câu hỏi đã được trả lời rồi, thì để rơi xuống luồng tạo tin bình thường
+    // để chữ khách bấm vẫn tới nhân viên.
+    private function handleQuickReply(): bool
+    {
+        $parsed = ChoiceToken::parseFacebook((string) $this->response->quickReplyPayload());
+        $senderId = $this->response->senderId();
+
+        if ($parsed === null || $senderId === null) {
+            return false;
+        }
+
+        return FacebookPage::query()->where('page_id', $this->response->recipientId())->get()
+            ->filter(fn (FacebookPage $page) => $page->inbox !== null)
+            ->contains(fn (FacebookPage $page) => app(ChoiceCallbackService::class)
+                ->resolve($parsed['message_id'], $parsed['value'], null, $page->inbox->id, $senderId) !== null);
     }
 }

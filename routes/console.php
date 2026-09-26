@@ -41,6 +41,9 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 // Pulse ghi thẳng vào PostgreSQL dùng chung — dọn bản ghi quá hạn mỗi giờ để
 // bảng pulse_* không phình ra cạnh dữ liệu khách.
 Schedule::command('pulse:trim')->hourly();
+
+// Ảnh thẻ gửi qua kênh không có dạng gốc (Zalo): kênh đã tải về lúc gửi, bản cache chỉ còn tốn đĩa.
+Schedule::command('messaging:prune-card-images')->dailyAt('03:40');
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');

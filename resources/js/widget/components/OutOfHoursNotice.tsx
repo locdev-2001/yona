@@ -58,6 +58,7 @@ export default function OutOfHoursNotice() {
     const [isSubmitting, setSubmitting] = useState(false);
     const [hasSaveFailed, setSaveFailed] = useState(false);
     const errorId = useId();
+    const emailId = useId();
 
     const defaultBody = [hours, reopen ? t('OUT_OF_HOURS.BODY_REOPEN', { reopen }) : t('OUT_OF_HOURS.BODY')]
         .filter(Boolean)
@@ -83,23 +84,19 @@ export default function OutOfHoursNotice() {
     };
 
     return (
-        <div className="flex flex-col justify-center flex-1 gap-[14px] px-6 py-6" data-testid="out-of-hours">
-            <span className="flex items-center justify-center size-11 rounded-[13px] bg-[var(--yona-chat-field)] text-[var(--yona-chat-ink-soft)]">
-                <span className="i-lucide-clock size-5" />
-            </span>
+        <div className="flex flex-1 flex-col gap-4 px-6 pb-6 pt-8" data-testid="out-of-hours">
+            <span aria-hidden="true" className="i-lucide-clock size-7 text-[var(--yona-chat-ink-soft)]" />
             <div>
-                <h2 className="text-base font-semibold leading-[1.35] text-[var(--yona-chat-ink)]">{t('OUT_OF_HOURS.TITLE')}</h2>
-                <p className="mt-[5px] text-[13px] leading-[1.5] whitespace-pre-line text-[var(--yona-chat-ink-soft)]">
+                <h2 className="m-0 text-[22px] font-semibold leading-[29px] tracking-[-0.01em] text-[var(--yona-chat-ink)]">{t('OUT_OF_HOURS.TITLE')}</h2>
+                <p className="mt-1.5 text-[15px] leading-[22px] whitespace-pre-line text-[var(--yona-chat-ink-soft)]">
                     {outOfOfficeMessage || defaultBody}
                 </p>
                 {outOfOfficeMessage && reopen ? (
-                    <p className="mt-1 text-[13px] leading-[1.5] text-[var(--yona-chat-ink-soft)]">
-                        {t('OUT_OF_HOURS.REOPEN', { reopen })}
-                    </p>
+                    <p className="mt-1 text-[15px] leading-[22px] text-[var(--yona-chat-ink-soft)]">{t('OUT_OF_HOURS.REOPEN', { reopen })}</p>
                 ) : null}
             </div>
             <form
-                className="flex flex-col gap-[10px]"
+                className={hasEmail ? 'flex flex-col' : 'flex flex-col gap-3 rounded-2xl bg-[var(--yona-chat-panel)] p-4 shadow-[var(--yona-chat-shadow-card)]'}
                 noValidate
                 onSubmit={event => {
                     event.preventDefault();
@@ -107,41 +104,46 @@ export default function OutOfHoursNotice() {
                 }}
             >
                 {!hasEmail ? (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[15px] font-semibold text-[var(--yona-chat-ink)]">{t('OUT_OF_HOURS.EMAIL_TITLE')}</span>
+                        <label htmlFor={emailId} className="text-[13px] text-[var(--yona-chat-ink-soft)]">
+                            {t('OUT_OF_HOURS.EMAIL_LABEL')}
+                        </label>
                         <input
+                            id={emailId}
                             type="email"
                             value={email}
                             autoComplete="email"
-                            aria-label={t('OUT_OF_HOURS.EMAIL_PLACEHOLDER')}
                             aria-invalid={hasInvalidEmail}
                             aria-describedby={hasInvalidEmail ? errorId : undefined}
                             placeholder={t('OUT_OF_HOURS.EMAIL_PLACEHOLDER')}
-                            className="reset-base w-full min-h-11 px-3 py-[11px] yona-touch-field rounded-[11px] bg-[var(--yona-chat-field)] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)] aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-[var(--yona-chat-danger)]"
+                            className="reset-base w-full min-h-11 px-3 py-[11px] yona-touch-field rounded-[11px] border border-[var(--yona-chat-line-field)] bg-[var(--yona-chat-panel)] text-[var(--yona-chat-ink)] placeholder:text-[var(--yona-chat-ink-muted)] aria-[invalid=true]:border-[var(--yona-chat-danger)]"
                             onChange={event => {
                                 setEmail(event.target.value);
                                 setInvalidEmail(false);
                             }}
                         />
                         {hasInvalidEmail ? (
-                            <p id={errorId} className="text-[11.5px] text-[var(--yona-chat-danger)]">
+                            <p id={errorId} className="text-[12px] text-[var(--yona-chat-danger)]">
                                 {t('PRE_CHAT_FORM.FIELDS.EMAIL_ADDRESS.VALID_ERROR')}
                             </p>
                         ) : null}
                     </div>
                 ) : null}
                 {hasSaveFailed ? (
-                    <p role="alert" className="text-[11.5px] leading-[1.4] text-[var(--yona-chat-danger)]">
+                    <p role="alert" className="text-[12px] leading-[1.4] text-[var(--yona-chat-danger)]">
                         {t('EMAIL_SAVE_FAILED')}
                     </p>
                 ) : null}
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full min-h-11 p-3 rounded-[11px] text-[13.5px] font-semibold leading-none bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)] disabled:opacity-60"
+                    className="w-full min-h-11 rounded-full p-3 text-[15px] font-medium leading-none bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)] active:scale-[0.97] disabled:opacity-60"
                 >
                     {t('OUT_OF_HOURS.CTA')}
                 </button>
             </form>
+            <p className="m-0 text-[14px] leading-[21px] text-[var(--yona-chat-ink-soft)]">{t('OUT_OF_HOURS.HINT')}</p>
         </div>
     );
 }

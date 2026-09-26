@@ -48,7 +48,7 @@ class SlackEventProcessor implements EventProcessor
     // không bắn job Slack ở mọi lần sửa tin." (nguyên văn comment bản gốc)
     private function onMessageUpdated(Hook $hook, Message $message, array $eventData): void
     {
-        if (! in_array($message->contentTypeName(), UpdateSlackMessageService::SUPPORTED_CONTENT_TYPES, true)) {
+        if (! UpdateSlackMessageService::isSupportedContentType($message)) {
             return;
         }
 

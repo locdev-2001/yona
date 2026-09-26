@@ -3,6 +3,8 @@ import { format, fromUnixTime } from 'date-fns';
 import { joinsPreviousMessage, resolveGroupPositions } from 'shared/helpers/messageGrouping';
 import type { GroupableMessage } from 'shared/helpers/messageGrouping';
 
+import { messageTypeFor } from 'shared/messaging';
+
 import { MESSAGE_TYPE, STANDALONE_CONTENT_TYPES } from './constants';
 import { getUuid, groupBy } from './utils';
 import type { MessageAttachment, MessagesOfDay, PositionedMessage, WidgetMessage } from '../types';
@@ -46,7 +48,10 @@ export const createTemporaryMessage = ({
 const toGroupableMessage = (message: WidgetMessage): GroupableMessage => ({
     senderKey: `${message.message_type}:${message.sender?.id ?? message.sender?.name ?? ''}`,
     createdAt: message.created_at,
-    standalone: isASubmittedFormMessage(message) || STANDALONE_CONTENT_TYPES.includes(message.content_type ?? ''),
+    standalone:
+        isASubmittedFormMessage(message) ||
+        STANDALONE_CONTENT_TYPES.includes(message.content_type ?? '') ||
+        messageTypeFor(message.content_type) !== undefined,
 });
 
 const splitIntoGroups = (messages: WidgetMessage[]): PositionedMessage[][] => {

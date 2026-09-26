@@ -20,6 +20,7 @@ export const MACRO_ACTION_TYPES: AutomationActionDefinition[] = [
     { key: 'snooze_conversation', label: 'SNOOZE_CONVERSATION', inputType: null },
     { key: 'resolve_conversation', label: 'RESOLVE_CONVERSATION', inputType: null },
     { key: 'send_message', label: 'SEND_MESSAGE', inputType: 'textarea' },
+    { key: 'send_canned_card', label: 'SEND_CANNED_CARD', inputType: 'search_select' },
     { key: 'add_private_note', label: 'ADD_PRIVATE_NOTE', inputType: 'textarea' },
     { key: 'change_priority', label: 'CHANGE_PRIORITY', inputType: 'search_select' },
 ];
@@ -80,6 +81,8 @@ export const getMacroDropdownValues = (actionName: string, optionSets: MacroOpti
         case 'add_label':
         case 'remove_label':
             return optionSets.labels;
+        case 'send_canned_card':
+            return optionSets.cannedCards;
         case 'change_priority':
             return PRIORITY_CONDITION_VALUES.map(item => ({ id: item.id, name: t(`MACROS.PRIORITY_TYPES.${item.i18nKey}`) }));
         default:

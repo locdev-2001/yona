@@ -58,6 +58,19 @@ return [
                     'PLACEHOLDER' => 'Please enter the time',
                     'ERROR' => 'Time on page is required',
                 ],
+                'QUICK_REPLIES' => [
+                    'LABEL' => 'Quick reply chips',
+                    'HINT' => 'Up to 3 chips under the invitation. Tapping one opens the chat and sends that text.',
+                    'PLACEHOLDER' => 'E.g. Is this in stock?',
+                    'ITEM' => 'Chip {index}',
+                    'ERROR' => 'Each chip is at most 40 characters and must be unique',
+                ],
+                'SHOW_TO' => [
+                    'LABEL' => 'Show to',
+                    'ALL' => 'Everyone',
+                    'NEW' => 'Visitors who never messaged',
+                    'RETURNING' => 'Visitors who messaged before',
+                ],
                 'OTHER_PREFERENCES' => [
                     'TITLE' => 'Other preferences',
                     'ENABLED' => 'Enable campaign',

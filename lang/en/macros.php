@@ -109,6 +109,7 @@ return [
         'CHANGE_STATUS' => 'Change Status',
         'SEND_ATTACHMENT' => 'Send Attachment',
         'SEND_MESSAGE' => 'Send a Message',
+        'SEND_CANNED_CARD' => 'Send a card from a canned response',
         'CHANGE_PRIORITY' => 'Change Priority',
         'ADD_PRIVATE_NOTE' => 'Add a Private Note',
         'SEND_WEBHOOK_EVENT' => 'Send Webhook Event',

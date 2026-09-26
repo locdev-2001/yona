@@ -15,6 +15,7 @@ import type { Plugin } from 'prosemirror-state';
 import { createTypingIndicator } from '@ext/utils';
 
 import CannedResponse from 'dashboard/components/widgets/conversation/CannedResponse';
+import type { CannedCardSelection } from 'dashboard/components/widgets/conversation/CannedResponse';
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import TagAgents from './TagAgents';
 import TagGroupMembers from './TagGroupMembers';
@@ -58,6 +59,8 @@ interface EditorProps {
     onTypingOff?: () => void;
     onToggleCannedMenu?: (isOpen: boolean) => void;
     onToggleUserMention?: (isOpen: boolean) => void;
+    // Chọn một câu trả lời mẫu có thẻ: gửi thẻ đó, không chèn chữ vào ô soạn.
+    onSelectCannedCard?: (selection: CannedCardSelection) => void;
     /** Có thì tệp dán (Ctrl+V) hoặc thả vào ô soạn được chuyển thành tệp đính kèm thay vì chèn vào chữ. */
     onAttachFiles?: (files: File[]) => void;
 }
@@ -160,6 +163,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         onTypingOff,
         onToggleCannedMenu,
         onToggleUserMention,
+        onSelectCannedCard,
         onAttachFiles,
     },
     ref,
@@ -536,6 +540,10 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
                     schema={schemaRef.current}
                     boundaryElement={pickerBoundaryRef?.current ?? null}
                     onReplace={insertCannedResponse}
+                    onSelectCard={selection => {
+                        removeSuggestionTrigger();
+                        onSelectCannedCard?.(selection);
+                    }}
                     onClose={dismissCannedResponses}
                     onRemoveTrigger={removeSuggestionTrigger}
                 />

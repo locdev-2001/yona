@@ -60,6 +60,12 @@ class Message extends Model
         'integrations' => 10,
         'sticker' => 11,
         'voice_call' => 12,
+        // Tin có cấu trúc (app/Messaging/Structured). Số chỉ cộng thêm, không đổi.
+        'buttons' => 13,
+        'order_status' => 14,
+        'bank_transfer' => 15,
+        'order_request' => 16,
+        'webview' => 17,
     ];
 
     public const STATUSES = [

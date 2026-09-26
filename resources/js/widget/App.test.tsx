@@ -1,5 +1,6 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { currentRoute, replaceRoute } from './router';
 
 import App, { showMessagesWhenConversationExists } from './App';
 import { IFrameHelper } from './helpers/iframe';
@@ -10,7 +11,7 @@ import type { ChannelConfig, WidgetContact, WidgetMessage } from './types';
 const anyMessage = { id: 1, content: 'hello', message_type: 0, created_at: 1 } as unknown as WidgetMessage;
 
 const goHome = () => {
-    window.location.hash = '#/';
+    replaceRoute('home');
 };
 
 // App.vue#toggle-open: mở widget ở màn hình chủ mà đã có hội thoại thì vào thẳng
@@ -30,7 +31,7 @@ describe('showMessagesWhenConversationExists', () => {
 
         showMessagesWhenConversationExists();
 
-        expect(window.location.hash).toBe('#/messages');
+        expect(currentRoute()).toBe('messages');
     });
 
     it('stays on the home view while the widget is closed', () => {
@@ -38,7 +39,7 @@ describe('showMessagesWhenConversationExists', () => {
 
         showMessagesWhenConversationExists();
 
-        expect(window.location.hash).toBe('#/');
+        expect(currentRoute()).toBe('home');
     });
 
     it('stays on the home view when the visitor has no message yet', () => {
@@ -46,17 +47,17 @@ describe('showMessagesWhenConversationExists', () => {
 
         showMessagesWhenConversationExists();
 
-        expect(window.location.hash).toBe('#/');
+        expect(currentRoute()).toBe('home');
     });
 
     it('leaves a view other than home untouched', () => {
         widgetStore.patchAppConfig({ isWidgetOpen: true });
         widgetStore.addOrUpdateMessage(anyMessage);
-        window.location.hash = '#/prechat-form';
+        replaceRoute('prechat-form');
 
         showMessagesWhenConversationExists();
 
-        expect(window.location.hash).toBe('#/prechat-form');
+        expect(currentRoute()).toBe('prechat-form');
     });
 });
 

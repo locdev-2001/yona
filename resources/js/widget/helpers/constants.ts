@@ -45,13 +45,7 @@ export const CAMPAIGN_CACHE_EXPIRY = 60 * 60 * 1000;
 export const CAMPAIGN_SNOOZE_DURATION = 60 * 60 * 1000;
 
 // Tin có khung riêng không gom nhóm với tin khác: mỗi tin tự đứng một khối.
-export const STANDALONE_CONTENT_TYPES: readonly string[] = [
-    'input_csat',
-    'input_email',
-    'input_select',
-    'form',
-    'article',
-    'cards',
-    'integrations',
-];
+// Tin không gom nhóm với bong bóng khác. Tin có cấu trúc (thẻ, chip, form…) luôn
+// đứng riêng — messageHelpers hỏi registry của message kit, danh sách này chỉ còn loại cũ.
+export const STANDALONE_CONTENT_TYPES: readonly string[] = ['input_csat', 'input_email', 'integrations'];
 

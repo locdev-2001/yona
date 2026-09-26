@@ -19,6 +19,7 @@ return [
             'CONTENT' => 'Content',
             'ACTIONS' => 'Actions',
         ],
+        'UNKNOWN_CARD_TYPE' => 'Card',
     ],
     'ADD' => [
         'TITLE' => 'Add canned response',
@@ -62,6 +63,10 @@ return [
         'API' => [
             'SUCCESS_MESSAGE' => 'Canned response is updated successfully.',
             'ERROR_MESSAGE' => 'Could not connect to the server. Please try again.',
+        ],
+        'CARD_VIEW' => [
+            'TYPE_LABEL' => 'Card type',
+            'HINT' => 'This canned response sends a card. To change the card, send a new one from a conversation and save it as a canned response.',
         ],
     ],
     'DELETE' => [

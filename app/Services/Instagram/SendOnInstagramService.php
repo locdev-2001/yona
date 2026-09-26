@@ -2,6 +2,9 @@
 
 namespace App\Services\Instagram;
 
+use App\Messaging\Delivery\DeliveryLevel;
+use App\Messaging\Delivery\DeliveryPlan;
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\Instagram;
 use App\Services\Channels\BaseSendOnChannelService;
@@ -21,14 +24,26 @@ class SendOnInstagramService extends BaseSendOnChannelService
 
     protected function performReply(): void
     {
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $this->channel()->capabilities());
+
         $payloads = [
             ...$this->message->attachments->map(fn (Attachment $attachment) => $this->attachmentParams($attachment))->all(),
-            ...(filled($this->message->content) ? [$this->messageParams()] : []),
+            ...array_map(fn (array $part) => $this->messageParams($part), $this->messageParts($plan)),
         ];
 
         foreach ($this->withMessengerReplyToOnFirst($payloads) as $payload) {
             $this->send($payload);
         }
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function messageParts(DeliveryPlan $plan): array
+    {
+        if ($plan->level === DeliveryLevel::Native) {
+            return $plan->parts;
+        }
+
+        return filled($plan->plainText()) ? [['text' => $plan->plainText()]] : [];
     }
 
     /** @param array<string, mixed> $payload */
@@ -60,12 +75,16 @@ class SendOnInstagramService extends BaseSendOnChannelService
         ChannelMessageStatus::fail($this->message, $response->json('error.code').' - '.$response->json('error.message'));
     }
 
-    /** @return array<string, mixed> */
-    private function messageParams(): array
+    /**
+     * @param  array<string, mixed>  $message  phần đã dựng bởi DeliveryPlanner (text thuần
+     *                                         hoặc payload gốc kèm quick_replies)
+     * @return array<string, mixed>
+     */
+    private function messageParams(array $message): array
     {
         return $this->withHumanAgentTag([
             'recipient' => ['id' => $this->sourceId()],
-            'message' => ['text' => $this->message->outgoingContent()],
+            'message' => $message,
         ]);
     }
 

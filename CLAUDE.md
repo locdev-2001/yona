@@ -22,9 +22,12 @@ Production chạy tại https://yona.vn. Tiếng Việt đầy đủ, ~2.2k Pest
 
 **Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · thông báo đẩy trình duyệt (Web Push, VAPID tự sinh) · 2FA, RBAC, Platform API, Super Admin.
 
+**Widget mới và tin có cấu trúc** (26/09/2026, nhánh `feat/widget-revamp`, chờ deploy): widget có Home + 4 tab (Tin nhắn nhiều hội thoại, Trợ giúp, Cập nhật), phóng to hai cột, khách thả cảm xúc · tin có cấu trúc một lõi (`app/Messaging/Structured`, `shared/messaging`): trả lời nhanh, thẻ sản phẩm + đặt mua chọn biến thể, chọn lịch, form, tra đơn, **thẻ chuyển khoản VietQR** + đánh dấu đã nhận · kênh không có nút gốc tự hạ cấp (Zalo nhận ảnh thẻ + chữ + danh sách số, khách **trả lời bằng số**) · trang công khai theo token `/m/{token}` hạn 14 ngày · lời mời chủ động có chip · màn cấu hình Widget chat xem trước bằng widget thật. Kiến trúc: `docs/system-architecture.md` §3.
+
 **KHÔNG có trong code — đừng viết marketing hay code dựa trên chúng:**
 - **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. Landing đã sửa ngày 24/09 để không hứa nữa; `tests/Feature/Public/LandingClaimsTest.php` chặn tái phát.
-- **Gói cước, thanh toán, entitlements** — chưa có gì.
+- **Gói cước, thanh toán, entitlements** — chưa có gì (thẻ chuyển khoản VietQR là khách trả tiền cho shop, không phải Yona thu tiền).
+- **Trợ lý AI trong widget** — chưa có bộ não; tab Trợ lý AI ở màn cấu hình chỉ ghi "Sắp ra mắt".
 - **Bộ đếm hội thoại (metering)** — `MeteringService` đã bỏ khi viết lại; chỉ còn số đếm của báo cáo.
 - **Messenger, Instagram, WhatsApp Cloud, TikTok** — có wizard nhưng cần Meta App + App Review đứng tên Yona (#57).
 

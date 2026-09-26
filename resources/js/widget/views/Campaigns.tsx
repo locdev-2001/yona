@@ -28,6 +28,10 @@ export default function Campaigns() {
                 },
             ]}
             unreadMessageCount={0}
+            quickReplies={campaign?.quick_replies ?? []}
+            onQuickReply={reply =>
+                emitter.emit(WIDGET_BUS_EVENTS.ON_CAMPAIGN_MESSAGE_CLICK, { campaignId: campaign?.id, firstMessage: reply })
+            }
             onClose={closeFullView}
         />
     );

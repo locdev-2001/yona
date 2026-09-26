@@ -96,10 +96,14 @@ function UnreadMessage({
 export default function UnreadMessageList({
     messages,
     unreadMessageCount,
+    quickReplies = [],
+    onQuickReply,
     onClose,
 }: {
     messages: UnreadListMessage[];
     unreadMessageCount: number;
+    quickReplies?: string[];
+    onQuickReply?: (reply: string) => void;
     onClose: () => void;
 }) {
     const channelConfig = useWidgetState(state => state.channelConfig);
@@ -127,6 +131,21 @@ export default function UnreadMessageList({
                         inboxAvatarUrl={channelConfig?.avatarUrl ?? ''}
                     />
                 ))}
+                {quickReplies.length && onQuickReply ? (
+                    // Nằm trong .unread-messages để SDK tính đủ chiều cao khung khi mở lời mời.
+                    <div className="yona-invite-replies mt-2 flex flex-wrap gap-1.5 ltr:justify-end rtl:justify-start">
+                        {quickReplies.map(reply => (
+                            <button
+                                key={reply}
+                                type="button"
+                                className="min-h-10 rounded-full border border-[var(--yona-chat-line-field)] bg-[var(--yona-chat-panel)] px-3.5 py-2 text-[14px] font-medium leading-none text-[var(--yona-chat-ink)] shadow-[var(--yona-chat-shadow-chip)] active:scale-95"
+                                onClick={() => onQuickReply(reply)}
+                            >
+                                {reply}
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
             </div>
 
             <div className="open-read-view-wrap">

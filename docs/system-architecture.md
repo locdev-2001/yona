@@ -42,25 +42,54 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
 
 ### Tin nhắn có cấu trúc và hạ cấp theo kênh
 
-> Chốt 25/09/2026, **chưa có trong code**. Kế hoạch:
-> `plans/260925-1556-widget-market-review/plan.md`.
+Tin đặc biệt (trả lời nhanh, nút, thẻ sản phẩm, yêu cầu đặt hàng, tra đơn, form,
+mở trang, chuyển khoản…) là **payload có cấu trúc**: `content_type` +
+`content_attributes`, vẽ native từ payload, không render tin bằng iframe.
 
-- Tin đặc biệt (trả lời nhanh, nút, thẻ sản phẩm, đơn hàng, chuyển khoản, form…)
-  là **payload có cấu trúc**: `content_type` + `content_attributes`. Widget render
-  native từ payload, **không** render tin bằng iframe.
-- Luồng dài (form nhiều bước, tra đơn, chọn lịch, thanh toán) là **trang công
-  khai trên domain Yona**, định danh bằng token khó đoán và có hạn, như trang
-  CSAT. Widget mở trang đó trong sheet iframe cùng domain (`sandbox`, không nạp
-  URL do tenant nhập); kênh khác nhận link tới cùng trang.
-- Kênh không hiển thị được payload thì **hạ cấp theo `CapabilitySet`**, không rẽ
-  nhánh theo `content_type` trong từng adapter:
-  1. dạng gốc của kênh (template, quick reply, inline keyboard);
-  2. không có thì ảnh render từ chính component thẻ (Chromium, cache theo mã
-     băm nội dung, queue `low`, lỗi thì bỏ qua ảnh) + chữ thuần có link;
-  3. lựa chọn thành danh sách đánh số. Khách trả lời bằng số thì map về lựa
-     chọn; số lạ hoặc chữ tự do chuyển thẳng nhân viên.
-- Luôn kèm chữ thuần cho kênh không nhận ảnh và cho trình đọc màn hình. Mỗi lần
-  hạ cấp ghi log kênh và mức hạ để biết khách nào nhận bản kém.
+**Lõi (một nguồn cho mọi mặt tiền):**
+- `app/Messaging/Structured/`: mỗi loại tin là một class `StructuredType`
+  (`rules()`, `normalize()`, `plainText()`, `previewText()`, `choices()`,
+  `needsPublicPage()`), đăng ký ở `config/messaging.php` → `structured_types`.
+  `StructuredTypeRegistry::prepare()` kiểm và chuẩn hoá lúc tạo tin (API trả 422
+  kèm lý do); `read()` đọc lại payload đã lưu (`PayloadContext::$fromStorage`).
+  Máy chủ không tin dữ liệu client khai: giá, tên, ảnh của yêu cầu đặt hàng lấy từ
+  thẻ gốc; số tài khoản, mã VietQR của thẻ chuyển khoản dựng từ `PaymentAccount`
+  lúc gửi và giữ nguyên bản chụp khi đọc lại.
+- `SubmissionService`: ghi câu trả lời của khách (`submitted_values`) có khoá
+  dòng, chống trả lời hai lần.
+- `resources/js/shared/messaging/`: message kit dùng chung widget, hộp thư và
+  trang công khai. Mỗi loại một file trong `types/` + một dòng trong `index.ts`.
+  Mặt tiền quyết side effect qua `MessageHost` (widget: gửi, mở sheet; hộp thư:
+  chỉ xem).
+- **Thêm một loại tin:** một class PHP + một dòng config, một file TS + một dòng
+  `index.ts`. Không sửa lõi, không thêm nhánh `content_type` ở adapter hay giao diện.
+
+**Hạ cấp theo kênh** (`app/Messaging/Delivery/DeliveryPlanner`, nơi duy nhất quyết
+định; `SendOn*Service` chỉ hỏi planner rồi gửi):
+1. `native`: kênh có renderer gốc (`config/messaging.php` → `delivery_renderers`,
+   khoá theo class kênh: Facebook quick reply/template, Telegram inline keyboard,
+   LINE Flex). Lựa chọn quay về qua `ChoiceCallbackService`, kiểm đúng hộp thư và
+   đúng người nhận của tin.
+2. `image_text`: kênh nhận ảnh nhưng không có dạng gốc (Zalo cá nhân): ảnh thẻ vẽ
+   bằng satori + resvg ở bridge (`POST /render/card`, cache theo mã băm payload
+   trên disk `public`, lỗi thì bỏ ảnh), kèm bản chữ.
+3. `text_numbered` / `text`: chữ thuần, lựa chọn thành danh sách đánh số, kèm link
+   trang công khai khi loại tin cần.
+- Mức đã gửi ghi ở `content_attributes.delivery`; hộp thư hiện ghi chú khi khách
+  nhận bản kém hơn dạng gốc. Log `messaging.delivery.degraded`.
+- Khách gõ số (`ChoiceReplyResolver`, listener `message.created`): chỉ map khi
+  tin gốc đã tới khách dạng danh sách số, trong 24 giờ, chưa trả lời; số lạ hoặc
+  chữ tự do đi thẳng tới nhân viên. Tin khách mang `choice_of` để hộp thư hiện
+  "Trả lời cho…".
+
+**Trang công khai theo token** (`/m/{token}`, SPA `resources/js/flows/`):
+- `PublicFlowService` phát token 32 byte (DB chỉ lưu sha256), hạn 14 ngày; trang
+  chọn lịch/form khoá token sau khi gửi. Token sai, hết hạn, đã dùng đều 404 như nhau.
+- Widget xin link qua `POST /api/v1/widget/messages/{id}/flow` rồi mở trong sheet
+  iframe; trang báo kết quả bằng `postMessage` tiền tố `yona-flow:`, widget chỉ
+  nhận từ chính origin. Kênh khác nhận cùng link trong bản chữ.
+- `frame-ancestors` giống hệt widget (kênh website chưa khai domain thì không gửi
+  header), trang gắn `noindex`. Gửi form có hạn mức theo token và IP.
 
 ## 4. Realtime
 

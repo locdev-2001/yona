@@ -2,6 +2,7 @@
 
 namespace App\Services\Zalo;
 
+use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Message;
@@ -217,10 +218,28 @@ class SendOnZaloService extends BaseSendOnChannelService
 
         $attachments = $this->sendableAttachments();
         $nativeForward = $attachments === [] ? $this->nativeForwardReference($channel) : null;
-        $text = $this->message->outgoingContent();
+        $plan = app(DeliveryPlanner::class)->plan($this->message, $channel->capabilities());
+        // Zalo cá nhân không có chip/nút: tin có lựa chọn hạ xuống chữ kèm danh sách đánh số.
+        $text = $plan->plainText() ?? $this->message->outgoingContent();
 
         if ($nativeForward !== null) {
             return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward])];
+        }
+
+        // 6b: mức image_text (không có tệp đính kèm thật) — gửi ảnh thẻ (satori) như
+        // MỘT đính kèm mang chữ, cùng khuôn với nhánh đính kèm thật bên dưới (Zalo
+        // không có khung thẻ riêng để vẽ tiêu đề/giá/nút).
+        if ($attachments === [] && $plan->imageUrl() !== null) {
+            return [$this->part([
+                ...$thread,
+                'text' => $text,
+                'quote' => $this->quotePayload(),
+                'mentions' => $this->mentionsPayload($channel, $text),
+                'file_url' => $plan->imageUrl(),
+                'media_kind' => 'image',
+                'filename' => 'the.png',
+                'content_type' => 'image/png',
+            ])];
         }
 
         if ($attachments === []) {

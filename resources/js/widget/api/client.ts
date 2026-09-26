@@ -34,9 +34,17 @@ const writeStoredSession = (session: StoredVisitorSession): void => {
     }
 };
 
+// Xem trước trong dashboard: không ghi gì lên máy chủ, không lưu phiên (dashboard và widget
+// cùng domain, lưu thì phiên xem trước lẫn vào phiên khách thật trên cùng trình duyệt).
+let previewMode = false;
+
+export const setPreviewMode = (enabled: boolean): void => {
+    previewMode = enabled;
+};
+
 export const setAuthToken = (token: string): void => {
     authToken = token;
-    writeStoredSession({ ...readStoredSession(), authToken: token });
+    if (!previewMode) writeStoredSession({ ...readStoredSession(), authToken: token });
 };
 
 // Token lúc widget khởi động: token SDK gắn vào URL (cookie trang chủ) trước, rồi tới token widget
@@ -67,11 +75,26 @@ export const setLocale = (value: string): void => {
     locale = value;
 };
 
+/**
+ * Hội thoại đang mở: display_id, `'new'` (sắp mở hội thoại mới — tin đầu tiên tạo
+ * nó), hoặc null (chưa chọn → server dùng hội thoại mới nhất như widget đời cũ).
+ * Nơi DUY NHẤT gắn `conversation_id` vào request.
+ */
+export type ActiveConversation = number | string | 'new' | null;
+let activeConversation: ActiveConversation = null;
+
+export const setActiveConversation = (conversation: ActiveConversation): void => {
+    activeConversation = conversation === '' ? null : conversation;
+};
+
+export const getActiveConversation = (): ActiveConversation => activeConversation;
+
 // buildSearchParamsWithLocale: mọi request mang website_token, thêm locale khi có.
 export const buildSearch = (extra: Record<string, string | number | undefined> = {}): string => {
     const params = new URLSearchParams();
     if (websiteToken) params.set('website_token', websiteToken);
     if (locale) params.set('locale', locale);
+    if (activeConversation !== null) params.set('conversation_id', String(activeConversation));
     Object.entries(extra).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
     });
@@ -88,7 +111,14 @@ export class WidgetApiError extends Error {
     }
 }
 
+// /config chỉ đọc (dù là POST): xem trước vẫn cần nó để có màu, tên, Help Center của hộp thư.
+const PREVIEW_READ_ONLY_POSTS = ['/api/v1/widget/config'];
+
 async function request<T>(url: string, method: string, body?: BodyInit, contentType?: string): Promise<T> {
+    if (previewMode && method !== 'GET' && !PREVIEW_READ_ONLY_POSTS.some(path => url.startsWith(path))) {
+        throw new WidgetApiError(423, { code: 'preview_read_only' });
+    }
+
     const response = await fetch(url, {
         method,
         headers: {

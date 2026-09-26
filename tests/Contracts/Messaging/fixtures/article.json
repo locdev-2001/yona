@@ -1,0 +1,43 @@
+{
+  "content_type": "article",
+  "valid": [
+    {
+      "name": "bài đời cũ dùng link",
+      "content": null,
+      "attributes": {
+        "items": [
+          {
+            "title": "Chính sách đổi trả trong 7 ngày",
+            "description": "Trợ giúp · 2 phút đọc",
+            "link": "https://gommoc.vn/hc/doi-tra"
+          }
+        ]
+      },
+      "normalized": {
+        "items": [
+          {
+            "title": "Chính sách đổi trả trong 7 ngày",
+            "description": "Trợ giúp · 2 phút đọc",
+            "url": "https://gommoc.vn/hc/doi-tra"
+          }
+        ]
+      },
+      "plain_text": "Chính sách đổi trả trong 7 ngày: https://gommoc.vn/hc/doi-tra",
+      "preview_text": "Chính sách đổi trả trong 7 ngày",
+      "choices": []
+    }
+  ],
+  "invalid": [
+    {
+      "name": "thiếu đường dẫn",
+      "content": null,
+      "attributes": {
+        "items": [
+          {
+            "title": "A"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -79,6 +79,12 @@ function findInReplyTo(
     return messages.find(candidate => candidate.id === inReplyToId) ?? replyTargets.get(inReplyToId);
 }
 
+function findChoiceOf(message: ConversationMessage, messages: ConversationMessage[]): ConversationMessage | null {
+    const questionId = Number(message.content_attributes?.choice_of);
+
+    return questionId ? (messages.find(candidate => candidate.id === questionId) ?? null) : null;
+}
+
 const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function MessageList(
     {
         messages,
@@ -128,6 +134,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                         groupPosition={groupPositions[index]}
                         resolveReactorName={resolveReactorName}
                         inReplyTo={findInReplyTo(message, messages, replyTargets)}
+                        choiceOf={findChoiceOf(message, messages)}
                         onRetry={onRetry}
                         onToggleReaction={onToggleReaction}
                         onDeleteMessage={onDeleteMessage}

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Widget;
 use App\Actions\ContactIdentifyAction;
 use App\Builders\Messages\MessageBuilder;
 use App\Http\Resources\Widget\WidgetConversationResource;
+use App\Messaging\MessagePreview;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Services\Conversations\TypingStatusManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,9 +16,38 @@ use Illuminate\Support\Facades\DB;
 
 class ConversationsController extends WidgetController
 {
+    public const LIST_PER_PAGE = 20;
+
     public function index(Request $request): JsonResponse
     {
         return response()->json((object) WidgetConversationResource::summary($this->conversation($request)));
+    }
+
+    /**
+     * Tab Tin nhắn: mọi hội thoại của khách, mới hoạt động nhất trước, kèm tin
+     * cuối (không bao giờ là ghi chú nội bộ) và số tin shop gửi khách chưa đọc.
+     */
+    public function list(Request $request, MessagePreview $preview): JsonResponse
+    {
+        if ($this->contactInbox($request) === null) {
+            return response()->json(['payload' => [], 'meta' => ['has_more' => false]]);
+        }
+
+        $conversations = $this->conversationsQuery($request)
+            ->with('assignee')
+            ->withCount(['messages as contact_unread_count' => fn ($query) => $query
+                ->whereIn('message_type', [Message::TYPE_OUTGOING, Message::TYPE_TEMPLATE])
+                ->where('private', false)
+                ->whereRaw("messages.created_at > coalesce(conversations.contact_last_seen_at, 'epoch'::timestamp)")])
+            ->reorder()->orderByDesc('last_activity_at')->orderByDesc('id')
+            ->paginate(self::LIST_PER_PAGE);
+
+        return response()->json([
+            'payload' => $conversations->getCollection()
+                ->map(fn (Conversation $conversation) => WidgetConversationResource::listItem($conversation, $preview))
+                ->values(),
+            'meta' => ['has_more' => $conversations->hasMorePages()],
+        ]);
     }
 
     public function store(Request $request): JsonResponse

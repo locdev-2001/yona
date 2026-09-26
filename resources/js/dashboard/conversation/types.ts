@@ -56,6 +56,8 @@ export interface ConversationMessage {
     content_type: string;
     status: string | null;
     content_attributes: Record<string, unknown>;
+    /** Dòng xem trước máy chủ dựng cho tin có cấu trúc; null với tin thường. */
+    preview_text?: string | null;
     created_at: number;
     private: boolean;
     source_id: string | null;

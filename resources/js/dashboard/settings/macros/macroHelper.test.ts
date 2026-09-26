@@ -26,6 +26,7 @@ const optionSets: MacroOptionSets = {
         { id: 'billing', name: 'billing' },
         { id: 'spam', name: 'spam' },
     ],
+    cannedCards: [{ id: 9, name: '/ck-tra-truoc' }],
 };
 
 describe('emptyMacro', () => {
@@ -80,6 +81,10 @@ describe('getMacroDropdownValues', () => {
     it('returns labels for both label actions', () => {
         expect(getMacroDropdownValues('add_label', optionSets)).toEqual(optionSets.labels);
         expect(getMacroDropdownValues('remove_label', optionSets)).toEqual(optionSets.labels);
+    });
+
+    it('returns the canned responses that carry a card for send_canned_card', () => {
+        expect(getMacroDropdownValues('send_canned_card', optionSets)).toEqual(optionSets.cannedCards);
     });
 
     it('translates the priority values', () => {

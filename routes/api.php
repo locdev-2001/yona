@@ -24,8 +24,11 @@ use App\Http\Controllers\Widget\DirectUploadsController;
 use App\Http\Controllers\Widget\EventsController;
 use App\Http\Controllers\Widget\InboxMembersController;
 use App\Http\Controllers\Widget\LabelsController;
+use App\Http\Controllers\Widget\MessageFlowLinksController;
 use App\Http\Controllers\Widget\MessagesController;
 use App\Http\Controllers\Widget\PresenceController;
+use App\Http\Controllers\Widget\ReactionsController;
+use App\Http\Controllers\Widget\UpdatesController;
 use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveOrCreateWidgetContact;
@@ -45,7 +48,11 @@ Route::middleware(ResolveWidgetChannel::class)
         Route::post('/config', [ConfigsController::class, 'store']);
         Route::get('/inbox_members', [InboxMembersController::class, 'index']);
         Route::get('/campaigns', [CampaignsController::class, 'index']);
+        Route::get('/updates', [UpdatesController::class, 'index']);
+        Route::get('/updates/{updateId}', [UpdatesController::class, 'show'])->whereNumber('updateId');
         Route::post('/events', [EventsController::class, 'store']);
+        // Tab Tin nhắn: khách mới (chưa nhắn tin nào, chưa có contact) thấy danh sách rỗng, không 404.
+        Route::get('/conversations/list', [ConversationsController::class, 'list']);
 
         // Hành động THẬT đầu tiên của khách — dựng contact_inbox lazy nếu chưa có.
         Route::middleware(ResolveOrCreateWidgetContact::class)->group(function () {
@@ -63,6 +70,10 @@ Route::middleware(ResolveWidgetChannel::class)
             Route::get('/messages', [MessagesController::class, 'index']);
             Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
             Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
+            Route::post('/messages/{messageId}/reactions', [ReactionsController::class, 'store'])->whereNumber('messageId');
+            Route::delete('/messages/{messageId}/reactions', [ReactionsController::class, 'destroy'])->whereNumber('messageId');
+            // Sheet trong widget xin URL trang công khai thay vì tự ghép.
+            Route::post('/messages/{messageId}/flow', [MessageFlowLinksController::class, 'store'])->whereNumber('messageId');
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);

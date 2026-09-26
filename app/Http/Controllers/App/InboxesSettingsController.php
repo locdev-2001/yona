@@ -65,6 +65,19 @@ class InboxesSettingsController extends Controller
         ]);
     }
 
+    // Màn "Widget chat" (nhóm D, phase 7) — chỉ hộp thư kênh website mới có
+    // launcher/trang chủ/kênh khác để cấu hình.
+    public function widgetBuilder(Account $account, int $inboxId): Response
+    {
+        $inbox = $account->inboxes()->whereKey($inboxId)->firstOrFail();
+
+        abort_unless($inbox->isWebWidget(), 404);
+
+        return Inertia::render('dashboard/settings/inboxes/widget-builder/WidgetBuilderPage', [
+            'inboxId' => $inbox->id,
+        ]);
+    }
+
     private function fetchInboxId(Account $account, int $inboxId): int
     {
         return $account->inboxes()->whereKey($inboxId)->firstOrFail()->id;

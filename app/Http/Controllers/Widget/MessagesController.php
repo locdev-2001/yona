@@ -8,9 +8,11 @@ use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Resources\Widget\WidgetMessageResource;
+use App\Messaging\Structured\InvalidStructuredPayload;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Support\SubmittedValues;
+use App\Services\Messaging\SubmissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,28 +67,33 @@ class MessagesController extends WidgetController
         return response()->json(WidgetMessageResource::created($message));
     }
 
-    public function update(Request $request, int $messageId): JsonResponse
+    public function update(Request $request, int $messageId, SubmissionService $submissions): JsonResponse
     {
         $message = $this->fetchVisitorMessage($request, $messageId);
+
+        $reply = null;
 
         try {
             if ($message->contentTypeName() === 'input_email') {
                 $this->submitEmail($request, $message);
             } else {
-                $message->update([
-                    'content_attributes' => [
-                        ...($message->content_attributes ?? []),
-                        'submitted_values' => SubmittedValues::permit($request->input('message.submitted_values')),
-                    ],
-                ]);
+                $reply = $submissions->submit($message, $request->input('message.submitted_values'));
             }
+        } catch (InvalidStructuredPayload $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
         } catch (Throwable $exception) {
             return response()->json(['error' => [], 'message' => $exception->getMessage()], 500);
         }
 
         $contact = $this->contact($request);
 
-        return response()->json($contact === null ? [] : ['contact' => $contact->attributesToArray()]);
+        // Trả luôn tin trả lời vừa tạo và câu trả lời đã ghi: widget hiện ngay tin của khách thay
+        // cho hàng chip, không phải đợi realtime.
+        return response()->json([
+            ...($contact === null ? [] : ['contact' => $contact->attributesToArray()]),
+            'submitted_values' => $message->fresh()->content_attributes['submitted_values'] ?? null,
+            ...($reply === null ? [] : ['message' => WidgetMessageResource::listItem($reply)]),
+        ]);
     }
 
     /**
@@ -128,8 +135,19 @@ class MessagesController extends WidgetController
     protected function messageParams(Request $request, Conversation $conversation): array
     {
         $params = parent::messageParams($request, $conversation);
+        $contentType = $request->input('message.content_type');
 
-        if ($request->input('message.content_type') !== 'sticker') {
+        if ($this->contactMaySend($contentType)) {
+            $attributes = $request->input('message.content_attributes');
+
+            return [
+                ...$params,
+                'content_type' => $contentType,
+                'content_attributes' => [...(is_array($attributes) ? $attributes : []), ...$params['content_attributes']],
+            ];
+        }
+
+        if ($contentType !== 'sticker') {
             return $params;
         }
 
@@ -140,6 +158,14 @@ class MessagesController extends WidgetController
             'content_type' => 'sticker',
             'sticker_id' => is_scalar($stickerId) ? (string) $stickerId : null,
         ];
+    }
+
+    /** Loại tin có cấu trúc mà khách được gửi (vd yêu cầu đặt hàng), theo khai báo của chính loại đó. */
+    private function contactMaySend(mixed $contentType): bool
+    {
+        $type = is_string($contentType) ? app(StructuredTypeRegistry::class)->for($contentType) : null;
+
+        return $type !== null && in_array(Message::TYPE_INCOMING, $type->allowedMessageTypes(), true);
     }
 
     // prevent_reply_to_resolved_conversation — ẩn ô soạn tin ở FE không chặn

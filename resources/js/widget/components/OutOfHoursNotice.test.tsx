@@ -110,7 +110,7 @@ describe('ngoài giờ hỗ trợ', () => {
         document.body.insertAdjacentHTML('beforeend', '<textarea id="chat-input"></textarea>');
 
         render(<OutOfHoursNotice />);
-        const emailField = screen.getByRole('textbox', { name: 'Email to receive our reply' });
+        const emailField = screen.getByRole('textbox', { name: 'Your email' });
         fireEvent.change(emailField, { target: { value: 'khach@shop.vn' } });
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Leave a message' })));
 

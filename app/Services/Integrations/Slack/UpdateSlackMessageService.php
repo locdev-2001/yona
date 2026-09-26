@@ -2,17 +2,19 @@
 
 namespace App\Services\Integrations\Slack;
 
+use App\Messaging\Structured\StructuredType;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Integrations\Hook;
 use App\Models\Message;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-// Khi khách trả lời một tin nhắn tương tác (select/form/CSAT/email) đã gửi ra
-// Slack, cập nhật LẠI đúng tin đó với câu trả lời đã chọn.
+// Khi khách trả lời một tin nhắn tương tác (select/form/thẻ/CSAT/email) đã gửi
+// ra Slack, cập nhật LẠI đúng tin đó với câu trả lời đã chọn.
 class UpdateSlackMessageService
 {
-    public const SUPPORTED_CONTENT_TYPES = ['input_select', 'form', 'input_csat', 'input_email'];
+    // Hai loại này không nằm trong StructuredTypeRegistry (khảo sát CSAT, thu thập email).
+    private const NON_REGISTRY_CONTENT_TYPES = ['input_csat', 'input_email'];
 
     public function __construct(
         private readonly Message $message,
@@ -48,11 +50,18 @@ class UpdateSlackMessageService
         }
     }
 
+    /** Tin có thể cập nhật lại trên Slack: loại tin có lõi cấu trúc, hoặc CSAT/email (không qua registry). */
+    public static function isSupportedContentType(Message $message): bool
+    {
+        return in_array($message->contentTypeName(), self::NON_REGISTRY_CONTENT_TYPES, true)
+            || app(StructuredTypeRegistry::class)->for($message->contentTypeName()) !== null;
+    }
+
     private function isUpdateable(): bool
     {
         return filled($this->hook->reference_id)
             && filled($this->slackMessageTs())
-            && in_array($this->message->contentTypeName(), self::SUPPORTED_CONTENT_TYPES, true)
+            && self::isSupportedContentType($this->message)
             && (filled($this->message->content_attributes['submitted_values'] ?? null)
                 || filled($this->message->content_attributes['submitted_email'] ?? null));
     }
@@ -74,24 +83,28 @@ class UpdateSlackMessageService
 
     private function formattedResponse(): ?string
     {
+        $type = app(StructuredTypeRegistry::class)->for($this->message->contentTypeName());
+
+        if ($type !== null) {
+            return $this->formatStructuredResponse($type);
+        }
+
         return match ($this->message->contentTypeName()) {
-            'input_select' => $this->formatInputSelectResponse(),
-            'form' => $this->formatFormResponse(),
             'input_csat' => $this->formatCsatResponse(),
             'input_email' => $this->formatEmailResponse(),
             default => null,
         };
     }
 
-    private function formatInputSelectResponse(): ?string
+    private function formatStructuredResponse(StructuredType $type): ?string
     {
-        $item = ($this->message->content_attributes['submitted_values'] ?? [])[0] ?? null;
+        $submitted = $this->message->content_attributes['submitted_values'] ?? null;
 
-        if (blank($item)) {
+        if (blank($submitted)) {
             return null;
         }
 
-        $value = $this->sanitize($item['title'] ?? $item['value'] ?? null);
+        $value = $this->sanitize($type->submissionText($submitted));
 
         return blank($value) ? null : "*Response:* {$value}";
     }
@@ -101,39 +114,6 @@ class UpdateSlackMessageService
         $email = $this->sanitize($this->message->content_attributes['submitted_email'] ?? null);
 
         return blank($email) ? null : "*Email:* {$email}";
-    }
-
-    private function formatFormResponse(): ?string
-    {
-        $submittedValues = $this->message->content_attributes['submitted_values'] ?? [];
-
-        if (blank($submittedValues)) {
-            return null;
-        }
-
-        $itemsByName = collect($this->message->content_attributes['items'] ?? [])
-            ->keyBy(fn (array $item) => $item['name'] ?? null);
-
-        $lines = collect($submittedValues)
-            ->map(fn (array $submittedValue) => $this->formatFormLine($submittedValue, $itemsByName))
-            ->filter()
-            ->values();
-
-        return $lines->isEmpty() ? null : "*Responses:*\n".$lines->implode("\n");
-    }
-
-    private function formatFormLine(array $submittedValue, Collection $itemsByName): ?string
-    {
-        $name = $submittedValue['name'] ?? null;
-        $value = $this->sanitize($submittedValue['value'] ?? null);
-
-        if (blank($value)) {
-            return null;
-        }
-
-        $label = $this->sanitize($itemsByName->get($name)['label'] ?? $name);
-
-        return blank($label) ? null : "• {$label}: {$value}";
     }
 
     private function formatCsatResponse(): ?string

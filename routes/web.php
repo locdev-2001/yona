@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\SessionsController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalPagesController;
+use App\Http\Controllers\Public\FlowsController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -106,6 +107,11 @@ Route::get('/survey/responses/{uuid}', fn () => view('survey', ['globalConfig' =
     'INSTALLATION_NAME' => config('yona.branding.installation_name'),
 ]]))->name('survey_response');
 
+// Trang công khai theo token (`/m/{token}`, phase-05 §C) — link Yona gửi kèm tin
+// Zalo/SMS khi kênh không vẽ được thẻ gốc (schedule, form dài, theo dõi đơn,
+// chuyển khoản, chi tiết sản phẩm). Token sai/hết hạn/đã dùng: 404 ở FlowsController.
+Route::get('/m/{token}', [FlowsController::class, 'page'])->where('token', '[0-9A-Za-z]+')->name('flows.page');
+
 Route::middleware('guest')->group(function () {
     Route::get('/app/login', [SessionsController::class, 'create'])->name('login');
     Route::post('/app/login', [SessionsController::class, 'store']);
@@ -174,6 +180,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/labels/list', fn (Account $account) => Inertia::render('dashboard/settings/labels/Index'))
                 ->name('settings_labels_list');
 
+            // Trang "Bài cập nhật trên widget" (tab Cập nhật của widget) — administrator only.
+            Route::get('/settings/widget-updates', fn (Account $account) => Inertia::render('dashboard/settings/widgetUpdates/Index'))
+                ->name('settings_widget_updates');
+            // Chuyển khoản (Cài đặt / Tài khoản / Chuyển khoản): quản trị viên cấu
+            // hình tài khoản nhận tiền + mã QR VietQR.
+            Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
+                ->name('settings_payment_accounts');
+
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
             Route::get('/settings/teams/new', [TeamsSettingsController::class, 'create'])->name('settings_teams_new');
@@ -208,6 +222,10 @@ Route::middleware('auth')->group(function () {
             });
             Route::get('/settings/inboxes/new/{subPage}', [InboxesSettingsController::class, 'newChannel'])
                 ->where('subPage', '[a-z_]+')->name('settings_inboxes_page_channel');
+            // Màn "Widget chat" (nhóm D) — trang riêng, không phải tab của Show.tsx.
+            // Đăng ký trước route {tab?} bên dưới vì "widget" cũng khớp regex tab đó.
+            Route::get('/settings/inboxes/{inboxId}/widget', [InboxesSettingsController::class, 'widgetBuilder'])
+                ->whereNumber('inboxId')->name('settings_inbox_widget_builder');
             Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
 

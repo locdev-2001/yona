@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGE_TYPE } from '../helpers/constants';
 import { widgetStore } from '../store/widgetStore';
 import ConversationWrap from './ConversationWrap';
+import WidgetMessageHost from '../messaging/WidgetMessageHost';
 import type { WidgetMessage } from '../types';
 
 const agent = { id: 9, name: 'Robert' };
@@ -106,7 +107,7 @@ describe('ConversationWrap', () => {
         expect(deleted[1].textContent).toBe('You unsent a message');
     });
 
-    it('sticker đứng trần, thẻ cards thành carousel 190px', () => {
+    it('sticker đứng trần; thẻ cards đời cũ (type/text/uri) vẫn thành băng trượt của message kit', () => {
         load([
             visitorMessage(1, BASE, {
                 content: null,
@@ -124,12 +125,16 @@ describe('ConversationWrap', () => {
                 },
             }),
         ]);
-        const { container } = render(<ConversationWrap />);
+        const { container } = render(
+            <WidgetMessageHost>
+                <ConversationWrap />
+            </WidgetMessageHost>,
+        );
 
         const sticker = container.querySelector('img.yona-sticker');
         expect(sticker?.getAttribute('src')).toBe('/hi.png');
         expect(sticker?.closest('.yona-text-bubble')).toBeNull();
-        expect(container.querySelectorAll('.yona-cards .w-\\[190px\\]')).toHaveLength(2);
+        expect(container.querySelectorAll('.mk-track > .mk-card')).toHaveLength(2);
         expect(screen.getAllByRole('link', { name: 'Xem chi tiết' })).toHaveLength(2);
     });
 

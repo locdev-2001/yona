@@ -1159,6 +1159,19 @@ const messages: Record<string, unknown> = {
                         "PLACEHOLDER": "Please enter the time",
                         "ERROR": "Time on page is required"
                     },
+                    "QUICK_REPLIES": {
+                        "LABEL": "Quick reply chips",
+                        "HINT": "Up to 3 chips under the invitation. Tapping one opens the chat and sends that text.",
+                        "PLACEHOLDER": "E.g. Is this in stock?",
+                        "ITEM": "Chip {index}",
+                        "ERROR": "Each chip is at most 40 characters and must be unique"
+                    },
+                    "SHOW_TO": {
+                        "LABEL": "Show to",
+                        "ALL": "Everyone",
+                        "NEW": "Visitors who never messaged",
+                        "RETURNING": "Visitors who messaged before"
+                    },
                     "OTHER_PREFERENCES": {
                         "TITLE": "Other preferences",
                         "ENABLED": "Enable campaign",
@@ -1212,7 +1225,8 @@ const messages: Record<string, unknown> = {
                 "SHORT_CODE": "Short code",
                 "CONTENT": "Content",
                 "ACTIONS": "Actions"
-            }
+            },
+            "UNKNOWN_CARD_TYPE": "Card"
         },
         "ADD": {
             "TITLE": "Add canned response",
@@ -1256,6 +1270,10 @@ const messages: Record<string, unknown> = {
             "API": {
                 "SUCCESS_MESSAGE": "Canned response is updated successfully.",
                 "ERROR_MESSAGE": "Could not connect to the server. Please try again."
+            },
+            "CARD_VIEW": {
+                "TYPE_LABEL": "Card type",
+                "HINT": "This canned response sends a card. To change the card, send a new one from a conversation and save it as a canned response."
             }
         },
         "DELETE": {
@@ -2408,6 +2426,95 @@ const messages: Record<string, unknown> = {
         },
         "FRIEND_REQUEST": {
             "TITLE": "Friend request"
+        },
+        "SEND_CARD": {
+            "BUTTON": "Send a card",
+            "PREVIEW": "What the customer sees",
+            "PREVIEW_EMPTY": "Fill in the form to preview",
+            "SEND": "Send",
+            "CANCEL": "Cancel",
+            "REMOVE": "Remove",
+            "REVIEW_TITLE": "Review the card before sending",
+            "REVIEW_HINT": "Card from a canned response — review it, then press Send.",
+            "SAVE_AS_CANNED": "Save as a canned response",
+            "SAVE_AS_CANNED_LABEL": "Short code",
+            "SAVE_AS_CANNED_PLACEHOLDER": "e.g. bank-transfer-deposit",
+            "SAVE_AS_CANNED_SUCCESS": "Saved as a canned response.",
+            "SAVE_AS_CANNED_ERROR": "Could not save, please try again.",
+            "QUICK_REPLIES": {
+                "TITLE": "Quick replies",
+                "HINT": "A question with 2–6 options to tap",
+                "QUESTION": "Question",
+                "OPTIONS": "Options",
+                "OPTION": "Option {index}",
+                "ADD_OPTION": "Add option"
+            },
+            "PRODUCT": {
+                "TITLE": "Product card",
+                "HINT": "Image, price, variants and an Order button",
+                "NAME": "Product name",
+                "UPLOAD_IMAGE": "Upload image",
+                "CHANGE_IMAGE": "Change image",
+                "UPLOADING": "Uploading…",
+                "PRICE": "Price (VND)",
+                "COMPARE_AT": "Original price (VND)",
+                "STOCK_LABEL": "Stock line",
+                "STOCK_PLACEHOLDER": "2 left",
+                "MAX_QUANTITY": "Max quantity",
+                "VARIANTS": "Variants",
+                "VARIANT_NAME": "Group name",
+                "VARIANT_NAME_PLACEHOLDER": "Colour",
+                "VARIANT_OPTIONS": "Options, separated by commas",
+                "VARIANT_OPTIONS_PLACEHOLDER": "Blue, Ivory, Jade",
+                "ADD_VARIANT": "Add variant group",
+                "LINK": "Product link on your website (optional)",
+                "ORDER_BUTTON": "Order",
+                "VIEW_BUTTON": "View"
+            },
+            "BANK_TRANSFER": {
+                "TITLE": "Bank transfer card",
+                "HINT": "VietQR code, account number, amount and memo",
+                "ACCOUNT": "Receiving account",
+                "AMOUNT": "Amount (VND, optional)",
+                "AMOUNT_PLACEHOLDER": "Leave empty to let the customer enter it",
+                "MEMO": "Transfer memo",
+                "MEMO_HINT": "Banks only read unaccented text, up to 25 characters; Yona strips accents for you.",
+                "NO_ACCOUNTS": "No receiving account you are allowed to send yet. An administrator can add one in Settings → Bank transfer."
+            },
+            "SCHEDULE": {
+                "TITLE": "Delivery time picker",
+                "HINT": "The customer picks a day and time slot on a separate page",
+                "TITLE_LABEL": "Title",
+                "SLOTS": "Time slots",
+                "DATE": "Date",
+                "TIME": "Time slot",
+                "TIME_PLACEHOLDER": "8:00 to 10:00",
+                "ADD_SLOT": "Add time slot",
+                "NOTE": "Note for the customer (optional)",
+                "NOTE_PLACEHOLDER": "Order #GM1024, to 12 Hang Bong"
+            },
+            "ERRORS": {
+                "ACCOUNT_REQUIRED": "Choose a receiving account",
+                "AMOUNT_INVALID": "The amount is not valid",
+                "SLOTS_REQUIRED": "Add at least one slot with a date and time",
+                "QUESTION_REQUIRED": "A question is required",
+                "TOO_FEW_OPTIONS": "Add at least 2 options",
+                "OPTION_TOO_LONG": "Each option is at most 80 characters",
+                "DUPLICATE_OPTION": "Two options are the same",
+                "TITLE_REQUIRED": "A product name is required",
+                "COMPARE_AT_INVALID": "The original price must be higher than the price",
+                "LINK_INVALID": "Links must start with http:// or https://",
+                "VARIANT_EMPTY": "A variant group needs at least one option"
+            }
+        },
+        "STRUCTURED": {
+            "CHOICE_OF": "Reply to: {question}",
+            "DELIVERY": {
+                "TEXT_NUMBERED": "No buttons on this channel: the customer got text with a numbered list",
+                "TEXT": "This channel can't show cards: the customer got a text version",
+                "IMAGE_TEXT": "This channel can't show cards: the customer got a card image with text"
+            },
+            "MARK_BANK_TRANSFER_PAID": "Mark as paid"
         },
         "SENT_FROM_NATIVE_APP": "from phone",
         "MESSAGE_ACTIONS": {
@@ -3698,6 +3805,63 @@ const messages: Record<string, unknown> = {
                     "ERROR_MESSAGE": "Error while deleting segment."
                 }
             }
+        }
+    },
+    "FLOWS": {
+        "not_found": "This link is invalid or has expired.",
+        "loading": "Loading…",
+        "send_failed": "Could not send, please try again.",
+        "submitted_title": "Received",
+        "submitted_body": "Thanks, the shop has received your details.",
+        "close": "Close",
+        "you_can_close_tab": "You can close this page now.",
+        "open_in_new_tab": "Open in a new tab",
+        "schedule": {
+            "day_section": "Day",
+            "time_section": "Time slot",
+            "full_note": "Crossed-out slots are already full.",
+            "no_slots": "No open time slots right now.",
+            "confirm": "Confirm {day}, {time}",
+            "choose_slot": "Choose a time slot"
+        },
+        "form": {
+            "submit": "Send details",
+            "check_field": "Check {field}"
+        },
+        "order_tracking": {
+            "ref": "Order #{ref}",
+            "eta": "Arrives {date}",
+            "fee_included": "Shipping included",
+            "total": "Total",
+            "track_order": "Track on the website",
+            "statuses": {
+                "placed": "Placed",
+                "confirmed": "Confirmed",
+                "shipped": "Shipped",
+                "delivering": "On the way",
+                "delivered": "Delivered",
+                "cancelled": "Cancelled"
+            }
+        },
+        "bank_transfer": {
+            "copy": "Copy",
+            "copied": "Copied",
+            "bank_name": "Bank",
+            "account_number": "Account number",
+            "account_name": "Account name",
+            "amount": "Amount",
+            "transfer_note": "Transfer note",
+            "instructions": "Instructions"
+        },
+        "product": {
+            "variant": "Variant",
+            "quantity": "Quantity",
+            "max_quantity": "Up to {max}",
+            "note_label": "Note for the shop",
+            "note_placeholder": "Optional",
+            "subtotal": "Subtotal",
+            "submit": "Send order request",
+            "select_variant": "Choose every variant before ordering"
         }
     },
     "GALLERY_VIEW": {
@@ -6329,6 +6493,11 @@ const messages: Record<string, unknown> = {
         },
         "NOTE": "Note: ",
         "WIDGET_BUILDER": {
+            "OPEN_BUILDER": {
+                "LABEL": "Widget chat",
+                "HELP_TEXT": "Launcher, colors, home screen, other channels, proactive invites, AI assistant, embed code — all in one place.",
+                "BUTTON": "Customize widget"
+            },
             "WIDGET_OPTIONS": {
                 "AVATAR": {
                     "LABEL": "Website Avatar",
@@ -7983,6 +8152,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_STATUS": "Change Status",
             "SEND_ATTACHMENT": "Send Attachment",
             "SEND_MESSAGE": "Send a Message",
+            "SEND_CANNED_CARD": "Send a card from a canned response",
             "CHANGE_PRIORITY": "Change Priority",
             "ADD_PRIVATE_NOTE": "Add a Private Note",
             "SEND_WEBHOOK_EVENT": "Send Webhook Event"
@@ -8026,6 +8196,111 @@ const messages: Record<string, unknown> = {
         },
         "DROPDOWN_ITEM": {
             "ID": "(ID: {identifier})"
+        }
+    },
+    "MESSAGING": {
+        "errors": {
+            "not_allowed": "A :type message cannot be sent in this direction.",
+            "not_answerable": "A :type message does not accept replies.",
+            "unknown_choice": "That option is not part of the message.",
+            "already_submitted": "This message has already been answered.",
+            "duplicate_choice": "Options must be distinct.",
+            "duplicate_item": "Card ids must be unique.",
+            "invalid_action": "Invalid button.",
+            "invalid_url": "Links must start with http:// or https://.",
+            "invalid_phone": "Invalid phone number.",
+            "invalid_price": "Invalid price.",
+            "variants_without_order": "A card with variants needs an Order button.",
+            "unknown_item": "The product to order was not found.",
+            "invalid_selection": "The :name option is invalid or sold out.",
+            "quantity_exceeded": "Quantity is above the allowed maximum.",
+            "field_required": ":field is required.",
+            "field_invalid": ":field is invalid.",
+            "empty_submission": "Nothing was submitted.",
+            "payload_too_large": "The page data is too large.",
+            "unknown_payment_account": "The receiving bank account was not found.",
+            "payment_account_not_allowed": "You are not allowed to send a bank transfer card with this account.",
+            "duplicate_payment_account": "This bank and account number were already added."
+        },
+        "settings": {
+            "invalid_channel": "Invalid channel: check the channel type and its link or phone number."
+        },
+        "preview": {
+            "deleted": "Message recalled",
+            "image": "Sent a photo",
+            "file": "Sent a file"
+        },
+        "delivery": {
+            "numbered_prompt": "Reply with the number of your choice:"
+        },
+        "cards": {
+            "preview_many": ":title and :count more",
+            "compare_at": "was :price, -:percent%"
+        },
+        "order_status": {
+            "preview": "Order #:ref · :status",
+            "eta": "Arrives :date",
+            "total": "Total :amount",
+            "tracking": "Track: :url",
+            "statuses": {
+                "placed": "Placed",
+                "confirmed": "Confirmed",
+                "shipped": "Shipped",
+                "delivering": "Out for delivery",
+                "delivered": "Delivered",
+                "cancelled": "Cancelled"
+            }
+        },
+        "order_request": {
+            "preview": "Order request: :title",
+            "line": "Order request: :title:selection × :quantity",
+            "note": "Note: :note"
+        },
+        "bank_transfer": {
+            "preview": "Bank transfer via :bank",
+            "bank_line": "Bank :bank, account :account",
+            "holder": "Account holder :name",
+            "amount": "Amount :amount",
+            "memo": "Memo: :memo"
+        },
+        "kit": {
+            "item_position": "Item {current} of {total}",
+            "previous_item": "Previous item",
+            "next_item": "Next item",
+            "copied": "Copied",
+            "copy": "Copy {label}",
+            "submit_field": "Send {field}",
+            "submit": "Send",
+            "selected": "Customer chose: {value}",
+            "form_received": "Details received",
+            "form_open": "Fill in details",
+            "order_request": "Order request",
+            "note": "Note: {note}",
+            "order_ref": "Order #{ref}",
+            "eta": "Arrives {date}",
+            "fee_included": "Shipping included",
+            "total": "Total",
+            "track_order": "Track order",
+            "help_article": "Help",
+            "more": "+{count}",
+            "read_only": "The customer can tap this in the widget",
+            "check_field": "Check {field}",
+            "send_failed": "Could not send, please try again",
+            "steps": {
+                "placed": "Placed",
+                "shipped": "Shipped",
+                "delivering": "On the way",
+                "delivered": "Delivered"
+            },
+            "bank_transfer_title": "Bank transfer",
+            "show_qr": "Show QR code to scan",
+            "bank_transfer_qr_alt": "Bank transfer QR code",
+            "bank": "Bank",
+            "account_number": "Account number",
+            "account_holder": "Account holder",
+            "transfer_amount": "Amount",
+            "transfer_memo": "Memo",
+            "paid": "Payment received"
         }
     },
     "MFA_SETTINGS": {
@@ -8415,6 +8690,78 @@ const messages: Record<string, unknown> = {
     "PAGINATION_FOOTER": {
         "SHOWING": "Showing {startItem} - {endItem} of {totalItems} item | Showing {startItem} - {endItem} of {totalItems} items",
         "CURRENT_PAGE_INFO": "{currentPage} of {totalPages} page | {currentPage} of {totalPages} pages"
+    },
+    "PAYMENT_ACCOUNTS": {
+        "HEADER": "Bank transfer",
+        "DESCRIPTION": "Bank accounts used when sending a bank transfer card in a conversation. Customers pay straight into your account, Yona never holds the money.",
+        "LOADING": "Loading accounts",
+        "LIST": {
+            "TITLE": "Receiving accounts",
+            "EMPTY": "No receiving account yet.",
+            "ADD": "Add account",
+            "DEFAULT_BADGE": "Default"
+        },
+        "FORM": {
+            "EDIT": "Edit",
+            "DELETE": "Delete",
+            "SAVE": "Save changes",
+            "CREATE": "Add account",
+            "CANCEL": "Cancel",
+            "BANK": {
+                "LABEL": "Bank",
+                "PLACEHOLDER": "Choose a bank",
+                "SEARCH_PLACEHOLDER": "Search banks...",
+                "EMPTY": "No bank found"
+            },
+            "ACCOUNT_NUMBER": {
+                "LABEL": "Account number",
+                "PLACEHOLDER": "Digits only",
+                "INVALID": "Account number must be 4-30 digits."
+            },
+            "ACCOUNT_NAME": {
+                "LABEL": "Account holder",
+                "PLACEHOLDER": "HKD GOM MOC",
+                "HINT": "Uppercase without diacritics, exactly as the bank shows it, so customers can check it."
+            },
+            "MEMO_TEMPLATE": {
+                "LABEL": "Transfer memo",
+                "HINT": "Auto-filled with the conversation code when sent, e.g. GM1024. Makes reconciliation faster."
+            },
+            "IS_DEFAULT": {
+                "LABEL": "Set as default account"
+            },
+            "ALLOW_ALL_AGENTS": {
+                "LABEL": "Let every agent send bank transfer cards in conversations"
+            }
+        },
+        "ADD": {
+            "TITLE": "Add account",
+            "SUCCESS": "Account added",
+            "ERROR": "Something went wrong, please try again"
+        },
+        "EDIT": {
+            "TITLE": "Edit account",
+            "SUCCESS": "Changes saved",
+            "ERROR": "Something went wrong, please try again"
+        },
+        "DELETE": {
+            "SUCCESS": "Account deleted",
+            "ERROR": "Something went wrong, please try again",
+            "CONFIRM": {
+                "TITLE": "Delete account?",
+                "MESSAGE": "Agents will no longer be able to send bank transfer cards with this account:",
+                "YES": "Yes, delete",
+                "NO": "No, keep it"
+            }
+        },
+        "PREVIEW": {
+            "TITLE": "What customers see",
+            "EMPTY": "Save the account to see its QR code.",
+            "QR_ALT": "Bank transfer QR code",
+            "BANK": "Bank",
+            "ACCOUNT_NUMBER": "Account number",
+            "NOTE": "The QR code follows the VietQR standard and scans with any banking app."
+        }
     },
     "PHONE_INPUT": {
         "SEARCH_PLACEHOLDER": "Search country",
@@ -9211,6 +9558,8 @@ const messages: Record<string, unknown> = {
         "ACCOUNT_SETTINGS": "Account Settings",
         "APPLICATIONS": "Applications",
         "LABELS": "Labels",
+        "WIDGET_UPDATES": "Widget updates",
+        "PAYMENT_ACCOUNTS": "Bank transfer",
         "CUSTOM_ATTRIBUTES": "Custom Attributes",
         "AUTOMATION": "Automation",
         "MACROS": "Macros",
@@ -9650,7 +9999,7 @@ const messages: Record<string, unknown> = {
         "YOU": "You",
         "START_NEW_CONVERSATION": "Start a new conversation",
         "RESET_SESSION": {
-            "BUTTON": "Start a new chat",
+            "BUTTON": "Start over as a new visitor",
             "CONFIRM_TITLE": "Start a new chat?",
             "CONFIRM_BODY": "The chat will start over as a new visitor. Earlier messages will no longer show in this browser.",
             "CONFIRM": "Start over",
@@ -9725,6 +10074,11 @@ const messages: Record<string, unknown> = {
             "SUBMITTED_TITLE": "Thank you for submitting the rating",
             "PLACEHOLDER": "Tell us more..."
         },
+        "EMAIL_CAPTURE": {
+            "HINT": "We’ll email you when we reply, feel free to leave",
+            "LABEL": "Email",
+            "DONE": "We’ll reply to {email}"
+        },
         "EMAIL_TRANSCRIPT": {
             "BUTTON_TEXT": "Request a conversation transcript",
             "SEND_EMAIL_SUCCESS": "The chat transcript was sent successfully",
@@ -9765,10 +10119,37 @@ const messages: Record<string, unknown> = {
             "REPLY_TO": "Replying to:"
         },
         "MESSAGE_ACTIONS": {
+            "REACT": "React",
             "REPLY": "Reply",
             "MORE": "More actions",
             "RECALL": "Unsend",
             "COPY": "Copy text"
+        },
+        "ORDER_SHEET": {
+            "CLOSE": "Close",
+            "MAX": "Up to {count}",
+            "QUANTITY": "Quantity",
+            "DECREASE": "Decrease",
+            "INCREASE": "Increase",
+            "NOTE": "Note for the shop",
+            "OPTIONAL": "Optional",
+            "NOTE_PLACEHOLDER": "E.g. please gift-wrap it",
+            "SUBTOTAL": "Subtotal",
+            "SHIPPING_HINT": "The shop will confirm shipping in chat",
+            "SUBMIT": "Send order request",
+            "VIEW_SITE": "View on the shop's website",
+            "SOLD_OUT": "{option}, sold out",
+            "FAILED": "Could not send the request, please try again."
+        },
+        "WEBVIEW_SHEET": {
+            "OPEN_TAB": "Open in a new tab",
+            "CLOSE": "Close",
+            "FAILED": "Could not open the page, please try again."
+        },
+        "REACTIONS": {
+            "COUNT": "{count} reacted {emoji}",
+            "REMOVE": "Remove reaction {emoji}",
+            "FAILED": "Could not add the reaction, please try again."
         },
         "RECALL": {
             "CONFIRM_TITLE": "Unsend this message?",
@@ -9842,13 +10223,18 @@ const messages: Record<string, unknown> = {
             "BACK": "Back",
             "AGENT_ACTIVE": "Active now",
             "MORE": "More options",
-            "POPOUT": "Open in a new window"
+            "POPOUT": "Open in a new window",
+            "TRANSCRIPT": "Email me this chat",
+            "NEW_CONVERSATION": "New conversation"
         },
         "OUT_OF_HOURS": {
             "TITLE": "We are outside support hours",
             "BODY": "Leave a message and we will reply when we open again.",
             "EMAIL_PLACEHOLDER": "Email to receive our reply",
             "CTA": "Leave a message",
+            "EMAIL_TITLE": "Get our reply by email",
+            "EMAIL_LABEL": "Your email",
+            "HINT": "Or message us below, we will read it when we open.",
             "HOURS": "Our team is available from {from} to {to}.",
             "BODY_REOPEN": "Leave a message and we will reply when we open {reopen}.",
             "REOPEN": "We open again {reopen}.",
@@ -9888,6 +10274,342 @@ const messages: Record<string, unknown> = {
             "CTA_FALLBACK": "View details",
             "PREVIOUS": "Previous card",
             "NEXT": "Next card"
+        },
+        "TABS": {
+            "LABEL": "Widget navigation",
+            "HOME": "Home",
+            "MESSAGES": "Messages",
+            "HELP": "Help",
+            "UPDATES": "Updates"
+        },
+        "NAV": {
+            "BACK": "Back",
+            "CLOSE": "Close",
+            "EXPAND": "Expand",
+            "COLLAPSE": "Collapse"
+        },
+        "HOME": {
+            "GREETING_LINE": "Hi there,",
+            "GREETING_DEFAULT": "how can {name} help?",
+            "CONTINUE_WITH": "Continue with {name} · {time}",
+            "CONTINUE": "Continue conversation · {time}",
+            "SEND_NEW": "Send us a message",
+            "START": "Start a conversation",
+            "FIND_ANSWERS": "Find answers",
+            "SEARCH_PLACEHOLDER": "Ask about returns, shipping…",
+            "OTHER_CHANNELS": "Message us elsewhere",
+            "REQUEST": "Submit a warranty or return request",
+            "COMING_SOON": "Coming soon",
+            "CHANNEL_HINT": {
+                "ZALO": "Message {name} on Zalo",
+                "MESSENGER": "{name} on Facebook",
+                "TELEGRAM": "{name} on Telegram",
+                "WHATSAPP": "{name} on WhatsApp",
+                "INSTAGRAM": "{name} on Instagram",
+                "TIKTOK": "{name} on TikTok",
+                "HOTLINE": "Call us",
+                "EMAIL": "Send an email",
+                "CUSTOM": "Open link"
+            },
+            "CHANNEL_NAME": {
+                "ZALO": "Zalo",
+                "MESSENGER": "Messenger",
+                "TELEGRAM": "Telegram",
+                "WHATSAPP": "WhatsApp",
+                "INSTAGRAM": "Instagram",
+                "TIKTOK": "TikTok",
+                "HOTLINE": "Call hotline",
+                "EMAIL": "Email",
+                "CUSTOM": "Link"
+            }
+        },
+        "MESSAGE_LIST": {
+            "TITLE": "Messages",
+            "NEW": "Send us a message",
+            "EMPTY_TITLE": "No messages yet",
+            "EMPTY_BODY": "Your conversations with {name} will show up here.",
+            "LOAD_FAILED": "Could not load conversations, please try again",
+            "RETRY": "Try again",
+            "LOAD_MORE": "Load more",
+            "UNREAD": "{count} unread",
+            "YOU": "You: {text}",
+            "PICK": "Pick a conversation",
+            "NEW_CONVERSATION": "New conversation"
+        },
+        "HELP": {
+            "TITLE": "Help",
+            "SEARCH": "Search for answers",
+            "CLEAR": "Clear search",
+            "POPULAR": "Frequently asked",
+            "CATEGORIES": "Categories",
+            "EMPTY_TITLE": "No articles yet",
+            "EMPTY_BODY": "Message the shop and the team will get back to you.",
+            "LOAD_FAILED": "Could not load articles, please try again",
+            "RESULTS": "{count} articles",
+            "NO_RESULTS": "No articles match “{query}”",
+            "NOT_FOUND": "Didn’t find an answer?",
+            "MESSAGE_TEAM": "Message the team",
+            "UPDATED": "Updated {date}",
+            "READ_TIME": "{n} min read",
+            "STILL_NEED_HELP": "Still need help? Message the shop"
+        },
+        "UPDATES": {
+            "TITLE": "Updates",
+            "EMPTY_TITLE": "No news yet",
+            "EMPTY_BODY": "Promotions, new arrivals and announcements from {name} will show up here.",
+            "LOAD_FAILED": "Could not load updates, please try again",
+            "ASK": "Ask the shop about this",
+            "TAG": {
+                "PROMO": "Promotion",
+                "NEW": "New arrival",
+                "NOTICE": "Announcement"
+            }
+        },
+        "REQUEST": {
+            "TITLE": "Send a request",
+            "NOTICE_TITLE": "Coming soon",
+            "NOTICE_BODY": "Meanwhile, message the shop directly and the team will handle it as a request.",
+            "WARRANTY": "Warranty claim",
+            "WARRANTY_HINT": "Photos of the issue, order number",
+            "RETURN": "Return or exchange",
+            "RETURN_HINT": "Order number and reason",
+            "INVOICE": "VAT invoice",
+            "INVOICE_HINT": "Company name, tax code",
+            "MESSAGE_SHOP": "Message the shop"
+        },
+        "TIME": {
+            "NOW": "just now",
+            "MINUTES": "{n}m",
+            "HOURS": "{n}h",
+            "YESTERDAY": "Yesterday"
+        }
+    },
+    "WIDGET_BUILDER": {
+        "COMING_SOON": "Coming soon",
+        "HEADER": {
+            "BREADCRUMB_ARIA_LABEL": "Breadcrumb",
+            "BREADCRUMB_SETTINGS": "Settings",
+            "BREADCRUMB_INBOXES": "Inboxes",
+            "TITLE": "Widget chat",
+            "UNSAVED": "Unsaved changes",
+            "CANCEL": "Cancel",
+            "SAVE": "Save changes",
+            "CONFIRM_LEAVE": "Leaving now will discard your unsaved changes. Leave anyway?",
+            "SAVE_SUCCESS": "Widget settings saved.",
+            "SAVE_ERROR": "Could not save the widget settings, please try again."
+        },
+        "NAV": {
+            "ARIA_LABEL": "Widget settings sections",
+            "APPEARANCE": "Appearance",
+            "HOME": "Home",
+            "CHANNELS": "Other channels & links",
+            "CAPTURE": "Collect customer info",
+            "INVITE": "Proactive invites",
+            "AI": "AI assistant",
+            "EMBED": "Embed code"
+        },
+        "PREVIEW": {
+            "TITLE": "Preview",
+            "DEVICE_LABEL": "Preview on",
+            "DEVICE_DESKTOP": "Desktop",
+            "DEVICE_MOBILE": "Mobile",
+            "IFRAME_TITLE": "Widget preview"
+        },
+        "APPEARANCE": {
+            "TITLE": "Appearance",
+            "DESCRIPTION": "Color, launcher and position on your website.",
+            "ACCENT_COLOR_LABEL": "Accent color",
+            "ACCENT_COLOR_HEX_LABEL": "Hex code",
+            "ACCENT_COLOR_CONTRAST_GOOD": "White text reads well on this color ({ratio}:1)",
+            "ACCENT_COLOR_CONTRAST_BAD": "White text is hard to read on this color ({ratio}:1) — the widget will switch to dark text",
+            "ACCENT_COLOR_INVALID": "Invalid color code — use #RRGGBB",
+            "LAUNCHER_LABEL": "Launcher style",
+            "LAUNCHER_ROUND": "Round",
+            "LAUNCHER_PILL": "With label",
+            "LAUNCHER_LABEL_PLACEHOLDER": "Chat with us",
+            "POSITION_LABEL": "Position",
+            "POSITION_LEFT": "Left",
+            "POSITION_RIGHT": "Right",
+            "GREETING_LABEL": "Home greeting",
+            "GREETING_HINT": "Shown right under the shop name on the widget home screen.",
+            "GREETING_PLACEHOLDER": "How can we help?"
+        },
+        "HOME": {
+            "TITLE": "Home",
+            "DESCRIPTION": "Toggle each block on or off. Turn all of them off and the widget opens straight into chat.",
+            "ALWAYS_ON": "Always on",
+            "BLOCK_MESSAGE_SHOP": "Message the shop",
+            "BLOCK_MESSAGE_SHOP_DESCRIPTION": "Always shown, with online status and reply time.",
+            "BLOCK_RECENT_CONVERSATION": "Recent conversation",
+            "BLOCK_HELP": "Search help & top articles",
+            "HELP_BLOCK_CONNECTED": "Pulled from the \"{portal}\" help center, {count} articles",
+            "HELP_BLOCK_NOT_CONNECTED": "No help center connected — connect one",
+            "BLOCK_OTHER_CHANNELS": "Other channels (Zalo, Messenger, hotline)",
+            "BLOCK_CUSTOM_LINKS": "Custom links",
+            "BLOCK_REQUEST": "Submit a request by type",
+            "BLOCK_REQUEST_DESCRIPTION": "Customers pick the exact request type (return, warranty…) before messaging."
+        },
+        "CHANNELS": {
+            "TITLE": "Other channels",
+            "DESCRIPTION": "Tapping one opens that channel directly. Only enabled channels show on the widget home screen.",
+            "KIND_HOTLINE": "Hotline",
+            "KIND_EMAIL": "Email",
+            "KIND_CUSTOM": "Other",
+            "VALUE_LABEL": "Address or number",
+            "ENABLED_LABEL": "Enable this channel",
+            "MOVE_UP": "Move up",
+            "MOVE_DOWN": "Move down",
+            "REMOVE": "Remove",
+            "ADD": "Add channel",
+            "LINKS_TITLE": "Custom links",
+            "LINKS_DESCRIPTION": "Up to {max} links. Opens in a new tab.",
+            "LINK_LABEL_LABEL": "Display name",
+            "LINK_URL_LABEL": "Address",
+            "ADD_LINK": "Add link"
+        },
+        "CAPTURE": {
+            "TITLE": "Collect customer info",
+            "DESCRIPTION": "Asked mid-conversation after the first message — never blocks the customer from messaging.",
+            "PHONE_LABEL": "Ask for phone number",
+            "EMAIL_LABEL": "Ask for email"
+        },
+        "INVITE": {
+            "TITLE": "Proactive invites",
+            "DESCRIPTION": "Reuses the live chat campaign module — add or edit invites on the Campaigns page.",
+            "ADD": "Add invite",
+            "EMPTY": "This inbox has no proactive invites yet.",
+            "QUICK_REPLIES_COUNT": "{count} quick reply buttons",
+            "STATUS_ON": "On",
+            "STATUS_OFF": "Off",
+            "AUDIENCE_ALL": "All customers",
+            "AUDIENCE_NEW": "New customers",
+            "AUDIENCE_RETURNING": "Returning customers",
+            "MANAGE_LINK": "Manage proactive invites"
+        },
+        "AI": {
+            "TITLE": "AI assistant",
+            "DESCRIPTION": "The AI brain does not exist in Yona yet — here is a preview of what it will do.",
+            "FEATURE_KNOWLEDGE": "Answers from the shop's documents and saved replies.",
+            "FEATURE_AUTO_REPLY": "Replies to customers automatically, with agents able to step in anytime.",
+            "FEATURE_HANDOFF": "Hands off to an agent when the customer asks for one, or the AI is unsure.",
+            "MOCK_CUSTOMER_MESSAGE": "I bought this but it doesn't fit — how do I exchange it?",
+            "MOCK_AI_REPLY": "You can exchange it within 7 days of delivery, as long as the tag is still on.",
+            "MOCK_SOURCE": "Source: 7-day exchange policy"
+        },
+        "EMBED": {
+            "TITLE": "Embed code",
+            "DESCRIPTION": "Paste this snippet right before </body>. Paste it once and the widget shows on every page.",
+            "NO_LOADED_EVENT_YET": "Yona doesn't record when customers last opened the widget yet, so there's no \"running on…\" banner here.",
+            "DOMAINS_LABEL": "Only show on these domains",
+            "DOMAINS_HINT": "Stops others from copying your snippet onto their own site. Leave empty to allow any domain.",
+            "DOMAINS_PLACEHOLDER": "Enter a domain, press Enter to add",
+            "DOMAINS_ERROR": "Could not save the domain list."
+        }
+    },
+    "WIDGET_UPDATES_MGMT": {
+        "HEADER": "Widget updates",
+        "HEADER_BTN_TXT": "Add update",
+        "DESCRIPTION": "Post promos, new products or announcements to the Updates tab of the website chat widget.",
+        "LOADING": "Loading updates",
+        "SEARCH_PLACEHOLDER": "Search updates...",
+        "NO_RESULTS": "No matching updates found",
+        "LIST": {
+            "404": "No updates yet. Add the first one so customers see it in the Updates tab.",
+            "TABLE_HEADER": {
+                "COVER": "Cover",
+                "TITLE": "Title",
+                "TAG": "Tag",
+                "INBOX": "Inbox",
+                "STATUS": "Status",
+                "ACTION": "Action"
+            },
+            "ALL_INBOXES": "All websites",
+            "STATUS_DRAFT": "Draft",
+            "STATUS_PUBLISHED": "Published"
+        },
+        "FORM": {
+            "TITLE": {
+                "LABEL": "Title",
+                "PLACEHOLDER": "15% off the blue-glaze collection until 09/30",
+                "REQUIRED_ERROR": "Title is required",
+                "MAX_ERROR": "Title is at most 120 characters"
+            },
+            "BODY": {
+                "LABEL": "Content",
+                "PLACEHOLDER": "Describe the update. Line breaks are kept as-is on the widget.",
+                "MAX_ERROR": "Content is at most 5000 characters"
+            },
+            "TAG": {
+                "LABEL": "Tag"
+            },
+            "COVER": {
+                "LABEL": "Cover image",
+                "UPLOAD_BTN": "Upload image",
+                "REPLACE_BTN": "Replace image",
+                "REMOVE_BTN": "Remove image",
+                "UPLOAD_ERROR": "Upload failed, please try again"
+            },
+            "CTA_LABEL": {
+                "LABEL": "Button text",
+                "PLACEHOLDER": "View collection",
+                "REQUIRED_ERROR": "Button text is required when a link is set",
+                "MAX_ERROR": "At most 40 characters"
+            },
+            "CTA_URL": {
+                "LABEL": "Button link",
+                "PLACEHOLDER": "https://...",
+                "INVALID_ERROR": "Link must start with http:// or https://"
+            },
+            "INBOX": {
+                "LABEL": "Show in inbox",
+                "PLACEHOLDER": "All websites"
+            },
+            "PREVIEW_TITLE": "Preview on the widget",
+            "SAVE_DRAFT": "Save draft",
+            "PUBLISH": "Publish",
+            "UNPUBLISH": "Unpublish",
+            "CANCEL": "Cancel",
+            "EDIT": "Edit",
+            "DELETE": "Delete"
+        },
+        "ADD": {
+            "TITLE": "Add update",
+            "DESC": "New posts are saved as a draft until you press Publish.",
+            "API": {
+                "SUCCESS_MESSAGE": "Update saved",
+                "ERROR_MESSAGE": "Something went wrong, please try again"
+            }
+        },
+        "EDIT": {
+            "TITLE": "Edit update",
+            "API": {
+                "SUCCESS_MESSAGE": "Changes saved",
+                "ERROR_MESSAGE": "Something went wrong, please try again"
+            }
+        },
+        "PUBLISH": {
+            "API": {
+                "SUCCESS_MESSAGE": "Published to the widget",
+                "ERROR_MESSAGE": "Publishing failed, please try again"
+            }
+        },
+        "UNPUBLISH": {
+            "API": {
+                "SUCCESS_MESSAGE": "Removed from the widget",
+                "ERROR_MESSAGE": "Unpublishing failed, please try again"
+            }
+        },
+        "DELETE": {
+            "CONFIRM": {
+                "TITLE": "Confirm deletion",
+                "MESSAGE": "Are you sure you want to delete",
+                "YES": "Yes, delete",
+                "NO": "No, keep it"
+            },
+            "API": {
+                "SUCCESS_MESSAGE": "Update deleted",
+                "ERROR_MESSAGE": "Something went wrong, please try again"
+            }
         }
     }
 };

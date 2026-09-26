@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { currentRoute, replaceRoute } from '../router';
 
 import { emitter } from 'shared/helpers/emitter';
 
@@ -12,7 +13,7 @@ import { widgetStore } from '../store/widgetStore';
 
 afterEach(() => {
     vi.restoreAllMocks();
-    window.location.hash = '#/';
+    replaceRoute('home');
 });
 
 // Khung xem trước tin mới không phải khung chat đang mở: đóng nó thì tin vẫn chưa
@@ -32,13 +33,13 @@ describe('khung xem trước tin mới', () => {
     });
 
     it('rời khung xem trước thì về màn hình chủ, màn khác giữ nguyên', () => {
-        window.location.hash = '#/unread-messages';
+        replaceRoute('unread-messages');
         expect(leaveUnreadViewRoute()).toBe(true);
-        expect(window.location.hash).toBe('#/');
+        expect(currentRoute()).toBe('home');
 
-        window.location.hash = '#/messages';
+        replaceRoute('messages');
         expect(leaveUnreadViewRoute()).toBe(false);
-        expect(window.location.hash).toBe('#/messages');
+        expect(currentRoute()).toBe('messages');
     });
 });
 

@@ -64,6 +64,7 @@ function zaloSessionWebhook(int $connectionId, string $state, ?string $detail = 
 }
 
 beforeEach(function () {
+    config()->set('zalo.bridge.webhook_secret', 'secret-bridge');
     $this->account = Account::factory()->create();
     $this->admin = zaloUserOf($this->account, AccountUser::ROLE_ADMINISTRATOR);
     $this->inbox = Inbox::factory()->zalo()->create(['account_id' => $this->account->id]);

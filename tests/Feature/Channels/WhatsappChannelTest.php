@@ -109,6 +109,73 @@ it('gửi tin đi qua Cloud API và lưu source_id', function () {
     expect($outgoing->fresh()->source_id)->toBe('wamid.OUT');
 });
 
+// WhatsApp chưa có renderer gốc (docs/system-architecture.md §3) nên tin có lựa
+// chọn phải qua DeliveryPlanner trước khi gửi, hạ xuống chữ kèm danh sách đánh số
+// thay vì gửi thẳng câu hỏi trơn như trước.
+it('tin có lựa chọn hạ xuống chữ kèm danh sách đánh số trước khi gửi qua Cloud API', function () {
+    app()->setLocale('vi');
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.OUT']]]),
+    ]);
+    whatsappPost(ChannelFixture::load('whatsapp_cloud_text'));
+
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Bạn có đồng ý không?',
+        'content_type' => Message::CONTENT_TYPES['input_select'],
+        'content_attributes' => ['items' => [['title' => 'Có', 'value' => 'yes'], ['title' => 'Không', 'value' => 'no']]],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/v13.0/123456/messages')
+        && $request['text'] === ['body' => "Bạn có đồng ý không?\n\nNhắn số tương ứng để chọn:\n1. Có\n2. Không"]);
+
+    expect($outgoing->fresh()->source_id)->toBe('wamid.OUT');
+});
+
+it('tin chữ thuần vẫn gửi nguyên văn qua nhà cung cấp 360dialog, không đụng logic cũ', function () {
+    $this->channel->update(['provider' => 'default', 'provider_config' => ['api_key' => '360-key']]);
+    Http::fake(['waba.360dialog.io/*' => Http::response(['messages' => [['id' => 'wamid.360']]])]);
+    whatsappPost(ChannelFixture::load('whatsapp_cloud_text'));
+
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'waba.360dialog.io/v1/messages')
+        && $request['text'] === ['body' => 'Chào bạn']);
+
+    expect($outgoing->fresh()->source_id)->toBe('wamid.360');
+});
+
+it('tin có lựa chọn cũng hạ xuống chữ đánh số trên nhà cung cấp 360dialog', function () {
+    app()->setLocale('vi');
+    $this->channel->update(['provider' => 'default', 'provider_config' => ['api_key' => '360-key']]);
+    Http::fake(['waba.360dialog.io/*' => Http::response(['messages' => [['id' => 'wamid.360-qr']]])]);
+    whatsappPost(ChannelFixture::load('whatsapp_cloud_text'));
+
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Bạn có đồng ý không?',
+        'content_type' => Message::CONTENT_TYPES['input_select'],
+        'content_attributes' => ['items' => [['title' => 'Có', 'value' => 'yes']]],
+    ]);
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'waba.360dialog.io/v1/messages')
+        && $request['text'] === ['body' => "Bạn có đồng ý không?\n\nNhắn số tương ứng để chọn:\n1. Có"]);
+
+    expect($outgoing->fresh())->not->toBeNull();
+});
+
 it('đổi nhà cung cấp là đổi driver, không đụng lõi kênh', function () {
     $this->channel->update(['provider' => 'default', 'provider_config' => ['api_key' => '360-key']]);
 
