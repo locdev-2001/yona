@@ -516,8 +516,9 @@ gửi thành ảnh PNG kèm bản chữ. Ảnh vẽ trong chính tiến trình b
 - Laravel gọi bằng `ZALO_BRIDGE_URL` + `ZALO_BRIDGE_SEND_SECRET` đã có, hết giờ 3 giây;
   lỗi thì gửi chữ như cũ và ghi log `messaging.delivery.degraded` với `level: image_failed`.
 - Ảnh cache trên disk `public` ở `storage/app/public/card-images/` (cần
-  `php artisan storage:link` như ảnh đính kèm). Chưa có job dọn: dung lượng tăng
-  theo số thẻ khác nhau đã gửi.
+  `php artisan storage:link` như ảnh đính kèm). Lịch `messaging:prune-card-images`
+  chạy 03:40 hằng ngày xoá ảnh cũ hơn 30 ngày (kênh đã tải ảnh về lúc gửi; thẻ gửi
+  lại thì vẽ lại). Chạy tay: `php artisan messaging:prune-card-images --dry-run`.
 - Ảnh sản phẩm chỉ được tải từ địa chỉ công khai, không theo chuyển hướng. Máy
   local ảnh nằm ở 127.0.0.1 thì đặt trong `services/zalo-bridge/.env`:
 
