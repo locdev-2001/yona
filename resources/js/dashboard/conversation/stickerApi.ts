@@ -45,10 +45,14 @@ export function fetchStickers(
     );
 }
 
-/** Sticker đi một mình ra khách: không trong ghi chú riêng, không khi khung soạn đang khoá. */
+/**
+ * Sticker đi một mình ra khách: không trong ghi chú riêng, không khi khung soạn đang khoá.
+ * Kênh không có sticker riêng mà gửi được ảnh vẫn nhận sticker kho Yona dạng ảnh tĩnh.
+ */
 export function canPickSticker(
     inbox: InboxWithCapabilities | null | undefined,
     { isOnPrivateNote, isEditorDisabled }: { isOnPrivateNote: boolean; isEditorDisabled: boolean },
 ): boolean {
-    return inboxSupports(inbox, 'outbound_sticker') && !isOnPrivateNote && !isEditorDisabled;
+    const canDeliverSticker = inboxSupports(inbox, 'outbound_sticker') || inboxSupports(inbox, 'outbound_image');
+    return canDeliverSticker && !isOnPrivateNote && !isEditorDisabled;
 }

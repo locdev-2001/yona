@@ -1,3 +1,6 @@
+import AnimatedSticker from 'shared/sticker/AnimatedSticker';
+import { animatedStickerSource } from 'shared/sticker/stickerPayload';
+
 import { useWidgetState } from '../../store/hooks';
 import { t } from '../../i18n';
 import type { WidgetMessage } from '../../types';
@@ -17,18 +20,25 @@ export function stickerImageUrl(
     return message.attachments?.[0]?.data_url;
 }
 
-// Sticker đứng trần 100×100, không bong bóng.
+// Sticker đứng trần 100×100, không bong bóng. Sticker kho Yona thì phát bản động.
 export default function StickerBubble({ message }: { message: WidgetMessage }) {
     const catalog = useWidgetState(state => state.messagingPolicy.stickers);
+    const animated = animatedStickerSource(message.content_attributes?.sticker);
     const url = stickerImageUrl(message, catalog);
+    const stickerClass = `yona-sticker h-[100px] w-[100px] ${message.status === 'in_progress' ? 'opacity-60' : ''}`;
+
+    if (animated) {
+        return (
+            <AnimatedSticker
+                className={stickerClass}
+                posterUrl={animated.posterUrl}
+                animationUrl={animated.animationUrl}
+                alt={t('STICKER_PANEL.STICKER_ALT')}
+            />
+        );
+    }
 
     if (!url) return null;
 
-    return (
-        <img
-            src={url}
-            alt={t('STICKER_PANEL.STICKER_ALT')}
-            className={`yona-sticker h-[100px] w-[100px] object-contain ${message.status === 'in_progress' ? 'opacity-60' : ''}`}
-        />
-    );
+    return <img src={url} alt={t('STICKER_PANEL.STICKER_ALT')} className={`${stickerClass} object-contain`} />;
 }

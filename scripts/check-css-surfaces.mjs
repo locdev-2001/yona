@@ -13,14 +13,12 @@ import path from 'node:path';
 import { build } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import { viteAliases } from '../vite.aliases.js';
+
 const root = path.resolve(import.meta.dirname, '..');
 const surfaces = createRequire(import.meta.url)('../tailwind/surfaces.cjs');
 
-const alias = {
-    dashboard: path.resolve(root, 'resources/js/dashboard'),
-    shared: path.resolve(root, 'resources/js/shared'),
-    v3: path.resolve(root, 'resources/js/v3'),
-};
+const alias = viteAliases(root);
 
 /** Mọi file nguồn mà entry của bề mặt kéo vào, tính theo đường dẫn tương đối repo. */
 async function moduleGraph(entries) {

@@ -64,7 +64,7 @@ import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCard
 // và gửi kèm qua buildOutgoingContentAttributes. Nhắc tên thành viên nhóm: kênh
 // khai `outbound_mention` thì `@` ở chế độ Trả lời gợi ý thành viên, link mention
 // đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Sticker: kênh khai
-// `outbound_sticker` thì có bảng chọn, chọn là gửi ngay. Bỏ: draft (B10), ghi
+// `outbound_sticker` hoặc `outbound_image` thì có bảng chọn, chọn là gửi ngay. Bỏ: draft (B10), ghi
 // âm (voice recorder), email head/quoted reply, WhatsApp templates, copilot editor,
 // variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
 

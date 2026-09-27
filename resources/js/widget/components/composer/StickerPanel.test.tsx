@@ -13,6 +13,20 @@ describe('StickerPanel', () => {
         expect(screen.getByRole('tab', { name: 'Emoji' })).toHaveAttribute('aria-selected', 'true');
     });
 
+    it('danh mục có sticker kho Yona thì mở sẵn tab Sticker, lưới chỉ là ảnh poster tĩnh', () => {
+        const sticker = { id: 'yona:12', image_url: '/storage/stickers/ab/poster.webp', pack_id: 'yona:3', label: 'Mèo vẫy' };
+        const { container } = render(
+            <StickerPanel stickers={[sticker]} onSelectEmoji={vi.fn()} onSelectSticker={vi.fn()} />,
+        );
+
+        expect(screen.getByRole('tab', { name: 'Stickers' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('button', { name: 'Mèo vẫy' }).querySelector('img')).toHaveAttribute(
+            'src',
+            '/storage/stickers/ab/poster.webp',
+        );
+        expect(container.querySelector('[data-sticker-player], lottie-player')).toBeNull();
+    });
+
     it('sticker vừa gửi hiện trong tab Gần đây', () => {
         const sticker = { id: 'hi', image_url: '/s/hi.png', pack_id: null, label: 'Chào' };
         const onSelectSticker = vi.fn();

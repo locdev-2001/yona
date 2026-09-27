@@ -118,10 +118,17 @@ describe('ReplyBox — gửi sticker', () => {
         expect(stickerButton()).not.toBeNull();
     });
 
-    it('kênh không khai outbound_sticker thì không có nút', () => {
+    it('kênh không gửi được sticker lẫn ảnh thì không có nút', () => {
         inboxCapabilities.current = ['outbound_text'];
         render(<ReplyBox />);
 
         expect(stickerButton()).toBeNull();
+    });
+
+    it('kênh chỉ gửi được ảnh vẫn có nút: sticker kho Yona đi ra dạng ảnh', () => {
+        inboxCapabilities.current = ['outbound_text', 'outbound_image'];
+        render(<ReplyBox />);
+
+        expect(stickerButton()).not.toBeNull();
     });
 });

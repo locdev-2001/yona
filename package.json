@@ -20,6 +20,7 @@
         "@ext/prosemirror-schema": "npm:@chatwoot/prosemirror-schema@1.4.1",
         "@ext/utils": "npm:@chatwoot/utils@0.0.57",
         "@inertiajs/react": "^2.0.0",
+        "@thorvg/lottie-player": "1.1.2",
         "@types/qrcode": "^1.5.6",
         "countries-and-timezones": "^3.10.0",
         "date-fns": "^4.4.0",

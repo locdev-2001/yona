@@ -47,6 +47,20 @@ describe('StickerPicker', () => {
         );
     });
 
+    it('sticker kho Yona trong lưới chỉ là ảnh poster tĩnh, không phát bản động', async () => {
+        const yonaSticker: StickerItem = {
+            id: 'yona:12',
+            image_url: 'https://yona.test/storage/stickers/ab/poster.webp',
+            pack_id: 'yona:3',
+            label: 'Mèo vẫy',
+        };
+        renderPicker(vi.fn().mockResolvedValue(browsed({ stickers: [yonaSticker], packs: [] })));
+
+        await waitFor(() => expect(stickerButtons()).toHaveLength(1));
+        expect(stickerButtons()[0].querySelector('img')?.getAttribute('src')).toBe(yonaSticker.image_url);
+        expect(screen.getByTestId('sticker-picker').querySelector('[data-sticker-player], lottie-player')).toBeNull();
+    });
+
     it('gõ từ khoá thì chờ ngừng gõ 400ms rồi mới tìm, đúng một lần', async () => {
         vi.useFakeTimers();
         const loadStickers = vi.fn().mockResolvedValue(browsed({ source: 'search', query: 'cảm ơn', stickers: [THANKS], packs: [] }));

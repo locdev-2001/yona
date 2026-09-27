@@ -95,6 +95,8 @@ describe('canPickSticker', () => {
         [zalo, false, false, true],
         [zalo, true, false, false],
         [zalo, false, true, false],
+        [{ capabilities: ['outbound_image'] }, false, false, true],
+        [{ capabilities: ['outbound_image'] }, true, false, false],
         [{ capabilities: ['outbound_text'] }, false, false, false],
         [null, false, false, false],
     ])('%o · Lưu ý riêng %s · khoá %s → %s', (inbox, isOnPrivateNote, isEditorDisabled, expected) => {

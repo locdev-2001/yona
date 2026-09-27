@@ -173,7 +173,17 @@ export interface MessageAttachment {
 }
 
 // Sticker đã lưu: máy chủ tra danh mục và ghi lại ảnh; tin tạm phía khách chỉ có mã.
-export type MessageSticker = string | { id?: string | number; url?: string; thumbnail?: string };
+// Sticker kho Yona có thêm `source: 'yona'`, poster và bản động (Lottie).
+export type MessageSticker =
+    | string
+    | {
+          id?: string | number;
+          url?: string;
+          thumbnail?: string;
+          source?: string;
+          poster_url?: string;
+          animation_url?: string;
+      };
 
 export interface MessageSender {
     id?: number;

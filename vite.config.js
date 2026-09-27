@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+
+import { thorvgWithoutCdnFallback } from './resources/js/shared/sticker/thorvgBuildPlugin.ts';
+import { viteAliases } from './vite.aliases.js';
 
 export default defineConfig({
     plugins: [
@@ -27,13 +29,10 @@ export default defineConfig({
             refresh: true,
         }),
         react(),
+        thorvgWithoutCdnFallback(),
     ],
     resolve: {
-        alias: {
-            dashboard: path.resolve(__dirname, 'resources/js/dashboard'),
-            shared: path.resolve(__dirname, 'resources/js/shared'),
-            v3: path.resolve(__dirname, 'resources/js/v3'),
-        },
+        alias: viteAliases(__dirname),
     },
     server: {
         watch: {
