@@ -34,11 +34,14 @@ use App\Http\Controllers\SuperAdmin\MfaController as SuperAdminMfaController;
 use App\Http\Controllers\SuperAdmin\PlatformAppsController as SuperAdminPlatformAppsController;
 use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsController;
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
+use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerPacksController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
+use App\Http\Middleware\EnsureAccountFeatureEnabled;
 use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\SuperAdminInertia;
 use App\Models\Account;
+use App\Models\Sticker;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -187,6 +190,10 @@ Route::middleware('auth')->group(function () {
             // hình tài khoản nhận tiền + mã QR VietQR.
             Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
                 ->name('settings_payment_accounts');
+            // Kho sticker riêng: chỉ tồn tại khi account bật cờ custom_stickers.
+            Route::get('/settings/custom-stickers', fn (Account $account) => Inertia::render('dashboard/settings/customStickers/Index'))
+                ->middleware(EnsureAccountFeatureEnabled::class.':'.Sticker::CUSTOM_STICKERS_FEATURE)
+                ->name('settings_custom_stickers');
 
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');
@@ -506,6 +513,24 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
             Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
             Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
             Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
+
+            // Kho sticker chung: trang + JSON cho trang (dùng chung khung với kho riêng của tenant).
+            Route::get('/sticker_packs', [SuperAdminStickerPacksController::class, 'page']);
+            Route::prefix('/api/sticker_packs')->group(function () {
+                Route::get('/', [SuperAdminStickerPacksController::class, 'index']);
+                Route::post('/', [SuperAdminStickerPacksController::class, 'store']);
+                Route::get('/{packId}', [SuperAdminStickerPacksController::class, 'show'])->whereNumber('packId');
+                Route::match(['put', 'patch'], '/{packId}', [SuperAdminStickerPacksController::class, 'update'])->whereNumber('packId');
+                Route::delete('/{packId}', [SuperAdminStickerPacksController::class, 'destroy'])->whereNumber('packId');
+                Route::post('/{packId}/publish', [SuperAdminStickerPacksController::class, 'publish'])->whereNumber('packId');
+                Route::post('/{packId}/unpublish', [SuperAdminStickerPacksController::class, 'unpublish'])->whereNumber('packId');
+                Route::post('/{packId}/stickers', [SuperAdminStickerPacksController::class, 'upload'])
+                    ->whereNumber('packId')
+                    ->middleware('throttle:sticker-uploads');
+                Route::put('/{packId}/stickers/order', [SuperAdminStickerPacksController::class, 'reorder'])->whereNumber('packId');
+                Route::delete('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'destroySticker'])
+                    ->whereNumber(['packId', 'stickerId']);
+            });
 
             Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
 

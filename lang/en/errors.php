@@ -117,6 +117,11 @@ return [
         'renderer_unavailable' => 'Sticker previews cannot be rendered right now, please try again later.',
         'storage_write_failed' => 'The sticker files could not be saved, please try again later.',
     ],
+    'sticker_library' => [
+        'pack_full' => 'A pack holds at most :max stickers. Remove some or create a new pack.',
+        'too_many_packs' => 'An account can have at most :max sticker packs.',
+        'upload_throttled' => 'Too many sticker uploads at once. Please wait a moment and try again.',
+    ],
     'widget_recall' => [
         'capability_not_supported' => 'This channel does not support unsending messages.',
         'not_own_message' => 'You can only unsend your own messages.',

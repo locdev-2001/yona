@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Reportable;
+use App\Services\Stickers\StickerLibraryManager;
 use App\Support\EmailAddress;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,6 +45,9 @@ class Account extends Model
         'status' => self::STATUS_ACTIVE,
     ];
 
+    /** @var list<string> hash tệp kho sticker riêng, chờ dọn khi cascade xoá account xong */
+    private array $stickerHashesPendingRelease = [];
+
     protected function casts(): array
     {
         return [
@@ -72,11 +76,13 @@ class Account extends Model
         static::deleting(function (Account $account) {
             $account->inboxes()->cursor()->each(fn (Inbox $inbox) => $inbox->delete());
             $account->agentBots()->cursor()->each(fn (AgentBot $agentBot) => $agentBot->delete());
+            $account->stickerHashesPendingRelease = app(StickerLibraryManager::class)->contentHashesOf($account);
         });
 
         static::deleted(function (Account $account) {
             DB::statement("DROP SEQUENCE IF EXISTS camp_dpid_seq_{$account->id}");
             DB::statement("DROP SEQUENCE IF EXISTS conv_dpid_seq_{$account->id}");
+            app(StickerLibraryManager::class)->releaseFilesOf($account->stickerHashesPendingRelease);
         });
     }
 

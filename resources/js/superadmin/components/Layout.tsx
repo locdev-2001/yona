@@ -12,6 +12,10 @@ const RESOURCE_ICONS: Record<string, string> = {
     impersonations: 'icon-mist-fill',
 };
 
+const TOOL_PAGE_ICONS: Record<string, string> = {
+    sticker_packs: 'icon-emotion-line',
+};
+
 const NAV_ITEM_CLASS =
     '-ml-1 focus:outline-none cursor-pointer flex items-center px-2 py-1.5 text-slate-800 cursor-pointer hover:text-woot-500 hover:bg-slate-25 rounded-lg';
 
@@ -87,6 +91,15 @@ export default function Layout({ children }: { children: ReactNode }) {
                                 url={item.url}
                                 label={item.label}
                                 active={currentPath.startsWith(item.url)}
+                            />
+                        ))}
+                        {superAdmin.toolPages.map(page => (
+                            <NavItem
+                                key={page.key}
+                                icon={TOOL_PAGE_ICONS[page.key]}
+                                url={page.url}
+                                label={page.label}
+                                active={currentPath.startsWith(page.url)}
                             />
                         ))}
                         <li className="px-4 mb-1">

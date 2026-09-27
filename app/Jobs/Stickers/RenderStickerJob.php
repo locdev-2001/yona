@@ -3,8 +3,8 @@
 namespace App\Jobs\Stickers;
 
 use App\Jobs\ApplicationJob;
-use App\Models\Attachment;
 use App\Models\Sticker;
+use App\Services\Stickers\StickerFileJanitor;
 use App\Services\Stickers\StickerRenderer;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
@@ -151,28 +151,9 @@ class RenderStickerJob extends ApplicationJob
         ]);
     }
 
-    // Tệp đặt theo hash nên dùng chung giữa các bộ có cùng nội dung, và tin đã
-    // gửi mượn thẳng ảnh tĩnh: chỉ xoá khi không còn sticker nào khác đang dùng
-    // hoặc đang dựng, và không còn đính kèm nào trỏ tới.
     private function discardStoredFiles(): void
     {
-        $storagePaths = self::storagePaths($this->sticker->content_hash);
-
-        $sharedWithAnotherSticker = Sticker::query()
-            ->where('content_hash', $this->sticker->content_hash)
-            ->whereKeyNot($this->sticker->getKey())
-            ->whereIn('status', [Sticker::STATUS_PROCESSING, Sticker::STATUS_READY])
-            ->exists();
-        $borrowedByMessage = Attachment::query()
-            ->where('disk', Sticker::DISK)
-            ->whereIn('path', array_values($storagePaths))
-            ->exists();
-        if ($sharedWithAnotherSticker || $borrowedByMessage) {
-            return;
-        }
-
-        $this->disk()->delete(array_values($storagePaths));
-        $this->disk()->deleteDirectory(dirname($storagePaths['animation_path']));
+        app(StickerFileJanitor::class)->releaseIfUnreferenced($this->sticker->content_hash, $this->sticker->getKey());
     }
 
     private function disk(): Filesystem

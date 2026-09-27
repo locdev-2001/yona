@@ -3674,6 +3674,11 @@ const messages: Record<string, unknown> = {
             "renderer_unavailable": "Sticker previews cannot be rendered right now, please try again later.",
             "storage_write_failed": "The sticker files could not be saved, please try again later."
         },
+        "sticker_library": {
+            "pack_full": "A pack holds at most :max stickers. Remove some or create a new pack.",
+            "too_many_packs": "An account can have at most :max sticker packs.",
+            "upload_throttled": "Too many sticker uploads at once. Please wait a moment and try again."
+        },
         "widget_recall": {
             "capability_not_supported": "This channel does not support unsending messages.",
             "not_own_message": "You can only unsend your own messages.",
@@ -9682,6 +9687,47 @@ const messages: Record<string, unknown> = {
         "IMAGE": "Image",
         "VIDEO": "Video",
         "DIVIDER": "Divider"
+    },
+    "STICKER_LIBRARY": {
+        "MENU": "Sticker library",
+        "SUPER_ADMIN_HEADER": "Shared sticker library",
+        "SUPER_ADMIN_DESCRIPTION": "Published packs are visible to every account. External channels receive a static PNG; animation only plays inside Yona.",
+        "ACCOUNT_HEADER": "Custom sticker library",
+        "ACCOUNT_DESCRIPTION": "Published packs are visible only in this account. External channels receive a static PNG; animation only plays inside Yona.",
+        "LOADING": "Loading sticker library…",
+        "LOAD_ERROR": "Could not load the sticker library, please try again.",
+        "RETRY": "Retry",
+        "EMPTY": "No sticker packs yet. Create the first pack, then upload stickers into it.",
+        "PACKS_TITLE": "Sticker packs",
+        "NEW_PACK_PLACEHOLDER": "New pack name",
+        "CREATE_PACK": "Create pack",
+        "STICKERS_COUNT": "{count} stickers",
+        "PUBLISHED": "Published",
+        "DRAFT": "Not published",
+        "SELECT_PACK": "Pick a pack on the left to view and upload stickers.",
+        "PACK_NAME_LABEL": "Pack name",
+        "SAVE_NAME": "Save name",
+        "PUBLISH": "Publish",
+        "UNPUBLISH": "Unpublish",
+        "DELETE_PACK": "Delete pack",
+        "DELETE_PACK_CONFIRM": "Delete pack “{name}” and all of its stickers? Sent messages keep their images.",
+        "UPLOAD": "Upload stickers",
+        "UPLOAD_HINT": "Pick one or more Lottie (.json) or .tgs files, up to {maxKb} KB each.",
+        "UPLOADING": "Uploading {done}/{total}…",
+        "UPLOAD_FAILED_FILE": "{filename}: {message}",
+        "UPLOAD_FAILED": "Could not upload this file.",
+        "NO_STICKERS": "This pack has no stickers yet.",
+        "STATUS": {
+            "processing": "Processing",
+            "ready": "Ready",
+            "failed": "Failed"
+        },
+        "MOVE_UP": "Move earlier",
+        "MOVE_DOWN": "Move later",
+        "DELETE_STICKER": "Delete sticker",
+        "DELETE_STICKER_CONFIRM": "Delete this sticker from the pack? Sent messages keep their images.",
+        "ACTION_ERROR": "Something went wrong, please try again.",
+        "SAVED": "Saved"
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Inbox",

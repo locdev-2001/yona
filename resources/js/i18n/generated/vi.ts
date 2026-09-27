@@ -3674,6 +3674,11 @@ const messages: Record<string, unknown> = {
             "renderer_unavailable": "Máy chủ chưa dựng được ảnh sticker lúc này, bạn thử lại sau nhé.",
             "storage_write_failed": "Không lưu được tệp sticker, bạn thử lại sau nhé."
         },
+        "sticker_library": {
+            "pack_full": "Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.",
+            "too_many_packs": "Mỗi account có tối đa :max bộ sticker.",
+            "upload_throttled": "Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé."
+        },
         "widget_recall": {
             "capability_not_supported": "Kênh này chưa cho thu hồi tin nhắn.",
             "not_own_message": "Bạn chỉ thu hồi được tin nhắn của chính mình.",
@@ -9682,6 +9687,47 @@ const messages: Record<string, unknown> = {
         "IMAGE": "Ảnh",
         "VIDEO": "Video",
         "DIVIDER": "Đường kẻ ngang"
+    },
+    "STICKER_LIBRARY": {
+        "MENU": "Kho sticker",
+        "SUPER_ADMIN_HEADER": "Kho sticker chung",
+        "SUPER_ADMIN_DESCRIPTION": "Bộ đã xuất bản hiện với mọi account. Kênh ngoài nhận ảnh tĩnh PNG, hoạt ảnh chỉ chạy trong Yona.",
+        "ACCOUNT_HEADER": "Kho sticker riêng",
+        "ACCOUNT_DESCRIPTION": "Bộ đã xuất bản chỉ hiện trong account này. Kênh ngoài nhận ảnh tĩnh PNG, hoạt ảnh chỉ chạy trong Yona.",
+        "LOADING": "Đang tải kho sticker…",
+        "LOAD_ERROR": "Không tải được kho sticker, bạn thử lại nhé.",
+        "RETRY": "Thử lại",
+        "EMPTY": "Chưa có bộ sticker nào. Tạo bộ đầu tiên rồi tải sticker vào.",
+        "PACKS_TITLE": "Bộ sticker",
+        "NEW_PACK_PLACEHOLDER": "Tên bộ mới",
+        "CREATE_PACK": "Tạo bộ",
+        "STICKERS_COUNT": "{count} sticker",
+        "PUBLISHED": "Đã xuất bản",
+        "DRAFT": "Chưa xuất bản",
+        "SELECT_PACK": "Chọn một bộ bên trái để xem và tải sticker.",
+        "PACK_NAME_LABEL": "Tên bộ",
+        "SAVE_NAME": "Lưu tên",
+        "PUBLISH": "Xuất bản",
+        "UNPUBLISH": "Gỡ xuất bản",
+        "DELETE_PACK": "Xoá bộ",
+        "DELETE_PACK_CONFIRM": "Xoá bộ “{name}” cùng mọi sticker trong bộ? Tin đã gửi vẫn giữ ảnh.",
+        "UPLOAD": "Tải sticker lên",
+        "UPLOAD_HINT": "Chọn một hoặc nhiều tệp Lottie (.json) hoặc .tgs, mỗi tệp tối đa {maxKb} KB.",
+        "UPLOADING": "Đang tải {done}/{total}…",
+        "UPLOAD_FAILED_FILE": "{filename}: {message}",
+        "UPLOAD_FAILED": "Không tải được tệp này.",
+        "NO_STICKERS": "Bộ này chưa có sticker nào.",
+        "STATUS": {
+            "processing": "Đang xử lý",
+            "ready": "Sẵn sàng",
+            "failed": "Lỗi"
+        },
+        "MOVE_UP": "Đưa lên trước",
+        "MOVE_DOWN": "Đưa xuống sau",
+        "DELETE_STICKER": "Xoá sticker",
+        "DELETE_STICKER_CONFIRM": "Xoá sticker này khỏi bộ? Tin đã gửi vẫn giữ ảnh.",
+        "ACTION_ERROR": "Không thực hiện được, bạn thử lại nhé.",
+        "SAVED": "Đã lưu"
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Hộp thư",

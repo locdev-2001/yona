@@ -28,6 +28,11 @@ class SuperAdminInertia
                 'logoThumbnail' => config('yona.branding.logo_thumbnail'),
                 'version' => config('yona.version'),
                 'navigation' => $this->registry->navigationItems(),
+                // Nhãn dịch sẵn ở máy chủ: layout nằm trong entry của console,
+                // gọi t() ở đó kéo cả bộ i18n vào mọi trang, kể cả trang đăng nhập.
+                'toolPages' => [
+                    ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => '/super_admin/sticker_packs'],
+                ],
                 'settingsPages' => array_map(fn (string $section) => [
                     'key' => $section,
                     'label' => Str::headline($section),

@@ -56,12 +56,15 @@ use App\Http\Controllers\WebApi\Reports\LiveReportsController;
 use App\Http\Controllers\WebApi\Reports\ReportsController;
 use App\Http\Controllers\WebApi\Reports\SummaryReportsController;
 use App\Http\Controllers\WebApi\SearchController;
+use App\Http\Controllers\WebApi\Settings\CustomStickerPacksController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
+use App\Http\Middleware\EnsureAccountFeatureEnabled;
+use App\Models\Sticker;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -431,6 +434,26 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/widget_updates/{updateId}', [WidgetUpdatesController::class, 'destroy'])->whereNumber('updateId');
         Route::post('/widget_updates/{updateId}/publish', [WidgetUpdatesController::class, 'publish'])->whereNumber('updateId');
         Route::post('/widget_updates/{updateId}/unpublish', [WidgetUpdatesController::class, 'unpublish'])->whereNumber('updateId');
+
+        // Kho sticker riêng của account (cùng lõi với kho chung của Super Admin);
+        // cờ custom_stickers tắt thì cả nhóm trả 404.
+        Route::middleware(EnsureAccountFeatureEnabled::class.':'.Sticker::CUSTOM_STICKERS_FEATURE)
+            ->prefix('/sticker_packs')
+            ->group(function () {
+                Route::get('/', [CustomStickerPacksController::class, 'index']);
+                Route::post('/', [CustomStickerPacksController::class, 'store']);
+                Route::get('/{packId}', [CustomStickerPacksController::class, 'show'])->whereNumber('packId');
+                Route::match(['put', 'patch'], '/{packId}', [CustomStickerPacksController::class, 'update'])->whereNumber('packId');
+                Route::delete('/{packId}', [CustomStickerPacksController::class, 'destroy'])->whereNumber('packId');
+                Route::post('/{packId}/publish', [CustomStickerPacksController::class, 'publish'])->whereNumber('packId');
+                Route::post('/{packId}/unpublish', [CustomStickerPacksController::class, 'unpublish'])->whereNumber('packId');
+                Route::post('/{packId}/stickers', [CustomStickerPacksController::class, 'upload'])
+                    ->whereNumber('packId')
+                    ->middleware('throttle:sticker-uploads');
+                Route::put('/{packId}/stickers/order', [CustomStickerPacksController::class, 'reorder'])->whereNumber('packId');
+                Route::delete('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'destroySticker'])
+                    ->whereNumber(['packId', 'stickerId']);
+            });
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

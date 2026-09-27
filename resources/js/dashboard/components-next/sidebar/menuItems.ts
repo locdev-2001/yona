@@ -306,6 +306,14 @@ export function buildMenuItems(
                     to: scoped('settings/payment-accounts'),
                 },
                 {
+                    name: 'Settings Custom Stickers',
+                    permissions: ['administrator'],
+                    featureFlag: 'custom_stickers',
+                    label: t('STICKER_LIBRARY.MENU'),
+                    icon: 'i-lucide-sticker',
+                    to: scoped('settings/custom-stickers'),
+                },
+                {
                     name: 'Settings Custom Attributes',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),

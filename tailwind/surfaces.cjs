@@ -36,6 +36,7 @@ module.exports = {
         content: [
             './resources/js/superadmin/**/*.{ts,tsx}',
             './resources/js/shared/**/*.{ts,tsx}',
+            './resources/js/dashboard/settings/customStickers/**/*.{ts,tsx}',
             './resources/views/superadmin.blade.php',
             './resources/views/superadmin_auth.blade.php',
         ],

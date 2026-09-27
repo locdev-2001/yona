@@ -25,6 +25,7 @@ export type SuperAdminPageProps = {
         logoThumbnail: string;
         version: string;
         navigation: { resource: string; label: string; url: string }[];
+        toolPages: { key: string; label: string; url: string }[];
         settingsPages: { key: string; label: string; url: string }[];
         currentPath: string;
     };

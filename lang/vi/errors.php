@@ -115,6 +115,11 @@ return [
         'renderer_unavailable' => 'Máy chủ chưa dựng được ảnh sticker lúc này, bạn thử lại sau nhé.',
         'storage_write_failed' => 'Không lưu được tệp sticker, bạn thử lại sau nhé.',
     ],
+    'sticker_library' => [
+        'pack_full' => 'Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.',
+        'too_many_packs' => 'Mỗi account có tối đa :max bộ sticker.',
+        'upload_throttled' => 'Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.',
+    ],
     'widget_recall' => [
         'capability_not_supported' => 'Kênh này chưa cho thu hồi tin nhắn.',
         'not_own_message' => 'Bạn chỉ thu hồi được tin nhắn của chính mình.',
