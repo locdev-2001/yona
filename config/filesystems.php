@@ -47,6 +47,23 @@ return [
             'report' => false,
         ],
 
+        // Kho sticker: đổi sang R2/S3 chỉ bằng env (STICKERS_DISK_DRIVER=s3 cùng
+        // bucket/endpoint/key, ROOT là tiền tố trong bucket, URL là tên miền công khai).
+        'stickers' => [
+            'driver' => env('STICKERS_DISK_DRIVER', 'local'),
+            'root' => env('STICKERS_DISK_ROOT', storage_path('app/public/stickers')),
+            'url' => env('STICKERS_DISK_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/stickers'),
+            'visibility' => 'public',
+            'key' => env('STICKERS_DISK_KEY'),
+            'secret' => env('STICKERS_DISK_SECRET'),
+            'region' => env('STICKERS_DISK_REGION', 'auto'),
+            'bucket' => env('STICKERS_DISK_BUCKET'),
+            'endpoint' => env('STICKERS_DISK_ENDPOINT'),
+            'use_path_style_endpoint' => env('STICKERS_DISK_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

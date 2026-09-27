@@ -71,4 +71,5 @@ return [
     'whatsapp_reconfigure' => false,
     'whatsapp_embedded_signup_inbox_creation' => false,
     'delayed_automations' => false,
+    'custom_stickers' => false,
 ];
