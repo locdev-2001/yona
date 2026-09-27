@@ -52,6 +52,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly APP_DIR="${DEPLOY_APP_DIR:-$SCRIPT_DIR}"
 readonly ENV_FILE="$APP_DIR/.env"
 readonly BRIDGE_DIR="$APP_DIR/services/zalo-bridge"
+readonly STICKER_RENDERER_DIR="$APP_DIR/services/sticker-renderer"
 readonly LOCK_FILE="$APP_DIR/storage/framework/cache/yona-deploy.lock"
 
 readonly DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
@@ -671,6 +672,13 @@ prepare_runtime_permissions() {
     run find "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" -type d -exec chmod g+s {} +
 }
 
+# Renderer sticker là workspace pnpm riêng: pnpm install ở gốc không cài nó, thiếu
+# thì mọi sticker upload thành failed (renderer_unavailable).
+deploy_sticker_renderer() {
+    log 'Cài renderer sticker'
+    run_pnpm --dir "$STICKER_RENDERER_DIR" install --frozen-lockfile --prod
+}
+
 deploy_zalo_bridge() {
     local bridge_port
 
@@ -1263,6 +1271,7 @@ main() {
     step 'laravel cache'  prepare_laravel
     step 'permissions'    prepare_runtime_permissions
     step 'zalo bridge'    deploy_zalo_bridge
+    step 'sticker renderer' deploy_sticker_renderer
     step 'services'       ensure_system_services
     step 'restart'        restart_application_processes
     step 'maintenance off' disable_maintenance_mode

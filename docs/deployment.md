@@ -132,6 +132,18 @@ khi cần thêm (ví dụ trước một migration rủi ro):
 sudo -u postgres /www/server/pgsql/bin/pg_dump -Fc yona > /www/backup/yona-$(date +%F-%H%M).dump
 ```
 
+`pg_dump` không chứa tệp của kho sticker: bảng `stickers` chỉ giữ đường dẫn,
+tệp nằm ở `storage/app/public/stickers` (disk `stickers`). Cron sao lưu phải
+gom thêm thư mục này, cùng nhịp với database; khôi phục database mà thiếu tệp
+thì sticker đã gửi và bảng chọn đều ra ảnh hỏng. Backup tay:
+
+```bash
+tar -C /www/wwwroot/yona.vn/storage/app/public -czf /www/backup/yona-stickers-$(date +%F-%H%M).tar.gz stickers
+```
+
+Tệp đặt theo hash nội dung nên chép chồng lên bản cũ an toàn. Đã chuyển disk
+sang R2 (mục 9, "Kho sticker") thì thư mục này không còn dùng: sao lưu bucket.
+
 ---
 
 ## 5. `.env` production
@@ -802,6 +814,50 @@ số phá cache, lệch nhau là cảnh báo.
 /www/server/nginx/sbin/nginx -t && /etc/init.d/nginx reload
 ```
 
+### Tệp kho sticker và wasm của trình phát
+
+Tệp kho sticker (`/storage/stickers/<2 ký tự>/<hash>/anim.json`, `poster.webp`,
+`static.png`) đặt theo hash nội dung của animation: nội dung đổi là đường dẫn
+đổi, nên cache một năm kèm `immutable` được. Thêm vào `cache-policy.conf`:
+
+```nginx
+# Khớp tiền tố ^~ thắng rule regex ảnh/js của aaPanel. add_header ở cấp location
+# nuốt mất header kế thừa từ server block, nên chép lại nguyên dòng
+# Strict-Transport-Security đang có ở server block vào đây.
+location ^~ /storage/stickers/ {
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    add_header Strict-Transport-Security "<giá trị y hệt server block>" always;
+    access_log /dev/null;
+}
+```
+
+`anim.json` là chữ JSON, phải được nén (gzip/brotli) ở Cloudflare hoặc nginx.
+
+Trình phát sticker động (ThorVG) nạp `thorvg-<hash>.wasm` từ `/build/assets/`
+(đã có `location ^~ /build/assets/` cache 1 năm ở trên), không bao giờ tải từ CDN
+ngoài. nginx phải trả `Content-Type: application/wasm` cho đuôi `.wasm`. Sai MIME
+không làm hỏng việc phát (trang tự tải bytes rồi gói lại đúng kiểu) nhưng
+`application/octet-stream` không được nén ở edge. Kiểm và thêm nếu thiếu:
+
+```bash
+grep -n wasm /www/server/nginx/conf/mime.types
+# thiếu thì thêm dòng này vào khối types { } của mime.types rồi nginx -t, reload:
+#     application/wasm                                 wasm;
+```
+
+Kiểm sau reload (lấy tên tệp thật từ `public/build/assets/` và một sticker đã
+xuất bản):
+
+```bash
+curl -sI https://yona.vn/build/assets/thorvg-<hash>.wasm | grep -i '^content-type'
+# mong đợi: content-type: application/wasm
+curl -sI https://yona.vn/storage/stickers/<2 ký tự>/<hash>/poster.webp | grep -Ei '^(cache-control|strict-transport-security)'
+# mong đợi: public, max-age=31536000, immutable và vẫn còn strict-transport-security
+curl -s -o /dev/null -w '%{size_download}\n' -H 'Accept-Encoding: gzip' \
+    https://yona.vn/storage/stickers/<2 ký tự>/<hash>/anim.json
+# nhỏ hơn hẳn kích thước tệp trên đĩa nghĩa là đã nén
+```
+
 ### IP thật của khách sau Cloudflare
 
 Cloudflare ─▶ Nginx ─FastCGI─▶ PHP-FPM: `REMOTE_ADDR` mà PHP thấy là IP edge của
@@ -959,6 +1015,7 @@ Lưu ý vận hành:
 - **Kiểm máy chủ gửi được thông báo đẩy** — xem ngay dưới (không có bí mật phải điền).
 - **OAuth client cho nút "Tiếp tục với Google"** — xem ngay dưới. Chưa làm thì nút ẩn, không hỏng gì.
 - **Dọn access token mồ côi** — một lần, sau lần deploy đầu có lệnh `access-tokens:prune-orphans`. Xem ngay dưới.
+- **Kho sticker**: cài renderer, nginx cho tệp sticker, sao lưu thư mục sticker. Xem "Kho sticker" ngay dưới.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
 
@@ -1240,6 +1297,70 @@ Mất dữ liệu Meilisearch không mất gì của khách: khôi phục snapsh
 Theo dõi dung lượng `/var/lib/meilisearch` (đo thử: ~1,3 GB cho mỗi 1 triệu tin
 ngắn). Quay về PostgreSQL: `SEARCH_DRIVER=pgsql` rồi `php artisan config:cache`;
 job outbox tự bỏ các dòng còn tồn.
+
+### Kho sticker
+
+Kho chung do Super Admin quản (`/super_admin/sticker_packs`); kho riêng của
+account nằm sau cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
+Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`,
+ví dụ Platform API cập nhật account với `features`). Mỗi lần upload,
+`RenderStickerJob` (hàng đợi `low`) gọi renderer Node `services/sticker-renderer`
+dựng `poster.webp` + `static.png` từ Lottie/TGS. Worker `low` không chạy thì
+sticker nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker
+thành `failed`. Cả hai trường hợp đều không hiện trong bảng chọn.
+
+**Cài renderer.** Renderer có workspace pnpm riêng nên `pnpm install` ở gốc không
+chạm tới; `deploy.sh` cài nó ở bước `sticker renderer` (ngay sau `zalo bridge`).
+Cài tay khi cần (máy mới, kiểm lỗi):
+
+```bash
+cd /www/wwwroot/yona.vn
+corepack pnpm --dir services/sticker-renderer install --frozen-lockfile --prod
+# thử nhanh bằng đúng user chạy Horizon: phải in ra đường dẫn node, không lỗi
+sudo -u www node -e "require.resolve('sharp', { paths: ['services/sticker-renderer'] }); console.log(process.execPath)"
+```
+
+Renderer cần Node `>=18.17` (`services/sticker-renderer/package.json`) và
+`prlimit` (gói `util-linux`, có sẵn trên Ubuntu/Debian): mỗi lượt render bị cắt
+bộ nhớ bằng `prlimit --data` và cắt thời gian. Biến trong `.env` Laravel (đọc ở
+`config/yona.php` → `stickers`, mẫu ở `.env.example`), mặc định dùng được luôn:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `STICKER_RENDERER` | `node` | Chọn renderer trong `config/yona.php` → `stickers.renderers` |
+| `STICKER_RENDERER_NODE_BINARY` | `node` | Đường dẫn node mà worker Horizon thấy (nvm/aaPanel không nằm trong PATH của `www` thì ghi đường dẫn tuyệt đối) |
+| `STICKER_RENDERER_TIMEOUT` | `10` | Giây tối đa cho một lượt render |
+| `STICKER_RENDERER_MEMORY_LIMITER` | `prlimit` | `none` chỉ dùng ở máy không có `prlimit` (macOS), không dùng trên server |
+| `STICKER_RENDERER_MEMORY_MB` | `384` | Trần bộ nhớ dữ liệu của tiến trình render |
+
+Đổi biến xong chạy `php artisan config:cache` rồi `php artisan horizon:terminate`
+(Supervisor tự dựng lại worker).
+
+**Nginx và sao lưu.** Cache tệp sticker và MIME wasm: mục 7, "Tệp kho sticker và
+wasm của trình phát". Sao lưu `storage/app/public/stickers` cùng database: mục 4.
+
+**Chuyển disk sang R2/S3** (tuỳ chọn, chỉ bằng env; mặc định là đĩa local
+`storage/app/public/stickers`, phục vụ qua `/storage/stickers` sau
+`storage:link`):
+
+1. Trên máy dev: `composer require league/flysystem-aws-s3-v3` (driver s3 chưa có
+   trong `vendor`), commit `composer.json` + `composer.lock`, deploy như thường.
+   Đừng chạy composer trên server: `deploy.sh` dừng khi working tree bẩn.
+2. Chép nguyên cây thư mục hiện có lên bucket dưới tiền tố `STICKERS_DISK_ROOT`
+   (giữ nguyên `<2 ký tự>/<hash>/...`). Tin cũ lưu đường dẫn tương đối, URL dựng
+   lúc đọc, nên chép đủ là tin cũ vẫn hiện đúng.
+3. Điền `STICKERS_DISK_*` trong `.env` theo mẫu `.env.example`: `STICKERS_DISK_DRIVER=s3`,
+   `BUCKET`, `ENDPOINT`, `KEY`, `SECRET`, `REGION=auto`; `STICKERS_DISK_URL` là
+   tên miền công khai của bucket, **không** kèm `ROOT` (Laravel tự nối).
+4. Thêm host của `STICKERS_DISK_URL` vào `BRIDGE_FETCH_HOST_ALLOWLIST` trong
+   `services/zalo-bridge/.env` rồi nạp lại bridge bằng `pm2 startOrReload …
+   --update-env` (lệnh ở mục 6; `pm2 restart` không đọc lại `.env`). Bridge tải ảnh qua URL đính kèm
+   của Yona, URL đó chuyển hướng sang disk sticker; bridge chặn chuyển hướng tới
+   host lạ, thiếu bước này thì mọi sticker gửi ra Zalo đều hỏng.
+5. `php artisan config:cache`, `php artisan horizon:terminate`. Đặt
+   `Cache-Control: public, max-age=31536000, immutable` cho bucket ở phía
+   Cloudflare (job ghi tệp không gắn header này), vì block nginx ở mục 7 không còn
+   áp cho tên miền bucket.
 
 ## 10. Deploy
 

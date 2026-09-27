@@ -91,6 +91,46 @@ mở trang, chuyển khoản…) là **payload có cấu trúc**: `content_type`
 - `frame-ancestors` giống hệt widget (kênh website chưa khai domain thì không gửi
   header), trang gắn `noindex`. Gửi form có hạn mức theo token và IP.
 
+### Sticker và kho sticker Yona
+
+Tin sticker là `content_type: sticker` với payload ở `content_attributes.sticker`;
+nó **không** phải `StructuredType` (không đăng ký ở `config/messaging.php`), vì
+ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không cần hạ cấp.
+
+- **Danh mục ghép:** `app/Services/Channels/Stickers/StickerLibrary.php` là lõi
+  trung tính, ghép `YonaStickerCatalog` (`app/Services/Stickers/`, kho của chính
+  Yona) với danh mục của nền tảng tra qua `ChannelActionRegistry` (ví dụ
+  `app/Services/Zalo/ZaloStickerCatalog.php`), cùng contract `StickerCatalog`.
+  Mã kho Yona mang tiền tố `yona:` và định tuyến theo tiền tố. Sticker nền tảng
+  cần năng lực `outbound_sticker`; sticker Yona chỉ cần `outbound_image` vì ra
+  ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Động (Lottie) chỉ phát trong
+  dashboard và widget.
+- **Ai thấy gì:** một nguồn là `Sticker::visibleTo($account)`: sticker `ready`
+  trong bộ đã xuất bản, của kho chung (`account_id` null) và thêm kho riêng của
+  account khi cờ `custom_stickers` bật. Cờ tắt thì trang và API kho riêng trả 404
+  (`EnsureAccountFeatureEnabled`).
+- **Payload lưu đường dẫn, URL dựng lúc đọc:** tin chỉ giữ đường dẫn trên disk
+  `stickers` (`config/filesystems.php`), không giữ URL; `MessageResource` gọi
+  `StickerLibrary::forReader()` dựng `url` (PNG), `poster_url`, `animation_url`,
+  `source: yona`. Đổi tên miền hay chuyển disk sang R2 thì tin cũ vẫn đúng.
+- **Tệp mượn:** đính kèm của tin sticker trỏ thẳng tệp trên disk `stickers`, không
+  sao chép. `Attachment::ownsStoredFile()` trả false cho disk thuộc
+  `config('yona.attachment_borrowed_disks')`, nên xoá, thu hồi hay chuyển tiếp tin
+  không đụng tệp kho. Xoá tệp kho chỉ ở `StickerFileJanitor`, khi không còn sticker
+  hay đính kèm nào trỏ tới hash đó.
+- **Pipeline upload:** `StickerUploadService` kiểm và thu gọn Lottie/TGS
+  (`LottieDocumentValidator`, `LottieMinifier`), tạo sticker `processing`, rồi
+  `RenderStickerJob` (hàng đợi `low`) gọi `StickerRenderer`. Bản cài đặt
+  `NodeStickerRenderer` chạy `services/sticker-renderer` (ThorVG wasm) trong tiến
+  trình con có cắt thời gian và `prlimit --data` (`config/yona.php` → `stickers`).
+  Tệp ghi theo hash nội dung: `<2 ký tự>/<hash>/anim.json`, `poster.webp`,
+  `static.png`. Hỏng bước nào thì sticker `failed` kèm mã.
+- **Trình phát:** `resources/js/shared/sticker/StickerPlayer.tsx` dùng chung cho
+  dashboard và widget: hiện poster ngay, chỉ nạp ThorVG (chunk riêng, wasm tự host
+  qua `thorvgLoader.ts`) khi sticker vào khung nhìn, ra khỏi khung thì dừng; mọi
+  lỗi giữ poster. Plugin Vite `thorvgBuildPlugin.ts` gỡ đường tải wasm dự phòng từ
+  CDN ngoài khỏi bundle.
+
 ## 4. Realtime
 
 - Laravel Reverb + Echo. Sự kiện đẩy qua `app/Events/RealtimeBroadcast.php`
