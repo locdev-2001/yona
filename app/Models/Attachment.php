@@ -148,11 +148,7 @@ class Attachment extends Model
             $attachment->validateFile();
         });
 
-        static::deleted(function (Attachment $attachment) {
-            if ($attachment->path) {
-                Storage::disk($attachment->disk)->delete($attachment->path);
-            }
-        });
+        static::deleted(fn (Attachment $attachment) => $attachment->discardStoredFile());
     }
 
     public function attachable(): MorphTo
@@ -331,7 +327,8 @@ class Attachment extends Model
     /**
      * Sao tệp sang một đường dẫn mới và trả thuộc tính cho bản ghi đính kèm độc
      * lập: hook `deleted` xoá tệp theo `path`, nên dùng chung đường dẫn thì thu
-     * hồi tin gốc sẽ làm mất luôn tệp của bản sao. Null khi không còn tệp để sao.
+     * hồi tin gốc sẽ làm mất luôn tệp của bản sao. Tệp mượn không bị xoá theo
+     * bản ghi nên dùng chung được. Null khi không còn tệp để sao.
      *
      * @return array<string, mixed>|null
      */
@@ -339,6 +336,10 @@ class Attachment extends Model
     {
         if (! $this->hasFile()) {
             return null;
+        }
+
+        if (! $this->ownsStoredFile()) {
+            return Storage::disk($this->disk)->exists((string) $this->path) ? $this->storedFileAttributes() : null;
         }
 
         $copyPath = self::storagePathFor($this->filename ?? basename((string) $this->path), $this->account_id);
@@ -369,8 +370,25 @@ class Attachment extends Model
 
         foreach ($copies as $copy) {
             if (! in_array($copy['path'], $attachedPaths, true)) {
-                Storage::disk($copy['disk'])->delete($copy['path']);
+                (new self($copy))->discardStoredFile();
             }
+        }
+    }
+
+    /**
+     * Bản ghi sở hữu tệp của nó, trừ khi tệp nằm trên disk dùng chung (tệp mượn):
+     * tệp mượn thuộc về nơi khác nên xoá, sao chép hay dọn bản ghi không đụng tới.
+     */
+    public function ownsStoredFile(): bool
+    {
+        return ! in_array($this->disk, (array) config('yona.attachment_borrowed_disks', []), true);
+    }
+
+    // Nguồn duy nhất của việc xoá tệp đính kèm khỏi đĩa.
+    public function discardStoredFile(): void
+    {
+        if ($this->hasFile() && $this->ownsStoredFile()) {
+            Storage::disk($this->disk)->delete($this->path);
         }
     }
 

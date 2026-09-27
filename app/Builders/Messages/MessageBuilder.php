@@ -16,7 +16,6 @@ use App\Support\BooleanParam;
 use App\Support\EmailAddress;
 use App\Support\Messages\OutgoingText;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 // Bỏ: template_params (kênh WhatsApp F5).
 class MessageBuilder
@@ -213,9 +212,7 @@ class MessageBuilder
     private function discardStoredFiles(array $attachments): void
     {
         foreach ($attachments as $attachment) {
-            if ($attachment->path) {
-                Storage::disk($attachment->disk)->delete($attachment->path);
-            }
+            $attachment->discardStoredFile();
         }
     }
 
