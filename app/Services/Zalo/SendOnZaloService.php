@@ -194,7 +194,8 @@ class SendOnZaloService extends BaseSendOnChannelService
     }
 
     /**
-     * Một phần = một lượt gọi bridge. Sticker đi riêng; tin chữ chuyển tiếp trong
+     * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng (sticker
+     * nguồn khác đi như ảnh qua đính kèm của nó); tin chữ chuyển tiếp trong
      * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì mỗi tệp một phần, chú
      * thích + trích dẫn + nhắc tên bám vào tệp đầu tiên (zca gộp caption vào chính
      * tin đính kèm).
@@ -210,9 +211,9 @@ class SendOnZaloService extends BaseSendOnChannelService
             'thread_type' => $channel->threadType($this->message),
         ];
 
-        $sticker = $this->message->content_attributes['sticker'] ?? null;
+        $sticker = $this->nativeSticker();
 
-        if (filled($sticker)) {
+        if ($sticker !== null) {
             return [$this->part([...$thread, 'sticker' => $sticker])];
         }
 
@@ -268,6 +269,19 @@ class SendOnZaloService extends BaseSendOnChannelService
         }
 
         return $parts;
+    }
+
+    /**
+     * Payload sticker chỉ đi lệnh sticker của Zalo khi danh mục Zalo nhận ra nó;
+     * mã của nguồn khác gửi vào đây sẽ thành sticker sai hoặc bị Zalo từ chối.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function nativeSticker(): ?array
+    {
+        $sticker = $this->message->content_attributes['sticker'] ?? null;
+
+        return is_array($sticker) && app(ZaloStickerCatalog::class)->fromStored($sticker) !== null ? $sticker : null;
     }
 
     /**

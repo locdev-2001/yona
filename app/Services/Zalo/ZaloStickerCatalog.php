@@ -2,6 +2,7 @@
 
 namespace App\Services\Zalo;
 
+use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use App\Services\Channels\Stickers\Sticker;
@@ -49,6 +50,9 @@ final class ZaloStickerCatalog implements StickerCatalog
     private const LABEL_CODE_PATTERN = '/^\[\^.*\^\]$/u';
 
     private const BAD_REQUEST = 'bad_request';
+
+    /** Payload sticker Zalo không có khoá này; payload khai nguồn là của danh mục khác (kho Yona). */
+    private const FOREIGN_SOURCE_KEY = 'source';
 
     public function __construct(private readonly ZaloBridgeClient $bridge) {}
 
@@ -99,6 +103,10 @@ final class ZaloStickerCatalog implements StickerCatalog
 
     public function fromStored(array $stored): ?Sticker
     {
+        if (array_key_exists(self::FOREIGN_SOURCE_KEY, $stored)) {
+            return null;
+        }
+
         $item = $this->validItem([
             'id' => self::firstFilled($stored, self::STORED_ID_KEYS),
             'cate_id' => self::firstFilled($stored, self::STORED_PACK_KEYS),
@@ -114,6 +122,16 @@ final class ZaloStickerCatalog implements StickerCatalog
         $this->rememberItems([$item]);
 
         return $this->stickerFromItem($item);
+    }
+
+    /** Ảnh sticker nằm trên CDN của Zalo: đính kèm chỉ trỏ URL, không lưu tệp. */
+    public function attachmentFor(Sticker $sticker, Inbox $inbox): Attachment
+    {
+        return new Attachment([
+            'account_id' => $inbox->account_id,
+            'file_type' => Attachment::FILE_TYPE_IMAGE,
+            'external_url' => $sticker->imageUrl,
+        ]);
     }
 
     /**

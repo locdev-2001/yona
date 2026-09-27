@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Widget;
 
+use App\Channels\Capability;
 use App\Models\Channel\WebWidget;
 use App\Models\ContactInbox;
 use App\Services\Channels\Stickers\Sticker;
-use App\Services\Widget\WidgetStickerCatalog;
+use App\Services\Channels\Stickers\StickerLibrary;
 use DateTimeZone;
 use Throwable;
 
@@ -45,7 +46,10 @@ final class WidgetConfigResource
                 'recall_window' => (int) $channel->recallWindow()->totalSeconds,
                 'reactions' => config('messaging.widget_reactions'),
                 'reply_time' => $channel->reply_time,
-                'stickers' => array_map(fn (Sticker $sticker) => $sticker->toApi(), app(WidgetStickerCatalog::class)->all()),
+                'stickers' => array_map(
+                    fn (Sticker $sticker) => $sticker->toApi(),
+                    app(StickerLibrary::class)->listing($inbox, Capability::InboundSticker),
+                ),
                 'timezone' => $inbox->timezone,
                 'utc_off_set' => self::utcOffset($inbox->timezone),
                 'website_name' => $inbox->name,

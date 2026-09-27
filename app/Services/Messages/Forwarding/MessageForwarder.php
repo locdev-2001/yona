@@ -9,7 +9,7 @@ use App\Models\Attachment;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
-use App\Services\Channels\ChannelActionRegistry;
+use App\Services\Channels\Stickers\StickerLibrary;
 use Throwable;
 
 /**
@@ -74,7 +74,7 @@ final class MessageForwarder
 
     private function stickerId(Message $source, Conversation $target): string
     {
-        $sticker = ChannelActionRegistry::stickers($target->inbox)?->fromStored($source->content_attributes['sticker']);
+        $sticker = app(StickerLibrary::class)->fromStored($target->inbox, $source->content_attributes['sticker']);
 
         return $sticker?->id
             ?? throw new ForwardException(ForwardBlock::translated(ForwardBlock::STICKER_UNAVAILABLE, $source->account->locale, [

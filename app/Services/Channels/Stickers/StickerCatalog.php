@@ -2,13 +2,15 @@
 
 namespace App\Services\Channels\Stickers;
 
+use App\Models\Attachment;
 use App\Models\Inbox;
 
 /**
  * Danh mục sticker của một kênh (docs/channel-capabilities.md §2.2
  * `outbound_sticker`). Lõi chỉ nói chuyện qua contract này; cách hỏi nền tảng,
  * cache, hình dạng payload gửi đi là việc của driver. Thêm kênh = thêm driver +
- * một dòng trong ChannelActionRegistry.
+ * một dòng trong ChannelActionRegistry. Kho sticker của Yona cũng là một danh
+ * mục theo contract này, ghép vào ở StickerLibrary.
  *
  * Lỗi phía nền tảng ném StickerCatalogException với mã ổn định.
  */
@@ -31,4 +33,11 @@ interface StickerCatalog
      * @param  array<string, mixed>  $stored
      */
     public function fromStored(array $stored): ?Sticker;
+
+    /**
+     * Đính kèm ảnh của tin sticker (chưa lưu). Đây là thứ mọi kênh không có
+     * sticker gốc gửi đi như một tin ảnh, nên driver tự chọn nguồn ảnh: URL của
+     * nền tảng hay tệp của kho.
+     */
+    public function attachmentFor(Sticker $sticker, Inbox $inbox): Attachment;
 }

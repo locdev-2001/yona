@@ -4,7 +4,6 @@ namespace App\Services\Messages;
 
 use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
-use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\Stickers\StickerCatalogException;
@@ -13,10 +12,10 @@ use App\Services\Channels\Stickers\StickerLibrary;
 /**
  * Tin `content_type: sticker` do agent gửi, hoặc khách gửi từ bề mặt của kênh
  * khai `inbound_sticker` (widget website): client chỉ đưa `sticker_id`, máy chủ
- * tra danh mục của kênh rồi tự dựng tin theo đúng hình dạng sticker nhận về —
- * `content` rỗng, `content_attributes.sticker` là payload của driver, một đính
- * kèm ảnh trỏ `external_url`. Nhờ vậy bong bóng, ô xem trước, realtime và webhook
- * dùng lại contract sẵn có.
+ * tra danh mục sở hữu mã rồi tự dựng tin theo đúng hình dạng sticker nhận về —
+ * `content` rỗng, `content_attributes.sticker` là payload của danh mục, một đính
+ * kèm ảnh do chính danh mục dựng. Nhờ vậy bong bóng, ô xem trước, realtime,
+ * webhook và đường gửi ảnh của mọi kênh dùng lại contract sẵn có.
  *
  * Sticker đi một mình: không ghi chú riêng, không kèm tệp, không trích dẫn.
  */
@@ -37,19 +36,18 @@ final class StickerMessageBuilder
 
         $this->guardStandalone();
 
+        $library = app(StickerLibrary::class);
+
         try {
-            $sticker = app(StickerLibrary::class)->resolve($this->inbox, $this->stickerId(), $this->direction());
+            $sticker = $library->resolve($this->inbox, $this->stickerId(), $this->direction());
+            $attachment = $library->attachmentFor($this->inbox, $sticker, $this->direction());
         } catch (StickerCatalogException $exception) {
             throw new MessageValidationException($exception->getMessage());
         }
 
         $this->message->content = null;
         $this->message->content_attributes = ['sticker' => $sticker->payload];
-        $this->message->pendingAttachments = [new Attachment([
-            'account_id' => $this->inbox->account_id,
-            'file_type' => Attachment::FILE_TYPE_IMAGE,
-            'external_url' => $sticker->imageUrl,
-        ])];
+        $this->message->pendingAttachments = [$attachment];
     }
 
     private function guardStandalone(): void

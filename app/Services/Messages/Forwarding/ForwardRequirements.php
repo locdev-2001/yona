@@ -6,7 +6,7 @@ use App\Channels\Capability;
 use App\Models\Attachment;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Services\Channels\ChannelActionRegistry;
+use App\Services\Channels\Stickers\StickerLibrary;
 use Illuminate\Support\Collection;
 
 /**
@@ -51,7 +51,9 @@ final class ForwardRequirements
     public static function capabilitiesFor(Message $source): array
     {
         if (self::isSticker($source)) {
-            return [Capability::OutboundSticker];
+            $stored = $source->content_attributes['sticker'] ?? null;
+
+            return [is_array($stored) ? app(StickerLibrary::class)->outboundCapabilityFor($stored) : Capability::OutboundSticker];
         }
 
         $required = array_map(
@@ -68,7 +70,7 @@ final class ForwardRequirements
 
     /**
      * Đính kèm sẽ được sao sang bản chuyển tiếp. Sticker mang ảnh của chính nó
-     * theo danh mục của kênh đích, nên không sao ảnh đính kèm.
+     * theo danh mục của hộp thư đích, nên không sao ảnh đính kèm.
      *
      * @return list<Attachment> theo id tăng dần
      */
@@ -143,7 +145,7 @@ final class ForwardRequirements
             );
         }
 
-        if (self::isSticker($source) && ChannelActionRegistry::stickers($inbox)?->fromStored($source->content_attributes['sticker']) === null) {
+        if (self::isSticker($source) && app(StickerLibrary::class)->fromStored($inbox, $source->content_attributes['sticker']) === null) {
             return ForwardBlock::translated(ForwardBlock::STICKER_UNAVAILABLE, $locale, ['inbox' => (string) $inbox->name]);
         }
 

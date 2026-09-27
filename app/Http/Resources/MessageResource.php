@@ -13,6 +13,7 @@ use App\Models\Contact;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Channels\Stickers\StickerLibrary;
 use App\Services\Messages\WebhookContentNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -46,7 +47,7 @@ class MessageResource extends JsonResource
             'message_type' => $message->message_type,
             'content_type' => $message->contentTypeName(),
             'status' => $message->statusName(),
-            'content_attributes' => $message->content_attributes ?? [],
+            'content_attributes' => self::contentAttributes($message),
             'preview_text' => self::previewText($message),
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
@@ -54,6 +55,23 @@ class MessageResource extends JsonResource
             ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account, $message->inbox)] : []),
             ...self::attachmentsPayload($message),
         ];
+    }
+
+    /**
+     * content_attributes cho bề mặt hiển thị (dashboard, widget, realtime): payload
+     * sticker lưu đường dẫn tệp, URL dựng lúc đọc.
+     *
+     * @return array<string, mixed>
+     */
+    public static function contentAttributes(Message $message): array
+    {
+        $attributes = $message->content_attributes ?? [];
+
+        if (is_array($attributes['sticker'] ?? null)) {
+            $attributes['sticker'] = app(StickerLibrary::class)->forReader($attributes['sticker']);
+        }
+
+        return $attributes;
     }
 
     // json.attachments … if message.attachments.present? — vắng hẳn khóa khi không có tệp.
@@ -90,7 +108,7 @@ class MessageResource extends JsonResource
             'status' => $message->statusName(),
             'source_id' => $message->source_id,
             'content_type' => $message->contentTypeName(),
-            'content_attributes' => $message->content_attributes ?? [],
+            'content_attributes' => self::contentAttributes($message),
             'preview_text' => self::previewText($message),
             'sender_type' => $message->sender_type,
             'sender_id' => $message->sender_id,

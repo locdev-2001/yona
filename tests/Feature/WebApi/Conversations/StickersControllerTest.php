@@ -172,11 +172,13 @@ it('mở một bộ gọi kênh theo mã bộ và dùng cache cho lần sau', fu
         ->and($requests[0]['cate_id'])->toBe(61900);
 });
 
-it('hộp thư không khai outbound_sticker trả 422 capability_not_supported', function () {
+// Kênh gửi được ảnh (API, Facebook…) có kho sticker Yona đi dưới dạng ảnh; chỉ kênh
+// không gửi được cả ảnh lẫn sticker mới không có bảng chọn.
+it('hộp thư không gửi được ảnh lẫn sticker trả 422 capability_not_supported', function () {
     fakeStickerBridge();
-    $apiInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
-    $apiInbox->addMembers([$this->agent->id]);
-    $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $apiInbox->id]);
+    $smsInbox = Inbox::factory()->sms()->create(['account_id' => $this->account->id]);
+    $smsInbox->addMembers([$this->agent->id]);
+    $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $smsInbox->id]);
 
     $this->actingAs($this->agent)->getJson(stickersUrl($this->account, $conversation, ['q' => 'chào']))
         ->assertStatus(422)

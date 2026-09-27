@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\Stickers\NodeStickerRenderer;
+
 return [
 
     /*
@@ -163,10 +165,26 @@ return [
 
     'widget_token_expiry_days' => (int) env('WIDGET_TOKEN_EXPIRY', 180),
 
-    // Bộ sticker khách chọn được trong widget, dùng chung mọi inbox:
-    // [['id' => …, 'url' => …, 'pack_id' => …, 'label' => …], …]. Để rỗng thì
-    // widget ẩn tab Sticker.
-    'widget_stickers' => [],
+    // Dựng ảnh tĩnh cho sticker upload. `renderer` chọn một mục trong
+    // `renderers`; thêm trình render khác = thêm một mục, không sửa pipeline.
+    // Trình render chạy trong tiến trình con bị cắt theo `timeout_seconds` và
+    // bị giới hạn bộ nhớ ở tầng hệ điều hành bằng `prlimit --data`: wasm của
+    // ThorVG tự phình tới 2 GiB, còn giới hạn không gian địa chỉ (--as) không
+    // dùng được vì V8 giữ chỗ hàng GB địa chỉ ảo cho wasm. macOS không có
+    // prlimit: chạy local thì đặt STICKER_RENDERER_MEMORY_LIMITER=none.
+    'stickers' => [
+        'renderer' => env('STICKER_RENDERER', 'node'),
+        'renderers' => [
+            'node' => [
+                'class' => NodeStickerRenderer::class,
+                'binary' => env('STICKER_RENDERER_NODE_BINARY', 'node'),
+                'script' => base_path('services/sticker-renderer/src/render.mjs'),
+            ],
+        ],
+        'timeout_seconds' => (int) env('STICKER_RENDERER_TIMEOUT', 10),
+        'memory_limiter' => env('STICKER_RENDERER_MEMORY_LIMITER', 'prlimit'),
+        'memory_limit_mb' => (int) env('STICKER_RENDERER_MEMORY_MB', 384),
+    ],
 
     'available_locales' => [
         ['name' => 'English', 'iso_639_1_code' => 'en'],

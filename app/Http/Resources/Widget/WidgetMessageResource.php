@@ -25,7 +25,7 @@ final class WidgetMessageResource
             'content' => $message->content,
             'message_type' => $message->message_type,
             'content_type' => $message->contentTypeName(),
-            'content_attributes' => $message->content_attributes ?? [],
+            'content_attributes' => MessageResource::contentAttributes($message),
             'status' => $message->statusName(),
             'created_at' => $message->created_at->getTimestamp(),
             'conversation_id' => $message->conversation->display_id,
@@ -54,7 +54,7 @@ final class WidgetMessageResource
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
-            'content_attributes' => $message->content_attributes ?? [],
+            'content_attributes' => MessageResource::contentAttributes($message),
             ...self::attachments($message),
             ...self::sender($message),
         ];

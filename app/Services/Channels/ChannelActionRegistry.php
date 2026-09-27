@@ -5,7 +5,6 @@ namespace App\Services\Channels;
 use App\Models\Inbox;
 use App\Services\Channels\Stickers\StickerCatalog;
 use App\Services\Widget\WidgetOutboundActions;
-use App\Services\Widget\WidgetStickerCatalog;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
 use App\Services\Zalo\ZaloStickerCatalog;
@@ -27,10 +26,9 @@ class ChannelActionRegistry
         'Channel::Zalo' => ZaloGroupMembers::class,
     ];
 
-    /** @var array<string, class-string<StickerCatalog>> */
+    /** Sticker gốc của nền tảng. Kho Yona không theo kênh nên không nằm ở đây (xem StickerLibrary). @var array<string, class-string<StickerCatalog>> */
     private const STICKER_CATALOGS = [
         'Channel::Zalo' => ZaloStickerCatalog::class,
-        'Channel::WebWidget' => WidgetStickerCatalog::class,
     ];
 
     public static function for(Inbox $inbox): ?ChannelOutboundActions
