@@ -1,0 +1,21 @@
+{
+    "name": "yona-sticker-renderer",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Render Lottie/TGS sticker ra poster.webp và static.png bằng ThorVG wasm (sw-lite) trên Node",
+    "bin": {
+        "sticker-render": "src/render.mjs"
+    },
+    "engines": {
+        "node": ">=18.17"
+    },
+    "scripts": {
+        "render": "node src/render.mjs",
+        "test": "node --test"
+    },
+    "dependencies": {
+        "@thorvg/lottie-player": "1.1.2",
+        "sharp": "^0.33.5"
+    }
+}

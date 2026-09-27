@@ -128,3 +128,22 @@ jobs:
 
       - name: node --test
         run: node --test src/*.test.mjs
+
+  # Renderer sticker: render thật bằng ThorVG wasm + sharp, chặn việc nâng bản
+  # @thorvg/lottie-player làm hỏng im lặng phần nạp engine.
+  sticker-renderer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/sticker-renderer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: node --test
+        run: node --test src/*.test.mjs
