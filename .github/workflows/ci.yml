@@ -71,6 +71,16 @@ jobs:
           psql -h 127.0.0.1 -U postgres -d "${DB_DATABASE}" \
             -c "CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 
+      # Test nhóm renderer gọi CLI sticker thật (ThorVG + sharp, trần prlimit, cắt
+      # tiến trình treo); thiếu node_modules thì các test đó tự skip.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cài renderer sticker
+        run: pnpm --dir services/sticker-renderer install --frozen-lockfile
+
       - name: Pest (toàn bộ)
         run: php artisan test --compact
 

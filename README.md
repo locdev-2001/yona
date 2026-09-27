@@ -62,6 +62,12 @@ make down      # tắt hết
 Cổng lấy **một nguồn duy nhất** từ `.env`: app `8610` (`SERVER_PORT`), Reverb
 `8611` (`REVERB_SERVER_PORT`), Zalo bridge `8612`. Đừng truyền `--port` ở nơi khác.
 
+**Kho sticker** cần thêm renderer và queue worker: cài một lần
+`corepack pnpm --dir services/sticker-renderer install`, và phải có worker chạy
+(`make up` hoặc `make worker`). Không có worker thì sticker vừa upload nằm mãi ở
+`processing`. Trên macOS không có `prlimit`: đặt `STICKER_RENDERER_MEMORY_LIMITER=none`
+trong `.env` (các biến `STICKER_RENDERER_*` ở `.env.example`).
+
 Tài khoản seed: `john@acme.inc` / `Password1!`.
 
 > **Đăng ký ở local sẽ kẹt.** `MAIL_MAILER=log` nên thư xác nhận chỉ nằm trong
