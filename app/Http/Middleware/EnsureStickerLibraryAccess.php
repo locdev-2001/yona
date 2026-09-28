@@ -11,14 +11,17 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // Cổng của API dashboard quản lý kho sticker. `account`: kho riêng của account
-// đang mở (đặt sau account.scope); `platform`: kho nền tảng. Không phải quản trị
-// viên account thì 401 như mọi API cài đặt; là quản trị viên nhưng chưa có quyền
-// dùng kho thì 403.
+// đang mở (đặt sau account.scope); `platform`: kho nền tảng; `transfer`: chuyển
+// bộ giữa kho nền tảng và kho riêng của account đang mở (đặt sau account.scope).
+// Kho riêng: không phải quản trị viên account thì 401 như mọi API cài đặt; là
+// quản trị viên nhưng chưa có quyền dùng kho thì 403.
 class EnsureStickerLibraryAccess
 {
     public const ACCOUNT_LIBRARY = 'account';
 
     public const PLATFORM_LIBRARY = 'platform';
+
+    public const PACK_TRANSFER = 'transfer';
 
     public function __construct(private readonly StickerLibraryAccess $access) {}
 
@@ -30,6 +33,7 @@ class EnsureStickerLibraryAccess
         $allowed = match ($library) {
             self::ACCOUNT_LIBRARY => $this->allowsAccountLibrary($request, $user),
             self::PLATFORM_LIBRARY => $this->access->canManagePlatformLibrary($user),
+            self::PACK_TRANSFER => $this->allowsPackTransfer($request, $user),
         };
 
         abort_unless($allowed, 403, __('errors.sticker_library.forbidden'));
@@ -49,5 +53,12 @@ class EnsureStickerLibraryAccess
         );
 
         return $this->access->canManageAccountLibrary($user, $account);
+    }
+
+    private function allowsPackTransfer(Request $request, User $user): bool
+    {
+        $account = $request->attributes->get('currentAccount');
+
+        return $account instanceof Account && $this->access->canMovePacks($user, $account);
     }
 }

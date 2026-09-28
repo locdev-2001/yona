@@ -4,6 +4,7 @@ namespace App\Http\Controllers\WebApi\Settings;
 
 use App\Http\Controllers\Concerns\ManagesStickerLibrary;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Stickers\MoveStickerPackRequest;
 use App\Http\Requests\Stickers\ReorderStickersRequest;
 use App\Http\Requests\Stickers\StickerPackRequest;
 use App\Http\Requests\Stickers\UpdateStickerRequest;
@@ -13,7 +14,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 // Kho sticker riêng của account. Quyền do EnsureStickerLibraryAccess:account ở
-// route quyết (StickerLibraryAccess).
+// route quyết (StickerLibraryAccess); riêng chuyển bộ qua lại kho nền tảng do
+// EnsureStickerLibraryAccess:transfer.
 class CustomStickerPacksController extends Controller
 {
     use ManagesStickerLibrary;
@@ -71,5 +73,10 @@ class CustomStickerPacksController extends Controller
     public function destroySticker(Account $account, int $packId, int $stickerId): JsonResponse
     {
         return $this->destroyLibrarySticker($account, $packId, $stickerId);
+    }
+
+    public function move(MoveStickerPackRequest $request, Account $account, int $packId): JsonResponse
+    {
+        return $this->moveLibraryPack($request, $account, $packId, $request->movesToAccountLibrary());
     }
 }

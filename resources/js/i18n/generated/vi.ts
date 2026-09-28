@@ -3674,7 +3674,8 @@ const messages: Record<string, unknown> = {
             "keyword_not_text": "Từ khoá phải là chữ.",
             "keyword_too_long": "Từ khoá «:input» dài quá :max ký tự.",
             "pack_name_required": "Bạn đặt tên cho bộ sticker nhé.",
-            "pack_name_too_long": "Tên bộ tối đa :max ký tự."
+            "pack_name_too_long": "Tên bộ tối đa :max ký tự.",
+            "invalid_destination": "Kho đích phải là kho riêng hoặc kho nền tảng."
         },
         "widget_recall": {
             "capability_not_supported": "Kênh này chưa cho thu hồi tin nhắn.",
@@ -9738,6 +9739,19 @@ const messages: Record<string, unknown> = {
         "DELETE_PACK": "Xoá bộ",
         "DELETE_PACK_CONFIRM": "Xoá bộ «{name}» cùng {count} sticker? Không hoàn tác được.",
         "PACK_DELETED": "Đã xoá bộ «{name}»",
+        "MOVE_TO_ACCOUNT": {
+            "MENU": "Chuyển sang kho riêng",
+            "TITLE": "Chuyển bộ sang kho riêng?",
+            "MESSAGE": "Bộ «{name}» sẽ chỉ còn trong kho riêng của tài khoản này, các tài khoản khác không còn thấy bộ. Tin đã gửi vẫn giữ ảnh sticker.",
+            "DONE": "Đã chuyển «{name}» sang kho riêng"
+        },
+        "MOVE_TO_PLATFORM": {
+            "MENU": "Chuyển lên kho nền tảng",
+            "TITLE": "Chuyển bộ lên kho nền tảng?",
+            "MESSAGE": "Bộ «{name}» sẽ rời kho riêng của tài khoản này. Nếu bộ đang xuất bản, mọi tài khoản sẽ thấy bộ. Tin đã gửi vẫn giữ ảnh sticker.",
+            "DONE": "Đã chuyển «{name}» lên kho nền tảng"
+        },
+        "OPEN_MOVED_PACK": "Mở",
         "PACK_SUMMARY": "{count}/{max} sticker · PNG, JPG, WebP, GIF · sticker {size}×{size}",
         "UPLOAD_INFO": "Ảnh lớn tự thu nhỏ trước khi gửi, riêng ảnh động tối đa {limit}. Kênh ngoài như Zalo nhận ảnh PNG tĩnh.",
         "ADD_STICKER": "Thêm sticker",

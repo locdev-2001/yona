@@ -51,20 +51,33 @@ final class StickerLibraryManager
 
     public function createPack(?Account $owner, string $name): StickerPack
     {
-        // Kho chung do đội Yona tự quản nên chỉ kho riêng của account bị giới hạn số bộ.
-        if ($owner !== null && $this->ownedPacks($owner)->count() >= self::MAX_PACKS_PER_ACCOUNT) {
-            throw ValidationException::withMessages([
-                'name' => __('errors.sticker_library.too_many_packs', ['max' => self::MAX_PACKS_PER_ACCOUNT]),
-            ]);
-        }
-
-        $lastPosition = $this->ownedPacks($owner)->max('position');
+        $this->ensureRoomForPackIn($owner, 'name');
 
         return StickerPack::query()->create([
             'account_id' => $owner?->id,
             'name' => $name,
-            'position' => $lastPosition === null ? 0 : (int) $lastPosition + 1,
+            'position' => $this->nextPackPosition($owner),
         ]);
+    }
+
+    // Sticker, tệp và trạng thái xuất bản đi theo bộ; tin đã gửi lưu đường dẫn
+    // tệp nên vẫn hiện ảnh.
+    public function moveToLibrary(StickerPack $pack, ?Account $owner): StickerPack
+    {
+        if ($pack->account_id === $owner?->id) {
+            return $pack;
+        }
+
+        return DB::transaction(function () use ($pack, $owner) {
+            $this->ensureRoomForPackIn($owner, 'library');
+
+            $pack->update([
+                'account_id' => $owner?->id,
+                'position' => $this->nextPackPosition($owner),
+            ]);
+
+            return $pack;
+        });
     }
 
     public function renamePack(StickerPack $pack, string $name): StickerPack
@@ -155,6 +168,23 @@ final class StickerLibraryManager
                 'file' => __('errors.sticker_library.pack_full', ['max' => self::MAX_STICKERS_PER_PACK]),
             ]);
         }
+    }
+
+    // Kho chung do đội Yona tự quản nên chỉ kho riêng của account bị giới hạn số bộ.
+    private function ensureRoomForPackIn(?Account $owner, string $field): void
+    {
+        if ($owner !== null && $this->ownedPacks($owner)->count() >= self::MAX_PACKS_PER_ACCOUNT) {
+            throw ValidationException::withMessages([
+                $field => __('errors.sticker_library.too_many_packs', ['max' => self::MAX_PACKS_PER_ACCOUNT]),
+            ]);
+        }
+    }
+
+    private function nextPackPosition(?Account $owner): int
+    {
+        $lastPosition = $this->ownedPacks($owner)->max('position');
+
+        return $lastPosition === null ? 0 : (int) $lastPosition + 1;
     }
 
     /** @return Builder<StickerPack> */

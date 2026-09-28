@@ -28,6 +28,8 @@ interface StickerPackHeaderProps {
     onTogglePublished: (published: boolean) => void;
     onAddSticker: () => void;
     onDeletePack: () => void;
+    moveLabel: string | null;
+    onMovePack: () => void;
     onFailedFirst: () => void;
     onStartSort: () => void;
     onBack: () => void;
@@ -51,6 +53,8 @@ export default function StickerPackHeader({
     onTogglePublished,
     onAddSticker,
     onDeletePack,
+    moveLabel,
+    onMovePack,
     onFailedFirst,
     onStartSort,
     onBack,
@@ -97,6 +101,7 @@ export default function StickerPackHeader({
         ...(isMobile
             ? [{ key: 'sort', label: t('STICKER_LIBRARY.SORT'), icon: 'i-lucide-arrow-up-down', disabled: stickerCount < 2, onSelect: onStartSort }]
             : [{ key: 'failed-first', label: t('STICKER_LIBRARY.FAILED_FIRST'), icon: 'i-lucide-triangle-alert', disabled: failedCount === 0, onSelect: onFailedFirst }]),
+        ...(moveLabel ? [{ key: 'move', label: moveLabel, icon: 'i-lucide-arrow-right-left', onSelect: onMovePack }] : []),
         { key: 'delete', label: t('STICKER_LIBRARY.DELETE_PACK'), icon: 'i-lucide-trash-2', danger: true, separatorBefore: true, onSelect: onDeletePack },
     ];
 

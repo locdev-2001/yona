@@ -15,7 +15,7 @@ import StickerImageEditor from './StickerImageEditor';
 import StickerPackHeader from './StickerPackHeader';
 import StickerPackList from './StickerPackList';
 import { StickerThumb } from './StickerTile';
-import type { StickerLibraryApi, StickerUpload, UploadOptions } from './stickerLibraryApi';
+import type { StickerLibraryApi, StickerLibraryKind, StickerUpload, UploadOptions } from './stickerLibraryApi';
 import { DEFAULT_STICKER_LIMITS, stickerLimitsFromMeta, stickerMetaErrorsFromApi } from './stickerLimits';
 import {
     MOBILE_QUERY,
@@ -39,6 +39,28 @@ const FLASH_MS = 1500;
 const MOBILE_SCREEN_STATE = 'stickerPackScreen';
 
 type LoadState = 'loading' | 'failed' | 'ready';
+
+// Chuyển bộ đang mở sang kho còn lại; chỉ có khi người dùng được phép.
+export interface PackTransfer {
+    destination: StickerLibraryKind;
+    movePack: (packId: number) => Promise<LibraryStickerPackDetail>;
+    openDestination: (packId: number) => void;
+}
+
+const MOVE_PACK_COPY: Record<StickerLibraryKind, { menu: string; title: string; message: string; done: string }> = {
+    account: {
+        menu: 'STICKER_LIBRARY.MOVE_TO_ACCOUNT.MENU',
+        title: 'STICKER_LIBRARY.MOVE_TO_ACCOUNT.TITLE',
+        message: 'STICKER_LIBRARY.MOVE_TO_ACCOUNT.MESSAGE',
+        done: 'STICKER_LIBRARY.MOVE_TO_ACCOUNT.DONE',
+    },
+    platform: {
+        menu: 'STICKER_LIBRARY.MOVE_TO_PLATFORM.MENU',
+        title: 'STICKER_LIBRARY.MOVE_TO_PLATFORM.TITLE',
+        message: 'STICKER_LIBRARY.MOVE_TO_PLATFORM.MESSAGE',
+        done: 'STICKER_LIBRARY.MOVE_TO_PLATFORM.DONE',
+    },
+};
 
 interface Pending {
     creating: boolean;
@@ -85,7 +107,7 @@ const packSummary = (detail: LibraryStickerPackDetail): LibraryStickerPack => ({
     cover_url: detail.stickers[0]?.image_url ?? null,
 });
 
-function StickerLibrary({ api }: { api: StickerLibraryApi }) {
+function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
     const toast = useStickerToast();
     const isMobile = useMediaQuery(MOBILE_QUERY);
     const isWide = useMediaQuery(WIDE_QUERY);
@@ -317,21 +339,49 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
             onConfirm: async () => {
                 try {
                     await api.deletePack(packId);
-                    const index = packs.findIndex(pack => pack.id === packId);
-                    const remaining = packs.filter(pack => pack.id !== packId);
-                    const neighbour = remaining[index] ?? remaining[index - 1] ?? null;
-                    setPacks(remaining);
-                    setDetail(null);
-                    const nextId = isMobile ? null : (neighbour?.id ?? null);
-                    setRequestedPackId(nextId);
-                    writePackQuery(nextId, false);
+                    dropPackAndSelectNeighbour(packId);
                     toast({ message: t('STICKER_LIBRARY.PACK_DELETED', { name }) });
-                    void loadPacks('refresh');
                 } catch (error) {
                     errorToast(error);
                 }
             },
         });
+    };
+
+    const movePack = () => {
+        if (!currentDetail || !packTransfer) return;
+        const { id: packId, name } = currentDetail;
+        const copy = MOVE_PACK_COPY[packTransfer.destination];
+        setConfirmation({
+            title: t(copy.title),
+            message: t(copy.message, { name }),
+            confirmLabel: t(copy.menu),
+            tone: 'primary',
+            onConfirm: async () => {
+                try {
+                    await packTransfer.movePack(packId);
+                    dropPackAndSelectNeighbour(packId);
+                    toast({
+                        message: t(copy.done, { name }),
+                        action: { label: t('STICKER_LIBRARY.OPEN_MOVED_PACK'), onClick: () => packTransfer.openDestination(packId) },
+                    });
+                } catch (error) {
+                    errorToast(error);
+                }
+            },
+        });
+    };
+
+    const dropPackAndSelectNeighbour = (packId: number) => {
+        const index = packs.findIndex(pack => pack.id === packId);
+        const remaining = packs.filter(pack => pack.id !== packId);
+        const neighbour = remaining[index] ?? remaining[index - 1] ?? null;
+        setPacks(remaining);
+        setDetail(null);
+        const nextId = isMobile ? null : (neighbour?.id ?? null);
+        setRequestedPackId(nextId);
+        writePackQuery(nextId, false);
+        void loadPacks('refresh');
     };
 
     const persistOrder = (packId: number, ids: number[]) => {
@@ -675,6 +725,8 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
                                     onTogglePublished={published => void setPublished(published)}
                                     onAddSticker={pickFiles}
                                     onDeletePack={deletePack}
+                                    moveLabel={packTransfer ? t(MOVE_PACK_COPY[packTransfer.destination].menu) : null}
+                                    onMovePack={movePack}
                                     onFailedFirst={failedFirst}
                                     onStartSort={startSort}
                                     onBack={backToList}
@@ -843,10 +895,15 @@ function LibrarySkeleton() {
     );
 }
 
-export default function StickerLibraryManager({ api }: { api: StickerLibraryApi }) {
+interface StickerLibraryManagerProps {
+    api: StickerLibraryApi;
+    packTransfer?: PackTransfer;
+}
+
+export default function StickerLibraryManager({ api, packTransfer }: StickerLibraryManagerProps) {
     return (
         <StickerToastProvider>
-            <StickerLibrary api={api} />
+            <StickerLibrary api={api} packTransfer={packTransfer} />
         </StickerToastProvider>
     );
 }

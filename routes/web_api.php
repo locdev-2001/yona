@@ -483,6 +483,12 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
                     ->whereNumber(['packId', 'stickerId']);
             });
 
+        // Chuyển bộ giữa kho nền tảng và kho riêng của account: chỉ người có quyền
+        // hệ thống đồng thời là quản trị viên account.
+        Route::post('/sticker_packs/{packId}/move', [CustomStickerPacksController::class, 'move'])
+            ->whereNumber('packId')
+            ->middleware(EnsureStickerLibraryAccess::class.':'.EnsureStickerLibraryAccess::PACK_TRANSFER);
+
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 
         Route::post('/bulk_actions', [BulkActionsController::class, 'create']);

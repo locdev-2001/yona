@@ -116,6 +116,7 @@ return [
         'keyword_too_long' => 'The keyword “:input” is longer than :max characters.',
         'pack_name_required' => 'Give the sticker pack a name.',
         'pack_name_too_long' => 'Pack names can be at most :max characters.',
+        'invalid_destination' => 'The destination must be the account library or the platform library.',
     ],
     'widget_recall' => [
         'capability_not_supported' => 'This channel does not support unsending messages.',

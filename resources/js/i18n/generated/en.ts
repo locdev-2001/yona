@@ -3674,7 +3674,8 @@ const messages: Record<string, unknown> = {
             "keyword_not_text": "Keywords must be text.",
             "keyword_too_long": "The keyword “:input” is longer than :max characters.",
             "pack_name_required": "Give the sticker pack a name.",
-            "pack_name_too_long": "Pack names can be at most :max characters."
+            "pack_name_too_long": "Pack names can be at most :max characters.",
+            "invalid_destination": "The destination must be the account library or the platform library."
         },
         "widget_recall": {
             "capability_not_supported": "This channel does not support unsending messages.",
@@ -9738,6 +9739,19 @@ const messages: Record<string, unknown> = {
         "DELETE_PACK": "Delete pack",
         "DELETE_PACK_CONFIRM": "Delete pack “{name}” and its {count} sticker? This cannot be undone. | Delete pack “{name}” and its {count} stickers? This cannot be undone.",
         "PACK_DELETED": "Deleted pack “{name}”",
+        "MOVE_TO_ACCOUNT": {
+            "MENU": "Move to account library",
+            "TITLE": "Move pack to the account library?",
+            "MESSAGE": "Pack “{name}” will live only in this account’s library, and other accounts will no longer see it. Messages already sent keep their sticker images.",
+            "DONE": "Moved “{name}” to the account library"
+        },
+        "MOVE_TO_PLATFORM": {
+            "MENU": "Move to platform library",
+            "TITLE": "Move pack to the platform library?",
+            "MESSAGE": "Pack “{name}” will leave this account’s library. If it is published, every account will see it. Messages already sent keep their sticker images.",
+            "DONE": "Moved “{name}” to the platform library"
+        },
+        "OPEN_MOVED_PACK": "Open",
         "PACK_SUMMARY": "{count}/{max} stickers · PNG, JPG, WebP, GIF · {size}×{size} sticker",
         "UPLOAD_INFO": "Large images are shrunk before upload; animated images can be up to {limit}. External channels such as Zalo receive a static PNG.",
         "ADD_STICKER": "Add sticker",

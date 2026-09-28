@@ -111,6 +111,17 @@ trait ManagesStickerLibrary
         return response()->json(null, 200);
     }
 
+    // Chuyển bộ giữa kho nền tảng và kho riêng của account: bộ phải đang nằm ở
+    // kho nguồn, không thì 404.
+    protected function moveLibraryPack(Request $request, Account $account, int $packId, bool $toAccountLibrary): JsonResponse
+    {
+        [$source, $destination] = $toAccountLibrary ? [null, $account] : [$account, null];
+        $library = $this->stickerLibrary();
+        $pack = $library->moveToLibrary($library->findPack($source, $packId), $destination);
+
+        return $this->packDetailResponse($pack, $request);
+    }
+
     private function packDetailResponse(StickerPack $pack, Request $request, int $status = 200): JsonResponse
     {
         return response()->json([...LibraryStickerPackResource::detail($pack, $request), 'meta' => $this->libraryLimits()], $status);

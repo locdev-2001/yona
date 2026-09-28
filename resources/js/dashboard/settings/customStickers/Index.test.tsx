@@ -1,15 +1,18 @@
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setLocale } from '../../../i18n';
 import CustomStickersIndex, { PLATFORM_STICKER_LIBRARY_API_BASE } from './Index';
+import type { PackTransfer } from './StickerLibraryManager';
 import type { StickerLibraryAccess } from './types';
 
 const pageProps: { stickerLibraryAccess: StickerLibraryAccess } = {
     stickerLibraryAccess: { accountLibrary: false, platformLibrary: false },
 };
 const libraryApiBases: string[] = [];
+const movePack = vi.fn();
+let lastPackTransfer: PackTransfer | undefined;
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { currentAccount: { id: 7 }, ...pageProps } }),
@@ -18,12 +21,15 @@ vi.mock('../../Dashboard', () => ({ default: ({ children }: { children: ReactNod
 vi.mock('../SettingsWrapper', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }));
 vi.mock('../BaseSettingsHeader', () => ({ default: ({ title }: { title: string }) => <h1>{title}</h1> }));
 vi.mock('./stickerLibraryApi', () => ({
+    accountStickerLibraryBase: (accountId: number) => `/api/v1/accounts/${accountId}`,
     createStickerLibraryApi: (baseUrl: string) => ({ baseUrl }),
+    createStickerPackMoveApi: (accountId: number) => ({ movePack: (...args: unknown[]) => movePack(accountId, ...args) }),
 }));
 vi.mock('./StickerLibraryManager', () => ({
     PACK_QUERY_KEY: 'pack',
-    default: ({ api }: { api: { baseUrl: string } }) => {
+    default: ({ api, packTransfer }: { api: { baseUrl: string }; packTransfer?: PackTransfer }) => {
         libraryApiBases.push(api.baseUrl);
+        lastPackTransfer = packTransfer;
 
         return <div data-testid="library-manager">{api.baseUrl}</div>;
     },
@@ -44,6 +50,8 @@ afterAll(() => {
 });
 beforeEach(() => {
     libraryApiBases.length = 0;
+    lastPackTransfer = undefined;
+    movePack.mockReset();
     window.history.replaceState(null, '', '/app/accounts/7/settings/stickers');
 });
 
@@ -98,6 +106,33 @@ describe('trang Cài đặt / Kho sticker', () => {
         window.history.replaceState(null, '', `/app/accounts/7/settings/stickers?tab=${requestedTab}`);
         render(<CustomStickersIndex />);
 
+        expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
+    });
+
+    it('không có quyền kho nền tảng thì không trao chức năng chuyển bộ', () => {
+        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
+        render(<CustomStickersIndex />);
+
+        expect(lastPackTransfer).toBeUndefined();
+    });
+
+    it('chuyển bộ luôn gọi API của account đang mở, đích là kho còn lại; Mở chuyển tab kèm ?pack=', () => {
+        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        render(<CustomStickersIndex />);
+
+        expect(lastPackTransfer?.destination).toBe('platform');
+        void lastPackTransfer?.movePack(5);
+        expect(movePack).toHaveBeenLastCalledWith(7, 5, 'platform');
+
+        act(() => lastPackTransfer?.openDestination(5));
+        expect(window.location.search).toBe('?tab=platform&pack=5');
+        expect(screen.getByTestId('library-manager')).toHaveTextContent(PLATFORM_STICKER_LIBRARY_API_BASE);
+        expect(lastPackTransfer?.destination).toBe('account');
+        void lastPackTransfer?.movePack(5);
+        expect(movePack).toHaveBeenLastCalledWith(7, 5, 'account');
+
+        act(() => lastPackTransfer?.openDestination(6));
+        expect(window.location.search).toBe('?pack=6');
         expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
     });
 });

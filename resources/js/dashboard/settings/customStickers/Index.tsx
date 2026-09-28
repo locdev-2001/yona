@@ -7,18 +7,19 @@ import SettingsWrapper from '../SettingsWrapper';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import StickerLibraryManager, { PACK_QUERY_KEY } from './StickerLibraryManager';
+import type { PackTransfer } from './StickerLibraryManager';
 import { InfoTip } from './stickerLibraryUi';
-import { createStickerLibraryApi } from './stickerLibraryApi';
+import { accountStickerLibraryBase, createStickerLibraryApi, createStickerPackMoveApi } from './stickerLibraryApi';
+import type { StickerLibraryApi, StickerLibraryKind } from './stickerLibraryApi';
 import type { DashboardPageProps } from '../../types';
 import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
 import type { StickerLibraryAccess } from './types';
 
 export const PLATFORM_STICKER_LIBRARY_API_BASE = '/api/v1/platform_sticker_library';
 
-type StickerLibraryTab = 'account' | 'platform';
-
 export const TAB_QUERY_KEY = 'tab';
-const DEFAULT_TAB: StickerLibraryTab = 'account';
+const DEFAULT_TAB: StickerLibraryKind = 'account';
+const OTHER_LIBRARY: Record<StickerLibraryKind, StickerLibraryKind> = { account: 'platform', platform: 'account' };
 
 interface CustomStickersPageProps extends DashboardPageProps {
     stickerLibraryAccess: StickerLibraryAccess;
@@ -42,26 +43,43 @@ function LockedNotice({ message }: { message: string }) {
 export default function CustomStickersIndex() {
     const { currentAccount, stickerLibraryAccess } = usePage<CustomStickersPageProps>().props;
     const accountId = currentAccount!.id;
-    const accountApi = useMemo(() => createStickerLibraryApi(`/api/v1/accounts/${accountId}`), [accountId]);
+    const accountApi = useMemo(() => createStickerLibraryApi(accountStickerLibraryBase(accountId)), [accountId]);
     const platformApi = useMemo(() => createStickerLibraryApi(PLATFORM_STICKER_LIBRARY_API_BASE), []);
+    const moveApi = useMemo(() => createStickerPackMoveApi(accountId), [accountId]);
 
     const tabs = [
         { label: t('STICKER_LIBRARY.TABS.ACCOUNT'), value: 'account' },
         ...(stickerLibraryAccess.platformLibrary ? [{ label: t('STICKER_LIBRARY.TABS.PLATFORM'), value: 'platform' }] : []),
     ];
-    const [activeTab, setActiveTab] = useState<StickerLibraryTab>(() => {
+    const [activeTab, setActiveTab] = useState<StickerLibraryKind>(() => {
         const requested = currentQuery()[TAB_QUERY_KEY];
-        return tabs.some(tab => tab.value === requested) ? (requested as StickerLibraryTab) : DEFAULT_TAB;
+        return tabs.some(tab => tab.value === requested) ? (requested as StickerLibraryKind) : DEFAULT_TAB;
     });
-    const changeTab = (tab: StickerLibraryTab) => {
-        setActiveTab(tab);
+    const changeTab = (tab: StickerLibraryKind, packId: number | null = null) => {
         const { [TAB_QUERY_KEY]: _previousTab, [PACK_QUERY_KEY]: _previousPack, ...otherParams } = currentQuery();
-        replaceQuery(tab === DEFAULT_TAB ? otherParams : { ...otherParams, [TAB_QUERY_KEY]: tab });
+        replaceQuery({
+            ...otherParams,
+            ...(tab === DEFAULT_TAB ? {} : { [TAB_QUERY_KEY]: tab }),
+            ...(packId === null ? {} : { [PACK_QUERY_KEY]: String(packId) }),
+        });
+        setActiveTab(tab);
     };
 
-    const manager = (api: typeof accountApi) => (
+    // Kho còn lại chỉ mở được khi có quyền kho nền tảng (máy chủ còn đòi thêm vai trò quản trị viên account).
+    const packTransferFrom = (library: StickerLibraryKind): PackTransfer | undefined => {
+        if (!stickerLibraryAccess.platformLibrary) return undefined;
+        const destination = OTHER_LIBRARY[library];
+
+        return {
+            destination,
+            movePack: packId => moveApi.movePack(packId, destination),
+            openDestination: packId => changeTab(destination, packId),
+        };
+    };
+
+    const manager = (api: StickerLibraryApi, library: StickerLibraryKind) => (
         <div className="min-h-0 flex-1">
-            <StickerLibraryManager api={api} />
+            <StickerLibraryManager key={library} api={api} packTransfer={packTransferFrom(library)} />
         </div>
     );
 
@@ -82,12 +100,12 @@ export default function CustomStickersIndex() {
                         <TabBar
                             tabs={tabs}
                             initialActiveTab={tabs.findIndex(tab => tab.value === activeTab)}
-                            onTabChanged={tab => changeTab(tab.value as StickerLibraryTab)}
+                            onTabChanged={tab => changeTab(tab.value as StickerLibraryKind)}
                         />
                     ) : null}
                     {activeTab === 'account' &&
-                        (stickerLibraryAccess.accountLibrary ? manager(accountApi) : <LockedNotice message={t('STICKER_LIBRARY.LOCKED_ACCOUNT_LIBRARY')} />)}
-                    {activeTab === 'platform' && stickerLibraryAccess.platformLibrary ? manager(platformApi) : null}
+                        (stickerLibraryAccess.accountLibrary ? manager(accountApi, 'account') : <LockedNotice message={t('STICKER_LIBRARY.LOCKED_ACCOUNT_LIBRARY')} />)}
+                    {activeTab === 'platform' && stickerLibraryAccess.platformLibrary ? manager(platformApi, 'platform') : null}
                 </div>
             </SettingsWrapper>
         </Dashboard>

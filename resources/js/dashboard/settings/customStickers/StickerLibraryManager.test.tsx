@@ -395,6 +395,57 @@ describe('StickerLibraryManager · desktop', () => {
         expect(await screen.findByRole('listbox', { name: 'Sticker trong bộ «Mèo»' })).toBeInTheDocument();
     });
 
+    it('không có quyền chuyển bộ thì menu không có mục chuyển kho', async () => {
+        render(<StickerLibraryManager api={fakeApi()} />);
+        await grid();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tuỳ chọn bộ' }));
+
+        expect(screen.queryByRole('menuitem', { name: /Chuyển/ })).not.toBeInTheDocument();
+    });
+
+    it.each([
+        ['account', 'Chuyển sang kho riêng', 'các tài khoản khác không còn thấy bộ', 'Đã chuyển «Chó vui» sang kho riêng'],
+        ['platform', 'Chuyển lên kho nền tảng', 'mọi tài khoản sẽ thấy bộ', 'Đã chuyển «Chó vui» lên kho nền tảng'],
+    ] as const)('chuyển bộ sang kho %s: hỏi trước, gọi API, bỏ bộ khỏi danh sách, toast mở kho kia', async (destination, label, consequence, done) => {
+        const cats = packDetail({ id: 9, name: 'Mèo' });
+        const listPacks = vi
+            .fn()
+            .mockResolvedValueOnce({ payload: [packDetail(), cats], meta: META })
+            .mockResolvedValue({ payload: [cats], meta: META });
+        const api = fakeApi({ listPacks, getPack: vi.fn(async (id: number) => (id === 9 ? cats : packDetail())) });
+        const packTransfer = { destination, movePack: vi.fn().mockResolvedValue(packDetail()), openDestination: vi.fn() };
+        render(<StickerLibraryManager api={api} packTransfer={packTransfer} />);
+        await grid();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tuỳ chọn bộ' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: label }));
+        const dialog = await screen.findByRole('alertdialog');
+        expect(dialog).toHaveTextContent(consequence);
+        expect(dialog).toHaveTextContent('Tin đã gửi vẫn giữ ảnh sticker.');
+        expect(packTransfer.movePack).not.toHaveBeenCalled();
+        fireEvent.click(within(dialog).getByRole('button', { name: label }));
+
+        await waitFor(() => expect(packTransfer.movePack).toHaveBeenCalledWith(3));
+        expect(await screen.findByRole('listbox', { name: 'Sticker trong bộ «Mèo»' })).toBeInTheDocument();
+        expect(screen.getByText(done)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Mở' }));
+        expect(packTransfer.openDestination).toHaveBeenCalledWith(3);
+    });
+
+    it('huỷ hộp xác nhận chuyển bộ thì không gọi API', async () => {
+        const packTransfer = { destination: 'platform' as const, movePack: vi.fn(), openDestination: vi.fn() };
+        render(<StickerLibraryManager api={fakeApi()} packTransfer={packTransfer} />);
+        await grid();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Tuỳ chọn bộ' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Chuyển lên kho nền tảng' }));
+        fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Huỷ' }));
+
+        expect(packTransfer.movePack).not.toHaveBeenCalled();
+        expect(screen.getByRole('listbox', { name: 'Sticker trong bộ «Chó vui»' })).toBeInTheDocument();
+    });
+
     it('sticker lỗi hiện failure_message trong ngăn chi tiết', async () => {
         const failed = sticker({ status: 'failed', failure_message: 'Ảnh hỏng.', image_url: null });
         render(<StickerLibraryManager api={fakeApi({ getPack: vi.fn().mockResolvedValue(packDetail({ stickers: [failed] })) })} />);

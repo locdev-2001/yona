@@ -114,6 +114,7 @@ return [
         'keyword_too_long' => 'Từ khoá «:input» dài quá :max ký tự.',
         'pack_name_required' => 'Bạn đặt tên cho bộ sticker nhé.',
         'pack_name_too_long' => 'Tên bộ tối đa :max ký tự.',
+        'invalid_destination' => 'Kho đích phải là kho riêng hoặc kho nền tảng.',
     ],
     'widget_recall' => [
         'capability_not_supported' => 'Kênh này chưa cho thu hồi tin nhắn.',

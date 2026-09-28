@@ -57,11 +57,18 @@ async function withThrottleRetry<T>(send: () => Promise<T>, { signal, onThrottle
     }
 }
 
+export type StickerLibraryKind = 'account' | 'platform';
+
+export const accountStickerLibraryBase = (accountId: number) => `/api/v1/accounts/${accountId}`;
+
+const stickerPacksUrl = (baseUrl: string) => `${baseUrl}/sticker_packs`;
+const stickerPackUrl = (baseUrl: string, packId: number) => `${stickerPacksUrl(baseUrl)}/${packId}`;
+
 // Cùng một bộ endpoint cho kho chung (Super Admin) và kho riêng của account;
 // chỉ khác gốc URL.
 export function createStickerLibraryApi(baseUrl: string) {
-    const packsUrl = `${baseUrl}/sticker_packs`;
-    const packUrl = (packId: number) => `${packsUrl}/${packId}`;
+    const packsUrl = stickerPacksUrl(baseUrl);
+    const packUrl = (packId: number) => stickerPackUrl(baseUrl, packId);
     const stickerUrl = (packId: number, stickerId: number) => `${packUrl(packId)}/stickers/${stickerId}`;
 
     return {
@@ -91,3 +98,14 @@ export function createStickerLibraryApi(baseUrl: string) {
 }
 
 export type StickerLibraryApi = ReturnType<typeof createStickerLibraryApi>;
+
+// Chuyển bộ giữa kho nền tảng và kho riêng luôn đi qua gốc của account đang mở,
+// dù màn đang ở tab nào.
+export function createStickerPackMoveApi(accountId: number) {
+    const baseUrl = accountStickerLibraryBase(accountId);
+
+    return {
+        movePack: (packId: number, destination: StickerLibraryKind) =>
+            postJson<LibraryStickerPackDetail>(`${stickerPackUrl(baseUrl, packId)}/move`, { library: destination }),
+    };
+}

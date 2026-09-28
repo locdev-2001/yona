@@ -11,7 +11,9 @@ use App\Support\SystemAccess;
 // đặt và API dashboard:
 // - kho riêng của account: quản trị viên account đó, và account bật cờ
 //   custom_stickers hoặc người đó có quyền hệ thống;
-// - kho nền tảng (kho chung): chỉ người có quyền hệ thống.
+// - kho nền tảng (kho chung): chỉ người có quyền hệ thống;
+// - chuyển bộ giữa kho nền tảng và kho riêng: người có quyền hệ thống đồng thời
+//   là quản trị viên account đó.
 class StickerLibraryAccess
 {
     public function canManageAccountLibrary(User $user, Account $account): bool
@@ -23,6 +25,11 @@ class StickerLibraryAccess
     public function canManagePlatformLibrary(User $user): bool
     {
         return SystemAccess::isSystemAdmin($user);
+    }
+
+    public function canMovePacks(User $user, Account $account): bool
+    {
+        return $this->canManagePlatformLibrary($user) && $this->isAdministratorOf($user, $account);
     }
 
     private function isAdministratorOf(User $user, Account $account): bool

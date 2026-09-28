@@ -5,15 +5,17 @@ import type { StickerUpload } from './stickerLibraryApi';
 
 const postForm = vi.fn();
 const patchJson = vi.fn();
+const postJson = vi.fn();
 
 vi.mock('dashboard/helper/apiClient', async importOriginal => ({
     ...(await importOriginal<typeof import('dashboard/helper/apiClient')>()),
     postForm: (...args: unknown[]) => postForm(...args),
     patchJson: (...args: unknown[]) => patchJson(...args),
+    postJson: (...args: unknown[]) => postJson(...args),
 }));
 
 const { ApiError } = await import('dashboard/helper/apiClient');
-const { createStickerLibraryApi } = await import('./stickerLibraryApi');
+const { createStickerLibraryApi, createStickerPackMoveApi } = await import('./stickerLibraryApi');
 
 const stickerFile = () => new File(['png'], 'meo.png', { type: 'image/png' });
 const EDIT: StickerEdit = {
@@ -122,5 +124,15 @@ describe('từ khoá sticker', () => {
         expect(withDetails.getAll('keywords[]')).toEqual(['haha', 'cảm ơn']);
         expect(withoutDetails.has('label')).toBe(false);
         expect(withoutDetails.getAll('keywords[]')).toEqual([]);
+    });
+});
+
+describe('movePack', () => {
+    it.each(['account', 'platform'] as const)('luôn gửi qua gốc của account đang mở, kho đích %s nằm trong body', destination => {
+        postJson.mockReset().mockResolvedValue({ id: 3 });
+
+        void createStickerPackMoveApi(7).movePack(3, destination);
+
+        expect(postJson).toHaveBeenCalledWith('/api/v1/accounts/7/sticker_packs/3/move', { library: destination });
     });
 });
