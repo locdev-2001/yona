@@ -1,3 +1,10 @@
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
+# ninja-keys import thẳng lit-html mà không khai trong dependency của nó; khai bù
+# để không phụ thuộc vào việc pnpm có hoist lit-html hay không (gỡ gói kéo theo
+# lit-html bản khác từng làm build production hỏng).
+packageExtensions:
+  '@chatwoot/ninja-keys':
+    dependencies:
+      lit-html: ^2.8.0

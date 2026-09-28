@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: sha256-s8NVPyB91iO158OeAlyGV8GnZf+ZalNz2HtX2mQ8YIQ=
+
 importers:
 
   .:
@@ -2026,6 +2028,7 @@ snapshots:
       '@material/mwc-icon': 0.25.3
       hotkeys-js: 3.8.7
       lit: 2.2.6
+      lit-html: 2.8.0
 
   '@chatwoot/pico-search@0.6.2': {}
 
